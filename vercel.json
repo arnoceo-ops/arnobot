@@ -5,6 +5,10 @@
       "schedule": "0 8 * * 1"
     },
     {
+      "path": "/api/cron/weekly-top-users",
+      "schedule": "0 8 * * 5"
+    },
+    {
       "path": "/api/cron/auto-analyse",
       "schedule": "0 3 * * *"
     },
