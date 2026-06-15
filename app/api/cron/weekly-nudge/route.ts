@@ -29,6 +29,14 @@ export async function GET(req: NextRequest) {
   for (const user of users) {
     if (!user.email) continue
 
+    // Sla over als gebruiker nog nooit een gesprek heeft gevoerd
+    const { count: totalCount } = await supabase
+      .from('arnobot_rds_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.user_id)
+
+    if ((totalCount ?? 0) === 0) continue
+
     // Sla over als gebruiker afgelopen 7 dagen actief was (geen nudge nodig)
     const { count: recentCount } = await supabase
       .from('arnobot_rds_logs')
