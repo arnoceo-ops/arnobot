@@ -111,6 +111,31 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Trigger: eerste coaching (5+ gesprekken, nog geen coachingsrapport aangevraagd)
+    if (!email && !sentTypes.has('first_coaching')) {
+      const { count: sessionCount } = await supabase
+        .from('arnobot_blog_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+      if ((sessionCount ?? 0) >= 5) {
+        const { count: coachingCount } = await supabase
+          .from('arnobot_coaching_scores')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.user_id)
+        if ((coachingCount ?? 0) === 0) {
+          email = {
+            type: 'first_coaching',
+            subject: `${naam}, je kunt nu een coachingsrapport aanvragen.`,
+            html: emailHtml(
+              `Je hebt inmiddels ${sessionCount} gesprekken gevoerd met ArnoBot. Genoeg voor een eerste coachingsrapport.<br /><br />ArnoBot analyseert je gesprekken en geeft je een persoonlijk advies op basis van wat hij van jou weet. Niet generiek. Jouw patronen, jouw blinde vlekken, jouw volgende stap.`,
+              'VRAAG COACHING AAN →',
+              'https://arno.bot/bot/coaching'
+            ),
+          }
+        }
+      }
+    }
+
     // Dag 14 — altijd
     if (!email && days >= 14 && !sentTypes.has('dag14')) {
       email = {
