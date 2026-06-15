@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/trial-emails",
+      "schedule": "5 4 * * *"
+    },
+    {
       "path": "/api/cron/weekly-nudge",
       "schedule": "5 4 * * 1"
     },
