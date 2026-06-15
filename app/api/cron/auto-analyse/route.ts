@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { Resend } from 'resend'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -74,6 +76,38 @@ export async function GET(req: NextRequest) {
       session_count: batch.length,
       session_ids: batch.map((s: { session_id: string }) => s.session_id),
     })
+
+    // Notificatiemail aan gebruiker
+    const { data: userRow } = await supabase
+      .from('approved_users')
+      .select('email, voornaam')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (userRow?.email) {
+      const voornaam = userRow.voornaam || 'daar'
+      resend.emails.send({
+        from: 'ArnoBot <info@arno.bot>',
+        to: userRow.email,
+        subject: `Je BIEB is bijgewerkt, ${voornaam}.`,
+        html: `
+          <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
+            <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:32px;">ARNOBOT</p>
+            <h1 style="font-size:24px;font-weight:700;margin-bottom:20px;line-height:1.3;">Er staat een nieuwe analyse voor je klaar.</h1>
+            <p style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">
+              ArnoBot heeft je laatste ${batch.length} gesprekken geanalyseerd en ziet patronen die je eerder misschien niet zag.
+            </p>
+            <a href="https://arno.bot/bot/bieb"
+               style="display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;">
+              OPEN MIJN BIEB →
+            </a>
+            <p style="font-size:12px;color:#4b5563;margin-top:40px;line-height:1.7;">
+              Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.
+            </p>
+          </div>
+        `,
+      }).catch(() => {})
+    }
 
     analysed++
   }
