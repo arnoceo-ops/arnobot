@@ -96,7 +96,7 @@ export default clerkMiddleware(async (auth, req) => {
             }
             user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
             // Telegram notificatie — fire and forget
-            const tgToken = process.env.TELEGRAM_BOT_TOKEN
+            const tgToken = process.env.TELEGRAM_NEW_USER_BOT_TOKEN
             const tgChat = process.env.TELEGRAM_NEW_USER_CHAT_ID
             if (tgToken && tgChat) {
               const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${clerkUser.firstName || ''} ${clerkUser.lastName || ''}\nEmail: ${email}\nLinkedIn: ${linkedinUrl || 'onbekend'}`
