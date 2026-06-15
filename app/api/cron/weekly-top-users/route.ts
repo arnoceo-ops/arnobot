@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
   await resend.emails.send({
     from: 'ArnoBot <info@arno.bot>',
-    to: 'arnodiepeveen@gmail.com',
+    to: 'analyses@arno.bot',
     subject: `ArnoBot top 10 actieve gebruikers — week van ${weekOf}`,
     html: `
       <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:700px;margin:0 auto;">

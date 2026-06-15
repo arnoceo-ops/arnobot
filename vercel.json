@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/weekly-top-users",
-      "schedule": "0 8 * * 5"
+      "schedule": "5 4 * * 6"
     },
     {
       "path": "/api/cron/auto-analyse",
