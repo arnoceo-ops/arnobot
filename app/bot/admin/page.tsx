@@ -67,7 +67,7 @@ export default async function ArnoBotAdminPage({
     .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
     .filter(u => u.naam)
 
-  if (naamParam) {
+  if (naamParam && naamParam.toUpperCase() !== 'ALLE') {
     const match = alleNamen.find(u => u.naam.toLowerCase() === naamParam.toLowerCase())
     if (match) userFilter = match.userId
   }
@@ -134,6 +134,7 @@ export default async function ArnoBotAdminPage({
               style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}
             />
             <datalist id="gebruikers-list">
+              <option value="ALLE" />
               {alleNamen.map(u => <option key={u.userId} value={u.naam} />)}
             </datalist>
           </div>
@@ -169,14 +170,6 @@ export default async function ArnoBotAdminPage({
         </form>
       </div>
 
-      {filterNaam && (
-        <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ background: '#f59e0b', color: '#111827', fontSize: 13, letterSpacing: 3, fontWeight: 700, padding: '6px 14px', borderRadius: 999 }}>
-            {filterNaam.toUpperCase()}
-          </span>
-          <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}`} style={{ color: '#6b7280', fontSize: 13, textDecoration: 'none' }}>wis filter ✕</a>
-        </div>
-      )}
       {sessionList.length === 0 ? (
         <p style={{ opacity: 0.4 }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
