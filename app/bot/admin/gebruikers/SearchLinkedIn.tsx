@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function SearchLinkedIn({ userId, name, hasLinkedin }: { userId: string; name: string; hasLinkedin: boolean }) {
+export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { userId: string; name: string; email?: string; hasLinkedin: boolean }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState(false)
@@ -14,7 +14,7 @@ export default function SearchLinkedIn({ userId, name, hasLinkedin }: { userId: 
       const res = await fetch('/api/bot/search-linkedin-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name }),
+        body: JSON.stringify({ userId, name, email }),
       })
       const data = await res.json()
       if (data.linkedinUrl) {

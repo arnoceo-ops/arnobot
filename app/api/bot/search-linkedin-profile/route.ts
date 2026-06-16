@@ -16,8 +16,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geen toegang' }, { status: 403 })
   }
 
-  const { userId, name } = await req.json()
+  const { userId, name, email } = await req.json()
   if (!userId || !name) return NextResponse.json({ error: 'userId en name verplicht' }, { status: 400 })
+
+  const GENERIC_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'live.com', 'hotmail.nl']
+  const emailDomain = email ? email.split('@')[1] : ''
+  const domainHint = emailDomain && !GENERIC_DOMAINS.includes(emailDomain)
+    ? ' ' + emailDomain.split('.')[0]
+    : ''
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -25,7 +31,7 @@ export async function POST(req: NextRequest) {
     tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
     messages: [{
       role: 'user',
-      content: `Zoek het LinkedIn-profiel van "${name}". Gebruik web_search met de query: site:linkedin.com/in "${name}". Geef alleen de volledige linkedin.com/in/... URL terug, niets anders. Als je geen resultaat vindt, geef dan terug: NIET_GEVONDEN.`,
+      content: `Zoek het LinkedIn-profiel van "${name}". Gebruik web_search met de query: site:linkedin.com/in "${name}"${domainHint}. Geef alleen de volledige linkedin.com/in/... URL terug, niets anders. Als je geen resultaat vindt, geef dan terug: NIET_GEVONDEN.`,
     }],
   })
 

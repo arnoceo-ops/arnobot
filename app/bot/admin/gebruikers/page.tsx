@@ -249,7 +249,7 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'right' }}>
                   {u.linkedin
                     ? <a href={u.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>LI →</a>
-                    : <SearchLinkedIn userId={u.user_id} name={name} hasLinkedin={false} />
+                    : <SearchLinkedIn userId={u.user_id} name={name} email={u.email ?? ''} hasLinkedin={false} />
                   }
                 </div>
               </div>
