@@ -28,6 +28,13 @@ function fmtDate(iso: string): string {
   return iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4)
 }
 
+function renderAnswer(text: string) {
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+}
+
 function parseDate(input: string): string {
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(input)) {
     const [d, m, y] = input.split('/')
@@ -202,9 +209,8 @@ export default async function ArnoBotAdminPage({
                     <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '8px', color: '#f1f5f9' }}>
                       {msg.question}
                     </p>
-                    <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>
-                      {msg.answer}
-                    </p>
+                    <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#9ca3af' }}
+                      dangerouslySetInnerHTML={{ __html: renderAnswer(msg.answer) }} />
                     <p style={{ fontSize: '11px', opacity: 0.25, marginTop: '6px' }}>
                       {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
                     </p>
