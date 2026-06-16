@@ -39,7 +39,7 @@ function parseDate(input: string): string {
 export default async function ArnoBotAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string }>
+  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string }>
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -51,12 +51,26 @@ export default async function ArnoBotAdminPage({
   const from = parseDate(params.from || '') || thirtyDaysAgo
   const to = parseDate(params.to || '') || today
   const sort = params.sort || 'date_desc'
-  const userFilter = params.user || ''
+  const naamParam = params.naam || ''
+  let userFilter = params.user || ''
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  const { data: alleGebruikers } = await supabase
+    .from('approved_users')
+    .select('user_id, voornaam, achternaam')
+
+  const alleNamen: { userId: string; naam: string }[] = (alleGebruikers ?? [])
+    .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
+    .filter(u => u.naam)
+
+  if (naamParam) {
+    const match = alleNamen.find(u => u.naam.toLowerCase() === naamParam.toLowerCase())
+    if (match) userFilter = match.userId
+  }
 
   const { data } = await supabase
     .from('arnobot_rds_logs')
@@ -90,7 +104,7 @@ export default async function ArnoBotAdminPage({
   if (sort === 'count_desc') sessionList.sort((a, b) => b[1].length - a[1].length)
   if (sort === 'count_asc')  sessionList.sort((a, b) => a[1].length - b[1].length)
 
-  const filterNaam = userFilter ? naamMap[userFilter] : ''
+  const filterNaam = userFilter ? (naamMap[userFilter] || alleNamen.find(u => u.userId === userFilter)?.naam || '') : ''
 
   const dateRange = from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`
 
@@ -111,6 +125,18 @@ export default async function ArnoBotAdminPage({
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
+            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>GEBRUIKER</label>
+            <input
+              type="text" name="naam" list="gebruikers-list"
+              defaultValue={filterNaam || naamParam}
+              placeholder="Zoek op naam..."
+              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}
+            />
+            <datalist id="gebruikers-list">
+              {alleNamen.map(u => <option key={u.userId} value={u.naam} />)}
+            </datalist>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>VAN</label>
             <input type="date" name="from" defaultValue={from}
@@ -148,7 +174,7 @@ export default async function ArnoBotAdminPage({
           <span style={{ background: '#f59e0b', color: '#111827', fontSize: 13, letterSpacing: 3, fontWeight: 700, padding: '6px 14px', borderRadius: 999 }}>
             {filterNaam.toUpperCase()}
           </span>
-          <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}`} style={{ color: '#6b7280', fontSize: 13, textDecoration: 'none' }}>wis filter</a>
+          <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}`} style={{ color: '#6b7280', fontSize: 13, textDecoration: 'none' }}>wis filter ✕</a>
         </div>
       )}
       {sessionList.length === 0 ? (
