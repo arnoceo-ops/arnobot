@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useClerk } from '@clerk/nextjs'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 
@@ -37,7 +37,9 @@ export default function BotNav({ active }: Props) {
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const { signOut } = useClerk()
+  const { user } = useUser()
   const router = useRouter()
+  const isBouwer = user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com'
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return
@@ -130,6 +132,7 @@ export default function BotNav({ active }: Props) {
             {active === 'bieb'  ? <span className="mob-active">BIEB</span>     : <Link href="/bot/bieb">BIEB</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching">COACHING</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
+            {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
             <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
           </div>
@@ -156,6 +159,9 @@ export default function BotNav({ active }: Props) {
           {active === 'qa'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>Q&A</span>
             : <Link href="/bot/qa" style={linkBase}>Q&A</Link>}
+          {isBouwer && (active === 'team'
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
+            : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}
           {active === 'account'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ACCOUNT</span>
             : <Link href="/bot/account" style={linkBase}>ACCOUNT</Link>}
