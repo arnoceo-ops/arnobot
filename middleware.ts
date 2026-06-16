@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/evaluatie(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/sso-callback(.*)',
 ])
 
 const isProtectedBot = createRouteMatcher(['/bot', '/bot/:path*'])
