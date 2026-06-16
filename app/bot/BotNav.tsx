@@ -39,7 +39,7 @@ export default function BotNav({ active }: Props) {
   const { signOut } = useClerk()
   const { user } = useUser()
   const router = useRouter()
-  const clerkEmail = user?.primaryEmailAddress?.emailAddress ?? 'laden...'
+  const clerkEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || 'geen email gevonden'
   const isBouwer = false
 
   async function sendFeedback() {
@@ -168,7 +168,7 @@ export default function BotNav({ active }: Props) {
             : <Link href="/bot/account" style={linkBase}>ACCOUNT</Link>}
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#6b7280' }}>{clerkEmail}</span>
+          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f59e0b' }}>{clerkEmail}</span>
           <button
             style={logoutBtnStyle}
             onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
