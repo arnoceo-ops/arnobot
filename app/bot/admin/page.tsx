@@ -39,7 +39,7 @@ function parseDate(input: string): string {
 export default async function ArnoBotAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; sort?: string }>
+  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string }>
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -51,6 +51,7 @@ export default async function ArnoBotAdminPage({
   const from = parseDate(params.from || '') || thirtyDaysAgo
   const to = parseDate(params.to || '') || today
   const sort = params.sort || 'date_desc'
+  const userFilter = params.user || ''
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -83,10 +84,13 @@ export default async function ArnoBotAdminPage({
   }
 
   let sessionList = Object.entries(sessions)
+  if (userFilter) sessionList = sessionList.filter(([, msgs]) => msgs[0].user_id === userFilter)
   if (sort === 'date_desc') sessionList.sort((a, b) => b[1][0].created_at.localeCompare(a[1][0].created_at))
   if (sort === 'date_asc')  sessionList.sort((a, b) => a[1][0].created_at.localeCompare(b[1][0].created_at))
   if (sort === 'count_desc') sessionList.sort((a, b) => b[1].length - a[1].length)
   if (sort === 'count_asc')  sessionList.sort((a, b) => a[1].length - b[1].length)
+
+  const filterNaam = userFilter ? naamMap[userFilter] : ''
 
   const dateRange = from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`
 
@@ -139,6 +143,14 @@ export default async function ArnoBotAdminPage({
         </form>
       </div>
 
+      {filterNaam && (
+        <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ background: '#f59e0b', color: '#111827', fontSize: 13, letterSpacing: 3, fontWeight: 700, padding: '6px 14px', borderRadius: 999 }}>
+            {filterNaam.toUpperCase()}
+          </span>
+          <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}`} style={{ color: '#6b7280', fontSize: 13, textDecoration: 'none' }}>wis filter</a>
+        </div>
+      )}
       {sessionList.length === 0 ? (
         <p style={{ opacity: 0.4 }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
@@ -156,8 +168,11 @@ export default async function ArnoBotAdminPage({
                   <p style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7, margin: 0 }}>
                     SESSIE {idx + 1} — {messages[0].ip}
                   </p>
-                  {naam && (
-                    <p style={{ fontSize: '15px', color: '#f1f5f9', margin: 0, fontWeight: 700 }}>{naam}</p>
+                  {naam && userId && (
+                    <a
+                      href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${userId}`}
+                      style={{ fontSize: '15px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
+                    >{naam}</a>
                   )}
                 </div>
                 <p style={{ fontSize: '16px', opacity: 0.3, marginBottom: '28px' }}>
