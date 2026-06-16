@@ -37,9 +37,15 @@ export default function BotNav({ active }: Props) {
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const { signOut } = useClerk()
-  const { user } = useUser()
+  const { user, isLoaded } = useUser()
   const router = useRouter()
-  const isBouwer = user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com'
+  const [bouwer, setBouwer] = useState(false)
+
+  useEffect(() => {
+    if (isLoaded) setBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
+  }, [isLoaded, user])
+
+  const isBouwer = bouwer
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return
