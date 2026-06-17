@@ -53,7 +53,13 @@ async function proxyToClerk(req: NextRequest, path: string[]): Promise<NextRespo
 
     const resHeaders = new Headers()
     clerkRes.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== 'set-cookie') resHeaders.set(key, value)
+      const k = key.toLowerCase()
+      // content-encoding: fetch() already decompresses the body — forwarding the
+      // original header causes ERR_CONTENT_DECODING_FAILED in the browser.
+      // content-length: body length changed after decompression.
+      if (k !== 'set-cookie' && k !== 'content-encoding' && k !== 'content-length') {
+        resHeaders.set(key, value)
+      }
     })
 
     const res = new NextResponse(clerkRes.body, { status: clerkRes.status, headers: resHeaders })
