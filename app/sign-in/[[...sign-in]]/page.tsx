@@ -25,7 +25,7 @@ export default function SignInPage() {
     const timer = setTimeout(() => {
       setLoading(false)
       setError('Verbinding mislukt. Ververs de pagina en probeer opnieuw.')
-    }, 8000)
+    }, 20000)
     try {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
