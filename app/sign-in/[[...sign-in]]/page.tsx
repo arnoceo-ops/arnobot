@@ -29,13 +29,17 @@ export default function SignInPage() {
         redirectCallbackUrl: '/bot',
       })
     } catch (err: unknown) {
-      const clerr = err as { errors?: { message: string }[] }
-      const msg = clerr?.errors?.[0]?.message
+      const clerr = err as { errors?: { message: string; longMessage?: string }[] }
+      const msg = clerr?.errors?.[0]?.longMessage
+        || clerr?.errors?.[0]?.message
         || (err as Error)?.message
         || JSON.stringify(err)
         || 'Er is iets misgegaan'
       setError(msg)
       setLoading(false)
+    } finally {
+      // Als de redirect uitblijft na 15 seconden, knop terugzetten
+      setTimeout(() => setLoading(false), 15000)
     }
   }
 
