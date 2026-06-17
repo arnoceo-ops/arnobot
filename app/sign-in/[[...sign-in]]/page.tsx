@@ -22,13 +22,19 @@ export default function SignInPage() {
     }
     setError('')
     setLoading(true)
+    const timer = setTimeout(() => {
+      setLoading(false)
+      setError('Verbinding mislukt. Ververs de pagina en probeer opnieuw.')
+    }, 8000)
     try {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
         redirectUrl: `${window.location.origin}/sso-callback`,
         redirectCallbackUrl: '/bot',
       })
+      clearTimeout(timer)
     } catch (err: unknown) {
+      clearTimeout(timer)
       const clerr = err as { errors?: { message: string; longMessage?: string }[] }
       const msg = clerr?.errors?.[0]?.longMessage
         || clerr?.errors?.[0]?.message
@@ -37,9 +43,6 @@ export default function SignInPage() {
         || 'Er is iets misgegaan'
       setError(msg)
       setLoading(false)
-    } finally {
-      // Als de redirect uitblijft na 15 seconden, knop terugzetten
-      setTimeout(() => setLoading(false), 15000)
     }
   }
 
