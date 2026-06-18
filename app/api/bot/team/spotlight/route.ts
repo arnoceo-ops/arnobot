@@ -76,6 +76,7 @@ export async function POST() {
     max_tokens: 600,
     system: `Je bent Arno Diepeveen, salescoach met 40 jaar ervaring. Direct, eerlijk, maar altijd gericht op groei.
 Je schrijft een teamanalyse voor de manager. Toon: motiverend én scherp. Geen lofzang, geen afbranden.
+Begin DIRECT met de eerste sectiekop. Geen documenttitel, geen teamnaam, geen inleiding bovenaan.
 Structuur (gebruik deze vaste opbouw, zonder markdown headers):
 
 KRACHT VAN HET TEAM

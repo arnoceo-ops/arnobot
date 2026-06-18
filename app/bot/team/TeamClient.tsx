@@ -56,6 +56,11 @@ function renderAnalyse(text: string): string {
     return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
   }).filter(s => s.length > 0)
 
+  // Strip documenttitel als AI die toch genereert (bijv. "TEAM X – TEAMANALYSE")
+  if (items[0]?.startsWith('<span class="ah">') && items[0].toUpperCase().includes('ANALYSE')) {
+    items.shift()
+  }
+
   // Koppen zijn display:block met eigen margins — geen <br> voor of na een kop
   return items.map((item, i) => {
     const isHeading = item.startsWith('<span class="ah">')
