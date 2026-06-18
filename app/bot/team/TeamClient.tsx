@@ -45,24 +45,24 @@ function renderAnalyse(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
-  return safe.split('\n').map(line => {
+  const items = safe.split('\n').map(line => {
     const t = line.trim()
     if (!t) return ''
-
-    // Volledige regel tussen ** → amber sectiekop
     const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
-    if (fullBold) {
-      return `<span class="ah">${fullBold[1]}</span>`
-    }
-
-    // Standalone all-caps regel → amber sectiekop (bijv. GROEIKANS)
+    if (fullBold) return `<span class="ah">${fullBold[1]}</span>`
     if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {
       return `<span class="ah">${t}</span>`
     }
-
-    // Inline **bold** binnen lopende tekst
     return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
-  }).filter(s => s.length > 0).join('<br>')
+  }).filter(s => s.length > 0)
+
+  // Koppen zijn display:block met eigen margins — geen <br> voor of na een kop
+  return items.map((item, i) => {
+    const isHeading = item.startsWith('<span class="ah">')
+    const nextIsHeading = items[i + 1]?.startsWith('<span class="ah">') ?? true
+    if (isHeading || nextIsHeading) return item
+    return item + '<br>'
+  }).join('')
 }
 
 const label: React.CSSProperties = {
@@ -207,7 +207,7 @@ export default function TeamClient() {
         .team-input:focus { border-color: #f59e0b; }
         .team-input::placeholder { color: #4b5563; }
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
-        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
       `}</style>
 

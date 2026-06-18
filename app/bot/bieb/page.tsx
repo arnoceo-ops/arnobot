@@ -38,7 +38,7 @@ function renderContent(text: string) {
 
 function renderAnalyseText(text: string): string {
   const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  return safe.split('\n').map(line => {
+  const items = safe.split('\n').map(line => {
     const t = line.trim()
     if (!t) return ''
     const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
@@ -47,7 +47,14 @@ function renderAnalyseText(text: string): string {
       return `<span class="ah">${t}</span>`
     }
     return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
-  }).filter(s => s.length > 0).join('<br>')
+  }).filter(s => s.length > 0)
+
+  return items.map((item, i) => {
+    const isHeading = item.startsWith('<span class="ah">')
+    const nextIsHeading = items[i + 1]?.startsWith('<span class="ah">') ?? true
+    if (isHeading || nextIsHeading) return item
+    return item + '<br>'
+  }).join('')
 }
 
 function formatDate(iso: string) {
@@ -346,7 +353,7 @@ export default function GeschiedenisPage() {
           background: #1f2937; border-left: 3px solid #f59e0b;
           padding: 20px 24px; margin-bottom: 8px;
         }
-        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
 
         @media (max-width: 768px) {

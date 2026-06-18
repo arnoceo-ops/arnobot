@@ -26,6 +26,7 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 - **Body tekst**: Space Mono, fontWeight 400, fontSize 15px, lineHeight 1.9, kleur #9ca3af
 - **Labels (amber)**: Space Mono, fontWeight 400, fontSize 13px, letterSpacing 4, kleur #f59e0b — geldt voor ALLE amber labels: inline, sectiekoppen in configurators, "BEGIN HET GESPREK", etc.
 - **Labels (amber, synthesetitel zoals SYNTHESE/TERUGBLIK)**: Space Mono, fontWeight 700, fontSize 13px, letterSpacing 4, kleur #f59e0b — alleen voor de titel boven een AI-syntheseblok
+- **Subkoppen binnen AI-content** (bijv. KRACHT VAN HET TEAM, GROEIKANS in analyse-cards): Space Mono, fontWeight 400, fontSize 13px, letterSpacing 4, kleur #f1f5f9 — wit, niet amber. Amber is voor UI-labels die content introduceren, niet voor hiërarchie binnen AI-gegenereerde tekst.
 - **H1**: Bebas Neue, fontSize 64, letterSpacing 3, kleur #f1f5f9
 - **H2**: Bebas Neue, fontSize 32, letterSpacing 2, kleur #f1f5f9
 - **Primaire knop**: Bebas Neue 18px, letterSpacing 3, padding '12px 36px', borderRadius 999, background #f59e0b, **color #111827**, hover #d97706. Gebruik wanneer het de enige of belangrijkste actie in een sectie is.
