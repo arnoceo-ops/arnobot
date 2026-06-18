@@ -69,6 +69,8 @@ function JoinContent() {
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
         .join-link { color: #f59e0b; text-decoration: none; }
         .join-link:hover { text-decoration: underline; }
+        .btn-primary:hover { background: #d97706 !important; }
+        .btn-secondary:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: '#111827' }}>
@@ -97,7 +99,7 @@ function JoinContent() {
                 Je bent uitgenodigd om deel te nemen aan team <span style={{ color: '#f1f5f9' }}>{teamName}</span>.
               </p>
               {isSignedIn ? (
-                <button onClick={() => setStatus('trust')} style={btnPrimary}>
+                <button onClick={() => setStatus('trust')} className="btn-primary" style={btnPrimary}>
                   MEER INFORMATIE →
                 </button>
               ) : (
@@ -151,10 +153,10 @@ function JoinContent() {
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <button onClick={join} style={btnPrimary}>
+                <button onClick={join} className="btn-primary" style={btnPrimary}>
                   DEELNEMEN
                 </button>
-                <button onClick={() => setStatus('ready')} style={btnSecondary}>
+                <button onClick={() => setStatus('ready')} className="btn-secondary" style={btnSecondary}>
                   ← TERUG
                 </button>
               </div>
@@ -167,7 +169,7 @@ function JoinContent() {
 
           {status === 'done' && (
             <>
-              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f59e0b', lineHeight: 1, marginBottom: 16 }}>WELKOM!</h1>
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 16 }}>WELKOM!</h1>
               <p style={body}>Je bent nu lid van {teamName}. Je wordt doorgestuurd...</p>
             </>
           )}
