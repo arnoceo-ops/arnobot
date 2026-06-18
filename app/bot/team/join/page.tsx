@@ -125,7 +125,7 @@ function JoinContent() {
                 <button onClick={join} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'background 0.2s' }}>
                   IK BEGRIJP HET — DEELNEMEN
                 </button>
-                <button onClick={() => setStatus('ready')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}>
+                <button onClick={() => setStatus('ready')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}>
                   ← TERUG
                 </button>
               </div>
