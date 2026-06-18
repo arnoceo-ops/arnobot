@@ -66,7 +66,7 @@ function renderAnalyse(text: string): string {
 }
 
 const label: React.CSSProperties = {
-  fontFamily: "'Space Mono', monospace", fontWeight: 700,
+  fontFamily: "'Space Mono', monospace", fontWeight: 400,
   fontSize: 13, letterSpacing: 4, color: '#f59e0b',
   display: 'block', marginBottom: 16,
 }
