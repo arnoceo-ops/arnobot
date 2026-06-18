@@ -124,15 +124,12 @@ function JoinContent() {
                 <p style={text.body}>
                   Wil je meer weten voordat je verder gaat? Check met Arno. Niet de bot, de man. Dat kan via{' '}
                   <a href="https://t.me/arnodiepeveen" target="_blank" rel="noopener noreferrer" className="join-link">t.me/arnodiepeveen</a>.
-                  {' '}If not, klik hieronder op DEELNEMEN en je bent binnen.
+                  {' '}Weet je genoeg? Klik dan hieronder op DEELNEMEN en je bent binnen.
                 </p>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <button onClick={join} className="btn-primary" style={btn.primary}>
                   DEELNEMEN
-                </button>
-                <button onClick={() => setStatus('ready')} className="btn-secondary" style={btn.secondary}>
-                  ← TERUG
                 </button>
               </div>
             </>
