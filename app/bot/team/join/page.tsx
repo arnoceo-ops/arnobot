@@ -107,7 +107,7 @@ function JoinContent() {
                 </p>
                 <div style={{ borderLeft: `3px solid ${colors.border}`, paddingLeft: 20 }}>
                   <p style={text.body}>
-                    Je manager ziet niet wat jij met ArnoBot bespreekt. Nooit. Wat hij wel ziet, is wat er uit die gesprekken wordt gedestilleerd: jouw ontwikkelrichting en groeipunten. Je kunt zelf checken hoe dat er uit ziet.
+                    Je manager ziet niet wat jij met ArnoBot bespreekt. Nooit. Wat hij wel ziet, is wat er uit die gesprekken wordt gedestilleerd: jouw ontwikkelrichting en groeipunten. Je kunt in de app checken hoe dat er uit ziet, dus je komt nooit voor verrassingen te staan.
                   </p>
                 </div>
                 <div style={{ background: colors.card, borderLeft: `3px solid ${colors.amber}`, padding: '16px 20px' }}>
