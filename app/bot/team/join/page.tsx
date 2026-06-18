@@ -11,7 +11,7 @@ function JoinContent() {
   const { isLoaded, isSignedIn } = useUser()
   const code = searchParams.get('code') ?? ''
   const [teamName, setTeamName] = useState('')
-  const [status, setStatus] = useState<'loading' | 'ready' | 'joining' | 'done' | 'error' | 'invalid'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'trust' | 'joining' | 'done' | 'error' | 'invalid'>('loading')
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
@@ -73,12 +73,11 @@ function JoinContent() {
                 JE BENT UITGENODIGD.
               </h1>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 32 }}>
-                Je wordt uitgenodigd om deel te nemen aan team<br />
-                <span style={{ color: '#f1f5f9', fontWeight: 400 }}>{teamName}</span>
+                Je bent uitgenodigd om deel te nemen aan team <span style={{ color: '#f1f5f9' }}>{teamName}</span>.
               </p>
               {isSignedIn ? (
-                <button onClick={join} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'background 0.2s' }}>
-                  DEELNEMEN
+                <button onClick={() => setStatus('trust')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'background 0.2s' }}>
+                  MEER INFORMATIE →
                 </button>
               ) : (
                 <>
@@ -93,6 +92,43 @@ function JoinContent() {
                   </Link>
                 </>
               )}
+            </>
+          )}
+
+          {status === 'trust' && (
+            <>
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 32 }}>
+                WELKOM IN HET TEAM.
+              </h1>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>
+                VOORDAT JE VERDERGAAT
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 40 }}>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                  ArnoBot coacht je eerlijk — maar alleen als jij eerlijk bent. Hoe opener je bent over wat je écht tegenkomt, hoe scherper het advies wordt.
+                </p>
+                <div style={{ borderLeft: '3px solid #374151', paddingLeft: 20 }}>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                    Je manager ziet niet wat jij met ArnoBot bespreekt. Nooit. Wat hij wel ziet is wat er uit die gesprekken is gedestilleerd: jouw ontwikkelrichting en groeipunten. Geen quotes, geen situaties, geen klantnamen.
+                  </p>
+                </div>
+                <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
+                    Je gesprekken zijn van jou. Alleen jij kunt ze inzien.
+                  </p>
+                </div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                  Kwetsbaarheid in je coaching is geen risico. Het is precies wat je verder brengt.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <button onClick={join} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'background 0.2s' }}>
+                  IK BEGRIJP HET — DEELNEMEN
+                </button>
+                <button onClick={() => setStatus('ready')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}>
+                  ← TERUG
+                </button>
+              </div>
             </>
           )}
 
