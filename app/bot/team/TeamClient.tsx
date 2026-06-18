@@ -39,6 +39,32 @@ interface Team {
   invite_code: string
 }
 
+function renderAnalyse(text: string): string {
+  const safe = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  return safe.split('\n').map(line => {
+    const t = line.trim()
+    if (!t) return ''
+
+    // Volledige regel tussen ** → amber sectiekop
+    const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
+    if (fullBold) {
+      return `<span class="ah">${fullBold[1]}</span>`
+    }
+
+    // Standalone all-caps regel → amber sectiekop (bijv. GROEIKANS)
+    if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {
+      return `<span class="ah">${t}</span>`
+    }
+
+    // Inline **bold** binnen lopende tekst
+    return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
+  }).join('<br>')
+}
+
 const label: React.CSSProperties = {
   fontFamily: "'Space Mono', monospace", fontWeight: 700,
   fontSize: 13, letterSpacing: 4, color: '#f59e0b',
@@ -181,6 +207,8 @@ export default function TeamClient() {
         .team-input:focus { border-color: #f59e0b; }
         .team-input::placeholder { color: #4b5563; }
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
+        .ah { font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah:first-child { margin-top:0; }
       `}</style>
 
       <BotNav active="team" />
@@ -299,7 +327,7 @@ export default function TeamClient() {
                       <div key={a.id}>
                         <span style={{ ...label, marginBottom: 12 }}>{formatAnalyseDate(a.created_at)}</span>
                         <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '24px 28px' }}>
-                          <p style={{ ...body, marginBottom: 0, whiteSpace: 'pre-wrap' }}>{a.analyse_text}</p>
+                          <div style={{ ...body, marginBottom: 0 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
                         </div>
                       </div>
                     ))}
