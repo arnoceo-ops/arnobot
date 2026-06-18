@@ -53,7 +53,7 @@ function JoinContent() {
       `}</style>
       <div style={{ minHeight: '100vh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ maxWidth: 480, width: '100%' }}>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
 
           {status === 'loading' && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#6b7280', letterSpacing: 2 }}>LADEN...</p>
@@ -105,7 +105,7 @@ function JoinContent() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 40 }}>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-                  ArnoBot coacht je eerlijk — maar alleen als jij eerlijk bent. Hoe opener je bent over wat je écht tegenkomt, hoe scherper het advies wordt.
+                  ArnoBot coacht je eerlijk, maar alleen als jij eerlijk bent. Hoe opener je bent over wat je écht tegenkomt, hoe scherper het advies wordt.
                 </p>
                 <div style={{ borderLeft: '3px solid #374151', paddingLeft: 20 }}>
                   <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -121,9 +121,9 @@ function JoinContent() {
                   Kwetsbaarheid in je coaching is geen risico. Het is precies wat je verder brengt.
                 </p>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
                 <button onClick={join} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, cursor: 'pointer', transition: 'background 0.2s' }}>
-                  IK BEGRIJP HET — DEELNEMEN
+                  IK BEGRIJP HET. DEELNEMEN.
                 </button>
                 <button onClick={() => setStatus('ready')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}>
                   ← TERUG
