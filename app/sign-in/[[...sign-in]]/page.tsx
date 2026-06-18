@@ -10,10 +10,18 @@ export default function SignInPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [autoTriggered, setAutoTriggered] = useState(false)
 
   useEffect(() => {
     if (isSignedIn) router.replace('/bot')
   }, [isSignedIn, router])
+
+  useEffect(() => {
+    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered) {
+      setAutoTriggered(true)
+      handleLinkedIn()
+    }
+  }, [fetchStatus, signIn, isSignedIn, autoTriggered])
 
   async function handleLinkedIn() {
     if (fetchStatus !== 'idle' || !signIn) {
