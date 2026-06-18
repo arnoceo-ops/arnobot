@@ -207,7 +207,7 @@ export default function TeamClient() {
         .team-input:focus { border-color: #f59e0b; }
         .team-input::placeholder { color: #4b5563; }
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
-        .ah { font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
         .ah:first-child { margin-top:0; }
       `}</style>
 

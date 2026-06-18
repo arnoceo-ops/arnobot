@@ -346,7 +346,7 @@ export default function GeschiedenisPage() {
           background: #1f2937; border-left: 3px solid #f59e0b;
           padding: 20px 24px; margin-bottom: 8px;
         }
-        .ah { font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
         .ah:first-child { margin-top:0; }
 
         @media (max-width: 768px) {
