@@ -47,7 +47,7 @@ function renderAnalyseText(text: string): string {
       return `<span class="ah">${t}</span>`
     }
     return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
-  }).join('<br>')
+  }).filter(s => s.length > 0).join('<br>')
 }
 
 function formatDate(iso: string) {

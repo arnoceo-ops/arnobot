@@ -62,7 +62,7 @@ function renderAnalyse(text: string): string {
 
     // Inline **bold** binnen lopende tekst
     return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
-  }).join('<br>')
+  }).filter(s => s.length > 0).join('<br>')
 }
 
 const label: React.CSSProperties = {
