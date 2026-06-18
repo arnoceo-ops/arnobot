@@ -66,8 +66,8 @@ function JoinContent() {
             <>
               <h1 style={{ ...text.h1, marginBottom: 16 }}>ONGELDIGE LINK.</h1>
               <p style={{ ...text.body, marginBottom: 32 }}>Deze uitnodigingslink is niet geldig of al verlopen.</p>
-              <Link href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: colors.amber, textDecoration: 'none' }}>
-                ← NAAR ROYALDUTCHSALES.COM
+              <Link href="https://arno.bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: colors.amber, textDecoration: 'none' }}>
+                ← NAAR ARNO.BOT
               </Link>
             </>
           )}
@@ -150,8 +150,8 @@ function JoinContent() {
             <>
               <h1 style={{ ...text.h1, marginBottom: 16 }}>OEPS.</h1>
               <p style={{ ...text.body, marginBottom: 32 }}>{errorMsg}</p>
-              <Link href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: colors.amber, textDecoration: 'none' }}>
-                ← NAAR ROYALDUTCHSALES.COM
+              <Link href="https://arno.bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: colors.amber, textDecoration: 'none' }}>
+                ← NAAR ARNO.BOT
               </Link>
             </>
           )}
