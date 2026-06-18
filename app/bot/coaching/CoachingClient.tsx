@@ -5,6 +5,13 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useUser } from '@clerk/nextjs'
 
+function renderMd(text: string): string {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
+    .replace(/\n/g, '<br>')
+}
+
 interface CoachingDoc {
   voortgang: string
   mindset_score: number
@@ -344,7 +351,7 @@ export default function CoachingClient({ userId }: Props) {
           <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, fontWeight: 700, color: '#f59e0b', display: 'block', marginBottom: 24 }}>THOUGHT OF THE DAY</span>
             <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '28px 32px' }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 2, color: '#9ca3af' }}>{uitdaging}</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 2, color: '#9ca3af' }} dangerouslySetInnerHTML={{ __html: renderMd(uitdaging) }} />
             </div>
           </div>
         </div>
@@ -475,7 +482,7 @@ export default function CoachingClient({ userId }: Props) {
             {hasMSA && doc.mindset_diagnose && (
               <div className="coaching-section" style={{ borderTop: 'none', paddingTop: 0 }}>
                 <span className="coaching-label" style={{ color: '#f1f5f9' }}>MINDSET</span>
-                <p className="coaching-body">{doc.mindset_diagnose}</p>
+                <p className="coaching-body" dangerouslySetInnerHTML={{ __html: renderMd(doc.mindset_diagnose) }} />
               </div>
             )}
 
@@ -483,7 +490,7 @@ export default function CoachingClient({ userId }: Props) {
             {hasMSA && doc.systeem_diagnose && (
               <div className="coaching-section">
                 <span className="coaching-label" style={{ color: '#f1f5f9' }}>SYSTEEM</span>
-                <p className="coaching-body">{doc.systeem_diagnose}</p>
+                <p className="coaching-body" dangerouslySetInnerHTML={{ __html: renderMd(doc.systeem_diagnose) }} />
               </div>
             )}
 
@@ -491,7 +498,7 @@ export default function CoachingClient({ userId }: Props) {
             {hasMSA && doc.actie_diagnose && (
               <div className="coaching-section">
                 <span className="coaching-label" style={{ color: '#f1f5f9' }}>ACTIE</span>
-                <p className="coaching-body">{doc.actie_diagnose}</p>
+                <p className="coaching-body" dangerouslySetInnerHTML={{ __html: renderMd(doc.actie_diagnose) }} />
               </div>
             )}
 
@@ -506,7 +513,7 @@ export default function CoachingClient({ userId }: Props) {
                       <span className="pijlar-tag" style={{ color: PIJLAR_COLOR }}>
                         [{p.pijlar?.toUpperCase() ?? ''}]
                       </span>
-                      <span className="ontwikkelpunt-text">{p.tekst}</span>
+                      <span className="ontwikkelpunt-text" dangerouslySetInnerHTML={{ __html: renderMd(p.tekst) }} />
                     </div>
                   </div>
                 ))}
@@ -532,9 +539,9 @@ export default function CoachingClient({ userId }: Props) {
                     <div key={i} style={{ marginBottom: 8 }}>
                       <a href={b.url} target="_blank" rel="noopener noreferrer" className="blog-item">{b.title}</a>
                       {b.reden && (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', lineHeight: 1.8, padding: '10px 20px 4px', borderLeft: '3px solid #1f2937' }}>
-                          {b.reden}
-                        </p>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', lineHeight: 1.8, padding: '10px 20px 4px', borderLeft: '3px solid #1f2937' }}
+                          dangerouslySetInnerHTML={{ __html: renderMd(b.reden) }}
+                        />
                       )}
                     </div>
                   ))}

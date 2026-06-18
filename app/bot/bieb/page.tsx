@@ -36,6 +36,20 @@ function renderContent(text: string) {
     .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
 }
 
+function renderAnalyseText(text: string): string {
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return safe.split('\n').map(line => {
+    const t = line.trim()
+    if (!t) return ''
+    const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
+    if (fullBold) return `<span class="ah">${fullBold[1]}</span>`
+    if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {
+      return `<span class="ah">${t}</span>`
+    }
+    return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
+  }).join('<br>')
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
@@ -328,10 +342,12 @@ export default function GeschiedenisPage() {
         }
         .analyse-item-full {
           color: #9ca3af; font-size: 15px; line-height: 1.9;
-          white-space: pre-wrap; font-family: 'Space Mono', monospace;
+          font-family: 'Space Mono', monospace;
           background: #1f2937; border-left: 3px solid #f59e0b;
           padding: 20px 24px; margin-bottom: 8px;
         }
+        .ah { font-family:'Space Mono',monospace; font-weight:700; font-size:13px; letter-spacing:4px; color:#f59e0b; display:block; margin:20px 0 6px; }
+        .ah:first-child { margin-top:0; }
 
         @media (max-width: 768px) {
           .delete-bar { padding: 16px 20px; gap: 12px; }
@@ -549,7 +565,7 @@ export default function GeschiedenisPage() {
                   {session.summary && (
                     <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>
                       <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>SYNTHESE</p>
-                      <p style={{ color: '#9ca3af', fontSize: 15, fontFamily: "'Space Mono', monospace", lineHeight: 1.9, marginBottom: session.blog_suggestions?.length ? 24 : 0 }}>{session.summary}</p>
+                      <p style={{ color: '#9ca3af', fontSize: 15, fontFamily: "'Space Mono', monospace", lineHeight: 1.9, marginBottom: session.blog_suggestions?.length ? 24 : 0 }} dangerouslySetInnerHTML={{ __html: renderContent(session.summary) }} />
                       {session.blog_suggestions && session.blog_suggestions.length > 0 && (
                         <div style={{ borderTop: '1px solid #374151', paddingTop: 20 }}>
                           <p style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Bebas Neue', sans-serif" }}>VERDER LEZEN</p>
@@ -655,7 +671,7 @@ export default function GeschiedenisPage() {
                 <p style={{ color: '#f59e0b', fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>
                   {isDeltaAnalyse ? 'WAT ER VERANDERD IS' : 'NIEUW GEGENEREERD'}
                 </p>
-                <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, fontFamily: "'Space Mono', monospace", whiteSpace: 'pre-wrap', marginBottom: 16 }}>{activeAnalyse}</p>
+                <div style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, fontFamily: "'Space Mono', monospace", marginBottom: 16 }} dangerouslySetInnerHTML={{ __html: renderAnalyseText(activeAnalyse) }} />
                 <button
                   onClick={() => setActiveAnalyse(null)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, color: '#9ca3af', padding: 0 }}
@@ -720,7 +736,7 @@ export default function GeschiedenisPage() {
                 </button>
                 {expandedAnalyse === a.id && (
                   <div style={{ paddingBottom: 40, animation: 'fadein 0.3s ease' }}>
-                    <p className="analyse-item-full">{a.analyse_text}</p>
+                    <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.analyse_text) }} />
                   </div>
                 )}
               </div>
