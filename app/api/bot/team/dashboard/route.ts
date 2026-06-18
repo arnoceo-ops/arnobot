@@ -34,7 +34,7 @@ export async function GET() {
   const memberIds = members.map(m => m.user_id)
 
   // Fetch stats for all members in parallel
-  const [sessionsRes, logsRes, analysesRes] = await Promise.all([
+  const [sessionsRes, logsRes, analysesRes, profilesRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('user_id, created_at')
@@ -47,6 +47,10 @@ export async function GET() {
     supabase
       .from('arnobot_analyses')
       .select('user_id')
+      .in('user_id', memberIds),
+    supabase
+      .from('arnobot_blog_profiles')
+      .select('user_id, profiel')
       .in('user_id', memberIds),
   ])
 
@@ -77,9 +81,15 @@ export async function GET() {
     analysesCounts[a.user_id] = (analysesCounts[a.user_id] ?? 0) + 1
   }
 
+  const profielRolMap: Record<string, string> = {}
+  for (const p of profilesRes.data ?? []) {
+    if (p.profiel?.rol) profielRolMap[p.user_id] = p.profiel.rol
+  }
+
   const enriched = members.map(m => ({
     user_id: m.user_id,
     role: m.role,
+    profiel_rol: profielRolMap[m.user_id] ?? null,
     joined_at: m.joined_at,
     name: nameMap[m.user_id] || (m as any).display_name || 'Onbekend',
     sessions: sessionCounts[m.user_id] ?? 0,

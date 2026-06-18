@@ -18,6 +18,7 @@ interface Member {
   user_id: string
   name: string
   role: string
+  profiel_rol: string | null
   sessions: number
   last_activity: string | null
   analyses: number
@@ -292,7 +293,7 @@ export default function TeamClient() {
                           <tr key={m.user_id} style={{ borderBottom: '1px solid #374151' }}>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
                             <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: m.role === 'manager' ? '#f59e0b' : '#6b7280' }}>
-                              {m.role === 'manager' ? 'MANAGER' : 'LID'}
+                              {m.role === 'manager' ? 'MANAGER' : (m.profiel_rol?.toUpperCase() ?? 'LID')}
                             </td>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#4b5563' }}>{m.sessions}</td>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>{formatLast(m.last_activity)}</td>
