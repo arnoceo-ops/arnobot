@@ -309,7 +309,7 @@ export default function TeamClient() {
                 <button
                   onClick={generateSpotlight}
                   disabled={spotlightLoading || members.length < 2}
-                  style={{ ...btnPrimary(members.length < 2), opacity: spotlightLoading ? 0.6 : 1, marginBottom: 12 }}
+                  style={{ ...btnPrimary(members.length < 2), opacity: spotlightLoading ? 0.6 : 1, marginBottom: 32 }}
                 >
                   {spotlightLoading ? 'ARNO ANALYSEERT...' : 'GENEREER TEAM-ANALYSE'}
                 </button>
@@ -325,7 +325,7 @@ export default function TeamClient() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     {teamAnalyses.map(a => (
                       <div key={a.id}>
-                        <span style={{ ...label, marginBottom: 12 }}>{formatAnalyseDate(a.created_at)}</span>
+                        <span style={{ ...label, marginBottom: 16 }}>{formatAnalyseDate(a.created_at)}</span>
                         <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '24px 28px' }}>
                           <div style={{ ...body, marginBottom: 0 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
                         </div>
