@@ -1,8 +1,45 @@
-﻿'use client'
+'use client'
 
 import { useSignIn, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+function getClerkFrontendApi(): string {
+  const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
+  const b64 = key.replace(/^pk_(live|test)_/, '')
+  try {
+    return atob(b64).replace(/\$$/, '')
+  } catch {
+    return ''
+  }
+}
+
+async function linkedInViaDirectFetch(): Promise<boolean> {
+  const frontendApi = getClerkFrontendApi()
+  if (!frontendApi) return false
+
+  const res = await fetch(`https://${frontendApi}/v1/client/sign_ins`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    credentials: 'include',
+    body: new URLSearchParams({
+      strategy: 'oauth_linkedin_oidc',
+      redirect_url: `${window.location.origin}/sso-callback`,
+      action_complete_redirect_url: '/bot',
+    }),
+  })
+
+  const data = await res.json()
+  const oauthUrl =
+    data?.response?.first_factor?.external_verification_redirect_url ||
+    data?.response?.external_account?.verification?.external_verification_redirect_url
+
+  if (oauthUrl) {
+    window.location.href = oauthUrl
+    return true
+  }
+  return false
+}
 
 export default function SignInPage() {
   const { fetchStatus, signIn } = useSignIn()
@@ -30,10 +67,30 @@ export default function SignInPage() {
     }
     setError('')
     setLoading(true)
+
+    // MetaMask's SES lockdown breekt Clerk's SDK — bypass via directe fetch
+    const hasMetaMask = typeof window !== 'undefined' &&
+      !!(window as unknown as { ethereum?: { isMetaMask?: boolean } }).ethereum?.isMetaMask
+
+    if (hasMetaMask) {
+      try {
+        const ok = await linkedInViaDirectFetch()
+        if (!ok) {
+          setError('Verbinding mislukt. Ververs de pagina en probeer opnieuw.')
+          setLoading(false)
+        }
+      } catch {
+        setError('Verbinding mislukt. Ververs de pagina en probeer opnieuw.')
+        setLoading(false)
+      }
+      return
+    }
+
     const timer = setTimeout(() => {
       setLoading(false)
       setError('Verbinding mislukt. Ververs de pagina en probeer opnieuw.')
     }, 20000)
+
     try {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
@@ -47,7 +104,6 @@ export default function SignInPage() {
       const msg = clerr?.errors?.[0]?.longMessage
         || clerr?.errors?.[0]?.message
         || (err as Error)?.message
-        || JSON.stringify(err)
         || 'Er is iets misgegaan'
       setError(msg)
       setLoading(false)
@@ -78,14 +134,14 @@ export default function SignInPage() {
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 44, letterSpacing: 1, lineHeight: 1 }}>INLOGGEN</h1>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button className="li-btn" onClick={handleLinkedIn} type="button" disabled={loading}>
-            {loading ? <div className="spinner" /> : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-            )}
-            {loading ? 'VERBINDEN MET LINKEDIN...' : 'DOORGAAN MET LINKEDIN'}
-          </button>
+            <button className="li-btn" onClick={handleLinkedIn} type="button" disabled={loading}>
+              {loading ? <div className="spinner" /> : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              )}
+              {loading ? 'VERBINDEN MET LINKEDIN...' : 'DOORGAAN MET LINKEDIN'}
+            </button>
           </div>
           {error && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           {fetchStatus === 'fetching' && <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>LADEN...</p>}
