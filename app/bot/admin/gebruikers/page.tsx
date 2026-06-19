@@ -235,6 +235,7 @@ export default async function GebruikersPage({
                 {/* Status */}
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '2px', color: status.color, fontWeight: 700 }}>{status.label}</p>
+                  {u.created_at && <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>}
                 </div>
                 {/* Gesprekken */}
                 <div style={{ textAlign: 'right' }}>
