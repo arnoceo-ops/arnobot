@@ -146,7 +146,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '56px 1fr 140px 80px 80px 100px 70px 70px 80px 70px 80px'
+  const cols = '56px 1fr 140px 80px 80px 100px 70px 70px 70px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -180,7 +180,6 @@ export default async function GebruikersPage({
           <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} />
           <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} />
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} />
-          <SortHeader label="7 DAGEN" field="actief" sort={sort} dir={dir} />
           <span style={{ fontSize: '11px', letterSpacing: '3px', color: '#4b5563', textAlign: 'right' }}>TIER</span>
           <span style={{ fontSize: '11px', letterSpacing: '3px', color: '#4b5563', textAlign: 'right' }}>LINKEDIN</span>
         </div>
@@ -189,10 +188,12 @@ export default async function GebruikersPage({
           {sorted.map((u) => {
             const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || '—'
             const status = trialStatus(u)
-            const lastSessionDate = u.lastSession
-              ? new Date(u.lastSession).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
-              : '—'
+            const daysAgo = u.lastSession
+              ? Math.round((Date.now() - new Date(u.lastSession).getTime()) / (1000 * 60 * 60 * 24))
+              : null
+            const lastSessionLabel = daysAgo === null ? '—' : daysAgo === 0 ? 'vandaag' : daysAgo === 1 ? 'gisteren' : `${daysAgo}d geleden`
             const actief7d = u.recentCount > 0
+            const borderColor = actief7d ? '#44cc88' : u.questions > 0 ? '#cc4444' : '#1e293b'
             return (
               <div key={u.user_id} style={{
                 display: 'grid',
@@ -201,7 +202,7 @@ export default async function GebruikersPage({
                 alignItems: 'center',
                 background: '#1f2937',
                 padding: '14px 20px',
-                borderLeft: `3px solid ${actief7d ? '#44cc88' : '#1e293b'}`,
+                borderLeft: `3px solid ${borderColor}`,
               }}>
                 {/* Foto */}
                 {u.imageUrl
@@ -227,7 +228,7 @@ export default async function GebruikersPage({
                 </div>
                 {/* Laatste gesprek */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '13px', color: '#9ca3af' }}>{lastSessionDate}</p>
+                  <p style={{ fontSize: '13px', color: '#9ca3af' }}>{lastSessionLabel}</p>
                 </div>
                 {/* Coaching */}
                 <div style={{ textAlign: 'right' }}>
@@ -236,10 +237,6 @@ export default async function GebruikersPage({
                 {/* Analyses */}
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '16px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || '—'}</p>
-                </div>
-                {/* Actief 7d */}
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '18px' }}>{actief7d ? '🟢' : '🔴'}</span>
                 </div>
                 {/* Tier */}
                 <div style={{ textAlign: 'right' }}>
