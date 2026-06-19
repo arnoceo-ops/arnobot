@@ -43,7 +43,7 @@ function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = fal
   if (vertical) {
     return (
       <a href={`?sort=${field}&dir=${nextDir}`}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end',
           textDecoration: 'none', cursor: 'pointer', gap: 4 }}>
         <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)',
           fontSize: '10px', letterSpacing: '2px', color: isActive ? '#f59e0b' : '#4b5563',
