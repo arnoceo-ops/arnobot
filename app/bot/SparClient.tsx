@@ -691,61 +691,46 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           display: flex; flex-direction: column;
         }
 
-        /* HERO */
+        /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
         .spar-hero {
-          min-height: clamp(240px, 22vw, 340px);
           border-bottom: 3px solid #f59e0b;
           display: grid;
-          grid-template-areas: "left center right";
-          grid-template-columns: auto 1fr auto;
-          gap: clamp(20px, 3vw, 60px);
-          align-items: start;
-          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px) clamp(20px,5vw,60px);
+          grid-template-columns: auto 1fr;
+          gap: clamp(24px, 4vw, 80px);
+          align-items: flex-end;
+          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
           overflow: hidden;
         }
-        .hero-left  { grid-area: left; display: flex; align-items: flex-end; gap: clamp(12px, 1.5vw, 24px); }
-        .hero-center { grid-area: center; display: flex; justify-content: center; align-items: flex-start; }
-        .hero-right {
-          grid-area: right; text-align: right; min-width: 0;
-          display: flex; flex-direction: column; justify-content: flex-start;
-          gap: clamp(10px, 1.5vw, 18px);
+        .hero-photo img {
+          height: clamp(200px, 24vw, 340px);
+          width: auto;
+          display: block;
         }
-        .hero-right p { font-size: 15px; line-height: 1.9; color: #9ca3af; }
-        .hero-narrow { display: none; }
+        .hero-text {
+          display: flex; flex-direction: column; justify-content: flex-end;
+          gap: clamp(10px, 1.5vw, 20px);
+        }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(64px, 10vw, 120px);
-          line-height: 0.9; letter-spacing: -2px; white-space: nowrap;
+          line-height: 0.9; letter-spacing: -2px;
         }
         .spar-title span { color: #f59e0b; }
-        /* Narrow desktop: cyborg verdwijnt, 2-koloms grid */
-        @media (max-width: 1100px) {
-          .spar-hero {
-            grid-template-areas: "center narrow";
-            grid-template-columns: auto 1fr;
-            align-items: flex-end;
-          }
-          .hero-left  { display: none; }
-          .hero-right { display: none; }
-          .hero-narrow {
-            display: flex; flex-direction: column; justify-content: flex-end;
-            grid-area: narrow;
-          }
-          .spar-title { font-size: clamp(48px, 8vw, 90px); white-space: normal; }
+        .hero-subtitle {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(20px, 2.5vw, 40px);
+          letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
         }
-        /* Touch-apparaat (telefoon, tablet): pointer: coarse = geen muis als primair invoerapparaat */
+        /* Touch (telefoon / tablet): één kolom, gecentreerd — geen pixel-grens */
         @media (pointer: coarse) {
           .spar-hero {
-            display: flex; flex-direction: column;
-            align-items: center; text-align: center;
+            grid-template-columns: 1fr;
+            text-align: center; align-items: center;
             padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
-            min-height: unset;
           }
-          .hero-left, .hero-center, .hero-right { display: none; }
-          .hero-narrow {
-            display: flex; flex-direction: column; align-items: center;
-          }
-          .spar-title { font-size: clamp(72px, 14vw, 140px); white-space: normal; }
+          .hero-photo { display: none; }
+          .hero-text { align-items: center; }
+          .spar-title { font-size: clamp(72px, 14vw, 140px); }
         }
         @media (max-width: 700px) {
           .spar-input-row { flex-direction: column; }
@@ -1195,45 +1180,15 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 200 : 160 } : {}}>
 
         <div className="spar-hero">
-          {/* Kolom 1 — cyborg + titel, alleen op breed scherm (CSS verbergt onder 1100px) */}
-          <div className="hero-left">
-            <img src="/cyborg.jpg" alt="Arno" style={{ height: 300, width: 'auto', display: 'block', flexShrink: 0 }} />
-            <h1 className="spar-title" style={{ marginBottom: '-18px', whiteSpace: 'normal', lineHeight: 0.85 }}>
-              ARNO<br /><span>BOT.</span>
-            </h1>
-          </div>
-
-          {/* Kolom 2 — roterende foto, altijd zichtbaar op desktop */}
-          <div className="hero-center">
+          <div className="hero-photo">
             {(() => {
               const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
-              return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" style={{ height: 'clamp(220px, 22vw, 320px)', width: 'auto', display: 'block' }} />
+              return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
             })()}
           </div>
-
-          {/* Kolom 3 — volledige tagline, alleen op breed scherm */}
-          <div className="hero-right">
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(28px, 3.2vw, 48px)', letterSpacing: 2, color: '#f1f5f9', lineHeight: 1.05 }}>
-              ARNO<span style={{ color: '#f59e0b' }}>BOT.</span><br />
-              JOUW 24/7 NO EXCUSES SALES COACH
-            </p>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(14px, 1.3vw, 18px)', color: '#f1f5f9', lineHeight: 1.8, textAlign: 'right' }}>
-              Betere relaties. Meer deals.<br />
-              Hogere marges. Harder groeien.
-            </p>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, textAlign: 'right' }}>
-              gebouwd op 40 jaar sales, 30 jaar entrepreneurship,<br />
-              20 jaar bloggen, 15 jaar scale-up coaching.<br />
-              369.000 woorden. altijd up to date.
-            </p>
-          </div>
-
-          {/* Kolom 3 smal — compacte titel naast foto, alleen onder 1100px (CSS) */}
-          <div className="hero-narrow">
+          <div className="hero-text">
             <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(18px, 2.5vw, 36px)', letterSpacing: 2, color: '#9ca3af', lineHeight: 1.2, marginTop: 12 }}>
-              JOUW 24/7 NO EXCUSES<br />SALES COACH
-            </p>
+            <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
           </div>
         </div>
 
