@@ -164,7 +164,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '56px 1fr 150px 110px 100px 130px 100px 100px 90px 80px 80px 100px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -187,7 +187,7 @@ export default async function GebruikersPage({
         </p>
 
         {/* Tabel header */}
-        <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 24px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
@@ -216,7 +216,7 @@ export default async function GebruikersPage({
               <div key={u.user_id} style={{
                 display: 'grid',
                 gridTemplateColumns: cols,
-                gap: '0 24px',
+                gap: '0 12px',
                 alignItems: 'center',
                 background: '#1f2937',
                 padding: '14px 20px',
