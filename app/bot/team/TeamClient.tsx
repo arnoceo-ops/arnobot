@@ -290,7 +290,13 @@ export default function TeamClient() {
                       </thead>
                       <tbody>
                         {members.map(m => (
-                          <tr key={m.user_id} style={{ borderBottom: '1px solid #374151' }}>
+                          <tr
+                            key={m.user_id}
+                            onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
+                            style={{ borderBottom: '1px solid #374151', cursor: 'pointer', transition: 'background 0.15s' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
                             <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: m.role === 'manager' ? '#f59e0b' : '#6b7280' }}>
                               {m.role === 'manager' ? 'MANAGER' : (m.profiel_rol?.toUpperCase() ?? 'LID')}
