@@ -707,6 +707,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           line-height: 0.9; letter-spacing: -2px; white-space: nowrap;
         }
         .spar-title span { color: #f59e0b; }
+        @media (max-width: 1500px) {
+          .spar-center-foto { display: none; }
+        }
         @media (max-width: 600px) {
           .spar-hero {
             height: auto; flex-direction: column; align-items: center; justify-content: center;
@@ -1189,7 +1192,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   ARNO<br /><span>BOT.</span>
                 </h1>
               </div>
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 'clamp(20px,3vw,36px)', display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
+              <div className="spar-center-foto" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 'clamp(20px,3vw,36px)', display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
                 {(() => {
                   const total = 17
                   const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % total + 1
