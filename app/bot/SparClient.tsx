@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useIsMobile } from '@/hooks/useBreakpoint'
+import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 
@@ -138,8 +138,7 @@ const VRAGEN_ORGANISATORISCH = [
 ]
 
 export default function SparClient({ userId, profiel, tier, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
-  const isMobile = useIsMobile()
-  const isNarrowDesktop = useIsMobile(1500)
+  const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -694,38 +693,59 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         /* HERO */
         .spar-hero {
-          height: auto;
           min-height: clamp(240px, 22vw, 340px);
           border-bottom: 3px solid #f59e0b;
-          display: flex; justify-content: space-between; align-items: flex-start;
-          position: relative;
+          display: grid;
+          grid-template-areas: "left center right";
+          grid-template-columns: auto 1fr auto;
+          gap: clamp(20px, 3vw, 60px);
+          align-items: start;
           padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px) clamp(20px,5vw,60px);
           overflow: hidden;
         }
+        .hero-left  { grid-area: left; display: flex; align-items: flex-end; gap: clamp(12px, 1.5vw, 24px); }
+        .hero-center { grid-area: center; display: flex; justify-content: center; align-items: flex-start; }
+        .hero-right {
+          grid-area: right; text-align: right; min-width: 0;
+          display: flex; flex-direction: column; justify-content: flex-start;
+          gap: clamp(10px, 1.5vw, 18px);
+        }
+        .hero-right p { font-size: 15px; line-height: 1.9; color: #9ca3af; }
+        .hero-narrow { display: none; }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(64px, 10vw, 120px);
           line-height: 0.9; letter-spacing: -2px; white-space: nowrap;
         }
         .spar-title span { color: #f59e0b; }
-        @media (max-width: 600px) {
+        /* Narrow desktop: cyborg verdwijnt, 2-koloms grid */
+        @media (max-width: 1100px) {
           .spar-hero {
-            height: auto; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center;
-            padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
+            grid-template-areas: "center narrow";
+            grid-template-columns: auto 1fr;
+            align-items: flex-end;
           }
-          .spar-title { font-size: clamp(72px, 14vw, 140px); letter-spacing: -2px; white-space: normal; }
+          .hero-left  { display: none; }
+          .hero-right { display: none; }
+          .hero-narrow {
+            display: flex; flex-direction: column; justify-content: flex-end;
+            grid-area: narrow;
+          }
+          .spar-title { font-size: clamp(48px, 8vw, 90px); white-space: normal; }
         }
-        .spar-tagline {
-          text-align: right; flex: 1; min-width: 0;
-          align-self: flex-start;
-          display: flex; flex-direction: column; justify-content: flex-start;
-          gap: clamp(10px, 1.5vw, 18px);
-        }
-        .spar-tagline p { font-size: 15px; line-height: 1.9; color: #9ca3af; }
-        @media (max-width: 600px) {
-          .spar-tagline { text-align: left; max-width: 100%; }
-          .spar-tagline-sub { display: none; }
+        /* Touch-apparaat (telefoon, tablet): pointer: coarse = geen muis als primair invoerapparaat */
+        @media (pointer: coarse) {
+          .spar-hero {
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+            padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
+            min-height: unset;
+          }
+          .hero-left, .hero-center, .hero-right { display: none; }
+          .hero-narrow {
+            display: flex; flex-direction: column; align-items: center;
+          }
+          .spar-title { font-size: clamp(72px, 14vw, 140px); white-space: normal; }
         }
         @media (max-width: 700px) {
           .spar-input-row { flex-direction: column; }
@@ -1174,62 +1194,47 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 200 : 160 } : {}}>
 
-        <div className="spar-hero" style={isNarrowDesktop && !isMobile ? { alignItems: 'flex-end' } : {}}>
-          {isMobile ? (
-            <>
-              <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(22px, 4vw, 40px)', letterSpacing: 2, color: '#9ca3af', lineHeight: 1.2, marginTop: 16 }}>
-                JOUW 24/7 NO EXCUSES<br />SALES COACH
-              </p>
-            </>
-          ) : isNarrowDesktop ? (
-            <>
-              <div style={{ flex: '0 0 auto' }}>
-                {(() => {
-                  const total = 17
-                  const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % total + 1
-                  return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" style={{ height: 300, width: 'auto', display: 'block' }} />
-                })()}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(22px, 2.5vw, 40px)', letterSpacing: 2, color: '#9ca3af', lineHeight: 1.2, marginTop: 16 }}>
-                  JOUW 24/7 NO EXCUSES<br />SALES COACH
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'flex-end', flexDirection: 'row', gap: 'clamp(12px, 1.5vw, 24px)' }}>
-                <img src="/cyborg.jpg" alt="Arno" style={{ height: 300, width: 'auto', display: 'block', flexShrink: 0 }} />
-                <h1 className="spar-title" style={{ marginBottom: '-18px', whiteSpace: 'normal', lineHeight: 0.85 }}>
-                  ARNO<br /><span>BOT.</span>
-                </h1>
-              </div>
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 'clamp(20px,3vw,36px)', display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
-                {(() => {
-                  const total = 17
-                  const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % total + 1
-                  return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" style={{ height: 300, width: 'auto', display: 'block' }} />
-                })()}
-              </div>
-              <div className="spar-tagline">
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(28px, 3.2vw, 48px)', letterSpacing: 2, color: '#f1f5f9', lineHeight: 1.05 }}>
-                  ARNO<span style={{ color: '#f59e0b' }}>BOT.</span><br />
-                  JOUW 24/7 NO EXCUSES SALES COACH
-                </p>
-                <p className="spar-tagline-sub" style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(14px, 1.3vw, 18px)', color: '#f1f5f9', lineHeight: 1.8, textAlign: 'right' }}>
-                  Betere relaties. Meer deals.<br />
-                  Hogere marges. Harder groeien.
-                </p>
-                <p className="spar-tagline-sub" style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-                  gebouwd op 40 jaar sales, 30 jaar entrepreneurship,<br />
-                  20 jaar bloggen, 15 jaar scale-up coaching.<br />
-                  369.000 woorden. altijd up to date.
-                </p>
-              </div>
-            </>
-          )}
+        <div className="spar-hero">
+          {/* Kolom 1 — cyborg + titel, alleen op breed scherm (CSS verbergt onder 1100px) */}
+          <div className="hero-left">
+            <img src="/cyborg.jpg" alt="Arno" style={{ height: 300, width: 'auto', display: 'block', flexShrink: 0 }} />
+            <h1 className="spar-title" style={{ marginBottom: '-18px', whiteSpace: 'normal', lineHeight: 0.85 }}>
+              ARNO<br /><span>BOT.</span>
+            </h1>
+          </div>
+
+          {/* Kolom 2 — roterende foto, altijd zichtbaar op desktop */}
+          <div className="hero-center">
+            {(() => {
+              const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
+              return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" style={{ height: 'clamp(220px, 22vw, 320px)', width: 'auto', display: 'block' }} />
+            })()}
+          </div>
+
+          {/* Kolom 3 — volledige tagline, alleen op breed scherm */}
+          <div className="hero-right">
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(28px, 3.2vw, 48px)', letterSpacing: 2, color: '#f1f5f9', lineHeight: 1.05 }}>
+              ARNO<span style={{ color: '#f59e0b' }}>BOT.</span><br />
+              JOUW 24/7 NO EXCUSES SALES COACH
+            </p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(14px, 1.3vw, 18px)', color: '#f1f5f9', lineHeight: 1.8, textAlign: 'right' }}>
+              Betere relaties. Meer deals.<br />
+              Hogere marges. Harder groeien.
+            </p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, textAlign: 'right' }}>
+              gebouwd op 40 jaar sales, 30 jaar entrepreneurship,<br />
+              20 jaar bloggen, 15 jaar scale-up coaching.<br />
+              369.000 woorden. altijd up to date.
+            </p>
+          </div>
+
+          {/* Kolom 3 smal — compacte titel naast foto, alleen onder 1100px (CSS) */}
+          <div className="hero-narrow">
+            <h1 className="spar-title">ARNO<span>BOT.</span></h1>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(18px, 2.5vw, 36px)', letterSpacing: 2, color: '#9ca3af', lineHeight: 1.2, marginTop: 12 }}>
+              JOUW 24/7 NO EXCUSES<br />SALES COACH
+            </p>
+          </div>
         </div>
 
         {teamPrompt && !started && (
