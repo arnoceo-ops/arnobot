@@ -87,7 +87,7 @@ export default clerkMiddleware(async (auth, req) => {
             }
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
             const suffix = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-            const firstName = (clerkUser.firstName || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6)
+            const firstName = (clerkUser.firstName || '').toUpperCase().replace(/[^A-Z]/g, '')
             const referralCode = firstName ? `${firstName}-${suffix}` : suffix
 
             const { error: insertErr } = await supabase.from('approved_users').insert({ ...newRow, referral_code: referralCode })
