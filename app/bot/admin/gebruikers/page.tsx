@@ -37,13 +37,15 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
 function SortHeader({ label, field, sort, dir }: { label: string; field: string; sort: string; dir: string }) {
   const isActive = sort === field
   const nextDir = isActive && dir === 'desc' ? 'asc' : 'desc'
-  const arrow = isActive ? (dir === 'desc' ? ' ↓' : ' ↑') : ''
   return (
     <a
       href={`?sort=${field}&dir=${nextDir}`}
-      style={{ fontSize: '11px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#4b5563', textDecoration: 'none', textAlign: 'right', display: 'block', cursor: 'pointer' }}
+      style={{ fontSize: '11px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#4b5563', textDecoration: 'none', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', cursor: 'pointer', gap: 2 }}
     >
-      {label}{arrow}
+      <span>{label}</span>
+      <span style={{ opacity: isActive ? 1 : 0, fontSize: '10px', lineHeight: 1 }}>
+        {dir === 'desc' ? '↓' : '↑'}
+      </span>
     </a>
   )
 }
@@ -148,7 +150,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '56px 1fr 140px 80px 80px 100px 70px 70px 70px 80px'
+  const cols = '56px 1fr 150px 110px 100px 130px 100px 100px 90px 100px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
