@@ -141,6 +141,8 @@ export default async function GebruikersPage({
     if (sort === 'coaching') { av = a.coachingCount; bv = b.coachingCount }
     if (sort === 'analyses') { av = a.analysesCount; bv = b.analysesCount }
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
+    if (sort === 'tier') { av = a.tier || ''; bv = b.tier || '' }
+    if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
     if (av < bv) return dir === 'asc' ? -1 : 1
     if (av > bv) return dir === 'asc' ? 1 : -1
     return 0
@@ -171,17 +173,15 @@ export default async function GebruikersPage({
         {/* Tabel header */}
         <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 24px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
           <div />
-          <a href={`?sort=naam&dir=${sort === 'naam' && dir === 'desc' ? 'asc' : 'desc'}`} style={{ fontSize: '11px', letterSpacing: '3px', color: sort === 'naam' ? '#f59e0b' : '#4b5563', textDecoration: 'none' }}>
-            NAAM{sort === 'naam' ? (dir === 'desc' ? ' ↓' : ' ↑') : ''}
-          </a>
+          <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
           <SortHeader label="GESPREKKEN" field="gesprekken" sort={sort} dir={dir} />
           <SortHeader label="VRAGEN" field="vragen" sort={sort} dir={dir} />
           <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} />
           <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} />
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} />
-          <span style={{ fontSize: '11px', letterSpacing: '3px', color: '#4b5563', textAlign: 'right' }}>TIER</span>
-          <span style={{ fontSize: '11px', letterSpacing: '3px', color: '#4b5563', textAlign: 'right' }}>LINKEDIN</span>
+          <SortHeader label="TIER" field="tier" sort={sort} dir={dir} />
+          <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
