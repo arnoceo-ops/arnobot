@@ -707,8 +707,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           line-height: 0.9; letter-spacing: -2px; white-space: nowrap;
         }
         .spar-title span { color: #f59e0b; }
-        @media (max-width: 1500px) {
-          .spar-center-foto { display: none; }
+        @media (max-width: 1921px) {
+          .spar-center-foto { display: none !important; }
         }
         @media (max-width: 600px) {
           .spar-hero {
