@@ -139,6 +139,7 @@ const VRAGEN_ORGANISATORISCH = [
 
 export default function SparClient({ userId, profiel, tier, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
   const isMobile = useIsMobile()
+  const isNarrowDesktop = useIsMobile(1500)
   const { signOut } = useClerk()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -696,7 +697,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           height: auto;
           min-height: clamp(240px, 22vw, 340px);
           border-bottom: 3px solid #f59e0b;
-          display: flex; justify-content: space-between; align-items: flex-end;
+          display: flex; justify-content: space-between; align-items: flex-start;
           position: relative;
           padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px) clamp(20px,5vw,60px);
           overflow: hidden;
@@ -1173,7 +1174,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 200 : 160 } : {}}>
 
-        <div className="spar-hero">
+        <div className="spar-hero" style={isNarrowDesktop && !isMobile ? { alignItems: 'flex-end' } : {}}>
           {isMobile ? (
             <>
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
@@ -1181,7 +1182,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 JOUW 24/7 NO EXCUSES<br />SALES COACH
               </p>
             </>
-          ) : (
+          ) : isNarrowDesktop ? (
             <>
               <div style={{ flex: '0 0 auto' }}>
                 {(() => {
@@ -1194,6 +1195,37 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 <h1 className="spar-title">ARNO<span>BOT.</span></h1>
                 <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(22px, 2.5vw, 40px)', letterSpacing: 2, color: '#9ca3af', lineHeight: 1.2, marginTop: 16 }}>
                   JOUW 24/7 NO EXCUSES<br />SALES COACH
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'flex-end', flexDirection: 'row', gap: 'clamp(12px, 1.5vw, 24px)' }}>
+                <img src="/cyborg.jpg" alt="Arno" style={{ height: 300, width: 'auto', display: 'block', flexShrink: 0 }} />
+                <h1 className="spar-title" style={{ marginBottom: '-18px', whiteSpace: 'normal', lineHeight: 0.85 }}>
+                  ARNO<br /><span>BOT.</span>
+                </h1>
+              </div>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 'clamp(20px,3vw,36px)', display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
+                {(() => {
+                  const total = 17
+                  const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % total + 1
+                  return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" style={{ height: 300, width: 'auto', display: 'block' }} />
+                })()}
+              </div>
+              <div className="spar-tagline">
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(28px, 3.2vw, 48px)', letterSpacing: 2, color: '#f1f5f9', lineHeight: 1.05 }}>
+                  ARNO<span style={{ color: '#f59e0b' }}>BOT.</span><br />
+                  JOUW 24/7 NO EXCUSES SALES COACH
+                </p>
+                <p className="spar-tagline-sub" style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(14px, 1.3vw, 18px)', color: '#f1f5f9', lineHeight: 1.8, textAlign: 'right' }}>
+                  Betere relaties. Meer deals.<br />
+                  Hogere marges. Harder groeien.
+                </p>
+                <p className="spar-tagline-sub" style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                  gebouwd op 40 jaar sales, 30 jaar entrepreneurship,<br />
+                  20 jaar bloggen, 15 jaar scale-up coaching.<br />
+                  369.000 woorden. altijd up to date.
                 </p>
               </div>
             </>
