@@ -70,7 +70,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier'),
@@ -84,6 +84,9 @@ export default async function GebruikersPage({
     supabase
       .from('arnobot_analyses')
       .select('user_id'),
+    supabase
+      .from('arnobot_referrals')
+      .select('referrer_user_id, status'),
   ])
 
   const logs = logsRes.data ?? []
@@ -111,6 +114,15 @@ export default async function GebruikersPage({
     coachingMap[c.user_id] = (coachingMap[c.user_id] || 0) + 1
   }
 
+  const referralSignups: Record<string, number> = {}
+  const referralConverted: Record<string, number> = {}
+  for (const r of referralsRes.data ?? []) {
+    referralSignups[r.referrer_user_id] = (referralSignups[r.referrer_user_id] || 0) + 1
+    if (r.status === 'converted') {
+      referralConverted[r.referrer_user_id] = (referralConverted[r.referrer_user_id] || 0) + 1
+    }
+  }
+
   const clerk = await clerkClient()
 
   const enriched = await Promise.all(
@@ -127,7 +139,7 @@ export default async function GebruikersPage({
         } catch {}
       }
       const activity = sessionMap[u.user_id] ?? { count: 0, questions: 0, lastSession: null, recentCount: 0 }
-      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0 }
+      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0 }
     })
   )
 
@@ -145,12 +157,14 @@ export default async function GebruikersPage({
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'tier') { av = a.tier || ''; bv = b.tier || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
+    if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
+    if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
     if (av < bv) return dir === 'asc' ? -1 : 1
     if (av > bv) return dir === 'asc' ? 1 : -1
     return 0
   })
 
-  const cols = '56px 1fr 150px 110px 100px 130px 100px 100px 90px 100px'
+  const cols = '56px 1fr 150px 110px 100px 130px 100px 100px 90px 80px 80px 100px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -183,6 +197,8 @@ export default async function GebruikersPage({
           <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} />
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} />
           <SortHeader label="TIER" field="tier" sort={sort} dir={dir} />
+          <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} />
+          <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} />
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} />
         </div>
 
@@ -243,6 +259,14 @@ export default async function GebruikersPage({
                 {/* Tier */}
                 <div style={{ textAlign: 'right' }}>
                   <TierToggle userId={u.user_id} currentTier={(u.tier as 'basis' | 'pro') ?? 'pro'} />
+                </div>
+                {/* Referral aanmeldingen */}
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || '—'}</p>
+                </div>
+                {/* Referral betaald */}
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || '—'}</p>
                 </div>
                 {/* LinkedIn */}
                 <div style={{ textAlign: 'right' }}>
