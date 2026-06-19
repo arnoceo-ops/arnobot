@@ -34,14 +34,32 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   return { label: 'ONBEKEND', color: '#6b7280' }
 }
 
-function SortHeader({ label, field, sort, dir }: { label: string; field: string; sort: string; dir: string }) {
+function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = false }: {
+  label: string; field: string; sort: string; dir: string; vertical?: boolean; leftAlign?: boolean
+}) {
   const isActive = sort === field
   const nextDir = isActive && dir === 'desc' ? 'asc' : 'desc'
+
+  if (vertical) {
+    return (
+      <a href={`?sort=${field}&dir=${nextDir}`}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+          textDecoration: 'none', cursor: 'pointer', gap: 4 }}>
+        <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+          fontSize: '10px', letterSpacing: '2px', color: isActive ? '#f59e0b' : '#4b5563',
+          whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ opacity: isActive ? 1 : 0, fontSize: '10px', color: '#f59e0b' }}>
+          {dir === 'desc' ? '↓' : '↑'}
+        </span>
+      </a>
+    )
+  }
+
   return (
-    <a
-      href={`?sort=${field}&dir=${nextDir}`}
-      style={{ fontSize: '11px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#4b5563', textDecoration: 'none', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', cursor: 'pointer', gap: 2 }}
-    >
+    <a href={`?sort=${field}&dir=${nextDir}`}
+      style={{ fontSize: '11px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#4b5563',
+        textDecoration: 'none', display: 'flex', flexDirection: 'column',
+        alignItems: leftAlign ? 'flex-start' : 'flex-end', cursor: 'pointer', gap: 2 }}>
       <span>{label}</span>
       <span style={{ opacity: isActive ? 1 : 0, fontSize: '10px', lineHeight: 1 }}>
         {dir === 'desc' ? '↓' : '↑'}
@@ -189,17 +207,17 @@ export default async function GebruikersPage({
         {/* Tabel header */}
         <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
           <div />
-          <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} />
+          <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
-          <SortHeader label="GESPREKKEN" field="gesprekken" sort={sort} dir={dir} />
-          <SortHeader label="VRAGEN" field="vragen" sort={sort} dir={dir} />
-          <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} />
-          <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} />
-          <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} />
-          <SortHeader label="TIER" field="tier" sort={sort} dir={dir} />
-          <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} />
-          <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} />
-          <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} />
+          <SortHeader label="GESPREKKEN" field="gesprekken" sort={sort} dir={dir} vertical />
+          <SortHeader label="VRAGEN" field="vragen" sort={sort} dir={dir} vertical />
+          <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} vertical />
+          <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} vertical />
+          <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} vertical />
+          <SortHeader label="TIER" field="tier" sort={sort} dir={dir} vertical />
+          <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
+          <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
+          <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
