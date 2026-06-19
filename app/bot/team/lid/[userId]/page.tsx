@@ -64,9 +64,24 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function analysePreview(text: string): string {
-  const clean = text.replace(/\*\*/g, '').replace(/\n+/g, ' ').trim()
-  return clean.length > 220 ? clean.slice(0, 217) + '...' : clean
+function renderAnalyse(text: string): string {
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const items = safe.split('\n').map(line => {
+    const t = line.trim()
+    if (!t) return ''
+    const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
+    if (fullBold) return `<span class="ah">${fullBold[1]}</span>`
+    if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {
+      return `<span class="ah">${t}</span>`
+    }
+    return t.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f1f5f9;font-weight:700">$1</strong>')
+  }).filter(s => s.length > 0)
+  return items.map((item, i) => {
+    const isHeading = item.startsWith('<span class="ah">')
+    const nextIsHeading = items[i + 1]?.startsWith('<span class="ah">') ?? true
+    if (isHeading || nextIsHeading) return item
+    return item + '<br>'
+  }).join('')
 }
 
 export default function LidPage() {
@@ -95,6 +110,8 @@ export default function LidPage() {
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
         .back-link { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; color: #6b7280; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 48px; transition: color 0.15s; }
         .back-link:hover { color: #9ca3af; }
+        .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
+        .ah:first-child { margin-top:0; }
       `}</style>
 
       <BotNav active="team" />
@@ -167,7 +184,7 @@ export default function LidPage() {
                         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 8 }}>
                           {formatDate(a.created_at)}{a.session_count ? ` · ${a.session_count} gesprekken` : ''}
                         </p>
-                        <p style={{ ...body, fontSize: 14, color: '#9ca3af' }}>{analysePreview(a.analyse_text)}</p>
+                        <div style={{ ...body, fontSize: 14, color: '#9ca3af' }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
                       </div>
                     ))}
                   </div>
