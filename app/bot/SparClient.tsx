@@ -695,8 +695,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .spar-hero {
           border-bottom: 3px solid #f59e0b;
           display: grid;
-          grid-template-columns: auto 1fr;
+          grid-template-columns: auto auto;
           gap: clamp(24px, 4vw, 80px);
+          justify-content: center;
           align-items: flex-end;
           padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
           overflow: hidden;
