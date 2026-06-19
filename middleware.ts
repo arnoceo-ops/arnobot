@@ -96,12 +96,12 @@ export default clerkMiddleware(async (auth, req) => {
               return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
             }
             user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
-            // Telegram notificatie — fire and forget
+            // Telegram notificatie — bewust awaited: fire-and-forget wordt op Edge Runtime afgekapt
             const tgToken = process.env.TELEGRAM_NEW_USER_BOT_TOKEN
             const tgChat = process.env.TELEGRAM_NEW_USER_CHAT_ID
             if (tgToken && tgChat) {
               const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${clerkUser.firstName || ''} ${clerkUser.lastName || ''}\nEmail: ${email}\nLinkedIn: ${linkedinUrl || 'onbekend'}`
-              fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+              await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: tgChat, text: tgText }),
