@@ -82,13 +82,16 @@ export default async function AdminWidgetPage({
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
-      <nav style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px' }}>
+      <nav style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
+        <div />
         <div style={{ display: 'flex', gap: '4px' }}>
           <a href="/bot/admin" style={navLinkStyle(false)}>APP</a>
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>EVALUATIES</a>
         </div>
-        <a href="/bot/admin/widget" style={navLinkStyle(true)}>BLOG</a>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <a href="/bot/admin/widget" style={navLinkStyle(true)}>BLOG</a>
+        </div>
       </nav>
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px' }}>
 
