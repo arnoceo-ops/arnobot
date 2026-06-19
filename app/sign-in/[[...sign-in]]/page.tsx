@@ -92,10 +92,10 @@ export default function SignInPage() {
     }, 20000)
 
     try {
-      await signIn.authenticateWithRedirect({
+      await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
         redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectUrlComplete: '/bot',
+        redirectCallbackUrl: '/bot',
       })
       clearTimeout(timer)
     } catch (err: unknown) {
