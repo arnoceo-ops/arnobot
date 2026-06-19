@@ -693,11 +693,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         /* HERO */
         .spar-hero {
-          height: 400px;
+          height: auto;
+          min-height: clamp(240px, 22vw, 340px);
           border-bottom: 3px solid #f59e0b;
           display: flex; justify-content: space-between; align-items: flex-start;
           position: relative;
-          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) 28px clamp(20px,5vw,60px);
+          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px) clamp(20px,5vw,60px);
           overflow: hidden;
         }
         .spar-title {
