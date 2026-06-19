@@ -31,7 +31,7 @@ async function linkedInViaDirectFetch(): Promise<boolean> {
 
   const data = await res.json()
   const oauthUrl =
-    data?.response?.first_factor?.external_verification_redirect_url ||
+    data?.response?.first_factor_verification?.external_verification_redirect_url ||
     data?.response?.external_account?.verification?.external_verification_redirect_url
 
   if (oauthUrl) {
@@ -92,10 +92,10 @@ export default function SignInPage() {
     }, 20000)
 
     try {
-      await signIn.sso({
+      await signIn.authenticateWithRedirect({
         strategy: 'oauth_linkedin_oidc',
         redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectCallbackUrl: '/bot',
+        redirectUrlComplete: '/bot',
       })
       clearTimeout(timer)
     } catch (err: unknown) {
