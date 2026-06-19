@@ -96,6 +96,52 @@ export default clerkMiddleware(async (auth, req) => {
               return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
             }
             user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
+            // Referral cookie verwerken
+            const refCode = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
+            if (refCode) {
+              const { data: referrer } = await supabase
+                .from('approved_users')
+                .select('user_id, voornaam, full_name, email')
+                .eq('referral_code', refCode)
+                .maybeSingle()
+              if (referrer && referrer.user_id !== userId) {
+                const { data: existingRef } = await supabase
+                  .from('arnobot_referrals')
+                  .select('id')
+                  .eq('referred_user_id', userId)
+                  .maybeSingle()
+                if (!existingRef) {
+                  await supabase.from('arnobot_referrals').insert({
+                    referrer_user_id: referrer.user_id,
+                    referred_user_id: userId,
+                    code_used: refCode,
+                    status: 'signed_up',
+                  })
+                  const resendLocal = new Resend(process.env.RESEND_API_KEY)
+                  const newUserName2 = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || 'iemand'
+                  const referrerNaam2 = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
+                  if (referrer.email) {
+                    resendLocal.emails.send({
+                      from: 'ArnoBot <noreply@arno.bot>',
+                      to: referrer.email,
+                      subject: `${newUserName2} heeft zich aangemeld via jouw referral code`,
+                      html: `
+                        <div style="background:#111827;padding:40px;font-family:monospace;color:#f1f5f9;max-width:600px">
+                          <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT</p>
+                          <h1 style="font-size:28px;margin:0 0 24px;color:#f1f5f9">Nieuwe referral</h1>
+                          <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0 0 16px">
+                            Hey ${referrerNaam2}, <strong style="color:#f1f5f9">${newUserName2}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b">${refCode}</strong>.
+                          </p>
+                          <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0">
+                            Zodra ${newUserName2} een betalend abonnee wordt, ontvang jij 50% korting op je volgende maand, of €97 korting op je volgende jaarverlenging.
+                          </p>
+                        </div>
+                      `,
+                    }).catch(() => {})
+                  }
+                }
+              }
+            }
             // Telegram notificatie — bewust awaited: fire-and-forget wordt op Edge Runtime afgekapt
             const tgToken = process.env.TELEGRAM_NEW_USER_BOT_TOKEN
             const tgChat = process.env.TELEGRAM_NEW_USER_CHAT_ID
