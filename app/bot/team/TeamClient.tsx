@@ -14,6 +14,14 @@ function formatLast(iso: string | null) {
   return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 }
 
+function activiteitsSignaal(sessions: number, last_activity: string | null): { label: string; color: string; dot: string } {
+  if (sessions === 0 || !last_activity) return { label: 'GEEN', color: '#374151', dot: '#374151' }
+  const dagen = Math.round((Date.now() - new Date(last_activity).getTime()) / 86400000)
+  if (dagen <= 7)  return { label: 'ACTIEF',    color: '#44cc88', dot: '#44cc88' }
+  if (dagen <= 14) return { label: 'INACTIEF',  color: '#f59e0b', dot: '#f59e0b' }
+  return               { label: 'STAGNATIE', color: '#cc4444', dot: '#cc4444' }
+}
+
 interface Member {
   user_id: string
   name: string
@@ -283,13 +291,15 @@ export default function TeamClient() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid #374151' }}>
-                          {['NAAM', 'ROL', 'GESPREKKEN', 'LAATSTE ACTIVITEIT', 'ANALYSES'].map(h => (
+                          {['', 'NAAM', 'ROL', 'GESPREKKEN', 'LAATSTE ACTIVITEIT', 'ANALYSES'].map(h => (
                             <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {members.map(m => (
+                        {members.map(m => {
+                          const signaal = activiteitsSignaal(m.sessions, m.last_activity)
+                          return (
                           <tr
                             key={m.user_id}
                             onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
@@ -297,6 +307,10 @@ export default function TeamClient() {
                             onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
+                            <td style={{ padding: '16px 16px 16px 0', whiteSpace: 'nowrap' }}>
+                              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, marginRight: 8, verticalAlign: 'middle' }} />
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 2, color: signaal.color, verticalAlign: 'middle' }}>{signaal.label}</span>
+                            </td>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
                             <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: m.role === 'manager' ? '#f59e0b' : '#6b7280' }}>
                               {m.role === 'manager' ? 'MANAGER' : (m.profiel_rol?.toUpperCase() ?? 'LID')}
@@ -305,7 +319,8 @@ export default function TeamClient() {
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>{formatLast(m.last_activity)}</td>
                             <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
                           </tr>
-                        ))}
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
