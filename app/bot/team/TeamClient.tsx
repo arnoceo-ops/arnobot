@@ -291,7 +291,7 @@ export default function TeamClient() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid #374151' }}>
-                          {['', 'NAAM', 'ROL', 'GESPREKKEN', 'LAATSTE ACTIVITEIT', 'ANALYSES'].map(h => (
+                          {['', 'NAAM', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
                             <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
                           ))}
                         </tr>
@@ -307,17 +307,13 @@ export default function TeamClient() {
                             onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
-                            <td style={{ padding: '16px 16px 16px 0', whiteSpace: 'nowrap' }}>
-                              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, marginRight: 8, verticalAlign: 'middle' }} />
-                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 2, color: signaal.color, verticalAlign: 'middle' }}>{signaal.label}</span>
+                            <td style={{ padding: '16px 12px 16px 0', width: 16 }}>
+                              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
                             </td>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
-                            <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: m.role === 'manager' ? '#f59e0b' : '#6b7280' }}>
-                              {m.role === 'manager' ? 'MANAGER' : (m.profiel_rol?.toUpperCase() ?? 'LID')}
-                            </td>
                             <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280' }}>{m.sessions}</td>
-                            <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>{formatLast(m.last_activity)}</td>
-                            <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
+                            <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
+                            <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>{formatLast(m.last_activity)}</td>
                           </tr>
                           )
                         })}

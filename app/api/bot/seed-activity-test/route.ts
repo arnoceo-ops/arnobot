@@ -29,7 +29,7 @@ export async function POST() {
       answer: 'Stilstand in een gesprek is bijna altijd een signaal dat je te vroeg richting gaat geven.',
       ip: '0.0.0.0',
       session_id: 'fake_session_lisa_1',
-      created_at: daysAgo(20),
+      created_at: daysAgo(21),
     },
   ]
 
