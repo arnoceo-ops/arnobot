@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 
 interface Coaching {
@@ -86,10 +86,12 @@ function renderAnalyse(text: string): string {
 
 export default function LidPage() {
   const { userId } = useParams<{ userId: string }>()
-  const router = useRouter()
   const [data, setData] = useState<LidData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [agendaLoading, setAgendaLoading] = useState(false)
+  const [agenda, setAgenda] = useState('')
+  const [agendaError, setAgendaError] = useState('')
 
   useEffect(() => {
     fetch(`/api/bot/team/lid?userId=${userId}`)
@@ -102,6 +104,27 @@ export default function LidPage() {
       .finally(() => setLoading(false))
   }, [userId])
 
+  async function genereerAgenda() {
+    if (!data) return
+    setAgendaLoading(true)
+    setAgendaError('')
+    setAgenda('')
+    try {
+      const res = await fetch('/api/bot/team/1on1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: userId, name: data.name }),
+      })
+      const d = await res.json()
+      if (!res.ok) setAgendaError(d.error || 'Er ging iets mis')
+      else setAgenda(d.agenda)
+    } catch {
+      setAgendaError('Er ging iets mis')
+    } finally {
+      setAgendaLoading(false)
+    }
+  }
+
   return (
     <>
       <style>{`
@@ -112,6 +135,9 @@ export default function LidPage() {
         .back-link:hover { color: #9ca3af; }
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
+        .btn-1on1 { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 36px; background:#f59e0b; color:#111827; border:none; border-radius:999px; cursor:pointer; transition:background 0.2s; }
+        .btn-1on1:hover { background:#d97706; }
+        .btn-1on1:disabled { background:#374151; color:#6b7280; cursor:not-allowed; }
       `}</style>
 
       <BotNav active="team" />
@@ -158,15 +184,35 @@ export default function LidPage() {
                     </div>
 
                     {data.coaching.voortgang && (
-                      <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px' }}>
+                      <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>
                         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>VOORTGANG</p>
                         <p style={body}>{data.coaching.voortgang}</p>
                       </div>
                     )}
 
-                    <p style={{ ...body, fontSize: 12, color: '#4b5563', marginTop: 16 }}>
+                    <p style={{ ...body, fontSize: 12, color: '#4b5563', marginTop: 16, marginBottom: 32 }}>
                       Bijgewerkt op {formatDate(data.coaching.updated_at)}
                     </p>
+
+                    {/* 1:1 voorbereiding */}
+                    <button
+                      className="btn-1on1"
+                      onClick={genereerAgenda}
+                      disabled={agendaLoading}
+                    >
+                      {agendaLoading ? 'ARNO BEREIDT VOOR...' : 'BEREID 1:1 VOOR'}
+                    </button>
+
+                    {agendaError && (
+                      <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>{agendaError}</p>
+                    )}
+
+                    {agenda && (
+                      <div style={{ marginTop: 32, background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '24px 28px' }}>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
+                        <div style={{ ...body, fontSize: 14 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
