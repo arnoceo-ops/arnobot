@@ -66,7 +66,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elk kwartaal (of na een
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar?"
 
-## Foto (cyborg.jpg in arnobot/page.tsx)
+## Foto (header in arnobot/page.tsx)
 - NOOIT meer aanpassen tenzij de gebruiker er expliciet om vraagt
-- Correct formaat: `<img src="/cyborg.jpg" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />` in een `subscribe-text-col` div
+- Huidig formaat: `<img src="/header-fotos/foto-11.jpg" style={{display:'block', width:'100%', maxWidth:'480px', height:'auto'}} />` in een `subscribe-text-col` div
 - Geen background-image, geen position:absolute, geen objectFit — gewoon de img tag

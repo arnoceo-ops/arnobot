@@ -179,7 +179,7 @@ export default async function ArnoBotLandingPage() {
       {/* INTRO */}
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
         <div className="subscribe-text-col">
-          <img src="/cyborg.jpg" alt="ArnoBot" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />
+          <img src="/header-fotos/foto-11.jpg" alt="ArnoBot" style={{display:'block', width:'100%', maxWidth:'480px', height:'auto'}} />
         </div>
         <div className="canvas-right" style={{background:'#1e293b', justifyContent:'center'}}>
           <div style={{maxWidth:'540px'}}>
