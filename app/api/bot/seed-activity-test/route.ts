@@ -2,8 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_ID = 'user_2s7tMoEkHPrGvKwF7BsblGIqF6p'
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -11,7 +9,7 @@ const supabase = createClient(
 
 export async function POST() {
   const { userId } = await auth()
-  if (userId !== ADMIN_ID) return NextResponse.json({ error: 'Geen toegang' }, { status: 403 })
+  if (!userId || userId !== process.env.ADMIN_USER_ID) return NextResponse.json({ error: 'Geen toegang' }, { status: 403 })
 
   const now = new Date()
   const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000).toISOString()
