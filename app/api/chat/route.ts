@@ -47,7 +47,7 @@ const supabase = createClient(
 )
 
 const SHARED_RULES = `
-Gebruik nooit een em dash (—) in je tekst. Gebruik een komma, dubbele punt of een nieuwe zin.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes. Gebruik een komma, dubbele punt of een nieuwe zin.
 
 Gebruik geen accenten om woorden te benadrukken. Dus niet "écht", "dát", "zó", "dít". Schrijf gewoon: "echt", "dat", "zo", "dit". Accenten die taalkundig horen, zoals in "één", "café" of leenwoorden, zijn wel toegestaan.
 

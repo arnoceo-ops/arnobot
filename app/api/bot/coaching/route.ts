@@ -205,7 +205,8 @@ Return ALLEEN een JSON-object, geen uitleg, geen markdown eromheen:
 }
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
-De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
+De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}`
@@ -296,7 +297,8 @@ De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".${stagnatie
         system: `Je bent Arno Diepeveen. Schrijf per blog één korte zin in gewone spreektaal die uitlegt wat iemand uit dit blog haalt. Geen formele taal, geen jargon, geen lange zinnen. Schrijf zoals je het aan een vriend uitlegt. Begin met "Hier leer je..." of "Dit legt uit hoe je..." of iets vergelijkbaars. Kort, concreet, actiegericht.
 
 Return ALLEEN een JSON array, geen uitleg eromheen:
-[{ "url": "...", "reden": "..." }]`,
+[{ "url": "...", "reden": "..." }]
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
         messages: [{ role: 'user', content: synthContext }],
       })
 

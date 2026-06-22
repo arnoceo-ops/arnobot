@@ -124,7 +124,8 @@ Geef precies drie gerichte vragen die de manager kan stellen. Vragen die de verk
 WAT TE OBSERVEREN
 Twee concrete dingen die de manager kan letten op in dit gesprek of in de komende week.
 
-Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop.`
+Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',

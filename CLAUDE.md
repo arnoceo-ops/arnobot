@@ -10,9 +10,22 @@
 
 **Werkwijze**: bij elke nieuwe UI-component, controleer alle elementen direct tegen de vaste normen hieronder vóór commit. Niet achteraf. Bij twijfel over de juiste norm: vragen aan de gebruiker.
 
-## Streepjes — nooit gebruiken
+## Streepjes — ABSOLUUT VERBOD — for ever and ever
 
-De tekens –, - en — worden NOOIT gebruikt in arno.bot: niet in UI-copy, niet in Q&A, niet in labels, niet in placeholders, en niet in systeemprompts of antwoorden van ArnoBot (coaching, analyse, debrief, synthese). Enige uitzondering: een koppelteken in een samengesteld woord waar het taalkundig echt noodzakelijk is (bijv. MT-lid, oud-klant). Twijfel je? Laat het weg en herschrijf de zin.
+De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed het - maar") worden NOOIT gebruikt in arno.bot. Nergens. Nooit.
+
+**Dit geldt voor:**
+- UI-copy, labels, placeholders, knoppen, titels
+- Q&A-teksten
+- Alle systeemprompts van ArnoBot
+- Alle AI-gegenereerde output: coaching, analyse, debrief, synthese, 1:1 agenda, spotlight, bieb, sparren
+
+**Enige uitzondering:** een koppelteken IN een samengesteld woord waar het taalkundig onvermijdelijk is (MT-lid, oud-klant, follow-up). Nooit als leesteken ter vervanging van een komma of punt.
+
+**Handhaving in systeemprompts:** elke route die AI-output genereert MOET deze zin bevatten in de systeemprompt:
+`Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
+
+**Twijfel je?** Vervang het streepje door een punt of komma, of herschrijf de zin. Laat het streepje nooit staan.
 
 ## Nieuwe content of functionaliteit — altijd eerst voorstellen
 

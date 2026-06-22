@@ -88,7 +88,8 @@ GROEIKANS
 ARNO'S ADVIES
 Één concrete actie die de manager deze week kan inzetten. Praktisch, uitvoerbaar, direct.
 
-Maximaal 250 woorden totaal. Schrijf in eerste persoon, alsof je de manager persoonlijk aanspreekt.`,
+Maximaal 250 woorden totaal. Schrijf in eerste persoon, alsof je de manager persoonlijk aanspreekt.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
     messages: [{
       role: 'user',
       content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van deze gesprekssamengevattingen van zijn teamleden met ArnoBot.
