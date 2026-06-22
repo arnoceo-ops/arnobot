@@ -34,8 +34,8 @@ export async function GET(req: NextRequest) {
 
   if (!targetMember) return NextResponse.json({ error: 'Lid niet gevonden in jouw team' }, { status: 404 })
 
-  // Fetch coaching profile + analyses (synthese-laag, nooit ruwe gesprekken)
-  const [coachingRes, analysesRes, profileRes] = await Promise.all([
+  // Fetch coaching profile + analyses + 1:1 geschiedenis (synthese-laag, nooit ruwe gesprekken)
+  const [coachingRes, analysesRes, profileRes, historyRes] = await Promise.all([
     supabase
       .from('arnobot_coaching')
       .select('mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang, updated_at')
@@ -52,6 +52,13 @@ export async function GET(req: NextRequest) {
       .select('profiel')
       .eq('user_id', targetUserId)
       .single(),
+    supabase
+      .from('arnobot_1on1_log')
+      .select('id, aandachtspunt, notitie, mindset_score, systeem_score, actie_score, created_at')
+      .eq('manager_id', managerId)
+      .eq('member_id', targetUserId)
+      .order('created_at', { ascending: false })
+      .limit(10),
   ])
 
   // Get name from Clerk
@@ -68,5 +75,6 @@ export async function GET(req: NextRequest) {
     profiel_rol: profileRes.data?.profiel?.rol ?? null,
     coaching: coachingRes.data ?? null,
     analyses: analysesRes.data ?? [],
+    history: historyRes.data ?? [],
   })
 }
