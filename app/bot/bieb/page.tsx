@@ -40,7 +40,7 @@ function renderAnalyseText(text: string): string {
   const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const items = safe.split('\n').map(line => {
     const t = line.trim()
-    if (!t) return ''
+    if (!t || /^-{2,}$/.test(t)) return ''
     const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
     if (fullBold) return `<span class="ah">${fullBold[1]}</span>`
     if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {

@@ -88,7 +88,7 @@ function renderAnalyse(text: string): string {
   const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const items = safe.split('\n').map(line => {
     const t = line.trim()
-    if (!t) return ''
+    if (!t || /^-{2,}$/.test(t)) return ''
     const fullBold = t.match(/^\*\*([^*]+)\*\*$/)
     if (fullBold) return `<span class="ah">${fullBold[1]}</span>`
     if (t.length < 60 && t === t.toUpperCase() && /[A-Z]/.test(t) && !/\*/.test(t)) {
@@ -299,7 +299,7 @@ export default function LidPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {data.history.map(h => {
                       const scores = [h.mindset_score, h.systeem_score, h.actie_score]
-                      const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '—').join(' / ')
+                      const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '?').join(' / ')
                       return (
                         <div key={h.id} style={{ background: '#1f2937', padding: '20px 24px', borderLeft: '3px solid #374151' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: h.aandachtspunt ? 8 : 0, flexWrap: 'wrap', gap: 8 }}>
