@@ -39,7 +39,15 @@ interface TeamAnalyse {
 }
 
 function formatAnalyseDate(iso: string) {
-  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function getAnalyseTitle(text: string): string {
+  const clean = text.replace(/\n/g, ' ').trim()
+  if (clean.length <= 80) return clean
+  const cut = clean.slice(0, 77)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut) + '...'
 }
 
 interface Team {
@@ -127,6 +135,7 @@ export default function TeamClient() {
   const [copied, setCopied] = useState(false)
   const [spotlightLoading, setSpotlightLoading] = useState(false)
   const [teamAnalyses, setTeamAnalyses] = useState<TeamAnalyse[]>([])
+  const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -223,6 +232,7 @@ export default function TeamClient() {
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
+        .analyse-item-full { color:#9ca3af; font-size:15px; line-height:1.9; font-family:'Space Mono',monospace; background:#1f2937; border-left:3px solid #f59e0b; padding:20px 24px; margin-bottom:8px; }
       `}</style>
 
       <BotNav active="team" />
@@ -345,13 +355,32 @@ export default function TeamClient() {
                   <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>Minimaal 2 teamleden nodig voor een team-analyse.</p>
                 )}
                 {teamAnalyses.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <div>
                     {teamAnalyses.map(a => (
-                      <div key={a.id}>
-                        <span style={{ ...label, marginBottom: 16 }}>{formatAnalyseDate(a.created_at)}</span>
-                        <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
-                          <div style={{ ...body, marginBottom: 0 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
-                        </div>
+                      <div key={a.id} style={{ borderTop: '1px solid #374151' }}>
+                        <button
+                          onClick={() => setExpandedAnalyse(expandedAnalyse === a.id ? null : a.id)}
+                          style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                              {formatAnalyseDate(a.created_at)}
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                                {getAnalyseTitle(a.analyse_text)}
+                              </p>
+                            </div>
+                            <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                              {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                            </span>
+                          </div>
+                        </button>
+                        {expandedAnalyse === a.id && (
+                          <div style={{ paddingBottom: 32 }}>
+                            <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -84,6 +84,14 @@ function wekenGeleden(iso: string) {
   return `${weken} ${weken === 1 ? 'week' : 'weken'} geleden`
 }
 
+function getAnalyseTitle(text: string): string {
+  const clean = text.replace(/\n/g, ' ').trim()
+  if (clean.length <= 80) return clean
+  const cut = clean.slice(0, 77)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut) + '...'
+}
+
 function renderAnalyse(text: string): string {
   const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const items = safe.split('\n').map(line => {
@@ -118,6 +126,7 @@ export default function LidPage() {
   const [notitie, setNotitie] = useState('')
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/bot/team/lid?userId=${userId}`)
@@ -188,6 +197,7 @@ export default function LidPage() {
         .back-link:hover { color: #f1f5f9; }
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
+        .analyse-item-full { color:#9ca3af; font-size:15px; line-height:1.9; font-family:'Space Mono',monospace; background:#1f2937; border-left:3px solid #f59e0b; padding:20px 24px; margin-bottom:8px; }
         .btn-1on1 { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 36px; background:#f59e0b; color:#111827; border:none; border-radius:999px; cursor:pointer; transition:background 0.2s; }
         .btn-1on1:hover { background:#d97706; }
         .btn-1on1:disabled { background:#374151; color:#6b7280; cursor:not-allowed; }
@@ -331,13 +341,32 @@ export default function LidPage() {
                 {data.analyses.length === 0 ? (
                   <p style={body}>Nog geen analyses beschikbaar.</p>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
                     {data.analyses.map(a => (
-                      <div key={a.id} style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 8 }}>
-                          {formatDate(a.created_at)}{a.session_count ? ` · ${a.session_count} gesprekken` : ''}
-                        </p>
-                        <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
+                      <div key={a.id} style={{ borderTop: '1px solid #374151' }}>
+                        <button
+                          onClick={() => setExpandedAnalyse(expandedAnalyse === a.id ? null : a.id)}
+                          style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                              {formatDate(a.created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                                {getAnalyseTitle(a.analyse_text)}
+                              </p>
+                            </div>
+                            <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                              {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                            </span>
+                          </div>
+                        </button>
+                        {expandedAnalyse === a.id && (
+                          <div style={{ paddingBottom: 32 }}>
+                            <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
