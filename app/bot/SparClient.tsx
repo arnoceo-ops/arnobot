@@ -877,13 +877,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           display: flex; flex-direction: column; align-items: center;
         }
         .opener-toggle {
-          display: grid; grid-template-columns: repeat(3, 142px); gap: 8px; margin: 0 auto 2px;
+          display: flex; gap: 8px; justify-content: center; margin: 0 auto 2px;
         }
         .toggle-btn {
           background: #1f2937; border: none; color: #6b7280;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 16px; letter-spacing: 3px;
-          padding: 10px 24px; cursor: pointer;
+          font-size: 18px; letter-spacing: 3px;
+          padding: 12px 36px; cursor: pointer;
           border-radius: 999px;
           transition: all 0.15s;
         }
