@@ -15,6 +15,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Env vars ontbreken', tgToken: !!tgToken, tgChat: !!tgChat })
   }
 
+  const botRes = await fetch(`https://api.telegram.org/bot${tgToken}/getMe`)
+  const botData = await botRes.json()
+
   const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -22,5 +25,10 @@ export async function GET() {
   })
 
   const data = await res.json()
-  return NextResponse.json({ status: res.status, telegram: data, chat_id_used: tgChat })
+  return NextResponse.json({
+    bot: botData?.result ? { username: botData.result.username, name: botData.result.first_name } : botData,
+    send_status: res.status,
+    send_result: data,
+    chat_id_used: tgChat,
+  })
 }
