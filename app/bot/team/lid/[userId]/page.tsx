@@ -184,8 +184,8 @@ export default function LidPage() {
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
-        .back-link { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; color: #6b7280; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 48px; transition: color 0.15s; }
-        .back-link:hover { color: #9ca3af; }
+        .back-link { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; color: #9ca3af; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 48px; transition: color 0.15s; }
+        .back-link:hover { color: #f1f5f9; }
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
         .btn-1on1 { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 36px; background:#f59e0b; color:#111827; border:none; border-radius:999px; cursor:pointer; transition:background 0.2s; }
@@ -262,9 +262,9 @@ export default function LidPage() {
 
                     {agenda && (
                       <div style={{ marginTop: 32 }}>
-                        <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '24px 28px', marginBottom: 24 }}>
+                        <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 24 }}>
                           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
-                          <div style={{ ...body, fontSize: 14 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
+                          <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
                         </div>
 
                         {!saved ? (
@@ -301,7 +301,7 @@ export default function LidPage() {
                       const scores = [h.mindset_score, h.systeem_score, h.actie_score]
                       const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '—').join(' / ')
                       return (
-                        <div key={h.id} style={{ background: '#1f2937', padding: '16px 20px', borderRadius: 4, borderLeft: '2px solid #374151' }}>
+                        <div key={h.id} style={{ background: '#1f2937', padding: '20px 24px', borderLeft: '3px solid #374151' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: h.aandachtspunt ? 8 : 0, flexWrap: 'wrap', gap: 8 }}>
                             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>
                               {wekenGeleden(h.created_at)}
@@ -333,11 +333,11 @@ export default function LidPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {data.analyses.map(a => (
-                      <div key={a.id} style={{ background: '#1f2937', padding: '20px 24px', borderRadius: 4 }}>
+                      <div key={a.id} style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
                         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 8 }}>
                           {formatDate(a.created_at)}{a.session_count ? ` · ${a.session_count} gesprekken` : ''}
                         </p>
-                        <div style={{ ...body, fontSize: 14, color: '#9ca3af' }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
+                        <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
                       </div>
                     ))}
                   </div>

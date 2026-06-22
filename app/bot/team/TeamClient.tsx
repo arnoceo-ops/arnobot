@@ -349,7 +349,7 @@ export default function TeamClient() {
                     {teamAnalyses.map(a => (
                       <div key={a.id}>
                         <span style={{ ...label, marginBottom: 16 }}>{formatAnalyseDate(a.created_at)}</span>
-                        <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '24px 28px' }}>
+                        <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
                           <div style={{ ...body, marginBottom: 0 }} dangerouslySetInnerHTML={{ __html: renderAnalyse(a.analyse_text) }} />
                         </div>
                       </div>
