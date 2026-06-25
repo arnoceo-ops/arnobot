@@ -260,7 +260,10 @@ export default async function GebruikersPage({
                 {/* Status */}
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '2px', color: status.color, fontWeight: 700 }}>{status.label}</p>
-                  {u.created_at && <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>}
+                  {u.paid_at && u.expires_at
+                    ? <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>t/m {new Date(u.expires_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                    : u.created_at && <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                  }
                 </div>
                 {/* Gesprekken */}
                 <div style={{ textAlign: 'right' }}>
@@ -297,9 +300,9 @@ export default async function GebruikersPage({
                 {/* Betaling */}
                 <div style={{ textAlign: 'right' }}>
                   {(u as { renewal_requested_at?: string | null }).renewal_requested_at && !u.paid_at
-                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} />
+                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : u.paid_at
-                    ? <span style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: '#44cc88' }}>BETAALD</span>
+                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : <span style={{ fontSize: '11px', color: '#374151' }}>—</span>
                   }
                 </div>

@@ -14,12 +14,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { userId } = await req.json()
+  const { userId, expiresAt } = await req.json()
   if (!userId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
 
   const { error } = await supabase
     .from('approved_users')
-    .update({ paid_at: new Date().toISOString(), is_active: true })
+    .update({ paid_at: new Date().toISOString(), is_active: true, expires_at: expiresAt ?? null })
     .eq('user_id', userId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

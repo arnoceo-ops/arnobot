@@ -160,5 +160,47 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // --- Loop 2: auto-block betaalde gebruikers na opzegging + verstreken expires_at ---
+  const { data: cancelledPaid } = await supabase
+    .from('approved_users')
+    .select('user_id, email, voornaam, expires_at')
+    .not('paid_at', 'is', null)
+    .not('cancelled_at', 'is', null)
+    .not('expires_at', 'is', null)
+    .eq('is_active', true)
+
+  for (const user of cancelledPaid ?? []) {
+    if (!user.email || !user.expires_at) continue
+    if (new Date(user.expires_at) > now) continue
+    const naam = user.voornaam || 'daar'
+    await supabase.from('approved_users')
+      .update({ is_active: false, deactivated_at: now.toISOString() })
+      .eq('user_id', user.user_id)
+    const { subject, html } = getEmailTemplate('geblokkeerd', naam)
+    await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
+    blocked++
+  }
+
+  // --- Loop 3: winback email 30 dagen na deactivatie ---
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: deactivated } = await supabase
+    .from('approved_users')
+    .select('user_id, email, voornaam, deactivated_at')
+    .eq('is_active', false)
+    .not('deactivated_at', 'is', null)
+    .is('winback_sent_at', null)
+    .lte('deactivated_at', thirtyDaysAgo)
+
+  for (const user of deactivated ?? []) {
+    if (!user.email) continue
+    const naam = user.voornaam || 'daar'
+    const { subject, html } = getEmailTemplate('winback', naam)
+    const { error } = await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html })
+    if (!error) {
+      await supabase.from('approved_users').update({ winback_sent_at: now.toISOString() }).eq('user_id', user.user_id)
+      sent++
+    }
+  }
+
   return NextResponse.json({ ok: true, sent, cancelled, blocked })
 }

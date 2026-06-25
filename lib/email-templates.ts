@@ -23,6 +23,7 @@ export type EmailType =
   | 'geblokkeerd'
   | 'trial_afgelopen'
   | 'opzegging_bevestiging'
+  | 'winback'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string }> = {
   dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
@@ -35,6 +36,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string 
   geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling' },
   trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
+  winback:               { label: 'Win-back',              description: '30 dagen na deactivatie, 14-daagse trial aanbieding' },
 }
 
 export function getEmailTemplate(
@@ -116,6 +118,14 @@ export function getEmailTemplate(
         html: emailHtml(
           `Je gratis proefperiode van 30 dagen is afgelopen. Je toegang tot ArnoBot is gestopt.<br /><br />Wil je toch doorgaan? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b">arno@arno.bot</a> en Arno regelt het verder.`,
           'CONTACT ARNO →', 'mailto:arno@arno.bot', isTest
+        ),
+      }
+    case 'winback':
+      return {
+        subject: `${prefix}${naam}, 30 dagen zonder ArnoBot.`,
+        html: emailHtml(
+          `Je hebt ArnoBot 30 dagen geleden achter je gelaten. Misschien was het timing. Misschien miste je iets.<br /><br />We willen je de kans geven het opnieuw te proberen. Niet 30 dagen dit keer, maar 14. Geen verplichtingen.<br /><br />Als je daarna verder wil, weet je hoe het werkt.`,
+          'START 14-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest
         ),
       }
     case 'opzegging_bevestiging':
