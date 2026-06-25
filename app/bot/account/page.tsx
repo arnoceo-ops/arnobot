@@ -23,17 +23,17 @@ export default function AccountPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
 
-  if (!isLoaded) return null
-
-  const name = user?.fullName || '?'
-  const email = user?.primaryEmailAddress?.emailAddress || '?'
-
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
       .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
       .catch(() => {})
   }, [])
+
+  if (!isLoaded) return null
+
+  const name = user?.fullName || '?'
+  const email = user?.primaryEmailAddress?.emailAddress || '?'
 
   async function handleCancel() {
     setCancelling(true)
