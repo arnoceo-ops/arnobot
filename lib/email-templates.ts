@@ -24,6 +24,7 @@ export type EmailType =
   | 'trial_afgelopen'
   | 'opzegging_bevestiging'
   | 'winback'
+  | 'admin_derde_trial'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string }> = {
   dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
@@ -37,6 +38,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string 
   trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
   winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding' },
+  admin_derde_trial:     { label: 'Admin: derde trial',    description: 'Notificatie naar pannekoek@arno.bot bij start derde trial' },
 }
 
 export function getEmailTemplate(
@@ -126,6 +128,14 @@ export function getEmailTemplate(
         html: emailHtml(
           `Je trial is twee weken geleden afgelopen. Misschien was het timing. Misschien miste je iets.<br /><br />We geven je de kans om het opnieuw te proberen. 30 dagen gratis, zonder verplichtingen.<br /><br />Klik hieronder om je tweede trial te starten. Dit aanbod vervalt over 5 dagen.`,
           'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest
+        ),
+      }
+    case 'admin_derde_trial':
+      return {
+        subject: `${prefix}Derde trial: ${naam}`,
+        html: emailHtml(
+          `${naam} is vandaag begonnen aan een derde trial.<br /><br />Tijd om ze persoonlijk te benaderen.`,
+          'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers', isTest
         ),
       }
     case 'opzegging_bevestiging':

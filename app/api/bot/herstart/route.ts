@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { emailHtml } from '@/lib/email-templates'
+import { getEmailTemplate } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,16 +108,12 @@ export async function POST() {
   await supabase.from('arnobot_email_log').delete().eq('user_id', userId)
 
   if (status === 'third_trial') {
-    const naam = user.voornaam || 'onbekend'
-    const email = user.email || 'onbekend'
-    const html = emailHtml(
-      `${naam} (${email}) is vandaag begonnen aan een derde trial.`,
-      'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
-    )
+    const naam = `${user.voornaam || 'onbekend'} (${user.email || 'onbekend'})`
+    const { subject, html } = getEmailTemplate('admin_derde_trial', naam)
     await resend.emails.send({
       from: 'ArnoBot <noreply@arno.bot>',
       to: 'pannekoek@arno.bot',
-      subject: `Derde trial: ${naam}`,
+      subject,
       html,
     }).catch(() => {})
   }
