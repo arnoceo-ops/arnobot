@@ -172,7 +172,7 @@
       '<div id="arnobot-messages"></div>',
       '<div id="arnobot-openers">',
       '  <span class="ab-openers-label">Geen corporate vaagtaal. Gewoon Arno: direct en ongefilterd.</span>',
-      '  <span class="ab-openers-sub">Kies een vraag hieronder — <span style="color:#EE7700">of stel je eigen vraag onderaan.</span></span>',
+      '  <span class="ab-openers-sub">Kies een vraag hieronder, <span style="color:#EE7700">of stel je eigen vraag onderaan.</span></span>',
       '  <div class="ab-openers-grid">' + this.openers.map(function (q) {
         return '<button class="ab-opener">' + escapeHtml(q) + '</button>';
       }).join('') + '</div>',
