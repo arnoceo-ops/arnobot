@@ -59,7 +59,7 @@ export default function HerstartPage() {
 
         <p style={label}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 40 }}>
-          WELKOM TERUG.
+          {status === 'paid_only' ? 'BUMMER.' : 'WELKOM TERUG.'}
         </h1>
 
         {status === 'active' && (
@@ -107,8 +107,14 @@ export default function HerstartPage() {
 
         {status === 'paid_only' && (
           <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '24px 28px' }}>
+            <p style={{ ...body, marginBottom: 24 }}>
+              Je hebt al een trial gehad, vervolgens een tweede kans gekregen voor nog eens een trial van 30 dagen, en nu wil je er nog een? Bummer. Je mag starten met een betaalde account. Graag. Of niet.
+            </p>
+            <p style={{ ...body, marginBottom: 24 }}>
+              Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, dan. Maar dat betwijfel ik. Hoe dan ook, it&apos;s your call.
+            </p>
             <p style={{ ...body, marginBottom: 32 }}>
-              Je hebt al een trial gehad, vervolgens een tweede kans gekregen voor nog eens een trial van 30 dagen, en nu wil je er nog een? Bummer. Je mag starten met een betaalde account. Graag. Of niet. Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, dan. It&apos;s your call.
+              NB Ken je deze quotes? &quot;We are what we repeatedly do. Excellence, then, is not an act but a habit.&quot; ~ Aristotle. &quot;Unfortunately, so is failure.&quot; ~ Vince Lombardi. Moets ik even aan denken...
             </p>
             <a
               href="mailto:arno@arno.bot"
