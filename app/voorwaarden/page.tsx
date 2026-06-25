@@ -31,7 +31,7 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 1', title: 'Definities',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Royal Dutch Sales:</strong> de onderneming van Arno Diepeveen, gevestigd in Lissabon, Portugal, bereikbaar via <a href="mailto:arno@arno.bot">arno@arno.bot</a>.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Royal Dutch Sales:</strong> gevestigd in Lissabon, Portugal, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>ArnoBot:</strong> het digitale AI-coachingsplatform toegankelijk via arno.bot.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Gebruiker:</strong> de natuurlijke of rechtspersoon die zich aanmeldt voor en gebruik maakt van ArnoBot.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}><strong style={{ color: '#f1f5f9' }}>Abonnement:</strong> de overeenkomst tussen Royal Dutch Sales en de Gebruiker voor toegang tot ArnoBot tegen de overeengekomen vergoeding.</p>,
@@ -77,8 +77,9 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 7', title: 'Opzegging',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement op elk moment opzeggen via de accountpagina. Opzegging per e-mail aan <a href="mailto:arno@arno.bot">arno@arno.bot</a> is eveneens mogelijk. De toegang blijft actief tot het einde van de lopende betaalperiode.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement opzeggen via de accountpagina of per e-mail aan <a href="mailto:cancel@arno.bot">cancel@arno.bot</a>.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De opzegtermijn bedraagt één kalendermaand. Opzegging dient te worden ingediend vóór de eerste van de maand en gaat in op de eerste dag van de daaropvolgende maand. De Gebruiker is over deze laatste maand de volledige abonnementsprijs verschuldigd.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
               ],
             },
             {
@@ -92,7 +93,8 @@ export default function VoorwaardenPage() {
               num: 'ARTIKEL 9', title: 'Wijziging van de voorwaarden',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales behoudt zich het recht voor deze voorwaarden te wijzigen. Wijzigingen worden minimaal 14 dagen van tevoren per e-mail aangekondigd aan actieve gebruikers.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Voortzetting van het gebruik van ArnoBot na de ingangsdatum van een wijziging geldt als aanvaarding van de nieuwe voorwaarden.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Indien een wijziging nadelig is voor de Gebruiker, heeft de Gebruiker het recht de overeenkomst zonder opgaaf van reden te beëindigen, met ingang van de datum waarop de gewijzigde voorwaarden van kracht worden.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Voortzetting van het gebruik van ArnoBot na de ingangsdatum van een wijziging geldt als aanvaarding van de nieuwe voorwaarden.</p>,
               ],
             },
             {
@@ -111,7 +113,7 @@ export default function VoorwaardenPage() {
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32 }}>
             <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.9 }}>
-              Vragen over deze voorwaarden? Mail naar <a href="mailto:arno@arno.bot">arno@arno.bot</a>
+              Vragen over deze voorwaarden? Mail naar <a href="mailto:hq@arno.bot">hq@arno.bot</a>
             </p>
           </div>
 
