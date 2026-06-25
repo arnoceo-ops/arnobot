@@ -52,7 +52,7 @@ export default function DoorgaanPage() {
         .primary-btn:hover { background: #d97706 !important; }
       `}</style>
 
-      <BotNav active="" />
+      <BotNav active="account" />
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
