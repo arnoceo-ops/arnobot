@@ -25,7 +25,9 @@ De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed h
 **Handhaving in systeemprompts:** elke route die AI-output genereert MOET deze zin bevatten in de systeemprompt:
 `Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
-**Twijfel je?** Vervang het streepje door een punt of komma, of herschrijf de zin. Laat het streepje nooit staan.
+**Als je zelf tekst schrijft of herschrijft:** vervang het streepje door een punt of komma, of herschrijf de zin. Laat het streepje nooit staan.
+
+**Als de gebruiker zegt "haal eruit" of "verwijder":** verwijder alleen het streepje. Voeg niets terug — geen komma, geen punt, tenzij de gebruiker dat expliciet vraagt.
 
 ## Nieuwe content of functionaliteit — altijd eerst voorstellen
 
