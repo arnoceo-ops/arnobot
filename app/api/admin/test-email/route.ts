@@ -126,6 +126,24 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
+const templateMeta: Record<string, { label: string; description: string }> = {
+  dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
+  dag4:                  { label: 'Dag 4',                 description: 'Nog geen gesprek gevoerd' },
+  first_conversation:    { label: 'Eerste gesprek',        description: 'Na het eerste gesprek' },
+  dag14:                 { label: 'Dag 14',                description: 'Halverwege de trial' },
+  first_coaching:        { label: 'Eerste coaching',       description: 'Na 5+ sessies, nog geen rapport' },
+  dag25:                 { label: 'Dag 25',                description: 'Trial bijna afgelopen, opt-in CTA' },
+  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',    description: '7 dagen na opt-in, geen betaling' },
+  geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling' },
+  trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan' },
+  opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
+}
+
 export async function GET() {
-  return NextResponse.json({ types: Object.keys(templates) })
+  const list = Object.keys(templates).map(type => ({
+    type,
+    label: templateMeta[type]?.label ?? type,
+    description: templateMeta[type]?.description ?? '',
+  }))
+  return NextResponse.json({ templates: list })
 }

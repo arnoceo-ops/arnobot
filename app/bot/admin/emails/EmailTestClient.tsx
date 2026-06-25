@@ -1,23 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-const EMAIL_TYPES: { type: string; label: string; description: string }[] = [
-  { type: 'dag1',                  label: 'Dag 1',                  description: 'Welkom, waar begin je?' },
-  { type: 'dag4',                  label: 'Dag 4',                  description: 'Nog geen gesprek gevoerd' },
-  { type: 'first_conversation',    label: 'Eerste gesprek',         description: 'Na het eerste gesprek' },
-  { type: 'dag14',                 label: 'Dag 14',                 description: 'Halverwege de trial' },
-  { type: 'first_coaching',        label: 'Eerste coaching',        description: 'Na 5+ sessies, nog geen rapport' },
-  { type: 'dag25',                 label: 'Dag 25',                 description: 'Trial bijna afgelopen, opt-in CTA' },
-  { type: 'betaalwaarschuwing',    label: 'Betaalwaarschuwing',     description: '7 dagen na opt-in, geen betaling' },
-  { type: 'geblokkeerd',           label: 'Geblokkeerd',            description: '24u na waarschuwing, geen betaling' },
-  { type: 'trial_afgelopen',       label: 'Trial afgelopen',        description: 'Dag 30, nooit opt-in gedaan' },
-  { type: 'opzegging_bevestiging', label: 'Opzegging bevestiging',  description: 'Na opzegging via account pagina' },
-]
+type Template = { type: string; label: string; description: string }
 
 export default function EmailTestClient() {
+  const [templates, setTemplates] = useState<Template[]>([])
   const [sending, setSending] = useState<string | null>(null)
   const [results, setResults] = useState<Record<string, 'ok' | 'error'>>({})
+
+  useEffect(() => {
+    fetch('/api/admin/test-email')
+      .then(r => r.json())
+      .then(d => setTemplates(d.templates ?? []))
+      .catch(() => {})
+  }, [])
 
   async function send(type: string) {
     setSending(type)
@@ -35,9 +32,13 @@ export default function EmailTestClient() {
     }
   }
 
+  if (!templates.length) return (
+    <p style={{ fontSize: 13, color: '#4b5563', letterSpacing: 1 }}>Laden...</p>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {EMAIL_TYPES.map(({ type, label, description }) => (
+      {templates.map(({ type, label, description }) => (
         <div key={type} style={{
           display: 'grid',
           gridTemplateColumns: '180px 1fr auto',
@@ -47,9 +48,7 @@ export default function EmailTestClient() {
           padding: '16px 24px',
           borderLeft: `3px solid ${results[type] === 'ok' ? '#44cc88' : results[type] === 'error' ? '#cc2200' : '#374151'}`,
         }}>
-          <div>
-            <p style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9', letterSpacing: 1 }}>{label}</p>
-          </div>
+          <p style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9', letterSpacing: 1 }}>{label}</p>
           <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1 }}>{description}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {results[type] === 'ok' && (
