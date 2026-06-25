@@ -111,12 +111,6 @@ export default function VoorwaardenPage() {
             </div>
           ))}
 
-          <div style={{ borderTop: '1px solid #374151', paddingTop: 32 }}>
-            <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.9 }}>
-              Vragen over deze voorwaarden? Mail naar <a href="mailto:hq@arno.bot">hq@arno.bot</a>
-            </p>
-          </div>
-
         </div>
       </div>
     </>
