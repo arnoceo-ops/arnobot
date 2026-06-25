@@ -111,7 +111,7 @@ export default function HerstartPage() {
               Je hebt al een trial gehad, vervolgens een tweede kans gekregen voor nog eens een trial van 30 dagen, en nu wil je er nog een? Bummer. Je mag starten met een betaalde account. Graag. Of niet.
             </p>
             <p style={{ ...body, marginBottom: 24 }}>
-              Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, dan. Maar dat betwijfel ik. Hoe dan ook, it&apos;s your call.
+              Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, tenminste. Maar dat betwijfel ik. Hoe dan ook, it&apos;s your call.
             </p>
             <p style={{ ...body, marginBottom: 32 }}>
               NB Ken je deze quotes? &quot;We are what we repeatedly do. Excellence, then, is not an act but a habit.&quot; ~ Aristotle. &quot;Unfortunately, so is failure.&quot; ~ Vince Lombardi. Moest ik even aan denken...
