@@ -32,9 +32,6 @@ export default function AccountPage() {
 
   if (!isLoaded) return null
 
-  const name = user?.fullName || '?'
-  const email = user?.primaryEmailAddress?.emailAddress || '?'
-
   async function handleCancel() {
     setCancelling(true)
     setError(null)
@@ -122,26 +119,21 @@ export default function AccountPage() {
         </div>
 
         {/* Privacy statement */}
-        <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 48 }}>
+        <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 20 }}>
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>JOUW DATA IS VAN JOU</p>
           <p style={{ fontSize: 15, lineHeight: '1.9', color: '#9ca3af' }}>
             Alles wat je hier invoert en bespreekt met ArnoBot, is 100% veilig opgeslagen en wordt nooit gedeeld met derden, gebruikt voor marketing of ingezet voor andere doeleinden dan jouw persoonlijke coaching. Je kunt je gegevens op elk moment downloaden of je account volledig verwijderen.
           </p>
         </div>
 
-        {/* Accountinformatie */}
-        <div style={section}>
-          <p style={label}>ACCOUNTINFORMATIE</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <p style={{ fontFamily: "'Space Mono', monospace", color: '#6b7280', fontSize: 13, letterSpacing: 2, marginBottom: 4 }}>NAAM</p>
-              <p style={{ fontSize: 15, color: '#f1f5f9' }}>{name}</p>
-            </div>
-            <div>
-              <p style={{ fontFamily: "'Space Mono', monospace", color: '#6b7280', fontSize: 13, letterSpacing: 2, marginBottom: 4 }}>E-MAILADRES</p>
-              <p style={{ fontSize: 15, color: '#f1f5f9' }}>{email}</p>
-            </div>
-          </div>
+        {/* Voorwaarden en privacy — direct onder privacy statement */}
+        <div style={{ display: 'flex', gap: 24, marginBottom: 48 }}>
+          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#9ca3af', textDecoration: 'none' }}>
+            VOORWAARDEN
+          </Link>
+          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#9ca3af', textDecoration: 'none' }}>
+            PRIVACY
+          </Link>
         </div>
 
         {/* Profiel */}
@@ -166,16 +158,6 @@ export default function AccountPage() {
             {exporting ? 'EXPORTEREN...' : 'DOWNLOAD MIJN DATA'}
           </button>
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
-        </div>
-
-        {/* Footer links — onderkant JOUW GEGEVENS */}
-        <div style={{ borderTop: '1px solid #1f2937', marginTop: 0, marginBottom: 64, paddingTop: 24, display: 'flex', gap: 24 }}>
-          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
-            VOORWAARDEN
-          </Link>
-          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
-            PRIVACY
-          </Link>
         </div>
 
         {/* Nieuwe sectie: Genoeg geweest */}
