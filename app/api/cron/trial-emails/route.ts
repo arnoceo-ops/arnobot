@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const { data: users } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, paid_at')
+    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at')
     .not('trial_start', 'is', null)
     .is('paid_at', null)
     .eq('is_active', true)
@@ -41,11 +41,78 @@ export async function GET(req: NextRequest) {
 
   let sent = 0
 
+  let cancelled = 0
+  let blocked = 0
+
   for (const user of users) {
     if (!user.email || !user.trial_start) continue
 
     const trialStart = new Date(user.trial_start)
     const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
+    const naam = user.voornaam || 'daar'
+
+    // --- Blokkering 24u na betaalwaarschuwing ---
+    if (user.renewal_warning_sent_at && !user.paid_at) {
+      const warnedAt = new Date(user.renewal_warning_sent_at)
+      const hoursSinceWarning = (now.getTime() - warnedAt.getTime()) / (1000 * 60 * 60)
+      if (hoursSinceWarning >= 24) {
+        await supabase.from('approved_users').update({ is_active: false }).eq('user_id', user.user_id)
+        await resend.emails.send({
+          from: 'ArnoBot <info@arno.bot>',
+          to: user.email,
+          subject: `${naam}, je toegang is geblokkeerd`,
+          html: emailHtml(
+            `Je betaling is niet ontvangen. Je toegang tot ArnoBot is tijdelijk geblokkeerd.<br /><br />Zodra de betaling is verwerkt, wordt je toegang direct hersteld. Vragen? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b">arno@arno.bot</a>.`,
+            'CONTACT ARNO →',
+            'mailto:arno@arno.bot'
+          ),
+        }).catch(() => {})
+        blocked++
+        continue
+      }
+    }
+
+    // --- Betaalwaarschuwing 7 dagen na opt-in ---
+    if (user.renewal_requested_at && !user.renewal_warning_sent_at && !user.paid_at) {
+      const requestedAt = new Date(user.renewal_requested_at)
+      const daysSinceRequest = (now.getTime() - requestedAt.getTime()) / (1000 * 60 * 60 * 24)
+      if (daysSinceRequest >= 7) {
+        await supabase.from('approved_users').update({ renewal_warning_sent_at: now.toISOString() }).eq('user_id', user.user_id)
+        await resend.emails.send({
+          from: 'ArnoBot <info@arno.bot>',
+          to: user.email,
+          subject: `${naam}, betaling nog niet ontvangen`,
+          html: emailHtml(
+            `Je hebt aangegeven door te willen gaan met ArnoBot, maar de betaling is nog niet ontvangen.<br /><br />Je toegang wordt over <strong>24 uur</strong> geblokkeerd totdat de betaling is verwerkt.<br /><br />Heb je al betaald? Dan hoef je niets te doen. Mail bij vragen naar <a href="mailto:arno@arno.bot" style="color:#f59e0b">arno@arno.bot</a>.`,
+            'CONTACT ARNO →',
+            'mailto:arno@arno.bot'
+          ),
+        }).catch(() => {})
+        sent++
+        continue
+      }
+    }
+
+    // --- Auto-cancel na 30 dagen zonder opt-in ---
+    if (now > trialEnd && !user.renewal_requested_at) {
+      await supabase.from('approved_users').update({ is_active: false }).eq('user_id', user.user_id)
+      await resend.emails.send({
+        from: 'ArnoBot <info@arno.bot>',
+        to: user.email,
+        subject: `${naam}, je trial is afgelopen`,
+        html: emailHtml(
+          `Je gratis proefperiode van 30 dagen is afgelopen. Je toegang tot ArnoBot is gestopt.<br /><br />Wil je toch doorgaan? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b">arno@arno.bot</a> en Arno regelt het verder.`,
+          'CONTACT ARNO →',
+          'mailto:arno@arno.bot'
+        ),
+      }).catch(() => {})
+      cancelled++
+      continue
+    }
+
+    // Geen trial-emails meer sturen als user al heeft geopteerd voor verlenging
+    if (user.renewal_requested_at) continue
+
     if (now > trialEnd) continue
 
     const days = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
@@ -149,15 +216,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Dag 25 — altijd
+    // Dag 25 — altijd, met echte opt-in CTA
     if (!email && days >= 25 && !sentTypes.has('dag25')) {
       email = {
         type: 'dag25',
         subject: `${naam}, je trial loopt over 5 dagen af.`,
         html: emailHtml(
-          `Over vijf dagen stopt je gratis toegang. Wat heeft het je opgeleverd?<br /><br />Als het antwoord is: niet genoeg, dan is dat precies de reden om door te gaan. ArnoBot wordt beter naarmate hij je langer kent.`,
-          'DOORGAAN MET ARNOBOT →',
-          'https://arno.bot/bot'
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je aangeeft door te willen gaan.<br /><br />Klik hieronder om te bevestigen. Je ontvangt dan een factuur van Arno. Je toegang blijft actief totdat de factuur is voldaan.<br /><br />Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
+          'JA, IK GA DOOR →',
+          'https://arno.bot/bot/doorgaan'
         ),
       }
     }
@@ -183,5 +250,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, sent })
+  return NextResponse.json({ ok: true, sent, cancelled, blocked })
 }

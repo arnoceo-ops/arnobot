@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { clerkClient } from '@clerk/nextjs/server'
 import SearchLinkedIn from './SearchLinkedIn'
 import TierToggle from './TierToggle'
+import PaidButton from './PaidButton'
 
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
@@ -91,7 +92,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier'),
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at'),
     supabase
       .from('arnobot_rds_logs')
       .select('user_id, session_id, created_at')
@@ -175,6 +176,7 @@ export default async function GebruikersPage({
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'tier') { av = a.tier || ''; bv = b.tier || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
+    if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
     if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
     if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
     if (av < bv) return dir === 'asc' ? -1 : 1
@@ -182,7 +184,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 90px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -220,6 +222,7 @@ export default async function GebruikersPage({
           <SortHeader label="TIER" field="tier" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
+          <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
 
@@ -289,6 +292,15 @@ export default async function GebruikersPage({
                 {/* Referral betaald */}
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '16px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || '—'}</p>
+                </div>
+                {/* Betaling */}
+                <div style={{ textAlign: 'right' }}>
+                  {(u as { renewal_requested_at?: string | null }).renewal_requested_at && !u.paid_at
+                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} />
+                    : u.paid_at
+                    ? <span style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: '#44cc88' }}>BETAALD</span>
+                    : <span style={{ fontSize: '11px', color: '#374151' }}>—</span>
+                  }
                 </div>
                 {/* LinkedIn */}
                 <div style={{ textAlign: 'right' }}>
