@@ -116,7 +116,6 @@ export async function GET(req: NextRequest) {
     if (now > trialEnd) continue
 
     const days = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
-    const naam = user.voornaam || 'daar'
 
     const { data: log } = await supabase
       .from('arnobot_email_log')
