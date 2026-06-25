@@ -168,6 +168,22 @@ export default function AccountPage() {
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
         </div>
 
+        {/* Footer links — onderkant JOUW GEGEVENS */}
+        <div style={{ borderTop: '1px solid #1f2937', marginTop: 0, marginBottom: 64, paddingTop: 24, display: 'flex', gap: 24 }}>
+          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
+            VOORWAARDEN
+          </Link>
+          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
+            PRIVACY
+          </Link>
+        </div>
+
+        {/* Nieuwe sectie: Genoeg geweest */}
+        <div style={{ borderTop: '1px solid #374151', paddingTop: 48, marginBottom: 0 }}>
+          <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ABONNEMENT</p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 40px 0', color: '#f1f5f9', lineHeight: 1 }}>GENOEG GEWEEST?</h1>
+        </div>
+
         {/* Abonnement opzeggen */}
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
@@ -254,16 +270,6 @@ export default function AccountPage() {
         </div>
 
 {error && <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginTop: 24 }}>✗ {error}</p>}
-
-        {/* Footer links */}
-        <div style={{ borderTop: '1px solid #1f2937', marginTop: 64, paddingTop: 24, display: 'flex', gap: 24 }}>
-          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
-            VOORWAARDEN
-          </Link>
-          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
-            PRIVACY
-          </Link>
-        </div>
 
       </div>
     </>
