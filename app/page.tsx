@@ -140,9 +140,9 @@ export default async function ArnoBotLandingPage() {
           border-top: 1px solid #1f2937;
         }
         .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #f59e0b; letter-spacing: 3px; text-decoration: none; }
-        .footer-copy { font-size: 11px; color: #6b7280; letter-spacing: 1px; }
-        .footer-link { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #6b7280; text-decoration: none; transition: color 0.2s; }
-        .footer-link:hover { color: #9ca3af; }
+        .footer-copy { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; }
+        .footer-link { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+        .footer-link:hover { color: #f1f5f9; }
 
         /* ── MOBILE ── */
         @media (max-width: 768px) {
