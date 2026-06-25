@@ -325,7 +325,7 @@
       '<div class="ab-cta-card ab-cta-card--secondary">',
       '<div class="ab-cta-card-title">ARNOBOT UNLIMITED</div>',
       '<div class="ab-cta-card-body">Oneindig doorvragen. Tot je een ons weegt. Geen limiet, 24/7.</div>',
-      '<a href="https://arno.bot/arnobot" target="_blank" class="ab-cta-btn--secondary">ABONNEER &rarr;</a>',
+      '<a href="https://www.arno.bot/" target="_blank" class="ab-cta-btn--secondary">ABONNEER &rarr;</a>',
       '</div>',
       '</div>',
     ].join('');
