@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -18,11 +18,39 @@ export default function AccountPage() {
   const [deleteInput, setDeleteInput] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cancelledAt, setCancelledAt] = useState<string | null>(null)
+  const [cancelConfirm, setCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelDone, setCancelDone] = useState(false)
 
   if (!isLoaded) return null
 
-  const name = user?.fullName || '—'
-  const email = user?.primaryEmailAddress?.emailAddress || '—'
+  const name = user?.fullName || '?'
+  const email = user?.primaryEmailAddress?.emailAddress || '?'
+
+  useEffect(() => {
+    fetch('/api/bot/cancel-subscription')
+      .then(r => r.json())
+      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
+      .catch(() => {})
+  }, [])
+
+  async function handleCancel() {
+    setCancelling(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/bot/cancel-subscription', { method: 'POST' })
+      if (!res.ok) throw new Error('Opzegging mislukt')
+      const data = await res.json()
+      setCancelledAt(data.cancelled_at)
+      setCancelConfirm(false)
+      setCancelDone(true)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Opzegging mislukt')
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   async function handleExport() {
     setExporting(true)
@@ -140,6 +168,49 @@ export default function AccountPage() {
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
         </div>
 
+        {/* Abonnement opzeggen */}
+        <div style={section}>
+          <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
+          {cancelledAt ? (
+            <p style={body}>
+              Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot het einde van de lopende periode. Je data blijft bewaard totdat je account wordt afgesloten.
+            </p>
+          ) : cancelDone ? (
+            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
+          ) : !cancelConfirm ? (
+            <>
+              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
+              <button
+                onClick={() => setCancelConfirm(true)}
+                style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
+              >
+                ABONNEMENT OPZEGGEN
+              </button>
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
+              <p style={{ color: '#f1f5f9', opacity: 0.7, fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
+                Weet je het zeker? Je toegang loopt door tot einde van de periode.
+              </p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  style={{ ...btn, background: !cancelling ? '#cc2200' : '#374151', color: !cancelling ? '#fff' : '#4b5563', cursor: cancelling ? 'not-allowed' : 'pointer' }}
+                >
+                  {cancelling ? 'VERWERKEN...' : 'JA, OPZEGGEN'}
+                </button>
+                <button
+                  onClick={() => setCancelConfirm(false)}
+                  style={{ ...btn, background: 'transparent', color: '#f1f5f9', border: '1px solid #374151', opacity: 0.5 }}
+                >
+                  ANNULEREN
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Account verwijderen */}
         <div style={{ ...section, marginBottom: 0 }}>
           <p style={{ ...label, color: '#cc2200' }}>ACCOUNT VERWIJDEREN</p>
@@ -183,6 +254,16 @@ export default function AccountPage() {
         </div>
 
 {error && <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginTop: 24 }}>✗ {error}</p>}
+
+        {/* Footer links */}
+        <div style={{ borderTop: '1px solid #1f2937', marginTop: 64, paddingTop: 24, display: 'flex', gap: 24 }}>
+          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
+            VOORWAARDEN
+          </Link>
+          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>
+            PRIVACY
+          </Link>
+        </div>
 
       </div>
     </>
