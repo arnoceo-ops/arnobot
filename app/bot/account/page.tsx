@@ -212,7 +212,7 @@ export default function AccountPage() {
         {/* Account verwijderen */}
         <div style={{ ...section, marginBottom: 0 }}>
           <p style={{ ...label, color: '#cc2200' }}>ACCOUNT VERWIJDEREN</p>
-          <p style={body}>Hiermee worden al jouw gegevens permanent verwijderd uit Royal Dutch Sales. Dit is niet ongedaan te maken.</p>
+          <p style={body}>Hiermee worden al jouw gegevens permanent verwijderd van ArnoBot. Dit is niet ongedaan te maken.</p>
 
           {!deleteConfirm ? (
             <button
