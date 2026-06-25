@@ -18,7 +18,7 @@ export default async function ArnoBotLandingPage() {
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;600;900&family=DM+Sans:wght@400;500&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #1e293b; color: #f1f5f9; font-family: 'Space Mono', monospace; }
+        body { background: #1e293b; color: #f1f5f9; font-family: 'DM Sans', sans-serif; font-size: 15px; }
 
         /* ── NAV ── */
         .site-nav {
@@ -136,7 +136,7 @@ export default async function ArnoBotLandingPage() {
         /* ── FOOTER ── */
         footer {
           background: #0d1117; padding: 40px 60px;
-          display: flex; justify-content: space-between; align-items: center;
+          display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
           border-top: 1px solid #1f2937;
         }
         .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #f59e0b; letter-spacing: 3px; text-decoration: none; }
@@ -160,7 +160,7 @@ export default async function ArnoBotLandingPage() {
           .subscribe-btn { align-self: stretch; width: 100%; }
           .subscribe-btn-dark { width: 100%; }
 
-          footer { padding: 32px 24px; flex-direction: column; gap: 12px; text-align: center; }
+          footer { padding: 32px 24px; grid-template-columns: 1fr; gap: 12px; text-align: center; }
         }
       `}</style>
 
@@ -185,7 +185,7 @@ export default async function ArnoBotLandingPage() {
         </div>
         <div className="canvas-right" style={{background:'#1e293b', justifyContent:'center'}}>
           <div style={{maxWidth:'540px'}}>
-            <p style={{fontSize:'13px', letterSpacing:'4px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Space Mono', monospace", marginBottom:'16px'}}>ArnoBot Unlimited</p>
+            <p style={{fontSize:'13px', letterSpacing:'4px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'DM Sans', sans-serif", marginBottom:'16px'}}>ArnoBot Unlimited</p>
             <h2 style={{fontFamily:"'Barlow Condensed', sans-serif", fontSize:'clamp(32px, 3.5vw, 52px)', fontWeight:600, color:'#f1f5f9', lineHeight:1.1, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'20px'}}>
               Jouw Personal Sales<br />Coach <span style={{color:'#f59e0b'}}>voor €97 p/m</span>
             </h2>
@@ -243,7 +243,7 @@ export default async function ArnoBotLandingPage() {
               transition:'background 0.2s'
             }}>START NU.</a>
             <a href="/sign-up" style={{
-              fontSize:'13px', color:'#9ca3af', fontFamily:"'Space Mono', monospace",
+              fontSize:'13px', color:'#9ca3af', fontFamily:"'DM Sans', sans-serif",
               textDecoration:'none', letterSpacing:'1px'
             }}>30 dagen Free Trial</a>
           </div>
@@ -263,13 +263,13 @@ export default async function ArnoBotLandingPage() {
               transition:'background 0.2s'
             }}>START NU.</a>
             <a href="/sign-up" style={{
-              fontSize:'13px', color:'#9ca3af', fontFamily:"'Space Mono', monospace",
+              fontSize:'13px', color:'#9ca3af', fontFamily:"'DM Sans', sans-serif",
               textDecoration:'none', letterSpacing:'1px'
             }}>30 dagen Free Trial</a>
           </div>
         </div>
         <div style={{gridColumn:'1 / -1', borderTop:'1px solid #374151', padding:'28px 60px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px', textAlign:'center'}}>
-          <span style={{fontFamily:"'Space Mono', monospace", fontSize:'13px', color:'#9ca3af', letterSpacing:'0.5px'}}>
+          <span style={{fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#9ca3af', letterSpacing:'0.5px'}}>
             Wil je je hele salesteam uitrusten met ArnoBot als persoonlijke coach?
           </span>
           <a href="mailto:arno@arno.bot" style={{
@@ -337,7 +337,7 @@ export default async function ArnoBotLandingPage() {
             <p className="canvas-body" style={{color:'#9ca3af'}}>
               Niet alleen de bot. Arno zelf. Persoonlijke online coaching op basis van jouw specifieke situatie. Voor als je nog harder vooruit wilt.
             </p>
-            <p style={{fontFamily:"'Space Mono', monospace", fontSize:'12px', color:'#6b7280', letterSpacing:'0.5px', marginTop:'8px'}}>* Een half uur per kwartaal gratis bij een jaarabonnement.</p>
+            <p style={{fontFamily:"'DM Sans', sans-serif", fontSize:'12px', color:'#6b7280', letterSpacing:'0.5px', marginTop:'8px'}}>* Een half uur per kwartaal gratis bij een jaarabonnement.</p>
           </div>
         </div>
       </section>
@@ -349,7 +349,7 @@ export default async function ArnoBotLandingPage() {
           <Link href="/voorwaarden" className="footer-link">VOORWAARDEN</Link>
           <Link href="/privacy" className="footer-link">PRIVACY</Link>
         </span>
-        <span className="footer-copy">© 2025 Royal Dutch Sales</span>
+        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2025 Royal Dutch Sales</span>
       </footer>
     </>
   )
