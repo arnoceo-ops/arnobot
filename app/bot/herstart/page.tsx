@@ -14,6 +14,8 @@ export default function HerstartPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
+    const preview = new URLSearchParams(window.location.search).get('preview')
+    if (preview) { setStatus(preview as PageStatus); return }
     fetch('/api/bot/herstart')
       .then(r => r.json())
       .then(d => setStatus(d.status as PageStatus))
