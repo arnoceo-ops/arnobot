@@ -331,7 +331,7 @@ export default async function ArnoBotLandingPage() {
         </div>
         <div className="canvas-right" style={{background:'#1e293b'}}>
           <div style={{maxWidth:'540px', width:'100%'}}>
-            <h2 className="canvas-title" style={{color:'#f1f5f9'}}>ARNO <span style={{color:'#f59e0b'}}>LIVE.</span></h2>
+            <h2 className="canvas-title" style={{color:'#f1f5f9'}}>ARNO<span style={{color:'#f59e0b'}}>LIVE.</span></h2>
             <p className="canvas-body" style={{color:'#9ca3af'}}>
               Niet alleen de bot. Arno zelf. Persoonlijke online coaching op basis van jouw specifieke situatie. Voor als je nog harder vooruit wilt.
             </p>
@@ -343,7 +343,11 @@ export default async function ArnoBotLandingPage() {
       {/* FOOTER */}
       <footer>
         <Link href="/" className="footer-logo">ARNOBOT.</Link>
-        <span className="footer-copy">© Since 2007 · CC BY-ND 4.0</span>
+        <span style={{ display: 'flex', gap: 24 }}>
+          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>VOORWAARDEN</Link>
+          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>PRIVACY</Link>
+        </span>
+        <span className="footer-copy">© Since 2007 · Royal Dutch Sales</span>
       </footer>
     </>
   )
