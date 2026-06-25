@@ -78,7 +78,8 @@ export default function VoorwaardenPage() {
               num: 'ARTIKEL 7', title: 'Opzegging',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement opzeggen via de accountpagina of per e-mail aan <a href="mailto:cancel@arno.bot">cancel@arno.bot</a>.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De opzegtermijn bedraagt één kalendermaand. Opzegging dient te worden ingediend vóór de eerste van de maand en gaat in op de eerste dag van de daaropvolgende maand. De Gebruiker is over deze laatste maand de volledige abonnementsprijs verschuldigd.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor maandelijks abonnement bedraagt de opzegtermijn één kalendermaand. Opzegging dient te worden ingediend vóór de eerste van de maand en gaat in op de eerste dag van de daaropvolgende maand. De Gebruiker is over deze laatste maand de volledige abonnementsprijs verschuldigd.</p>,
+                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor jaarlijks abonnement geldt een opzegtermijn van twee maanden vóór de verlengingsdatum. Wordt niet tijdig opgezegd, dan wordt het abonnement automatisch verlengd voor één jaar. Consumenten hebben te allen tijde het recht het abonnement op te zeggen met inachtneming van een opzegtermijn van twee maanden.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
               ],
             },
