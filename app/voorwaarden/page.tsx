@@ -79,7 +79,7 @@ export default function VoorwaardenPage() {
         <div className="nav-links">
           <Link href="/">HOME</Link>
           <Link href="/bio">ARNO</Link>
-          <a href="https://arno.bot/arnobot">BOT</a>
+          <a href="https://www.arno.bot/">BOT</a>
           <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer">CANVAS</a>
           <a href="https://arno.blog/subscribe" target="_blank" rel="noopener noreferrer" className="nav-cta">SUBSCRIBE</a>
         </div>
