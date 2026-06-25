@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import PublicNav from '@/app/components/PublicNav'
 
 export const metadata = {
   title: 'Algemene voorwaarden: ArnoBot',
@@ -16,17 +16,7 @@ export default function VoorwaardenPage() {
         a:hover { text-decoration: underline; }
       `}</style>
 
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 clamp(20px, 4vw, 40px)', height: 64,
-        display: 'flex', alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(17,24,39,0.95)', backdropFilter: 'blur(12px)',
-      }}>
-        <Link href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
-          ARNO<span style={{ color: '#f59e0b' }}>BOT.</span>
-        </Link>
-      </nav>
+      <PublicNav />
 
       <div style={{ minHeight: '100vh', background: '#111827' }}>
         <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
