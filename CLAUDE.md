@@ -1,5 +1,20 @@
 # Claude Code — project instructies
 
+## Werkwijze bij meerdelige verzoeken — ALTIJD
+
+Bij elk verzoek met meer dan één onderdeel:
+
+1. **Schrijf de checklist eerst**, zichtbaar in de response, vóór enige wijziging:
+   - `[ ] onderdeel 1`
+   - `[ ] onderdeel 2`
+   - etc.
+
+2. **Loop de lijst na vóór de commit.** Elk onderdeel expliciet afgevinkt, niet impliciet aangenomen.
+
+3. **Bij twijfel of iets in scope valt: vragen, niet zelf beslissen.**
+
+Dit geldt ook als de verzoeken als losse zinnen in één bericht staan.
+
 ## Git
 - Na elke commit direct pushen naar origin master: `git push origin master`
 - Nooit alleen committen zonder te pushen — Vercel deployt alleen via GitHub
