@@ -349,7 +349,7 @@ export default async function ArnoBotLandingPage() {
           <Link href="/voorwaarden" className="footer-link">VOORWAARDEN</Link>
           <Link href="/privacy" className="footer-link">PRIVACY</Link>
         </span>
-        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2025 Royal Dutch Sales</span>
+        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2026 Royal Dutch Sales</span>
       </footer>
     </>
   )
