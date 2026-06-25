@@ -63,7 +63,7 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 5', title: 'Gebruik en licentie',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales verleent de Gebruiker een niet-exclusieve, niet-overdraagbare licentie voor het gebruik van ArnoBot gedurende de looptijd van het abonnement.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales verleent de Gebruiker een niet-exclusieve, niet-overdraagbare licentie voor het gebruik van ArnoBot gedurende de looptijd van het abonnement of de proefperiode.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het is niet toegestaan ArnoBot te gebruiken voor onrechtmatige doeleinden, de werking te verstoren, of toegang te verlenen aan derden buiten het afgesproken aantal gebruikers.</p>,
               ],
             },
@@ -75,24 +75,24 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 7', title: 'Aansprakelijkheid',
-              content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales is niet aansprakelijk voor indirecte schade, gevolgschade of gederfde winst als gevolg van het gebruik van ArnoBot.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De aansprakelijkheid van Royal Dutch Sales is in alle gevallen beperkt tot het bedrag dat de Gebruiker in de drie maanden voorafgaand aan de schade heeft betaald.</p>,
-              ],
-            },
-            {
-              num: 'ARTIKEL 8', title: 'Opzegging',
+              num: 'ARTIKEL 7', title: 'Opzegging',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement op elk moment opzeggen via de accountpagina. Opzegging per e-mail aan <a href="mailto:arno@arno.bot">arno@arno.bot</a> is eveneens mogelijk. De toegang blijft actief tot het einde van de lopende betaalperiode.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
               ],
             },
             {
-              num: 'ARTIKEL 9', title: 'Overmacht',
+              num: 'ARTIKEL 8', title: 'Overmacht',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales is niet gehouden tot nakoming van enige verplichting indien zij daartoe verhinderd is als gevolg van overmacht. Hieronder valt onder meer: storingen bij externe dienstverleners (waaronder Anthropic, Supabase, Vercel of Clerk), internetstoringen, cyberaanvallen en overheidsmaatregelen.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>In geval van overmacht worden de verplichtingen opgeschort zolang de situatie voortduurt. Royal Dutch Sales stelt de Gebruiker zo spoedig mogelijk op de hoogte.</p>,
+              ],
+            },
+            {
+              num: 'ARTIKEL 9', title: 'Wijziging van de voorwaarden',
+              content: [
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales behoudt zich het recht voor deze voorwaarden te wijzigen. Wijzigingen worden minimaal 14 dagen van tevoren per e-mail aangekondigd aan actieve gebruikers.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Voortzetting van het gebruik van ArnoBot na de ingangsdatum van een wijziging geldt als aanvaarding van de nieuwe voorwaarden.</p>,
               ],
             },
             {
