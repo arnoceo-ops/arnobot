@@ -88,6 +88,7 @@ export default async function AdminWidgetPage({
           <a href="/bot/admin" style={navLinkStyle(false)}>APP</a>
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>EVALUATIES</a>
+          <a href="/bot/admin/emails" style={navLinkStyle(false)}>EMAILS</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(true)}>BLOG</a>
