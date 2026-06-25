@@ -140,7 +140,9 @@ export default async function ArnoBotLandingPage() {
           border-top: 1px solid #1f2937;
         }
         .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #f59e0b; letter-spacing: 3px; text-decoration: none; }
-        .footer-copy { font-size: 10px; color: #374151; }
+        .footer-copy { font-size: 11px; color: #6b7280; letter-spacing: 1px; }
+        .footer-link { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #6b7280; text-decoration: none; transition: color 0.2s; }
+        .footer-link:hover { color: #9ca3af; }
 
         /* ── MOBILE ── */
         @media (max-width: 768px) {
@@ -344,10 +346,10 @@ export default async function ArnoBotLandingPage() {
       <footer>
         <Link href="/" className="footer-logo">ARNOBOT.</Link>
         <span style={{ display: 'flex', gap: 24 }}>
-          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>VOORWAARDEN</Link>
-          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textDecoration: 'none' }}>PRIVACY</Link>
+          <Link href="/voorwaarden" className="footer-link">VOORWAARDEN</Link>
+          <Link href="/privacy" className="footer-link">PRIVACY</Link>
         </span>
-        <span className="footer-copy">© Since 2007 · Royal Dutch Sales</span>
+        <span className="footer-copy">© 2025 Royal Dutch Sales</span>
       </footer>
     </>
   )
