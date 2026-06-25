@@ -107,11 +107,8 @@ export default function HerstartPage() {
 
         {status === 'paid_only' && (
           <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '24px 28px' }}>
-            <p style={{ ...body, marginBottom: 16 }}>
-              Je hebt al twee gratis trials gehad. Een derde gratis ronde zit er niet in.
-            </p>
             <p style={{ ...body, marginBottom: 32 }}>
-              Wil je toch aan de slag? Start gewoon een betaald account. Graag.
+              Je hebt al een trial gehad, vervolgens een tweede kans gekregen voor nog eens een trial van 30 dagen, en nu wil je er nog een? Bummer. Je mag starten met een betaalde account. Graag. Of niet. Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, dan. It&apos;s your call.
             </p>
             <a
               href="mailto:arno@arno.bot"
