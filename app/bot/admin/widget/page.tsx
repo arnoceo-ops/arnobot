@@ -47,7 +47,7 @@ export default async function AdminWidgetPage({
   const params = await searchParams
   const today = new Date().toISOString().slice(0, 10)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const from = parseDate(params.from || '') || sevenDaysAgo
+  const from = parseDate(params.from || '') || today
   const to = parseDate(params.to || '') || today
   const sort = params.sort || 'date_desc'
 
