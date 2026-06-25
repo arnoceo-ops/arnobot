@@ -4,18 +4,19 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
+import type { HerstartStatus } from '@/app/api/bot/herstart/route'
 
-type Status = 'loading' | 'active' | 'winback_14' | 'full_30' | 'not_eligible' | 'done' | 'error'
+type PageStatus = HerstartStatus | 'loading' | 'done' | 'error'
 
 export default function HerstartPage() {
   const { isLoaded } = useUser()
-  const [status, setStatus] = useState<Status>('loading')
+  const [status, setStatus] = useState<PageStatus>('loading')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     fetch('/api/bot/herstart')
       .then(r => r.json())
-      .then(d => setStatus(d.status as Status))
+      .then(d => setStatus(d.status as PageStatus))
       .catch(() => setStatus('error'))
   }, [])
 
@@ -24,6 +25,7 @@ export default function HerstartPage() {
   const label: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8, display: 'block' }
   const body: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 24 }
   const btn: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer' }
+  const secBtn: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, background: 'transparent', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer' }
 
   async function handleHerstart() {
     setSubmitting(true)
@@ -37,6 +39,8 @@ export default function HerstartPage() {
       setSubmitting(false)
     }
   }
+
+  const canStart = status === 'winback' || status === 'second_trial' || status === 'third_trial'
 
   return (
     <>
@@ -65,33 +69,12 @@ export default function HerstartPage() {
           </>
         )}
 
-        {status === 'winback_14' && (
+        {canStart && (
           <>
             <p style={body}>
-              Je hebt ArnoBot een tijdje gemist. Dat begrijpen we. Start een gratis trial van 14 dagen om te zien of je er klaar voor bent.
+              Je hebt nog een kans voor een volledige gratis trial van 30 dagen. Je data staat er nog. Je kunt gewoon verdergaan waar je gebleven was.
             </p>
-            <p style={{ ...body, marginBottom: 40 }}>
-              Geen verplichtingen. Je data staat er nog. Je kunt gewoon verdergaan waar je gebleven was.
-            </p>
-            <button
-              onClick={handleHerstart}
-              disabled={submitting}
-              className="primary-btn"
-              style={{ ...btn, opacity: submitting ? 0.6 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}
-            >
-              {submitting ? 'BEZIG...' : 'START 14-DAAGSE TRIAL'}
-            </button>
-          </>
-        )}
-
-        {status === 'full_30' && (
-          <>
-            <p style={body}>
-              Je bent meer dan 6 maanden weg geweest. Je kunt nu opnieuw een volledige gratis trial van 30 dagen starten.
-            </p>
-            <p style={{ ...body, marginBottom: 40 }}>
-              Je eerdere data staat er nog. Je kunt gewoon verdergaan.
-            </p>
+            <p style={{ ...body, marginBottom: 40 }}>Geen verplichtingen.</p>
             <button
               onClick={handleHerstart}
               disabled={submitting}
@@ -103,21 +86,56 @@ export default function HerstartPage() {
           </>
         )}
 
+        {status === 'too_late' && (
+          <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '24px 28px' }}>
+            <p style={{ ...body, marginBottom: 16 }}>
+              Het aanbod voor een tweede trial is verlopen. Je was net iets te laat.
+            </p>
+            <p style={{ ...body, marginBottom: 32 }}>
+              Wil je toch toegang? Arno regelt het persoonlijk.
+            </p>
+            <a
+              href="mailto:arno@arno.bot"
+              style={{ ...secBtn, textDecoration: 'none', display: 'inline-block' }}
+            >
+              MAIL ARNO
+            </a>
+          </div>
+        )}
+
+        {status === 'paid_only' && (
+          <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '24px 28px' }}>
+            <p style={{ ...body, marginBottom: 16 }}>
+              Je hebt al twee gratis trials gehad. Een derde gratis ronde zit er niet in.
+            </p>
+            <p style={{ ...body, marginBottom: 32 }}>
+              Wil je toch aan de slag? Start gewoon een betaald account. Graag.
+            </p>
+            <a
+              href="mailto:arno@arno.bot"
+              style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
+              className="primary-btn"
+            >
+              OKAY, DAN
+            </a>
+          </div>
+        )}
+
+        {status === 'not_eligible' && (
+          <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '20px 24px' }}>
+            <p style={body}>Je komt nog niet in aanmerking voor een nieuwe trial. Vragen? Mail <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a>.</p>
+          </div>
+        )}
+
         {status === 'done' && (
           <>
             <div style={{ background: '#1f2937', borderLeft: '3px solid #44cc88', padding: '20px 24px', marginBottom: 32 }}>
-              <p style={{ ...body, color: '#44cc88', marginBottom: 0 }}>✓ Je account is weer actief.</p>
+              <p style={{ ...body, color: '#44cc88', marginBottom: 0 }}>Je account is weer actief.</p>
             </div>
             <Link href="/bot" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }} className="primary-btn">
               NAAR ARNOBOT
             </Link>
           </>
-        )}
-
-        {status === 'not_eligible' && (
-          <div style={{ background: '#1f2937', borderLeft: '3px solid #374151', padding: '20px 24px' }}>
-            <p style={body}>Je komt nog niet in aanmerking voor een nieuwe trial. Heb je vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a>.</p>
-          </div>
         )}
 
         {status === 'error' && (

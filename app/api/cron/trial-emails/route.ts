@@ -69,7 +69,9 @@ export async function GET(req: NextRequest) {
 
     // --- Auto-cancel na 30 dagen zonder opt-in ---
     if (now > trialEnd && !user.renewal_requested_at) {
-      await supabase.from('approved_users').update({ is_active: false }).eq('user_id', user.user_id)
+      await supabase.from('approved_users')
+        .update({ is_active: false, deactivated_at: now.toISOString() })
+        .eq('user_id', user.user_id)
       await send('trial_afgelopen').catch(() => {})
       cancelled++
       continue
@@ -181,15 +183,16 @@ export async function GET(req: NextRequest) {
     blocked++
   }
 
-  // --- Loop 3: winback email 30 dagen na deactivatie ---
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  // --- Loop 3: winback email 15 dagen na einde trial ---
+  const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString()
   const { data: deactivated } = await supabase
     .from('approved_users')
     .select('user_id, email, voornaam, deactivated_at')
     .eq('is_active', false)
     .not('deactivated_at', 'is', null)
     .is('winback_sent_at', null)
-    .lte('deactivated_at', thirtyDaysAgo)
+    .is('trial_reactivated_at', null)
+    .lte('deactivated_at', fifteenDaysAgo)
 
   for (const user of deactivated ?? []) {
     if (!user.email) continue

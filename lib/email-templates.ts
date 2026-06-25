@@ -36,7 +36,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string 
   geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling' },
   trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
-  winback:               { label: 'Win-back',              description: '30 dagen na deactivatie, 14-daagse trial aanbieding' },
+  winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding' },
 }
 
 export function getEmailTemplate(
@@ -122,10 +122,10 @@ export function getEmailTemplate(
       }
     case 'winback':
       return {
-        subject: `${prefix}${naam}, 30 dagen zonder ArnoBot.`,
+        subject: `${prefix}${naam}, je krijgt nog een kans.`,
         html: emailHtml(
-          `Je hebt ArnoBot 30 dagen geleden achter je gelaten. Misschien was het timing. Misschien miste je iets.<br /><br />We willen je de kans geven het opnieuw te proberen. Niet 30 dagen dit keer, maar 14. Geen verplichtingen.<br /><br />Als je daarna verder wil, weet je hoe het werkt.`,
-          'START 14-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest
+          `Je trial is twee weken geleden afgelopen. Misschien was het timing. Misschien miste je iets.<br /><br />We geven je de kans om het opnieuw te proberen. 30 dagen gratis, zonder verplichtingen.<br /><br />Klik hieronder om je tweede trial te starten. Dit aanbod vervalt over 5 dagen.`,
+          'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest
         ),
       }
     case 'opzegging_bevestiging':

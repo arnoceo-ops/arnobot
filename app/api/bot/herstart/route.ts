@@ -1,17 +1,60 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
+import { emailHtml } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-function eligibility(deactivatedAt: string): 'winback_14' | 'full_30' | 'not_eligible' {
-  const days = (Date.now() - new Date(deactivatedAt).getTime()) / (1000 * 60 * 60 * 24)
-  if (days >= 180) return 'full_30'
-  if (days >= 30) return 'winback_14'
-  return 'not_eligible'
+export type HerstartStatus =
+  | 'active'
+  | 'not_eligible'
+  | 'winback'
+  | 'too_late'
+  | 'paid_only'
+  | 'second_trial'
+  | 'third_trial'
+
+function eligibility(user: {
+  is_active: boolean
+  deactivated_at: string | null
+  winback_sent_at: string | null
+  trial_reactivated_at: string | null
+  trial_start: string | null
+}): HerstartStatus {
+  if (user.is_active) return 'active'
+  if (!user.deactivated_at) return 'not_eligible'
+
+  const now = Date.now()
+
+  if (user.trial_reactivated_at) {
+    const reactivatedAt = new Date(user.trial_reactivated_at).getTime()
+
+    // Third trial already activated if current trial_start is 200+ days after reactivation
+    if (user.trial_start) {
+      const trialStart = new Date(user.trial_start).getTime()
+      if ((trialStart - reactivatedAt) / (1000 * 60 * 60 * 24) >= 200) return 'paid_only'
+    }
+
+    // 30d second trial + 180d block = eligible for third trial at 210d
+    const daysSinceReactivation = (now - reactivatedAt) / (1000 * 60 * 60 * 24)
+    if (daysSinceReactivation >= 210) return 'third_trial'
+    return 'paid_only'
+  }
+
+  if (!user.winback_sent_at) return 'not_eligible'
+
+  const daysSinceWinback = (now - new Date(user.winback_sent_at).getTime()) / (1000 * 60 * 60 * 24)
+  if (daysSinceWinback <= 5) return 'winback'
+
+  const daysSinceDeactivation = (now - new Date(user.deactivated_at).getTime()) / (1000 * 60 * 60 * 24)
+  if (daysSinceDeactivation >= 201) return 'second_trial'
+
+  return 'too_late'
 }
 
 export async function GET() {
@@ -20,16 +63,13 @@ export async function GET() {
 
   const { data: user } = await supabase
     .from('approved_users')
-    .select('is_active, deactivated_at, trial_reactivated_at')
+    .select('is_active, deactivated_at, winback_sent_at, trial_reactivated_at, trial_start')
     .eq('user_id', userId)
     .maybeSingle()
 
   if (!user) return NextResponse.json({ error: 'Niet gevonden' }, { status: 404 })
-  if (user.is_active) return NextResponse.json({ status: 'active' })
-  if (!user.deactivated_at) return NextResponse.json({ status: 'not_eligible' })
 
-  const type = eligibility(user.deactivated_at)
-  return NextResponse.json({ status: type })
+  return NextResponse.json({ status: eligibility(user) })
 }
 
 export async function POST() {
@@ -38,25 +78,24 @@ export async function POST() {
 
   const { data: user } = await supabase
     .from('approved_users')
-    .select('is_active, deactivated_at')
+    .select('is_active, deactivated_at, winback_sent_at, trial_reactivated_at, trial_start, email, voornaam')
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (!user || !user.deactivated_at) return NextResponse.json({ error: 'Niet in aanmerking' }, { status: 400 })
+  if (!user) return NextResponse.json({ error: 'Niet gevonden' }, { status: 404 })
 
-  const type = eligibility(user.deactivated_at)
-  if (type === 'not_eligible') return NextResponse.json({ error: 'Nog niet in aanmerking' }, { status: 400 })
+  const status = eligibility(user)
+  if (!['winback', 'second_trial', 'third_trial'].includes(status)) {
+    return NextResponse.json({ error: 'Niet in aanmerking' }, { status: 400 })
+  }
 
-  // 14-daagse trial: trial_start 16 dagen terug zodat trial over 14 dagen eindigt
-  // 30-daagse trial: trial_start = nu
-  const trialStart = type === 'winback_14'
-    ? new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString()
-    : new Date().toISOString()
+  const now = new Date()
 
   await supabase.from('approved_users').update({
     is_active: true,
-    trial_start: trialStart,
-    trial_reactivated_at: new Date().toISOString(),
+    trial_start: now.toISOString(),
+    // Keep existing trial_reactivated_at for third trial (needed for eligibility check after)
+    trial_reactivated_at: user.trial_reactivated_at ?? now.toISOString(),
     cancelled_at: null,
     deactivated_at: null,
     renewal_requested_at: null,
@@ -65,5 +104,23 @@ export async function POST() {
     expires_at: null,
   }).eq('user_id', userId)
 
-  return NextResponse.json({ ok: true, type })
+  // Clear email log so trial sequence restarts from dag1
+  await supabase.from('arnobot_email_log').delete().eq('user_id', userId)
+
+  if (status === 'third_trial') {
+    const naam = user.voornaam || 'onbekend'
+    const email = user.email || 'onbekend'
+    const html = emailHtml(
+      `${naam} (${email}) is vandaag begonnen aan een derde trial.`,
+      'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
+    )
+    await resend.emails.send({
+      from: 'ArnoBot <noreply@arno.bot>',
+      to: 'pannekoek@arno.bot',
+      subject: `Derde trial: ${naam}`,
+      html,
+    }).catch(() => {})
+  }
+
+  return NextResponse.json({ ok: true, status })
 }

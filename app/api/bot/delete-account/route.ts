@@ -13,9 +13,15 @@ export async function DELETE() {
 
   try {
     await Promise.all([
+      // Persoonlijk profiel verwijderen
       supabaseAdmin.from('arnobot_blog_profiles').delete().eq('user_id', userId),
-      supabaseAdmin.from('arnobot_rds_logs').delete().eq('user_id', userId),
-      supabaseAdmin.from('approved_users').delete().eq('user_id', userId),
+      // approved_users anonimiseren: persoonsdata wissen, zakelijke historie bewaren
+      supabaseAdmin.from('approved_users').update({
+        voornaam: null, achternaam: null, full_name: null,
+        email: null, linkedin: null,
+        is_active: false,
+      }).eq('user_id', userId),
+      // arnobot_rds_logs bewaard voor geanonimiseerde analyse
     ])
 
     const clerk = await clerkClient()

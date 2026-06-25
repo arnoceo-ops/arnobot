@@ -92,7 +92,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at'),
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at'),
     supabase
       .from('arnobot_rds_logs')
       .select('user_id, session_id, created_at')
@@ -254,7 +254,20 @@ export default async function GebruikersPage({
                 }
                 {/* Naam + email */}
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '2px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <p style={{ fontWeight: 700, fontSize: '16px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{name}</p>
+                    {(() => {
+                      const tr = (u as { trial_reactivated_at?: string | null }).trial_reactivated_at
+                      const ts = u.trial_start
+                      if (!tr) return null
+                      const isThird = ts && ((new Date(ts).getTime() - new Date(tr).getTime()) / (1000 * 60 * 60 * 24)) >= 200
+                      return (
+                        <span style={{ fontSize: '10px', letterSpacing: '2px', fontWeight: 700, color: isThird ? '#cc2200' : '#f59e0b', background: isThird ? '#2a1010' : '#1e1a0a', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
+                          {isThird ? '3e TRIAL' : '2e TRIAL'}
+                        </span>
+                      )
+                    })()}
+                  </div>
                   <p style={{ fontSize: '12px', color: '#6b7280' }}>{u.email || '—'}</p>
                 </div>
                 {/* Status */}
