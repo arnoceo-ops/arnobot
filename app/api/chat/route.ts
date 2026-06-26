@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 30
 
+const INJECTION_PATTERNS = [
+  /negeer\s+(alle?\s+)?(vorige|eerdere|bovenstaande)\s+instructies/i,
+  /ignore\s+(all\s+)?(previous|prior|above|earlier)\s+instructions/i,
+  /disregard\s+(all\s+)?instructions/i,
+  /you\s+are\s+now\s+(a|an)\s+/i,
+  /jij?\s+bent\s+nu\s+(een\s+)?/i,
+  /nieuwe?\s+instructies:/i,
+  /new\s+instructions:/i,
+  /system\s*prompt/i,
+  /vergeet\s+(alles|alle\s+instructies)/i,
+  /forget\s+(everything|all\s+instructions)/i,
+  /<\s*system\s*>/i,
+  /\[INST\]/i,
+  /###\s*instruction/i,
+]
+
+function detectPromptInjection(text: string): boolean {
+  return INJECTION_PATTERNS.some(p => p.test(text))
+}
+
 const ALLOWED_ORIGINS = [
   'https://arno.bot',
   'https://www.arno.bot',
@@ -124,6 +144,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
     }
     if (Array.isArray(history) && history.length > 40) {
+      return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
+    }
+    if (detectPromptInjection(question)) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
     }
 
