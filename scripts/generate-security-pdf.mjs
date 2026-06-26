@@ -30,12 +30,9 @@ const s = StyleSheet.create({
   coverSub:   { fontSize: 10.5, color: light, lineHeight: 1.7 },
   coverMeta:  { marginTop: 28, fontSize: 8.5, color: muted },
 
-  body: {
-    paddingLeft: MARGIN, paddingRight: MARGIN,
-    paddingBottom: FOOTER_SPACE,
-  },
-  bodyTop: { paddingTop: 36 },
-  bodyTopInner: { paddingTop: 44 },
+  bodyP1: { paddingLeft: MARGIN, paddingRight: MARGIN, paddingBottom: FOOTER_SPACE, paddingTop: 36 },
+  bodyP2: { paddingLeft: MARGIN, paddingRight: MARGIN, paddingBottom: FOOTER_SPACE, paddingTop: 52 },
+  bodyP3: { paddingLeft: MARGIN, paddingRight: MARGIN, paddingBottom: FOOTER_SPACE, paddingTop: 52 },
 
   intro: { paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 28 },
   introText: { fontSize: 10.5, lineHeight: 1.8, color: mid },
@@ -137,7 +134,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
       el(Text, { style: s.coverMeta }, `Versie 1.0  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
-    el(View, { style: [s.body, s.bodyTop] },
+    el(View, { style: s.bodyP1 },
 
       el(View, { style: s.intro, wrap: false },
         el(Text, { style: s.introText },
@@ -171,7 +168,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
 
   // ── PAGINA 2: gegevensisolatie + aanvallen + invoer ──────────
   el(Page, { size: 'A4', style: s.page },
-    el(View, { style: [s.body, s.bodyTopInner] },
+    el(View, { style: s.bodyP2 },
 
       Sec('JOUW DATA IS VAN JOU', 'Gegevensisolatie',
         el(Text, { style: s.body1 },
@@ -216,7 +213,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
 
   // ── PAGINA 3: headers + software + rechten + contact ──────────
   el(Page, { size: 'A4', style: s.page },
-    el(View, { style: [s.body, s.bodyTopInner] },
+    el(View, { style: s.bodyP3 },
 
       Sec('BEVEILIGING IN DE BROWSER', 'HTTP-beveiligingsheaders',
         el(Text, { style: s.body1 }, 'Elke pagina van ArnoBot wordt geserveerd met beveiligingsheaders die de browser instrueert hoe hij de inhoud moet behandelen.'),
