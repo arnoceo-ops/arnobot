@@ -167,8 +167,8 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
   ),
 
   // ── PAGINA 2: gegevensisolatie + aanvallen + invoer ──────────
-  el(Page, { size: 'A4', style: s.page },
-    el(View, { style: s.bodyP2 },
+  el(Page, { size: 'A4', style: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingTop: 52, paddingLeft: MARGIN, paddingRight: MARGIN, paddingBottom: FOOTER_SPACE } },
+    el(View, null,
 
       Sec('JOUW DATA IS VAN JOU', 'Gegevensisolatie',
         el(Text, { style: s.body1 },
@@ -212,8 +212,8 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
   ),
 
   // ── PAGINA 3: headers + software + rechten + contact ──────────
-  el(Page, { size: 'A4', style: s.page },
-    el(View, { style: s.bodyP3 },
+  el(Page, { size: 'A4', style: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingTop: 52, paddingLeft: MARGIN, paddingRight: MARGIN, paddingBottom: FOOTER_SPACE } },
+    el(View, null,
 
       Sec('BEVEILIGING IN DE BROWSER', 'HTTP-beveiligingsheaders',
         el(Text, { style: s.body1 }, 'Elke pagina van ArnoBot wordt geserveerd met beveiligingsheaders die de browser instrueert hoe hij de inhoud moet behandelen.'),
