@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
@@ -9,6 +10,9 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
   const body = await req.json()
   const { naam, frequentie, onderdelen, waardevol, ontbreekt, persona, personaAnders, tariefstelling, aanbevelen, aanbevelenToelichting, slotwoord } = body
 
@@ -26,7 +30,10 @@ export async function POST(req: NextRequest) {
     slotwoord: slotwoord || null,
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Evaluatie insert error:', error.message)
+    return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+  }
 
   const r = (label: string, val: string | string[] | undefined) => {
     if (!val || (Array.isArray(val) && val.length === 0)) return ''
