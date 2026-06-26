@@ -115,9 +115,17 @@ ${context}`
 
 export async function POST(req: NextRequest) {
   try {
-    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId } = await req.json()
+    const body = await req.json()
+    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId } = body
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
+
+    if (typeof question !== 'string' || question.length > 4000) {
+      return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
+    }
+    if (Array.isArray(history) && history.length > 40) {
+      return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
+    }
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
