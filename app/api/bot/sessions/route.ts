@@ -114,7 +114,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('arnobot_blog_sessions')
-    .select('*')
+    .select('session_id, title, summary, message_count, blog_suggestions, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(100)
