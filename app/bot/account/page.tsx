@@ -213,11 +213,11 @@ export default function AccountPage() {
         {/* Account verwijderen */}
         <div style={{ ...section, marginBottom: 0 }}>
           <p style={{ ...label, color: '#cc2200' }}>ACCOUNT VERWIJDEREN</p>
-          <p style={body}>Je kunt hier een verzoek indienen om je account en persoonsgegevens te verwijderen. We verwerken dit binnen 5 werkdagen.</p>
+          <p style={body}>Je kunt hier een verzoek indienen om je account en persoonsgegevens te verwijderen. We verwerken dit binnen 10 werkdagen.</p>
 
           {deleteDone ? (
             <div style={{ background: '#1f2937', borderLeft: '3px solid #44cc88', padding: '20px 24px' }}>
-              <p style={{ color: '#44cc88', fontSize: 13, letterSpacing: 2 }}>✓ Verzoek ontvangen. We verwerken dit binnen 5 werkdagen.</p>
+              <p style={{ color: '#44cc88', fontSize: 13, letterSpacing: 2 }}>✓ Verzoek ontvangen. We verwerken dit binnen 10 werkdagen.</p>
             </div>
           ) : !deleteConfirm ? (
             <button

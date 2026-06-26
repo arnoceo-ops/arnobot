@@ -159,7 +159,8 @@ export default function PrivacyPage() {
                 <tr><th>Categorie</th><th>Bewaartermijn</th></tr>
               </thead>
               <tbody>
-                <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens en profiel</td><td>Zolang het account actief is. Na beëindiging verwijderd na 30 dagen, of eerder op verzoek via de accountpagina.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Persoonsgegevens en profiel</td><td>Zolang het account actief is. Na beëindiging verwijderd na 30 dagen, of eerder op verzoek.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Worden 30 dagen na beëindiging van het account geanonimiseerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
               </tbody>
             </table>
@@ -184,7 +185,7 @@ export default function PrivacyPage() {
               ))}
             </div>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-              Voor overige verzoeken: <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>. Verzoeken worden binnen 5 werkdagen beantwoord.
+              Voor overige verzoeken: <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>. Verzoeken worden binnen 10 werkdagen beantwoord.
             </p>
           </div>
 
