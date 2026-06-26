@@ -1,0 +1,82 @@
+name: Kwartaalcheck
+
+on:
+  schedule:
+    # 1 januari, 1 april, 1 juli, 1 oktober om 08:00 UTC
+    - cron: '0 8 1 1,4,7,10 *'
+  workflow_dispatch: # handmatig starten mag ook
+
+jobs:
+  create-issue:
+    name: Maak kwartaalcheck issue aan
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Bepaal kwartaal
+        id: kwartaal
+        run: |
+          MONTH=$(date +%-m)
+          if [ $MONTH -eq 1 ]; then echo "label=Q1" >> $GITHUB_OUTPUT
+          elif [ $MONTH -eq 4 ]; then echo "label=Q2" >> $GITHUB_OUTPUT
+          elif [ $MONTH -eq 7 ]; then echo "label=Q3" >> $GITHUB_OUTPUT
+          else echo "label=Q4" >> $GITHUB_OUTPUT
+          fi
+          echo "jaar=$(date +%Y)" >> $GITHUB_OUTPUT
+
+      - name: Maak issue aan
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const kwartaal = '${{ steps.kwartaal.outputs.label }}'
+            const jaar = '${{ steps.kwartaal.outputs.jaar }}'
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Kwartaalcheck ${kwartaal} ${jaar} — ArnoBot`,
+              labels: ['maintenance'],
+              body: `## Kwartaalcheck ${kwartaal} ${jaar}
+
+Stuur dit issue door naar Claude Code met: **"doe de kwartaalcheck"**
+
+Claude loopt dan alle onderstaande rubrieken volledig na en rapporteert per punt.
+
+---
+
+### 1. Beveiliging
+- [ ] \`npm audit --production\` — nieuwe high/critical kwetsbaarheden?
+- [ ] Nieuwe API-routes gecheckt op auth, IDOR, error leaks?
+- [ ] Middleware scanner-blokkering nog volledig?
+
+### 2. Dependencies & tooling
+- [ ] Major versie-updates beschikbaar voor Next.js, Clerk, Supabase, Anthropic SDK, Sanity?
+- [ ] Openstaande Dependabot-PRs beoordelen
+
+### 3. AI-modelinventaris
+- [ ] Nieuwere of betere Anthropic-modellen beschikbaar?
+- [ ] Kosten per route nog acceptabel?
+
+### 4. Infrastructuur
+- [ ] Vercel: deprecated features in gebruik?
+- [ ] Supabase: RLS-policies nog correct, geen expirerende keys?
+- [ ] Clerk: webhooks actief, geen development-instance in productie?
+- [ ] Resend: DKIM geldig?
+
+### 5. Werking van de app
+- [ ] Happy path nalopen: inloggen, chat, sessie-einde, synthese, coaching, sparring
+- [ ] Cron-jobs succesvol gedraaid? (Vercel logs)
+- [ ] Onverwachte 500-fouten of time-outs in logs?
+
+### 6. AVG & gebruikers
+- [ ] Beveiligingsdocument \`/arnobot-beveiliging.pdf\` nog actueel?
+- [ ] Nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
+- [ ] Openstaande verwijderverzoeken of datavragen?
+
+### 7. Beveiligingsheaders
+- [ ] Test op securityheaders.com — target grade A
+- [ ] Test op observatory.mozilla.org
+
+---
+
+*Aangemaakt door de automatische kwartaalcheck workflow.*`
+            })
