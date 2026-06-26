@@ -1,3 +1,7 @@
+export function isValidEmail(email: unknown): email is string {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;`
 
 export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false) {

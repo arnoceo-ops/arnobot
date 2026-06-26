@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { isValidEmail } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   for (const user of users) {
-    if (!user.email) continue
+    if (!isValidEmail(user.email)) continue
 
     // Sla over als gebruiker nog nooit een gesprek heeft gevoerd
     const { count: totalCount } = await supabase

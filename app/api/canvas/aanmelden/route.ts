@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { isValidEmail } from '@/lib/email-templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,6 +11,10 @@ export async function POST(req: NextRequest) {
 
     if (!naam || !email || !bedrijf || !plan) {
       return NextResponse.json({ error: 'Ontbrekende velden' }, { status: 400 });
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: 'Ongeldig e-mailadres' }, { status: 400 });
     }
 
     const planLabel = plan === 'team' ? `Team (${seats} gebruikers)` : 'Solo';

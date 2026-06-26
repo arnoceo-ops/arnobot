@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { getEmailTemplate, type EmailType } from '@/lib/email-templates'
+import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   let blocked = 0
 
   for (const user of users) {
-    if (!user.email || !user.trial_start) continue
+    if (!isValidEmail(user.email) || !user.trial_start) continue
 
     const trialStart = new Date(user.trial_start)
     const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)

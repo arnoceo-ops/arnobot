@@ -2,6 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { isValidEmail } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
 
   // Email naar referrer
   const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
-  if (referrer.email) {
+  if (isValidEmail(referrer.email)) {
     await resend.emails.send({
       from: 'ArnoBot <noreply@arno.bot>',
       to: referrer.email,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { Resend } from 'resend'
+import { isValidEmail } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,7 +85,7 @@ export async function GET(req: NextRequest) {
       .eq('user_id', userId)
       .maybeSingle()
 
-    if (userRow?.email) {
+    if (isValidEmail(userRow?.email)) {
       const voornaam = userRow.voornaam || 'daar'
       resend.emails.send({
         from: 'ArnoBot <info@arno.bot>',
