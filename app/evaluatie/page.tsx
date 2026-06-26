@@ -190,12 +190,12 @@ export default function EvaluatiePage() {
                 ))}
               </div>
               {referentie === 'Tuurlijk' && (
-                <textarea rows={4} value={referentieTekst} onChange={e => setReferentieTekst(e.target.value)} placeholder="Schrijf hier je aanbeveling." />
+                <textarea rows={4} value={referentieTekst} onChange={e => setReferentieTekst(e.target.value)} placeholder="Go go, Gadget!" />
               )}
             </Block>
 
-            <Block nr="09" title="Is er niets wat nog gezegd wil worden?">
-              <textarea rows={4} value={slotwoord} onChange={e => setSlotwoord(e.target.value)} />
+            <Block nr="09" title="Is er iets wat nog gezegd wil worden?">
+              <textarea rows={4} value={slotwoord} onChange={e => setSlotwoord(e.target.value)} placeholder="Ja? Dat kan dan hier." />
             </Block>
 
             {error && (
