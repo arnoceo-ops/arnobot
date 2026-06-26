@@ -14,83 +14,97 @@ const light = '#9ca3af'
 const white = '#ffffff'
 const line  = '#e5e7eb'
 
+const MARGIN = 52
+const FOOTER_SPACE = 48 // ruimte voor footer onderaan
+
 const s = StyleSheet.create({
   page: { backgroundColor: white, fontFamily: 'Helvetica', color: mid },
 
-  // Cover
-  coverStripe: { backgroundColor: dark, paddingTop: 56, paddingBottom: 44, paddingLeft: 52, paddingRight: 52 },
-  coverLabel:  { fontSize: 8, letterSpacing: 3, color: amber, marginBottom: 10 },
-  coverTitle:  { fontSize: 28, fontFamily: 'Helvetica-Bold', color: white, lineHeight: 1.25, marginBottom: 14 },
-  coverSub:    { fontSize: 10.5, color: light, lineHeight: 1.7 },
-  coverMeta:   { marginTop: 28, fontSize: 8.5, color: muted },
+  coverStripe: {
+    backgroundColor: dark,
+    paddingTop: 56, paddingBottom: 44,
+    paddingLeft: MARGIN, paddingRight: MARGIN,
+  },
+  coverLabel: { fontSize: 8, letterSpacing: 3, color: amber, marginBottom: 10 },
+  coverTitle: { fontSize: 28, fontFamily: 'Helvetica-Bold', color: white, lineHeight: 1.25, marginBottom: 14 },
+  coverSub:   { fontSize: 10.5, color: light, lineHeight: 1.7 },
+  coverMeta:  { marginTop: 28, fontSize: 8.5, color: muted },
 
-  // Pagina body — expliciete stijl per pagina, geen spreads
-  bodyP1: { paddingLeft: 52, paddingRight: 52, paddingBottom: 52 },
-  bodyP2: { paddingLeft: 52, paddingRight: 52, paddingTop: 44, paddingBottom: 52 },
-  bodyP3: { paddingLeft: 52, paddingRight: 52, paddingTop: 44, paddingBottom: 52 },
+  body: {
+    paddingLeft: MARGIN, paddingRight: MARGIN,
+    paddingBottom: FOOTER_SPACE,
+  },
+  bodyTop: { paddingTop: 36 },
+  bodyTopInner: { paddingTop: 44 },
 
-  // Intro
-  intro:     { paddingTop: 32, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 28 },
+  intro: { paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 28 },
   introText: { fontSize: 10.5, lineHeight: 1.8, color: mid },
 
-  // Sectie
-  section:      { marginBottom: 26 },
+  // Secties — wrap:false zodat ze nooit doormidden knippen
+  section: { marginBottom: 24 },
   sectionLabel: { fontSize: 7.5, letterSpacing: 3, color: amber, marginBottom: 5 },
   sectionTitle: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: dark, marginBottom: 10 },
-  body1:        { fontSize: 10, lineHeight: 1.75, color: mid, marginBottom: 8 },
+  body1: { fontSize: 10, lineHeight: 1.75, color: mid, marginBottom: 8 },
 
-  // Bulletlijst
-  item:     { flexDirection: 'row', marginBottom: 7, alignItems: 'flex-start' },
-  itemDot:  { width: 14, fontSize: 10, color: amber, marginTop: 1 },
+  item: { flexDirection: 'row', marginBottom: 7, alignItems: 'flex-start' },
+  itemDot: { width: 14, fontSize: 10, color: amber, marginTop: 1 },
   itemText: { flex: 1, fontSize: 10, lineHeight: 1.65, color: mid },
   itemBold: { fontFamily: 'Helvetica-Bold', color: dark },
 
-  divider: { borderBottomWidth: 1, borderBottomColor: line, marginBottom: 26, marginTop: 4 },
+  divider: { borderBottomWidth: 1, borderBottomColor: line, marginBottom: 24, marginTop: 4 },
 
-  // Uitlichtbox
-  box:     { backgroundColor: '#f9fafb', borderLeftWidth: 3, borderLeftColor: amber, paddingTop: 10, paddingBottom: 10, paddingLeft: 14, paddingRight: 14, marginBottom: 16, marginTop: 4 },
+  box: {
+    backgroundColor: '#f9fafb',
+    borderLeftWidth: 3, borderLeftColor: amber,
+    paddingTop: 10, paddingBottom: 10,
+    paddingLeft: 14, paddingRight: 14,
+    marginBottom: 12, marginTop: 4,
+  },
   boxBold: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: dark, marginBottom: 3 },
   boxText: { fontSize: 9.5, lineHeight: 1.65, color: mid },
 
-  // Tabel
-  tHead: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: dark, paddingBottom: 5, marginBottom: 0 },
+  tHead: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: dark, paddingBottom: 5 },
   tRow:  { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: line, paddingTop: 6, paddingBottom: 6 },
-  tC1h:  { width: '36%', fontSize: 9, fontFamily: 'Helvetica-Bold', color: dark },
-  tC2h:  { width: '64%', fontSize: 9, fontFamily: 'Helvetica-Bold', color: dark },
-  tC1:   { width: '36%', fontSize: 9, color: dark, fontFamily: 'Helvetica-Bold', paddingRight: 8 },
-  tC2:   { width: '64%', fontSize: 9, color: mid, lineHeight: 1.5 },
+  tC1h:  { width: '34%', fontSize: 9, fontFamily: 'Helvetica-Bold', color: dark },
+  tC2h:  { width: '66%', fontSize: 9, fontFamily: 'Helvetica-Bold', color: dark },
+  tC1:   { width: '34%', fontSize: 9, color: dark, fontFamily: 'Helvetica-Bold', paddingRight: 8 },
+  tC2:   { width: '66%', fontSize: 9, color: mid, lineHeight: 1.5 },
 
-  // Footer
-  footer:  { position: 'absolute', bottom: 26, left: 52, right: 52, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: line, paddingTop: 7 },
-  footerL: { fontSize: 7.5, color: muted },
-  footerR: { fontSize: 7.5, color: muted },
+  footer: {
+    position: 'absolute',
+    bottom: 24, left: MARGIN, right: MARGIN,
+    flexDirection: 'row', justifyContent: 'space-between',
+    borderTopWidth: 1, borderTopColor: line, paddingTop: 7,
+  },
+  footerText: { fontSize: 7.5, color: muted },
 })
 
 const DATE = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 function el(t, p, ...c) { return React.createElement(t, p, ...c) }
 
-function Item(label, desc) {
-  return el(View, { style: s.item },
-    el(Text, { style: s.itemDot }, '·'),
-    el(Text, { style: s.itemText },
-      el(Text, { style: s.itemBold }, label + '  '),
-      desc
-    )
-  )
-}
-
+// Sectie die nooit doormidden knipt
 function Sec(label, title, ...children) {
-  return el(View, { style: s.section },
+  return el(View, { style: s.section, wrap: false },
     el(Text, { style: s.sectionLabel }, label),
     el(Text, { style: s.sectionTitle }, title),
     ...children
   )
 }
 
+function Item(bold, desc) {
+  return el(View, { style: s.item },
+    el(Text, { style: s.itemDot }, '·'),
+    el(Text, { style: s.itemText },
+      el(Text, { style: s.itemBold }, bold + '  '),
+      desc
+    )
+  )
+}
+
 function HR() { return el(View, { style: s.divider }) }
 
 function THead(c1, c2) {
-  return el(View, { style: s.tHead },
+  return el(View, { style: s.tHead, wrap: false },
     el(Text, { style: s.tC1h }, c1),
     el(Text, { style: s.tC2h }, c2),
   )
@@ -102,28 +116,30 @@ function TRow(c1, c2) {
   )
 }
 
-function Footer(page) {
+function Footer(n) {
   return el(View, { style: s.footer },
-    el(Text, { style: s.footerL }, 'ArnoBot — Hoe wij jouw gegevens beschermen'),
-    el(Text, { style: s.footerR }, `${DATE}  ·  pagina ${page} van 3`)
+    el(Text, { style: s.footerText }, 'ArnoBot — Hoe wij jouw gegevens beschermen'),
+    el(Text, { style: s.footerText }, `${DATE}  ·  pagina ${n} van 3`)
   )
 }
 
 const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen', author: 'ArnoBot' },
 
-  // ── PAGINA 1 ─────────────────────────────────────
+  // ── PAGINA 1: cover + intro + infrastructuur ──────────
   el(Page, { size: 'A4', style: s.page },
 
     el(View, { style: s.coverStripe },
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
-      el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
+      el(Text, { style: s.coverSub },
+        'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'
+      ),
       el(Text, { style: s.coverMeta }, `Versie 1.0  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
-    el(View, { style: s.bodyP1 },
+    el(View, { style: [s.body, s.bodyTop] },
 
-      el(View, { style: s.intro },
+      el(View, { style: s.intro, wrap: false },
         el(Text, { style: s.introText },
           'Vertrouwen is de basis van alles wat ArnoBot doet. Jij deelt persoonlijke inzichten, zakelijke uitdagingen en coachingsgesprekken met ons platform. Het is onze verantwoordelijkheid om die informatie te behandelen met de grootst mogelijke zorg. Dit document legt uit hoe wij dat technisch hebben ingericht.'
         )
@@ -153,14 +169,18 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
     Footer('1')
   ),
 
-  // ── PAGINA 2 ─────────────────────────────────────
+  // ── PAGINA 2: gegevensisolatie + aanvallen + invoer ──────────
   el(Page, { size: 'A4', style: s.page },
-    el(View, { style: s.bodyP2 },
+    el(View, { style: [s.body, s.bodyTopInner] },
 
       Sec('JOUW DATA IS VAN JOU', 'Gegevensisolatie',
-        el(Text, { style: s.body1 }, 'Een veelvoorkomende kwetsbaarheid in webapplicaties is dat een gebruiker toegang kan krijgen tot andermans data door een parameter in de URL aan te passen. Dit heet IDOR (Insecure Direct Object Reference). ArnoBot beschermt hier actief tegen.'),
+        el(Text, { style: s.body1 },
+          'Een veelvoorkomende kwetsbaarheid is dat een gebruiker toegang kan krijgen tot andermans data door een parameter in de URL aan te passen. Dit heet IDOR (Insecure Direct Object Reference). ArnoBot beschermt hier actief tegen.'
+        ),
         el(View, { style: s.box },
-          el(Text, { style: s.boxText }, 'Elke API-route haalt jouw identiteit op uit de geverifieerde sessie. Een gebruikers-ID in een URL of requestbody wordt nooit vertrouwd. Alleen de actieve sessie bepaalt welke data wordt teruggegeven.')
+          el(Text, { style: s.boxText },
+            'Elke API-route haalt jouw identiteit op uit de geverifieerde sessie. Een gebruikers-ID in een URL of requestbody wordt nooit vertrouwd. Alleen de actieve sessie bepaalt welke data wordt teruggegeven.'
+          )
         ),
         Item('Exportfunctie', 'Het downloaden van jouw gegevens werkt op basis van jouw ingelogde sessie, nooit op basis van een ID in de URL.'),
         Item('Teamdata', 'Een manager ziet uitsluitend data van leden die aantoonbaar tot hetzelfde team behoren.'),
@@ -168,7 +188,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
 
       HR(),
 
-      Sec('AANVALLEN VOORKOMEN', "Wat er op ons afkomt en hoe wij het stoppen",
+      Sec('AANVALLEN VOORKOMEN', 'Wat er op ons afkomt en hoe wij het stoppen',
         el(Text, { style: s.body1 }, 'Onderstaand overzicht laat zien welke aanvalstypen wij tegenkomen en welke maatregel precies wat afdekt.'),
         THead('Aanval', 'Hoe ArnoBot dit afdekt'),
         TRow('Volumetrische aanvallen', 'Vercel Edge Network absorbeert grote hoeveelheden verkeer automatisch op netwerkniveau'),
@@ -176,7 +196,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
         TRow('Prompt injection', '14 detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
         TRow('Bots en scanners', 'Middleware blokkeert automatisch bekende scannerpaden: .env, .git, wp-admin, phpMyAdmin en vergelijkbare paden'),
         TRow('SQL-injectie', 'Supabase gebruikt geparametriseerde queries; Row Level Security begrenst bovendien wat elke gebruiker mag opvragen'),
-        TRow('Cross-site scripting (XSS)', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
+        TRow('Cross-site scripting', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
         TRow('Credential stuffing', 'Inloggen zonder wachtwoord via LinkedIn OAuth. Er valt niets te raden of te stelen.'),
         TRow('Informatielekken', 'Technische foutdetails worden nooit aan de gebruiker getoond, alleen server-side gelogd'),
         TRow('IDOR', 'Gebruikers-ID altijd uit de geverifieerde sessie, nooit uit URL of requestbody'),
@@ -185,19 +205,18 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
       HR(),
 
       Sec('INVOERBEVEILIGING', 'Wat er met jouw tekst gebeurt',
-        Item('Lengtelimieten', 'Chatberichten max 4.000 tekens, oefengesprekken max 2.000 tekens, vrije invoervelden max 500 tekens. Dit voorkomt misbruik van rekenkracht.'),
+        Item('Lengtelimieten', 'Chatberichten max 4.000 tekens, oefengesprekken max 2.000 tekens, vrije invoervelden max 500 tekens.'),
         Item('Sanitatie', 'Tekst die wordt doorgestuurd naar externe diensten wordt eerst ontdaan van tekens die tot injectie kunnen leiden.'),
         Item('E-mailvalidatie', 'E-mailadressen worden gecontroleerd op geldigheid voordat ze worden verwerkt of opgeslagen.'),
       ),
-
     ),
 
     Footer('2')
   ),
 
-  // ── PAGINA 3 ─────────────────────────────────────
+  // ── PAGINA 3: headers + software + rechten + contact ──────────
   el(Page, { size: 'A4', style: s.page },
-    el(View, { style: s.bodyP3 },
+    el(View, { style: [s.body, s.bodyTopInner] },
 
       Sec('BEVEILIGING IN DE BROWSER', 'HTTP-beveiligingsheaders',
         el(Text, { style: s.body1 }, 'Elke pagina van ArnoBot wordt geserveerd met beveiligingsheaders die de browser instrueert hoe hij de inhoud moet behandelen.'),
@@ -217,6 +236,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
         Item('Regelmatige audit', 'Alle pakketten worden gecontroleerd op bekende kwetsbaarheden. Kwetsbaarheden in runtime-code worden direct verholpen.'),
         Item('Nul bekende runtime-kwetsbaarheden', 'Na de laatste securitysessie zijn alle kwetsbaarheden in code die in productie draait verholpen.'),
         Item('Tijdslimiet op AI-aanroepen', 'Alle verbindingen met het AI-model hebben een maximale looptijd om ongecontroleerd resourcegebruik te voorkomen.'),
+        Item('Automatische monitoring', 'Dependabot controleert wekelijks alle pakketten op nieuwe kwetsbaarheden en meldt dit direct.'),
       ),
 
       HR(),
@@ -238,7 +258,6 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
           el(Text, { style: s.boxText }, 'Verzoeken worden binnen 10 werkdagen beantwoord.'),
         ),
       ),
-
     ),
 
     Footer('3')
