@@ -5,8 +5,23 @@ import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'ArnoBot: Jouw Personal Sales Coach',
-  description: 'ArnoBot: 20 jaar sales expertise, 24/7 beschikbaar als jouw persoonlijke coach.',
+  description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar. Verbeter je salesresultaten met AI-coaching.',
   robots: { index: true, follow: true },
+  openGraph: {
+    title: 'ArnoBot: Jouw Personal Sales Coach',
+    description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar.',
+    url: 'https://arno.bot',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: [{ url: 'https://arno.bot/cyborg.jpg', width: 380, height: 380, alt: 'ArnoBot — Personal Sales Coach' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ArnoBot: Jouw Personal Sales Coach',
+    description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar.',
+    images: ['https://arno.bot/cyborg.jpg'],
+  },
 }
 
 export default async function ArnoBotLandingPage() {

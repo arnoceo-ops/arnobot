@@ -5,9 +5,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/$',
+        allow: ['/$', '/blog', '/blog/'],
         disallow: '/',
       },
     ],
+    sitemap: 'https://arno.bot/sitemap.xml',
   }
 }
