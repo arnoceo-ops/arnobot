@@ -53,6 +53,8 @@ export default function EvaluatiePage() {
   const [tariefstelling, setTariefstelling] = useState('')
   const [aanbevelen, setAanbevelen] = useState('')
   const [aanbevelenToelichting, setAanbevelenToelichting] = useState('')
+  const [referentie, setReferentie] = useState('')
+  const [referentieTekst, setReferentieTekst] = useState('')
   const [naam, setNaam] = useState('')
   const [slotwoord, setSlotwoord] = useState('')
   const [loading, setLoading] = useState(false)
@@ -77,7 +79,7 @@ export default function EvaluatiePage() {
       const res = await fetch('/api/evaluatie', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ naam, frequentie, onderdelen, waardevol, ontbreekt, persona, personaAnders, tariefstelling, aanbevelen, aanbevelenToelichting, slotwoord }),
+        body: JSON.stringify({ naam, frequentie, onderdelen, waardevol, ontbreekt, persona, personaAnders, tariefstelling, aanbevelen, aanbevelenToelichting, referentie, referentieTekst, slotwoord }),
       })
       if (!res.ok) throw new Error()
       setSent(true)
@@ -179,8 +181,19 @@ export default function EvaluatiePage() {
               )}
             </Block>
 
-            <Block nr="08" title="Nog andere mooie laatste woorden?">
-              <textarea rows={4} value={slotwoord} onChange={e => setSlotwoord(e.target.value)} placeholder="Alles wat je kwijt wilt." />
+            <Block nr="08" title="Zou je een wervelende aanbeveling willen schrijven als user reference op de landing page?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: referentie === 'Tuurlijk' ? 16 : 0 }}>
+                {['Tuurlijk', 'Nope'].map(o => (
+                  <Chip key={o} label={o} selected={referentie === o} onClick={() => setReferentie(o)} />
+                ))}
+              </div>
+              {referentie === 'Tuurlijk' && (
+                <textarea rows={4} value={referentieTekst} onChange={e => setReferentieTekst(e.target.value)} placeholder="Schrijf hier je aanbeveling." />
+              )}
+            </Block>
+
+            <Block nr="09" title="Is er niets wat nog gezegd wil worden?">
+              <textarea rows={4} value={slotwoord} onChange={e => setSlotwoord(e.target.value)} />
             </Block>
 
             {error && (

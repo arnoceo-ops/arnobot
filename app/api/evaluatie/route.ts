@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   const body = await req.json()
-  const { naam, frequentie, onderdelen, waardevol, ontbreekt, persona, personaAnders, tariefstelling, aanbevelen, aanbevelenToelichting, slotwoord } = body
+  const { naam, frequentie, onderdelen, waardevol, ontbreekt, persona, personaAnders, tariefstelling, aanbevelen, aanbevelenToelichting, referentie, referentieTekst, slotwoord } = body
 
   const { error } = await supabase.from('arnobot_evaluaties').insert({
     naam: naam || null,
@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
     tariefstelling: tariefstelling || null,
     aanbevelen,
     aanbevelen_toelichting: aanbevelenToelichting || null,
+    referentie: referentie || null,
+    referentie_tekst: referentieTekst || null,
     slotwoord: slotwoord || null,
   })
 
@@ -60,6 +62,8 @@ export async function POST(req: NextRequest) {
           ${r('Tariefstelling', tariefstelling)}
           ${r('Aanbevelen', aanbevelen)}
           ${aanbevelenToelichting ? r('Toelichting', aanbevelenToelichting) : ''}
+          ${referentie ? r('User reference', referentie) : ''}
+          ${referentieTekst ? r('Aanbeveling', referentieTekst) : ''}
           ${slotwoord ? r('Slotwoord', slotwoord) : ''}
         </table>
       </div>
