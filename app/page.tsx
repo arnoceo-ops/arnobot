@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'ArnoBot: Jouw Personal Sales Coach',
-  description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar. Verbeter je salesresultaten met AI-coaching.',
+  description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 klaarstaat voor jou.',
   robots: { index: true, follow: true },
   openGraph: {
     title: 'ArnoBot: Jouw Personal Sales Coach',
-    description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar.',
+    description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 klaarstaat voor jou.',
     url: 'https://arno.bot',
     siteName: 'ArnoBot',
     locale: 'nl_NL',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'ArnoBot: Jouw Personal Sales Coach',
-    description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar.',
+    description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 klaarstaat voor jou.',
     images: ['https://arno.bot/cyborg.jpg'],
   },
 }
