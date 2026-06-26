@@ -147,7 +147,8 @@ export default clerkMiddleware(async (auth, req) => {
             const tgChat = process.env.TELEGRAM_NEW_USER_CHAT_ID
             if (tgToken && tgChat) {
               const refCodeForTg = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
-              const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${clerkUser.firstName || ''} ${clerkUser.lastName || ''}\nEmail: ${email}\nLinkedIn: ${linkedinUrl || 'onbekend'}${refCodeForTg ? `\nReferral: ${refCodeForTg}` : ''}`
+              const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
+              const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${tgSafe(clerkUser.firstName || '')} ${tgSafe(clerkUser.lastName || '')}\nEmail: ${tgSafe(email || '')}\nLinkedIn: ${tgSafe(linkedinUrl || 'onbekend')}${refCodeForTg ? `\nReferral: ${tgSafe(refCodeForTg)}` : ''}`
               await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
