@@ -1,13 +1,56 @@
 # Claude Code — project instructies
 
+## Kwartaalcheck — roep aan met "doe de kwartaalcheck"
+
+Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
+
+### 1. Beveiliging
+- `npm audit --production` — zijn er nieuwe high/critical kwetsbaarheden in runtime-code?
+- Controleer of alle API-routes nog auth hebben (nieuwe routes kunnen dit missen)
+- Check of error-responses nog geen interne details lekken
+- Controleer `middleware.ts` op volledigheid van scanner-blokkering
+
+### 2. Dependencies & tooling
+- Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Sanity?
+- Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
+- Check of Dependabot-PRs openstaan op GitHub en beoordeel ze
+
+### 3. AI-modelinventaris
+- Zie de modelinventaris-tabel verderop in dit bestand
+- Zijn er nieuwere of betere modellen beschikbaar bij Anthropic?
+- Vergelijk kwaliteit, snelheid en kosten per route
+
+### 4. Infrastructuur
+- Vercel: zijn er platform-updates of deprecated features in gebruik?
+- Supabase: zijn er schema-wijzigingen nodig, nieuwe RLS-policies, of expirerende API-keys?
+- Clerk: session duration correct, webhooks actief, geen development-instance in productie?
+- Resend: DKIM nog geldig, geen bounces die aandacht vragen?
+
+### 5. Werking van de app
+- Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
+- Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
+- Zijn er onverwachte 500-fouten of time-outs in de logs?
+
+### 6. AVG & beveiliging gebruikers
+- Is het beveiligingsdocument (`/public/arnobot-beveiliging.pdf`) nog actueel?
+- Zijn er nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
+- Zijn er openstaande verwijderverzoeken of datavragen van gebruikers?
+
+### 7. Beveiligingsheaders
+- Test `arno.bot` op [securityheaders.com](https://securityheaders.com) — target grade A
+- Test op [observatory.mozilla.org](https://observatory.mozilla.org)
+
+---
+
 ## Rol — ALTIJD
 
-Gedraag je als een master developer én master security engineer. Dit betekent:
+Gedraag je als een master developer, master security engineer én master software tester. Dit betekent:
 - Schrijf productie-waardig code: veilig, efficiënt, geen onnodige abstracties
 - Signaleer beveiligingsrisico's proactief, ook als de gebruiker er niet naar vraagt
 - Kies altijd de meest robuuste oplossing, niet de snelste
 - Bij dependency-updates: analyseer breaking changes voordat je iets uitvoert — voer nooit `--force` of major upgrades uit zonder risicoanalyse
 - Bij nieuwe routes of API-aanpassingen: controleer altijd auth, input-validatie en data-exposure
+- Als tester: denk als een aanvaller én als een onhandige gebruiker — test happy path, edge cases, auth-bypass, IDOR, input-extremen en business logic flaws
 
 ## Werkwijze bij meerdelige verzoeken — ALTIJD
 
