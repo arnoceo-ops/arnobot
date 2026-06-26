@@ -102,12 +102,14 @@ export default function EvaluatiePage() {
           outline: none; resize: vertical; transition: border-color 0.15s;
         }
         textarea:focus, input[type="text"]:focus { border-color: #f59e0b; }
+        .submit-btn { background: #f59e0b; }
+        .submit-btn:hover:not(:disabled) { background: #d97706; }
         textarea::placeholder, input[type="text"]::placeholder { color: #4b5563; }
       `}</style>
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 16 }}>EVALUATIE</h1>
         {sent ? (
           <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '32px 28px' }}>
@@ -203,11 +205,12 @@ export default function EvaluatiePage() {
             <button
               type="submit"
               disabled={loading}
+              className="submit-btn"
               style={{
                 fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3,
                 padding: '12px 36px', borderRadius: 999, border: 'none',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                background: loading ? '#374151' : '#f59e0b', color: '#111827',
+                background: loading ? '#374151' : undefined, color: '#111827',
                 transition: 'background 0.15s',
               }}
             >
