@@ -16,9 +16,16 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 const isProtectedBot = createRouteMatcher(['/bot', '/bot/:path*'])
+const isAdminRoute = createRouteMatcher(['/bot/admin', '/bot/admin/:path*'])
 
 export default clerkMiddleware(async (auth, req) => {
   const path = req.nextUrl.pathname
+
+  // Admin routes: Clerk-login vereist als extra laag. Cookie-auth wordt per pagina afgehandeld.
+  if (isAdminRoute(req)) {
+    await auth.protect()
+    return NextResponse.next()
+  }
 
   if (!isPublicRoute(req) && path.startsWith('/canvas')) {
     await auth.protect()
@@ -218,7 +225,5 @@ export default clerkMiddleware(async (auth, req) => {
 })
 
 export const config = {
-  // bot/admin valt buiten Clerk-middleware: die routes gebruiken eigen cookie-auth (arnobot_admin).
-  // LET OP: elke nieuwe route onder /bot/admin MOET zelf de cookie checken, anders is die onbeschermd.
-  matcher: ['/((?!_next|.*\\.|api/cron|bot/admin|clerk-proxy).*)'],
+  matcher: ['/((?!_next|.*\\.|api/cron|clerk-proxy).*)'],
 }
