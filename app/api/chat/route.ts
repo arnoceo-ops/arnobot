@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const maxDuration = 30
+
 const ALLOWED_ORIGINS = [
   'https://arno.bot',
   'https://www.arno.bot',

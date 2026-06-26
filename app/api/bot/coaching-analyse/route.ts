@@ -1,3 +1,5 @@
+export const maxDuration = 60
+
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
