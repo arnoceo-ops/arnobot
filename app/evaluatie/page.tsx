@@ -171,7 +171,7 @@ export default function EvaluatiePage() {
               {aanbevelen === 'Ja' && (
                 <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
                   <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-                    Gebruik dan je referral code en je krijgt x maanden gratis per y gebruikers die je aanbrengt. We sturen je de details zodra het programma live is.
+                    Gebruik dan de referral code op de account pagina en je krijgt x maanden gratis per y gebruikers die je aanbrengt.
                   </p>
                 </div>
               )}
