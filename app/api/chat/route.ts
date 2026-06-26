@@ -119,6 +119,20 @@ export async function POST(req: NextRequest) {
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
+    // Per-minuut IP rate limit: max 5 verzoeken per minuut per IP
+    if (ip) {
+      const logTable = isWidget ? 'arno_blog_widget_logs' : 'arnobot_rds_logs'
+      const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString()
+      const { count: recentCount } = await supabase
+        .from(logTable)
+        .select('*', { count: 'exact', head: true })
+        .eq('ip', ip)
+        .gte('created_at', oneMinuteAgo)
+      if ((recentCount ?? 0) >= 5) {
+        return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+      }
+    }
+
     // Voor ArnoBot-gebruikers (niet-widget): altijd de Clerk session gebruiken, nooit de body-waarde vertrouwen
     let userId: string | null = bodyUserId ?? null
     if (!isWidget) {
@@ -314,9 +328,8 @@ PROFIEL VAN DE GEBRUIKER:
     if (!isWidget && tier === 'basis') responseBody.dagelijks_gebruikt = todayUsage + 1
     return NextResponse.json(responseBody, { headers: corsHeaders(origin) })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('Chat error:', msg)
+    console.error('Chat error:', err instanceof Error ? err.message : String(err))
     const origin = req.headers.get('origin')
-    return NextResponse.json({ error: msg }, { status: 500, headers: corsHeaders(origin) })
+    return NextResponse.json({ error: 'Verzoek mislukt' }, { status: 500, headers: corsHeaders(origin) })
   }
 }
