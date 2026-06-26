@@ -141,7 +141,8 @@ export async function POST(req: NextRequest) {
       ])
       tier = (tierRes.data?.tier as 'basis' | 'pro') ?? 'basis'
       todayUsage = todayRes.count ?? 0
-      if (tier === 'basis' && todayUsage >= 25) {
+      const dagelijksMax = tier === 'pro' ? 100 : 25
+      if (todayUsage >= dagelijksMax) {
         return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
       }
     }
