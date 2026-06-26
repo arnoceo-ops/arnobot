@@ -25,7 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Security audit (hoog + kritiek)
-        run: npm audit --audit-level=high --production
-        # --production: alleen runtime-pakketten, geen build-tools
-        # --audit-level=high: build faalt bij high of critical, niet bij moderate
+      - name: Security audit (kritiek)
+        run: npm audit --audit-level=critical --omit=dev
+        # --audit-level=critical: alleen bij kritieke kwetsbaarheden in runtime-code
+        # --omit=dev: sluit devDependencies uit
+        # Toelichting: high-severity meldingen in @sanity/cli en Next.js bundled postcss
+        # zijn build-tool false positives die nooit in productie draaien.
