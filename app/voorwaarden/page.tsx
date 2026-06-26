@@ -72,7 +72,7 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle rechten op ArnoBot, inclusief de software, vormgeving, teksten en methodologie, berusten bij Royal Dutch Sales.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De door de Gebruiker ingevoerde data blijft eigendom van de Gebruiker. Royal Dutch Sales gebruikt deze data uitsluitend voor het leveren van de dienst.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De Gebruiker heeft het recht te verzoeken zijn persoonsgegevens te verwijderen via de accountpagina. Wordt geen verzoek ingediend, dan worden persoonsgegevens uiterlijk 60 dagen na deactivering van het account geanonimiseerd.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De Gebruiker heeft het recht te verzoeken zijn persoonsgegevens te verwijderen via de accountpagina. Wordt geen verzoek ingediend, dan worden persoonsgegevens uiterlijk 30 dagen na beëindiging van het account geanonimiseerd.</p>,
               ],
             },
             {

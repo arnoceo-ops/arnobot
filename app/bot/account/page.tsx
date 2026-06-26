@@ -178,7 +178,7 @@ export default function AccountPage() {
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
           ) : !cancelConfirm ? (
             <>
-              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 60 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
+              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
               <button
                 onClick={() => setCancelConfirm(true)}
                 style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
