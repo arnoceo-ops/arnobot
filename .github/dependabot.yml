@@ -21,3 +21,15 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "next-sanity"
         update-types: ["version-update:semver-major"]
+      # @types/node op 20 houden — app draait op Node 20 (Vercel)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # eslint-config-next 16 is niet compatibel met eslint 10+
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # @anthropic-ai/sdk handmatig updaten in kleine stappen
+      - dependency-name: "@anthropic-ai/sdk"
+        update-types: ["version-update:semver-minor"]
+      # @react-pdf/renderer handmatig updaten — StyleSheet-gedrag is kritiek
+      - dependency-name: "@react-pdf/renderer"
+        update-types: ["version-update:semver-minor"]
