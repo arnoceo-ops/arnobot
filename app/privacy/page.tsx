@@ -197,12 +197,6 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <div style={{ borderTop: '1px solid #374151', paddingTop: 32 }}>
-            <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.9 }}>
-              Laatste update: juni 2026 · Royal Dutch Sales, Lissabon, Portugal · <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>
-            </p>
-          </div>
-
         </div>
       </div>
     </>
