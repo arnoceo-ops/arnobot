@@ -129,10 +129,10 @@ export default function AccountPage() {
 
         {/* Voorwaarden en privacy — direct onder privacy statement */}
         <div style={{ display: 'flex', gap: 24, marginBottom: 48 }}>
-          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#9ca3af', textDecoration: 'none' }}>
+          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             VOORWAARDEN
           </Link>
-          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#9ca3af', textDecoration: 'none' }}>
+          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             PRIVACY
           </Link>
         </div>
