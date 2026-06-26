@@ -18,7 +18,7 @@
     "@supabase/supabase-js": "^2.99.1",
     "disposable-email-domains": "^1.0.62",
     "jspdf": "^4.2.0",
-    "next": "16.1.6",
+    "next": "^16.2.9",
     "next-sanity": "^11.6.12",
     "react": "19.2.3",
     "react-dom": "19.2.3",
