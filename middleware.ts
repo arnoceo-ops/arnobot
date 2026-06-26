@@ -18,8 +18,14 @@ const isPublicRoute = createRouteMatcher([
 const isProtectedBot = createRouteMatcher(['/bot', '/bot/:path*'])
 const isAdminRoute = createRouteMatcher(['/bot/admin', '/bot/admin/:path*'])
 
+const SCANNER_PATTERNS = /^\/(\.env|\.git|\.svn|wp-admin|wp-login\.php|phpMyAdmin|phpmyadmin|admin\.php|xmlrpc\.php|shell\.php|eval-stdin\.php|config\.php|setup\.php|install\.php|backup|\.DS_Store|\.htaccess|\.htpasswd|web\.config|etc\/passwd|proc\/self)(\/|$)/i
+
 export default clerkMiddleware(async (auth, req) => {
   const path = req.nextUrl.pathname
+
+  if (SCANNER_PATTERNS.test(path)) {
+    return new NextResponse(null, { status: 404 })
+  }
 
   // Admin routes: Clerk-login vereist als extra laag. Cookie-auth wordt per pagina afgehandeld.
   if (isAdminRoute(req)) {
