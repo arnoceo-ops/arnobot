@@ -214,7 +214,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   })
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
-    return NextResponse.json({ error: 'generate_error', detail: err?.message ?? 'unknown' }, { status: 500 })
+    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
   }
 
   const raw = response.content[0].type === 'text' ? response.content[0].text : ''
