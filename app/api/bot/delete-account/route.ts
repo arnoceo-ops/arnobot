@@ -1,31 +1,34 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function DELETE() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   try {
-    await Promise.all([
-      // Persoonlijk profiel verwijderen
-      supabaseAdmin.from('arnobot_blog_profiles').delete().eq('user_id', userId),
-      // approved_users anonimiseren: persoonsdata wissen, zakelijke historie bewaren
-      supabaseAdmin.from('approved_users').update({
-        voornaam: null, achternaam: null, full_name: null,
-        email: null, linkedin: null,
-        is_active: false,
-      }).eq('user_id', userId),
-      // arnobot_rds_logs bewaard voor geanonimiseerde analyse
-    ])
+    const { data: user } = await supabaseAdmin
+      .from('approved_users')
+      .select('voornaam, achternaam, email')
+      .eq('user_id', userId)
+      .maybeSingle()
 
-    const clerk = await clerkClient()
-    await clerk.users.deleteUser(userId)
+    const naam = [user?.voornaam, user?.achternaam].filter(Boolean).join(' ') || 'Onbekend'
+    const email = user?.email || 'Onbekend'
+
+    await resend.emails.send({
+      from: 'ArnoBot <noreply@arno.bot>',
+      to: 'delete@arno.bot',
+      subject: `Verwijderverzoek: ${naam}`,
+      html: `<p>Gebruiker <strong>${naam}</strong> (${email}) heeft verzocht het account en alle persoonsgegevens te verwijderen.</p><p>Clerk ID: <code>${userId}</code></p><p>Te verwijderen: approved_users (anonimiseren), arnobot_rds_logs (optioneel), arnobot_blog_profiles, Clerk-gebruiker.</p>`,
+    })
 
     return NextResponse.json({ success: true })
   } catch (e: unknown) {

@@ -17,6 +17,7 @@ export default function AccountPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteInput, setDeleteInput] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [deleteDone, setDeleteDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cancelledAt, setCancelledAt] = useState<string | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
@@ -78,11 +79,11 @@ export default function AccountPage() {
     setError(null)
     try {
       const res = await fetch('/api/bot/delete-account', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Verwijdering mislukt')
-      await signOut()
-      router.push('/')
+      if (!res.ok) throw new Error('Verzoek mislukt')
+      setDeleteDone(true)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Verwijdering mislukt')
+      setError(e instanceof Error ? e.message : 'Verzoek mislukt')
+    } finally {
       setDeleting(false)
     }
   }
@@ -177,7 +178,7 @@ export default function AccountPage() {
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
           ) : !cancelConfirm ? (
             <>
-              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
+              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 60 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
               <button
                 onClick={() => setCancelConfirm(true)}
                 style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
@@ -212,9 +213,13 @@ export default function AccountPage() {
         {/* Account verwijderen */}
         <div style={{ ...section, marginBottom: 0 }}>
           <p style={{ ...label, color: '#cc2200' }}>ACCOUNT VERWIJDEREN</p>
-          <p style={body}>Hiermee worden al jouw gegevens permanent verwijderd van ArnoBot. Dit is niet ongedaan te maken.</p>
+          <p style={body}>Je kunt hier een verzoek indienen om je account en persoonsgegevens te verwijderen. We verwerken dit binnen 5 werkdagen.</p>
 
-          {!deleteConfirm ? (
+          {deleteDone ? (
+            <div style={{ background: '#1f2937', borderLeft: '3px solid #44cc88', padding: '20px 24px' }}>
+              <p style={{ color: '#44cc88', fontSize: 13, letterSpacing: 2 }}>✓ Verzoek ontvangen. We verwerken dit binnen 5 werkdagen.</p>
+            </div>
+          ) : !deleteConfirm ? (
             <button
               onClick={() => setDeleteConfirm(true)}
               style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
@@ -224,7 +229,7 @@ export default function AccountPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
               <p style={{ color: '#f1f5f9', opacity: 0.7, fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
-                Typ <strong>VERWIJDER</strong> om te bevestigen:
+                Typ <strong>VERWIJDER</strong> om het verzoek te bevestigen:
               </p>
               <input
                 type="text"
@@ -238,7 +243,7 @@ export default function AccountPage() {
                   disabled={deleteInput !== 'VERWIJDER' || deleting}
                   style={{ ...btn, background: deleteInput === 'VERWIJDER' && !deleting ? '#cc2200' : '#374151', color: deleteInput === 'VERWIJDER' && !deleting ? '#fff' : '#4b5563', cursor: deleteInput === 'VERWIJDER' && !deleting ? 'pointer' : 'not-allowed' }}
                 >
-                  {deleting ? 'VERWIJDEREN...' : 'VERWIJDER'}
+                  {deleting ? 'BEZIG...' : 'VERWIJDER'}
                 </button>
                 <button
                   onClick={() => { setDeleteConfirm(false); setDeleteInput('') }}

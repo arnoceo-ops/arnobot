@@ -159,8 +159,8 @@ export default function PrivacyPage() {
                 <tr><th>Categorie</th><th>Bewaartermijn</th></tr>
               </thead>
               <tbody>
-                <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens en profiel</td><td>Zolang het account actief is + 30 dagen na opzegging</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Maximaal 12 maanden, daarna geanonimiseerd</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens en profiel</td><td>Zolang het account actief is. Na deactivering geanonimiseerd na 60 dagen, of eerder op verzoek via de accountpagina.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Worden geanonimiseerd bij anonimisering van het account.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
               </tbody>
             </table>
