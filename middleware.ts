@@ -98,7 +98,7 @@ export default clerkMiddleware(async (auth, req) => {
             user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
             // Referral cookie verwerken
             const refCode = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
-            if (refCode) {
+            if (refCode && /^[A-Z0-9-]{4,20}$/.test(refCode)) {
               const { data: referrer } = await supabase
                 .from('approved_users')
                 .select('user_id, voornaam, full_name, email')
