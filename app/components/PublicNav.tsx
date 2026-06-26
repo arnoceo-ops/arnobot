@@ -1,11 +1,9 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function PublicNav() {
-  const { isSignedIn } = useUser()
-  const href = isSignedIn ? '/bot/account' : '/'
+  const router = useRouter()
 
   return (
     <nav style={{
@@ -15,9 +13,12 @@ export default function PublicNav() {
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       background: 'rgba(17,24,39,0.95)', backdropFilter: 'blur(12px)',
     }}>
-      <Link href={href} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
+      <button
+        onClick={() => router.back()}
+        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
         ARNO<span style={{ color: '#f59e0b' }}>BOT.</span>
-      </Link>
+      </button>
     </nav>
   )
 }
