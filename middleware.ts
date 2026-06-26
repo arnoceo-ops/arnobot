@@ -218,5 +218,7 @@ export default clerkMiddleware(async (auth, req) => {
 })
 
 export const config = {
+  // bot/admin valt buiten Clerk-middleware: die routes gebruiken eigen cookie-auth (arnobot_admin).
+  // LET OP: elke nieuwe route onder /bot/admin MOET zelf de cookie checken, anders is die onbeschermd.
   matcher: ['/((?!_next|.*\\.|api/cron|bot/admin|clerk-proxy).*)'],
 }
