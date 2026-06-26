@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { isValidEmail } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const coachEmail: string = body.coachEmail || COACH_EMAIL
+  const coachEmail: string = isValidEmail(body.coachEmail) ? body.coachEmail : COACH_EMAIL
 
   const d = await getUserData(userId)
   const coaching = d.coaching?.coaching_data as Record<string, unknown> | null
@@ -159,7 +160,7 @@ export async function POST(req: Request) {
 
   if (sendResult.error) {
     console.error('Resend error:', sendResult.error)
-    return NextResponse.json({ error: sendResult.error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Verzenden mislukt' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })

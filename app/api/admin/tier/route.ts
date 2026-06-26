@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
     .update({ tier })
     .eq('user_id', userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Tier update error:', error.message)
+    return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

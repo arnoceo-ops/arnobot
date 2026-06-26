@@ -22,7 +22,11 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { messages, profiel, persona, weerstand, rolCategorie } = await req.json()
+  const body = await req.json()
+  const { messages, profiel, persona, weerstand, rolCategorie } = body
+  if (!Array.isArray(messages) || messages.length > 40) {
+    return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+  }
 
   const { data: coachingScores } = await supabase
     .from('arnobot_coaching_scores')

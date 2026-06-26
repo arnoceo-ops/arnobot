@@ -1,3 +1,5 @@
+export const maxDuration = 30
+
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -28,8 +30,9 @@ export async function POST(req: NextRequest) {
   const { userId: managerId } = await auth()
   if (!managerId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const { targetUserId, name } = await req.json()
+  const { targetUserId, name: rawName } = await req.json()
   if (!targetUserId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
+  const name = typeof rawName === 'string' ? rawName.slice(0, 100) : 'Onbekend'
 
   const { data: managerMember } = await supabase
     .from('arnobot_team_members')

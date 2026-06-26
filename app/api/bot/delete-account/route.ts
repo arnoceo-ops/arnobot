@@ -32,6 +32,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true })
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Fout' }, { status: 500 })
+    console.error('Delete account error:', e)
+    return NextResponse.json({ error: 'Verwijderverzoek mislukt' }, { status: 500 })
   }
 }

@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Geen toegang.' }, { status: 403 })
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email || typeof email !== 'string' || !emailRegex.test(email) || email.length > 254) {
+      return NextResponse.json({ error: 'Ongeldig e-mailadres' }, { status: 400 })
+    }
+
     // Invite via Clerk
     const clerk = await clerkClient()
     await clerk.invitations.createInvitation({

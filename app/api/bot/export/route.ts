@@ -26,6 +26,7 @@ export async function GET() {
       account: account.data ?? [],
     })
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Fout' }, { status: 500 })
+    console.error('Export error:', e)
+    return NextResponse.json({ error: 'Export mislukt' }, { status: 500 })
   }
 }

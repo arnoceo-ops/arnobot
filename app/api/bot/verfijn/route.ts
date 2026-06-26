@@ -1,22 +1,29 @@
 export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { vraag, profiel } = await req.json()
     if (!vraag?.trim()) return NextResponse.json({ verfijnd: vraag })
+    if (typeof vraag !== 'string' || vraag.length > 2000) {
+      return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+    }
 
     const profielHint = profiel ? `
 Profiel van de gebruiker:
-- Rol: ${profiel.rol || '—'}
-- Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || '—'}
-- Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || '—'}
-- Ideale klant: ${profiel.ideale_klant || '—'}
-- Grootste uitdaging: ${profiel.uitdaging || '—'}` : ''
+- Rol: ${profiel.rol || 'onbekend'}
+- Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}
+- Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
+- Ideale klant: ${profiel.ideale_klant || 'onbekend'}
+- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}` : ''
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -33,7 +40,7 @@ Als de input wel een herkenbare vraag of context bevat: maak hem concreter en ve
     if (text === 'ONBEGRIJPELIJK') return NextResponse.json({ onbegrijpelijk: true })
     return NextResponse.json({ verfijnd: text })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('Verfijn error:', err instanceof Error ? err.message : String(err))
+    return NextResponse.json({ error: 'Verwerking mislukt' }, { status: 500 })
   }
 }

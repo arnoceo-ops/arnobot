@@ -43,7 +43,17 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { message, history, rolCategorie, persona, weerstand, context } = await req.json()
+  const body = await req.json()
+  const { message, history, rolCategorie, persona, weerstand, context } = body
+  if (typeof message !== 'string' || message.length > 2000) {
+    return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+  }
+  if (Array.isArray(history) && history.length > 40) {
+    return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+  }
+  if (context && (typeof context !== 'string' || context.length > 500)) {
+    return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+  }
 
   const personaBeschrijving = persona === 'anders' && context
     ? `Je speelt de volgende rol: ${context}. Blijf volledig in karakter. Reageer zoals deze persoon in een echt zakelijk gesprek zou reageren.`

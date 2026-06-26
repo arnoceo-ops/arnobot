@@ -30,6 +30,15 @@ export async function POST(req: Request) {
 
   if (!team) return NextResponse.json({ error: 'Ongeldige uitnodigingscode' }, { status: 404 })
 
+  const { count: memberCount } = await supabase
+    .from('arnobot_team_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('team_id', team.id)
+
+  if ((memberCount ?? 0) >= 25) {
+    return NextResponse.json({ error: 'Team is vol (maximaal 25 leden)' }, { status: 400 })
+  }
+
   const { error } = await supabase
     .from('arnobot_team_members')
     .insert({ team_id: team.id, user_id: userId, role: 'member' })
@@ -40,6 +49,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
   if (!code) return NextResponse.json({ error: 'Geen code' }, { status: 400 })

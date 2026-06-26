@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -100,12 +101,10 @@ const SECTIONS = {
 const ALL_TOTAL = 82
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('user_id')
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id verplicht' }, { status: 400 })
-  }
+  void req
 
   // Haal alle antwoorden op
   const { data: answers } = await supabase

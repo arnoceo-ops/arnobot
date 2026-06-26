@@ -1,3 +1,5 @@
+export const maxDuration = 60
+
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -64,7 +66,7 @@ export async function GET() {
             anthropic.messages.create({
               model: 'claude-haiku-4-5-20251001',
               max_tokens: 200,
-              system: 'Extraheer alleen concrete, feitelijke informatie. Maximaal 8 korte bullets, elk beginnend met een streepje.',
+              system: 'Extraheer alleen concrete, feitelijke informatie. Maximaal 8 korte bullets. Begin elk punt met een asterisk *.',
               messages: [{ role: 'user', content: `Extraheer de feiten uit dit gesprek:\n\n${conversationText}` }],
             }),
           ])

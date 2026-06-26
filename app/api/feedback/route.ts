@@ -8,6 +8,9 @@ export async function POST(req: Request) {
 
   const { feedback } = await req.json()
   if (!feedback?.trim()) return NextResponse.json({ error: 'Geen feedback' }, { status: 400 })
+  if (typeof feedback !== 'string' || feedback.length > 2000) {
+    return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+  }
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +28,8 @@ export async function POST(req: Request) {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return NextResponse.json({ error: 'Telegram niet geconfigureerd' }, { status: 500 })
 
-  const text = `💬 Feedback van ${naam}\n\n${feedback.trim()}`
+  const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 200)
+  const text = `Feedback van ${tgSafe(naam)}\n\n${tgSafe(feedback.trim())}`
   const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -34,7 +38,7 @@ export async function POST(req: Request) {
   const tgData = await tgRes.json()
   if (!tgData.ok) {
     console.error('Telegram error:', tgData)
-    return NextResponse.json({ error: tgData.description || 'Telegram fout' }, { status: 500 })
+    return NextResponse.json({ error: 'Verzenden mislukt' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
