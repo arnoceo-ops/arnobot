@@ -106,6 +106,10 @@ export default function PrivacyPage() {
                 </div>
               ))}
             </div>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginTop: 20 }}>
+              Een volledig overzicht van alle technische beveiligingsmaatregelen staat in het{' '}
+              <a href="/arnobot-beveiliging.pdf" target="_blank" rel="noopener noreferrer">beveiligingsdocument (PDF)</a>.
+            </p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
