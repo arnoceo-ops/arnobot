@@ -90,7 +90,10 @@ export default clerkMiddleware(async (auth, req) => {
             const firstName = (clerkUser.firstName || '').toUpperCase().replace(/[^A-Z]/g, '')
             const referralCode = firstName ? `${firstName}-${suffix}` : suffix
 
-            const { error: insertErr } = await supabase.from('approved_users').insert({ ...newRow, referral_code: referralCode })
+            const { error: insertErr } = await supabase.from('approved_users').upsert(
+              { ...newRow, referral_code: referralCode },
+              { onConflict: 'user_id', ignoreDuplicates: true }
+            )
             if (insertErr) {
               console.error('New user insert failed:', insertErr.message)
               return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
