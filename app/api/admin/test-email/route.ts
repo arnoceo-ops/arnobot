@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   let template: { subject: string; html: string }
   try {
-    template = getEmailTemplate(type as EmailType, 'Arno', true, { userId: 'test-user-id' })
+    template = getEmailTemplate(type as EmailType, 'Arno', true, { userId: process.env.ARNOBOT_OWNER_USER_ID ?? 'test-user-id' })
   } catch {
     return NextResponse.json({ error: 'Onbekend type' }, { status: 400 })
   }
