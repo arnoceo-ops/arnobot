@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import EmailTestClient from './EmailTestClient'
+import BlogsClient from './BlogsClient'
 
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
@@ -13,7 +13,7 @@ const navLinkStyle = (active: boolean): React.CSSProperties => ({
   background: active ? '#1e293b' : 'none',
 })
 
-export default async function EmailsPage() {
+export default async function IdeePage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
@@ -26,21 +26,22 @@ export default async function EmailsPage() {
           <a href="/bot/admin" style={navLinkStyle(false)}>APP</a>
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>EVALUATIES</a>
-          <a href="/bot/admin/emails" style={navLinkStyle(true)}>EMAILS</a>
-          <a href="/bot/admin/idee" style={navLinkStyle(false)}>IDEE</a>
+          <a href="/bot/admin/emails" style={navLinkStyle(false)}>EMAILS</a>
+          <a href="/bot/admin/idee" style={navLinkStyle(true)}>IDEE</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>BLOG</a>
         </div>
       </nav>
 
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
-        <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '5px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0' }}>Emails</h1>
-        <p style={{ color: '#6b7280', fontSize: '13px', letterSpacing: '2px', marginBottom: '48px' }}>
-          Stuur een testversie van elk emailtemplate naar arno@arno.bot.
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px' }}>
+        <p style={{ color: '#f59e0b', fontSize: '16px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 12px 0', letterSpacing: '-1px' }}>Blog ideeën</h1>
+        <p style={{ color: '#6b7280', fontSize: 14, letterSpacing: 1, marginBottom: 48, lineHeight: 1.7 }}>
+          Analyse van gesprekken uit ArnoBot. Kies een periode en genereer een redactionele briefing met thema's, patronen en concrete artikel-suggesties.
         </p>
-        <EmailTestClient />
+
+        <BlogsClient />
       </div>
     </main>
   )

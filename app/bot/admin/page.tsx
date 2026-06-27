@@ -124,6 +124,7 @@ export default async function ArnoBotAdminPage({
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>EVALUATIES</a>
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>EMAILS</a>
+          <a href="/bot/admin/idee" style={navLinkStyle(false)}>IDEE</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>BLOG</a>

@@ -92,7 +92,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at'),
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at, nudge_opt_out'),
     supabase
       .from('arnobot_rds_logs')
       .select('user_id, session_id, created_at')
@@ -177,6 +177,7 @@ export default async function GebruikersPage({
     if (sort === 'tier') { av = a.tier || ''; bv = b.tier || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
     if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
+    if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
     if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
     if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
     if (av < bv) return dir === 'asc' ? -1 : 1
@@ -184,7 +185,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 90px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -196,6 +197,7 @@ export default async function GebruikersPage({
           <a href="/bot/admin/gebruikers" style={navLinkStyle(true)}>USERS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>EVALUATIES</a>
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>EMAILS</a>
+          <a href="/bot/admin/idee" style={navLinkStyle(false)}>IDEE</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>BLOG</a>
@@ -224,6 +226,7 @@ export default async function GebruikersPage({
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
           <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
+          <SortHeader label="MAIL" field="nudge_opt_out" sort={sort} dir={dir} vertical />
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
 
@@ -318,6 +321,12 @@ export default async function GebruikersPage({
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : <span style={{ fontSize: '11px', color: '#374151' }}>—</span>
                   }
+                </div>
+                {/* Mail opt-out */}
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 700, color: (u as { nudge_opt_out?: boolean }).nudge_opt_out ? '#cc2200' : '#44cc88' }}>
+                    {(u as { nudge_opt_out?: boolean }).nudge_opt_out ? 'UIT' : 'AAN'}
+                  </p>
                 </div>
                 {/* LinkedIn */}
                 <div style={{ textAlign: 'right' }}>
