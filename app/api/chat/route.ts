@@ -119,7 +119,7 @@ ${antwoordLengte === 'kort'
 
 Als de vraag aantoonbaar meerdere lagen heeft waarbij 350 woorden actief waarde zou ontnemen, zeg dan in één zin waarom, en vraag of je meer ruimte mag. Doe dit alleen als het echt niet anders kan, en maximaal één keer per gesprek. Probeer het altijd eerst beknopt op te lossen voordat je om meer ruimte vraagt.`
   : antwoordLengte === 'uitgebreid'
-  ? 'Ga de diepte in. Maximaal 1500 woorden.'
+  ? 'Ga zo diep als het onderwerp vraagt. Maximaal 1500 woorden. Als het antwoord van nature beknopter is dan je bij uitgebreid zou verwachten, is dat goed. Voeg geen woorden toe om de keuze te rechtvaardigen. Leg in één zin uit waarom je beknopt blijft. Bied alleen aan om verder te gaan als er aantoonbaar nog een laag onbehandeld is.'
   : 'Antwoord zo lang als het onderwerp vraagt. Maximaal 750 woorden.'} Sluit altijd af met een volledige zin. Geen bullet points. Gebruik **vet** alleen als het er echt toe doet.
 
 Eindig niet altijd met een vraag. Een scherpe observatie die raak is nodigt vanzelf uit tot reactie. Varieer: soms een vraag, soms een inzicht dat staat zonder uitnodiging. Het gaat om resonantie, niet om interrogatie.
