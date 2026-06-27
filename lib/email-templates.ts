@@ -30,6 +30,8 @@ export type EmailType =
   | 'winback'
   | 'admin_derde_trial'
   | 'referral_aanmelding'
+  | 'weekly_nudge'
+  | 'geen_gesprek_nudge'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string }> = {
   dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
@@ -45,6 +47,8 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string 
   winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding' },
   admin_derde_trial:     { label: 'Admin: derde trial',    description: 'Notificatie naar pannekoek@arno.bot bij start derde trial' },
   referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link' },
+  weekly_nudge:          { label: 'Weekly nudge',          description: 'Elke maandag naar actieve gebruikers met 7+ dagen geen activiteit' },
+  geen_gesprek_nudge:    { label: 'Geen gesprek nudge',    description: 'Elke maandag naar actieve gebruikers die nog nooit een gesprek hebben gevoerd' },
 }
 
 export function getEmailTemplate(
@@ -158,6 +162,22 @@ export function getEmailTemplate(
         html: emailHtml(
           `Hey ${naam}, <strong style="color:#f1f5f9">Jan Jansen</strong> heeft zich zojuist aangemeld via jouw referral code.<br /><br />Zodra Jan Jansen een betaald abonnement afsluit, ben je op weg. Bij een maandabonnement ontvang jij €97 tegoed nadat Jan Jansen drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account', isTest
+        ),
+      }
+    case 'weekly_nudge':
+      return {
+        subject: `${prefix}${naam}, wat ga je deze week doen?`,
+        html: emailHtml(
+          `Je hebt een week geen gebruik gemaakt van ArnoBot. Vakantie? Geen tijd? Even vergeten? Te confronterend? Wat dan ook, ArnoBot staat 24/7 voor je klaar. Gebruik 'm en wordt nog scherper dan je al bent. Het grootste risico is dat je meer gaat verkopen. Wie wil 't niet?`,
+          'SPAR MET ARNO →', 'https://arno.bot/bot', isTest
+        ),
+      }
+    case 'geen_gesprek_nudge':
+      return {
+        subject: `${prefix}${naam}, ArnoBot wacht op je.`,
+        html: emailHtml(
+          `Je hebt je aangemeld voor ArnoBot. Maar het is stil aan de overkant. Er is namelijk nog geen gesprek gevoerd. Koudwatervrees? Druk, druk, druk met andere dingen? Oeps, vergeten? Hoe dan ook, ga eens in gesprek. Het grootste risico wat je loopt, is dat je meer gaat verkopen.`,
+          'START EEN GESPREK →', 'https://arno.bot/bot', isTest
         ),
       }
   }

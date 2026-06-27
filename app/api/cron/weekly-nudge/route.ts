@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { isValidEmail } from '@/lib/email-templates'
+import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,13 +30,7 @@ export async function GET(req: NextRequest) {
   for (const user of users) {
     if (!isValidEmail(user.email)) continue
 
-    // Sla over als gebruiker nog nooit een gesprek heeft gevoerd
-    const { count: totalCount } = await supabase
-      .from('arnobot_rds_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.user_id)
-
-    if ((totalCount ?? 0) === 0) continue
+    const naam = user.voornaam || 'hey'
 
     // Sla over als gebruiker afgelopen 7 dagen actief was (geen nudge nodig)
     const { count: recentCount } = await supabase
@@ -47,24 +41,21 @@ export async function GET(req: NextRequest) {
 
     if ((recentCount ?? 0) > 0) continue
 
-    const naam = user.voornaam || 'hey'
+    // Bepaal welke mail: nog nooit een gesprek of al wel actief geweest
+    const { count: totalCount } = await supabase
+      .from('arnobot_rds_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.user_id)
 
-    const subject = `${naam}, wat ga je deze week doen?`
-
-    const bodyHtml = `
-      <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
-        <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:32px;">ARNOBOT</p>
-        <p style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">Je hebt een week geen gebruik gemaakt van ArnoBot. Vakantie? Geen tijd? Even vergeten? Te confronterend? Wat dan ook, ArnoBot staat 24/7 voor je klaar. Gebruik 'm en wordt nog scherper dan je al bent. Het grootste risico is dat je meer gaat verkopen. Wie wil 't niet?</p>
-        <a href="https://arno.bot/bot" style="display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;">SPAR MET ARNO →</a>
-      </div>
-    `
+    const type = (totalCount ?? 0) === 0 ? 'geen_gesprek_nudge' : 'weekly_nudge'
+    const template = getEmailTemplate(type, naam)
 
     try {
       await resend.emails.send({
         from: 'ArnoBot <info@arno.bot>',
         to: user.email,
-        subject,
-        html: bodyHtml,
+        subject: template.subject,
+        html: template.html,
       })
       sent++
     } catch (e) {
