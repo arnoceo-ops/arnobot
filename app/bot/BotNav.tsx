@@ -105,7 +105,7 @@ export default function BotNav({ active }: Props) {
               >{feedbackLoading ? '...' : 'VERSTUUR'}</button>
               <button
                 onClick={() => setFeedbackOpen(false)}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
               >ANNULEER</button>
             </div>
           </>

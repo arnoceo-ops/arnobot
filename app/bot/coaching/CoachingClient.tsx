@@ -311,7 +311,7 @@ export default function CoachingClient({ userId }: Props) {
         .generate-btn { background: #f59e0b; border: none; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #111827; padding: 12px 36px; transition: background 0.2s; border-radius: 999px; min-width: 220px; }
         .generate-btn:hover:not(:disabled) { background: #d97706; }
         .generate-btn:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
-        .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 12px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
+        .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
         .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
 
         .stat-block { text-align: center; }

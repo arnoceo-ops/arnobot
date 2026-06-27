@@ -1221,11 +1221,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 24 : 0 }}>
               <button
                 onClick={() => setSparModus('coaching')}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'coaching' ? '#f59e0b' : 'none', color: sparModus === 'coaching' ? '#111827' : '#9ca3af', border: sparModus === 'coaching' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'coaching' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'coaching' ? '#f59e0b' : 'none', color: sparModus === 'coaching' ? '#111827' : '#9ca3af', border: sparModus === 'coaching' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
               >COACHING</button>
               <button
                 onClick={() => { setSparModus('sparren'); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
               >SPARREN</button>
             </div>
 
@@ -1235,14 +1235,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WAT IS MIJN ROL</p>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
                     {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
-                      <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {p.label}
                       </button>
                     ))}
                   </div>
                   {PERSONAS[rolCategorie].some(p => p.key === 'anders') && (
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
-                      <button onClick={() => setSparPersona('anders')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: sparPersona === 'anders' ? '#f59e0b' : 'none', color: sparPersona === 'anders' ? '#111827' : '#9ca3af', border: sparPersona === 'anders' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
+                      <button onClick={() => setSparPersona('anders')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === 'anders' ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === 'anders' ? '#f59e0b' : 'none', color: sparPersona === 'anders' ? '#111827' : '#9ca3af', border: sparPersona === 'anders' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
                         Anders
                       </button>
                     </div>
@@ -1252,7 +1252,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WEERSTAND</p>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {(['licht', 'stevig', 'zwaar'] as const).map(w => (
-                      <button key={w} onClick={() => setSparWeerstand(w)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: isMobile ? 1 : 3, flex: isMobile ? 1 : undefined, width: isMobile ? undefined : 122, padding: '12px 0', borderRadius: 999, background: sparWeerstand === w ? '#f59e0b' : 'none', color: sparWeerstand === w ? '#111827' : '#9ca3af', border: sparWeerstand === w ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
+                      <button key={w} onClick={() => setSparWeerstand(w)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: isMobile ? 1 : 3, flex: isMobile ? 1 : undefined, width: isMobile ? undefined : 122, padding: sparWeerstand === w ? '12px 0' : '11px 0', borderRadius: 999, background: sparWeerstand === w ? '#f59e0b' : 'none', color: sparWeerstand === w ? '#111827' : '#9ca3af', border: sparWeerstand === w ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
                         {w.charAt(0).toUpperCase() + w.slice(1)}
                       </button>
                     ))}
@@ -1564,7 +1564,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               >SLUIT GESPREK</button>
               <button
                 onClick={() => { setNavGuardOpen(false); setPendingNavDest(null) }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
               >DOORGAAN</button>
             </div>
           </div>
@@ -1600,7 +1600,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   >{feedbackLoading ? '...' : 'VERSTUUR'}</button>
                   <button
                     onClick={() => setFeedbackOpen(false)}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
                   >ANNULEER</button>
                 </div>
               </>
