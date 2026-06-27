@@ -149,6 +149,56 @@ Elke route gebruikt een bewust gekozen model. Controleer elk kwartaal (of na een
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar?"
 
+## E-mail stijl — lib/email-templates.ts
+
+E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New gebruiken in e-mail. Nooit Bebas Neue voor de knop (laadt niet betrouwbaar in e-mailclients).
+
+### Layout
+- Achtergrond: `#111827`, max-width `560px`, padding `48px 40px 40px 40px`, `margin: 0 auto`
+- Google Fonts @import voor Bebas Neue staat in `<style>` tag in `<head>`
+
+### ARNOBOT header
+- Font: `'Bebas Neue','Arial Black',Impact,sans-serif`, 26px, letter-spacing 6px
+- "ARNO" in `#f1f5f9` (wit), "BOT" in `#f59e0b` (amber)
+
+### [TEST EMAIL] label
+- Font: Arial, 11px, letter-spacing 2px, kleur `#6b7280`
+
+### Aanhef
+- Tekst: `Hey, {voornaam}.` — altijd de voornaam van de ontvanger, nooit hardcoded
+- Font: Arial/-apple-system/sans-serif, 16px, font-weight 700, kleur `#f1f5f9`
+
+### Bodytekst
+- Font: `Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`
+- 15px, kleur `#9ca3af`, line-height 1.8
+- Geen Courier New — dat is de fallback voor Space Mono op het web, maar ziet er slecht uit in e-mail
+
+### Knop (CTA)
+- Font: `Arial,-apple-system,sans-serif` — NIET Bebas Neue, NIET Arial Black
+- 14px, font-weight 600, letter-spacing 0.5px
+- Padding: `12px 24px`, border-radius `999px`
+- Background `#f59e0b`, color `#111827`
+- Knop valt op door kleur en vorm, niet door een display-font
+
+### Opt-out footnote
+- Font: Arial, 12px, kleur `#6b7280`, margin-top `48px` (ruime afstand na knop)
+- Tekst: `Geen mail meer? <a href="...">Klik dan hier.</a>` — link kleur `#9ca3af`
+- Alleen verplicht in marketingmails: `weekly_nudge`, `geen_gesprek_nudge`, `winback`
+
+### © ARNOBOT
+- Font: Arial, 11px, kleur `#374151`
+
+### Marketing vs. transactioneel
+- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding
+- **Marketing** (opt-out verplicht): weekly_nudge, geen_gesprek_nudge, winback
+
+### Opt-out mechanisme
+- Opt-out link in e-mail → `https://arno.bot/optout/{userId}` — publieke pagina, één klik, geen login
+- userId wordt meegegeven via `options.userId` in `getEmailTemplate()`
+- Winback-gebruikers hebben geen actief account meer → opt-out via `mailto:arno@arno.bot`
+
+---
+
 ## Foto (header in arnobot/page.tsx)
 - NOOIT meer aanpassen tenzij de gebruiker er expliciet om vraagt
 - Huidig formaat: `<img src="/cyborg.jpg" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />` in een `subscribe-text-col` div
