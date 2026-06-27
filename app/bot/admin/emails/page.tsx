@@ -35,9 +35,9 @@ export default async function EmailsPage() {
       </nav>
 
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
-        <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '5px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0' }}>Emails</h1>
-        <p style={{ color: '#6b7280', fontSize: '13px', letterSpacing: '2px', marginBottom: '48px' }}>
+        <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Emails</h1>
+        <p style={{ color: '#6b7280', fontSize: '14px', letterSpacing: '2px', marginBottom: '48px' }}>
           Stuur een testversie van elk emailtemplate naar arno@arno.bot.
         </p>
         <EmailTestClient />
