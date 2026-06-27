@@ -98,10 +98,14 @@ export default function ReferralSpelregelsPage() {
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 6</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Mijlpalen</h2>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 20 }}>Bij het bereiken van de volgende aantallen betalende referrals gelden de onderstaande beloningen:</p>
-            <table>
+            <table style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '70%' }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>BETALENDE REFERRALS</th>
+                  <th># REFERRALS</th>
                   <th>BELONING</th>
                 </tr>
               </thead>
@@ -116,7 +120,7 @@ export default function ReferralSpelregelsPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>100</td>
-                  <td>Persoonlijk aanbod voor deelname in de <strong style={{ color: '#f1f5f9' }}>ArnoBot Venture 🚀</strong></td>
+                  <td style={{ whiteSpace: 'nowrap' }}>Persoonlijk aanbod voor deelname in de <strong style={{ color: '#f1f5f9' }}>ArnoBot Venture 🚀</strong></td>
                 </tr>
               </tbody>
             </table>
