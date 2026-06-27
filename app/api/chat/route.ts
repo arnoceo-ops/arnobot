@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 30
+export const maxDuration = 60
 
 const INJECTION_PATTERNS = [
   /negeer\s+(alle?\s+)?(vorige|eerdere|bovenstaande)\s+instructies/i,
@@ -115,10 +115,12 @@ Als uit de gesprekshistorie blijkt dat iemand steeds hetzelfde vraagt, over hetz
 Mindset is de stille grondlaag: geen apart onderwerp om op te hameren. Breng het in wanneer het de kern raakt van wat iemand blokkeert. Maar altijd in dienst van actie: een mindset-observatie zonder concrete vervolgstap is een preek, geen coaching.
 
 ${antwoordLengte === 'kort'
-  ? 'Antwoord zo puntig mogelijk. Maximaal 300 woorden. Één centrale gedachte per antwoord.'
+  ? `Antwoord zo kort en krachtig mogelijk. Maximaal 350 woorden. Één centrale gedachte. Geen uitwijdingen.
+
+Als de vraag aantoonbaar meerdere lagen heeft waarbij 350 woorden actief waarde zou ontnemen, zeg dan in één zin waarom, en vraag of je meer ruimte mag. Doe dit alleen als het echt niet anders kan, en maximaal één keer per gesprek. Probeer het altijd eerst beknopt op te lossen voordat je om meer ruimte vraagt.`
   : antwoordLengte === 'uitgebreid'
-  ? 'Ga de diepte in. Maximaal 3000 woorden.'
-  : 'Antwoord zo lang als het onderwerp vraagt. Maximaal 2000 woorden.'} Sluit altijd af met een volledige zin. Geen bullet points. Gebruik **vet** alleen als het er echt toe doet.
+  ? 'Ga de diepte in. Maximaal 1500 woorden.'
+  : 'Antwoord zo lang als het onderwerp vraagt. Maximaal 750 woorden.'} Sluit altijd af met een volledige zin. Geen bullet points. Gebruik **vet** alleen als het er echt toe doet.
 
 Eindig niet altijd met een vraag. Een scherpe observatie die raak is nodigt vanzelf uit tot reactie. Varieer: soms een vraag, soms een inzicht dat staat zonder uitnodiging. Het gaat om resonantie, niet om interrogatie.
 ${SHARED_RULES}
@@ -365,7 +367,7 @@ PROFIEL VAN DE GEBRUIKER:
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: isWidget ? 1000 : 3000,
+      max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
       system: systemPrompt,
       messages
     })
