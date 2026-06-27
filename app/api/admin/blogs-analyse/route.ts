@@ -9,10 +9,29 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-export async function POST(req: NextRequest) {
+async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  return token === process.env.ARNOBOT_ADMIN_KEY
+}
+
+export async function GET() {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data, error } = await supabase
+    .from('arnobot_idee_analyses')
+    .select('id, created_at, period_days, session_count, analyse_text')
+    .order('created_at', { ascending: false })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json(data ?? [])
+}
+
+export async function POST(req: NextRequest) {
+  if (!(await checkAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -22,7 +41,6 @@ export async function POST(req: NextRequest) {
   }
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-
   const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
 
   let query = supabase
@@ -38,7 +56,7 @@ export async function POST(req: NextRequest) {
   const { data: sessions } = await query
 
   if (!sessions?.length) {
-    return NextResponse.json({ analyse: null, count: 0 })
+    return NextResponse.json({ analyse: null, count: 0, id: null })
   }
 
   const sessiesText = sessions
@@ -61,5 +79,11 @@ export async function POST(req: NextRequest) {
 
   const analyse = response.content[0].type === 'text' ? response.content[0].text : ''
 
-  return NextResponse.json({ analyse, count: sessions.length })
+  const { data: saved } = await supabase
+    .from('arnobot_idee_analyses')
+    .insert({ period_days: days, session_count: sessions.length, analyse_text: analyse })
+    .select('id')
+    .single()
+
+  return NextResponse.json({ analyse, count: sessions.length, id: saved?.id ?? null })
 }

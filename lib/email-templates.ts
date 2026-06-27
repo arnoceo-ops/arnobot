@@ -2,19 +2,19 @@ export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;`
+const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;padding:12px 36px;text-decoration:none;border-radius:999px;`
 
 export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false, footerNote?: string) {
-  return `
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');</style></head><body style="margin:0;padding:0;">
     <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
-      <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:${isTest ? '4px' : '32px'}">ARNOBOT</p>
-      ${isTest ? `<p style="color:#4b5563;font-size:11px;letter-spacing:2px;margin-bottom:32px">[TEST EMAIL]</p>` : ''}
-      <div style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">${body}</div>
+      <p style="color:#f59e0b;font-size:13px;font-weight:700;letter-spacing:4px;margin:0 0 ${isTest ? '4px' : '32px'} 0;">ARNOBOT</p>
+      ${isTest ? `<p style="color:#6b7280;font-size:11px;letter-spacing:2px;margin:0 0 32px 0;">[TEST EMAIL]</p>` : ''}
+      <div style="font-size:15px;color:#9ca3af;line-height:1.9;margin-bottom:32px;">${body}</div>
       <a href="${ctaUrl}" style="${CTA}">${ctaText}</a>
-      ${footerNote ? `<p style="font-size:11px;color:#4b5563;margin-top:24px;">${footerNote}</p>` : ''}
+      ${footerNote ? `<p style="font-size:11px;color:#6b7280;margin-top:24px;">${footerNote}</p>` : ''}
       <p style="font-size:11px;color:#374151;margin-top:${footerNote ? '8px' : '40px'};">© ARNOBOT</p>
     </div>
-  `
+  </body></html>`
 }
 
 export type EmailType =
@@ -138,7 +138,8 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, je krijgt nog een kans.`,
         html: emailHtml(
           `Je trial is twee weken geleden afgelopen. Misschien was het timing. Misschien miste je iets.<br /><br />We geven je de kans om het opnieuw te proberen. 30 dagen gratis, zonder verplichtingen.<br /><br />Klik hieronder om je tweede trial te starten. Dit aanbod vervalt over 5 dagen.`,
-          'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest
+          'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart', isTest,
+          `Geen e-mails meer ontvangen? <a href="mailto:arno@arno.bot" style="color:#9ca3af;">Stuur een bericht naar arno@arno.bot.</a>`
         ),
       }
     case 'admin_derde_trial':
