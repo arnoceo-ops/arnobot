@@ -4,14 +4,15 @@ export function isValidEmail(email: unknown): email is string {
 
 const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;`
 
-export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false) {
+export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false, footerNote?: string) {
   return `
     <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
       <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:${isTest ? '4px' : '32px'}">ARNOBOT</p>
       ${isTest ? `<p style="color:#4b5563;font-size:11px;letter-spacing:2px;margin-bottom:32px">[TEST EMAIL]</p>` : ''}
       <div style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">${body}</div>
       <a href="${ctaUrl}" style="${CTA}">${ctaText}</a>
-      <p style="font-size:11px;color:#374151;margin-top:40px;">© ARNOBOT</p>
+      ${footerNote ? `<p style="font-size:11px;color:#4b5563;margin-top:24px;">${footerNote}</p>` : ''}
+      <p style="font-size:11px;color:#374151;margin-top:${footerNote ? '8px' : '40px'};">© ARNOBOT</p>
     </div>
   `
 }
@@ -169,7 +170,8 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, wat ga je deze week doen?`,
         html: emailHtml(
           `Je hebt een week geen gebruik gemaakt van ArnoBot. Vakantie? Geen tijd? Even vergeten? Te confronterend? Wat dan ook, ArnoBot staat 24/7 voor je klaar. Gebruik 'm en wordt nog scherper dan je al bent. Het grootste risico is dat je meer gaat verkopen. Wie wil 't niet?`,
-          'SPAR MET ARNO →', 'https://arno.bot/bot', isTest
+          'SPAR MET ARNO →', 'https://arno.bot/bot', isTest,
+          `Geen herinneringen meer ontvangen? <a href="https://arno.bot/bot/account" style="color:#4b5563;">Pas je voorkeuren aan.</a>`
         ),
       }
     case 'geen_gesprek_nudge':
@@ -177,7 +179,8 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, ArnoBot wacht op je.`,
         html: emailHtml(
           `Je hebt je aangemeld voor ArnoBot. Maar het is stil aan de overkant. Er is namelijk nog geen gesprek gevoerd. Koudwatervrees? Druk, druk, druk met andere dingen? Oeps, vergeten? Hoe dan ook, ga eens in gesprek. Het grootste risico wat je loopt, is dat je meer gaat verkopen.`,
-          'START EEN GESPREK →', 'https://arno.bot/bot', isTest
+          'START EEN GESPREK →', 'https://arno.bot/bot', isTest,
+          `Geen herinneringen meer ontvangen? <a href="https://arno.bot/bot/account" style="color:#4b5563;">Pas je voorkeuren aan.</a>`
         ),
       }
   }

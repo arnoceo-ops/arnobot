@@ -12,6 +12,9 @@ export default function AccountPage() {
   const { signOut } = useClerk()
   const router = useRouter()
 
+  const [nudgeOptOut, setNudgeOptOut] = useState(false)
+  const [nudgeLoading, setNudgeLoading] = useState(true)
+  const [nudgeSaving, setNudgeSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportDone, setExportDone] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -29,7 +32,26 @@ export default function AccountPage() {
       .then(r => r.json())
       .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
       .catch(() => {})
+    fetch('/api/bot/nudge-opt-out')
+      .then(r => r.json())
+      .then(d => { setNudgeOptOut(d.nudge_opt_out ?? false) })
+      .catch(() => {})
+      .finally(() => setNudgeLoading(false))
   }, [])
+
+  async function handleNudgeToggle() {
+    setNudgeSaving(true)
+    const newVal = !nudgeOptOut
+    try {
+      await fetch('/api/bot/nudge-opt-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nudge_opt_out: newVal }),
+      })
+      setNudgeOptOut(newVal)
+    } catch {}
+    finally { setNudgeSaving(false) }
+  }
 
   if (!isLoaded) return null
 
@@ -159,6 +181,31 @@ export default function AccountPage() {
             {exporting ? 'EXPORTEREN...' : 'DOWNLOAD MIJN DATA'}
           </button>
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
+        </div>
+
+        {/* E-mail voorkeuren */}
+        <div style={section}>
+          <p style={label}>E-MAIL VOORKEUREN</p>
+          <p style={body}>Je ontvangt een herinnering als je 7 dagen niet actief bent geweest op ArnoBot. Je kunt dit hier uitzetten.</p>
+          <button
+            onClick={handleNudgeToggle}
+            disabled={nudgeLoading || nudgeSaving}
+            style={{
+              ...btn,
+              background: 'transparent',
+              color: nudgeOptOut ? '#9ca3af' : '#cc2200',
+              border: `1px solid ${nudgeOptOut ? '#374151' : '#cc2200'}`,
+              cursor: nudgeLoading || nudgeSaving ? 'not-allowed' : 'pointer',
+              opacity: nudgeLoading ? 0.4 : 1,
+            }}
+          >
+            {nudgeSaving ? '...' : nudgeOptOut ? 'HERINNERINGEN STAAN UIT' : 'HERINNERINGEN UITZETTEN'}
+          </button>
+          {nudgeOptOut && (
+            <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, marginTop: 12 }}>
+              Je ontvangt geen activiteitsherinneringen meer.
+            </p>
+          )}
         </div>
 
         {/* Nieuwe sectie: Genoeg geweest */}

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     .from('approved_users')
     .select('user_id, email, voornaam, trial_start')
     .eq('is_active', true)
+    .eq('nudge_opt_out', false)
     .not('email', 'is', null)
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
