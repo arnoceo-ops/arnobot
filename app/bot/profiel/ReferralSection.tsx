@@ -38,7 +38,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         </>
       )}
       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 24 }}>
-        Deel deze link. Nieuwe gebruikers krijgen de eerste maand gratis. Jij ook: per betalende referral ontvang jij één maand gratis (€97 tegoed). Bij 25 betalende referrals word je lid van de ArnoBot Ambassadors Club. Bij 50 betalende referrals krijg je een Lifetime Subscription op ArnoBot. Bij 100 betalende referrals krijg je een aanbieding voor deelname in de ArnoBot Venture. Go, Go Gadget 🚀
+        Deel deze link. Nieuwe gebruikers krijgen de eerste maand gratis. Per betalende referral ontvang jij één maand gratis (€97 tegoed). Bij een maandabonnement wordt dat tegoed bijgeschreven nadat de nieuwe gebruiker drie betaalmaanden heeft voltooid, in de vijfde maand na aanmelding. Bij een jaarabonnement direct na de eerste betaling. Bij 25 betalende referrals word je lid van de ArnoBot Ambassadors Club. Bij 50 betalende referrals krijg je een Lifetime Subscription op ArnoBot. Bij 100 betalende referrals krijg je een aanbieding voor deelname in de ArnoBot Venture. Go, Go Gadget 🚀
       </p>
 
       {/* Link + kopieerknop */}
@@ -81,7 +81,10 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         ))}
       </div>
 
-      <p style={{ marginTop: 16 }}>
+      <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', lineHeight: 1.9, marginTop: 12 }}>
+        Staat iemand als betalend maar zie je nog geen tegoed? Dan loopt de drie-maandsperiode nog.
+      </p>
+      <p style={{ marginTop: 12 }}>
         <a href="/referrals" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
           SPELREGELS REFERRALPROGRAMMA →
         </a>
