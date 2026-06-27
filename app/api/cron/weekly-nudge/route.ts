@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     if (!type) continue
 
-    const template = getEmailTemplate(type, naam)
+    const template = getEmailTemplate(type, naam, false, { userId: user.user_id })
 
     try {
       await resend.emails.send({

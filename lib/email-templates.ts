@@ -56,8 +56,12 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number }
+  options?: { sessionCount?: number; userId?: string }
 ): { subject: string; html: string } {
+  const optOutUrl = options?.userId
+    ? `https://arno.bot/optout/${options.userId}`
+    : 'https://arno.bot/bot/account'
+  const optOutNote = `Geen herinneringen meer? <a href="${optOutUrl}" style="color:#9ca3af;">Klik hier om je uit te schrijven.</a>`
   const prefix = isTest ? '[TEST] ' : ''
 
   switch (type) {
@@ -171,8 +175,7 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, wat ga je deze week doen?`,
         html: emailHtml(
           `Je hebt een week geen gebruik gemaakt van ArnoBot. Vakantie? Geen tijd? Even vergeten? Te confronterend? Wat dan ook, ArnoBot staat 24/7 voor je klaar. Gebruik 'm en wordt nog scherper dan je al bent. Het grootste risico is dat je meer gaat verkopen. Wie wil 't niet?`,
-          'SPAR MET ARNO →', 'https://arno.bot/bot', isTest,
-          `Geen herinneringen meer ontvangen? <a href="https://arno.bot/bot/account" style="color:#4b5563;">Pas je voorkeuren aan.</a>`
+          'SPAR MET ARNO →', 'https://arno.bot/bot', isTest, optOutNote
         ),
       }
     case 'geen_gesprek_nudge':
@@ -180,8 +183,7 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, ArnoBot wacht op je.`,
         html: emailHtml(
           `Je hebt je aangemeld voor ArnoBot. Maar het is stil aan de overkant. Er is namelijk nog geen gesprek gevoerd. Koudwatervrees? Druk, druk, druk met andere dingen? Oeps, vergeten? Hoe dan ook, ga eens in gesprek. Het grootste risico wat je loopt, is dat je meer gaat verkopen.`,
-          'START EEN GESPREK →', 'https://arno.bot/bot', isTest,
-          `Geen herinneringen meer ontvangen? <a href="https://arno.bot/bot/account" style="color:#4b5563;">Pas je voorkeuren aan.</a>`
+          'START EEN GESPREK →', 'https://arno.bot/bot', isTest, optOutNote
         ),
       }
   }
