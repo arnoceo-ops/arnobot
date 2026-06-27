@@ -29,6 +29,7 @@ export type EmailType =
   | 'opzegging_bevestiging'
   | 'winback'
   | 'admin_derde_trial'
+  | 'referral_aanmelding'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string }> = {
   dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
@@ -43,6 +44,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string 
   opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
   winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding' },
   admin_derde_trial:     { label: 'Admin: derde trial',    description: 'Notificatie naar pannekoek@arno.bot bij start derde trial' },
+  referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link' },
 }
 
 export function getEmailTemplate(
@@ -148,6 +150,14 @@ export function getEmailTemplate(
         html: emailHtml(
           `Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.<br /><br />Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br /><br />Vragen? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b">arno@arno.bot</a>.`,
           'MIJN DATA DOWNLOADEN →', 'https://arno.bot/bot/account', isTest
+        ),
+      }
+    case 'referral_aanmelding':
+      return {
+        subject: `${prefix}Jan Jansen heeft zich aangemeld via jouw referral code`,
+        html: emailHtml(
+          `Hey ${naam}, <strong style="color:#f1f5f9">Jan Jansen</strong> heeft zich zojuist aangemeld via jouw referral code.<br /><br />Zodra Jan Jansen een betaald abonnement afsluit, ben je op weg. Bij een maandabonnement ontvang jij €97 tegoed nadat Jan Jansen drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`,
+          'MIJN REFERRALS →', 'https://arno.bot/bot/account', isTest
         ),
       }
   }
