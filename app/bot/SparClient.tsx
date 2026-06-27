@@ -444,6 +444,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setSynthesisMessageCount(0)
     setSuggestedBlogs([])
     setPendingNavDest(null)
+    setAntwoordLengte('normaal')
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
   }
