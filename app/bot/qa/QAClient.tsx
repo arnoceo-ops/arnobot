@@ -73,6 +73,36 @@ const FAQ_GROUPS = [
     ],
   },
   {
+    label: 'ABONNEMENT',
+    items: [
+      {
+        q: 'Hoeveel kost ArnoBot?',
+        a: 'ArnoBot kost €97 per maand of €777 per jaar. Je begint met een gratis proefperiode van 30 dagen, zonder verplichtingen. Na afloop kies je zelf of je doorgaat.',
+      },
+      {
+        q: 'Hoe lang duurt de proefperiode?',
+        a: 'Je hebt 30 dagen gratis toegang. Op dag 25 vragen we of je wilt doorgaan. Als je niets doet, stopt je toegang automatisch op dag 30.',
+      },
+      {
+        q: 'Hoe zeg ik op?',
+        a: 'Via de accountpagina, met één klik. Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.',
+      },
+    ],
+  },
+  {
+    label: 'REFERRAL',
+    items: [
+      {
+        q: 'Hoe werkt het referralprogramma?',
+        a: 'Deel je persoonlijke referral-link vanuit je profiel. Zodra iemand zich aanmeldt via jouw link en een betaald abonnement afsluit, ontvang jij tegoed en wordt dat verrekend op de factuur. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.',
+      },
+      {
+        q: 'Hoe hoog is het tegoed?',
+        a: 'Per succesvolle referral ontvang je €97 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
+      },
+    ],
+  },
+  {
     label: 'PRIVACY',
     items: [
       {
@@ -83,6 +113,14 @@ const FAQ_GROUPS = [
             <a href="/privacy" style={{ color: '#f59e0b', textDecoration: 'none' }}>privacyverklaring</a>.
           </>
         ),
+      },
+      {
+        q: 'Wie heeft toegang tot mijn gesprekken?',
+        a: 'Alleen jijzelf. Arno Diepeveen heeft als verwerkingsverantwoordelijke toegang tot de systemen, maar leest geen individuele gesprekken. Je gesprekken worden verwerkt door Anthropic voor de AI-analyse en opgeslagen bij Supabase. Beide partijen zijn GDPR-compliant.',
+      },
+      {
+        q: 'Kan ik mijn account en data verwijderen?',
+        a: 'Ja. Via de accountpagina kun je je account verwijderen. Al je gesprekken, je profiel en je analyseresultaten worden dan direct gewist.',
       },
     ],
   },
@@ -178,7 +216,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
 
             {FAQ_GROUPS.map((group, gi) => (
               <div key={gi} style={{ marginBottom: 48 }}>
-                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase' }}>{group.label}</p>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase' }}>{group.label}</p>
                 <div style={{ borderTop: '1px solid #374151' }}>
                   {group.items.map((faq, fi) => {
                     const key = `${gi}-${fi}`
