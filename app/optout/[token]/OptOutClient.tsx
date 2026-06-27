@@ -35,7 +35,7 @@ export default function OptOutClient({ token }: { token: string }) {
           {state === 'done' ? (
             <>
               <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, color: '#f1f5f9', marginBottom: 24, lineHeight: 1 }}>
-                Je staat uitgeschreven
+                Je bent uitgeschreven
               </h1>
               <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
                 Je ontvangt geen activiteitsherinneringen meer van ArnoBot.
