@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 
 type SavedAnalyse = {
   id: string
@@ -15,6 +15,53 @@ const periods = [
   { label: 'DEZE MAAND', days: 30 },
   { label: 'DIT KWARTAAL', days: 90 },
 ]
+
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return parts.map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i} style={{ color: '#f1f5f9', fontWeight: 700 }}>{part.slice(2, -2)}</strong>
+      : <Fragment key={i}>{part}</Fragment>
+  )
+}
+
+function AnalyseText({ text }: { text: string }) {
+  const blocks = text.split(/\n{2,}/)
+  return (
+    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+      {blocks.map((block, i) => {
+        const trimmed = block.trim()
+        if (!trimmed) return null
+        if (trimmed === '---') {
+          return <hr key={i} style={{ border: 'none', borderTop: '1px solid #374151', margin: '28px 0' }} />
+        }
+        if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s]+$/.test(trimmed) && trimmed.length < 50) {
+          return (
+            <p key={i} style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 11, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+              {trimmed}
+            </p>
+          )
+        }
+        const lines = trimmed.split('\n')
+        return (
+          <div key={i} style={{ marginBottom: 24 }}>
+            {lines.map((line, j) => {
+              const isInvalshoek = line.startsWith('Invalshoek:')
+              return (
+                <p key={j} style={{ margin: j === 0 ? 0 : '4px 0 0 0', color: isInvalshoek ? '#6b7280' : '#9ca3af', fontSize: isInvalshoek ? 13 : 15 }}>
+                  {isInvalshoek
+                    ? <><span style={{ color: '#f59e0b', fontWeight: 700 }}>Invalshoek:</span>{renderInline(line.slice('Invalshoek:'.length))}</>
+                    : renderInline(line)
+                  }
+                </p>
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function periodLabel(days: number) {
   if (days === 7) return 'WEEK'
@@ -176,17 +223,8 @@ export default function BlogsClient() {
                     </span>
                   </button>
                   {isOpen && (
-                    <div style={{
-                      padding: '0 20px 24px 20px',
-                      whiteSpace: 'pre-wrap',
-                      fontSize: 15,
-                      lineHeight: 1.9,
-                      color: '#9ca3af',
-                      fontFamily: "'Courier New', monospace",
-                      borderTop: '1px solid #374151',
-                      paddingTop: 20,
-                    }}>
-                      {a.analyse_text}
+                    <div style={{ padding: '20px 24px 28px 24px', borderTop: '1px solid #374151' }}>
+                      <AnalyseText text={a.analyse_text} />
                     </div>
                   )}
                 </div>
