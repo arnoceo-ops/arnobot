@@ -38,7 +38,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         </>
       )}
       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 24 }}>
-        Deel deze link. Nieuwe gebruikers krijgen de eerste maand 50% korting. Jij ook op je volgende maand. Bij 25 betalende referrals word je lid van de ArnoBot Ambassadors Club. Bij 50 betalende referrals krijg je een Lifetime Subscription op ArnoBot. Bij 100 betalende referrals krijg je een aanbieding voor deelname in de ArnoBot Venture. Go, Go Gadget 🚀
+        Deel deze link. Nieuwe gebruikers krijgen de eerste maand gratis. Jij ook: per betalende referral ontvang jij één maand gratis (€97 tegoed). Bij 25 betalende referrals word je lid van de ArnoBot Ambassadors Club. Bij 50 betalende referrals krijg je een Lifetime Subscription op ArnoBot. Bij 100 betalende referrals krijg je een aanbieding voor deelname in de ArnoBot Venture. Go, Go Gadget 🚀
       </p>
 
       {/* Link + kopieerknop */}

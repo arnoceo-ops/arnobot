@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
             Hey ${referrerNaam}, <strong style="color:#f1f5f9">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b">${code.toUpperCase()}</strong>.
           </p>
           <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0">
-            Zodra ${newUserName} een betalend abonnee wordt, ontvang jij 50% korting op je volgende maand, of €97 korting op je volgende jaarverlenging.
+            Zodra ${newUserName} een betalend abonnee wordt, ontvang jij één maand gratis: €97 tegoed op je abonnement.
           </p>
         </div>
       `,

@@ -27,7 +27,7 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.1 · Juni 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.2 · Juni 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
@@ -58,7 +58,7 @@ export default function ReferralSpelregelsPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
                   <td>Maandabonnement (€97/m)</td>
-                  <td>50% korting eerste maand: €48,50</td>
+                  <td>Eerste maand gratis: €97</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
@@ -66,24 +66,9 @@ export default function ReferralSpelregelsPage() {
                   <td>€97 korting: €680</td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer (maand)</td>
-                  <td>Nieuwe gebruiker converteert naar maand</td>
-                  <td>50% korting volgende maand: €48,50</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer (jaar)</td>
-                  <td>Nieuwe gebruiker converteert naar maand</td>
-                  <td>€48,50 tegoed op jaarverlenging</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer (maand)</td>
-                  <td>Nieuwe gebruiker converteert naar jaar</td>
-                  <td>100% korting volgende maand: €97,00</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer (jaar)</td>
-                  <td>Nieuwe gebruiker converteert naar jaar</td>
-                  <td>€97,00 tegoed op jaarverlenging</td>
+                  <td style={{ color: '#f1f5f9' }}>Referrer</td>
+                  <td>Per betalende conversie (maand of jaar)</td>
+                  <td>€97 tegoed (1 maand gratis)</td>
                 </tr>
               </tbody>
             </table>
@@ -92,7 +77,8 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 4</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Geldigheid van een referral</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit: maand of jaar, direct bij de eerste betaling.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit binnen de 30-daagse trial of uiterlijk 15 dagen daarna. Wie na die periode converteert, ontvangt geen referralkorting meer.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De referrer ontvangt zijn tegoed zodra Arno de betaling heeft geregistreerd.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
