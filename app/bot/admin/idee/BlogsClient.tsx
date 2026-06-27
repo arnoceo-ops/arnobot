@@ -37,7 +37,7 @@ function AnalyseText({ text }: { text: string }) {
         }
         if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s]+$/.test(trimmed) && trimmed.length < 50) {
           return (
-            <p key={i} style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 11, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+            <p key={i} style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
               {trimmed}
             </p>
           )
@@ -160,12 +160,12 @@ export default function BlogsClient() {
         onClick={generate}
         disabled={loading}
         style={{
-          fontFamily: "'Space Mono', monospace",
-          fontSize: 13,
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: 18,
           letterSpacing: 3,
-          fontWeight: 700,
-          padding: '12px 32px',
-          borderRadius: 4,
+          fontWeight: 400,
+          padding: '12px 36px',
+          borderRadius: 999,
           border: 'none',
           background: loading ? '#374151' : '#f59e0b',
           color: loading ? '#6b7280' : '#111827',
