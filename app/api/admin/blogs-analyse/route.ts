@@ -23,11 +23,19 @@ export async function POST(req: NextRequest) {
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: sessions } = await supabase
+  const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
+
+  let query = supabase
     .from('arnobot_blog_sessions')
     .select('title, summary, created_at')
     .gte('created_at', since)
     .order('created_at', { ascending: false })
+
+  if (ownerUserId) {
+    query = query.neq('user_id', ownerUserId)
+  }
+
+  const { data: sessions } = await query
 
   if (!sessions?.length) {
     return NextResponse.json({ analyse: null, count: 0 })
