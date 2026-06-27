@@ -47,7 +47,7 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 3', title: 'Proefperiode',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Nieuwe gebruikers ontvangen een gratis proefperiode van <strong style={{ color: '#f1f5f9' }}>30 dagen</strong> na activering van hun account. Gedurende deze periode is volledige functionaliteit beschikbaar.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Nieuwe gebruikers ontvangen een gratis proefperiode van 30 dagen na activering van hun account. Gedurende deze periode is volledige functionaliteit beschikbaar.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na afloop van de proefperiode wordt de toegang geblokkeerd totdat een betaald abonnement is afgesloten. Er vindt geen automatische afschrijving plaats.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales behoudt zich het recht voor de proefperiode zonder opgave van reden te beëindigen of aan te passen.</p>,
               ],
