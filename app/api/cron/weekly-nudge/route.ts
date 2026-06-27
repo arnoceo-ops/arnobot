@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
@@ -15,24 +15,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Haal actieve gebruikers op die minstens 1 gesprek hebben gevoerd
+  const now = Date.now()
+  const sevenDaysAgo  = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const eightDaysAgo  = new Date(now - 8 * 24 * 60 * 60 * 1000).toISOString()
+
   const { data: users } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam')
+    .select('user_id, email, voornaam, trial_start')
     .eq('is_active', true)
     .not('email', 'is', null)
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
 
   let sent = 0
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   for (const user of users) {
     if (!isValidEmail(user.email)) continue
 
     const naam = user.voornaam || 'hey'
 
-    // Sla over als gebruiker afgelopen 7 dagen actief was (geen nudge nodig)
+    // Sla over als gebruiker afgelopen 7 dagen actief was
     const { count: recentCount } = await supabase
       .from('arnobot_rds_logs')
       .select('*', { count: 'exact', head: true })
@@ -41,13 +43,33 @@ export async function GET(req: NextRequest) {
 
     if ((recentCount ?? 0) > 0) continue
 
-    // Bepaal welke mail: nog nooit een gesprek of al wel actief geweest
     const { count: totalCount } = await supabase
       .from('arnobot_rds_logs')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.user_id)
 
-    const type = (totalCount ?? 0) === 0 ? 'geen_gesprek_nudge' : 'weekly_nudge'
+    let type: 'weekly_nudge' | 'geen_gesprek_nudge' | null = null
+
+    if ((totalCount ?? 0) === 0) {
+      // Nog nooit een gesprek: stuur nudge als trial precies 7-8 dagen geleden startte
+      if (user.trial_start && user.trial_start >= eightDaysAgo && user.trial_start < sevenDaysAgo) {
+        type = 'geen_gesprek_nudge'
+      }
+    } else {
+      // Wel gesprekken gehad: stuur nudge als laatste activiteit precies 7-8 dagen geleden was
+      const { count: windowCount } = await supabase
+        .from('arnobot_rds_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+        .gte('created_at', eightDaysAgo)
+
+      if ((windowCount ?? 0) > 0) {
+        type = 'weekly_nudge'
+      }
+    }
+
+    if (!type) continue
+
     const template = getEmailTemplate(type, naam)
 
     try {
