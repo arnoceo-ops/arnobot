@@ -2,7 +2,7 @@ export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Bebas Neue',Arial,sans-serif;font-size:16px;font-weight:400;letter-spacing:3px;padding:10px 28px;text-decoration:none;border-radius:999px;`
+const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.5px;padding:12px 24px;text-decoration:none;border-radius:999px;`
 
 export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false, footerNote?: string, greeting?: string) {
   return `<!DOCTYPE html>
