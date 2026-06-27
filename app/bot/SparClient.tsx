@@ -193,6 +193,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
+  const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
   const recognitionRef = useRef<any>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -589,7 +590,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, history, userId, profiel, sessionId })
+          body: JSON.stringify({ question, history, userId, profiel, sessionId, antwoordLengte })
         })
         const data = await res.json()
 
@@ -1282,6 +1283,27 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'begin het gesprek' : 'begin een gesprek'}</span>
               {sparModus === 'coaching' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 28 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
+          )}
+          {sparModus === 'coaching' && (
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 812 }}>
+              {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
+                <button
+                  key={optie}
+                  onClick={() => setAntwoordLengte(optie)}
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: 13, letterSpacing: 2,
+                    padding: '4px 14px', borderRadius: 999,
+                    background: antwoordLengte === optie ? '#374151' : 'none',
+                    color: antwoordLengte === optie ? '#f1f5f9' : '#4b5563',
+                    border: 'none', cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {optie.toUpperCase()}
+                </button>
+              ))}
+            </div>
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
             <textarea

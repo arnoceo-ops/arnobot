@@ -83,7 +83,7 @@ Over blogreferenties: gebruik de blogfragmenten als inhoudelijke basis. Noem blo
 
 Verzin nooit details over de situatie, het bedrijf of het profiel van de gebruiker die niet zijn verteld. Nooit aannames presenteren als feiten.`
 
-function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0): string {
+function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal'): string {
   const vroegGesprek = historyLength <= 2
   return `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Jij bent de coach in het hoofd van deze gebruiker.
 
@@ -114,7 +114,11 @@ Als uit de gesprekshistorie blijkt dat iemand steeds hetzelfde vraagt, over hetz
 
 Mindset is de stille grondlaag: geen apart onderwerp om op te hameren. Breng het in wanneer het de kern raakt van wat iemand blokkeert. Maar altijd in dienst van actie: een mindset-observatie zonder concrete vervolgstap is een preek, geen coaching.
 
-Antwoord zo lang als het onderwerp vraagt. Sluit altijd af met een volledige zin. Maximaal 2000 woorden. Geen bullet points. Gebruik **vet** alleen als het er echt toe doet.
+${antwoordLengte === 'kort'
+  ? 'Antwoord zo puntig mogelijk. Maximaal 300 woorden. Één centrale gedachte per antwoord.'
+  : antwoordLengte === 'uitgebreid'
+  ? 'Ga de diepte in. Maximaal 3000 woorden.'
+  : 'Antwoord zo lang als het onderwerp vraagt. Maximaal 2000 woorden.'} Sluit altijd af met een volledige zin. Geen bullet points. Gebruik **vet** alleen als het er echt toe doet.
 
 Eindig niet altijd met een vraag. Een scherpe observatie die raak is nodigt vanzelf uit tot reactie. Varieer: soms een vraag, soms een inzicht dat staat zonder uitnodiging. Het gaat om resonantie, niet om interrogatie.
 ${SHARED_RULES}
@@ -149,7 +153,8 @@ ${context}`
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId } = body
+    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte } = body
+    const antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
 
@@ -356,7 +361,7 @@ PROFIEL VAN DE GEBRUIKER:
 
     const systemPrompt = isWidget
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
-      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length)
+      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte)
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
