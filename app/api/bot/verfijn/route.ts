@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { vraag, profiel } = await req.json()
+    const { vraag, profiel, context } = await req.json()
     if (!vraag?.trim()) return NextResponse.json({ verfijnd: vraag })
     if (typeof vraag !== 'string' || vraag.length > 2000) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
@@ -25,14 +25,18 @@ Profiel van de gebruiker:
 - Ideale klant: ${profiel.ideale_klant || 'onbekend'}
 - Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}` : ''
 
+    const contextHint = context ? `\n\nVorig antwoord van ArnoBot in dit gesprek:\n"${context.slice(0, 800)}"` : ''
+
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
-      system: `Je helpt mensen een scherpere vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${profielHint}
+      system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${profielHint}${contextHint}
 
-Beoordeel eerst of de input een herkenbare vraag of onderwerp bevat. Als de input onzin, wartaal, willekeurige tekens of onbegrijpelijk is: reageer dan uitsluitend met het woord: ONBEGRIJPELIJK
+Als er een vorig antwoord van ArnoBot aanwezig is, is de input een vervolg op dat gesprek. Een statement, antwoord of aanvulling is dan net zo geldig als een vraag.
 
-Als de input wel een herkenbare vraag of context bevat: maak hem concreter en verwijder vaagheid, maar behoud de kern en context die de gebruiker heeft gegeven. Gebruik het profiel om de vraag scherper te maken op hun specifieke situatie. Als de vraag al goed is, voeg dan alleen toe wat ontbreekt. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde vraag. Geen uitleg, geen inleiding, geen aanhalingstekens. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
+Beoordeel eerst of de input herkenbare inhoud bevat. Als de input onzin, wartaal, willekeurige tekens of volledig onbegrijpelijk is zonder enige context: reageer dan uitsluitend met het woord: ONBEGRIJPELIJK
+
+Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar behoud de kern. Gebruik het profiel en de gesprekscontext om de reactie relevanter te maken. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde versie. Geen uitleg, geen inleiding, geen aanhalingstekens. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
       messages: [{ role: 'user', content: vraag }]
     })
 

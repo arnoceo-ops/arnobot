@@ -1370,7 +1370,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   const res = await fetch('/api/bot/verfijn', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vraag: input, profiel })
+                    body: JSON.stringify({ vraag: input, profiel, context: messages.filter(m => m.role === 'arno').slice(-1)[0]?.content ?? null })
                   })
                   const data = await res.json()
                   if (data.onbegrijpelijk) {
