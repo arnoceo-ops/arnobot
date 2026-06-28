@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
       body: JSON.stringify({ password }),
     })
     if (res.ok) {
-      router.push('/bot/admin')
+      router.push('/bot/admin/gebruikers')
     } else {
       setError('Verkeerde gebruikersnaam of wachtwoord.')
     }
