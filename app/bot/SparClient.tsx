@@ -1497,7 +1497,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   <div className="msg-arno" style={isMobile ? { flexDirection: 'column', gap: 4 } : {}}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 48, paddingTop: 2, flexShrink: 0, position: 'relative' }}>
                       <span className="msg-arno-label">
-                        {sparModus === 'sparren' && rolCategorie && sparPersona
+                        {sparModus === 'sparren' && rolCategorie && sparPersona && !msg.content?.startsWith('**Debrief')
                           ? (PERSONAS[rolCategorie].find(p => p.key === sparPersona)?.label ?? 'ARNO').toUpperCase()
                           : 'ARNO'}
                       </span>
@@ -1554,7 +1554,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {showSluiten && sparModus === 'sparren' && !loading && (
             <div style={{ padding: 'clamp(20px,3vw,32px)', borderTop: '1px solid #374151', background: '#111827' }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: debriefAntwoord ? 20 : 16 }}>
-                VRAAG DOOR OVER DE DEBRIEF
+                HEB JE NOG EEN VRAAG OVER DE DEBRIEF?
               </p>
               {debriefAntwoord && (
                 <div style={{ background: '#1f2937', padding: 'clamp(16px,2vw,24px)', marginBottom: 16, borderLeft: '3px solid #f59e0b' }}>
