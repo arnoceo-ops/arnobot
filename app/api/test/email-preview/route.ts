@@ -111,8 +111,7 @@ const emails = [
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
-  const querySecret = req.nextUrl.searchParams.get('secret')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && querySecret !== process.env.CRON_SECRET) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

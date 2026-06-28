@@ -12,18 +12,26 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   try {
-    const [profile, logs, account] = await Promise.all([
+    const [profile, logs, account, coaching, referrals, teamlidmaatschap, sessieanalyses] = await Promise.all([
       supabaseAdmin.from('arnobot_blog_profiles').select('*').eq('user_id', userId),
       supabaseAdmin.from('arnobot_rds_logs').select('*').eq('user_id', userId),
       supabaseAdmin.from('approved_users').select('*').eq('user_id', userId),
+      supabaseAdmin.from('arnobot_coaching').select('*').eq('user_id', userId),
+      supabaseAdmin.from('arnobot_referrals').select('*').or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`),
+      supabaseAdmin.from('arnobot_team_members').select('*').eq('user_id', userId),
+      supabaseAdmin.from('arnobot_blog_sessions').select('id, title, summary, created_at').eq('user_id', userId),
     ])
 
     return NextResponse.json({
       export_datum: new Date().toISOString(),
       gebruiker: { clerk_id: userId },
+      account: account.data ?? [],
       profiel: profile.data ?? [],
       gesprekken: logs.data ?? [],
-      account: account.data ?? [],
+      coaching: coaching.data ?? [],
+      referrals: referrals.data ?? [],
+      team: teamlidmaatschap.data ?? [],
+      sessie_analyses: sessieanalyses.data ?? [],
     })
   } catch (e: unknown) {
     console.error('Export error:', e)
