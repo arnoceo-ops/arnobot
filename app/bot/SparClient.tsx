@@ -155,6 +155,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [verfijnen, setVerfijnen] = useState(false)
   const [verfijndSuggestie, setVerfijndSuggestie] = useState('')
   const [verfijnFout, setVerfijnFout] = useState(false)
+  const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
   const [suggestedBlogs, setSuggestedBlogs] = useState<{title: string, url: string}[]>([])
   const [voortgang, setVoortgang] = useState<{count: number, lastDate: string | null} | null>(null)
@@ -1247,7 +1248,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         {!started && rolCategorie && (
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 32 : 0 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 'clamp(24px,4vw,40px)' : 0 }}>
               <button
                 onClick={() => setSparModus('coaching')}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'coaching' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'coaching' ? '#f59e0b' : 'none', color: sparModus === 'coaching' ? '#111827' : '#9ca3af', border: sparModus === 'coaching' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
@@ -1345,6 +1346,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 e.target.style.height = '0px'
                 e.target.style.height = e.target.scrollHeight + 'px'
                 if (showSluiten) setShowSluiten(false)
+                if (inputIsVerfijnd) setInputIsVerfijnd(false)
               }}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -1390,7 +1392,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               {dagelijksTeller} / 25 vragen gebruikt vandaag
             </p>
           )}
-          {input.trim().length > 5 && (
+          {input.trim().length > 5 && !inputIsVerfijnd && (
             <button
               className="verfijn-btn"
               disabled={verfijnen || loading}
@@ -1428,7 +1430,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>{verfijndSuggestie}</p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setInput(verfijndSuggestie); setVerfijndSuggestie(''); setResizeInput(true) }}
+                  onClick={() => { setInput(verfijndSuggestie); setVerfijndSuggestie(''); setResizeInput(true); setInputIsVerfijnd(true) }}
                   style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 15, letterSpacing: 3, padding: '8px 20px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', borderRadius: 999 }}
                 >GEBRUIK DIT</button>
                 <button
