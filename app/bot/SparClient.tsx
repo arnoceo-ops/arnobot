@@ -194,6 +194,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
+  const [debriefVraag, setDebriefVraag] = useState('')
+  const [debriefAntwoord, setDebriefAntwoord] = useState<string | null>(null)
+  const [debriefLoading, setDebriefLoading] = useState(false)
   const recognitionRef = useRef<any>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -445,6 +448,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setSuggestedBlogs([])
     setPendingNavDest(null)
     setAntwoordLengte('normaal')
+    setDebriefVraag('')
+    setDebriefAntwoord(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
   }
@@ -561,6 +566,27 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       reset()
     } finally {
       setSynthesisLoading(false)
+    }
+  }
+
+  async function askDebrief() {
+    if (!debriefVraag.trim() || debriefLoading) return
+    const debriefMsg = messages.find(m => m.content?.startsWith('**Debrief'))
+    if (!debriefMsg) return
+    setDebriefLoading(true)
+    try {
+      const res = await fetch('/api/sparring/doorvraag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: debriefVraag, debrief: debriefMsg.content })
+      })
+      const data = await res.json()
+      setDebriefAntwoord(data.answer || '')
+      setDebriefVraag('')
+    } catch {
+      setDebriefAntwoord('Er ging iets mis. Probeer opnieuw.')
+    } finally {
+      setDebriefLoading(false)
     }
   }
 
@@ -1527,6 +1553,36 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               </div>
             )
           ))}
+          {showSluiten && sparModus === 'sparren' && !loading && (
+            <div style={{ padding: 'clamp(20px,3vw,32px)', borderTop: '1px solid #374151', background: '#111827' }}>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: debriefAntwoord ? 20 : 16 }}>
+                VRAAG DOOR OVER DE DEBRIEF
+              </p>
+              {debriefAntwoord && (
+                <div style={{ background: '#1f2937', padding: 'clamp(16px,2vw,24px)', marginBottom: 16, borderLeft: '3px solid #f59e0b' }}>
+                  <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(debriefAntwoord) }} />
+                </div>
+              )}
+              <div style={{ display: 'flex', border: '1.5px solid #374151' }}>
+                <textarea
+                  value={debriefVraag}
+                  onChange={e => setDebriefVraag(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDebrief() } }}
+                  placeholder="Stel een vervolgvraag over de debrief..."
+                  rows={1}
+                  style={{ flex: 1, background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', caretColor: '#f59e0b' }}
+                />
+                <button
+                  onClick={askDebrief}
+                  disabled={debriefLoading || !debriefVraag.trim()}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '0 24px', background: debriefLoading || !debriefVraag.trim() ? '#374151' : '#f59e0b', color: debriefLoading || !debriefVraag.trim() ? '#6b7280' : '#111827', border: 'none', cursor: debriefLoading || !debriefVraag.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
+                >
+                  {debriefLoading ? '...' : 'VRAAG DOOR →'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {loading && (
             <div className="msg-loading">
               <div className="loading-dots">

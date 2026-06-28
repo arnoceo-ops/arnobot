@@ -70,6 +70,10 @@ const FAQ_GROUPS = [
         q: 'Wat gebeurt er na een sparring-sessie?',
         a: 'ArnoBot geeft een debrief: wat ging goed, het kritieke moment waarop je de controle verloor of het momentum brak, een herkenbaar patroon uit je eerdere coaching, en één concrete tip voor het volgende gesprek.',
       },
+      {
+        q: 'Waarom kan ik niet kiezen hoe lang het antwoord is, zoals bij ArnoBot?',
+        a: 'Bij ArnoBot geef jij een situatie en krijg je advies. Dan is antwoordlengte zinvol. Bij Sparren speelt ArnoBot een tegenpartij in een echt oefengesprek. Die bepaalt zelf hoe lang hij antwoordt, net zoals in het echte leven. De weerstandsinstelling stuurt dat organisch: licht geeft kortere, meegaande reacties. Zwaar geeft langere pushback.',
+      },
     ],
   },
   {
