@@ -26,9 +26,8 @@ export default clerkMiddleware(async (auth, req) => {
     return new NextResponse(null, { status: 404 })
   }
 
-  // Admin routes: Clerk-login vereist. Cookie-auth wordt per pagina afgehandeld.
+  // Admin routes: cookie-auth wordt per pagina afgehandeld.
   if (isAdminRoute(req)) {
-    await auth.protect()
     return NextResponse.next()
   }
 

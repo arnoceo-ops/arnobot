@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 
 // In-memory rate limiter: werkt per serverless instance (good enough voor admin endpoint)
 const ipAttempts = new Map<string, { count: number; firstAt: number }>()
@@ -7,14 +6,6 @@ const WINDOW_MS = 15 * 60 * 1000
 const MAX_ATTEMPTS = 10
 
 export async function POST(req: NextRequest) {
-  // Als ADMIN_USER_ID gezet is, alleen dat Clerk-account toestaan
-  const { userId } = await auth()
-  const adminUserId = process.env.ADMIN_USER_ID
-  if (adminUserId && (!userId || userId !== adminUserId)) {
-    await new Promise(r => setTimeout(r, 500))
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const now = Date.now()
 
