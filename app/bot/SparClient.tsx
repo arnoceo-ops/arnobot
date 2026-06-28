@@ -203,6 +203,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
+  const debriefVraagRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
@@ -450,6 +451,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setAntwoordLengte('normaal')
     setDebriefVraag('')
     setDebriefAntwoord(null)
+    setSparContext('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
   }
@@ -583,6 +585,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       const data = await res.json()
       setDebriefAntwoord(data.answer || '')
       setDebriefVraag('')
+      setTimeout(() => debriefVraagRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     } catch {
       setDebriefAntwoord('Er ging iets mis. Probeer opnieuw.')
     } finally {
@@ -1552,7 +1555,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             )
           ))}
           {showSluiten && sparModus === 'sparren' && !loading && (
-            <div style={{ padding: 'clamp(20px,3vw,32px)', borderTop: '1px solid #374151', background: '#111827' }}>
+            <div ref={debriefVraagRef} style={{ padding: 'clamp(20px,3vw,32px)', borderTop: '1px solid #374151', background: '#111827' }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: debriefAntwoord ? 20 : 16 }}>
                 HEB JE NOG EEN VRAAG OVER DE DEBRIEF?
               </p>
@@ -1571,7 +1574,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(debriefAntwoord) }} />
                 </div>
               )}
-              <div style={{ display: 'flex', border: '1.5px solid #374151' }}>
+              <div className="spar-input-row" style={{ border: '1.5px solid #374151', background: '#1f2937' }}>
                 <textarea
                   value={debriefVraag}
                   onChange={e => setDebriefVraag(e.target.value)}
@@ -1583,15 +1586,28 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDebrief() } }}
                   placeholder="Stel een vervolgvraag over de debrief..."
                   rows={1}
-                  style={{ flex: 1, background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', caretColor: '#f59e0b', overflow: 'hidden' }}
+                  className="spar-textarea"
+                  style={{ background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, resize: 'none', outline: 'none', caretColor: '#f59e0b', overflow: 'hidden' }}
                 />
-                <button
-                  onClick={askDebrief}
-                  disabled={debriefLoading || !debriefVraag.trim()}
-                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '0 24px', background: debriefLoading || !debriefVraag.trim() ? '#374151' : '#f59e0b', color: debriefLoading || !debriefVraag.trim() ? '#6b7280' : '#111827', border: 'none', cursor: debriefLoading || !debriefVraag.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
-                >
-                  {debriefLoading ? '...' : 'VRAAG DOOR →'}
-                </button>
+                <div className="spar-buttons">
+                  {speechSupported && (
+                    <button
+                      className={`spar-mic${recording ? ' recording' : ''}`}
+                      onClick={toggleRecording}
+                      disabled={debriefLoading}
+                      title={recording ? 'Stop opname' : 'Spreek je vraag in'}
+                    >
+                      {recording ? '⏹' : '🎤'}
+                    </button>
+                  )}
+                  <button
+                    className="spar-send"
+                    onClick={askDebrief}
+                    disabled={debriefLoading || !debriefVraag.trim()}
+                  >
+                    {debriefLoading ? '...' : 'VRAAG →'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
