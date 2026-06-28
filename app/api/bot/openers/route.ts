@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -7,6 +8,9 @@ const supabase = createClient(
 )
 
 export async function GET() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
   const { data } = await supabase
     .from('arnobot_openers')
     .select('strategisch, organisatorisch, operationeel, created_at')

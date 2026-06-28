@@ -7,6 +7,11 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const TO = 'arno@arno.bot'
 
 export async function GET() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('arnobot_admin')?.value
+  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   return NextResponse.json({ templates: getEmailTemplateList() })
 }
 
