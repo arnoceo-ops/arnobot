@@ -792,7 +792,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           bottom: 0; left: 0; right: 0;
           background: rgba(17,24,39,0.97);
           border-top: 2px solid #f59e0b;
-          padding: 12px 16px 28px;
+          padding: 20px 16px 28px;
           z-index: 50;
         }
         .spar-input-label {
