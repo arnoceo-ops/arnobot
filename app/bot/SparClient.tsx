@@ -1244,7 +1244,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         {!started && rolCategorie && (
           <div style={{ background: '#111827', padding: '32px clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 24 : 0 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 32 : 0 }}>
               <button
                 onClick={() => setSparModus('coaching')}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'coaching' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'coaching' ? '#f59e0b' : 'none', color: sparModus === 'coaching' ? '#111827' : '#9ca3af', border: sparModus === 'coaching' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
@@ -1256,9 +1256,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
 
             {sparModus === 'sparren' && (
-              <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 24 }}>
+              <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
                 <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WIE IS JE GESPREKSPARTNER?</p>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
                     {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
                       <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1275,7 +1275,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   )}
                 </div>
                 <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WEERSTAND</p>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WEERSTAND</p>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {(['licht', 'stevig', 'zwaar'] as const).map(w => (
                       <button key={w} onClick={() => setSparWeerstand(w)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: isMobile ? 1 : 3, flex: isMobile ? 1 : undefined, width: isMobile ? undefined : 122, padding: sparWeerstand === w ? '12px 0' : '11px 0', borderRadius: 999, background: sparWeerstand === w ? '#f59e0b' : 'none', color: sparWeerstand === w ? '#111827' : '#9ca3af', border: sparWeerstand === w ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
@@ -1285,7 +1285,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>
                     {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE (OPTIONEEL)'}
                   </p>
                   <textarea
