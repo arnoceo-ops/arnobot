@@ -199,8 +199,9 @@ export default async function GebruikersPage({
           <a href="/bot/admin/idee" style={navLinkStyle(false)}>BLOGS</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>
+          <a href="/api/admin/logout" style={{ color: '#4b5563', textDecoration: 'none', fontSize: 13, letterSpacing: 2, fontWeight: 700, padding: '6px 12px' }}>UITLOG</a>
         </div>
       </nav>
 
