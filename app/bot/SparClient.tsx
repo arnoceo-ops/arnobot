@@ -1575,10 +1575,15 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 <textarea
                   value={debriefVraag}
                   onChange={e => setDebriefVraag(e.target.value)}
+                  onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                    const t = e.currentTarget
+                    t.style.height = '0px'
+                    t.style.height = t.scrollHeight + 'px'
+                  }}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDebrief() } }}
                   placeholder="Stel een vervolgvraag over de debrief..."
                   rows={1}
-                  style={{ flex: 1, background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', caretColor: '#f59e0b' }}
+                  style={{ flex: 1, background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', caretColor: '#f59e0b', overflow: 'hidden' }}
                 />
                 <button
                   onClick={askDebrief}
