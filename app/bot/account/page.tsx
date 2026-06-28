@@ -23,11 +23,16 @@ export default function AccountPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
+  const [isTeamMember, setIsTeamMember] = useState(false)
 
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
       .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
+      .catch(() => {})
+    fetch('/api/bot/team/status')
+      .then(r => r.json())
+      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
       .catch(() => {})
   }, [])
 
@@ -108,10 +113,14 @@ export default function AccountPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        {/* Referral — openingssectie */}
-        <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
-        <ReferralSection inAccount />
+        {/* Referral — openingssectie (verborgen voor teamleden) */}
+        {!isTeamMember && (
+          <>
+            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
+            <ReferralSection inAccount />
+          </>
+        )}
 
         {/* Gegevens — tweede sectie */}
         <div style={{ borderTop: '1px solid #374151', paddingTop: 48, marginTop: 56 }}>

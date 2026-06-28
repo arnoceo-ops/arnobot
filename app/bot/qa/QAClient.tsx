@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 
@@ -132,6 +132,14 @@ const FAQ_GROUPS = [
 
 export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [isTeamMember, setIsTeamMember] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/bot/team/status')
+      .then(r => r.json())
+      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+      .catch(() => {})
+  }, [])
 
   return (
     <>
@@ -218,7 +226,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
               FAQ
             </h2>
 
-            {FAQ_GROUPS.map((group, gi) => (
+            {FAQ_GROUPS.filter(g => !(isTeamMember && g.label === 'REFERRAL')).map((group, gi) => (
               <div key={gi} style={{ marginBottom: 48 }}>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase' }}>{group.label}</p>
                 <div style={{ borderTop: '1px solid #374151' }}>
