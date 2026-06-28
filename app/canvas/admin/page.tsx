@@ -75,7 +75,7 @@ export default function AdminPage() {
         email: inviteEmail.trim(),
         invited_by: user.id,
       })
-      const res = await fetch('/api/invite', {
+      const res = await fetch('/api/canvas/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim() }),
