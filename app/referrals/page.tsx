@@ -129,7 +129,6 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 7</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Uitsluitingen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Teamlicenties zijn uitgesloten van het referralprogramma. Kortingen en tegoed gelden alleen voor individuele abonnementen.</p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar.</p>
           </div>
 
