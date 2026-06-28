@@ -26,12 +26,15 @@ export default clerkMiddleware(async (auth, req) => {
     return new NextResponse(null, { status: 404 })
   }
 
-  // Admin routes: alleen jouw Clerk-account krijgt toegang. Cookie-auth wordt per pagina afgehandeld.
+  // Admin routes: Clerk-login vereist. Als ADMIN_USER_ID gezet is, alleen dat account.
   if (isAdminRoute(req)) {
     await auth.protect()
-    const { userId } = await auth()
-    if (userId !== process.env.ADMIN_USER_ID) {
-      return NextResponse.redirect(new URL('/', req.url))
+    const adminUserId = process.env.ADMIN_USER_ID
+    if (adminUserId) {
+      const { userId } = await auth()
+      if (userId !== adminUserId) {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
     }
     return NextResponse.next()
   }

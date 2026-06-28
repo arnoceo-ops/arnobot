@@ -7,9 +7,10 @@ const WINDOW_MS = 15 * 60 * 1000
 const MAX_ATTEMPTS = 10
 
 export async function POST(req: NextRequest) {
-  // Alleen de specifieke admin-Clerk-account mag de wachtwoordcheck uitvoeren
+  // Als ADMIN_USER_ID gezet is, alleen dat Clerk-account toestaan
   const { userId } = await auth()
-  if (!userId || userId !== process.env.ADMIN_USER_ID) {
+  const adminUserId = process.env.ADMIN_USER_ID
+  if (adminUserId && (!userId || userId !== adminUserId)) {
     await new Promise(r => setTimeout(r, 500))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
