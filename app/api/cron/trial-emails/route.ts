@@ -205,5 +205,42 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // --- Loop 4: referral notificaties naar referrers ---
+  const { data: pendingReferrals } = await supabase
+    .from('arnobot_referrals')
+    .select('id, referrer_user_id, referred_naam')
+    .is('notif_sent_at', null)
+    .eq('status', 'signed_up')
+
+  for (const ref of pendingReferrals ?? []) {
+    const { data: referrer } = await supabase
+      .from('approved_users')
+      .select('email, voornaam')
+      .eq('user_id', ref.referrer_user_id)
+      .single()
+
+    if (!referrer?.email || !isValidEmail(referrer.email)) continue
+
+    const referrerNaam = referrer.voornaam || 'daar'
+    const { subject, html } = getEmailTemplate('referral_aanmelding', referrerNaam, false, {
+      newUserName: ref.referred_naam || 'Iemand',
+    })
+
+    const { error } = await resend.emails.send({
+      from: 'ArnoBot <noreply@arno.bot>',
+      to: referrer.email,
+      subject,
+      html,
+    })
+
+    if (!error) {
+      await supabase
+        .from('arnobot_referrals')
+        .update({ notif_sent_at: now.toISOString() })
+        .eq('id', ref.id)
+      sent++
+    }
+  }
+
   return NextResponse.json({ ok: true, sent, cancelled, blocked })
 }

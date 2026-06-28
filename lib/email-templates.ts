@@ -84,7 +84,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -193,14 +193,16 @@ export function getEmailTemplate(
           'MIJN DATA DOWNLOADEN →', 'https://arno.bot/bot/account'
         ),
       }
-    case 'referral_aanmelding':
+    case 'referral_aanmelding': {
+      const newUser = options?.newUserName ?? 'Iemand'
       return {
-        subject: `${prefix}Jan Jansen heeft zich aangemeld via jouw referral code`,
+        subject: `${prefix}${newUser} heeft zich aangemeld via jouw referral code`,
         html: mail(
-          `<strong style="color:#f1f5f9;">Jan Jansen</strong> heeft zich zojuist aangemeld via jouw referral code.<br><br>Zodra Jan Jansen een betaald abonnement afsluit, ben je op weg. Bij een maandabonnement ontvang jij €97 tegoed nadat Jan Jansen drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`,
+          `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich zojuist aangemeld via jouw referral link.<br><br>Zodra ${newUser} een betaald abonnement afsluit, ontvang jij €97 tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account'
         ),
       }
+    }
     case 'weekly_nudge':
       return {
         subject: `${prefix}${naam}, wat ga je deze week doen?`,
