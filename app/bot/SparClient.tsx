@@ -171,7 +171,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [recording, setRecording] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
-  const [ttsSpeed, setTtsSpeed] = useState(1.0)
+  const [ttsSpeed, setTtsSpeed] = useState(1.25)
   const [ttsSpeedOpenIdx, setTtsSpeedOpenIdx] = useState<number | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
@@ -211,7 +211,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (SR) setSpeechSupported(true)
     const saved = localStorage.getItem('arnobot_tts_speed')
-    if (saved) setTtsSpeed(parseFloat(saved))
+    setTtsSpeed(saved ? parseFloat(saved) : 1.25)
   }, [])
 
   function toggleRecording() {
