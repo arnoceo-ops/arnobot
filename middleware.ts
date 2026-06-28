@@ -175,27 +175,6 @@ export default clerkMiddleware(async (auth, req) => {
                 body: JSON.stringify({ chat_id: tgChat, text: tgText }),
               }).catch(() => {})
             }
-            // Welkomstmail — fire and forget
-            const resend = new Resend(process.env.RESEND_API_KEY)
-            const voornaam = clerkUser.firstName || 'daar'
-            resend.emails.send({
-              from: 'ArnoBot <info@arno.bot>',
-              to: email,
-              subject: 'Je ArnoBot trial staat klaar',
-              html: `
-                <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
-                  <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:32px;">ARNOBOT</p>
-                  <h1 style="font-size:24px;font-weight:700;margin-bottom:20px;line-height:1.3;">Hey, ${voornaam}. Welkom!</h1>
-                  <p style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">
-                    Je account is aangemaakt via LinkedIn. Je hebt 30 dagen gratis toegang tot ArnoBot Unlimited. Geen creditcard, geen verplichtingen.
-                  </p>
-                  <a href="https://arno.bot/bot"
-                     style="display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;">
-                    OPEN ARNOBOT →
-                  </a>
-                </div>
-              `,
-            }).catch(() => {})
           }
         }
       } catch (e) {
