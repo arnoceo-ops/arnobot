@@ -1309,7 +1309,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           </div>
         )}
 
-        {!blocked && <div className={`spar-input-area${started ? ' active' : ''}`}>
+        {!blocked && !(showSluiten && sparModus === 'sparren') && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'begin het gesprek' : 'begin een gesprek'}</span>
@@ -1559,60 +1559,15 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             )
           ))}
           {showSluiten && sparModus === 'sparren' && !loading && (
-            <div ref={debriefVraagRef} style={{ padding: 'clamp(20px,3vw,32px)', borderTop: '1px solid #374151', background: '#111827' }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: debriefAntwoord ? 20 : 16 }}>
-                HEB JE NOG EEN VRAAG OVER DE DEBRIEF?
-              </p>
-              {debriefLoading && (
-                <div className="msg-loading" style={{ marginBottom: 16 }}>
-                  <div className="loading-dots">
-                    <div className="loading-dot" />
-                    <div className="loading-dot" />
-                    <div className="loading-dot" />
-                  </div>
-                  <span className="loading-text">Arno denkt na</span>
-                </div>
-              )}
-              {debriefAntwoord && !debriefLoading && (
-                <div style={{ background: '#1f2937', padding: 'clamp(16px,2vw,24px)', marginBottom: 16, borderLeft: '3px solid #f59e0b' }}>
-                  <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(debriefAntwoord) }} />
-                </div>
-              )}
-              <div className="spar-input-row" style={{ border: '1.5px solid #374151', background: '#1f2937' }}>
-                <textarea
-                  value={debriefVraag}
-                  onChange={e => setDebriefVraag(e.target.value)}
-                  onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
-                    const t = e.currentTarget
-                    t.style.height = '0px'
-                    t.style.height = t.scrollHeight + 'px'
-                  }}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDebrief() } }}
-                  placeholder="Stel een vervolgvraag over de debrief..."
-                  rows={1}
-                  className="spar-textarea"
-                  style={{ background: '#1f2937', border: 'none', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, resize: 'none', outline: 'none', caretColor: '#f59e0b', overflow: 'hidden' }}
-                />
-                <div className="spar-buttons">
-                  {speechSupported && (
-                    <button
-                      className={`spar-mic${recording ? ' recording' : ''}`}
-                      onClick={toggleRecording}
-                      disabled={debriefLoading}
-                      title={recording ? 'Stop opname' : 'Spreek je vraag in'}
-                    >
-                      {recording ? '⏹' : '🎤'}
-                    </button>
-                  )}
-                  <button
-                    className="spar-send"
-                    onClick={askDebrief}
-                    disabled={debriefLoading || !debriefVraag.trim()}
-                  >
-                    {debriefLoading ? '...' : 'VRAAG →'}
-                  </button>
-                </div>
-              </div>
+            <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,60px)', display: 'flex', justifyContent: 'center', background: '#111827' }}>
+              <button
+                onClick={reset}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#d97706')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#f59e0b')}
+              >
+                NIEUW GESPREK →
+              </button>
             </div>
           )}
 
