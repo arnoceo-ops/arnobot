@@ -1243,7 +1243,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         )}
 
         {!started && rolCategorie && (
-          <div style={{ background: '#111827', padding: '32px clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+          <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 32 : 0 }}>
               <button
                 onClick={() => setSparModus('coaching')}
