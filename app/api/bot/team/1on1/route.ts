@@ -85,9 +85,9 @@ export async function POST(req: NextRequest) {
 
   if (coaching) {
     lines.push('\nCOACHINGPROFIEL (huidig)')
-    if (coaching.mindset_score !== null) lines.push(`Mindset: ${coaching.mindset_score}/5 — ${coaching.mindset_diagnose ?? ''}`)
-    if (coaching.systeem_score !== null) lines.push(`Systeem: ${coaching.systeem_score}/5 — ${coaching.systeem_diagnose ?? ''}`)
-    if (coaching.actie_score !== null) lines.push(`Actie: ${coaching.actie_score}/5 — ${coaching.actie_diagnose ?? ''}`)
+    if (coaching.mindset_score !== null) lines.push(`Mindset: ${coaching.mindset_score}/5: ${coaching.mindset_diagnose ?? ''}`)
+    if (coaching.systeem_score !== null) lines.push(`Systeem: ${coaching.systeem_score}/5: ${coaching.systeem_diagnose ?? ''}`)
+    if (coaching.actie_score !== null) lines.push(`Actie: ${coaching.actie_score}/5: ${coaching.actie_diagnose ?? ''}`)
     if (coaching.voortgang) lines.push(`\nVoortgang: ${coaching.voortgang}`)
   }
 
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     for (const h of history) {
       const wekenGeleden = Math.round((Date.now() - new Date(h.created_at).getTime()) / (7 * 86400000))
       const scoreStr = [h.mindset_score, h.systeem_score, h.actie_score].filter(s => s !== null).join(' / ')
-      lines.push(`${wekenGeleden} weken geleden — scores: ${scoreStr || 'onbekend'} — aandachtspunt: ${h.aandachtspunt || 'niet vastgelegd'}${h.notitie ? ` — notitie: ${h.notitie}` : ''}`)
+      lines.push(`${wekenGeleden} weken geleden | scores: ${scoreStr || 'onbekend'} | aandachtspunt: ${h.aandachtspunt || 'niet vastgelegd'}${h.notitie ? ` | notitie: ${h.notitie}` : ''}`)
     }
   }
 

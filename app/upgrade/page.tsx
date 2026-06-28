@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Upgrade — Royal Dutch Sales',
+  title: 'Upgrade · Royal Dutch Sales',
 }
 
 export default function UpgradePage() {

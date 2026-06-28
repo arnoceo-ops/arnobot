@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: 'ArnoBot',
     locale: 'nl_NL',
     type: 'website',
-    images: [{ url: 'https://arno.bot/cyborg.jpg', width: 380, height: 380, alt: 'ArnoBot — Personal Sales Coach' }],
+    images: [{ url: 'https://arno.bot/cyborg.jpg', width: 380, height: 380, alt: 'ArnoBot: Personal Sales Coach' }],
   },
   twitter: {
     card: 'summary_large_image',
