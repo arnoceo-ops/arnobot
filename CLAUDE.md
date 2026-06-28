@@ -73,6 +73,8 @@ Dit geldt ook als de verzoeken als losse zinnen in één bericht staan.
 
 ## UI-stijl — ALTIJD consistent toepassen
 
+**Actief stijltoezicht**: signaleer afwijkingen van de Style Guide zodra je ze tegenkomt, ook als ze buiten de scope van het huidige verzoek vallen. Benoem het kort en vraag of je het direct mee-fixt. Wacht niet tot de gebruiker het zelf opmerkt.
+
 **Regel**: elke keer dat een UI-norm wordt vastgesteld of gewijzigd, update je CLAUDE.md in dezelfde commit. Geen uitzondering.
 
 **Werkwijze**: bij elke nieuwe UI-component, controleer alle elementen direct tegen de vaste normen hieronder vóór commit. Niet achteraf. Bij twijfel over de juiste norm: vragen aan de gebruiker.
