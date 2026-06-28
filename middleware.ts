@@ -149,7 +149,7 @@ export default clerkMiddleware(async (auth, req) => {
                             Hey ${referrerNaam2}, <strong style="color:#f1f5f9">${newUserName2}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b">${refCode}</strong>.
                           </p>
                           <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0">
-                            Zodra ${newUserName2} een betalend abonnee wordt, ontvang jij 50% korting op je volgende maand, of €97 korting op je volgende jaarverlenging.
+                            Zodra ${newUserName2} een betalend abonnee wordt, ontvang jij €97 tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.
                           </p>
                         </div>
                       `,
