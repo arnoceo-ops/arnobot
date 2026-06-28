@@ -172,7 +172,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
   const [ttsSpeed, setTtsSpeed] = useState(1.0)
-  const [ttsSpeedOpen, setTtsSpeedOpen] = useState(false)
+  const [ttsSpeedOpenIdx, setTtsSpeedOpenIdx] = useState<number | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackSent, setFeedbackSent] = useState(false)
@@ -1511,21 +1511,19 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                       >
                         {ttsLoading === i ? '⏳' : speakingIdx === i ? '⏹' : '▶'}
                       </button>
-                      {i === messages.findIndex(m => m.role === 'arno') && (
-                        <button
-                          onClick={() => setTtsSpeedOpen(o => !o)}
-                          title="Snelheid"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
-                        >⚙</button>
-                      )}
-                      {ttsSpeedOpen && i === messages.findIndex(m => m.role === 'arno') && (
+                      <button
+                        onClick={() => setTtsSpeedOpenIdx(ttsSpeedOpenIdx === i ? null : i)}
+                        title="Snelheid"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: ttsSpeedOpenIdx === i ? '#f59e0b' : '#6b7280', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
+                        onMouseEnter={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                        onMouseLeave={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
+                      >⚙</button>
+                      {ttsSpeedOpenIdx === i && (
                         <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, background: '#1f2937', border: '1px solid #374151', padding: '6px 0', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
                           {[0.75, 1.0, 1.25].map(s => (
                             <button
                               key={s}
-                              onClick={() => { setTtsSpeed(s); localStorage.setItem('arnobot_tts_speed', String(s)); setTtsSpeedOpen(false) }}
+                              onClick={() => { setTtsSpeed(s); localStorage.setItem('arnobot_tts_speed', String(s)); setTtsSpeedOpenIdx(null) }}
                               style={{ display: 'block', width: '100%', textAlign: 'left', background: ttsSpeed === s ? '#374151' : 'none', border: 'none', cursor: 'pointer', padding: '7px 14px', fontFamily: "'Space Mono', monospace", fontSize: 11, color: ttsSpeed === s ? '#f59e0b' : '#9ca3af', letterSpacing: 1, whiteSpace: 'nowrap' }}
                             >
                               {s === 0.75 ? '0.75× langzamer' : s === 1.0 ? '1.0× normaal' : '1.25× sneller'}
