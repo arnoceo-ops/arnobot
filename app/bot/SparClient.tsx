@@ -1258,7 +1258,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             {sparModus === 'sparren' && (
               <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 24 }}>
                 <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WAT IS MIJN ROL</p>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>WIE IS JE GESPREKSPARTNER?</p>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
                     {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
                       <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1293,7 +1293,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     onChange={e => setSparContext(e.target.value)}
                     onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
                     onBlur={e => { e.currentTarget.style.borderColor = '#374151' }}
-                    placeholder={sparPersona === 'anders' ? 'Beschrijf mijn rol en de context van ons gesprek.' : 'Wat is de context van het gesprek?'}
+                    placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
                     rows={2}
                     className="spar-context-textarea"
                     style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
