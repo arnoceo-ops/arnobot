@@ -10,11 +10,11 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Wat is ArnoBot precies?',
-        a: 'ArnoBot is een AI-salescoach die uitsluitend antwoord geeft vanuit de bibliotheek van Arno Diepeveen. 40 jaar sales-expertise, 369.000 woorden aan inzichten, cases en coaching. Geen internet, geen generieke AI.',
+        a: 'ArnoBot is een AI-salescoach, half man, half machine, die uitsluitend antwoord geeft vanuit de expertise en content van Arno Diepeveen. Meer dan 40 jaar sales ervaring uit de voorhoede, 20 jaar sales blogs met inzichten, cases en coaching. Er komt geen generieke AI aan te pas. Just Arno.',
       },
       {
         q: 'Waarom geen ChatGPT o.i.d.?',
-        a: 'ChatGPT is een generieke LLM. Het middelt wat het kan vinden. ArnoBot heeft focus op jouw profiel, groei en succes. Dat wordt gematcht met supergerichte data. ArnoBot redeneert uitsluitend binnen het kader van Arno\'s content.',
+        a: 'ChatGPT e.a. zijn generieke LLM\'s. Het middelt wat het kan vinden. ArnoBot heeft focus op jouw profiel, groei en succes. Daarnaast is ArnoBot transparant en neemt geen blad voor de mond. ArnoBot heeft maar één doel en dat is jouw sales engine chippen tot buitengewone resultaten. Hij redeneert uitsluitend binnen het kader van Arno\'s content.',
       },
       {
         q: 'Wat als het antwoord niet klopt?',
@@ -27,7 +27,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt ArnoBot stap voor stap?',
-        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in de Bieb, en vraag daarna een coachingsadvies aan. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
+        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in de Bieb, en vraag daarna een coachingsadvies aan. De respectievelijke pagina\'s staan in het menu: ArnoBot, Bieb, Coaching. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
       },
       {
         q: 'Hoe gebruik ik de gesprekken optimaal?',
@@ -35,11 +35,11 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Wat is een patroonanalyse en hoe maak ik er een?',
-        a: 'Ga naar de Bieb, selecteer de gesprekken die je wilt meenemen (maximaal 20) en klik op Analyseer. ArnoBot trekt de rode draden eruit: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon.',
+        a: 'Ga naar de Bieb, selecteer de gesprekken waar je een duiding op wilt (maximaal 20) en klik op Analyseer. ArnoBot geeft je de rode draad: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon waar je iets mee kunt.',
       },
       {
-        q: 'Wanneer kan ik een coachingsadvies aanvragen?',
-        a: 'Pas als je minimaal 5 gesprekken hebt gevoerd. Ga dan naar Coaching en klik op de knop. Arno combineert je gesprekken, profiel en eerdere analyses op drie pijlers: Mindset, Systeem en Actie. Het resultaat wordt elke keer scherper naarmate je meer hebt opgebouwd.',
+        q: 'Wanneer kan ik een coachingsadvies opvragen?',
+        a: 'Dat kan als je minimaal 5 gesprekken hebt gevoerd. Ga dan naar Coaching en klik op de knop Adviseer. Arno combineert je gesprekken, profiel en eerdere analyses op drie pijlers: Mindset, Systeem en Actie. Het resultaat wordt elke keer scherper naarmate je meer hebt opgebouwd.',
       },
       {
         q: 'Waarom kan ik maximaal 20 gesprekken selecteren voor een analyse?',
