@@ -57,7 +57,7 @@ const ORGANISATORISCH_ROLLEN = ['Sales Manager/Director']
 const SALES_ONLY_ROLLEN = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
 
 const VERKOPER_ROLLEN_SPAR = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
-const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales']
+const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales', 'Sales Manager/Director']
 const EINDBAAS_ROLLEN_SPAR = ['CEO/DGA']
 const SOLOPRENEUR_ROLLEN_SPAR = ['Solopreneur']
 
@@ -195,16 +195,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
-  const [debriefVraag, setDebriefVraag] = useState('')
-  const [debriefAntwoord, setDebriefAntwoord] = useState<string | null>(null)
-  const [debriefLoading, setDebriefLoading] = useState(false)
   const recognitionRef = useRef<any>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
-  const debriefVraagRef = useRef<HTMLDivElement>(null)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
@@ -451,8 +447,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setSuggestedBlogs([])
     setPendingNavDest(null)
     setAntwoordLengte('normaal')
-    setDebriefVraag('')
-    setDebriefAntwoord(null)
     setSparContext('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
@@ -570,28 +564,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       reset()
     } finally {
       setSynthesisLoading(false)
-    }
-  }
-
-  async function askDebrief() {
-    if (!debriefVraag.trim() || debriefLoading) return
-    const debriefMsg = messages.find(m => m.content?.startsWith('**Debrief'))
-    if (!debriefMsg) return
-    setDebriefLoading(true)
-    try {
-      const res = await fetch('/api/sparring/doorvraag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: debriefVraag, debrief: debriefMsg.content })
-      })
-      const data = await res.json()
-      setDebriefAntwoord(data.answer || '')
-      setDebriefVraag('')
-      setTimeout(() => debriefVraagRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-    } catch {
-      setDebriefAntwoord('Er ging iets mis. Probeer opnieuw.')
-    } finally {
-      setDebriefLoading(false)
     }
   }
 
@@ -1297,7 +1269,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     value={sparContext}
                     onChange={e => setSparContext(e.target.value)}
                     onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = '#374151' }}
+                    onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
                     placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
                     rows={2}
                     className="spar-context-textarea"
@@ -1312,7 +1284,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         {!blocked && !(showSluiten && sparModus === 'sparren') && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
-              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Jij begint het gesprek.' : 'begin een gesprek'}</span>
+              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Jij begint het gesprek.' : 'Begin een gesprek.'}</span>
               {sparModus === 'coaching' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 28 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
@@ -1327,7 +1299,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     fontSize: 13, letterSpacing: 2,
                     padding: '4px 14px', borderRadius: 999,
                     background: antwoordLengte === optie ? '#374151' : 'none',
-                    color: antwoordLengte === optie ? '#f1f5f9' : '#4b5563',
+                    color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
                     border: 'none', cursor: 'pointer',
                     transition: 'all 0.15s',
                   }}
