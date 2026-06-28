@@ -143,7 +143,7 @@ export async function POST(req: Request) {
         </table>
 
         <div style="margin-top:40px;padding-top:24px;border-top:1px solid #eee;font-size:12px;color:#aaa;text-align:center">
-          Verstuurd vanuit ArnoBot — arno.bot
+          Verstuurd vanuit ArnoBot · arno.bot
         </div>
       </div>
     </body>
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
     from: 'ArnoBot <info@arno.bot>',
     to: coachEmail,
     replyTo: d.email || undefined,
-    subject: `[COACHING] ${d.naam} — ${d.stats.sessionCount} gesprekken`,
+    subject: `[COACHING] ${d.naam} · ${d.stats.sessionCount} gesprekken`,
     html,
   })
 

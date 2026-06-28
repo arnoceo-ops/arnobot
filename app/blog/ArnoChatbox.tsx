@@ -118,7 +118,7 @@ export default function ArnoChatbox() {
           {messages.map((msg, i) => (
             <div key={i}>
               <div className={msg.role === 'user' ? 'chat-msg-user' : 'chat-msg-arno'}>
-                {msg.role === 'arno' && msg.content && <strong>— Arno</strong>}
+                {msg.role === 'arno' && msg.content && <strong>Arno:</strong>}
                 {msg.role === 'arno' ? renderMarkdown(msg.content) : msg.content}
               </div>
               {msg.hint && <HintBlock hint={msg.hint} />}

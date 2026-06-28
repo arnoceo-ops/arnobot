@@ -1,6 +1,7 @@
 export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
 
@@ -15,6 +16,9 @@ function removeAccents(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
   try {
     const { label, sub, answer, mode, questionId } = await req.json()
 

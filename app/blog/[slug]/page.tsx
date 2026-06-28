@@ -359,7 +359,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       <div className="post-hero">
         <div className="post-hero-inner">
-          <span className="post-label">Royal Dutch Sales — arno.blog</span>
+          <span className="post-label">Royal Dutch Sales · arno.blog</span>
           <h1 className="post-title">{title}</h1>
           <div className="post-meta">
             <span className="post-date">{date}</span>
