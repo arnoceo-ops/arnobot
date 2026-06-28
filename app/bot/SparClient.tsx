@@ -976,7 +976,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .msg-arno-label {
           font-family: 'Bebas Neue', sans-serif;
           font-size: 18px; letter-spacing: 3px;
-          color: #f59e0b; white-space: nowrap; padding-top: 2px; min-width: 48px;
+          color: #f59e0b; white-space: nowrap; padding-top: 2px; min-width: 48px; text-align: center;
         }
         .msg-arno-text {
           font-size: 15px; line-height: 1.9; color: #9ca3af;
