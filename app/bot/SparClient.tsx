@@ -1556,7 +1556,17 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: debriefAntwoord ? 20 : 16 }}>
                 HEB JE NOG EEN VRAAG OVER DE DEBRIEF?
               </p>
-              {debriefAntwoord && (
+              {debriefLoading && (
+                <div className="msg-loading" style={{ marginBottom: 16 }}>
+                  <div className="loading-dots">
+                    <div className="loading-dot" />
+                    <div className="loading-dot" />
+                    <div className="loading-dot" />
+                  </div>
+                  <span className="loading-text">Arno denkt na</span>
+                </div>
+              )}
+              {debriefAntwoord && !debriefLoading && (
                 <div style={{ background: '#1f2937', padding: 'clamp(16px,2vw,24px)', marginBottom: 16, borderLeft: '3px solid #f59e0b' }}>
                   <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(debriefAntwoord) }} />
                 </div>
@@ -1581,7 +1591,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
           )}
 
-          {loading && (
+          {(loading || synthesisLoading) && (
             <div className="msg-loading">
               <div className="loading-dots">
                 <div className="loading-dot" />
