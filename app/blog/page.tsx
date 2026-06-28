@@ -134,7 +134,7 @@ export default async function BlogPage() {
           </h1>
           <div className="blog-meta">
             <span className="blog-count">500+</span>
-            <span className="blog-count-label">Posts — Since 2007</span>
+            <span className="blog-count-label">Posts · Since 2007</span>
           </div>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default async function BlogPage() {
 
       <footer>
         <span className="footer-logo">Royal Dutch Sales</span>
-        <span className="footer-copy">© Since 2007 — CC BY-ND 4.0</span>
+        <span className="footer-copy">© Since 2007 · CC BY-ND 4.0</span>
       </footer>
     </>
   )

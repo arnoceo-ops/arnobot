@@ -2,6 +2,7 @@ import { client } from '@/sanity/client'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
 interface Post {
   _id: string
@@ -29,6 +30,10 @@ async function getPosts(): Promise<Post[]> {
 }
 
 export default async function Home() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('arnobot_admin')?.value
+  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/')
+
   const { userId } = await auth()
   if (userId) redirect('/bot')
   return (
