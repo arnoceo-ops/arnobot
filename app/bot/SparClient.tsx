@@ -1505,9 +1505,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                         onClick={() => speak(msg.content, i)}
                         title={speakingIdx === i ? 'Stop' : 'Beluister'}
                         disabled={ttsLoading !== null && ttsLoading !== i}
-                        style={{ background: 'none', border: 'none', cursor: ttsLoading === i ? 'wait' : 'pointer', color: speakingIdx === i ? '#f59e0b' : ttsLoading === i ? '#f59e0b' : '#374151', fontSize: 18, padding: 0, transition: 'color 0.15s', lineHeight: 1 }}
-                        onMouseEnter={e => { if (speakingIdx !== i && ttsLoading !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
-                        onMouseLeave={e => { if (speakingIdx !== i && ttsLoading !== i) (e.currentTarget as HTMLButtonElement).style.color = '#374151' }}
+                        style={{ background: 'none', border: 'none', cursor: ttsLoading === i ? 'wait' : 'pointer', color: speakingIdx === i ? '#f59e0b' : ttsLoading === i ? '#f59e0b' : '#6b7280', fontSize: 18, padding: 0, transition: 'color 0.15s', lineHeight: 1 }}
+                        onMouseEnter={e => { if (speakingIdx !== i && ttsLoading !== i) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                        onMouseLeave={e => { if (speakingIdx !== i && ttsLoading !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
                       >
                         {ttsLoading === i ? '⏳' : speakingIdx === i ? '⏹' : '▶'}
                       </button>
@@ -1515,9 +1515,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                         <button
                           onClick={() => setTtsSpeedOpen(o => !o)}
                           title="Snelheid"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#374151', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#6b7280')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#374151')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#9ca3af')}
+                          onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
                         >⚙</button>
                       )}
                       {ttsSpeedOpen && i === messages.findIndex(m => m.role === 'arno') && (
