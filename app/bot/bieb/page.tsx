@@ -393,7 +393,7 @@ export default function GeschiedenisPage() {
             placeholder="Zoek in gesprekken..."
             style={{
               width: '100%', background: '#1f2937', border: '1px solid #374151',
-              color: '#f1f5f9', fontFamily: "'Space Mono', monospace",
+              borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace",
               fontSize: 15, padding: '12px 16px', paddingRight: 44, outline: 'none', letterSpacing: 1,
             }}
             onFocus={e => (e.target.style.borderColor = '#f59e0b')}

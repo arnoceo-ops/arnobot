@@ -38,7 +38,7 @@ export default async function CoachingPage() {
               </p>
             </div>
             <Link
-              href="mailto:arno@royaldutchsales.com?subject=Upgrade%20naar%20Pro"
+              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Pro"
               style={{
                 display: 'inline-block', padding: '12px 36px',
                 background: '#f59e0b', color: '#111827',
