@@ -1312,7 +1312,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         {!blocked && !(showSluiten && sparModus === 'sparren') && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
-              <span className="spar-input-intro">{sparModus === 'sparren' ? 'begin het gesprek' : 'begin een gesprek'}</span>
+              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Jij begint het gesprek.' : 'begin een gesprek'}</span>
               {sparModus === 'coaching' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 28 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
