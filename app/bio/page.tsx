@@ -2,12 +2,18 @@
 import { client } from '@/sanity/client'
 import { PortableText } from '@portabletext/react'
 import { auth } from '@clerk/nextjs/server'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 async function getBioPage() {
   return await client.fetch(`*[_type == "bioPage"][0]`, {}, { next: { revalidate: 0 } })
 }
 
 export default async function BioPage() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('arnobot_admin')?.value
+  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/')
+
   const { userId } = await auth()
   const bio = await getBioPage()
 
@@ -135,7 +141,7 @@ export default async function BioPage() {
 
       <footer>
         <span className="footer-logo">Royal Dutch Sales</span>
-        <span className="footer-copy">© Since 2007 — CC BY-ND 4.0</span>
+        <span className="footer-copy">© Since 2007 · CC BY-ND 4.0</span>
       </footer>
     </>
   )

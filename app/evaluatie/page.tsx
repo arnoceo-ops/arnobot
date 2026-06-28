@@ -119,7 +119,7 @@ export default function EvaluatiePage() {
         ) : (
           <form onSubmit={submit}>
 
-            <Block nr="—" title="Naam">
+            <Block nr="" title="Naam">
               <input type="text" value={naam} onChange={e => setNaam(e.target.value)} placeholder="Jouw naam" />
             </Block>
 
@@ -171,7 +171,7 @@ export default function EvaluatiePage() {
               {aanbevelen === 'Ja' && (
                 <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
                   <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-                    Gebruik dan de referral code op de account pagina en je krijgt x maanden gratis per y gebruikers die je aanbrengt.
+                    Gebruik dan de referral code op de accountpagina. Per betalende referral ontvang je €97 tegoed, automatisch verrekend op je volgende factuur.
                   </p>
                 </div>
               )}
