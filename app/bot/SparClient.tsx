@@ -1210,7 +1210,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         </nav>
       )}
 
-      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 200 : 160 } : {}}>
+      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 
         <div className="spar-hero">
           <div className="hero-photo">
