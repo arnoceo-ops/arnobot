@@ -205,6 +205,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const debriefVraagRef = useRef<HTMLDivElement>(null)
+  const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
@@ -1392,7 +1393,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               {dagelijksTeller} / 25 vragen gebruikt vandaag
             </p>
           )}
-          {input.trim().length > 5 && !inputIsVerfijnd && (
+          {sparModus === 'coaching' && input.trim().length > 5 && !inputIsVerfijnd && (
             <button
               className="verfijn-btn"
               disabled={verfijnen || loading}
@@ -1411,6 +1412,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   } else if (data.verfijnd) {
                     setVerfijnFout(false)
                     setVerfijndSuggestie(data.verfijnd)
+                    setTimeout(() => verfijndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
                   }
                 } catch {}
                 finally { setVerfijnen(false) }
@@ -1425,7 +1427,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </p>
           )}
           {verfijndSuggestie && (
-            <div style={{ width: '100%', maxWidth: 812, background: '#1f2937', border: '1px solid #f59e0b', padding: '16px 20px', marginTop: 8 }}>
+            <div ref={verfijndRef} style={{ width: '100%', maxWidth: 812, background: '#1f2937', border: '1px solid #f59e0b', padding: '16px 20px', marginTop: 8 }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f59e0b', letterSpacing: 2, marginBottom: 10 }}>VERFIJNDE VERSIE</p>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>{verfijndSuggestie}</p>
               <div style={{ display: 'flex', gap: 10 }}>
