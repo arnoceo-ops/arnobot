@@ -1,5 +1,14 @@
+import { createHmac } from 'crypto'
+
 export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function optOutSig(userId: string): string {
+  return createHmac('sha256', process.env.ARNOBOT_ADMIN_KEY ?? '')
+    .update(userId)
+    .digest('hex')
+    .slice(0, 32)
 }
 
 const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.5px;padding:12px 24px;text-decoration:none;border-radius:999px;`
@@ -78,7 +87,7 @@ export function getEmailTemplate(
   options?: { sessionCount?: number; userId?: string }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
-    ? `https://arno.bot/optout/${options.userId}`
+    ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
     : 'https://arno.bot/bot/account'
   const optOutNote = `Geen mail meer? <a href="${optOutUrl}" style="color:#9ca3af;text-decoration:underline;">Klik dan hier.</a>`
   const prefix = isTest ? '[TEST] ' : ''

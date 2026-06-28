@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       e.ontbreekt ? `Ontbreekt/werkt niet: ${e.ontbreekt}` : '',
       e.persona?.length ? `Ideale doelgroep: ${e.persona.join(', ')}${e.persona_anders ? ` (anders: ${e.persona_anders})` : ''}` : '',
       e.tariefstelling ? `Tariefstelling: ${e.tariefstelling}` : '',
-      e.aanbevelen ? `Aanbevelen: ${e.aanbevelen}${e.aanbevelen_toelichting ? ` — ${e.aanbevelen_toelichting}` : ''}` : '',
+      e.aanbevelen ? `Aanbevelen: ${e.aanbevelen}${e.aanbevelen_toelichting ? `: ${e.aanbevelen_toelichting}` : ''}` : '',
       e.slotwoord ? `Slotwoord: ${e.slotwoord}` : '',
     ].filter(Boolean).join('\n')
     return delen
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const res = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 1500,
-    system: `Je bent Arno Diepeveen. Direct, ongefilterd. Je analyseert evaluaties van testers van jouw ArnoBot-app. Geen inleiding, geen conclusie-kopje. Gewoon de patronen, wat ze zeggen, wat het betekent — en wat je er concreet mee moet doen.`,
+    system: `Je bent Arno Diepeveen. Direct, ongefilterd. Je analyseert evaluaties van testers van jouw ArnoBot-app. Geen inleiding, geen conclusie-kopje. Gewoon de patronen, wat ze zeggen, wat het betekent, en wat je er concreet mee moet doen. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
     messages: [{
       role: 'user',
       content: `Analyseer de onderstaande ${evaluaties.length} evaluatie${evaluaties.length !== 1 ? 's' : ''} en geef een heldere samenvatting per thema:

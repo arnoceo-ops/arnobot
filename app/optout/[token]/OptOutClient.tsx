@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function OptOutClient({ token }: { token: string }) {
+export default function OptOutClient({ token, sig }: { token: string; sig: string }) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
   async function handleOptOut() {
@@ -11,7 +11,7 @@ export default function OptOutClient({ token }: { token: string }) {
       const res = await fetch('/api/optout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, sig }),
       })
       setState(res.ok ? 'done' : 'error')
     } catch {

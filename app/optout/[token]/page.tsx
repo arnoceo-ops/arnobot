@@ -1,6 +1,13 @@
 import OptOutClient from './OptOutClient'
 
-export default async function OptOutPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function OptOutPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>
+  searchParams: Promise<{ sig?: string }>
+}) {
   const { token } = await params
-  return <OptOutClient token={token} />
+  const { sig } = await searchParams
+  return <OptOutClient token={token} sig={sig ?? ''} />
 }

@@ -158,7 +158,7 @@ export default function EvaluatiePage() {
               )}
             </Block>
 
-            <Block nr="06" title="Wat vind je van de tariefstelling?" sub="€97 P/M — 4 MAANDEN GRATIS: €777 P/J — PER GEBRUIKER">
+            <Block nr="06" title="Wat vind je van de tariefstelling?" sub="€97 P/M · 4 MAANDEN GRATIS: €777 P/J · PER GEBRUIKER">
               <textarea rows={3} value={tariefstelling} onChange={e => setTariefstelling(e.target.value)} placeholder="Te duur, precies goed, te laag? Graag met onderbouwing." />
             </Block>
 
