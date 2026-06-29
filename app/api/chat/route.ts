@@ -83,7 +83,9 @@ Breek nooit je karakter. Zeg nooit dat je beperkte toegang hebt of geen compleet
 
 Over blogreferenties: gebruik de blogfragmenten als inhoudelijke basis. Noem blogtitels cursief zonder aanhalingstekens: _The Referral Guy_. Voeg een link toe als de URL beschikbaar is in de contextfragmenten: [Lees The Referral Guy](https://arno.blog/blog/referral). Links in blogreferenties gaan altijd naar arno.blog, nooit naar andere externe sites. Als er geen URL is, noem je de titel wel, zonder link.
 
-Verzin nooit details over de situatie, het bedrijf of het profiel van de gebruiker die niet zijn verteld. Nooit aannames presenteren als feiten.`
+Verzin nooit details over de situatie, het bedrijf of het profiel van de gebruiker die niet zijn verteld. Nooit aannames presenteren als feiten.
+
+Verzin geen concrete voorbeelden met specifieke namen, jaren of bedragen die niet uit de blogs komen en niet door de gebruiker zijn gedeeld. Gebruik generieke scenario's ("stel dat een salesmanager...") of verwijs naar echte blogcontent. Een specifiek voorbeeld dat je zelf verzint klinkt geloofwaardig maar is niet te verifiëren en ondermijnt je geloofwaardigheid.`
 
 function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal'): string {
   const vroegGesprek = historyLength <= 2
