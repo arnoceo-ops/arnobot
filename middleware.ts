@@ -2,6 +2,22 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+function buildCSP(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
+    "style-src 'self' 'unsafe-inline' https://assets.feedblitz.com",
+    "font-src 'self'",
+    "img-src 'self' data: blob: https://images.squarespace-cdn.com https://cdn.sanity.io https://img.clerk.com https://assets.feedblitz.com",
+    "connect-src 'self' https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com",
+    "frame-src https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self' https://*.clerk.com https://*.accounts.dev https://app.feedblitz.com",
+  ].join('; ')
+}
+
 const isPublicRoute = createRouteMatcher([
   '/canvas-aanmelden(.*)',
   '/api/canvas/aanmelden(.*)',
@@ -20,6 +36,18 @@ const isAdminRoute = createRouteMatcher(['/bot/admin', '/bot/admin/:path*'])
 const SCANNER_PATTERNS = /^\/(\.env|\.git|\.svn|wp-admin|wp-login\.php|phpMyAdmin|phpmyadmin|admin\.php|xmlrpc\.php|shell\.php|eval-stdin\.php|config\.php|setup\.php|install\.php|backup|\.DS_Store|\.htaccess|\.htpasswd|web\.config|etc\/passwd|proc\/self)(\/|$)/i
 
 export default clerkMiddleware(async (auth, req) => {
+  const nonce = crypto.randomUUID().replace(/-/g, '')
+  const csp = buildCSP(nonce)
+
+  function nextWithNonce(): NextResponse {
+    const reqHeaders = new Headers(req.headers)
+    reqHeaders.set('x-nonce', nonce)
+    const res = NextResponse.next({ request: { headers: reqHeaders } })
+    res.headers.set('Content-Security-Policy', csp)
+    res.headers.set('x-nonce', nonce)
+    return res
+  }
+
   const path = req.nextUrl.pathname
 
   if (SCANNER_PATTERNS.test(path)) {
@@ -28,7 +56,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Admin routes: cookie-auth wordt per pagina afgehandeld.
   if (isAdminRoute(req)) {
-    return NextResponse.next()
+    return nextWithNonce()
   }
 
   if (!isPublicRoute(req) && path.startsWith('/canvas')) {
@@ -38,7 +66,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedBot(req)) {
     await auth.protect()
     const { userId } = await auth()
-    if (!userId) return NextResponse.next()
+    if (!userId) return nextWithNonce()
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -185,6 +213,8 @@ export default clerkMiddleware(async (auth, req) => {
       if (path !== '/bot/profiel') return NextResponse.redirect(new URL('/bot/profiel', req.url))
     }
   }
+
+  return nextWithNonce()
 })
 
 export const config = {
