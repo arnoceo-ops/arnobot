@@ -15,7 +15,7 @@
     "@react-pdf/renderer": "^4.3.3",
     "@sanity/image-url": "^1.2.0",
     "@sanity/vision": "^6.2.0",
-    "@supabase/supabase-js": "^2.99.1",
+    "@supabase/supabase-js": "^2.108.2",
     "disposable-email-domains": "^1.0.62",
     "jspdf": "^4.2.0",
     "next": "^16.2.9",
