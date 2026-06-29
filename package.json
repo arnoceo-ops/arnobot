@@ -22,7 +22,7 @@
     "next-sanity": "^13.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "resend": "^6.9.3",
+    "resend": "^6.16.0",
     "sanity": "^6.2.0",
     "styled-components": "^6.3.11",
     "voyageai": "^0.2.1"
