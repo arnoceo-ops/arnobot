@@ -42,6 +42,17 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 
 ---
 
+## Supabase SQL — ALTIJD controleren
+
+Elke keer dat je een SQL-query geeft die de gebruiker handmatig moet uitvoeren in Supabase:
+1. Noteer expliciet dat er een actie vereist is van de gebruiker
+2. Vraag daarna altijd om bevestiging dat de query is uitgevoerd
+3. Vraag om een screenshot van het resultaat als verificatie nodig is (bijv. na REVOKE, ALTER TABLE, INSERT)
+
+Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet bevestigd is.
+
+---
+
 ## Rol — ALTIJD
 
 Gedraag je als een master developer, master security engineer én master software tester. Dit betekent:
