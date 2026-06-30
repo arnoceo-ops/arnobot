@@ -62,22 +62,22 @@ export type EmailType =
   | 'weekly_nudge'
   | 'geen_gesprek_nudge'
 
-export const EMAIL_META: Record<EmailType, { label: string; description: string }> = {
-  dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?' },
-  dag4:                  { label: 'Dag 4',                 description: 'Nog geen gesprek gevoerd' },
-  first_conversation:    { label: 'Eerste gesprek',        description: 'Na het eerste gesprek' },
-  dag14:                 { label: 'Dag 14',                description: 'Halverwege de trial' },
-  first_coaching:        { label: 'Eerste coaching',       description: 'Na 5+ sessies, nog geen rapport' },
-  dag25:                 { label: 'Dag 25',                description: 'Trial bijna afgelopen, opt-in CTA' },
-  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',    description: '7 dagen na opt-in, geen betaling' },
-  geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling' },
-  trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan' },
-  opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina' },
-  winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding' },
-  admin_derde_trial:     { label: 'Admin: derde trial',    description: 'Notificatie naar pannekoek@arno.bot bij start derde trial' },
-  referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link' },
-  weekly_nudge:          { label: 'Weekly nudge',          description: 'Dagelijks naar gebruikers met exact 7 dagen geen activiteit' },
-  geen_gesprek_nudge:    { label: 'Geen gesprek nudge',    description: 'Naar gebruikers die zich aanmeldden maar nooit een gesprek startten' },
+export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
+  dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?',                                          category: 'user' },
+  dag4:                  { label: 'Dag 4',                 description: 'Nog geen gesprek gevoerd',                                        category: 'user' },
+  first_conversation:    { label: 'Eerste gesprek',        description: 'Na het eerste gesprek',                                           category: 'user' },
+  dag14:                 { label: 'Dag 14',                description: 'Halverwege de trial',                                             category: 'user' },
+  first_coaching:        { label: 'Eerste coaching',       description: 'Na 5+ sessies, nog geen rapport',                                 category: 'user' },
+  dag25:                 { label: 'Dag 25',                description: 'Trial bijna afgelopen, opt-in CTA',                               category: 'user' },
+  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',    description: '7 dagen na opt-in, geen betaling',                                category: 'user' },
+  geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling',                              category: 'user' },
+  trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan',                                     category: 'user' },
+  opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina',                                 category: 'user' },
+  winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding',      category: 'user' },
+  referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link',          category: 'user' },
+  weekly_nudge:          { label: 'Inactivity nudge',      description: 'Dagelijks naar gebruikers met exact 7 dagen geen activiteit',     category: 'user' },
+  geen_gesprek_nudge:    { label: 'Geen gesprek nudge',    description: 'Naar gebruikers die zich aanmeldden maar nooit een gesprek startten', category: 'user' },
+  admin_derde_trial:     { label: 'Derde trial',           description: 'Notificatie bij start derde trial',                               category: 'admin' },
 }
 
 export function getEmailTemplate(
