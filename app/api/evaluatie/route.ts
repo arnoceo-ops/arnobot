@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
     to: 'evaluatie@arno.bot',
     subject: `Evaluatie van ${naam || 'onbekend'}`,
     html: `
-      <div style="background:#111827;padding:40px;font-family:monospace;color:#f1f5f9;max-width:600px">
-        <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT</p>
-        <h1 style="font-size:32px;margin:0 0 32px;color:#f1f5f9">Nieuwe evaluatie</h1>
+      <div style="background:#111827;padding:48px 40px 40px;font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f1f5f9;max-width:560px;margin:0 auto;">
+        <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:26px;letter-spacing:6px;margin:0 0 32px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
+        <p style="font-size:20px;font-weight:700;color:#f1f5f9;margin:0 0 32px;">Nieuwe evaluatie</p>
         <table style="width:100%;border-collapse:collapse">
           ${r('Naam', naam)}
           ${r('Frequentie', frequentie)}

@@ -58,7 +58,7 @@ function buildEmail(
     if (!lijst.length) return `
       <div style="margin-bottom: 40px;">
         <p style="color: #f59e0b; font-size: 11px; letter-spacing: 4px; margin: 0 0 12px;">${rolLabel(rol)}</p>
-        <p style="color: #4b5563; font-size: 13px; font-family: 'Courier New', monospace;">Geen kandidaten met voldoende data.</p>
+        <p style="color: #4b5563; font-size: 13px; font-family: Arial,-apple-system,sans-serif;">Geen kandidaten met voldoende data.</p>
       </div>`
 
     const rows = lijst.slice(0, 10).map((k, i) => {
@@ -66,12 +66,12 @@ function buildEmail(
       const kleur = i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : i === 2 ? '#b45309' : '#4b5563'
       return `
         <tr>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: ${kleur}; font-size: 13px; font-family: 'Courier New', monospace; font-weight: 700;">${medal}</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #f1f5f9; font-size: 13px; font-family: 'Courier New', monospace;">${k.naam}</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #f59e0b; font-size: 13px; font-family: 'Courier New', monospace; text-align: right;">${k.msaScore}</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: ${k.progressie >= 0 ? '#4ade80' : '#f87171'}; font-size: 13px; font-family: 'Courier New', monospace; text-align: right;">${k.progressie >= 0 ? '+' : ''}${k.progressie}</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #6b7280; font-size: 13px; font-family: 'Courier New', monospace; text-align: right;">${k.sessiesPerMaand.toFixed(1)}/mnd</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #9ca3af; font-size: 13px; font-family: 'Courier New', monospace; text-align: right;">${(k.compound * 100).toFixed(1)}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: ${kleur}; font-size: 13px; font-family: Arial,-apple-system,sans-serif; font-weight: 700;">${medal}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #f1f5f9; font-size: 13px; font-family: Arial,-apple-system,sans-serif;">${k.naam}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #f59e0b; font-size: 13px; font-family: Arial,-apple-system,sans-serif; text-align: right;">${k.msaScore}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: ${k.progressie >= 0 ? '#4ade80' : '#f87171'}; font-size: 13px; font-family: Arial,-apple-system,sans-serif; text-align: right;">${k.progressie >= 0 ? '+' : ''}${k.progressie}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; text-align: right;">${k.sessiesPerMaand.toFixed(1)}/mnd</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #1f2937; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif; text-align: right;">${(k.compound * 100).toFixed(1)}</td>
         </tr>`
     }).join('')
 
@@ -95,8 +95,8 @@ function buildEmail(
   }).join('')
 
   return `
-    <div style="background: #111827; color: #f1f5f9; padding: 40px; max-width: 760px; margin: 0 auto; font-family: 'Courier New', monospace;">
-      <p style="color: #f59e0b; font-size: 12px; letter-spacing: 4px; margin: 0 0 8px;">ARNOBOT</p>
+    <div style="background: #111827; color: #f1f5f9; padding: 48px 40px 40px; max-width: 760px; margin: 0 auto; font-family: Arial,-apple-system,sans-serif;">
+      <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:26px;letter-spacing:6px;margin:0 0 32px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
       <h1 style="font-size: 28px; font-weight: 700; margin: 0 0 4px; color: #f1f5f9;">MAANDELIJKSE COMPETITIE</h1>
       <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">${date}</p>
       <p style="color: #4b5563; font-size: 12px; margin: 0 0 32px;">Periode: ${window.van} t/m ${window.tot}</p>

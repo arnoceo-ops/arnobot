@@ -114,7 +114,7 @@ export async function POST(req: Request) {
       <div style="max-width:680px;margin:0 auto;background:#fff;padding:48px 40px">
 
         <div style="border-bottom:3px solid #f59e0b;padding-bottom:24px;margin-bottom:32px">
-          <p style="margin:0 0 4px;font-size:11px;letter-spacing:4px;color:#f59e0b;text-transform:uppercase">ArnoBot</p>
+          <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:22px;letter-spacing:5px;margin:0 0 8px;line-height:1;"><span style="color:#1f2937;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
           <h1 style="margin:0;font-size:32px;color:#1f2937;letter-spacing:1px">Coachingsoverzicht</h1>
           <p style="margin:8px 0 0;font-size:14px;color:#9ca3af">Aangevraagd door gebruiker op ${formatDate(new Date().toISOString())}</p>
         </div>

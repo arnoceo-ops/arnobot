@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { emailHtml } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,53 +28,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, active_users: total, milestone: MILESTONE, reached: false })
   }
 
+  const ab = (num: string, title: string, body: string) =>
+    `<div style="background:#1f2937;border-left:4px solid #f59e0b;padding:20px 24px;margin-bottom:16px;">
+      <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#f1f5f9;margin:0 0 8px;">${num}. ${title}</p>
+      <p style="font-family:Arial,sans-serif;font-size:14px;color:#9ca3af;line-height:1.8;margin:0;">${body}</p>
+    </div>`
+
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'hq@arno.bot',
     subject: `ArnoBot heeft ${total} actieve gebruikers — tijd voor Pro-upgrades`,
-    html: `
-      <div style="font-family:sans-serif;max-width:600px;padding:40px">
-        <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT MILESTONE</p>
-        <h1 style="font-size:28px;margin:0 0 24px">Je hebt ${total} actieve gebruikers.</h1>
-        <p style="color:#555;font-size:15px;line-height:1.8;margin:0 0 32px">
-          Je hebt de grens van ${MILESTONE} gebruikers bereikt. Dit is het moment om drie platform-upgrades door te voeren voor betere beveiliging en databescherming.
-        </p>
-
-        <h2 style="font-size:18px;margin:0 0 16px">Wat je nu moet doen:</h2>
-
-        <div style="background:#f9f9f9;border-left:4px solid #f59e0b;padding:20px 24px;margin-bottom:16px">
-          <p style="font-weight:700;margin:0 0 8px">1. Vercel Firewall + Bot Filter</p>
-          <p style="color:#555;font-size:14px;margin:0">
-            Ga naar vercel.com → jouw project (arnobot) → Settings → Security<br>
-            Zet <strong>Firewall</strong> aan + <strong>Bot Filter</strong> aan.<br>
-            Optioneel: voeg een rate limiting rule toe voor /api/* (100 req/min per IP).
-          </p>
-        </div>
-
-        <div style="background:#f9f9f9;border-left:4px solid #f59e0b;padding:20px 24px;margin-bottom:16px">
-          <p style="font-weight:700;margin:0 0 8px">2. Supabase Point-in-Time Recovery</p>
-          <p style="color:#555;font-size:14px;margin:0">
-            Ga naar supabase.com → jouw project → Settings → Addons<br>
-            Zet <strong>Point-in-Time Recovery</strong> aan (7 dagen, $100/maand).<br>
-            Vereist Supabase Pro-plan.
-          </p>
-        </div>
-
-        <div style="background:#f9f9f9;border-left:4px solid #f59e0b;padding:20px 24px;margin-bottom:32px">
-          <p style="font-weight:700;margin:0 0 8px">3. Clerk session token lifetime</p>
-          <p style="color:#555;font-size:14px;margin:0">
-            Ga naar dashboard.clerk.com → jouw applicatie → Configure → Sessions<br>
-            Stel <strong>Maximum lifetime</strong> in op 1 dag.<br>
-            Stel <strong>Inactivity timeout</strong> in op 2 uur.<br>
-            Vereist Clerk Pro-plan.
-          </p>
-        </div>
-
-        <p style="color:#999;font-size:13px">
-          Deze mail wordt maandelijks gestuurd zolang je ${MILESTONE}+ actieve gebruikers hebt en de upgrades nog niet zijn doorgevoerd.
-        </p>
-      </div>
-    `,
+    html: emailHtml(
+      `Je hebt de grens van ${MILESTONE} gebruikers bereikt. Tijd voor drie platform-upgrades voor betere beveiliging en databescherming.<br><br>
+      ${ab('1', 'Vercel Firewall + Bot Filter', 'vercel.com → project → Settings → Security. Zet Firewall aan + Bot Filter aan. Optioneel: rate limiting rule voor /api/* (100 req/min per IP).')}
+      ${ab('2', 'Supabase Point-in-Time Recovery', 'supabase.com → project → Settings → Addons. Zet Point-in-Time Recovery aan (7 dagen, $100/maand). Vereist Supabase Pro-plan.')}
+      ${ab('3', 'Clerk session token lifetime', 'dashboard.clerk.com → applicatie → Configure → Sessions. Maximum lifetime: 1 dag. Inactivity timeout: 2 uur. Vereist Clerk Pro-plan.')}`,
+      'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers', false,
+      `Deze mail wordt maandelijks gestuurd zolang je ${MILESTONE}+ actieve gebruikers hebt en de upgrades nog niet zijn doorgevoerd.`
+    ),
   })
 
   return NextResponse.json({ ok: true, active_users: total, milestone: MILESTONE, reached: true })

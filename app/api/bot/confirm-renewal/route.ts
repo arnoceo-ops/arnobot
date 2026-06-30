@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { emailHtml } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,17 +35,10 @@ export async function POST() {
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
     subject: `Doorgaan: ${user.voornaam || user.email || userId}`,
-    html: `
-      <div style="background:#111827;padding:40px;font-family:monospace;color:#f1f5f9;max-width:600px">
-        <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT</p>
-        <h1 style="font-size:24px;margin:0 0 24px;color:#f1f5f9">Gebruiker wil doorgaan</h1>
-        <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0 0 16px">
-          <strong style="color:#f1f5f9">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft bevestigd dat hij wil doorgaan met ArnoBot.
-        </p>
-        <p style="color:#f59e0b;font-size:15px;font-weight:700;margin:0">Actie: stuur een factuur naar ${user.email || userId}.</p>
-        <p style="color:#9ca3af;font-size:13px;margin-top:16px">Na betaling: registreer via de admin pagina onder Gebruikers.</p>
-      </div>
-    `,
+    html: emailHtml(
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft bevestigd dat hij wil doorgaan met ArnoBot.<br><br><strong style="color:#f59e0b;">Actie: stuur een factuur naar ${user.email || userId}.</strong><br><br>Na betaling: registreer via de admin pagina onder Gebruikers.`,
+      'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
+    ),
   }).catch(() => {})
 
   return NextResponse.json({ ok: true })

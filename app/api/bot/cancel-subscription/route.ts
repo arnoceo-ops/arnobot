@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { emailHtml } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,22 +30,15 @@ export async function POST() {
     .update({ cancelled_at: now })
     .eq('user_id', userId)
 
+  const datum = new Date(now).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
     subject: `Opzegging: ${user.voornaam || user.email || userId}`,
-    html: `
-      <div style="background:#111827;padding:40px;font-family:monospace;color:#f1f5f9;max-width:600px">
-        <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT</p>
-        <h1 style="font-size:24px;margin:0 0 24px;color:#f1f5f9">Opzegging ontvangen</h1>
-        <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0 0 16px">
-          <strong style="color:#f1f5f9">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het abonnement opgezegd op ${new Date(now).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}.
-        </p>
-        <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0">
-          Actie vereist: zet <code style="color:#f59e0b">is_active = false</code> op het moment dat de lopende periode afloopt.
-        </p>
-      </div>
-    `,
+    html: emailHtml(
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het abonnement opgezegd op ${datum}.<br><br>Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.`,
+      'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
+    ),
   }).catch(() => {})
 
   return NextResponse.json({ ok: true, cancelled_at: now })

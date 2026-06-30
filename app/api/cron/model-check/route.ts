@@ -59,16 +59,16 @@ function buildEmail(date: string, adviezen: AdviesMap): string {
 
     return `
     <tr>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #9ca3af; font-size: 13px; font-family: 'Courier New', monospace; vertical-align: top;">${item.route}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #f59e0b; font-size: 13px; font-family: 'Courier New', monospace; white-space: nowrap; vertical-align: top;">${item.model}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #6b7280; font-size: 13px; font-family: 'Courier New', monospace; vertical-align: top;">${item.reden}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; font-size: 13px; font-family: 'Courier New', monospace; vertical-align: top;">${adviesHtml}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${item.route}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #f59e0b; font-size: 13px; font-family: Arial,-apple-system,sans-serif; white-space: nowrap; vertical-align: top;">${item.model}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${item.reden}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${adviesHtml}</td>
     </tr>
   `}).join('')
 
   return `
-    <div style="background: #111827; color: #f1f5f9; padding: 40px; max-width: 800px; margin: 0 auto; font-family: 'Courier New', monospace;">
-      <p style="color: #f59e0b; font-size: 12px; letter-spacing: 4px; margin: 0 0 8px;">ARNOBOT</p>
+    <div style="background: #111827; color: #f1f5f9; padding: 48px 40px 40px; max-width: 800px; margin: 0 auto; font-family: Arial,-apple-system,sans-serif;">
+      <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:26px;letter-spacing:6px;margin:0 0 32px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
       <h1 style="font-size: 28px; font-weight: 700; margin: 0 0 4px; color: #f1f5f9;">MAANDELIJKSE MODELCHECK</h1>
       <p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">${date}</p>
 
