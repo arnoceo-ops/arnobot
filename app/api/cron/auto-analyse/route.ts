@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { Resend } from 'resend'
-import { isValidEmail } from '@/lib/email-templates'
+import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,25 +87,12 @@ export async function GET(req: NextRequest) {
 
     if (isValidEmail(userRow?.email)) {
       const voornaam = userRow.voornaam || 'daar'
+      const { subject, html } = getEmailTemplate('bieb_bijgewerkt', voornaam, false, { sessionCount: batch.length })
       resend.emails.send({
         from: 'ArnoBot <info@arno.bot>',
         to: userRow.email,
-        subject: `Je BIEB is bijgewerkt, ${voornaam}.`,
-        html: `
-          <div style="font-family:'Courier New',monospace;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
-            <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:32px;">ARNOBOT</p>
-            <p style="font-size:15px;color:#9ca3af;line-height:1.8;margin-bottom:32px;">
-              Morning, ${voornaam}. Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste ${batch.length} gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.
-            </p>
-            <a href="https://arno.bot/bot/bieb"
-               style="display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;">
-              OPEN MIJN BIEB →
-            </a>
-            <p style="font-size:12px;color:#4b5563;margin-top:40px;line-height:1.7;">
-              Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.
-            </p>
-          </div>
-        `,
+        subject,
+        html,
       }).catch(() => {})
     }
 

@@ -2,7 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { isValidEmail } from '@/lib/email-templates'
+import { isValidEmail, emailHtml } from '@/lib/email-templates'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,22 +108,12 @@ export async function POST(req: NextRequest) {
   // Email naar referrer
   const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
   if (isValidEmail(referrer.email)) {
+    const body = `<strong style="color:#f1f5f9;">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b;">${code.toUpperCase()}</strong>.<br><br>Zodra ${newUserName} een betaald abonnement afsluit, ontvang jij €97 tegoed. Bij een maandabonnement nadat ${newUserName} drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`
     await resend.emails.send({
       from: 'ArnoBot <noreply@arno.bot>',
       to: referrer.email,
       subject: `${newUserName} heeft zich aangemeld via jouw referral code`,
-      html: `
-        <div style="background:#111827;padding:40px;font-family:monospace;color:#f1f5f9;max-width:600px">
-          <p style="color:#f59e0b;font-size:13px;letter-spacing:4px;margin:0 0 8px">ARNOBOT</p>
-          <h1 style="font-size:28px;margin:0 0 24px;color:#f1f5f9">Nieuwe referral</h1>
-          <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0 0 16px">
-            Hey ${referrerNaam}, <strong style="color:#f1f5f9">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b">${code.toUpperCase()}</strong>.
-          </p>
-          <p style="color:#9ca3af;font-size:15px;line-height:1.8;margin:0">
-            Zodra ${newUserName} een betaald abonnement afsluit, ben je op weg. Bij een maandabonnement ontvang jij €97 tegoed nadat ${newUserName} drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.
-          </p>
-        </div>
-      `,
+      html: emailHtml(body, 'MIJN REFERRALS →', 'https://arno.bot/bot/account', false, undefined, referrerNaam),
     }).catch(() => {})
   }
 

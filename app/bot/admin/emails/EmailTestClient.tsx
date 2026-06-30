@@ -110,9 +110,19 @@ export default function EmailTestClient() {
         </div>
       </div>
 
-      <p style={{ fontSize: 12, color: '#4b5563', letterSpacing: 1, marginTop: -24 }}>
-        Gebruikerstests worden verzonden naar arno@arno.bot. Dagelijkse activiteit stuurt de echte mail met live data.
-      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <p style={{ fontSize: 12, color: '#4b5563', letterSpacing: 1, margin: 0 }}>
+          Gebruikerstests worden verzonden naar arno@arno.bot. Admin crons sturen de echte mail met live data.
+        </p>
+        <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer"
+          style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          ALLE VERSTUURDE MAILS IN RESEND →
+        </a>
+        <a href="/bot/admin/emails/overzicht" target="_blank"
+          style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          TOTAALOVERZICHT (PDF) →
+        </a>
+      </div>
     </div>
   )
 }

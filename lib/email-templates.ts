@@ -61,6 +61,7 @@ export type EmailType =
   | 'referral_aanmelding'
   | 'weekly_nudge'
   | 'geen_gesprek_nudge'
+  | 'bieb_bijgewerkt'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
   dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?',                                             category: 'user' },
@@ -78,6 +79,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding',         category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link',             category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',           description: 'Notificatie bij start derde trial',                                  category: 'admin' },
+  bieb_bijgewerkt:       { label: 'BIEB bijgewerkt',       description: 'Na 10+ nieuwe gesprekken, patroonanalyse klaar',                      category: 'user' },
 }
 
 export function getEmailTemplate(
@@ -217,6 +219,15 @@ export function getEmailTemplate(
         html: mail(
           `Je hebt je aangemeld voor ArnoBot. Maar het is stil aan de overkant. Er is namelijk nog geen gesprek gevoerd. Koudwatervrees? Druk, druk, druk met andere dingen? Oeps, vergeten? Hoe dan ook, ga eens in gesprek. Het grootste risico wat je loopt, is dat je meer gaat verkopen.`,
           'START EEN GESPREK →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    case 'bieb_bijgewerkt':
+      return {
+        subject: `${prefix}Je BIEB is bijgewerkt, ${naam}.`,
+        html: mail(
+          `Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste ${options?.sessionCount ?? 10} gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.`,
+          'OPEN MIJN BIEB →', 'https://arno.bot/bot/bieb',
+          'Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.'
         ),
       }
   }
