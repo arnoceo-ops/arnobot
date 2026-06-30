@@ -9,6 +9,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/daily-activity",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron/weekly-top-users",
       "schedule": "5 4 * * 6"
     },
