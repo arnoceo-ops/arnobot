@@ -3,7 +3,8 @@ import { ImageResponse } from 'next/og'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function Image({ params }: { params: { token: string } }) {
+export default async function Image({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const headers = { apikey: key, Authorization: `Bearer ${key}` }
@@ -12,7 +13,7 @@ export default async function Image({ params }: { params: { token: string } }) {
 
   try {
     const sharedRes = await fetch(
-      `${baseUrl}/rest/v1/arnobot_shared_sessions?token=eq.${params.token}&select=session_id&limit=1`,
+      `${baseUrl}/rest/v1/arnobot_shared_sessions?token=eq.${token}&select=session_id&limit=1`,
       { headers }
     )
     const [shared] = await sharedRes.json()
