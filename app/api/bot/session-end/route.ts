@@ -37,7 +37,16 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   const title = (messages.find((m: { role: string }) => m.role === 'user')?.content as string)?.slice(0, 100) || 'Gesprek'
-  const messageCount = messages.filter((m: { role: string }) => m.role === 'user').length
+
+  // Gebruik de echte tellung uit de database als bron van waarheid
+  const { count: actualCount } = await supabase
+    .from('arnobot_rds_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('session_id', sessionId)
+    .eq('user_id', userId)
+
+  const messageCount = actualCount ?? 0
+  if (messageCount === 0) return NextResponse.json({ ok: true })
 
   const conversationText = messages
     .map((m: { role: string; content: string }) =>
