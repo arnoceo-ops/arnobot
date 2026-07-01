@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,6 +17,46 @@ function renderContent(text: string) {
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
     .replace(/_([^_\n]+)_/g, '<em>$1</em>')
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params
+
+  const { data: shared } = await supabase
+    .from('arnobot_shared_sessions')
+    .select('session_id')
+    .eq('token', token)
+    .maybeSingle()
+
+  if (!shared) return { title: 'ArnoBot' }
+
+  const { data: session } = await supabase
+    .from('arnobot_blog_sessions')
+    .select('title, summary')
+    .eq('session_id', shared.session_id)
+    .maybeSingle()
+
+  const title = session?.title || 'Gesprek met ArnoBot'
+  const description = session?.summary
+    ? session.summary.slice(0, 155)
+    : 'Een salesgesprek met ArnoBot, de AI-salescoach van Arno Diepeveen.'
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      siteName: 'ArnoBot',
+      url: `https://arno.bot/gesprek/${token}`,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  }
 }
 
 export default async function GedeeldGesprekPage({ params }: { params: Promise<{ token: string }> }) {
