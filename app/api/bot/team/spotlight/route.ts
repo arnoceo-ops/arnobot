@@ -1,9 +1,10 @@
-export const maxDuration = 30
+﻿export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -101,7 +102,7 @@ ${teamData}`
     }]
   })
 
-  const analyse = result.content[0].type === 'text' ? result.content[0].text : ''
+  const analyse = getText(result.content)
 
   await supabase
     .from('arnobot_team_analyses')

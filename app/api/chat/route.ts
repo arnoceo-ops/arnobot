@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
 }
 
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
@@ -267,7 +268,7 @@ OK — logisch vervolg op het gesprek of relevant voor sales/business`
         system: moderatiePrompt,
         messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
       })
-      const check = checkRes.content[0].type === 'text' ? checkRes.content[0].text.trim().toUpperCase() : 'OK'
+      const check = getText(\.content, 'OK').trim().toUpperCase()
 
       if (check.includes('ONGEPAST')) {
         await supabase.from('arno_blog_widget_blocked').upsert({ ip }, { onConflict: 'ip' })
@@ -385,7 +386,7 @@ PROFIEL VAN DE GEBRUIKER:
       messages
     })
 
-    const answer = response.content[0].type === 'text' ? response.content[0].text : ''
+    const answer = getText(response.content)
 
     const logTable = isWidget ? 'arno_blog_widget_logs' : 'arnobot_rds_logs'
     await supabase.from(logTable).insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })

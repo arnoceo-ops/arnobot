@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
       }]
     })
 
-    const analyse = response.content[0].type === 'text' ? response.content[0].text : ''
+    const analyse = getText(response.content)
 
     await supabase.from('arnobot_analyses').insert({
       user_id: userId,

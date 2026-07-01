@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -87,6 +88,6 @@ REGELS:
     messages,
   })
 
-  const answer = response.content[0].type === 'text' ? response.content[0].text : ''
+  const answer = getText(response.content)
   return NextResponse.json({ answer })
 }

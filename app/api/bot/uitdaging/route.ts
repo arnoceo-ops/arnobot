@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -95,7 +96,7 @@ export async function GET() {
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const uitdaging = ((response.content[0] as { type: string; text?: string }).text ?? '').trim()
+  const uitdaging = getText(response.content).trim()
 
   return NextResponse.json({ uitdaging })
 }

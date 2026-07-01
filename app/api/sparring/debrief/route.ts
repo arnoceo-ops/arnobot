@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -65,6 +66,6 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const debrief = response.content[0].type === 'text' ? response.content[0].text : ''
+  const debrief = getText(response.content)
   return NextResponse.json({ debrief })
 }

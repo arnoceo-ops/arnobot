@@ -1,9 +1,10 @@
-export const maxDuration = 30
+﻿export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { getRelevantChunks, getVoyageEmbedding } from '@/lib/rag'
 
 const supabase = createClient(
@@ -88,9 +89,9 @@ export async function POST(req: NextRequest) {
         }]
       })
     ])
-    summary = summaryRes.content[0].type === 'text' ? summaryRes.content[0].text : ''
-    feiten = feitenRes.content[0].type === 'text' ? feitenRes.content[0].text : ''
-    uitdaging = (uitdagingRes.content[0].type === 'text' ? uitdagingRes.content[0].text.trim() : '').replace(/\*\*/g, '')
+    summary = getText(summaryRes.content)
+    feiten = getText(feitenRes.content)
+    uitdaging = (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '')
   } catch (e) {
     console.error('Synthesis/feiten error:', e)
   }

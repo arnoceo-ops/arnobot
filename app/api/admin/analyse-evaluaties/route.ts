@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { cookies } from 'next/headers'
 
 const supabase = createClient(
@@ -62,6 +63,6 @@ ${tekst}`,
     }],
   })
 
-  const analyse = res.content[0].type === 'text' ? res.content[0].text : ''
+  const analyse = getText(res.content)
   return NextResponse.json({ analyse, count: evaluaties.length })
 }

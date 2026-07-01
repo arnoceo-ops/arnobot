@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
     }],
   })
 
-  const analyse = response.content[0].type === 'text' ? response.content[0].text : ''
+  const analyse = getText(response.content)
 
   const { data: saved } = await supabase
     .from('arnobot_idee_analyses')

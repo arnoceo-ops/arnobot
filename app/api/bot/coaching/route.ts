@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 
 const supabase = createClient(
@@ -120,7 +121,7 @@ export async function POST() {
             content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}\n\nIs er kwalitatief iets veranderd in het patroon?`,
           }],
         })
-        precheckText = precheck.content[0].type === 'text' ? precheck.content[0].text.trim().toLowerCase() : 'nee'
+        precheckText = getText(precheck.content, 'nee').trim().toLowerCase()
       } catch (err: any) {
         console.error('[coaching precheck error]', err?.status, err?.message ?? err)
         // precheck mislukt: laat generatie door, behandel als "ja"
@@ -219,7 +220,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     return NextResponse.json({ error: 'generate_error' }, { status: 500 })
   }
 
-  const raw = response.content[0].type === 'text' ? response.content[0].text : ''
+  const raw = getText(response.content)
 
   let parsed: {
     voortgang: string
@@ -304,7 +305,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
         messages: [{ role: 'user', content: synthContext }],
       })
 
-      const synthRaw = synthResponse.content[0].type === 'text' ? synthResponse.content[0].text : ''
+      const synthRaw = getText(synthResponse.content)
       const synthMatch = synthRaw.match(/\[[\s\S]*\]/)
       const synthParsed: { url: string; reden: string }[] = JSON.parse(synthMatch?.[0] ?? '[]')
 

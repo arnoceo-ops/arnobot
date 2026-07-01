@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -137,7 +138,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     messages: [{ role: 'user', content: context }],
   })
 
-  const agenda = response.content[0].type === 'text' ? response.content[0].text : ''
+  const agenda = getText(response.content)
   const aandachtspunt = extractAandachtspunt(agenda)
 
   return NextResponse.json({ agenda, aandachtspunt })

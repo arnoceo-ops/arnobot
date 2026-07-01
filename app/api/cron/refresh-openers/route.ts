@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,7 +71,7 @@ ${analysesText}`
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const text = res.content[0].type === 'text' ? res.content[0].text.trim() : ''
+  const text = getText(res.content).trim()
   const start = text.indexOf('{')
   const end = text.lastIndexOf('}')
   if (start < 0 || end < 0) {

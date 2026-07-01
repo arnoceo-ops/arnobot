@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -40,7 +41,7 @@ Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar b
       messages: [{ role: 'user', content: vraag }]
     })
 
-    const text = response.content[0].type === 'text' ? response.content[0].text.trim() : vraag
+    const text = getText(response.content, vraag).trim()
     if (text === 'ONBEGRIJPELIJK') return NextResponse.json({ onbegrijpelijk: true })
     return NextResponse.json({ verfijnd: text })
   } catch (err) {

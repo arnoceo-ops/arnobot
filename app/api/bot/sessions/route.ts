@@ -1,9 +1,10 @@
-export const maxDuration = 60
+﻿export const maxDuration = 60
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 import { getMultilingualEmbedding } from '@/lib/rag'
 
 const supabase = createClient(
@@ -70,8 +71,8 @@ export async function GET() {
               messages: [{ role: 'user', content: `Extraheer de feiten uit dit gesprek:\n\n${conversationText}` }],
             }),
           ])
-          summary = summaryRes.content[0].type === 'text' ? summaryRes.content[0].text : ''
-          feiten = feitenRes.content[0].type === 'text' ? feitenRes.content[0].text : ''
+          summary = getText(summaryRes.content)
+          feiten = getText(feitenRes.content)
         } catch {}
 
         let embedding: number[] | null = null

@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
+import { getText } from '@/lib/ai'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -32,7 +33,7 @@ async function getAdviezen(): Promise<AdviesMap> {
     }]
   })
 
-  const raw = res.content[0].type === 'text' ? res.content[0].text : '[]'
+  const raw = getText(res.content, '[]')
   const match = raw.match(/\[[\s\S]*\]/)
   if (!match) return {}
 
