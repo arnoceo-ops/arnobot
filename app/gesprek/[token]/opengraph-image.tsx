@@ -14,28 +14,18 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   try {
     const sharedRes = await fetch(
       `${baseUrl}/rest/v1/arnobot_shared_sessions?token=eq.${token}&select=session_id&limit=1`,
-      { headers }
+      { headers, signal: AbortSignal.timeout(3000) }
     )
     const [shared] = await sharedRes.json()
 
     if (shared?.session_id) {
       const sessionRes = await fetch(
         `${baseUrl}/rest/v1/arnobot_blog_sessions?session_id=eq.${shared.session_id}&select=title&limit=1`,
-        { headers }
+        { headers, signal: AbortSignal.timeout(3000) }
       )
       const [session] = await sessionRes.json()
       if (session?.title) title = session.title
     }
-  } catch {}
-
-  let fontData: ArrayBuffer | null = null
-  try {
-    const css = await fetch(
-      'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap',
-      { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } }
-    ).then(r => r.text())
-    const urlMatch = css.match(/src: url\(([^)]+)\) format\('woff2'\)/)
-    if (urlMatch) fontData = await fetch(urlMatch[1]).then(r => r.arrayBuffer())
   } catch {}
 
   const fontSize = title.length > 80 ? 52 : title.length > 50 ? 62 : 76
@@ -50,13 +40,13 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '64px 80px',
-          fontFamily: fontData ? 'Bebas Neue' : 'sans-serif',
+          fontFamily: 'sans-serif',
         }}>
-          <div style={{ display: 'flex' }}>
-            <span style={{ color: '#f1f5f9', fontSize: 38, letterSpacing: 6 }}>ARNO</span>
-            <span style={{ color: '#f59e0b', fontSize: 38, letterSpacing: 6 }}>BOT</span>
+          <div style={{ display: 'flex', gap: 0 }}>
+            <span style={{ color: '#f1f5f9', fontSize: 38, fontWeight: 700, letterSpacing: 6 }}>ARNO</span>
+            <span style={{ color: '#f59e0b', fontSize: 38, fontWeight: 700, letterSpacing: 6 }}>BOT</span>
           </div>
-          <div style={{ color: '#f1f5f9', fontSize, lineHeight: 1.15, letterSpacing: 2, maxWidth: 980 }}>
+          <div style={{ color: '#f1f5f9', fontSize, fontWeight: 700, lineHeight: 1.15, letterSpacing: 1, maxWidth: 980 }}>
             {title}
           </div>
           <div style={{ color: '#6b7280', fontSize: 22, letterSpacing: 4 }}>
@@ -65,9 +55,6 @@ export default async function Image({ params }: { params: Promise<{ token: strin
         </div>
       </div>
     ),
-    {
-      ...size,
-      ...(fontData ? { fonts: [{ name: 'Bebas Neue', data: fontData, weight: 400, style: 'normal' as const }] } : {}),
-    }
+    { ...size }
   )
 }
