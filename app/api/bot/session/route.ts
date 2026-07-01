@@ -45,13 +45,7 @@ export async function DELETE(req: NextRequest) {
 
   await supabase
     .from('arnobot_blog_sessions')
-    .delete()
-    .eq('user_id', userId)
-    .eq('session_id', sessionId)
-
-  await supabase
-    .from('arnobot_rds_logs')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('session_id', sessionId)
 

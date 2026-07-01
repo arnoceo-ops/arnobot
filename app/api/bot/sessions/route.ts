@@ -118,6 +118,7 @@ export async function GET() {
     .from('arnobot_blog_sessions')
     .select('session_id, title, summary, message_count, blog_suggestions, created_at')
     .eq('user_id', userId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
 
