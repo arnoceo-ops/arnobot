@@ -90,6 +90,8 @@ export default function GeschiedenisPage() {
   const [isSimilarAnalyse, setIsSimilarAnalyse] = useState(false)
   const [isDeltaAnalyse, setIsDeltaAnalyse] = useState(false)
   const [analyseLimiet, setAnalyseLimiet] = useState(false)
+  const [shareLoading, setShareLoading] = useState<string | null>(null)
+  const [shareToast, setShareToast] = useState(false)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
 
@@ -201,6 +203,26 @@ export default function GeschiedenisPage() {
       }
     } catch {
       if (expandedRef.current === sessionId) setConvLoading(false)
+    }
+  }
+
+  async function handleShareSession(sessionId: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setShareLoading(sessionId)
+    try {
+      const res = await fetch('/api/bot/share-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        try { await navigator.clipboard.writeText(data.url) } catch {}
+        setShareToast(true)
+        setTimeout(() => setShareToast(false), 3000)
+      }
+    } finally {
+      setShareLoading(null)
     }
   }
 
@@ -594,6 +616,27 @@ export default function GeschiedenisPage() {
                     </div>
                   )}
 
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 }} onClick={e => e.stopPropagation()}>
+                    <Link
+                      href={`/bot?resume=${session.session_id}`}
+                      onClick={e => e.stopPropagation()}
+                      style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', textDecoration: 'none' }}
+                      onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')}
+                      onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
+                    >
+                      ← VERVOLG DIT GESPREK IN ARNOBOT
+                    </Link>
+                    <button
+                      onClick={e => handleShareSession(session.session_id, e)}
+                      disabled={shareLoading === session.session_id}
+                      style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
+                      onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
+                    >
+                      {shareLoading === session.session_id ? '...' : 'DEEL DIT GESPREK →'}
+                    </button>
+                  </div>
+
                   {convLoading && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0' }}>
                       <span className="loading-dot" /><span className="loading-dot" /><span className="loading-dot" />
@@ -811,6 +854,16 @@ export default function GeschiedenisPage() {
         </div>
       )}
 
+      {shareToast && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 400, background: '#1f2937', border: '1px solid #374151', borderRadius: 8, padding: '14px 20px', maxWidth: 360, width: 'calc(100% - 32px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', pointerEvents: 'none' }}>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f1f5f9', marginBottom: 4 }}>
+            <span style={{ color: '#f59e0b', marginRight: 8 }}>✓</span>Link gekopieerd naar klembord
+          </p>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
+            Iedereen met deze link kan dit gesprek bekijken
+          </p>
+        </div>
+      )}
     </>
   )
 }
