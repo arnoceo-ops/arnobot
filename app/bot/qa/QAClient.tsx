@@ -126,6 +126,10 @@ const FAQ_GROUPS = [
         q: 'Kan ik mijn account en data verwijderen?',
         a: 'Ja. Via de accountpagina kun je je account verwijderen. Al je gesprekken, je profiel en je analyseresultaten worden dan direct gewist.',
       },
+      {
+        q: 'Zijn gedeelde gesprekken openbaar?',
+        a: 'Ja. Als jij kiest om een gesprek te delen via "Deel dit gesprek", is de link toegankelijk voor iedereen die hem heeft. Gedeelde gesprekken kunnen worden geïndexeerd door zoekmachines. Deel alleen gesprekken waarvan je dat bewust wilt.',
+      },
     ],
   },
 ]
