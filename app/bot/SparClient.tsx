@@ -178,6 +178,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [shareLoading, setShareLoading] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
   const [dagelijksTeller, setDagelijksTeller] = useState<number | null>(null)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
@@ -448,8 +451,32 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setPendingNavDest(null)
     setAntwoordLengte('normaal')
     setSparContext('')
+    setShareUrl(null)
+    setShareLoading(false)
+    setShareCopied(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
+  }
+
+  async function handleShare() {
+    if (shareLoading || !sessionId) return
+    setShareLoading(true)
+    try {
+      const res = await fetch('/api/bot/share-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        setShareUrl(data.url)
+        await navigator.clipboard.writeText(data.url)
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 3000)
+      }
+    } finally {
+      setShareLoading(false)
+    }
   }
 
   async function speak(text: string, idx: number) {
@@ -1561,6 +1588,22 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   {b.title.replace(/\s*\([^)]+\)\s*$/, '')}
                 </a>
               ))}
+            </div>
+          )}
+          {showSluiten && messages.length <= synthesisMessageCount && (
+            <div style={{ padding: 'clamp(20px,3vw,32px)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, border: '1px solid #374151', background: 'none', color: shareCopied ? '#f59e0b' : '#9ca3af', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
+                onMouseEnter={e => { if (!shareCopied) { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = '#6b7280' } }}
+                onMouseLeave={e => { if (!shareCopied) { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#374151' } }}
+              >
+                {shareLoading ? '...' : shareCopied ? 'LINK GEKOPIEERD' : 'DEEL DIT GESPREK →'}
+              </button>
+              {shareUrl && !shareCopied && (
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', wordBreak: 'break-all' }}>{shareUrl}</p>
+              )}
             </div>
           )}
           <div ref={bottomRef} />
