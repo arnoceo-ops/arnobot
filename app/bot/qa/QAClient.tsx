@@ -130,6 +130,10 @@ const FAQ_GROUPS = [
         q: 'Zijn gedeelde gesprekken openbaar?',
         a: 'Ja. Als jij kiest om een gesprek te delen via "Deel dit gesprek", is de link toegankelijk voor iedereen die hem heeft. Gedeelde gesprekken kunnen worden geïndexeerd door zoekmachines. Deel alleen gesprekken waarvan je dat bewust wilt.',
       },
+      {
+        q: 'Kan ik een gedeelde link weer intrekken?',
+        a: 'Dat is op dit moment nog niet mogelijk. Deze functie wordt meegenomen in de volgende grote release. Wil je een gedeeld gesprek in de tussentijd laten verwijderen, stuur dan een e-mail naar hq@arno.bot. We regelen het dan handmatig.',
+      },
     ],
   },
 ]
