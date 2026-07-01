@@ -675,16 +675,7 @@ export default function GeschiedenisPage() {
                     </div>
                   ))}
 
-                  <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #374151', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                    <Link
-                      href={`/bot?resume=${session.session_id}`}
-                      onClick={e => e.stopPropagation()}
-                      style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', textDecoration: 'none' }}
-                      onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
-                      onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
-                    >
-                      <span style={{ color: '#f59e0b' }}>←</span> VERVOLG DIT GESPREK IN ARNOBOT
-                    </Link>
+                  <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #374151', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                     <button
                       onClick={() => { toggleSession(session.session_id); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                       style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}

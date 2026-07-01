@@ -286,7 +286,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
   useEffect(() => {
     if (resumeSessionId) {
-      sessionStorage.setItem('arnobot_session', resumeSessionId)
+      localStorage.setItem('arnobot_session', resumeSessionId)
       setSessionId(resumeSessionId)
       fetch(`/api/bot/session?sessionId=${resumeSessionId}`)
         .then(r => r.json())
@@ -299,9 +299,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         })
         .catch(() => {})
     } else {
-      const existing = sessionStorage.getItem('arnobot_session')
+      const existing = localStorage.getItem('arnobot_session')
       const id = existing || crypto.randomUUID()
-      if (!existing) sessionStorage.setItem('arnobot_session', id)
+      if (!existing) localStorage.setItem('arnobot_session', id)
       setSessionId(id)
 
       if (existing) {
@@ -435,7 +435,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
   function reset() {
     const newId = crypto.randomUUID()
-    sessionStorage.setItem('arnobot_session', newId)
+    localStorage.setItem('arnobot_session', newId)
     setSessionId(newId)
     setStarted(false)
     setMessages([])
