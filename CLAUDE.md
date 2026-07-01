@@ -18,7 +18,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop in dit bestand
 - Zijn er nieuwere of betere modellen beschikbaar bij Anthropic?
-- Vergelijk kwaliteit, snelheid en kosten per route
+- Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
 
 ### 4. Infrastructuur
 - Vercel: zijn er platform-updates of deprecated features in gebruik?
@@ -152,7 +152,9 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 
 ## Model-inventaris — controleer elk kwartaal
 
-Elke route gebruikt een bewust gekozen model. Controleer elk kwartaal (of na een nieuwe Anthropic release) of dit nog de juiste keuzes zijn.
+Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een nieuwe Anthropic release) of dit nog de juiste keuzes zijn.
+
+**Beslissingsvolgorde:** kwaliteit staat altijd op de eerste plaats. Kosten worden genoemd en meegewogen, maar bepalen het besluit niet. Een goedkoper model wordt alleen gekozen als de kwaliteit aantoonbaar gelijkwaardig is voor die specifieke taak.
 
 | Route | Model | Reden | Laatste check |
 |---|---|---|---|
