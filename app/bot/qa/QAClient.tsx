@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 
+function renderAnswer(text: string) {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/)
+  return parts.map((part, i) => {
+    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+    if (match) return <a key={i} href={match[2]} style={{ color: '#f59e0b', textDecoration: 'none' }}>{match[1]}</a>
+    return part
+  })
+}
+
 const FAQ_GROUPS = [
   {
     label: 'OVER ARNOBOT',
@@ -132,7 +141,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een gedeelde link weer intrekken?',
-        a: 'Dat is op dit moment nog niet mogelijk. Deze functie wordt meegenomen in de volgende grote release. Wil je een gedeeld gesprek in de tussentijd laten verwijderen, stuur dan een e-mail naar hq@arno.bot. We regelen het dan handmatig.',
+        a: 'Dat is op dit moment nog niet mogelijk. Deze functie wordt meegenomen in de volgende release. Wil je een gedeeld gesprek laten verwijderen, stuur dan een e-mail naar [hq@arno.bot](mailto:hq@arno.bot). We regelen het dan handmatig.',
       },
     ],
   },
@@ -251,7 +260,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
                           <span className={`faq-arrow${isOpen ? ' open' : ''}`}>{isOpen ? '↑' : '↓'}</span>
                         </button>
                         {isOpen && (
-                          <p className="faq-answer">{faq.a}</p>
+                          <p className="faq-answer">{renderAnswer(faq.a)}</p>
                         )}
                       </div>
                     )
