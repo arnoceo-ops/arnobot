@@ -53,6 +53,9 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; font-family: 'Space Mono', monospace; font-weight: 400; }
+        @media (max-width: 600px) {
+          .shared-footer { flex-direction: column; align-items: flex-start; gap: 20px; }
+        }
       `}</style>
 
       <div style={{ background: '#111827', minHeight: '100vh', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,20px) 80px' }}>
@@ -87,7 +90,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
             ))}
           </div>
 
-          <div style={{ marginTop: 64, paddingTop: 32, borderTop: '1px solid #1f2937', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div className="shared-footer" style={{ marginTop: 64, paddingTop: 32, borderTop: '1px solid #1f2937', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
               Gedeeld via <a href="https://arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>arno.bot</a>
             </p>
