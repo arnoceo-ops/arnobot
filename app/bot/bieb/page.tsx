@@ -91,7 +91,7 @@ export default function GeschiedenisPage() {
   const [isDeltaAnalyse, setIsDeltaAnalyse] = useState(false)
   const [analyseLimiet, setAnalyseLimiet] = useState(false)
   const [shareLoading, setShareLoading] = useState<string | null>(null)
-  const [shareToast, setShareToast] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
 
@@ -217,9 +217,20 @@ export default function GeschiedenisPage() {
       })
       const data = await res.json()
       if (data.url) {
-        try { await navigator.clipboard.writeText(data.url) } catch {}
-        setShareToast(true)
-        setTimeout(() => setShareToast(false), 3000)
+        setShareUrl(data.url)
+        try { await navigator.clipboard.writeText(data.url) } catch {
+          try {
+            const ta = document.createElement('textarea')
+            ta.value = data.url
+            ta.style.position = 'fixed'
+            ta.style.opacity = '0'
+            document.body.appendChild(ta)
+            ta.focus()
+            ta.select()
+            document.execCommand('copy')
+            document.body.removeChild(ta)
+          } catch {}
+        }
       }
     } finally {
       setShareLoading(null)
@@ -854,14 +865,38 @@ export default function GeschiedenisPage() {
         </div>
       )}
 
-      {shareToast && (
-        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 400, background: '#1f2937', border: '1px solid #374151', borderRadius: 8, padding: '14px 20px', maxWidth: 360, width: 'calc(100% - 32px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', pointerEvents: 'none' }}>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f1f5f9', marginBottom: 4 }}>
-            <span style={{ color: '#f59e0b', marginRight: 8 }}>✓</span>Link gekopieerd naar klembord
-          </p>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
-            Iedereen met deze link kan dit gesprek bekijken
-          </p>
+      {shareUrl && (
+        <div
+          onClick={() => setShareUrl(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 4, padding: '28px 28px 24px', maxWidth: 480, width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>GESPREK DELEN</p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#f1f5f9', lineHeight: 1.8, marginBottom: 20 }}>
+              Iedereen met deze link kan het gesprek lezen. Kopieer de link en deel hem.
+            </p>
+            <div style={{ background: '#111827', border: '1px solid #374151', padding: '10px 14px', marginBottom: 20, borderRadius: 4, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af', flex: 1, wordBreak: 'break-all', lineHeight: 1.6 }}>{shareUrl}</span>
+              <button
+                onClick={async () => {
+                  try { await navigator.clipboard.writeText(shareUrl) } catch {
+                    try {
+                      const ta = document.createElement('textarea'); ta.value = shareUrl; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
+                    } catch {}
+                  }
+                }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: 2, color: '#f59e0b', background: 'none', border: '1px solid #f59e0b', padding: '6px 12px', cursor: 'pointer', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                KOPIEER
+              </button>
+            </div>
+            <button
+              onClick={() => setShareUrl(null)}
+              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              SLUITEN
+            </button>
+          </div>
         </div>
       )}
     </>
