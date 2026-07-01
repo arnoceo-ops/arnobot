@@ -470,7 +470,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       const data = await res.json()
       if (data.url) {
         setShareUrl(data.url)
-        await navigator.clipboard.writeText(data.url)
+        try { await navigator.clipboard.writeText(data.url) } catch {}
         setShareCopied(true)
         setTimeout(() => setShareCopied(false), 3000)
       }
@@ -1595,11 +1595,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, border: '1px solid #374151', background: 'none', color: shareCopied ? '#f59e0b' : '#9ca3af', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
-                onMouseEnter={e => { if (!shareCopied) { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = '#6b7280' } }}
-                onMouseLeave={e => { if (!shareCopied) { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#374151' } }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, border: '1px solid #374151', background: 'none', color: '#9ca3af', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = '#6b7280' }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#374151' }}
               >
-                {shareLoading ? '...' : shareCopied ? 'LINK GEKOPIEERD' : 'DEEL DIT GESPREK →'}
+                {shareLoading ? '...' : 'DEEL DIT GESPREK →'}
               </button>
               {shareUrl && !shareCopied && (
                 <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', wordBreak: 'break-all' }}>{shareUrl}</p>
@@ -1609,6 +1609,17 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           <div ref={bottomRef} />
         </div>
       </div>
+
+      {shareCopied && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 400, background: '#1f2937', border: '1px solid #374151', borderRadius: 8, padding: '14px 20px', maxWidth: 360, width: 'calc(100% - 32px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f1f5f9', marginBottom: 4 }}>
+            <span style={{ color: '#f59e0b', marginRight: 8 }}>✓</span>Link gekopieerd naar klembord
+          </p>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
+            Iedereen met deze link kan dit gesprek bekijken
+          </p>
+        </div>
+      )}
 
       {navGuardOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
