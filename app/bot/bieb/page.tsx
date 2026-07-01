@@ -92,6 +92,7 @@ export default function GeschiedenisPage() {
   const [analyseLimiet, setAnalyseLimiet] = useState(false)
   const [shareLoading, setShareLoading] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [shareCopied, setShareCopied] = useState(false)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
 
@@ -627,15 +628,15 @@ export default function GeschiedenisPage() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 }} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }} onClick={e => e.stopPropagation()}>
                     <Link
                       href={`/bot?resume=${session.session_id}`}
                       onClick={e => e.stopPropagation()}
                       style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', textDecoration: 'none' }}
-                      onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')}
+                      onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
                       onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
                     >
-                      ← VERVOLG DIT GESPREK IN ARNOBOT
+                      <span style={{ color: '#f59e0b' }}>←</span> VERVOLG DIT GESPREK IN ARNOBOT
                     </Link>
                     <button
                       onClick={e => handleShareSession(session.session_id, e)}
@@ -644,7 +645,7 @@ export default function GeschiedenisPage() {
                       onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
                       onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
                     >
-                      {shareLoading === session.session_id ? '...' : 'DEEL DIT GESPREK →'}
+                      {shareLoading === session.session_id ? '...' : <>DEEL DIT GESPREK <span style={{ color: '#f59e0b' }}>→</span></>}
                     </button>
                   </div>
 
@@ -679,10 +680,10 @@ export default function GeschiedenisPage() {
                       href={`/bot?resume=${session.session_id}`}
                       onClick={e => e.stopPropagation()}
                       style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', textDecoration: 'none' }}
-                      onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')}
+                      onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
                       onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
                     >
-                      ← Vervolg dit gesprek met ArnoBot.
+                      <span style={{ color: '#f59e0b' }}>←</span> VERVOLG DIT GESPREK IN ARNOBOT
                     </Link>
                     <button
                       onClick={() => { toggleSession(session.session_id); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
@@ -884,10 +885,11 @@ export default function GeschiedenisPage() {
                       const ta = document.createElement('textarea'); ta.value = shareUrl; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
                     } catch {}
                   }
+                  setShareCopied(true); setTimeout(() => setShareCopied(false), 2000)
                 }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: 2, color: '#f59e0b', background: 'none', border: '1px solid #f59e0b', padding: '6px 12px', cursor: 'pointer', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0 }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: 2, color: shareCopied ? '#111827' : '#f59e0b', background: shareCopied ? '#f59e0b' : 'none', border: '1px solid #f59e0b', padding: '6px 12px', cursor: 'pointer', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
               >
-                KOPIEER
+                {shareCopied ? 'GEKOPIEERD' : 'KOPIEER'}
               </button>
             </div>
             <button

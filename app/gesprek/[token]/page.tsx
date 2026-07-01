@@ -58,10 +58,11 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
       <div style={{ background: '#111827', minHeight: '100vh', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,20px) 80px' }}>
         <div style={{ maxWidth: 812, margin: '0 auto' }}>
 
-          <div style={{ marginBottom: 48 }}>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 6, color: '#f1f5f9', marginBottom: 4, lineHeight: 1 }}>
+          <div style={{ marginBottom: 64 }}>
+            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 6, lineHeight: 1, marginBottom: 6 }}>
               <span style={{ color: '#f1f5f9' }}>ARNO</span><span style={{ color: '#f59e0b' }}>BOT</span>
             </p>
+            <a href="https://arno.bot" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', letterSpacing: 2, textDecoration: 'none', display: 'block', marginBottom: 40 }}>arno.bot</a>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(28px,5vw,48px)', letterSpacing: 2, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8 }}>
               {title}
             </h1>
