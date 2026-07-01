@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
       url: `https://arno.bot/gesprek/${token}`,
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
     },
