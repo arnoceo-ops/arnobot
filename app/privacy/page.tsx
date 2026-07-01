@@ -59,7 +59,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens</td><td>Naam en e-mailadres, afkomstig uit jouw LinkedIn-profiel via Clerk</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profielgegevens</td><td>Salesrol, markt, uitdagingen en doelstellingen die jij invult</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>AI-coachingsgesprekken die jij voert met ArnoBot</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die jij actief deelt via een publieke link. Deze zijn toegankelijk voor iedereen met de link en kunnen door zoekmachines worden geïndexeerd. Delen is altijd een bewuste keuze van jou.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die worden gedeeld via een publieke link. Deze zijn toegankelijk voor iedereen met de link en kunnen door zoekmachines worden geïndexeerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
               </tbody>
             </table>
