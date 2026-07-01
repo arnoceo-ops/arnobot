@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.109.0",
     "@clerk/nextjs": "^7.0.4",
     "@portabletext/react": "^6.0.3",
     "@react-pdf/renderer": "^4.3.3",
