@@ -380,7 +380,7 @@ PROFIEL VAN DE GEBRUIKER:
       : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte)
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
       system: systemPrompt,
       messages

@@ -158,7 +158,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 | Route | Model | Reden | Laatste check |
 |---|---|---|---|
-| `app/api/chat/route.ts` (hoofdchat) | `claude-sonnet-5` | Conversationele turns, hoog volume, Sonnet volstaat | 2026-07 |
+| `app/api/chat/route.ts` (hoofdchat) | `claude-sonnet-4-6` | Sonnet 5 teruggedraaid: bij lange/complexe vragen geen text block in response (thinking mode zonder output). Hercheck zodra stabiel gedrag bevestigd. | 2026-07 |
 | `app/api/bot/uitdaging/route.ts` | `claude-sonnet-5` | Één korte vraag genereren, Sonnet volstaat | 2026-07 |
 | `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-07 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
