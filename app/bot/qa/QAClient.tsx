@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 
-function renderAnswer(text: string) {
+function renderAnswer(text: React.ReactNode) {
+  if (typeof text !== 'string') return text
   const parts = text.split(/(\[[^\]]+\]\([^)]+\))/)
   return parts.map((part, i) => {
     const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
