@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
         content: `Hieronder staan gesprekssessies in het formaat "ID:xxx | titel | samenvatting".\n\nGeef een JSON-array terug met alleen de session-IDs die inhoudelijk relevant zijn voor de zoekopdracht: "${q}"\n\nWees ruimhartig: als het gesprek ook maar raakvlak heeft met het onderwerp, neem het mee. Geef alleen de JSON-array terug, niets anders.\n\nSessies:\n${sessionList}`,
       }],
     })
-    const text = getText(\.content, '[]').trim()
+    const text = getText(res.content, '[]').trim()
     const start = text.indexOf('[')
     const end = text.lastIndexOf(']')
     const parsed = JSON.parse(start >= 0 && end >= 0 ? text.slice(start, end + 1) : '[]')

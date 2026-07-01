@@ -177,7 +177,7 @@ export async function POST() {
   let response
   try {
     response = await anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-opus-4-8',
     max_tokens: 1600,
     system: `Je bent Arno Diepeveen. Salesstrateeg, 20 jaar ervaring, direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Spreek de gebruiker aan met "je".
 

@@ -162,7 +162,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/bot/uitdaging/route.ts` | `claude-sonnet-5` | Één korte vraag genereren, Sonnet volstaat | 2026-07 |
 | `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-07 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
-| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Fable 5 terug beschikbaar. Beste keuze voor complexe coaching-redenering. | 2026-07 |
+| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-opus-4-8` | Fable 5 ingetrokken door Anthropic. Opus 4.8 is beste beschikbare keuze. Hercheck zodra Fable 5 stabiel beschikbaar is. | 2026-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
 | `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
 

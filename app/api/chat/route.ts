@@ -268,7 +268,7 @@ OK — logisch vervolg op het gesprek of relevant voor sales/business`
         system: moderatiePrompt,
         messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
       })
-      const check = getText(\.content, 'OK').trim().toUpperCase()
+      const check = getText(checkRes.content, 'OK').trim().toUpperCase()
 
       if (check.includes('ONGEPAST')) {
         await supabase.from('arno_blog_widget_blocked').upsert({ ip }, { onConflict: 'ip' })
