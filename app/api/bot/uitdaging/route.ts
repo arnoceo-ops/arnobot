@@ -1,4 +1,4 @@
-export const maxDuration = 15
+﻿export const maxDuration = 15
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
@@ -90,7 +90,7 @@ export async function GET() {
     : `Je bent Arno Diepeveen. ${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Gebruik nooit een em dash (—): gebruik een komma, dubbele punt of nieuwe zin.`
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 120,
     messages: [{ role: 'user', content: prompt }],
   })

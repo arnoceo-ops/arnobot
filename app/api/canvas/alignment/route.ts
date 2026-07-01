@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
@@ -121,7 +121,7 @@ async function analyseQuestion(questionId: string, answers: string[]): Promise<{
   const answersText = answers.map((a, i) => `Lid ${i + 1}: "${a}"`).join('\n');
 
   const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 200,
     messages: [{
       role: 'user',
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
 
     // Generate ArnoBot summary
     const summaryMsg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-5',
       max_tokens: 400,
       messages: [{
         role: 'user',

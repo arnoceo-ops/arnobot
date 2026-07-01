@@ -1,9 +1,9 @@
-name: Kwartaalcheck
+name: Maandelijkse check
 
 on:
   schedule:
-    # 1 januari, 1 april, 1 juli, 1 oktober om 08:00 UTC
-    - cron: '0 8 1 1,4,7,10 *'
+    # Elke 1e van de maand om 08:00 UTC
+    - cron: '0 8 1 * *'
   workflow_dispatch:
 
 jobs:
@@ -22,10 +22,11 @@ jobs:
             const now = new Date()
             const month = now.getMonth() + 1
             const year = now.getFullYear()
-            const q = month <= 3 ? 'Q1' : month <= 6 ? 'Q2' : month <= 9 ? 'Q3' : 'Q4'
+            const maanden = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec']
+            const maand = maanden[month - 1]
 
             const body = [
-              '## Kwartaalcheck ' + q + ' ' + year,
+              '## Maandelijkse check ' + maand + ' ' + year,
               '',
               'Stuur dit issue door naar Claude Code met: doe de kwartaalcheck',
               '',
@@ -64,12 +65,12 @@ jobs:
               '- [ ] Test op securityheaders.com - target grade A',
               '- [ ] Test op observatory.mozilla.org',
               '',
-              'Aangemaakt door de automatische kwartaalcheck workflow.',
+              'Aangemaakt door de automatische maandelijkse check workflow.',
             ].join('\n')
 
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Kwartaalcheck ' + q + ' ' + year + ' - ArnoBot',
+              title: 'Maandelijkse check ' + maand + ' ' + year + ' - ArnoBot',
               body: body,
             })

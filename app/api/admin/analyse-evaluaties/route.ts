@@ -1,4 +1,4 @@
-export const maxDuration = 60
+﻿export const maxDuration = 60
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }).join('\n\n---\n\n')
 
   const res = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 1500,
     system: `Je bent Arno Diepeveen. Direct, ongefilterd. Je analyseert evaluaties van testers van jouw ArnoBot-app. Geen inleiding, geen conclusie-kopje. Gewoon de patronen, wat ze zeggen, wat het betekent, en wat je er concreet mee moet doen. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
     messages: [{

@@ -1,4 +1,4 @@
-export const maxDuration = 30
+﻿export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
@@ -60,7 +60,7 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
 4. Één concrete tip voor het volgende gesprek`
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
   })

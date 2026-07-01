@@ -1,4 +1,4 @@
-export const maxDuration = 60
+﻿export const maxDuration = 60
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
@@ -112,7 +112,7 @@ export async function POST() {
       let precheckText = 'nee'
       try {
         const precheck = await anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
+          model: 'claude-sonnet-5',
           max_tokens: 10,
           system: 'Je beoordeelt of nieuwe gesprekken kwalitatief andere patronen laten zien dan de vorige coaching. Antwoord uitsluitend met "ja" of "nee".',
           messages: [{
@@ -176,7 +176,7 @@ export async function POST() {
   let response
   try {
     response = await anthropic.messages.create({
-    model: 'claude-opus-4-8',
+    model: 'claude-fable-5',
     max_tokens: 1600,
     system: `Je bent Arno Diepeveen. Salesstrateeg, 20 jaar ervaring, direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Spreek de gebruiker aan met "je".
 

@@ -1,6 +1,6 @@
 # Claude Code — project instructies
 
-## Kwartaalcheck — roep aan met "doe de kwartaalcheck"
+## Maandelijkse check — roep aan met "doe de kwartaalcheck"
 
 Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
 
@@ -156,13 +156,13 @@ Elke route gebruikt een bewust gekozen model. Controleer elk kwartaal (of na een
 
 | Route | Model | Reden | Laatste check |
 |---|---|---|---|
-| `app/api/chat/route.ts` (hoofdchat) | `claude-sonnet-4-6` | Conversationele turns, hoog volume, Sonnet volstaat | 2026-06 |
-| `app/api/bot/uitdaging/route.ts` | `claude-sonnet-4-6` | Één korte vraag genereren, Sonnet volstaat | 2026-06 |
-| `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-06 |
-| `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-4-6` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-06 |
-| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-opus-4-8` | Fable 5 tijdelijk stopgezet. Opus 4.8 is de beste beschikbare keuze voor complexe redenering. Hercheck zodra Fable 5 weer beschikbaar is. | 2026-06 |
-| `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-06 |
-| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-4-6` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-06 |
+| `app/api/chat/route.ts` (hoofdchat) | `claude-sonnet-5` | Conversationele turns, hoog volume, Sonnet volstaat | 2026-07 |
+| `app/api/bot/uitdaging/route.ts` | `claude-sonnet-5` | Één korte vraag genereren, Sonnet volstaat | 2026-07 |
+| `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-07 |
+| `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
+| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Fable 5 terug beschikbaar. Beste keuze voor complexe coaching-redenering. | 2026-07 |
+| `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
+| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar?"
 

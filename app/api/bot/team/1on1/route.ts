@@ -1,4 +1,4 @@
-export const maxDuration = 30
+﻿export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
@@ -131,7 +131,7 @@ Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting ac
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 1200,
     system: systemPrompt,
     messages: [{ role: 'user', content: context }],

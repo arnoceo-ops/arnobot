@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -6,13 +6,13 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const INVENTORY = [
-  { route: 'app/api/chat/route.ts (hoofdchat)', model: 'claude-sonnet-4-6', reden: 'Hoog volume, korte conversationele turns' },
-  { route: 'app/api/bot/uitdaging/route.ts', model: 'claude-sonnet-4-6', reden: 'Dagelijkse mindsetvraag, één zin' },
+  { route: 'app/api/chat/route.ts (hoofdchat)', model: 'claude-sonnet-5', reden: 'Hoog volume, korte conversationele turns' },
+  { route: 'app/api/bot/uitdaging/route.ts', model: 'claude-sonnet-5', reden: 'Dagelijkse mindsetvraag, één zin' },
   { route: 'app/api/bot/session-end/route.ts (synthese)', model: 'claude-haiku-4-5-20251001', reden: 'Drie snelle batch-calls per sessie' },
-  { route: 'app/api/bot/coaching/route.ts (precheck)', model: 'claude-sonnet-4-6', reden: 'Ja/nee vraag, Fable 5 overkill' },
-  { route: 'app/api/bot/coaching/route.ts (hoofdsynthese)', model: 'claude-opus-4-8', reden: 'Fable 5 tijdelijk stopgezet. Opus 4.8 beste beschikbare keuze voor complexe redenering.' },
+  { route: 'app/api/bot/coaching/route.ts (precheck)', model: 'claude-sonnet-5', reden: 'Ja/nee vraag, Fable 5 overkill' },
+  { route: 'app/api/bot/coaching/route.ts (hoofdsynthese)', model: 'claude-fable-5', reden: 'Fable 5 terug beschikbaar. Beste keuze voor complexe coaching-redenering.' },
   { route: 'app/api/bot/coaching/route.ts (blog-synthese)', model: 'claude-haiku-4-5-20251001', reden: 'Korte labels per blog' },
-  { route: 'app/api/bot/coaching-analyse/route.ts (BIEB)', model: 'claude-sonnet-4-6', reden: 'Patroonanalyse max 20 gesprekken' },
+  { route: 'app/api/bot/coaching-analyse/route.ts (BIEB)', model: 'claude-sonnet-5', reden: 'Patroonanalyse max 20 gesprekken' },
 ]
 
 type AdviesMap = Record<string, { actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }>

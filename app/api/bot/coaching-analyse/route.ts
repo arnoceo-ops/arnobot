@@ -1,4 +1,4 @@
-export const maxDuration = 60
+﻿export const maxDuration = 60
 
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     : `Analyseer deze ${sessions.length} gesprekken en geef een patroonanalyse in Arno's stijl. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's.${profielText}\n\nGESPREKKEN:\n${sessiesText}`
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     max_tokens: 500,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }]

@@ -1,4 +1,4 @@
-export const maxDuration = 30
+﻿export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       }
 
       const scoreMessage = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
         max_tokens: 150,
         messages: [
           {
@@ -72,7 +72,7 @@ Schaal:
     const context = formatChunksForPrompt(relevant)
 
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-5',
       max_tokens: 400,
       system: `Je bent ArnoBot, de ongefiltreerde, provocerende AI van Royal Dutch Sales. Je bent gebaseerd op Arno Diepeveen: sales strateeg, auteur, en iemand die al 20 jaar middelmatigheid in salesorganisaties benoemt zonder er omheen te draaien.
 
