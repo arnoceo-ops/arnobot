@@ -65,6 +65,10 @@ async function rerankChunks(
     })
     if (!res.ok) throw new Error(`Rerank API error: ${await res.text()}`)
     const data = await res.json()
+    if (!Array.isArray(data?.results)) {
+      console.error('[RAG] Rerank onverwacht formaat:', JSON.stringify(data).slice(0, 200))
+      return chunks.slice(0, topN).map(c => ({ ...c, relevance_score: 0 }))
+    }
     return data.results.map((r: { index: number; relevance_score: number }) => ({
       ...chunks[r.index],
       relevance_score: r.relevance_score ?? 0,
