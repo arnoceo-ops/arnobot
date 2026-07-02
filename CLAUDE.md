@@ -170,6 +170,20 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 **Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren op of rond 1 augustus (livegang) — wacht minimaal een week na go-live.**
 
+## E-mail crons — ALTIJD via email-templates.ts
+
+Elke cron die een e-mail naar gebruikers stuurt:
+1. Voeg het type toe aan `EmailType` in `lib/email-templates.ts`
+2. Voeg metadata toe in `EMAIL_META` (label, description, category) op de **chronologisch juiste positie** in de lifecycle
+3. Voeg een `case` toe in `getEmailTemplate()` voor de inhoud
+4. Gebruik `getEmailTemplate()` in de cron route — **nooit** inline `emailHtml()` direct aanroepen
+
+Zo verschijnt elke mail automatisch in de admin CRONS-pagina (`/bot/admin/emails`) in de juiste volgorde en is direct testbaar zonder code aan te passen.
+
+**Volgorde in `EMAIL_META` is lifecycle-chronologisch:** trial onboarding → betaalstroom → post-trial → recurring → events → admin.
+
+---
+
 ## E-mail stijl — lib/email-templates.ts
 
 E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New gebruiken in e-mail. Nooit Bebas Neue voor de knop (laadt niet betrouwbaar in e-mailclients).

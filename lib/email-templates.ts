@@ -48,6 +48,7 @@ export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest 
 export type EmailType =
   | 'dag1'
   | 'dag4'
+  | 'geen_gesprek_nudge'
   | 'first_conversation'
   | 'dag14'
   | 'first_coaching'
@@ -57,36 +58,37 @@ export type EmailType =
   | 'trial_afgelopen'
   | 'opzegging_bevestiging'
   | 'winback'
-  | 'admin_derde_trial'
-  | 'referral_aanmelding'
   | 'weekly_nudge'
-  | 'geen_gesprek_nudge'
   | 'bieb_bijgewerkt'
+  | 'kwartaal_doel'
+  | 'referral_aanmelding'
+  | 'admin_derde_trial'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
-  dag1:                  { label: 'Dag 1',                 description: 'Welkom, waar begin je?',                                             category: 'user' },
-  dag4:                  { label: 'Dag 4',                 description: 'Nog geen gesprek gevoerd',                                           category: 'user' },
-  geen_gesprek_nudge:    { label: 'Geen gesprek nudge',    description: 'Dag 7, nooit een gesprek gestart',                                   category: 'user' },
-  first_conversation:    { label: 'Eerste gesprek',        description: 'Na het eerste gesprek',                                              category: 'user' },
-  dag14:                 { label: 'Dag 14',                description: 'Halverwege de trial',                                                category: 'user' },
-  weekly_nudge:          { label: 'Inactivity nudge',      description: '7 dagen geen activiteit',                                            category: 'user' },
-  first_coaching:        { label: 'Eerste coaching',       description: 'Na 5+ sessies, nog geen rapport',                                    category: 'user' },
-  dag25:                 { label: 'Dag 25',                description: 'Trial bijna afgelopen, opt-in CTA',                                  category: 'user' },
-  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',    description: '7 dagen na opt-in, geen betaling',                                   category: 'user' },
-  geblokkeerd:           { label: 'Geblokkeerd',           description: '24u na waarschuwing, geen betaling',                                 category: 'user' },
-  trial_afgelopen:       { label: 'Trial afgelopen',       description: 'Dag 30, nooit opt-in gedaan',                                        category: 'user' },
-  opzegging_bevestiging: { label: 'Opzegging bevestiging', description: 'Na opzegging via account pagina',                                    category: 'user' },
-  winback:               { label: 'Win-back',              description: '15 dagen na einde trial, 30-daagse tweede trial aanbieding',         category: 'user' },
-  referral_aanmelding:   { label: 'Referral aanmelding',   description: 'Naar referrer zodra iemand zich aanmeldt via zijn link',             category: 'user' },
-  admin_derde_trial:     { label: 'Derde trial',           description: 'Notificatie bij start derde trial',                                  category: 'admin' },
-  bieb_bijgewerkt:       { label: 'BIEB bijgewerkt',       description: 'Na 10+ nieuwe gesprekken, patroonanalyse klaar',                      category: 'user' },
+  dag1:                  { label: 'Dag 1',                  description: 'Dag 1 — welkom, waar begin je?',                                       category: 'user' },
+  dag4:                  { label: 'Dag 4',                  description: 'Dag 4 — nog geen gesprek gevoerd',                                     category: 'user' },
+  geen_gesprek_nudge:    { label: 'Geen gesprek nudge',     description: 'Dag 7 — nooit een gesprek gestart',                                    category: 'user' },
+  first_conversation:    { label: 'Eerste gesprek',         description: 'Dag 1-30 — na het allereerste gesprek',                                category: 'user' },
+  dag14:                 { label: 'Dag 14',                 description: 'Dag 14 — halverwege de trial',                                         category: 'user' },
+  first_coaching:        { label: 'Eerste coaching',        description: 'Dag 5-30 — na 5+ sessies, nog geen rapport aangevraagd',               category: 'user' },
+  dag25:                 { label: 'Dag 25',                 description: 'Dag 25 — trial bijna afgelopen, opt-in CTA',                          category: 'user' },
+  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',     description: 'Dag 25+ — 7 dagen na opt-in zonder betaling',                         category: 'user' },
+  geblokkeerd:           { label: 'Geblokkeerd',            description: 'Dag 26+ — 24u na waarschuwing, nog steeds geen betaling',             category: 'user' },
+  trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30 — trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
+  opzegging_bevestiging: { label: 'Opzegging bevestiging',  description: 'Op elk moment — na opzegging via account pagina',                     category: 'user' },
+  winback:               { label: 'Win-back',               description: 'Dag 45 — 15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
+  weekly_nudge:          { label: 'Inactivity nudge',       description: 'Recurring — 7 dagen geen activiteit',                                 category: 'user' },
+  bieb_bijgewerkt:       { label: 'BIEB bijgewerkt',        description: 'Recurring — na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
+  kwartaal_doel:         { label: 'Kwartaaldoel check',     description: 'Recurring — bij kwartaalstart, check of jaardoel nog klopt',          category: 'user' },
+  referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event — naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
+  admin_derde_trial:     { label: 'Derde trial',            description: 'Admin — notificatie bij start derde trial',                           category: 'admin' },
 }
 
 export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -230,6 +232,16 @@ export function getEmailTemplate(
           'Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.'
         ),
       }
+    case 'kwartaal_doel': {
+      const doel = options?.jaardoel ?? 'jouw doel voor dit jaar'
+      return {
+        subject: `${prefix}${naam}, klopt je doel voor dit jaar nog?`,
+        html: mail(
+          `Nieuw kwartaal, nieuw momentum.<br><br>Je hebt in je profiel dit als doel neergezet:<br><br><em style="color:#f1f5f9;">"${doel}"</em><br><br>Klopt dit nog? Of heeft het afgelopen kwartaal je perspectief verschoven? Pas je doel aan in je profiel als dat zo is. Of gebruik het als startpunt voor een gesprek vandaag.`,
+          'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
   }
 }
 
