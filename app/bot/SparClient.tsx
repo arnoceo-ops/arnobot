@@ -217,16 +217,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setTtsSpeed(saved ? parseFloat(saved) : 1.25)
   }, [])
 
-  async function toggleRecording() {
-    if (recording) {
-      mediaRecorderRef.current?.stop()
-      return
-    }
+  async function startRecording(e: React.MouseEvent | React.TouchEvent) {
+    e.preventDefault()
+    if (recording || transcribing || loading || blocked) return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
       audioChunksRef.current = []
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.ondataavailable = (ev) => { if (ev.data.size > 0) audioChunksRef.current.push(ev.data) }
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
         setRecording(false)
@@ -248,7 +246,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
-    } catch (e) { console.error('[Whisper] getUserMedia mislukt:', e) }
+    } catch (err) { console.error('[Whisper] getUserMedia mislukt:', err) }
+  }
+
+  function stopRecording(e?: React.MouseEvent | React.TouchEvent) {
+    e?.preventDefault()
+    if (!recording) return
+    mediaRecorderRef.current?.stop()
   }
 
   function handleNavAttempt(dest: string) {
@@ -847,11 +851,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .spar-mic:hover { color: #f1f5f9; background: #374151; }
         .spar-mic.recording {
           color: #f59e0b; background: #374151;
-          animation: micpulse 1s ease-in-out infinite;
+          animation: micpulse 0.8s ease-in-out infinite;
         }
         @keyframes micpulse {
-          0%, 100% { color: #f59e0b; }
-          50% { color: #f59e0b; }
+          0%, 100% { background: #374151; box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+          50% { background: #2d2200; box-shadow: 0 0 0 6px rgba(245,158,11,0); }
         }
 
         .spar-send {
@@ -1373,11 +1377,15 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               {speechSupported && (
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
-                  onClick={toggleRecording}
+                  onMouseDown={startRecording}
+                  onMouseUp={stopRecording}
+                  onMouseLeave={() => { if (recording) stopRecording() }}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
                   disabled={loading || blocked || transcribing}
-                  title={transcribing ? 'Transcriberen...' : recording ? 'Stop opname' : 'Spreek je vraag in'}
+                  title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
                 >
-                  {transcribing ? '⏳' : recording ? '⏹' : '🎤'}
+                  {transcribing ? '⏳' : '🎤'}
                 </button>
               )}
               <button
