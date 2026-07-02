@@ -212,7 +212,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
 
   useEffect(() => {
-    if (navigator.mediaDevices?.getUserMedia && 'MediaRecorder' in window) setSpeechSupported(true)
+    if ('mediaDevices' in navigator && 'MediaRecorder' in window) setSpeechSupported(true)
     const saved = localStorage.getItem('arnobot_tts_speed')
     setTtsSpeed(saved ? parseFloat(saved) : 1.25)
   }, [])
