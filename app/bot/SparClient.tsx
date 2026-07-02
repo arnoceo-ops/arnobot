@@ -170,6 +170,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     isStrategischProfiel ? 'strategisch' : isOrganisatorischProfiel ? 'organisatorisch' : 'sales'
   )
   const [recording, setRecording] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
   const [ttsSpeed, setTtsSpeed] = useState(1.25)
@@ -198,7 +199,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
-  const recognitionRef = useRef<any>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -210,34 +212,43 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
 
   useEffect(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (SR) setSpeechSupported(true)
+    if (navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined') setSpeechSupported(true)
     const saved = localStorage.getItem('arnobot_tts_speed')
     setTtsSpeed(saved ? parseFloat(saved) : 1.25)
   }, [])
 
-  function toggleRecording() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SR) return
+  async function toggleRecording() {
     if (recording) {
-      recognitionRef.current?.stop()
-      setRecording(false)
+      mediaRecorderRef.current?.stop()
       return
     }
-    const rec = new SR()
-    rec.lang = 'nl-NL'
-    rec.continuous = false
-    rec.interimResults = true
-    rec.onresult = (e: any) => {
-      const transcript = Array.from(e.results as any[]).map((r: any) => r[0].transcript).join('')
-      setInput(transcript)
-      setResizeInput(true)
-    }
-    rec.onend = () => setRecording(false)
-    rec.onerror = () => setRecording(false)
-    recognitionRef.current = rec
-    rec.start()
-    setRecording(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        setRecording(false)
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        if (blob.size < 1000) return
+        setTranscribing(true)
+        try {
+          const form = new FormData()
+          form.append('audio', blob, 'recording.webm')
+          const res = await fetch('/api/transcribe', { method: 'POST', body: form })
+          const data = await res.json()
+          if (data.transcript) {
+            setInput(prev => prev ? `${prev} ${data.transcript}` : data.transcript)
+            setResizeInput(true)
+          }
+        } catch {}
+        finally { setTranscribing(false) }
+      }
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      setRecording(true)
+    } catch {}
   }
 
   function handleNavAttempt(dest: string) {
@@ -1363,10 +1374,10 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
                   onClick={toggleRecording}
-                  disabled={loading || blocked}
-                  title={recording ? 'Stop opname' : 'Spreek je vraag in'}
+                  disabled={loading || blocked || transcribing}
+                  title={transcribing ? 'Transcriberen...' : recording ? 'Stop opname' : 'Spreek je vraag in'}
                 >
-                  {recording ? '⏹' : '🎤'}
+                  {transcribing ? '⏳' : recording ? '⏹' : '🎤'}
                 </button>
               )}
               <button
