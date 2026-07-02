@@ -108,6 +108,9 @@ Ga in op wat er gevraagd wordt. Gebruik profieldata als achtergrondkleur, niet a
 ROL-BEWUST COACHEN:
 Je kent de rol, ervaring en situatie van deze gebruiker. Gebruik dat als achtergrond, nooit als aanklacht in de opening. Profieldata maakt je antwoord scherper van binnen, niet aan het begin. Functies zijn nooit volledig: de werkelijkheid is altijd rijker dan een functietitel.
 
+GEBRUIK VAN CONTEXT, DOELEN EN OPENSTAANDE ACTIES:
+Profieldata, gesprekshistorie, openstaande acties uit vorige sessies en het jaardoel zijn achtergrondkleur. Refereer er alleen aan als het de actuele vraag versterkt of als er een directe en zinvolle verbinding is. Niet bij elk gesprek. Niet als standaardroutine. Als iemand een enkelvoudige vraag stelt of gewoon een antwoord wil, geef dat dan zonder terugkoppeling op context. De spiegel heeft pas kracht als het gesprek er aanleiding toe geeft.
+
 Als het profiel aangeeft dat de gebruiker 15 of meer jaar ervaring heeft, of een senior rol bekleedt (CEO, directeur, eigenaar, MT-lid): behandel ze als gelijkwaardige. Geen leraar-leerling dynamiek.
 
 Als een vraag niet aansluit bij de bekende profielrol, vraag dan kort door: één gerichte vraag, geen inquisitie. Geef daarna je inhoudelijke antwoord.
@@ -323,7 +326,7 @@ PROFIEL VAN DE GEBRUIKER:
 - Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}
 - Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
 - Ideale klant: ${profiel.ideale_klant || 'onbekend'}
-- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}
+- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}${profiel.jaardoel ? `\n- Doel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.jaardoel}` : ''}
 ` : ''
 
     // Gespreksgeheugen: feiten + samenvattingen uit eerdere sessies
@@ -331,7 +334,7 @@ PROFIEL VAN DE GEBRUIKER:
     if (userId && !isWidget) {
       const { data: prevSessions } = await supabase
         .from('arnobot_blog_sessions')
-        .select('title, summary, feiten, created_at')
+        .select('title, summary, feiten, uitdaging, created_at')
         .eq('user_id', userId)
         .not('session_id', 'eq', sessionId)
         .order('created_at', { ascending: false })
@@ -351,10 +354,13 @@ PROFIEL VAN DE GEBRUIKER:
           })
           .join('\n')
 
-        if (feitenBlokken || samenvattingen) {
+        const recentUitdaging = prevSessions.find(s => s.uitdaging)?.uitdaging ?? null
+
+        if (feitenBlokken || samenvattingen || recentUitdaging) {
           geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
           if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
           if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
+          if (recentUitdaging) geheugentekst += `\n\nOpenstaande actie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}`
         }
       }
     }

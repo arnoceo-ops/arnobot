@@ -19,6 +19,7 @@ type Answers = {
   teamgrootte: string
   jaren_sales: string
   jaren_functie: string
+  jaardoel: string
 }
 
 const empty: Answers = {
@@ -35,6 +36,19 @@ const empty: Answers = {
   teamgrootte: '',
   jaren_sales: '',
   jaren_functie: '',
+  jaardoel: '',
+}
+
+function getJaardoelPlaceholder(rol: string): string {
+  if (rol === 'AE Hunter') return 'dit jaar wil ik stoppen met wachten op leads en zelf mijn pipeline vullen.'
+  if (rol === 'AM Farmer') return 'dit jaar wil ik >80% wallet share bij mijn 3 grootste klanten.'
+  if (rol === 'Key AM') return 'ik wil veel meer als trusted advisor fungeren voor mijn klanten.'
+  if (rol === 'Inside Sales') return 'ik wil mijn gesprekken zo scherp krijgen dat prijs nooit meer een issue is.'
+  if (rol === 'Sales Director') return 'ik wil dat het gehele team het resultaat ownt in plaats van excuses te bedenken.'
+  if (rol === 'VP of Sales') return 'dit jaar wil ik van operationeel brandjes blussen naar strategisch bouwen.'
+  if (rol === 'CEO/DGA') return 'dit jaar wil ik mezelf overbodig maken in het verkoopproces.'
+  if (rol === 'Solopreneur') return 'dit jaar wil ik dat klanten me aanbevelen zonder dat ik erom hoef te vragen.'
+  return 'Waar wil jij dit jaar echt naartoe?'
 }
 
 const TARGET_DIT_JAAR_OPTIONS = ['Ja', 'Nee']
@@ -395,7 +409,22 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="09" title="Jouw ervaring">
+          <Block nr="09" title="Jouw doel dit jaar">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>
+              Wat wil jij dit jaar echt bereiken? <span style={{ color: '#6b7280' }}>(optioneel)</span>
+            </p>
+            <textarea
+              value={answers.jaardoel}
+              onChange={e => set('jaardoel', e.target.value)}
+              placeholder={getJaardoelPlaceholder(answers.rol)}
+              rows={3}
+            />
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginTop: 10, lineHeight: 1.7 }}>
+              ArnoBot gebruikt dit als achtergrond in gesprekken, niet als verplicht gespreksonderwerp.
+            </p>
+          </Block>
+
+          <Block nr="10" title="Jouw ervaring">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
               {JAREN_SALES_OPTIONS.map(o => (
