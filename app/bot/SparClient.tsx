@@ -212,7 +212,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
 
   useEffect(() => {
-    if ('mediaDevices' in navigator && 'MediaRecorder' in window) setSpeechSupported(true)
+    setSpeechSupported(true)
     const saved = localStorage.getItem('arnobot_tts_speed')
     setTtsSpeed(saved ? parseFloat(saved) : 1.25)
   }, [])
@@ -248,7 +248,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
-    } catch {}
+    } catch (e) { console.error('[Whisper] getUserMedia mislukt:', e) }
   }
 
   function handleNavAttempt(dest: string) {
