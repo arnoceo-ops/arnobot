@@ -35,7 +35,7 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.headerLabel}>ARNOBOT — ROYAL DUTCH SALES</Text>
+          <Text style={styles.headerLabel}>ARNOBOT · ROYAL DUTCH SALES</Text>
           <Text style={styles.headerTitle}>Gesprekken export</Text>
           <Text style={styles.headerDate}>{dateRange}</Text>
         </View>
@@ -43,10 +43,10 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
           <View key={sessionId} style={styles.session} break={idx > 0}>
             <View style={styles.sessionHeader}>
               <Text style={styles.sessionLabel}>
-                SESSIE {idx + 1} — {messages[0].ip} — {messages.length} {messages.length === 1 ? 'vraag & antwoord' : 'vragen & antwoorden'}
+                SESSIE {idx + 1} · {messages[0].ip} · {messages.length} {messages.length === 1 ? 'vraag & antwoord' : 'vragen & antwoorden'}
               </Text>
               <Text style={styles.sessionMeta}>
-                {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} – {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
+                {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
               </Text>
             </View>
             {messages.map((msg) => (

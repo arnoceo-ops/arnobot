@@ -102,13 +102,13 @@ function KpiCard({ def, doel, real }: { def: KpiDef; doel: string; real: string 
           <div>
             <div style={{ color: '#f1f5f9', fontSize: '10px', letterSpacing: '2px', opacity: 0.25, marginBottom: '6px' }}>DOEL</div>
             <div style={{ fontFamily: 'var(--font-bebas), sans-serif', fontSize: '36px', color: '#f1f5f9', lineHeight: 1, opacity: doelN !== null ? 1 : 0.15 }}>
-              {doelN !== null ? fmt(doelN, def) : '—'}
+              {doelN !== null ? fmt(doelN, def) : '0'}
             </div>
           </div>
           <div>
             <div style={{ color: '#f1f5f9', fontSize: '10px', letterSpacing: '2px', opacity: 0.25, marginBottom: '6px' }}>REALISATIE</div>
             <div style={{ fontFamily: 'var(--font-bebas), sans-serif', fontSize: '36px', color: hasData ? color : '#f1f5f9', lineHeight: 1, opacity: realN !== null ? 1 : 0.15 }}>
-              {realN !== null ? fmt(realN, def) : '—'}
+              {realN !== null ? fmt(realN, def) : '0'}
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ function ConversieRij({ from, to, pct, color }: { from: string; to: string; pct:
         {from.toUpperCase()} → {to.toUpperCase()}
       </span>
       <span style={{ fontFamily: 'var(--font-bebas), sans-serif', fontSize: '32px', color: pct !== null ? color : '#374151', letterSpacing: '2px' }}>
-        {pct !== null ? `${Math.round(pct)}%` : '—'}
+        {pct !== null ? `${Math.round(pct)}%` : '0'}
       </span>
     </div>
   )
@@ -247,7 +247,7 @@ export default function KpiDashboardPage() {
           KPI DASHBOARD
         </h1>
         <p style={{ color: 'rgb(136,136,136)', opacity: 1, fontSize: '13px', letterSpacing: '0.03em', fontFamily: 'Geist, system-ui, sans-serif', textTransform: 'uppercase' as const, marginTop: 12 }}>
-          {user.firstName} — DOELEN VS. REALISATIE {new Date().getFullYear()}
+          {user.firstName} · DOELEN VS. REALISATIE {new Date().getFullYear()}
         </p>
       </div>
 

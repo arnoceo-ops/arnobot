@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'hq@arno.bot',
-    subject: `ArnoBot heeft ${total} actieve gebruikers — tijd voor Pro-upgrades`,
+    subject: `ArnoBot heeft ${total} actieve gebruikers: tijd voor Pro-upgrades`,
     html: emailHtml(
       `Je hebt de grens van ${MILESTONE} gebruikers bereikt. Tijd voor drie platform-upgrades voor betere beveiliging en databescherming.<br><br>
       ${ab('1', 'Vercel Firewall + Bot Filter', 'vercel.com → project → Settings → Security. Zet Firewall aan + Bot Filter aan. Optioneel: rate limiting rule voor /api/* (100 req/min per IP).')}

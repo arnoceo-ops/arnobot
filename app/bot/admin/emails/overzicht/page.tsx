@@ -40,44 +40,44 @@ export default async function EmailsOverzichtPage() {
 
         <Section title="NAAR GEBRUIKERS" subtitle="Lifecycle e-mails richting actieve en voormalige gebruikers">
           <Table rows={[
-            { name: 'Dag 1',                trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Direct na aanmelding',                                  type: 'Transactioneel' },
-            { name: 'Dag 4',                trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '4 dagen na aanmelding, nog geen gesprek',               type: 'Transactioneel' },
-            { name: 'Geen gesprek nudge',    trigger: 'Cron — inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: 'Dag 7, nooit een gesprek gestart',                      type: 'Marketing' },
-            { name: 'Eerste gesprek',        trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na het eerste gesprek',                                 type: 'Transactioneel' },
-            { name: 'Dag 14',               trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Halverwege de trial',                                   type: 'Transactioneel' },
-            { name: 'Inactivity nudge',      trigger: 'Cron — inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: '7 dagen geen activiteit',                               type: 'Marketing' },
-            { name: 'Eerste coaching',       trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na 5+ sessies, nog geen coaching aangevraagd',          type: 'Transactioneel' },
-            { name: 'Dag 25',               trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Trial loopt over 5 dagen af, opt-in CTA',               type: 'Transactioneel' },
-            { name: 'Betaalwaarschuwing',    trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '7 dagen na opt-in, geen betaling ontvangen',            type: 'Transactioneel' },
-            { name: 'Geblokkeerd',           trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '24u na waarschuwing, nog geen betaling',                type: 'Transactioneel' },
-            { name: 'Trial afgelopen',       trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Dag 30, nooit opt-in gedaan',                          type: 'Transactioneel' },
-            { name: 'Opzegging bevestiging', trigger: 'Event — bot/cancel-subscription',               ontvanger: 'Gebruiker',            wanneer: 'Direct bij opzegging via account pagina',               type: 'Transactioneel' },
-            { name: 'Win-back',             trigger: 'Cron — trial-emails (dagelijks 06:05)',          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
-            { name: 'Referral aanmelding',   trigger: 'Event — bot/referral (direct)',                 ontvanger: 'Referrer (gebruiker)', wanneer: 'Zodra iemand zich aanmeldt via de referral link',       type: 'Transactioneel' },
-            { name: 'BIEB bijgewerkt',       trigger: 'Cron — auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
+            { name: 'Dag 1',                trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Direct na aanmelding',                                  type: 'Transactioneel' },
+            { name: 'Dag 4',                trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '4 dagen na aanmelding, nog geen gesprek',               type: 'Transactioneel' },
+            { name: 'Geen gesprek nudge',    trigger: 'Cron:inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: 'Dag 7, nooit een gesprek gestart',                      type: 'Marketing' },
+            { name: 'Eerste gesprek',        trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na het eerste gesprek',                                 type: 'Transactioneel' },
+            { name: 'Dag 14',               trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Halverwege de trial',                                   type: 'Transactioneel' },
+            { name: 'Inactivity nudge',      trigger: 'Cron:inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: '7 dagen geen activiteit',                               type: 'Marketing' },
+            { name: 'Eerste coaching',       trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na 5+ sessies, nog geen coaching aangevraagd',          type: 'Transactioneel' },
+            { name: 'Dag 25',               trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Trial loopt over 5 dagen af, opt-in CTA',               type: 'Transactioneel' },
+            { name: 'Betaalwaarschuwing',    trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '7 dagen na opt-in, geen betaling ontvangen',            type: 'Transactioneel' },
+            { name: 'Geblokkeerd',           trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '24u na waarschuwing, nog geen betaling',                type: 'Transactioneel' },
+            { name: 'Trial afgelopen',       trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Dag 30, nooit opt-in gedaan',                          type: 'Transactioneel' },
+            { name: 'Opzegging bevestiging', trigger: 'Event: bot/cancel-subscription',               ontvanger: 'Gebruiker',            wanneer: 'Direct bij opzegging via account pagina',               type: 'Transactioneel' },
+            { name: 'Win-back',             trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
+            { name: 'Referral aanmelding',   trigger: 'Event: bot/referral (direct)',                 ontvanger: 'Referrer (gebruiker)', wanneer: 'Zodra iemand zich aanmeldt via de referral link',       type: 'Transactioneel' },
+            { name: 'BIEB bijgewerkt',       trigger: 'Cron:auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
           ]} />
         </Section>
 
-        <Section title="NAAR MIJZELF — GEPLANDE CRONS" subtitle="Automatische rapportages op vaste tijdstippen">
+        <Section title="NAAR MIJZELF: GEPLANDE CRONS" subtitle="Automatische rapportages op vaste tijdstippen">
           <Table rows={[
-            { name: 'Dagelijkse activiteit', trigger: 'Cron — daily-activity (dagelijks 05:00)',       ontvanger: 'arno@royaldutchsales.com', wanneer: 'Elke ochtend, actieve gebruikers afgelopen 24u',         type: 'Admin' },
-            { name: 'Weekly top gebruikers', trigger: 'Cron — weekly-top-users (zaterdag 06:05)',      ontvanger: 'analyses@arno.bot',        wanneer: 'Elke zaterdag, top 10 actieve gebruikers',              type: 'Admin' },
-            { name: 'Competitie',            trigger: 'Cron — competitie (maandelijks, 1e)',           ontvanger: 'arno@arno.bot',            wanneer: 'Eerste van de maand, competitierapport',                type: 'Admin' },
-            { name: 'Model-check',           trigger: 'Cron — model-check (maandelijks, 1e)',         ontvanger: 'model@arno.bot',           wanneer: 'Eerste van de maand, modelkwaliteitscheck',             type: 'Admin' },
-            { name: 'Data-cleanup',          trigger: 'Cron — data-cleanup (maandelijks, 1e)',        ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, gebruikers te verwerken',          type: 'Admin' },
-            { name: 'Milestone-check',       trigger: 'Cron — milestone-check (maandelijks, 1e)',     ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, alert bij 50 actieve gebruikers',  type: 'Admin' },
+            { name: 'Dagelijkse activiteit', trigger: 'Cron:daily-activity (dagelijks 05:00)',       ontvanger: 'arno@royaldutchsales.com', wanneer: 'Elke ochtend, actieve gebruikers afgelopen 24u',         type: 'Admin' },
+            { name: 'Weekly top gebruikers', trigger: 'Cron:weekly-top-users (zaterdag 06:05)',      ontvanger: 'analyses@arno.bot',        wanneer: 'Elke zaterdag, top 10 actieve gebruikers',              type: 'Admin' },
+            { name: 'Competitie',            trigger: 'Cron:competitie (maandelijks, 1e)',           ontvanger: 'arno@arno.bot',            wanneer: 'Eerste van de maand, competitierapport',                type: 'Admin' },
+            { name: 'Model-check',           trigger: 'Cron:model-check (maandelijks, 1e)',         ontvanger: 'model@arno.bot',           wanneer: 'Eerste van de maand, modelkwaliteitscheck',             type: 'Admin' },
+            { name: 'Data-cleanup',          trigger: 'Cron:data-cleanup (maandelijks, 1e)',        ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, gebruikers te verwerken',          type: 'Admin' },
+            { name: 'Milestone-check',       trigger: 'Cron:milestone-check (maandelijks, 1e)',     ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, alert bij 50 actieve gebruikers',  type: 'Admin' },
           ]} />
         </Section>
 
-        <Section title="NAAR MIJZELF — EVENT-NOTIFICATIES" subtitle="Vuren als een gebruiker iets doet, niet via een schema">
+        <Section title="NAAR MIJZELF: EVENT-NOTIFICATIES" subtitle="Vuren als een gebruiker iets doet, niet via een schema">
           <Table rows={[
-            { name: 'Derde trial',           trigger: 'Event — bot/herstart',                         ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker een derde trial start',               type: 'Admin' },
-            { name: 'Opzegging (intern)',     trigger: 'Event — bot/cancel-subscription',              ontvanger: 'arno@arno.bot',       wanneer: 'Direct bij opzegging door een gebruiker',               type: 'Admin' },
-            { name: 'Doorgaan bevestigd',    trigger: 'Event — bot/confirm-renewal',                  ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker doorgaan na trial bevestigt',         type: 'Admin' },
-            { name: 'Account verwijderd',    trigger: 'Event — bot/delete-account',                   ontvanger: 'delete@arno.bot',     wanneer: 'Als een gebruiker zijn account verwijdert',             type: 'Admin' },
-            { name: 'Evaluatie',             trigger: 'Event — api/evaluatie',                        ontvanger: 'evaluatie@arno.bot',  wanneer: 'Als een gebruiker een evaluatie instuurt',              type: 'Admin' },
-            { name: 'BIEB gedeeld',          trigger: 'Event — bot/share-overview',                   ontvanger: 'Coach (extern)',       wanneer: 'Als een gebruiker zijn BIEB deelt met een coach',       type: 'Admin' },
-            { name: 'Team waitlist',         trigger: 'Event — bot/profiel',                          ontvanger: 'waitlist@arno.bot',   wanneer: 'Als iemand zich aanmeldt voor de teamwaitlist',         type: 'Admin' },
+            { name: 'Derde trial',           trigger: 'Event: bot/herstart',                         ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker een derde trial start',               type: 'Admin' },
+            { name: 'Opzegging (intern)',     trigger: 'Event: bot/cancel-subscription',              ontvanger: 'arno@arno.bot',       wanneer: 'Direct bij opzegging door een gebruiker',               type: 'Admin' },
+            { name: 'Doorgaan bevestigd',    trigger: 'Event: bot/confirm-renewal',                  ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker doorgaan na trial bevestigt',         type: 'Admin' },
+            { name: 'Account verwijderd',    trigger: 'Event: bot/delete-account',                   ontvanger: 'delete@arno.bot',     wanneer: 'Als een gebruiker zijn account verwijdert',             type: 'Admin' },
+            { name: 'Evaluatie',             trigger: 'Event: api/evaluatie',                        ontvanger: 'evaluatie@arno.bot',  wanneer: 'Als een gebruiker een evaluatie instuurt',              type: 'Admin' },
+            { name: 'BIEB gedeeld',          trigger: 'Event: bot/share-overview',                   ontvanger: 'Coach (extern)',       wanneer: 'Als een gebruiker zijn BIEB deelt met een coach',       type: 'Admin' },
+            { name: 'Team waitlist',         trigger: 'Event: bot/profiel',                          ontvanger: 'waitlist@arno.bot',   wanneer: 'Als iemand zich aanmeldt voor de teamwaitlist',         type: 'Admin' },
           ]} />
         </Section>
 
@@ -85,7 +85,7 @@ export default async function EmailsOverzichtPage() {
           <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#4b5563', letterSpacing: 1, lineHeight: 1.8 }}>
             Marketing-mails (inactivity nudge, geen gesprek nudge, win-back) bevatten een opt-out link via arno.bot/optout/&#123;userId&#125;.<br />
             Alle verstuurde mails zijn terug te vinden op resend.com/emails.<br />
-            ArnoBot Admin — arno.bot
+            ArnoBot Admin: arno.bot
           </p>
         </div>
 

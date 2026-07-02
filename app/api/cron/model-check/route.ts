@@ -56,7 +56,7 @@ function buildEmail(date: string, adviezen: AdviesMap): string {
     const advies = adviezen[item.route]
     const adviesHtml = advies
       ? `<span style="color: ${actiekleur(advies.actie)}; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;">${advies.actie}</span><br><span style="color: #9ca3af;">${advies.tekst}</span>`
-      : '<span style="color: #4b5563;">—</span>'
+      : '<span style="color: #4b5563;">n.v.t.</span>'
 
     return `
     <tr>

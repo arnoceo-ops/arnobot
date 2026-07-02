@@ -108,7 +108,7 @@ export default function EvaluatiesClient({ evaluaties }: { evaluaties: Evaluatie
               <Row label="DOELGROEP" value={e.persona} />
               <Row label="ANDERS" value={e.persona_anders} />
               <Row label="TARIEFSTELLING" value={e.tariefstelling} />
-              <Row label="AANBEVELEN" value={e.aanbevelen + (e.aanbevelen_toelichting ? ` — ${e.aanbevelen_toelichting}` : '')} />
+              <Row label="AANBEVELEN" value={e.aanbevelen + (e.aanbevelen_toelichting ? `: ${e.aanbevelen_toelichting}` : '')} />
               <Row label="SLOTWOORD" value={e.slotwoord} />
             </div>
           )}

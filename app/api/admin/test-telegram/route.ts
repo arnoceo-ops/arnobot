@@ -18,7 +18,7 @@ export async function POST() {
   const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: tgChat, text: 'ArnoBot admin test — Telegram werkt.' }),
+    body: JSON.stringify({ chat_id: tgChat, text: 'ArnoBot admin test: Telegram werkt.' }),
   })
   const data = await res.json()
   return NextResponse.json({ ok: data.ok, telegram: data })

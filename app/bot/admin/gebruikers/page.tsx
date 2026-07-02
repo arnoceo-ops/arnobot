@@ -24,13 +24,13 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
     const exp = new Date(row.expires_at)
     const left = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     if (left <= 0) return { label: 'VERLOPEN', color: '#cc4444' }
-    return { label: `TRIAL — ${left}d`, color: '#f59e0b' }
+    return { label: `TRIAL ${left}d`, color: '#f59e0b' }
   }
   if (row.trial_start) {
     const end = new Date(new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
     const left = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     if (left <= 0) return { label: 'TRIAL VERLOPEN', color: '#cc4444' }
-    return { label: `TRIAL — ${left}d`, color: '#f59e0b' }
+    return { label: `TRIAL ${left}d`, color: '#f59e0b' }
   }
   return { label: 'ONBEKEND', color: '#6b7280' }
 }
@@ -233,12 +233,12 @@ export default async function GebruikersPage({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
           {sorted.map((u) => {
-            const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || '—'
+            const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
             const status = trialStatus(u)
             const daysAgo = u.lastSession
               ? Math.round((Date.now() - new Date(u.lastSession).getTime()) / (1000 * 60 * 60 * 24))
               : null
-            const lastSessionLabel = daysAgo === null ? '—' : daysAgo === 0 ? 'vandaag' : daysAgo === 1 ? 'gisteren' : `${daysAgo}d geleden`
+            const lastSessionLabel = daysAgo === null ? 'nooit' : daysAgo === 0 ? 'vandaag' : daysAgo === 1 ? 'gisteren' : `${daysAgo}d geleden`
             const actief7d = u.recentCount > 0
             const borderColor = actief7d ? '#44cc88' : u.questions > 0 ? '#cc4444' : '#1e293b'
             return (
@@ -272,7 +272,7 @@ export default async function GebruikersPage({
                       )
                     })()}
                   </div>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{u.email || '—'}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{u.email || 'n.v.t.'}</p>
                 </div>
                 {/* Status */}
                 <div style={{ textAlign: 'right' }}>
@@ -296,11 +296,11 @@ export default async function GebruikersPage({
                 </div>
                 {/* Coaching */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || '—'}</p>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || 'n.v.t.'}</p>
                 </div>
                 {/* Analyses */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || '—'}</p>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
                 </div>
                 {/* Tier */}
                 <div style={{ textAlign: 'right' }}>
@@ -308,11 +308,11 @@ export default async function GebruikersPage({
                 </div>
                 {/* Referral aanmeldingen */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || '—'}</p>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || 'n.v.t.'}</p>
                 </div>
                 {/* Referral betaald */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || '—'}</p>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
                 {/* Betaling */}
                 <div style={{ textAlign: 'right' }}>
@@ -320,7 +320,7 @@ export default async function GebruikersPage({
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : u.paid_at
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : <span style={{ fontSize: '11px', color: '#374151' }}>—</span>
+                    : <span style={{ fontSize: '11px', color: '#374151' }}>.</span>
                   }
                 </div>
                 {/* Mail opt-out */}

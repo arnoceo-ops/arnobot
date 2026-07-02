@@ -141,7 +141,7 @@ function Hero({ pageNum }) {
 function Footer({ label, page, dark }) {
   return (
     <View style={s.footer} fixed>
-      <Text style={dark ? s.footerDark : s.footerLight}>ROYAL DUTCH SALES — RDS CANVAS</Text>
+      <Text style={dark ? s.footerDark : s.footerLight}>ROYAL DUTCH SALES | RDS CANVAS</Text>
       <Text style={dark ? s.footerDark : s.footerLight}>{label}</Text>
       <Text style={s.footerPage}>{page}</Text>
     </View>
@@ -462,16 +462,16 @@ function CoverPage({ answers, healthScore, kwaliteitsScore, userName, laatsteAna
   const MF = ['aantrekkingskracht','profielen','wervingskanalen','selectieproces','behoud_sterspelers','verkopers_q1','verkopers_q2','verkopers_q3','verkopers_q4','werving_selectie','onboarding','tijd_rendement','actieplan']
   const UF = ['kwartaal_jaar','themanaam','meetbaar_doel','cruciale_kpi','okr_wat_1','okr_hoe_1','okr_wie_1','okr_wat_2','okr_hoe_2','okr_wie_2','okr_wat_3','okr_hoe_3','okr_wie_3','klanten_krijgen_1','klanten_krijgen_2','klanten_krijgen_3','klanten_uitbouwen_1','klanten_uitbouwen_2','klanten_uitbouwen_3','klanten_houden_1','klanten_houden_2','klanten_houden_3','numbers_leads','numbers_bezoeken','numbers_offertes','numbers_orders','numbers_referrals','wensenlijst','kpi_verkoopcyclus','kpi_omzet','kpi_winst','verkoopproces','feestje','beloning']
   const sections = [
-    { key: 'strategie', label: 'STRATEGIE', pages: '01 — 02', fields: SF },
-    { key: 'mensen', label: 'MENSEN', pages: '03 — 04', fields: MF },
-    { key: 'uitvoering', label: 'UITVOERING', pages: '05 — 06', fields: UF },
+    { key: 'strategie', label: 'STRATEGIE', pages: '01-02', fields: SF },
+    { key: 'mensen', label: 'MENSEN', pages: '03-04', fields: MF },
+    { key: 'uitvoering', label: 'UITVOERING', pages: '05-06', fields: UF },
   ]
   return (
     <Page size="A4" style={s.pageDark}>
       <View style={{ marginBottom: 48 }}>
         <Text style={s.coverLabel}>ROYAL DUTCH SALES</Text>
         <Text style={s.coverTitle}>RDS{'\n'}CANVAS</Text>
-        <Text style={s.coverSub}>{userName} — Verkoopplan {new Date().getFullYear()}</Text>
+        <Text style={s.coverSub}>{userName}, Verkoopplan {new Date().getFullYear()}</Text>
       </View>
       <View style={s.coverDivider} />
       <View style={{ marginBottom: 24 }}>

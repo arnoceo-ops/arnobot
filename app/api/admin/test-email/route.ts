@@ -7,12 +7,12 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const TO = 'arno@arno.bot'
 
 const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string }[] = [
-  { type: 'daily_activity',   label: 'Dagelijkse activiteit', description: 'Elke dag 05:00 — actieve gebruikers afgelopen 24u',          category: 'admin', cron: '/api/cron/daily-activity' },
-  { type: 'weekly_top_users', label: 'Weekly top gebruikers', description: 'Elke zaterdag 06:05 — top 10 actieve gebruikers',            category: 'admin', cron: '/api/cron/weekly-top-users' },
-  { type: 'competitie',       label: 'Competitie',            description: 'Maandelijks (1e) — competitierapport naar arno@arno.bot',    category: 'admin', cron: '/api/cron/competitie' },
-  { type: 'model_check',      label: 'Model-check',           description: 'Maandelijks (1e) — modelkwaliteitscheck naar model@arno.bot', category: 'admin', cron: '/api/cron/model-check' },
-  { type: 'data_cleanup',     label: 'Data-cleanup',          description: 'Maandelijks (1e) — gebruikers te verwerken naar hq@arno.bot', category: 'admin', cron: '/api/cron/data-cleanup' },
-  { type: 'milestone_check',  label: 'Milestone-check',       description: 'Maandelijks (1e) — alert bij 50 actieve gebruikers',         category: 'admin', cron: '/api/cron/milestone-check' },
+  { type: 'daily_activity',   label: 'Dagelijkse activiteit', description: 'Elke dag 05:00:actieve gebruikers afgelopen 24u',          category: 'admin', cron: '/api/cron/daily-activity' },
+  { type: 'weekly_top_users', label: 'Weekly top gebruikers', description: 'Elke zaterdag 06:05:top 10 actieve gebruikers',            category: 'admin', cron: '/api/cron/weekly-top-users' },
+  { type: 'competitie',       label: 'Competitie',            description: 'Maandelijks (1e):competitierapport naar arno@arno.bot',    category: 'admin', cron: '/api/cron/competitie' },
+  { type: 'model_check',      label: 'Model-check',           description: 'Maandelijks (1e):modelkwaliteitscheck naar model@arno.bot', category: 'admin', cron: '/api/cron/model-check' },
+  { type: 'data_cleanup',     label: 'Data-cleanup',          description: 'Maandelijks (1e):gebruikers te verwerken naar hq@arno.bot', category: 'admin', cron: '/api/cron/data-cleanup' },
+  { type: 'milestone_check',  label: 'Milestone-check',       description: 'Maandelijks (1e):alert bij 50 actieve gebruikers',         category: 'admin', cron: '/api/cron/milestone-check' },
 ]
 
 export async function GET() {

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const { message, context, history } = await req.json();
     if (!message) return NextResponse.json({ error: 'Geen bericht' }, { status: 400 });
 
-    const systemPrompt = `Je bent ArnoBot — de ongefilterde, provocerende sales coach van Royal Dutch Sales. Je spreekt managers direct aan met "jij" en "jouw team". Je geeft concrete, bruikbare adviezen gebaseerd op de alignment data. Geen wollige taal, geen omwegen. Eerlijk, soms confronterend, maar altijd constructief. Max 80 woorden per antwoord. Antwoord altijd in het Nederlands.
+    const systemPrompt = `Je bent ArnoBot, de ongefilterde en provocerende sales coach van Royal Dutch Sales. Je spreekt managers direct aan met "jij" en "jouw team". Je geeft concrete, bruikbare adviezen gebaseerd op de alignment data. Geen wollige taal, geen omwegen. Eerlijk, soms confronterend, maar altijd constructief. Max 80 woorden per antwoord. Antwoord altijd in het Nederlands.
 
 Huidige team alignment context:
 ${context ?? 'Geen context beschikbaar.'}`;

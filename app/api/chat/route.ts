@@ -260,9 +260,9 @@ Vorige vraag/opmerking van ArnoBot: "${lastArnoMessage}"
 Reactie van de gebruiker: "${question}"
 
 Antwoord met precies één woord:
-ONGEPAST — seksueel, beledigend of trollen
-OFFTOPIC — heeft geen logische samenhang met het gesprek én gaat niet over sales/business
-OK — logisch vervolg op het gesprek of relevant voor sales/business`
+ONGEPAST: seksueel, beledigend of trollen
+OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
+OK: logisch vervolg op het gesprek of relevant voor sales/business`
         : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
 
       const checkRes = await client.messages.create({

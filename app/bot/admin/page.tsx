@@ -188,7 +188,7 @@ export default async function ArnoBotAdminPage({
       ) : (
         <div>
           <p style={{ opacity: 0.4, fontSize: '16px', marginBottom: '32px' }}>
-            {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''} — {rows.length} berichten
+            {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''}, {rows.length} berichten
           </p>
           {sessionList.map(([sessionId, messages], idx) => {
             const userId = messages[0].user_id
@@ -198,7 +198,7 @@ export default async function ArnoBotAdminPage({
               <div key={sessionId} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
                   <p style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7, margin: 0 }}>
-                    SESSIE {idx + 1} — {messages[0].ip}
+                    SESSIE {idx + 1} · {messages[0].ip}
                   </p>
                   {naam && userId && (
                     <a
@@ -208,7 +208,7 @@ export default async function ArnoBotAdminPage({
                   )}
                 </div>
                 <p style={{ fontSize: '16px', opacity: 0.3, marginBottom: '28px' }}>
-                  {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} – {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
+                  {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
                 </p>
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '28px' }}>

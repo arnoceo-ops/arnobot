@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const dagen = Math.floor((Date.now() - new Date(u.deactivated_at).getTime()) / (1000 * 60 * 60 * 24))
     return `<tr>
       <td style="padding:8px 12px;border-bottom:1px solid #eee">${naam}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #eee">${u.email || '—'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee">${u.email || 'onbekend'}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eee">${new Date(u.deactivated_at).toLocaleDateString('nl-NL')}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eee">${dagen} dagen</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${u.user_id}</td>

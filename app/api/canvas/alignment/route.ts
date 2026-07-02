@@ -125,7 +125,7 @@ async function analyseQuestion(questionId: string, answers: string[]): Promise<{
     max_tokens: 200,
     messages: [{
       role: 'user',
-      content: `Je analyseert de mate van alignment binnen een salesteam. Beoordeel op INHOUDELIJKE overlap — niet op formulering. Verschillende woorden voor hetzelfde concept zijn waardevol en verdienen een hoge score. Het gaat om gedeelde intentie en betekenis, niet om identieke tekst.
+      content: `Je analyseert de mate van alignment binnen een salesteam. Beoordeel op INHOUDELIJKE overlap, niet op formulering. Verschillende woorden voor hetzelfde concept zijn waardevol en verdienen een hoge score. Het gaat om gedeelde intentie en betekenis, niet om identieke tekst.
 
 Vraag: "${label}"
 
@@ -136,7 +136,7 @@ Geef een alignment score van 1–5 op basis van INHOUDELIJKE overeenkomst:
 1 = fundamenteel tegenstrijdig, tegengestelde visies
 2 = weinig inhoudelijke overlap, duidelijk verschillende prioriteiten
 3 = gedeeltelijke overlap, gemeenschappelijke basis maar ook echte verschillen
-4 = sterke inhoudelijke overlap, zelfde richting met eigen nuance — dit is waardevol (1+1=5)
+4 = sterke inhoudelijke overlap, zelfde richting met eigen nuance. Dit is waardevol (1+1=5)
 5 = volledig op één lijn, zelfde intentie en betekenis ook al zijn woorden anders
 
 Belangrijk: score 4 of 5 als teamleden hetzelfde bedoelen maar anders formuleren. Dat is een teken van een sterk team dat vanuit meerdere invalshoeken naar hetzelfde kijkt.
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 400,
       messages: [{
         role: 'user',
-        content: `Je bent ArnoBot — een provocerende, ongefilterde sales coach van Royal Dutch Sales. Schrijf een korte maar krachtige analyse van de team alignment resultaten hieronder. Wees direct, eerlijk, en gebruik de taal van een ervaren sales strateeg. Geen wollige taal. Max 60 woorden. Nederlands.
+        content: `Je bent ArnoBot, een provocerende en ongefilterde sales coach van Royal Dutch Sales. Schrijf een korte maar krachtige analyse van de team alignment resultaten hieronder. Wees direct, eerlijk, en gebruik de taal van een ervaren sales strateeg. Geen wollige taal. Max 60 woorden. Nederlands.
 
 Overall alignment: ${overall}%
 Strategie: ${strategie}% | Mensen: ${mensen}% | Uitvoering: ${uitvoering}%

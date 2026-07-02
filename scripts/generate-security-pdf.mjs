@@ -81,12 +81,12 @@ function TH(a, b) { return el(View, { style: s.th }, el(Text, { style: s.c1h }, 
 function TR(a, b) { return el(View, { style: s.tr }, el(Text, { style: s.c1 }, a), el(Text, { style: s.c2 }, b)) }
 function Footer(n) {
   return el(View, { style: s.footer, fixed: true },
-    el(Text, { style: s.ft }, 'ArnoBot — Hoe wij jouw gegevens beschermen'),
+    el(Text, { style: s.ft }, 'ArnoBot: Hoe wij jouw gegevens beschermen'),
     el(Text, { style: s.ft }, `${DATE}  ·  pagina ${n} van ${TOTAL}`)
   )
 }
 
-const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen', author: 'ArnoBot' },
+const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', author: 'ArnoBot' },
 
   // ── PAGINA 1: cover + intro + infrastructuur ─────────────────
   el(Page, { size: 'A4', style: s.page1 },
@@ -103,11 +103,11 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
       Sec('WAAR JOUW GEGEVENS STAAN', 'Infrastructuur en hosting',
         el(Text, { style: s.p }, 'ArnoBot maakt gebruik van gevestigde, gecertificeerde partijen voor alle infrastructurele onderdelen. Wij beheren zelf geen servers.'),
         TH('Onderdeel', 'Partij en garantie'),
-        TR('Hosting', 'Vercel — serverless, wereldwijd CDN, HTTPS verplicht op alle verbindingen'),
-        TR('Database', 'Supabase — PostgreSQL in de EU, versleuteld in rust (AES-256) en tijdens transport (TLS 1.2+)'),
-        TR('Authenticatie', 'Clerk — SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
-        TR('AI-verwerking', 'Anthropic — jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
-        TR('E-mail', 'Resend — transactionele e-mail via DKIM-geverifieerd domein'),
+        TR('Hosting', 'Vercel: serverless, wereldwijd CDN, HTTPS verplicht op alle verbindingen'),
+        TR('Database', 'Supabase: PostgreSQL in de EU, versleuteld in rust (AES-256) en tijdens transport (TLS 1.2+)'),
+        TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
+        TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
+        TR('E-mail', 'Resend: transactionele e-mail via DKIM-geverifieerd domein'),
       ),
     ),
     Footer('1')
@@ -162,7 +162,7 @@ const doc = el(Document, { title: 'ArnoBot — Hoe wij jouw gegevens beschermen'
       Item('X-Content-Type-Options: nosniff', 'Voorkomt dat de browser bestanden als een ander type interpreteert dan bedoeld.'),
       Item('Strict-Transport-Security', 'Dwingt de browser om altijd HTTPS te gebruiken, ook als je per ongeluk http:// typt.'),
       Item('Content-Security-Policy', 'Beperkt welke externe bronnen de browser mag laden.'),
-      Item('Permissions-Policy', 'Schakelt camera, microfoon en locatietoegang uit — features die ArnoBot niet gebruikt.'),
+      Item('Permissions-Policy', 'Schakelt camera, microfoon en locatietoegang uit. ArnoBot gebruikt deze features niet.'),
       Item('X-Powered-By verborgen', 'De technologie achter ArnoBot wordt niet bekendgemaakt aan derden.'),
     ),
     Footer('3')

@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   await resend.emails.send({
     from: 'ArnoBot <info@arno.bot>',
     to: 'analyses@arno.bot',
-    subject: `ArnoBot top 10 actieve gebruikers — week van ${weekOf}`,
+    subject: `ArnoBot top 10 actieve gebruikers, week van ${weekOf}`,
     html: `
       <div style="font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111827;color:#f1f5f9;padding:48px 40px 40px;max-width:700px;margin:0 auto;">
         <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:26px;letter-spacing:6px;margin:0 0 32px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>

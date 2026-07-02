@@ -81,9 +81,9 @@ function getKwaliteitLabel(score: number | null) {
 }
 
 const SECTIONS = [
-  { key: 'strategie' as const, pages: '01 — 02', title: 'STRATEGIE' },
-  { key: 'mensen' as const, pages: '03 — 04', title: 'MENSEN' },
-  { key: 'uitvoering' as const, pages: '05 — 06', title: 'UITVOERING' },
+  { key: 'strategie' as const, pages: '01-02', title: 'STRATEGIE' },
+  { key: 'mensen' as const, pages: '03-04', title: 'MENSEN' },
+  { key: 'uitvoering' as const, pages: '05-06', title: 'UITVOERING' },
 ]
 
 function berekenGewogenScore(rows: { question_id: string; score: number }[]): number {
@@ -331,7 +331,7 @@ export default function CanvasPage() {
           RDS CANVAS
         </h1>
         <p style={{ color: '#f1f5f9', opacity: 0.35, fontSize: '13px', letterSpacing: '1px' }}>
-          {user.firstName} — Verkoopplan {new Date().getFullYear()}
+          {user.firstName} · Verkoopplan {new Date().getFullYear()}
         </p>
       </div>
 
@@ -347,7 +347,7 @@ export default function CanvasPage() {
             </span>
           </div>
           <div style={{ fontFamily: 'var(--font-bebas), sans-serif', fontSize: '120px', color: '#f1f5f9', lineHeight: 1, marginBottom: '24px', letterSpacing: '2px' }}>
-            {loading ? '—' : `${healthScore}%`}
+            {loading ? '...' : `${healthScore}%`}
           </div>
           <div style={{ width: '100%', height: '2px', backgroundColor: '#1e293b', marginBottom: '32px' }}>
             <div style={{ height: '2px', width: loading ? '0%' : `${healthScore}%`, backgroundColor: '#f59e0b', transition: 'width 1s ease' }} />
@@ -370,7 +370,7 @@ export default function CanvasPage() {
 
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '40px' }}>
             <div style={{ fontFamily: 'var(--font-bebas), sans-serif', fontSize: '120px', color: kwaliteitsScore !== null ? '#f1f5f9' : '#1e1e1e', lineHeight: 1, letterSpacing: '2px' }}>
-              {kwaliteitsScore !== null ? `${kwaliteitsScore}%` : '—'}
+              {kwaliteitsScore !== null ? `${kwaliteitsScore}%` : '0%'}
             </div>
 
             <div style={{ paddingBottom: '16px' }}>
@@ -413,7 +413,7 @@ export default function CanvasPage() {
               <div key={s.key}>
                 <p style={{ color: '#f59e0b', fontSize: '10px', letterSpacing: '3px', marginBottom: '6px' }}>{s.title}</p>
                 <p style={{ color: '#f1f5f9', fontSize: '13px', opacity: 0.5, letterSpacing: '1px' }}>
-                  {loading ? '—' : `${scores[s.key]} / ${TOTAL_FIELDS[s.key].length}`}
+                  {loading ? '...' : `${scores[s.key]} / ${TOTAL_FIELDS[s.key].length}`}
                 </p>
               </div>
             ))}

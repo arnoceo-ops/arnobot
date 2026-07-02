@@ -117,7 +117,7 @@ export default function AdminPage() {
       </div>
 
       <div style={{ borderTop: '1px solid #1e1e1e', paddingTop: '40px' }}>
-        <p style={{ color: '#f59e0b', fontSize: '11px', letterSpacing: '3px', marginBottom: '32px' }}>GEBRUIKERS — {users.length}</p>
+        <p style={{ color: '#f59e0b', fontSize: '11px', letterSpacing: '3px', marginBottom: '32px' }}>GEBRUIKERS: {users.length}</p>
         {loading ? (
           <p style={{ opacity: 0.4, fontSize: '14px' }}>Laden...</p>
         ) : users.length === 0 ? (
@@ -130,7 +130,7 @@ export default function AdminPage() {
             {users.map(u => (
               <div key={u.user_id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 140px', padding: '20px 24px', borderTop: '1px solid #1e293b', alignItems: 'center' }}>
                 <div>
-                  <p style={{ fontSize: '14px', marginBottom: '4px' }}>{u.full_name || '—'}</p>
+                  <p style={{ fontSize: '14px', marginBottom: '4px' }}>{u.full_name || 'n.v.t.'}</p>
                   <p style={{ fontSize: '12px', opacity: 0.4 }}>{u.email}</p>
                 </div>
                 <p style={{ fontSize: '12px', letterSpacing: '1px', opacity: 0.5, textTransform: 'uppercase' }}>{u.role}</p>

@@ -139,7 +139,7 @@ export default function UpgradePage() {
 
         <div className="up-grid">
           <div className="up-card">
-            <div className="up-plan">1–2 PERSONEN</div>
+            <div className="up-plan">1-2 PERSONEN</div>
             <div className="up-for">SOLO / CO-FOUNDERS</div>
             <div className="up-price">
               <span className="up-currency">€</span>

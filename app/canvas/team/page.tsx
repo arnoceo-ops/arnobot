@@ -423,7 +423,7 @@ function AlignmentScore({
               </div>
               <div style={{ fontFamily: G, fontSize: 11, color: GREY, lineHeight: 1.6 }}>
                 Gewogen score (Mensen 40%, Strategie 30%, Uitvoering 30%).
-                Groen ≥70% · Oranje 45–69% · Rood &lt;45%
+                Groen ≥70% · Oranje 45-69% · Rood &lt;45%
               </div>
             </div>
           </div>
@@ -476,13 +476,13 @@ function AlignmentScore({
               {/* Header */}
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontFamily: G, fontSize: 11, fontWeight: 400, letterSpacing: '0.08em', color: GREY, textTransform: 'uppercase' as const }}>
-                  VRAAG ANALYSE — {result.questions.length} VRAGEN GEANALYSEERD
+                  VRAAG ANALYSE: {result.questions.length} VRAGEN GEANALYSEERD
                 </div>
               </div>
 
               {/* Top 5 worst aligned */}
               <div style={{ fontFamily: G, fontSize: 11, color: GREY, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 12 }}>
-                AANDACHTSPUNTEN — LAAGSTE ALIGNMENT
+                AANDACHTSPUNTEN: LAAGSTE ALIGNMENT
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))', gap: 2, marginBottom: 32 }}>
                 {result.questions.slice(0, 5).map((q) => {
@@ -506,7 +506,7 @@ function AlignmentScore({
 
               {/* Top 5 best aligned */}
               <div style={{ fontFamily: G, fontSize: 11, color: GREY, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 12 }}>
-                STERKSTE ALIGNMENT — GEDEELDE KRACHT
+                STERKSTE ALIGNMENT: GEDEELDE KRACHT
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))', gap: 2 }}>
                 {[...result.questions].sort((a, b) => b.score - a.score).slice(0, 5).map((q) => {
@@ -626,7 +626,7 @@ function TeamAverages({ members }: { members: MemberStats[] }) {
   return (
     <div style={{ borderBottom: `1px solid ${LINE}`, padding: '40px 40px 48px' }}>
       <div style={{ fontFamily: G, fontSize: 13, fontWeight: 400, letterSpacing: '0.05em', color: GREY, marginBottom: 40, textTransform: 'uppercase' as const }}>
-        TEAM GEMIDDELDE — {members.length} {members.length === 1 ? 'LID' : 'LEDEN'}
+        TEAM GEMIDDELDE: {members.length} {members.length === 1 ? 'LID' : 'LEDEN'}
       </div>
       <div style={{ display: 'flex', marginBottom: 48 }}>
         {row1.map((s, i) => <StatCell key={s.lbl} k={s.key} lbl={s.lbl} last={i === row1.length - 1} variant="primary" />)}
@@ -739,7 +739,7 @@ export default function TeamPage() {
       {!loading && !error && (
         <div style={{ padding: '40px' }}>
           <div style={{ fontFamily: G, fontSize: 11, fontWeight: 400, letterSpacing: '0.08em', color: GREY, marginBottom: 24, textTransform: 'uppercase' as const }}>
-            TEAMLEDEN — GESORTEERD OP PLAN KWALITEIT
+            TEAMLEDEN: GESORTEERD OP PLAN KWALITEIT
           </div>
           {members.length === 0
             ? <div style={{ fontFamily: G, fontSize: 13, color: GREY, textAlign: 'center' as const, padding: '80px 0' }}>Geen teamleden gevonden.</div>

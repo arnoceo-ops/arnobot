@@ -65,7 +65,7 @@ function ScoreBar({ score }: { score: number | null }) {
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.6s ease' }} />
       </div>
       <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, color, minWidth: 24, textAlign: 'right' }}>
-        {score ?? '—'}
+        {score ?? 0}
       </span>
     </div>
   )
@@ -318,7 +318,7 @@ export default function LidPage() {
                             </span>
                             {scoreStr && (
                               <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#4b5563' }}>
-                                M {h.mindset_score ?? '—'} · S {h.systeem_score ?? '—'} · A {h.actie_score ?? '—'}
+                                M {h.mindset_score ?? 0} · S {h.systeem_score ?? 0} · A {h.actie_score ?? 0}
                               </span>
                             )}
                           </div>

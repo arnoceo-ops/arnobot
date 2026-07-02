@@ -47,13 +47,13 @@ const DATE = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'lo
 
 export function BeveiligingsPdfDocument() {
   return (
-    <Document title="ArnoBot — Beveiliging & Gegevensbescherming" author="ArnoBot">
+    <Document title="ArnoBot:Beveiliging & Gegevensbescherming" author="ArnoBot">
       <Page size="A4" style={s.page}>
 
         <View style={s.header}>
           <Text style={s.headerEyebrow}>ARNOBOT</Text>
           <Text style={s.headerTitle}>Beveiliging & Gegevensbescherming</Text>
-          <Text style={s.headerSub}>Overzicht van technische en organisatorische maatregelen — versie {DATE}</Text>
+          <Text style={s.headerSub}>Overzicht van technische en organisatorische maatregelen:versie {DATE}</Text>
         </View>
 
         <Section title="1. OVER DIT DOCUMENT">
@@ -157,7 +157,7 @@ export function BeveiligingsPdfDocument() {
         </Section>
 
         <View style={s.footer}>
-          <Text style={s.footerText}>ArnoBot — Beveiliging & Gegevensbescherming</Text>
+          <Text style={s.footerText}>ArnoBot:Beveiliging & Gegevensbescherming</Text>
           <Text style={s.footerText}>versie {DATE}</Text>
         </View>
 

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
 
   const coachingHtml = coaching ? `
     <h2 style="font-family:sans-serif;font-size:18px;color:#f59e0b;margin:32px 0 16px;text-transform:uppercase;letter-spacing:2px">Coachingsdocument</h2>
-    <p style="font-size:12px;color:#aaa;margin-bottom:24px">Gegenereerd op ${d.coaching?.updated_at ? formatDate(d.coaching.updated_at) : '—'} · ${d.coaching?.conversation_count ?? 0} gesprekken</p>
+    <p style="font-size:12px;color:#aaa;margin-bottom:24px">Gegenereerd op ${d.coaching?.updated_at ? formatDate(d.coaching.updated_at) : 'onbekend'} · ${d.coaching?.conversation_count ?? 0} gesprekken</p>
 
     <h3 style="font-size:13px;color:#f59e0b;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px">Waar op gefocust</h3>
     <p style="font-size:14px;color:#374151;line-height:1.8;margin:0 0 24px">${coaching.focus ?? ''}</p>

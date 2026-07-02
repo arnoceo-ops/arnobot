@@ -275,7 +275,7 @@ export default function StrategiePage() {
         <Field {...f('zandbak')} {...fp('zandbak')} />
         <div>
           <div style={{ ...BEBAS, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>DOELEN <span style={LINE} /></div>
-          <div style={{ ...MONO_SUB, marginBottom: '16px' }}>3–5 JR</div>
+          <div style={{ ...MONO_SUB, marginBottom: '16px' }}>3-5 JR</div>
           {['doelen_datum','doelen_omzet','doelen_winst','doelen_klanten','doelen_marktaandeel','doelen_liquiditeit'].map(id => si(id))}
         </div>
         <div>

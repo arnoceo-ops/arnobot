@@ -295,7 +295,7 @@ function KpiRowWithLight({ id, label, doelVal, realVal, onDoelChange, onRealChan
 // Conversie berekend met traffic light
 function ConversieRow({ label, value, redBelow, greenAbove }: { label: string; value: number | null; redBelow: number; greenAbove: number }) {
   const color = value === null ? '#4b5563' : trafficLight(value, redBelow, greenAbove)
-  const display = value === null ? '—' : `${Math.round(value)}%`
+  const display = value === null ? '0%' : `${Math.round(value)}%`
   return (
     <div style={{ borderTop: '1px solid #e0d8cc', paddingTop: '16px' }}>
       <div style={{ ...MONO18, opacity: 0.6, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -472,7 +472,7 @@ export default function UitvoeringPage() {
 
       {/* OKR */}
       <div style={{ ...s.sectionDivider, paddingBottom: '48px' }}>
-        <div style={{ ...s.groupLabel, marginBottom: '32px' }}>OKR'S — DOELSTELLINGEN<span style={s.fieldLabelLine} /></div>
+        <div style={{ ...s.groupLabel, marginBottom: '32px' }}>OKR'S: DOELSTELLINGEN<span style={s.fieldLabelLine} /></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '32px' }}>
           <OkrCol title="DOELSTELLING (WAT)" sub="Wat willen we bereiken?" prefix="okr_wat"
             answers={answers} arnobotFeedback={arnobotFeedback} arnobotLoading={arnobotLoading}

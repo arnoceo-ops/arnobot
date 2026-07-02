@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const tekst = evaluaties.map((e, i) => {
     const delen = [
-      `EVALUATIE ${i + 1} — ${e.naam ?? 'anoniem'} (${new Date(e.created_at).toLocaleDateString('nl-NL')})`,
+      `EVALUATIE ${i + 1}: ${e.naam ?? 'anoniem'} (${new Date(e.created_at).toLocaleDateString('nl-NL')})`,
       e.frequentie ? `Frequentie: ${e.frequentie}` : '',
       e.onderdelen?.length ? `Onderdelen gebruikt: ${e.onderdelen.join(', ')}` : '',
       e.waardevol ? `Meest waardevol: ${e.waardevol}` : '',

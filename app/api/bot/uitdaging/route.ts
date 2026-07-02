@@ -59,12 +59,12 @@ export async function GET() {
   const contextParts: string[] = []
 
   if (profiel) {
-    contextParts.push(`PROFIEL: ${profiel.rol || ''}${profiel.markt ? `, ${Array.isArray(profiel.markt) ? profiel.markt.join('/') : profiel.markt}` : ''}. Verkoopt: ${profiel.wat_verkoop_je || '—'}. Uitdaging: ${profiel.uitdaging || '—'}.`)
+    contextParts.push(`PROFIEL: ${profiel.rol || ''}${profiel.markt ? `, ${Array.isArray(profiel.markt) ? profiel.markt.join('/') : profiel.markt}` : ''}. Verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}. Uitdaging: ${profiel.uitdaging || 'onbekend'}.`)
   }
 
   if (coaching?.focus || coaching?.blinde_vlekken) {
     const punten = coaching.ontwikkelpunten ? (coaching.ontwikkelpunten as string[]).join(' / ') : ''
-    contextParts.push(`COACHING: Focus op ${coaching.focus || '—'}. Blinde vlekken: ${coaching.blinde_vlekken || '—'}. Ontwikkelpunten: ${punten}. Opdracht: ${coaching.opdracht || '—'}.`)
+    contextParts.push(`COACHING: Focus op ${coaching.focus || 'onbekend'}. Blinde vlekken: ${coaching.blinde_vlekken || 'onbekend'}. Ontwikkelpunten: ${punten}. Opdracht: ${coaching.opdracht || 'onbekend'}.`)
   }
 
   if (sessions.length > 0) {
