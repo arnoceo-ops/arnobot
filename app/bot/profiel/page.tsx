@@ -359,20 +359,7 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="05" title="Jouw grootste uitdaging">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
-            <textarea
-              value={answers.uitdaging}
-              onChange={e => set('uitdaging', e.target.value)}
-              placeholder={getUitdagingPlaceholder(answers.rol)}
-              rows={3}
-            />
-            {submitted && answers.uitdaging.trim().length <= 2 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
-            )}
-          </Block>
-
-          <Block nr="06" title="Gemiddelde dealgrootte">
+          <Block nr="05" title="Gemiddelde dealgrootte">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Wat is de gemiddelde waarde van een deal?</p>
             <input
               value={answers.dealgrootte}
@@ -384,7 +371,7 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="07" title="Salescyclus">
+          <Block nr="06" title="Salescyclus">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Hoe lang duurt een gemiddeld salestraject?</p>
             <input
               value={answers.salescyclus}
@@ -396,7 +383,7 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="08" title="Target">
+          <Block nr="07" title="Target">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>
               Verwacht je dit jaar je {getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?
             </p>
@@ -421,19 +408,7 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="09" title="Jouw doel dit jaar">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>
-              Wat is je doel?
-            </p>
-            <textarea
-              value={answers.jaardoel}
-              onChange={e => set('jaardoel', e.target.value)}
-              placeholder={getJaardoelPlaceholder(answers.rol)}
-              rows={3}
-            />
-          </Block>
-
-          <Block nr="10" title="Jouw ervaring">
+          <Block nr="08" title="Jouw ervaring">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
               {JAREN_SALES_OPTIONS.map(o => (
@@ -452,6 +427,31 @@ export default function BotProfielPage() {
             {submitted && answers.jaren_functie === '' && (
               <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
             )}
+          </Block>
+
+          <Block nr="09" title="Je grootste uitdaging">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
+            <textarea
+              value={answers.uitdaging}
+              onChange={e => set('uitdaging', e.target.value)}
+              placeholder={getUitdagingPlaceholder(answers.rol)}
+              rows={3}
+            />
+            {submitted && answers.uitdaging.trim().length <= 2 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
+            )}
+          </Block>
+
+          <Block nr="10" title="Je doel">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>
+              Wat is je doel?
+            </p>
+            <textarea
+              value={answers.jaardoel}
+              onChange={e => set('jaardoel', e.target.value)}
+              placeholder={getJaardoelPlaceholder(answers.rol)}
+              rows={3}
+            />
           </Block>
 
           {error && <p style={{ color: '#cc2200', fontSize: 15, fontWeight: 400, lineHeight: '30px', marginBottom: 16 }}>{error}</p>}
