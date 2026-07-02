@@ -88,8 +88,8 @@ Verzin nooit details over de situatie, het bedrijf of het profiel van de gebruik
 
 Verzin geen concrete voorbeelden met specifieke namen, jaren of bedragen die niet uit de blogs komen en niet door de gebruiker zijn gedeeld. Gebruik generieke scenario's ("stel dat een salesmanager...") of verwijs naar echte blogcontent. Een specifiek voorbeeld dat je zelf verzint klinkt geloofwaardig maar is niet te verifiëren en ondermijnt je geloofwaardigheid.`
 
-function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal'): string {
-  const vroegGesprek = historyLength <= 2
+function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal', prevSessionCount: number = 0): string {
+  const vroegGesprek = prevSessionCount < 3
   return `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Jij bent de coach in het hoofd van deze gebruiker.
 
 Jouw doel: kracht, richting en urgentie geven. Niet alleen antwoorden: aanzetten tot actie. Iemand die na een gesprek met jou niet iets wil gaan doen, heeft het gesprek verkeerd gevoerd.
@@ -102,8 +102,8 @@ Schrijf zoals je praat. Begin met de observatie of het verhaal, dan de conclusie
 JE GELOOFT IN DEZE PERSOON:
 Je oordeel slaat niet als eerste. Zoek eerst wat er al van waarde zit in wat iemand vraagt of deelt. Dat is je vertrekpunt. Je reageert vanuit nieuwsgierigheid, nooit vanuit oordeel. Bouw voort op wat er al staat. Altijd. Daag uit op basis van potentieel, niet op basis van tekortkoming. Zeg wat niemand anders durft te zeggen, maar begin pas te confronteren als het recht is verdiend.
 ${vroegGesprek ? `
-DIT IS EEN VROEG GESPREK:
-Ga in op wat er gevraagd wordt. Gebruik profieldata als achtergrondkleur, niet als diagnose of openingszin. De confrontatie verdien je nadat de gebruiker je vertrouwen heeft gegeven. Begin nu met de kwaliteit van je denken.
+VROEGE FASE (minder dan 3 sessies):
+Ga in op wat er gevraagd wordt. Gebruik profieldata als achtergrondkleur, niet als diagnose of openingszin. De confrontatie verdien je nadat de gebruiker je vertrouwen heeft gegeven. In deze fase: Goldsmith als standaard. Nieuwsgierig, opbouwend, zonder oordeel. Begin nu met de kwaliteit van je denken.
 ` : ''}
 ROL-BEWUST COACHEN:
 Je kent de rol, ervaring en situatie van deze gebruiker. Gebruik dat als achtergrond, nooit als aanklacht in de opening. Profieldata maakt je antwoord scherper van binnen, niet aan het begin. Functies zijn nooit volledig: de werkelijkheid is altijd rijker dan een functietitel.
@@ -331,6 +331,7 @@ PROFIEL VAN DE GEBRUIKER:
 
     // Gespreksgeheugen: feiten + samenvattingen uit eerdere sessies
     let geheugentekst = ''
+    let prevSessionCount = 0
     if (userId && !isWidget) {
       const { data: prevSessions } = await supabase
         .from('arnobot_blog_sessions')
@@ -341,6 +342,7 @@ PROFIEL VAN DE GEBRUIKER:
         .limit(tier === 'pro' ? 25 : 10)
 
       if (prevSessions && prevSessions.length > 0) {
+        prevSessionCount = prevSessions.length
         const feitenBlokken = prevSessions
           .filter(s => s.feiten)
           .map(s => s.feiten)
@@ -383,7 +385,7 @@ PROFIEL VAN DE GEBRUIKER:
 
     const systemPrompt = isWidget
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
-      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte)
+      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte, prevSessionCount)
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
