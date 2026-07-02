@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 function buildCSP(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
+    `script-src 'self' 'nonce-${nonce}' https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://vercel.live https://*.vercel.live`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
@@ -49,7 +49,7 @@ export default clerkMiddleware(async (auth, req) => {
     res.headers.set('X-Content-Type-Options', 'nosniff')
     res.headers.set('X-Frame-Options', 'DENY')
     res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-    res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    res.headers.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()')
     res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
     return res
   }
