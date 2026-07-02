@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import Anthropic from '@anthropic-ai/sdk'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 
 const supabase = createClient(
@@ -8,6 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const resend = new Resend(process.env.RESEND_API_KEY)
+const anthropic = new Anthropic()
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -71,7 +73,40 @@ export async function GET(req: NextRequest) {
 
     if (!type) continue
 
-    const template = getEmailTemplate(type, naam, false, { userId: user.user_id })
+    let nudgeQuestion: string | undefined
+
+    if (type === 'weekly_nudge') {
+      const { data: lastSession } = await supabase
+        .from('arnobot_blog_sessions')
+        .select('uitdaging')
+        .eq('user_id', user.user_id)
+        .not('uitdaging', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (lastSession?.uitdaging?.trim()) {
+        try {
+          const msg = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 100,
+            messages: [{
+              role: 'user',
+              content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
+            }],
+          })
+          nudgeQuestion = msg.content
+            .filter(b => b.type === 'text')
+            .map(b => b.text)
+            .join('')
+            .trim()
+        } catch {
+          // val terug op generieke template
+        }
+      }
+    }
+
+    const template = getEmailTemplate(type, naam, false, { userId: user.user_id, nudgeQuestion })
 
     try {
       await resend.emails.send({

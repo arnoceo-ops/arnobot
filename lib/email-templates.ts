@@ -88,7 +88,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -208,6 +208,15 @@ export function getEmailTemplate(
       }
     }
     case 'weekly_nudge':
+      if (options?.nudgeQuestion) {
+        return {
+          subject: `${prefix}${naam}, even een vraag.`,
+          html: mail(
+            `${options.nudgeQuestion}<br><br>ArnoBot staat klaar als je wil doorpraten.`,
+            'SPAR MET ARNO →', 'https://arno.bot/bot', optOutNote
+          ),
+        }
+      }
       return {
         subject: `${prefix}${naam}, wat ga je deze week doen?`,
         html: mail(
