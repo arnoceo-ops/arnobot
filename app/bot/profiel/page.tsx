@@ -39,16 +39,28 @@ const empty: Answers = {
   jaardoel: '',
 }
 
+function getUitdagingPlaceholder(rol: string): string {
+  if (rol === 'AE Hunter') return 'Bijv: Ik kom wel binnen maar verlies deals in de afrondingsfase.'
+  if (rol === 'AM Farmer') return 'Bijv: Mijn klanten waarderen me maar kopen ook bij de concurrent.'
+  if (rol === 'Key AM') return 'Bijv: Ik word gezien als leverancier, niet als strategisch partner.'
+  if (rol === 'Inside Sales') return 'Bijv: Mijn gesprekken lopen goed maar stranden op prijs.'
+  if (rol === 'Sales Director') return 'Bijv: Mijn team haalt de cijfers niet en ik weet niet precies waarom.'
+  if (rol === 'VP of Sales') return 'Bijv: Ik ben te veel bezig met operationele zaken en te weinig met strategie.'
+  if (rol === 'CEO/DGA') return 'Bijv: De omzet groeit maar ik ben er zelf nog te veel voor nodig.'
+  if (rol === 'Solopreneur') return 'Bijv: Ik heb genoeg werk maar het komt niet vanzelf, ik moet blijven jagen.'
+  return 'Bijv: Mijn conversie in het tweede gesprek is te laag, ik verlies deals op prijs...'
+}
+
 function getJaardoelPlaceholder(rol: string): string {
-  if (rol === 'AE Hunter') return 'Bijv: Dit jaar wil ik stoppen met wachten op leads en zelf mijn pipeline vullen.'
-  if (rol === 'AM Farmer') return 'Bijv: Dit jaar wil ik >80% wallet share bij mijn 3 grootste klanten.'
-  if (rol === 'Key AM') return 'Bijv: Ik wil veel meer als trusted advisor fungeren voor mijn klanten.'
-  if (rol === 'Inside Sales') return 'Bijv: Ik wil mijn gesprekken zo scherp krijgen dat prijs nooit meer een issue is.'
-  if (rol === 'Sales Director') return 'Bijv: Ik wil dat het gehele team het resultaat ownt in plaats van excuses te bedenken.'
-  if (rol === 'VP of Sales') return 'Bijv: Dit jaar wil ik van operationeel brandjes blussen naar strategisch bouwen.'
-  if (rol === 'CEO/DGA') return 'Bijv: Dit jaar wil ik mezelf overbodig maken in het verkoopproces.'
-  if (rol === 'Solopreneur') return 'Bijv: Dit jaar wil ik dat klanten me aanbevelen zonder dat ik erom hoef te vragen.'
-  return 'Bijv: Waar wil jij dit jaar echt naartoe?'
+  if (rol === 'AE Hunter') return 'Bijv: Ik wil mijn eigen pipeline vullen zonder te wachten op leads.'
+  if (rol === 'AM Farmer') return 'Bijv: Ik wil onmisbaar worden voor mijn drie grootste klanten.'
+  if (rol === 'Key AM') return 'Bijv: Ik wil als trusted advisor gezien worden, niet als accountbeheerder.'
+  if (rol === 'Inside Sales') return 'Bijv: Ik wil deals sluiten op waarde, niet verliezen op prijs.'
+  if (rol === 'Sales Director') return 'Bijv: Ik wil een team dat zelf verantwoordelijkheid neemt voor het resultaat.'
+  if (rol === 'VP of Sales') return 'Bijv: Ik wil strategisch bouwen in plaats van operationeel brandjes blussen.'
+  if (rol === 'CEO/DGA') return 'Bijv: Ik wil mezelf overbodig maken in het verkoopproces.'
+  if (rol === 'Solopreneur') return 'Bijv: Ik wil klanten krijgen via aanbevelingen, zonder zelf te hoeven jagen.'
+  return 'Bijv: Waar wil jij naartoe?'
 }
 
 const TARGET_DIT_JAAR_OPTIONS = ['Ja', 'Nee']
@@ -348,11 +360,11 @@ export default function BotProfielPage() {
           </Block>
 
           <Block nr="05" title="Jouw grootste uitdaging">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Wat houdt jou nu het meest bezig in je saleswerk?</p>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
             <textarea
               value={answers.uitdaging}
               onChange={e => set('uitdaging', e.target.value)}
-              placeholder="Bijv: Mijn conversie in het tweede gesprek is te laag, ik verlies deals op prijs..."
+              placeholder={getUitdagingPlaceholder(answers.rol)}
               rows={3}
             />
             {submitted && answers.uitdaging.trim().length <= 2 && (
@@ -411,7 +423,7 @@ export default function BotProfielPage() {
 
           <Block nr="09" title="Jouw doel dit jaar">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: '30px', color: '#9ca3af', marginBottom: 12 }}>
-              Wat wil jij dit jaar echt bereiken?
+              Wat is je doel?
             </p>
             <textarea
               value={answers.jaardoel}
