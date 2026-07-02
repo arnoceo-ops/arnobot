@@ -59,6 +59,9 @@ export type EmailType =
   | 'opzegging_bevestiging'
   | 'winback'
   | 'weekly_nudge'
+  | 'inactivity_dag21'
+  | 'inactivity_dag45'
+  | 'inactivity_dag60'
   | 'bieb_bijgewerkt'
   | 'kwartaal_doel'
   | 'referral_aanmelding'
@@ -78,6 +81,9 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   opzegging_bevestiging: { label: 'Opzegging bevestiging',  description: 'Op elk moment:na opzegging via account pagina',                     category: 'user' },
   winback:               { label: 'Win-back',               description: 'Dag 45:15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
   weekly_nudge:          { label: 'Inactivity nudge',       description: 'Recurring:7 dagen geen activiteit',                                 category: 'user' },
+  inactivity_dag21:      { label: 'Inactivity dag 21',      description: 'Recurring:21 dagen geen activiteit',                                category: 'user' },
+  inactivity_dag45:      { label: 'Inactivity dag 45',      description: 'Recurring:45 dagen geen activiteit, sportschool-vergelijking',     category: 'user' },
+  inactivity_dag60:      { label: 'Inactivity dag 60',      description: 'Recurring:60 dagen geen activiteit, abonnement wordt opgezegd',    category: 'user' },
   bieb_bijgewerkt:       { label: 'BIEB bijgewerkt',        description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
   kwartaal_doel:         { label: 'Kwartaaldoel check',     description: 'Recurring:bij kwartaalstart, check of jaardoel nog klopt',          category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
@@ -222,6 +228,30 @@ export function getEmailTemplate(
         html: mail(
           `Je hebt een week geen gebruik gemaakt van ArnoBot. Vakantie? Geen tijd? Even vergeten? Te confronterend? Wat dan ook, ArnoBot staat 24/7 voor je klaar. Gebruik 'm en wordt nog scherper dan je al bent. Het grootste risico is dat je meer gaat verkopen. Wie wil 't niet?`,
           'SPAR MET ARNO →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    case 'inactivity_dag21':
+      return {
+        subject: `${prefix}${naam}, het is stil aan de overkant...`,
+        html: mail(
+          `Vakantie? Ziekte? Druk, druk, druk? Geen zin? Weerstand? Ah, je weet alles al? Whatever, je bent al drie weken uit de lucht. ArnoBot is je niet vergeten. Je weet het toch: het grootste risico om met ArnoBot door te gaan is dat je meer gaat verkopen.`,
+          'SPAR MET ARNO →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    case 'inactivity_dag45':
+      return {
+        subject: `${prefix}${naam}, heb je ook een abonnement op de gym zonder dat je er ooit bent?`,
+        html: mail(
+          `Da’s dus een patroontje. Je betaalt, je weet dat het goed voor je zou zijn, maar je gaat niet. De sportschool vindt het prima. Wij niet. ArnoBot is geen tool voor amateurs maar voor pro’s die alles uit de kast willen halen. Als je binnen 15 dagen niet van je laat horen, zeggen we de overeenkomst op. Waarvan akte.`,
+          'SPAR MET ARNO →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    case 'inactivity_dag60':
+      return {
+        subject: `${prefix}${naam}, dat was ’m dan.`,
+        html: mail(
+          `Wat de sportschool niet doet maar wij wel: stoppen. Twee maanden geen activiteit zonder opgaaf van redenen? Daar verbinden we onze naam niet aan. Je abonnement is per morgen beëindigd, tenzij je ons laat weten wat je excuus is.`,
+          'MAIL ARNO →', 'mailto:arno@arno.bot'
         ),
       }
     case 'geen_gesprek_nudge':

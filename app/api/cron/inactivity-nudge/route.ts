@@ -18,8 +18,11 @@ export async function GET(req: NextRequest) {
   }
 
   const now = Date.now()
-  const sevenDaysAgo  = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const eightDaysAgo  = new Date(now - 8 * 24 * 60 * 60 * 1000).toISOString()
+  const sevenDaysAgo    = new Date(now - 7  * 24 * 60 * 60 * 1000).toISOString()
+  const eightDaysAgo    = new Date(now - 8  * 24 * 60 * 60 * 1000).toISOString()
+  const twentyOneDaysAgo = new Date(now - 21 * 24 * 60 * 60 * 1000).toISOString()
+  const fortyFiveDaysAgo = new Date(now - 45 * 24 * 60 * 60 * 1000).toISOString()
+  const sixtyDaysAgo     = new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: users } = await supabase
     .from('approved_users')
@@ -51,7 +54,7 @@ export async function GET(req: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.user_id)
 
-    let type: 'weekly_nudge' | 'geen_gesprek_nudge' | null = null
+    let type: 'weekly_nudge' | 'geen_gesprek_nudge' | 'inactivity_dag21' | 'inactivity_dag45' | 'inactivity_dag60' | null = null
 
     if ((totalCount ?? 0) === 0) {
       // Nog nooit een gesprek: stuur nudge als trial precies 7-8 dagen geleden startte
@@ -68,6 +71,44 @@ export async function GET(req: NextRequest) {
 
       if ((windowCount ?? 0) > 0) {
         type = 'weekly_nudge'
+      }
+    }
+
+    // Dag 21/45/60: check op basis van eerste activiteit en log
+    if (!type && (totalCount ?? 0) > 0) {
+      const { data: sentNudges } = await supabase
+        .from('inactivity_nudge_log')
+        .select('type')
+        .eq('user_id', user.user_id)
+
+      const sent60 = sentNudges?.some(r => r.type === 'dag60')
+      const sent45 = sentNudges?.some(r => r.type === 'dag45')
+      const sent21 = sentNudges?.some(r => r.type === 'dag21')
+
+      const { count: activeSince60 } = await supabase
+        .from('arnobot_rds_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+        .gte('created_at', sixtyDaysAgo)
+
+      const { count: activeSince45 } = await supabase
+        .from('arnobot_rds_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+        .gte('created_at', fortyFiveDaysAgo)
+
+      const { count: activeSince21 } = await supabase
+        .from('arnobot_rds_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+        .gte('created_at', twentyOneDaysAgo)
+
+      if (!sent60 && (activeSince60 ?? 0) === 0) {
+        type = 'inactivity_dag60'
+      } else if (!sent45 && (activeSince45 ?? 0) === 0) {
+        type = 'inactivity_dag45'
+      } else if (!sent21 && (activeSince21 ?? 0) === 0) {
+        type = 'inactivity_dag21'
       }
     }
 
@@ -116,6 +157,11 @@ export async function GET(req: NextRequest) {
         html: template.html,
       })
       sent++
+
+      if (type === 'inactivity_dag21' || type === 'inactivity_dag45' || type === 'inactivity_dag60') {
+        const logType = type === 'inactivity_dag21' ? 'dag21' : type === 'inactivity_dag45' ? 'dag45' : 'dag60'
+        await supabase.from('inactivity_nudge_log').insert({ user_id: user.user_id, type: logType })
+      }
     } catch (e) {
       console.error(`Email naar ${user.email} mislukt:`, e)
     }
