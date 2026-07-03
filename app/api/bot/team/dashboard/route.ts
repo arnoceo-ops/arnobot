@@ -23,11 +23,12 @@ export async function GET() {
 
   const team = managerMember.arnobot_teams as unknown as { id: string; name: string; invite_code: string; min_interval_dagen: number | null }
 
-  // Get all team members
+  // Get all team members except the manager
   const { data: members } = await supabase
     .from('arnobot_team_members')
     .select('user_id, role, joined_at, display_name')
     .eq('team_id', team.id)
+    .neq('role', 'manager')
 
   if (!members?.length) return NextResponse.json({ team, members: [] })
 
