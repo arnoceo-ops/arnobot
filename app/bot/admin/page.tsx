@@ -188,7 +188,7 @@ export default async function ArnoBotAdminPage({
       ) : (
         <div>
           <p style={{ opacity: 0.4, fontSize: '16px', marginBottom: '32px' }}>
-            {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''}, {rows.length} berichten
+            {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''}, {sessionList.reduce((sum, [, msgs]) => sum + msgs.length, 0)} berichten
           </p>
           {sessionList.map(([sessionId, messages], idx) => {
             const userId = messages[0].user_id

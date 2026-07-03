@@ -2,10 +2,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-function buildCSP(nonce: string): string {
+function buildCSP(nonce: string, allowWasm = false): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://vercel.live https://*.vercel.live`,
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''} https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://vercel.live https://*.vercel.live`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
@@ -38,7 +38,7 @@ const SCANNER_PATTERNS = /^\/(\.env|\.git|\.svn|wp-admin|wp-login\.php|phpMyAdmi
 
 export default clerkMiddleware(async (auth, req) => {
   const nonce = crypto.randomUUID().replace(/-/g, '')
-  const csp = buildCSP(nonce)
+  const csp = buildCSP(nonce, isAdminRoute(req))
 
   function nextWithNonce(): NextResponse {
     const reqHeaders = new Headers(req.headers)
