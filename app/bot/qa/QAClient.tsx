@@ -265,6 +265,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
 
             {FAQ_GROUPS.filter(g => {
               if (isTeamMember && g.label === 'REFERRAL') return false
+              if (isTeamMember && g.label === 'ABONNEMENT') return false
               if (!isTeamMember && g.label === 'JOUW TEAM') return false
               return true
             }).map((group, gi) => (
