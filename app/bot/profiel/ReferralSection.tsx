@@ -26,7 +26,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
     ? {}
     : { marginTop: 56, borderTop: '1px solid #374151', paddingTop: 40 }
 
-  const statLabel: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 6 }
+  const statLabel: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }
   const statValue: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, lineHeight: 1 }
 
   return (
