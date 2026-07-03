@@ -254,7 +254,7 @@ export default function LidPage() {
         .btn-save { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; background:none; border:1px solid #374151; color:#9ca3af; border-radius:999px; cursor:pointer; transition:all 0.2s; }
         .btn-save:hover { border-color:#f59e0b; color:#f59e0b; }
         .btn-save:disabled { opacity:0.4; cursor:not-allowed; }
-        .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:14px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:vertical; min-height:80px; line-height:1.7; transition:border-color 0.15s; }
+        .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:15px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:vertical; min-height:80px; line-height:1.7; transition:border-color 0.15s; }
         .notitie-input:focus { border-color:#f59e0b; }
         .notitie-input::placeholder { color:#4b5563; }
         .btn-note { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:6px 16px; background:none; border:1px solid #374151; color:#6b7280; border-radius:999px; cursor:pointer; transition:all 0.15s; }
@@ -311,7 +311,7 @@ export default function LidPage() {
                       </div>
                     )}
 
-                    <p style={{ ...body, fontSize: 12, color: '#4b5563', marginTop: 16, marginBottom: 32 }}>
+                    <p style={{ ...body, fontSize: 13, color: '#6b7280', marginTop: 16, marginBottom: 32 }}>
                       Bijgewerkt op {formatDate(data.coaching.updated_at)}
                     </p>
 
@@ -361,16 +361,16 @@ export default function LidPage() {
                               {wekenGeleden(h.created_at)}
                             </span>
                             {scoreStr && (
-                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: '#4b5563' }}>
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>
                                 M {h.mindset_score ?? 0} · S {h.systeem_score ?? 0} · A {h.actie_score ?? 0}
                               </span>
                             )}
                           </div>
                           {h.aandachtspunt && (
-                            <p style={{ ...body, fontSize: 13, color: '#9ca3af', marginBottom: 12 }}>{h.aandachtspunt}</p>
+                            <p style={{ ...body, marginBottom: 12 }}>{h.aandachtspunt}</p>
                           )}
                           {h.notitie && !isNoteOpen && (
-                            <p style={{ ...body, fontSize: 12, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
+                            <p style={{ ...body, fontSize: 13, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
                           )}
                           {isNoteOpen ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
@@ -423,7 +423,7 @@ export default function LidPage() {
               {data.sharedAnalyses && data.sharedAnalyses.length > 0 && (
                 <div style={section}>
                   <span style={label}>GEDEELD DOOR LID</span>
-                  <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
+                  <p style={{ ...body, color: '#6b7280', marginBottom: 24 }}>
                     {data.name.split(' ')[0]} heeft onderstaande {data.sharedAnalyses.length === 1 ? 'analyse' : 'analyses'} zelf gedeeld.
                   </p>
                   <div>
