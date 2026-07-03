@@ -219,7 +219,7 @@ export default function LidPage() {
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
         .analyse-item-full { color:#9ca3af; font-size:15px; line-height:1.9; font-family:'Space Mono',monospace; background:#1f2937; border-left:3px solid #f59e0b; padding:20px 24px; margin-bottom:8px; }
-        .btn-1on1 { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 36px; width:230px; background:#f59e0b; color:#111827; border:none; border-radius:999px; cursor:pointer; transition:background 0.2s; }
+        .btn-1on1 { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 36px; min-width:300px; white-space:nowrap; background:#f59e0b; color:#111827; border:none; border-radius:999px; cursor:pointer; transition:background 0.2s; }
         .btn-1on1:hover { background:#d97706; }
         .btn-1on1:disabled { background:#374151; color:#6b7280; cursor:not-allowed; }
         .btn-save { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; background:none; border:1px solid #374151; color:#9ca3af; border-radius:999px; cursor:pointer; transition:all 0.2s; }
@@ -398,7 +398,7 @@ export default function LidPage() {
                 {!verwijderBevestig ? (
                   <button
                     onClick={() => setVerwijderBevestig(true)}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', width: 230, background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: 'pointer' }}
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', minWidth: 300, whiteSpace: 'nowrap', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: 'pointer' }}
                   >
                     VERWIJDER UIT TEAM
                   </button>
@@ -411,13 +411,13 @@ export default function LidPage() {
                       <button
                         onClick={verwijderLid}
                         disabled={verwijderLoading}
-                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: verwijderLoading ? 'not-allowed' : 'pointer', opacity: verwijderLoading ? 0.6 : 1 }}
+                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', minWidth: 180, whiteSpace: 'nowrap', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: verwijderLoading ? 'not-allowed' : 'pointer', opacity: verwijderLoading ? 0.6 : 1 }}
                       >
                         {verwijderLoading ? 'VERWIJDEREN...' : 'JA, VERWIJDER'}
                       </button>
                       <button
                         onClick={() => setVerwijderBevestig(false)}
-                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}
+                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', minWidth: 180, whiteSpace: 'nowrap', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}
                       >
                         ANNULEER
                       </button>
