@@ -323,7 +323,7 @@ export default function TeamClient() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
                   <span style={label}>TEAMLEDEN ({members.length})</span>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                    <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>MINIMUMFREQUENTIE</span>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b' }}>MINIMUMFREQUENTIE</span>
                     <select
                       value={minIntervalDagen ?? ''}
                       onChange={e => handleRitmeChange(e.target.value)}
@@ -331,9 +331,9 @@ export default function TeamClient() {
                       style={{ maxWidth: 220, padding: '8px 12px', fontSize: 13 }}
                     >
                       <option value="">Geen drempel</option>
-                      <option value="7">Minstens 1x per week</option>
-                      <option value="14">Minstens 1x per 2 weken</option>
-                      <option value="30">Minstens 1x per maand</option>
+                      <option value="7">1x per week</option>
+                      <option value="14">1x per 2 weken</option>
+                      <option value="30">1x per maand</option>
                     </select>
                     {ritmeSaved && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88' }}>OPGESLAGEN</span>}
                   </div>
