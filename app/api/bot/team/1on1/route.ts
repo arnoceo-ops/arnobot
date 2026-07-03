@@ -24,7 +24,7 @@ function extractAandachtspunt(agenda: string): string {
       if (t) parts.push(t)
     }
   }
-  return parts.join(' ').replace(/\*\*/g, '')
+  return parts.join(' ').replace(/\*\*/g, '').replace(/—|–|---|-{2,}/g, '').replace(/\s{2,}/g, ' ').trim()
 }
 
 export async function POST(req: NextRequest) {
