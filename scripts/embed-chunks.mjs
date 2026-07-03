@@ -46,6 +46,11 @@ function getBlogUrl(title) {
   for (const [key, url] of Object.entries(blogUrls)) {
     if (key.toLowerCase() === lower) return url
   }
+  // Fallback: strip alle niet-alfanumerieke tekens (►◄ ♛ ★ etc.) en vergelijk opnieuw
+  const stripped = title.replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase()
+  for (const [key, url] of Object.entries(blogUrls)) {
+    if (key.replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase() === stripped) return url
+  }
   return null
 }
 
