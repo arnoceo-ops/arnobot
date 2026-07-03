@@ -206,10 +206,14 @@ export default function CoachingClient({ userId }: Props) {
       .then(data => setAnalyses(data.analyses ?? []))
       .catch(() => {})
 
-    fetch('/api/bot/team/status')
-      .then(r => r.json())
-      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-      .catch(() => {})
+    if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
+      setIsTeamMember(true)
+    } else {
+      fetch('/api/bot/team/status')
+        .then(r => r.json())
+        .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+        .catch(() => {})
+    }
 
     if (SCORE_HISTORY_ENABLED) {
       fetch('/api/bot/coaching-scores')

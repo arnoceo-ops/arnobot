@@ -172,6 +172,10 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
   const [isTeamMember, setIsTeamMember] = useState(false)
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
+      setIsTeamMember(true)
+      return
+    }
     fetch('/api/bot/team/status')
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })

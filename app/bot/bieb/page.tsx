@@ -108,10 +108,14 @@ export default function GeschiedenisPage() {
       .then(r => r.json())
       .then(data => setSavedAnalyses(data.analyses ?? []))
       .catch(() => {})
-    fetch('/api/bot/team/status')
-      .then(r => r.json())
-      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-      .catch(() => {})
+    if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
+      setIsTeamMember(true)
+    } else {
+      fetch('/api/bot/team/status')
+        .then(r => r.json())
+        .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+        .catch(() => {})
+    }
     fetch('/api/bot/team/share-analyse')
       .then(r => r.json())
       .then(d => setSharedAnalyseIds(new Set(d.sharedIds ?? [])))
