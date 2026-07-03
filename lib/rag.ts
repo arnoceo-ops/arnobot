@@ -81,13 +81,26 @@ async function rerankChunks(
 
 export type RagChunk = { content: string; context: string | null; source: string | null; url: string | null; relevance_score: number }
 
+function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 3): RagChunk[] {
+  const sourceCounts: Record<string, number> = {}
+  const result: RagChunk[] = []
+  for (const chunk of chunks) {
+    const src = chunk.source ?? 'unknown'
+    if ((sourceCounts[src] ?? 0) >= perSourceMax) continue
+    sourceCounts[src] = (sourceCounts[src] ?? 0) + 1
+    result.push(chunk)
+    if (result.length >= topN) break
+  }
+  return result
+}
+
 export async function getRelevantChunks(query: string, topN = 15): Promise<RagChunk[]> {
   const queryEmbedding = await getEmbedding(query)
 
-  // Haal 30 kandidaten op voor reranking
+  // Haal 60 kandidaten op zodat diverse bronnen een kans maken
   const { data, error } = await supabase.rpc('match_blog_chunks', {
     query_embedding: queryEmbedding,
-    match_count: 30,
+    match_count: 60,
   })
 
   if (error) throw new Error(`Supabase RAG error: ${error.message}`)
@@ -97,8 +110,9 @@ export async function getRelevantChunks(query: string, topN = 15): Promise<RagCh
 
   if (candidates.length === 0) return []
 
-  // Rerank naar top N
-  return rerankChunks(query, candidates, topN)
+  // Rerank naar top 30, dan source diversity naar topN
+  const reranked = await rerankChunks(query, candidates, Math.min(30, candidates.length))
+  return diversifyChunks(reranked, topN)
 }
 
 export function formatChunksForPrompt(chunks: RagChunk[]): string {
