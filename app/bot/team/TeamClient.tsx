@@ -54,6 +54,7 @@ interface Team {
   id: string
   name: string
   invite_code: string
+  min_interval_dagen: number | null
 }
 
 function renderAnalyse(text: string): string {
@@ -136,6 +137,8 @@ export default function TeamClient() {
   const [spotlightLoading, setSpotlightLoading] = useState(false)
   const [teamAnalyses, setTeamAnalyses] = useState<TeamAnalyse[]>([])
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
+  const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
+  const [ritmeSaved, setRitmeSaved] = useState(false)
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -159,7 +162,10 @@ export default function TeamClient() {
     fetch('/api/bot/team/dashboard')
       .then(r => r.json())
       .then(data => {
-        if (data.team) setTeam(data.team)
+        if (data.team) {
+          setTeam(data.team)
+          setMinIntervalDagen(data.team.min_interval_dagen ?? null)
+        }
         setMembers(data.members ?? [])
         setLoading(false)
       })
@@ -206,6 +212,27 @@ export default function TeamClient() {
     } finally {
       setSpotlightLoading(false)
     }
+  }
+
+  function isOnderRitme(last_activity: string | null): boolean {
+    if (!minIntervalDagen || !last_activity) return false
+    const dagen = Math.round((Date.now() - new Date(last_activity).getTime()) / 86400000)
+    return dagen > minIntervalDagen
+  }
+
+  async function handleRitmeChange(value: string) {
+    const val = value === '' ? null : Number(value)
+    setMinIntervalDagen(val)
+    setRitmeSaved(false)
+    try {
+      await fetch('/api/bot/team/ritme', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ min_interval_dagen: val }),
+      })
+      setRitmeSaved(true)
+      setTimeout(() => setRitmeSaved(false), 2000)
+    } catch {}
   }
 
   function copyInviteLink() {
@@ -293,43 +320,75 @@ export default function TeamClient() {
               </div>
 
               <div style={section}>
-                <span style={label}>TEAMLEDEN ({members.length})</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+                  <span style={label}>TEAMLEDEN ({members.length})</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>MINIMUMFREQUENTIE</span>
+                    <select
+                      value={minIntervalDagen ?? ''}
+                      onChange={e => handleRitmeChange(e.target.value)}
+                      className="team-input"
+                      style={{ maxWidth: 220, padding: '8px 12px', fontSize: 13 }}
+                    >
+                      <option value="">Geen drempel</option>
+                      <option value="7">Minstens 1x per week</option>
+                      <option value="14">Minstens 1x per 2 weken</option>
+                      <option value="30">Minstens 1x per maand</option>
+                    </select>
+                    {ritmeSaved && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88' }}>OPGESLAGEN</span>}
+                  </div>
+                </div>
                 {members.length === 0 ? (
                   <p style={body}>Nog geen teamleden. Stuur de uitnodigingslink naar je team.</p>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid #374151' }}>
-                          {['', 'NAAM', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
-                            <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {members.map(m => {
-                          const signaal = activiteitsSignaal(m.sessions, m.last_activity)
-                          return (
-                          <tr
-                            key={m.user_id}
-                            onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
-                            style={{ borderBottom: '1px solid #374151', cursor: 'pointer', transition: 'background 0.15s' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            <td style={{ padding: '16px 12px 16px 0', width: 16 }}>
-                              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
-                            </td>
-                            <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
-                            <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280' }}>{m.sessions}</td>
-                            <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
-                            <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>{formatLast(m.last_activity)}</td>
+                  <>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #374151' }}>
+                            {['', 'NAAM', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
+                              <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
+                            ))}
                           </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {members.map(m => {
+                            const signaal = activiteitsSignaal(m.sessions, m.last_activity)
+                            const onderRitme = isOnderRitme(m.last_activity)
+                            return (
+                            <tr
+                              key={m.user_id}
+                              onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
+                              style={{ borderBottom: '1px solid #374151', cursor: 'pointer', transition: 'background 0.15s' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                            >
+                              <td style={{ padding: '16px 12px 16px 0', width: 16 }}>
+                                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
+                              </td>
+                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
+                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280' }}>{m.sessions}</td>
+                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
+                              <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af' }}>{formatLast(m.last_activity)}</td>
+                            </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {minIntervalDagen && (() => {
+                      const count = members.filter(m => isOnderRitme(m.last_activity)).length
+                      return count > 0 ? (
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#f59e0b', marginTop: 16 }}>
+                          {count} van {members.length} {count === 1 ? 'lid zit' : 'leden zitten'} onder het ritme.
+                        </p>
+                      ) : (
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#44cc88', marginTop: 16 }}>
+                          Alle leden zitten op ritme.
+                        </p>
+                      )
+                    })()}
+                  </>
                 )}
               </div>
 

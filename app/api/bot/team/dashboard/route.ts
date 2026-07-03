@@ -14,14 +14,14 @@ export async function GET() {
   // Verify manager
   const { data: managerMember } = await supabase
     .from('arnobot_team_members')
-    .select('team_id, role, arnobot_teams(id, name, invite_code)')
+    .select('team_id, role, arnobot_teams(id, name, invite_code, min_interval_dagen)')
     .eq('user_id', userId)
     .eq('role', 'manager')
     .single()
 
   if (!managerMember) return NextResponse.json({ error: 'Geen manager-toegang' }, { status: 403 })
 
-  const team = managerMember.arnobot_teams as unknown as { id: string; name: string; invite_code: string }
+  const team = managerMember.arnobot_teams as unknown as { id: string; name: string; invite_code: string; min_interval_dagen: number | null }
 
   // Get all team members
   const { data: members } = await supabase

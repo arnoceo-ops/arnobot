@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   if (!targetMember) return NextResponse.json({ error: 'Lid niet gevonden' }, { status: 404 })
 
-  const [coachingRes, analysesRes, historyRes] = await Promise.all([
+  const [coachingRes, analysesRes, historyRes, sessiesRes] = await Promise.all([
     supabase
       .from('arnobot_coaching')
       .select('mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang')
@@ -72,11 +72,19 @@ export async function POST(req: NextRequest) {
       .eq('member_id', targetUserId)
       .order('created_at', { ascending: false })
       .limit(3),
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('title, summary, feiten, created_at')
+      .eq('user_id', targetUserId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(3),
   ])
 
   const coaching = coachingRes.data
   const analyses = analysesRes.data ?? []
   const history = historyRes.data ?? []
+  const sessies = sessiesRes.data ?? []
 
   if (!coaching && analyses.length === 0) {
     return NextResponse.json({ error: 'Nog geen coachingdata beschikbaar voor dit lid.' }, { status: 422 })
@@ -106,13 +114,28 @@ export async function POST(req: NextRequest) {
     lines.push(analyses[0].analyse_text)
   }
 
+  if (sessies.length > 0) {
+    lines.push('\nRECENTE GESPREKKEN MET ARNOBOT')
+    for (const s of sessies) {
+      const dagenGeleden = Math.round((Date.now() - new Date(s.created_at).getTime()) / 86400000)
+      const wanneer = dagenGeleden === 0 ? 'Vandaag' : dagenGeleden === 1 ? 'Gisteren' : `${dagenGeleden} dagen geleden`
+      lines.push(`${wanneer}: ${s.title}`)
+      if (s.summary) lines.push(`Samenvatting: ${s.summary}`)
+      if (s.feiten) lines.push(`Kernpunten: ${s.feiten}`)
+    }
+  }
+
   const context = lines.join('\n')
 
   const historyInstruction = history.length > 0
     ? '\nEr zijn eerdere 1:1-gesprekken. Benoem expliciet of het aandachtspunt van de vorige keer is verbeterd, gelijk gebleven of verslechterd. Als hetzelfde thema terugkomt, benoem dat dan ook.'
     : ''
 
-  const systemPrompt = `Je bent een sales management coach die managers helpt om betere 1:1-gesprekken te voeren met hun verkopers. Je werkt uitsluitend op basis van het coachingprofiel dat je krijgt aangeleverd. Je ziet nooit ruwe gesprekken of klantnamen.${historyInstruction}
+  const sessiesInstruction = sessies.length > 0
+    ? '\nEr zijn recente gesprekken met ArnoBot beschikbaar. Gebruik die actief: wanneer een sessie een concreet thema, actie of voornemen bevatte dat daarna niet meer teruggekomen is, zet dat dan in VRAGEN OM TE STELLEN. Schrijf het als een echte vraag, niet als template. Bijv.: "Je had het X dagen geleden over [thema]. Hoe is dat gegaan?"'
+    : ''
+
+  const systemPrompt = `Je bent een sales management coach die managers helpt om betere 1:1-gesprekken te voeren met hun verkopers. Je werkt uitsluitend op basis van het coachingprofiel dat je krijgt aangeleverd. Je ziet nooit ruwe gesprekken of klantnamen.${historyInstruction}${sessiesInstruction}
 
 Schrijf een concrete 1:1-agenda voor de manager. Gebruik precies deze structuur en koppen:
 
