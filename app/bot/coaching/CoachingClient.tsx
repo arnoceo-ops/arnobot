@@ -168,6 +168,7 @@ export default function CoachingClient({ userId }: Props) {
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
+  const [isTeamMember, setIsTeamMember] = useState(false)
 
   useEffect(() => {
     const cacheKey = `arnobot_coaching_doc_${userId}`
@@ -203,6 +204,11 @@ export default function CoachingClient({ userId }: Props) {
     fetch('/api/bot/coaching-analyses')
       .then(r => r.json())
       .then(data => setAnalyses(data.analyses ?? []))
+      .catch(() => {})
+
+    fetch('/api/bot/team/status')
+      .then(r => r.json())
+      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
       .catch(() => {})
 
     if (SCORE_HISTORY_ENABLED) {
@@ -361,6 +367,17 @@ export default function CoachingClient({ userId }: Props) {
 
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 16 }}>COACHING</h1>
+
+        {isTeamMember && (
+          <div className="no-print" style={{ background: '#1f2937', borderLeft: '3px solid #374151', padding: '16px 24px', marginBottom: 32 }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>DIT ZIET JOUW MANAGER</p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', lineHeight: 1.9 }}>
+              Je drie scores op mindset, systeem en actie, plus een korte duiding per dimensie. Dat is een patroon dat ArnoBot destilleert, geen citaat of samenvatting van wat je hebt gezegd. Verder ziet de manager hoeveel gesprekken je hebt gevoerd.
+              <br /><br />
+              Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties. Wil je een analyse delen? Dat doe je zelf via de BIEB.
+            </p>
+          </div>
+        )}
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>

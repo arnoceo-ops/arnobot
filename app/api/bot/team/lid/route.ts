@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       .eq('manager_id', managerId)
       .eq('member_id', targetUserId)
       .order('created_at', { ascending: false })
-      .limit(10),
+      .limit(5),
   ])
 
   // Fetch the actual analyse texts for shared analyses

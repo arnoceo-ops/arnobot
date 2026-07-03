@@ -125,7 +125,9 @@ const FAQ_GROUPS = [
           <>
             Nee. Alles wat je met ArnoBot bespreekt, is strikt vertrouwelijk. Je manager heeft geen toegang tot je gesprekken of de inhoud ervan.
             <br /><br />
-            Het enige wat je manager ziet zijn uitsluitend getallen: van het aantal vragen/gesprekken en jouw rating op mindset, systeem en actie.
+            Wat je manager wel ziet: je drie scores op mindset, systeem en actie, plus een korte duiding per dimensie. Dat is een patroon dat ArnoBot destilleert, geen citaat of samenvatting van wat je hebt gezegd. Verder ziet de manager hoeveel gesprekken je hebt gevoerd.
+            <br /><br />
+            Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties.
             <br /><br />
             Wil je zelf iets delen? Dat kan. In de BIEB kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
           </>
