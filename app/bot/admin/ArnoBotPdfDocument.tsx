@@ -52,8 +52,11 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
             {messages.map((msg) => (
               <View key={msg.id} style={styles.message}>
                 <Text style={styles.question}>{msg.question}</Text>
-                <Text style={styles.answer}>{msg.answer.replace(/\*\*([^*]+)\*\*/g, '$1')}</Text>
-                <Text style={styles.timestamp}>{new Date(msg.created_at).toLocaleTimeString('nl-NL')}</Text>
+                <Text style={styles.answer}>{
+                  msg.answer
+                    .replace(/\*\*([^*]+)\*\*/g, '$1')
+                    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                }</Text>
               </View>
             ))}
           </View>
