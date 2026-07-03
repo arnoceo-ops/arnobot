@@ -127,6 +127,8 @@ export default function LidPage() {
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
+  const [verwijderBevestig, setVerwijderBevestig] = useState(false)
+  const [verwijderLoading, setVerwijderLoading] = useState(false)
 
   useEffect(() => {
     fetch(`/api/bot/team/lid?userId=${userId}`)
@@ -159,6 +161,25 @@ export default function LidPage() {
       setAgendaError('Er ging iets mis')
     } finally {
       setAgendaLoading(false)
+    }
+  }
+
+  async function verwijderLid() {
+    setVerwijderLoading(true)
+    try {
+      const res = await fetch(`/api/bot/team/lid?userId=${userId}`, { method: 'DELETE' })
+      if (res.ok) {
+        window.location.href = '/bot/team'
+      } else {
+        const d = await res.json()
+        setAgendaError(d.error || 'Verwijderen mislukt')
+        setVerwijderBevestig(false)
+      }
+    } catch {
+      setAgendaError('Er ging iets mis')
+      setVerwijderBevestig(false)
+    } finally {
+      setVerwijderLoading(false)
     }
   }
 
@@ -369,6 +390,38 @@ export default function LidPage() {
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+              {/* Verwijderen */}
+              <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 48 }}>
+                {!verwijderBevestig ? (
+                  <button
+                    onClick={() => setVerwijderBevestig(true)}
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: 'pointer' }}
+                  >
+                    VERWIJDER UIT TEAM
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                      {data?.name.split(' ')[0]} wordt verwijderd uit het team. Dit kan niet ongedaan worden gemaakt.
+                    </p>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <button
+                        onClick={verwijderLid}
+                        disabled={verwijderLoading}
+                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: verwijderLoading ? 'not-allowed' : 'pointer', opacity: verwijderLoading ? 0.6 : 1 }}
+                      >
+                        {verwijderLoading ? 'VERWIJDEREN...' : 'JA, VERWIJDER'}
+                      </button>
+                      <button
+                        onClick={() => setVerwijderBevestig(false)}
+                        style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', border: '1px solid #374151', color: '#9ca3af', borderRadius: 999, cursor: 'pointer' }}
+                      >
+                        ANNULEER
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

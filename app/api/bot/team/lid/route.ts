@@ -7,6 +7,36 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+export async function DELETE(req: NextRequest) {
+  const { userId: managerId } = await auth()
+  if (!managerId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const targetUserId = req.nextUrl.searchParams.get('userId')
+  if (!targetUserId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
+
+  const { data: managerMember } = await supabase
+    .from('arnobot_team_members')
+    .select('team_id')
+    .eq('user_id', managerId)
+    .eq('role', 'manager')
+    .single()
+
+  if (!managerMember) return NextResponse.json({ error: 'Geen manager-toegang' }, { status: 403 })
+
+  // Verifieer dat het lid in hetzelfde team zit en niet de manager zelf is
+  if (targetUserId === managerId) return NextResponse.json({ error: 'Je kunt jezelf niet verwijderen' }, { status: 400 })
+
+  const { error } = await supabase
+    .from('arnobot_team_members')
+    .delete()
+    .eq('user_id', targetUserId)
+    .eq('team_id', managerMember.team_id)
+    .neq('role', 'manager')
+
+  if (error) return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
+
 export async function GET(req: NextRequest) {
   const { userId: managerId } = await auth()
   if (!managerId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
