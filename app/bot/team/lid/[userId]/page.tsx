@@ -15,11 +15,13 @@ interface Coaching {
   updated_at: string
 }
 
-interface Analyse {
+interface SharedAnalyse {
   id: string
+  shared_at: string
+  analyse_id: string
   analyse_text: string
-  created_at: string
   session_count: number | null
+  analyse_created_at: string
 }
 
 interface OneononeLog {
@@ -37,7 +39,7 @@ interface LidData {
   role: string
   profiel_rol: string | null
   coaching: Coaching | null
-  analyses: Analyse[]
+  sharedAnalyses: SharedAnalyse[]
   history: OneononeLog[]
 }
 
@@ -123,12 +125,24 @@ export default function LidPage() {
   const [aandachtspunt, setAandachtspunt] = useState('')
   const [agendaError, setAgendaError] = useState('')
 
-  const [notitie, setNotitie] = useState('')
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [verwijderBevestig, setVerwijderBevestig] = useState(false)
   const [verwijderLoading, setVerwijderLoading] = useState(false)
+
+  // Note editing for history cards
+  const [noteOpenId, setNoteOpenId] = useState<string | null>(null)
+  const [noteInputs, setNoteInputs] = useState<Record<string, string>>({})
+  const [noteSavingId, setNoteSavingId] = useState<string | null>(null)
+  const [noteSavedId, setNoteSavedId] = useState<string | null>(null)
+
+  function loadData() {
+    return fetch(`/api/bot/team/lid?userId=${userId}`)
+      .then(r => r.json())
+      .then(d => { if (!d.error) setData(d) })
+  }
 
   useEffect(() => {
     fetch(`/api/bot/team/lid?userId=${userId}`)
@@ -190,22 +204,37 @@ export default function LidPage() {
       const res = await fetch('/api/bot/team/1on1/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: userId, aandachtspunt, notitie }),
+        body: JSON.stringify({ targetUserId: userId, aandachtspunt, notitie: '' }),
       })
       const d = await res.json()
       if (!res.ok) setAgendaError(d.error || 'Opslaan mislukt')
       else {
         setSaved(true)
-        // Refresh history
-        fetch(`/api/bot/team/lid?userId=${userId}`)
-          .then(r => r.json())
-          .then(d => { if (!d.error) setData(d) })
+        loadData()
       }
     } catch {
       setAgendaError('Opslaan mislukt')
     } finally {
       setSaveLoading(false)
     }
+  }
+
+  async function slaNotitieOp(logId: string) {
+    setNoteSavingId(logId)
+    const notitie = noteInputs[logId] ?? ''
+    try {
+      const res = await fetch('/api/bot/team/1on1/note', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId, notitie }),
+      })
+      if (res.ok) {
+        setNoteSavedId(logId)
+        setNoteOpenId(null)
+        loadData()
+      }
+    } catch {}
+    setNoteSavingId(null)
   }
 
   return (
@@ -228,6 +257,8 @@ export default function LidPage() {
         .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:14px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:vertical; min-height:80px; line-height:1.7; transition:border-color 0.15s; }
         .notitie-input:focus { border-color:#f59e0b; }
         .notitie-input::placeholder { color:#4b5563; }
+        .btn-note { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:6px 16px; background:none; border:1px solid #374151; color:#6b7280; border-radius:999px; cursor:pointer; transition:all 0.15s; }
+        .btn-note:hover { border-color:#9ca3af; color:#9ca3af; }
       `}</style>
 
       <BotNav active="team" />
@@ -299,22 +330,12 @@ export default function LidPage() {
                         </div>
 
                         {!saved ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            <textarea
-                              className="notitie-input"
-                              placeholder="Optioneel: notitie na het gesprek..."
-                              value={notitie}
-                              onChange={e => setNotitie(e.target.value)}
-                            />
-                            <div style={{ display: 'flex', gap: 12 }}>
-                              <button className="btn-save" onClick={bewaar1on1} disabled={saveLoading}>
-                                {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
-                              </button>
-                            </div>
-                          </div>
+                          <button className="btn-save" onClick={bewaar1on1} disabled={saveLoading}>
+                            {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
+                          </button>
                         ) : (
                           <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
-                            ✓ OPGESLAGEN
+                            ✓ OPGESLAGEN — voeg na het gesprek een notitie toe via de geschiedenis hieronder
                           </p>
                         )}
                       </div>
@@ -331,6 +352,8 @@ export default function LidPage() {
                     {data.history.map(h => {
                       const scores = [h.mindset_score, h.systeem_score, h.actie_score]
                       const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '?').join(' / ')
+                      const isNoteOpen = noteOpenId === h.id
+                      const noteInput = noteInputs[h.id] ?? h.notitie ?? ''
                       return (
                         <div key={h.id} style={{ background: '#1f2937', padding: '20px 24px', borderLeft: '3px solid #374151' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: h.aandachtspunt ? 8 : 0, flexWrap: 'wrap', gap: 8 }}>
@@ -344,10 +367,50 @@ export default function LidPage() {
                             )}
                           </div>
                           {h.aandachtspunt && (
-                            <p style={{ ...body, fontSize: 13, color: '#9ca3af', marginBottom: h.notitie ? 6 : 0 }}>{h.aandachtspunt}</p>
+                            <p style={{ ...body, fontSize: 13, color: '#9ca3af', marginBottom: 12 }}>{h.aandachtspunt}</p>
                           )}
-                          {h.notitie && (
-                            <p style={{ ...body, fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>{h.notitie}</p>
+                          {h.notitie && !isNoteOpen && (
+                            <p style={{ ...body, fontSize: 12, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
+                          )}
+                          {isNoteOpen ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                              <textarea
+                                className="notitie-input"
+                                placeholder="Notitie na het gesprek..."
+                                value={noteInput}
+                                onChange={e => setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))}
+                              />
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                  className="btn-note"
+                                  onClick={() => slaNotitieOp(h.id)}
+                                  disabled={noteSavingId === h.id}
+                                  style={{ color: '#f59e0b', borderColor: '#f59e0b' }}
+                                >
+                                  {noteSavingId === h.id ? 'OPSLAAN...' : 'OPSLAAN'}
+                                </button>
+                                <button
+                                  className="btn-note"
+                                  onClick={() => { setNoteOpenId(null); setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' })) }}
+                                >
+                                  ANNULEER
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className="btn-note"
+                              onClick={() => {
+                                setNoteOpenId(h.id)
+                                setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' }))
+                                setNoteSavedId(null)
+                              }}
+                            >
+                              {h.notitie ? 'BEWERK NOTITIE' : 'VOEG NOTITIE TOE'}
+                            </button>
+                          )}
+                          {noteSavedId === h.id && !isNoteOpen && (
+                            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88', marginLeft: 8 }}>✓</span>
                           )}
                         </div>
                       )
@@ -356,14 +419,15 @@ export default function LidPage() {
                 </div>
               )}
 
-              {/* Analyses */}
-              <div style={section}>
-                <span style={label}>ANALYSES</span>
-                {data.analyses.length === 0 ? (
-                  <p style={body}>Nog geen analyses beschikbaar.</p>
-                ) : (
+              {/* Gedeeld door lid */}
+              {data.sharedAnalyses && data.sharedAnalyses.length > 0 && (
+                <div style={section}>
+                  <span style={label}>GEDEELD DOOR LID</span>
+                  <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
+                    {data.name.split(' ')[0]} heeft onderstaande {data.sharedAnalyses.length === 1 ? 'analyse' : 'analyses'} zelf gedeeld.
+                  </p>
                   <div>
-                    {data.analyses.map(a => (
+                    {data.sharedAnalyses.map(a => (
                       <div key={a.id} style={{ borderTop: '1px solid #374151' }}>
                         <button
                           onClick={() => setExpandedAnalyse(expandedAnalyse === a.id ? null : a.id)}
@@ -371,7 +435,7 @@ export default function LidPage() {
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                             <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
-                              {formatDate(a.created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
+                              {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
                             </span>
                             <div style={{ flex: 1 }}>
                               <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
@@ -391,8 +455,9 @@ export default function LidPage() {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
               {/* Verwijderen */}
               <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 48 }}>
                 {!verwijderBevestig ? (

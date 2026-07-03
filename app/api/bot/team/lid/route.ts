@@ -64,19 +64,20 @@ export async function GET(req: NextRequest) {
 
   if (!targetMember) return NextResponse.json({ error: 'Lid niet gevonden in jouw team' }, { status: 404 })
 
-  // Fetch coaching profile + analyses + 1:1 geschiedenis (synthese-laag, nooit ruwe gesprekken)
-  const [coachingRes, analysesRes, profileRes, historyRes] = await Promise.all([
+  // Fetch coaching profile + gedeelde analyses + 1:1 geschiedenis (synthese-laag, nooit ruwe gesprekken)
+  const [coachingRes, sharedRefsRes, profileRes, historyRes] = await Promise.all([
     supabase
       .from('arnobot_coaching')
       .select('mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang, updated_at')
       .eq('user_id', targetUserId)
       .maybeSingle(),
     supabase
-      .from('arnobot_analyses')
-      .select('id, analyse_text, created_at, session_count')
+      .from('arnobot_shared_analyses')
+      .select('id, analyse_id, created_at')
       .eq('user_id', targetUserId)
+      .eq('team_id', managerMember.team_id)
       .order('created_at', { ascending: false })
-      .limit(5),
+      .limit(10),
     supabase
       .from('arnobot_blog_profiles')
       .select('profiel')
@@ -91,6 +92,26 @@ export async function GET(req: NextRequest) {
       .limit(10),
   ])
 
+  // Fetch the actual analyse texts for shared analyses
+  const sharedRefs = sharedRefsRes.data ?? []
+  const analyseIds = sharedRefs.map(r => r.analyse_id)
+  const { data: analysesData } = analyseIds.length > 0
+    ? await supabase
+        .from('arnobot_analyses')
+        .select('id, analyse_text, created_at, session_count')
+        .in('id', analyseIds)
+    : { data: [] }
+
+  const analyseMap = Object.fromEntries((analysesData ?? []).map(a => [a.id, a]))
+  const sharedAnalyses = sharedRefs.map(r => ({
+    id: r.id,
+    shared_at: r.created_at,
+    analyse_id: r.analyse_id,
+    analyse_text: analyseMap[r.analyse_id]?.analyse_text ?? '',
+    session_count: analyseMap[r.analyse_id]?.session_count ?? null,
+    analyse_created_at: analyseMap[r.analyse_id]?.created_at ?? r.created_at,
+  }))
+
   // Get name from Clerk
   const clerk = await clerkClient()
   let name = targetMember.display_name || 'Teamlid'
@@ -104,7 +125,7 @@ export async function GET(req: NextRequest) {
     role: targetMember.role,
     profiel_rol: profileRes.data?.profiel?.rol ?? null,
     coaching: coachingRes.data ?? null,
-    analyses: analysesRes.data ?? [],
+    sharedAnalyses,
     history: historyRes.data ?? [],
   })
 }

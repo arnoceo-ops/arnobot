@@ -117,6 +117,23 @@ const FAQ_GROUPS = [
     ],
   },
   {
+    label: 'JOUW TEAM',
+    items: [
+      {
+        q: 'Kan mijn manager mijn gesprekken inzien?',
+        a: (
+          <>
+            Nee. Alles wat je met ArnoBot bespreekt, is strikt vertrouwelijk. Je manager heeft geen toegang tot je gesprekken of de inhoud ervan.
+            <br /><br />
+            Het enige wat je manager ziet zijn uitsluitend getallen: van het aantal vragen/gesprekken en jouw rating op mindset, systeem en actie.
+            <br /><br />
+            Wil je zelf iets delen? Dat kan. In de BIEB kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
+          </>
+        ),
+      },
+    ],
+  },
+  {
     label: 'PRIVACY',
     items: [
       {
@@ -244,7 +261,11 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
               FAQ
             </h2>
 
-            {FAQ_GROUPS.filter(g => !(isTeamMember && g.label === 'REFERRAL')).map((group, gi) => (
+            {FAQ_GROUPS.filter(g => {
+              if (isTeamMember && g.label === 'REFERRAL') return false
+              if (!isTeamMember && g.label === 'JOUW TEAM') return false
+              return true
+            }).map((group, gi) => (
               <div key={gi} style={{ marginBottom: 48 }}>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase' }}>{group.label}</p>
                 <div style={{ borderTop: '1px solid #374151' }}>

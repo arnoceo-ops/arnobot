@@ -93,6 +93,9 @@ export default function GeschiedenisPage() {
   const [shareLoading, setShareLoading] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
+  const [isTeamMember, setIsTeamMember] = useState(false)
+  const [sharedAnalyseIds, setSharedAnalyseIds] = useState<Set<string>>(new Set())
+  const [teamShareLoadingId, setTeamShareLoadingId] = useState<string | null>(null)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
 
@@ -104,6 +107,14 @@ export default function GeschiedenisPage() {
     fetch('/api/bot/coaching-analyses')
       .then(r => r.json())
       .then(data => setSavedAnalyses(data.analyses ?? []))
+      .catch(() => {})
+    fetch('/api/bot/team/status')
+      .then(r => r.json())
+      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+      .catch(() => {})
+    fetch('/api/bot/team/share-analyse')
+      .then(r => r.json())
+      .then(d => setSharedAnalyseIds(new Set(d.sharedIds ?? [])))
       .catch(() => {})
   }, [])
 
@@ -236,6 +247,25 @@ export default function GeschiedenisPage() {
     } finally {
       setShareLoading(null)
     }
+  }
+
+  async function toggleTeamShare(analyseId: string) {
+    setTeamShareLoadingId(analyseId)
+    const isShared = sharedAnalyseIds.has(analyseId)
+    try {
+      if (isShared) {
+        await fetch(`/api/bot/team/share-analyse?analyseId=${analyseId}`, { method: 'DELETE' })
+        setSharedAnalyseIds(prev => { const next = new Set(prev); next.delete(analyseId); return next })
+      } else {
+        await fetch('/api/bot/team/share-analyse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ analyseId }),
+        })
+        setSharedAnalyseIds(prev => new Set([...prev, analyseId]))
+      }
+    } catch {}
+    setTeamShareLoadingId(null)
   }
 
   async function runAnalyse(sessionIds?: string[]) {
@@ -790,6 +820,26 @@ export default function GeschiedenisPage() {
                 {expandedAnalyse === a.id && (
                   <div style={{ paddingBottom: 40, animation: 'fadein 0.3s ease' }}>
                     <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.analyse_text) }} />
+                    {isTeamMember && (
+                      <button
+                        onClick={() => toggleTeamShare(a.id)}
+                        disabled={teamShareLoadingId === a.id}
+                        style={{
+                          marginTop: 16,
+                          fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3,
+                          padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer',
+                          border: `1px solid ${sharedAnalyseIds.has(a.id) ? '#44cc88' : '#374151'}`,
+                          color: sharedAnalyseIds.has(a.id) ? '#44cc88' : '#9ca3af',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {teamShareLoadingId === a.id
+                          ? 'BEZIG...'
+                          : sharedAnalyseIds.has(a.id)
+                          ? '✓ GEDEELD MET MANAGER'
+                          : 'DEEL MET MANAGER'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
