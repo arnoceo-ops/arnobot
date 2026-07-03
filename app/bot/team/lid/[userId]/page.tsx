@@ -297,7 +297,7 @@ export default function LidPage() {
                         { key: 'actie', label: 'ACTIE', score: data.coaching.actie_score, diagnose: data.coaching.actie_diagnose },
                       ] as const).map(({ key, label: l, score, diagnose }) => (
                         <div key={key} style={{ background: '#1f2937', padding: '20px 24px', borderRadius: 4 }}>
-                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280', marginBottom: 12 }}>{l}</p>
+                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', marginBottom: 12 }}>{l}</p>
                           <ScoreBar score={score} />
                           {diagnose && <p style={{ ...body, fontSize: 13, color: '#9ca3af', marginTop: 8, lineHeight: 1.7 }}>{diagnose}</p>}
                         </div>
