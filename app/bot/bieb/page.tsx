@@ -434,7 +434,7 @@ export default function GeschiedenisPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: `clamp(80px,12vw,120px) clamp(16px,4vw,20px) ${hasSelected ? 100 : 80}px` }}>
 
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>BIEB</h1>
 
         {!loading && sessions.length > 0 && (
@@ -445,7 +445,7 @@ export default function GeschiedenisPage() {
               { label: 'ANALYSES', value: savedAnalyses.length },
             ].map(({ label, value }) => (
               <div key={label} style={{ background: '#1f2937', padding: 'clamp(16px,3vw,28px) clamp(8px,2vw,20px)', textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 'clamp(9px,2vw,13px)', letterSpacing: 'clamp(1px,0.5vw,4px)', color: '#f59e0b', marginBottom: 8 }}>{label}</div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 'clamp(9px,2vw,13px)', letterSpacing: 'clamp(1px,0.5vw,4px)', color: '#f59e0b', marginBottom: 8 }}>{label}</div>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(36px,9vw,64px)', color: '#f1f5f9', lineHeight: 1 }}>{value}</div>
               </div>
             ))}
@@ -639,7 +639,7 @@ export default function GeschiedenisPage() {
                 >
                   {session.summary && (
                     <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>
-                      <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>SYNTHESE</p>
+                      <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 400, fontFamily: "'Space Mono', monospace", letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>SYNTHESE</p>
                       <p style={{ color: '#9ca3af', fontSize: 15, fontFamily: "'Space Mono', monospace", lineHeight: 1.9, marginBottom: session.blog_suggestions?.length ? 24 : 0 }} dangerouslySetInnerHTML={{ __html: renderContent(session.summary) }} />
                       {session.blog_suggestions && session.blog_suggestions.length > 0 && (
                         <div style={{ borderTop: '1px solid #374151', paddingTop: 20 }}>

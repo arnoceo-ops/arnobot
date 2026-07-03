@@ -26,14 +26,14 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
     ? {}
     : { marginTop: 56, borderTop: '1px solid #374151', paddingTop: 40 }
 
-  const statLabel: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 11, letterSpacing: 3, color: '#f59e0b', marginBottom: 6 }
+  const statLabel: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 3, color: '#f59e0b', marginBottom: 6 }
   const statValue: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, lineHeight: 1 }
 
   return (
     <div style={wrapStyle}>
       {!inAccount && (
         <>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '16px', display: 'block' }}>REFERRAL</p>
+          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '16px', display: 'block' }}>REFERRAL</p>
           <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, fontWeight: 400, color: '#f1f5f9', margin: '0 0 8px', letterSpacing: 1 }}>Jouw referral code</h3>
         </>
       )}

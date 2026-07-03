@@ -28,7 +28,7 @@ export default function OptOutClient({ token, sig }: { token: string; sig: strin
       `}</style>
       <main style={{ background: '#111827', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
         <div style={{ maxWidth: 480, width: '100%' }}>
-          <p style={{ fontFamily: "'Space Mono', monospace", color: '#f59e0b', fontSize: 13, fontWeight: 700, letterSpacing: 4, marginBottom: 24 }}>
+          <p style={{ fontFamily: "'Space Mono', monospace", color: '#f59e0b', fontSize: 13, fontWeight: 400, letterSpacing: 4, marginBottom: 24 }}>
             ARNOBOT
           </p>
 
