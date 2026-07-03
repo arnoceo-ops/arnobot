@@ -314,7 +314,24 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
       if (n === 3) hint = 'salescanvas'
     }
 
-    const relevant = await getRelevantChunks(question, 15)
+    // Query augmentatie: vertaal de gebruikersvraag naar betere zoektermen voor de RAG
+    // Haiku-call om impliciete salesthema's te extrapoleren (bijv. "klanten via netwerk" → "referral systeem")
+    let ragQuery = question
+    if (!isWidget) {
+      try {
+        const ragRes = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 60,
+          system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
+          messages: [{ role: 'user', content: question }]
+        })
+        const augmented = getText(ragRes.content, '').trim()
+        if (augmented.length > 10) ragQuery = `${question} ${augmented}`
+      } catch {
+        // Fallback op originele vraag
+      }
+    }
+    const relevant = await getRelevantChunks(ragQuery, 15)
     const context = formatChunksForPrompt(relevant)
 
     const messages = [
