@@ -8,9 +8,9 @@ export interface ScorePoint {
 }
 
 const SERIES = [
-  { key: 'mindset_score' as keyof ScorePoint, color: '#f59e0b', label: 'MINDSET', offset: -1.5 },
-  { key: 'systeem_score' as keyof ScorePoint, color: '#60a5fa', label: 'SYSTEEM', offset: 0 },
-  { key: 'actie_score'   as keyof ScorePoint, color: '#34d399', label: 'ACTIE',   offset: 1.5 },
+  { key: 'mindset_score' as keyof ScorePoint, color: '#f59e0b', label: 'MINDSET', offset: -1.5, dash: undefined },
+  { key: 'systeem_score' as keyof ScorePoint, color: '#60a5fa', label: 'SYSTEEM', offset: 0,    dash: '6 4' as string | undefined },
+  { key: 'actie_score'   as keyof ScorePoint, color: '#34d399', label: 'ACTIE',   offset: 1.5,  dash: '2 4' as string | undefined },
 ]
 
 function curvePath(pts: { x: number; y: number }[]): string {
@@ -29,7 +29,7 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
 
   if (data.length === 0) return null
 
-  const W = 600, H = 200, PL = 28, PR = 12, PT = 34, PB = 32
+  const W = 600, H = 224, PL = 28, PR = 44, PT = 34, PB = 52
   const iW = W - PL - PR, iH = H - PT - PB
   const n = data.length
   const xAt = (i: number) => n === 1 ? PL + iW / 2 : PL + (i / (n - 1)) * iW
@@ -37,14 +37,31 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
 
   const activeSeries = SERIES.filter(s => data.some(d => d[s.key] != null))
 
+  // Eindwaarde-labels rechts van de plot — minimale y-afstand 15px afdwingen
+  const endLabels = activeSeries
+    .map(s => {
+      const val = data[data.length - 1][s.key]
+      if (val == null) return null
+      return { color: s.color, val, rawY: yAt(val as number, s.offset) }
+    })
+    .filter((l): l is { color: string; val: number; rawY: number } => l != null)
+    .sort((a, b) => a.rawY - b.rawY)
+
+  for (let i = 1; i < endLabels.length; i++) {
+    if (endLabels[i].rawY - endLabels[i - 1].rawY < 15) {
+      endLabels[i].rawY = endLabels[i - 1].rawY + 15
+    }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
         {activeSeries.map(s => (
           <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="24" height="10" style={{ display: 'block', flexShrink: 0 }}>
-              <line x1="0" y1="5" x2="24" y2="5" stroke={s.color} strokeWidth="2" strokeLinecap="round" />
-              <circle cx="12" cy="5" r="3" fill="#111827" stroke={s.color} strokeWidth="2" />
+            <svg width="32" height="10" style={{ display: 'block', flexShrink: 0 }}>
+              <line x1="0" y1="5" x2="32" y2="5" stroke={s.color} strokeWidth="2"
+                strokeLinecap="round" strokeDasharray={s.dash} />
+              <circle cx="16" cy="5" r="3" fill="#111827" stroke={s.color} strokeWidth="2" />
             </svg>
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280' }}>
               {s.label}
@@ -57,7 +74,7 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
         <defs>
           {activeSeries.map(s => (
             <linearGradient key={s.key} id={`pg-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={s.color} stopOpacity="0.14" />
+              <stop offset="0%" stopColor={s.color} stopOpacity="0.10" />
               <stop offset="100%" stopColor={s.color} stopOpacity="0" />
             </linearGradient>
           ))}
@@ -73,7 +90,7 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
           </g>
         ))}
 
-        {/* Pass 1: fills — laagste laag */}
+        {/* Pass 1: fills */}
         {activeSeries.map(s => {
           const pts = data
             .map((d, i) => d[s.key] != null ? { x: xAt(i), y: yAt(d[s.key] as number, s.offset) } : null)
@@ -85,7 +102,7 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
           return <path key={s.key} d={ap} fill={`url(#pg-${s.key})`} />
         })}
 
-        {/* Pass 2: lijnen — midden laag */}
+        {/* Pass 2: lijnen met dash-patronen */}
         {activeSeries.map(s => {
           const pts = data
             .map((d, i) => d[s.key] != null ? { x: xAt(i), y: yAt(d[s.key] as number, s.offset) } : null)
@@ -93,36 +110,51 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
           const lp = curvePath(pts)
           return lp ? (
             <path key={s.key} d={lp} fill="none" stroke={s.color} strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" />
+              strokeLinecap="round" strokeLinejoin="round"
+              strokeDasharray={s.dash} />
           ) : null
         })}
 
-        {/* Pass 3: punten + waarden — bovenste laag */}
+        {/* Pass 3: punten — alleen laatste punt met label */}
         {activeSeries.map(s => (
           <g key={s.key}>
             {data.map((d, i) => {
               if (d[s.key] == null) return null
               const x = xAt(i), y = yAt(d[s.key] as number, s.offset)
+              const isLast = i === data.length - 1
               return (
                 <g key={i}>
-                  <circle cx={x} cy={y} r="9" fill={s.color} opacity="0.08" />
-                  <circle cx={x} cy={y} r="4.5" fill="#111827" stroke={s.color} strokeWidth="2" />
-                  <text x={x} y={y - 12} fill={s.color} fontSize="14"
-                    textAnchor="middle" fontFamily="Bebas Neue, sans-serif" letterSpacing="1">
-                    {d[s.key]}
-                  </text>
+                  <circle cx={x} cy={y} r={isLast ? 10 : 8} fill={s.color} opacity="0.08" />
+                  <circle cx={x} cy={y} r={isLast ? 5 : 4} fill="#111827" stroke={s.color} strokeWidth="2" />
                 </g>
               )
             })}
           </g>
         ))}
 
-        {data.map((d, i) => (
-          <text key={i} x={xAt(i)} y={H - 6} fill="#4b5563" fontSize="11"
-            textAnchor="middle" fontFamily="Space Mono, monospace">
-            {new Date(d.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }).toUpperCase()}
+        {/* Eindwaarde-labels rechts van de plot */}
+        {endLabels.map((l, i) => (
+          <text key={i} x={W - PR + 7} y={l.rawY + 5} fill={l.color} fontSize="13"
+            textAnchor="start" fontFamily="Bebas Neue, sans-serif" letterSpacing="1">
+            {l.val}
           </text>
         ))}
+
+        {/* X-as datums, -45° gedraaid */}
+        {data.map((d, i) => {
+          const x = xAt(i)
+          const y = H - 10
+          const label = new Date(d.created_at)
+            .toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+            .toUpperCase()
+          return (
+            <text key={i} x={x} y={y} fill="#4b5563" fontSize="10"
+              textAnchor="end" fontFamily="Space Mono, monospace"
+              transform={`rotate(-45, ${x}, ${y})`}>
+              {label}
+            </text>
+          )
+        })}
       </svg>
     </div>
   )
