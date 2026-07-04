@@ -12,11 +12,11 @@ function formatLast(iso: string | null) {
 
 function activiteitsSignaal(sessions: number, last_activity: string | null, minIntervalDagen: number | null): { label: string; color: string; dot: string } {
   if (sessions === 0 || !last_activity) return { label: 'GEEN', color: '#374151', dot: '#374151' }
+  if (!minIntervalDagen) return { label: '', color: 'transparent', dot: 'transparent' }
   const dagen = Math.round((Date.now() - new Date(last_activity).getTime()) / 86400000)
-  const grens = minIntervalDagen ?? 14
-  if (dagen <= grens)            return { label: 'ACTIEF',    color: '#44cc88', dot: '#44cc88' }
-  if (dagen <= grens * 1.5)      return { label: 'INACTIEF',  color: '#f59e0b', dot: '#f59e0b' }
-  return                                { label: 'STAGNATIE', color: '#cc4444', dot: '#cc4444' }
+  if (dagen <= minIntervalDagen)        return { label: 'ACTIEF',    color: '#44cc88', dot: '#44cc88' }
+  if (dagen <= minIntervalDagen * 1.5)  return { label: 'INACTIEF',  color: '#f59e0b', dot: '#f59e0b' }
+  return                                       { label: 'STAGNATIE', color: '#cc4444', dot: '#cc4444' }
 }
 
 interface Member {
