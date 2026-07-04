@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import DownloadPdfButton from './DownloadPdfButton'
 
+export const dynamic = 'force-dynamic'
+
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
   textDecoration: 'none',
@@ -128,7 +130,7 @@ export default async function ArnoBotAdminPage({
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>
-          <a href="/api/admin/logout" style={{ color: '#4b5563', textDecoration: 'none', fontSize: 13, letterSpacing: 2, fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
+          <a href="/api/admin/logout" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px', letterSpacing: '3px', fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
         </div>
       </nav>
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
