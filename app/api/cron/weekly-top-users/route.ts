@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       <tr style="border-bottom:1px solid #1f2937;">
         <td style="padding:12px 16px;color:#6b7280;font-size:13px;">${i + 1}</td>
         <td style="padding:12px 16px;color:#f1f5f9;font-size:14px;">${naam}</td>
-        <td style="padding:12px 16px;color:#9ca3af;font-size:13px;">${email}</td>
+        <td style="padding:12px 16px;color:#9ca3af;font-size:13px;word-break:break-all;max-width:160px;">${email}</td>
         <td style="padding:12px 16px;color:#f59e0b;font-size:14px;font-weight:700;text-align:right;">${vragenCount}</td>
         <td style="padding:12px 16px;color:#9ca3af;font-size:14px;text-align:right;">${sessies}</td>
         <td style="padding:12px 16px;color:#9ca3af;font-size:14px;text-align:right;">${anal}</td>
