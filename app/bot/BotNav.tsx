@@ -29,12 +29,6 @@ const linkBase: React.CSSProperties = {
   fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3,
 }
 
-const linkPrimary: React.CSSProperties = {
-  ...linkBase,
-  borderBottom: '2px solid #f59e0b',
-  paddingBottom: 2,
-}
-
 export default function BotNav({ active }: Props) {
   const isMobile = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -128,7 +122,6 @@ export default function BotNav({ active }: Props) {
           .mob-menu a { color:#9ca3af; }
           .mob-menu a:hover { color:#f1f5f9; }
           .mob-menu .mob-active { color:#f59e0b; }
-          .mob-menu .mob-primary { border-bottom:2px solid #f59e0b; padding-bottom:2px; }
         `}</style>
         <nav className="mob-nav">
           <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
