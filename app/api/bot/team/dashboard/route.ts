@@ -110,5 +110,12 @@ export async function GET() {
     actie_score: coachingMap[m.user_id]?.actie_score ?? null,
   }))
 
+  enriched.sort((a, b) => {
+    if (!a.last_activity && !b.last_activity) return 0
+    if (!a.last_activity) return 1
+    if (!b.last_activity) return -1
+    return b.last_activity.localeCompare(a.last_activity)
+  })
+
   return NextResponse.json({ team, members: enriched })
 }
