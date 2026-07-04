@@ -361,7 +361,7 @@ export default function TeamClient() {
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400, tableLayout: 'fixed' }}>
                         <colgroup>
-                          <col style={{ width: 24 }} />
+                          <col style={{ width: minIntervalDagen ? 24 : 0 }} />
                           <col />
                           <col style={{ width: 80 }} />
                           <col style={{ width: 80 }} />
@@ -387,7 +387,7 @@ export default function TeamClient() {
                               onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
                               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
-                              <td style={{ padding: '16px 12px 16px 0', width: 16 }}>
+                              <td style={{ padding: minIntervalDagen ? '16px 12px 16px 0' : 0, width: minIntervalDagen ? 16 : 0, overflow: 'hidden' }}>
                                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
                               </td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
