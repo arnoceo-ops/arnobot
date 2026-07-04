@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   const total = count ?? 0
 
   if (total < MILESTONE) {
-    return NextResponse.json({ ok: true, active_users: total, milestone: MILESTONE, reached: false })
+    return NextResponse.json({ ok: true, skipped: true, active_users: total, milestone: MILESTONE, reached: false })
   }
 
   const ab = (num: string, title: string, body: string) =>

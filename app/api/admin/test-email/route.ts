@@ -43,11 +43,9 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${baseUrl}${adminItem.cron}`, {
       headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
     })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      return NextResponse.json({ error: body.error ?? `Cron mislukt (${res.status})` }, { status: 500 })
-    }
-    return NextResponse.json({ ok: true })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) return NextResponse.json({ error: body.error ?? `Cron mislukt (${res.status})` }, { status: 500 })
+    return NextResponse.json({ ok: true, skipped: body.skipped === true })
   }
 
   let template: { subject: string; html: string }

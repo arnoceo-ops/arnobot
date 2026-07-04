@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     .order('deactivated_at', { ascending: true })
 
   if (!users || users.length === 0) {
-    return NextResponse.json({ ok: true, message: 'Geen gebruikers te verwerken.' })
+    return NextResponse.json({ ok: true, skipped: true, message: 'Geen gebruikers te verwerken.' })
   }
 
   const rows = users.map(u => {

@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (new Date() < FIRST_RUN) {
-    return NextResponse.json({ ok: true, skipped: 'voor_startdatum', start: FIRST_RUN.toISOString() })
+    return NextResponse.json({ ok: true, skipped: true, reason: 'voor_startdatum', start: FIRST_RUN.toISOString() })
   }
 
   const now = new Date()
@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
     .select('user_id, profiel')
 
   const geldig = (profielen ?? []).filter(p => ROL_MAP[p.profiel?.rol] !== undefined)
-  if (!geldig.length) return NextResponse.json({ ok: true, kandidaten: 0 })
+  if (!geldig.length) return NextResponse.json({ ok: true, skipped: true, kandidaten: 0 })
 
   const userIds = geldig.map(p => p.user_id)
 

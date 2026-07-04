@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const coaching = coachingRes.data || []
 
   if (!logs.length) {
-    return NextResponse.json({ ok: true, message: 'Geen activiteit deze week' })
+    return NextResponse.json({ ok: true, skipped: true, message: 'Geen activiteit deze week' })
   }
 
   // Tel vragen, gesprekken, analyses en coachingsrapporten per user

@@ -17,7 +17,7 @@ const sectionLabel: React.CSSProperties = {
 export default function EmailTestClient() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [sending, setSending] = useState<string | null>(null)
-  const [results, setResults] = useState<Record<string, 'ok' | 'error'>>({})
+  const [results, setResults] = useState<Record<string, 'ok' | 'skipped' | 'error'>>({})
 
   useEffect(() => {
     fetch('/api/admin/test-email')
@@ -34,7 +34,8 @@ export default function EmailTestClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type }),
       })
-      setResults(r => ({ ...r, [type]: res.ok ? 'ok' : 'error' }))
+      const data = await res.json().catch(() => ({}))
+      setResults(r => ({ ...r, [type]: !res.ok ? 'error' : data.skipped ? 'skipped' : 'ok' }))
     } catch {
       setResults(r => ({ ...r, [type]: 'error' }))
     } finally {
@@ -58,13 +59,16 @@ export default function EmailTestClient() {
         gap: 24,
         background: '#1f2937',
         padding: '16px 24px',
-        borderLeft: `3px solid ${results[type] === 'ok' ? '#44cc88' : results[type] === 'error' ? '#cc2200' : '#374151'}`,
+        borderLeft: `3px solid ${results[type] === 'ok' ? '#44cc88' : results[type] === 'error' ? '#cc2200' : results[type] === 'skipped' ? '#6b7280' : '#374151'}`,
       }}>
         <p style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9', letterSpacing: 1, margin: 0 }}>{label}</p>
         <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, margin: 0 }}>{description}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {results[type] === 'ok' && (
             <span style={{ fontSize: 12, color: '#44cc88', letterSpacing: 2 }}>VERZONDEN</span>
+          )}
+          {results[type] === 'skipped' && (
+            <span style={{ fontSize: 12, color: '#6b7280', letterSpacing: 2 }}>OVERGESLAGEN</span>
           )}
           {results[type] === 'error' && (
             <span style={{ fontSize: 12, color: '#cc2200', letterSpacing: 2 }}>FOUT</span>
