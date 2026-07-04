@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const { userId: managerId } = await auth()
   if (!managerId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const { targetUserId, aandachtspunt, notitie } = await req.json()
+  const { targetUserId, aandachtspunt, notitie, agenda } = await req.json()
   if (!targetUserId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
 
   const { data: managerMember } = await supabase
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
     actie_score: coaching?.actie_score ?? null,
     aandachtspunt: aandachtspunt || null,
     notitie: notitie || null,
+    agenda: agenda || null,
   }
 
   const { error } = existing

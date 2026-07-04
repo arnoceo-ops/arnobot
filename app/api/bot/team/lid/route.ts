@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('arnobot_1on1_log')
-      .select('id, aandachtspunt, notitie, mindset_score, systeem_score, actie_score, created_at')
+      .select('id, aandachtspunt, agenda, notitie, mindset_score, systeem_score, actie_score, created_at')
       .eq('manager_id', managerId)
       .eq('member_id', targetUserId)
       .order('created_at', { ascending: false })

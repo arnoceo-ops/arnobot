@@ -28,6 +28,7 @@ interface SharedAnalyse {
 interface OneononeLog {
   id: string
   aandachtspunt: string | null
+  agenda: string | null
   notitie: string | null
   mindset_score: number | null
   systeem_score: number | null
@@ -130,6 +131,7 @@ export default function LidPage() {
   const [saved, setSaved] = useState(false)
 
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
   const [verwijderBevestig, setVerwijderBevestig] = useState(false)
   const [verwijderLoading, setVerwijderLoading] = useState(false)
 
@@ -205,7 +207,7 @@ export default function LidPage() {
       const res = await fetch('/api/bot/team/1on1/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: userId, aandachtspunt, notitie: '' }),
+        body: JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '' }),
       })
       const d = await res.json()
       if (!res.ok) setAgendaError(d.error || 'Opslaan mislukt')
@@ -324,9 +326,19 @@ export default function LidPage() {
                     </p>
 
                     {/* 1:1 voorbereiding */}
-                    <button className="btn-1on1" onClick={genereerAgenda} disabled={agendaLoading}>
-                      {agendaLoading ? 'ARNO BEREIDT VOOR...' : 'BEREID 1:1 VOOR'}
-                    </button>
+                    {(() => {
+                      const today = new Date().toISOString().slice(0, 10)
+                      const alGedaanVandaag = data.history.some(h => h.created_at.slice(0, 10) === today)
+                      return alGedaanVandaag ? (
+                        <button className="btn-save" onClick={genereerAgenda} disabled={agendaLoading}>
+                          {agendaLoading ? 'ARNO BEREIDT VOOR...' : 'GENEREER OPNIEUW'}
+                        </button>
+                      ) : (
+                        <button className="btn-1on1" onClick={genereerAgenda} disabled={agendaLoading}>
+                          {agendaLoading ? 'ARNO BEREIDT VOOR...' : 'BEREID 1:1 VOOR'}
+                        </button>
+                      )
+                    })()}
 
                     {agendaError && <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>{agendaError}</p>}
 
@@ -342,9 +354,17 @@ export default function LidPage() {
                             {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
                           </button>
                         ) : (
-                          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
-                            ✓ OPGESLAGEN
-                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
+                              ✓ OPGESLAGEN
+                            </p>
+                            <button
+                              onClick={() => { setAgenda(''); setSaved(false) }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
+                            >
+                              SLUITEN
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -376,6 +396,21 @@ export default function LidPage() {
                           </div>
                           {h.aandachtspunt && (
                             <p style={{ ...body, marginBottom: 12 }}>{h.aandachtspunt}</p>
+                          )}
+                          {h.agenda && (
+                            <div style={{ marginBottom: 12 }}>
+                              <button
+                                onClick={() => setExpandedHistory(expandedHistory === h.id ? null : h.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: expandedHistory === h.id ? '#f59e0b' : '#6b7280', padding: 0 }}
+                              >
+                                {expandedHistory === h.id ? '↑ VERBERG AGENDA' : '↓ TOON VOLLEDIGE AGENDA'}
+                              </button>
+                              {expandedHistory === h.id && (
+                                <div style={{ marginTop: 12, borderLeft: '3px solid #374151', paddingLeft: 16 }}>
+                                  <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(h.agenda) }} />
+                                </div>
+                              )}
+                            </div>
                           )}
                           {h.notitie && !isNoteOpen && (
                             <p style={{ ...body, fontSize: 13, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
