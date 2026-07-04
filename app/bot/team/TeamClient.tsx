@@ -334,7 +334,7 @@ export default function TeamClient() {
               </div>
 
               {teamScores.length > 0 && (
-                <div style={section}>
+                <div style={{ ...section, borderTop: 'none', paddingTop: 0 }}>
                   <span style={label}>TEAMSCORES</span>
                   <ProgressieChart history={teamScores} />
                 </div>
