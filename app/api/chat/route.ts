@@ -83,6 +83,18 @@ const userRateLimit = new Ratelimit({
   prefix: 'arnobot:user',
 })
 
+async function notifyRateLimit(identifier: string, reden: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+  const text = `Rate limit geraakt op arno.bot\n\nGebruiker: ${identifier}\nReden: ${reden}`
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  }).catch(() => {})
+}
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const supabase = createClient(
@@ -233,7 +245,18 @@ export async function POST(req: NextRequest) {
       // Per-user rate limit: max 30 berichten per uur
       const { success: userOk } = await userRateLimit.limit(userId)
       if (!userOk) {
+        await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
         return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+      }
+
+      // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd)
+      if (userId !== process.env.ARNOBOT_OWNER_USER_ID && typeof clientSessionId === 'string' && clientSessionId.length > 0) {
+        const lockKey = `arnobot:active:${userId}`
+        const activeSid = await redis.get<string>(lockKey)
+        if (activeSid && activeSid !== clientSessionId) {
+          return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
+        }
+        await redis.set(lockKey, clientSessionId, { ex: 600 })
       }
     }
 

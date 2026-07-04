@@ -645,6 +645,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             setBlocked(true)
             setDagelijksTeller(25)
             setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
+          } else if (res.status === 429 && data.error === 'dual_session') {
+            setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
           } else {
             setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
           }
