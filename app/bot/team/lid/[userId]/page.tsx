@@ -262,6 +262,13 @@ export default function LidPage() {
         .notitie-input::placeholder { color:#4b5563; }
         .btn-note { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:6px 16px; background:none; border:1px solid #374151; color:#6b7280; border-radius:999px; cursor:pointer; transition:all 0.15s; }
         .btn-note:hover { border-color:#9ca3af; color:#9ca3af; }
+        .agenda-loading { display:flex; align-items:center; gap:16px; margin-top:20px; }
+        .loading-dots { display:flex; gap:6px; }
+        .loading-dots span { width:7px; height:7px; border-radius:50%; background:#f59e0b; animation:dot-pulse 1.2s infinite; }
+        .loading-dots span:nth-child(2) { animation-delay:0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay:0.4s; }
+        @keyframes dot-pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.85)} 40%{opacity:1;transform:scale(1)} }
+        .loading-text { font-family:'Space Mono',monospace; font-size:13px; letter-spacing:4px; color:#6b7280; }
       `}</style>
 
       <BotNav active="team" />
@@ -339,6 +346,15 @@ export default function LidPage() {
                         </button>
                       )
                     })()}
+
+                    {agendaLoading && (
+                      <div className="agenda-loading">
+                        <div className="loading-dots">
+                          <span /><span /><span />
+                        </div>
+                        <span className="loading-text">ARNO BEREIDT VOOR</span>
+                      </div>
+                    )}
 
                     {agendaError && <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>{agendaError}</p>}
 
