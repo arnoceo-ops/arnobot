@@ -26,7 +26,6 @@ function curvePath(pts: { x: number; y: number }[]): string {
 export function ProgressieChart({ history }: { history: ScorePoint[] }) {
   const data = [...history]
     .filter(h => h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
-    .reverse()
 
   if (data.length === 0) return null
 
