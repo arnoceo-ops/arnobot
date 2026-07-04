@@ -30,7 +30,7 @@ export async function GET() {
     .select('id, analyse_text, created_at')
     .eq('team_id', managerMember.team_id)
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(5)
 
   return NextResponse.json({ analyses: analyses ?? [] })
 }
@@ -107,6 +107,18 @@ ${teamData}`
   await supabase
     .from('arnobot_team_analyses')
     .insert({ team_id: managerMember.team_id, analyse_text: analyse })
+
+  // Houd maximaal 5 analyses per team — verwijder de oudste
+  const { data: all } = await supabase
+    .from('arnobot_team_analyses')
+    .select('id')
+    .eq('team_id', managerMember.team_id)
+    .order('created_at', { ascending: false })
+
+  if (all && all.length > 5) {
+    const toDelete = all.slice(5).map(r => r.id)
+    await supabase.from('arnobot_team_analyses').delete().in('id', toDelete)
+  }
 
   return NextResponse.json({ analyse })
 }
