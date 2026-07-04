@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import type { CSSProperties } from 'react'
+
+export const dynamic = 'force-dynamic'
 import { PrintButton } from './PrintButton'
 
 export default async function EmailsOverzichtPage() {

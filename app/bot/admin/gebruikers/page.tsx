@@ -1,6 +1,8 @@
 ﻿import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+
+export const dynamic = 'force-dynamic'
 import { clerkClient } from '@clerk/nextjs/server'
 import SearchLinkedIn from './SearchLinkedIn'
 import TierToggle from './TierToggle'

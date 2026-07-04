@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+
+export const dynamic = 'force-dynamic'
 import EvaluatiesClient from './EvaluatiesClient'
 
 const navLinkStyle = (active: boolean): React.CSSProperties => ({

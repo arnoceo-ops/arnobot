@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import EmailTestClient from './EmailTestClient'
 
+export const dynamic = 'force-dynamic'
+
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
   textDecoration: 'none',
