@@ -15,12 +15,13 @@ function formatLast(iso: string | null) {
   return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 }
 
-function activiteitsSignaal(sessions: number, last_activity: string | null): { label: string; color: string; dot: string } {
+function activiteitsSignaal(sessions: number, last_activity: string | null, minIntervalDagen: number | null): { label: string; color: string; dot: string } {
   if (sessions === 0 || !last_activity) return { label: 'GEEN', color: '#374151', dot: '#374151' }
   const dagen = Math.round((Date.now() - new Date(last_activity).getTime()) / 86400000)
-  if (dagen <= 7)  return { label: 'ACTIEF',    color: '#44cc88', dot: '#44cc88' }
-  if (dagen <= 14) return { label: 'INACTIEF',  color: '#f59e0b', dot: '#f59e0b' }
-  return               { label: 'STAGNATIE', color: '#cc4444', dot: '#cc4444' }
+  const grens = minIntervalDagen ?? 14
+  if (dagen <= grens)            return { label: 'ACTIEF',    color: '#44cc88', dot: '#44cc88' }
+  if (dagen <= grens * 1.5)      return { label: 'INACTIEF',  color: '#f59e0b', dot: '#f59e0b' }
+  return                                { label: 'STAGNATIE', color: '#cc4444', dot: '#cc4444' }
 }
 
 interface Member {
@@ -374,7 +375,7 @@ export default function TeamClient() {
                         </thead>
                         <tbody>
                           {members.map(m => {
-                            const signaal = activiteitsSignaal(m.sessions, m.last_activity)
+                            const signaal = activiteitsSignaal(m.sessions, m.last_activity, minIntervalDagen)
                             const onderRitme = isOnderRitme(m.last_activity)
                             return (
                             <tr
@@ -420,7 +421,7 @@ export default function TeamClient() {
                 <span style={label}>COLLECTIEVE ANALYSE</span>
                 <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, margin: '0 0 16px 0' }}>TEAM SPOTLIGHT</h2>
                 <p style={{ ...body, marginBottom: 32 }}>
-                  Arno analyseert de collectieve gesprekken van je team: gemeenschappelijke patronen, sterktes en groeikansen.
+                  ArnoBot analyseert de collectieve gesprekken van je team: gemeenschappelijke patronen, sterktes en groeikansen.
                 </p>
                 <button
                   onClick={generateSpotlight}
