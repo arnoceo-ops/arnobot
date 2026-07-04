@@ -54,8 +54,8 @@ export default async function ArnoBotAdminPage({
 
   const params = await searchParams
   const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const from = parseDate(params.from || '') || yesterday
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const from = parseDate(params.from || '') || sevenDaysAgo
   const to = parseDate(params.to || '') || today
   const sort = params.sort || 'date_desc'
   const naamParam = params.naam || ''
@@ -128,7 +128,7 @@ export default async function ArnoBotAdminPage({
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>
-          <a href="/api/admin/logout" style={{ color: '#4b5563', textDecoration: 'none', fontSize: 13, letterSpacing: 2, fontWeight: 700, padding: '6px 12px' }}>UITLOG</a>
+          <a href="/api/admin/logout" style={{ color: '#4b5563', textDecoration: 'none', fontSize: 13, letterSpacing: 2, fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
         </div>
       </nav>
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
