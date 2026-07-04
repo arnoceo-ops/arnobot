@@ -331,7 +331,7 @@ export default function TeamClient() {
 
               {teamScores.length > 0 && (
                 <div style={section}>
-                  <span style={label}>TEAM SCORES</span>
+                  <span style={label}>TEAMSCORES</span>
                   <ProgressieChart history={teamScores} />
                 </div>
               )}
@@ -404,18 +404,6 @@ export default function TeamClient() {
                         </tbody>
                       </table>
                     </div>
-                    {minIntervalDagen && (() => {
-                      const count = members.filter(m => isOnderRitme(m.last_activity)).length
-                      return count > 0 ? (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#f59e0b', marginTop: 16 }}>
-                          {count} van {members.length} {count === 1 ? 'lid zit' : 'leden zitten'} onder het ritme.
-                        </p>
-                      ) : (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#44cc88', marginTop: 16 }}>
-                          Alle leden zitten op ritme.
-                        </p>
-                      )
-                    })()}
                   </>
                 )}
               </div>
