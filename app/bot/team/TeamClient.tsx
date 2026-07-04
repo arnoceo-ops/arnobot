@@ -375,7 +375,7 @@ export default function TeamClient() {
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
                             {['', 'NAAM', 'MSA', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
-                              <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
+                              <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
