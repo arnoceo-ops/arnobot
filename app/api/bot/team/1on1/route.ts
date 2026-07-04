@@ -145,13 +145,10 @@ Noem één of twee concrete sterke punten op basis van de scores en diagnoses. W
 AANDACHTSPUNT
 Het voornaamste groeithema dit gesprek. Koppel het aan de laagste score of het patroon in de analyse. Één aandachtspunt, niet meerdere.
 
-VRAGEN OM TE STELLEN
-Geef precies drie gerichte vragen die de manager kan stellen. Vragen die de verkoper aan het denken zetten, niet vragen waarop ja of nee het antwoord is.
+ARNO ADVISEERT
+Geef concrete instructies voor de manager: welke vragen stelt hij letterlijk, en welk gedrag observeert hij actief in dit gesprek of de komende week. Schrijf dit als directe coaching aan de manager. Niet als twee aparte blokken, maar als één samenhangende aanbeveling van maximaal vijf zinnen.
 
-WAT TE OBSERVEREN
-Twee concrete dingen die de manager kan letten op in dit gesprek of in de komende week.
-
-Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop. Houd elke sectie beknopt: maximaal 3 zinnen per sectie. Zorg dat alle vier de secties altijd volledig aanwezig zijn.
+Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop. Zorg dat alle drie de secties altijd volledig aanwezig zijn.
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."`
 

@@ -56,7 +56,7 @@ function MiniChart({ points, label, color }: { points: MiniPoint[]; label: strin
   return (
     <div style={{ background: '#1f2937', borderRadius: 4, padding: '14px 14px 8px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>
+        <span className="mc-label" style={{ fontFamily: "'Space Mono',monospace", fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>
           {label}
         </span>
         <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: 1, lineHeight: 1, color }}>

@@ -251,24 +251,36 @@ export default function CoachingClient({ userId }: Props) {
         .print-only { display: none; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { background: #111827 !important; }
+          body { background: #ffffff !important; color: #111827 !important; }
           .no-print { display: none !important; }
           .print-only { display: block !important; }
-          a { color: inherit !important; text-decoration: none !important; }
-          .blog-item { border-left-color: #f59e0b !important; }
-          .coaching-section { page-break-inside: avoid; }
-          .ontwikkelpunt { page-break-inside: avoid; }
+          h1 { color: #111827 !important; }
+          .msa-score-number { color: #111827 !important; }
+          .msa-card { background: #f1f5f9 !important; }
+          .msa-dot-empty { border-color: #9ca3af !important; }
+          .coaching-label { color: #f59e0b !important; }
+          .coaching-body { color: #374151 !important; }
+          .pijlar-tag { color: #6b7280 !important; }
+          .ontwikkelpunt-text { color: #111827 !important; }
+          .coaching-section { border-top-color: #e5e7eb !important; page-break-inside: avoid; }
+          .ontwikkelpunt { border-bottom-color: #e5e7eb !important; page-break-inside: avoid; }
           .msa-grid { page-break-inside: avoid; }
+          .blog-item { color: #111827 !important; border-left-color: #f59e0b !important; background: transparent !important; text-decoration: underline !important; text-decoration-color: #f59e0b !important; }
+          .blog-reden { color: #6b7280 !important; border-left-color: #e5e7eb !important; }
+          .pg-grid > div { background: #f1f5f9 !important; }
+          .mc-label { color: #374151 !important; }
+          svg circle[fill="#1f2937"] { fill: #f1f5f9 !important; }
+          a { text-decoration-color: #f59e0b; }
         }
       `}</style>
 
       <div className="no-print"><BotNav active="coaching" /></div>
 
       <div className="print-only" style={{ maxWidth: 812, margin: '0 auto', padding: '40px clamp(16px,4vw,20px) 0' }}>
-        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: 6, lineHeight: 1, color: '#f1f5f9', marginBottom: 6 }}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: 6, lineHeight: 1, color: '#111827', marginBottom: 6 }}>
           ARNO<span style={{ color: '#f59e0b' }}>BOT</span>
         </p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 12 }}>COACHING</h1>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, lineHeight: 1, color: '#111827', marginBottom: 12 }}>COACHING</h1>
         {firstName && (
           <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#f59e0b', marginBottom: 4 }}>{firstName.toUpperCase()}</p>
         )}
@@ -290,8 +302,10 @@ export default function CoachingClient({ userId }: Props) {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 16 }}>COACHING</h1>
+        <div className="no-print">
+          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 16 }}>COACHING</h1>
+        </div>
 
         {isTeamMember && (
           <div className="no-print" style={{ background: '#1f2937', borderLeft: '3px solid #374151', padding: '16px 24px', marginBottom: 32 }}>
@@ -481,7 +495,7 @@ export default function CoachingClient({ userId }: Props) {
                     <div key={i} style={{ marginBottom: 8 }}>
                       <a href={b.url} target="_blank" rel="noopener noreferrer" className="blog-item">{b.title}</a>
                       {b.reden && (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', lineHeight: 1.8, padding: '10px 20px 4px', borderLeft: '3px solid #1f2937' }}
+                        <p className="blog-reden" style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', lineHeight: 1.8, padding: '10px 20px 4px', borderLeft: '3px solid #1f2937' }}
                           dangerouslySetInnerHTML={{ __html: renderMd(b.reden) }}
                         />
                       )}
