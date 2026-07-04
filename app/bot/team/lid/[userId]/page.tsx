@@ -467,13 +467,13 @@ export default function LidPage() {
               )}
 
               {/* Verwijderen */}
-              <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 48 }}>
+              <div style={{ borderTop: '1px solid #1f2937', paddingTop: 32, marginTop: 48 }}>
                 {!verwijderBevestig ? (
                   <button
                     onClick={() => setVerwijderBevestig(true)}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', minWidth: 260, whiteSpace: 'nowrap', background: 'none', border: '1px solid #cc2200', color: '#cc2200', borderRadius: 999, cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#4b5563', padding: 0, textDecoration: 'underline', textDecorationColor: '#374151' }}
                   >
-                    VERWIJDER UIT TEAM
+                    verwijder uit team
                   </button>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
