@@ -30,6 +30,46 @@ interface Member {
   sessions: number
   last_activity: string | null
   analyses: number
+  mindset_score: number | null
+  systeem_score: number | null
+  actie_score: number | null
+}
+
+function msaTotal(m: Member): number | null {
+  if (m.mindset_score == null || m.systeem_score == null || m.actie_score == null) return null
+  return Math.max(1, Math.ceil((m.mindset_score * m.systeem_score * m.actie_score) / 1.25))
+}
+
+function TeamMSABars({ members }: { members: Member[] }) {
+  const scored = members.filter(m => m.mindset_score != null && m.systeem_score != null && m.actie_score != null)
+  if (scored.length === 0) return null
+  const avg = (key: 'mindset_score' | 'systeem_score' | 'actie_score') =>
+    scored.reduce((s, m) => s + (m[key] as number), 0) / scored.length
+  const dims = [
+    { label: 'MINDSET', color: '#f59e0b', value: avg('mindset_score') },
+    { label: 'SYSTEEM', color: '#60a5fa', value: avg('systeem_score') },
+    { label: 'ACTIE',   color: '#34d399', value: avg('actie_score')   },
+  ]
+  return (
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
+        {dims.map(d => (
+          <div key={d.label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 3, color: d.color }}>{d.label}</span>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 1, color: '#f1f5f9' }}>{d.value.toFixed(1)} / 5</span>
+            </div>
+            <div style={{ height: 6, background: '#1e293b', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: `${(d.value / 5) * 100}%`, height: '100%', background: d.color, borderRadius: 3, transition: 'width 0.6s ease' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>
+        Gemiddelde van {scored.length} van {members.length} {members.length === 1 ? 'lid' : 'leden'} met coaching
+      </p>
+    </div>
+  )
 }
 
 interface TeamAnalyse {
@@ -319,6 +359,13 @@ export default function TeamClient() {
                 </div>
               </div>
 
+              {members.some(m => m.mindset_score != null) && (
+                <div style={section}>
+                  <span style={label}>TEAM COACHINGPROFIEL</span>
+                  <TeamMSABars members={members} />
+                </div>
+              )}
+
               <div style={section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
                   <span style={label}>TEAMLEDEN ({members.length})</span>
@@ -346,7 +393,7 @@ export default function TeamClient() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
-                            {['', 'NAAM', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
+                            {['', 'NAAM', 'MSA', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
                               <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
                             ))}
                           </tr>
@@ -367,6 +414,9 @@ export default function TeamClient() {
                                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
                               </td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
+                              <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, color: msaTotal(m) != null ? '#f1f5f9' : '#374151' }}>
+                                {msaTotal(m) ?? '·'}
+                              </td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280' }}>{m.sessions}</td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
                               <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af' }}>{formatLast(m.last_activity)}</td>

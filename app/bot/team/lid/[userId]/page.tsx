@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
+import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 
 interface Coaching {
   mindset_score: number | null
@@ -303,6 +304,13 @@ export default function LidPage() {
                         </div>
                       ))}
                     </div>
+
+                    {data.history && data.history.some(h => h.mindset_score != null || h.systeem_score != null || h.actie_score != null) && (
+                      <div style={{ marginBottom: 32 }}>
+                        <p style={{ ...label, marginBottom: 16 }}>PROGRESSIE</p>
+                        <ProgressieChart history={data.history} />
+                      </div>
+                    )}
 
                     {data.coaching.voortgang && (
                       <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>

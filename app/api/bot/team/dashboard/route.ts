@@ -35,7 +35,7 @@ export async function GET() {
   const memberIds = members.map(m => m.user_id)
 
   // Fetch stats for all members in parallel
-  const [sessionsRes, logsRes, analysesRes, profilesRes] = await Promise.all([
+  const [sessionsRes, logsRes, analysesRes, profilesRes, coachingRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('user_id, created_at')
@@ -52,6 +52,10 @@ export async function GET() {
     supabase
       .from('arnobot_blog_profiles')
       .select('user_id, profiel')
+      .in('user_id', memberIds),
+    supabase
+      .from('arnobot_coaching')
+      .select('user_id, mindset_score, systeem_score, actie_score')
       .in('user_id', memberIds),
   ])
 
@@ -87,6 +91,11 @@ export async function GET() {
     if (p.profiel?.rol) profielRolMap[p.user_id] = p.profiel.rol
   }
 
+  const coachingMap: Record<string, { mindset_score: number | null; systeem_score: number | null; actie_score: number | null }> = {}
+  for (const c of coachingRes.data ?? []) {
+    coachingMap[c.user_id] = { mindset_score: c.mindset_score, systeem_score: c.systeem_score, actie_score: c.actie_score }
+  }
+
   const enriched = members.map(m => ({
     user_id: m.user_id,
     role: m.role,
@@ -96,6 +105,9 @@ export async function GET() {
     sessions: sessionCounts[m.user_id] ?? 0,
     last_activity: lastActivity[m.user_id] ?? null,
     analyses: analysesCounts[m.user_id] ?? 0,
+    mindset_score: coachingMap[m.user_id]?.mindset_score ?? null,
+    systeem_score: coachingMap[m.user_id]?.systeem_score ?? null,
+    actie_score: coachingMap[m.user_id]?.actie_score ?? null,
   }))
 
   return NextResponse.json({ team, members: enriched })
