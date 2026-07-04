@@ -112,7 +112,7 @@ export async function POST() {
     const { subject, html } = getEmailTemplate('admin_derde_trial', naam)
     await resend.emails.send({
       from: 'ArnoBot <noreply@arno.bot>',
-      to: 'pannekoek@arno.bot',
+      to: 'arno@arno.bot',
       subject,
       html,
     }).catch(() => {})
