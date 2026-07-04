@@ -142,8 +142,8 @@ export default function BotNav({ active }: Props) {
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-primary">ARNOBOT</Link>}
-            {active === 'bieb'     ? <span className="mob-active">BIEB</span>     : <Link href="/bot/bieb" className="mob-primary">BIEB</Link>}
-            {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-primary">COACHING</Link>}
+            {active === 'bieb'     ? <span className="mob-active">BIEB</span>     : <Link href="/bot/bieb">BIEB</Link>}
+            {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching">COACHING</Link>}
             {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
@@ -165,10 +165,10 @@ export default function BotNav({ active }: Props) {
             : <Link href="/bot" style={linkPrimary}>ARNOBOT</Link>}
           {active === 'bieb'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>BIEB</span>
-            : <Link href="/bot/bieb" style={linkPrimary}>BIEB</Link>}
+            : <Link href="/bot/bieb" style={linkBase}>BIEB</Link>}
           {active === 'coaching'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
-            : <Link href="/bot/coaching" style={linkPrimary}>COACHING</Link>}
+            : <Link href="/bot/coaching" style={linkBase}>COACHING</Link>}
           {isBouwer && (active === 'team'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
             : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}
