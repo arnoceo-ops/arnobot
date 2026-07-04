@@ -316,7 +316,7 @@ export default function LidPage() {
 
                     {data.coaching.voortgang && (
                       <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>VOORTGANG</p>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>SYNTHESE</p>
                         <p style={body}>{data.coaching.voortgang}</p>
                       </div>
                     )}
