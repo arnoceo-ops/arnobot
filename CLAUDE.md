@@ -9,6 +9,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Controleer of alle API-routes nog auth hebben (nieuwe routes kunnen dit missen)
 - Check of error-responses nog geen interne details lekken
 - Controleer `middleware.ts` op volledigheid van scanner-blokkering
+- **Post-launch taak (nog niet gedaan):** RLS inschakelen in Supabase met Clerk JWT-integratie als defense-in-depth. Niet uitvoeren vóór of vlak na livegang — verkeerde policy maakt data onzichtbaar voor gebruikers.
 
 ### 2. Dependencies & tooling
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Sanity?
@@ -39,6 +40,18 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 ### 7. Beveiligingsheaders
 - Test `arno.bot` op [securityheaders.com](https://securityheaders.com) — target grade A
 - Test op [observatory.mozilla.org](https://observatory.mozilla.org)
+
+---
+
+## Supabase — gebruikersdata queries — ALTIJD
+
+Elke query op een tabel met gebruikersdata (arnobot_blog_sessions, arnobot_rds_logs, arnobot_analyses, arnobot_coaching, arnobot_coaching_scores, arnobot_1on1_log, arnobot_blog_profiles, approved_users) vereist een expliciete user-filter:
+
+```typescript
+.eq('user_id', userId)  // userId altijd uit Clerk auth(), nooit uit request body
+```
+
+Bij code review: controleer elke nieuwe query op deze filter. Ontbrekende filter = potentiële IDOR.
 
 ---
 
