@@ -152,7 +152,7 @@ WAT TE OBSERVEREN
 Twee concrete dingen die de manager kan letten op in dit gesprek of in de komende week.
 
 Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop.
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."`
 
   const response = await anthropic.messages.create({

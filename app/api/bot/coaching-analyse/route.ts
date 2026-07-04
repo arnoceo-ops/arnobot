@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     )
     .join('\n\n')
 
-  const systemPrompt = `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Geen accenten op woorden voor nadruk. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
+  const systemPrompt = `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Geen accenten op woorden voor nadruk. Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
   const userContent = isDelta
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Benoem concreet wat er nieuw is, wat er doorgebroken is, en wat de volgende stap is. Max 3 alinea's.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
