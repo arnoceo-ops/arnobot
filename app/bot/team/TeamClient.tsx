@@ -418,11 +418,21 @@ export default function TeamClient() {
                   ArnoBot analyseert de collectieve gesprekken van je team: gemeenschappelijke patronen, sterktes en groeikansen.
                 </p>
                 {(() => {
-                  const dagenSinds = teamAnalyses.length > 0
-                    ? (Date.now() - new Date(teamAnalyses[0].created_at).getTime()) / 86400000
-                    : null
-                  const blokkeerd = dagenSinds !== null && dagenSinds < 7
-                  const dagenRest = blokkeerd && dagenSinds !== null ? Math.ceil(7 - dagenSinds) : 0
+                  // Nieuwe analyse mogelijk vanaf maandag 5:00 lokale tijd
+                  const now = new Date()
+                  const dayOfWeek = now.getDay() // 0=zo, 1=ma
+                  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+                  const weekStart = new Date(now)
+                  weekStart.setDate(now.getDate() - daysFromMonday)
+                  weekStart.setHours(5, 0, 0, 0)
+                  if (now < weekStart) weekStart.setDate(weekStart.getDate() - 7)
+
+                  const blokkeerd = teamAnalyses.length > 0 &&
+                    new Date(teamAnalyses[0].created_at) >= weekStart
+
+                  const nextMonday = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+                  const nextMondayLabel = nextMonday.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+
                   const uitgeschakeld = members.length < 2 || blokkeerd
                   return (
                     <>
@@ -443,7 +453,7 @@ export default function TeamClient() {
                       )}
                       {blokkeerd && (
                         <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>
-                          Er is al een analyse van deze week. Volgende analyse mogelijk over {dagenRest} {dagenRest === 1 ? 'dag' : 'dagen'}.
+                          Er is al een analyse van deze week. Nieuwe analyse beschikbaar maandag {nextMondayLabel} vanaf 5:00.
                         </p>
                       )}
                     </>
