@@ -157,7 +157,7 @@ Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot"
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 1200,
+    max_tokens: 1800,
     system: systemPrompt,
     messages: [{ role: 'user', content: context }],
   })
