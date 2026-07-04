@@ -16,6 +16,7 @@ function buildCSP(nonce: string, allowWasm = false): string {
     "base-uri 'self'",
     "frame-ancestors 'none'",
     "form-action 'self' https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://app.feedblitz.com",
+    "report-uri /api/csp-report",
   ].join('; ')
 }
 
