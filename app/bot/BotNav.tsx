@@ -141,7 +141,7 @@ export default function BotNav({ active }: Props) {
         </nav>
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
-            {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-primary">ARNOBOT</Link>}
+            {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot">ARNOBOT</Link>}
             {active === 'bieb'     ? <span className="mob-active">BIEB</span>     : <Link href="/bot/bieb">BIEB</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching">COACHING</Link>}
             {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
@@ -162,7 +162,7 @@ export default function BotNav({ active }: Props) {
         <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
           {active === 'bot'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
-            : <Link href="/bot" style={linkPrimary}>ARNOBOT</Link>}
+            : <Link href="/bot" style={linkBase}>ARNOBOT</Link>}
           {active === 'bieb'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>BIEB</span>
             : <Link href="/bot/bieb" style={linkBase}>BIEB</Link>}
