@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import DownloadPdfButton from '../DownloadPdfButton'
 
 export const dynamic = 'force-dynamic'
-import DownloadPdfButton from '../DownloadPdfButton'
 
 type LogRow = {
   id: string
@@ -49,7 +49,7 @@ export default async function AdminWidgetPage({
   const params = await searchParams
   const today = new Date().toISOString().slice(0, 10)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const from = parseDate(params.from || '') || today
+  const from = parseDate(params.from || '') || sevenDaysAgo
   const to = parseDate(params.to || '') || today
   const sort = params.sort || 'date_desc'
 
@@ -95,7 +95,7 @@ export default async function AdminWidgetPage({
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(true)}>ARNO.BLOG</a>
-          <a href="/api/admin/logout" style={{ color: '#4b5563', textDecoration: 'none', fontSize: 13, letterSpacing: 2, fontWeight: 700, padding: '6px 12px' }}>UITLOG</a>
+          <a href="/api/admin/logout" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px', letterSpacing: '3px', fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
         </div>
       </nav>
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px' }}>
