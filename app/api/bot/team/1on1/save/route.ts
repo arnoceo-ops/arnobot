@@ -38,16 +38,27 @@ export async function POST(req: NextRequest) {
     .eq('user_id', targetUserId)
     .maybeSingle()
 
-  const { error } = await supabase.from('arnobot_1on1_log').insert({
-    manager_id: managerId,
-    member_id: targetUserId,
-    team_id: managerMember.team_id,
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: existing } = await supabase
+    .from('arnobot_1on1_log')
+    .select('id')
+    .eq('manager_id', managerId)
+    .eq('member_id', targetUserId)
+    .gte('created_at', `${today}T00:00:00`)
+    .lte('created_at', `${today}T23:59:59`)
+    .maybeSingle()
+
+  const payload = {
     mindset_score: coaching?.mindset_score ?? null,
     systeem_score: coaching?.systeem_score ?? null,
     actie_score: coaching?.actie_score ?? null,
     aandachtspunt: aandachtspunt || null,
     notitie: notitie || null,
-  })
+  }
+
+  const { error } = existing
+    ? await supabase.from('arnobot_1on1_log').update(payload).eq('id', existing.id)
+    : await supabase.from('arnobot_1on1_log').insert({ ...payload, manager_id: managerId, member_id: targetUserId, team_id: managerMember.team_id })
 
   if (error) {
     console.error('1on1 save error:', error.message)

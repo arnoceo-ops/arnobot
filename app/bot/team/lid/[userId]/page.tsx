@@ -343,7 +343,7 @@ export default function LidPage() {
                           </button>
                         ) : (
                           <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
-                            ✓ OPGESLAGEN — voeg na het gesprek een notitie toe via de geschiedenis hieronder
+                            ✓ OPGESLAGEN
                           </p>
                         )}
                       </div>
