@@ -352,7 +352,6 @@ export default function LidPage() {
                         <div className="loading-dots">
                           <span /><span /><span />
                         </div>
-                        <span className="loading-text">ARNO BEREIDT VOOR</span>
                       </div>
                     )}
 
