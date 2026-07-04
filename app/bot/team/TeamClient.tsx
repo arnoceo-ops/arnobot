@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
+import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 
 function formatLast(iso: string | null) {
   if (!iso) return 'Nog niet actief'
@@ -38,38 +39,6 @@ interface Member {
 function msaTotal(m: Member): number | null {
   if (m.mindset_score == null || m.systeem_score == null || m.actie_score == null) return null
   return Math.max(1, Math.ceil((m.mindset_score * m.systeem_score * m.actie_score) / 1.25))
-}
-
-function TeamMSABars({ members }: { members: Member[] }) {
-  const scored = members.filter(m => m.mindset_score != null && m.systeem_score != null && m.actie_score != null)
-  if (scored.length === 0) return null
-  const avg = (key: 'mindset_score' | 'systeem_score' | 'actie_score') =>
-    scored.reduce((s, m) => s + (m[key] as number), 0) / scored.length
-  const dims = [
-    { label: 'MINDSET', color: '#f59e0b', value: avg('mindset_score') },
-    { label: 'SYSTEEM', color: '#60a5fa', value: avg('systeem_score') },
-    { label: 'ACTIE',   color: '#34d399', value: avg('actie_score')   },
-  ]
-  return (
-    <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 16 }}>
-        {dims.map(d => (
-          <div key={d.label}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 3, color: d.color }}>{d.label}</span>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 1, color: '#f1f5f9' }}>{d.value.toFixed(1)} / 5</span>
-            </div>
-            <div style={{ height: 6, background: '#1e293b', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ width: `${(d.value / 5) * 100}%`, height: '100%', background: d.color, borderRadius: 3, transition: 'width 0.6s ease' }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>
-        Gemiddelde van {scored.length} van {members.length} {members.length === 1 ? 'lid' : 'leden'} met coaching
-      </p>
-    </div>
-  )
 }
 
 interface TeamAnalyse {
@@ -179,6 +148,7 @@ export default function TeamClient() {
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
+  const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -213,6 +183,10 @@ export default function TeamClient() {
     fetch('/api/bot/team/spotlight')
       .then(r => r.json())
       .then(data => setTeamAnalyses(data.analyses ?? []))
+      .catch(() => {})
+    fetch('/api/bot/team/scores')
+      .then(r => r.json())
+      .then(data => setTeamScores(data.scores ?? []))
       .catch(() => {})
   }
 
@@ -359,10 +333,10 @@ export default function TeamClient() {
                 </div>
               </div>
 
-              {members.some(m => m.mindset_score != null) && (
+              {teamScores.length > 0 && (
                 <div style={section}>
-                  <span style={label}>TEAM COACHINGPROFIEL</span>
-                  <TeamMSABars members={members} />
+                  <span style={label}>TEAM SCORES</span>
+                  <ProgressieChart history={teamScores} />
                 </div>
               )}
 
