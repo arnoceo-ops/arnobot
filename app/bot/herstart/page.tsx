@@ -42,7 +42,7 @@ export default function HerstartPage() {
     }
   }
 
-  const canStart = status === 'winback' || status === 'second_trial' || status === 'third_trial'
+  const canStart = status === 'winback' || status === 'second_trial'
 
   return (
     <>
@@ -117,7 +117,7 @@ export default function HerstartPage() {
               NB Ken je deze quotes? &quot;We are what we repeatedly do. Excellence, then, is not an act but a habit.&quot; ~ Aristotle. &quot;Unfortunately, so is failure.&quot; ~ Vince Lombardi. Moest ik even aan denken...
             </p>
             <a
-              href="mailto:arno@arno.bot"
+              href="mailto:pannekoek@arno.bot"
               style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
               className="primary-btn"
             >
