@@ -36,11 +36,17 @@ export async function POST(req: NextRequest) {
 
   const adminItem = ADMIN_ONLY_ITEMS.find(i => i.type === type)
   if (adminItem) {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://arno.bot'
+    // Gebruik de host van het binnenkomende request om redirect-drops van de Authorization header te voorkomen
+    const host = req.headers.get('host') ?? 'arno.bot'
+    const proto = host.includes('localhost') ? 'http' : 'https'
+    const baseUrl = `${proto}://${host}`
     const res = await fetch(`${baseUrl}${adminItem.cron}`, {
       headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
     })
-    if (!res.ok) return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return NextResponse.json({ error: body.error ?? `Cron mislukt (${res.status})` }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   }
 
