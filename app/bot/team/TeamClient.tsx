@@ -424,14 +424,12 @@ export default function TeamClient() {
                   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
                   const weekStart = new Date(now)
                   weekStart.setDate(now.getDate() - daysFromMonday)
-                  weekStart.setHours(5, 0, 0, 0)
+                  weekStart.setHours(0, 0, 0, 0)
                   if (now < weekStart) weekStart.setDate(weekStart.getDate() - 7)
 
                   const blokkeerd = teamAnalyses.length > 0 &&
                     new Date(teamAnalyses[0].created_at) >= weekStart
 
-                  const nextMonday = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
-                  const nextMondayLabel = nextMonday.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
 
                   const uitgeschakeld = members.length < 2 || blokkeerd
                   return (
@@ -453,7 +451,7 @@ export default function TeamClient() {
                       )}
                       {blokkeerd && (
                         <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>
-                          Er is al een analyse van deze week. Nieuwe analyse beschikbaar maandag {nextMondayLabel} vanaf 5:00.
+                          Er is al een analyse van deze week. Nieuwe analyse op maandagochtend beschikbaar.
                         </p>
                       )}
                     </>
