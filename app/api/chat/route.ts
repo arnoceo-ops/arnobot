@@ -83,10 +83,18 @@ const userRateLimit = new Ratelimit({
   prefix: 'arnobot:user',
 })
 
-async function notifyRateLimit(identifier: string, reden: string) {
+async function notifyRateLimit(identifier: string, reden: string, dedupKey?: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
+
+  // Deduplicatie: zelfde melding max 1x per uur (voor IP-spam)
+  if (dedupKey) {
+    const seen = await redis.get(dedupKey)
+    if (seen) return
+    await redis.set(dedupKey, '1', { ex: 3600 })
+  }
+
   const text = `Rate limit geraakt op arno.bot\n\nGebruiker: ${identifier}\nReden: ${reden}`
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -231,6 +239,7 @@ export async function POST(req: NextRequest) {
     if (ip) {
       const { success: ipOk } = await ipRateLimit.limit(ip)
       if (!ipOk) {
+        await notifyRateLimit(ip, 'IP-limiet (5/min)', `arnobot:notify:ip:${ip}`)
         return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
       }
     }
@@ -254,6 +263,7 @@ export async function POST(req: NextRequest) {
         const lockKey = `arnobot:active:${userId}`
         const activeSid = await redis.get<string>(lockKey)
         if (activeSid && activeSid !== clientSessionId) {
+          await notifyRateLimit(userId, 'dubbele sessie (twee vensters/apparaten)', `arnobot:notify:dual:${userId}`)
           return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
         }
         await redis.set(lockKey, clientSessionId, { ex: 600 })
