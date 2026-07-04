@@ -102,10 +102,12 @@ function MiniChart({ points, label, color }: { points: MiniPoint[]; label: strin
 export function ProgressieChart({ history }: { history: ScorePoint[] }) {
   const threeMonthsAgo = new Date()
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-  const data = history.filter(
-    h => (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
+  const data = history
+    .filter(h =>
+      (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
       && new Date(h.created_at) >= threeMonthsAgo
-  )
+    )
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
   if (data.length === 0) return null
 
