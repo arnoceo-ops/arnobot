@@ -471,9 +471,9 @@ export default function LidPage() {
                 {!verwijderBevestig ? (
                   <button
                     onClick={() => setVerwijderBevestig(true)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#4b5563', padding: 0, textDecoration: 'underline', textDecorationColor: '#374151' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', padding: 0, textDecoration: 'none' }}
                   >
-                    verwijder uit team
+                    VERWIJDER UIT TEAM
                   </button>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
