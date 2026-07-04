@@ -100,8 +100,11 @@ function MiniChart({ points, label, color }: { points: MiniPoint[]; label: strin
 }
 
 export function ProgressieChart({ history }: { history: ScorePoint[] }) {
+  const threeMonthsAgo = new Date()
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
   const data = history.filter(
-    h => h.mindset_score != null || h.systeem_score != null || h.actie_score != null
+    h => (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
+      && new Date(h.created_at) >= threeMonthsAgo
   )
 
   if (data.length === 0) return null
@@ -109,7 +112,7 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
   return (
     <>
       <style>{`
-        .pg-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .pg-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
         @media (min-width: 560px) { .pg-grid { grid-template-columns: repeat(3, 1fr); } }
       `}</style>
       <div className="pg-grid">
