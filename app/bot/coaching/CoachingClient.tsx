@@ -248,21 +248,34 @@ export default function CoachingClient({ userId }: Props) {
           .msa-grid { grid-template-columns: repeat(3, 1fr); }
           .msa-score-number { font-size: clamp(36px, 10vw, 64px); }
         }
+        .print-only { display: none; }
         @media print {
-          body { background: #fff !important; color: #000 !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: #111827 !important; }
           .no-print { display: none !important; }
-          .msa-card { background: #f5f5f5 !important; }
-          .msa-score-number { color: #f59e0b !important; }
-          .msa-diagnose { color: #374151 !important; }
-          .coaching-label { color: #f59e0b !important; }
-          .coaching-body { color: #374151 !important; }
-          .ontwikkelpunt-text { color: #000 !important; }
-          .blog-item { color: #374151 !important; border-left-color: #f59e0b !important; }
-          .coaching-section { border-top-color: #ddd !important; }
+          .print-only { display: block !important; }
+          a { color: inherit !important; text-decoration: none !important; }
+          .blog-item { border-left-color: #f59e0b !important; }
+          .coaching-section { page-break-inside: avoid; }
+          .ontwikkelpunt { page-break-inside: avoid; }
+          .msa-grid { page-break-inside: avoid; }
         }
       `}</style>
 
-      <BotNav active="coaching" />
+      <div className="no-print"><BotNav active="coaching" /></div>
+
+      <div className="print-only" style={{ maxWidth: 812, margin: '0 auto', padding: '40px clamp(16px,4vw,20px) 0' }}>
+        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: 6, lineHeight: 1, color: '#f1f5f9', marginBottom: 6 }}>
+          ARNO<span style={{ color: '#f59e0b' }}>BOT</span>
+        </p>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 12 }}>COACHING</h1>
+        {firstName && (
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#f59e0b', marginBottom: 4 }}>{firstName.toUpperCase()}</p>
+        )}
+        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 1, color: '#6b7280', paddingBottom: 24, borderBottom: '2px solid #f59e0b' }}>
+          {new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
+      </div>
 
       {uitdaging && (
         <div className="no-print" style={{ borderBottom: '2px solid #f59e0b', background: '#111827', padding: 'clamp(96px,12vw,120px) clamp(20px,6vw,60px) clamp(48px,6vw,64px)' }}>
