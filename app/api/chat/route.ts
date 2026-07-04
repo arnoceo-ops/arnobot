@@ -61,6 +61,27 @@ import { getText } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
+// Per-IP: max 5 requests per minuut (widget + bot)
+const ipRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 m'),
+  prefix: 'arnobot:ip',
+})
+
+// Per-user: max 30 berichten per uur (bot only)
+const userRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, '1 h'),
+  prefix: 'arnobot:user',
+})
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -194,16 +215,10 @@ export async function POST(req: NextRequest) {
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
-    // Per-minuut IP rate limit: max 5 verzoeken per minuut per IP
+    // Per-IP rate limit via Upstash (atomisch, geen race conditions)
     if (ip) {
-      const logTable = isWidget ? 'arno_blog_widget_logs' : 'arnobot_rds_logs'
-      const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString()
-      const { count: recentCount } = await supabase
-        .from(logTable)
-        .select('*', { count: 'exact', head: true })
-        .eq('ip', ip)
-        .gte('created_at', oneMinuteAgo)
-      if ((recentCount ?? 0) >= 5) {
+      const { success: ipOk } = await ipRateLimit.limit(ip)
+      if (!ipOk) {
         return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
       }
     }
@@ -214,6 +229,12 @@ export async function POST(req: NextRequest) {
       const { userId: sessionUserId } = await auth()
       userId = sessionUserId
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
+
+      // Per-user rate limit: max 30 berichten per uur
+      const { success: userOk } = await userRateLimit.limit(userId)
+      if (!userOk) {
+        return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+      }
     }
 
     // Tier + dagelijks gebruik
