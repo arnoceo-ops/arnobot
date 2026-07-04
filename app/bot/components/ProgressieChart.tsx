@@ -7,10 +7,12 @@ export interface ScorePoint {
   created_at: string
 }
 
-const SERIES = [
-  { key: 'mindset_score' as keyof ScorePoint, color: '#f59e0b', label: 'MINDSET' },
-  { key: 'systeem_score' as keyof ScorePoint, color: '#60a5fa', label: 'SYSTEEM' },
-  { key: 'actie_score'   as keyof ScorePoint, color: '#34d399', label: 'ACTIE'   },
+type ScoreKey = 'mindset_score' | 'systeem_score' | 'actie_score'
+
+const SERIES: { key: ScoreKey; color: string; label: string }[] = [
+  { key: 'mindset_score', color: '#f59e0b', label: 'MINDSET' },
+  { key: 'systeem_score', color: '#60a5fa', label: 'SYSTEEM' },
+  { key: 'actie_score',   color: '#34d399', label: 'ACTIE'   },
 ]
 
 function curvePath(pts: { x: number; y: number }[]): string {
