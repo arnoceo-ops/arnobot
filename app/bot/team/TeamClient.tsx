@@ -48,7 +48,11 @@ function formatAnalyseDate(iso: string) {
 }
 
 function getAnalyseTitle(text: string): string {
-  const clean = text.replace(/\n/g, ' ').trim()
+  const clean = text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/[—–]/g, '')
+    .replace(/\n/g, ' ')
+    .trim()
   if (clean.length <= 80) return clean
   const cut = clean.slice(0, 77)
   const lastSpace = cut.lastIndexOf(' ')
