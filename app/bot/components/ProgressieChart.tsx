@@ -23,8 +23,8 @@ function curvePath(pts: { x: number; y: number }[]): string {
   return d
 }
 
-function monthLabel(iso: string): string {
-  return new Date(iso).toLocaleDateString('nl-NL', { month: 'short' }).toUpperCase().replace('.', '')
+function maandNaam(yearMonth: string): string {
+  return new Date(yearMonth + '-15').toLocaleDateString('nl-NL', { month: 'short' }).toUpperCase().replace('.', '')
 }
 
 interface MiniPoint { month: string; value: number }
@@ -32,7 +32,7 @@ interface MiniPoint { month: string; value: number }
 function MiniChart({ points, label, color }: { points: MiniPoint[]; label: string; color: string }) {
   if (points.length === 0) return (
     <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 16px 12px 16px' }}>
-      <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280' }}>{label}</span>
+      <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>{label}</span>
       <div style={{ marginTop: 8, color: '#374151', fontFamily: "'Space Mono',monospace", fontSize: 13 }}>Geen data</div>
     </div>
   )
@@ -99,17 +99,39 @@ function MiniChart({ points, label, color }: { points: MiniPoint[]; label: strin
   )
 }
 
-export function ProgressieChart({ history }: { history: ScorePoint[] }) {
-  const threeMonthsAgo = new Date()
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-  const data = history
-    .filter(h =>
-      (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
-      && new Date(h.created_at) >= threeMonthsAgo
-    )
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+function avgScore(values: (number | null)[]): number | null {
+  const valid = values.filter((v): v is number => v !== null)
+  if (valid.length === 0) return null
+  return Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10
+}
 
-  if (data.length === 0) return null
+export function ProgressieChart({ history }: { history: ScorePoint[] }) {
+  const fourMonthsAgo = new Date()
+  fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4)
+
+  const filtered = history.filter(h =>
+    (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
+    && new Date(h.created_at) >= fourMonthsAgo
+  )
+
+  if (filtered.length === 0) return null
+
+  // Groepeer per jaar-maand en bereken gemiddelde scores
+  const byMonth = new Map<string, ScorePoint[]>()
+  for (const h of filtered) {
+    const key = h.created_at.slice(0, 7) // "2026-06"
+    if (!byMonth.has(key)) byMonth.set(key, [])
+    byMonth.get(key)!.push(h)
+  }
+
+  const monthly = Array.from(byMonth.entries())
+    .sort(([a], [b]) => a.localeCompare(b)) // ASC op jaar-maand
+    .map(([key, pts]) => ({
+      yearMonth: key,
+      mindset_score: avgScore(pts.map(p => p.mindset_score)),
+      systeem_score: avgScore(pts.map(p => p.systeem_score)),
+      actie_score: avgScore(pts.map(p => p.actie_score)),
+    }))
 
   return (
     <>
@@ -119,11 +141,11 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
       `}</style>
       <div className="pg-grid">
         {SERIES.map(s => {
-          const points: MiniPoint[] = data
-            .filter(d => d[s.key] != null)
-            .map(d => ({
-              month: monthLabel(d.created_at),
-              value: d[s.key] as number,
+          const points: MiniPoint[] = monthly
+            .filter(m => m[s.key] != null)
+            .map(m => ({
+              month: maandNaam(m.yearMonth),
+              value: m[s.key] as number,
             }))
           return <MiniChart key={s.key} points={points} label={s.label} color={s.color} />
         })}
