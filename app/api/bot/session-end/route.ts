@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks, getVoyageEmbedding } from '@/lib/rag'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     feiten = getText(feitenRes.content)
     uitdaging = (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '')
   } catch (e) {
-    console.error('Synthesis/feiten error:', e)
+    await notifyCronFailure(`session-end: synthese (sessie ${sessionId})`, e)
   }
 
   // Blog-suggesties: eerst inline geciteerde blogs uit de berichten halen
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  await supabase
+  const { error: upsertError } = await supabase
     .from('arnobot_blog_sessions')
     .upsert({
       user_id: userId,
@@ -158,6 +159,11 @@ export async function POST(req: NextRequest) {
       message_count: messageCount,
       blog_suggestions: blogSuggestions,
     }, { onConflict: 'session_id' })
+
+  if (upsertError) {
+    await notifyCronFailure(`session-end: opslaan mislukt (sessie ${sessionId})`, upsertError.message)
+    return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+  }
 
   // Embedding genereren en opslaan (voor semantisch zoeken)
   try {
