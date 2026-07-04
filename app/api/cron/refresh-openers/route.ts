@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  try {
 
   // Haal alle sessies op van alle gebruikers (max 300 voor context)
   const { data: sessions } = await supabase
@@ -107,4 +109,8 @@ ${analysesText}`
     sessions_analysed: sessions?.length ?? 0,
     analyses_used: analyses?.length ?? 0,
   })
+  } catch (err) {
+    await notifyCronFailure('refresh-openers', err)
+    return NextResponse.json({ error: 'cron_error' }, { status: 500 })
+  }
 }

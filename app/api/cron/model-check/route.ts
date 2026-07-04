@@ -2,6 +2,7 @@
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
     })
     return NextResponse.json({ ok: true, sent: date })
   } catch (e) {
-    console.error('[model-check cron]', e)
+    await notifyCronFailure('model-check', e)
     return NextResponse.json({ error: 'send_failed' }, { status: 500 })
   }
 }

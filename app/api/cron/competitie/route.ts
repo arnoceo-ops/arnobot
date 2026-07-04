@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -117,6 +118,7 @@ export async function GET(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  try {
 
   if (new Date() < FIRST_RUN) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'voor_startdatum', start: FIRST_RUN.toISOString() })
@@ -222,4 +224,8 @@ export async function GET(req: NextRequest) {
     kandidaten: kandidaten.length,
     per_categorie: Object.fromEntries(VALID_ROLES.map(r => [r, rankings[r].length])),
   })
+  } catch (err) {
+    await notifyCronFailure('competitie', err)
+    return NextResponse.json({ error: 'cron_error' }, { status: 500 })
+  }
 }

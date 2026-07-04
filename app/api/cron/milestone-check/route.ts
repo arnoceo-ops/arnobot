@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  try {
 
   const { count } = await supabase
     .from('approved_users')
@@ -49,4 +51,8 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ ok: true, active_users: total, milestone: MILESTONE, reached: true })
+  } catch (err) {
+    await notifyCronFailure('milestone-check', err)
+    return NextResponse.json({ error: 'cron_error' }, { status: 500 })
+  }
 }

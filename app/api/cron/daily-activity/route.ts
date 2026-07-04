@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  try {
 
   const now = new Date()
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
@@ -108,4 +110,8 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ ok: true, activeUsers: userIds.length })
+  } catch (err) {
+    await notifyCronFailure('daily-activity', err)
+    return NextResponse.json({ error: 'cron_error' }, { status: 500 })
+  }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
+import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  try {
 
   const now = new Date()
 
@@ -243,4 +245,8 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, sent, cancelled, blocked })
+  } catch (err) {
+    await notifyCronFailure('trial-emails', err)
+    return NextResponse.json({ error: 'cron_error' }, { status: 500 })
+  }
 }
