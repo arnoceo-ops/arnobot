@@ -50,6 +50,26 @@ export async function POST() {
 
   const team = managerMember.arnobot_teams as unknown as { name: string }
 
+  // Blokkeer als er al een analyse is van minder dan 7 dagen oud
+  const { data: recent } = await supabase
+    .from('arnobot_team_analyses')
+    .select('created_at')
+    .eq('team_id', managerMember.team_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (recent) {
+    const dagenOud = (Date.now() - new Date(recent.created_at).getTime()) / 86400000
+    if (dagenOud < 7) {
+      const dagenRest = Math.ceil(7 - dagenOud)
+      return NextResponse.json(
+        { error: `Er is al een analyse van deze week. Probeer het over ${dagenRest} ${dagenRest === 1 ? 'dag' : 'dagen'} opnieuw.` },
+        { status: 429 }
+      )
+    }
+  }
+
   const { data: members } = await supabase
     .from('arnobot_team_members')
     .select('user_id')

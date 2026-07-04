@@ -413,21 +413,38 @@ export default function TeamClient() {
                 <p style={{ ...body, marginBottom: 32 }}>
                   ArnoBot analyseert de collectieve gesprekken van je team: gemeenschappelijke patronen, sterktes en groeikansen.
                 </p>
-                <button
-                  onClick={generateSpotlight}
-                  disabled={spotlightLoading || members.length < 2}
-                  style={{ ...btnPrimary(members.length < 2), opacity: spotlightLoading ? 0.6 : 1, marginBottom: 32 }}
-                >
-                  {spotlightLoading ? 'ARNO ANALYSEERT...' : 'GENEREER TEAM-ANALYSE'}
-                </button>
-                {spotlightLoading && (
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', marginBottom: 32 }}>
-                    Arno analyseert je team...
-                  </p>
-                )}
-                {members.length < 2 && (
-                  <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>Minimaal 2 teamleden nodig voor een team-analyse.</p>
-                )}
+                {(() => {
+                  const dagenSinds = teamAnalyses.length > 0
+                    ? (Date.now() - new Date(teamAnalyses[0].created_at).getTime()) / 86400000
+                    : null
+                  const blokkeerd = dagenSinds !== null && dagenSinds < 7
+                  const dagenRest = blokkeerd && dagenSinds !== null ? Math.ceil(7 - dagenSinds) : 0
+                  const uitgeschakeld = members.length < 2 || blokkeerd
+                  return (
+                    <>
+                      <button
+                        onClick={generateSpotlight}
+                        disabled={spotlightLoading || uitgeschakeld}
+                        style={{ ...btnPrimary(uitgeschakeld), opacity: spotlightLoading || blokkeerd ? 0.6 : 1, marginBottom: 32 }}
+                      >
+                        {spotlightLoading ? 'ARNO ANALYSEERT...' : 'GENEREER TEAM-ANALYSE'}
+                      </button>
+                      {spotlightLoading && (
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', marginBottom: 32 }}>
+                          Arno analyseert je team...
+                        </p>
+                      )}
+                      {members.length < 2 && (
+                        <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>Minimaal 2 teamleden nodig voor een team-analyse.</p>
+                      )}
+                      {blokkeerd && (
+                        <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>
+                          Er is al een analyse van deze week. Volgende analyse mogelijk over {dagenRest} {dagenRest === 1 ? 'dag' : 'dagen'}.
+                        </p>
+                      )}
+                    </>
+                  )
+                })()}
                 {teamAnalyses.length > 0 && (
                   <div>
                     {teamAnalyses.map(a => (
