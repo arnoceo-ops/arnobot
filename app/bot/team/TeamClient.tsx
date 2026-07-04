@@ -352,7 +352,6 @@ export default function TeamClient() {
                       <option value="14">1x per 2 weken</option>
                       <option value="30">1x per maand</option>
                     </select>
-                    {ritmeSaved && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88' }}>OPGESLAGEN</span>}
                   </div>
                 </div>
                 {members.length === 0 ? (
