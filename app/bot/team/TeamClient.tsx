@@ -271,6 +271,11 @@ export default function TeamClient() {
         .team-input:focus { border-color: #f59e0b; }
         .team-input::placeholder { color: #4b5563; }
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
+        .loading-dots { display:flex; gap:6px; }
+        .loading-dot { width:7px; height:7px; border-radius:50%; background:#f59e0b; animation:dot-pulse 1.2s infinite; }
+        .loading-dot:nth-child(2) { animation-delay:0.2s; }
+        .loading-dot:nth-child(3) { animation-delay:0.4s; }
+        @keyframes dot-pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.85)} 40%{opacity:1;transform:scale(1)} }
         .ah { font-family:'Space Mono',monospace; font-weight:400; font-size:13px; letter-spacing:4px; color:#f1f5f9; display:block; margin:24px 0 8px; }
         .ah:first-child { margin-top:0; }
         .analyse-item-full { color:#9ca3af; font-size:15px; line-height:1.9; font-family:'Space Mono',monospace; background:#1f2937; border-left:3px solid #f59e0b; padding:20px 24px; margin-bottom:8px; }
@@ -442,9 +447,11 @@ export default function TeamClient() {
                         {spotlightLoading ? 'ARNO ANALYSEERT...' : 'GENEREER TEAM-ANALYSE'}
                       </button>
                       {spotlightLoading && (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', marginBottom: 32 }}>
-                          Arno analyseert je team...
-                        </p>
+                        <div className="loading-dots" style={{ marginBottom: 32 }}>
+                          <div className="loading-dot" />
+                          <div className="loading-dot" />
+                          <div className="loading-dot" />
+                        </div>
                       )}
                       {members.length < 2 && (
                         <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>Minimaal 2 teamleden nodig voor een team-analyse.</p>
