@@ -41,23 +41,23 @@ export async function GET() {
 
   if (!raw?.length) return NextResponse.json({ scores: [] })
 
-  // Groepeer per dag en bereken gemiddelden
-  const byDay: Record<string, { mindset: number[]; systeem: number[]; actie: number[] }> = {}
+  // Groepeer per maand en bereken gemiddelden — laatste 6 maanden
+  const byMonth: Record<string, { mindset: number[]; systeem: number[]; actie: number[] }> = {}
   for (const s of raw) {
-    const day = s.created_at.slice(0, 10)
-    if (!byDay[day]) byDay[day] = { mindset: [], systeem: [], actie: [] }
-    byDay[day].mindset.push(s.mindset_score)
-    byDay[day].systeem.push(s.systeem_score)
-    byDay[day].actie.push(s.actie_score)
+    const month = s.created_at.slice(0, 7) // "2026-01"
+    if (!byMonth[month]) byMonth[month] = { mindset: [], systeem: [], actie: [] }
+    byMonth[month].mindset.push(s.mindset_score)
+    byMonth[month].systeem.push(s.systeem_score)
+    byMonth[month].actie.push(s.actie_score)
   }
 
   const avg = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10
 
-  const scores = Object.entries(byDay)
+  const scores = Object.entries(byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-20) // max 20 datapunten
-    .map(([day, d]) => ({
-      created_at: day + 'T12:00:00Z',
+    .slice(-6) // laatste 6 maanden
+    .map(([month, d]) => ({
+      created_at: month + '-01T12:00:00Z',
       mindset_score: avg(d.mindset),
       systeem_score: avg(d.systeem),
       actie_score:   avg(d.actie),

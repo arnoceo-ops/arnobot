@@ -8,9 +8,9 @@ export interface ScorePoint {
 }
 
 const SERIES = [
-  { key: 'mindset_score' as keyof ScorePoint, color: '#f59e0b', label: 'MINDSET', offset: -1.5, dash: undefined },
-  { key: 'systeem_score' as keyof ScorePoint, color: '#60a5fa', label: 'SYSTEEM', offset: 0,    dash: '6 4' as string | undefined },
-  { key: 'actie_score'   as keyof ScorePoint, color: '#34d399', label: 'ACTIE',   offset: 1.5,  dash: '2 4' as string | undefined },
+  { key: 'mindset_score' as keyof ScorePoint, color: '#f59e0b', label: 'MINDSET' },
+  { key: 'systeem_score' as keyof ScorePoint, color: '#60a5fa', label: 'SYSTEEM' },
+  { key: 'actie_score'   as keyof ScorePoint, color: '#34d399', label: 'ACTIE'   },
 ]
 
 function curvePath(pts: { x: number; y: number }[]): string {
@@ -23,139 +23,106 @@ function curvePath(pts: { x: number; y: number }[]): string {
   return d
 }
 
-export function ProgressieChart({ history }: { history: ScorePoint[] }) {
-  const data = [...history]
-    .filter(h => h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
+function monthLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString('nl-NL', { month: 'short' }).toUpperCase().replace('.', '')
+}
 
-  if (data.length === 0) return null
+interface MiniPoint { month: string; value: number }
 
-  const W = 600, H = 224, PL = 28, PR = 44, PT = 34, PB = 52
+function MiniChart({ points, label, color }: { points: MiniPoint[]; label: string; color: string }) {
+  if (points.length === 0) return (
+    <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 16px 12px 16px' }}>
+      <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280' }}>{label}</span>
+      <div style={{ marginTop: 8, color: '#374151', fontFamily: "'Space Mono',monospace", fontSize: 13 }}>Geen data</div>
+    </div>
+  )
+
+  const current = points[points.length - 1].value
+  const W = 200, H = 84, PL = 20, PR = 4, PT = 6, PB = 20
   const iW = W - PL - PR, iH = H - PT - PB
-  const n = data.length
-  const xAt = (i: number) => n === 1 ? PL + iW / 2 : PL + (i / (n - 1)) * iW
-  const yAt = (v: number, offset = 0) => PT + (1 - (v - 1) / 4) * iH + offset
+  const n = points.length
+  const xAt = (i: number) => n <= 1 ? PL + iW / 2 : PL + (i / (n - 1)) * iW
+  const yAt = (v: number) => PT + (1 - (v - 1) / 4) * iH
 
-  const activeSeries = SERIES.filter(s => data.some(d => d[s.key] != null))
-
-  // Eindwaarde-labels rechts van de plot — minimale y-afstand 15px afdwingen
-  const endLabels = activeSeries
-    .map(s => {
-      const val = data[data.length - 1][s.key]
-      if (val == null) return null
-      return { color: s.color, val, rawY: yAt(val as number, s.offset) }
-    })
-    .filter((l): l is { color: string; val: number; rawY: number } => l != null)
-    .sort((a, b) => a.rawY - b.rawY)
-
-  for (let i = 1; i < endLabels.length; i++) {
-    if (endLabels[i].rawY - endLabels[i - 1].rawY < 15) {
-      endLabels[i].rawY = endLabels[i - 1].rawY + 15
-    }
-  }
+  const pts = points.map((p, i) => ({ x: xAt(i), y: yAt(p.value) }))
+  const line = curvePath(pts)
+  const area = line
+    ? line + ` L ${pts[pts.length - 1].x} ${PT + iH} L ${pts[0].x} ${PT + iH} Z`
+    : ''
+  const gradId = `mc-${label}`
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
-        {activeSeries.map(s => (
-          <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="32" height="10" style={{ display: 'block', flexShrink: 0 }}>
-              <line x1="0" y1="5" x2="32" y2="5" stroke={s.color} strokeWidth="2"
-                strokeLinecap="round" strokeDasharray={s.dash} />
-              <circle cx="16" cy="5" r="3" fill="#111827" stroke={s.color} strokeWidth="2" />
-            </svg>
-            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280' }}>
-              {s.label}
-            </span>
-          </div>
-        ))}
+    <div style={{ background: '#1f2937', borderRadius: 4, padding: '14px 14px 8px 14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280' }}>
+          {label}
+        </span>
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: 1, lineHeight: 1, color }}>
+          {current.toFixed(1)}
+        </span>
       </div>
-
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block', overflow: 'visible' }}>
         <defs>
-          {activeSeries.map(s => (
-            <linearGradient key={s.key} id={`pg-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={s.color} stopOpacity="0.10" />
-              <stop offset="100%" stopColor={s.color} stopOpacity="0" />
-            </linearGradient>
-          ))}
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
         </defs>
 
         {[1, 2, 3, 4, 5].map(v => (
           <g key={v}>
             <line x1={PL} y1={yAt(v)} x2={W - PR} y2={yAt(v)}
               stroke="#374151" strokeWidth="0.5"
-              strokeDasharray={v === 1 || v === 5 ? undefined : '3 4'} />
-            <text x={PL - 6} y={yAt(v) + 4} fill="#374151" fontSize="10"
+              strokeDasharray={v === 1 || v === 5 ? undefined : '2 3'} />
+            <text x={PL - 3} y={yAt(v) + 3.5} fill="#374151" fontSize="8"
               textAnchor="end" fontFamily="Space Mono, monospace">{v}</text>
           </g>
         ))}
 
-        {/* Pass 1: fills */}
-        {activeSeries.map(s => {
-          const pts = data
-            .map((d, i) => d[s.key] != null ? { x: xAt(i), y: yAt(d[s.key] as number, s.offset) } : null)
-            .filter((p): p is { x: number; y: number } => p != null)
-          const lp = curvePath(pts)
-          if (!lp) return null
-          const base = PT + iH
-          const ap = lp + ` L ${pts[pts.length - 1].x} ${base} L ${pts[0].x} ${base} Z`
-          return <path key={s.key} d={ap} fill={`url(#pg-${s.key})`} />
-        })}
+        {area && <path d={area} fill={`url(#${gradId})`} />}
+        {line && <path d={line} fill="none" stroke={color} strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round" />}
 
-        {/* Pass 2: lijnen met dash-patronen */}
-        {activeSeries.map(s => {
-          const pts = data
-            .map((d, i) => d[s.key] != null ? { x: xAt(i), y: yAt(d[s.key] as number, s.offset) } : null)
-            .filter((p): p is { x: number; y: number } => p != null)
-          const lp = curvePath(pts)
-          return lp ? (
-            <path key={s.key} d={lp} fill="none" stroke={s.color} strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round"
-              strokeDasharray={s.dash} />
-          ) : null
-        })}
-
-        {/* Pass 3: punten — alleen laatste punt met label */}
-        {activeSeries.map(s => (
-          <g key={s.key}>
-            {data.map((d, i) => {
-              if (d[s.key] == null) return null
-              const x = xAt(i), y = yAt(d[s.key] as number, s.offset)
-              const isLast = i === data.length - 1
-              return (
-                <g key={i}>
-                  <circle cx={x} cy={y} r={isLast ? 10 : 8} fill={s.color} opacity="0.08" />
-                  <circle cx={x} cy={y} r={isLast ? 5 : 4} fill="#111827" stroke={s.color} strokeWidth="2" />
-                </g>
-              )
-            })}
-          </g>
+        {pts.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={i === n - 1 ? 4.5 : 3.5}
+            fill="#1f2937" stroke={color} strokeWidth={i === n - 1 ? 2 : 1.5} />
         ))}
 
-        {/* Eindwaarde-labels rechts van de plot */}
-        {endLabels.map((l, i) => (
-          <text key={i} x={W - PR + 7} y={l.rawY + 5} fill={l.color} fontSize="13"
-            textAnchor="start" fontFamily="Bebas Neue, sans-serif" letterSpacing="1">
-            {l.val}
+        {points.map((p, i) => (
+          <text key={i} x={xAt(i)} y={H - 3} fill="#4b5563" fontSize="9"
+            textAnchor="middle" fontFamily="Space Mono, monospace">
+            {p.month}
           </text>
         ))}
-
-        {/* X-as datums, -45° gedraaid */}
-        {data.map((d, i) => {
-          const x = xAt(i)
-          const y = H - 10
-          const label = new Date(d.created_at)
-            .toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
-            .toUpperCase()
-          return (
-            <text key={i} x={x} y={y} fill="#4b5563" fontSize="10"
-              textAnchor="end" fontFamily="Space Mono, monospace"
-              transform={`rotate(-45, ${x}, ${y})`}>
-              {label}
-            </text>
-          )
-        })}
       </svg>
     </div>
+  )
+}
+
+export function ProgressieChart({ history }: { history: ScorePoint[] }) {
+  const data = history.filter(
+    h => h.mindset_score != null || h.systeem_score != null || h.actie_score != null
+  )
+
+  if (data.length === 0) return null
+
+  return (
+    <>
+      <style>{`
+        .pg-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 560px) { .pg-grid { grid-template-columns: repeat(3, 1fr); } }
+      `}</style>
+      <div className="pg-grid">
+        {SERIES.map(s => {
+          const points: MiniPoint[] = data
+            .filter(d => d[s.key] != null)
+            .map(d => ({
+              month: monthLabel(d.created_at),
+              value: d[s.key] as number,
+            }))
+          return <MiniChart key={s.key} points={points} label={s.label} color={s.color} />
+        })}
+      </div>
+    </>
   )
 }
