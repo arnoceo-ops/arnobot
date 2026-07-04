@@ -255,6 +255,7 @@ export default function CoachingClient({ userId }: Props) {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
           h1 { color: #111827 !important; }
+          .msa-total { color: #111827 !important; }
           .msa-score-number { color: #111827 !important; }
           .msa-card { background: #f1f5f9 !important; }
           .msa-dot-empty { border-color: #9ca3af !important; }
@@ -411,7 +412,7 @@ export default function CoachingClient({ userId }: Props) {
               <>
                 <div style={{ textAlign: 'center', marginBottom: 8 }}>
                   <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', display: 'block', marginBottom: 8 }}>MSA SCORE</span>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 96, color: '#f1f5f9', lineHeight: 1 }}>{msaScore}</span>
+                  <span className="msa-total" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 96, color: '#f1f5f9', lineHeight: 1 }}>{msaScore}</span>
                   <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', display: 'block', marginTop: 4 }}>/ 100</span>
                 </div>
                 <div className="msa-grid">
