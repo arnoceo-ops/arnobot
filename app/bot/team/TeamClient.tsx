@@ -6,13 +6,8 @@ import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 
 function formatLast(iso: string | null) {
-  if (!iso) return 'Nog niet actief'
-  const d = new Date(iso)
-  const diff = Math.round((Date.now() - d.getTime()) / 86400000)
-  if (diff === 0) return 'Vandaag'
-  if (diff === 1) return 'Gisteren'
-  if (diff < 7) return `${diff} dagen geleden`
-  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 }
 
 function activiteitsSignaal(sessions: number, last_activity: string | null, minIntervalDagen: number | null): { label: string; color: string; dot: string } {
@@ -365,7 +360,15 @@ export default function TeamClient() {
                 ) : (
                   <>
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400, tableLayout: 'fixed' }}>
+                        <colgroup>
+                          <col style={{ width: 24 }} />
+                          <col />
+                          <col style={{ width: 80 }} />
+                          <col style={{ width: 80 }} />
+                          <col style={{ width: 90 }} />
+                          <col style={{ width: 100 }} />
+                        </colgroup>
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
                             {['', 'NAAM', 'MSA', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
