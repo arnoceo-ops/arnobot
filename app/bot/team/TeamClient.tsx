@@ -375,7 +375,7 @@ export default function TeamClient() {
                     return (
                       <div style={{ marginTop: 24 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                          <span style={{ ...label, marginBottom: 0 }}>TEAM MSA</span>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>TEAM MSA</span>
                           <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1 }}>{score}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 6 }}>/ 100</span></span>
                         </div>
                         <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
