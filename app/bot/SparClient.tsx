@@ -1482,7 +1482,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         {actieOpvolging && !actieBeantwoord && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 500, width: '100%', padding: 'clamp(24px,5vw,40px)' }}>
-              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>REMINDER</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ACTIE-REMINDER</p>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 28 }}>{actieOpvolging.uitdaging}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 {([
