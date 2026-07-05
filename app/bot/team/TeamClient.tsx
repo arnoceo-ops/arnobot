@@ -184,7 +184,11 @@ export default function TeamClient() {
       .catch(() => setLoading(false))
     fetch('/api/bot/team/spotlight')
       .then(r => r.json())
-      .then(data => setTeamAnalyses(data.analyses ?? []))
+      .then(data => {
+        const analyses = data.analyses ?? []
+        setTeamAnalyses(analyses)
+        if (analyses.length > 0) setExpandedAnalyse(analyses[0].id)
+      })
       .catch(() => {})
     fetch('/api/bot/team/scores')
       .then(r => r.json())
