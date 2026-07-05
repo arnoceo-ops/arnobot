@@ -444,7 +444,7 @@ PROFIEL VAN DE GEBRUIKER:
           if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
           if (recentUitdaging) {
             const statusTekst = recentActieStatus === 'ja'
-              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Als het gesprek iets anders suggereert, mag je daar voorzichtig naar vragen. Nooit beschuldigend, wel alert: "Je had aangegeven dat je dit had gedaan, maar ik hoor je nu zeggen dat..." Arno is eerlijk en verwacht dat de gebruiker eerlijk is met zichzelf.'
+              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno: als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het dan direct. Geen aannames, maar geen omzeilen als het evident is. "Je zei dat je dit had gedaan, maar je vertelt me nu..." is de juiste toon. Eerlijkheid gaat boven comfort.'
               : recentActieStatus === 'deels'
               ? 'De gebruiker heeft aangegeven dit ingepland te hebben maar nog niet volledig gedaan.'
               : recentActieStatus === 'nee'
