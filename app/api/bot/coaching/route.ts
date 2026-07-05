@@ -337,6 +337,34 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 
   if (saveResult.error) console.error('[coaching POST save]', saveResult.error.message)
 
+  // Notificatie naar manager als dit een teamlid is
+  const { data: membership } = await supabase
+    .from('arnobot_team_members')
+    .select('team_id, display_name')
+    .eq('user_id', userId)
+    .neq('role', 'manager')
+    .maybeSingle()
+
+  if (membership) {
+    const { data: manager } = await supabase
+      .from('arnobot_team_members')
+      .select('user_id')
+      .eq('team_id', membership.team_id)
+      .eq('role', 'manager')
+      .maybeSingle()
+
+    if (manager) {
+      await supabase.from('arnobot_team_notifications').insert({
+        team_id: membership.team_id,
+        manager_id: manager.user_id,
+        type: 'coaching_gegenereerd',
+        member_id: userId,
+        member_name: membership.display_name ?? 'Teamlid',
+        ref_id: null,
+      })
+    }
+  }
+
   const msaScore = Math.max(1, Math.ceil((parsed.mindset_score * parsed.systeem_score * parsed.actie_score) / 1.25))
   const prevScore = prevScoreRes.data as { mindset_score: number; systeem_score: number; actie_score: number; created_at: string } | null
   const canSaveScore = !prevScore || (() => {
