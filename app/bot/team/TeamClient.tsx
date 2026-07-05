@@ -394,9 +394,9 @@ export default function TeamClient() {
                           <col style={{ width: minIntervalDagen ? 24 : 0 }} />
                           <col />
                           <col style={{ width: 80 }} />
-                          <col style={{ width: 80 }} />
                           <col style={{ width: 90 }} />
-                          <col style={{ width: 100 }} />
+                          <col style={{ width: 120 }} />
+                          <col style={{ width: 130 }} />
                         </colgroup>
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
