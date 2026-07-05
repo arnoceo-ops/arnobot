@@ -368,7 +368,9 @@ export default function CoachingClient({ userId }: Props) {
           {error && (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#cc2200', flexShrink: 0, marginTop: 10 }} />
-              <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>{error}</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
+                {error} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+              </p>
             </div>
           )}
         </div>

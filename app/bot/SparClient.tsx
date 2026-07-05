@@ -682,7 +682,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         ])
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'arno', content: 'Er ging iets mis. Probeer opnieuw.' }])
+      setMessages(prev => [...prev, { role: 'arno', content: 'Er ging iets mis. Probeer opnieuw, of stuur Arno een WhatsApp via wa.me/31650695999.' }])
     } finally {
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 100)

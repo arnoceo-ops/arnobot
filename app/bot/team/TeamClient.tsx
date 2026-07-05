@@ -144,6 +144,7 @@ export default function TeamClient() {
   const [createError, setCreateError] = useState('')
   const [copied, setCopied] = useState(false)
   const [spotlightLoading, setSpotlightLoading] = useState(false)
+  const [spotlightError, setSpotlightError] = useState('')
   const [teamAnalyses, setTeamAnalyses] = useState<TeamAnalyse[]>([])
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
@@ -218,13 +219,13 @@ export default function TeamClient() {
       const res = await fetch('/api/bot/team/spotlight', { method: 'POST' })
       const data = await res.json()
       if (!res.ok) {
-        alert(data.error || 'Niet genoeg data beschikbaar.')
+        setSpotlightError(data.error || 'Niet genoeg data beschikbaar.')
       } else {
         const updated = await fetch('/api/bot/team/spotlight').then(r => r.json())
         setTeamAnalyses(updated.analyses ?? [])
       }
     } catch {
-      alert('Er ging iets mis.')
+      setSpotlightError('Er ging iets mis.')
     } finally {
       setSpotlightLoading(false)
     }
@@ -504,6 +505,11 @@ export default function TeamClient() {
                           <div className="loading-dot" />
                           <div className="loading-dot" />
                         </div>
+                      )}
+                      {spotlightError && (
+                        <p style={{ ...body, color: '#cc4444', marginBottom: 32 }}>
+                          {spotlightError} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+                        </p>
                       )}
                       {members.length < 2 && (
                         <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 40 }}>Minimaal 2 teamleden nodig voor een team-analyse.</p>

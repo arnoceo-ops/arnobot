@@ -279,7 +279,11 @@ export default function LidPage() {
           <a href="/bot/team" className="back-link">← TEAM</a>
 
           {loading && <p style={{ ...body, color: '#6b7280', letterSpacing: 2 }}>LADEN...</p>}
-          {error && <p style={{ ...body, color: '#cc4444' }}>{error}</p>}
+          {error && (
+            <p style={{ ...body, color: '#cc4444' }}>
+              {error} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+            </p>
+          )}
 
           {data && (
             <>
@@ -355,7 +359,11 @@ export default function LidPage() {
                       </div>
                     )}
 
-                    {agendaError && <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>{agendaError}</p>}
+                    {agendaError && (
+                      <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>
+                        {agendaError} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+                      </p>
+                    )}
 
                     {agenda && (
                       <div style={{ marginTop: 32 }}>
