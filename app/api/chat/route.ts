@@ -413,7 +413,7 @@ PROFIEL VAN DE GEBRUIKER:
     if (userId && !isWidget) {
       const { data: prevSessions } = await supabase
         .from('arnobot_blog_sessions')
-        .select('title, summary, feiten, uitdaging, created_at')
+        .select('title, summary, feiten, uitdaging, actie_status, created_at')
         .eq('user_id', userId)
         .not('session_id', 'eq', sessionId)
         .order('created_at', { ascending: false })
@@ -434,13 +434,24 @@ PROFIEL VAN DE GEBRUIKER:
           })
           .join('\n')
 
-        const recentUitdaging = prevSessions.find(s => s.uitdaging)?.uitdaging ?? null
+        const recentSessieMetUitdaging = prevSessions.find(s => s.uitdaging) ?? null
+        const recentUitdaging = recentSessieMetUitdaging?.uitdaging ?? null
+        const recentActieStatus = recentSessieMetUitdaging?.actie_status ?? null
 
         if (feitenBlokken || samenvattingen || recentUitdaging) {
           geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
           if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
           if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
-          if (recentUitdaging) geheugentekst += `\n\nOpenstaande actie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}`
+          if (recentUitdaging) {
+            const statusTekst = recentActieStatus === 'ja'
+              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Als het gesprek iets anders suggereert, mag je daar voorzichtig naar vragen. Nooit beschuldigend, wel alert: "Je had aangegeven dat je dit had gedaan, maar ik hoor je nu zeggen dat..." Arno is eerlijk en verwacht dat de gebruiker eerlijk is met zichzelf.'
+              : recentActieStatus === 'deels'
+              ? 'De gebruiker heeft aangegeven dit ingepland te hebben maar nog niet volledig gedaan.'
+              : recentActieStatus === 'nee'
+              ? 'De gebruiker heeft aangegeven dit nog niet gedaan te hebben.'
+              : 'De gebruiker heeft hier nog geen antwoord op gegeven.'
+            geheugentekst += `\n\nActie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}\n${statusTekst}`
+          }
         }
       }
     }
