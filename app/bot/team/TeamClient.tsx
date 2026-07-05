@@ -408,7 +408,7 @@ export default function TeamClient() {
                               { label: 'ANALYSES', col: 'analyses' },
                               { label: 'DATUM', col: 'datum' },
                             ] as const).map(({ label, col }) => (
-                              <th key={col} onClick={() => toggleSort(col)} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: sortBy === col ? '#f59e0b' : '#6b7280', padding: '8px 16px 12px 0', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                              <th key={col} onClick={() => toggleSort(col)} style={{ textAlign: col === 'datum' ? 'right' : 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: sortBy === col ? '#f59e0b' : '#6b7280', padding: col === 'datum' ? '8px 0 12px 16px' : '8px 16px 12px 0', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
                                 {label}{sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                               </th>
                             ))}
@@ -429,13 +429,13 @@ export default function TeamClient() {
                               <td style={{ padding: minIntervalDagen ? '16px 12px 16px 0' : 0, width: minIntervalDagen ? 16 : 0, overflow: 'hidden' }}>
                                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, verticalAlign: 'middle' }} />
                               </td>
-                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>{m.name}</td>
+                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>{m.name}</td>
                               <td style={{ padding: '16px 16px 16px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, color: msaTotal(m) != null ? '#f1f5f9' : '#374151' }}>
                                 {msaTotal(m) ?? '·'}
                               </td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280' }}>{m.sessions}</td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280' }}>{m.analyses}</td>
-                              <td style={{ padding: '16px 0', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af' }}>{formatLast(m.last_activity)}</td>
+                              <td style={{ padding: '16px 0 16px 16px', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af', textAlign: 'right' }}>{formatLast(m.last_activity)}</td>
                             </tr>
                             )
                           })}
