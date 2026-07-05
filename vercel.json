@@ -50,7 +50,7 @@
     },
     {
       "path": "/api/cron/rss-ingest",
-      "schedule": "0 6 * * *"
+      "schedule": "0 0 * * 6"
     }
   ],
   "redirects": [
