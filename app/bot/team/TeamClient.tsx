@@ -379,7 +379,7 @@ export default function TeamClient() {
                       value={minIntervalDagen ?? ''}
                       onChange={e => handleRitmeChange(e.target.value)}
                       className="team-input"
-                      style={{ maxWidth: 220, padding: '8px 12px', fontSize: 13 }}
+                      style={{ width: 160, padding: '8px 12px', fontSize: 13 }}
                     >
                       <option value="">Geen drempel</option>
                       <option value="7">1x per week</option>
