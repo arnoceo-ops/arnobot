@@ -149,6 +149,8 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
+  const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum'>('naam')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -255,6 +257,25 @@ export default function TeamClient() {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  function toggleSort(col: typeof sortBy) {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortBy(col); setSortDir('asc') }
+  }
+
+  const sortedMembers = [...members].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1
+    if (sortBy === 'naam') return dir * a.name.localeCompare(b.name, 'nl')
+    if (sortBy === 'msa') return dir * ((msaTotal(a) ?? -1) - (msaTotal(b) ?? -1))
+    if (sortBy === 'sessies') return dir * (a.sessions - b.sessions)
+    if (sortBy === 'analyses') return dir * (a.analyses - b.analyses)
+    if (sortBy === 'datum') {
+      const da = a.last_activity ? new Date(a.last_activity).getTime() : 0
+      const db = b.last_activity ? new Date(b.last_activity).getTime() : 0
+      return dir * (da - db)
+    }
+    return 0
+  })
 
   return (
     <>
@@ -379,13 +400,22 @@ export default function TeamClient() {
                         </colgroup>
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
-                            {['', 'NAAM', 'MSA', 'GESPR.', 'ANALYSES', 'DATUM'].map(h => (
-                              <th key={h} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280', padding: '8px 16px 12px 0' }}>{h}</th>
+                            <th style={{ padding: '8px 16px 12px 0' }} />
+                            {([
+                              { label: 'NAAM', col: 'naam' },
+                              { label: 'MSA', col: 'msa' },
+                              { label: 'GESPR.', col: 'sessies' },
+                              { label: 'ANALYSES', col: 'analyses' },
+                              { label: 'DATUM', col: 'datum' },
+                            ] as const).map(({ label, col }) => (
+                              <th key={col} onClick={() => toggleSort(col)} style={{ textAlign: 'left', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: sortBy === col ? '#f59e0b' : '#6b7280', padding: '8px 16px 12px 0', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                                {label}{sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                              </th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {members.map(m => {
+                          {sortedMembers.map(m => {
                             const signaal = activiteitsSignaal(m.sessions, m.last_activity, minIntervalDagen)
                             const onderRitme = isOnderRitme(m.last_activity)
                             return (
