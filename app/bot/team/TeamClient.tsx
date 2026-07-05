@@ -380,9 +380,7 @@ export default function TeamClient() {
                         <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
                           <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: 999, transition: 'width 0.6s ease' }} />
                         </div>
-                        <div style={{ textAlign: 'right', marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#6b7280' }}>
-                          nog {100 - score} te winnen
-                        </div>
+
                       </div>
                     )
                   })()}
