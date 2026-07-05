@@ -173,6 +173,22 @@ export async function POST() {
     }
   }
 
+  // Significante scoreverbeteringen detecteren (2+ punten stijging)
+  let voortgangErkenningContext = ''
+  if (prevCoaching?.mindset_score != null) {
+    const pijlarNamen: Record<string, string> = { mindset: 'Mindset', systeem: 'Systeem', actie: 'Actie' }
+    const sprongen: string[] = []
+    const pijlars = [
+      { key: 'mindset', prev: prevCoaching.mindset_score, naam: 'Mindset' },
+      { key: 'systeem', prev: prevCoaching.systeem_score, naam: 'Systeem' },
+      { key: 'actie', prev: prevCoaching.actie_score, naam: 'Actie' },
+    ]
+    // We weten de nieuwe scores nog niet (die bepaalt het model), maar we geven het model
+    // de instructie om significante stijgingen te erkennen als het ze berekent.
+    // Drempel: 2+ punten op een 1-5 schaal is significant.
+    voortgangErkenningContext = `\n\nVOORTGANGSERKENNING: Vorige scores waren Mindset ${prevCoaching.mindset_score}/5, Systeem ${prevCoaching.systeem_score}/5, Actie ${prevCoaching.actie_score}/5. Als een pijlar met 2 of meer punten is gestegen ten opzichte van deze vorige scores, erken dat expliciet in de betreffende diagnose. Kort en direct, geen overdreven lof. Bijv. "Je systeemscore is gestegen van ${prevCoaching.systeem_score} naar [score]. Dat is een reële verbetering." Geen erkenning bij 1 punt stijging of minder.`
+  }
+
   const profiel = profielRes.data?.profiel ?? null
   const profielText = profiel
     ? `\n\nGEBRUIKERSPROFIEL:\nRol: ${profiel.rol || 'onbekend'}\nMarkt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}\nWat verkoop je: ${profiel.wat_verkoop_je || 'onbekend'}\nIdeale klant: ${profiel.ideale_klant || 'onbekend'}\nGrootste uitdaging: ${profiel.uitdaging || 'onbekend'}`
@@ -236,7 +252,7 @@ Return ALLEEN een JSON-object, geen uitleg, geen markdown eromheen:
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
 De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}`
