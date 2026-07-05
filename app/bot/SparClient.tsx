@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import NotificationBell from '@/app/bot/components/NotificationBell'
 
 function formatLastDate(iso: string | null): string {
   if (!iso) return ''
@@ -1211,6 +1212,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             <button onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
           </div>
           <div className="nav-spacer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
+            <NotificationBell onNavigate={handleNavAttempt} />
             <button
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
               onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
