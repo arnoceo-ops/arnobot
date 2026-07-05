@@ -44,7 +44,7 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   if (!await checkProTier(userId)) return NextResponse.json({ error: 'Pro vereist' }, { status: 403 })
 
-  const [sessionsRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes] = await Promise.all([
+  const [sessionsRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, message_count, created_at')
@@ -74,6 +74,14 @@ export async function POST() {
       .select('updated_at, used_session_ids, used_analyse_ids, mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang')
       .eq('user_id', userId)
       .maybeSingle(),
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('actie_status')
+      .eq('user_id', userId)
+      .not('actie_status', 'is', null)
+      .not('actie_status', 'eq', 'skip')
+      .order('created_at', { ascending: false })
+      .limit(10),
   ])
 
   const sessions = sessionsRes.data ?? []
@@ -146,6 +154,25 @@ export async function POST() {
       }
     }
   }
+  // Actieopvolging patroon berekenen
+  const actieStatussen = (actieStatRes.data ?? []).map(s => s.actie_status as string)
+  const recent = actieStatussen.slice(0, 5)
+  const aantalNee = recent.filter(s => s === 'nee').length
+  const aantalDeels = recent.filter(s => s === 'deels').length
+  const aantalJa = recent.filter(s => s === 'ja').length
+  const recentLabels = recent.map(s => s === 'ja' ? 'gedaan' : s === 'deels' ? 'ingepland' : 'niet gedaan').join(', ')
+
+  let actieOpvolgingContext = ''
+  if (recent.length >= 4) {
+    if (aantalNee >= 3) {
+      actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Er is een patroon zichtbaar: acties blijven vaker liggen dan worden opgepakt. Verwerk dit subtiel in de actie_diagnose als constaterende observatie met een open vraag. Nooit als oordeel. Geen "je doet je acties niet". Wel zoiets als: "Ik zie dat acties vaker blijven liggen dan worden opgepakt. Wat houdt je tegen?" De context kan anders zijn dan wat zichtbaar is in de gesprekken.`
+    } else if (aantalDeels >= 3) {
+      actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Patroon: acties worden vaker half opgepakt dan volledig afgerond. Verwerk dit in de actie_diagnose als observatie met een vraag, geen oordeel. Bijv. "Ik zie dat acties vaak worden ingepland maar niet volledig worden afgerond. Zijn ze misschien te groot om in één keer te doen?"`
+    } else if (aantalJa >= 4) {
+      actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Patroon: de gebruiker zet afspraken consequent om in actie. Verwerk dit als positief signaal in de actie_diagnose.`
+    }
+  }
+
   const profiel = profielRes.data?.profiel ?? null
   const profielText = profiel
     ? `\n\nGEBRUIKERSPROFIEL:\nRol: ${profiel.rol || 'onbekend'}\nMarkt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}\nWat verkoop je: ${profiel.wat_verkoop_je || 'onbekend'}\nIdeale klant: ${profiel.ideale_klant || 'onbekend'}\nGrootste uitdaging: ${profiel.uitdaging || 'onbekend'}`
@@ -209,7 +236,7 @@ Return ALLEEN een JSON-object, geen uitleg, geen markdown eromheen:
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
 De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties die de gebruiker vandaag kan uitvoeren. Concreet gedrag, geen algemene adviezen.' : ''}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}`
