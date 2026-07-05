@@ -308,16 +308,6 @@ export default function CoachingClient({ userId }: Props) {
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 16 }}>COACHING</h1>
         </div>
 
-        {isTeamMember && (
-          <div className="no-print" style={{ background: '#1f2937', borderLeft: '3px solid #374151', padding: '16px 24px', marginBottom: 32 }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>DIT ZIET JOUW MANAGER</p>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', lineHeight: 1.9 }}>
-              Je drie scores op mindset, systeem en actie, plus een korte duiding per dimensie. Dat is een patroon dat ArnoBot destilleert, geen citaat of samenvatting van wat je hebt gezegd. Verder ziet de manager hoeveel gesprekken je hebt gevoerd.
-              <br /><br />
-              Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties. Wil je een analyse delen? Dat doe je zelf via de BIEB.
-            </p>
-          </div>
-        )}
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
