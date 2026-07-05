@@ -195,6 +195,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   }, [isLoaded, user])
   const [teamPrompt, setTeamPrompt] = useState(false)
   const [isManager, setIsManager] = useState(false)
+  const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
+  const [actieBeantwoord, setActieBeantwoord] = useState(false)
+  const [actieStatus, setActieStatus] = useState<'ja' | 'deels' | 'nee' | null>(null)
   const [sparModus, setSparModus] = useState<'coaching' | 'sparren'>('coaching')
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
@@ -337,6 +340,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     fetch('/api/bot/openers')
       .then(r => r.json())
       .then(data => { if (data.openers) setDynamicOpeners(data.openers) })
+      .catch(() => {})
+
+    fetch('/api/bot/actieopvolging')
+      .then(r => r.json())
+      .then(d => { if (d.uitdaging) setActieOpvolging(d) })
       .catch(() => {})
 
     // Verwerk referral code uit localStorage na OAuth
@@ -634,10 +642,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           { role: 'assistant', content: answer }
         ])
       } else {
+        const actieContext = (actieStatus && history.length === 0 && actieOpvolging)
+          ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'gedeeltelijk gedaan' : 'nog niet gedaan'}] `
+          : ''
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, history, userId, profiel, sessionId, antwoordLengte })
+          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte })
         })
         const data = await res.json()
 
@@ -918,6 +929,36 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
         .verfijn-btn:hover { opacity: 0.75; }
         .verfijn-btn:disabled { color: #6b7280; cursor: not-allowed; }
+
+        /* ACTIEOPVOLGING */
+        .actie-card {
+          max-width: 812px; margin: 0 auto;
+          padding: clamp(40px,6vw,64px) clamp(16px,4vw,20px) 0;
+        }
+        .actie-card-inner {
+          background: #1f2937; border-left: 3px solid #f59e0b;
+          padding: 20px 24px; margin-bottom: 0;
+        }
+        .actie-label {
+          font-family: 'Space Mono', monospace; font-size: 11px;
+          letter-spacing: 4px; color: #f59e0b; display: block; margin-bottom: 10px;
+        }
+        .actie-tekst {
+          font-family: 'Space Mono', monospace; font-size: 13px;
+          line-height: 1.8; color: #9ca3af; margin-bottom: 20px;
+        }
+        .actie-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .actie-btn {
+          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+          padding: 8px 20px; border-radius: 999px; cursor: pointer;
+          border: 1px solid #374151; background: none; color: #9ca3af;
+          transition: border-color 0.15s, color 0.15s;
+        }
+        .actie-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+        .actie-btn-ja {
+          background: #f59e0b; color: #111827; border-color: #f59e0b;
+        }
+        .actie-btn-ja:hover { background: #d97706; border-color: #d97706; color: #111827; }
 
         /* OPENERS */
         .spar-openers {
@@ -1465,6 +1506,32 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
           )}
         </div>}
+
+        {!started && !loading && sparModus !== 'sparren' && actieOpvolging && !actieBeantwoord && (
+          <div className="actie-card">
+            <div className="actie-card-inner">
+              <span className="actie-label">OPENSTAANDE ACTIE</span>
+              <p className="actie-tekst">{actieOpvolging.uitdaging}</p>
+              <div className="actie-btns">
+                <button className="actie-btn actie-btn-ja" onClick={() => {
+                  setActieStatus('ja')
+                  setActieBeantwoord(true)
+                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'ja' }) }).catch(() => {})
+                }}>JA, GEDAAN</button>
+                <button className="actie-btn" onClick={() => {
+                  setActieStatus('deels')
+                  setActieBeantwoord(true)
+                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'deels' }) }).catch(() => {})
+                }}>DEELS</button>
+                <button className="actie-btn" onClick={() => {
+                  setActieStatus('nee')
+                  setActieBeantwoord(true)
+                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'nee' }) }).catch(() => {})
+                }}>NOG NIET</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!started && !loading && sparModus !== 'sparren' && (
           <div className="spar-openers" style={isSalesOnlyProfiel ? { paddingTop: 20 } : undefined}>
