@@ -39,9 +39,9 @@ function HintBlock({ hint }: { hint: string }) {
   if (hint === 'salescanvas' || hint === 'blocked') {
     return (
       <div className="chat-cta">
-        <p>{hint === 'blocked' ? 'Toch proberen, hè? 😂' : 'Als je echt de diepte in wilt, doe dan een free trial.'}</p>
-        <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer" className="chat-cta-btn">
-          → Probeer SalesCanvas gratis
+        <p>{hint === 'blocked' ? 'Toch proberen, hè? 😂' : 'Als je echt de diepte in wilt, ga dan naar arno.bot.'}</p>
+        <a href="https://arno.bot" target="_blank" rel="noopener noreferrer" className="chat-cta-btn">
+          → Ga naar arno.bot
         </a>
       </div>
     )

@@ -139,11 +139,13 @@ GROEIKANS
 Één patroon dat het team collectief terughoudt. Benoem het helder, zonder te veroordelen.
 
 ARNO'S ADVIES
-Één concrete actie die de manager deze week kan inzetten. Praktisch, uitvoerbaar, direct.
+Één concrete actie die de manager kan inzetten. Praktisch, uitvoerbaar, direct.
 
 Maximaal 250 woorden totaal. Schrijf in eerste persoon, alsof je de manager persoonlijk aanspreekt.
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).
+Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".`,
     messages: [{
       role: 'user',
       content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van de gesprekssamenvatingen en scoreontwikkeling van zijn teamleden.

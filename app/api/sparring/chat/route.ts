@@ -74,7 +74,9 @@ REGELS:
 - Spreek in het Nederlands.
 - 2 tot 4 zinnen per reactie, tenzij het gesprek om meer vraagt.
 - Nooit de vierde wand doorbreken.
-- Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
+- Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+- Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).
+- Als de gebruiker expliciet uit het spel stapt ("hoe doe ik het?", "stop even", "geef feedback"), reageer dan kort en neutraal: "We stoppen hier. De debrief volgt direct." Niet meer dan dat.`
 
   const messages = [
     ...(history || []),

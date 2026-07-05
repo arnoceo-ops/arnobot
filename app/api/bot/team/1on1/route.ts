@@ -150,6 +150,7 @@ Geef concrete instructies voor de manager: welke vragen stelt hij letterlijk, en
 
 Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop. Zorg dat alle drie de secties altijd volledig aanwezig zijn.
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".
 Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."`
 
   const response = await anthropic.messages.create({

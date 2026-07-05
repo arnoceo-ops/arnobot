@@ -53,7 +53,7 @@ ${transcript}
 
 ${coachingContext}
 
-Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kopje. Begin direct met het eerste punt. Gebruik geen horizontale lijnen (---). Gebruik een lege regel als scheiding tussen punten. Gebruik genderneutrale taal: noem de tegenpartij altijd bij de rol (bijv. 'de ${personaLabel}'), nooit bij voornaamwoord (niet 'hij', 'zij', 'hem', 'haar'). Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kopje. Begin direct met het eerste punt. Gebruik geen horizontale lijnen (---). Gebruik een lege regel als scheiding tussen punten. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Herschrijf zinnen zonder streepjes.
 
 1. Wat ging goed (1-2 zinnen)
 2. Het kritieke moment: wanneer verloor de gebruiker de controle of het momentum? Citeer de exacte woorden.
