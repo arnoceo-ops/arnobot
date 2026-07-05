@@ -369,6 +369,7 @@ export default function TeamClient() {
                   <ProgressieChart history={teamScores} />
                   {(() => {
                     const last = teamScores[teamScores.length - 1]
+                    if (!last.mindset_score || !last.systeem_score || !last.actie_score) return null
                     const score = Math.max(1, Math.ceil((last.mindset_score * last.systeem_score * last.actie_score) / 1.25))
                     const pct = score
                     return (
