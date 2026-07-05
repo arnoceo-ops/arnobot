@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 80,
-        system: 'Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin, beginnen met een werkwoord. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).',
+        system: 'Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin, beginnen met een werkwoord. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.',
         messages: [{
           role: 'user',
           content: `Wat is de concrete uitdaging of actie voor de gebruiker na dit gesprek?\n\n${conversationText}`

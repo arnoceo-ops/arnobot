@@ -643,7 +643,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         ])
       } else {
         const actieContext = (actieStatus && history.length === 0 && actieOpvolging)
-          ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'gedeeltelijk gedaan' : 'nog niet gedaan'}] `
+          ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'ingepland' : 'nog niet gedaan'}] `
           : ''
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -930,35 +930,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .verfijn-btn:hover { opacity: 0.75; }
         .verfijn-btn:disabled { color: #6b7280; cursor: not-allowed; }
 
-        /* ACTIEOPVOLGING */
-        .actie-card {
-          max-width: 812px; margin: 0 auto;
-          padding: clamp(40px,6vw,64px) clamp(16px,4vw,20px) 0;
-        }
-        .actie-card-inner {
-          background: #1f2937; border-left: 3px solid #f59e0b;
-          padding: 20px 24px; margin-bottom: 0;
-        }
-        .actie-label {
-          font-family: 'Space Mono', monospace; font-size: 11px;
-          letter-spacing: 4px; color: #f59e0b; display: block; margin-bottom: 10px;
-        }
-        .actie-tekst {
-          font-family: 'Space Mono', monospace; font-size: 13px;
-          line-height: 1.8; color: #9ca3af; margin-bottom: 20px;
-        }
-        .actie-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-        .actie-btn {
-          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
-          padding: 8px 20px; border-radius: 999px; cursor: pointer;
-          border: 1px solid #374151; background: none; color: #9ca3af;
-          transition: border-color 0.15s, color 0.15s;
-        }
-        .actie-btn:hover { border-color: #f59e0b; color: #f59e0b; }
-        .actie-btn-ja {
-          background: #f59e0b; color: #111827; border-color: #f59e0b;
-        }
-        .actie-btn-ja:hover { background: #d97706; border-color: #d97706; color: #111827; }
+        /* REMINDER MODAL */
 
         /* OPENERS */
         .spar-openers {
@@ -1507,27 +1479,35 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           )}
         </div>}
 
-        {!started && !loading && sparModus !== 'sparren' && actieOpvolging && !actieBeantwoord && (
-          <div className="actie-card">
-            <div className="actie-card-inner">
-              <span className="actie-label">OPENSTAANDE ACTIE</span>
-              <p className="actie-tekst">{actieOpvolging.uitdaging}</p>
-              <div className="actie-btns">
-                <button className="actie-btn actie-btn-ja" onClick={() => {
-                  setActieStatus('ja')
-                  setActieBeantwoord(true)
-                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'ja' }) }).catch(() => {})
-                }}>JA, GEDAAN</button>
-                <button className="actie-btn" onClick={() => {
-                  setActieStatus('deels')
-                  setActieBeantwoord(true)
-                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'deels' }) }).catch(() => {})
-                }}>DEELS</button>
-                <button className="actie-btn" onClick={() => {
-                  setActieStatus('nee')
-                  setActieBeantwoord(true)
-                  fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'nee' }) }).catch(() => {})
-                }}>NOG NIET</button>
+        {actieOpvolging && !actieBeantwoord && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 500, width: '100%', padding: 'clamp(24px,5vw,40px)' }}>
+              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>REMINDER</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 28 }}>{actieOpvolging.uitdaging}</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([
+                  { label: 'JA, GEDAAN', status: 'ja' as const, primary: true },
+                  { label: 'INGEPLAND', status: 'deels' as const, primary: false },
+                  { label: 'NOG NIET', status: 'nee' as const, primary: false },
+                ] as const).map(({ label, status, primary }) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setActieStatus(status)
+                      setActieBeantwoord(true)
+                      fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status }) }).catch(() => {})
+                    }}
+                    style={{
+                      flex: 1,
+                      fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
+                      padding: '10px 4px', borderRadius: 999, cursor: 'pointer',
+                      background: primary ? '#f59e0b' : 'none',
+                      color: primary ? '#111827' : '#9ca3af',
+                      border: primary ? 'none' : '1px solid #374151',
+                      transition: 'all 0.15s',
+                    }}
+                  >{label}</button>
+                ))}
               </div>
             </div>
           </div>

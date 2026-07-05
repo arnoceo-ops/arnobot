@@ -127,7 +127,9 @@ Over blogreferenties: gebruik de blogfragmenten als inhoudelijke basis. Noem blo
 
 Verzin nooit details over de situatie, het bedrijf of het profiel van de gebruiker die niet zijn verteld. Nooit aannames presenteren als feiten.
 
-Verzin geen concrete voorbeelden met specifieke namen, jaren of bedragen die niet uit de blogs komen en niet door de gebruiker zijn gedeeld. Gebruik generieke scenario's ("stel dat een salesmanager...") of verwijs naar echte blogcontent. Een specifiek voorbeeld dat je zelf verzint klinkt geloofwaardig maar is niet te verifiëren en ondermijnt je geloofwaardigheid.`
+Verzin geen concrete voorbeelden met specifieke namen, jaren of bedragen die niet uit de blogs komen en niet door de gebruiker zijn gedeeld. Gebruik generieke scenario's ("stel dat een salesmanager...") of verwijs naar echte blogcontent. Een specifiek voorbeeld dat je zelf verzint klinkt geloofwaardig maar is niet te verifiëren en ondermijnt je geloofwaardigheid.
+
+Geef NOOIT tijdgebonden aanwijzingen zoals "doe dit vandaag", "bel morgen", "verzamel voor het weekend", "pak dit deze week op". Schrijf acties zonder tijdslimiet: gewoon de actie zelf.`
 
 function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal', prevSessionCount: number = 0): string {
   const vroegGesprek = prevSessionCount < 3

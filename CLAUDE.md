@@ -123,6 +123,17 @@ De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed h
 
 **Als de gebruiker zegt "haal eruit" of "verwijder":** verwijder alleen het streepje. Voeg niets terug — geen komma, geen punt, tenzij de gebruiker dat expliciet vraagt.
 
+## Tijdgebonden aanwijzingen — NOOIT — geldt voor alle AI-output
+
+Schrijf NOOIT tijdgebonden aanwijzingen in AI-gegenereerde output: geen "doe dit vandaag", "bel morgen", "verzamel voor het weekend", "pak dit deze week op", of enige andere tijdsdruk.
+
+**Dit geldt voor:** gesprekken, uitdagingen/acties, coaching, analyses, syntheses, spotlight, 1:1 agenda, thought of the day.
+
+**Handhaving in systeemprompts:** elke route die een actie of aanbeveling genereert MOET bevatten:
+`Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend". Gewoon de actie zelf.`
+
+**Reden:** gebruikers zijn volwassenen die zelf bepalen wanneer ze iets doen. Tijdsdruk vanuit de app voegt niets toe en past niet bij de toon van ArnoBot.
+
 ## AI-calls — altijd loading-state tonen
 
 Elke fetch naar een AI-route moet een zichtbare loading-indicator hebben in het gesprek of in het relevante UI-blok — niet alleen een `...` op een knop. Gebruik de bestaande `.msg-loading` + `.loading-dots` + `.loading-text` structuur, of een equivalent in context. Dit geldt ook voor nieuwe routes die buiten het hoofdgesprek vallen (synthese, doorvraag, analyse).
