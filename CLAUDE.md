@@ -9,7 +9,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Controleer of alle API-routes nog auth hebben (nieuwe routes kunnen dit missen)
 - Check of error-responses nog geen interne details lekken
 - Controleer `middleware.ts` op volledigheid van scanner-blokkering
-- **Post-launch taak (nog niet gedaan):** RLS inschakelen in Supabase met Clerk JWT-integratie als defense-in-depth. Niet uitvoeren vóór of vlak na livegang — verkeerde policy maakt data onzichtbaar voor gebruikers.
+- **Pre-launch taak (nog niet gedaan):** RLS inschakelen in Supabase met Clerk JWT-integratie als defense-in-depth. Uitvoeren vóór livegang (voor 1 augustus 2026): pre-launch is het juiste moment omdat een tijdelijke verstoring herstelbaar is. Na livegang wil je dit risico niet nemen met echte gebruikers. Verkeerde policy maakt data onzichtbaar — grondig testen na implementatie.
 
 ### 2. Dependencies & tooling
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Sanity?
