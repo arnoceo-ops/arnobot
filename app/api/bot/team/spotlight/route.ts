@@ -79,23 +79,53 @@ export async function POST() {
 
   const memberIds = members.map(m => m.user_id)
 
-  const { data: sessions } = await supabase
-    .from('arnobot_blog_sessions')
-    .select('user_id, summary, feiten')
-    .in('user_id', memberIds)
-    .order('created_at', { ascending: false })
-    .limit(40)
+  const [sessionsRes, scoresRes] = await Promise.all([
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('user_id, summary, feiten')
+      .in('user_id', memberIds)
+      .order('created_at', { ascending: false })
+      .limit(40),
+    supabase
+      .from('arnobot_coaching_scores')
+      .select('mindset_score, systeem_score, actie_score, created_at')
+      .in('user_id', memberIds)
+      .order('created_at', { ascending: true })
+      .limit(300),
+  ])
 
-  if (!sessions?.length) return NextResponse.json({ error: 'Niet genoeg data voor een team-analyse' }, { status: 400 })
+  if (!sessionsRes.data?.length) return NextResponse.json({ error: 'Niet genoeg data voor een team-analyse' }, { status: 400 })
 
-  const teamData = sessions
+  const teamData = sessionsRes.data
     .filter(s => s.summary)
     .map(s => `- ${s.summary}${s.feiten ? '\n  Feiten: ' + s.feiten.slice(0, 200) : ''}`)
     .join('\n\n')
     .slice(0, 6000)
 
+  // Bereken maandgemiddelden uit historische scores
+  const byMonth: Record<string, { mindset: number[]; systeem: number[]; actie: number[] }> = {}
+  for (const s of scoresRes.data ?? []) {
+    const month = s.created_at.slice(0, 7)
+    if (!byMonth[month]) byMonth[month] = { mindset: [], systeem: [], actie: [] }
+    if (s.mindset_score) byMonth[month].mindset.push(s.mindset_score)
+    if (s.systeem_score) byMonth[month].systeem.push(s.systeem_score)
+    if (s.actie_score) byMonth[month].actie.push(s.actie_score)
+  }
+  const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10 : null
+  const maanden = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec']
+  const trendRegels = Object.entries(byMonth)
+    .slice(-6)
+    .map(([month, d]) => {
+      const m = avg(d.mindset), s = avg(d.systeem), a = avg(d.actie)
+      const label = `${maanden[parseInt(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`
+      return `${label}: Mindset ${m ?? '?'} / Systeem ${s ?? '?'} / Actie ${a ?? '?'}`
+    })
+    .join('\n')
+
+  const trendContext = trendRegels ? `\n\nTEAMSCORES OVER TIJD (gemiddeld per maand):\n${trendRegels}` : ''
+
   const result = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-5',
     max_tokens: 600,
     system: `Je bent Arno Diepeveen, salescoach met 40 jaar ervaring. Direct, eerlijk, maar altijd gericht op groei.
 Je schrijft een teamanalyse voor de manager. Toon: motiverend én scherp. Geen lofzang, geen afbranden.
@@ -112,13 +142,14 @@ ARNO'S ADVIES
 Één concrete actie die de manager deze week kan inzetten. Praktisch, uitvoerbaar, direct.
 
 Maximaal 250 woorden totaal. Schrijf in eerste persoon, alsof je de manager persoonlijk aanspreekt.
+Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
     messages: [{
       role: 'user',
-      content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van deze gesprekssamengevattingen van zijn teamleden met ArnoBot.
+      content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van de gesprekssamenvatingen en scoreontwikkeling van zijn teamleden.
 
 GESPREKKEN:
-${teamData}`
+${teamData}${trendContext}`
     }]
   })
 

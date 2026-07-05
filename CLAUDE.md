@@ -178,6 +178,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. Fable 5 hersteld op 1 juli 2026. Risico anders dan Sonnet 5: thinking is altijd aan maar gescheiden van output, getText() handelt dit correct af. | 2026-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
 | `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
+| `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-5` | Trend-bewuste teamanalyse op basis van gesprekken + historische scores. Opgewaardeerd van Haiku: cruciale boodschap voor manager vereist redeneervermogen. | 2026-07 |
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar?"
 
