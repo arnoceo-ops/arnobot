@@ -149,7 +149,7 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum'>('naam')
+  const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
@@ -258,12 +258,16 @@ export default function TeamClient() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function toggleSort(col: typeof sortBy) {
-    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    else { setSortBy(col); setSortDir('asc') }
+  function toggleSort(col: 'naam' | 'msa' | 'sessies' | 'analyses' | 'datum') {
+    if (sortBy === col) {
+      if (sortDir === 'asc') setSortDir('desc')
+      else { setSortBy(null); setSortDir('asc') }
+    } else {
+      setSortBy(col); setSortDir('asc')
+    }
   }
 
-  const sortedMembers = [...members].sort((a, b) => {
+  const sortedMembers = sortBy === null ? members : [...members].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1
     if (sortBy === 'naam') return dir * a.name.localeCompare(b.name, 'nl')
     if (sortBy === 'msa') return dir * ((msaTotal(a) ?? -1) - (msaTotal(b) ?? -1))
@@ -396,7 +400,7 @@ export default function TeamClient() {
                           <col style={{ width: 75 }} />
                           <col style={{ width: 100 }} />
                           <col style={{ width: 100 }} />
-                          <col style={{ width: 130 }} />
+                          <col style={{ width: 100 }} />
                         </colgroup>
                         <thead>
                           <tr style={{ borderBottom: '1px solid #374151' }}>
