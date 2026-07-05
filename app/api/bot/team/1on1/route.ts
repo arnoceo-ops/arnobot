@@ -155,8 +155,8 @@ Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, é
 Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."`
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
-    max_tokens: 2500,
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1000,
     system: systemPrompt,
     messages: [{ role: 'user', content: context }],
   })
