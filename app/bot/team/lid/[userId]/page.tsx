@@ -426,7 +426,7 @@ export default function LidPage() {
                                 onClick={() => setExpandedHistory(expandedHistory === h.id ? null : h.id)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: expandedHistory === h.id ? '#f59e0b' : '#6b7280', padding: 0 }}
                               >
-                                {expandedHistory === h.id ? '↑ VERBERG AGENDA' : '↓ TOON VOLLEDIGE AGENDA'}
+                                {expandedHistory === h.id ? '↑ VERBERG TOELICHTING' : '↓ TOON VOLLEDIGE TOELICHTING'}
                               </button>
                               {expandedHistory === h.id && (
                                 <div style={{ marginTop: 12, borderLeft: '3px solid #374151', paddingLeft: 16 }}>
