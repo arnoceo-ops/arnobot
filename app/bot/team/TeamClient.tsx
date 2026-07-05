@@ -367,6 +367,25 @@ export default function TeamClient() {
                 <div style={{ ...section, borderTop: 'none', paddingTop: 0 }}>
                   <span style={label}>TEAMSCORES</span>
                   <ProgressieChart history={teamScores} />
+                  {(() => {
+                    const last = teamScores[teamScores.length - 1]
+                    const score = Math.max(1, Math.ceil((last.mindset_score * last.systeem_score * last.actie_score) / 1.25))
+                    const pct = score
+                    return (
+                      <div style={{ marginTop: 24 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280' }}>TEAM MSA</span>
+                          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 2, color: '#f59e0b', lineHeight: 1 }}>{score}<span style={{ fontSize: 14, color: '#6b7280', marginLeft: 4 }}>/ 100</span></span>
+                        </div>
+                        <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: 999, transition: 'width 0.6s ease' }} />
+                        </div>
+                        <div style={{ textAlign: 'right', marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#6b7280' }}>
+                          nog {100 - score} te winnen
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
 
