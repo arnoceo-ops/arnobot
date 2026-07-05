@@ -444,7 +444,7 @@ PROFIEL VAN DE GEBRUIKER:
           if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
           if (recentUitdaging) {
             const statusTekst = recentActieStatus === 'ja'
-              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno: als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het dan direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar in de gesprekken. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" zodat de gebruiker zelf de context kan geven.'
+              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno. Als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt. Dat is de toon: eerlijk en direct vanuit oprechte betrokkenheid.'
               : recentActieStatus === 'deels'
               ? 'De gebruiker heeft aangegeven dit ingepland te hebben maar nog niet volledig gedaan.'
               : recentActieStatus === 'nee'
