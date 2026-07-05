@@ -358,7 +358,7 @@ export default function TeamClient() {
                 </h1>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <button className="btn-outline" onClick={copyInviteLink} style={{ ...btnOutline, color: copied ? '#f59e0b' : '#9ca3af', borderColor: copied ? '#f59e0b' : '#374151' }}>
-                    {copied ? 'GEKOPIEERD!' : 'KOPIEER UITNODIGINGSLINK'}
+                    {copied ? 'GEKOPIEERD!' : 'UITNODIGINGSLINK'}
                   </button>
                 </div>
               </div>
@@ -370,38 +370,7 @@ export default function TeamClient() {
                 </div>
               )}
 
-              {(() => {
-                const scored = members.filter(m => m.mindset_score != null && m.systeem_score != null && m.actie_score != null)
-                if (scored.length === 0) return null
-                const avg = (key: 'mindset_score' | 'systeem_score' | 'actie_score') =>
-                  Math.round(scored.reduce((s, m) => s + (m[key] as number), 0) / scored.length * 10) / 10
-                const m = avg('mindset_score'), s = avg('systeem_score'), a = avg('actie_score')
-                const totaal = Math.max(1, Math.ceil((m * s * a) / 1.25))
-                return (
-                  <div style={{ ...section, borderTop: '1px solid #374151', paddingTop: 32, paddingBottom: 32 }}>
-                    <span style={label}>TEAM MSA</span>
-                    <div style={{ display: 'flex', gap: 40, marginTop: 20, flexWrap: 'wrap' }}>
-                      {[['MINDSET', m], ['SYSTEEM', s], ['ACTIE', a]].map(([lbl, val]) => (
-                        <div key={lbl as string}>
-                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280', marginBottom: 6 }}>{lbl}</div>
-                          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 1, color: '#f1f5f9', lineHeight: 1 }}>{val}</div>
-                        </div>
-                      ))}
-                      <div style={{ borderLeft: '1px solid #374151', paddingLeft: 40 }}>
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 4, color: '#6b7280', marginBottom: 6 }}>TOTAAL</div>
-                        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 1, color: '#f59e0b', lineHeight: 1 }}>{totaal}</div>
-                      </div>
-                    </div>
-                    {scored.length < members.length && (
-                      <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-                        Op basis van {scored.length} van {members.length} leden met coaching
-                      </p>
-                    )}
-                  </div>
-                )
-              })()}
-
-              <div style={section}>
+<div style={section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
                   <span style={label}>TEAMLEDEN ({members.length})</span>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
