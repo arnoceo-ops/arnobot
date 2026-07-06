@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
+import Anthropic from '@anthropic-ai/sdk'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const anthropic = new Anthropic()
 const TO = 'arno@arno.bot'
 
 const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string }[] = [
@@ -50,7 +54,31 @@ export async function POST(req: NextRequest) {
 
   let template: { subject: string; html: string }
   try {
-    template = getEmailTemplate(type as EmailType, 'Arno', true, { userId: process.env.ARNOBOT_OWNER_USER_ID ?? 'test-user-id' })
+    let nudgeQuestion: string | undefined
+    if (type === 'weekly_nudge') {
+      const ownerId = process.env.ARNOBOT_OWNER_USER_ID
+      if (ownerId) {
+        const { data: lastSession } = await supabase
+          .from('arnobot_blog_sessions')
+          .select('uitdaging')
+          .eq('user_id', ownerId)
+          .not('uitdaging', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (lastSession?.uitdaging?.trim()) {
+          try {
+            const msg = await anthropic.messages.create({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 100,
+              messages: [{ role: 'user', content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.` }],
+            })
+            nudgeQuestion = msg.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
+          } catch { /* val terug op generieke template */ }
+        }
+      }
+    }
+    template = getEmailTemplate(type as EmailType, 'Arno', true, { userId: process.env.ARNOBOT_OWNER_USER_ID ?? 'test-user-id', nudgeQuestion })
   } catch {
     return NextResponse.json({ error: 'Onbekend type' }, { status: 400 })
   }
