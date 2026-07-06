@@ -44,19 +44,38 @@ export async function POST(req: NextRequest) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
   const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
 
-  // Stap 1: haal recente sessies op
+  // Stap 1: haal recente sessies op (ruimer dan 12 zodat we na filteren genoeg overhouden)
   let sessieQuery = supabase
     .from('arnobot_blog_sessions')
-    .select('session_id, title, summary')
+    .select('session_id, title, summary, user_id')
     .gte('created_at', since)
     .not('session_id', 'is', null)
     .order('created_at', { ascending: false })
-    .limit(12)
+    .limit(30)
 
   if (ownerUserId) sessieQuery = sessieQuery.neq('user_id', ownerUserId)
-  const { data: sessies } = await sessieQuery
+  const { data: alleSessies } = await sessieQuery
 
-  if (!sessies?.length) {
+  if (!alleSessies?.length) {
+    return NextResponse.json({ zelfbeoordeling: null, expertpanel: null, count: 0, id: null })
+  }
+
+  // Filter op goedgekeurde ArnoBot-gebruikers — sluit arno.blog widget en Sales Canvas uit
+  const kandidaatUserIds = [...new Set(alleSessies.map(s => s.user_id).filter(Boolean) as string[])]
+  const { data: goedgekeurdeGebruikers } = kandidaatUserIds.length > 0
+    ? await supabase.from('approved_users').select('user_id, voornaam, achternaam').in('user_id', kandidaatUserIds)
+    : { data: [] }
+
+  const naamMap: Record<string, string> = {}
+  const goedgekeurdeIds = new Set<string>()
+  for (const u of goedgekeurdeGebruikers ?? []) {
+    naamMap[u.user_id] = [u.voornaam, u.achternaam].filter(Boolean).join(' ')
+    goedgekeurdeIds.add(u.user_id)
+  }
+
+  const sessies = alleSessies.filter(s => s.user_id && goedgekeurdeIds.has(s.user_id)).slice(0, 12)
+
+  if (!sessies.length) {
     return NextResponse.json({ zelfbeoordeling: null, expertpanel: null, count: 0, id: null })
   }
 
@@ -101,10 +120,11 @@ export async function POST(req: NextRequest) {
 
   const transcripts = rijkeSessies
     .map((s, i) => {
+      const naam = naamMap[s.user_id] || 'Onbekend'
       const exchanges = bySession[s.session_id]
         .map(e => `GEBRUIKER: ${e.question}\n\nARNO: ${e.answer}`)
         .join('\n\n---\n\n')
-      return `GESPREK ${i + 1}${s.title ? ` (${s.title})` : ''}:\n\n${exchanges}`
+      return `GESPREK ${i + 1} (${naam}${s.title ? ` · ${s.title}` : ''}):\n\n${exchanges}`
     })
     .join('\n\n====\n\n')
 
