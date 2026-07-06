@@ -18,6 +18,7 @@ const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; cate
   { type: 'data_cleanup',     label: 'Data-cleanup',          description: 'Maandelijks (1e):gebruikers te verwerken naar hq@arno.bot', category: 'admin', cron: '/api/cron/data-cleanup' },
   { type: 'milestone_check',  label: 'Milestone-check',       description: 'Maandelijks (1e):alert bij 50 actieve gebruikers',         category: 'admin', cron: '/api/cron/milestone-check' },
   { type: 'update_handover', label: 'Overdracht­docs update', description: 'Maandelijks (1e):bijwerkt TECHNICAL_ en BUSINESS_HANDOVER.md', category: 'admin', cron: '/api/cron/update-handover' },
+  { type: 'meta_analyse',   label: 'Meta-analyse',          description: 'Maandelijks (1e):zelfbeoordeling + expertpanel naar arno@arno.bot',   category: 'admin', cron: '/api/cron/meta-analyse' },
 ]
 
 export async function GET() {

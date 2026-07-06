@@ -126,6 +126,7 @@ export default async function ArnoBotAdminPage({
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>CRONS</a>
           <a href="/bot/admin" style={navLinkStyle(true)}>ARNOBOT</a>
           <a href="/bot/admin/idee" style={navLinkStyle(false)}>BLOGS</a>
+          <a href="/bot/admin/meta-analyse" style={navLinkStyle(false)}>META</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
