@@ -178,7 +178,13 @@ export default async function ArnoBotAdminPage({
             LAAD
           </button>
           {sessionList.length > 0 && (
-            <div style={{ alignSelf: 'flex-end' }}>
+            <div style={{ alignSelf: 'flex-end', display: 'flex', gap: 8 }}>
+              <a
+                href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
+                style={{ background: '#1f2937', color: '#9ca3af', border: '1px solid #374151', padding: '10px 20px', fontWeight: 700, fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                ↓ CSV
+              </a>
               <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />
             </div>
           )}
