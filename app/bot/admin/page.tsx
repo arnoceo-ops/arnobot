@@ -87,15 +87,14 @@ export default async function ArnoBotAdminPage({
     .gte('created_at', `${from}T00:00:00`)
     .lte('created_at', `${to}T23:59:59`)
     .order('created_at', { ascending: true })
+    .limit(2000)
 
   const rows: LogRow[] = data || []
 
-  const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean) as string[])]
-  const { data: gebruikers } = userIds.length > 0
-    ? await supabase.from('approved_users').select('user_id, voornaam, achternaam').in('user_id', userIds)
-    : { data: [] }
+  // alleGebruikers is already fetched above — build naamMap from it directly
+  // (avoids a large .in() query that breaks PostgREST URL limits with many users)
   const naamMap: Record<string, string> = {}
-  for (const u of gebruikers ?? []) {
+  for (const u of alleGebruikers ?? []) {
     naamMap[u.user_id] = [u.voornaam, u.achternaam].filter(Boolean).join(' ')
   }
 
