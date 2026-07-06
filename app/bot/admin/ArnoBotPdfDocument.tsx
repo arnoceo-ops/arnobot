@@ -51,9 +51,9 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
             </View>
             {messages.map((msg) => (
               <View key={msg.id} style={styles.message}>
-                <Text style={styles.question}>{msg.question}</Text>
+                <Text style={styles.question}>{msg.question ?? ''}</Text>
                 <Text style={styles.answer}>{
-                  msg.answer
+                  (msg.answer ?? '')
                     .replace(/\*\*([^*]+)\*\*/g, '$1')
                     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
                 }</Text>
