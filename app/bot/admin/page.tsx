@@ -147,7 +147,7 @@ export default async function ArnoBotAdminPage({
               type="text" name="naam" list="gebruikers-list"
               defaultValue={filterNaam || naamParam}
               placeholder="Zoek op naam..."
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}
             />
             <datalist id="gebruikers-list">
               <option value="ALLE" />
@@ -157,17 +157,17 @@ export default async function ArnoBotAdminPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>VAN</label>
             <input type="date" name="from" defaultValue={from} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>TOT EN MET</label>
             <input type="date" name="to" defaultValue={to} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>SORTERING</label>
             <select name="sort" defaultValue={sort}
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}>
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>
               <option value="count_desc">Meeste vragen eerst</option>
