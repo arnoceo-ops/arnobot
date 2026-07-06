@@ -128,7 +128,7 @@ export default function BotNav({ active }: Props) {
           <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
           <button className="mob-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
             {menuOpen
-              ? <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, color: '#f59e0b', lineHeight: 1 }}>✕</span>
+              ? <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, color: '#f59e0b', lineHeight: 1, height: 'auto', width: 'auto', background: 'transparent' }}>✕</span>
               : <><span /><span /><span /></>
             }
           </button>

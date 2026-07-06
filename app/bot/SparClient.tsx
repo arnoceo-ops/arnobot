@@ -1200,7 +1200,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             <Link href="/" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
             <button className="mob-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
               {menuOpen
-                ? <span style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", color: '#f59e0b', lineHeight: 1 }}>✕</span>
+                ? <span style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", color: '#f59e0b', lineHeight: 1, height: 'auto', width: 'auto', background: 'transparent' }}>✕</span>
                 : <><span /><span /><span /></>
               }
             </button>
