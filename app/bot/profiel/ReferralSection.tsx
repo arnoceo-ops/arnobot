@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useIsMobile } from '@/hooks/useBreakpoint'
 
 export default function ReferralSection({ inAccount }: { inAccount?: boolean }) {
+  const isMobile = useIsMobile()
   const [data, setData] = useState<{ code: string; link: string; referrals: number; converted: number; credit: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -42,12 +44,12 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
       </p>
 
       {/* Link + kopieerknop */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
         <code style={{
-          flex: 1, background: '#1f2937', border: '1.5px solid #374151',
+          background: '#1f2937', border: '1.5px solid #374151',
           borderRadius: 4, padding: '12px 16px', fontSize: 14,
           fontFamily: "'Space Mono', monospace", color: loading ? '#374151' : '#f1f5f9',
-          letterSpacing: 2, wordBreak: 'break-all',
+          letterSpacing: 2, wordBreak: 'break-all', display: 'block',
         }}>
           {loading ? 'arno.bot/aanmelden?ref=...' : data?.link ?? ''}
         </code>
@@ -55,12 +57,14 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
           onClick={copy}
           disabled={loading || !data}
           style={{
-            fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3,
-            padding: '12px 24px', borderRadius: 999, border: 'none',
+            fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3,
+            padding: '12px 36px', borderRadius: 999, border: 'none',
             cursor: loading || !data ? 'default' : 'pointer',
             background: copied ? '#374151' : loading ? '#374151' : '#f59e0b',
             color: copied || loading ? '#9ca3af' : '#111827',
             transition: 'all 0.15s', whiteSpace: 'nowrap',
+            alignSelf: isMobile ? 'stretch' : 'flex-start',
+            textAlign: 'center',
           }}
         >
           {copied ? 'GEKOPIEERD ✓' : 'KOPIEER LINK'}
@@ -68,14 +72,21 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: 2 }}>
+      <div style={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {[
           { label: 'AANGEMELD', value: loading ? '...' : String(data?.referrals ?? 0) },
           { label: 'BETALEND',  value: loading ? '...' : String(data?.converted ?? 0) },
           { label: 'TEGOED',    value: loading ? '...' : `€${(data?.credit ?? 0).toFixed(0)}` },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: '#1f2937', padding: '16px 20px', flex: 1, textAlign: 'center' }}>
-            <div style={statLabel}>{label}</div>
+          <div key={label} style={{
+            background: '#1f2937', padding: '16px 20px', flex: 1,
+            display: 'flex',
+            flexDirection: isMobile ? 'row' : 'column',
+            justifyContent: isMobile ? 'space-between' : 'center',
+            alignItems: isMobile ? 'center' : 'center',
+            textAlign: isMobile ? 'left' : 'center',
+          }}>
+            <div style={{ ...statLabel, marginBottom: isMobile ? 0 : 12 }}>{label}</div>
             <div style={{ ...statValue, color: loading ? '#374151' : '#f1f5f9' }}>{value}</div>
           </div>
         ))}
