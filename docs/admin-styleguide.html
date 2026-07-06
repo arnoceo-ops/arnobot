@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArnoBot Admin — Stijlgids</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-nav: #0d0d0d;
+    --bg-page: #111827;
+    --bg-card: #1f2937;
+    --bg-hover: #1e293b;
+    --border: #374151;
+    --amber: #f59e0b;
+    --amber-hover: #d97706;
+    --text-head: #f1f5f9;
+    --text-body: #9ca3af;
+    --text-muted: #6b7280;
+    --text-dim: #4b5563;
+    --success: #44cc88;
+    --error: #cc4444;
+    --error-hard: #cc2200;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg-page); color: var(--text-body); font-family: var(--font-ui); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+  .admin-nav { position: sticky; top: 0; z-index: 100; background: var(--bg-nav); border-bottom: 1px solid #1e293b; height: 56px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 40px; }
+  .admin-nav-links { display: flex; gap: 4px; }
+  .nav-link { color: var(--text-body); text-decoration: none; font-size: 15px; letter-spacing: 3px; font-weight: 700; padding: 6px 20px; border-radius: 4px; background: none; }
+  .nav-link.active { color: var(--amber); background: var(--bg-hover); }
+  .nav-right { display: flex; justify-content: flex-end; gap: 4px; align-items: center; }
+  .nav-logout { color: var(--text-muted); text-decoration: none; font-size: 15px; letter-spacing: 3px; font-weight: 700; padding: 6px 12px; }
+
+  .layout { display: grid; grid-template-columns: 220px 1fr; max-width: 1100px; margin: 0 auto; padding: 0 24px; align-items: start; }
+  .sidebar { position: sticky; top: 56px; padding: 48px 0 80px; height: calc(100vh - 56px); overflow-y: auto; border-right: 1px solid var(--border); }
+  .sidebar-label { font-size: 10px; letter-spacing: 4px; color: var(--text-muted); padding: 0 20px 12px; display: block; }
+  .sidebar a { display: block; padding: 7px 20px; font-size: 13px; color: var(--text-muted); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar a:hover { color: var(--text-body); }
+  .sidebar a.active { color: var(--amber); border-left-color: var(--amber); }
+
+  .content { padding: 48px 0 80px 56px; }
+  .section { margin-bottom: 72px; }
+  .section + .section { border-top: 1px solid var(--border); padding-top: 72px; }
+
+  .eyebrow { font-size: 11px; letter-spacing: 4px; color: var(--amber); margin-bottom: 8px; font-weight: 700; }
+  h2 { font-size: 28px; font-weight: 700; color: var(--text-head); letter-spacing: -0.5px; margin-bottom: 8px; }
+  .section-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 40px; line-height: 1.6; max-width: 560px; }
+  h3 { font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--text-head); margin-bottom: 16px; margin-top: 36px; }
+  h3:first-of-type { margin-top: 0; }
+
+  .palette { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch { display: flex; flex-direction: column; gap: 8px; width: 120px; }
+  .swatch-color { height: 56px; border-radius: 4px; border: 1px solid rgba(255,255,255,.06); }
+  .swatch-hex { font-family: var(--font-mono); font-size: 12px; color: var(--text-body); }
+  .swatch-name { font-size: 11px; color: var(--text-muted); }
+
+  .code-block { background: var(--bg-nav); border: 1px solid var(--border); border-radius: 4px; padding: 20px 24px; overflow-x: auto; margin-top: 16px; }
+  pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.7; color: var(--text-body); white-space: pre; }
+  .hl-key { color: #93c5fd; }
+  .hl-val { color: #86efac; }
+  .hl-str { color: #fca5a5; }
+  .hl-cmt { color: #4b5563; font-style: italic; }
+
+  .demo { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 32px; margin-top: 16px; }
+  .code-inline { font-family: var(--font-mono); font-size: 12px; background: var(--bg-nav); padding: 2px 6px; border-radius: 3px; color: var(--text-body); }
+
+  .btn-demo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn-primary { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 2px; padding: 10px 24px; border-radius: 4px; background: var(--amber); color: #111827; border: none; cursor: pointer; }
+  .btn-secondary { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 2px; padding: 10px 24px; border-radius: 4px; background: transparent; color: var(--text-muted); border: 1px solid var(--border); cursor: pointer; }
+  .btn-destructive { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 2px; padding: 10px 24px; border-radius: 4px; background: transparent; color: var(--error-hard); border: 1px solid var(--error-hard); cursor: pointer; }
+
+  .input-demo { display: flex; flex-direction: column; gap: 12px; max-width: 400px; }
+  .input-field { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 4px; color: var(--text-head); font-family: var(--font-ui); font-size: 15px; padding: 10px 14px; outline: none; width: 100%; }
+  .input-field::placeholder { color: var(--text-dim); }
+  .input-field:focus { border-color: var(--amber); }
+  .form-label { font-size: 12px; letter-spacing: 2px; color: var(--amber); opacity: .7; margin-bottom: 4px; display: block; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-size: 11px; letter-spacing: 2px; font-weight: 700; padding: 4px 10px; border-radius: 3px; }
+
+  .data-row { background: var(--bg-card); padding: 14px 20px; border-left: 3px solid var(--success); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .data-row + .data-row { border-top: 1px solid var(--bg-page); }
+
+  .accordion-item { background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 2px; }
+  .accordion-header { display: flex; align-items: center; gap: 16px; padding: 14px 20px; font-size: 13px; }
+  .accordion-body { border-top: 1px solid var(--border); padding: 20px 24px; font-size: 14px; color: var(--text-body); line-height: 1.7; }
+
+  .issue-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .issue-table th { text-align: left; font-size: 10px; letter-spacing: 3px; color: var(--text-muted); padding: 0 16px 10px 0; border-bottom: 1px solid var(--border); }
+  .issue-table td { padding: 12px 16px 12px 0; border-bottom: 1px solid #1e293b; vertical-align: top; }
+  .issue-table tr:last-child td { border-bottom: none; }
+  .badge-done { color: var(--success); font-size: 11px; letter-spacing: 2px; font-weight: 700; }
+  .badge-ok { color: var(--text-muted); font-size: 11px; letter-spacing: 2px; }
+
+  .nav-order { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+  .nav-pill { font-size: 12px; letter-spacing: 2px; font-weight: 700; padding: 4px 14px; border-radius: 3px; background: var(--bg-hover); color: var(--text-muted); }
+  .nav-pill.active { color: var(--amber); }
+  .nav-sep { color: var(--border); font-size: 11px; margin: 0 2px; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-page); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 24px 0; }
+    .content { padding: 40px 0 60px; }
+    .admin-nav { padding: 0 16px; }
+  }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .admin-nav { position: static !important; }
+    .sidebar { display: none !important; }
+    .layout { display: block !important; max-width: 100% !important; padding: 0 !important; }
+    .content { padding: 24px 0 !important; }
+    .section { page-break-inside: avoid; }
+    .code-block { page-break-inside: avoid; overflow: visible !important; }
+    .demo { page-break-inside: avoid; }
+    .palette { page-break-inside: avoid; }
+    .issue-table tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="admin-nav">
+  <div></div>
+  <div class="admin-nav-links">
+    <a href="#" class="nav-link">USERS</a>
+    <a href="#" class="nav-link">CRONS</a>
+    <a href="#" class="nav-link active">ARNOBOT</a>
+    <a href="#" class="nav-link">BLOGS</a>
+    <a href="#" class="nav-link">META</a>
+    <a href="#" class="nav-link">FEEDBACK</a>
+  </div>
+  <div class="nav-right">
+    <a href="#" class="nav-link">ARNO.BLOG</a>
+    <a href="#" class="nav-logout">UITLOGGEN</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <nav class="sidebar">
+    <span class="sidebar-label">INHOUD</span>
+    <a href="#kleuren" class="active">Kleuren</a>
+    <a href="#navigatie">Navigatie</a>
+    <a href="#structuur">Paginastructuur</a>
+    <a href="#typografie">Typografie</a>
+    <a href="#knoppen">Knoppen</a>
+    <a href="#formulieren">Formulierelementen</a>
+    <a href="#status">Statuskleuren</a>
+    <a href="#rijen">Datarijen</a>
+    <a href="#accordeon">Accordeons</a>
+    <a href="#inconsistenties">Inconsistenties</a>
+  </nav>
+
+  <main class="content">
+
+    <div class="section" style="border-top:none; padding-top:0;">
+      <p class="eyebrow">ARNOBOT ADMIN</p>
+      <h2 style="font-size:36px; letter-spacing:-1px;">Stijlgids</h2>
+      <p class="section-desc">Referentie voor nieuwe adminpagina's. Alle patronen zijn afgeleid uit de bestaande code. Nieuwe pagina's volgen dit patroon zonder uitzondering.</p>
+    </div>
+
+    <section class="section" id="kleuren">
+      <p class="eyebrow">01</p>
+      <h2>Kleuren</h2>
+      <p class="section-desc">Het admin-palet is donkerder dan de app: de nav gebruikt <code class="code-inline">#0d0d0d</code> — één tint dieper dan de pagina-achtergrond.</p>
+
+      <h3>LAGEN</h3>
+      <div class="palette">
+        <div class="swatch"><div class="swatch-color" style="background:#0d0d0d;"></div><span class="swatch-hex">#0d0d0d</span><span class="swatch-name">Nav achtergrond</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#111827;"></div><span class="swatch-hex">#111827</span><span class="swatch-name">Pagina</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1f2937;"></div><span class="swatch-hex">#1f2937</span><span class="swatch-name">Card / rij</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1e293b;"></div><span class="swatch-hex">#1e293b</span><span class="swatch-name">Hover / actieve nav</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#374151;"></div><span class="swatch-hex">#374151</span><span class="swatch-name">Border (canoniek)</span></div>
+      </div>
+
+      <h3>TEKST</h3>
+      <div class="palette">
+        <div class="swatch"><div class="swatch-color" style="background:#f1f5f9;"></div><span class="swatch-hex">#f1f5f9</span><span class="swatch-name">Koppen</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#9ca3af;"></div><span class="swatch-hex">#9ca3af</span><span class="swatch-name">Body tekst</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#6b7280;"></div><span class="swatch-hex">#6b7280</span><span class="swatch-name">Gedempte tekst</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#4b5563;"></div><span class="swatch-hex">#4b5563</span><span class="swatch-name">Alleen placeholders</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#f59e0b;"></div><span class="swatch-hex">#f59e0b</span><span class="swatch-name">Amber accent</span></div>
+      </div>
+
+      <h3>STATUS (semantisch, niet als accent)</h3>
+      <div class="palette">
+        <div class="swatch"><div class="swatch-color" style="background:#44cc88;"></div><span class="swatch-hex">#44cc88</span><span class="swatch-name">Actief / goed</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#cc4444;"></div><span class="swatch-hex">#cc4444</span><span class="swatch-name">Verlopen / fout</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#cc2200;"></div><span class="swatch-hex">#cc2200</span><span class="swatch-name">Destructief</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="navigatie">
+      <p class="eyebrow">02</p>
+      <h2>Navigatie</h2>
+      <p class="section-desc">De nav is identiek op elke adminpagina. Gebruik de <code class="code-inline">navLinkStyle</code> functie exact zoals hieronder.</p>
+
+      <h3>NAV-VOLGORDE</h3>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Links (gecentreerd):</p>
+      <div class="nav-order">
+        <span class="nav-pill">USERS</span><span class="nav-sep">›</span>
+        <span class="nav-pill">CRONS</span><span class="nav-sep">›</span>
+        <span class="nav-pill">ARNOBOT</span><span class="nav-sep">›</span>
+        <span class="nav-pill">BLOGS</span><span class="nav-sep">›</span>
+        <span class="nav-pill active">META</span><span class="nav-sep">›</span>
+        <span class="nav-pill">FEEDBACK</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin:20px 0 12px;">Rechts:</p>
+      <div class="nav-order">
+        <span class="nav-pill">ARNO.BLOG</span>
+        <span class="nav-sep" style="margin:0 8px;">|</span>
+        <span class="nav-pill" style="color:#6b7280;">UITLOGGEN</span>
+      </div>
+
+      <h3>CODE</h3>
+      <div class="code-block"><pre><span class="hl-key">const</span> navLinkStyle = (active: <span class="hl-val">boolean</span>): React.CSSProperties => ({
+  <span class="hl-str">color</span>: active ? <span class="hl-val">'#f59e0b'</span> : <span class="hl-val">'#9ca3af'</span>,
+  <span class="hl-str">textDecoration</span>: <span class="hl-val">'none'</span>,
+  <span class="hl-str">fontSize</span>: <span class="hl-val">'15px'</span>,
+  <span class="hl-str">letterSpacing</span>: <span class="hl-val">'3px'</span>,
+  <span class="hl-str">fontWeight</span>: <span class="hl-val">700</span>,
+  <span class="hl-str">padding</span>: <span class="hl-val">'6px 20px'</span>,
+  <span class="hl-str">borderRadius</span>: <span class="hl-val">4</span>,
+  <span class="hl-str">background</span>: active ? <span class="hl-val">'#1e293b'</span> : <span class="hl-val">'none'</span>,
+})
+<span class="hl-cmt">// Nav-structuur: grid 1fr auto 1fr, height 56, bg #0d0d0d, borderBottom 1px solid #1e293b</span></pre></div>
+    </section>
+
+    <section class="section" id="structuur">
+      <p class="eyebrow">03</p>
+      <h2>Paginastructuur</h2>
+      <p class="section-desc">Elke adminpagina heeft dezelfde drie lagen: <code class="code-inline">main</code>, <code class="code-inline">nav</code>, en een <code class="code-inline">div</code>-container.</p>
+
+      <h3>MAXWIDTH-VARIANTEN</h3>
+      <table class="issue-table">
+        <thead><tr><th>Pagina</th><th>maxWidth</th><th>Reden</th></tr></thead>
+        <tbody>
+          <tr><td>Standaard (Crons, Blogs, Meta, Feedback)</td><td><code class="code-inline">800px</code></td><td style="color:var(--text-muted);">Leestekst, één kolom</td></tr>
+          <tr><td>Evaluaties</td><td><code class="code-inline">900px</code></td><td style="color:var(--text-muted);">Kaartweergave heeft meer ruimte nodig</td></tr>
+          <tr><td>Gebruikers</td><td><code class="code-inline">1400px</code></td><td style="color:var(--text-muted);">Datatabel met veel kolommen</td></tr>
+        </tbody>
+      </table>
+
+      <div class="code-block" style="margin-top:24px;"><pre><span class="hl-cmt">// Boilerplate voor elke nieuwe adminpagina</span>
+&lt;<span class="hl-key">main</span> style={{ background: <span class="hl-val">'#111827'</span>, minHeight: <span class="hl-val">'100vh'</span>, color: <span class="hl-val">'#f1f5f9'</span>, fontFamily: <span class="hl-val">'sans-serif'</span> }}&gt;
+  &lt;<span class="hl-key">nav</span> style={{ background: <span class="hl-val">'#0d0d0d'</span>, borderBottom: <span class="hl-val">'1px solid #1e293b'</span>, height: <span class="hl-val">56</span>, ... }}&gt;
+    ...nav-links...
+  &lt;/<span class="hl-key">nav</span>&gt;
+  &lt;<span class="hl-key">div</span> style={{ maxWidth: <span class="hl-val">'800px'</span>, margin: <span class="hl-val">'0 auto'</span>, padding: <span class="hl-val">'48px 40px'</span> }}&gt;
+    &lt;<span class="hl-key">p</span> style={{ color: <span class="hl-val">'#f59e0b'</span>, fontSize: <span class="hl-val">'13px'</span>, letterSpacing: <span class="hl-val">'4px'</span>, marginBottom: <span class="hl-val">'8px'</span> }}&gt;ARNOBOT ADMIN&lt;/<span class="hl-key">p</span>&gt;
+    &lt;<span class="hl-key">h1</span> style={{ fontSize: <span class="hl-val">'48px'</span>, fontWeight: <span class="hl-val">700</span>, letterSpacing: <span class="hl-val">'-1px'</span>, margin: <span class="hl-val">'0 0 8px 0'</span> }}&gt;Paginatitel&lt;/<span class="hl-key">h1</span>&gt;
+    &lt;<span class="hl-key">p</span> style={{ color: <span class="hl-val">'#6b7280'</span>, fontSize: <span class="hl-val">'14px'</span>, letterSpacing: <span class="hl-val">'2px'</span>, marginBottom: <span class="hl-val">'48px'</span> }}&gt;Beschrijving&lt;/<span class="hl-key">p</span>&gt;
+    &lt;<span class="hl-key">YourPageClient</span> /&gt;
+  &lt;/<span class="hl-key">div</span>&gt;
+&lt;/<span class="hl-key">main</span>&gt;</pre></div>
+    </section>
+
+    <section class="section" id="typografie">
+      <p class="eyebrow">04</p>
+      <h2>Typografie</h2>
+      <p class="section-desc">Adminpagina's gebruiken <strong style="color:var(--text-head);">system sans-serif</strong>. Space Mono en Bebas Neue verschijnen alleen in client-components die AI-output renderen.</p>
+
+      <div class="demo">
+        <p style="font-size:13px; letter-spacing:4px; color:var(--amber); font-weight:700;">ARNOBOT ADMIN</p>
+        <p style="font-size:48px; font-weight:700; color:var(--text-head); letter-spacing:-1px; margin-top:4px; line-height:1.1;">Gesprekken</p>
+        <p style="color:var(--text-muted); font-size:14px; letter-spacing:2px; margin-top:8px;">Filter op gebruiker, periode en sortering.</p>
+      </div>
+    </section>
+
+    <section class="section" id="knoppen">
+      <p class="eyebrow">05</p>
+      <h2>Knoppen</h2>
+      <p class="section-desc">Admin-knoppen gebruiken <code class="code-inline">borderRadius: 4</code> (niet 999). App-knoppen in client-components mogen de app-norm volgen.</p>
+
+      <div class="demo">
+        <div class="btn-demo">
+          <button class="btn-primary">LAAD</button>
+          <button class="btn-secondary">ANNULEER</button>
+          <button class="btn-destructive">VERWIJDER</button>
+        </div>
+      </div>
+      <div class="code-block"><pre><span class="hl-cmt">// Primair</span>
+{ background: <span class="hl-val">'#f59e0b'</span>, color: <span class="hl-val">'#000'</span>, border: <span class="hl-val">'none'</span>, padding: <span class="hl-val">'10px 24px'</span>, fontWeight: <span class="hl-val">700</span>, fontSize: <span class="hl-val">'14px'</span>, letterSpacing: <span class="hl-val">'2px'</span>, borderRadius: <span class="hl-val">4</span> }
+<span class="hl-cmt">// Secundair</span>
+{ background: <span class="hl-val">'transparent'</span>, border: <span class="hl-val">'1px solid #374151'</span>, color: <span class="hl-val">'#6b7280'</span>, borderRadius: <span class="hl-val">4</span> }
+<span class="hl-cmt">// Destructief</span>
+{ background: <span class="hl-val">'transparent'</span>, border: <span class="hl-val">'1px solid #cc2200'</span>, color: <span class="hl-val">'#cc2200'</span>, borderRadius: <span class="hl-val">4</span> }</pre></div>
+    </section>
+
+    <section class="section" id="formulieren">
+      <p class="eyebrow">06</p>
+      <h2>Formulierelementen</h2>
+      <p class="section-desc">Altijd <code class="code-inline">1.5px solid #374151</code>. Focus-kleur is amber. Placeholder is <code class="code-inline">#4b5563</code>.</p>
+
+      <div class="demo">
+        <div class="input-demo">
+          <div><label class="form-label">GEBRUIKER</label><input class="input-field" type="text" placeholder="Zoek op naam..." /></div>
+          <div><label class="form-label">VAN</label><input class="input-field" type="date" /></div>
+        </div>
+      </div>
+      <div class="code-block"><pre>{ background: <span class="hl-val">'#1f2937'</span>, border: <span class="hl-val">'1.5px solid #374151'</span>, borderRadius: <span class="hl-val">4</span>,
+  color: <span class="hl-val">'#f1f5f9'</span>, padding: <span class="hl-val">'10px 14px'</span>, fontSize: <span class="hl-val">'15px'</span> }
+<span class="hl-cmt">// focus: borderColor '#f59e0b' — placeholder: color '#4b5563'</span></pre></div>
+    </section>
+
+    <section class="section" id="status">
+      <p class="eyebrow">07</p>
+      <h2>Statuskleuren</h2>
+      <p class="section-desc">Semantisch, niet decoratief. Altijd met bijpassende achtergrondkleur.</p>
+
+      <div class="demo">
+        <div class="chips">
+          <span class="chip" style="background:#0d2b1a; color:#44cc88;">BETAALD</span>
+          <span class="chip" style="background:#1e1a0a; color:#f59e0b;">TRIAL 14d</span>
+          <span class="chip" style="background:#1e0d0d; color:#cc4444;">VERLOPEN</span>
+          <span class="chip" style="background:#1a0808; color:#cc2200;">3e TRIAL</span>
+          <span class="chip" style="background:#1e293b; color:#6b7280;">INACTIEF</span>
+        </div>
+      </div>
+      <div class="code-block"><pre>Actief:      <span class="hl-val">#44cc88</span>  bg <span class="hl-val">#0d2b1a</span>
+Trial:       <span class="hl-val">#f59e0b</span>  bg <span class="hl-val">#1e1a0a</span>
+Verlopen:    <span class="hl-val">#cc4444</span>  bg <span class="hl-val">#1e0d0d</span>
+Destructief: <span class="hl-val">#cc2200</span>  bg <span class="hl-val">#1a0808</span>
+Inactief:    <span class="hl-val">#6b7280</span>  bg <span class="hl-val">#1e293b</span></pre></div>
+    </section>
+
+    <section class="section" id="rijen">
+      <p class="eyebrow">08</p>
+      <h2>Datarijen</h2>
+      <p class="section-desc"><code class="code-inline">#1f2937</code> achtergrond. Rijen scheiden via <code class="code-inline">gap: 2px</code>, niet border-bottom.</p>
+
+      <div class="demo" style="padding:0;">
+        <div class="data-row" style="border-left-color:#44cc88;"><span style="color:var(--text-head); font-weight:700;">Wout van Bergen</span><span style="color:#44cc88; font-size:12px; letter-spacing:2px; font-weight:700;">BETAALD</span></div>
+        <div class="data-row" style="border-left-color:#f59e0b; border-top:1px solid var(--bg-page);"><span style="color:var(--text-head); font-weight:700;">Ingrid Smit</span><span style="color:#f59e0b; font-size:12px; letter-spacing:2px; font-weight:700;">TRIAL 8d</span></div>
+        <div class="data-row" style="border-left-color:#1e293b; border-top:1px solid var(--bg-page);"><span style="color:var(--text-muted); font-weight:700;">Anoniem</span><span style="color:#6b7280; font-size:12px; letter-spacing:2px; font-weight:700;">INACTIEF</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="accordeon">
+      <p class="eyebrow">09</p>
+      <h2>Accordeons</h2>
+      <p class="section-desc">Gebruikt in Meta-analyse en Evaluaties. Pijl: gesloten = <code class="code-inline">#374151</code>, open = <code class="code-inline">#f59e0b</code>.</p>
+
+      <div class="demo" style="padding:0;">
+        <div class="accordion-item">
+          <div class="accordion-header">
+            <span style="color:var(--amber); font-size:11px;">▼</span>
+            <span style="color:var(--amber); font-size:11px; letter-spacing:3px;">MAAND</span>
+            <span style="color:var(--text-body); font-size:13px;">1 jul. 2026</span>
+            <span style="color:var(--text-dim); font-size:12px;">14 gesprekken</span>
+          </div>
+          <div class="accordion-body">Uitgevouwen inhoud. Achtergrond blijft <code class="code-inline">#1f2937</code>.</div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header">
+            <span style="color:var(--border); font-size:11px;">▶</span>
+            <span style="color:var(--amber); font-size:11px; letter-spacing:3px;">WEEK</span>
+            <span style="color:var(--text-body); font-size:13px;">24 jun. 2026</span>
+            <span style="color:var(--text-dim); font-size:12px;">6 gesprekken</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="inconsistenties">
+      <p class="eyebrow">10</p>
+      <h2>Inconsistenties</h2>
+      <p class="section-desc">Status na audit van 6 juli 2026. Alles is opgelost of bewust geaccepteerd.</p>
+
+      <table class="issue-table">
+        <thead><tr><th>Bestand</th><th>Issue</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text-body);">admin/page.tsx — inputs</td>
+            <td><code class="code-inline">border: '1px solid #222'</code> → <code class="code-inline">1.5px solid #374151</code></td>
+            <td><span class="badge-done">OPGELOST</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-body);">evaluaties/page.tsx</td>
+            <td><code class="code-inline">maxWidth: '900px'</code> — kaartweergave</td>
+            <td><span class="badge-ok">BEWUST</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-body);">MetaAnalyseClient.tsx</td>
+            <td>Space Mono + Bebas Neue voor AI-output</td>
+            <td><span class="badge-ok">BEWUST</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.sidebar a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { const id = e.target.id; links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id)); } });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

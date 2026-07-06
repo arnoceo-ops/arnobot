@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArnoBot App — Stijlgids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-page: #111827;
+    --bg-card: #1f2937;
+    --bg-hover: #1e293b;
+    --border: #374151;
+    --amber: #f59e0b;
+    --amber-hover: #d97706;
+    --text-head: #f1f5f9;
+    --text-body: #9ca3af;
+    --text-muted: #6b7280;
+    --text-dim: #4b5563;
+    --error-hard: #cc2200;
+    --font-display: 'Bebas Neue', 'Arial Black', Impact, sans-serif;
+    --font-mono: 'Space Mono', 'Courier New', monospace;
+    --font-code: 'Courier New', Courier, monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg-page); color: var(--text-body); font-family: var(--font-mono); font-size: 15px; line-height: 1.9; font-weight: 400; min-height: 100vh; }
+
+  /* ── Topbalk (stijlgids nav, niet de app-nav) ── */
+  .guide-nav { position: sticky; top: 0; z-index: 100; background: #0d1117; border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 40px; gap: 32px; justify-content: space-between; }
+  .guide-nav-brand { font-family: var(--font-display); font-size: 22px; letter-spacing: 4px; color: var(--text-head); }
+  .guide-nav-brand span { color: var(--amber); }
+  .guide-nav-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px; color: var(--text-muted); }
+
+  /* ── Layout ── */
+  .layout { display: grid; grid-template-columns: 220px 1fr; max-width: 1100px; margin: 0 auto; padding: 0 24px; align-items: start; }
+  .sidebar { position: sticky; top: 56px; padding: 48px 0 80px; height: calc(100vh - 56px); overflow-y: auto; border-right: 1px solid var(--border); }
+  .sidebar-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 4px; color: var(--text-muted); padding: 0 20px 12px; display: block; }
+  .sidebar a { display: block; padding: 7px 20px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar a:hover { color: var(--text-body); }
+  .sidebar a.active { color: var(--amber); border-left-color: var(--amber); }
+
+  /* ── Content ── */
+  .content { padding: 48px 0 80px 56px; }
+  .section { margin-bottom: 72px; }
+  .section + .section { border-top: 1px solid var(--border); padding-top: 72px; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 4px; color: var(--amber); margin-bottom: 8px; font-weight: 400; }
+  h2 { font-family: var(--font-display); font-size: 48px; letter-spacing: 2px; color: var(--text-head); margin-bottom: 8px; line-height: 1; }
+  .section-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 40px; line-height: 1.8; max-width: 560px; }
+  h3 { font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: 4px; color: var(--text-head); margin-bottom: 16px; margin-top: 40px; }
+  h3:first-of-type { margin-top: 0; }
+
+  /* ── Utilities ── */
+  .palette { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch { display: flex; flex-direction: column; gap: 8px; width: 120px; }
+  .swatch-color { height: 56px; border-radius: 4px; border: 1px solid rgba(255,255,255,.06); }
+  .swatch-hex { font-family: var(--font-code); font-size: 12px; color: var(--text-body); }
+  .swatch-name { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+  .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 4px; padding: 20px 24px; overflow-x: auto; margin-top: 16px; }
+  pre { font-family: var(--font-code); font-size: 13px; line-height: 1.7; color: var(--text-body); white-space: pre; }
+  .hl-key { color: #93c5fd; }
+  .hl-val { color: #86efac; }
+  .hl-str { color: #fca5a5; }
+  .hl-cmt { color: #4b5563; font-style: italic; }
+  .code-inline { font-family: var(--font-code); font-size: 12px; background: #0d1117; padding: 2px 6px; border-radius: 3px; color: var(--text-body); }
+
+  .demo { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 32px; margin-top: 16px; }
+  .demo-light { background: var(--bg-page); border: 1px solid var(--border); border-radius: 4px; margin-top: 16px; overflow: hidden; }
+
+  /* ── Typografielabel ── */
+  .type-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 8px; }
+
+  /* ── Knoppen ── */
+  .btn-demo { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .btn-primary {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 12px 36px;
+    border-radius: 999px;
+    background: var(--amber);
+    color: #111827;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .btn-primary:hover { background: var(--amber-hover); }
+  .btn-secondary {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 12px 32px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-body);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .btn-destructive {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 12px 32px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--error-hard);
+    border: 1px solid var(--error-hard);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  /* ── Input ── */
+  .input-demo { display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
+  .input-field {
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-head);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 400;
+    padding: 12px 16px;
+    outline: none;
+    width: 100%;
+  }
+  .input-field::placeholder { color: var(--text-dim); }
+  .input-field:focus { border-color: var(--amber); }
+  textarea.input-field { min-height: 100px; resize: vertical; }
+
+  /* ── Gespreksstijl ── */
+  .convo { max-width: 812px; }
+  .convo-row { display: flex; gap: clamp(16px,3vw,40px); padding: clamp(20px,3vw,32px); }
+  .convo-row-arno { background: var(--bg-card); }
+  .convo-row-jij { background: transparent; }
+  .convo-label-jij { font-family: var(--font-display); font-size: 18px; letter-spacing: 3px; color: var(--text-muted); white-space: nowrap; padding-top: 2px; min-width: 48px; line-height: 1; }
+  .convo-label-arno { font-family: var(--font-display); font-size: 18px; letter-spacing: 3px; color: var(--amber); white-space: nowrap; padding-top: 2px; min-width: 48px; line-height: 1; }
+  .convo-text-jij { font-family: var(--font-display); font-size: clamp(18px,3vw,26px); line-height: 1.5; color: var(--text-head); letter-spacing: 0.5px; }
+  .convo-text-arno { font-family: var(--font-mono); font-size: 15px; line-height: 1.9; color: var(--text-body); font-weight: 400; }
+
+  /* ── Tabel ── */
+  .spec-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--font-mono); }
+  .spec-table th { text-align: left; font-size: 10px; letter-spacing: 3px; color: var(--text-muted); padding: 0 16px 10px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
+  .spec-table td { padding: 12px 16px 12px 0; border-bottom: 1px solid #1e293b; vertical-align: top; color: var(--text-body); }
+  .spec-table tr:last-child td { border-bottom: none; }
+  .spec-val { font-family: var(--font-code); font-size: 12px; background: #0d1117; padding: 2px 6px; border-radius: 3px; color: #86efac; }
+
+  /* ── Amber label demo ── */
+  .amber-label { font-family: var(--font-mono); font-weight: 400; font-size: 13px; letter-spacing: 4px; color: var(--amber); }
+  .ai-sublabel { font-family: var(--font-mono); font-weight: 400; font-size: 13px; letter-spacing: 4px; color: var(--text-head); }
+  .sec-link { font-family: var(--font-mono); font-size: 13px; letter-spacing: 4px; color: var(--text-muted); text-decoration: none; }
+
+  /* ── Waarschuwingsblok ── */
+  .rule-block { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--amber); padding: 18px 24px; border-radius: 2px; margin-top: 20px; }
+  .rule-block p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+  .rule-block strong { color: var(--text-head); }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-page); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 24px 0; }
+    .content { padding: 40px 0 60px; }
+  }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .guide-nav { position: static !important; }
+    .sidebar { display: none !important; }
+    .layout { display: block !important; max-width: 100% !important; padding: 0 !important; }
+    .content { padding: 24px 0 !important; }
+    .section { page-break-inside: avoid; }
+    .code-block { page-break-inside: avoid; overflow: visible !important; }
+    .demo, .demo-light { page-break-inside: avoid; }
+    .palette { page-break-inside: avoid; }
+    .convo-row { page-break-inside: avoid; }
+    .spec-table tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="guide-nav">
+  <div class="guide-nav-brand">ARNO<span>BOT</span></div>
+  <span class="guide-nav-tag">APP STIJLGIDS</span>
+</nav>
+
+<div class="layout">
+  <nav class="sidebar">
+    <span class="sidebar-label">INHOUD</span>
+    <a href="#kleuren" class="active">Kleuren</a>
+    <a href="#typografie">Typografie</a>
+    <a href="#container">Container</a>
+    <a href="#knoppen">Knoppen</a>
+    <a href="#inputs">Inputs</a>
+    <a href="#gesprek">Gespreksstijl</a>
+    <a href="#labels">Labels en links</a>
+    <a href="#regels">Absolute regels</a>
+    <a href="#referenties">Paginaverwijzingen</a>
+  </nav>
+
+  <main class="content">
+
+    <div class="section" style="border-top:none; padding-top:0;">
+      <p class="eyebrow">ARNOBOT APP</p>
+      <h2>Stijlgids</h2>
+      <p class="section-desc">Referentie voor alle app-pagina's achter en voor de login. Normen uit CLAUDE.md. Nieuwe pagina's volgen dit patroon — bij twijfel: vergelijk met de referentiepagina's onderaan.</p>
+    </div>
+
+    <!-- 1. Kleuren -->
+    <section class="section" id="kleuren">
+      <p class="eyebrow">01</p>
+      <h2>Kleuren</h2>
+      <p class="section-desc">Twee achtergrondlagen: pagina en card. Amber is het enige accent — gebruik het niet voor decoratie, alleen voor UI-labels en actieve states.</p>
+
+      <h3>ACHTERGRONDEN</h3>
+      <div class="palette">
+        <div class="swatch"><div class="swatch-color" style="background:#111827;"></div><span class="swatch-hex">#111827</span><span class="swatch-name">Pagina</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1f2937;"></div><span class="swatch-hex">#1f2937</span><span class="swatch-name">Card / input / ARNO-rij</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1e293b;"></div><span class="swatch-hex">#1e293b</span><span class="swatch-name">Hover</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#374151;"></div><span class="swatch-hex">#374151</span><span class="swatch-name">Borders</span></div>
+      </div>
+
+      <h3>TEKST</h3>
+      <div class="palette">
+        <div class="swatch"><div class="swatch-color" style="background:#f1f5f9;"></div><span class="swatch-hex">#f1f5f9</span><span class="swatch-name">Koppen / H1 / H2</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#9ca3af;"></div><span class="swatch-hex">#9ca3af</span><span class="swatch-name">Body tekst</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#6b7280;"></div><span class="swatch-hex">#6b7280</span><span class="swatch-name">Gedempte tekst, sec. links</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#4b5563;"></div><span class="swatch-hex">#4b5563</span><span class="swatch-name">Placeholders (alleen)</span></div>
+        <div class="swatch"><div class="swatch-color" style="background:#f59e0b;"></div><span class="swatch-hex">#f59e0b</span><span class="swatch-name">Amber — labels, actief</span></div>
+      </div>
+    </section>
+
+    <!-- 2. Typografie -->
+    <section class="section" id="typografie">
+      <p class="eyebrow">02</p>
+      <h2>Typografie</h2>
+      <p class="section-desc">Twee fonts: Bebas Neue voor display (koppen, knoppen, labels in gesprek), Space Mono voor body en UI-labels. Nooit omwisselen.</p>
+
+      <div class="demo">
+        <p class="type-label">H1 — BEBAS NEUE 64PX LETTERSPACING 3</p>
+        <p style="font-family:'Bebas Neue',sans-serif; font-size:64px; letter-spacing:3px; color:var(--text-head); line-height:1;">Verkoopkracht</p>
+
+        <p class="type-label" style="margin-top:28px;">H2 — BEBAS NEUE 32PX LETTERSPACING 2</p>
+        <p style="font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; color:var(--text-head); line-height:1.1;">Jouw groeipunten</p>
+
+        <p class="type-label" style="margin-top:28px;">BODY — SPACE MONO 15PX LINEHEIGHT 1.9</p>
+        <p style="font-family:'Space Mono',monospace; font-size:15px; line-height:1.9; color:var(--text-body); font-weight:400;">De analyse laat zien waar je het meest groeit. Elk gesprek voegt een laag toe aan jouw profiel als salesleider.</p>
+
+        <p class="type-label" style="margin-top:28px;">AMBER LABEL — SPACE MONO 13PX LETTERSPACING 4</p>
+        <p style="font-family:'Space Mono',monospace; font-size:13px; letter-spacing:4px; color:var(--amber); font-weight:400;">SYNTHESE</p>
+
+        <p class="type-label" style="margin-top:28px;">AI-SUBKOP — SPACE MONO 13PX LETTERSPACING 4 WIT</p>
+        <p style="font-family:'Space Mono',monospace; font-size:13px; letter-spacing:4px; color:var(--text-head); font-weight:400;">KRACHT VAN HET TEAM</p>
+      </div>
+
+      <div class="code-block"><pre><span class="hl-cmt">// H1</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">64</span>, letterSpacing: <span class="hl-val">3</span>, color: <span class="hl-val">'#f1f5f9'</span> }
+<span class="hl-cmt">// H2</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">32</span>, letterSpacing: <span class="hl-val">2</span>, color: <span class="hl-val">'#f1f5f9'</span> }
+<span class="hl-cmt">// Body</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontWeight: <span class="hl-val">400</span>, fontSize: <span class="hl-val">15</span>, lineHeight: <span class="hl-val">1.9</span>, color: <span class="hl-val">'#9ca3af'</span> }
+<span class="hl-cmt">// Amber label (SYNTHESE, BEGIN HET GESPREK, etc.)</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontWeight: <span class="hl-val">400</span>, fontSize: <span class="hl-val">13</span>, letterSpacing: <span class="hl-val">4</span>, color: <span class="hl-val">'#f59e0b'</span> }
+<span class="hl-cmt">// AI-subkop binnen analyse-cards (KRACHT VAN HET TEAM, etc.)</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontWeight: <span class="hl-val">400</span>, fontSize: <span class="hl-val">13</span>, letterSpacing: <span class="hl-val">4</span>, color: <span class="hl-val">'#f1f5f9'</span> }
+<span class="hl-cmt">// Gedempte tekst (meta, artikelnummers)</span>
+{ color: <span class="hl-val">'#6b7280'</span> }</pre></div>
+
+      <div class="rule-block" style="margin-top:24px;">
+        <p><strong>Amber vs. wit voor subkoppen:</strong> Amber (<code class="code-inline">#f59e0b</code>) is voor UI-labels die content introduceren. Wit (<code class="code-inline">#f1f5f9</code>) is voor hiërarchie binnen AI-gegenereerde tekst. Nooit amber gebruiken voor koppen binnen analyse-cards.</p>
+      </div>
+    </section>
+
+    <!-- 3. Container -->
+    <section class="section" id="container">
+      <p class="eyebrow">03</p>
+      <h2>Container</h2>
+      <p class="section-desc">Één containerpatroon voor alle pagina's. Nooit afwijken zonder expliciete opdracht.</p>
+
+      <div class="code-block"><pre><span class="hl-cmt">// Alle app-pagina's — style-tag bovenaan</span>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: <span class="hl-val">#111827</span>; font-weight: <span class="hl-val">400</span>; }
+
+<span class="hl-cmt">// Container</span>
+{ maxWidth: <span class="hl-val">812</span>, margin: <span class="hl-val">'0 auto'</span>,
+  padding: <span class="hl-val">'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px'</span> }
+
+<span class="hl-cmt">// Gesprekcontainer (zelfde breedte, eigen padding)</span>
+{ maxWidth: <span class="hl-val">812</span>, margin: <span class="hl-val">'0 auto'</span> }</pre></div>
+    </section>
+
+    <!-- 4. Knoppen -->
+    <section class="section" id="knoppen">
+      <p class="eyebrow">04</p>
+      <h2>Knoppen</h2>
+      <p class="section-desc">Alle knoppen zijn pills (<code class="code-inline">borderRadius: 999</code>), Bebas Neue 18px, letterSpacing 3. Primair alleen als het de enige of hoofd-actie is.</p>
+
+      <div class="demo">
+        <div class="btn-demo">
+          <button class="btn-primary">BEGIN HET GESPREK</button>
+          <button class="btn-secondary">ANNULEER</button>
+          <button class="btn-destructive">VERWIJDER ACCOUNT</button>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="hl-cmt">// Primair — enige/hoofd-actie in een sectie</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">18</span>, letterSpacing: <span class="hl-val">3</span>,
+  padding: <span class="hl-val">'12px 36px'</span>, borderRadius: <span class="hl-val">999</span>, border: <span class="hl-val">'none'</span>,
+  background: <span class="hl-val">'#f59e0b'</span>, color: <span class="hl-val">'#111827'</span> }
+<span class="hl-cmt">// hover: background '#d97706'</span>
+
+<span class="hl-cmt">// Secundair — naast een primaire knop</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">18</span>, letterSpacing: <span class="hl-val">3</span>,
+  padding: <span class="hl-val">'12px 32px'</span>, borderRadius: <span class="hl-val">999</span>,
+  border: <span class="hl-val">'1px solid #374151'</span>, background: <span class="hl-val">'transparent'</span>, color: <span class="hl-val">'#9ca3af'</span> }
+
+<span class="hl-cmt">// Destructief — onomkeerbare actie</span>
+{ ...secundair, border: <span class="hl-val">'1px solid #cc2200'</span>, color: <span class="hl-val">'#cc2200'</span> }</pre></div>
+    </section>
+
+    <!-- 5. Inputs -->
+    <section class="section" id="inputs">
+      <p class="eyebrow">05</p>
+      <h2>Inputs</h2>
+      <p class="section-desc">Space Mono, 15px. Border 1.5px. Focus amber. Placeholder <code class="code-inline">#4b5563</code> — nooit <code class="code-inline">#4b5563</code> voor zichtbare tekst buiten placeholders.</p>
+
+      <div class="demo">
+        <div class="input-demo">
+          <input class="input-field" type="text" placeholder="Typ hier je vraag..." />
+          <textarea class="input-field" placeholder="Schrijf je observaties..."></textarea>
+        </div>
+      </div>
+
+      <div class="code-block"><pre>{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontWeight: <span class="hl-val">400</span>, fontSize: <span class="hl-val">15</span>,
+  padding: <span class="hl-val">'12px 16px'</span>, borderRadius: <span class="hl-val">4</span>,
+  border: <span class="hl-val">'1.5px solid #374151'</span>, background: <span class="hl-val">'#1f2937'</span>, color: <span class="hl-val">'#f1f5f9'</span>,
+  outline: <span class="hl-val">'none'</span> }
+<span class="hl-cmt">// focus: borderColor '#f59e0b'</span>
+<span class="hl-cmt">// placeholder: color '#4b5563'</span></pre></div>
+    </section>
+
+    <!-- 6. Gespreksstijl -->
+    <section class="section" id="gesprek">
+      <p class="eyebrow">06</p>
+      <h2>Gespreksstijl</h2>
+      <p class="section-desc">Referentie is <code class="code-inline">SparClient.tsx</code>. Nooit zelf afwijken. JIJ-rij is transparant, ARNO-rij heeft <code class="code-inline">#1f2937</code> achtergrond.</p>
+
+      <div class="demo-light">
+        <div class="convo">
+          <div class="convo-row convo-row-jij">
+            <span class="convo-label-jij">JIJ</span>
+            <p class="convo-text-jij">Hoe ga ik om met een klant die constant de prijs ter discussie stelt?</p>
+          </div>
+          <div class="convo-row convo-row-arno">
+            <span class="convo-label-arno">ARNO</span>
+            <p class="convo-text-arno">Prijsdiscussies zijn bijna altijd symptomen van een waardegat. De klant ziet nog niet wat hij terugkrijgt voor wat hij betaalt. Vraag jezelf af: heb je zijn specifieke situatie al concreet gemaakt, of ben je nog te generiek gebleven in je propositie?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="hl-cmt">// JIJ-label</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">18</span>, letterSpacing: <span class="hl-val">3</span>,
+  color: <span class="hl-val">'#6b7280'</span>, whiteSpace: <span class="hl-val">'nowrap'</span>, paddingTop: <span class="hl-val">2</span>, minWidth: <span class="hl-val">48</span> }
+
+<span class="hl-cmt">// ARNO-label</span>
+{ ...jij-label, color: <span class="hl-val">'#f59e0b'</span> }
+
+<span class="hl-cmt">// JIJ-tekst (vraag)</span>
+{ fontFamily: <span class="hl-val">"'Bebas Neue', sans-serif"</span>, fontSize: <span class="hl-val">'clamp(18px,3vw,26px)'</span>,
+  lineHeight: <span class="hl-val">1.5</span>, color: <span class="hl-val">'#f1f5f9'</span>, letterSpacing: <span class="hl-val">0.5</span> }
+
+<span class="hl-cmt">// ARNO-tekst (antwoord)</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontSize: <span class="hl-val">15</span>, lineHeight: <span class="hl-val">1.9</span>,
+  color: <span class="hl-val">'#9ca3af'</span>, fontWeight: <span class="hl-val">400</span> }
+
+<span class="hl-cmt">// Rij — JIJ: geen bg | ARNO: #1f2937</span>
+<span class="hl-cmt">// Padding beide rijen: clamp(20px,3vw,32px) horizontaal en verticaal</span>
+<span class="hl-cmt">// Gap label↔tekst: clamp(16px,3vw,40px)</span></pre></div>
+    </section>
+
+    <!-- 7. Labels en links -->
+    <section class="section" id="labels">
+      <p class="eyebrow">07</p>
+      <h2>Labels en links</h2>
+      <p class="section-desc">Drie soorten: amber UI-label, secundaire link, en gedempte meta-tekst. Nooit amber voor secundaire navigatie.</p>
+
+      <div class="demo">
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          <div>
+            <p class="type-label">AMBER LABEL (SYNTHESE, TERUGBLIK, BEGIN HET GESPREK)</p>
+            <p class="amber-label">SYNTHESE</p>
+          </div>
+          <div>
+            <p class="type-label">SECUNDAIRE LINK (VOORWAARDEN, PRIVACY, SPELREGELS)</p>
+            <a href="#" class="sec-link">VOORWAARDEN</a>
+          </div>
+          <div>
+            <p class="type-label">AI-SUBKOP BINNEN ANALYSE-CARD</p>
+            <p class="ai-sublabel">KRACHT VAN HET TEAM</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="hl-cmt">// Amber label — Space Mono 13px letterSpacing 4 #f59e0b</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontWeight: <span class="hl-val">400</span>,
+  fontSize: <span class="hl-val">13</span>, letterSpacing: <span class="hl-val">4</span>, color: <span class="hl-val">'#f59e0b'</span> }
+
+<span class="hl-cmt">// Secundaire link — Space Mono 13px letterSpacing 4 #6b7280 geen underline</span>
+{ fontFamily: <span class="hl-val">"'Space Mono', monospace"</span>, fontSize: <span class="hl-val">13</span>,
+  letterSpacing: <span class="hl-val">4</span>, color: <span class="hl-val">'#6b7280'</span>, textDecoration: <span class="hl-val">'none'</span> }
+
+<span class="hl-cmt">// AI-subkop — zelfde als amber label maar kleur #f1f5f9 (wit)</span>
+{ ...amber-label, color: <span class="hl-val">'#f1f5f9'</span> }</pre></div>
+    </section>
+
+    <!-- 8. Absolute regels -->
+    <section class="section" id="regels">
+      <p class="eyebrow">08</p>
+      <h2>Absolute regels</h2>
+      <p class="section-desc">Deze regels gelden voor de volledige app, inclusief alle AI-output. Geen uitzonderingen.</p>
+
+      <table class="spec-table">
+        <thead><tr><th>Regel</th><th>Wat het betekent</th><th>Handhaving in systeemprompts</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text-head); font-weight:700;">Geen streepjes als leesteken</td>
+            <td>— en – zijn verboden als leesteken. Koppelteken in samengesteld woord (follow-up) mag.</td>
+            <td><code class="code-inline">Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).</code></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-head); font-weight:700;">Geen markdown in AI-output</td>
+            <td>Geen **vet**, geen *cursief*, geen # koppen in antwoorden van ArnoBot.</td>
+            <td><code class="code-inline">Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.</code></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-head); font-weight:700;">Geen tijdsdruk in AI-output</td>
+            <td>Geen "doe dit vandaag", "bel morgen", "pak dit deze week op".</td>
+            <td><code class="code-inline">Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week".</code></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-head); font-weight:700;">Loading-state bij AI-calls</td>
+            <td>Elke fetch naar een AI-route toont een zichtbare loading-indicator.</td>
+            <td>Gebruik <code class="code-inline">.msg-loading</code> + <code class="code-inline">.loading-dots</code> + <code class="code-inline">.loading-text</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 9. Paginaverwijzingen -->
+    <section class="section" id="referenties">
+      <p class="eyebrow">09</p>
+      <h2>Paginaverwijzingen</h2>
+      <p class="section-desc">Bij elke nieuwe pagina: lees eerst de referentiepagina en leg de stijl naast elkaar. Nooit afwijken zonder expliciete opdracht.</p>
+
+      <table class="spec-table">
+        <thead><tr><th>Type</th><th>Referentiepagina</th><th>Gebruik</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text-head);">Bot-pagina's (achter login)</td>
+            <td><code class="code-inline">app/bot/account/page.tsx</code></td>
+            <td style="color:var(--text-muted);">Alle pagina's onder /bot</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-head);">Publieke pagina's (geen login)</td>
+            <td><code class="code-inline">app/privacy/page.tsx</code></td>
+            <td style="color:var(--text-muted);">Homepage, /voorwaarden, /privacy</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-head);">Gespreksstijl</td>
+            <td><code class="code-inline">app/bot/spar/SparClient.tsx</code></td>
+            <td style="color:var(--text-muted);">Alle JIJ/ARNO-gespreksweergaven</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="rule-block">
+        <p><strong>Nooit de voorwaardenpagina als referentie gebruiken</strong> voor publieke pagina's — die heeft een afwijkende opmaak. Gebruik altijd <code class="code-inline">app/privacy/page.tsx</code>.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.sidebar a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { const id = e.target.id; links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id)); } });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
