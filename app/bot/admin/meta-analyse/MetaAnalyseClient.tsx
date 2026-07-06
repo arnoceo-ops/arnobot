@@ -219,7 +219,7 @@ export default function MetaAnalyseClient() {
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Arno observeert wat ArnoBot zegt in zijn antwoorden. Bijvoorbeeld: ArnoBot is te voorzichtig in zijn formuleringen, ik zou hier harder ingaan. Of: de analyse klopt maar de afsluiting mist urgentie. Of: dit is niet hoe ik dit zou zeggen."
+              placeholder="Arno observeert wat ArnoBot zegt in zijn antwoorden."
               style={{
                 width: '100%',
                 minHeight: 180,
