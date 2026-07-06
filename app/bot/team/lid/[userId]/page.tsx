@@ -270,7 +270,7 @@ export default function LidPage() {
         .loading-dots span:nth-child(2) { animation-delay:0.2s; }
         .loading-dots span:nth-child(3) { animation-delay:0.4s; }
         @keyframes dot-pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.85)} 40%{opacity:1;transform:scale(1)} }
-        .loading-text { font-family:'Space Mono',monospace; font-size:13px; letter-spacing:4px; color:#6b7280; }
+        .loading-text { font-family:'Space Mono',monospace; font-size:13px; letter-spacing:4px; color:#9ca3af; }
       `}</style>
 
       <BotNav active="team" />
@@ -280,7 +280,14 @@ export default function LidPage() {
 
           <a href="/bot/team" className="back-link">← TEAM</a>
 
-          {loading && <p style={{ ...body, color: '#6b7280', letterSpacing: 2 }}>LADEN...</p>}
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="loading-dots">
+                <span /><span /><span />
+              </div>
+              <span className="loading-text">LADEN</span>
+            </div>
+          )}
           {error && (
             <p style={{ ...body, color: '#cc4444' }}>
               {error} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.

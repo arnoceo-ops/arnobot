@@ -376,7 +376,12 @@ export default function CoachingClient({ userId }: Props) {
         </div>
 
         {loading && (
-          <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 12, letterSpacing: 3 }}>LADEN...</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span className="loading-dot" />
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#9ca3af' }}>LADEN</span>
+          </div>
         )}
 
         {doc && (

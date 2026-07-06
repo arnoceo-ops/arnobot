@@ -315,7 +315,14 @@ export default function TeamClient() {
         <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
           {loading && (
-            <p style={{ ...body, color: '#6b7280', letterSpacing: 2 }}>LADEN...</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="loading-dots">
+                <div className="loading-dot" />
+                <div className="loading-dot" />
+                <div className="loading-dot" />
+              </div>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#9ca3af' }}>LADEN</span>
+            </div>
           )}
 
           {/* Team aanmaken */}

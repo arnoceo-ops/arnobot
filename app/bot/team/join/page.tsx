@@ -51,6 +51,10 @@ function JoinContent() {
         ${globalCss}
         .join-link { color: ${colors.amber}; text-decoration: none; }
         .join-link:hover { text-decoration: underline; }
+        .loading-dot { width: 7px; height: 7px; background: #f59e0b; border-radius: 50%; animation: dot-pulse 1.2s infinite; display: inline-block; }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dot-pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.85)} 40%{opacity:1;transform:scale(1)} }
       `}</style>
 
       <div style={layout.page}>
@@ -59,7 +63,12 @@ function JoinContent() {
           <p style={{ ...text.label, marginBottom: 8 }}>ARNOBOT</p>
 
           {status === 'loading' && (
-            <p style={{ ...text.muted, letterSpacing: 2 }}>LADEN...</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#9ca3af' }}>LADEN</span>
+            </div>
           )}
 
           {status === 'invalid' && (
