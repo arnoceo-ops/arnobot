@@ -132,7 +132,7 @@ export default async function AdminWidgetPage({
           </button>
           {sessionList.length > 0 && (
             <div style={{ alignSelf: 'flex-end' }}>
-              <DownloadPdfButton sessions={sessionList} dateRange={dateRange} />
+              <DownloadPdfButton from={from} to={to} userFilter="" sort={sort} dateRange={dateRange} />
             </div>
           )}
         </form>

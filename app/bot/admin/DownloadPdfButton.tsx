@@ -1,21 +1,18 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 
-type LogRow = {
-  id: string
-  created_at: string
-  question: string
-  answer: string
-  ip: string
-  session_id: string
-}
-
 export default function DownloadPdfButton({
-  sessions,
+  from,
+  to,
+  userFilter,
+  sort,
   dateRange,
 }: {
-  sessions: [string, LogRow[]][]
+  from: string
+  to: string
+  userFilter: string
+  sort: string
   dateRange: string
 }) {
   const [loading, setLoading] = useState(false)
@@ -23,6 +20,11 @@ export default function DownloadPdfButton({
   async function handleDownload() {
     setLoading(true)
     try {
+      const params = new URLSearchParams({ from, to, user: userFilter, sort })
+      const res = await fetch(`/api/admin/export?${params}`)
+      if (!res.ok) throw new Error('Export mislukt')
+      const { sessions } = await res.json()
+
       const { pdf } = await import('@react-pdf/renderer')
       const { ArnoBotPdfDocument } = await import('./ArnoBotPdfDocument')
       const blob = await pdf(<ArnoBotPdfDocument sessions={sessions} dateRange={dateRange} />).toBlob()
