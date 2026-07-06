@@ -57,6 +57,10 @@
       "schedule": "15 4 1 * *"
     },
     {
+      "path": "/api/cron/meta-analyse-reminder",
+      "schedule": "0 8 27 * *"
+    },
+    {
       "path": "/api/cron/rss-ingest",
       "schedule": "0 0 * * 6"
     }
