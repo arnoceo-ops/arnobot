@@ -88,6 +88,7 @@ function formatDate(iso: string) {
 
 export default function MetaAnalyseClient() {
   const [selected, setSelected] = useState(30)
+  const [customDays, setCustomDays] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analyses, setAnalyses] = useState<MetaAnalyse[]>([])
@@ -271,11 +272,11 @@ export default function MetaAnalyseClient() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 32 }}>
         {periods.map(p => (
           <button
             key={p.days}
-            onClick={() => setSelected(p.days)}
+            onClick={() => { setSelected(p.days); setCustomDays('') }}
             style={{
               fontFamily: "'Space Mono', monospace",
               fontSize: 13,
@@ -284,15 +285,48 @@ export default function MetaAnalyseClient() {
               padding: '8px 20px',
               borderRadius: 4,
               border: '1px solid',
-              borderColor: selected === p.days ? '#f59e0b' : '#374151',
-              background: selected === p.days ? '#1e293b' : 'transparent',
-              color: selected === p.days ? '#f59e0b' : '#6b7280',
+              borderColor: selected === p.days && !customDays ? '#f59e0b' : '#374151',
+              background: selected === p.days && !customDays ? '#1e293b' : 'transparent',
+              color: selected === p.days && !customDays ? '#f59e0b' : '#6b7280',
               cursor: 'pointer',
             }}
           >
             {p.label}
           </button>
         ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          <input
+            type="number"
+            min={1}
+            max={365}
+            value={customDays}
+            onChange={e => {
+              const v = e.target.value
+              setCustomDays(v)
+              const n = parseInt(v, 10)
+              if (!isNaN(n) && n > 0) setSelected(n)
+            }}
+            placeholder="EIGEN"
+            style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 13,
+              letterSpacing: 2,
+              fontWeight: 400,
+              width: 90,
+              padding: '8px 12px',
+              borderRadius: 4,
+              border: `1px solid ${customDays ? '#f59e0b' : '#374151'}`,
+              background: customDays ? '#1e293b' : 'transparent',
+              color: customDays ? '#f59e0b' : '#6b7280',
+              outline: 'none',
+            }}
+          />
+          {customDays && (
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', letterSpacing: 1 }}>
+              {selected} dagen
+            </span>
+          )}
+        </div>
       </div>
 
       <button
