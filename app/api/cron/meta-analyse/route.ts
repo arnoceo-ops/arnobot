@@ -64,6 +64,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ skipped: true, reden: 'geen gesprekken' })
     }
 
+    // Arno's eigen input ophalen (max 45 dagen oud)
+    const cutoff = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: arnoInput } = await supabase
+      .from('arnobot_meta_input')
+      .select('content, created_at')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const arnoInputTekst = arnoInput?.content ?? null
+
     const sessionIds = sessies.map(s => s.session_id).filter(Boolean) as string[]
 
     let logsQuery = supabase
@@ -114,7 +125,10 @@ export async function GET(req: NextRequest) {
         system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
         messages: [{
           role: 'user',
-          content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales, de echte persoon achter ArnoBot. Zijn lens: herken ik mezelf hierin? Is dit mijn stem, mijn directheid, mijn timing van confronteren? Wat zou ik anders hebben gezegd?)\nScore: [X]/10\n[Oordeel: toon, directheid, inhoudelijke scherpte, authenticiteit van de stem]\nKritisch punt: [één aanbeveling om ArnoBot dichter bij de echte Arno te brengen]\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
+          content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
+  ? `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft zijn eigen observaties aangeleverd over wat ArnoBot zei in zijn antwoorden. Verwerk zijn input als een juryoordeel.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
+  : `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: is dit zijn stem, zijn directheid, zijn timing?)\nScore: [X]/10\n[Oordeel: toon, authenticiteit, aanpak]\nKritisch punt: [één aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
+}\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
         }],
       }),
     ])

@@ -2,6 +2,12 @@
 
 import { useState, useEffect, Fragment } from 'react'
 
+type MetaInput = {
+  id: string
+  created_at: string
+  content: string
+}
+
 type MetaAnalyse = {
   id: string
   created_at: string
@@ -89,13 +95,50 @@ export default function MetaAnalyseClient() {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState<Record<string, 'zelf' | 'panel'>>({})
 
+  const [input, setInput] = useState('')
+  const [savedInput, setSavedInput] = useState<MetaInput | null>(null)
+  const [inputLoading, setInputLoading] = useState(true)
+  const [inputSaving, setInputSaving] = useState(false)
+  const [inputSaved, setInputSaved] = useState(false)
+
   useEffect(() => {
     fetch('/api/admin/meta-analyse')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setAnalyses(data) })
       .catch(() => {})
       .finally(() => setArchiveLoading(false))
+
+    fetch('/api/admin/meta-input')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.content) {
+          setSavedInput(data)
+          setInput(data.content)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setInputLoading(false))
   }, [])
+
+  async function saveInput() {
+    if (!input.trim()) return
+    setInputSaving(true)
+    setInputSaved(false)
+    try {
+      const res = await fetch('/api/admin/meta-input', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: input }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSavedInput({ id: data.id, created_at: data.created_at, content: input })
+        setInputSaved(true)
+        setTimeout(() => setInputSaved(false), 3000)
+      }
+    } catch { /* stil falen */ }
+    setInputSaving(false)
+  }
 
   function toggleOpen(id: string) {
     setOpenIds(prev => {
@@ -159,6 +202,75 @@ export default function MetaAnalyseClient() {
 
   return (
     <div>
+      {/* Jouw maandelijkse input */}
+      <div style={{ marginBottom: 56 }}>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
+          JOUW INPUT VOOR HET PANEL
+        </p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+          Schrijf wat je de afgelopen periode opviel aan ArnoBot. Wat herkende je niet? Wat miste er? Wat was raak?
+          Dit wordt meegenomen als jouw eigen jurering bij de volgende analyse.
+        </p>
+        {inputLoading ? (
+          <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>
+        ) : (
+          <>
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Arno observeert wat ArnoBot zegt in zijn antwoorden. Bijvoorbeeld: ArnoBot is te voorzichtig in zijn formuleringen, ik zou hier harder ingaan. Of: de analyse klopt maar de afsluiting mist urgentie. Of: dit is niet hoe ik dit zou zeggen."
+              style={{
+                width: '100%',
+                minHeight: 180,
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 14,
+                fontWeight: 400,
+                lineHeight: 1.8,
+                color: '#f1f5f9',
+                background: '#1f2937',
+                border: '1.5px solid #374151',
+                borderRadius: 4,
+                padding: '14px 16px',
+                resize: 'vertical',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={e => { e.target.style.borderColor = '#f59e0b' }}
+              onBlur={e => { e.target.style.borderColor = '#374151' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
+              <button
+                onClick={saveInput}
+                disabled={inputSaving || !input.trim()}
+                style={{
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  fontSize: 16,
+                  letterSpacing: 3,
+                  padding: '10px 28px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: inputSaving || !input.trim() ? '#374151' : '#f59e0b',
+                  color: inputSaving || !input.trim() ? '#6b7280' : '#111827',
+                  cursor: inputSaving || !input.trim() ? 'default' : 'pointer',
+                }}
+              >
+                {inputSaving ? 'OPSLAAN...' : 'OPSLAAN'}
+              </button>
+              {inputSaved && (
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#4ade80', letterSpacing: 1 }}>
+                  Opgeslagen.
+                </span>
+              )}
+              {savedInput && !inputSaved && (
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#4b5563', letterSpacing: 1 }}>
+                  Laatste opslag: {new Date(savedInput.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
         {periods.map(p => (
           <button
