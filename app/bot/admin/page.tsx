@@ -30,7 +30,8 @@ function fmtDate(iso: string): string {
   return iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4)
 }
 
-function renderAnswer(text: string) {
+function renderAnswer(text: string | null | undefined) {
+  if (!text) return ''
   const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   return escaped
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
@@ -173,21 +174,23 @@ export default async function ArnoBotAdminPage({
               <option value="count_asc">Minste vragen eerst</option>
             </select>
           </div>
-          <button type="submit"
-            style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '14px', alignSelf: 'flex-end' }}>
-            LAAD
-          </button>
-          {sessionList.length > 0 && (
-            <div style={{ alignSelf: 'flex-end', display: 'flex', gap: 8 }}>
-              <a
-                href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
-                style={{ background: '#1f2937', color: '#9ca3af', border: '1px solid #374151', padding: '10px 20px', fontWeight: 700, fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap' }}
-              >
-                ↓ CSV
-              </a>
-              <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />
-            </div>
-          )}
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <button type="submit"
+              style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
+              LAAD
+            </button>
+            {sessionList.length > 0 && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <a
+                  href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
+                  style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                >
+                  ↓ DOWNLOAD CSV
+                </a>
+                <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />
+              </div>
+            )}
+          </div>
         </form>
       </div>
 
@@ -221,7 +224,7 @@ export default async function ArnoBotAdminPage({
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '28px' }}>
                     <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '8px', color: '#f1f5f9' }}>
-                      {msg.question}
+                      {msg.question ?? ''}
                     </p>
                     <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#9ca3af' }}
                       dangerouslySetInnerHTML={{ __html: renderAnswer(msg.answer) }} />
