@@ -351,7 +351,7 @@ export default function MetaAnalyseClient() {
 
       {loading && (
         <p style={{ color: '#6b7280', fontSize: 13, letterSpacing: 2, marginBottom: 32 }}>
-          Gesprekken ophalen en panel laten jureren. Dit duurt 20-40 seconden.
+          Gesprekken ophalen en panel laten jureren. Dit kan wat langer duren.
         </p>
       )}
 
