@@ -2,6 +2,16 @@
 
 import { useState, useEffect, Fragment } from 'react'
 
+const loadingStyle = `
+  .meta-loading { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+  .meta-loading-dots { display: flex; gap: 6px; }
+  .meta-loading-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; animation: metaPulse 1.2s ease-in-out infinite; }
+  .meta-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .meta-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  .meta-loading-text { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #6b7280; }
+  @keyframes metaPulse { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+`
+
 type MetaInput = {
   id: string
   created_at: string
@@ -203,6 +213,7 @@ export default function MetaAnalyseClient() {
 
   return (
     <div>
+      <style>{loadingStyle}</style>
       {/* Jouw maandelijkse input */}
       <div style={{ marginBottom: 56 }}>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
@@ -350,9 +361,14 @@ export default function MetaAnalyseClient() {
       </button>
 
       {loading && (
-        <p style={{ color: '#6b7280', fontSize: 13, letterSpacing: 2, marginBottom: 32 }}>
-          Gesprekken ophalen en panel laten jureren. Dit kan wat langer duren.
-        </p>
+        <div className="meta-loading">
+          <div className="meta-loading-dots">
+            <div className="meta-loading-dot" />
+            <div className="meta-loading-dot" />
+            <div className="meta-loading-dot" />
+          </div>
+          <span className="meta-loading-text">Gesprekken ophalen en panel laten jureren. Dit kan wat langer duren.</span>
+        </div>
       )}
 
       {error && (
