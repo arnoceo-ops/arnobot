@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
   const [zelfResponse, panelResponse] = await Promise.all([
     anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 4000,
       system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
 
 ${ARNOBOT_MANDAAT}
@@ -148,7 +148,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }),
     anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 5000,
+      max_tokens: 8000,
       system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
 
 ${ARNOBOT_MANDAAT}
