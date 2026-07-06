@@ -53,6 +53,19 @@ export default function SignInPage() {
     if (isSignedIn) router.replace('/bot')
   }, [isSignedIn, router])
 
+  // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
+  // met loading=true en de knop disabled. pageshow detecteert dit en reset de state.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) {
+        setLoading(false)
+        setAutoTriggered(false)
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
   useEffect(() => {
     if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered) {
       setAutoTriggered(true)
