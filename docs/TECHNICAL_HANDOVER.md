@@ -392,11 +392,11 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 | `app/api/bot/uitdaging/route.ts` | `claude-sonnet-5` | Één korte vraag genereren, Sonnet volstaat | 2026-07 |
 | `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-07 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
-| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese | 2026-07 |
+| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. Fable 5 hersteld op 1 juli 2026. Risico anders dan Sonnet 5: thinking is altijd aan maar gescheiden van output, getText() handelt dit correct af. | 2026-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
-| `app/api/bot/coaching-analyse/route.ts` | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken | 2026-07 |
-| `app/api/bot/team/spotlight/route.ts` | `claude-sonnet-5` | Trend-bewuste teamanalyse | 2026-07 |
-| `app/api/bot/team/1on1/route.ts` | `claude-haiku-4-5-20251001` | Sonnet 5 teruggedraaid wegens thinking-mode truncatie. Haiku: geen thinking, 5-10x sneller. | 2026-07 |
+| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
+| `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-5` | Trend-bewuste teamanalyse op basis van gesprekken + historische scores. Opgewaardeerd van Haiku: cruciale boodschap voor manager vereist redeneervermogen. | 2026-07 |
+| `app/api/bot/team/1on1/route.ts` (1:1 agenda) | `claude-haiku-4-5-20251001` | Sonnet 5 teruggedraaid: thinking-mode kapt output af midden in een zin (zelfde probleem als hoofdchat). Haiku doet geen thinking, is 5-10x sneller en volstaat voor gestructureerde agenda op basis van aangeleverde data. | 2026-07 |
 <!-- /AUTO:MODELS -->
 
 **Beslissingsvolgorde:** kwaliteit eerst, kosten tweed. Een goedkoper model wordt alleen gekozen als de kwaliteit aantoonbaar gelijkwaardig is voor die specifieke taak.
