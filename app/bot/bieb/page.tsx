@@ -32,8 +32,9 @@ function renderContent(text: string) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
 }
 
 function renderAnalyseText(text: string): string {
