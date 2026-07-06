@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
+import { useIsMobile } from '@/hooks/useBreakpoint'
 
 interface Coaching {
   mindset_score: number | null
@@ -130,6 +131,7 @@ export default function LidPage() {
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const isMobile = useIsMobile()
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
   const [verwijderBevestig, setVerwijderBevestig] = useState(false)
@@ -499,19 +501,33 @@ export default function LidPage() {
                           onClick={() => setExpandedAnalyse(expandedAnalyse === a.id ? null : a.id)}
                           style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0' }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
-                              {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
-                            </span>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                          {isMobile ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }}>
+                                {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
+                              </span>
+                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
                                 {getAnalyseTitle(a.analyse_text)}
                               </p>
+                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
+                                {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                              </span>
                             </div>
-                            <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
-                              {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
-                            </span>
-                          </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                                {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
+                              </span>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                                  {getAnalyseTitle(a.analyse_text)}
+                                </p>
+                              </div>
+                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                                {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                              </span>
+                            </div>
+                          )}
                         </button>
                         {expandedAnalyse === a.id && (
                           <div style={{ paddingBottom: 32 }}>

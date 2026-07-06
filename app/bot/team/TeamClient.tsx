@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
+import { useIsMobile } from '@/hooks/useBreakpoint'
 
 function formatLast(iso: string | null) {
   if (!iso) return ''
@@ -152,6 +153,7 @@ export default function TeamClient() {
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -392,13 +394,13 @@ export default function TeamClient() {
 <div style={section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
                   <span style={label}>TEAMLEDEN ({members.length})</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'flex-start' : 'flex-end', gap: 6 }}>
                     <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b' }}>MINIMUMFREQUENTIE</span>
                     <select
                       value={minIntervalDagen ?? ''}
                       onChange={e => handleRitmeChange(e.target.value)}
                       className="team-input"
-                      style={{ width: 160, padding: '8px 12px', fontSize: 13 }}
+                      style={{ width: isMobile ? '100%' : 160, padding: '8px 12px', fontSize: 13 }}
                     >
                       <option value="">Geen drempel</option>
                       <option value="7">1x per week</option>
@@ -409,39 +411,68 @@ export default function TeamClient() {
                 </div>
                 {members.length === 0 ? (
                   <p style={body}>Nog geen teamleden. Stuur de uitnodigingslink naar je team.</p>
+                ) : isMobile ? (
+                  sortedMembers.map(m => {
+                    const signaal = activiteitsSignaal(m.sessions, m.last_activity, minIntervalDagen)
+                    return (
+                      <div
+                        key={m.user_id}
+                        onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
+                        style={{ borderTop: '1px solid #374151', padding: '16px 0', cursor: 'pointer' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', fontWeight: 400 }}>
+                            {minIntervalDagen && <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: signaal.dot, marginRight: 10, verticalAlign: 'middle' }} />}
+                            {m.name}
+                          </span>
+                          {msaTotal(m) != null && (
+                            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, color: '#f1f5f9' }}>{msaTotal(m)}</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{m.sessions} GESPR.</span>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{m.analyses} ANAL.</span>
+                          {m.last_activity && (
+                            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: isOnderRitme(m.last_activity) ? '#f59e0b' : '#6b7280' }}>
+                              {formatLast(m.last_activity)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
                 ) : (
-                  <>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400, tableLayout: 'fixed' }}>
-                        <colgroup>
-                          <col style={{ width: minIntervalDagen ? 24 : 0 }} />
-                          <col />
-                          <col style={{ width: 75 }} />
-                          <col style={{ width: 100 }} />
-                          <col style={{ width: 100 }} />
-                          <col style={{ width: 100 }} />
-                        </colgroup>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid #374151' }}>
-                            <th style={{ padding: '8px 16px 12px 0' }} />
-                            {([
-                              { label: 'NAAM', col: 'naam', align: 'left' },
-                              { label: 'MSA', col: 'msa', align: 'center' },
-                              { label: 'GESPR.', col: 'sessies', align: 'center' },
-                              { label: 'ANALYSES', col: 'analyses', align: 'center' },
-                              { label: 'DATUM', col: 'datum', align: 'right' },
-                            ] as const).map(({ label, col, align }) => (
-                              <th key={col} onClick={() => toggleSort(col)} style={{ textAlign: align as 'left'|'center'|'right', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: sortBy === col ? '#f59e0b' : '#6b7280', padding: col === 'datum' ? '8px 0 12px 16px' : '8px 16px 12px 0', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
-                                {label}{sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sortedMembers.map(m => {
-                            const signaal = activiteitsSignaal(m.sessions, m.last_activity, minIntervalDagen)
-                            const onderRitme = isOnderRitme(m.last_activity)
-                            return (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Space Mono', monospace", fontWeight: 400, tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: minIntervalDagen ? 24 : 0 }} />
+                        <col />
+                        <col style={{ width: 75 }} />
+                        <col style={{ width: 100 }} />
+                        <col style={{ width: 100 }} />
+                        <col style={{ width: 100 }} />
+                      </colgroup>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #374151' }}>
+                          <th style={{ padding: '8px 16px 12px 0' }} />
+                          {([
+                            { label: 'NAAM', col: 'naam', align: 'left' },
+                            { label: 'MSA', col: 'msa', align: 'center' },
+                            { label: 'GESPR.', col: 'sessies', align: 'center' },
+                            { label: 'ANALYSES', col: 'analyses', align: 'center' },
+                            { label: 'DATUM', col: 'datum', align: 'right' },
+                          ] as const).map(({ label, col, align }) => (
+                            <th key={col} onClick={() => toggleSort(col)} style={{ textAlign: align as 'left'|'center'|'right', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: sortBy === col ? '#f59e0b' : '#6b7280', padding: col === 'datum' ? '8px 0 12px 16px' : '8px 16px 12px 0', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                              {label}{sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedMembers.map(m => {
+                          const signaal = activiteitsSignaal(m.sessions, m.last_activity, minIntervalDagen)
+                          const onderRitme = isOnderRitme(m.last_activity)
+                          return (
                             <tr
                               key={m.user_id}
                               onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
@@ -460,12 +491,11 @@ export default function TeamClient() {
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280', textAlign: 'center' }}>{m.analyses}</td>
                               <td style={{ padding: '16px 0 16px 16px', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af', textAlign: 'right' }}>{formatLast(m.last_activity)}</td>
                             </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
 
@@ -530,19 +560,33 @@ export default function TeamClient() {
                           onClick={() => setExpandedAnalyse(expandedAnalyse === a.id ? null : a.id)}
                           style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0' }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
-                              {formatAnalyseDate(a.created_at)}
-                            </span>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                          {isMobile ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }}>
+                                {formatAnalyseDate(a.created_at)}
+                              </span>
+                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
                                 {getAnalyseTitle(a.analyse_text)}
                               </p>
+                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
+                                {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                              </span>
                             </div>
-                            <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
-                              {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
-                            </span>
-                          </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                                {formatAnalyseDate(a.created_at)}
+                              </span>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
+                                  {getAnalyseTitle(a.analyse_text)}
+                                </p>
+                              </div>
+                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                                {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
+                              </span>
+                            </div>
+                          )}
                         </button>
                         {expandedAnalyse === a.id && (
                           <div style={{ paddingBottom: 32 }}>
