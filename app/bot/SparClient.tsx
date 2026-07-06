@@ -150,6 +150,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [started, setStarted] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [sessionId, setSessionId] = useState('')
+  const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
@@ -483,13 +484,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   }
 
   async function handleShare() {
-    if (shareLoading || !sessionId) return
+    const idToShare = savedSessionId || sessionId
+    if (shareLoading || !idToShare) return
     setShareLoading(true)
     try {
       const res = await fetch('/api/bot/share-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({ sessionId: idToShare }),
       })
       const data = await res.json()
       if (data.url) {
@@ -567,6 +569,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             hint: null
           }])
           setSynthesisMessageCount(newCount)
+          setSavedSessionId(sessionId)
           const newId = crypto.randomUUID()
           sessionStorage.setItem('arnobot_session', newId)
           setSessionId(newId)
@@ -598,6 +601,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }])
         if (data.blogs?.length) setSuggestedBlogs(data.blogs)
         setSynthesisMessageCount(newCount)
+        setSavedSessionId(sessionId)
         const newId = crypto.randomUUID()
         sessionStorage.setItem('arnobot_session', newId)
         setSessionId(newId)
