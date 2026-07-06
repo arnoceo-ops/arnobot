@@ -741,6 +741,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
           background: #111827; border-bottom: 1px solid rgba(255,255,255,0.06);
           padding: 24px 20px; display: flex; flex-direction: column; gap: 24px;
+          align-items: flex-end;
         }
         .mob-menu a, .mob-menu span {
           font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
