@@ -1,4 +1,6 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+﻿export const maxDuration = 60
+
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
   const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : 'afgelopen kwartaal'
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1500,
     system: `Je schrijft een redactionele briefing voor Arno Diepeveen. Arno is salesexpert en schrijft over sales, leiderschap en commercieel succes voor managers en eindbazen. De input zijn gesprekstitels en samenvattingen van gesprekken die gebruikers de ${periodeLabel} hebben gevoerd met ArnoBot, zijn AI-salescoach. Geef een briefing in drie onderdelen: THEMA'S, PATRONEN, BLOGINSPIRATIE. Schrijf direct. Geen inleiding. Begin gewoon. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes. Gebruik het woord "moeten" niet.`,
     messages: [{
