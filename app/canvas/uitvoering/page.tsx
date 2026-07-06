@@ -100,7 +100,7 @@ function AutoTextarea({ value, onChange, onBlur, style, rows = 3 }: { value: str
 
 function ArnobotBox({ text, onClose, style }: { text: string; onClose: () => void; style?: React.CSSProperties }) {
   return (
-    <div style={{ marginTop: '12px', borderLeft: '2px solid #f59e0b', fontSize: '18px', lineHeight: 1.8, color: '#1a1714', opacity: 0.8, fontFamily: 'var(--font-space-mono, monospace)', backgroundColor: '#fdf6ec', padding: '12px', ...style }}>
+    <div style={{ marginTop: '12px', borderLeft: '2px solid #f59e0b', fontSize: '18px', lineHeight: 1.8, color: '#1a1714', opacity: 0.8, fontFamily: 'var(--font-space-mono, monospace)', backgroundColor: '#fdf6ec', padding: '12px', whiteSpace: 'pre-wrap', ...style }}>
       {text}
       <button onClick={onClose} style={{ marginTop: '12px', display: 'block', background: 'none', border: 'none', color: '#f59e0b', fontSize: '11px', letterSpacing: '2px', cursor: 'pointer', padding: '0' }}>
         {'→ SLUITEN'}
@@ -144,7 +144,7 @@ function Field({ id, label, sub, type, value, onChange, onBlur, feedback, loadin
         : <input style={s.input} value={value} onChange={e => onChange(id, e.target.value)} onBlur={() => onBlur(id)} placeholder="..." />
       }
       {hasAnswer && (
-        <button style={{ ...s.arnobotBtn, opacity: loading ? 0.4 : 0.7 }} onClick={() => !loading && onArnoBot(id, label, sub)}>
+        <button style={{ ...s.arnobotBtn, opacity: 0.7 }} onClick={() => !loading && onArnoBot(id, label, sub)}>
           {loading ? '→ ARNOBOT DENKT...' : feedback ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
         </button>
       )}
@@ -211,7 +211,7 @@ function OkrCol({ title, sub, prefix, answers, arnobotFeedback, arnobotLoading, 
               )}
             </div>
             {hasAnswer && (
-              <button style={{ ...s.arnobotBtn, opacity: arnobotLoading[id] ? 0.4 : 0.7, marginLeft: '34px' }}
+              <button style={{ ...s.arnobotBtn, opacity: 0.7, marginLeft: '34px' }}
                 onClick={() => !arnobotLoading[id] && handleArnoBot(id, `${title} ${i}`, sub)}>
                 {arnobotLoading[id] ? '→ ARNOBOT DENKT...' : arnobotFeedback[id] ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
               </button>
@@ -233,7 +233,7 @@ function NumberCol({ id, label, value, onChange, onBlur, feedback, loading, onAr
       <div style={{ ...MONO18, opacity: 0.6, marginBottom: '12px' }}>{label}</div>
       <input style={s.input} value={value} onChange={e => onChange(id, e.target.value)} onBlur={() => onBlur(id)} placeholder="..." />
       {hasAnswer && (
-        <button style={{ ...s.arnobotBtn, opacity: loading ? 0.4 : 0.7 }} onClick={() => !loading && onArnoBot(id, label, '')}>
+        <button style={{ ...s.arnobotBtn, opacity: 0.7 }} onClick={() => !loading && onArnoBot(id, label, '')}>
           {loading ? '→ ARNOBOT DENKT...' : feedback ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
         </button>
       )}
@@ -459,7 +459,7 @@ export default function UitvoeringPage() {
                 <div style={{ ...MONO18, opacity: 0.5, marginBottom: '8px' }}>{f(id).label}</div>
                 <input style={s.input} value={answers[id] || ''} onChange={e => handleChange(id, e.target.value)} onBlur={() => handleBlur(id)} placeholder="..." />
                 {hasAnswer && (
-                  <button style={{ ...s.arnobotBtn, opacity: arnobotLoading[id] ? 0.4 : 0.7 }} onClick={() => !arnobotLoading[id] && handleArnoBot(id, f(id).label, '')}>
+                  <button style={{ ...s.arnobotBtn, opacity: 0.7 }} onClick={() => !arnobotLoading[id] && handleArnoBot(id, f(id).label, '')}>
                     {arnobotLoading[id] ? '→ ARNOBOT DENKT...' : arnobotFeedback[id] ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
                   </button>
                 )}
@@ -511,7 +511,7 @@ export default function UitvoeringPage() {
                       <AutoTextarea style={{ ...s.textarea, minHeight: '70px' }} value={value} onChange={v => handleChange(id, v)} onBlur={() => handleBlur(id)} rows={1} />
                     </div>
                     {hasAnswer && (
-                      <button style={{ ...s.arnobotBtn, opacity: arnobotLoading[id] ? 0.4 : 0.7, marginLeft: '34px' }}
+                      <button style={{ ...s.arnobotBtn, opacity: 0.7, marginLeft: '34px' }}
                         onClick={() => !arnobotLoading[id] && handleArnoBot(id, `${label} ${n}`, '')}>
                         {arnobotLoading[id] ? '→ ARNOBOT DENKT...' : arnobotFeedback[id] ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
                       </button>

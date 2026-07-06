@@ -1034,7 +1034,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           50% { opacity: 1; transform: scale(1); }
         }
         .loading-text {
-          font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #374151;
+          font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #1a1714;
         }
 
         /* GLOW op invoerveld na gesprek */

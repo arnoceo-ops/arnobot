@@ -59,7 +59,7 @@ function AutoTextarea({ value, onChange, onBlur, style }: { value: string; onCha
 
 function ArnobotBox({ text, onClose, style }: { text: string; onClose: () => void; style?: React.CSSProperties }) {
   return (
-    <div style={{ marginTop: '12px', borderLeft: '2px solid #f59e0b', fontSize: '18px', lineHeight: 1.8, color: '#1a1714', opacity: 0.8, fontFamily: 'var(--font-space-mono, monospace)', backgroundColor: '#fdf6ec', padding: '12px', ...style }}>
+    <div style={{ marginTop: '12px', borderLeft: '2px solid #f59e0b', fontSize: '18px', lineHeight: 1.8, color: '#1a1714', opacity: 0.8, fontFamily: 'var(--font-space-mono, monospace)', backgroundColor: '#fdf6ec', padding: '12px', whiteSpace: 'pre-wrap', ...style }}>
       {text}
       <button onClick={onClose} style={{ marginTop: '12px', display: 'block', background: 'none', border: 'none', color: '#f59e0b', fontSize: '11px', letterSpacing: '2px', cursor: 'pointer', padding: '0' }}>
         {'→ SLUITEN'}
@@ -101,7 +101,7 @@ function Field({ id, label, sub, type, value, onChange, onBlur, feedback, loadin
         : <input style={s.input} value={value} onChange={e => onChange(id, e.target.value)} onBlur={() => onBlur(id)} placeholder="..." />
       }
       {hasAnswer && (
-        <button style={{ ...s.arnobotBtn, opacity: loading ? 0.4 : 0.7 }} onClick={() => !loading && onArnoBot(id, label, sub)}>
+        <button style={{ ...s.arnobotBtn, opacity: 0.7 }} onClick={() => !loading && onArnoBot(id, label, sub)}>
           {loading ? '→ ARNOBOT DENKT...' : feedback ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
         </button>
       )}
@@ -128,7 +128,7 @@ function QRow({ label, id, answers, onChange, onBlur, feedback, loading, onArnoB
         />
       </div>
       {hasAnswer && (
-        <button style={{ ...s.arnobotBtn, opacity: loading[id] ? 0.4 : 0.7, marginLeft: '172px' }} onClick={() => !loading[id] && onArnoBot(id, label, '')}>
+        <button style={{ ...s.arnobotBtn, opacity: 0.7, marginLeft: '172px' }} onClick={() => !loading[id] && onArnoBot(id, label, '')}>
           {loading[id] ? '→ ARNOBOT DENKT...' : feedback[id] ? '→ OPNIEUW VRAGEN' : '→ ARNOBOT'}
         </button>
       )}
