@@ -84,7 +84,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   inactivity_dag21:      { label: 'Inactivity dag 21',      description: 'Recurring:21 dagen geen activiteit',                                category: 'user' },
   inactivity_dag45:      { label: 'Inactivity dag 45',      description: 'Recurring:45 dagen geen activiteit, sportschool-vergelijking',     category: 'user' },
   inactivity_dag60:      { label: 'Inactivity dag 60',      description: 'Recurring:60 dagen geen activiteit, abonnement wordt opgezegd',    category: 'user' },
-  bieb_bijgewerkt:       { label: 'BIEB bijgewerkt',        description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
+  bieb_bijgewerkt:       { label: 'Archief bijgewerkt',     description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
   kwartaal_doel:         { label: 'Kwartaaldoel check',     description: 'Recurring:bij kwartaalstart, check of jaardoel nog klopt',          category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
@@ -264,10 +264,10 @@ export function getEmailTemplate(
       }
     case 'bieb_bijgewerkt':
       return {
-        subject: `${prefix}Je BIEB is bijgewerkt, ${naam}.`,
+        subject: `${prefix}Je archief is bijgewerkt, ${naam}.`,
         html: mail(
           `Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste ${options?.sessionCount ?? 10} gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.`,
-          'OPEN MIJN BIEB →', 'https://arno.bot/bot/bieb',
+          'OPEN MIJN ARCHIEF →', 'https://arno.bot/bot/archief',
           'Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.'
         ),
       }

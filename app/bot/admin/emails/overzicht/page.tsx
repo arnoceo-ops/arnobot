@@ -56,7 +56,7 @@ export default async function EmailsOverzichtPage() {
             { name: 'Opzegging bevestiging', trigger: 'Event: bot/cancel-subscription',               ontvanger: 'Gebruiker',            wanneer: 'Direct bij opzegging via account pagina',               type: 'Transactioneel' },
             { name: 'Win-back',             trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
             { name: 'Referral aanmelding',   trigger: 'Event: bot/referral (direct)',                 ontvanger: 'Referrer (gebruiker)', wanneer: 'Zodra iemand zich aanmeldt via de referral link',       type: 'Transactioneel' },
-            { name: 'BIEB bijgewerkt',       trigger: 'Cron:auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
+            { name: 'Archief bijgewerkt',    trigger: 'Cron:auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
           ]} />
         </Section>
 
@@ -78,7 +78,7 @@ export default async function EmailsOverzichtPage() {
             { name: 'Doorgaan bevestigd',    trigger: 'Event: bot/confirm-renewal',                  ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker doorgaan na trial bevestigt',         type: 'Admin' },
             { name: 'Account verwijderd',    trigger: 'Event: bot/delete-account',                   ontvanger: 'delete@arno.bot',     wanneer: 'Als een gebruiker zijn account verwijdert',             type: 'Admin' },
             { name: 'Evaluatie',             trigger: 'Event: api/evaluatie',                        ontvanger: 'evaluatie@arno.bot',  wanneer: 'Als een gebruiker een evaluatie instuurt',              type: 'Admin' },
-            { name: 'BIEB gedeeld',          trigger: 'Event: bot/share-overview',                   ontvanger: 'Coach (extern)',       wanneer: 'Als een gebruiker zijn BIEB deelt met een coach',       type: 'Admin' },
+            { name: 'Archief gedeeld',       trigger: 'Event: bot/share-overview',                   ontvanger: 'Coach (extern)',       wanneer: 'Als een gebruiker zijn archief deelt met een coach',    type: 'Admin' },
             { name: 'Team waitlist',         trigger: 'Event: bot/profiel',                          ontvanger: 'waitlist@arno.bot',   wanneer: 'Als iemand zich aanmeldt voor de teamwaitlist',         type: 'Admin' },
           ]} />
         </Section>

@@ -200,7 +200,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
   const [actieStatus, setActieStatus] = useState<'ja' | 'deels' | 'nee' | null>(null)
-  const [sparModus, setSparModus] = useState<'coaching' | 'sparren'>('coaching')
+  const [sparModus, setSparModus] = useState<'gesprek' | 'sparren'>('gesprek')
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
@@ -1211,7 +1211,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {menuOpen && (
             <div className="mob-menu" onClick={() => setMenuOpen(false)}>
               <span className="active">ARNOBOT</span>
-              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/bieb')}>BIEB</button>
+              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/archief')}>ARCHIEF</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
               {isBouwer && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
@@ -1225,7 +1225,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           <div className="nav-spacer" />
           <div className="nav-links">
             <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>
-            <button onClick={() => handleNavAttempt('/bot/bieb')}>BIEB</button>
+            <button onClick={() => handleNavAttempt('/bot/archief')}>ARCHIEF</button>
             <button onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
             {isBouwer && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
             <button onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
@@ -1289,13 +1289,17 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 'clamp(24px,4vw,40px)' : 0 }}>
               <button
-                onClick={() => setSparModus('coaching')}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'coaching' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'coaching' ? '#f59e0b' : 'none', color: sparModus === 'coaching' ? '#111827' : '#9ca3af', border: sparModus === 'coaching' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
-              >COACHING</button>
+                onClick={() => setSparModus('gesprek')}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'gesprek' ? '12px 0' : '11px 0', minWidth: 140, borderRadius: 999, background: sparModus === 'gesprek' ? '#f59e0b' : 'none', color: sparModus === 'gesprek' ? '#111827' : '#9ca3af', border: sparModus === 'gesprek' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+              >GESPREK</button>
               <button
                 onClick={() => { setSparModus('sparren'); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', minWidth: 170, borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', minWidth: 140, borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
               >SPARREN</button>
+              <Link
+                href="/bot/archief"
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 0', minWidth: 140, borderRadius: 999, background: 'none', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }}
+              >ARCHIEF</Link>
             </div>
 
             {sparModus === 'sparren' && (
@@ -1351,10 +1355,10 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Jij begint het gesprek.' : 'Begin een gesprek.'}</span>
-              {sparModus === 'coaching' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 28 }}>hoe concreter jouw info, hoe beter mijn output</span>}
+              {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 28 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
-          {sparModus === 'coaching' && (
+          {sparModus === 'gesprek' && (
             <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 812 }}>
               {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
                 <button
@@ -1436,7 +1440,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               {dagelijksTeller} / 25 vragen gebruikt vandaag
             </p>
           )}
-          {sparModus === 'coaching' && input.trim().length > 5 && !inputIsVerfijnd && (
+          {sparModus === 'gesprek' && input.trim().length > 5 && !inputIsVerfijnd && (
             <button
               className="verfijn-btn"
               disabled={verfijnen || loading}
@@ -1562,7 +1566,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   {voortgang.count} {voortgang.count === 1 ? 'GESPREK' : 'GESPREKKEN'}
                   {voortgang.lastDate ? ` · LAATSTE: ${formatLastDate(voortgang.lastDate).toUpperCase()}` : ''}
                 </div>
-                <Link href="/bot/bieb" className="archief-btn">NAAR ARCHIEF</Link>
               </>
             )}
           </div>

@@ -12,6 +12,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ['@react-pdf/renderer'],
+  async redirects() {
+    return [
+      { source: '/bot/bieb', destination: '/bot/archief', permanent: true },
+      { source: '/bot/bieb/:path*', destination: '/bot/archief/:path*', permanent: true },
+    ]
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },

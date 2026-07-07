@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 const FREQUENTIE = ['Dagelijks', '2-3x per week', '1x per week', 'Minder dan 1x per week']
-const ONDERDELEN = ['ArnoBot chat', 'Bieb', 'Analyses', 'Coaching']
+const ONDERDELEN = ['ArnoBot chat', 'Archief', 'Analyses', 'Coaching']
 const PERSONA_OPTIES = ['Verkoper', 'Salesbaas', 'Eindbaas', 'Anders']
 const AANBEVELEN_OPTIES = ['Ja', 'Misschien', 'Nee']
 

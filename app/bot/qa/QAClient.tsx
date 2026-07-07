@@ -37,7 +37,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt ArnoBot stap voor stap?',
-        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in de Bieb, en vraag daarna een coachingsadvies aan. De respectievelijke pagina\'s staan in het menu: ArnoBot, Bieb, Coaching. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
+        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in de Archief, en vraag daarna een coachingsadvies aan. De respectievelijke pagina\'s staan in het menu: ArnoBot, Archief, Coaching. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
       },
       {
         q: 'Hoe gebruik ik de gesprekken optimaal?',
@@ -45,7 +45,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Wat is een patroonanalyse en hoe maak ik er een?',
-        a: 'Ga naar de Bieb, selecteer de gesprekken waar je een duiding op wilt (maximaal 20) en klik op Analyseer. ArnoBot geeft je de rode draad: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon waar je iets mee kunt.',
+        a: 'Ga naar de Archief, selecteer de gesprekken waar je een duiding op wilt (maximaal 20) en klik op Analyseer. ArnoBot geeft je de rode draad: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon waar je iets mee kunt.',
       },
       {
         q: 'Wanneer kan ik een coachingsadvies opvragen?',
@@ -57,7 +57,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een eerder gesprek voortzetten?',
-        a: 'Ja. Al je gesprekken staan in de Bieb. Open een gesprek, scroll naar beneden en klik op "Zet dit gesprek voort bij ArnoBot?" ArnoBot pakt de draad op waar je gebleven was.',
+        a: 'Ja. Al je gesprekken staan in de Archief. Open een gesprek, scroll naar beneden en klik op "Zet dit gesprek voort bij ArnoBot?" ArnoBot pakt de draad op waar je gebleven was.',
       },
     ],
   },
@@ -129,7 +129,7 @@ const FAQ_GROUPS = [
             <br /><br />
             Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties.
             <br /><br />
-            Wil je zelf iets delen? Dat kan. In de BIEB kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
+            Wil je zelf iets delen? Dat kan. In de ARCHIEF kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
           </>
         ),
       },

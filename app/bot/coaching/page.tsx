@@ -34,7 +34,7 @@ export default async function CoachingPage() {
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>COACHING</h1>
             <div style={{ borderLeft: '3px solid #f59e0b', padding: '24px 28px', background: '#1f2937', marginBottom: 40 }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-                Coaching is beschikbaar voor Pro-gebruikers. Arno analyseert al je gesprekken, je analyses uit de BIEB in relatie tot jouw specifieke profiel. Hij laat je zien wat werkt en ook wat je het best kunt veranderen voor nog betere performance.
+                Coaching is beschikbaar voor Pro-gebruikers. Arno analyseert al je gesprekken, je analyses uit het Archief in relatie tot jouw specifieke profiel. Hij laat je zien wat werkt en ook wat je het best kunt veranderen voor nog betere performance.
               </p>
             </div>
             <Link
