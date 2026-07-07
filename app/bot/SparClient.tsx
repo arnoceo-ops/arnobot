@@ -1291,7 +1291,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <button
                 onClick={() => setSparModus('gesprek')}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'gesprek' ? '12px 0' : '11px 0', minWidth: 140, borderRadius: 999, background: sparModus === 'gesprek' ? '#f59e0b' : 'none', color: sparModus === 'gesprek' ? '#111827' : '#9ca3af', border: sparModus === 'gesprek' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
-              >GESPREK</button>
+              >COACHING</button>
               <button
                 onClick={() => { setSparModus('sparren'); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', minWidth: 140, borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
