@@ -123,6 +123,19 @@ De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed h
 
 **Als de gebruiker zegt "haal eruit" of "verwijder":** verwijder alleen het streepje. Voeg niets terug — geen komma, geen punt, tenzij de gebruiker dat expliciet vraagt.
 
+## Aanspreken met "jij/jou" — ALTIJD — nooit "u"
+
+In alle AI-gegenereerde output wordt de gebruiker ALTIJD aangesproken met "jij" en "jou". Nooit "u". Dit geldt ongeacht de rang, functie of leeftijd van de gebruiker of de gespeelde persona.
+
+**Dit geldt voor:** gesprekken, sparring-persona's, coaching, analyses, syntheses, uitdagingen, debrief, 1:1 agenda, Q&A-teksten, welkomstberichten, e-mails.
+
+**Handhaving in sparring:** elke sparring-persona, hoe formeel ook (CEO, CFO, DGA), spreekt de gebruiker aan met "jij/jou". Nooit "u".
+
+**Handhaving in systeemprompts:** elke route die AI-output genereert MOET bevatten:
+`Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u". Ongeacht hoe senior of formeel de persoon is die je speelt.`
+
+---
+
 ## Tijdgebonden aanwijzingen — NOOIT — geldt voor alle AI-output
 
 Schrijf NOOIT tijdgebonden aanwijzingen in AI-gegenereerde output: geen "doe dit vandaag", "bel morgen", "verzamel voor het weekend", "pak dit deze week op", of enige andere tijdsdruk.
