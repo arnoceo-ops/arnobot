@@ -21,7 +21,8 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(48px,10vw,96px)', letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 8 }}>Oeps.</h1>
           <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 40 }}>
-            Er is iets misgegaan. Probeer het opnieuw of kom later terug.
+            Er is iets misgegaan. Probeer het opnieuw of kom later terug. Lukt het niet?{' '}
+            <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
           </p>
           <button className="reset-btn" onClick={reset}>OPNIEUW PROBEREN</button>
         </div>
