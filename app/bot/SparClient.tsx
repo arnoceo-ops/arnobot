@@ -1359,7 +1359,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </>
           )}
           {sparModus === 'gesprek' && (
-            <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 812 }}>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 812, alignItems: 'center' }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginRight: 4 }}>OUTPUT:</span>
               {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
                 <button
                   key={optie}
