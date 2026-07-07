@@ -187,6 +187,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [dagelijksTeller, setDagelijksTeller] = useState<number | null>(null)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
+  const [audioError, setAudioError] = useState(false)
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
   const { user, isLoaded } = useUser()
@@ -533,6 +534,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       audio.play()
     } catch {
       setSpeakingIdx(null)
+      setAudioError(true)
+      setTimeout(() => setAudioError(false), 6000)
     } finally {
       setTtsLoading(null)
     }
@@ -686,7 +689,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         ])
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'arno', content: 'Er ging iets mis. Probeer opnieuw, of stuur Arno een WhatsApp via wa.me/31650695999.' }])
+      setMessages(prev => [...prev, { role: 'arno', content: 'Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot%20sparring).', hint: null }])
     } finally {
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 100)
@@ -1371,6 +1374,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   {optie.toUpperCase()}
                 </button>
               ))}
+            </div>
+          )}
+          {audioError && (
+            <div style={{ padding: '8px 16px', background: '#1f2937', borderTop: '1px solid #374151', fontSize: 13, fontFamily: "'Space Mono', monospace", color: '#9ca3af' }}>
+              Audio werkt niet. Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20audio%20werkt%20niet%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
             </div>
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
