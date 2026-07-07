@@ -1371,7 +1371,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     padding: '4px 14px', borderRadius: 999,
                     background: antwoordLengte === optie ? '#374151' : 'none',
                     color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
-                    border: 'none', cursor: 'pointer',
+                    border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
                     transition: 'all 0.15s',
                   }}
                 >
