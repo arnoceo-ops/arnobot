@@ -1368,7 +1368,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   style={{
                     fontFamily: "'Bebas Neue', sans-serif",
                     fontSize: 13, letterSpacing: 2,
-                    padding: '4px 14px', borderRadius: 999,
+                    padding: '4px 0', borderRadius: 999, width: 96, textAlign: 'center' as const,
                     background: antwoordLengte === optie ? '#374151' : 'none',
                     color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
                     border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
