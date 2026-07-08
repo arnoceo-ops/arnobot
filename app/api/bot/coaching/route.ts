@@ -50,7 +50,7 @@ export async function POST() {
       .select('session_id, title, summary, feiten, message_count, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(100),
+      .limit(50),
     supabase
       .from('arnobot_analyses')
       .select('id, analyse_text, created_at, session_count')
@@ -122,7 +122,7 @@ export async function POST() {
       try {
         const precheck = await anthropic.messages.create({
           model: 'claude-sonnet-5',
-          max_tokens: 10,
+          max_tokens: 100,
           system: 'Je beoordeelt of nieuwe gesprekken kwalitatief andere patronen laten zien dan de vorige coaching. Antwoord uitsluitend met "ja" of "nee".',
           messages: [{
             role: 'user',
@@ -262,12 +262,12 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   })
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
-    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+    return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
   }
 
   if (response.stop_reason === 'refusal') {
     console.error('[coaching refusal]', response.stop_reason)
-    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+    return NextResponse.json({ error: 'generate_error', detail: 'refusal' }, { status: 500 })
   }
 
   const raw = getText(response.content)
