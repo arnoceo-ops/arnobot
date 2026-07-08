@@ -221,7 +221,7 @@ export async function POST() {
   try {
     response = await anthropic.messages.create({
     model: 'claude-fable-5',
-    max_tokens: 1600,
+    max_tokens: 4000,
     system: `Je bent Arno Diepeveen. Salesstrateeg, 20 jaar ervaring, direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
 
 MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verkoper, positief of negatief taalgebruik, excuses maken of verantwoordelijkheid nemen.
@@ -262,6 +262,11 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   })
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
+    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+  }
+
+  if (response.stop_reason === 'refusal') {
+    console.error('[coaching refusal]', response.stop_reason)
     return NextResponse.json({ error: 'generate_error' }, { status: 500 })
   }
 
