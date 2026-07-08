@@ -72,6 +72,7 @@ type Sort = 'newest' | 'oldest' | 'most' | 'least'
 export default function GeschiedenisPage() {
   const isMobile = useIsMobile()
   const { showCoachingHint, activeCoachingHint, analysesSinceLastCoaching, daysSinceLastCoaching, convsSinceLastCoaching, dismissCoachingHint } = useProgressHints()
+  const [analysesNudgeGezien, setAnalysesNudgeGezien] = useState(false)
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -101,6 +102,10 @@ export default function GeschiedenisPage() {
   const [teamShareLoadingId, setTeamShareLoadingId] = useState<string | null>(null)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    setAnalysesNudgeGezien(!!sessionStorage.getItem('arnobot_analyses_nudge_gezien'))
+  }, [])
 
   useEffect(() => {
     fetch('/api/bot/sessions')
@@ -333,6 +338,8 @@ export default function GeschiedenisPage() {
         @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideup { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
         @keyframes blink { 0%,100%{opacity:0.2} 50%{opacity:1} }
+        @keyframes pulse-amber { 0%,100% { opacity:1; } 40% { opacity:0.25; } }
+        .coaching-hint-btn { animation: pulse-amber 0.7s ease 0.6s 3 forwards; }
         .loading-dot { display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:blink 1.2s ease-in-out infinite; }
         .loading-dot:nth-child(2){animation-delay:0.2s}
         .loading-dot:nth-child(3){animation-delay:0.4s}
@@ -754,9 +761,9 @@ export default function GeschiedenisPage() {
         {!loading && sorted.length > 0 && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse ? 24 : 48 }}>ANALYSES</h2>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && !analysesNudgeGezien ? 24 : 48 }}>ANALYSES</h2>
 
-            {showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && (
+            {showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && !analysesNudgeGezien && (
               <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginBottom: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
                   {activeCoachingHint === 'B'
@@ -767,6 +774,7 @@ export default function GeschiedenisPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                   <Link
                     href="/bot/coaching"
+                    className="coaching-hint-btn"
                     style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
                   >
                     NAAR COACHING →

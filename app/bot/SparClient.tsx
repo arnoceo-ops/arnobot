@@ -197,6 +197,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => {
     if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
   }, [isLoaded, user])
+  useEffect(() => {
+    if (showSluiten && showAnalysesHint) {
+      sessionStorage.setItem('arnobot_analyses_nudge_gezien', '1')
+    }
+  }, [showSluiten, showAnalysesHint])
   const [teamPrompt, setTeamPrompt] = useState(false)
   const [isManager, setIsManager] = useState(false)
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
@@ -1091,7 +1096,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
         @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse-amber { 0%,100% { opacity:1; } 40% { opacity:0.25; } }
-        .analyse-hint-btn { animation: pulse-amber 0.7s ease 0.6s 2 forwards; }
+        .analyse-hint-btn { animation: pulse-amber 0.7s ease 0.6s 3 forwards; }
         .msg-action-btn {
           background: none; border: 1px solid #374151;
           font-family: 'Bebas Neue', sans-serif;
