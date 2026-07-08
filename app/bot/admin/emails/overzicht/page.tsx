@@ -130,6 +130,7 @@ function Table({ rows }: { rows: Row[] }) {
     lineHeight: 1.7,
   }
   return (
+    <div className="admin-table-wrap">
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr>
@@ -152,5 +153,6 @@ function Table({ rows }: { rows: Row[] }) {
         ))}
       </tbody>
     </table>
+    </div>
   )
 }

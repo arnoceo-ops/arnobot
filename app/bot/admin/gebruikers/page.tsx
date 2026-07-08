@@ -192,9 +192,9 @@ export default async function GebruikersPage({
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
 
-      <nav style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
-        <div />
-        <div style={{ display: 'flex', gap: '4px' }}>
+      <nav className="admin-nav" style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
+        <div className="admin-nav-spacer" />
+        <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>
           <a href="/bot/admin/gebruikers" style={navLinkStyle(true)}>USERS</a>
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>CRONS</a>
           <a href="/bot/admin" style={navLinkStyle(false)}>ARNOBOT</a>
@@ -202,13 +202,13 @@ export default async function GebruikersPage({
           <a href="/bot/admin/meta-analyse" style={navLinkStyle(false)}>META</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
+        <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>
           <a href="/api/admin/logout" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px', letterSpacing: '3px', fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
         </div>
       </nav>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
+      <div className="admin-content" style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
 
         <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Gebruikers</h1>
@@ -216,6 +216,7 @@ export default async function GebruikersPage({
           {sorted.length} gebruiker{sorted.length !== 1 ? 's' : ''}
         </p>
 
+        <div className="admin-table-wrap">
         {/* Tabel header */}
         <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
           <div />
@@ -343,6 +344,7 @@ export default async function GebruikersPage({
             )
           })}
         </div>
+        </div>{/* /admin-table-wrap */}
       </div>
     </main>
   )
