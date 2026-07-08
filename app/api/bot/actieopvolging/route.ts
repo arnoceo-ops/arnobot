@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('arnobot_blog_sessions')
-    .select('id, uitdaging')
+    .select('session_id, uitdaging')
     .eq('user_id', userId)
     .not('uitdaging', 'is', null)
     .is('actie_status', null)
@@ -23,7 +23,7 @@ export async function GET() {
 
   if (!data?.uitdaging) return NextResponse.json({ uitdaging: null })
 
-  return NextResponse.json({ uitdaging: data.uitdaging, sessionId: data.id })
+  return NextResponse.json({ uitdaging: data.uitdaging, sessionId: data.session_id })
 }
 
 export async function PATCH(req: Request) {
@@ -36,7 +36,7 @@ export async function PATCH(req: Request) {
   await supabase
     .from('arnobot_blog_sessions')
     .update({ actie_status: status })
-    .eq('id', sessionId)
+    .eq('session_id', sessionId)
     .eq('user_id', userId)
 
   return NextResponse.json({ ok: true })
