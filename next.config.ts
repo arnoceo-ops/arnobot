@@ -14,8 +14,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@react-pdf/renderer'],
   async redirects() {
     return [
-      { source: '/bot/bieb', destination: '/bot/archief', permanent: true },
-      { source: '/bot/bieb/:path*', destination: '/bot/archief/:path*', permanent: true },
+      { source: '/bot/bieb', destination: '/bot/analyses', permanent: true },
+      { source: '/bot/bieb/:path*', destination: '/bot/analyses', permanent: true },
+      { source: '/bot/archief', destination: '/bot/analyses', permanent: true },
+      { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
     ]
   },
   async headers() {
