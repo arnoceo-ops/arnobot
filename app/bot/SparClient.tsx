@@ -783,7 +783,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
         .spar-hero {
-          border-bottom: 3px solid #f59e0b;
+          border-bottom: 2px solid #f59e0b;
           display: grid;
           grid-template-columns: auto auto;
           gap: clamp(24px, 4vw, 80px);

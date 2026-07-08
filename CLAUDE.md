@@ -174,6 +174,7 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 - **Container**: maxWidth 812, padding 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px'
 - **Style-tag**: altijd bovenaan met font-import, `* { box-sizing: border-box; margin: 0; padding: 0; }`, body met font-weight 400
 - **Achtergrond**: #111827 pagina, #1f2937 voor cards/inputs
+- **Amber scheidingslijn** (horizontale hero-divider): altijd `2px solid #f59e0b` — nooit dikker. Geldt voor `border-bottom` op hero-secties (sparren, team, teamlid) en `border-top` op sectie-scheidingen (Q&A FAQ-blok).
 
 ## Gespreksstijl (ArnoBot + Bieb) — REFERENTIE is SparClient.tsx, nooit zelf afwijken
 - **JIJ-label**: Bebas Neue 18px, letterSpacing 3, kleur **#6b7280**, whiteSpace nowrap, paddingTop 2px, minWidth 48px

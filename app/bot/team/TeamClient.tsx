@@ -362,7 +362,7 @@ export default function TeamClient() {
           {!loading && hasTeam && isManager && team && (
             <>
               <p style={{ ...label, marginBottom: 8 }}>TEAM</p>
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 48, borderBottom: '3px solid #f59e0b', paddingBottom: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 48, borderBottom: '2px solid #f59e0b', paddingBottom: 32 }}>
                 <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, margin: 0 }}>
                   {team.name.toUpperCase()}
                 </h1>
