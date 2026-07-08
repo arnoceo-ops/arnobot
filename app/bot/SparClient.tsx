@@ -832,6 +832,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           .toggle-btn { font-size: 11px; letter-spacing: 0px; padding: 7px 4px; border-radius: 4px; }
           .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
           .verfijn-btn { display: none; }
+          .spar-input-row { max-width: 100%; }
         }
 
         /* INPUT — BOVEN BIJ NIEUW GESPREK, STICKY-ONDER BIJ ACTIEF */
@@ -858,7 +859,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
         .spar-input-row {
           display: flex; flex-direction: column; gap: 10px;
-          width: 100%; max-width: 812px;
+          width: 100%; max-width: 650px;
           margin: 0 auto;
         }
         .spar-textarea {
