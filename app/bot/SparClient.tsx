@@ -720,6 +720,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .nav-links a:hover, .nav-links button:hover { color: #f1f5f9; }
         .nav-active { color: #f59e0b !important; }
         .nav-cta { color: #f59e0b !important; }
+        .nav-flow { text-decoration: underline !important; text-decoration-color: #f59e0b !important; text-decoration-thickness: 2px !important; text-underline-offset: 6px !important; }
 
         /* MOBILE NAV */
         .mob-nav {
@@ -1212,8 +1213,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {menuOpen && (
             <div className="mob-menu" onClick={() => setMenuOpen(false)}>
               <span className="active">ARNOBOT</span>
-              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
-              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
+              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
+              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
               {isBouwer && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
@@ -1226,8 +1227,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           <div className="nav-spacer" />
           <div className="nav-links">
             <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>
-            <button onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
-            <button onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
+            <button className="nav-flow" onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
+            <button className="nav-flow" onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
             {isBouwer && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
             <button onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
             <button onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
