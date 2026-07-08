@@ -122,6 +122,12 @@ export default function AccountPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
+        {/* Support notice */}
+        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: '1.9', color: '#9ca3af', marginBottom: 56 }}>
+          Technische problemen of vragen over je abonnement? Mail naar{' '}
+          <a href="mailto:support@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@arno.bot</a>
+        </p>
+
         {/* Referral — openingssectie (verborgen voor teamleden) */}
         {!isTeamMember && (
           <>

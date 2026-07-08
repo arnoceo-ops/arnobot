@@ -70,7 +70,7 @@ Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet beve
 
 ArnoBot is gebouwd voor enterprise-gebruik en hoge volumes. Denk bij elk ontwerp- en architectuurkeuze als volgt:
 
-- **Volume**: ga altijd uit van duizenden gelijktijdige gebruikers, niet van een handvol. Elke API-route, database-query, en frontend-component moet dat aankunnen zonder aanpassingen achteraf.
+- **Volume**: ga altijd uit van honderden gelijktijdige gebruikers, niet van een handvol. Elke API-route, database-query, en frontend-component moet dat aankunnen zonder aanpassingen achteraf.
 - **Enterprise-kwaliteit**: alles wat gebouwd wordt, moet direct inzetbaar zijn voor corporate klanten met hoge standaarden op gebied van betrouwbaarheid, beveiliging en professionele uitstraling. Geen workarounds, geen "dit werkt voor nu".
 - **Schaalbaarheid by design**: bij elke nieuwe feature, vraag je af hoe dit werkt bij 10.000 gebruikers. Als het antwoord "niet goed" is, bouw je het meteen robuust.
 - **Geen kleine oplossingen**: een eenvoudige oplossing is prima als die ook op schaal werkt. Maar een oplossing die later teruggebouwd moet worden is geen oplossing.
