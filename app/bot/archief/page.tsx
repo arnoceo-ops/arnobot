@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { FlowStrip } from '@/app/bot/components/FlowStrip'
 
 interface Session {
   id: string
@@ -436,7 +437,8 @@ export default function GeschiedenisPage() {
       <div style={{ maxWidth: 812, margin: '0 auto', padding: `clamp(80px,12vw,120px) clamp(16px,4vw,20px) ${hasSelected ? 100 : 80}px` }}>
 
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>ARCHIEF</h1>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 12 }}>ARCHIEF</h1>
+        <FlowStrip active="analyse" />
 
         {!loading && sessions.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 48 }}>
@@ -749,10 +751,16 @@ export default function GeschiedenisPage() {
           </div>
         )}
 
-        {(activeAnalyse || savedAnalyses.length > 0) && (
+        {!loading && sorted.length > 0 && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: 48 }}>ANALYSES</h2>
+
+            {!activeAnalyse && savedAnalyses.length === 0 && !analyseLimiet && (
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, border: '1px solid #374151', borderLeft: '3px solid #374151', padding: '16px 20px', marginBottom: 32 }}>
+                Selecteer 3 of meer gesprekken hierboven voor je eerste analyse.
+              </p>
+            )}
 
             {activeAnalyse && !isDuplicateAnalyse && (
               <div style={{ marginBottom: 28, background: '#1f2937', borderLeft: `3px solid ${isDeltaAnalyse ? '#f59e0b' : '#f59e0b'}`, padding: '20px 24px' }}>
@@ -869,9 +877,7 @@ export default function GeschiedenisPage() {
             <Link href="/bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               ← TERUG NAAR ARNOBOT
             </Link>
-            <Link href="/bot/coaching" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', textDecoration: 'none' }}
-              onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')}
-              onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}>
+            <Link href="/bot/coaching" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               VERDER NAAR COACHING →
             </Link>
           </div>

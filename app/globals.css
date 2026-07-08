@@ -18,6 +18,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* FlowStrip navigatielinks */
+.flow-link {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.flow-link:hover { color: #9ca3af; }
+
 /* Admin pages — hamburger nav (mobile only) */
 .admin-mob-nav { display: none; }
 
