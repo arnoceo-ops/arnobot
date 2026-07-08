@@ -1360,7 +1360,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         {!blocked && !(showSluiten && sparModus === 'sparren') && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
-              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Jij begint het gesprek.' : 'Begin een gesprek.'}</span>
+              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
               {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 44 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
@@ -1405,7 +1405,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   ask(input)
                 }
               }}
-              placeholder={sparModus === 'sparren' ? (started ? "jouw reactie" : "What's up?") : started ? "vervolg het gesprek" : isMobile ? "beschrijf je casus" : "beschrijf je casus of stel je vraag"}
+              placeholder={sparModus === 'sparren' ? (started ? "jouw reactie" : "zeg het maar...") : started ? "vervolg het gesprek" : isMobile ? "beschrijf je casus" : "beschrijf je casus of stel je vraag"}
               disabled={loading || blocked}
               rows={1}
             />
