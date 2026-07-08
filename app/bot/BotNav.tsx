@@ -118,11 +118,11 @@ export default function BotNav({ active }: Props) {
           .mob-nav-logo span { color:#f59e0b; }
           .mob-hamburger { background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:8px; }
           .mob-hamburger span { display:block;width:22px;height:2px;background:#f1f5f9; }
-          .mob-menu { position:fixed;top:56px;left:0;right:0;z-index:99;background:#111827;border-bottom:1px solid rgba(255,255,255,0.06);padding:24px 20px;display:flex;flex-direction:column;gap:20px;align-items:flex-end; }
-          .mob-menu a,.mob-menu span { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;text-decoration:none; }
+          .mob-menu { position:fixed;top:56px;left:0;right:0;z-index:99;background:#111827;border-bottom:1px solid rgba(255,255,255,0.06);padding:24px 28px;display:flex;flex-direction:column;gap:20px;align-items:flex-start; }
+          .mob-menu a,.mob-menu span { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;text-decoration:none; padding-left:16px; }
           .mob-menu a { color:#9ca3af; }
           .mob-menu a:hover { color:#f1f5f9; }
-          .mob-menu .mob-active { color:#f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 2px; }
+          .mob-menu .mob-active { color:#f59e0b; border-left:3px solid #f59e0b; padding-left:13px; }
         `}</style>
         <nav className="mob-nav">
           <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
