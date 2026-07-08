@@ -94,8 +94,26 @@ export default function CoachingClient({ userId }: Props) {
       .then(data => {
         const c = data.coaching
         if (c && c.mindset_score != null && c.systeem_score != null && c.actie_score != null) {
-          setDoc(c)
-          localStorage.setItem(cacheKey, JSON.stringify(c))
+          // Alleen overschrijven als DB-data nieuwer is dan gecachede data (voorkomt regressie bij DB-update-mismatch)
+          const existingCached = localStorage.getItem(cacheKey)
+          if (existingCached) {
+            try {
+              const cached = JSON.parse(existingCached)
+              const cachedTs = cached.updated_at ? new Date(cached.updated_at).getTime() : 0
+              const dbTs = c.updated_at ? new Date(c.updated_at).getTime() : 0
+              if (dbTs >= cachedTs) {
+                setDoc(c)
+                localStorage.setItem(cacheKey, JSON.stringify(c))
+              }
+              // DB is ouder dan cache → generatie is nog niet opgeslagen, houd cache
+            } catch {
+              setDoc(c)
+              localStorage.setItem(cacheKey, JSON.stringify(c))
+            }
+          } else {
+            setDoc(c)
+            localStorage.setItem(cacheKey, JSON.stringify(c))
+          }
         } else if (c && !localStorage.getItem(cacheKey)) {
           // oude rij zonder MSA — toon niets, zodat de gebruiker genereert
           setDoc(null)
