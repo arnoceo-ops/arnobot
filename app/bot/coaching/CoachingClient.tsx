@@ -5,7 +5,6 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useUser } from '@clerk/nextjs'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
-import { FlowStrip } from '@/app/bot/components/FlowStrip'
 
 function renderMd(text: string): string {
   return text
@@ -306,8 +305,7 @@ export default function CoachingClient({ userId }: Props) {
 
         <div className="no-print">
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 12 }}>COACHING</h1>
-          <FlowStrip active="coaching" />
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>COACHING</h1>
         </div>
 
 

@@ -122,7 +122,7 @@ export default function BotNav({ active }: Props) {
           .mob-menu a,.mob-menu span { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;text-decoration:none; }
           .mob-menu a { color:#9ca3af; }
           .mob-menu a:hover { color:#f1f5f9; }
-          .mob-menu .mob-active { color:#f59e0b; }
+          .mob-menu .mob-active { color:#f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 2px; }
         `}</style>
         <nav className="mob-nav">
           <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
@@ -155,13 +155,13 @@ export default function BotNav({ active }: Props) {
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
           {active === 'bot'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
+            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ARNOBOT</span>
             : <Link href="/bot" style={linkBase}>ARNOBOT</Link>}
           {active === 'archief'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
+            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ANALYSES</span>
             : <Link href="/bot/analyses" style={linkBase}>ANALYSES</Link>}
           {active === 'coaching'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
+            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>COACHING</span>
             : <Link href="/bot/coaching" style={linkBase}>COACHING</Link>}
           {isBouwer && (active === 'team'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
