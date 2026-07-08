@@ -879,7 +879,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .spar-context-textarea::placeholder { color: #4b5563; }
         .spar-textarea:focus { background: #1f2937; }
         .spar-buttons {
-          display: flex; align-self: flex-end; gap: 8px;
+          display: flex; align-self: center; gap: 8px;
         }
         .spar-mic {
           background: #1f2937; color: #6b7280;
@@ -1412,6 +1412,34 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               disabled={loading || blocked}
               rows={1}
             />
+            {sparModus === 'gesprek' && input.trim().length > 5 && !inputIsVerfijnd && (
+              <button
+                className="verfijn-btn"
+                disabled={verfijnen || loading}
+                onClick={async () => {
+                  setVerfijnen(true)
+                  try {
+                    const res = await fetch('/api/bot/verfijn', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ vraag: input, profiel, context: messages.filter(m => m.role === 'arno').slice(-1)[0]?.content ?? null })
+                    })
+                    const data = await res.json()
+                    if (data.onbegrijpelijk) {
+                      setVerfijnFout(true)
+                      setTimeout(() => setVerfijnFout(false), 4000)
+                    } else if (data.verfijnd) {
+                      setVerfijnFout(false)
+                      setVerfijndSuggestie(data.verfijnd)
+                      setTimeout(() => verfijndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
+                    }
+                  } catch {}
+                  finally { setVerfijnen(false) }
+                }}
+              >
+                {verfijnen ? '...' : '→ verbeter mijn prompt'}
+              </button>
+            )}
             <div className="spar-buttons">
               {speechSupported && (
                 <button
@@ -1449,34 +1477,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: dagelijksTeller >= 20 ? '#f59e0b' : '#4b5563', letterSpacing: 2, textAlign: 'center', marginTop: 10, width: '100%', maxWidth: 812 }}>
               {dagelijksTeller} / 25 vragen gebruikt vandaag
             </p>
-          )}
-          {sparModus === 'gesprek' && input.trim().length > 5 && !inputIsVerfijnd && (
-            <button
-              className="verfijn-btn"
-              disabled={verfijnen || loading}
-              onClick={async () => {
-                setVerfijnen(true)
-                try {
-                  const res = await fetch('/api/bot/verfijn', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vraag: input, profiel, context: messages.filter(m => m.role === 'arno').slice(-1)[0]?.content ?? null })
-                  })
-                  const data = await res.json()
-                  if (data.onbegrijpelijk) {
-                    setVerfijnFout(true)
-                    setTimeout(() => setVerfijnFout(false), 4000)
-                  } else if (data.verfijnd) {
-                    setVerfijnFout(false)
-                    setVerfijndSuggestie(data.verfijnd)
-                    setTimeout(() => verfijndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
-                  }
-                } catch {}
-                finally { setVerfijnen(false) }
-              }}
-            >
-              {verfijnen ? '...' : '→ verbeter mijn prompt'}
-            </button>
           )}
           {verfijnFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
