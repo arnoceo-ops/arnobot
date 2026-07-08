@@ -754,7 +754,31 @@ export default function GeschiedenisPage() {
         {!loading && sorted.length > 0 && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: 48 }}>ANALYSES</h2>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 ? 24 : 48 }}>ANALYSES</h2>
+
+            {showCoachingHint && savedAnalyses.length > 0 && (
+              <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginBottom: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
+                  {activeCoachingHint === 'B'
+                    ? `${daysSinceLastCoaching} dagen geen coaching · ${convsSinceLastCoaching} nieuwe ${convsSinceLastCoaching === 1 ? 'gesprek' : 'gesprekken'}`
+                    : `${analysesSinceLastCoaching} nieuwe ${analysesSinceLastCoaching === 1 ? 'analyse' : 'analyses'} zonder coaching`
+                  }
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <Link
+                    href="/bot/coaching"
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
+                  >
+                    NAAR COACHING →
+                  </Link>
+                  <button
+                    onClick={dismissCoachingHint}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                    aria-label="Sluiten"
+                  >×</button>
+                </div>
+              </div>
+            )}
 
             {!activeAnalyse && savedAnalyses.length === 0 && !analyseLimiet && (
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, border: '1px solid #374151', borderLeft: '3px solid #374151', padding: '16px 20px', marginBottom: 32 }}>
@@ -869,31 +893,6 @@ export default function GeschiedenisPage() {
               </button>
             </div>
           )}
-          </div>
-        )}
-
-        {showCoachingHint && savedAnalyses.length > 0 && (
-          <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
-              {activeCoachingHint === 'B'
-                ? `${daysSinceLastCoaching} dagen geen coaching · ${convsSinceLastCoaching} nieuwe ${convsSinceLastCoaching === 1 ? 'gesprek' : 'gesprekken'}`
-                : `${analysesSinceLastCoaching} nieuwe ${analysesSinceLastCoaching === 1 ? 'analyse' : 'analyses'} zonder coaching`
-              }
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <Link
-                href="/bot/coaching"
-                onClick={dismissCoachingHint}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
-              >
-                NAAR COACHING →
-              </Link>
-              <button
-                onClick={dismissCoachingHint}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
-                aria-label="Sluiten"
-              >×</button>
-            </div>
           </div>
         )}
 
