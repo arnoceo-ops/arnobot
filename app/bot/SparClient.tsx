@@ -752,6 +752,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .mob-menu a { color: #9ca3af; }
         .mob-menu a:hover { color: #f1f5f9; }
         .mob-menu .active { color: #f59e0b; }
+        .tab-archief:active { background: #374151 !important; color: #f1f5f9 !important; }
 
         /* SPAR LAYOUT */
         .spar-page {
@@ -1298,6 +1299,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               >SPARREN</button>
               <Link
                 href="/bot/archief"
+                className="tab-archief"
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 0', flex: '1 1 0', borderRadius: 999, background: 'none', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', textDecoration: 'none', display: 'block' }}
               >ARCHIEF</Link>
             </div>
