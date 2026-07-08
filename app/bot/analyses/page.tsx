@@ -902,9 +902,11 @@ export default function GeschiedenisPage() {
             <Link href="/bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               ← TERUG NAAR ARNOBOT
             </Link>
-            <Link href="/bot/coaching" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
-              VERDER NAAR COACHING →
-            </Link>
+            {!showCoachingHint && (
+              <Link href="/bot/coaching" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
+                VERDER NAAR COACHING →
+              </Link>
+            )}
           </div>
         )}
       </div>
