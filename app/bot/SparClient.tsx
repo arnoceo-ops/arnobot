@@ -192,7 +192,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
   const { user, isLoaded } = useUser()
-  const { showAnalysesHint, convsSinceLastAnalysis, dismissAnalysesHint } = useProgressHints()
+  const { showAnalysesHint, convsSinceLastAnalysis, dismissAnalysesHint, refreshHints } = useProgressHints()
   const [isBouwer, setIsBouwer] = useState(false)
   useEffect(() => {
     if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
@@ -585,6 +585,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           sessionStorage.setItem('arnobot_session', newId)
           setSessionId(newId)
           setShowSluiten(true)
+          refreshHints()
         } else {
           reset()
         }
@@ -617,6 +618,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         sessionStorage.setItem('arnobot_session', newId)
         setSessionId(newId)
         setShowSluiten(true)
+        refreshHints()
         if (userId) {
           setVoortgang(prev => prev
             ? { count: prev.count + 1, lastDate: new Date().toISOString() }

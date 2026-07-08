@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 
 interface HintStatus {
@@ -20,6 +20,13 @@ export function useProgressHints() {
   const [status, setStatus] = useState<HintStatus | null>(null)
   const [dismissed, setDismissed] = useState<Record<string, number>>({})
 
+  const fetchStatus = useCallback(() => {
+    fetch('/api/bot/hint-status')
+      .then(r => r.json())
+      .then(d => setStatus(d))
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (!userId) return
     const keys = ['analyses', 'coaching']
@@ -29,11 +36,8 @@ export function useProgressHints() {
       if (raw) loaded[k] = parseInt(raw, 10)
     }
     setDismissed(loaded)
-    fetch('/api/bot/hint-status')
-      .then(r => r.json())
-      .then(d => setStatus(d))
-      .catch(() => {})
-  }, [userId])
+    fetchStatus()
+  }, [userId, fetchStatus])
 
   function isDismissedRecently(type: string, days: number): boolean {
     const ts = dismissed[type]
@@ -75,6 +79,7 @@ export function useProgressHints() {
     daysSinceLastCoaching: s?.daysSinceLastCoaching ?? null,
     convsSinceLastCoaching: s?.convsSinceLastCoaching ?? 0,
     userId,
+    refreshHints: fetchStatus,
     dismissAnalysesHint: () => dismiss('analyses'),
     dismissCoachingHint: () => dismiss('coaching'),
   }
