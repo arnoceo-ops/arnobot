@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 function buildCSP(nonce: string, allowWasm = false): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''} https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://vercel.live https://*.vercel.live`,
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''} https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
