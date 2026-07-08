@@ -831,7 +831,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           .opener-toggle { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 812px; }
           .toggle-btn { font-size: 11px; letter-spacing: 0px; padding: 7px 4px; border-radius: 4px; }
           .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
-          .verfijn-btn { display: none; }
           .spar-input-row { max-width: 100%; }
         }
 
