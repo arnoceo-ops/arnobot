@@ -1,17 +1,17 @@
 import Link from 'next/link'
 import React from 'react'
 
-type FlowStep = 'gesprek' | 'analyse' | 'coaching'
+type FlowStep = 'gesprek' | 'analyses' | 'coaching'
 
 const STEPS: { key: FlowStep; label: string; href: string }[] = [
   { key: 'gesprek', label: 'GESPREK', href: '/bot' },
-  { key: 'analyse', label: 'ANALYSE', href: '/bot/archief' },
+  { key: 'analyses', label: 'ANALYSES', href: '/bot/analyses' },
   { key: 'coaching', label: 'COACHING', href: '/bot/coaching' },
 ]
 
-const sepStyle: React.CSSProperties = {
+const arrowStyle: React.CSSProperties = {
   fontFamily: "'Space Mono', monospace",
-  fontSize: 11,
+  fontSize: 10,
   color: '#374151',
   userSelect: 'none',
 }
@@ -25,10 +25,10 @@ const activeStyle: React.CSSProperties = {
 
 export function FlowStrip({ active }: { active: FlowStep }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 32 }}>
       {STEPS.map((step, i) => (
         <React.Fragment key={step.key}>
-          {i > 0 && <span style={sepStyle}>·</span>}
+          {i > 0 && <span style={arrowStyle}>›</span>}
           {step.key === active ? (
             <span style={activeStyle}>{step.label}</span>
           ) : (

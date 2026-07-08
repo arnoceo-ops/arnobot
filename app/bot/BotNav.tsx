@@ -136,7 +136,7 @@ export default function BotNav({ active }: Props) {
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot">ARNOBOT</Link>}
-            {active === 'archief'     ? <span className="mob-active">ARCHIEF</span>     : <Link href="/bot/archief">ARCHIEF</Link>}
+            {active === 'archief'     ? <span className="mob-active">ANALYSES</span>     : <Link href="/bot/analyses">ANALYSES</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching">COACHING</Link>}
             {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
@@ -158,8 +158,8 @@ export default function BotNav({ active }: Props) {
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
             : <Link href="/bot" style={linkBase}>ARNOBOT</Link>}
           {active === 'archief'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARCHIEF</span>
-            : <Link href="/bot/archief" style={linkBase}>ARCHIEF</Link>}
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
+            : <Link href="/bot/analyses" style={linkBase}>ANALYSES</Link>}
           {active === 'coaching'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
             : <Link href="/bot/coaching" style={linkBase}>COACHING</Link>}
