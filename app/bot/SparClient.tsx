@@ -1088,6 +1088,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           animation: fadein 0.4s ease;
         }
         @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-amber { 0%,100% { opacity:1; } 40% { opacity:0.25; } }
+        .analyse-hint-btn { animation: pulse-amber 0.7s ease 0.6s 2 forwards; }
         .msg-action-btn {
           background: none; border: 1px solid #374151;
           font-family: 'Bebas Neue', sans-serif;
@@ -1716,6 +1718,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <button
                     onClick={() => { dismissAnalysesHint(); handleNavAttempt('/bot/analyses') }}
+                    className="analyse-hint-btn"
                     style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
                     MAAK EEN ANALYSE →
