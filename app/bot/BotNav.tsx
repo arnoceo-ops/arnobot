@@ -122,8 +122,8 @@ export default function BotNav({ active }: Props) {
           .mob-menu a,.mob-menu span { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;text-decoration:none; padding-left:16px; }
           .mob-menu a { color:#9ca3af; }
           .mob-menu a:hover { color:#f1f5f9; }
-          .mob-menu .mob-flow { border-left:2px solid #f59e0b; padding-left:14px; }
-          .mob-menu .mob-active { color:#f59e0b; border-left:3px solid #f59e0b; padding-left:13px; }
+          .mob-menu .mob-flow { text-decoration:underline; text-decoration-color:#f59e0b; text-decoration-thickness:2px; text-underline-offset:6px; }
+          .mob-menu .mob-active { color:#f59e0b; }
         `}</style>
         <nav className="mob-nav">
           <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
@@ -156,14 +156,14 @@ export default function BotNav({ active }: Props) {
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
           {active === 'bot'
-            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ARNOBOT</span>
-            : <Link href="/bot" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ARNOBOT</Link>}
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
+            : <Link href="/bot" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ARNOBOT</Link>}
           {active === 'archief'
-            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ANALYSES</span>
-            : <Link href="/bot/analyses" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ANALYSES</Link>}
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
+            : <Link href="/bot/analyses" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ANALYSES</Link>}
           {active === 'coaching'
-            ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>COACHING</span>
-            : <Link href="/bot/coaching" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>COACHING</Link>}
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
+            : <Link href="/bot/coaching" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>COACHING</Link>}
           {isBouwer && (active === 'team'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
             : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}
