@@ -348,7 +348,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
     fetch('/api/bot/actieopvolging')
       .then(r => r.json())
-      .then(d => { if (d.uitdaging) setActieOpvolging(d) })
+      .then(d => {
+        if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
+          setActieOpvolging(d)
+        }
+      })
       .catch(() => {})
 
     // Verwerk referral code uit localStorage na OAuth
@@ -1509,6 +1513,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     onClick={() => {
                       setActieStatus(status)
                       setActieBeantwoord(true)
+                      localStorage.setItem(`arnobot_actie_beantwoord_${actieOpvolging.sessionId}`, status)
                       fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status }) }).catch(() => {})
                     }}
                     style={{
