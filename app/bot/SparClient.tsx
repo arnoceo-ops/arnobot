@@ -192,7 +192,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
   const { user, isLoaded } = useUser()
-  const { showAnalysesHint, showCoachingHint, convCount, dismissAnalysesHint, dismissCoachingHint } = useProgressHints()
+  const { showAnalysesHint, showCoachingHint, convsSinceLastAnalysis, dismissAnalysesHint, dismissCoachingHint } = useProgressHints()
   const [isBouwer, setIsBouwer] = useState(false)
   useEffect(() => {
     if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
@@ -1367,7 +1367,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         {!started && !loading && showAnalysesHint && sparModus === 'gesprek' && (
           <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '14px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
-              {convCount} {convCount === 1 ? 'gesprek' : 'gesprekken'} opgeslagen
+              {convsSinceLastAnalysis} {convsSinceLastAnalysis === 1 ? 'gesprek' : 'gesprekken'} zonder analyse
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <button

@@ -4,49 +4,78 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 
 interface HintStatus {
-  convCount: number
-  analysisCount: number
-  coachingCount: number
+  convsSinceLastAnalysis: number
+  daysSinceLastAnalysis: number | null
+  analysesSinceLastCoaching: number
+  daysSinceLastCoaching: number | null
+  convsSinceLastCoaching: number
 }
+
+const THROTTLE_ANALYSES_DAYS = 7
+const THROTTLE_COACHING_DAYS = 14
 
 export function useProgressHints() {
   const { user } = useUser()
   const userId = user?.id
   const [status, setStatus] = useState<HintStatus | null>(null)
-  const [seenAnalyses, setSeenAnalyses] = useState(true)
-  const [seenCoaching, setSeenCoaching] = useState(true)
+  const [dismissed, setDismissed] = useState<Record<string, number>>({})
 
   useEffect(() => {
     if (!userId) return
-    setSeenAnalyses(localStorage.getItem(`arnobot_seen_analyses_hint_${userId}`) === 'true')
-    setSeenCoaching(localStorage.getItem(`arnobot_seen_coaching_hint_${userId}`) === 'true')
+    const keys = ['analyses', 'coaching']
+    const loaded: Record<string, number> = {}
+    for (const k of keys) {
+      const raw = localStorage.getItem(`arnobot_hint_${k}_${userId}`)
+      if (raw) loaded[k] = parseInt(raw, 10)
+    }
+    setDismissed(loaded)
     fetch('/api/bot/hint-status')
       .then(r => r.json())
       .then(d => setStatus(d))
       .catch(() => {})
   }, [userId])
 
-  function dismissAnalysesHint() {
-    if (!userId) return
-    localStorage.setItem(`arnobot_seen_analyses_hint_${userId}`, 'true')
-    setSeenAnalyses(true)
+  function isDismissedRecently(type: string, days: number): boolean {
+    const ts = dismissed[type]
+    if (!ts) return false
+    return Date.now() - ts < days * 86400000
   }
 
-  function dismissCoachingHint() {
+  function dismiss(type: string) {
     if (!userId) return
-    localStorage.setItem(`arnobot_seen_coaching_hint_${userId}`, 'true')
-    setSeenCoaching(true)
+    const ts = Date.now()
+    localStorage.setItem(`arnobot_hint_${type}_${userId}`, String(ts))
+    setDismissed(prev => ({ ...prev, [type]: ts }))
   }
 
-  const showAnalysesHint = !!status && status.convCount >= 3 && status.analysisCount === 0 && !seenAnalyses
-  const showCoachingHint = !!status && status.analysisCount > 0 && status.coachingCount === 0 && !seenCoaching
+  const s = status
+
+  const showAnalysesHint =
+    !!s && s.convsSinceLastAnalysis >= 3 && !isDismissedRecently('analyses', THROTTLE_ANALYSES_DAYS)
+
+  const showCoachingHintA =
+    !!s && s.analysesSinceLastCoaching >= 1 && !isDismissedRecently('coaching', THROTTLE_COACHING_DAYS)
+
+  const showCoachingHintB =
+    !!s &&
+    s.daysSinceLastCoaching !== null &&
+    s.daysSinceLastCoaching >= 30 &&
+    s.convsSinceLastCoaching >= 3 &&
+    !isDismissedRecently('coaching', THROTTLE_COACHING_DAYS)
+
+  const showCoachingHint = showCoachingHintA || showCoachingHintB
+  const activeCoachingHint: 'A' | 'B' | null = showCoachingHintA ? 'A' : showCoachingHintB ? 'B' : null
 
   return {
     showAnalysesHint,
     showCoachingHint,
-    convCount: status?.convCount ?? 0,
+    activeCoachingHint,
+    convsSinceLastAnalysis: s?.convsSinceLastAnalysis ?? 0,
+    analysesSinceLastCoaching: s?.analysesSinceLastCoaching ?? 0,
+    daysSinceLastCoaching: s?.daysSinceLastCoaching ?? null,
+    convsSinceLastCoaching: s?.convsSinceLastCoaching ?? 0,
     userId,
-    dismissAnalysesHint,
-    dismissCoachingHint,
+    dismissAnalysesHint: () => dismiss('analyses'),
+    dismissCoachingHint: () => dismiss('coaching'),
   }
 }

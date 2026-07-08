@@ -71,12 +71,7 @@ type Sort = 'newest' | 'oldest' | 'most' | 'least'
 
 export default function GeschiedenisPage() {
   const isMobile = useIsMobile()
-  const { showCoachingHint, dismissAnalysesHint, dismissCoachingHint, userId } = useProgressHints()
-
-  useEffect(() => {
-    if (userId) dismissAnalysesHint()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId])
+  const { showCoachingHint, activeCoachingHint, analysesSinceLastCoaching, daysSinceLastCoaching, convsSinceLastCoaching, dismissCoachingHint } = useProgressHints()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -880,7 +875,10 @@ export default function GeschiedenisPage() {
         {showCoachingHint && savedAnalyses.length > 0 && (
           <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
-              {savedAnalyses.length} {savedAnalyses.length === 1 ? 'analyse' : 'analyses'} beschikbaar
+              {activeCoachingHint === 'B'
+                ? `${daysSinceLastCoaching} dagen geen coaching · ${convsSinceLastCoaching} nieuwe ${convsSinceLastCoaching === 1 ? 'gesprek' : 'gesprekken'}`
+                : `${analysesSinceLastCoaching} nieuwe ${analysesSinceLastCoaching === 1 ? 'analyse' : 'analyses'} zonder coaching`
+              }
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <Link
