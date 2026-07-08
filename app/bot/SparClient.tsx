@@ -600,7 +600,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         const newCount = messages.length + 1
         setMessages(prev => [...prev, {
           role: 'arno',
-          content: `**Terugblik op dit gesprek**\n\n${data.summary}`,
+          content: `**Samenvatting**\n\n${data.summary}`,
           hint: null
         }])
         if (data.blogs?.length) setSuggestedBlogs(data.blogs)
@@ -1352,7 +1352,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           </div>
         )}
 
-        {!blocked && !(showSluiten && sparModus === 'sparren') && <div className={`spar-input-area${started ? ' active' : ''}`}>
+        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
@@ -1581,7 +1581,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 <span className="msg-user-text">{msg.content}</span>
               </div>
             ) : (
-              <div key={i} ref={(msg.content?.startsWith('**Terugblik') || msg.content?.startsWith('**Debrief')) ? synthesisRef : i === messages.length - 1 ? lastMessageRef : undefined}>
+              <div key={i} ref={(msg.content?.startsWith('**Samenvatting') || msg.content?.startsWith('**Debrief')) ? synthesisRef : i === messages.length - 1 ? lastMessageRef : undefined}>
                 {msg.content && (
                   <div className="msg-arno" style={isMobile ? { flexDirection: 'column', gap: 4 } : {}}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 48, paddingTop: 2, flexShrink: 0, position: 'relative' }}>
@@ -1675,15 +1675,25 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           )}
           {showSluiten && messages.length <= synthesisMessageCount && (
             <div style={{ padding: 'clamp(20px,3vw,32px)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
-              <button
-                onClick={handleShare}
-                disabled={shareLoading}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, border: '1px solid #374151', background: 'none', color: '#9ca3af', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = '#6b7280' }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#374151' }}
-              >
-                {shareLoading ? '...' : 'DEEL DIT GESPREK →'}
-              </button>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleShare}
+                  disabled={shareLoading}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, border: '1px solid #374151', background: 'none', color: '#9ca3af', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = '#6b7280' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#374151' }}
+                >
+                  {shareLoading ? '...' : 'DEEL DIT GESPREK →'}
+                </button>
+                <button
+                  onClick={handleNieuw}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#d97706' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#f59e0b' }}
+                >
+                  SLUITEN
+                </button>
+              </div>
               {shareUrl && !shareCopied && (
                 <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', wordBreak: 'break-all' }}>{shareUrl}</p>
               )}
