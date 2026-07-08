@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useIsTouch } from '@/hooks/useBreakpoint'
-import { useClerk, useUser } from '@clerk/nextjs'
+import { useAuth, useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import { useProgressHints } from '@/hooks/useProgressHints'
@@ -192,6 +192,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
   const { user, isLoaded } = useUser()
+  const { sessionId: clerkSessionId } = useAuth()
   const { showAnalysesHint, convsSinceLastAnalysis, dismissAnalysesHint, refreshHints } = useProgressHints()
   const [isBouwer, setIsBouwer] = useState(false)
   useEffect(() => {
@@ -351,12 +352,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       .then(data => { if (data.openers) setDynamicOpeners(data.openers) })
       .catch(() => {})
 
-    if (!sessionStorage.getItem('arnobot_actie_getoond')) {
+    if (clerkSessionId && !localStorage.getItem(`arnobot_actie_getoond_${clerkSessionId}`)) {
       fetch('/api/bot/actieopvolging')
         .then(r => r.json())
         .then(d => {
           if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
-            sessionStorage.setItem('arnobot_actie_getoond', '1')
+            localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
             setActieOpvolging(d)
           }
         })
