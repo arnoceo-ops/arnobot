@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 import EvaluatiesClient from './EvaluatiesClient'
+import AdminMobileNav from '../AdminMobileNav'
 
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
@@ -33,6 +34,7 @@ export default async function EvaluatiesPage() {
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+      <AdminMobileNav active="/bot/admin/evaluaties" />
       <nav className="admin-nav" style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
         <div className="admin-nav-spacer" />
         <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>

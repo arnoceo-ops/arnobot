@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import DownloadPdfButton from './DownloadPdfButton'
+import AdminMobileNav from './AdminMobileNav'
 
 export const dynamic = 'force-dynamic'
 
@@ -119,6 +120,7 @@ export default async function ArnoBotAdminPage({
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+      <AdminMobileNav active="/bot/admin" />
       <nav className="admin-nav" style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
         <div className="admin-nav-spacer" />
         <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>
@@ -180,7 +182,7 @@ export default async function ArnoBotAdminPage({
               LAAD
             </button>
             {sessionList.length > 0 && (
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
                   href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
                   style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}

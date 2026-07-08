@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import BlogsClient from './BlogsClient'
+import AdminMobileNav from '../AdminMobileNav'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,7 @@ export default async function IdeePage() {
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
+      <AdminMobileNav active="/bot/admin/idee" />
       <nav className="admin-nav" style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
         <div className="admin-nav-spacer" />
         <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>

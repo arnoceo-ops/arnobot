@@ -7,6 +7,7 @@ import { clerkClient } from '@clerk/nextjs/server'
 import SearchLinkedIn from './SearchLinkedIn'
 import TierToggle from './TierToggle'
 import PaidButton from './PaidButton'
+import AdminMobileNav from '../AdminMobileNav'
 
 const navLinkStyle = (active: boolean): React.CSSProperties => ({
   color: active ? '#f59e0b' : '#9ca3af',
@@ -191,7 +192,7 @@ export default async function GebruikersPage({
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
-
+      <AdminMobileNav active="/bot/admin/gebruikers" />
       <nav className="admin-nav" style={{ background: '#0d0d0d', borderBottom: '1px solid #1e293b', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px' }}>
         <div className="admin-nav-spacer" />
         <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>
@@ -235,7 +236,7 @@ export default async function GebruikersPage({
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', minWidth: 'max-content' }}>
           {sorted.map((u) => {
             const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
             const status = trialStatus(u)

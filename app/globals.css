@@ -18,43 +18,54 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Admin pages — mobile responsive */
-@media (max-width: 768px) {
-  /* Nav: wrap to two rows, geen horizontale scroll zodat body niet meescrollt */
-  .admin-nav {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 8px 12px !important;
-    overflow-x: visible !important;
-    gap: 4px !important;
-  }
-  .admin-nav-spacer { display: none !important; }
-  .admin-nav-center {
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-    justify-content: flex-start !important;
-  }
-  .admin-nav-center a, .admin-nav-center button {
-    padding: 4px 8px !important;
-    font-size: 12px !important;
-    letter-spacing: 1px !important;
-  }
-  .admin-nav-right { display: none !important; }
+/* Admin pages — hamburger nav (mobile only) */
+.admin-mob-nav { display: none; }
 
-  /* Content padding */
-  .admin-content { padding: 24px 16px !important; }
+@media (max-width: 768px) {
+  /* Desktop nav verborgen op mobile */
+  .admin-nav { display: none !important; }
+
+  /* Hamburger nav */
+  .admin-mob-nav {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; right: 0; z-index: 100;
+    height: 56px;
+    padding: 0 20px;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(13,13,13,0.97);
+    border-bottom: 1px solid #1e293b;
+    backdrop-filter: blur(12px);
+  }
+  .admin-mob-hamburger {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 5px; padding: 8px;
+  }
+  .admin-mob-hamburger span {
+    display: block; width: 22px; height: 2px; background: #f1f5f9;
+  }
+  .admin-mob-menu {
+    position: fixed;
+    top: 56px; left: 0; right: 0; z-index: 99;
+    background: #111827;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 24px;
+    align-items: flex-end;
+  }
+
+  /* Content: padding-top voor vaste nav, compacte zijkanten */
+  .admin-content { padding: 80px 16px 40px !important; }
 
   /* Brede tabellen scrollbaar */
   .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-  /* Users grid: min-width zodat fr-units werken in scroll-container */
-  .admin-user-row { min-width: 1200px; }
+  /* Users grid: vaste breedte zodat fr-units werken in scroll-container */
+  .admin-user-row { min-width: 1300px; }
 
   /* Email test rijen: verticaal stapelen */
-  .email-test-row {
-    display: block !important;
-    padding: 12px 16px !important;
-  }
+  .email-test-row { display: block !important; padding: 12px 16px !important; }
   .email-test-row p { margin-bottom: 6px !important; }
   .email-test-row > div { margin-top: 8px; }
 
@@ -64,4 +75,7 @@ body {
     align-items: flex-start !important;
     gap: 8px !important;
   }
+
+  /* Download-knoppen verbergen op mobile */
+  .admin-download-hidden { display: none !important; }
 }
