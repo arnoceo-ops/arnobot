@@ -754,9 +754,9 @@ export default function GeschiedenisPage() {
         {!loading && sorted.length > 0 && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 ? 24 : 48 }}>ANALYSES</h2>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse ? 24 : 48 }}>ANALYSES</h2>
 
-            {showCoachingHint && savedAnalyses.length > 0 && (
+            {showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && (
               <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginBottom: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
                   {activeCoachingHint === 'B'
