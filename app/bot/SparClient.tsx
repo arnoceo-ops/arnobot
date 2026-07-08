@@ -6,7 +6,6 @@ import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
-import { FlowStrip } from '@/app/bot/components/FlowStrip'
 
 function formatLastDate(iso: string | null): string {
   if (!iso) return ''
@@ -1289,9 +1288,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
         {!started && rolCategorie && (
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-            <div style={{ width: '100%', maxWidth: 480, marginBottom: 16 }}>
-              <FlowStrip active="gesprek" />
-            </div>
+
             <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 'clamp(24px,4vw,40px)' : 0, width: '100%', maxWidth: 480 }}>
               <button
                 onClick={() => setSparModus('gesprek')}
