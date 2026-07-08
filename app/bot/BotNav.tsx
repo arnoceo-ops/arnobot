@@ -122,6 +122,7 @@ export default function BotNav({ active }: Props) {
           .mob-menu a,.mob-menu span { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;text-decoration:none; padding-left:16px; }
           .mob-menu a { color:#9ca3af; }
           .mob-menu a:hover { color:#f1f5f9; }
+          .mob-menu .mob-flow { border-left:2px solid #f59e0b; padding-left:14px; }
           .mob-menu .mob-active { color:#f59e0b; border-left:3px solid #f59e0b; padding-left:13px; }
         `}</style>
         <nav className="mob-nav">
@@ -135,9 +136,9 @@ export default function BotNav({ active }: Props) {
         </nav>
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
-            {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot">ARNOBOT</Link>}
-            {active === 'archief'     ? <span className="mob-active">ANALYSES</span>     : <Link href="/bot/analyses">ANALYSES</Link>}
-            {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching">COACHING</Link>}
+            {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-flow">ARNOBOT</Link>}
+            {active === 'archief'  ? <span className="mob-active">ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow">ANALYSES</Link>}
+            {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-flow">COACHING</Link>}
             {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
@@ -156,13 +157,13 @@ export default function BotNav({ active }: Props) {
         <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
           {active === 'bot'
             ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ARNOBOT</span>
-            : <Link href="/bot" style={linkBase}>ARNOBOT</Link>}
+            : <Link href="/bot" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ARNOBOT</Link>}
           {active === 'archief'
             ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ANALYSES</span>
-            : <Link href="/bot/analyses" style={linkBase}>ANALYSES</Link>}
+            : <Link href="/bot/analyses" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>ANALYSES</Link>}
           {active === 'coaching'
             ? <span style={{ ...linkBase, color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>COACHING</span>
-            : <Link href="/bot/coaching" style={linkBase}>COACHING</Link>}
+            : <Link href="/bot/coaching" style={{ ...linkBase, borderBottom: '2px solid #f59e0b', paddingBottom: 3 }}>COACHING</Link>}
           {isBouwer && (active === 'team'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
             : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}
