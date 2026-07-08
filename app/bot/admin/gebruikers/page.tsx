@@ -218,7 +218,7 @@ export default async function GebruikersPage({
 
         <div className="admin-table-wrap">
         {/* Tabel header */}
-        <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
+        <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
@@ -246,7 +246,7 @@ export default async function GebruikersPage({
             const actief7d = u.recentCount > 0
             const borderColor = actief7d ? '#44cc88' : u.questions > 0 ? '#cc4444' : '#1e293b'
             return (
-              <div key={u.user_id} style={{
+              <div key={u.user_id} className="admin-user-row" style={{
                 display: 'grid',
                 gridTemplateColumns: cols,
                 gap: '0 12px',

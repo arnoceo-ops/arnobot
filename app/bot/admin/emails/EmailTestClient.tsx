@@ -52,7 +52,7 @@ export default function EmailTestClient() {
 
   function renderRow({ type, label, description }: Template) {
     return (
-      <div key={type} style={{
+      <div key={type} className="email-test-row" style={{
         display: 'grid',
         gridTemplateColumns: '200px 1fr auto',
         alignItems: 'center',

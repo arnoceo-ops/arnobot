@@ -20,19 +20,48 @@ body {
 
 /* Admin pages — mobile responsive */
 @media (max-width: 768px) {
+  /* Nav: wrap to two rows, geen horizontale scroll zodat body niet meescrollt */
   .admin-nav {
-    display: flex !important;
+    flex-wrap: wrap !important;
     height: auto !important;
-    padding: 10px 12px !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: 0;
+    padding: 8px 12px !important;
+    overflow-x: visible !important;
+    gap: 4px !important;
   }
-  .admin-nav::-webkit-scrollbar { display: none; }
   .admin-nav-spacer { display: none !important; }
-  .admin-nav-center { flex-shrink: 0; justify-content: flex-start !important; }
-  .admin-nav-right { flex-shrink: 0; margin-left: 16px; }
+  .admin-nav-center {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    justify-content: flex-start !important;
+  }
+  .admin-nav-center a, .admin-nav-center button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    letter-spacing: 1px !important;
+  }
+  .admin-nav-right { display: none !important; }
+
+  /* Content padding */
   .admin-content { padding: 24px 16px !important; }
+
+  /* Brede tabellen scrollbaar */
   .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Users grid: min-width zodat fr-units werken in scroll-container */
+  .admin-user-row { min-width: 1200px; }
+
+  /* Email test rijen: verticaal stapelen */
+  .email-test-row {
+    display: block !important;
+    padding: 12px 16px !important;
+  }
+  .email-test-row p { margin-bottom: 6px !important; }
+  .email-test-row > div { margin-top: 8px; }
+
+  /* Arnobot form knoppen: verticaal stapelen */
+  .admin-form-actions {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
 }

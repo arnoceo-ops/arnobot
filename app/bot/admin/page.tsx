@@ -174,7 +174,7 @@ export default async function ArnoBotAdminPage({
               <option value="count_asc">Minste vragen eerst</option>
             </select>
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+          <div className="admin-form-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <button type="submit"
               style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
               LAAD
