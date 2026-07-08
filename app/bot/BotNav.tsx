@@ -6,6 +6,7 @@ import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import NotificationBell from '@/app/bot/components/NotificationBell'
+import { useProgressHints } from '@/hooks/useProgressHints'
 
 interface Props {
   active: 'bot' | 'archief' | 'coaching' | 'team' | 'account' | 'profiel' | 'qa'
@@ -47,6 +48,7 @@ export default function BotNav({ active }: Props) {
   }, [isLoaded, user])
 
   const isBouwer = bouwer
+  const { showAnalysesHint, showCoachingHint, dismissAnalysesHint, dismissCoachingHint } = useProgressHints()
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return
@@ -137,8 +139,14 @@ export default function BotNav({ active }: Props) {
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-flow">ARNOBOT</Link>}
-            {active === 'archief'  ? <span className="mob-active">ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow">ANALYSES</Link>}
-            {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-flow">COACHING</Link>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 16 }}>
+              {active === 'archief'  ? <span className="mob-active" style={{ paddingLeft: 0 }}>ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow" style={{ paddingLeft: 0 }} onClick={dismissAnalysesHint}>ANALYSES</Link>}
+              {showAnalysesHint && <span style={{ width: 6, height: 6, borderRadius: 999, background: '#f59e0b', flexShrink: 0, marginTop: 2 }} />}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 16 }}>
+              {active === 'coaching' ? <span className="mob-active" style={{ paddingLeft: 0 }}>COACHING</span> : <Link href="/bot/coaching" className="mob-flow" style={{ paddingLeft: 0 }} onClick={dismissCoachingHint}>COACHING</Link>}
+              {showCoachingHint && <span style={{ width: 6, height: 6, borderRadius: 999, background: '#f59e0b', flexShrink: 0, marginTop: 2 }} />}
+            </div>
             {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
@@ -158,12 +166,18 @@ export default function BotNav({ active }: Props) {
           {active === 'bot'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
             : <Link href="/bot" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ARNOBOT</Link>}
-          {active === 'archief'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
-            : <Link href="/bot/analyses" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ANALYSES</Link>}
-          {active === 'coaching'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
-            : <Link href="/bot/coaching" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>COACHING</Link>}
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            {active === 'archief'
+              ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
+              : <Link href="/bot/analyses" onClick={dismissAnalysesHint} style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ANALYSES</Link>}
+            {showAnalysesHint && <span style={{ position: 'absolute', top: 1, right: -10, width: 6, height: 6, borderRadius: 999, background: '#f59e0b', pointerEvents: 'none' }} />}
+          </div>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            {active === 'coaching'
+              ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
+              : <Link href="/bot/coaching" onClick={dismissCoachingHint} style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>COACHING</Link>}
+            {showCoachingHint && <span style={{ position: 'absolute', top: 1, right: -10, width: 6, height: 6, borderRadius: 999, background: '#f59e0b', pointerEvents: 'none' }} />}
+          </div>
           {isBouwer && (active === 'team'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
             : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}

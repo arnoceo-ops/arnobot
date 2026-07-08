@@ -6,6 +6,7 @@ import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
+import { useProgressHints } from '@/hooks/useProgressHints'
 
 function formatLastDate(iso: string | null): string {
   if (!iso) return ''
@@ -191,6 +192,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
   const { user, isLoaded } = useUser()
+  const { showAnalysesHint, showCoachingHint, convCount, dismissAnalysesHint, dismissCoachingHint } = useProgressHints()
   const [isBouwer, setIsBouwer] = useState(false)
   useEffect(() => {
     if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
@@ -1213,8 +1215,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {menuOpen && (
             <div className="mob-menu" onClick={() => setMenuOpen(false)}>
               <span className="active">ARNOBOT</span>
-              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
-              <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => { dismissAnalysesHint(); handleNavAttempt('/bot/analyses') }}>ANALYSES</button>
+                {showAnalysesHint && <span style={{ width: 6, height: 6, borderRadius: 999, background: '#f59e0b', flexShrink: 0 }} />}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => { dismissCoachingHint(); handleNavAttempt('/bot/coaching') }}>COACHING</button>
+                {showCoachingHint && <span style={{ width: 6, height: 6, borderRadius: 999, background: '#f59e0b', flexShrink: 0 }} />}
+              </div>
               {isBouwer && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
@@ -1227,8 +1235,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           <div className="nav-spacer" />
           <div className="nav-links">
             <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>
-            <button className="nav-flow" onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
-            <button className="nav-flow" onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <button className="nav-flow" onClick={() => { dismissAnalysesHint(); handleNavAttempt('/bot/analyses') }}>ANALYSES</button>
+              {showAnalysesHint && <span style={{ position: 'absolute', top: 1, right: -10, width: 6, height: 6, borderRadius: 999, background: '#f59e0b', pointerEvents: 'none' }} />}
+            </div>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <button className="nav-flow" onClick={() => { dismissCoachingHint(); handleNavAttempt('/bot/coaching') }}>COACHING</button>
+              {showCoachingHint && <span style={{ position: 'absolute', top: 1, right: -10, width: 6, height: 6, borderRadius: 999, background: '#f59e0b', pointerEvents: 'none' }} />}
+            </div>
             {isBouwer && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
             <button onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
             <button onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
@@ -1347,6 +1361,27 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {!started && !loading && showAnalysesHint && sparModus === 'gesprek' && (
+          <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '14px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
+              {convCount} {convCount === 1 ? 'gesprek' : 'gesprekken'} opgeslagen
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <button
+                onClick={() => { dismissAnalysesHint(); handleNavAttempt('/bot/analyses') }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                MAAK JE EERSTE ANALYSE →
+              </button>
+              <button
+                onClick={dismissAnalysesHint}
+                style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                aria-label="Sluiten"
+              >×</button>
+            </div>
           </div>
         )}
 

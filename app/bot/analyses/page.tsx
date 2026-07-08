@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { useProgressHints } from '@/hooks/useProgressHints'
 
 interface Session {
   id: string
@@ -70,6 +71,12 @@ type Sort = 'newest' | 'oldest' | 'most' | 'least'
 
 export default function GeschiedenisPage() {
   const isMobile = useIsMobile()
+  const { showCoachingHint, dismissAnalysesHint, dismissCoachingHint, userId } = useProgressHints()
+
+  useEffect(() => {
+    if (userId) dismissAnalysesHint()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -867,6 +874,28 @@ export default function GeschiedenisPage() {
               </button>
             </div>
           )}
+          </div>
+        )}
+
+        {showCoachingHint && savedAnalyses.length > 0 && (
+          <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginTop: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>
+              {savedAnalyses.length} {savedAnalyses.length === 1 ? 'analyse' : 'analyses'} beschikbaar
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <Link
+                href="/bot/coaching"
+                onClick={dismissCoachingHint}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
+              >
+                NAAR COACHING →
+              </Link>
+              <button
+                onClick={dismissCoachingHint}
+                style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                aria-label="Sluiten"
+              >×</button>
+            </div>
           </div>
         )}
 
