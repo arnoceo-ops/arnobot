@@ -352,17 +352,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       .then(data => { if (data.openers) setDynamicOpeners(data.openers) })
       .catch(() => {})
 
-    if (clerkSessionId && !localStorage.getItem(`arnobot_actie_getoond_${clerkSessionId}`)) {
-      fetch('/api/bot/actieopvolging')
-        .then(r => r.json())
-        .then(d => {
-          if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
-            localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
-            setActieOpvolging(d)
-          }
-        })
-        .catch(() => {})
-    }
 
     // Verwerk referral code uit localStorage na OAuth
     const referralCode = localStorage.getItem('arnobot_referral')
@@ -435,6 +424,20 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       inputRef.current.style.height = inputRef.current.scrollHeight + 'px'
     }
   }, [input])
+
+  useEffect(() => {
+    if (!clerkSessionId) return
+    if (localStorage.getItem(`arnobot_actie_getoond_${clerkSessionId}`)) return
+    fetch('/api/bot/actieopvolging')
+      .then(r => r.json())
+      .then(d => {
+        if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
+          localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
+          setActieOpvolging(d)
+        }
+      })
+      .catch(() => {})
+  }, [clerkSessionId])
 
   useEffect(() => {
     function handleUnload(e: BeforeUnloadEvent) {

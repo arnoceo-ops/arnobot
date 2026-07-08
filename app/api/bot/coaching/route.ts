@@ -173,6 +173,13 @@ export async function POST() {
     }
   }
 
+  // Groeiflow: weinig analyses verhouding tot gesprekken
+  let groeiflowContext = ''
+  const analyseRatio = analyses.length / Math.max(sessions.length, 1)
+  if (sessions.length >= 10 && analyseRatio < 0.2) {
+    groeiflowContext = `\n\nGROEIFLOW: De gebruiker heeft ${sessions.length} gesprekken gevoerd maar slechts ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Noem dit ergens in de coaching, kort en zonder oordeel: groei gaat het snelst via de route gesprek naar analyse naar coaching. Als iemand dit niet wist, weet die het nu. Eén zin, informatief. Geen verwijt.`
+  }
+
   // Significante scoreverbeteringen detecteren (2+ punten stijging)
   let voortgangErkenningContext = ''
   if (prevCoaching?.mindset_score != null) {
