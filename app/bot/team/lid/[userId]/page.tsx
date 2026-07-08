@@ -451,7 +451,7 @@ export default function LidPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                               <textarea
                                 className="notitie-input"
-                                placeholder="Notitie na het gesprek..."
+                                placeholder="Notitie over het gesprek..."
                                 value={noteInput}
                                 onChange={e => setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))}
                               />
