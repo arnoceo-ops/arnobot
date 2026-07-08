@@ -821,11 +821,8 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           .spar-title { font-size: clamp(72px, 14vw, 140px); }
         }
         @media (max-width: 700px) {
-          .spar-input-row { flex-direction: column; }
-          .spar-textarea { flex: none; width: 100%; }
-          .spar-buttons { align-self: stretch; border-top: 1px solid #374151; }
-          .spar-mic { height: 48px; width: 52px; flex-shrink: 0; border-left: none; border-right: 1px solid #374151; }
-          .spar-send { flex: 1; min-width: 0; height: 48px; font-size: 17px; padding: 0 20px; }
+          .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
+          .spar-send { height: 48px; font-size: 17px; padding: 0 20px; }
           .spar-reset { height: 48px; padding: 0 16px; font-size: 15px; }
           .spar-openers { overflow-x: hidden; }
           .opener-toggle { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 812px; }
@@ -857,15 +854,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           width: 100%; max-width: 812px;
         }
         .spar-input-row {
-          display: flex; gap: 0;
-          border: 2px solid #f59e0b;
+          display: flex; flex-direction: column; gap: 10px;
           width: 100%; max-width: 812px;
           margin: 0 auto;
         }
         .spar-textarea {
-          flex: 1;
+          width: 100%;
           background: #1f2937;
-          border: none;
+          border: 2px solid #f59e0b;
           color: #f1f5f9;
           font-family: 'Space Mono', monospace;
           font-size: 15px; font-weight: 400;
@@ -880,11 +876,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .spar-context-textarea::placeholder { color: #4b5563; }
         .spar-textarea:focus { background: #1f2937; }
         .spar-buttons {
-          display: flex; align-self: flex-end;
+          display: flex; align-self: flex-end; gap: 8px;
         }
         .spar-mic {
           background: #1f2937; color: #6b7280;
-          font-size: 20px; border: none; border-left: 1px solid #374151;
+          font-size: 20px; border: 1px solid #374151;
           padding: 0 18px; cursor: pointer; transition: all 0.2s;
           height: 55px; display: flex; align-items: center; justify-content: center;
         }
@@ -1064,19 +1060,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
 
         /* GLOW op invoerveld na gesprek */
-        .spar-input-row.active-glow {
-          border-color: #f59e0b;
+        .spar-input-row.active-glow .spar-textarea {
           box-shadow: inset 0 0 0 3px rgba(245,158,11,0.25);
           animation: glowpulse 2s ease-in-out infinite;
         }
-        @media (min-width: 701px) {
-          .spar-input-row.active-glow { flex-direction: column; }
-          .spar-input-row.active-glow .spar-buttons {
-            align-self: stretch; justify-content: flex-start;
-            border-top: 1px solid #374151;
-          }
-        }
-        .spar-input-row.blink-glow {
+        .spar-input-row.blink-glow .spar-textarea {
           animation: blinkglow 0.4s ease-in-out 4;
         }
         @keyframes glowpulse {
