@@ -134,8 +134,8 @@ export default function AccountPage() {
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
         {/* Support sectie */}
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 8px 0', lineHeight: 1 }}>HERE TO HELP</h1>
-        <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 32 }}>SUPPORT</p>
+        <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>SUPPORT</p>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>HERE TO HELP</h1>
 
         {/* Systeemstatus */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
