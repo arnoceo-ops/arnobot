@@ -240,8 +240,51 @@ export default async function AdminStatusPage() {
           </div>
         </div>
 
+        {/* Monitor config — inklapbaar, direct onder ARNO.BOT */}
+        {mo && (
+          <details style={{ background: '#1f2937', borderRadius: 4, marginBottom: 40 }}>
+            <summary style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, letterSpacing: 3, color: '#6b7280', padding: '14px 20px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>MONITOR CONFIGURATIE</span>
+              <span style={{ fontSize: 10 }}>▼</span>
+            </summary>
+            <div style={{ padding: '0 20px 16px' }}>
+              {[
+                ['URL', mo.url],
+                ['TYPE', `${mo.type} ${mo.httpMethod}`],
+                ['INTERVAL', `${Math.round(mo.durationBetweenChecksInSeconds / 60)} min`],
+                ['LOCATIES', (mo.locations ?? []).map(l => l.replace('_', ' ')).join(', ')],
+                ['DEGRADED NA', `${mo.degradedAfterSeconds}s`],
+                ['DOWN NA', `${mo.failedAfterSeconds}s`],
+                ['MAX RETRIES', String(mo.maxNumberOfRetries)],
+                ['RETRY ANDERE LOCATIE', mo.retryFromDifferentLocation ? 'ja' : 'nee'],
+                ['SSL VERIFICATIE', mo.verifySSL ? 'aan' : 'uit'],
+                ['SSL CERTIFICAAT', mo.checkSSLExpiry ? (mo.lastCreatedPeriodSSLExpiry ? `geldig t/m ${mo.lastCreatedPeriodSSLExpiry.slice(0, 10)}` : 'geldig') : 'niet gecheckt'],
+                ['ACTIEF', mo.active && !mo.muted ? 'ja' : mo.muted ? 'gedempt' : 'uit'],
+                ['AANGEMAAKT', mo.createdAt.slice(0, 10)],
+                ['LAATSTE UPDATE', mo.updatedAt.replace('T', ' ').slice(0, 16)],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', gap: 16, padding: '7px 0', borderBottom: '1px solid #1e293b' }}>
+                  <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#6b7280', letterSpacing: 2, minWidth: 180, flexShrink: 0 }}>{label}</span>
+                  <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#9ca3af' }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+
         {/* Externe services */}
         <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>EXTERNE SERVICES</p>
+
+        {/* Compact overzicht */}
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 2, display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+          {services.map(s => (
+            <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: indicatorColor(s.indicator), flexShrink: 0 }} />
+              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, letterSpacing: 2, color: '#9ca3af' }}>{s.name}</span>
+            </div>
+          ))}
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 40 }}>
           {services.map(s => (
             <div key={s.name} style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
@@ -276,37 +319,6 @@ export default async function AdminStatusPage() {
           ))}
         </div>
 
-        {/* Inklapbare monitor config */}
-        {mo && (
-          <details style={{ background: '#1f2937', borderRadius: 4 }}>
-            <summary style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, letterSpacing: 3, color: '#6b7280', padding: '14px 20px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>MONITOR CONFIGURATIE</span>
-              <span style={{ fontSize: 10 }}>▼</span>
-            </summary>
-            <div style={{ padding: '0 20px 16px' }}>
-              {[
-                ['URL', mo.url],
-                ['TYPE', `${mo.type} ${mo.httpMethod}`],
-                ['INTERVAL', `${Math.round(mo.durationBetweenChecksInSeconds / 60)} min`],
-                ['LOCATIES', (mo.locations ?? []).map(l => l.replace('_', ' ')).join(', ')],
-                ['DEGRADED NA', `${mo.degradedAfterSeconds}s`],
-                ['DOWN NA', `${mo.failedAfterSeconds}s`],
-                ['MAX RETRIES', String(mo.maxNumberOfRetries)],
-                ['RETRY ANDERE LOCATIE', mo.retryFromDifferentLocation ? 'ja' : 'nee'],
-                ['SSL VERIFICATIE', mo.verifySSL ? 'aan' : 'uit'],
-                ['SSL CERTIFICAAT', mo.checkSSLExpiry ? (mo.lastCreatedPeriodSSLExpiry ? `geldig t/m ${mo.lastCreatedPeriodSSLExpiry.slice(0, 10)}` : 'geldig') : 'niet gecheckt'],
-                ['ACTIEF', mo.active && !mo.muted ? 'ja' : mo.muted ? 'gedempt' : 'uit'],
-                ['AANGEMAAKT', mo.createdAt.slice(0, 10)],
-                ['LAATSTE UPDATE', mo.updatedAt.replace('T', ' ').slice(0, 16)],
-              ].map(([label, value]) => (
-                <div key={label} style={{ display: 'flex', gap: 16, padding: '7px 0', borderBottom: '1px solid #1e293b' }}>
-                  <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#6b7280', letterSpacing: 2, minWidth: 180, flexShrink: 0 }}>{label}</span>
-                  <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#9ca3af' }}>{value}</span>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
       </div>
     </main>
   )
