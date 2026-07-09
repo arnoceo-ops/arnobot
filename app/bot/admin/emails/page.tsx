@@ -30,10 +30,10 @@ export default async function EmailsPage() {
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/emails" style={navLinkStyle(true)}>CRONS</a>
           <a href="/bot/admin" style={navLinkStyle(false)}>ARNOBOT</a>
+          <a href="/bot/admin/status" style={navLinkStyle(false)}>STATUS</a>
           <a href="/bot/admin/idee" style={navLinkStyle(false)}>BLOGS</a>
           <a href="/bot/admin/meta-analyse" style={navLinkStyle(false)}>META</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
-          <a href="/bot/admin/status" style={navLinkStyle(false)}>STATUS</a>
         </div>
         <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>

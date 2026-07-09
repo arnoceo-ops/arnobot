@@ -65,11 +65,11 @@ type ServiceStatus = {
 }
 
 const SERVICES = [
-  { name: 'Anthropic', link: 'https://anthropicstatus.com', url: 'https://anthropicstatus.com/api/v2/summary.json' },
+  { name: 'Anthropic', link: 'https://status.claude.com', url: 'https://status.claude.com/api/v2/summary.json' },
   { name: 'Vercel', link: 'https://www.vercel-status.com', url: 'https://www.vercel-status.com/api/v2/summary.json' },
   { name: 'Supabase', link: 'https://status.supabase.com', url: 'https://status.supabase.com/api/v2/summary.json' },
-  { name: 'Clerk', link: 'https://clerkstatus.com', url: 'https://clerkstatus.com/api/v2/summary.json' },
-  { name: 'Resend', link: 'https://status.resend.com', url: 'https://status.resend.com/api/v2/summary.json' },
+  { name: 'Clerk', link: 'https://status.clerk.com', url: 'https://status.clerk.com/api/v2/summary.json' },
+  { name: 'Resend', link: 'https://resend-status.com', url: 'https://resend-status.com/api/v2/summary.json' },
 ]
 
 export default async function AdminStatusPage() {
@@ -184,10 +184,10 @@ export default async function AdminStatusPage() {
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>CRONS</a>
           <a href="/bot/admin" style={navLinkStyle(false)}>ARNOBOT</a>
+          <a href="/bot/admin/status" style={navLinkStyle(true)}>STATUS</a>
           <a href="/bot/admin/idee" style={navLinkStyle(false)}>BLOGS</a>
           <a href="/bot/admin/meta-analyse" style={navLinkStyle(false)}>META</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
-          <a href="/bot/admin/status" style={navLinkStyle(true)}>STATUS</a>
         </div>
         <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>

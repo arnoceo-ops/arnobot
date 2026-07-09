@@ -117,33 +117,6 @@ export default async function ArnoBotAdminPage({
   const filterNaam = userFilter ? (naamMap[userFilter] || alleNamen.find(u => u.userId === userFilter)?.naam || '') : ''
   const dateRange = from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`
 
-  type InstatusMonitor = {
-    status: string; name: string; url: string; type: string; httpMethod: string
-    averageResponseTime: number | null; logCount: number
-    durationBetweenChecksInSeconds: number; locations: string[]
-    verifySSL: boolean; checkSSLExpiry: boolean; lastCreatedPeriodSSLExpiry: string | null
-    active: boolean; muted: boolean
-    degradedAfterSeconds: number; failedAfterSeconds: number; maxNumberOfRetries: number
-    retryFromDifferentLocation: boolean; updatedAt: string; createdAt: string
-  }
-  let instatusMonitor: InstatusMonitor | null = null
-  try {
-    const apiKey = process.env.INSTATUS_API_KEY?.trim()
-    if (apiKey) {
-      const pages = await fetch('https://api.instatus.com/v1/pages', {
-        headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store'
-      }).then(r => r.json())
-      const pageId = Array.isArray(pages) ? pages[0]?.id : null
-      if (pageId) {
-        const monitorsData = await fetch(`https://api.instatus.com/${pageId}/monitors`, {
-          headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store'
-        }).then(r => r.json())
-        const m = monitorsData?.monitors?.[0]
-        if (m) instatusMonitor = m as InstatusMonitor
-      }
-    }
-  } catch { /* negeer */ }
-
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminMobileNav active="/bot/admin" />
@@ -153,10 +126,10 @@ export default async function ArnoBotAdminPage({
           <a href="/bot/admin/gebruikers" style={navLinkStyle(false)}>USERS</a>
           <a href="/bot/admin/emails" style={navLinkStyle(false)}>CRONS</a>
           <a href="/bot/admin" style={navLinkStyle(true)}>ARNOBOT</a>
+          <a href="/bot/admin/status" style={navLinkStyle(false)}>STATUS</a>
           <a href="/bot/admin/idee" style={navLinkStyle(false)}>BLOGS</a>
           <a href="/bot/admin/meta-analyse" style={navLinkStyle(false)}>META</a>
           <a href="/bot/admin/evaluaties" style={navLinkStyle(false)}>FEEDBACK</a>
-          <a href="/bot/admin/status" style={navLinkStyle(false)}>STATUS</a>
         </div>
         <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
           <a href="/bot/admin/widget" style={navLinkStyle(false)}>ARNO.BLOG</a>
@@ -167,53 +140,7 @@ export default async function ArnoBotAdminPage({
 
       <div style={{ marginBottom: '40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 20px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
-
-        {instatusMonitor && (() => {
-          const m = instatusMonitor!
-          const statusColor = m.status === 'UP' ? '#22c55e' : m.status === 'DEGRADED' ? '#f59e0b' : '#cc2200'
-          const statusLabel = m.status === 'UP' ? 'UP' : m.status === 'DEGRADED' ? 'DEGRADED' : 'DOWN'
-          const checkMin = Math.round(m.durationBetweenChecksInSeconds / 60)
-          const locationLabel = (m.locations ?? []).map(l => l.replace('_', ' ')).join(', ')
-          const sslLabel = m.checkSSLExpiry
-            ? (m.lastCreatedPeriodSSLExpiry ? `geldig t/m ${m.lastCreatedPeriodSSLExpiry.slice(0, 10)}` : 'geldig')
-            : 'niet gecheckt'
-          const row = (label: string, value: React.ReactNode) => (
-            <div style={{ display: 'flex', gap: 16, padding: '7px 0', borderBottom: '1px solid #1e293b' }}>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#6b7280', letterSpacing: 2, minWidth: 200, flexShrink: 0 }}>{label}</span>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#9ca3af' }}>{value}</span>
-            </div>
-          )
-          return (
-            <div style={{ marginBottom: 32, background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
-                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#f1f5f9', letterSpacing: 2 }}>
-                  {m.name} — <span style={{ color: statusColor }}>{statusLabel}</span>
-                </span>
-                <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer"
-                  style={{ marginLeft: 'auto', fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#6b7280', textDecoration: 'none', letterSpacing: 2 }}>
-                  INSTATUS →
-                </a>
-              </div>
-              {row('URL', m.url)}
-              {row('TYPE', `${m.type} ${m.httpMethod}`)}
-              {row('INTERVAL', `${checkMin} min`)}
-              {row('LOCATIES', locationLabel || '—')}
-              {row('GEMIDDELDE RESPONSTIJD', m.averageResponseTime ? `${m.averageResponseTime}ms` : 'wordt verzameld')}
-              {row('CHECKS UITGEVOERD', String(m.logCount))}
-              {row('DEGRADED NA', `${m.degradedAfterSeconds}s`)}
-              {row('DOWN NA', `${m.failedAfterSeconds}s`)}
-              {row('MAX RETRIES', String(m.maxNumberOfRetries))}
-              {row('RETRY ANDERE LOCATIE', m.retryFromDifferentLocation ? 'ja' : 'nee')}
-              {row('SSL VERIFICATIE', m.verifySSL ? 'aan' : 'uit')}
-              {row('SSL CERTIFICAAT', sslLabel)}
-              {row('ACTIEF', m.active && !m.muted ? 'ja' : m.muted ? 'gedempt' : 'uit')}
-              {row('MONITOR AANGEMAAKT', m.createdAt.slice(0, 10))}
-              {row('LAATSTE UPDATE', m.updatedAt.replace('T', ' ').slice(0, 16))}
-            </div>
-          )
-        })()}
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
