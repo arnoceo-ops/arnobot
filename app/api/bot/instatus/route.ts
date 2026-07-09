@@ -23,13 +23,15 @@ export async function GET() {
     const pageId = Array.isArray(pages) ? (pages as {id:string}[])[0]?.id : null
     if (!pageId) return NextResponse.json({ error: 'no page id', raw: pages }, { status: 500 })
 
-    const monitorsText = await fetch(`https://api.instatus.com/v1/${pageId}/monitors`, {
+    // Try without /v1/ prefix — docs show /:page_id/monitors
+    const monitorsRes = await fetch(`https://api.instatus.com/${pageId}/monitors`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       cache: 'no-store'
-    }).then(r => r.text())
+    })
+    const monitorsText = await monitorsRes.text()
     let monitors: unknown
     try { monitors = JSON.parse(monitorsText) } catch {
-      return NextResponse.json({ error: 'monitors not json', body: monitorsText.slice(0, 500) }, { status: 500 })
+      return NextResponse.json({ error: 'monitors not json', httpStatus: monitorsRes.status, body: monitorsText.slice(0, 500) }, { status: 500 })
     }
 
     return NextResponse.json({ pageId, monitors })
