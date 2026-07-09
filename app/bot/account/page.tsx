@@ -36,13 +36,14 @@ export default function AccountPage() {
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
       .catch(() => {})
-    fetch('https://arnobot.instatus.com/summary.json')
-      .then(r => r.json())
-      .then(d => { if (d?.page?.status) setSysStatus(d.page.status) })
-      .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
-      .then(d => { if (d?.status) setMetrics(d) })
+      .then(d => {
+        if (d?.status) {
+          setMetrics(d)
+          setSysStatus(d.status as 'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE')
+        }
+      })
       .catch(() => {})
   }, [])
 
