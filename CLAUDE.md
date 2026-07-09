@@ -37,7 +37,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Check Settings → API op deprecated key-formaten of migratiewaarschuwingen
 - Zijn er schema-wijzigingen nodig voor nieuwe features?
 - Database binnen limieten? (free: 500MB — check Settings → Billing → Usage)
-- **Openstaand actiepunt:** migreer van legacy JWT-keys (`NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`) naar nieuwe publishable/secret keys. Supabase meldt dit als deprecated. Aanpak: alleen env var-waarden updaten in `.env.local` en Vercel, geen codewijzigingen. Uitvoeren na livegang zodra arno.bot stabiel draait.
+- **Gedaan (juli 2026):** gemigreerd van legacy JWT-keys naar nieuwe publishable/secret keys (`sb_publishable_...` / `sb_secret_...`) in `.env.local` en Vercel. Legacy keys daarna uitgeschakeld in Supabase dashboard. Geen codewijzigingen nodig geweest.
 
 #### Clerk (app: clerk.arno.bot)
 - Controleer [clerk.com/changelog](https://clerk.com/changelog) op breaking changes in SDK of JWT-formaat
