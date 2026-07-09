@@ -122,10 +122,24 @@ export default function AccountPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        {/* Support notice */}
-        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: '1.9', color: '#9ca3af', marginBottom: 56 }}>
-          Technische problemen of vragen over je abonnement? Mail naar{' '}
+        {/* Support sectie */}
+        <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>SUPPORT</p>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>TECHNISCH, FINANCIEEL</h1>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
+          Voor technische issues, errors of bugs: stuur een mail naar{' '}
           <a href="mailto:support@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@arno.bot</a>
+        </p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
+          Bekijk de systeemstatus op{' '}
+          <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>arnobot.instatus.com</a>
+        </p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
+          Voor administratieve of financiële vragen: stuur een mail naar{' '}
+          <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>admin@arno.bot</a>
+        </p>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 56 }}>
+          Voor alle andere vragen:{' '}
+          <Link href="/bot/qa" style={{ color: '#f59e0b', textDecoration: 'none' }}>bekijk de Q&A</Link>
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
