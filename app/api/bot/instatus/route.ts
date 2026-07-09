@@ -23,16 +23,16 @@ export async function GET() {
     const pageId = Array.isArray(pages) ? (pages as {id:string}[])[0]?.id : null
     if (!pageId) return NextResponse.json({ error: 'no page id', raw: pages }, { status: 500 })
 
-    const monitorText = await fetch(`https://api.instatus.com/v1/${pageId}/monitors/${MONITOR_ID}`, {
+    const monitorsText = await fetch(`https://api.instatus.com/v1/${pageId}/monitors`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       cache: 'no-store'
     }).then(r => r.text())
-    let monitor: unknown
-    try { monitor = JSON.parse(monitorText) } catch {
-      return NextResponse.json({ error: 'monitor not json', body: monitorText.slice(0, 500) }, { status: 500 })
+    let monitors: unknown
+    try { monitors = JSON.parse(monitorsText) } catch {
+      return NextResponse.json({ error: 'monitors not json', body: monitorsText.slice(0, 500) }, { status: 500 })
     }
 
-    return NextResponse.json(monitor)
+    return NextResponse.json({ pageId, monitors })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
