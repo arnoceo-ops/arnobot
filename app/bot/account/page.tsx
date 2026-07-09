@@ -24,6 +24,7 @@ export default function AccountPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
 
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
@@ -33,6 +34,10 @@ export default function AccountPage() {
     fetch('/api/bot/team/status')
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+      .catch(() => {})
+    fetch('https://arnobot.instatus.com/summary.json')
+      .then(r => r.json())
+      .then(d => { if (d?.page?.status) setSysStatus(d.page.status) })
       .catch(() => {})
   }, [])
 
@@ -124,14 +129,20 @@ export default function AccountPage() {
 
         {/* Support sectie */}
         <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>SUPPORT</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>TECHNISCH, FINANCIEEL</h1>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>HERE TO HELP</h1>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
           Voor technische issues, errors of bugs: stuur een mail naar{' '}
           <a href="mailto:support@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@arno.bot</a>
         </p>
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
-          Bekijk de systeemstatus op{' '}
-          <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>arnobot.instatus.com</a>
+        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            width: 10, height: 10, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+            background: sysStatus === 'UP' ? '#22c55e' : sysStatus === null ? '#374151' : '#f59e0b'
+          }} />
+          <span>
+            {sysStatus === 'UP' ? 'Alle systemen werken normaal.' : sysStatus === null ? 'Systeemstatus wordt geladen...' : 'Er zijn momenteel problemen gemeld.'}{' '}
+            <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>Bekijk de statuspagina</a>
+          </span>
         </p>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
           Voor administratieve of financiële vragen: stuur een mail naar{' '}
