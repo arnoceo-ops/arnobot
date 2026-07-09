@@ -115,8 +115,25 @@ export default async function ArnoBotAdminPage({
   if (sort === 'count_asc')  sessionList.sort((a, b) => a[1].length - b[1].length)
 
   const filterNaam = userFilter ? (naamMap[userFilter] || alleNamen.find(u => u.userId === userFilter)?.naam || '') : ''
-
   const dateRange = from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`
+
+  let instatusMonitor: { status: string; averageResponseTime: number | null } | null = null
+  try {
+    const apiKey = process.env.INSTATUS_API_KEY?.trim()
+    if (apiKey) {
+      const pages = await fetch('https://api.instatus.com/v1/pages', {
+        headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store'
+      }).then(r => r.json())
+      const pageId = Array.isArray(pages) ? pages[0]?.id : null
+      if (pageId) {
+        const monitorsData = await fetch(`https://api.instatus.com/${pageId}/monitors`, {
+          headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store'
+        }).then(r => r.json())
+        const m = monitorsData?.monitors?.[0]
+        if (m) instatusMonitor = { status: m.status, averageResponseTime: m.averageResponseTime }
+      }
+    }
+  } catch { /* negeer */ }
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -140,7 +157,23 @@ export default async function ArnoBotAdminPage({
 
       <div style={{ marginBottom: '40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 20px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
+
+        {instatusMonitor && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, padding: '10px 14px', background: '#1f2937', borderRadius: 4 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: instatusMonitor.status === 'UP' ? '#22c55e' : '#f59e0b', flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#9ca3af' }}>
+              arno.bot — {instatusMonitor.status === 'UP' ? 'operationeel' : 'problemen gemeld'}
+              {instatusMonitor.averageResponseTime
+                ? ` · ${instatusMonitor.averageResponseTime}ms gemiddeld`
+                : ' · responstijd wordt verzameld'}
+            </span>
+            <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer"
+              style={{ marginLeft: 'auto', fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#6b7280', textDecoration: 'none', letterSpacing: 2 }}>
+              INSTATUS →
+            </a>
+          </div>
+        )}
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
