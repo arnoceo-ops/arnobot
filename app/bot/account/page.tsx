@@ -25,6 +25,7 @@ export default function AccountPage() {
   const [cancelDone, setCancelDone] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
+  const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
 
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
@@ -38,6 +39,10 @@ export default function AccountPage() {
     fetch('https://arnobot.instatus.com/summary.json')
       .then(r => r.json())
       .then(d => { if (d?.page?.status) setSysStatus(d.page.status) })
+      .catch(() => {})
+    fetch('/api/bot/instatus')
+      .then(r => r.json())
+      .then(d => { if (d?.status) setMetrics(d) })
       .catch(() => {})
   }, [])
 
@@ -130,27 +135,81 @@ export default function AccountPage() {
         {/* Support sectie */}
         <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>SUPPORT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>HERE TO HELP</h1>
+
+        {/* Systeemstatus */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <span style={{
+            width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+            background: sysStatus === 'UP' ? '#22c55e' : sysStatus === null ? '#374151' : '#f59e0b'
+          }} />
+          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>
+            {sysStatus === 'UP' ? 'Alle systemen werken normaal.' : sysStatus === null ? 'Systeemstatus wordt geladen...' : 'Er zijn momenteel problemen gemeld.'}
+          </span>
+        </div>
+
+        {/* Metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: sysStatus !== 'UP' && sysStatus !== null ? 16 : 32 }}>
+          <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>PERFORMANCE</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>GEMIDDELD</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#f1f5f9', lineHeight: 1 }}>
+                  {metrics?.avgMs ? `${metrics.avgMs}ms` : '—'}
+                </p>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>P95</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#f1f5f9', lineHeight: 1 }}>
+                  {metrics?.p95 ? `${metrics.p95}ms` : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>BESCHIKBAARHEID</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>VANDAAG</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#f1f5f9', lineHeight: 1 }}>
+                  {metrics?.availDay !== null && metrics?.availDay !== undefined ? `${metrics.availDay}%` : '—'}
+                </p>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DEZE WEEK</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#f1f5f9', lineHeight: 1 }}>
+                  {metrics?.availWeek !== null && metrics?.availWeek !== undefined ? `${metrics.availWeek}%` : '—'}
+                </p>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DOWN</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#f1f5f9', lineHeight: 1 }}>
+                  {metrics ? (metrics.downSeconds > 0 ? `${Math.round(metrics.downSeconds / 60)}min` : '0s') : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Storing melding */}
+        {sysStatus !== null && sysStatus !== 'UP' && (
+          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 32 }}>
+            De storing is zichtbaar en geregistreerd. Herstel is afhankelijk van de betrokken externe partij.
+          </p>
+        )}
+
+        {/* Contactgegevens */}
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
           Voor technische issues, errors of bugs: stuur een mail naar{' '}
           <a href="mailto:support@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@arno.bot</a>
-        </p>
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 10, height: 10, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
-            background: sysStatus === 'UP' ? '#22c55e' : sysStatus === null ? '#374151' : '#f59e0b'
-          }} />
-          <span>
-            {sysStatus === 'UP' ? 'Alle systemen werken normaal.' : sysStatus === null ? 'Systeemstatus wordt geladen...' : 'Er zijn momenteel problemen gemeld.'}{' '}
-            <a href="https://arnobot.instatus.com" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>Bekijk de statuspagina</a>
-          </span>
         </p>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 16 }}>
           Voor administratieve of financiële vragen: stuur een mail naar{' '}
           <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>admin@arno.bot</a>
         </p>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 56 }}>
-          Voor alle andere vragen:{' '}
-          <Link href="/bot/qa" style={{ color: '#f59e0b', textDecoration: 'none' }}>bekijk de Q&A</Link>
+          Voor alle andere vragen: ga naar{' '}
+          <a href="https://arno.bot/qa" style={{ color: '#f59e0b', textDecoration: 'none' }}>arno.bot/qa</a>
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
