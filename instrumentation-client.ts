@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
+  tunnel: "/monitoring",
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
