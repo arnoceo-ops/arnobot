@@ -45,7 +45,7 @@ function renderInline(text: string) {
 function AnalyseText({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/)
   return (
-    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
       {blocks.map((block, i) => {
         const trimmed = block.trim()
         if (!trimmed) return null
@@ -389,7 +389,7 @@ export default function MetaAnalyseClient() {
               const isOpen = openIds.has(a.id)
               const tab = activeTab[a.id] ?? 'zelf'
               return (
-                <div key={a.id} style={{ background: '#1f2937', border: '1px solid #374151' }}>
+                <div key={a.id} style={{ background: '#1f2937', border: '1px solid #374151', overflow: 'hidden' }}>
                   <button
                     onClick={() => toggleOpen(a.id)}
                     style={{
