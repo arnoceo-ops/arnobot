@@ -73,6 +73,7 @@ Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet beve
 - **Nooit aannemen dat automatisering niet interessant is** omdat de gebruiker solo werkt. ArnoBot is gebouwd op automatisering. De gebruiker omarmt het.
 - **Geen paternalistische afwegingen** namens de gebruiker maken over wat "teveel overhead" zou zijn. Geef het eerlijke advies, laat de afweging aan de gebruiker.
 - **Proactief adviseren** — signaleer risico's, verbeterpunten en kansen zonder dat de gebruiker ernaar vraagt. Als je iets ziet dat aandacht verdient, benoem het direct. Niet wachten op de vraag.
+- **Altijd meerdere opties vergelijken** — bij een tool, dienst of aanpak: zoek minimaal 2-3 alternatieven, vergelijk ze, en geef dan één aanbeveling die specifiek past bij de situatie van ArnoBot. Nooit één optie presenteren zonder dat je de andere hebt beoordeeld.
 
 ---
 
