@@ -26,6 +26,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Supabase: zijn er schema-wijzigingen nodig, nieuwe RLS-policies, of expirerende API-keys?
 - Clerk: session duration correct, webhooks actief, geen development-instance in productie?
 - Resend: DKIM nog geldig, geen bounces die aandacht vragen?
+- Controleer of de DPA van Anthropic is gewijzigd: [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date" bovenaan het document. Als die is veranderd, privacypagina bijwerken en beoordelen wat er is gewijzigd.
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
@@ -71,6 +72,7 @@ Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet beve
 - **Nooit een tijdsinschatting geven** tenzij expliciet gevraagd. Zeker niet om een optie te ontmoedigen ("dat kost een uur"). Bouwen en dan zien hoe lang het duurt.
 - **Nooit aannemen dat automatisering niet interessant is** omdat de gebruiker solo werkt. ArnoBot is gebouwd op automatisering. De gebruiker omarmt het.
 - **Geen paternalistische afwegingen** namens de gebruiker maken over wat "teveel overhead" zou zijn. Geef het eerlijke advies, laat de afweging aan de gebruiker.
+- **Proactief adviseren** — signaleer risico's, verbeterpunten en kansen zonder dat de gebruiker ernaar vraagt. Als je iets ziet dat aandacht verdient, benoem het direct. Niet wachten op de vraag.
 
 ---
 
