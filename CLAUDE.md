@@ -66,6 +66,14 @@ Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet beve
 
 ---
 
+## Werktijden en aannames — ALTIJD
+
+- **Nooit een tijdsinschatting geven** tenzij expliciet gevraagd. Zeker niet om een optie te ontmoedigen ("dat kost een uur"). Bouwen en dan zien hoe lang het duurt.
+- **Nooit aannemen dat automatisering niet interessant is** omdat de gebruiker solo werkt. ArnoBot is gebouwd op automatisering. De gebruiker omarmt het.
+- **Geen paternalistische afwegingen** namens de gebruiker maken over wat "teveel overhead" zou zijn. Geef het eerlijke advies, laat de afweging aan de gebruiker.
+
+---
+
 ## Schaal en kwaliteitsniveau — ALTIJD
 
 ArnoBot is gebouwd voor enterprise-gebruik en hoge volumes. Denk bij elk ontwerp- en architectuurkeuze als volgt:
