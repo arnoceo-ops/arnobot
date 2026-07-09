@@ -142,7 +142,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Anthropic</td>
                   <td>AI-verwerking voor coaching (geen training op jouw data)</td>
-                  <td><a href="https://anthropic.com/legal" target="_blank" rel="noopener noreferrer">anthropic.com/legal</a></td>
+                  <td><a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">anthropic.com/legal/dpa</a></td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Resend</td>
