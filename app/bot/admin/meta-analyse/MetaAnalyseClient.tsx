@@ -230,7 +230,7 @@ export default function MetaAnalyseClient() {
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Arno observeert wat ArnoBot zegt in zijn antwoorden."
+              placeholder="Arno's observaties"
               style={{
                 width: '100%',
                 minHeight: 180,
