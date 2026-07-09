@@ -9,7 +9,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Controleer of alle API-routes nog auth hebben (nieuwe routes kunnen dit missen)
 - Check of error-responses nog geen interne details lekken
 - Controleer `middleware.ts` op volledigheid van scanner-blokkering
-- **Pre-launch taak (nog niet gedaan):** RLS inschakelen in Supabase met Clerk JWT-integratie als defense-in-depth. Uitvoeren vóór livegang (voor 1 augustus 2026): pre-launch is het juiste moment omdat een tijdelijke verstoring herstelbaar is. Na livegang wil je dit risico niet nemen met echte gebruikers. Verkeerde policy maakt data onzichtbaar — grondig testen na implementatie.
+- **Gedaan (juli 2026):** RLS ingeschakeld op alle gebruikerstabellen met Clerk JWT-integratie als defense-in-depth.
 
 ### 2. Dependencies & tooling
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Sanity?
@@ -22,11 +22,39 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
 
 ### 4. Infrastructuur
-- Vercel: zijn er platform-updates of deprecated features in gebruik?
-- Supabase: zijn er schema-wijzigingen nodig, nieuwe RLS-policies, of expirerende API-keys?
-- Clerk: session duration correct, webhooks actief, geen development-instance in productie?
-- Resend: DKIM nog geldig, geen bounces die aandacht vragen?
-- Controleer of de DPA van Anthropic is gewijzigd: [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date" bovenaan het document. Als die is veranderd, privacypagina bijwerken en beoordelen wat er is gewijzigd.
+
+**Werkregel:** een deprecation-melding in een dashboard of changelog = direct opnemen als actiepunt, niet uitstellen naar de volgende check. Commerciële tools veranderen zonder waarschuwing. Wacht niet tot iets toevallig ter sprake komt.
+
+#### Vercel
+- Zijn er deprecated features in gebruik? Controleer Vercel dashboard → Settings → General op waarschuwingen
+- Controleer [vercel.com/changelog](https://vercel.com/changelog) op breaking changes die arno.bot raken
+- Check build logs op deprecation warnings (`next build` output in Vercel)
+- Zijn er nieuwe platform-limieten of wijzigingen in het huidige plan?
+
+#### Supabase (project: wxrsmmzqbmoeackirsxc — arno.bot)
+- Open het dashboard en scan op banners of waarschuwingen — Supabase toont deprecated features actief in de UI
+- Controleer [supabase.com/changelog](https://supabase.com/changelog) op breaking changes
+- Check Settings → API op deprecated key-formaten of migratiewaarschuwingen
+- Zijn er schema-wijzigingen nodig voor nieuwe features?
+- Database binnen limieten? (free: 500MB — check Settings → Billing → Usage)
+- **Openstaand actiepunt:** migreer van legacy JWT-keys (`NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`) naar nieuwe publishable/secret keys. Supabase meldt dit als deprecated. Aanpak: alleen env var-waarden updaten in `.env.local` en Vercel, geen codewijzigingen. Uitvoeren na livegang zodra arno.bot stabiel draait.
+
+#### Clerk (app: clerk.arno.bot)
+- Controleer [clerk.com/changelog](https://clerk.com/changelog) op breaking changes in SDK of JWT-formaat
+- Session duration correct ingesteld?
+- Webhooks actief en zonder fouten? (Clerk dashboard → Webhooks → recent deliveries)
+- Geen development-instance in productie?
+- Zijn er nieuwe beveiligingsinstellingen beschikbaar (bijv. device fingerprinting, bot-detectie)?
+
+#### Resend
+- DKIM nog geldig? (Resend dashboard → Domains)
+- Geen bounces of spam-klachten die aandacht vragen?
+- Controleer [resend.com/changelog](https://resend.com/changelog) op API-wijzigingen
+
+#### Anthropic
+- Controleer of de DPA is gewijzigd: [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Als die is veranderd, privacypagina bijwerken.
+- Zijn er API-deprecaties aangekondigd? Controleer [docs.anthropic.com/changelog](https://docs.anthropic.com/en/release-notes/overview)
+- Worden de huidige model-IDs in de inventaris nog ondersteund? (Anthropic depreceert modellen met aankondiging)
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
