@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { headers } from "next/headers";
+import SentryUserIdentifier from "./components/SentryUserIdentifier";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default async function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
         >
+          <SentryUserIdentifier />
           {children}
         </body>
       </html>
