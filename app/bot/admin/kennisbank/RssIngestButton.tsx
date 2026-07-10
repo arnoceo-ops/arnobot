@@ -50,7 +50,6 @@ export default function RssIngestButton() {
       </button>
       {result && (
         <span style={{
-          fontFamily: "'Space Mono', monospace",
           fontSize: 12,
           color: state === 'error' ? '#cc4444' : '#6b7280',
           letterSpacing: 1,

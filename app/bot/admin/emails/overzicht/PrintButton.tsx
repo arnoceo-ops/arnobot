@@ -5,7 +5,7 @@ export function PrintButton() {
     <button
       onClick={() => window.print()}
       style={{
-        fontFamily: 'monospace',
+        fontFamily: 'sans-serif',
         fontSize: 12,
         letterSpacing: 2,
         padding: '6px 16px',

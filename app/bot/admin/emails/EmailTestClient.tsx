@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 type Template = { type: string; label: string; description: string; category: 'user' | 'admin' }
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: 'monospace',
+  fontFamily: 'sans-serif',
   fontSize: 13,
   letterSpacing: 4,
   color: '#f59e0b',
@@ -77,7 +77,7 @@ export default function EmailTestClient() {
             onClick={() => send(type)}
             disabled={sending === type}
             style={{
-              fontFamily: 'monospace',
+              fontFamily: 'sans-serif',
               fontSize: 12,
               letterSpacing: 2,
               fontWeight: 700,

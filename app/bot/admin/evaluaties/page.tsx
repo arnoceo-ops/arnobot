@@ -16,16 +16,33 @@ export default async function EvaluatiesPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const [{ data: evaluaties }, { data: ratingsRaw }, { data: negativeRatings }] = await Promise.all([
+  const [{ data: evaluaties }, { data: ratingsRaw }, { data: negRaw }] = await Promise.all([
     supabase.from('arnobot_evaluaties').select('*').order('created_at', { ascending: false }),
     supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null),
     supabase
       .from('arnobot_rds_logs')
-      .select('question, answer, created_at')
+      .select('question, answer, created_at, user_id')
       .eq('feedback', 'neg')
       .order('created_at', { ascending: false })
       .limit(10),
   ])
+
+  const userIds = [...new Set((negRaw ?? []).map((r: { user_id: string | null }) => r.user_id).filter(Boolean))] as string[]
+  const { data: users } = userIds.length
+    ? await supabase.from('approved_users').select('user_id, voornaam, achternaam').in('user_id', userIds)
+    : { data: [] }
+  const userMap = Object.fromEntries(
+    (users ?? []).map((u: { user_id: string; voornaam: string | null; achternaam: string | null }) => [
+      u.user_id,
+      [u.voornaam, u.achternaam].filter(Boolean).join(' ') || null,
+    ])
+  )
+  const negativeRatings = (negRaw ?? []).map((r: { question: string; answer: string; created_at: string; user_id: string | null }) => ({
+    question: r.question,
+    answer: r.answer,
+    created_at: r.created_at,
+    user_name: r.user_id ? (userMap[r.user_id] ?? null) : null,
+  }))
 
   const totalRatings = (ratingsRaw ?? []).length
   const positiveRatings = (ratingsRaw ?? []).filter((r: { feedback: string }) => r.feedback === 'pos').length

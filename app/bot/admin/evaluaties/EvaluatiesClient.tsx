@@ -33,6 +33,7 @@ interface NegativeRating {
   question: string
   answer: string
   created_at: string
+  user_name: string | null
 }
 
 interface Props {
@@ -64,38 +65,44 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {/* Antwoordbeoordelingen */}
       {totalRatings > 0 && (
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 20, fontFamily: "'Space Mono', monospace" }}>ANTWOORDBEOORDELINGEN</p>
+          <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 20 }}>ANTWOORDBEOORDELINGEN</p>
           <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end' }}>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {Math.round((positiveRatings / totalRatings) * 100)}%
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6, fontFamily: "'Space Mono', monospace" }}>POSITIEF</p>
+              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>POSITIEF</p>
             </div>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {totalRatings}
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6, fontFamily: "'Space Mono', monospace" }}>BEOORDELINGEN</p>
+              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>BEOORDELINGEN</p>
             </div>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#cc4444', lineHeight: 1 }}>
                 {totalRatings - positiveRatings}
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6, fontFamily: "'Space Mono', monospace" }}>NEGATIEF</p>
+              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>NEGATIEF</p>
             </div>
           </div>
+
           {negativeRatings.length > 0 && (
             <>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 10, fontFamily: "'Space Mono', monospace" }}>NEGATIEF BEOORDEELD (LAATSTE {negativeRatings.length})</p>
+              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 10 }}>
+                NEGATIEF BEOORDEELD (LAATSTE {negativeRatings.length})
+              </p>
               {negativeRatings.map((r, idx) => (
                 <div key={idx} style={{ background: '#1f2937', marginBottom: 2 }}>
                   <button
                     onClick={() => setExpandedRating(expandedRating === idx ? null : idx)}
                     style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', gap: 16, textAlign: 'left' }}
                   >
-                    <span style={{ fontSize: 13, color: '#9ca3af', fontFamily: "'Space Mono', monospace", flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 13, color: '#9ca3af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.question.slice(0, 80)}{r.question.length > 80 ? '...' : ''}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {r.user_name ?? 'onbekend'}
                     </span>
                     <span style={{ fontSize: 12, color: '#4b5563', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {new Date(r.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
@@ -104,10 +111,12 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                   </button>
                   {expandedRating === idx && (
                     <div style={{ padding: '0 20px 16px' }}>
-                      <p style={{ fontSize: 12, letterSpacing: 2, color: '#4b5563', marginBottom: 6, fontFamily: "'Space Mono', monospace" }}>VRAAG</p>
-                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16, fontFamily: "'Space Mono', monospace" }}>{r.question}</p>
-                      <p style={{ fontSize: 12, letterSpacing: 2, color: '#4b5563', marginBottom: 6, fontFamily: "'Space Mono', monospace" }}>ARNO'S ANTWOORD</p>
-                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, fontFamily: "'Space Mono', monospace", whiteSpace: 'pre-wrap' }}>{r.answer}</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 4 }}>GEBRUIKER</p>
+                      <p style={{ fontSize: 13, color: '#f59e0b', marginBottom: 16 }}>{r.user_name ?? 'onbekend'}</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 6 }}>VRAAG</p>
+                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16 }}>{r.question}</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
+                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.answer}</p>
                     </div>
                   )}
                 </div>
@@ -139,7 +148,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {analyse && (
         <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '24px 28px', marginBottom: 48 }}>
           <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>CLAUDE ANALYSE</p>
-          <p style={{ fontSize: 14, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{analyse}</p>
+          <p style={{ fontSize: 14, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>{analyse}</p>
         </div>
       )}
 

@@ -45,13 +45,13 @@ function renderInline(text: string) {
 function AnalyseText({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/)
   return (
-    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+    <div style={{ fontFamily: 'sans-serif', fontSize: 15, lineHeight: 1.9, color: '#9ca3af', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
       {blocks.map((block, i) => {
         const trimmed = block.trim()
         if (!trimmed) return null
         if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s\/0-9]+$/.test(trimmed) && trimmed.length < 60) {
           return (
-            <p key={i} style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
               {trimmed}
             </p>
           )
@@ -112,6 +112,10 @@ export default function MetaAnalyseClient() {
   const [inputSaving, setInputSaving] = useState(false)
   const [inputSaved, setInputSaved] = useState(false)
 
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [feedbackAnalyse, setFeedbackAnalyse] = useState('')
+
   useEffect(() => {
     fetch('/api/admin/meta-analyse')
       .then(r => r.json())
@@ -164,6 +168,22 @@ export default function MetaAnalyseClient() {
     setActiveTab(prev => ({ ...prev, [id]: tab }))
   }
 
+  async function generateFeedbackAnalyse() {
+    setFeedbackLoading(true)
+    setFeedbackError(null)
+    setFeedbackAnalyse('')
+    try {
+      const res = await fetch('/api/admin/feedback-analyse', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Fout')
+      if (data.analyse) setFeedbackAnalyse(data.analyse)
+    } catch (e: unknown) {
+      setFeedbackError(e instanceof Error ? e.message : 'Er ging iets mis')
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }
+
   async function generate() {
     setLoading(true)
     setError(null)
@@ -198,7 +218,7 @@ export default function MetaAnalyseClient() {
   }
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
-    fontFamily: "'Space Mono', monospace",
+    fontFamily: 'sans-serif',
     fontSize: 12,
     letterSpacing: 3,
     fontWeight: active ? 700 : 400,
@@ -216,10 +236,10 @@ export default function MetaAnalyseClient() {
       <style>{loadingStyle}</style>
       {/* Jouw maandelijkse input */}
       <div style={{ marginBottom: 56 }}>
-        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
           JOUW INPUT VOOR HET PANEL
         </p>
-        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
           Schrijf wat je de afgelopen periode opviel aan ArnoBot. Wat herkende je niet? Wat miste er? Wat was raak?
           Dit wordt meegenomen als jouw eigen jurering bij de volgende analyse.
         </p>
@@ -234,7 +254,7 @@ export default function MetaAnalyseClient() {
               style={{
                 width: '100%',
                 minHeight: 180,
-                fontFamily: "'Space Mono', monospace",
+                fontFamily: 'sans-serif',
                 fontSize: 14,
                 fontWeight: 400,
                 lineHeight: 1.8,
@@ -269,12 +289,12 @@ export default function MetaAnalyseClient() {
                 {inputSaving ? 'OPSLAAN...' : 'OPSLAAN'}
               </button>
               {inputSaved && (
-                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#4ade80', letterSpacing: 1 }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#4ade80', letterSpacing: 1 }}>
                   Opgeslagen.
                 </span>
               )}
               {savedInput && !inputSaved && (
-                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#4b5563', letterSpacing: 1 }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1 }}>
                   Laatste opslag: {new Date(savedInput.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               )}
@@ -289,7 +309,7 @@ export default function MetaAnalyseClient() {
             key={p.days}
             onClick={() => { setSelected(p.days); setCustomDays('') }}
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: 'sans-serif',
               fontSize: 13,
               letterSpacing: 3,
               fontWeight: 400,
@@ -320,7 +340,7 @@ export default function MetaAnalyseClient() {
           }}
           placeholder="X DAGEN"
           style={{
-            fontFamily: "'Space Mono', monospace",
+            fontFamily: 'sans-serif',
             fontSize: 13,
             letterSpacing: 3,
             fontWeight: 400,
@@ -371,6 +391,40 @@ export default function MetaAnalyseClient() {
       {error && (
         <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginBottom: 32 }}>✗ {error}</p>
       )}
+
+      {/* Thumbs-down analyse */}
+      <div style={{ borderTop: '1px solid #1f2937', paddingTop: 40, marginBottom: 48 }}>
+        <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>FEEDBACK ANALYSE</p>
+        <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+          Analyseer patronen in negatief beoordeelde antwoorden (laatste 20).
+        </p>
+        <button
+          onClick={generateFeedbackAnalyse}
+          disabled={feedbackLoading}
+          style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: 16,
+            letterSpacing: 3,
+            padding: '10px 28px',
+            borderRadius: 999,
+            border: '1px solid #374151',
+            background: feedbackLoading ? '#374151' : 'transparent',
+            color: feedbackLoading ? '#6b7280' : '#f59e0b',
+            cursor: feedbackLoading ? 'wait' : 'pointer',
+          }}
+        >
+          {feedbackLoading ? 'BEZIG...' : 'ANALYSEER THUMBS-DOWN →'}
+        </button>
+        {feedbackError && (
+          <p style={{ color: '#cc2200', fontSize: 13, marginTop: 16 }}>✗ {feedbackError}</p>
+        )}
+        {feedbackAnalyse && (
+          <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 20 }}>
+            <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>PATRONEN IN THUMBS-DOWN</p>
+            <p style={{ fontSize: 14, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>{feedbackAnalyse}</p>
+          </div>
+        )}
+      </div>
 
       {archiveLoading ? (
         <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>

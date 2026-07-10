@@ -28,7 +28,7 @@ function renderInline(text: string) {
 function AnalyseText({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/)
   return (
-    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+    <div style={{ fontFamily: 'sans-serif', fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
       {blocks.map((block, i) => {
         const trimmed = block.trim()
         if (!trimmed) return null
@@ -37,7 +37,7 @@ function AnalyseText({ text }: { text: string }) {
         }
         if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s]+$/.test(trimmed) && trimmed.length < 50) {
           return (
-            <p key={i} style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
               {trimmed}
             </p>
           )
@@ -137,7 +137,7 @@ export default function BlogsClient() {
             key={p.days}
             onClick={() => setSelected(p.days)}
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: 'sans-serif',
               fontSize: 13,
               letterSpacing: 3,
               fontWeight: 700,

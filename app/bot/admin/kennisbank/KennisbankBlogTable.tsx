@@ -40,7 +40,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
   }
 
   const thBtn = (c: SortCol, align: 'left' | 'right' = 'left'): React.CSSProperties => ({
-    fontFamily: "'Space Mono', monospace",
+    fontFamily: 'sans-serif',
     fontSize: 11,
     letterSpacing: 4,
     color: col === c ? '#f59e0b' : '#6b7280',
@@ -73,7 +73,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
         {sorted.map((b, i) => (
           <tr key={i} style={{ borderBottom: '1px solid #1f2937' }}>
             <td style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: 'sans-serif',
               fontSize: 11,
               color: '#6b7280',
               padding: '11px 16px 11px 0',
@@ -90,7 +90,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
                   rel="noopener noreferrer"
                   className="kb-link"
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: 'sans-serif',
                     fontSize: 13,
                     color: '#9ca3af',
                     textDecoration: 'none',
@@ -104,7 +104,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
                 </a>
               ) : (
                 <span style={{
-                  fontFamily: "'Space Mono', monospace",
+                  fontFamily: 'sans-serif',
                   fontSize: 13,
                   color: '#9ca3af',
                   display: 'block',
@@ -117,7 +117,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
               )}
             </td>
             <td style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: 'sans-serif',
               fontSize: 11,
               color: '#374151',
               padding: '11px 0',

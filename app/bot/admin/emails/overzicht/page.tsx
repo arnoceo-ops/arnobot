@@ -12,7 +12,7 @@ export default async function EmailsOverzichtPage() {
 
   return (
     <div style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9' }}>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" />
       <style href="overzicht-print" precedence="default">{`
         @media print {
           .no-print { display: none !important; }
@@ -25,18 +25,18 @@ export default async function EmailsOverzichtPage() {
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '60px 40px 80px' }}>
 
         <div className="no-print" style={{ marginBottom: 40, display: 'flex', alignItems: 'center', gap: 24 }}>
-          <a href="/bot/admin/emails" style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: 3, color: '#6b7280', textDecoration: 'none' }}>
+          <a href="/bot/admin/emails" style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', textDecoration: 'none' }}>
             ← TERUG
           </a>
           <PrintButton />
         </div>
 
-        <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 48, letterSpacing: 3, color: '#f1f5f9', marginBottom: 8 }}>Totaaloverzicht e-mails</h1>
-        <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#6b7280', letterSpacing: 1, marginBottom: 8 }}>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#6b7280', letterSpacing: 1, marginBottom: 8 }}>
           Alle e-mails en crons die ArnoBot verstuurt, gesorteerd per categorie.
         </p>
-        <p className="no-print" style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#4b5563', letterSpacing: 1, marginBottom: 48 }}>
+        <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1, marginBottom: 48 }}>
           Let op: het PDF-overzicht en de admin-crons zijn handmatig te onderhouden. De NAAR GEBRUIKERS sectie op de admin-pagina werkt automatisch via email-templates.ts.
         </p>
 
@@ -84,7 +84,7 @@ export default async function EmailsOverzichtPage() {
         </Section>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #1f2937' }}>
-          <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#4b5563', letterSpacing: 1, lineHeight: 1.8 }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1, lineHeight: 1.8 }}>
             Marketing-mails (inactivity nudge, geen gesprek nudge, win-back) bevatten een opt-out link via arno.bot/optout/&#123;userId&#125;.<br />
             Alle verstuurde mails zijn terug te vinden op resend.com/emails.<br />
             ArnoBot Admin: arno.bot
@@ -100,7 +100,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   return (
     <div style={{ marginBottom: 56 }}>
       <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 24, letterSpacing: 3, color: '#f59e0b', marginBottom: 4 }}>{title}</h2>
-      <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#6b7280', letterSpacing: 1, marginBottom: 20 }}>{subtitle}</p>
+      <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, marginBottom: 20 }}>{subtitle}</p>
       {children}
     </div>
   )
@@ -110,7 +110,7 @@ type Row = { name: string; trigger: string; ontvanger: string; wanneer: string; 
 
 function Table({ rows }: { rows: Row[] }) {
   const th: CSSProperties = {
-    fontFamily: 'Space Mono, monospace',
+    fontFamily: 'sans-serif',
     fontSize: 11,
     letterSpacing: 3,
     color: '#f59e0b',
@@ -121,7 +121,7 @@ function Table({ rows }: { rows: Row[] }) {
     whiteSpace: 'nowrap',
   }
   const td: CSSProperties = {
-    fontFamily: 'Space Mono, monospace',
+    fontFamily: 'sans-serif',
     fontSize: 12,
     color: '#9ca3af',
     padding: '10px 12px 10px 0',
