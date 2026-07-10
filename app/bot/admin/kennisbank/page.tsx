@@ -29,9 +29,13 @@ export default async function KennisbankPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data, error } = await supabase
-    .from('blog_chunks')
-    .select('source, url, created_at')
+  const [{ data, error }, { data: metaData }] = await Promise.all([
+    supabase.from('blog_chunks').select('source, url, created_at'),
+    supabase.from('arnobot_meta').select('key, value').in('key', ['last_embed_run', 'last_embed_chunks', 'last_embed_sources']),
+  ])
+
+  const meta: Record<string, string> = {}
+  for (const row of metaData ?? []) meta[row.key] = row.value
 
   const sourceMap: Record<string, { url: string | null; count: number; latest: string | null }> = {}
   for (const row of (data as ChunkRow[] | null) ?? []) {
@@ -89,6 +93,21 @@ export default async function KennisbankPage() {
             <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>{videoSources.length}</span>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>VIDEO&apos;S</p>
           </div>
+        </div>
+
+        {/* Laatste embed run */}
+        <div style={{ background: '#1f2937', padding: '16px 20px', marginBottom: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>LAATSTE EMBED RUN</p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: meta['last_embed_run'] ? '#f1f5f9' : '#374151' }}>
+              {meta['last_embed_run']
+                ? new Date(meta['last_embed_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : 'Nog nooit gedraaid'}
+            </p>
+          </div>
+          {meta['last_embed_sources'] && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#4b5563' }}>{meta['last_embed_sources']}</p>
+          )}
         </div>
 
         {error && (

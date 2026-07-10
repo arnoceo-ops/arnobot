@@ -240,7 +240,14 @@ async function main() {
     }
   }
 
-  console.log('\nKlaar!')
+  // Stap 4: Sla timestamp op in arnobot_meta
+  const now = new Date().toISOString()
+  await supabase.from('arnobot_meta').upsert([
+    { key: 'last_embed_run', value: now, updated_at: now },
+    { key: 'last_embed_chunks', value: String(inserted), updated_at: now },
+    { key: 'last_embed_sources', value: `${blogs.length} blogs, ${videos.length} video's`, updated_at: now },
+  ])
+  console.log(`\nKlaar! Timestamp opgeslagen in arnobot_meta.`)
 }
 
 main().catch(err => {
