@@ -393,7 +393,7 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
         // Fallback op originele vraag
       }
     }
-    const relevant = await getRelevantChunks(ragQuery, 15)
+    const relevant = await getRelevantChunks(ragQuery, 15, true)
     const context = formatChunksForPrompt(relevant)
 
     const messages = [

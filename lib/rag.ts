@@ -1,9 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
+import Anthropic from '@anthropic-ai/sdk'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+async function expandQuery(query: string): Promise<string> {
+  try {
+    const res = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `Herschrijf de volgende zoekvraag naar een rijkere zoekopdracht van maximaal 2 zinnen. Voeg relevante salescontext, synoniemen en concrete begrippen toe zodat de zoekopdracht beter aansluit bij een kennisbank over B2B sales, acquisitie en commercieel leiderschap. Geef alleen de herschreven zoekvraag terug, niets anders.\n\nVraag: ${query}`,
+      }],
+    })
+    const expanded = res.content[0].type === 'text' ? res.content[0].text.trim() : query
+    return expanded.length > 20 ? expanded : query
+  } catch {
+    return query
+  }
+}
 
 export async function getVoyageEmbedding(text: string): Promise<number[]> {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
@@ -95,8 +114,9 @@ function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 4): Ra
   return result
 }
 
-export async function getRelevantChunks(query: string, topN = 20): Promise<RagChunk[]> {
-  const queryEmbedding = await getEmbedding(query)
+export async function getRelevantChunks(query: string, topN = 20, expand = false): Promise<RagChunk[]> {
+  const searchQuery = expand ? await expandQuery(query) : query
+  const queryEmbedding = await getEmbedding(searchQuery)
 
   // Haal 100 kandidaten op voor maximale dekking van het archief
   const { data, error } = await supabase.rpc('match_blog_chunks', {
@@ -111,7 +131,7 @@ export async function getRelevantChunks(query: string, topN = 20): Promise<RagCh
 
   if (candidates.length === 0) return []
 
-  // Rerank naar top 50, dan source diversity naar topN
+  // Rerank op originele query voor precisie (niet de uitgebreide versie)
   const reranked = await rerankChunks(query, candidates, Math.min(50, candidates.length))
   return diversifyChunks(reranked, topN)
 }
