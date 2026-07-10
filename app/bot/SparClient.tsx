@@ -1463,7 +1463,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 onClick={() => ask(input)}
                 disabled={loading || blocked || !input.trim() || (sparModus === 'sparren' && sparPersona === 'anders' && !sparContext.trim())}
               >
-                {loading ? '...' : 'VRAAG →'}
+                {loading ? '...' : 'STUUR →'}
               </button>
               {started && (
                 <button
