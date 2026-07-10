@@ -263,10 +263,10 @@ export default async function AdminStatusPage() {
             <div key={s.name} style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: s.components.length > 0 ? 12 : 0 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: indicatorColor(s.indicator), flexShrink: 0 }} />
-                <span style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#f1f5f9', fontWeight: 700 }}>{s.name}</span>
-                <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280' }}>{s.description}</span>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', fontWeight: 700 }}>{s.name}</span>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>{s.description}</span>
                 <a href={s.link} target="_blank" rel="noopener noreferrer"
-                  style={{ marginLeft: 'auto', fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', textDecoration: 'none', letterSpacing: 2, flexShrink: 0 }}>
+                  style={{ marginLeft: 'auto', fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', textDecoration: 'none', letterSpacing: 2, flexShrink: 0 }}>
                   STATUS →
                 </a>
               </div>
@@ -275,16 +275,16 @@ export default async function AdminStatusPage() {
                   {s.components.map(c => (
                     <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: componentColor(c.status), flexShrink: 0 }} />
-                      <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#9ca3af' }}>{c.name}</span>
+                      <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#9ca3af' }}>{c.name}</span>
                       {c.status !== 'operational' && (
-                        <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: componentColor(c.status) }}>{componentLabel(c.status)}</span>
+                        <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: componentColor(c.status) }}>{componentLabel(c.status)}</span>
                       )}
                     </div>
                   ))}
                 </div>
               )}
               {s.lastIncident && (
-                <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#f59e0b', marginTop: 10, paddingLeft: 18 }}>
+                <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f59e0b', marginTop: 10, paddingLeft: 18 }}>
                   ↳ {s.lastIncident.name} · {s.lastIncident.status}
                 </p>
               )}
