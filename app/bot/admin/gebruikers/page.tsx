@@ -198,9 +198,10 @@ export default async function GebruikersPage({
           {sorted.length} gebruiker{sorted.length !== 1 ? 's' : ''}
         </p>
 
-        <div className="admin-table-wrap">
+        <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 'max-content' }}>
         {/* Tabel header */}
-        <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end' }}>
+        <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
@@ -217,7 +218,7 @@ export default async function GebruikersPage({
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', minWidth: 'max-content' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
           {sorted.map((u) => {
             const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
             const status = trialStatus(u)
@@ -326,6 +327,7 @@ export default async function GebruikersPage({
             )
           })}
         </div>
+        </div>{/* /minWidth wrapper */}
         </div>{/* /admin-table-wrap */}
       </div>
     </main>
