@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ blocked: !!data }, { headers: corsHeaders(origin) })
 }
 
+import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
@@ -331,12 +332,14 @@ OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/
 OK: logisch vervolg op het gesprek of relevant voor sales/business`
         : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
 
-      const checkRes = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        system: moderatiePrompt,
-        messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
-      })
+      const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check', op: 'ai.claude' }, () =>
+        client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 10,
+          system: moderatiePrompt,
+          messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
+        })
+      )
       const check = getText(checkRes.content, 'OK').trim().toUpperCase()
 
       if (check.includes('ONGEPAST')) {
@@ -381,19 +384,21 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
     let ragQuery = question
     if (!isWidget) {
       try {
-        const ragRes = await client.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 60,
-          system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
-          messages: [{ role: 'user', content: question }]
-        })
+        const ragRes = await Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
+          client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 60,
+            system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
+            messages: [{ role: 'user', content: question }]
+          })
+        )
         const augmented = getText(ragRes.content, '').trim()
         if (augmented.length > 10) ragQuery = `${question} ${augmented}`
       } catch {
         // Fallback op originele vraag
       }
     }
-    const relevant = await getRelevantChunks(ragQuery, 15, true)
+    const relevant = await Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
     const context = formatChunksForPrompt(relevant)
 
     const messages = [
@@ -481,12 +486,14 @@ PROFIEL VAN DE GEBRUIKER:
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
       : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte, prevSessionCount)
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
-      system: systemPrompt,
-      messages
-    })
+    const response = await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, () =>
+      client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+        system: systemPrompt,
+        messages
+      })
+    )
 
     const answer = getText(response.content)
 

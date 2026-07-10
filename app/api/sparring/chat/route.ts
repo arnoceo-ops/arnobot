@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 
@@ -83,12 +84,14 @@ REGELS:
     { role: 'user' as const, content: message },
   ]
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
-    max_tokens: 512,
-    system: systemPrompt,
-    messages,
-  })
+  const response = await Sentry.startSpan({ name: 'sparring.main-response', op: 'ai.claude' }, () =>
+    anthropic.messages.create({
+      model: 'claude-sonnet-5',
+      max_tokens: 512,
+      system: systemPrompt,
+      messages,
+    })
+  )
 
   const answer = getText(response.content)
   return NextResponse.json({ answer })

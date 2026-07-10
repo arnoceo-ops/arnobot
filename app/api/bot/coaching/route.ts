@@ -3,6 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
@@ -120,7 +121,7 @@ export async function POST() {
 
       let precheckText = 'nee'
       try {
-        const precheck = await anthropic.messages.create({
+        const precheck = await Sentry.startSpan({ name: 'coaching.precheck', op: 'ai.claude' }, () => anthropic.messages.create({
           model: 'claude-sonnet-5',
           max_tokens: 100,
           system: 'Je beoordeelt of nieuwe gesprekken kwalitatief andere patronen laten zien dan de vorige coaching. Antwoord uitsluitend met "ja" of "nee".',
@@ -128,7 +129,7 @@ export async function POST() {
             role: 'user',
             content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}\n\nIs er kwalitatief iets veranderd in het patroon?`,
           }],
-        })
+        }))
         precheckText = getText(precheck.content, 'nee').trim().toLowerCase()
       } catch (err: any) {
         console.error('[coaching precheck error]', err?.status, err?.message ?? err)
@@ -226,7 +227,7 @@ export async function POST() {
 
   let response
   try {
-    response = await anthropic.messages.create({
+    response = await Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
     model: 'claude-fable-5',
     max_tokens: 4000,
     system: `Je bent Arno Diepeveen. Salesstrateeg, 20 jaar ervaring, direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
@@ -266,7 +267,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}`
     }]
-  })
+  }))
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
     return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
@@ -313,8 +314,8 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   const blogs: Blog[] = []
   try {
     // 3 parallelle RAG-queries — één per ontwikkelpunt voor precieze matching
-    const ragResults = await Promise.all(
-      parsed.ontwikkelpunten.map(p => getRelevantChunks(p.tekst, 8))
+    const ragResults = await Sentry.startSpan({ name: 'coaching.rag-lookup', op: 'db.rag' }, () =>
+      Promise.all(parsed.ontwikkelpunten.map(p => getRelevantChunks(p.tekst, 8)))
     )
 
     // Bouw een map van url → { title, chunks, punten }
@@ -351,16 +352,18 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
         `Blog ${i + 1}: "${b.title}" (${url})\nRelevant voor: ${b.punten.join(' + ')}\nFragment(en):\n${b.chunks.join('\n---\n')}`
       ).join('\n\n===\n\n')
 
-      const synthResponse = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 500,
-        system: `Je bent Arno Diepeveen. Schrijf per blog één korte zin in gewone spreektaal die uitlegt wat iemand uit dit blog haalt. Geen formele taal, geen jargon, geen lange zinnen. Schrijf zoals je het aan een vriend uitlegt. Begin met "Hier leer je..." of "Dit legt uit hoe je..." of iets vergelijkbaars. Kort, concreet, actiegericht.
+      const synthResponse = await Sentry.startSpan({ name: 'coaching.blog-synthesis', op: 'ai.claude' }, () =>
+        anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 500,
+          system: `Je bent Arno Diepeveen. Schrijf per blog één korte zin in gewone spreektaal die uitlegt wat iemand uit dit blog haalt. Geen formele taal, geen jargon, geen lange zinnen. Schrijf zoals je het aan een vriend uitlegt. Begin met "Hier leer je..." of "Dit legt uit hoe je..." of iets vergelijkbaars. Kort, concreet, actiegericht.
 
 Return ALLEEN een JSON array, geen uitleg eromheen:
 [{ "url": "...", "reden": "..." }]
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
-        messages: [{ role: 'user', content: synthContext }],
-      })
+          messages: [{ role: 'user', content: synthContext }],
+        })
+      )
 
       const synthRaw = getText(synthResponse.content)
       const synthMatch = synthRaw.match(/\[[\s\S]*\]/)
