@@ -41,7 +41,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
 
   const thBtn = (c: SortCol, align: 'left' | 'right' = 'left'): React.CSSProperties => ({
     fontFamily: 'sans-serif',
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 4,
     color: col === c ? '#f59e0b' : '#6b7280',
     cursor: 'pointer',
@@ -74,7 +74,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
           <tr key={i} style={{ borderBottom: '1px solid #1f2937' }}>
             <td style={{
               fontFamily: 'sans-serif',
-              fontSize: 11,
+              fontSize: 12,
               color: '#6b7280',
               padding: '11px 16px 11px 0',
               whiteSpace: 'nowrap',
@@ -118,7 +118,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
             </td>
             <td style={{
               fontFamily: 'sans-serif',
-              fontSize: 11,
+              fontSize: 12,
               color: '#374151',
               padding: '11px 0',
               textAlign: 'right',

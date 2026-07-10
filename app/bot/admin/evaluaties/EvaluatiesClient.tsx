@@ -23,7 +23,7 @@ function Row({ label, value }: { label: string; value: string | string[] | null 
   const v = Array.isArray(value) ? value.join(', ') : value
   return (
     <div style={{ display: 'flex', gap: 16, padding: '6px 0', borderBottom: '1px solid #1f2937' }}>
-      <span style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', minWidth: 140, paddingTop: 2 }}>{label}</span>
+      <span style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', minWidth: 140, paddingTop: 2 }}>{label}</span>
       <span style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, flex: 1 }}>{v}</span>
     </div>
   )
@@ -65,31 +65,31 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {/* Antwoordbeoordelingen */}
       {totalRatings > 0 && (
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 20 }}>ANTWOORDBEOORDELINGEN</p>
+          <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 20 }}>ANTWOORDBEOORDELINGEN</p>
           <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end' }}>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {Math.round((positiveRatings / totalRatings) * 100)}%
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>POSITIEF</p>
+              <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>POSITIEF</p>
             </div>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {totalRatings}
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>BEOORDELINGEN</p>
+              <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>BEOORDELINGEN</p>
             </div>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#cc4444', lineHeight: 1 }}>
                 {totalRatings - positiveRatings}
               </span>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>NEGATIEF</p>
+              <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>NEGATIEF</p>
             </div>
           </div>
 
           {negativeRatings.length > 0 && (
             <>
-              <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 10 }}>
+              <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 10 }}>
                 NEGATIEF BEOORDEELD (LAATSTE {negativeRatings.length})
               </p>
               {negativeRatings.map((r, idx) => (
@@ -111,11 +111,11 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                   </button>
                   {expandedRating === idx && (
                     <div style={{ padding: '0 20px 16px' }}>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 4 }}>GEBRUIKER</p>
+                      <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 4 }}>GEBRUIKER</p>
                       <p style={{ fontSize: 13, color: '#f59e0b', marginBottom: 16 }}>{r.user_name ?? 'onbekend'}</p>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>VRAAG</p>
+                      <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>VRAAG</p>
                       <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16 }}>{r.question}</p>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
+                      <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
                       <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.answer}</p>
                     </div>
                   )}
@@ -147,7 +147,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {/* Analyse output */}
       {analyse && (
         <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '24px 28px', marginBottom: 48 }}>
-          <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>CLAUDE ANALYSE</p>
+          <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>CLAUDE ANALYSE</p>
           <p style={{ fontSize: 14, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>{analyse}</p>
         </div>
       )}
@@ -169,7 +169,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{e.naam ?? 'Anoniem'}</span>
               {e.aanbevelen && (
-                <span style={{ fontSize: 11, letterSpacing: 2, color: e.aanbevelen === 'Ja' ? '#44cc88' : e.aanbevelen === 'Nee' ? '#cc4444' : '#f59e0b' }}>
+                <span style={{ fontSize: 12, letterSpacing: 2, color: e.aanbevelen === 'Ja' ? '#44cc88' : e.aanbevelen === 'Nee' ? '#cc4444' : '#f59e0b' }}>
                   {e.aanbevelen === 'Ja' ? 'BEVEELT AAN' : e.aanbevelen === 'Nee' ? 'BEVEELT NIET AAN' : 'MISSCHIEN'}
                 </span>
               )}
