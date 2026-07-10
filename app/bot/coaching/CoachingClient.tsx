@@ -384,7 +384,7 @@ export default function CoachingClient({ userId }: Props) {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, marginTop: 10 }} />
               <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                Er is te weinig nieuwe input voor een zinvol nieuw advies. Voer minstens 3 gesprekken en wacht 48 uur na je vorige coaching.
+                Je coaching is recent. Doe nog een paar gesprekken, dan heeft een nieuw advies meer diepte.
               </p>
             </div>
           )}
@@ -392,7 +392,7 @@ export default function CoachingClient({ userId }: Props) {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#cc2200', flexShrink: 0, marginTop: 10 }} />
               <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                Je patronen herhalen zich over meerdere coachingsronden. Arno genereert hieronder bewust confronterende opdrachten.
+                Dezelfde patronen komen meerdere rondes terug. De actiepunten hieronder geven je inzicht om mee te kunnen werken.
               </p>
             </div>
           )}
@@ -400,7 +400,7 @@ export default function CoachingClient({ userId }: Props) {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0, marginTop: 10 }} />
               <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                Je staat al sterk op de drie pijlers. Voer meer gesprekken om het beeld verder aan te scherpen.
+                Je staat sterk op alle onderdelen. Voer meer gesprekken om jezelf tot de 1% elite te mogen rekenen.
               </p>
             </div>
           )}
@@ -430,15 +430,17 @@ export default function CoachingClient({ userId }: Props) {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 32 }}>
                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#cc2200', flexShrink: 0, marginTop: 10 }} />
                 <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                  Je patronen herhalen zich hardnekkig over meerdere coachingsronden. Neem de actiepunten hieronder serieus en doe er iets mee voor het volgende advies.
+                  Dezelfde patronen komen nu meerdere rondes terug. Overweeg een andere aanpak. Suggesties vind je hieronder.
                 </p>
               </div>
             )}
-            {!doc.stagnatie && doc.weinig_voortgang && progressSignal === true && (
+            {!doc.stagnatie && doc.weinig_voortgang && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 32 }}>
                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, marginTop: 10 }} />
                 <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                  Arno ziet in je recente gesprekken aanleiding voor een bijgewerkt advies.
+                  {progressSignal === true
+                    ? 'Arno ziet in je recente gesprekken aanleiding voor een bijgewerkt advies.'
+                    : 'De vorige actiepunten zijn nog niet volledig doorgevoerd in je aanpak. You can do it, tiger!'}
                 </p>
               </div>
             )}
