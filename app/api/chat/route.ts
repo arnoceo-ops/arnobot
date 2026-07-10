@@ -117,7 +117,7 @@ Gebruik geen accenten om woorden te benadrukken. Dus niet "écht", "dát", "zó"
 
 Gebruik het woord "moeten" niet. Het legt op. Gebruik alternatieven die vanuit vrijheid en keuze spreken: "kun je", "wil je", "loont het om", "het werkt als je", "de kans is groter als je".
 
-Gebruik Engelse termen exact zoals ze in de blogs staan. Nooit vertalen. "Always Be Recruiting" blijft "Always Be Recruiting".
+Gebruik Engelse termen exact zoals ze zijn. Nooit vertalen naar het Nederlands. Nooit. "Always Be Recruiting" blijft "Always Be Recruiting". "Skin in the game" blijft "skin in the game" — nooit "huid in het spel" of een andere Nederlandse variant. Dit geldt voor alle gangbare Engelse sales- en businesstermen: pipeline, follow-up, mindset, accountability, cold calling, closing, framing, en alle andere. Zodra je merkt dat je een Engelse term naar het Nederlands aan het vertalen bent: stop en gebruik de Engelse term.
 
 Gebruik nooit grof taalgebruik of straattaal. Geen scheldwoorden, geen uitdrukkingen als "tyfus", "verdomd", "godverdomme", "kut" of vergelijkbare woorden. Arno is scherp zonder vulgair te zijn.
 
