@@ -8,14 +8,12 @@ export const dynamic = 'force-dynamic'
 type ChunkRow = {
   source: string
   url: string | null
-  created_at: string | null
 }
 
 type SourceSummary = {
   source: string
   url: string | null
   count: number
-  latest: string | null
   type: 'video' | 'blog'
 }
 
@@ -30,22 +28,19 @@ export default async function KennisbankPage() {
   )
 
   const [{ data, error }, { data: metaData }] = await Promise.all([
-    supabase.from('blog_chunks').select('source, url, created_at'),
+    supabase.from('blog_chunks').select('source, url'),
     supabase.from('arnobot_meta').select('key, value').in('key', ['last_embed_run', 'last_embed_chunks', 'last_embed_sources']),
   ])
 
   const meta: Record<string, string> = {}
   for (const row of metaData ?? []) meta[row.key] = row.value
 
-  const sourceMap: Record<string, { url: string | null; count: number; latest: string | null }> = {}
+  const sourceMap: Record<string, { url: string | null; count: number }> = {}
   for (const row of (data as ChunkRow[] | null) ?? []) {
     if (!sourceMap[row.source]) {
-      sourceMap[row.source] = { url: row.url, count: 0, latest: row.created_at }
+      sourceMap[row.source] = { url: row.url, count: 0 }
     }
     sourceMap[row.source].count++
-    if (row.created_at && (!sourceMap[row.source].latest || row.created_at > sourceMap[row.source].latest!)) {
-      sourceMap[row.source].latest = row.created_at
-    }
   }
 
   const sources: SourceSummary[] = Object.entries(sourceMap)
@@ -53,19 +48,13 @@ export default async function KennisbankPage() {
       source,
       url: info.url,
       count: info.count,
-      latest: info.latest,
       type: (source.startsWith('Video:') ? 'video' : 'blog') as 'video' | 'blog',
     }))
-    .sort((a, b) => (b.latest ?? '').localeCompare(a.latest ?? ''))
+    .sort((a, b) => a.source.localeCompare(b.source))
 
   const totalChunks = data?.length ?? 0
   const blogSources = sources.filter(s => s.type === 'blog')
   const videoSources = sources.filter(s => s.type === 'video')
-
-  function fmtDate(iso: string | null) {
-    if (!iso) return ''
-    return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: "'Space Mono', monospace" }}>
@@ -141,14 +130,7 @@ export default async function KennisbankPage() {
                     </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: 20, flexShrink: 0, alignItems: 'center' }}>
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#374151' }}>{s.count}x</span>
-                  {s.latest && (
-                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#4b5563', whiteSpace: 'nowrap' }}>
-                      {fmtDate(s.latest)}
-                    </span>
-                  )}
-                </div>
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#374151', flexShrink: 0 }}>{s.count}x</span>
               </div>
             ))}
           </div>
