@@ -51,7 +51,7 @@ export default withSentryConfig(nextConfig, {
 
   org: "sales-canvas",
 
-  project: "javascript-nextjs",
+  project: "arno-bot",
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
