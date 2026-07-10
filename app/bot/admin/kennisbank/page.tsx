@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
+import RssIngestButton from './RssIngestButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,19 +85,25 @@ export default async function KennisbankPage() {
           </div>
         </div>
 
-        {/* Laatste embed run */}
-        <div style={{ background: '#1f2937', padding: '16px 20px', marginBottom: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>LAATSTE EMBED RUN</p>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: meta['last_embed_run'] ? '#f1f5f9' : '#374151' }}>
-              {meta['last_embed_run']
-                ? new Date(meta['last_embed_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                : 'Nog nooit gedraaid'}
-            </p>
+        {/* Laatste embed run + RSS trigger */}
+        <div style={{ background: '#1f2937', padding: '16px 20px', marginBottom: 48, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>LAATSTE EMBED RUN</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: meta['last_embed_run'] ? '#f1f5f9' : '#374151' }}>
+                {meta['last_embed_run']
+                  ? new Date(meta['last_embed_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : 'Nog nooit gedraaid'}
+              </p>
+            </div>
+            {meta['last_embed_sources'] && (
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#4b5563' }}>{meta['last_embed_sources']}</p>
+            )}
           </div>
-          {meta['last_embed_sources'] && (
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#4b5563' }}>{meta['last_embed_sources']}</p>
-          )}
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 16 }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>RSS INGEST — loopt automatisch elke zaterdag om middernacht UTC</p>
+            <RssIngestButton />
+          </div>
         </div>
 
         {error && (
