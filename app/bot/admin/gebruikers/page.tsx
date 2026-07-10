@@ -35,21 +35,23 @@ function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = fal
 
   if (vertical) {
     return (
-      <a href={`?sort=${field}&dir=${nextDir}`}
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-          textDecoration: 'none', cursor: 'pointer', gap: 4, width: '100%',
-        }}>
-        <span style={{
-          writingMode: 'vertical-rl', transform: 'rotate(180deg)',
-          fontSize: '13px', letterSpacing: '2px',
-          color: isActive ? '#f59e0b' : '#6b7280',
-          whiteSpace: 'nowrap',
-        }}>{label}</span>
-        <span style={{ opacity: isActive ? 1 : 0, fontSize: '12px', color: '#f59e0b' }}>
-          {dir === 'desc' ? '↓' : '↑'}
-        </span>
-      </a>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', height: '100%' }}>
+        <a href={`?sort=${field}&dir=${nextDir}`}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            textDecoration: 'none', cursor: 'pointer', gap: 4,
+          }}>
+          <span style={{
+            writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+            fontSize: '13px', letterSpacing: '2px',
+            color: isActive ? '#f59e0b' : '#6b7280',
+            whiteSpace: 'nowrap',
+          }}>{label}</span>
+          <span style={{ opacity: isActive ? 1 : 0, fontSize: '12px', color: '#f59e0b' }}>
+            {dir === 'desc' ? '↓' : '↑'}
+          </span>
+        </a>
+      </div>
     )
   }
 
@@ -267,39 +269,39 @@ export default async function GebruikersPage({
                   }
                 </div>
                 {/* Gesprekken */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.count > 0 ? '#f1f5f9' : '#374151' }}>{u.count}</p>
                 </div>
                 {/* Vragen */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.questions > 0 ? '#f1f5f9' : '#374151' }}>{u.questions}</p>
                 </div>
                 {/* Laatste gesprek */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', color: '#9ca3af' }}>{lastSessionLabel}</p>
                 </div>
                 {/* Coaching */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || 'n.v.t.'}</p>
                 </div>
                 {/* Analyses */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
                 </div>
                 {/* Tier */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <TierToggle userId={u.user_id} currentTier={(u.tier as 'basis' | 'pro') ?? 'pro'} />
                 </div>
                 {/* Referral aanmeldingen */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || 'n.v.t.'}</p>
                 </div>
                 {/* Referral betaald */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
                 {/* Betaling */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   {(u as { renewal_requested_at?: string | null }).renewal_requested_at && !u.paid_at
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : u.paid_at
@@ -308,13 +310,13 @@ export default async function GebruikersPage({
                   }
                 </div>
                 {/* Mail opt-out */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '1px', fontWeight: 700, color: (u as { nudge_opt_out?: boolean }).nudge_opt_out ? '#cc2200' : '#44cc88' }}>
                     {(u as { nudge_opt_out?: boolean }).nudge_opt_out ? 'UIT' : 'AAN'}
                   </p>
                 </div>
                 {/* LinkedIn */}
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'center' }}>
                   {u.linkedin
                     ? <a href={u.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>LI →</a>
                     : <SearchLinkedIn userId={u.user_id} name={name} email={u.email ?? ''} hasLinkedin={false} />
