@@ -215,7 +215,7 @@ export default function BlogsClient() {
                     <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 700, flexShrink: 0 }}>
                       {periodLabel(a.period_days)}
                     </span>
-                    <span style={{ color: '#9ca3af', fontSize: 12, flexShrink: 0 }}>
+                    <span style={{ color: '#9ca3af', fontSize: 14, flexShrink: 0 }}>
                       {formatDate(a.created_at)}
                     </span>
                     <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
