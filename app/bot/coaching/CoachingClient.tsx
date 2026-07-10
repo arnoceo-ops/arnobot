@@ -81,6 +81,7 @@ export default function CoachingClient({ userId }: Props) {
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [progressSignal, setProgressSignal] = useState<boolean | null>(null)
 
   useEffect(() => {
     const cacheKey = `arnobot_coaching_doc_${userId}`
@@ -113,6 +114,23 @@ export default function CoachingClient({ userId }: Props) {
           } else {
             setDoc(c)
             localStorage.setItem(cacheKey, JSON.stringify(c))
+          }
+
+          if (c.weinig_voortgang && !c.stagnatie) {
+            const precheckKey = `arnobot_coaching_precheck_${userId}_${new Date().toISOString().slice(0, 10)}`
+            const cached = localStorage.getItem(precheckKey)
+            if (cached !== null) {
+              setProgressSignal(cached === 'ja')
+            } else {
+              fetch('/api/bot/coaching-precheck')
+                .then(r => r.json())
+                .then(d => {
+                  const result = d.hasProgress === true
+                  localStorage.setItem(precheckKey, result ? 'ja' : 'nee')
+                  setProgressSignal(result)
+                })
+                .catch(() => setProgressSignal(false))
+            }
           }
         } else if (c && !localStorage.getItem(cacheKey)) {
           // oude rij zonder MSA — toon niets, zodat de gebruiker genereert
@@ -189,6 +207,9 @@ export default function CoachingClient({ userId }: Props) {
       } else if (data.coaching) {
         setDoc(data.coaching)
         localStorage.setItem(`arnobot_coaching_doc_${userId}`, JSON.stringify(data.coaching))
+        const precheckKey = `arnobot_coaching_precheck_${userId}_${new Date().toISOString().slice(0, 10)}`
+        localStorage.removeItem(precheckKey)
+        setProgressSignal(null)
       } else if (data.error) {
         setError('Er ging iets mis. Probeer opnieuw.')
       }
@@ -413,11 +434,11 @@ export default function CoachingClient({ userId }: Props) {
                 </p>
               </div>
             )}
-            {!doc.stagnatie && doc.weinig_voortgang && (
+            {!doc.stagnatie && doc.weinig_voortgang && progressSignal === true && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 32 }}>
                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, marginTop: 10 }} />
                 <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                  Er is weinig kwalitatieve verandering zichtbaar. De actiepunten hieronder zijn bewust concreter dan normaal.
+                  Arno ziet in je recente gesprekken aanleiding voor een bijgewerkt advies.
                 </p>
               </div>
             )}
