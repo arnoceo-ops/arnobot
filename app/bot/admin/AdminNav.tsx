@@ -8,6 +8,7 @@ const CENTER_LINKS = [
   { href: '/bot/admin/meta-analyse', label: 'META' },
   { href: '/bot/admin/emails', label: 'CRONS' },
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
+  { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
 ]
 
 function navLinkStyle(active: boolean): React.CSSProperties {

@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/bot/admin/meta-analyse', label: 'META' },
   { href: '/bot/admin/emails', label: 'CRONS' },
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
+  { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
   { href: '/bot/admin/widget', label: 'ARNO.BLOG' },
   { href: '/api/admin/logout', label: 'UITLOGGEN' },
 ]
