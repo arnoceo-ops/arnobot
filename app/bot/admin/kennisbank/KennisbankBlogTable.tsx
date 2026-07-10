@@ -74,8 +74,8 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
           <tr key={i} style={{ borderBottom: '1px solid #1f2937' }}>
             <td style={{
               fontFamily: 'sans-serif',
-              fontSize: 12,
-              color: '#6b7280',
+              fontSize: 14,
+              color: '#9ca3af',
               padding: '11px 16px 11px 0',
               whiteSpace: 'nowrap',
               verticalAlign: 'middle',
@@ -118,8 +118,8 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
             </td>
             <td style={{
               fontFamily: 'sans-serif',
-              fontSize: 12,
-              color: '#6b7280',
+              fontSize: 14,
+              color: '#9ca3af',
               padding: '11px 0',
               textAlign: 'right',
               whiteSpace: 'nowrap',
