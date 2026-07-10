@@ -118,16 +118,31 @@ export async function getRelevantChunks(query: string, topN = 20, expand = false
   const searchQuery = expand ? await expandQuery(query) : query
   const queryEmbedding = await getEmbedding(searchQuery)
 
-  // Haal 100 kandidaten op voor maximale dekking van het archief
-  const { data, error } = await supabase.rpc('match_blog_chunks', {
-    query_embedding: queryEmbedding,
-    match_count: 100,
-  })
+  // Vector: 100 kandidaten voor maximale semantische dekking van het archief.
+  // Fulltext: 30 kandidaten op exacte woorden, vangt namen/methodes/cijfers die
+  // semantisch niet dicht genoeg bij de vraag liggen om in de vector-top-100 te komen.
+  const [{ data, error }, { data: ftData, error: ftError }] = await Promise.all([
+    supabase.rpc('match_blog_chunks', {
+      query_embedding: queryEmbedding,
+      match_count: 100,
+    }),
+    supabase.rpc('match_blog_chunks_fulltext', {
+      query_text: query,
+      match_count: 30,
+    }),
+  ])
 
   if (error) throw new Error(`Supabase RAG error: ${error.message}`)
+  if (ftError) console.error('[RAG] Fulltext-zoekopdracht mislukt, ga verder met alleen vector:', ftError.message)
 
-  const candidates = (data as { content: string; context: string | null; source: string | null; url: string | null; similarity: number }[])
+  const vectorCandidates = (data as { content: string; context: string | null; source: string | null; url: string | null; similarity: number }[])
     .map(row => ({ content: row.content, context: row.context ?? null, source: row.source ?? null, url: row.url ?? null }))
+
+  const fulltextCandidates = (ftData as { content: string; context: string | null; source: string | null; url: string | null; rank: number }[] | null ?? [])
+    .map(row => ({ content: row.content, context: row.context ?? null, source: row.source ?? null, url: row.url ?? null }))
+
+  const seen = new Set(vectorCandidates.map(c => c.content))
+  const candidates = [...vectorCandidates, ...fulltextCandidates.filter(c => !seen.has(c.content))]
 
   if (candidates.length === 0) return []
 
