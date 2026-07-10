@@ -31,3 +31,55 @@ jobs:
         # --omit=dev: sluit devDependencies uit
         # Toelichting: high-severity meldingen in @sanity/cli en Next.js bundled postcss
         # zijn build-tool false positives die nooit in productie draaien.
+
+  typecheck:
+    name: TypeScript typecheck
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+        # Vercel's next build faalt ook al op typefouten vóór deploy; dit geeft
+        # sneller feedback direct in de PR in plaats van te wachten op de preview.
+
+  lint-changed-lines:
+    name: Lint gewijzigde regels
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint (alleen nieuwe/gewijzigde regels)
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-check
+          filter_mode: added
+          fail_level: error
+          eslint_flags: '.'
+        # filter_mode: added zorgt dat alleen fouten op écht gewijzigde regels
+        # meetellen. Er staan nog 66 bestaande lint-fouten in oudere code
+        # (2026-07-10 gemeten) die hierdoor bewust niet blokkeren, nieuwe
+        # fouten in nieuwe/gewijzigde regels wel.
