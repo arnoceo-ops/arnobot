@@ -12,8 +12,8 @@ const supabase = createClient(
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const RSS_URL = 'https://arno.blog/blog?format=rss'
-const CHUNK_SIZE = 200
-const OVERLAP = 50
+const CHUNK_SIZE = 300
+const OVERLAP = 75
 const MAX_NEW_PER_RUN = 5
 
 // ── RSS parsing ───────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}` },
-    body: JSON.stringify({ input: texts, model: 'voyage-3' }),
+    body: JSON.stringify({ input: texts, model: 'voyage-3-large' }),
   })
   if (!res.ok) throw new Error(`Voyage API error: ${await res.text()}`)
   const json = await res.json()
