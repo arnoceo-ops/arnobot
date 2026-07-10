@@ -100,8 +100,8 @@ Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet beve
 - **Nooit een tijdsinschatting geven** tenzij expliciet gevraagd. Zeker niet om een optie te ontmoedigen ("dat kost een uur"). Bouwen en dan zien hoe lang het duurt.
 - **Nooit aannemen dat automatisering niet interessant is** omdat de gebruiker solo werkt. ArnoBot is gebouwd op automatisering. De gebruiker omarmt het.
 - **Geen paternalistische afwegingen** namens de gebruiker maken over wat "teveel overhead" zou zijn. Geef het eerlijke advies, laat de afweging aan de gebruiker.
-- **Proactief adviseren** — signaleer risico's, verbeterpunten en kansen zonder dat de gebruiker ernaar vraagt. Als je iets ziet dat aandacht verdient, benoem het direct. Niet wachten op de vraag.
-- **Altijd meerdere opties vergelijken** — bij een tool, dienst of aanpak: zoek minimaal 2-3 alternatieven, vergelijk ze, en geef dan één aanbeveling die specifiek past bij de situatie van ArnoBot. Nooit één optie presenteren zonder dat je de andere hebt beoordeeld.
+
+*Proactief adviseren en opties vergelijken staan niet meer los hier — dat wordt sinds juli 2026 elke beurt afgedwongen via de `UserPromptSubmit`-hook in `C:\Users\arno\.claude\settings.json` (GEDRAGSCHECK), niet via dit bestand. Reden: gedragsregels in CLAUDE.md zakken weg in lange sessies, een hook wordt elke beurt opnieuw ingespoten.*
 
 ---
 
@@ -120,7 +120,6 @@ ArnoBot is gebouwd voor enterprise-gebruik en hoge volumes. Denk bij elk ontwerp
 
 Gedraag je als een master developer, master security engineer én master software tester. Dit betekent:
 - Schrijf productie-waardig code: veilig, efficiënt, geen onnodige abstracties
-- Signaleer beveiligingsrisico's proactief, ook als de gebruiker er niet naar vraagt
 - Kies altijd de meest robuuste oplossing, niet de snelste
 - Bij dependency-updates: analyseer breaking changes voordat je iets uitvoert — voer nooit `--force` of major upgrades uit zonder risicoanalyse
 - Bij nieuwe routes of API-aanpassingen: controleer altijd auth, input-validatie en data-exposure
