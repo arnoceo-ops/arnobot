@@ -27,8 +27,8 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const CHUNK_SIZE = 200       // Kleiner voor precisere matches
-const OVERLAP = 50
+const CHUNK_SIZE = 300       // Volledig argument per chunk incl. aanleiding en conclusie
+const OVERLAP = 75           // 25% overlap voor continuïteit tussen chunks
 const BATCH_SIZE = 8         // Voyage embeddings per request
 const VOYAGE_DELAY_MS = 21000 // 3 RPM Voyage
 const CONTEXT_CONCURRENCY = 10 // Parallelle Claude Haiku calls
@@ -181,7 +181,7 @@ async function embedBatch(texts) {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${VOYAGE_API_KEY}` },
-    body: JSON.stringify({ input: texts, model: 'voyage-3' }),
+    body: JSON.stringify({ input: texts, model: 'voyage-3-large' }),
   })
   if (!res.ok) {
     const err = await res.text()

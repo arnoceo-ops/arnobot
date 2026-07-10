@@ -12,7 +12,7 @@ export async function getVoyageEmbedding(text: string): Promise<number[]> {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}`,
     },
-    body: JSON.stringify({ input: [text], model: 'voyage-3' }),
+    body: JSON.stringify({ input: [text], model: 'voyage-3-large' }),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -82,7 +82,7 @@ async function rerankChunks(
 
 export type RagChunk = { content: string; context: string | null; source: string | null; url: string | null; relevance_score: number }
 
-function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 3): RagChunk[] {
+function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 4): RagChunk[] {
   const sourceCounts: Record<string, number> = {}
   const result: RagChunk[] = []
   for (const chunk of chunks) {
@@ -95,13 +95,13 @@ function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 3): Ra
   return result
 }
 
-export async function getRelevantChunks(query: string, topN = 15): Promise<RagChunk[]> {
+export async function getRelevantChunks(query: string, topN = 20): Promise<RagChunk[]> {
   const queryEmbedding = await getEmbedding(query)
 
-  // Haal 60 kandidaten op zodat diverse bronnen een kans maken
+  // Haal 100 kandidaten op voor maximale dekking van het archief
   const { data, error } = await supabase.rpc('match_blog_chunks', {
     query_embedding: queryEmbedding,
-    match_count: 60,
+    match_count: 100,
   })
 
   if (error) throw new Error(`Supabase RAG error: ${error.message}`)
@@ -111,8 +111,8 @@ export async function getRelevantChunks(query: string, topN = 15): Promise<RagCh
 
   if (candidates.length === 0) return []
 
-  // Rerank naar top 30, dan source diversity naar topN
-  const reranked = await rerankChunks(query, candidates, Math.min(30, candidates.length))
+  // Rerank naar top 50, dan source diversity naar topN
+  const reranked = await rerankChunks(query, candidates, Math.min(50, candidates.length))
   return diversifyChunks(reranked, topN)
 }
 
