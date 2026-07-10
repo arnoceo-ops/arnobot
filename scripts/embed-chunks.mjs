@@ -4,7 +4,7 @@
  * Uitvoeren: node scripts/embed-chunks.mjs
  */
 
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { createClient } from '@supabase/supabase-js'
@@ -118,6 +118,25 @@ function parseVideos(text) {
   return videos
 }
 
+// ── RSS artikelen parser (data/rss_articles/*.txt) ───────────────────────────
+function parseRssArticles(dir, existingUrls) {
+  if (!existsSync(dir)) return []
+  const files = readdirSync(dir).filter(f => f.endsWith('.txt')).sort()
+  const articles = []
+  for (const file of files) {
+    const text = readFileSync(join(dir, file), 'utf-8')
+    const lines = text.split('\n')
+    const title = lines[0]?.trim()
+    const url = lines[1]?.trim() || null
+    const date = lines[2]?.trim()
+    const body = lines.slice(4).join('\n').trim()
+    if (!title || body.length < 50) continue
+    if (url && existingUrls.has(url)) continue  // al aanwezig via CSU, geen duplicaat
+    articles.push({ source: `${title} (${date})`, title, url, text: body })
+  }
+  return articles
+}
+
 // ── Chunking ──────────────────────────────────────────────────────────────────
 function makeChunks(doc) {
   const words = doc.text.split(/\s+/).filter(Boolean)
@@ -199,9 +218,15 @@ async function main() {
 
   const blogs = parseBlogs(blogText)
   const videos = parseVideos(videoText)
-  console.log(`${blogs.length} blogs + ${videos.length} video's gevonden`)
 
-  const allDocs = [...blogs, ...videos]
+  // RSS-artikelen: dedupliceert op URL tegen bestaande CSU-blogs
+  const existingUrls = new Set(blogs.map(b => b.url).filter(Boolean))
+  const rssDir = join(__dirname, '..', 'data', 'rss_articles')
+  const rssArticles = parseRssArticles(rssDir, existingUrls)
+
+  console.log(`${blogs.length} blogs + ${videos.length} video's + ${rssArticles.length} RSS-artikelen gevonden`)
+
+  const allDocs = [...blogs, ...videos, ...rssArticles]
   const rawChunks = allDocs.flatMap(makeChunks)
   console.log(`${rawChunks.length} chunks aangemaakt. Context genereren via Claude Haiku...`)
 
@@ -245,7 +270,7 @@ async function main() {
   await supabase.from('arnobot_meta').upsert([
     { key: 'last_embed_run', value: now, updated_at: now },
     { key: 'last_embed_chunks', value: String(inserted), updated_at: now },
-    { key: 'last_embed_sources', value: `${blogs.length} blogs, ${videos.length} video's`, updated_at: now },
+    { key: 'last_embed_sources', value: `${blogs.length} blogs, ${videos.length} video's, ${rssArticles.length} RSS`, updated_at: now },
   ])
   console.log(`\nKlaar! Timestamp opgeslagen in arnobot_meta.`)
 }
