@@ -28,7 +28,7 @@ function renderInline(text: string) {
 function AnalyseText({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/)
   return (
-    <div style={{ fontFamily: 'sans-serif', fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+    <div style={{ fontFamily: 'sans-serif', fontSize: 14, lineHeight: 1.9, color: '#9ca3af' }}>
       {blocks.map((block, i) => {
         const trimmed = block.trim()
         if (!trimmed) return null
@@ -48,7 +48,7 @@ function AnalyseText({ text }: { text: string }) {
             {lines.map((line, j) => {
               const isInvalshoek = line.startsWith('Invalshoek:')
               return (
-                <p key={j} style={{ margin: j === 0 ? 0 : '4px 0 0 0', color: isInvalshoek ? '#6b7280' : '#9ca3af', fontSize: isInvalshoek ? 12 : 15 }}>
+                <p key={j} style={{ margin: j === 0 ? 0 : '4px 0 0 0', color: isInvalshoek ? '#6b7280' : '#9ca3af', fontSize: isInvalshoek ? 12 : 14 }}>
                   {isInvalshoek
                     ? <><span style={{ color: '#f59e0b', fontWeight: 700 }}>Invalshoek:</span>{renderInline(line.slice('Invalshoek:'.length))}</>
                     : renderInline(line)

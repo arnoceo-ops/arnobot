@@ -167,7 +167,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{e.naam ?? 'Anoniem'}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{e.naam ?? 'Anoniem'}</span>
               {e.aanbevelen && (
                 <span style={{ fontSize: 12, letterSpacing: 2, color: e.aanbevelen === 'Ja' ? '#44cc88' : e.aanbevelen === 'Nee' ? '#cc4444' : '#f59e0b' }}>
                   {e.aanbevelen === 'Ja' ? 'BEVEELT AAN' : e.aanbevelen === 'Nee' ? 'BEVEELT NIET AAN' : 'MISSCHIEN'}

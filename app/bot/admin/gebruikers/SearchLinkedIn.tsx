@@ -54,7 +54,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
   if (found) {
     return (
       <a href={found} target="_blank" rel="noopener noreferrer"
-        style={{ fontSize: '13px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>
+        style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>
         LI →
       </a>
     )
@@ -70,7 +70,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
           onKeyDown={e => { if (e.key === 'Enter') saveManual(); if (e.key === 'Escape') setShowInput(false) }}
           placeholder="linkedin.com/in/..."
           style={{
-            fontSize: '11px', padding: '4px 8px', borderRadius: 4,
+            fontSize: '12px', padding: '4px 8px', borderRadius: 4,
             border: '1px solid #374151', background: '#111827',
             color: '#f1f5f9', width: 160, outline: 'none',
           }}
@@ -78,7 +78,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
         <button
           onClick={saveManual}
           disabled={saving || !inputValue.trim()}
-          style={{ fontSize: '10px', letterSpacing: '2px', color: '#44cc88', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ fontSize: '12px', letterSpacing: '2px', color: '#44cc88', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {saving ? '...' : 'OPSLAAN'}
         </button>
@@ -89,10 +89,10 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
   if (notFound) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-        <span style={{ fontSize: '11px', letterSpacing: '1px', color: '#cc4444', fontWeight: 700 }}>NIET GEVONDEN</span>
+        <span style={{ fontSize: '12px', letterSpacing: '1px', color: '#cc4444', fontWeight: 700 }}>NIET GEVONDEN</span>
         <button
           onClick={() => setShowInput(true)}
-          style={{ fontSize: '10px', letterSpacing: '2px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ fontSize: '12px', letterSpacing: '2px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           HANDMATIG
         </button>
@@ -105,7 +105,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
       onClick={search}
       disabled={loading}
       style={{
-        fontSize: '11px', letterSpacing: '2px', color: '#f59e0b',
+        fontSize: '12px', letterSpacing: '2px', color: '#f59e0b',
         background: 'none', border: 'none', cursor: loading ? 'default' : 'pointer',
         fontWeight: 700, padding: 0,
       }}

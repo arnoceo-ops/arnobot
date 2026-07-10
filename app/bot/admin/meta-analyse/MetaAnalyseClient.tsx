@@ -45,7 +45,7 @@ function renderInline(text: string) {
 function AnalyseText({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/)
   return (
-    <div style={{ fontFamily: 'sans-serif', fontSize: 15, lineHeight: 1.9, color: '#9ca3af', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+    <div style={{ fontFamily: 'sans-serif', fontSize: 14, lineHeight: 1.9, color: '#9ca3af', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
       {blocks.map((block, i) => {
         const trimmed = block.trim()
         if (!trimmed) return null
@@ -67,7 +67,7 @@ function AnalyseText({ text }: { text: string }) {
                 <p key={j} style={{
                   margin: j === 0 ? 0 : '4px 0 0 0',
                   color: isScore ? '#f1f5f9' : isKritisch ? '#f59e0b' : isOverall ? '#f1f5f9' : '#9ca3af',
-                  fontSize: isScore || isOverall ? 14 : 15,
+                  fontSize: 14,
                   fontWeight: isOverall ? 700 : 400,
                 }}>
                   {isKritisch
@@ -429,7 +429,7 @@ export default function MetaAnalyseClient() {
       </div>
 
       {archiveLoading ? (
-        <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>
+        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
         <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
       ) : (

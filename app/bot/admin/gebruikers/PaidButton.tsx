@@ -19,11 +19,11 @@ export default function PaidButton({
   if (paid) {
     return (
       <div style={{ textAlign: 'right' }}>
-        <span style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: '#44cc88', display: 'block' }}>
+        <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: '#44cc88', display: 'block' }}>
           BETAALD
         </span>
         {expiresAt && (
-          <span style={{ fontSize: '10px', color: '#6b7280', display: 'block', marginTop: 2 }}>
+          <span style={{ fontSize: '12px', color: '#6b7280', display: 'block', marginTop: 2 }}>
             t/m {new Date(expiresAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
           </span>
         )}
@@ -51,7 +51,7 @@ export default function PaidButton({
       <button
         onClick={() => setExpanded(true)}
         style={{
-          fontSize: '10px', letterSpacing: '1px', fontWeight: 700,
+          fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
           padding: '3px 8px', borderRadius: 3, border: '1px solid #374151',
           cursor: 'pointer', background: 'transparent', color: '#9ca3af',
           whiteSpace: 'nowrap',
@@ -69,7 +69,7 @@ export default function PaidButton({
         value={expires}
         onChange={e => setExpires(e.target.value)}
         style={{
-          fontSize: '10px', padding: '3px 6px', background: '#111827',
+          fontSize: '12px', padding: '3px 6px', background: '#111827',
           border: '1px solid #374151', color: '#f1f5f9', borderRadius: 3,
           width: '100%',
         }}
@@ -79,7 +79,7 @@ export default function PaidButton({
           onClick={register}
           disabled={loading || !expires}
           style={{
-            fontSize: '10px', letterSpacing: '1px', fontWeight: 700,
+            fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
             padding: '3px 8px', borderRadius: 3, border: 'none',
             cursor: loading || !expires ? 'not-allowed' : 'pointer',
             background: expires ? '#f59e0b' : '#374151',
@@ -92,7 +92,7 @@ export default function PaidButton({
         <button
           onClick={() => setExpanded(false)}
           style={{
-            fontSize: '10px', padding: '3px 6px', borderRadius: 3,
+            fontSize: '12px', padding: '3px 6px', borderRadius: 3,
             border: '1px solid #374151', background: 'transparent',
             color: '#6b7280', cursor: 'pointer',
           }}

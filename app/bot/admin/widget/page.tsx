@@ -83,19 +83,19 @@ export default async function AdminWidgetPage({
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>VAN</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>VAN</label>
             <input type="date" name="from" defaultValue={from} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>TOT EN MET</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>TOT EN MET</label>
             <input type="date" name="to" defaultValue={to} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>SORTERING</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>SORTERING</label>
             <select name="sort" defaultValue={sort}
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}>
+              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>
               <option value="count_desc">Meeste vragen eerst</option>
@@ -103,7 +103,7 @@ export default async function AdminWidgetPage({
             </select>
           </div>
           <button type="submit"
-            style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '14px', alignSelf: 'flex-end' }}>
+            style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px', alignSelf: 'flex-end' }}>
             LAAD
           </button>
           {sessionList.length > 0 && (
@@ -115,31 +115,31 @@ export default async function AdminWidgetPage({
       </div>
 
       {sessionList.length === 0 ? (
-        <p style={{ opacity: 0.4 }}>Geen gesprekken gevonden voor {dateRange}.</p>
+        <p style={{ color: '#6b7280' }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
         <div>
-          <p style={{ opacity: 0.4, fontSize: '16px', marginBottom: '32px' }}>
+          <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>
             {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''}, {rows.length} berichten
           </p>
           {sessionList.map(([sessionId, messages], idx) => {
             const sessionDate = fmtDate(messages[0].created_at.slice(0, 10))
             return (
               <div key={sessionId} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
-                <p style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', marginBottom: '4px', opacity: 0.7 }}>
+                <p style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', marginBottom: '4px' }}>
                   SESSIE {idx + 1} · {messages[0].ip}
                 </p>
-                <p style={{ fontSize: '16px', opacity: 0.3, marginBottom: '28px' }}>
+                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
                   {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
                 </p>
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '28px' }}>
-                    <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '8px', color: '#f1f5f9' }}>
+                    <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px', color: '#f1f5f9' }}>
                       {msg.question}
                     </p>
-                    <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#aaa', whiteSpace: 'pre-wrap' }}>
+                    <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>
                       {msg.answer}
                     </p>
-                    <p style={{ fontSize: '11px', opacity: 0.25, marginTop: '6px' }}>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px' }}>
                       {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
                     </p>
                   </div>

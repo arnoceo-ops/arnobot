@@ -43,7 +43,7 @@ function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = fal
           }}>
           <span style={{
             writingMode: 'vertical-rl', transform: 'rotate(180deg)',
-            fontSize: '13px', letterSpacing: '2px',
+            fontSize: '12px', letterSpacing: '2px',
             color: isActive ? '#f59e0b' : '#6b7280',
             whiteSpace: 'nowrap',
           }}>{label}</span>
@@ -253,7 +253,7 @@ export default async function GebruikersPage({
                       if (!tr) return null
                       const isThird = ts && ((new Date(ts).getTime() - new Date(tr).getTime()) / (1000 * 60 * 60 * 24)) >= 200
                       return (
-                        <span style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: isThird ? '#cc2200' : '#f59e0b', background: isThird ? '#2a1010' : '#1e1a0a', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
+                        <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: isThird ? '#cc2200' : '#f59e0b', background: isThird ? '#2a1010' : '#1e1a0a', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
                           {isThird ? '3e TRIAL' : '2e TRIAL'}
                         </span>
                       )

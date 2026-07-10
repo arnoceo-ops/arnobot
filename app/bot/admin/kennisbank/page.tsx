@@ -103,7 +103,7 @@ export default async function KennisbankPage() {
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', marginBottom: 48, lineHeight: 1 }}>KENNISBANK</h1>
+        <h1 style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 48, letterSpacing: '-1px', color: '#f1f5f9', marginBottom: 48, lineHeight: 1 }}>KENNISBANK</h1>
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 40, marginBottom: 56, alignItems: 'flex-end' }}>

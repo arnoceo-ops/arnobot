@@ -117,12 +117,12 @@ export default async function ArnoBotAdminPage({
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>GEBRUIKER</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>GEBRUIKER</label>
             <input
               type="text" name="naam" list="gebruikers-list"
               defaultValue={filterNaam || naamParam}
               placeholder="Zoek op naam..."
-              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}
             />
             <datalist id="gebruikers-list">
               <option value="ALLE" />
@@ -130,19 +130,19 @@ export default async function ArnoBotAdminPage({
             </datalist>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>VAN</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>VAN</label>
             <input type="date" name="from" defaultValue={from} lang="nl"
-              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>TOT EN MET</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>TOT EN MET</label>
             <input type="date" name="to" defaultValue={to} lang="nl"
-              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }} />
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7 }}>SORTERING</label>
+            <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>SORTERING</label>
             <select name="sort" defaultValue={sort}
-              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '16px' }}>
+              style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>
               <option value="count_desc">Meeste vragen eerst</option>
@@ -151,14 +151,14 @@ export default async function ArnoBotAdminPage({
           </div>
           <div className="admin-form-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <button type="submit"
-              style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
+              style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px' }}>
               LAAD
             </button>
             {sessionList.length > 0 && (
               <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
                   href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
-                  style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                   ↓ DOWNLOAD CSV
                 </a>
@@ -170,10 +170,10 @@ export default async function ArnoBotAdminPage({
       </div>
 
       {sessionList.length === 0 ? (
-        <p style={{ opacity: 0.4 }}>Geen gesprekken gevonden voor {dateRange}.</p>
+        <p style={{ color: '#6b7280' }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
         <div>
-          <p style={{ opacity: 0.4, fontSize: '16px', marginBottom: '32px' }}>
+          <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>
             {sessionList.length} sessie{sessionList.length !== 1 ? 's' : ''}, {sessionList.reduce((sum, [, msgs]) => sum + msgs.length, 0)} berichten
           </p>
           {sessionList.map(([sessionId, messages], idx) => {
@@ -183,27 +183,27 @@ export default async function ArnoBotAdminPage({
             return (
               <div key={sessionId} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                  <p style={{ fontSize: '16px', letterSpacing: '2px', color: '#f59e0b', opacity: 0.7, margin: 0 }}>
+                  <p style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', margin: 0 }}>
                     SESSIE {idx + 1} · {messages[0].ip}
                   </p>
                   {naam && userId && (
                     <a
                       href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${userId}`}
-                      style={{ fontSize: '15px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
+                      style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
                     >{naam}</a>
                   )}
                 </div>
-                <p style={{ fontSize: '16px', opacity: 0.3, marginBottom: '28px' }}>
+                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
                   {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
                 </p>
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '28px' }}>
-                    <p style={{ fontWeight: 700, fontSize: '16px', marginBottom: '8px', color: '#f1f5f9' }}>
+                    <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px', color: '#f1f5f9' }}>
                       {msg.question ?? ''}
                     </p>
-                    <p style={{ fontSize: '16px', lineHeight: 1.8, color: '#9ca3af' }}
+                    <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
                       dangerouslySetInnerHTML={{ __html: renderAnswer(msg.answer) }} />
-                    <p style={{ fontSize: '11px', opacity: 0.25, marginTop: '6px' }}>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px' }}>
                       {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
                     </p>
                   </div>

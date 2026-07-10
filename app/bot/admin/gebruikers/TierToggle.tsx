@@ -26,7 +26,7 @@ export default function TierToggle({ userId, currentTier }: { userId: string; cu
       onClick={toggle}
       disabled={loading}
       style={{
-        fontSize: '11px',
+        fontSize: '12px',
         letterSpacing: '2px',
         fontWeight: 700,
         padding: '3px 8px',
