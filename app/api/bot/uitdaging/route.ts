@@ -84,17 +84,32 @@ export async function GET() {
     ? `Het is weekend. Stel een reflectieve mindsetvraag die iemand met zichzelf laat nadenken over wie hij is als salesprofessional. Geen acties, geen bellen, geen afspraken. Filosofisch, confronterend op het niveau van overtuigingen en identiteit.`
     : `Stel een mindsetvraag die rechtstreeks aansluit op de patronen en blinde vlekken uit het coachingsprofiel hierboven. Geen acties als "bel nu een klant" of "maak een lijst". Die staan al in het coachingsdocument. Richt je op overtuigingen, zelfbeeld, en de manier van denken die bepaalt of iemand groeit of stilstaat.`
 
+  const voortgangInstructie = `Als uit de recente gesprekken blijkt dat de gebruiker progressie boekt op een coaching-punt, stel dan een vraag die die ontwikkeling verdiept. Niet een vraag die het probleem herhaalt alsof het onopgelost is.`
+
+  const taalInstructie = `Schrijf de vraag in verzorgd Nederlands. Lees de zin terug voordat je antwoordt: als een bijzin grammaticaal onhandig loopt, herschrijf hem. Gebruik reflexieve constructies correct (bijvoorbeeld "waarbij je je" in plaats van "die je"). Geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik nooit een em dash (—): gebruik een komma, dubbele punt of nieuwe zin.`
+
   const hasContext = contextParts.length > 0
 
   const prompt = hasContext
-    ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details. Gebruik nooit een em dash (—): gebruik een komma, dubbele punt of nieuwe zin. Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).`
-    : `Je bent Arno Diepeveen. ${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Gebruik nooit een em dash (—): gebruik een komma, dubbele punt of nieuwe zin. Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).`
+    ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\n${voortgangInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.\n\n${taalInstructie}`
+    : `Je bent Arno Diepeveen. ${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg.\n\n${taalInstructie}`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
-    max_tokens: 120,
-    messages: [{ role: 'user', content: prompt }],
-  })
+  let response
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-fable-5',
+      max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }],
+    })
+  } catch (err: unknown) {
+    console.error('[uitdaging] generate error', err)
+    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+  }
+
+  if (response.stop_reason === 'refusal') {
+    console.error('[uitdaging] refusal')
+    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+  }
 
   const uitdaging = getText(response.content).trim()
 
