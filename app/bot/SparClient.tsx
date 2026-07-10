@@ -1636,7 +1636,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
                       {msg.log_id && !msg.content?.startsWith('**') && (
-                        <div style={{ display: 'flex', gap: 4, marginTop: 12, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 20, alignItems: 'center' }}>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(msg.content ?? '')
@@ -1644,11 +1644,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                               setTimeout(() => setCopiedIdx(null), 1500)
                             }}
                             title="Kopieer antwoord"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px 7px', color: copiedIdx === i ? '#f59e0b' : '#4b5563', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px 7px', color: copiedIdx === i ? '#f59e0b' : '#6b7280', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            onMouseEnter={e => { if (copiedIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                            onMouseLeave={e => { if (copiedIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
                           >
                             {copiedIdx === i
-                              ? <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,7 5,11 12,2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              : <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M1 9V1.5a.5.5 0 01.5-.5H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                              ? <svg width="15" height="15" viewBox="0 0 13 13" fill="none"><polyline points="1,7 5,11 12,2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              : <svg width="15" height="15" viewBox="0 0 13 13" fill="none"><rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M1 9V1.5a.5.5 0 01.5-.5H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                             }
                           </button>
                           <button
@@ -1658,9 +1660,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                               await fetch('/api/bot/response-feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ log_id: msg.log_id, feedback: 'pos' }) })
                             }}
                             title="Goed antwoord"
-                            style={{ background: 'none', border: 'none', cursor: msg.feedback && msg.feedback !== 'pos' ? 'default' : 'pointer', padding: '5px 7px', color: msg.feedback === 'pos' ? '#f59e0b' : msg.feedback === 'neg' ? '#374151' : '#4b5563', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            style={{ background: 'none', border: 'none', cursor: msg.feedback && msg.feedback !== 'pos' ? 'default' : 'pointer', padding: '5px 7px', color: msg.feedback === 'pos' ? '#f59e0b' : msg.feedback === 'neg' ? '#374151' : '#6b7280', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            onMouseEnter={e => { if (!msg.feedback) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                            onMouseLeave={e => { if (!msg.feedback) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
                           >
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 14H11.5C12.05 14 12.5 13.55 12.5 13V8C12.5 7.45 12.05 7 11.5 7H9.5L10.5 3C10.63 2.55 10.37 2.1 9.92 1.97L9.5 2L6 6H5V14ZM5 14H2.5C1.95 14 1.5 13.55 1.5 13V8C1.5 7.45 1.95 7 2.5 7H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M6 14H11.5C12.05 14 12.5 13.55 12.5 13V8C12.5 7.45 12.05 7 11.5 7H9.5L10.5 3C10.63 2.55 10.37 2.1 9.92 1.97L9.5 2L6 6H5V14ZM5 14H2.5C1.95 14 1.5 13.55 1.5 13V8C1.5 7.45 1.95 7 2.5 7H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           </button>
                           <button
                             onClick={async () => {
@@ -1669,9 +1673,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                               await fetch('/api/bot/response-feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ log_id: msg.log_id, feedback: 'neg' }) })
                             }}
                             title="Matig antwoord"
-                            style={{ background: 'none', border: 'none', cursor: msg.feedback && msg.feedback !== 'neg' ? 'default' : 'pointer', padding: '5px 7px', color: msg.feedback === 'neg' ? '#f59e0b' : msg.feedback === 'pos' ? '#374151' : '#4b5563', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            style={{ background: 'none', border: 'none', cursor: msg.feedback && msg.feedback !== 'neg' ? 'default' : 'pointer', padding: '5px 7px', color: msg.feedback === 'neg' ? '#f59e0b' : msg.feedback === 'pos' ? '#374151' : '#6b7280', transition: 'color 0.15s', lineHeight: 1, display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                            onMouseEnter={e => { if (!msg.feedback) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                            onMouseLeave={e => { if (!msg.feedback) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
                           >
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 2H4.5C3.95 2 3.5 2.45 3.5 3V8C3.5 8.55 3.95 9 4.5 9H6.5L5.5 13C5.37 13.45 5.63 13.9 6.08 14.03L6.5 14L10 10H11V2ZM11 2H13.5C14.05 2 14.5 2.45 14.5 3V8C14.5 8.55 14.05 9 13.5 9H11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M10 2H4.5C3.95 2 3.5 2.45 3.5 3V8C3.5 8.55 3.95 9 4.5 9H6.5L5.5 13C5.37 13.45 5.63 13.9 6.08 14.03L6.5 14L10 10H11V2ZM11 2H13.5C14.05 2 14.5 2.45 14.5 3V8C14.5 8.55 14.05 9 13.5 9H11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           </button>
                         </div>
                       )}
