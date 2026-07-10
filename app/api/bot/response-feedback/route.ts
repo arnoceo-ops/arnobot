@@ -16,12 +16,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Ongeldige input' }, { status: 400 })
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('arnobot_rds_logs')
     .update({ feedback })
     .eq('id', log_id)
     .eq('user_id', userId)
+    .is('feedback', null)
+    .select('id')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!data || data.length === 0) return NextResponse.json({ error: 'Al beoordeeld' }, { status: 409 })
   return NextResponse.json({ ok: true })
 }
