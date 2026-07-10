@@ -490,10 +490,19 @@ PROFIEL VAN DE GEBRUIKER:
 
     const answer = getText(response.content)
 
-    const logTable = isWidget ? 'arno_blog_widget_logs' : 'arnobot_rds_logs'
-    await supabase.from(logTable).insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
+    let logId: string | null = null
+    if (isWidget) {
+      await supabase.from('arno_blog_widget_logs').insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
+    } else {
+      const { data: logRow } = await supabase
+        .from('arnobot_rds_logs')
+        .insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
+        .select('id')
+        .single()
+      logId = logRow?.id ?? null
+    }
 
-    const responseBody: Record<string, unknown> = { answer, hint }
+    const responseBody: Record<string, unknown> = { answer, hint, log_id: logId }
     if (!isWidget && tier === 'basis') responseBody.dagelijks_gebruikt = todayUsage + 1
     return NextResponse.json(responseBody, { headers: corsHeaders(origin) })
   } catch (err) {

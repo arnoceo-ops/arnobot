@@ -16,10 +16,19 @@ export default async function EvaluatiesPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: evaluaties } = await supabase
-    .from('arnobot_evaluaties')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [{ data: evaluaties }, { data: ratingsRaw }, { data: negativeRatings }] = await Promise.all([
+    supabase.from('arnobot_evaluaties').select('*').order('created_at', { ascending: false }),
+    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null),
+    supabase
+      .from('arnobot_rds_logs')
+      .select('question, answer, created_at')
+      .eq('feedback', 'neg')
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ])
+
+  const totalRatings = (ratingsRaw ?? []).length
+  const positiveRatings = (ratingsRaw ?? []).filter((r: { feedback: string }) => r.feedback === 'pos').length
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -32,7 +41,12 @@ export default async function EvaluatiesPage() {
           {(evaluaties ?? []).length} ingevuld
         </p>
 
-        <EvaluatiesClient evaluaties={evaluaties ?? []} />
+        <EvaluatiesClient
+          evaluaties={evaluaties ?? []}
+          totalRatings={totalRatings}
+          positiveRatings={positiveRatings}
+          negativeRatings={negativeRatings ?? []}
+        />
       </div>
     </main>
   )

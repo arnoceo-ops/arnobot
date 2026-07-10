@@ -100,7 +100,28 @@ export async function POST(req: NextRequest) {
     .order('created_at', { ascending: true })
 
   if (ownerUserId) logsQuery = logsQuery.neq('user_id', ownerUserId)
-  const { data: logs } = await logsQuery
+  const [{ data: logs }, { data: ratingsData }] = await Promise.all([
+    logsQuery,
+    supabase
+      .from('arnobot_rds_logs')
+      .select('question, answer, feedback')
+      .in('session_id', sessionIds)
+      .not('feedback', 'is', null),
+  ])
+
+  const allRatings = ratingsData ?? []
+  const totalRatings = allRatings.length
+  const positiveRatings = allRatings.filter((r: { feedback: string }) => r.feedback === 'pos').length
+  const negativeExamples = allRatings
+    .filter((r: { feedback: string }) => r.feedback === 'neg')
+    .slice(0, 5)
+    .map((r: { question: string; answer: string }) =>
+      `Vraag: "${r.question.slice(0, 80)}"\nAntwoord (begin): "${r.answer.slice(0, 150)}..."`)
+    .join('\n\n')
+
+  const gebruikersJurorSection = totalRatings > 0
+    ? `\n\nGEBRUIKERS\n(Collectief oordeel op basis van ${totalRatings} antwoordbeoordelingen. Gebruikers beoordeelden ArnoBot-antwoorden met een duimpje omhoog of omlaag.)\nScore: ${(positiveRatings / totalRatings * 10).toFixed(1)}/10 (${Math.round(positiveRatings / totalRatings * 100)}% positief, ${totalRatings} beoordelingen)\n[Analyseer de negatief beoordeelde antwoorden op patronen. Wat triggert negatieve reacties: toon, relevantie, lengte, type vraag? Schrijf vanuit het perspectief van de gebruikers als collectief.${negativeExamples ? `\n\nNegatief beoordeeld:\n${negativeExamples}` : ''}]\nKritisch punt: [één concrete aanbeveling op basis van de gebruikersbeoordelingen]`
+    : `\n\nGEBRUIKERS\n(Nog geen antwoordbeoordelingen ontvangen in deze analyseperiode.)\nScore: n.v.t.\n[Geen gebruikersdata beschikbaar. Vermeld dat de rating-functionaliteit actief is en dat scores zichtbaar worden zodra gebruikers antwoorden beoordelen.]\nKritisch punt: n.v.t.`
 
   // Stap 3: groepeer per sessie, max 5 exchanges per sessie
   const bySession: Record<string, { question: string; answer: string }[]> = {}
@@ -159,7 +180,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
         content: `Hieronder staan ${sessieCount} echte gesprekken van ArnoBot de ${periodeLabel}. Laat elk jurylid een oordeel geven in hun eigen stem.\n\n${transcripts}\n\nGeef het oordeel van elk jurylid. Begin elke sectie met de naam in hoofdletters:\n\nMARSHALL GOLDSMITH\n(Executive Coach #1 ter wereld, auteur van "What Got You Here Won\'t Get You There". Zijn centrale overtuiging: echte coaching verandert specifiek gedrag, niet alleen inzicht. Accountability is alles.)\nScore: [X]/10\n[Concreet oordeel in 3-4 zinnen. Verwijs naar specifieke gesprekken. Was er een specifiek gedrag geïdentificeerd? Werd de vraag achter de vraag aangepakt?]\nKritisch punt: [één concrete aanbeveling]\n\nTONY ROBBINS\n(Life & Business Strategist, 50 miljoen mensen bereikt. Zijn centrale vraag: verliet de gebruiker dit gesprek sterker dan hij erin ging? Werd er een grotere visie gecreëerd?)\nScore: [X]/10\n[Concreet oordeel. Werden threats omgezet in opportunities? Is er peak state gecreëerd of bleef het intellectueel?]\nKritisch punt: [één concrete aanbeveling]\n\nELON MUSK\n(CEO Tesla, SpaceX, X. First principles denken. Geen geduld voor vaagheid. De meest directe weg naar resultaat.)\nScore: [X]/10\n[Concreet oordeel. Was het actiegericht? Werd de kern bereikt of bleef ArnoBot ronddraaien?]\nKritisch punt: [één concrete aanbeveling]\n\nDANIEL KAHNEMAN\n(Nobelprijswinnaar Psychologie, "Thinking, Fast and Slow". Menselijk gedrag wordt grotendeels gestuurd door System 1, niet System 2. De meeste coaching faalt omdat ze alleen System 2 aanspreekt.)\nScore: [X]/10\n[Concreet oordeel. Werden emotionele drijfveren aangesproken of bleef het rationeel advies?]\nKritisch punt: [één concrete aanbeveling]\n\nJORDAN BELFORT\n(Wolf of Wall Street, salestrainer. Zijn lens: was het advies commercieel scherp genoeg? Sluit de gebruiker na dit gesprek meer deals?)\nScore: [X]/10\n[Concreet oordeel. Waren de adviezen veldklaar en bruikbaar? Of te filosofisch?]\nKritisch punt: [één concrete aanbeveling]${arnoInputTekst
   ? `\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft deze maand zijn eigen observaties aangeleverd. Verwerk zijn input als een juryoordeel: zijn woorden staan er letterlijk in, jij voegt structuur en score toe.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken. Wat herkent hij? Wat bevestigt of weerspreekt de gesprekken zijn punt?]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
   : `\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: herkent de echte Arno zichzelf hierin? Is dit zijn stem, zijn directheid, zijn timing van confronteren?)\nScore: [X]/10\n[Concreet oordeel op toon, aanpak en authenticiteit van de stem]\nKritisch punt: [één concrete aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
-}\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]`,
+}${gebruikersJurorSection}\n\nOVERALL SCORE: [gemiddelde van zeven scores, of zes als gebruikers n.v.t. is]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]`,
       }],
     }),
   ])
