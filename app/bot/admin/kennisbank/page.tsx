@@ -126,7 +126,7 @@ export default async function KennisbankPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <div>
               <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>LAATSTE EMBED RUN</p>
-              <p style={{ fontFamily: 'sans-serif', fontSize: 13, color: meta['last_embed_run'] ? '#f1f5f9' : '#374151' }}>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: meta['last_embed_run'] ? '#f1f5f9' : '#374151' }}>
                 {meta['last_embed_run']
                   ? new Date(meta['last_embed_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                   : 'Nog nooit gedraaid'}
@@ -143,11 +143,11 @@ export default async function KennisbankPage() {
         </div>
 
         {error && (
-          <p style={{ color: '#cc4444', fontSize: 13, marginBottom: 24 }}>Fout bij laden: {error.message}</p>
+          <p style={{ color: '#cc4444', fontSize: 12, marginBottom: 24 }}>Fout bij laden: {error.message}</p>
         )}
 
         {sources.length === 0 && !error && (
-          <p style={{ color: '#374151', fontSize: 13, letterSpacing: 3 }}>KENNISBANK IS LEEG</p>
+          <p style={{ color: '#374151', fontSize: 12, letterSpacing: 3 }}>KENNISBANK IS LEEG</p>
         )}
 
         {/* Blogs */}
@@ -164,7 +164,7 @@ export default async function KennisbankPage() {
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>VIDEO&apos;S ({videoSources.length})</p>
             {videoSources.map((s, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid #1f2937' }}>
-                <span style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#9ca3af', lineHeight: 1.6, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#9ca3af', lineHeight: 1.6, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.source.replace('Video: ', '')}
                 </span>
                 <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#374151', flexShrink: 0 }}>{s.count}x</span>

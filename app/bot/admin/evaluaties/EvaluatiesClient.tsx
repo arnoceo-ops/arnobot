@@ -24,7 +24,7 @@ function Row({ label, value }: { label: string; value: string | string[] | null 
   return (
     <div style={{ display: 'flex', gap: 16, padding: '6px 0', borderBottom: '1px solid #1f2937' }}>
       <span style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', minWidth: 140, paddingTop: 2 }}>{label}</span>
-      <span style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, flex: 1 }}>{v}</span>
+      <span style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, flex: 1 }}>{v}</span>
     </div>
   )
 }
@@ -98,7 +98,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                     onClick={() => setExpandedRating(expandedRating === idx ? null : idx)}
                     style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', gap: 16, textAlign: 'left' }}
                   >
-                    <span style={{ fontSize: 13, color: '#9ca3af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 14, color: '#9ca3af', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.question.slice(0, 80)}{r.question.length > 80 ? '...' : ''}
                     </span>
                     <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -112,11 +112,11 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                   {expandedRating === idx && (
                     <div style={{ padding: '0 20px 16px' }}>
                       <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 4 }}>GEBRUIKER</p>
-                      <p style={{ fontSize: 13, color: '#f59e0b', marginBottom: 16 }}>{r.user_name ?? 'onbekend'}</p>
+                      <p style={{ fontSize: 14, color: '#f59e0b', marginBottom: 16 }}>{r.user_name ?? 'onbekend'}</p>
                       <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>VRAAG</p>
-                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16 }}>{r.question}</p>
+                      <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16 }}>{r.question}</p>
                       <p style={{ fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
-                      <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.answer}</p>
+                      <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.answer}</p>
                     </div>
                   )}
                 </div>
@@ -154,7 +154,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
 
       {/* Evaluaties lijst */}
       {evaluaties.length === 0 && (
-        <p style={{ color: '#374151', fontSize: 13, letterSpacing: 3 }}>NOG GEEN EVALUATIES ONTVANGEN</p>
+        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 3 }}>NOG GEEN EVALUATIES ONTVANGEN</p>
       )}
       {evaluaties.map(e => (
         <div key={e.id} style={{ background: '#1f2937', marginBottom: 2 }}>

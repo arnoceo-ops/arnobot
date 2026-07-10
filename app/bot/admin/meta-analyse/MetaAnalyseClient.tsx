@@ -244,7 +244,7 @@ export default function MetaAnalyseClient() {
           Dit wordt meegenomen als jouw eigen jurering bij de volgende analyse.
         </p>
         {inputLoading ? (
-          <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>
+          <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
         ) : (
           <>
             <textarea
@@ -431,7 +431,7 @@ export default function MetaAnalyseClient() {
       {archiveLoading ? (
         <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
-        <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
+        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
       ) : (
         <div>
           <p style={{ color: '#f59e0b', fontSize: 12, fontWeight: 400, letterSpacing: 4, marginBottom: 16 }}>

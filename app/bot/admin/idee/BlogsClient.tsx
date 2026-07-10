@@ -37,7 +37,7 @@ function AnalyseText({ text }: { text: string }) {
         }
         if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s]+$/.test(trimmed) && trimmed.length < 50) {
           return (
-            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
               {trimmed}
             </p>
           )
@@ -48,7 +48,7 @@ function AnalyseText({ text }: { text: string }) {
             {lines.map((line, j) => {
               const isInvalshoek = line.startsWith('Invalshoek:')
               return (
-                <p key={j} style={{ margin: j === 0 ? 0 : '4px 0 0 0', color: isInvalshoek ? '#6b7280' : '#9ca3af', fontSize: isInvalshoek ? 13 : 15 }}>
+                <p key={j} style={{ margin: j === 0 ? 0 : '4px 0 0 0', color: isInvalshoek ? '#6b7280' : '#9ca3af', fontSize: isInvalshoek ? 12 : 15 }}>
                   {isInvalshoek
                     ? <><span style={{ color: '#f59e0b', fontWeight: 700 }}>Invalshoek:</span>{renderInline(line.slice('Invalshoek:'.length))}</>
                     : renderInline(line)
@@ -138,7 +138,7 @@ export default function BlogsClient() {
             onClick={() => setSelected(p.days)}
             style={{
               fontFamily: 'sans-serif',
-              fontSize: 13,
+              fontSize: 12,
               letterSpacing: 3,
               fontWeight: 700,
               padding: '8px 20px',
@@ -182,12 +182,12 @@ export default function BlogsClient() {
 
       {/* Archief */}
       {archiveLoading ? (
-        <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Laden...</p>
+        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
-        <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
+        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
       ) : (
         <div>
-          <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 700, letterSpacing: 4, marginBottom: 16 }}>
+          <p style={{ color: '#f59e0b', fontSize: 12, fontWeight: 700, letterSpacing: 4, marginBottom: 16 }}>
             ARCHIEF
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -215,7 +215,7 @@ export default function BlogsClient() {
                     <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 700, flexShrink: 0 }}>
                       {periodLabel(a.period_days)}
                     </span>
-                    <span style={{ color: '#9ca3af', fontSize: 13, flexShrink: 0 }}>
+                    <span style={{ color: '#9ca3af', fontSize: 12, flexShrink: 0 }}>
                       {formatDate(a.created_at)}
                     </span>
                     <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>

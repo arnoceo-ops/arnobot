@@ -58,7 +58,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr>
-          <th style={{ width: 150, paddingBottom: 12, textAlign: 'left' }}>
+          <th style={{ width: 130, paddingBottom: 12, textAlign: 'left' }}>
             <button onClick={() => toggle('date')} style={thBtn('date')}>DATUM{arrow('date')}</button>
           </th>
           <th style={{ paddingBottom: 12, textAlign: 'left' }}>
@@ -91,7 +91,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
                   className="kb-link"
                   style={{
                     fontFamily: 'sans-serif',
-                    fontSize: 13,
+                    fontSize: 14,
                     color: '#9ca3af',
                     textDecoration: 'none',
                     display: 'block',
@@ -105,7 +105,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
               ) : (
                 <span style={{
                   fontFamily: 'sans-serif',
-                  fontSize: 13,
+                  fontSize: 14,
                   color: '#9ca3af',
                   display: 'block',
                   overflow: 'hidden',
@@ -119,7 +119,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
             <td style={{
               fontFamily: 'sans-serif',
               fontSize: 12,
-              color: '#374151',
+              color: '#6b7280',
               padding: '11px 0',
               textAlign: 'right',
               whiteSpace: 'nowrap',
