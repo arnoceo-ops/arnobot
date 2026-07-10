@@ -43,7 +43,8 @@ function toISO(date: string): string {
 }
 
 function parseBlogSource(source: string): { title: string; date: string; dateISO: string } {
-  const match = source.match(/^(.+?)\s+\((.+?)\)$/)
+  // Greedy titel + [^)]+ voor datum: pakt altijd de LAATSTE (datum) aan het einde
+  const match = source.match(/^(.+)\s+\(([^)]+)\)$/)
   if (!match) return { title: source, date: '', dateISO: '' }
   return { title: match[1], date: match[2], dateISO: toISO(match[2]) }
 }

@@ -42,7 +42,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
   const thBtn = (c: SortCol, align: 'left' | 'right' = 'left'): React.CSSProperties => ({
     fontFamily: "'Space Mono', monospace",
     fontSize: 11,
-    letterSpacing: 3,
+    letterSpacing: 4,
     color: col === c ? '#f59e0b' : '#6b7280',
     cursor: 'pointer',
     userSelect: 'none',
