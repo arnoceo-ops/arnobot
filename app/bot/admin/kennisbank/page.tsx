@@ -101,7 +101,7 @@ export default async function KennisbankPage() {
             )}
           </div>
           <div style={{ borderTop: '1px solid #374151', paddingTop: 16 }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>RSS INGEST — loopt automatisch elke zaterdag om middernacht UTC</p>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>RSS INGEST: loopt automatisch elke zaterdag om middernacht UTC</p>
             <RssIngestButton />
           </div>
         </div>
