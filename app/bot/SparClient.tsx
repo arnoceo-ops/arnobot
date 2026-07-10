@@ -428,6 +428,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => {
     if (!clerkSessionId) return
     if (localStorage.getItem(`arnobot_actie_getoond_${clerkSessionId}`)) return
+    localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
     fetch('/api/bot/actieopvolging')
       .then(r => r.json())
       .then(d => {
@@ -437,12 +438,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       })
       .catch(() => {})
   }, [clerkSessionId])
-
-  useEffect(() => {
-    if (actieOpvolging && !actieBeantwoord && !started && clerkSessionId) {
-      localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
-    }
-  }, [actieOpvolging, actieBeantwoord, started, clerkSessionId])
 
   useEffect(() => {
     function handleUnload(e: BeforeUnloadEvent) {
