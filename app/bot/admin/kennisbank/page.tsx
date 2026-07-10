@@ -50,7 +50,7 @@ export default async function KennisbankPage() {
       url: info.url,
       count: info.count,
       latest: info.latest,
-      type: source.startsWith('Video:') ? 'video' : 'blog',
+      type: (source.startsWith('Video:') ? 'video' : 'blog') as 'video' | 'blog',
     }))
     .sort((a, b) => (b.latest ?? '').localeCompare(a.latest ?? ''))
 
