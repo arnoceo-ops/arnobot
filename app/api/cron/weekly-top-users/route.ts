@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
+
+async function sendTelegram(text: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  })
+}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -32,7 +41,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true, message: 'Geen activiteit deze week' })
   }
 
-  // Tel vragen, gesprekken, analyses en coachingsrapporten per user
   const vragen: Record<string, number> = {}
   const gesprekken: Record<string, Set<string>> = {}
   for (const log of logs) {
@@ -51,66 +59,31 @@ export async function GET(req: NextRequest) {
     coachingTel[c.user_id] = (coachingTel[c.user_id] || 0) + 1
   }
 
-  // Rangschik op vragen, neem top 10
   const top10 = Object.entries(vragen)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
 
   const { data: users } = await supabase
     .from('approved_users')
-    .select('user_id, voornaam, achternaam, email')
+    .select('user_id, voornaam, achternaam')
     .in('user_id', top10.map(([id]) => id))
 
   const userMap = Object.fromEntries((users || []).map(u => [u.user_id, u]))
 
-  const rows = top10.map(([userId, vragenCount], i) => {
-    const u = userMap[userId]
-    const naam = u ? [u.voornaam, u.achternaam].filter(Boolean).join(' ') : userId
-    const email = u?.email || ''
-    const sessies = gesprekken[userId]?.size || 0
-    const anal = analysesTel[userId] || 0
-    const coach = coachingTel[userId] || 0
-    return `
-      <tr style="border-bottom:1px solid #1f2937;">
-        <td style="padding:12px 16px;color:#6b7280;font-size:13px;">${i + 1}</td>
-        <td style="padding:12px 16px;color:#f1f5f9;font-size:14px;">${naam}</td>
-        <td style="padding:12px 16px;color:#9ca3af;font-size:13px;word-break:break-all;max-width:160px;">${email}</td>
-        <td style="padding:12px 16px;color:#f59e0b;font-size:14px;font-weight:700;text-align:right;">${vragenCount}</td>
-        <td style="padding:12px 16px;color:#9ca3af;font-size:14px;text-align:right;">${sessies}</td>
-        <td style="padding:12px 16px;color:#9ca3af;font-size:14px;text-align:right;">${anal}</td>
-        <td style="padding:12px 16px;color:#9ca3af;font-size:14px;text-align:right;">${coach}</td>
-      </tr>`
-  }).join('')
-
   const weekOf = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  await resend.emails.send({
-    from: 'ArnoBot <info@arno.bot>',
-    to: 'analyses@arno.bot',
-    subject: `ArnoBot top 10 actieve gebruikers, week van ${weekOf}`,
-    html: `
-      <div style="font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111827;color:#f1f5f9;padding:48px 40px 40px;max-width:700px;margin:0 auto;">
-        <p style="font-family:'Arial Black',Arial,Impact,sans-serif;font-size:26px;letter-spacing:6px;margin:0 0 32px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
-        <p style="font-size:20px;font-weight:700;color:#f1f5f9;margin:0 0 4px;">Top 10 actieve gebruikers</p>
-        <p style="font-size:13px;color:#6b7280;margin-bottom:32px;">Week van ${weekOf}</p>
-        <table style="width:100%;border-collapse:collapse;background:#1f2937;">
-          <thead>
-            <tr style="border-bottom:2px solid #374151;">
-              <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">#</th>
-              <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">NAAM</th>
-              <th style="padding:10px 16px;text-align:left;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">EMAIL</th>
-              <th style="padding:10px 16px;text-align:right;font-size:11px;letter-spacing:2px;color:#f59e0b;font-weight:400;">VRAGEN</th>
-              <th style="padding:10px 16px;text-align:right;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">GESPREKKEN</th>
-              <th style="padding:10px 16px;text-align:right;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">ANALYSES</th>
-              <th style="padding:10px 16px;text-align:right;font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:400;">COACHING</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <p style="font-size:11px;color:#374151;margin-top:32px;letter-spacing:1px;">© ARNOBOT</p>
-      </div>
-    `,
+  const lines = top10.map(([userId, vragenCount], i) => {
+    const u = userMap[userId]
+    const naam = u ? [u.voornaam, u.achternaam].filter(Boolean).join(' ') : userId
+    const sess = gesprekken[userId]?.size || 0
+    const anal = analysesTel[userId] || 0
+    const coach = coachingTel[userId] || 0
+    return `${i + 1}. ${naam} — ${vragenCount}v · ${sess}g · ${anal}a · ${coach}c`
   })
+
+  const text = `📈 ARNOBOT WEEK · ${weekOf}\n\n${lines.join('\n')}\n\nv=vragen  g=gesprekken  a=analyses  c=coaching`
+
+  await sendTelegram(text)
 
   return NextResponse.json({ ok: true, sent: top10.length })
   } catch (err) {
