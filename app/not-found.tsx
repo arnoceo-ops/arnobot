@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import NotFoundCapture from './NotFoundCapture'
 
 export const metadata = {
   title: 'Pagina niet gevonden: ArnoBot',
@@ -13,6 +14,7 @@ export default function NotFound() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
       `}</style>
+      <NotFoundCapture />
       <div style={{ minHeight: '100vh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ maxWidth: 812, padding: 'clamp(16px,4vw,20px)', textAlign: 'center' }}>
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>

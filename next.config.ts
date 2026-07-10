@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
       { source: '/bot/bieb/:path*', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
+      { source: '/blog/:year(\\d{4})/:month/:day/:slug*', destination: '/blog', permanent: false },
     ]
   },
   async headers() {
