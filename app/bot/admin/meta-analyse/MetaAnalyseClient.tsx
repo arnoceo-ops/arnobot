@@ -8,7 +8,7 @@ const loadingStyle = `
   .meta-loading-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; animation: metaPulse 1.2s ease-in-out infinite; }
   .meta-loading-dot:nth-child(2) { animation-delay: 0.2s; }
   .meta-loading-dot:nth-child(3) { animation-delay: 0.4s; }
-  .meta-loading-text { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #6b7280; }
+  .meta-loading-text { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #6b7280; }
   @keyframes metaPulse { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 `
 
@@ -51,7 +51,7 @@ function AnalyseText({ text }: { text: string }) {
         if (!trimmed) return null
         if (/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ\s\/0-9]+$/.test(trimmed) && trimmed.length < 60) {
           return (
-            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
+            <p key={i} style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 12, letterSpacing: 4, color: '#f59e0b', margin: '28px 0 12px 0' }}>
               {trimmed}
             </p>
           )
@@ -236,7 +236,7 @@ export default function MetaAnalyseClient() {
       <style>{loadingStyle}</style>
       {/* Jouw maandelijkse input */}
       <div style={{ marginBottom: 56 }}>
-        <p style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'sans-serif', fontWeight: 400, fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>
           JOUW INPUT VOOR HET PANEL
         </p>
         <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
@@ -289,7 +289,7 @@ export default function MetaAnalyseClient() {
                 {inputSaving ? 'OPSLAAN...' : 'OPSLAAN'}
               </button>
               {inputSaved && (
-                <span style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#4ade80', letterSpacing: 1 }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#4ade80' }}>
                   Opgeslagen.
                 </span>
               )}
@@ -310,11 +310,11 @@ export default function MetaAnalyseClient() {
             onClick={() => { setSelected(p.days); setCustomDays('') }}
             style={{
               fontFamily: 'sans-serif',
-              fontSize: 13,
+              fontSize: 12,
               letterSpacing: 3,
               fontWeight: 400,
-              minWidth: 140,
-              padding: '8px 12px',
+              width: 148,
+              padding: '8px 0',
               borderRadius: 4,
               border: '1px solid',
               borderColor: selected === p.days && !customDays ? '#f59e0b' : '#374151',
@@ -341,14 +341,14 @@ export default function MetaAnalyseClient() {
           placeholder="X DAGEN"
           style={{
             fontFamily: 'sans-serif',
-            fontSize: 13,
+            fontSize: 12,
             letterSpacing: 3,
             fontWeight: 400,
-            minWidth: 140,
-            width: 140,
-            padding: '8px 12px',
+            width: 148,
+            padding: '8px 0',
             borderRadius: 4,
-            border: `1px solid ${customDays ? '#f59e0b' : '#374151'}`,
+            border: '1px solid',
+            borderColor: customDays ? '#f59e0b' : '#374151',
             background: customDays ? '#1e293b' : 'transparent',
             color: customDays ? '#f59e0b' : '#6b7280',
             outline: 'none',
@@ -365,7 +365,8 @@ export default function MetaAnalyseClient() {
           fontSize: 18,
           letterSpacing: 3,
           fontWeight: 400,
-          padding: '12px 36px',
+          width: 300,
+          padding: '12px 0',
           borderRadius: 999,
           border: 'none',
           background: loading ? '#374151' : '#f59e0b',
@@ -394,8 +395,8 @@ export default function MetaAnalyseClient() {
 
       {/* Thumbs-down analyse */}
       <div style={{ borderTop: '1px solid #1f2937', paddingTop: 40, marginBottom: 48 }}>
-        <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>FEEDBACK ANALYSE</p>
-        <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+        <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>FEEDBACK ANALYSE</p>
+        <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
           Analyseer patronen in negatief beoordeelde antwoorden (laatste 20).
         </p>
         <button
@@ -403,12 +404,13 @@ export default function MetaAnalyseClient() {
           disabled={feedbackLoading}
           style={{
             fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: 16,
+            fontSize: 18,
             letterSpacing: 3,
-            padding: '10px 28px',
+            width: 300,
+            padding: '12px 0',
             borderRadius: 999,
-            border: '1px solid #374151',
-            background: feedbackLoading ? '#374151' : 'transparent',
+            border: `1px solid ${feedbackLoading ? '#374151' : '#f59e0b'}`,
+            background: 'transparent',
             color: feedbackLoading ? '#6b7280' : '#f59e0b',
             cursor: feedbackLoading ? 'wait' : 'pointer',
           }}
@@ -416,11 +418,11 @@ export default function MetaAnalyseClient() {
           {feedbackLoading ? 'BEZIG...' : 'ANALYSEER THUMBS-DOWN →'}
         </button>
         {feedbackError && (
-          <p style={{ color: '#cc2200', fontSize: 13, marginTop: 16 }}>✗ {feedbackError}</p>
+          <p style={{ color: '#cc2200', fontSize: 14, marginTop: 16 }}>✗ {feedbackError}</p>
         )}
         {feedbackAnalyse && (
           <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 20 }}>
-            <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>PATRONEN IN THUMBS-DOWN</p>
+            <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>PATRONEN IN THUMBS-DOWN</p>
             <p style={{ fontSize: 14, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>{feedbackAnalyse}</p>
           </div>
         )}
@@ -432,7 +434,7 @@ export default function MetaAnalyseClient() {
         <p style={{ color: '#374151', fontSize: 13, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
       ) : (
         <div>
-          <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 400, letterSpacing: 4, marginBottom: 16 }}>
+          <p style={{ color: '#f59e0b', fontSize: 12, fontWeight: 400, letterSpacing: 4, marginBottom: 16 }}>
             ARCHIEF
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -461,7 +463,7 @@ export default function MetaAnalyseClient() {
                     <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 400, flexShrink: 0 }}>
                       {periodLabel(a.period_days)}
                     </span>
-                    <span style={{ color: '#9ca3af', fontSize: 13, flexShrink: 0 }}>
+                    <span style={{ color: '#9ca3af', fontSize: 14, flexShrink: 0 }}>
                       {formatDate(a.created_at)}
                     </span>
                     <span style={{ color: '#4b5563', fontSize: 12, letterSpacing: 1 }}>
