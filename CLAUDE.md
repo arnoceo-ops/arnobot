@@ -152,6 +152,19 @@ Dit geldt ook als de verzoeken als losse zinnen in één bericht staan.
 
 **Werkwijze**: bij elke nieuwe UI-component, controleer alle elementen direct tegen de vaste normen hieronder vóór commit. Niet achteraf. Bij twijfel over de juiste norm: vragen aan de gebruiker.
 
+### Admin UI-stijl (`/bot/admin/**`) — afwijkend van de rest van de app
+
+De admin-sectie gebruikt een eigen, bewust andere stijlnorm dan de "Vaste normen" hierboven. Referentiebestanden: `app/bot/admin/status/page.tsx` en `app/bot/admin/gebruikers/page.tsx`.
+
+- **Font**: sans-serif (systeemfont), niet Space Mono/Courier. Bebas Neue is alleen toegestaan voor grote cijfers/gauges (statistieken, gauge-widgets), niet voor H1/H2 of lopende tekst.
+- **Body-tekst / tabel-data / datums / omschrijvingen**: 14px
+- **Labels, kolomkoppen, status-badges, kleine knoppen** (vaak uppercase met letterSpacing): 12px
+- **Geen 10px, 11px of 13px** in de admin-sectie, alles is 12 of 14
+- **Gedempte tekst**: kleur `#6b7280` (niet via `opacity`, niet `#4b5563`, niet `#aaa`)
+- **Amber accent/labels**: `#f59e0b`
+- **H1**: sans-serif, fontWeight 700, fontSize 48px, letterSpacing -1px, kleur `#f1f5f9` (dus NIET de Bebas Neue 64px H1-norm van de rest van de app)
+- **Witte tekst/koppen**: `#f1f5f9`
+
 ## Streepjes — ABSOLUUT VERBOD — for ever and ever
 
 De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed het - maar") worden NOOIT gebruikt in arno.bot. Nergens. Nooit.
