@@ -65,7 +65,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {totalRatings > 0 && (
         <div style={{ marginBottom: 48 }}>
           <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 20, fontFamily: "'Space Mono', monospace" }}>ANTWOORDBEOORDELINGEN</p>
-          <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end', justifyContent: 'center' }}>
             <div>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {Math.round((positiveRatings / totalRatings) * 100)}%
