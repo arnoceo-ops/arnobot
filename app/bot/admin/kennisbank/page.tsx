@@ -102,7 +102,7 @@ export default async function KennisbankPage() {
       `}</style>
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        <p style={{ fontFamily: 'sans-serif', fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', marginBottom: 48, lineHeight: 1 }}>KENNISBANK</h1>
 
         {/* Stats */}
@@ -133,7 +133,7 @@ export default async function KennisbankPage() {
               </p>
             </div>
             {meta['last_embed_sources'] && (
-              <p style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#4b5563' }}>{meta['last_embed_sources']}</p>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#6b7280' }}>{meta['last_embed_sources']}</p>
             )}
           </div>
           <div style={{ borderTop: '1px solid #374151', paddingTop: 16 }}>

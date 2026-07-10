@@ -44,7 +44,7 @@ export default function EmailTestClient() {
   }
 
   if (!templates.length) return (
-    <p style={{ fontSize: 13, color: '#4b5563', letterSpacing: 1 }}>Laden...</p>
+    <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1 }}>Laden...</p>
   )
 
   const userTemplates = templates.filter(t => t.category === 'user')
@@ -86,7 +86,7 @@ export default function EmailTestClient() {
               border: '1px solid #374151',
               cursor: sending === type ? 'wait' : 'pointer',
               background: 'transparent',
-              color: sending === type ? '#4b5563' : '#9ca3af',
+              color: sending === type ? '#6b7280' : '#9ca3af',
               transition: 'all 0.15s',
               whiteSpace: 'nowrap',
             }}
@@ -115,7 +115,7 @@ export default function EmailTestClient() {
       </div>
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-        <p style={{ fontSize: 12, color: '#4b5563', letterSpacing: 1, margin: 0 }}>
+        <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: 1, margin: 0 }}>
           Gebruikerstests worden verzonden naar arno@arno.bot. Admin crons sturen de echte mail met live data.
         </p>
         <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer"

@@ -31,12 +31,12 @@ export default async function EmailsOverzichtPage() {
           <PrintButton />
         </div>
 
-        <p style={{ fontFamily: 'sans-serif', fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 48, letterSpacing: 3, color: '#f1f5f9', marginBottom: 8 }}>Totaaloverzicht e-mails</h1>
-        <p style={{ fontFamily: 'sans-serif', fontSize: 13, color: '#6b7280', letterSpacing: 1, marginBottom: 8 }}>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', marginBottom: 8 }}>
           Alle e-mails en crons die ArnoBot verstuurt, gesorteerd per categorie.
         </p>
-        <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1, marginBottom: 48 }}>
+        <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, marginBottom: 48 }}>
           Let op: het PDF-overzicht en de admin-crons zijn handmatig te onderhouden. De NAAR GEBRUIKERS sectie op de admin-pagina werkt automatisch via email-templates.ts.
         </p>
 
@@ -84,7 +84,7 @@ export default async function EmailsOverzichtPage() {
         </Section>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #1f2937' }}>
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1, lineHeight: 1.8 }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, lineHeight: 1.8 }}>
             Marketing-mails (inactivity nudge, geen gesprek nudge, win-back) bevatten een opt-out link via arno.bot/optout/&#123;userId&#125;.<br />
             Alle verstuurde mails zijn terug te vinden op resend.com/emails.<br />
             ArnoBot Admin: arno.bot
@@ -148,7 +148,7 @@ function Table({ rows }: { rows: Row[] }) {
             <td style={{ ...td, color: '#6b7280' }}>{r.trigger}</td>
             <td style={td}>{r.ontvanger}</td>
             <td style={td}>{r.wanneer}</td>
-            <td style={{ ...td, color: r.type === 'Marketing' ? '#f59e0b' : r.type === 'Transactioneel' ? '#9ca3af' : '#4b5563' }}>{r.type}</td>
+            <td style={{ ...td, color: r.type === 'Marketing' ? '#f59e0b' : r.type === 'Transactioneel' ? '#9ca3af' : '#6b7280' }}>{r.type}</td>
           </tr>
         ))}
       </tbody>

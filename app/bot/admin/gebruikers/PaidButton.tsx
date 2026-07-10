@@ -23,7 +23,7 @@ export default function PaidButton({
           BETAALD
         </span>
         {expiresAt && (
-          <span style={{ fontSize: '10px', color: '#4b5563', display: 'block', marginTop: 2 }}>
+          <span style={{ fontSize: '10px', color: '#6b7280', display: 'block', marginTop: 2 }}>
             t/m {new Date(expiresAt).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
           </span>
         )}
@@ -83,7 +83,7 @@ export default function PaidButton({
             padding: '3px 8px', borderRadius: 3, border: 'none',
             cursor: loading || !expires ? 'not-allowed' : 'pointer',
             background: expires ? '#f59e0b' : '#374151',
-            color: expires ? '#111827' : '#4b5563',
+            color: expires ? '#111827' : '#6b7280',
             whiteSpace: 'nowrap',
           }}
         >

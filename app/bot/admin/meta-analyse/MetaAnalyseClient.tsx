@@ -294,7 +294,7 @@ export default function MetaAnalyseClient() {
                 </span>
               )}
               {savedInput && !inputSaved && (
-                <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#4b5563', letterSpacing: 1 }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1 }}>
                   Laatste opslag: {new Date(savedInput.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               )}
@@ -466,7 +466,7 @@ export default function MetaAnalyseClient() {
                     <span style={{ color: '#9ca3af', fontSize: 14, flexShrink: 0 }}>
                       {formatDate(a.created_at)}
                     </span>
-                    <span style={{ color: '#4b5563', fontSize: 12, letterSpacing: 1 }}>
+                    <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
                       {a.session_count} gesprekken
                     </span>
                   </button>

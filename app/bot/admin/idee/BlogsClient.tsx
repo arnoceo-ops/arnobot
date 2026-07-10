@@ -218,7 +218,7 @@ export default function BlogsClient() {
                     <span style={{ color: '#9ca3af', fontSize: 13, flexShrink: 0 }}>
                       {formatDate(a.created_at)}
                     </span>
-                    <span style={{ color: '#4b5563', fontSize: 12, letterSpacing: 1 }}>
+                    <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
                       {a.session_count} gesprekken
                     </span>
                   </button>

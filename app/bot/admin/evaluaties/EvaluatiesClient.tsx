@@ -23,7 +23,7 @@ function Row({ label, value }: { label: string; value: string | string[] | null 
   const v = Array.isArray(value) ? value.join(', ') : value
   return (
     <div style={{ display: 'flex', gap: 16, padding: '6px 0', borderBottom: '1px solid #1f2937' }}>
-      <span style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', minWidth: 140, paddingTop: 2 }}>{label}</span>
+      <span style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', minWidth: 140, paddingTop: 2 }}>{label}</span>
       <span style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, flex: 1 }}>{v}</span>
     </div>
   )
@@ -104,18 +104,18 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                     <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {r.user_name ?? 'onbekend'}
                     </span>
-                    <span style={{ fontSize: 12, color: '#4b5563', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {new Date(r.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
                       {' '}{expandedRating === idx ? '↑' : '↓'}
                     </span>
                   </button>
                   {expandedRating === idx && (
                     <div style={{ padding: '0 20px 16px' }}>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 4 }}>GEBRUIKER</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 4 }}>GEBRUIKER</p>
                       <p style={{ fontSize: 13, color: '#f59e0b', marginBottom: 16 }}>{r.user_name ?? 'onbekend'}</p>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 6 }}>VRAAG</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>VRAAG</p>
                       <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, marginBottom: 16 }}>{r.question}</p>
-                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#4b5563', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
+                      <p style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>ARNO&apos;S ANTWOORD</p>
                       <p style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.answer}</p>
                     </div>
                   )}
@@ -174,7 +174,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
                 </span>
               )}
             </div>
-            <span style={{ fontSize: 12, color: '#4b5563', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>
               {new Date(e.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
               {' '}{expanded === e.id ? '↑' : '↓'}
             </span>
