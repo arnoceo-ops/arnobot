@@ -4,10 +4,11 @@ import { useState } from 'react'
 
 const NAV_LINKS = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
-  { href: '/bot/admin/emails', label: 'CRONS' },
   { href: '/bot/admin', label: 'ARNOBOT' },
+  { href: '/bot/admin/status', label: 'STATUS' },
   { href: '/bot/admin/idee', label: 'BLOGS' },
   { href: '/bot/admin/meta-analyse', label: 'META' },
+  { href: '/bot/admin/emails', label: 'CRONS' },
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
   { href: '/bot/admin/widget', label: 'ARNO.BLOG' },
   { href: '/api/admin/logout', label: 'UITLOGGEN' },
