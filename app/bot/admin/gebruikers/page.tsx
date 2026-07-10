@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 
@@ -36,12 +36,17 @@ function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = fal
   if (vertical) {
     return (
       <a href={`?sort=${field}&dir=${nextDir}`}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end',
-          textDecoration: 'none', cursor: 'pointer', gap: 4 }}>
-        <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)',
-          fontSize: '10px', letterSpacing: '2px', color: isActive ? '#f59e0b' : '#4b5563',
-          whiteSpace: 'nowrap' }}>{label}</span>
-        <span style={{ opacity: isActive ? 1 : 0, fontSize: '10px', color: '#f59e0b' }}>
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+          textDecoration: 'none', cursor: 'pointer', gap: 4, width: '100%',
+        }}>
+        <span style={{
+          writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+          fontSize: '13px', letterSpacing: '2px',
+          color: isActive ? '#f59e0b' : '#6b7280',
+          whiteSpace: 'nowrap',
+        }}>{label}</span>
+        <span style={{ opacity: isActive ? 1 : 0, fontSize: '12px', color: '#f59e0b' }}>
           {dir === 'desc' ? '↓' : '↑'}
         </span>
       </a>
@@ -50,11 +55,13 @@ function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = fal
 
   return (
     <a href={`?sort=${field}&dir=${nextDir}`}
-      style={{ fontSize: '11px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#4b5563',
-        textDecoration: 'none', display: 'flex', flexDirection: 'column',
-        alignItems: leftAlign ? 'flex-start' : 'flex-end', cursor: 'pointer', gap: 2 }}>
+      style={{
+        fontSize: '12px', letterSpacing: '3px', color: isActive ? '#f59e0b' : '#6b7280',
+        textDecoration: 'none', display: 'flex', flexDirection: 'column', width: '100%',
+        alignItems: leftAlign ? 'flex-start' : 'flex-end', cursor: 'pointer', gap: 2,
+      }}>
       <span>{label}</span>
-      <span style={{ opacity: isActive ? 1 : 0, fontSize: '10px', lineHeight: 1 }}>
+      <span style={{ opacity: isActive ? 1 : 0, fontSize: '12px', lineHeight: 1 }}>
         {dir === 'desc' ? '↓' : '↑'}
       </span>
     </a>
@@ -108,7 +115,6 @@ export default async function GebruikersPage({
     analysesMap[a.user_id] = (analysesMap[a.user_id] || 0) + 1
   }
 
-  // Aggregate per user from rds_logs (real-time source, not session-end dependent)
   const sessionMap: Record<string, { count: number; questions: number; lastSession: string | null; recentCount: number }> = {}
   for (const l of logs) {
     if (!sessionMap[l.user_id]) sessionMap[l.user_id] = { count: 0, questions: 0, lastSession: null, recentCount: 0, sessions: new Set<string>() } as never
@@ -154,7 +160,6 @@ export default async function GebruikersPage({
     })
   )
 
-  // Sort
   const sorted = [...enriched].sort((a, b) => {
     let av: number | string = 0
     let bv: number | string = 0
@@ -185,9 +190,9 @@ export default async function GebruikersPage({
 
       <div className="admin-content" style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
 
-        <p style={{ color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
+        <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Gebruikers</h1>
-        <p style={{ color: '#6b7280', fontSize: '14px', letterSpacing: '2px', marginBottom: '48px' }}>
+        <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '48px' }}>
           {sorted.length} gebruiker{sorted.length !== 1 ? 's' : ''}
         </p>
 
@@ -238,14 +243,14 @@ export default async function GebruikersPage({
                 {/* Naam + email */}
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <p style={{ fontWeight: 700, fontSize: '16px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{name}</p>
+                    <p style={{ fontWeight: 700, fontSize: '14px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{name}</p>
                     {(() => {
                       const tr = (u as { trial_reactivated_at?: string | null }).trial_reactivated_at
                       const ts = u.trial_start
                       if (!tr) return null
                       const isThird = ts && ((new Date(ts).getTime() - new Date(tr).getTime()) / (1000 * 60 * 60 * 24)) >= 200
                       return (
-                        <span style={{ fontSize: '10px', letterSpacing: '2px', fontWeight: 700, color: isThird ? '#cc2200' : '#f59e0b', background: isThird ? '#2a1010' : '#1e1a0a', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
+                        <span style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: isThird ? '#cc2200' : '#f59e0b', background: isThird ? '#2a1010' : '#1e1a0a', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
                           {isThird ? '3e TRIAL' : '2e TRIAL'}
                         </span>
                       )
@@ -257,29 +262,29 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '2px', color: status.color, fontWeight: 700 }}>{status.label}</p>
                   {u.paid_at && u.expires_at
-                    ? <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>t/m {new Date(u.expires_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
-                    : u.created_at && <p style={{ fontSize: '11px', color: '#4b5563', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                    ? <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>t/m {new Date(u.expires_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                    : u.created_at && <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
                   }
                 </div>
                 {/* Gesprekken */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.count > 0 ? '#f1f5f9' : '#374151' }}>{u.count}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.count > 0 ? '#f1f5f9' : '#374151' }}>{u.count}</p>
                 </div>
                 {/* Vragen */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.questions > 0 ? '#f1f5f9' : '#374151' }}>{u.questions}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.questions > 0 ? '#f1f5f9' : '#374151' }}>{u.questions}</p>
                 </div>
                 {/* Laatste gesprek */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '13px', color: '#9ca3af' }}>{lastSessionLabel}</p>
+                  <p style={{ fontSize: '12px', color: '#9ca3af' }}>{lastSessionLabel}</p>
                 </div>
                 {/* Coaching */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || 'n.v.t.'}</p>
                 </div>
                 {/* Analyses */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
                 </div>
                 {/* Tier */}
                 <div style={{ textAlign: 'right' }}>
@@ -287,11 +292,11 @@ export default async function GebruikersPage({
                 </div>
                 {/* Referral aanmeldingen */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || 'n.v.t.'}</p>
                 </div>
                 {/* Referral betaald */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
                 {/* Betaling */}
                 <div style={{ textAlign: 'right' }}>
@@ -299,19 +304,19 @@ export default async function GebruikersPage({
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                     : u.paid_at
                     ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : <span style={{ fontSize: '11px', color: '#374151' }}>.</span>
+                    : <span style={{ fontSize: '12px', color: '#374151' }}>.</span>
                   }
                 </div>
                 {/* Mail opt-out */}
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 700, color: (u as { nudge_opt_out?: boolean }).nudge_opt_out ? '#cc2200' : '#44cc88' }}>
+                  <p style={{ fontSize: '12px', letterSpacing: '1px', fontWeight: 700, color: (u as { nudge_opt_out?: boolean }).nudge_opt_out ? '#cc2200' : '#44cc88' }}>
                     {(u as { nudge_opt_out?: boolean }).nudge_opt_out ? 'UIT' : 'AAN'}
                   </p>
                 </div>
                 {/* LinkedIn */}
                 <div style={{ textAlign: 'right' }}>
                   {u.linkedin
-                    ? <a href={u.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>LI →</a>
+                    ? <a href={u.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', textDecoration: 'none', fontWeight: 700 }}>LI →</a>
                     : <SearchLinkedIn userId={u.user_id} name={name} email={u.email ?? ''} hasLinkedin={false} />
                   }
                 </div>
