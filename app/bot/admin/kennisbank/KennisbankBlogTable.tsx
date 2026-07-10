@@ -58,7 +58,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr>
-          <th style={{ width: 130, paddingBottom: 12, textAlign: 'left' }}>
+          <th style={{ width: 250, paddingBottom: 12, textAlign: 'left' }}>
             <button onClick={() => toggle('date')} style={thBtn('date')}>DATUM{arrow('date')}</button>
           </th>
           <th style={{ paddingBottom: 12, textAlign: 'left' }}>
