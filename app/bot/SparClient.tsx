@@ -432,12 +432,17 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
       .then(r => r.json())
       .then(d => {
         if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
-          localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
           setActieOpvolging(d)
         }
       })
       .catch(() => {})
   }, [clerkSessionId])
+
+  useEffect(() => {
+    if (actieOpvolging && !actieBeantwoord && !started && clerkSessionId) {
+      localStorage.setItem(`arnobot_actie_getoond_${clerkSessionId}`, '1')
+    }
+  }, [actieOpvolging, actieBeantwoord, started, clerkSessionId])
 
   useEffect(() => {
     function handleUnload(e: BeforeUnloadEvent) {
@@ -1501,7 +1506,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           )}
         </div>}
 
-        {actieOpvolging && !actieBeantwoord && (
+        {actieOpvolging && !actieBeantwoord && !started && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 500, width: '100%', padding: 'clamp(24px,5vw,40px)' }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ACTIE-REMINDER</p>
