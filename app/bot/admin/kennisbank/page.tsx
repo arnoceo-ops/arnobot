@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import RssIngestButton from './RssIngestButton'
+import KennisbankBlogTable, { type BlogRow } from './KennisbankBlogTable'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,35 @@ type SourceSummary = {
   url: string | null
   count: number
   type: 'video' | 'blog'
+}
+
+const NL_MONTHS: Record<string, number> = {
+  januari: 1, februari: 2, maart: 3, april: 4, mei: 5, juni: 6,
+  juli: 7, augustus: 8, september: 9, oktober: 10, november: 11, december: 12,
+}
+const EN_MONTHS: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+}
+
+function toISO(date: string): string {
+  const nl = date.match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/)
+  if (nl) {
+    const m = NL_MONTHS[nl[2].toLowerCase()]
+    if (m) return `${nl[3]}-${String(m).padStart(2, '0')}-${nl[1].padStart(2, '0')}`
+  }
+  const en = date.match(/^(\w+)\s+(\d{1,2}),?\s+(\d{4})$/)
+  if (en) {
+    const m = EN_MONTHS[en[1].toLowerCase()]
+    if (m) return `${en[3]}-${String(m).padStart(2, '0')}-${en[2].padStart(2, '0')}`
+  }
+  return date
+}
+
+function parseBlogSource(source: string): { title: string; date: string; dateISO: string } {
+  const match = source.match(/^(.+?)\s+\((.+?)\)$/)
+  if (!match) return { title: source, date: '', dateISO: '' }
+  return { title: match[1], date: match[2], dateISO: toISO(match[2]) }
 }
 
 export default async function KennisbankPage() {
@@ -56,6 +86,11 @@ export default async function KennisbankPage() {
   const totalChunks = data?.length ?? 0
   const blogSources = sources.filter(s => s.type === 'blog')
   const videoSources = sources.filter(s => s.type === 'video')
+
+  const blogRows: BlogRow[] = blogSources.map(s => {
+    const { title, date, dateISO } = parseBlogSource(s.source)
+    return { title, date, dateISO, url: s.url, count: s.count }
+  })
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: "'Space Mono', monospace" }}>
@@ -115,31 +150,10 @@ export default async function KennisbankPage() {
         )}
 
         {/* Blogs */}
-        {blogSources.length > 0 && (
+        {blogRows.length > 0 && (
           <div style={{ marginBottom: 48 }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>BLOGS ({blogSources.length})</p>
-            {blogSources.map((s, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid #1f2937' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {s.url ? (
-                    <a
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="kb-link"
-                      style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', lineHeight: 1.6, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'color 0.15s' }}
-                    >
-                      {s.source}
-                    </a>
-                  ) : (
-                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', lineHeight: 1.6, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.source}
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#374151', flexShrink: 0 }}>{s.count}x</span>
-              </div>
-            ))}
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>BLOGS ({blogRows.length})</p>
+            <KennisbankBlogTable blogs={blogRows} />
           </div>
         )}
 
