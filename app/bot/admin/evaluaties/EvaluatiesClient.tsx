@@ -65,20 +65,20 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
       {totalRatings > 0 && (
         <div style={{ marginBottom: 48 }}>
           <p style={{ fontSize: 11, letterSpacing: 4, color: '#f59e0b', marginBottom: 20, fontFamily: "'Space Mono', monospace" }}>ANTWOORDBEOORDELINGEN</p>
-          <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div>
+          <div style={{ display: 'flex', gap: 40, marginBottom: 24, alignItems: 'flex-end' }}>
+            <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {Math.round((positiveRatings / totalRatings) * 100)}%
               </span>
               <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6, fontFamily: "'Space Mono', monospace" }}>POSITIEF</p>
             </div>
-            <div>
+            <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>
                 {totalRatings}
               </span>
               <p style={{ fontSize: 11, letterSpacing: 3, color: '#6b7280', marginTop: 6, fontFamily: "'Space Mono', monospace" }}>BEOORDELINGEN</p>
             </div>
-            <div>
+            <div style={{ textAlign: 'center', minWidth: 80 }}>
               <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#cc4444', lineHeight: 1 }}>
                 {totalRatings - positiveRatings}
               </span>
