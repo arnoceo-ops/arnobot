@@ -190,7 +190,7 @@ export default async function GebruikersPage({
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/gebruikers" />
 
-      <div className="admin-content" style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
+      <div className="admin-content" style={{ margin: '0 auto', padding: '48px 24px' }}>
 
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Gebruikers</h1>
@@ -201,7 +201,7 @@ export default async function GebruikersPage({
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: 'max-content' }}>
         {/* Tabel header */}
-        <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 12px', padding: '0 20px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
+        <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 8px', padding: '0 12px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
           <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
@@ -232,10 +232,10 @@ export default async function GebruikersPage({
               <div key={u.user_id} className="admin-user-row" style={{
                 display: 'grid',
                 gridTemplateColumns: cols,
-                gap: '0 12px',
+                gap: '0 8px',
                 alignItems: 'center',
                 background: '#1f2937',
-                padding: '14px 20px',
+                padding: '14px 12px',
                 borderLeft: `3px solid ${borderColor}`,
               }}>
                 {/* Foto */}
