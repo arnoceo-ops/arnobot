@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function MarkReviewedButton({ flagId }: { flagId: number }) {
+  const router = useRouter()
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -16,7 +18,10 @@ export default function MarkReviewedButton({ flagId }: { flagId: number }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: flagId }),
       })
-      if (res.ok) setDone(true)
+      if (res.ok) {
+        setDone(true)
+        router.refresh()
+      }
     } finally {
       setLoading(false)
     }
