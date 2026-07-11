@@ -464,13 +464,17 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
       }
 
       if (check.includes('OFFTOPIC')) {
-        const alreadyWarned = history && history.some(
-          (m: { role: string; content: string }) =>
-            m.role === 'assistant' && m.content?.includes('Zullen we het zakelijk houden?')
-        )
-        if (alreadyWarned) {
-          await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'offtopic', message: question })
-        }
+        // Cumulatief over alle gesprekken heen, niet alleen de huidige sessie: anders kan
+        // iemand de nudge omzeilen door telkens een nieuw gesprek te starten. Eerste keer
+        // ooit: stil gelogd (reviewed: true), niet zichtbaar in de admin. Elke volgende
+        // keer: zichtbaar voor beoordeling.
+        const { count: priorOfftopicCount } = await supabase
+          .from('arnobot_offtopic_flags')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('category', 'offtopic')
+        const isRepeat = (priorOfftopicCount ?? 0) > 0
+        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'offtopic', message: question, reviewed: !isRepeat })
         return NextResponse.json({ answer: 'Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
       }
     }
