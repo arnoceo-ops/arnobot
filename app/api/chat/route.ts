@@ -296,10 +296,12 @@ export async function POST(req: NextRequest) {
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
-    // Start de RAG-queryherschrijving meteen, parallel aan alles hierna (moderatie-check,
-    // document-verwerking, etc.) in plaats van pas te beginnen ná de moderatie-check. Wordt
-    // pas verderop ge-await't, op het punt waar ragQuery daadwerkelijk nodig is.
-    const ragQueryPromise: Promise<string> = !isWidget
+    // Start de VOLLEDIGE RAG-pipeline (queryherschrijving + opzoeking + rerank) meteen,
+    // parallel aan de moderatie-check en de rest hierna, in plaats van pas te beginnen ná
+    // de moderatie-check. Dat was zelf al parallel met alleen de queryherschrijving, maar de
+    // opzoeking (embedding + Voyage-rerank, de traagste stap) wachtte nog op de moderatie-
+    // check. Pas verderop ge-await't, op het punt waar de context daadwerkelijk nodig is.
+    const ragContextPromise: Promise<string> = (!isWidget
       ? Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
           client.messages.create({
             model: 'claude-haiku-4-5-20251001',
@@ -314,6 +316,9 @@ export async function POST(req: NextRequest) {
           })
           .catch(() => question)
       : Promise.resolve(question)
+    ).then(ragQuery =>
+      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
+    ).then(relevant => formatChunksForPrompt(relevant))
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
@@ -561,11 +566,9 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       if (n === 3) hint = 'salescanvas'
     }
 
-    // ragQueryPromise draait al sinds het begin van dit verzoek, parallel aan de moderatie-
+    // ragContextPromise draait al sinds het begin van dit verzoek, parallel aan de moderatie-
     // check hierboven en de rest, in plaats van pas nu te starten.
-    const ragQuery = await ragQueryPromise
-    const relevant = await Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
-    const context = formatChunksForPrompt(relevant)
+    const context = await ragContextPromise
 
     const questionWithDocument = documentText
       ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`

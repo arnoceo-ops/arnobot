@@ -190,6 +190,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [pendingLogout, setPendingLogout] = useState(false)
+  const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -444,12 +445,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   useEffect(() => {
     if (showSluiten && synthesisRef.current) {
       scrollToRef(synthesisRef)
-    } else if (loading) {
+    } else if (loading && !streamingStarted) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     } else if (messages.length > 0) {
       scrollToRef(lastMessageRef)
     }
-  }, [messages, loading, showSluiten])
+  }, [messages, loading, showSluiten, streamingStarted])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -684,6 +685,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     setInput('')
     if (inputRef.current) { inputRef.current.style.height = '55px' }
     setLoading(true)
+    setStreamingStarted(false)
 
     try {
       if (sparModus === 'sparren') {
@@ -775,6 +777,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
 
         setMessages(prev => [...prev, { role: 'arno', content: '', hint: hintHeader ?? null, log_id: null, feedback: null }])
+        setStreamingStarted(true)
 
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
