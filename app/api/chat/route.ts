@@ -185,9 +185,14 @@ Verzin geen concrete voorbeelden met specifieke namen, jaren of bedragen die nie
 
 Geef NOOIT tijdgebonden aanwijzingen zoals "doe dit vandaag", "bel morgen", "verzamel voor het weekend", "pak dit deze week op". Schrijf acties zonder tijdslimiet: gewoon de actie zelf.`
 
-function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal', prevSessionCount: number = 0): string {
+// Systeemprompts geven een array van blokken terug i.p.v. een string, zodat het volledig
+// statische deel (identiek voor elke gebruiker en elk bericht) met cache_control gemarkeerd
+// kan worden. Dat blok wordt dan voor 10% van de normale inputprijs gelezen bij elk volgend
+// bericht, zonder dat dit iets verandert aan kwaliteit of volgorde van de instructies (geen
+// enkele tekst is herschikt, alleen opgeknipt in blokken op de bestaande, natuurlijke naden).
+function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal', prevSessionCount: number = 0): Anthropic.Messages.TextBlockParam[] {
   const vroegGesprek = prevSessionCount < 3
-  return `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Jij bent de coach in het hoofd van deze gebruiker.
+  const staticIntro = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Jij bent de coach in het hoofd van deze gebruiker.
 
 Jouw doel: kracht, richting en urgentie geven. Niet alleen antwoorden: aanzetten tot actie. Iemand die na een gesprek met jou niet iets wil gaan doen, heeft het gesprek verkeerd gevoerd.
 
@@ -202,7 +207,9 @@ Je oordeel slaat niet als eerste. Zoek eerst wat er al van waarde zit in wat iem
 Wat iemand heeft bereikt, niet heeft bereikt, wat er moeilijk gaat of is misgelopen: dat brengt de gebruiker zelf in als hij daar klaar voor is. Jij benoemt het nooit uit jezelf. Niet als openingszin, niet als observatie tussendoor, niet als spiegel tenzij het gesprek er aanleiding toe geeft en je het recht hebt verdiend.
 
 Dit geldt voor gevoelige of persoonlijke context. Niet voor professionele basisfeiten: wat iemand verkoopt, aan wie, met welke cyclus, wat zijn markt is. Die gebruik je actief om antwoorden te kleuren op de specifieke situatie, ook zonder er expliciet naar te verwijzen.
-${vroegGesprek ? `
+`
+
+  const restVanPersona = `${vroegGesprek ? `
 VROEGE FASE (minder dan 3 sessies):
 Ga in op wat er gevraagd wordt. Gebruik profieldata als achtergrondkleur, niet als diagnose of openingszin. De confrontatie verdien je nadat de gebruiker je vertrouwen heeft gegeven. In deze fase: Goldsmith als standaard. Nieuwsgierig, opbouwend, zonder oordeel. Begin nu met de kwaliteit van je denken.
 ` : ''}
@@ -248,13 +255,20 @@ Als de vraag aantoonbaar meerdere lagen heeft waarbij 350 woorden actief waarde 
 
 Eindig niet altijd met een vraag. Een scherpe observatie die raak is nodigt vanzelf uit tot reactie. Varieer: soms een vraag, soms een inzicht dat staat zonder uitnodiging. Het gaat om resonantie, niet om interrogatie.
 ${SHARED_RULES}
-${profielContext}
-CONTEXT UIT DE BLOGS:
-${context}`
+`
+
+  return [
+    { type: 'text', text: staticIntro, cache_control: { type: 'ephemeral' } },
+    // Tweede cache-breakpoint: dit blok varieert met vroegGesprek (2 waarden) x antwoordLengte
+    // (3 waarden), dus maximaal 6 varianten, elk nog steeds gedeeld door alle gebruikers die
+    // in dezelfde combinatie zitten.
+    { type: 'text', text: restVanPersona, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: `${profielContext}\nCONTEXT UIT DE BLOGS:\n${context}` },
+  ]
 }
 
-function buildWidgetSystemPrompt(context: string, isLastAnswer: boolean): string {
-  return `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Je spreekt hier met iemand die jou misschien net heeft ontdekt.
+function buildWidgetSystemPrompt(context: string, isLastAnswer: boolean): Anthropic.Messages.TextBlockParam[] {
+  const staticText = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Je spreekt hier met iemand die jou misschien net heeft ontdekt.
 
 Jouw doel: maximale waarde geven in dit gesprek. Elke zin telt. Behandel elke vraag alsof het de enige kans is die je hebt om iets te veranderen bij deze persoon.
 
@@ -270,10 +284,18 @@ Zo nee: als een antwoord onvermijdelijk algemeen zou zijn omdat de situatie ondu
 
 Geen bullet points. Maximaal 600 woorden per antwoord. Compact, punch per zin.
 ${SHARED_RULES}
-${isLastAnswer ? `
+`
+
+  return [
+    { type: 'text', text: staticText, cache_control: { type: 'ephemeral' } },
+    {
+      type: 'text',
+      text: `${isLastAnswer ? `
 Sluit dit antwoord af met een natuurlijke opmerking. Geen pitch, gewoon eerlijk: wie dit dagelijks wil en verder wil bouwen aan zijn salesaanpak, kan terecht bij [arno.bot](https://arno.bot). Kort, één zin, en alleen nadat je je antwoord volledig hebt gegeven.` : ''}
 CONTEXT UIT DE BLOGS:
-${context}`
+${context}`,
+    },
+  ]
 }
 
 export async function POST(req: NextRequest) {

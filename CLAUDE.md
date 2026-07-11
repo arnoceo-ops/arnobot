@@ -198,6 +198,8 @@ De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed h
 `Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.`
 `Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
+**Uitzondering op de markdown-regel:** de hoofdpersona-respons in `app/api/chat/route.ts` (`buildRdsSystemPrompt`/`buildWidgetSystemPrompt`) mag bewust `**vet**` gebruiken voor nadruk op een kernpunt. `SparClient.tsx` rendert dit via `renderContent()` naar echte HTML-opmaak (`<strong>`), gebruikers zien dus nooit een letterlijk sterretje. Deze uitzondering geldt niet voor andere AI-output binnen dezelfde route (bijv. de moderatie-redirect-tekst bij OFFTOPIC/ONGEPAST) en niet voor andere routes: die blijven platte tekst zonder markdown-opmaak. Bij twijfel of een nieuwe AI-output-plek onder de uitzondering valt: alleen als er een renderer is die `**tekst**`/`*tekst*` daadwerkelijk omzet naar opmaak, anders geldt de standaardregel.
+
 **Als je zelf tekst schrijft of herschrijft:** vervang het streepje door een punt of komma, of herschrijf de zin. Laat het streepje nooit staan.
 
 **Als de gebruiker zegt "haal eruit" of "verwijder":** verwijder alleen het streepje. Voeg niets terug — geen komma, geen punt, tenzij de gebruiker dat expliciet vraagt.
