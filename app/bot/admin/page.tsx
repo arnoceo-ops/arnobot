@@ -102,18 +102,29 @@ export default async function ArnoBotAdminPage({
 
   const flagged = (flaggedData ?? []) as { id: number; user_id: string; category: string; message: string; created_at: string }[]
 
-  // Volgnummer per gebruiker: hoeveel eerdere meldingen (offtopic + ongepast, ook al
-  // beoordeelde) heeft deze persoon in totaal, zelfde gecombineerde telling als de
-  // server gebruikt voor de automatische uitlog-drempel na de derde keer.
+  // Volgnummer per gebruiker sinds de laatste uitlog-cyclus (zelfde telling als de server
+  // gebruikt voor de uitlog-drempel), niet levenslang: na een uitlog begint de teller weer
+  // bij 1.
   const flaggedCounts = await Promise.all(
-    flagged.map(f =>
-      supabase
+    flagged.map(async f => {
+      const { data: lastLogoutRow } = await supabase
+        .from('arnobot_offtopic_flags')
+        .select('created_at')
+        .eq('user_id', f.user_id)
+        .eq('caused_logout', true)
+        .lt('created_at', f.created_at)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let countQuery = supabase
         .from('arnobot_offtopic_flags')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', f.user_id)
         .lte('created_at', f.created_at)
-        .then(res => res.count ?? 1, () => 1)
-    )
+      if (lastLogoutRow) countQuery = countQuery.gt('created_at', lastLogoutRow.created_at)
+      return countQuery.then(res => res.count ?? 1, () => 1)
+    })
   )
 
   const sessions: Record<string, LogRow[]> = {}

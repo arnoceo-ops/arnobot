@@ -742,9 +742,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         if (data.forceLogout) {
           setBlocked(true)
           setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
+          // Sessie wissen zodat er bij terugkomst geen oud (gemarkeerd) gesprek hervat wordt,
+          // maar gewoon het normale startscherm verschijnt.
+          localStorage.removeItem('arnobot_session')
           setTimeout(() => {
             setPendingLogout(true)
-            setTimeout(() => signOut(() => router.push('/')), 5000)
+            setTimeout(() => signOut(() => router.push('/')), 7000)
           }, 100)
           return
         }

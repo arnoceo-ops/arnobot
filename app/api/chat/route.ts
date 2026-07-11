@@ -441,10 +441,23 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
     const OFFTOPIC_LOGOUT_FALLBACK = 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.'
 
     if (!isWidget && userId) {
-      const { count: priorCount } = await supabase
+      // Telt alleen sinds de laatste keer dat deze gebruiker is uitgelogd, niet levenslang:
+      // na een uitlog-cyclus krijgt iemand weer een schone lei (nudge, nudge, uitloggen).
+      const { data: lastLogoutRow } = await supabase
+        .from('arnobot_offtopic_flags')
+        .select('created_at')
+        .eq('user_id', userId)
+        .eq('caused_logout', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let countQuery = supabase
         .from('arnobot_offtopic_flags')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
+      if (lastLogoutRow) countQuery = countQuery.gt('created_at', lastLogoutRow.created_at)
+      const { count: priorCount } = await countQuery
       const occurrence = (priorCount ?? 0) + 1 // deze poging meegeteld
 
       const historyExcerpt = (history || []).slice(-6)
@@ -490,7 +503,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
 
       if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
         const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
-        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed: occurrence === 1 })
+        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed: occurrence === 1, caused_logout: occurrence >= 3 })
 
         if (occurrence >= 3) {
           return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
