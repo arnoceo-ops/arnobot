@@ -709,10 +709,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile })
         })
-        setAttachedFile(null)
         const data = await res.json()
 
         if (!res.ok) {
+          const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
+          // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
+          // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
+          if (!isBestandsfout) setAttachedFile(null)
           if (res.status === 429 && data.error === 'dagelijks_limiet') {
             setBlocked(true)
             setDagelijksTeller(25)
@@ -720,16 +723,17 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           } else if (res.status === 429 && data.error === 'dual_session') {
             setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
           } else if (data.error === 'bestandstype_niet_ondersteund') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding.' }])
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
           } else if (data.error === 'bestand_te_groot') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB, probeer een kleiner bestand.' }])
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
           } else if (data.error === 'bestand_niet_leesbaar') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer het opnieuw of gebruik een ander formaat.' }])
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
           } else {
             setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
           }
           return
         }
+        setAttachedFile(null)
 
         if (data.dagelijks_gebruikt != null) setDagelijksTeller(data.dagelijks_gebruikt)
 

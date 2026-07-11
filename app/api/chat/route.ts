@@ -296,20 +296,8 @@ export async function POST(req: NextRequest) {
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
-    // Document-upload alleen voor ingelogde gebruikers, nooit voor de anonieme widget
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
-    let documentError: string | null = null
-    if (!isWidget && rawDocument && typeof rawDocument === 'object'
-      && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string' && typeof rawDocument.data === 'string') {
-      const result = await buildDocumentContentBlock(rawDocument as UploadedDocument)
-      documentBlock = result.block
-      documentText = result.extractedText
-      documentError = result.error
-    }
-    if (documentError) {
-      return NextResponse.json({ error: documentError }, { status: 400, headers: corsHeaders(origin) })
-    }
 
     // Per-IP rate limit via Upstash (atomisch, geen race conditions)
     if (ip) {
@@ -326,6 +314,20 @@ export async function POST(req: NextRequest) {
       const { userId: sessionUserId } = await auth()
       userId = sessionUserId
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
+
+      // Document-upload alleen voor ingelogde gebruikers, nooit voor de anonieme widget.
+      // Bewust ná de auth-check: dit voorkomt dat een niet-ingelogde aanvrager (Origin
+      // vervalst/weggelaten) de server base64/mammoth-verwerkingswerk laat doen vóórdat er
+      // ooit een 401 wordt teruggegeven.
+      if (rawDocument && typeof rawDocument === 'object'
+        && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string' && typeof rawDocument.data === 'string') {
+        const result = await buildDocumentContentBlock(rawDocument as UploadedDocument)
+        if (result.error) {
+          return NextResponse.json({ error: result.error }, { status: 400, headers: corsHeaders(origin) })
+        }
+        documentBlock = result.block
+        documentText = result.extractedText
+      }
 
       // Per-user rate limit: max 30 berichten per uur
       const { success: userOk } = await userRateLimit.limit(userId)
@@ -508,7 +510,10 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
 
       if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
         const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
-        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed: occurrence === 1, caused_logout: occurrence >= 3 })
+        // ONGEPAST is altijd meteen zichtbaar voor beoordeling, ook de eerste keer. Alleen
+        // OFFTOPIC mag de eerste keer stil blijven (onschuldig uitstapje, geen review nodig).
+        const reviewed = category === 'offtopic' && occurrence === 1
+        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed, caused_logout: occurrence >= 3 })
 
         if (occurrence >= 3) {
           return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
