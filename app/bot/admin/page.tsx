@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
+import MarkReviewedButton from './MarkReviewedButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,6 +90,18 @@ export default async function ArnoBotAdminPage({
     naamMap[u.user_id] = [u.voornaam, u.achternaam].filter(Boolean).join(' ')
   }
 
+  // Gemarkeerde off-topic/ongepaste berichten — .catch(() => ({ data: null })) zodat de
+  // pagina niet crasht als de tabel nog niet bestaat (migratie nog niet uitgevoerd)
+  const { data: flaggedData } = await supabase
+    .from('arnobot_offtopic_flags')
+    .select('id, user_id, category, message, created_at')
+    .eq('reviewed', false)
+    .order('created_at', { ascending: false })
+    .limit(50)
+    .then(res => res, () => ({ data: null }))
+
+  const flagged = (flaggedData ?? []) as { id: number; user_id: string; category: string; message: string; created_at: string }[]
+
   const sessions: Record<string, LogRow[]> = {}
   for (const row of rows) {
     const key = row.session_id || row.ip || 'onbekend'
@@ -114,6 +127,29 @@ export default async function ArnoBotAdminPage({
       <div style={{ marginBottom: '40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
+
+        {flagged.length > 0 && (
+          <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 32 }}>
+            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>GEMARKEERD: OFF-TOPIC / ONGEPAST</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {flagged.map(f => (
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', letterSpacing: '1px', color: f.category === 'ongepast' ? '#cc4444' : '#9ca3af', fontWeight: 700 }}>
+                    {f.category.toUpperCase()}
+                  </span>
+                  <span style={{ fontSize: '14px', color: '#f1f5f9' }}>{naamMap[f.user_id] || f.user_id}</span>
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>&quot;{f.message.slice(0, 80)}{f.message.length > 80 ? '...' : ''}&quot;</span>
+                  <span style={{ fontSize: '12px', color: '#6b7280' }}>{new Date(f.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${f.user_id}`}
+                    style={{ fontSize: '12px', letterSpacing: '1px', color: '#f59e0b', textDecoration: 'none', marginLeft: 'auto' }}>
+                    BEKIJK GESPREK →
+                  </a>
+                  <MarkReviewedButton flagId={f.id} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
