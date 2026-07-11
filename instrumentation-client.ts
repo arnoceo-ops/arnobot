@@ -4,14 +4,16 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-// Zie sentry.server.config.ts: pk_test_ betekent een lokale Playwright E2E-run tegen de
-// Clerk development-instance, geen echte productiefout.
-const isE2ETestRun = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_test_') ?? false
+// Zie sentry.server.config.ts: alleen aanzetten bij zekerheid over productie (pk_live_),
+// niet alleen uitzetten bij zekerheid over een test. Een lege/onbekende sleutel (bijv. een
+// CI-run zonder geconfigureerde secrets, live gevonden 2026-07) mag nooit als productiefout
+// doorgestuurd worden.
+const isProduction = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_') ?? false
 
 Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
   tunnel: "/monitoring",
-  enabled: !isE2ETestRun,
+  enabled: isProduction,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
