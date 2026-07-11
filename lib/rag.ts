@@ -7,6 +7,11 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+// Instelbaar zodat E2E-integratietests (niveau 3) dit naar een lokale mock-server kunnen
+// omleiden, net als ANTHROPIC_BASE_URL dat al standaard bij de Anthropic SDK kan. Voyage
+// heeft geen SDK-optie hiervoor (rauwe fetch-aanroepen), dus hier zelf instelbaar gemaakt.
+const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL ?? 'https://api.voyageai.com'
+
 async function expandQuery(query: string): Promise<string> {
   try {
     const res = await anthropic.messages.create({
@@ -25,7 +30,7 @@ async function expandQuery(query: string): Promise<string> {
 }
 
 export async function getVoyageEmbedding(text: string): Promise<number[]> {
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
+  const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -43,7 +48,7 @@ export async function getVoyageEmbedding(text: string): Promise<number[]> {
 
 // Voor Nederlandse gesprekken en cross-language zoekopdrachten
 export async function getMultilingualEmbedding(text: string): Promise<number[]> {
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
+  const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -69,7 +74,7 @@ async function rerankChunks(
   topN: number
 ): Promise<{ content: string; context: string | null; source: string | null; url: string | null; relevance_score: number }[]> {
   try {
-    const res = await fetch('https://api.voyageai.com/v1/rerank', {
+    const res = await fetch(`${VOYAGE_BASE_URL}/v1/rerank`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
