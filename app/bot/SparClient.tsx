@@ -907,20 +907,38 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           width: 100%; max-width: 650px;
           margin: 0 auto;
         }
-        .spar-textarea {
+        .spar-input-wrap {
           width: 100%;
           background: #1f2937;
           border: 2px solid #f59e0b;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0 10px 0 6px;
+        }
+        .spar-textarea {
+          width: 100%;
+          flex: 1;
+          background: transparent;
+          border: none;
           color: #f1f5f9;
           font-family: 'Space Mono', monospace;
           font-size: 15px; font-weight: 400;
-          padding: 13px 18px; outline: none;
+          padding: 13px 8px; outline: none;
           resize: none; overflow: hidden;
           min-height: 55px;
           line-height: 29px;
           display: block;
           field-sizing: content;
         }
+        .spar-attach-btn {
+          flex-shrink: 0;
+          width: 28px; height: 28px;
+          display: flex; align-items: center; justify-content: center;
+          background: none; border: none; border-radius: 50%;
+          color: #6b7280; font-size: 22px; line-height: 1; cursor: pointer; padding: 0;
+        }
+        .spar-attach-btn:hover { color: #f1f5f9; }
         .spar-textarea::placeholder { color: #4b5563; font-style: normal; font-size: 15px; font-weight: 400; }
         .spar-context-textarea::placeholder { color: #4b5563; }
         .spar-textarea:focus { background: #1f2937; }
@@ -1109,11 +1127,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
 
         /* GLOW op invoerveld na gesprek */
-        .spar-input-row.active-glow .spar-textarea {
+        .spar-input-row.active-glow .spar-input-wrap {
           box-shadow: inset 0 0 0 3px rgba(245,158,11,0.25);
           animation: glowpulse 2s ease-in-out infinite;
         }
-        .spar-input-row.blink-glow .spar-textarea {
+        .spar-input-row.blink-glow .spar-input-wrap {
           animation: blinkglow 0.4s ease-in-out 4;
         }
         @keyframes glowpulse {
@@ -1453,7 +1471,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
-            <div style={{ position: 'relative', width: '100%' }}>
+            <div className="spar-input-wrap">
               {sparModus !== 'sparren' && (
                 <>
                   <input
@@ -1464,15 +1482,10 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     style={{ display: 'none' }}
                   />
                   <button
+                    className="spar-attach-btn"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={loading || blocked}
                     title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
-                    style={{
-                      position: 'absolute', left: 10, top: 'calc(50% - 3px)', transform: 'translateY(-50%)', width: 28, height: 28,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'none', border: 'none', borderRadius: '50%',
-                      color: '#6b7280', fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 0,
-                    }}
                   >
                     +
                   </button>
@@ -1481,7 +1494,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <textarea
                 ref={inputRef}
                 className="spar-textarea"
-                style={sparModus !== 'sparren' ? { paddingLeft: 46 } : undefined}
                 value={input}
                 onChange={e => {
                   setInput(e.target.value)
