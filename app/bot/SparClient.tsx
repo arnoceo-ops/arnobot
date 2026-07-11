@@ -160,6 +160,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [verfijnen, setVerfijnen] = useState(false)
   const [verfijndSuggestie, setVerfijndSuggestie] = useState('')
   const [verfijnFout, setVerfijnFout] = useState(false)
+  const [verfijnAlGoed, setVerfijnAlGoed] = useState(false)
   const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
@@ -696,6 +697,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     if (inputRef.current) { inputRef.current.style.height = '55px' }
     setLoading(true)
     setStreamingStarted(false)
+    // Bij versturen verdwijnt een eventuele verfijn-suggestie/melding, ook als er niet expliciet
+    // op GEBRUIK DIT of NEGEER is geklikt.
+    setVerfijndSuggestie('')
+    setVerfijnFout(false)
+    setVerfijnAlGoed(false)
+    setInputIsVerfijnd(false)
 
     try {
       if (sparModus === 'sparren') {
@@ -1615,6 +1622,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     if (data.onbegrijpelijk) {
                       setVerfijnFout(true)
                       setTimeout(() => setVerfijnFout(false), 4000)
+                    } else if (data.verfijnd && data.verfijnd.trim() === input.trim()) {
+                      // Claude gaf bewust dezelfde tekst terug (instructie: niet herschrijven
+                      // voor het herschrijven). Geen lege "verbeterde versie" tonen, gewoon
+                      // eerlijk melden dat er niks te verbeteren viel.
+                      setVerfijnAlGoed(true)
+                      setTimeout(() => setVerfijnAlGoed(false), 4000)
                     } else if (data.verfijnd) {
                       setVerfijnFout(false)
                       setVerfijndSuggestie(data.verfijnd)
@@ -1668,6 +1681,11 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           {verfijnFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Dit snap ik niet. Typ een echte vraag en ik maak hem scherper.
+            </p>
+          )}
+          {verfijnAlGoed && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f59e0b', textAlign: 'center', marginTop: 8 }}>
+              Je vraag is al scherp genoeg, geen verbetering nodig.
             </p>
           )}
           {verfijndSuggestie && (
