@@ -428,54 +428,75 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
       }
     }
 
-    // Content moderatie voor ingelogde gebruikers: nudgen, nooit automatisch blokkeren.
+    // Content moderatie voor ingelogde gebruikers: nudgen, nooit direct blokkeren.
     // Herhaald off-topic of iets ongepasts wordt gemarkeerd voor handmatige beoordeling
-    // in de admin, want een betalende gebruiker automatisch buitensluiten is te zwaar middel.
+    // in de admin (een betalende gebruiker direct buitensluiten is te zwaar middel), en
+    // na de derde keer in totaal wordt de gebruiker automatisch uitgelogd, niet geblokkeerd:
+    // die kan altijd gewoon opnieuw inloggen zodra er weer een zakelijke vraag is.
+    const OFFTOPIC_FALLBACKS = [
+      'Zullen we het zakelijk houden?',
+      'Interessant, maar laten we het over jouw sales hebben.',
+      'Kom terug als je weer bij zakelijke zinnen bent.',
+    ]
+    const OFFTOPIC_LOGOUT_FALLBACK = 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.'
+
     if (!isWidget && userId) {
-      const lastArnoMessage = history && history.length > 0
-        ? history.filter((m: { role: string }) => m.role === 'assistant').slice(-1)[0]?.content
-        : null
+      const { count: priorCount } = await supabase
+        .from('arnobot_offtopic_flags')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+      const occurrence = (priorCount ?? 0) + 1 // deze poging meegeteld
 
-      const moderatiePrompt = lastArnoMessage
-        ? `Je beoordeelt een gesprek over sales en business met een ingelogde ArnoBot-gebruiker.
+      const historyExcerpt = (history || []).slice(-6)
+        .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${m.content}`)
+        .join('\n')
 
-Vorige vraag/opmerking van ArnoBot: "${lastArnoMessage}"
-Reactie van de gebruiker: "${question}"
+      const toonInstructie = occurrence >= 3
+        ? 'Dit is al de derde keer dat deze gebruiker afdwaalt, het gesprek wordt na dit bericht automatisch beëindigd. Schrijf een korte, duidelijke maar niet onaardige mededeling dat het gesprek hierdoor stopt, en dat diegene welkom is terug te komen zodra er een zakelijke vraag is.'
+        : occurrence >= 2
+        ? 'Dit is niet de eerste keer. Wees directer en korter dan een uitnodigende vraag, bijvoorbeeld in de trant van "Kom terug als je weer bij zakelijke zinnen bent."'
+        : 'Dit is de eerste keer. Wees uitnodigend en kies de invalshoek die het beste past bij dit bericht: ofwel verwijs naar het laatste echte zakelijke onderwerp uit het gesprek hieronder en stel een gerichte vraag om daarnaar terug te keren, ofwel vraag de gebruiker direct wat dit te maken heeft met wat eerder besproken is of met het zakelijke succes dat diegene nastreeft. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
 
-Antwoord met precies één woord:
+      const moderatiePrompt = `Je beoordeelt een gesprek over sales en business met een ingelogde ArnoBot-gebruiker.
+
+Gesprek tot nu toe:
+${historyExcerpt || '(nog geen eerdere berichten)'}
+
+Nieuwste bericht van de gebruiker: "${question}"
+
+Stap 1: categoriseer dit nieuwste bericht. Schrijf op de EERSTE regel precies één woord:
 ONGEPAST: seksueel, beledigend of trollen
 OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
-OK: logisch vervolg op het gesprek of relevant voor sales/business`
-        : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
+OK: logisch vervolg op het gesprek of relevant voor sales/business
+
+Stap 2: alleen als het niet OK is, schrijf op de TWEEDE regel een korte reactie (1-2 zinnen) in de stijl van Arno Diepeveen die het gesprek terugbrengt naar zakelijk. ${toonInstructie}
+
+Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
 
       const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check-app', op: 'ai.claude' }, () =>
         client.messages.create({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 10,
+          max_tokens: 150,
           system: moderatiePrompt,
-          messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
+          messages: [{ role: 'user', content: 'Beoordeel dit bericht.' }]
         })
       )
-      const check = getText(checkRes.content, 'OK').trim().toUpperCase()
+      const rawCheck = getText(checkRes.content, 'OK').trim()
+      const [firstLine, ...rest] = rawCheck.split('\n')
+      const check = firstLine.trim().toUpperCase()
+      const generatedReply = rest.join('\n').trim()
 
-      if (check.includes('ONGEPAST')) {
-        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'ongepast', message: question })
-        return NextResponse.json({ answer: 'Dat past niet in dit gesprek. Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
-      }
+      if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
+        const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
+        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed: occurrence === 1 })
 
-      if (check.includes('OFFTOPIC')) {
-        // Cumulatief over alle gesprekken heen, niet alleen de huidige sessie: anders kan
-        // iemand de nudge omzeilen door telkens een nieuw gesprek te starten. Eerste keer
-        // ooit: stil gelogd (reviewed: true), niet zichtbaar in de admin. Elke volgende
-        // keer: zichtbaar voor beoordeling.
-        const { count: priorOfftopicCount } = await supabase
-          .from('arnobot_offtopic_flags')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('category', 'offtopic')
-        const isRepeat = (priorOfftopicCount ?? 0) > 0
-        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'offtopic', message: question, reviewed: !isRepeat })
-        return NextResponse.json({ answer: 'Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
+        if (occurrence >= 3) {
+          return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
+        }
+        const fallback = OFFTOPIC_FALLBACKS[Math.min(occurrence - 1, OFFTOPIC_FALLBACKS.length - 1)]
+        return NextResponse.json({ answer: generatedReply || fallback, hint: null }, { headers: corsHeaders(origin) })
       }
     }
 

@@ -102,16 +102,15 @@ export default async function ArnoBotAdminPage({
 
   const flagged = (flaggedData ?? []) as { id: number; user_id: string; category: string; message: string; created_at: string }[]
 
-  // Volgnummer per gebruiker: hoeveel eerdere off-topic meldingen (ook al beoordeelde)
-  // heeft deze persoon in totaal, zodat een patroon zichtbaar blijft ook als je elke
-  // melding losstaand op BEKEKEN zet.
+  // Volgnummer per gebruiker: hoeveel eerdere meldingen (offtopic + ongepast, ook al
+  // beoordeelde) heeft deze persoon in totaal, zelfde gecombineerde telling als de
+  // server gebruikt voor de automatische uitlog-drempel na de derde keer.
   const flaggedCounts = await Promise.all(
     flagged.map(f =>
       supabase
         .from('arnobot_offtopic_flags')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', f.user_id)
-        .eq('category', 'offtopic')
         .lte('created_at', f.created_at)
         .then(res => res.count ?? 1, () => 1)
     )

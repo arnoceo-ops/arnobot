@@ -738,6 +738,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           return
         }
 
+        if (data.forceLogout) {
+          setBlocked(true)
+          setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
+          setTimeout(() => signOut(() => router.push('/')), 4000)
+          return
+        }
+
         const answer = data.answer || 'Geen antwoord ontvangen.'
         setMessages(prev => [...prev, { role: 'arno', content: answer, hint: data.hint ?? null, log_id: data.log_id ?? null, feedback: null }])
         setHistory(prev => [
