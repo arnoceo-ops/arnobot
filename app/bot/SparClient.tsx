@@ -1468,7 +1468,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                     disabled={loading || blocked}
                     title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
                     style={{
-                      position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 28, height: 28,
+                      position: 'absolute', left: 10, top: 'calc(50% - 3px)', transform: 'translateY(-50%)', width: 28, height: 28,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: 'none', border: 'none', borderRadius: '50%',
                       color: '#6b7280', fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 0,
