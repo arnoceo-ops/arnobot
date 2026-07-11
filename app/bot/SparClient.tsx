@@ -1209,6 +1209,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         .loading-text {
           font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #f1f5f9;
         }
+        .btn-loading-dots { display: inline-flex; gap: 5px; align-items: center; justify-content: center; }
+        .btn-loading-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: currentColor;
+          animation: pulse 1.2s ease-in-out infinite;
+        }
+        .btn-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .btn-loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
         /* GLOW op invoerveld na gesprek */
         .spar-input-row.active-glow .spar-input-wrap {
@@ -1668,7 +1676,13 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                   onClick={handleNieuw}
                   disabled={synthesisLoading}
                 >
-                  {synthesisLoading ? '...' : (showSluiten && messages.length <= synthesisMessageCount) ? 'SLUITEN' : 'SLUIT →'}
+                  {synthesisLoading ? (
+                    <span className="btn-loading-dots">
+                      <span className="btn-loading-dot" />
+                      <span className="btn-loading-dot" />
+                      <span className="btn-loading-dot" />
+                    </span>
+                  ) : (showSluiten && messages.length <= synthesisMessageCount) ? 'SLUITEN' : 'SLUIT →'}
                 </button>
               )}
             </div>
