@@ -254,6 +254,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
+  const scrolledForCountRef = useRef(0)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
@@ -443,12 +444,18 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   }
 
   useEffect(() => {
-    // messages.length (niet messages zelf) als dependency: een nieuw bericht mag de pagina
-    // verplaatsen, maar tekst die in-place bijwerkt tijdens het streamen mag dat niet, anders
-    // zit je vast op dezelfde positie en kun je niet vrij scrollen terwijl het antwoord komt.
     if (showSluiten && synthesisRef.current) {
       scrollToRef(synthesisRef)
-    } else if (loading && !streamingStarted) {
+      return
+    }
+    // Harde grendel: alleen scrollen als messages.length écht is veranderd sinds de vorige
+    // keer dat we scrolden. loading/streamingStarted staan wel in de dependency-array (React
+    // vereist dat voor wat er in het effect gelezen wordt), maar hun verandering aan het eind
+    // van het streamen (loading true -> false) mag zelf nooit opnieuw een scroll triggeren,
+    // anders knal je terug naar de bovenkant van het bericht precies als het antwoord klaar is.
+    if (messages.length === scrolledForCountRef.current) return
+    scrolledForCountRef.current = messages.length
+    if (loading && !streamingStarted) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     } else if (messages.length > 0) {
       scrollToRef(lastMessageRef)

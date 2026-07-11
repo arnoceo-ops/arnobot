@@ -316,8 +316,11 @@ export async function POST(req: NextRequest) {
           })
           .catch(() => question)
       : Promise.resolve(question)
+    // expand: false, want ragQuery is hierboven al herschreven. getRelevantChunks deed er met
+    // expand: true zelf nóg een Haiku-queryherschrijving overheen (~1,8s pure dubbel werk,
+    // gemeten), de enige aanroeper van deze functie die dat deed.
     ).then(ragQuery =>
-      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
+      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, false))
     ).then(relevant => formatChunksForPrompt(relevant))
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
