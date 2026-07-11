@@ -1385,6 +1385,15 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             {sparModus === 'sparren' && (
               <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
                 <div>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>ARNOBOT ALS SPARRING PARTNER</p>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 16 }}>
+                    Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
+                  </p>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+                    Je speelt het gesprek vanuit jouw rol. ArnoBot speelt de ander. En dat gesprek loopt niet altijd zoals jij wilt. Je kiest een weerstand: licht, stevig of zwaar, voert eventueel een korte context in en begint het gesprek. Test real life situaties. Have fun!
+                  </p>
+                </div>
+                <div>
                   <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
                     {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
