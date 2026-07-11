@@ -8,7 +8,7 @@ import type { Message } from '@anthropic-ai/sdk/resources'
 // altijd vervangen, ook zonder spaties eromheen ("goed—toch knap"). Een los koppelteken
 // telt alleen als leesteken met spaties aan beide kanten, anders is het een samengesteld
 // woord zoals "MT-lid".
-function stripDashPunctuation(text: string): string {
+export function stripDashPunctuation(text: string): string {
   return text
     .replace(/[ \t]*[-–—][ \t]*(?=\n)/g, '')
     .replace(/^[ \t]*[-–—][ \t]*/gm, '')

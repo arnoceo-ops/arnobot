@@ -709,59 +709,112 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile })
         })
-        const data = await res.json()
 
-        if (!res.ok) {
-          const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
-          // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
-          // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
-          if (!isBestandsfout) setAttachedFile(null)
-          if (res.status === 429 && data.error === 'dagelijks_limiet') {
+        // Blokkades/nudges/foutmeldingen komen nog steeds als JSON terug (early return op de
+        // server, geen tekst om te streamen). Alleen het echte hoofdantwoord is een tekst-stream.
+        const contentType = res.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+          const data = await res.json()
+
+          if (!res.ok) {
+            const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
+            // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
+            // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
+            if (!isBestandsfout) setAttachedFile(null)
+            if (res.status === 429 && data.error === 'dagelijks_limiet') {
+              setBlocked(true)
+              setDagelijksTeller(25)
+              setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
+            } else if (res.status === 429 && data.error === 'dual_session') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
+            } else if (data.error === 'bestandstype_niet_ondersteund') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'bestand_te_groot') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'bestand_niet_leesbaar') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else {
+              setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
+            }
+            return
+          }
+          setAttachedFile(null)
+
+          if (data.dagelijks_gebruikt != null) setDagelijksTeller(data.dagelijks_gebruikt)
+
+          if (data.blocked) {
             setBlocked(true)
-            setDagelijksTeller(25)
-            setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
-          } else if (res.status === 429 && data.error === 'dual_session') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
-          } else if (data.error === 'bestandstype_niet_ondersteund') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
-          } else if (data.error === 'bestand_te_groot') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
-          } else if (data.error === 'bestand_niet_leesbaar') {
-            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
-          } else {
-            setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
+            setMessages(prev => [...prev, { role: 'arno', content: '', hint: 'blocked' }])
+            return
+          }
+
+          if (data.forceLogout) {
+            setBlocked(true)
+            setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
+            // Sessie wissen zodat er bij terugkomst geen oud (gemarkeerd) gesprek hervat wordt,
+            // maar gewoon het normale startscherm verschijnt.
+            localStorage.removeItem('arnobot_session')
+            setTimeout(() => {
+              setPendingLogout(true)
+              setTimeout(() => signOut(() => router.push('/')), 7000)
+            }, 100)
+            return
           }
           return
         }
+
+        // Streaming hoofdantwoord: tekst komt in brokjes binnen, direct op het scherm bijgewerkt.
         setAttachedFile(null)
+        const hintHeader = res.headers.get('X-Hint')
+        const dagelijksHeader = res.headers.get('X-Dagelijks-Gebruikt')
+        if (dagelijksHeader != null) setDagelijksTeller(Number(dagelijksHeader))
 
-        if (data.dagelijks_gebruikt != null) setDagelijksTeller(data.dagelijks_gebruikt)
-
-        if (data.blocked) {
-          setBlocked(true)
-          setMessages(prev => [...prev, { role: 'arno', content: '', hint: 'blocked' }])
+        if (!res.body) {
+          setMessages(prev => [...prev, { role: 'arno', content: 'Geen antwoord ontvangen.' }])
           return
         }
 
-        if (data.forceLogout) {
-          setBlocked(true)
-          setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
-          // Sessie wissen zodat er bij terugkomst geen oud (gemarkeerd) gesprek hervat wordt,
-          // maar gewoon het normale startscherm verschijnt.
-          localStorage.removeItem('arnobot_session')
-          setTimeout(() => {
-            setPendingLogout(true)
-            setTimeout(() => signOut(() => router.push('/')), 7000)
-          }, 100)
-          return
+        setMessages(prev => [...prev, { role: 'arno', content: '', hint: hintHeader ?? null, log_id: null, feedback: null }])
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        const META_MARKER = '\n<<<ARNOBOT_META>>>'
+        let rawBuffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          rawBuffer += decoder.decode(value, { stream: true })
+          const metaIndex = rawBuffer.indexOf(META_MARKER)
+          const displayText = metaIndex !== -1 ? rawBuffer.slice(0, metaIndex) : rawBuffer
+          setMessages(prev => {
+            const updated = [...prev]
+            updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText }
+            return updated
+          })
         }
 
-        const answer = data.answer || 'Geen antwoord ontvangen.'
-        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: data.hint ?? null, log_id: data.log_id ?? null, feedback: null }])
+        const metaIndex = rawBuffer.indexOf(META_MARKER)
+        let finalAnswer = rawBuffer
+        let streamedLogId: string | null = null
+        if (metaIndex !== -1) {
+          finalAnswer = rawBuffer.slice(0, metaIndex)
+          try {
+            const meta = JSON.parse(rawBuffer.slice(metaIndex + META_MARKER.length))
+            streamedLogId = meta.log_id ?? null
+          } catch {}
+        }
+        finalAnswer = finalAnswer || 'Geen antwoord ontvangen.'
+
+        setMessages(prev => {
+          const updated = [...prev]
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: finalAnswer, log_id: streamedLogId }
+          return updated
+        })
         setHistory(prev => [
           ...prev,
           { role: 'user', content: question },
-          { role: 'assistant', content: answer }
+          { role: 'assistant', content: finalAnswer }
         ])
       }
     } catch {

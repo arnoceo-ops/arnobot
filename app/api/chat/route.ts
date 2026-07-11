@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
-import { getText } from '@/lib/ai'
+import { getText, stripDashPunctuation } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
@@ -295,6 +295,25 @@ export async function POST(req: NextRequest) {
     }
 
     const isWidget = origin?.includes('arno.blog') ?? false
+
+    // Start de RAG-queryherschrijving meteen, parallel aan alles hierna (moderatie-check,
+    // document-verwerking, etc.) in plaats van pas te beginnen ná de moderatie-check. Wordt
+    // pas verderop ge-await't, op het punt waar ragQuery daadwerkelijk nodig is.
+    const ragQueryPromise: Promise<string> = !isWidget
+      ? Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
+          client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 60,
+            system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
+            messages: [{ role: 'user', content: question }]
+          })
+        )
+          .then(ragRes => {
+            const augmented = getText(ragRes.content, '').trim()
+            return augmented.length > 10 ? `${question} ${augmented}` : question
+          })
+          .catch(() => question)
+      : Promise.resolve(question)
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
@@ -542,25 +561,9 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       if (n === 3) hint = 'salescanvas'
     }
 
-    // Query augmentatie: vertaal de gebruikersvraag naar betere zoektermen voor de RAG
-    // Haiku-call om impliciete salesthema's te extrapoleren (bijv. "klanten via netwerk" → "referral systeem")
-    let ragQuery = question
-    if (!isWidget) {
-      try {
-        const ragRes = await Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
-          client.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 60,
-            system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
-            messages: [{ role: 'user', content: question }]
-          })
-        )
-        const augmented = getText(ragRes.content, '').trim()
-        if (augmented.length > 10) ragQuery = `${question} ${augmented}`
-      } catch {
-        // Fallback op originele vraag
-      }
-    }
+    // ragQueryPromise draait al sinds het begin van dit verzoek, parallel aan de moderatie-
+    // check hierboven en de rest, in plaats van pas nu te starten.
+    const ragQuery = await ragQueryPromise
     const relevant = await Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
     const context = formatChunksForPrompt(relevant)
 
@@ -658,32 +661,72 @@ PROFIEL VAN DE GEBRUIKER:
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
       : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte, prevSessionCount)
 
-    const response = await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, () =>
-      client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
-        system: systemPrompt,
-        messages
-      })
-    )
+    // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
+    // Claude hem genereert, in plaats van pas na het volledige antwoord. Een kleine buffer
+    // (FLUSH_LOOKBACK) houdt de laatste tekens vast zodat het streepjes-vangnet (getText/
+    // stripDashPunctuation) een dash altijd samen met zijn omgeving ziet, ook al komt de
+    // tekst in kleine brokjes binnen. Metadata die al vooraf bekend is (hint, daglimiet-
+    // teller) gaat in de headers, log_id (pas bekend na het wegschrijven) komt als klein
+    // blokje ná het einde van de tekst-stream.
+    const FLUSH_LOOKBACK = 20
+    const encoder = new TextEncoder()
+    const anthropicStream = client.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+      system: systemPrompt,
+      messages
+    })
 
-    const answer = getText(response.content)
+    const readable = new ReadableStream({
+      async start(controller) {
+        let buffer = ''
+        try {
+          await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, async () => {
+            for await (const event of anthropicStream) {
+              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                buffer += event.delta.text
+                if (buffer.length > FLUSH_LOOKBACK) {
+                  const toFlush = buffer.slice(0, buffer.length - FLUSH_LOOKBACK)
+                  controller.enqueue(encoder.encode(stripDashPunctuation(toFlush)))
+                  buffer = buffer.slice(buffer.length - FLUSH_LOOKBACK)
+                }
+              }
+            }
+          })
 
-    let logId: string | null = null
-    if (isWidget) {
-      await supabase.from('arno_blog_widget_logs').insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
-    } else {
-      const { data: logRow } = await supabase
-        .from('arnobot_rds_logs')
-        .insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
-        .select('id')
-        .single()
-      logId = logRow?.id ?? null
-    }
+          const remainder = stripDashPunctuation(buffer)
+          if (remainder) controller.enqueue(encoder.encode(remainder))
 
-    const responseBody: Record<string, unknown> = { answer, hint, log_id: logId }
-    if (!isWidget && tier === 'basis') responseBody.dagelijks_gebruikt = todayUsage + 1
-    return NextResponse.json(responseBody, { headers: corsHeaders(origin) })
+          const finalMessage = await anthropicStream.finalMessage()
+          const answer = getText(finalMessage.content)
+
+          let logId: string | null = null
+          if (isWidget) {
+            await supabase.from('arno_blog_widget_logs').insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
+          } else {
+            const { data: logRow } = await supabase
+              .from('arnobot_rds_logs')
+              .insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
+              .select('id')
+              .single()
+            logId = logRow?.id ?? null
+          }
+
+          controller.enqueue(encoder.encode(`\n<<<ARNOBOT_META>>>${JSON.stringify({ log_id: logId })}`))
+        } catch (err) {
+          console.error('Chat stream error:', err instanceof Error ? err.message : String(err))
+          controller.error(err)
+        } finally {
+          controller.close()
+        }
+      }
+    })
+
+    const responseHeaders: Record<string, string> = { ...corsHeaders(origin), 'Content-Type': 'text/plain; charset=utf-8' }
+    if (hint) responseHeaders['X-Hint'] = hint
+    if (!isWidget && tier === 'basis') responseHeaders['X-Dagelijks-Gebruikt'] = String(todayUsage + 1)
+
+    return new Response(readable, { headers: responseHeaders })
   } catch (err) {
     console.error('Chat error:', err instanceof Error ? err.message : String(err))
     const origin = req.headers.get('origin')
