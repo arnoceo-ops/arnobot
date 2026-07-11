@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
-import { getText, stripDashPunctuation } from '@/lib/ai'
+import { getText, StreamingDashSanitizer } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
@@ -672,13 +672,12 @@ PROFIEL VAN DE GEBRUIKER:
       : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte, prevSessionCount)
 
     // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
-    // Claude hem genereert, in plaats van pas na het volledige antwoord. Een kleine buffer
-    // (FLUSH_LOOKBACK) houdt de laatste tekens vast zodat het streepjes-vangnet (getText/
-    // stripDashPunctuation) een dash altijd samen met zijn omgeving ziet, ook al komt de
-    // tekst in kleine brokjes binnen. Metadata die al vooraf bekend is (hint, daglimiet-
-    // teller) gaat in de headers, log_id (pas bekend na het wegschrijven) komt als klein
-    // blokje ná het einde van de tekst-stream.
-    const FLUSH_LOOKBACK = 20
+    // Claude hem genereert, in plaats van pas na het volledige antwoord. StreamingDashSanitizer
+    // stuurt tekst pas door zodra vaststaat dat een streepje niet meer kan volgen (een vaste
+    // lookback-buffer bleek bij live tests niet voldoende: die verstuurt de spatie vóór een
+    // streepje soms al vóórdat bekend is of er een streepje komt). Metadata die al vooraf
+    // bekend is (hint, daglimiet-teller) gaat in de headers, log_id (pas bekend na het
+    // wegschrijven) komt als klein blokje ná het einde van de tekst-stream.
     const encoder = new TextEncoder()
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
@@ -689,22 +688,18 @@ PROFIEL VAN DE GEBRUIKER:
 
     const readable = new ReadableStream({
       async start(controller) {
-        let buffer = ''
+        const sanitizer = new StreamingDashSanitizer()
         try {
           await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, async () => {
             for await (const event of anthropicStream) {
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                buffer += event.delta.text
-                if (buffer.length > FLUSH_LOOKBACK) {
-                  const toFlush = buffer.slice(0, buffer.length - FLUSH_LOOKBACK)
-                  controller.enqueue(encoder.encode(stripDashPunctuation(toFlush)))
-                  buffer = buffer.slice(buffer.length - FLUSH_LOOKBACK)
-                }
+                const toSend = sanitizer.push(event.delta.text)
+                if (toSend) controller.enqueue(encoder.encode(toSend))
               }
             }
           })
 
-          const remainder = stripDashPunctuation(buffer)
+          const remainder = sanitizer.flush()
           if (remainder) controller.enqueue(encoder.encode(remainder))
 
           const finalMessage = await anthropicStream.finalMessage()
