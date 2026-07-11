@@ -78,7 +78,7 @@ async function rerankChunks(
       body: JSON.stringify({
         query,
         documents: chunks.map(c => c.context ? `${c.context}\n\n${c.content}` : c.content),
-        model: 'rerank-2',
+        model: 'rerank-2.5',
         top_k: topN,
       }),
     })
@@ -114,20 +114,21 @@ function diversifyChunks(chunks: RagChunk[], topN: number, perSourceMax = 4): Ra
   return result
 }
 
-export async function getRelevantChunks(query: string, topN = 20, expand = false): Promise<RagChunk[]> {
-  const searchQuery = expand ? await expandQuery(query) : query
+type Candidate = { content: string; context: string | null; source: string | null; url: string | null }
+
+// Vector: 100 kandidaten voor maximale semantische dekking van het archief.
+// Fulltext: 30 kandidaten op exacte woorden, vangt namen/methodes/cijfers die
+// semantisch niet dicht genoeg bij de vraag liggen om in de vector-top-100 te komen.
+async function searchCandidates(searchQuery: string): Promise<Candidate[]> {
   const queryEmbedding = await getEmbedding(searchQuery)
 
-  // Vector: 100 kandidaten voor maximale semantische dekking van het archief.
-  // Fulltext: 30 kandidaten op exacte woorden, vangt namen/methodes/cijfers die
-  // semantisch niet dicht genoeg bij de vraag liggen om in de vector-top-100 te komen.
   const [{ data, error }, { data: ftData, error: ftError }] = await Promise.all([
     supabase.rpc('match_blog_chunks', {
       query_embedding: queryEmbedding,
       match_count: 100,
     }),
     supabase.rpc('match_blog_chunks_fulltext', {
-      query_text: query,
+      query_text: searchQuery,
       match_count: 30,
     }),
   ])
@@ -142,12 +143,44 @@ export async function getRelevantChunks(query: string, topN = 20, expand = false
     .map(row => ({ content: row.content, context: row.context ?? null, source: row.source ?? null, url: row.url ?? null }))
 
   const seen = new Set(vectorCandidates.map(c => c.content))
-  const candidates = [...vectorCandidates, ...fulltextCandidates.filter(c => !seen.has(c.content))]
+  return [...vectorCandidates, ...fulltextCandidates.filter(c => !seen.has(c.content))]
+}
+
+function dedupeCandidates(candidateLists: Candidate[][]): Candidate[] {
+  const seen = new Set<string>()
+  const merged: Candidate[] = []
+  for (const list of candidateLists) {
+    for (const c of list) {
+      if (seen.has(c.content)) continue
+      seen.add(c.content)
+      merged.push(c)
+    }
+  }
+  return merged
+}
+
+export async function getRelevantChunks(query: string, topN = 20, expand = false): Promise<RagChunk[]> {
+  const searchQuery = expand ? await expandQuery(query) : query
+  const candidates = await searchCandidates(searchQuery)
 
   if (candidates.length === 0) return []
 
   // Rerank op originele query voor precisie (niet de uitgebreide versie)
   const reranked = await rerankChunks(query, candidates, Math.min(50, candidates.length))
+  return diversifyChunks(reranked, topN)
+}
+
+// Doorzoekt meerdere zoekzinnen parallel (bijv. verschillende interpretaties van dezelfde
+// vraag) en voegt de resultaten samen vóór het herrangschikken. Vangt het geval op waarin
+// één enkele queryherschrijving de vraag verkeerd inschat en daardoor relevante kennisbank-
+// stof mist, ongeacht hoe goed de rerank daarna is.
+export async function getRelevantChunksMultiQuery(searchQueries: string[], rerankQuery: string, topN = 20): Promise<RagChunk[]> {
+  const perQueryResults = await Promise.all(searchQueries.map(q => searchCandidates(q)))
+  const candidates = dedupeCandidates(perQueryResults)
+
+  if (candidates.length === 0) return []
+
+  const reranked = await rerankChunks(rerankQuery, candidates, Math.min(50, candidates.length))
   return diversifyChunks(reranked, topN)
 }
 

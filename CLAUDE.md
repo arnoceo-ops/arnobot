@@ -12,14 +12,15 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - **Gedaan (juli 2026):** RLS ingeschakeld op alle gebruikerstabellen met Clerk JWT-integratie als defense-in-depth.
 
 ### 2. Dependencies & tooling
-- Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Sanity?
+- Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK, Sanity?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
 - Check of Dependabot-PRs openstaan op GitHub en beoordeel ze
 
 ### 3. AI-modelinventaris
-- Zie de modelinventaris-tabel verderop in dit bestand
-- Zijn er nieuwere of betere modellen beschikbaar bij Anthropic?
+- Zie de modelinventaris-tabel verderop in dit bestand, deze dekt zowel de Anthropic chat-modellen als de Voyage AI embedding/rerank-modellen (RAG-pipeline)
+- Zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?
 - Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
+- **Vaste regel:** elke nieuwe externe AI/API-leverancier die aan arnobot wordt toegevoegd (nieuwe SDK, nieuw model, nieuwe derde partij) wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. Reden: Voyage AI, Sentry en Upstash zijn alle drie ooit toegevoegd zonder dat de check werd bijgewerkt, en zijn daardoor tijdlang buiten beeld gebleven (Voyage AI liep op verouderde modellen zonder dat iemand het merkte).
 
 ### 4. Infrastructuur
 
@@ -55,6 +56,22 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Controleer of de DPA is gewijzigd: [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Als die is veranderd, privacypagina bijwerken.
 - Zijn er API-deprecaties aangekondigd? Controleer [docs.anthropic.com/changelog](https://docs.anthropic.com/en/release-notes/overview)
 - Worden de huidige model-IDs in de inventaris nog ondersteund? (Anthropic depreceert modellen met aankondiging)
+
+#### Voyage AI (embedding + rerank voor de RAG/kennisbank-pipeline, `lib/rag.ts`)
+- Controleer [docs.voyageai.com/docs/pricing](https://docs.voyageai.com/docs/pricing) op nieuwere modelgeneraties en gratis tokentoelagen (nieuwe modellen krijgen vaak 200 miljoen gratis tokens/maand, oudere modellen niet)
+- Zijn de huidige model-IDs (embedding + rerank) nog de nieuwste generatie, of inmiddels "legacy"?
+- **Gedaan (juli 2026):** rerank-model geüpgraded van `rerank-2` naar `rerank-2.5` (door Voyage zelf bevestigd als strikt beter op kwaliteit, contextlengte, latency en throughput, zelfde prijs). Reranking gebeurt live op tekst, geen migratie nodig.
+- **Openstaand actiepunt:** embedding-model (`voyage-3-large`) NIET losstaand upgraden naar `voyage-4-large`. Live geverifieerd dat dit de kennisbank-zoekfunctie volledig breekt (0 treffers): de hele kennisbank (`blog_chunks`) is offline vooraf ge-embed met `voyage-3-large` via `scripts/embed-chunks.mjs` en ligt vast in die vectorruimte. Een nieuw embedding-model voor alleen de live zoekvraag is semantisch incompatibel met de opgeslagen document-embeddings, ook al matcht de dimensie toevallig. Vereist een volledige her-embedding van de kennisbank plus een zorgvuldige overstap (geen periode waarin nieuw-model-vragen op oud-model-documenten zoeken). Aparte, groter geplande actie, niet en passant doen.
+
+#### Sentry (foutmonitoring + performance tracing)
+- Controleer [sentry.io changelog](https://docs.sentry.io/product/relay/release-notes/) of het SDK-versie-changelog op breaking changes in `@sentry/nextjs`
+- Komen er nog steeds spans/errors binnen in het Sentry-dashboard voor de laatste periode? (stille storing in instrumentatie is anders onzichtbaar)
+- Quota/limiet binnen het huidige plan?
+
+#### Upstash (rate limiting, `@upstash/ratelimit` + `@upstash/redis`)
+- Controleer [upstash.com/blog](https://upstash.com/blog) of changelog op breaking changes
+- Rate limit-drempels nog passend bij het huidige gebruikersaantal?
+- Quota/limiet binnen het huidige plan?
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
@@ -267,8 +284,12 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
 | `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-5` | Trend-bewuste teamanalyse op basis van gesprekken + historische scores. Opgewaardeerd van Haiku: cruciale boodschap voor manager vereist redeneervermogen. | 2026-07 |
 | `app/api/bot/team/1on1/route.ts` (1:1 agenda) | `claude-haiku-4-5-20251001` | Sonnet 5 teruggedraaid: thinking-mode kapt output af midden in een zin (zelfde probleem als hoofdchat). Haiku doet geen thinking, is 5-10x sneller en volstaat voor gestructureerde agenda op basis van aangeleverde data. | 2026-07 |
+| `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | Genereert 3 zoekzinnen per vraag (multi-query expansion), eenvoudige herschrijftaak, Haiku volstaat | 2026-07 |
+| `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy model, geen gratis toelage. Upgrade naar `voyage-4-large` bewust NIET losstaand gedaan: breekt de kennisbank-zoekfunctie volledig (0 treffers, live geverifieerd), want de hele kennisbank is met dit model vooraf ge-embed. Vereist eerst volledige her-embedding, zie openstaand actiepunt hierboven. | 2026-07 |
+| `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy): door Voyage zelf bevestigd als strikt beter op kwaliteit, contextlengte, latency en throughput, zelfde prijs | 2026-07 |
+| `lib/rag.ts` (`getMultilingualEmbedding`, sessie-geheugen) | `voyage-multilingual-2` | Nog niet gecheckt op een nieuwere generatie, apart van de kennisbank-RAG hierboven. Los actiepunt. | nog niet gecheckt |
 
-**Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar?"
+**Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
 **Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren op of rond 1 augustus (livegang) — wacht minimaal een week na go-live.**
 

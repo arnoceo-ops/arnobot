@@ -61,7 +61,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText, StreamingDashSanitizer } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
+import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
@@ -298,29 +298,31 @@ export async function POST(req: NextRequest) {
 
     // Start de VOLLEDIGE RAG-pipeline (queryherschrijving + opzoeking + rerank) meteen,
     // parallel aan de moderatie-check en de rest hierna, in plaats van pas te beginnen ná
-    // de moderatie-check. Dat was zelf al parallel met alleen de queryherschrijving, maar de
-    // opzoeking (embedding + Voyage-rerank, de traagste stap) wachtte nog op de moderatie-
-    // check. Pas verderop ge-await't, op het punt waar de context daadwerkelijk nodig is.
+    // de moderatie-check. Pas verderop ge-await't, op het punt waar de context daadwerkelijk
+    // nodig is.
+    // Multi-query: 1 Haiku-call levert 3 verschillend geformuleerde zoekzinnen (letterlijk,
+    // brede sales-context, onderliggend thema), plus de rauwe vraag zelf als vierde hoek.
+    // Elke zoekzin doorzoekt de kennisbank onafhankelijk en parallel; resultaten worden
+    // samengevoegd vóórdat er wordt herrangschikt. Vangt het geval op waarin één enkele
+    // herschrijving de vraag verkeerd inschat en daardoor relevante stof mist (kosten zijn
+    // hier bewust geen overweging, kwaliteit staat voorop).
     const ragContextPromise: Promise<string> = (!isWidget
       ? Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
           client.messages.create({
             model: 'claude-haiku-4-5-20251001',
-            max_tokens: 60,
-            system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf een compacte zoekzin (max 20 woorden) die de saleskennis-thema\'s vat die nodig zijn om deze vraag of opmerking goed te beantwoorden. Geen intro, geen uitleg. Alleen de zoekzin.',
+            max_tokens: 150,
+            system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf 3 verschillende zoekzinnen (elk max 20 woorden) die samen de vraag vanuit verschillende invalshoeken dekken: een die dicht bij de letterlijke vraag blijft, een met bredere sales-context en synoniemen, en een gericht op het onderliggende thema of probleem. Geef exact 3 regels, één zoekzin per regel, geen nummering, geen uitleg.',
             messages: [{ role: 'user', content: question }]
           })
         )
           .then(ragRes => {
-            const augmented = getText(ragRes.content, '').trim()
-            return augmented.length > 10 ? `${question} ${augmented}` : question
+            const lines = getText(ragRes.content, '').split('\n').map(l => l.trim()).filter(l => l.length > 10)
+            return lines.length > 0 ? [question, ...lines] : [question]
           })
-          .catch(() => question)
-      : Promise.resolve(question)
-    // expand: false, want ragQuery is hierboven al herschreven. getRelevantChunks deed er met
-    // expand: true zelf nóg een Haiku-queryherschrijving overheen (~1,8s pure dubbel werk,
-    // gemeten), de enige aanroeper van deze functie die dat deed.
-    ).then(ragQuery =>
-      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, false))
+          .catch(() => [question])
+      : Promise.resolve([question])
+    ).then(searchQueries =>
+      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunksMultiQuery(searchQueries, question, 20))
     ).then(relevant => formatChunksForPrompt(relevant))
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
