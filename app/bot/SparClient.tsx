@@ -1453,27 +1453,54 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
-            <textarea
-              ref={inputRef}
-              className="spar-textarea"
-              value={input}
-              onChange={e => {
-                setInput(e.target.value)
-                e.target.style.height = '0px'
-                e.target.style.height = e.target.scrollHeight + 'px'
-                if (showSluiten) setShowSluiten(false)
-                if (inputIsVerfijnd) setInputIsVerfijnd(false)
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  ask(input)
-                }
-              }}
-              placeholder={sparModus === 'sparren' ? (started ? "jouw reactie" : "zeg het maar...") : started ? "vervolg het gesprek" : isMobile ? "beschrijf je casus" : "beschrijf je casus of stel je vraag"}
-              disabled={loading || blocked}
-              rows={1}
-            />
+            <div style={{ position: 'relative', width: '100%' }}>
+              {sparModus !== 'sparren' && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading || blocked}
+                    title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
+                    style={{
+                      position: 'absolute', left: 10, top: 13, width: 28, height: 28,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'none', border: 'none', borderRadius: '50%',
+                      color: '#6b7280', fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 0,
+                    }}
+                  >
+                    +
+                  </button>
+                </>
+              )}
+              <textarea
+                ref={inputRef}
+                className="spar-textarea"
+                style={sparModus !== 'sparren' ? { paddingLeft: 46 } : undefined}
+                value={input}
+                onChange={e => {
+                  setInput(e.target.value)
+                  e.target.style.height = '0px'
+                  e.target.style.height = e.target.scrollHeight + 'px'
+                  if (showSluiten) setShowSluiten(false)
+                  if (inputIsVerfijnd) setInputIsVerfijnd(false)
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    ask(input)
+                  }
+                }}
+                placeholder={sparModus === 'sparren' ? (started ? "jouw reactie" : "zeg het maar...") : started ? "vervolg het gesprek" : isMobile ? "beschrijf je casus" : "beschrijf je casus of stel je vraag"}
+                disabled={loading || blocked}
+                rows={1}
+              />
+            </div>
             {sparModus === 'gesprek' && input.trim().length > 5 && !inputIsVerfijnd && (
               <button
                 className="verfijn-btn"
@@ -1503,25 +1530,6 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               </button>
             )}
             <div className="spar-buttons">
-              {sparModus !== 'sparren' && (
-                <>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    className="spar-mic"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={loading || blocked}
-                    title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
-                  >
-                    📎
-                  </button>
-                </>
-              )}
               {speechSupported && (
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
