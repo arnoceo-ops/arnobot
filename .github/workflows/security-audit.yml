@@ -58,6 +58,29 @@ jobs:
         # Vercel's next build faalt ook al op typefouten vóór deploy; dit geeft
         # sneller feedback direct in de PR in plaats van te wachten op de preview.
 
+  test:
+    name: Vitest (kritieke paden)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        # Regressietests voor plekken waar dit jaar al stille, functionele fouten
+        # ontdekt zijn (streepjes-sanitizer tijdens streaming, systeemprompt-opbouw
+        # bij het opknippen voor prompt caching, RAG-samenvoeging/dedupe). Geen
+        # externe aanroepen: Supabase/Voyage worden gemockt.
+
   lint:
     name: ESLint (informatief, blokkeert niet)
     runs-on: ubuntu-latest
