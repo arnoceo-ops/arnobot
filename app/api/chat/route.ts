@@ -464,11 +464,12 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
         .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${m.content}`)
         .join('\n')
 
-      const toonInstructie = occurrence >= 3
+      const offtopicToon = occurrence >= 3
         ? 'Dit is al de derde keer dat deze gebruiker afdwaalt, het gesprek wordt na dit bericht automatisch beëindigd. Schrijf een korte, duidelijke maar niet onaardige mededeling dat het gesprek hierdoor stopt, en dat diegene welkom is terug te komen zodra er een zakelijke vraag is.'
         : occurrence >= 2
         ? 'Dit is niet de eerste keer. Wees directer en korter dan een uitnodigende vraag, bijvoorbeeld in de trant van "Kom terug als je weer bij zakelijke zinnen bent."'
-        : 'Dit is de eerste keer. Wees uitnodigend en kies de invalshoek die het beste past bij dit bericht: ofwel verwijs naar het laatste echte zakelijke onderwerp uit het gesprek hieronder en stel een gerichte vraag om daarnaar terug te keren, ofwel vraag de gebruiker direct wat dit te maken heeft met wat eerder besproken is of met het zakelijke succes dat diegene nastreeft. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
+        : 'Dit is de eerste keer. Reageer zoals een mens dat in de praktijk zou doen: met een kwinkslag of luchtige humor die het onderwerp zelf gebruikt om terug te koppelen naar zaken of naar de klant van de gebruiker (bijvoorbeeld bij een vraag over een appeltaartrecept: "Wil je daarmee je klant verrassen?"). Alleen als een speelse invalshoek echt niet logisch past bij dit specifieke bericht, val terug op een directe, uitnodigende vraag die verwijst naar het laatste zakelijke onderwerp uit het gesprek hieronder. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
+      const ongepastToon = 'Geen humor, geen kwinkslag, dit is bewust aanstootgevend, seksueel ongepast of vergelijkbaar. Wees kort, serieus en duidelijk dat dit niet in het gesprek past, zonder te preken.'
 
       const moderatiePrompt = `Je beoordeelt een gesprek over sales en business met een ingelogde ArnoBot-gebruiker.
 
@@ -478,11 +479,15 @@ ${historyExcerpt || '(nog geen eerdere berichten)'}
 Nieuwste bericht van de gebruiker: "${question}"
 
 Stap 1: categoriseer dit nieuwste bericht. Schrijf op de EERSTE regel precies één woord:
-ONGEPAST: seksueel, beledigend of trollen
-OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
-OK: logisch vervolg op het gesprek of relevant voor sales/business
+ONGEPAST: seksueel, beledigend, verontrustend of duidelijk kwaadwillig
+OFFTOPIC: heeft geen logische samenhang met het gesprek, gaat niet over sales/business, en de gebruiker gaat niet mee in een eerdere luchtige terugkoppeling
+OK: logisch vervolg op het gesprek, relevant voor sales/business, OF onschuldige humor/luchtigheid die goed meegaat met een eerdere speelse terugkoppeling van ArnoBot
 
-Stap 2: alleen als het niet OK is, schrijf op de TWEEDE regel een korte reactie (1-2 zinnen) in de stijl van Arno Diepeveen die het gesprek terugbrengt naar zakelijk. ${toonInstructie}
+Belangrijk: als het vorige antwoord van ArnoBot hierboven een luchtige, humoristische terugkoppeling naar zaken was, en de gebruiker reageert daar speels en onschuldig op, ook al gaat die reactie zelf niet letterlijk over sales, beoordeel dat dan als OK. De humor heeft dan zijn werk gedaan, dat hoeft niet te tellen als afdwalen. Beoordeel pas als OFFTOPIC als de gebruiker die terugkoppeling negeert en zelf weer een nieuw, ongerelateerd onderwerp aansnijdt. Wees bij ONGEPAST alleen streng bij content die echt verontrustend, seksueel of kwaadwillig is, niet bij onschuldige grappen.
+
+Stap 2: alleen als het niet OK is, schrijf op de TWEEDE regel een korte reactie (1-2 zinnen) in de stijl van Arno Diepeveen die het gesprek terugbrengt naar zakelijk.
+Als je categoriseerde als ONGEPAST: ${ongepastToon}
+Als je categoriseerde als OFFTOPIC: ${offtopicToon}
 
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
@@ -499,7 +504,11 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       const rawCheck = getText(checkRes.content, 'OK').trim()
       const [firstLine, ...rest] = rawCheck.split('\n')
       const check = firstLine.trim().toUpperCase()
-      const generatedReply = rest.join('\n').trim()
+      // Vangnet: de prompt verbiedt een streepje als leesteken, maar een taalmodel volgt dat
+      // niet altijd. Vervang een los koppelteken/en dash/em dash MET spaties eromheen (dus
+      // gebruikt als leesteken) door een komma. Koppeltekens in samengestelde woorden zonder
+      // omringende spaties blijven onaangeroerd.
+      const generatedReply = rest.join('\n').trim().replace(/\s+[-–—]\s+/g, ', ')
 
       if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
         const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
