@@ -3,9 +3,20 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 function buildCSP(nonce: string, allowWasm = false): string {
+  // Een pk_test_-sleutel betekent altijd de Clerk development-instance (bijv. lokaal
+  // draaien tegen Playwright E2E-tests), pk_live_ altijd productie. script-src staat
+  // clerk.arno.bot (productie) hardcoded toe; connect-src stond *.accounts.dev al toe
+  // maar script-src niet, waardoor Clerk's eigen script op de development-instance
+  // stilletjes geblokkeerd werd en inloggen nooit kon voltooien.
+  const isDevInstance = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_test_') ?? false
+  const clerkScriptSrc = isDevInstance ? 'https://*.accounts.dev' : 'https://clerk.arno.bot'
+  // Clerk's development-instance gebruikt een dev-browser handshake (JWT-verificatie via
+  // redirects) die 'unsafe-eval' vereist. Productie (pk_live_) heeft dit nooit nodig, dus
+  // dit verzwakt de CSP van de live app niet.
+  const clerkUnsafeEval = isDevInstance ? " 'unsafe-eval'" : ''
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''} https://clerk.arno.bot https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",

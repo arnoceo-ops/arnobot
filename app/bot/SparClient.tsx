@@ -1595,6 +1595,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               <textarea
                 ref={inputRef}
                 className="spar-textarea"
+                aria-label="Je bericht"
                 value={input}
                 onChange={e => {
                   setInput(e.target.value)
