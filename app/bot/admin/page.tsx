@@ -130,21 +130,18 @@ export default async function ArnoBotAdminPage({
 
         {flagged.length > 0 && (
           <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 32 }}>
-            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>GEMARKEERD: OFF-TOPIC / ONGEPAST</p>
+            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>GEMARKEERD: OFF-TOPIC</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {flagged.map(f => (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '12px', letterSpacing: '1px', color: f.category === 'ongepast' ? '#cc4444' : '#9ca3af', fontWeight: 700 }}>
-                    {f.category.toUpperCase()}
-                  </span>
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <span style={{ fontSize: '14px', color: '#f1f5f9' }}>{naamMap[f.user_id] || f.user_id}</span>
-                  <span style={{ fontSize: '14px', color: '#6b7280' }}>&quot;{f.message.slice(0, 80)}{f.message.length > 80 ? '...' : ''}&quot;</span>
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>{new Date(f.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                  <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${f.user_id}`}
-                    style={{ fontSize: '12px', letterSpacing: '1px', color: '#f59e0b', textDecoration: 'none', marginLeft: 'auto' }}>
-                    BEKIJK GESPREK →
-                  </a>
-                  <MarkReviewedButton flagId={f.id} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${f.user_id}`}
+                      style={{ fontSize: '12px', letterSpacing: '1px', color: '#f59e0b', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                      BEKIJK GESPREK →
+                    </a>
+                    <MarkReviewedButton flagId={f.id} />
+                  </div>
                 </div>
               ))}
             </div>
