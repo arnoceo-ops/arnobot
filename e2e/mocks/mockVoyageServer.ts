@@ -24,8 +24,11 @@ export function startMockVoyageServer(port: number): Promise<Server> {
           let documentCount = 0
           try { documentCount = JSON.parse(body).documents?.length ?? 0 } catch { /* ignore */ }
           res.writeHead(200, { 'Content-Type': 'application/json' })
+          // "data", niet "results": zo geeft Voyage's echte rerank-API het nu terug (live
+          // geverifieerd via lib/contract.test.ts, 2026-07). lib/rag.ts's rerankChunks() heeft
+          // een fallback voor beide, maar de mock moet de actuele werkelijkheid weerspiegelen.
           res.end(JSON.stringify({
-            results: Array.from({ length: documentCount }, (_, i) => ({ index: i, relevance_score: 1 - i * 0.01 })),
+            data: Array.from({ length: documentCount }, (_, i) => ({ index: i, relevance_score: 1 - i * 0.01 })),
           }))
           return
         }
