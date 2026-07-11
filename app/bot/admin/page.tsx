@@ -102,6 +102,21 @@ export default async function ArnoBotAdminPage({
 
   const flagged = (flaggedData ?? []) as { id: number; user_id: string; category: string; message: string; created_at: string }[]
 
+  // Volgnummer per gebruiker: hoeveel eerdere off-topic meldingen (ook al beoordeelde)
+  // heeft deze persoon in totaal, zodat een patroon zichtbaar blijft ook als je elke
+  // melding losstaand op BEKEKEN zet.
+  const flaggedCounts = await Promise.all(
+    flagged.map(f =>
+      supabase
+        .from('arnobot_offtopic_flags')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', f.user_id)
+        .eq('category', 'offtopic')
+        .lte('created_at', f.created_at)
+        .then(res => res.count ?? 1, () => 1)
+    )
+  )
+
   const sessions: Record<string, LogRow[]> = {}
   for (const row of rows) {
     const key = row.session_id || row.ip || 'onbekend'
@@ -132,9 +147,12 @@ export default async function ArnoBotAdminPage({
           <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 32 }}>
             <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>GEMARKEERD: OFF-TOPIC</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {flagged.map(f => (
+              {flagged.map((f, i) => (
                 <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <span style={{ fontSize: '14px', color: '#f1f5f9' }}>{naamMap[f.user_id] || f.user_id}</span>
+                  <span style={{ fontSize: '14px', color: '#f1f5f9' }}>
+                    {naamMap[f.user_id] || f.user_id}
+                    <span style={{ color: '#6b7280' }}> · {flaggedCounts[i]}e keer</span>
+                  </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <a href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${f.user_id}`}
                       style={{ fontSize: '12px', letterSpacing: '1px', color: '#f59e0b', textDecoration: 'none', whiteSpace: 'nowrap' }}>
