@@ -504,11 +504,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       const rawCheck = getText(checkRes.content, 'OK').trim()
       const [firstLine, ...rest] = rawCheck.split('\n')
       const check = firstLine.trim().toUpperCase()
-      // Vangnet: de prompt verbiedt een streepje als leesteken, maar een taalmodel volgt dat
-      // niet altijd. Vervang een los koppelteken/en dash/em dash MET spaties eromheen (dus
-      // gebruikt als leesteken) door een komma. Koppeltekens in samengestelde woorden zonder
-      // omringende spaties blijven onaangeroerd.
-      const generatedReply = rest.join('\n').trim().replace(/\s+[-–—]\s+/g, ', ')
+      const generatedReply = rest.join('\n').trim()
 
       if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
         const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
