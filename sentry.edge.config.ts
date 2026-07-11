@@ -5,8 +5,13 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+// Zie sentry.server.config.ts: pk_test_ betekent een lokale Playwright E2E-run tegen de
+// Clerk development-instance, geen echte productiefout.
+const isE2ETestRun = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_test_') ?? false
+
 Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
+  enabled: !isE2ETestRun,
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
