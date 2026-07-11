@@ -29,9 +29,12 @@ function parseEnvFile(filename: string): Record<string, string> {
   return parsed
 }
 
-// .env.local eerst (alle gewone project-env-vars: Supabase, Upstash, Resend, ...), dan
-// .env.test.local overheen (de Clerk DEVELOPMENT-sleutels, vervangen de live-sleutels).
-const testEnvOverrides = { ...parseEnvFile('.env.local'), ...parseEnvFile('.env.test.local') }
+// Lokaal: .env.local eerst (Supabase, Upstash, Resend, ...), dan .env.test.local overheen
+// (Clerk DEVELOPMENT-sleutels, vervangen de live-sleutels). In CI bestaan deze bestanden niet
+// (gitignored); daar zet de workflow de benodigde vars al direct in process.env via GitHub
+// Actions secrets, en die hebben dan voorrang boven de (in CI toch lege) bestanden.
+const fileOverrides = { ...parseEnvFile('.env.local'), ...parseEnvFile('.env.test.local') }
+const testEnvOverrides = { ...fileOverrides, ...process.env }
 Object.assign(process.env, testEnvOverrides)
 
 export default defineConfig({

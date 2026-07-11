@@ -81,6 +81,97 @@ jobs:
         # bij het opknippen voor prompt caching, RAG-samenvoeging/dedupe). Geen
         # externe aanroepen: Supabase/Voyage worden gemockt.
 
+  e2e-ui:
+    name: Playwright E2E (UI, gemockte AI)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run niveau-2 E2E-tests (golden path, scenario's, a11y)
+        run: npx playwright test --project=chromium --grep-invert "echte backend-keten"
+        env:
+          # Clerk DEVELOPMENT-instance (@clerk/testing weigert een production secret key).
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.E2E_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
+          # Echte Supabase: nodig voor auth.setup.ts (approved_users/profiel seeden). Zelfde
+          # database als productie, geen apart testproject; het testaccount is uitgesloten
+          # van e-mailcrons (zie lib/email-templates.ts, E2E_TEST_USER_EMAIL).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Niveau-2-tests raken /api/chat nooit echt (page.route onderschept in de browser),
+          # dus geen echte AI-aanroep. Wel nodig als niet-lege waarde: module-level SDK-clients
+          # (lib/rag.ts) worden anders al bij het importeren geconstrueerd met een lege key.
+          ANTHROPIC_API_KEY: 'e2e-dummy-niet-gebruikt'
+          VOYAGE_API_KEY: 'e2e-dummy-niet-gebruikt'
+        # Deze job draait bij elke push/PR: snel en gratis, want /api/chat wordt volledig
+        # gemockt op browserniveau. Vereist E2E_CLERK_PUBLISHABLE_KEY/E2E_CLERK_SECRET_KEY
+        # (Clerk development-instance, zie e2e/auth.setup.ts) en de gewone Supabase-secrets
+        # als GitHub Actions repo-secrets. Nog niet gecheckt in een echte CI-run, alleen
+        # lokaal geverifieerd.
+
+      - name: Upload Playwright report bij falen
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  e2e-nightly:
+    name: Playwright E2E (echte backend) + contracttests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run niveau-3 E2E-test (echte backend-keten, gemockte AI-servers)
+        run: npx playwright test --project=chromium --grep "echte backend-keten"
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.E2E_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Niveau 3 draait de echte rate-limiting-code (chat/route.ts), dus hier wel echt
+          # nodig, in tegenstelling tot de niveau-2-job hierboven.
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          ANTHROPIC_API_KEY: 'e2e-dummy-niet-gebruikt'
+          VOYAGE_API_KEY: 'e2e-dummy-niet-gebruikt'
+
+      - name: Run contracttests (echte Anthropic/Voyage-aanroepen)
+        run: RUN_CONTRACT_TESTS=true npm test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+        # Kost echte tokens (een paar cent per run), vandaar alleen nightly, niet bij elke
+        # push. Verifieert dat lib/contract.test.ts's aannames over de vorm van Anthropic/
+        # Voyage-responses nog kloppen, zie lib/contract.test.ts voor de toelichting.
+
   lint:
     name: ESLint (informatief, blokkeert niet)
     runs-on: ubuntu-latest
