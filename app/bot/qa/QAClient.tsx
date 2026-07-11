@@ -152,6 +152,10 @@ const FAQ_GROUPS = [
         a: 'Alleen jijzelf. Arno Diepeveen heeft als verwerkingsverantwoordelijke toegang tot de systemen, maar leest geen individuele gesprekken. Je gesprekken worden verwerkt door Anthropic voor de AI-analyse en opgeslagen bij Supabase. Beide partijen zijn GDPR-compliant.',
       },
       {
+        q: 'Kan ik een document uploaden in een gesprek?',
+        a: 'Ja, in de hoofdchat kun je een PDF, Word-document of afbeelding toevoegen, bijvoorbeeld om je salesplan te laten checken. Dat bestand wordt niet opgeslagen, alleen gebruikt om die ene vraag te beantwoorden en daarna direct weggegooid. Maximaal 10MB per bestand.',
+      },
+      {
         q: 'Kan ik mijn account en data verwijderen?',
         a: 'Ja. Via de accountpagina kun je je account verwijderen. Al je gesprekken, je profiel en je analyseresultaten worden dan direct gewist.',
       },
