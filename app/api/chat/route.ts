@@ -395,6 +395,70 @@ export async function POST(req: NextRequest) {
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')
     const LOST_URL = 'https://arno.blog/lost'
 
+    // Gespreksgeheugen en coachingsdiagnose starten nu al, parallel aan de moderatie-check en
+    // de RAG-pipeline hierboven, in plaats van pas na de RAG-context te beginnen. Beide hangen
+    // alleen af van userId/tier/sessionId, niet van het RAG- of moderatie-resultaat.
+    const memoryContextPromise: Promise<{ geheugentekst: string; prevSessionCount: number }> = (userId && !isWidget)
+      ? Promise.resolve(
+          supabase
+            .from('arnobot_blog_sessions')
+            .select('title, summary, feiten, uitdaging, actie_status, created_at')
+            .eq('user_id', userId)
+            .not('session_id', 'eq', sessionId)
+            .order('created_at', { ascending: false })
+            .limit(tier === 'pro' ? 25 : 10)
+        )
+          .then(({ data: prevSessions }) => {
+            let geheugentekst = ''
+            let prevSessionCount = 0
+            if (prevSessions && prevSessions.length > 0) {
+              prevSessionCount = prevSessions.length
+              const feitenBlokken = prevSessions.filter(s => s.feiten).map(s => s.feiten).join('\n')
+              const samenvattingen = prevSessions.filter(s => s.summary).map(s => {
+                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                return `- ${datum}: ${s.summary}`
+              }).join('\n')
+              const recentSessieMetUitdaging = prevSessions.find(s => s.uitdaging) ?? null
+              const recentUitdaging = recentSessieMetUitdaging?.uitdaging ?? null
+              const recentActieStatus = recentSessieMetUitdaging?.actie_status ?? null
+              if (feitenBlokken || samenvattingen || recentUitdaging) {
+                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
+                if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
+                if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
+                if (recentUitdaging) {
+                  const statusTekst = recentActieStatus === 'ja'
+                    ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno. Als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt. Dat is de toon: eerlijk en direct vanuit oprechte betrokkenheid.'
+                    : recentActieStatus === 'deels'
+                    ? 'De gebruiker heeft aangegeven dit ingepland te hebben maar nog niet volledig gedaan.'
+                    : recentActieStatus === 'nee'
+                    ? 'De gebruiker heeft aangegeven dit nog niet gedaan te hebben.'
+                    : 'De gebruiker heeft hier nog geen antwoord op gegeven.'
+                  geheugentekst += `\n\nActie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}\n${statusTekst}`
+                }
+              }
+            }
+            return { geheugentekst, prevSessionCount }
+          })
+      : Promise.resolve({ geheugentekst: '', prevSessionCount: 0 })
+
+    const coachingContextPromise: Promise<string> = (!isWidget && tier === 'pro' && userId)
+      ? Promise.resolve(
+          supabase
+            .from('arnobot_coaching')
+            .select('mindset_score, systeem_score, actie_score, mindset_diagnose, systeem_diagnose, actie_diagnose, ontwikkelpunten, voortgang')
+            .eq('user_id', userId)
+            .maybeSingle()
+        )
+          .then(({ data: coachingDoc }) => {
+            if (coachingDoc?.mindset_score != null) {
+              const msa = Math.max(1, Math.ceil((coachingDoc.mindset_score * coachingDoc.systeem_score * coachingDoc.actie_score) / 1.25))
+              const punten = (coachingDoc.ontwikkelpunten as {tekst:string;pijlar:string}[] | null)?.map(p => `[${p.pijlar}] ${p.tekst}`).join(' | ') ?? ''
+              return `\n\nCOACHINGSDIAGNOSE (MSA ${msa}/100):\nVoortgang: ${coachingDoc.voortgang}\nMindset (${coachingDoc.mindset_score}/5): ${coachingDoc.mindset_diagnose}\nSysteem (${coachingDoc.systeem_score}/5): ${coachingDoc.systeem_diagnose}\nActie (${coachingDoc.actie_score}/5): ${coachingDoc.actie_diagnose}${punten ? `\nOntwikkelpunten: ${punten}` : ''}`
+            }
+            return ''
+          })
+      : Promise.resolve('')
+
     // Geblokkeerde IPs direct doorsturen
     if (isWidget && ip) {
       const { data: blockedRow } = await supabase
@@ -595,70 +659,10 @@ PROFIEL VAN DE GEBRUIKER:
 - Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}${profiel.jaardoel ? `\n- Doel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.jaardoel}` : ''}
 ` : ''
 
-    // Gespreksgeheugen: feiten + samenvattingen uit eerdere sessies
-    let geheugentekst = ''
-    let prevSessionCount = 0
-    if (userId && !isWidget) {
-      const { data: prevSessions } = await supabase
-        .from('arnobot_blog_sessions')
-        .select('title, summary, feiten, uitdaging, actie_status, created_at')
-        .eq('user_id', userId)
-        .not('session_id', 'eq', sessionId)
-        .order('created_at', { ascending: false })
-        .limit(tier === 'pro' ? 25 : 10)
-
-      if (prevSessions && prevSessions.length > 0) {
-        prevSessionCount = prevSessions.length
-        const feitenBlokken = prevSessions
-          .filter(s => s.feiten)
-          .map(s => s.feiten)
-          .join('\n')
-
-        const samenvattingen = prevSessions
-          .filter(s => s.summary)
-          .map(s => {
-            const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
-            return `- ${datum}: ${s.summary}`
-          })
-          .join('\n')
-
-        const recentSessieMetUitdaging = prevSessions.find(s => s.uitdaging) ?? null
-        const recentUitdaging = recentSessieMetUitdaging?.uitdaging ?? null
-        const recentActieStatus = recentSessieMetUitdaging?.actie_status ?? null
-
-        if (feitenBlokken || samenvattingen || recentUitdaging) {
-          geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
-          if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
-          if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
-          if (recentUitdaging) {
-            const statusTekst = recentActieStatus === 'ja'
-              ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno. Als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt. Dat is de toon: eerlijk en direct vanuit oprechte betrokkenheid.'
-              : recentActieStatus === 'deels'
-              ? 'De gebruiker heeft aangegeven dit ingepland te hebben maar nog niet volledig gedaan.'
-              : recentActieStatus === 'nee'
-              ? 'De gebruiker heeft aangegeven dit nog niet gedaan te hebben.'
-              : 'De gebruiker heeft hier nog geen antwoord op gegeven.'
-            geheugentekst += `\n\nActie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}\n${statusTekst}`
-          }
-        }
-      }
-    }
-
-    // Coaching context voor pro gebruikers
-    let coachingContext = ''
-    if (!isWidget && tier === 'pro' && userId) {
-      const { data: coachingDoc } = await supabase
-        .from('arnobot_coaching')
-        .select('mindset_score, systeem_score, actie_score, mindset_diagnose, systeem_diagnose, actie_diagnose, ontwikkelpunten, voortgang')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (coachingDoc?.mindset_score != null) {
-        const msa = Math.max(1, Math.ceil((coachingDoc.mindset_score * coachingDoc.systeem_score * coachingDoc.actie_score) / 1.25))
-        const punten = (coachingDoc.ontwikkelpunten as {tekst:string;pijlar:string}[] | null)
-          ?.map(p => `[${p.pijlar}] ${p.tekst}`).join(' | ') ?? ''
-        coachingContext = `\n\nCOACHINGSDIAGNOSE (MSA ${msa}/100):\nVoortgang: ${coachingDoc.voortgang}\nMindset (${coachingDoc.mindset_score}/5): ${coachingDoc.mindset_diagnose}\nSysteem (${coachingDoc.systeem_score}/5): ${coachingDoc.systeem_diagnose}\nActie (${coachingDoc.actie_score}/5): ${coachingDoc.actie_diagnose}${punten ? `\nOntwikkelpunten: ${punten}` : ''}`
-      }
-    }
+    // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
+    // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
+    const { geheugentekst, prevSessionCount } = await memoryContextPromise
+    const coachingContext = await coachingContextPromise
 
     const systemPrompt = isWidget
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')

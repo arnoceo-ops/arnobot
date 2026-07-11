@@ -443,6 +443,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   }
 
   useEffect(() => {
+    // messages.length (niet messages zelf) als dependency: een nieuw bericht mag de pagina
+    // verplaatsen, maar tekst die in-place bijwerkt tijdens het streamen mag dat niet, anders
+    // zit je vast op dezelfde positie en kun je niet vrij scrollen terwijl het antwoord komt.
     if (showSluiten && synthesisRef.current) {
       scrollToRef(synthesisRef)
     } else if (loading && !streamingStarted) {
@@ -450,7 +453,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     } else if (messages.length > 0) {
       scrollToRef(lastMessageRef)
     }
-  }, [messages, loading, showSluiten, streamingStarted])
+  }, [messages.length, loading, showSluiten, streamingStarted])
 
   useEffect(() => {
     if (inputRef.current) {
