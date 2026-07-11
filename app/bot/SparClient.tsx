@@ -189,6 +189,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [shareLoading, setShareLoading] = useState(false)
   const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [pendingLogout, setPendingLogout] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -741,7 +742,10 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         if (data.forceLogout) {
           setBlocked(true)
           setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
-          setTimeout(() => signOut(() => router.push('/')), 4000)
+          setTimeout(() => {
+            setPendingLogout(true)
+            setTimeout(() => signOut(() => router.push('/')), 5000)
+          }, 100)
           return
         }
 
@@ -1812,6 +1816,16 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           )}
 
           {(loading || synthesisLoading) && (
+            <div className="msg-loading">
+              <div className="loading-dots">
+                <div className="loading-dot" />
+                <div className="loading-dot" />
+                <div className="loading-dot" />
+              </div>
+              <span className="loading-text">Arno denkt na</span>
+            </div>
+          )}
+          {pendingLogout && (
             <div className="msg-loading">
               <div className="loading-dots">
                 <div className="loading-dot" />
