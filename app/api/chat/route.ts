@@ -64,6 +64,59 @@ import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunks, formatChunksForPrompt } from '@/lib/rag'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import mammoth from 'mammoth'
+
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
+const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const TEXT_EXTRACT_TYPES = new Set([
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+  'text/csv',
+])
+
+type UploadedDocument = { name: string; mediaType: string; data: string }
+
+async function buildDocumentContentBlock(
+  doc: UploadedDocument
+): Promise<{ block: Anthropic.Messages.ContentBlockParam | null; extractedText: string | null; error: string | null }> {
+  if (!NATIVE_DOCUMENT_TYPES.has(doc.mediaType) && !TEXT_EXTRACT_TYPES.has(doc.mediaType)) {
+    return { block: null, extractedText: null, error: 'bestandstype_niet_ondersteund' }
+  }
+
+  const byteLength = Math.ceil((doc.data.length * 3) / 4)
+  if (byteLength > MAX_DOCUMENT_BYTES) {
+    return { block: null, extractedText: null, error: 'bestand_te_groot' }
+  }
+
+  if (doc.mediaType === 'application/pdf') {
+    return {
+      block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: doc.data } },
+      extractedText: null,
+      error: null,
+    }
+  }
+
+  if (doc.mediaType.startsWith('image/')) {
+    return {
+      block: { type: 'image', source: { type: 'base64', media_type: doc.mediaType as 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif', data: doc.data } },
+      extractedText: null,
+      error: null,
+    }
+  }
+
+  // .docx / .txt / .csv worden niet native ondersteund door de Messages API document-blocks,
+  // dus zelf omzetten naar platte tekst en meesturen als onderdeel van het tekstbericht.
+  const buffer = Buffer.from(doc.data, 'base64')
+  try {
+    if (doc.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const { value } = await mammoth.extractRawText({ buffer })
+      return { block: null, extractedText: value, error: null }
+    }
+    return { block: null, extractedText: buffer.toString('utf-8'), error: null }
+  } catch {
+    return { block: null, extractedText: null, error: 'bestand_niet_leesbaar' }
+  }
+}
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -226,7 +279,7 @@ ${context}`
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte } = body
+    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument } = body
     const antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
@@ -242,6 +295,21 @@ export async function POST(req: NextRequest) {
     }
 
     const isWidget = origin?.includes('arno.blog') ?? false
+
+    // Document-upload alleen voor ingelogde gebruikers, nooit voor de anonieme widget
+    let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
+    let documentText: string | null = null
+    let documentError: string | null = null
+    if (!isWidget && rawDocument && typeof rawDocument === 'object'
+      && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string' && typeof rawDocument.data === 'string') {
+      const result = await buildDocumentContentBlock(rawDocument as UploadedDocument)
+      documentBlock = result.block
+      documentText = result.extractedText
+      documentError = result.error
+    }
+    if (documentError) {
+      return NextResponse.json({ error: documentError }, { status: 400, headers: corsHeaders(origin) })
+    }
 
     // Per-IP rate limit via Upstash (atomisch, geen race conditions)
     if (ip) {
@@ -360,6 +428,53 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
       }
     }
 
+    // Content moderatie voor ingelogde gebruikers: nudgen, nooit automatisch blokkeren.
+    // Herhaald off-topic of iets ongepasts wordt gemarkeerd voor handmatige beoordeling
+    // in de admin, want een betalende gebruiker automatisch buitensluiten is te zwaar middel.
+    if (!isWidget && userId) {
+      const lastArnoMessage = history && history.length > 0
+        ? history.filter((m: { role: string }) => m.role === 'assistant').slice(-1)[0]?.content
+        : null
+
+      const moderatiePrompt = lastArnoMessage
+        ? `Je beoordeelt een gesprek over sales en business met een ingelogde ArnoBot-gebruiker.
+
+Vorige vraag/opmerking van ArnoBot: "${lastArnoMessage}"
+Reactie van de gebruiker: "${question}"
+
+Antwoord met precies één woord:
+ONGEPAST: seksueel, beledigend of trollen
+OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
+OK: logisch vervolg op het gesprek of relevant voor sales/business`
+        : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
+
+      const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check-app', op: 'ai.claude' }, () =>
+        client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 10,
+          system: moderatiePrompt,
+          messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
+        })
+      )
+      const check = getText(checkRes.content, 'OK').trim().toUpperCase()
+
+      if (check.includes('ONGEPAST')) {
+        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'ongepast', message: question })
+        return NextResponse.json({ answer: 'Dat past niet in dit gesprek. Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
+      }
+
+      if (check.includes('OFFTOPIC')) {
+        const alreadyWarned = history && history.some(
+          (m: { role: string; content: string }) =>
+            m.role === 'assistant' && m.content?.includes('Zullen we het zakelijk houden?')
+        )
+        if (alreadyWarned) {
+          await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category: 'offtopic', message: question })
+        }
+        return NextResponse.json({ answer: 'Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
+      }
+    }
+
     // Limiet alleen voor widget-bezoekers zonder account
     let hint: string | null = null
     const limitEnabled = process.env.ARNOBOT_LIMIT_ENABLED === 'true'
@@ -401,9 +516,18 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
     const relevant = await Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunks(ragQuery, 15, true))
     const context = formatChunksForPrompt(relevant)
 
+    const questionWithDocument = documentText
+      ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`
+      : question
+
     const messages = [
       ...(history || []),
-      { role: 'user' as const, content: question }
+      {
+        role: 'user' as const,
+        content: documentBlock
+          ? [documentBlock, { type: 'text' as const, text: questionWithDocument }]
+          : questionWithDocument,
+      },
     ]
 
     const profielContext = profiel ? `

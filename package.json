@@ -21,6 +21,7 @@
     "@upstash/redis": "^1.38.0",
     "disposable-email-domains": "^1.0.62",
     "jspdf": "^4.2.0",
+    "mammoth": "^1.12.0",
     "next": "^16.2.9",
     "next-sanity": "^13.1.1",
     "react": "^19.2.7",

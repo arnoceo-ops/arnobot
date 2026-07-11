@@ -187,6 +187,35 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
+  const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const MAX_FILE_BYTES = 10 * 1024 * 1024
+  const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setFileError(null)
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setFileError('Alleen PDF, Word of een afbeelding wordt ondersteund.')
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setFileError('Bestand is groter dan 10MB.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      const base64 = result.split(',')[1] ?? ''
+      setAttachedFile({ name: file.name, mediaType: file.type, data: base64 })
+    }
+    reader.onerror = () => setFileError('Bestand kon niet worden gelezen.')
+    reader.readAsDataURL(file)
+  }
   const [shareCopied, setShareCopied] = useState(false)
   const [dagelijksTeller, setDagelijksTeller] = useState<number | null>(null)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
@@ -677,8 +706,9 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte })
+          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile })
         })
+        setAttachedFile(null)
         const data = await res.json()
 
         if (!res.ok) {
@@ -688,6 +718,12 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
           } else if (res.status === 429 && data.error === 'dual_session') {
             setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
+          } else if (data.error === 'bestandstype_niet_ondersteund') {
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding.' }])
+          } else if (data.error === 'bestand_te_groot') {
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB, probeer een kleiner bestand.' }])
+          } else if (data.error === 'bestand_niet_leesbaar') {
+            setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer het opnieuw of gebruik een ander formaat.' }])
           } else {
             setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
           }
@@ -1393,6 +1429,22 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
             </div>
           )}
 
+          {sparModus !== 'sparren' && (attachedFile || fileError) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, color: fileError ? '#cc4444' : '#9ca3af' }}>
+              {fileError ? (
+                <span>{fileError}</span>
+              ) : (
+                <>
+                  <span>📎 {attachedFile!.name}</span>
+                  <button
+                    onClick={() => setAttachedFile(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 0 }}
+                    title="Bijlage verwijderen"
+                  >✕</button>
+                </>
+              )}
+            </div>
+          )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
             <textarea
               ref={inputRef}
@@ -1444,6 +1496,25 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               </button>
             )}
             <div className="spar-buttons">
+              {sparModus !== 'sparren' && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    className="spar-mic"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading || blocked}
+                    title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
+                  >
+                    📎
+                  </button>
+                </>
+              )}
               {speechSupported && (
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
