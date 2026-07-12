@@ -245,35 +245,105 @@
     })
       .then(function (res) {
         if (!res.ok) console.error('[ArnoBot widget] HTTP ' + res.status + ' van ' + API_URL);
-        return res.json();
+        var contentType = res.headers.get('Content-Type') || '';
+        // Kortsluitpaden (geblokkeerd, redirect, rate limit, off-topic) geven nog JSON terug.
+        // Een normaal beantwoorde vraag komt als gestreamde text/plain binnen, met de hint
+        // (last_chance/salescanvas) in de X-Hint header in plaats van in de body.
+        if (contentType.indexOf('application/json') !== -1) {
+          return res.json().then(function (data) { return { kind: 'json', data: data }; });
+        }
+        var hint = res.headers.get('X-Hint');
+        return self._readStream(res).then(function (streamed) {
+          return { kind: 'stream', text: streamed.text, el: streamed.el, hint: hint };
+        });
       })
-      .then(function (data) {
+      .then(function (result) {
         self._setLoading(false);
-        if (data.redirect) {
-          window.location.href = data.redirect;
+
+        if (result.kind === 'json') {
+          var data = result.data;
+          if (data.redirect) {
+            window.location.href = data.redirect;
+            return;
+          }
+          if (data.blocked) {
+            self._addCta('Je bent door je vragen heen. Wat nu?');
+            self._setBlocked();
+            return;
+          }
+          var answer = data.answer || 'Er ging iets mis. Probeer opnieuw.';
+          self._addArnoMsg(answer);
+          self.history.push({ role: 'user', content: question });
+          self.history.push({ role: 'assistant', content: answer });
+          self._showActions();
           return;
         }
-        if (data.blocked) {
-          self._addCta('Je bent door je vragen heen. Wat nu?');
-          self._setBlocked();
+
+        // Gestreamde tekst-respons (het normale antwoordpad)
+        var streamedAnswer = result.text;
+        if (!streamedAnswer && !result.el) {
+          self._addArnoMsg('Er ging iets mis. Probeer opnieuw.');
           return;
         }
-        var answer = data.answer || 'Er ging iets mis. Probeer opnieuw.';
-        self._addArnoMsg(answer);
-        if (data.hint === 'last_chance') self._addHint('Je hebt nog één vraag over in deze sessie. Waar wil je op uitkomen?');
-        if (data.hint === 'salescanvas') {
-          self._addCta('Je bent door je vragen heen. Wat nu?');
-          self._setBlocked();
-        }
+        if (result.el) self._updateArnoMsg(result.el, streamedAnswer);
         self.history.push({ role: 'user', content: question });
-        self.history.push({ role: 'assistant', content: answer });
-        if (data.hint !== 'salescanvas') self._showActions();
+        self.history.push({ role: 'assistant', content: streamedAnswer });
+        if (result.hint === 'last_chance') self._addHint('Je hebt nog één vraag over in deze sessie. Waar wil je op uitkomen?');
+        if (result.hint === 'salescanvas') {
+          self._addCta('Je bent door je vragen heen. Wat nu?');
+          self._setBlocked();
+        } else {
+          self._showActions();
+        }
       })
       .catch(function (err) {
         console.error('[ArnoBot widget] fetch mislukt', err);
         self._setLoading(false);
         self._addArnoMsg('Verbindingsfout. Probeer het opnieuw.');
       });
+  };
+
+  // Leest de gestreamde text/plain-respons live uit, ontleedt en verwijdert het
+  // <<<ARNOBOT_META>>>-blokje aan het einde, en toont tekst zodra die binnenkomt
+  // (zelfde live-typing-gevoel als de hoofdapp).
+  ArnoBot.prototype._readStream = function (res) {
+    var self = this;
+    var msgEl = null;
+    var META_MARKER = '\n<<<ARNOBOT_META>>>';
+
+    function finalize(raw) {
+      var metaIdx = raw.indexOf(META_MARKER);
+      var clean = metaIdx === -1 ? raw : raw.slice(0, metaIdx);
+      return { text: clean, el: msgEl };
+    }
+
+    if (!res.body || !res.body.getReader) {
+      // Fallback voor browsers zonder streaming-support: hele body in één keer lezen
+      return res.text().then(finalize);
+    }
+
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var raw = '';
+
+    function pump() {
+      return reader.read().then(function (result) {
+        if (result.done) return finalize(raw);
+        raw += decoder.decode(result.value, { stream: true });
+        var metaIdx = raw.indexOf(META_MARKER);
+        var visible = metaIdx === -1 ? raw : raw.slice(0, metaIdx);
+        if (visible) {
+          if (!msgEl) {
+            self._setLoading(false);
+            msgEl = self._addArnoMsg('');
+          }
+          self._updateArnoMsg(msgEl, visible);
+        }
+        return pump();
+      });
+    }
+
+    return pump();
   };
 
   ArnoBot.prototype._addUserMsg = function (text) {
@@ -290,6 +360,12 @@
     el.innerHTML = '<span class="ab-msg-label arno">ARNO</span><span class="ab-msg-text arno">' + renderText(text) + '</span>';
     this.$messages.appendChild(el);
     this._scrollTo(el);
+    return el;
+  };
+
+  ArnoBot.prototype._updateArnoMsg = function (el, text) {
+    var textEl = el.querySelector('.ab-msg-text.arno');
+    if (textEl) textEl.innerHTML = renderText(text);
   };
 
   ArnoBot.prototype._setLoading = function (on) {
