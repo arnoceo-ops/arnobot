@@ -45,7 +45,7 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   if (!await checkProTier(userId)) return NextResponse.json({ error: 'Pro vereist' }, { status: 403 })
 
-  const [sessionsRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes] = await Promise.all([
+  const [sessionsRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, message_count, created_at')
@@ -83,9 +83,16 @@ export async function POST() {
       .not('actie_status', 'eq', 'skip')
       .order('created_at', { ascending: false })
       .limit(10),
+    supabase
+      .from('arnobot_sparring_sessions')
+      .select('session_id, rol_categorie, persona, weerstand, debrief, message_count, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10),
   ])
 
   const sessions = sessionsRes.data ?? []
+  const sparringSessions = (sparringRes.data ?? []).filter(s => s.debrief)
   if (sessions.length < 5) {
     return NextResponse.json({ error: 'te_weinig', count: sessions.length }, { status: 400 })
   }
@@ -107,17 +114,19 @@ export async function POST() {
     const prevAnalyseIds = new Set<string>(prevCoaching.used_analyse_ids ?? [])
     const newSessions = sessions.filter(s => !prevSessionIds.has(s.session_id))
     const newAnalyses = analyses.filter(a => !prevAnalyseIds.has(a.id))
+    const newSparring = sparringSessions.filter(s => new Date(s.created_at) > new Date((prevCoaching as any).updated_at ?? 0))
     const forceAllow = newSessions.length >= 3 && hoursSince >= 48
 
     const blockError = allPrevHighScores ? 'hoge_scores' : prevWeinigVoortgang ? 'stagnatie' : 'te_weinig_voortgang'
 
-    if (newSessions.length > 0 || newAnalyses.length > 0) {
+    if (newSessions.length > 0 || newAnalyses.length > 0 || newSparring.length > 0) {
       const newSessiesText = newSessions
         .map(s => `- ${s.title}${s.summary ? `: ${s.summary}` : ''}`)
         .join('\n')
       const newAnalysesText = newAnalyses
         .map(a => `- ${a.analyse_text.slice(0, 200)}`)
         .join('\n')
+      const newSparringText = newSparring.length > 0 ? `\n\nNieuwe sparring-oefensessies: ${newSparring.length}` : ''
 
       let precheckText = 'nee'
       try {
@@ -127,7 +136,7 @@ export async function POST() {
           system: 'Je beoordeelt of nieuwe gesprekken kwalitatief andere patronen laten zien dan de vorige coaching. Antwoord uitsluitend met "ja" of "nee".',
           messages: [{
             role: 'user',
-            content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}\n\nIs er kwalitatief iets veranderd in het patroon?`,
+            content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}${newSparringText}\n\nIs er kwalitatief iets veranderd in het patroon?`,
           }],
         }))
         precheckText = getText(precheck.content, 'nee').trim().toLowerCase()
@@ -225,6 +234,14 @@ export async function POST() {
         .join('\n\n')
     : ''
 
+  const sparringText = sparringSessions.length > 0
+    ? '\n\nSPARRING-OEFENSESSIES (gesimuleerde verkoopgesprekken tegen een tegenstander-persona, meest recent eerst):\n' + sparringSessions
+        .map((s, i) =>
+          `Sparring ${i + 1} (${new Date(s.created_at).toLocaleDateString('nl-NL')}, rol: ${s.rol_categorie || 'onbekend'}, weerstand: ${s.weerstand || 'onbekend'}, ${s.message_count} berichten):\n${s.debrief}`
+        )
+        .join('\n\n')
+    : ''
+
   let response
   try {
     response = await Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
@@ -235,6 +252,8 @@ export async function POST() {
 MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verkoper, positief of negatief taalgebruik, excuses maken of verantwoordelijkheid nemen.
 SYSTEEM = heeft iemand een verkoopproces? Volgt die dat consequent? Pipeline-denken, opvolging, structuur, terugkomen op dingen. Sales is een proces, geen vak.
 ACTIE = doet iemand het ook echt? Gesprekken voeren, initiatief nemen, consistent actief blijven. Een droom zonder actie is een nachtmerrie.
+
+SPARRING = naast coaching-gesprekken kan de gebruiker ook oefenen in gesimuleerde verkoopgesprekken tegen een tegenstander-persona. Dit is een aanvullend signaal, geen vervanging van de echte coaching-gesprekken: het zegt vooral iets over ACTIE (oefent iemand actief, hoe vaak) en MINDSET (hoe gaat iemand om met weerstand en tegenwerking in een simulatie). Weeg sparring-sessies mee in score en diagnose van deze twee pijlars als ze aanwezig zijn, maar baseer de kern van de analyse op de echte coaching-gesprekken.
 
 Score elke pijlar op een schaal van 1 (zwak) tot 5 (sterk) op basis van wat de gesprekken onthullen.
 Bepaal richting op basis van hoe gesprekken zich over tijd ontwikkelen: worden ze dieper, concreter, meer gericht? Stijgend. Draaien ze in cirkels? Dalend. Geen duidelijke beweging? Stabiel.
@@ -265,7 +284,7 @@ De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}${groeiflowContext}`,
     messages: [{
       role: 'user',
-      content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}`
+      content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
     }]
   }))
   } catch (err: any) {
