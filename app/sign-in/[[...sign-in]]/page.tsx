@@ -242,10 +242,10 @@ export default function SignInPage() {
                 required
                 value={emailValue}
                 onChange={e => setEmailValue(e.target.value)}
-                placeholder="jouw@email.nl"
+                placeholder="jouw@linkedinmail.nl"
                 style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14 }}
               />
-              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827' }}>
+              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13 }}>
                 {emailLoading ? 'VERSTUREN...' : 'VERSTUUR CODE'}
               </button>
               {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
