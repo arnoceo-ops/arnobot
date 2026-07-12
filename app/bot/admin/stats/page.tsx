@@ -61,6 +61,20 @@ function SplitBar({ segments }: { segments: { label: string; value: number; colo
   )
 }
 
+function RatioBar({ label, ratio, note }: { label: string; ratio: number; note?: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+      <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, minWidth: 80, flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, background: '#111827', borderRadius: 2, height: 16, position: 'relative' }}>
+        <div style={{ width: `${Math.max(0, Math.min(100, ratio))}%`, background: '#f59e0b', borderRadius: 2, height: '100%' }} />
+      </div>
+      <span style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#f1f5f9', minWidth: 90, textAlign: 'right' }}>
+        {ratio}%{note && <span style={{ fontSize: 12, fontWeight: 400, color: '#6b7280' }}> ({note})</span>}
+      </span>
+    </div>
+  )
+}
+
 function TrendChart({ data }: { data: Record<string, number> }) {
   const maanden = Object.keys(data).sort().slice(-6)
   if (maanden.length === 0) {
@@ -115,7 +129,7 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at, bedrag, interval').neq('email', E2E_TEST_USER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).neq('user_id', E2E_TEST_USER_ID),
-    supabase.from('arnobot_referrals').select('status').neq('referrer_user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_referrals').select('status, referred_user_id').neq('referrer_user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').neq('user_id', E2E_TEST_USER_ID),
   ])
@@ -162,6 +176,29 @@ export default async function AdminStatsPage() {
 
   const referralAanmeldingen = referrals?.length ?? 0
   const referralConversies = referrals?.filter(r => r.status === 'converted').length ?? 0
+
+  // Kanaalanalyse: conversie van referral-gebruikers vs overige (organisch/LinkedIn/direct)
+  const referredUserIds = new Set((referrals ?? []).map(r => r.referred_user_id).filter(Boolean))
+  const referralGebruikers = users?.filter(u => referredUserIds.has(u.user_id)) ?? []
+  const overigGebruikers = users?.filter(u => !referredUserIds.has(u.user_id)) ?? []
+  const referralKanaalConversie = referralGebruikers.length > 0
+    ? Math.round((referralGebruikers.filter(u => u.paid_at).length / referralGebruikers.length) * 100) : 0
+  const overigKanaalConversie = overigGebruikers.length > 0
+    ? Math.round((overigGebruikers.filter(u => u.paid_at).length / overigGebruikers.length) * 100) : 0
+
+  // Cohortdenken: conversie per aanmeldmaand i.p.v. één blended cijfer over alle gebruikers ooit
+  const cohortMap: Record<string, { totaal: number; betaald: number }> = {}
+  for (const u of users ?? []) {
+    const maand = (u.created_at as string).slice(0, 7)
+    if (!cohortMap[maand]) cohortMap[maand] = { totaal: 0, betaald: 0 }
+    cohortMap[maand].totaal++
+    if (u.paid_at) cohortMap[maand].betaald++
+  }
+  const cohorten = Object.keys(cohortMap).sort().slice(-6).map(maand => ({
+    maand,
+    ratio: cohortMap[maand].totaal > 0 ? Math.round((cohortMap[maand].betaald / cohortMap[maand].totaal) * 100) : 0,
+    n: cohortMap[maand].totaal,
+  }))
 
   // Periode-vergelijking: nieuwe gebruikers en gesprekken deze week vs de week ervoor
   const nieuwLaatste7Dagen = users?.filter(u => u.created_at >= sevenDaysAgo).length ?? 0
@@ -304,6 +341,33 @@ export default async function AdminStatsPage() {
             { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
             { sublabel: 'CONVERSIES', value: String(referralConversies) },
           ]} />
+        </div>
+
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER KANAAL</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
+            <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
+          </div>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
+            OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.
+          </p>
+        </div>
+
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER AANMELDMAAND</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
+          {cohorten.length === 0 ? (
+            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {cohorten.map(c => (
+                <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
+              ))}
+            </div>
+          )}
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
+            Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.
+          </p>
         </div>
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GESPREKKEN: COACHING VS SPARREN</p>
