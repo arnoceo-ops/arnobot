@@ -49,6 +49,25 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
   const [autoTriggered, setAutoTriggered] = useState(false)
 
+  // LinkedIn-fallback: alleen zichtbaar als Arno de schakelaar in het adminpaneel heeft
+  // aangezet (bij een LinkedIn-storing). Standaard uit, dan is dit hele blok onzichtbaar
+  // en verandert er niets aan het normale, keuzevrije LinkedIn-only inloggen.
+  const [fallbackChecked, setFallbackChecked] = useState(false)
+  const [fallbackEnabled, setFallbackEnabled] = useState(false)
+  const [emailStep, setEmailStep] = useState<'hidden' | 'email' | 'code'>('hidden')
+  const [emailValue, setEmailValue] = useState('')
+  const [codeValue, setCodeValue] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth-mode')
+      .then(res => res.json())
+      .then(data => setFallbackEnabled(!!data.linkedinFallbackEnabled))
+      .catch(() => setFallbackEnabled(false))
+      .finally(() => setFallbackChecked(true))
+  }, [])
+
   useEffect(() => {
     if (isSignedIn) router.replace('/bot')
   }, [isSignedIn, router])
@@ -66,12 +85,54 @@ export default function SignInPage() {
     return () => window.removeEventListener('pageshow', handlePageShow)
   }, [])
 
+  // Auto-redirect naar LinkedIn alleen in de normale situatie. Staat de fallback aan
+  // (Arno heeft 'm bij een storing aangezet), dan wachten we tot de gebruiker zelf kiest.
   useEffect(() => {
-    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered) {
+    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled) {
       setAutoTriggered(true)
       handleLinkedIn()
     }
-  }, [fetchStatus, signIn, isSignedIn, autoTriggered])
+  }, [fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled])
+
+  async function handleEmailCodeRequest(e: React.FormEvent) {
+    e.preventDefault()
+    if (!signIn) return
+    setEmailLoading(true)
+    setEmailError('')
+    const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: emailValue })
+    if (sendError) {
+      setEmailError(sendError.longMessage || sendError.message || 'Kon geen code versturen. Controleer het e-mailadres.')
+      setEmailLoading(false)
+      return
+    }
+    setEmailStep('code')
+    setEmailLoading(false)
+  }
+
+  async function handleEmailCodeConfirm(e: React.FormEvent) {
+    e.preventDefault()
+    if (!signIn) return
+    setEmailLoading(true)
+    setEmailError('')
+    const { error: verifyError } = await signIn.emailCode.verifyCode({ code: codeValue })
+    if (verifyError) {
+      setEmailError(verifyError.longMessage || verifyError.message || 'Onjuiste code. Probeer opnieuw.')
+      setEmailLoading(false)
+      return
+    }
+    if (signIn.status === 'complete') {
+      const { error: finalizeError } = await signIn.finalize()
+      if (finalizeError) {
+        setEmailError(finalizeError.longMessage || finalizeError.message || 'Inloggen niet voltooid. Probeer opnieuw.')
+        setEmailLoading(false)
+        return
+      }
+      router.push('/bot')
+    } else {
+      setEmailError('Inloggen niet voltooid. Probeer opnieuw.')
+      setEmailLoading(false)
+    }
+  }
 
   async function handleLinkedIn() {
     if (fetchStatus !== 'idle' || !signIn) {
@@ -158,6 +219,60 @@ export default function SignInPage() {
           </div>
           {error && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           {fetchStatus === 'fetching' && <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>LADEN...</p>}
+
+          {fallbackEnabled && emailStep === 'hidden' && (
+            <div style={{ textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setEmailStep('email')}
+                style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: 13, letterSpacing: 1, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                LinkedIn ligt er tijdelijk uit? Log in via e-mail
+              </button>
+            </div>
+          )}
+
+          {fallbackEnabled && emailStep === 'email' && (
+            <form onSubmit={handleEmailCodeRequest} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 12, color: '#f59e0b', letterSpacing: 1, textAlign: 'center' }}>
+                Tijdelijke inlogmethode zolang LinkedIn eruit ligt.
+              </p>
+              <input
+                type="email"
+                required
+                value={emailValue}
+                onChange={e => setEmailValue(e.target.value)}
+                placeholder="jouw@email.nl"
+                style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14 }}
+              />
+              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827' }}>
+                {emailLoading ? 'VERSTUREN...' : 'VERSTUUR CODE'}
+              </button>
+              {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
+            </form>
+          )}
+
+          {fallbackEnabled && emailStep === 'code' && (
+            <form onSubmit={handleEmailCodeConfirm} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 12, color: '#f59e0b', letterSpacing: 1, textAlign: 'center' }}>
+                Code verstuurd naar {emailValue}.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                required
+                value={codeValue}
+                onChange={e => setCodeValue(e.target.value)}
+                placeholder="6-cijferige code"
+                style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14, letterSpacing: 4, textAlign: 'center' }}
+              />
+              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827' }}>
+                {emailLoading ? 'BEVESTIGEN...' : 'BEVESTIG'}
+              </button>
+              {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
+            </form>
+          )}
+
           <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
             Door in te loggen ga je akkoord met onze voorwaarden.
           </p>

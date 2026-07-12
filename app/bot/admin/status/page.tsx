@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
+import { getSetting } from '@/lib/settings'
 import AdminNav from '../AdminNav'
+import LinkedInFallbackToggle from './LinkedInFallbackToggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -163,6 +165,7 @@ export default async function AdminStatusPage() {
   )
 
   const mo = monitor
+  const linkedinFallbackEnabled = await getSetting('linkedin_fallback_enabled')
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -171,6 +174,8 @@ export default async function AdminStatusPage() {
       <div className="admin-content" style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Status</h1>
+
+        <LinkedInFallbackToggle initialEnabled={linkedinFallbackEnabled} />
 
         {/* arno.bot metrics */}
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>ARNO.BOT</p>
