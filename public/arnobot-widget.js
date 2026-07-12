@@ -243,7 +243,10 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: question, history: historySnapshot }),
     })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        if (!res.ok) console.error('[ArnoBot widget] HTTP ' + res.status + ' van ' + API_URL);
+        return res.json();
+      })
       .then(function (data) {
         self._setLoading(false);
         if (data.redirect) {
@@ -266,7 +269,8 @@
         self.history.push({ role: 'assistant', content: answer });
         if (data.hint !== 'salescanvas') self._showActions();
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.error('[ArnoBot widget] fetch mislukt', err);
         self._setLoading(false);
         self._addArnoMsg('Verbindingsfout. Probeer het opnieuw.');
       });
