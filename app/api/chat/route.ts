@@ -572,7 +572,7 @@ PROFIEL VAN DE GEBRUIKER:
     const encoder = new TextEncoder()
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: isWidget ? 1000 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+      max_tokens: isWidget ? 1500 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
       system: systemPrompt,
       messages
     })
