@@ -158,7 +158,7 @@ export default async function AdminStatsPage() {
   const gesprekkenLaatste7Dagen = new Set(logsLaatste7Dagen.map(l => l.session_id)).size
   const vragenLaatste7Dagen = logsLaatste7Dagen.length
   const vragenPerGesprekLaatste7Dagen = gesprekkenLaatste7Dagen > 0 ? (vragenLaatste7Dagen / gesprekkenLaatste7Dagen).toFixed(1) : '0'
-  const actiefPercentage = actiefCount > 0 ? Math.round((actieveGebruikers.size / actiefCount) * 100) : 0
+  const actiefPercentage = actiefCount > 0 ? Math.min(100, Math.round((actieveGebruikers.size / actiefCount) * 100)) : 0
 
   const referralAanmeldingen = referrals?.length ?? 0
   const referralConversies = referrals?.filter(r => r.status === 'converted').length ?? 0
@@ -189,13 +189,13 @@ export default async function AdminStatsPage() {
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))
 
   const laatsteCoachingPerUser = new Map<string, string>()
-  const actieStatussenPerUser = new Map<string, string[]>()
+  const actieStatussenPerUser = new Map<string, { created_at: string; actie_status: string }[]>()
   for (const s of blogSessies ?? []) {
     const huidig = laatsteCoachingPerUser.get(s.user_id)
     if (!huidig || s.created_at > huidig) laatsteCoachingPerUser.set(s.user_id, s.created_at)
     if (s.actie_status && s.actie_status !== 'skip') {
       if (!actieStatussenPerUser.has(s.user_id)) actieStatussenPerUser.set(s.user_id, [])
-      actieStatussenPerUser.get(s.user_id)!.push(s.actie_status)
+      actieStatussenPerUser.get(s.user_id)!.push({ created_at: s.created_at, actie_status: s.actie_status })
     }
   }
 
@@ -225,7 +225,10 @@ export default async function AdminStatsPage() {
       weinig_voortgang: coaching.weinig_voortgang,
       stagnatie: coaching.stagnatie,
       laatsteCoachingGesprek: laatsteCoachingPerUser.get(u.user_id) ?? null,
-      actieStatussenRecent: (actieStatussenPerUser.get(u.user_id) ?? []).slice(-5).reverse(),
+      actieStatussenRecent: (actieStatussenPerUser.get(u.user_id) ?? [])
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .slice(0, 5)
+        .map(x => x.actie_status),
       laatsteSparring: laatsteSparringPerUser.get(u.user_id) ?? null,
       coachingGesprekkenLaatste7Dagen: coachingGesprekkenLaatste7DagenPerUser.get(u.user_id)?.size ?? 0,
     }, now)

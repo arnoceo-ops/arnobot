@@ -145,11 +145,11 @@ export default async function GebruikersPage({
   // Gezondheidsscore: gedragssignalen per gebruiker
   const now = Date.now()
   const coachingByUser = new Map(coachingRows.map(c => [c.user_id, c]))
-  const actieStatussenPerUser = new Map<string, string[]>()
+  const actieStatussenPerUser = new Map<string, { created_at: string; actie_status: string }[]>()
   for (const s of blogSessiesRes.data ?? []) {
     if (s.actie_status && s.actie_status !== 'skip') {
       if (!actieStatussenPerUser.has(s.user_id)) actieStatussenPerUser.set(s.user_id, [])
-      actieStatussenPerUser.get(s.user_id)!.push(s.actie_status)
+      actieStatussenPerUser.get(s.user_id)!.push({ created_at: s.created_at, actie_status: s.actie_status })
     }
   }
   const laatsteSparringPerUser = new Map<string, string>()
@@ -174,7 +174,10 @@ export default async function GebruikersPage({
       weinig_voortgang: coaching.weinig_voortgang,
       stagnatie: coaching.stagnatie,
       laatsteCoachingGesprek: lastSession,
-      actieStatussenRecent: (actieStatussenPerUser.get(userId) ?? []).slice(-5).reverse(),
+      actieStatussenRecent: (actieStatussenPerUser.get(userId) ?? [])
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .slice(0, 5)
+        .map(x => x.actie_status),
       laatsteSparring: laatsteSparringPerUser.get(userId) ?? null,
       coachingGesprekkenLaatste7Dagen: recentSessionsPerUser.get(userId)?.size ?? 0,
     }, now)
