@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 import { clerkClient } from '@clerk/nextjs/server'
 import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
+import { computeHealthScore, HEALTH_BUCKET_META, type HealthBucket } from '@/lib/healthScore'
 import SearchLinkedIn from './SearchLinkedIn'
 import TierToggle from './TierToggle'
 import PaidButton from './PaidButton'
@@ -91,7 +92,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at, nudge_opt_out')
@@ -102,13 +103,19 @@ export default async function GebruikersPage({
       .not('user_id', 'is', null),
     supabase
       .from('arnobot_coaching')
-      .select('user_id, updated_at'),
+      .select('user_id, updated_at, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie'),
     supabase
       .from('arnobot_analyses')
       .select('user_id'),
     supabase
       .from('arnobot_referrals')
       .select('referrer_user_id, status'),
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('user_id, created_at, actie_status'),
+    supabase
+      .from('arnobot_sparring_sessions')
+      .select('user_id, created_at'),
   ])
 
   const logs = logsRes.data ?? []
@@ -133,6 +140,45 @@ export default async function GebruikersPage({
   const coachingMap: Record<string, number> = {}
   for (const c of coachingRows) {
     coachingMap[c.user_id] = (coachingMap[c.user_id] || 0) + 1
+  }
+
+  // Gezondheidsscore: gedragssignalen per gebruiker
+  const now = Date.now()
+  const coachingByUser = new Map(coachingRows.map(c => [c.user_id, c]))
+  const actieStatussenPerUser = new Map<string, string[]>()
+  for (const s of blogSessiesRes.data ?? []) {
+    if (s.actie_status && s.actie_status !== 'skip') {
+      if (!actieStatussenPerUser.has(s.user_id)) actieStatussenPerUser.set(s.user_id, [])
+      actieStatussenPerUser.get(s.user_id)!.push(s.actie_status)
+    }
+  }
+  const laatsteSparringPerUser = new Map<string, string>()
+  for (const s of sparringRes.data ?? []) {
+    const huidig = laatsteSparringPerUser.get(s.user_id)
+    if (!huidig || s.created_at > huidig) laatsteSparringPerUser.set(s.user_id, s.created_at)
+  }
+  const recentSessionsPerUser = new Map<string, Set<string>>()
+  for (const l of logs) {
+    if (l.created_at < sevenDaysAgo) continue
+    if (!recentSessionsPerUser.has(l.user_id)) recentSessionsPerUser.set(l.user_id, new Set())
+    recentSessionsPerUser.get(l.user_id)!.add(l.session_id)
+  }
+
+  function getHealthBucket(userId: string, lastSession: string | null): HealthBucket | null {
+    const coaching = coachingByUser.get(userId)
+    if (!coaching) return null
+    const { bucket } = computeHealthScore({
+      mindset_richting: coaching.mindset_richting,
+      systeem_richting: coaching.systeem_richting,
+      actie_richting: coaching.actie_richting,
+      weinig_voortgang: coaching.weinig_voortgang,
+      stagnatie: coaching.stagnatie,
+      laatsteCoachingGesprek: lastSession,
+      actieStatussenRecent: (actieStatussenPerUser.get(userId) ?? []).slice(-5).reverse(),
+      laatsteSparring: laatsteSparringPerUser.get(userId) ?? null,
+      coachingGesprekkenLaatste7Dagen: recentSessionsPerUser.get(userId)?.size ?? 0,
+    }, now)
+    return bucket
   }
 
   const referralSignups: Record<string, number> = {}
@@ -160,7 +206,8 @@ export default async function GebruikersPage({
         } catch {}
       }
       const activity = sessionMap[u.user_id] ?? { count: 0, questions: 0, lastSession: null, recentCount: 0 }
-      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0 }
+      const healthBucket = getHealthBucket(u.user_id, activity.lastSession)
+      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0, healthBucket }
     })
   )
 
@@ -181,12 +228,17 @@ export default async function GebruikersPage({
     if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
     if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
     if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
+    if (sort === 'gezondheid') {
+      const rank: Record<string, number> = { risico: 0, neutraal: 1, gezond: 2 }
+      av = a.healthBucket ? rank[a.healthBucket] : 3
+      bv = b.healthBucket ? rank[b.healthBucket] : 3
+    }
     if (av < bv) return dir === 'asc' ? -1 : 1
     if (av > bv) return dir === 'asc' ? 1 : -1
     return 0
   })
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 75px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -212,6 +264,7 @@ export default async function GebruikersPage({
           <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} vertical />
           <SortHeader label="COACHING" field="coaching" sort={sort} dir={dir} vertical />
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} vertical />
+          <SortHeader label="GEZONDHEID" field="gezondheid" sort={sort} dir={dir} vertical />
           <SortHeader label="TIER" field="tier" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
@@ -290,6 +343,13 @@ export default async function GebruikersPage({
                 {/* Analyses */}
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
+                </div>
+                {/* Gezondheid */}
+                <div style={{ textAlign: 'center' }}>
+                  {u.healthBucket
+                    ? <p style={{ fontSize: '12px', letterSpacing: '1px', fontWeight: 700, color: HEALTH_BUCKET_META[u.healthBucket].color }}>{HEALTH_BUCKET_META[u.healthBucket].label}</p>
+                    : <p style={{ fontSize: '12px', color: '#374151' }}>n.v.t.</p>
+                  }
                 </div>
                 {/* Tier */}
                 <div style={{ textAlign: 'center' }}>

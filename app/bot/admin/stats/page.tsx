@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { E2E_TEST_USER_ID, E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
+import { computeHealthScore, HEALTH_BUCKET_META } from '@/lib/healthScore'
 import AdminNav from '../AdminNav'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-function StatCard({ label, stats, children }: { label: string; stats: { sublabel: string; value: string }[]; children?: React.ReactNode }) {
+function StatCard({ label, stats, children }: { label: string; stats: { sublabel: string; value: string; warn?: boolean; note?: string }[]; children?: React.ReactNode }) {
   return (
     <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
       <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>{label}</p>
@@ -19,7 +20,8 @@ function StatCard({ label, stats, children }: { label: string; stats: { sublabel
         {stats.map(s => (
           <div key={s.sublabel}>
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>{s.sublabel}</p>
-            <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{s.value}</p>
+            <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: s.warn ? '#f59e0b' : '#f1f5f9', lineHeight: 1 }}>{s.value}</p>
+            {s.note && <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 2 }}>{s.note}</p>}
           </div>
         ))}
       </div>
@@ -28,11 +30,12 @@ function StatCard({ label, stats, children }: { label: string; stats: { sublabel
   )
 }
 
-function HeroStat({ label, value }: { label: string; value: string }) {
+function HeroStat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div style={{ flex: 1, minWidth: 140 }}>
       <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 8 }}>{label}</p>
       <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 44, color: '#f1f5f9', lineHeight: 1 }}>{value}</p>
+      {note && <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 4 }}>{note}</p>}
     </div>
   )
 }
@@ -87,7 +90,9 @@ export default async function AdminStatsPage() {
   const token = cookieStore.get('arnobot_admin')?.value
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const now = Date.now()
+  const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const veertienDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
     { count: coachingGesprekken },
@@ -99,16 +104,20 @@ export default async function AdminStatsPage() {
     { data: users },
     { data: logs },
     { data: referrals },
+    { data: coachingDocs },
+    { data: blogSessies },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID),
-    supabase.from('arnobot_sparring_sessions').select('message_count').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'qa_page_view').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_arnolive_click').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID),
-    supabase.from('approved_users').select('user_id, paid_at, is_active, cancelled_at').neq('email', E2E_TEST_USER_EMAIL),
+    supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at, bedrag, interval').neq('email', E2E_TEST_USER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_referrals').select('status').neq('referrer_user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').neq('user_id', E2E_TEST_USER_ID),
   ])
 
   const sparringGesprekken = sparringSessies?.length ?? 0
@@ -154,6 +163,77 @@ export default async function AdminStatsPage() {
   const referralAanmeldingen = referrals?.length ?? 0
   const referralConversies = referrals?.filter(r => r.status === 'converted').length ?? 0
 
+  // Periode-vergelijking: nieuwe gebruikers en gesprekken deze week vs de week ervoor
+  const nieuwLaatste7Dagen = users?.filter(u => u.created_at >= sevenDaysAgo).length ?? 0
+  const nieuwDaarvoor7Dagen = users?.filter(u => u.created_at >= veertienDaysAgo && u.created_at < sevenDaysAgo).length ?? 0
+  const gebruikersDeltaNote = nieuwDaarvoor7Dagen > 0
+    ? `${nieuwLaatste7Dagen >= nieuwDaarvoor7Dagen ? '+' : ''}${Math.round(((nieuwLaatste7Dagen - nieuwDaarvoor7Dagen) / nieuwDaarvoor7Dagen) * 100)}% vs vorige week (${nieuwDaarvoor7Dagen} nieuw)`
+    : `${nieuwLaatste7Dagen} nieuw deze week`
+
+  const logsDaarvoor7Dagen = (logs ?? []).filter(l => l.created_at >= veertienDaysAgo && l.created_at < sevenDaysAgo)
+  const gesprekkenDaarvoor7Dagen = new Set(logsDaarvoor7Dagen.map(l => l.session_id)).size
+  const gesprekkenDeltaNote = gesprekkenDaarvoor7Dagen > 0
+    ? `${gesprekkenLaatste7Dagen >= gesprekkenDaarvoor7Dagen ? '+' : ''}${Math.round(((gesprekkenLaatste7Dagen - gesprekkenDaarvoor7Dagen) / gesprekkenDaarvoor7Dagen) * 100)}% vs vorige week (${gesprekkenDaarvoor7Dagen})`
+    : undefined
+
+  // MRR: alleen betrouwbaar zodra bedrag + interval bekend zijn (handmatig of via betaalprovider)
+  const betaaldeGebruikers = users?.filter(u => u.paid_at) ?? []
+  const betaaldeGebruikersMetBedrag = betaaldeGebruikers.filter(u => u.bedrag != null && u.interval)
+  const mrr = betaaldeGebruikersMetBedrag.reduce((sum, u) => {
+    const maandBedrag = u.interval === 'jaar' ? (u.bedrag as number) / 12 : (u.bedrag as number)
+    return sum + maandBedrag
+  }, 0)
+  const mrrOnbekendCount = betaaldeGebruikers.length - betaaldeGebruikersMetBedrag.length
+
+  // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
+  const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))
+
+  const laatsteCoachingPerUser = new Map<string, string>()
+  const actieStatussenPerUser = new Map<string, string[]>()
+  for (const s of blogSessies ?? []) {
+    const huidig = laatsteCoachingPerUser.get(s.user_id)
+    if (!huidig || s.created_at > huidig) laatsteCoachingPerUser.set(s.user_id, s.created_at)
+    if (s.actie_status && s.actie_status !== 'skip') {
+      if (!actieStatussenPerUser.has(s.user_id)) actieStatussenPerUser.set(s.user_id, [])
+      actieStatussenPerUser.get(s.user_id)!.push(s.actie_status)
+    }
+  }
+
+  const laatsteSparringPerUser = new Map<string, string>()
+  for (const s of sparringSessies ?? []) {
+    const huidig = laatsteSparringPerUser.get(s.user_id)
+    if (!huidig || s.created_at > huidig) laatsteSparringPerUser.set(s.user_id, s.created_at)
+  }
+
+  const coachingGesprekkenLaatste7DagenPerUser = new Map<string, Set<string>>()
+  for (const l of logsLaatste7Dagen) {
+    if (!coachingGesprekkenLaatste7DagenPerUser.has(l.user_id)) coachingGesprekkenLaatste7DagenPerUser.set(l.user_id, new Set())
+    coachingGesprekkenLaatste7DagenPerUser.get(l.user_id)!.add(l.session_id)
+  }
+
+  let risicoCount = 0
+  let neutraalCount = 0
+  let gezondCount = 0
+  let onbekendCount = 0
+  for (const u of users ?? []) {
+    const coaching = coachingByUser.get(u.user_id)
+    if (!coaching) { onbekendCount++; continue }
+    const { bucket } = computeHealthScore({
+      mindset_richting: coaching.mindset_richting,
+      systeem_richting: coaching.systeem_richting,
+      actie_richting: coaching.actie_richting,
+      weinig_voortgang: coaching.weinig_voortgang,
+      stagnatie: coaching.stagnatie,
+      laatsteCoachingGesprek: laatsteCoachingPerUser.get(u.user_id) ?? null,
+      actieStatussenRecent: (actieStatussenPerUser.get(u.user_id) ?? []).slice(-5).reverse(),
+      laatsteSparring: laatsteSparringPerUser.get(u.user_id) ?? null,
+      coachingGesprekkenLaatste7Dagen: coachingGesprekkenLaatste7DagenPerUser.get(u.user_id)?.size ?? 0,
+    }, now)
+    if (bucket === 'risico') risicoCount++
+    else if (bucket === 'gezond') gezondCount++
+    else neutraalCount++
+  }
+
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/stats" />
@@ -163,15 +243,40 @@ export default async function AdminStatsPage() {
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Stats</h1>
 
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', paddingBottom: 24, marginBottom: 40, borderBottom: '2px solid #f59e0b' }}>
-          <HeroStat label="TOTAAL GEBRUIKERS" value={String(totaalGebruikers)} />
-          <HeroStat label="CONVERSIERATIO" value={`${conversieratio}%`} />
-          <HeroStat label="ACTIEF LAATSTE 7 DAGEN" value={String(actieveGebruikers.size)} />
+          <HeroStat label="TOTAAL GEBRUIKERS" value={String(totaalGebruikers)} note={gebruikersDeltaNote} />
+          <HeroStat label="CONVERSIERATIO" value={`${conversieratio}%`} note={`n=${totaalGebruikers}`} />
+          <HeroStat label="ACTIEF LAATSTE 7 DAGEN" value={String(actieveGebruikers.size)} note={`${actiefPercentage}% van actieve gebruikers`} />
+          <HeroStat
+            label="MRR"
+            value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'}
+            note={mrrOnbekendCount > 0 ? `${mrrOnbekendCount} van ${betaaldeGebruikers.length} betaald zonder bedrag` : undefined}
+          />
         </div>
+
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEZONDHEIDSSCORE</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 12 }}>
+          <SplitBar segments={[
+            { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
+            { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
+            { label: HEALTH_BUCKET_META.risico.label, value: risicoCount, color: HEALTH_BUCKET_META.risico.color },
+          ]} />
+        </div>
+        {risicoCount > 0 && (
+          <p style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#cc4444', marginBottom: 12 }}>
+            {risicoCount} {risicoCount === 1 ? 'gebruiker vertoont' : 'gebruikers vertonen'} risicosignalen, bekijk de gebruikerspagina voor wie dit betreft.
+          </p>
+        )}
+        {onbekendCount > 0 && (
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginBottom: 40 }}>
+            {onbekendCount} {onbekendCount === 1 ? 'gebruiker heeft' : 'gebruikers hebben'} nog geen coachingsdocument, niet meegenomen in de score.
+          </p>
+        )}
+        {onbekendCount === 0 && <div style={{ marginBottom: 40 }} />}
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEBRUIKERS & GROEI</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 40 }}>
           <StatCard label="GEBRUIKERS" stats={[
-            { sublabel: 'TOTAAL', value: String(totaalGebruikers) },
+            { sublabel: 'TOTAAL', value: String(totaalGebruikers), note: gebruikersDeltaNote },
           ]}>
             <SplitBar segments={[
               { label: 'BETAALD', value: betaaldCount, color: '#44cc88' },
@@ -179,8 +284,8 @@ export default async function AdminStatsPage() {
             ]} />
           </StatCard>
           <StatCard label="STATUS" stats={[
-            { sublabel: 'OPGEZEGD', value: String(opgezegdCount) },
-            { sublabel: 'CONVERSIE', value: `${conversieratio}%` },
+            { sublabel: 'OPGEZEGD', value: String(opgezegdCount), warn: opgezegdCount > 0 },
+            { sublabel: 'CONVERSIE', value: `${conversieratio}%`, note: `n=${totaalGebruikers}` },
           ]}>
             <SplitBar segments={[
               { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
@@ -188,8 +293,8 @@ export default async function AdminStatsPage() {
             ]} />
           </StatCard>
           <StatCard label="ACTIVITEIT" stats={[
-            { sublabel: 'ACTIEF LAATSTE 7 DAGEN', value: `${actieveGebruikers.size} (${actiefPercentage}%)` },
-            { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen) },
+            { sublabel: 'ACTIEF LAATSTE 7 DAGEN', value: `${actieveGebruikers.size} (${actiefPercentage}%)`, warn: actiefPercentage < 50 },
+            { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
             { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
           ]} />
           <StatCard label="REFERRALS" stats={[
@@ -212,9 +317,9 @@ export default async function AdminStatsPage() {
             { sublabel: 'AANDEEL', value: `${coachingRatio}%` },
           ]} />
           <StatCard label="SPARREN" stats={[
-            { sublabel: 'GESPREKKEN', value: String(sparringGesprekken) },
-            { sublabel: 'VRAGEN', value: String(sparringVragen) },
-            { sublabel: 'AANDEEL', value: `${sparringRatio}%` },
+            { sublabel: 'GESPREKKEN', value: String(sparringGesprekken), warn: sparringGesprekken === 0 },
+            { sublabel: 'VRAGEN', value: String(sparringVragen), warn: sparringVragen === 0 },
+            { sublabel: 'AANDEEL', value: `${sparringRatio}%`, warn: sparringRatio === 0 },
           ]} />
         </div>
 
