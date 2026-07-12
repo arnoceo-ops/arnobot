@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { emailHtml, E2E_TEST_USER_EMAIL } from '@/lib/email-templates'
+import { emailHtml } from '@/lib/email-templates'
+import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(

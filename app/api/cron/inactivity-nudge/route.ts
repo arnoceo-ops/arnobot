@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
-import { isValidEmail, getEmailTemplate, E2E_TEST_USER_EMAIL } from '@/lib/email-templates'
+import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
+import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(

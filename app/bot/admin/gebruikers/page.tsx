@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 import { clerkClient } from '@clerk/nextjs/server'
+import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
 import SearchLinkedIn from './SearchLinkedIn'
 import TierToggle from './TierToggle'
 import PaidButton from './PaidButton'
@@ -93,7 +94,8 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at, nudge_opt_out'),
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, tier, renewal_requested_at, trial_reactivated_at, nudge_opt_out')
+      .neq('email', E2E_TEST_USER_EMAIL),
     supabase
       .from('arnobot_rds_logs')
       .select('user_id, session_id, created_at')

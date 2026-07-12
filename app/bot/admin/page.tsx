@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { E2E_TEST_USER_ID } from '@/lib/e2eTestAccount'
 import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
@@ -63,6 +64,7 @@ export default async function ArnoBotAdminPage({
   const { data: alleGebruikers } = await supabase
     .from('approved_users')
     .select('user_id, voornaam, achternaam')
+    .neq('user_id', E2E_TEST_USER_ID)
 
   const alleNamen: { userId: string; naam: string }[] = (alleGebruikers ?? [])
     .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
@@ -78,6 +80,7 @@ export default async function ArnoBotAdminPage({
     .select('*')
     .gte('created_at', `${from}T00:00:00`)
     .lte('created_at', `${to}T23:59:59`)
+    .neq('user_id', E2E_TEST_USER_ID)
     .order('created_at', { ascending: true })
     .limit(2000)
 

@@ -4,11 +4,6 @@ export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-// Playwright E2E-testaccount (aangemaakt tegen de Clerk development-instance, zie
-// e2e/auth.setup.ts). Draait wel in dezelfde Supabase-tabellen als echte gebruikers (geen
-// apart testproject), dus moet expliciet worden uitgesloten van e-mail-crons.
-export const E2E_TEST_USER_EMAIL = 'playwright-test@arno.bot'
-
 function optOutSig(userId: string): string {
   return createHmac('sha256', process.env.ARNOBOT_ADMIN_KEY ?? '')
     .update(userId)

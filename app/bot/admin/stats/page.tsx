@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { E2E_TEST_USER_ID } from '@/lib/e2eTestAccount'
 import AdminNav from '../AdminNav'
 
 export const dynamic = 'force-dynamic'
@@ -39,12 +40,12 @@ export default async function AdminStatsPage() {
     { count: arnoliveClicks },
     { data: analyses },
   ] = await Promise.all([
-    supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }),
-    supabase.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }),
-    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'qa_page_view'),
-    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view'),
-    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_arnolive_click'),
-    supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }),
+    supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'qa_page_view').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_arnolive_click').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID),
   ])
 
   const totaalGesprekken = (coachingGesprekken ?? 0) + (sparringGesprekken ?? 0)
