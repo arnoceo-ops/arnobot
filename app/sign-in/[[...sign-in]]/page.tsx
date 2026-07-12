@@ -54,7 +54,7 @@ export default function SignInPage() {
   // en verandert er niets aan het normale, keuzevrije LinkedIn-only inloggen.
   const [fallbackChecked, setFallbackChecked] = useState(false)
   const [fallbackEnabled, setFallbackEnabled] = useState(false)
-  const [emailStep, setEmailStep] = useState<'hidden' | 'email' | 'code'>('hidden')
+  const [emailStep, setEmailStep] = useState<'email' | 'code'>('email')
   const [emailValue, setEmailValue] = useState('')
   const [codeValue, setCodeValue] = useState('')
   const [emailError, setEmailError] = useState('')
@@ -219,18 +219,6 @@ export default function SignInPage() {
           </div>
           {error && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           {fetchStatus === 'fetching' && <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>LADEN...</p>}
-
-          {fallbackEnabled && emailStep === 'hidden' && (
-            <div style={{ textAlign: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setEmailStep('email')}
-                style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: 13, letterSpacing: 1, cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                LinkedIn ligt er tijdelijk uit? Log in via e-mail
-              </button>
-            </div>
-          )}
 
           {fallbackEnabled && emailStep === 'email' && (
             <form onSubmit={handleEmailCodeRequest} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
