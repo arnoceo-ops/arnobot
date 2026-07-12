@@ -131,8 +131,8 @@ export default async function AdminStatusPage() {
   const availGauge = availDay ?? (monitor?.status === 'UP' ? 100 : 0)
 
   // Externe services ophalen (parallel)
-  const serviceResults = await Promise.allSettled([
-    ...SERVICES.map(s =>
+  const serviceResults = await Promise.allSettled(
+    SERVICES.map(s =>
       fetch(s.url, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
         .then(r => r.json())
         .then((d): ServiceStatus => ({
@@ -155,28 +155,21 @@ export default async function AdminStatusPage() {
           name: s.name, link: s.link, indicator: 'unknown', description: 'Status niet beschikbaar',
           components: [], lastIncident: null,
         }))
-    ),
-    // LinkedIn publiceert geen publieke status-API zoals de bovenstaande services. Dit is een
-    // live bereikbaarheidscheck van het OIDC-endpoint waar de inlogflow zelf van afhangt, geen
-    // officiele LinkedIn-statusfeed. Vandaar de beschrijving "OIDC-endpoint", niet "operationeel".
-    fetch('https://www.linkedin.com/oauth/.well-known/openid-configuration', { cache: 'no-store', signal: AbortSignal.timeout(5000) })
-      .then((r): ServiceStatus => ({
-        name: 'LinkedIn', link: 'https://www.linkedin.com',
-        indicator: r.ok ? 'none' : 'major',
-        description: r.ok ? 'OIDC-endpoint bereikbaar' : `OIDC-endpoint gaf HTTP ${r.status}`,
-        components: [], lastIncident: null,
-      }))
-      .catch((): ServiceStatus => ({
-        name: 'LinkedIn', link: 'https://www.linkedin.com', indicator: 'major',
-        description: 'OIDC-endpoint niet bereikbaar', components: [], lastIncident: null,
-      })),
-  ])
+    )
+  )
 
   const services: ServiceStatus[] = serviceResults.map(r =>
     r.status === 'fulfilled' ? r.value : {
       name: '', link: '', indicator: 'unknown', description: 'Ophalen mislukt', components: [], lastIncident: null
     }
   )
+
+  // LinkedIn publiceert geen publieke status-API zoals de services hierboven. Dit is een live
+  // bereikbaarheidscheck van het OIDC-endpoint waar de inlogflow zelf van afhangt op het moment
+  // dat deze pagina laadt, geen officiele LinkedIn-statusfeed of historische uptime.
+  const linkedinReachable = await fetch('https://www.linkedin.com/oauth/.well-known/openid-configuration', {
+    cache: 'no-store', signal: AbortSignal.timeout(5000),
+  }).then(r => r.ok).catch(() => false)
 
   const mo = monitor
   const linkedinFallbackEnabled = await getSetting('linkedin_fallback_enabled')
@@ -190,6 +183,16 @@ export default async function AdminStatusPage() {
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Status</h1>
 
         <LinkedInFallbackToggle initialEnabled={linkedinFallbackEnabled} />
+
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: '20px', display: 'flex', gap: 20, alignItems: 'center', marginBottom: 40 }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>LINKEDIN OIDC</p>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280' }}>
+              Live check bij het laden van deze pagina, geen historische uptime (LinkedIn heeft geen publieke status-API).
+            </p>
+          </div>
+          <Gauge value={linkedinReachable ? 100 : 0} color={linkedinReachable ? '#22c55e' : '#cc2200'} />
+        </div>
 
         {/* arno.bot metrics */}
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>ARNO.BOT</p>
