@@ -190,6 +190,12 @@ export async function POST() {
     groeiflowContext = `\n\nGROEIFLOW: De gebruiker heeft ${sessions.length} gesprekken gevoerd maar slechts ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Noem dit ergens in de coaching, kort en zonder oordeel: groei gaat het snelst via de route gesprek naar analyse naar coaching. Als iemand dit niet wist, weet die het nu. Eén zin, informatief. Geen verwijt.`
   }
 
+  // Sparring-suggestie: veel coaching-gesprekken maar nog nooit geoefend in sparring
+  let sparringSuggestieContext = ''
+  if (sessions.length >= 10 && sparringSessions.length === 0) {
+    sparringSuggestieContext = `\n\nSPARRING-SUGGESTIE: De gebruiker heeft ${sessions.length} coaching-gesprekken gevoerd maar nog nooit geoefend in de sparring-functie (gesimuleerde verkoopgesprekken tegen een tegenstander-persona). Noem dit ergens kort, zonder oordeel: oefenen in sparring kan helpen om wat in de coaching-gesprekken besproken wordt ook echt te trainen. Eén zin, informatief, geen verwijt.`
+  }
+
   // Significante scoreverbeteringen detecteren (2+ punten stijging)
   let voortgangErkenningContext = ''
   if (prevCoaching?.mindset_score != null) {
@@ -253,7 +259,7 @@ MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verk
 SYSTEEM = heeft iemand een verkoopproces? Volgt die dat consequent? Pipeline-denken, opvolging, structuur, terugkomen op dingen. Sales is een proces, geen vak.
 ACTIE = doet iemand het ook echt? Gesprekken voeren, initiatief nemen, consistent actief blijven. Een droom zonder actie is een nachtmerrie.
 
-SPARRING = naast coaching-gesprekken kan de gebruiker ook oefenen in gesimuleerde verkoopgesprekken tegen een tegenstander-persona. Dit is een aanvullend signaal, geen vervanging van de echte coaching-gesprekken: het zegt vooral iets over ACTIE (oefent iemand actief, hoe vaak) en MINDSET (hoe gaat iemand om met weerstand en tegenwerking in een simulatie). Weeg sparring-sessies mee in score en diagnose van deze twee pijlars als ze aanwezig zijn, maar baseer de kern van de analyse op de echte coaching-gesprekken.
+SPARRING = naast coaching-gesprekken kan de gebruiker ook oefenen in gesimuleerde verkoopgesprekken tegen een tegenstander-persona. Dit is een laagdrempelige oefenruimte, geen examen: beoordeel losse sparring-momenten niet te streng en trek geen harde conclusies uit één minder sterk oefenmoment. Sparring is een aanvullend signaal, geen vervanging van de echte coaching-gesprekken: het zegt vooral iets over ACTIE (oefent iemand actief, hoe vaak) en MINDSET (hoe gaat iemand om met weerstand en tegenwerking in een simulatie). Weeg sparring-sessies mee in score en diagnose van deze twee pijlars als ze aanwezig zijn, maar baseer de kern van de analyse op de echte coaching-gesprekken. Zijn er geen sparring-sessies aangeleverd, ga er dan van uit dat de gebruiker deze functie simpelweg niet gebruikt: noem het ontbreken ervan niet als tekortkoming en laat het nooit de mindset- of actie-score verlagen. Sparring is een bonus, geen verplichting.
 
 Score elke pijlar op een schaal van 1 (zwak) tot 5 (sterk) op basis van wat de gesprekken onthullen.
 Bepaal richting op basis van hoe gesprekken zich over tijd ontwikkelen: worden ze dieper, concreter, meer gericht? Stijgend. Draaien ze in cirkels? Dalend. Geen duidelijke beweging? Stabiel.
@@ -281,7 +287,7 @@ Kies de drie meest urgente ontwikkelpunten op basis van de laagste scores en ste
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
 De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}${groeiflowContext}`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}${groeiflowContext}${sparringSuggestieContext}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
