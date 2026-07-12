@@ -51,7 +51,7 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_arnolive_click').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID),
-    supabase.from('approved_users').select('user_id, paid_at').neq('email', E2E_TEST_USER_EMAIL),
+    supabase.from('approved_users').select('user_id, paid_at, is_active, cancelled_at').neq('email', E2E_TEST_USER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_referrals').select('status').neq('referrer_user_id', E2E_TEST_USER_ID),
   ])
@@ -75,19 +75,16 @@ export default async function AdminStatsPage() {
   const totaalGebruikers = users?.length ?? 0
   const betaaldCount = users?.filter(u => u.paid_at).length ?? 0
   const trialCount = totaalGebruikers - betaaldCount
+  const actiefCount = users?.filter(u => u.is_active).length ?? 0
+  const opgezegdCount = users?.filter(u => u.cancelled_at).length ?? 0
   const conversieratio = totaalGebruikers > 0 ? Math.round((betaaldCount / totaalGebruikers) * 100) : 0
 
-  const sessionsPerUser: Record<string, Set<string>> = {}
-  const actieveGebruikers = new Set<string>()
-  for (const l of logs ?? []) {
-    if (!sessionsPerUser[l.user_id]) sessionsPerUser[l.user_id] = new Set()
-    sessionsPerUser[l.user_id].add(l.session_id)
-    if (l.created_at >= sevenDaysAgo) actieveGebruikers.add(l.user_id)
-  }
-  const totaalGesprekkenAlleGebruikers = Object.values(sessionsPerUser).reduce((sum, s) => sum + s.size, 0)
-  const totaalVragenAlleGebruikers = (logs ?? []).length
-  const gemGesprekken = totaalGebruikers > 0 ? (totaalGesprekkenAlleGebruikers / totaalGebruikers).toFixed(1) : '0'
-  const gemVragen = totaalGebruikers > 0 ? (totaalVragenAlleGebruikers / totaalGebruikers).toFixed(1) : '0'
+  const logsLaatste7Dagen = (logs ?? []).filter(l => l.created_at >= sevenDaysAgo)
+  const actieveGebruikers = new Set(logsLaatste7Dagen.map(l => l.user_id))
+  const gesprekkenLaatste7Dagen = new Set(logsLaatste7Dagen.map(l => l.session_id)).size
+  const vragenLaatste7Dagen = logsLaatste7Dagen.length
+  const vragenPerGesprekLaatste7Dagen = gesprekkenLaatste7Dagen > 0 ? (vragenLaatste7Dagen / gesprekkenLaatste7Dagen).toFixed(1) : '0'
+  const actiefPercentage = actiefCount > 0 ? Math.round((actieveGebruikers.size / actiefCount) * 100) : 0
 
   const referralAanmeldingen = referrals?.length ?? 0
   const referralConversies = referrals?.filter(r => r.status === 'converted').length ?? 0
@@ -102,16 +99,20 @@ export default async function AdminStatsPage() {
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEBRUIKERS & GROEI</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 40 }}>
-          <StatCard label="GEBRUIKERS" stats={[{ sublabel: 'TOTAAL', value: String(totaalGebruikers) }]} />
-          <StatCard label="STATUS" stats={[
+          <StatCard label="GEBRUIKERS" stats={[
+            { sublabel: 'TOTAAL', value: String(totaalGebruikers) },
             { sublabel: 'TRIAL', value: String(trialCount) },
             { sublabel: 'BETAALD', value: String(betaaldCount) },
-            { sublabel: 'CONVERSIERATIO', value: `${conversieratio}%` },
+          ]} />
+          <StatCard label="STATUS" stats={[
+            { sublabel: 'ACTIEF', value: String(actiefCount) },
+            { sublabel: 'OPGEZEGD', value: String(opgezegdCount) },
+            { sublabel: 'CONVERSIE', value: `${conversieratio}%` },
           ]} />
           <StatCard label="ACTIVITEIT" stats={[
-            { sublabel: 'ACTIEF LAATSTE 7 DAGEN', value: String(actieveGebruikers.size) },
-            { sublabel: 'GEM. GESPREKKEN/GEBRUIKER', value: gemGesprekken },
-            { sublabel: 'GEM. VRAGEN/GEBRUIKER', value: gemVragen },
+            { sublabel: 'ACTIEF LAATSTE 7 DAGEN', value: `${actieveGebruikers.size} (${actiefPercentage}%)` },
+            { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen) },
+            { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
           ]} />
           <StatCard label="REFERRALS" stats={[
             { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
@@ -122,21 +123,21 @@ export default async function AdminStatsPage() {
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GESPREKKEN: COACHING VS SPARREN</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 40 }}>
           <StatCard label="COACHING" stats={[
-            { sublabel: 'AFGESLOTEN GESPREKKEN', value: String(coachingGesprekken ?? 0) },
+            { sublabel: 'GESPREKKEN', value: String(coachingGesprekken ?? 0) },
             { sublabel: 'VRAGEN', value: String(coachingVragen) },
-            { sublabel: 'AANDEEL VAN TOTAAL', value: `${coachingRatio}%` },
+            { sublabel: 'AANDEEL', value: `${coachingRatio}%` },
           ]} />
           <StatCard label="SPARREN" stats={[
-            { sublabel: 'AFGESLOTEN GESPREKKEN', value: String(sparringGesprekken) },
+            { sublabel: 'GESPREKKEN', value: String(sparringGesprekken) },
             { sublabel: 'VRAGEN', value: String(sparringVragen) },
-            { sublabel: 'AANDEEL VAN TOTAAL', value: `${sparringRatio}%` },
+            { sublabel: 'AANDEEL', value: `${sparringRatio}%` },
           ]} />
         </div>
 
-        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>PAGINABEZOEK & ENGAGEMENT</p>
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BEZOEKEN & ENGAGEMENT</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 40 }}>
-          <StatCard label="Q&A" stats={[{ sublabel: 'PAGINABEZOEKEN', value: String(qaViews ?? 0) }]} />
-          <StatCard label="COACHING" stats={[{ sublabel: 'PAGINABEZOEKEN', value: String(coachingViews ?? 0) }]} />
+          <StatCard label="Q&A" stats={[{ sublabel: 'BEZOEKEN', value: String(qaViews ?? 0) }]} />
+          <StatCard label="COACHING" stats={[{ sublabel: 'BEZOEKEN', value: String(coachingViews ?? 0) }]} />
           <StatCard label="ARNOLIVE" stats={[{ sublabel: 'CLICKS', value: String(arnoliveClicks ?? 0) }]} />
         </div>
 
