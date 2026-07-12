@@ -233,7 +233,7 @@ export default function SignInPage() {
                 placeholder="jouw@linkedinmail.nl"
                 style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14 }}
               />
-              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13 }}>
+              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13, alignSelf: 'center', width: 'auto' }}>
                 {emailLoading ? 'VERSTUREN...' : 'VERSTUUR CODE'}
               </button>
               {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
@@ -254,7 +254,7 @@ export default function SignInPage() {
                 placeholder="6-cijferige code"
                 style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14, letterSpacing: 4, textAlign: 'center' }}
               />
-              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827' }}>
+              <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13, alignSelf: 'center', width: 'auto' }}>
                 {emailLoading ? 'BEVESTIGEN...' : 'BEVESTIG'}
               </button>
               {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
