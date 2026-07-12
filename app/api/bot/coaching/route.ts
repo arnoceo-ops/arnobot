@@ -183,17 +183,17 @@ export async function POST() {
     }
   }
 
-  // Groeiflow: weinig analyses verhouding tot gesprekken
-  let groeiflowContext = ''
+  // Signalen: korte, feitelijke observaties op basis van tellingen, geen AI-oordeel nodig.
+  // BEWUST buiten de AI-call om (rechtstreeks in JS): dit zijn losse tips, geen onderdeel van de
+  // kernscoring. Nieuwe tips van dit type horen HIER thuis, niet in de systeemprompt hieronder,
+  // anders verdrukken ze de mindset/systeem/actie-diagnoses die wel AI-interpretatie vereisen.
+  const signalen: string[] = []
   const analyseRatio = analyses.length / Math.max(sessions.length, 1)
   if (sessions.length >= 10 && analyseRatio < 0.2) {
-    groeiflowContext = `\n\nGROEIFLOW: De gebruiker heeft ${sessions.length} gesprekken gevoerd maar slechts ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Noem dit ergens in de coaching, kort en zonder oordeel: groei gaat het snelst via de route gesprek naar analyse naar coaching. Als iemand dit niet wist, weet die het nu. Eén zin, informatief. Geen verwijt.`
+    signalen.push(`Je hebt ${sessions.length} gesprekken gevoerd maar pas ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Groei gaat het snelst via de route gesprek naar analyse naar coaching.`)
   }
-
-  // Sparring-suggestie: veel coaching-gesprekken maar nog nooit geoefend in sparring
-  let sparringSuggestieContext = ''
   if (sessions.length >= 10 && sparringSessions.length === 0) {
-    sparringSuggestieContext = `\n\nSPARRING-SUGGESTIE: De gebruiker heeft ${sessions.length} coaching-gesprekken gevoerd maar nog nooit geoefend in de sparring-functie (gesimuleerde verkoopgesprekken tegen een tegenstander-persona). Noem dit ergens kort, zonder oordeel: oefenen in sparring kan helpen om wat in de coaching-gesprekken besproken wordt ook echt te trainen. Eén zin, informatief, geen verwijt.`
+    signalen.push(`Je hebt ${sessions.length} coaching-gesprekken gevoerd maar nog niet gesparred. Oefenen in sparring helpt om wat je hier bespreekt ook echt te trainen.`)
   }
 
   // Significante scoreverbeteringen detecteren (2+ punten stijging)
@@ -287,7 +287,7 @@ Kies de drie meest urgente ontwikkelpunten op basis van de laagste scores en ste
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
 De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}${groeiflowContext}${sparringSuggestieContext}`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
@@ -401,7 +401,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }
   } catch {}
 
-  const doc = { ...parsed, blogs, conversation_count: sessions.length, weinig_voortgang, stagnatie }
+  const doc = { ...parsed, blogs, conversation_count: sessions.length, weinig_voortgang, stagnatie, signalen }
   const payload = {
     ...doc,
     updated_at: new Date().toISOString(),

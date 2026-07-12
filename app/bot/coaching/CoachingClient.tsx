@@ -30,6 +30,7 @@ interface CoachingDoc {
   updated_at?: string
   weinig_voortgang?: boolean
   stagnatie?: boolean
+  signalen?: string[]
 }
 
 interface Stats {
@@ -514,6 +515,23 @@ export default function CoachingClient({ userId }: Props) {
                 ))}
               </div>
             </div>
+
+            {/* Signalen */}
+            {(doc.signalen?.length ?? 0) > 0 && (
+              <div className="coaching-section">
+                <span className="coaching-label">SIGNALEN</span>
+                <div style={{ marginTop: 8 }}>
+                  {doc.signalen!.map((s, i) => (
+                    <p
+                      key={i}
+                      className="coaching-body"
+                      style={{ marginBottom: i < doc.signalen!.length - 1 ? 8 : 0 }}
+                      dangerouslySetInnerHTML={{ __html: renderMd(s) }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Scoregeschiedenis */}
             {SCORE_HISTORY_ENABLED && scoreHistory.length > 0 && (
