@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { messages, profiel, persona, weerstand, rolCategorie } = body
+  const { messages, profiel, persona, weerstand, rolCategorie, sessionId } = body
   if (!Array.isArray(messages) || messages.length > 40) {
     return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
   }
@@ -67,5 +67,23 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
   })
 
   const debrief = getText(response.content)
+
+  // Sparring-gebruik loggen, analoog aan arnobot_blog_sessions voor gewone gesprekken (die
+  // tot vanavond compleet ontbrak, waardoor "hoe vaak wordt sparren gebruikt" onbeantwoordbaar
+  // was). sessionId kan ontbreken bij oudere clients die nog niet zijn bijgewerkt, dan gewoon
+  // niet loggen in plaats van de debrief zelf te laten falen.
+  if (typeof sessionId === 'string' && sessionId) {
+    const { error: logError } = await supabase.from('arnobot_sparring_sessions').upsert({
+      user_id: userId,
+      session_id: sessionId,
+      rol_categorie: rolCategorie ?? null,
+      persona: persona ?? null,
+      weerstand: weerstand ?? null,
+      debrief,
+      message_count: messages.length,
+    }, { onConflict: 'session_id' })
+    if (logError) console.error('[sparring/debrief] loggen mislukt:', logError.message)
+  }
+
   return NextResponse.json({ debrief })
 }

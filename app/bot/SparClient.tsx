@@ -623,7 +623,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         const res = await fetch('/api/sparring/debrief', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages, profiel, persona: sparPersona, weerstand: sparWeerstand, rolCategorie })
+          body: JSON.stringify({ messages, profiel, persona: sparPersona, weerstand: sparWeerstand, rolCategorie, sessionId })
         })
         const data = await res.json()
         if (data.debrief) {
