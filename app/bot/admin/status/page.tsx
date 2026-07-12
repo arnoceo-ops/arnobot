@@ -131,8 +131,8 @@ export default async function AdminStatusPage() {
   const availGauge = availDay ?? (monitor?.status === 'UP' ? 100 : 0)
 
   // Externe services ophalen (parallel)
-  const serviceResults = await Promise.allSettled(
-    SERVICES.map(s =>
+  const serviceResults = await Promise.allSettled([
+    ...SERVICES.map(s =>
       fetch(s.url, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
         .then(r => r.json())
         .then((d): ServiceStatus => ({
@@ -155,8 +155,22 @@ export default async function AdminStatusPage() {
           name: s.name, link: s.link, indicator: 'unknown', description: 'Status niet beschikbaar',
           components: [], lastIncident: null,
         }))
-    )
-  )
+    ),
+    // LinkedIn publiceert geen publieke status-API zoals de bovenstaande services. Dit is een
+    // live bereikbaarheidscheck van het OIDC-endpoint waar de inlogflow zelf van afhangt, geen
+    // officiele LinkedIn-statusfeed. Vandaar de beschrijving "OIDC-endpoint", niet "operationeel".
+    fetch('https://www.linkedin.com/oauth/.well-known/openid-configuration', { cache: 'no-store', signal: AbortSignal.timeout(5000) })
+      .then((r): ServiceStatus => ({
+        name: 'LinkedIn', link: 'https://www.linkedin.com',
+        indicator: r.ok ? 'none' : 'major',
+        description: r.ok ? 'OIDC-endpoint bereikbaar' : `OIDC-endpoint gaf HTTP ${r.status}`,
+        components: [], lastIncident: null,
+      }))
+      .catch((): ServiceStatus => ({
+        name: 'LinkedIn', link: 'https://www.linkedin.com', indicator: 'major',
+        description: 'OIDC-endpoint niet bereikbaar', components: [], lastIncident: null,
+      })),
+  ])
 
   const services: ServiceStatus[] = serviceResults.map(r =>
     r.status === 'fulfilled' ? r.value : {
