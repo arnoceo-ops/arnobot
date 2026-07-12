@@ -2,12 +2,15 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { logEvent } from '@/lib/events'
 import CoachingClient from './CoachingClient'
 import BotNav from '../BotNav'
 
 export default async function CoachingPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
+
+  logEvent(userId, 'coaching_page_view')
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

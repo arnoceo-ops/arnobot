@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
   { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
   { href: '/bot/admin/idee', label: 'BLOGS' },
+  { href: '/bot/admin/stats', label: 'STATS' },
   { href: '/bot/admin/widget', label: 'ARNO.BLOG' },
 
   { href: '/api/admin/logout', label: 'UITLOGGEN' },
