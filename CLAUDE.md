@@ -26,6 +26,12 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 
 **Werkregel:** een deprecation-melding in een dashboard of changelog = direct opnemen als actiepunt, niet uitstellen naar de volgende check. Commerciële tools veranderen zonder waarschuwing. Wacht niet tot iets toevallig ter sprake komt.
 
+#### Milestone: Pro-upgrades bij 50 actieve gebruikers
+Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorvoeren (nu bewust uitgesteld, niet omdat het onbelangrijk is maar omdat het bij de huidige schaal nog niet in verhouding staat):
+- **Vercel Firewall** aanzetten
+- **Supabase PITR** (Point-In-Time Recovery, echte databasebackups) aanzetten, huidige gratis plan biedt dit niet
+- **Clerk**: inactivity timeout inschakelen (zie hieronder bij Clerk) en session limits aanscherpen
+
 #### Vercel
 - Zijn er deprecated features in gebruik? Controleer Vercel dashboard → Settings → General op waarschuwingen
 - Controleer [vercel.com/changelog](https://vercel.com/changelog) op breaking changes die arno.bot raken
@@ -39,6 +45,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Zijn er schema-wijzigingen nodig voor nieuwe features?
 - Database binnen limieten? (free: 500MB — check Settings → Billing → Usage)
 - **Gedaan (juli 2026):** gemigreerd van legacy JWT-keys naar nieuwe publishable/secret keys (`sb_publishable_...` / `sb_secret_...`) in `.env.local` en Vercel. Legacy keys daarna uitgeschakeld in Supabase dashboard. Geen codewijzigingen nodig geweest.
+- **Openstaand actiepunt:** geen echte databasebackups (PITR) op het huidige gratis plan. Zie "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven.
 
 #### Clerk (app: clerk.arno.bot)
 - Controleer [clerk.com/changelog](https://clerk.com/changelog) op breaking changes in SDK of JWT-formaat
@@ -46,7 +53,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Webhooks actief en zonder fouten? (Clerk dashboard → Webhooks → recent deliveries)
 - Geen development-instance in productie?
 - Zijn er nieuwe beveiligingsinstellingen beschikbaar (bijv. device fingerprinting, bot-detectie)?
-- **Openstaand actiepunt:** inactivity timeout inschakelen (Clerk dashboard → Sessions). Vereist een betaald Clerk-plan voor productiegebruik, dus pas oppakken bij de al geplande Pro-upgrade (zie "Pro upgrade bij 50 gebruikers"). Geen "log uit bij browser sluiten"-optie beschikbaar bij Clerk, inactivity timeout is het dichtstbijzijnde alternatief.
+- **Openstaand actiepunt:** inactivity timeout inschakelen (Clerk dashboard → Sessions). Vereist een betaald Clerk-plan voor productiegebruik, dus pas oppakken bij "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven. Geen "log uit bij browser sluiten"-optie beschikbaar bij Clerk, inactivity timeout is het dichtstbijzijnde alternatief.
 
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)
