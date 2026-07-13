@@ -46,6 +46,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Webhooks actief en zonder fouten? (Clerk dashboard → Webhooks → recent deliveries)
 - Geen development-instance in productie?
 - Zijn er nieuwe beveiligingsinstellingen beschikbaar (bijv. device fingerprinting, bot-detectie)?
+- **Openstaand actiepunt:** inactivity timeout inschakelen (Clerk dashboard → Sessions). Vereist een betaald Clerk-plan voor productiegebruik, dus pas oppakken bij de al geplande Pro-upgrade (zie "Pro upgrade bij 50 gebruikers"). Geen "log uit bij browser sluiten"-optie beschikbaar bij Clerk, inactivity timeout is het dichtstbijzijnde alternatief.
 
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)
