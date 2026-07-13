@@ -1,6 +1,6 @@
-# Verwerkersovereenkomst — CONCEPT v0.4
+# Verwerkersovereenkomst — CONCEPT v0.5
 
-> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule), en het specifieke aansprakelijkheidsmaximum voor databeschermingsschendingen in Artikel 11 (afhankelijk van verzekeringsdekking). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
+> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
 
 ---
 
@@ -113,11 +113,11 @@ ArnoBot informeert de Klant zonder onredelijke vertraging, uiterlijk binnen 72 u
 
 ## Artikel 11 — Aansprakelijkheid
 
-De totale aansprakelijkheid van ArnoBot uit hoofde van deze overeenkomst is per kalenderjaar beperkt tot het totaalbedrag dat de Klant in de twaalf (12) maanden voorafgaand aan de schadeveroorzakende gebeurtenis aan ArnoBot heeft betaald onder de onderliggende dienstverleningsovereenkomst. Aansprakelijkheid voor indirecte schade, waaronder in ieder geval gevolgschade, gederfde winst en gemiste besparingen, is uitgesloten.
+De totale aansprakelijkheid van ArnoBot uit hoofde van deze overeenkomst, inclusief voor tekortkomingen in de verplichtingen als verwerker genoemd in Artikel 4 tot en met 10, is per kalenderjaar beperkt tot het totaalbedrag dat de Klant in de twaalf (12) maanden voorafgaand aan de schadeveroorzakende gebeurtenis aan ArnoBot heeft betaald onder de onderliggende dienstverleningsovereenkomst. Aansprakelijkheid voor indirecte schade, waaronder in ieder geval gevolgschade, gederfde winst en gemiste besparingen, is uitgesloten.
 
-Deze beperkingen gelden niet:
-- in geval van opzet of bewuste roekeloosheid van ArnoBot of haar leidinggevenden (kan onder Nederlands recht sowieso niet worden uitgesloten, art. 6:248 lid 2 BW);
-- voor schade als rechtstreeks gevolg van een toerekenbare tekortkoming door ArnoBot in de verplichtingen als verwerker genoemd in Artikel 4 tot en met 10 van deze overeenkomst, waarvoor een separaat maximum geldt van [PLACEHOLDER: bedrag nog te bepalen op basis van de beroepsaansprakelijkheidsverzekering van Royal Dutch Sales B.V. — dit maximum moet niet boven de eigen verzekeringsdekking uitkomen].
+Deze beperking geldt niet in geval van opzet of bewuste roekeloosheid van ArnoBot of haar leidinggevenden (kan onder Nederlands recht sowieso niet worden uitgesloten, art. 6:248 lid 2 BW).
+
+*ArnoBot heeft geen beroepsaansprakelijkheids- of cyberverzekering. Om die reden is bewust gekozen voor één uniform maximum in plaats van een apart, hoger maximum voor databeschermingsschendingen, in lijn met de daadwerkelijke financiële draagkracht van ArnoBot.*
 
 ## Artikel 12 — Toepasselijk recht en geschillen
 
