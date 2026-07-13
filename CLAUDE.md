@@ -15,6 +15,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK, Sanity?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
 - Check of Dependabot-PRs openstaan op GitHub en beoordeel ze
+- **Bekend en bewust geaccepteerd:** Dependabot-kwetsbaarheidsmeldingen over Sanity. Niet opnieuw aankaarten of als nieuw probleem behandelen, dit is al beoordeeld en geaccepteerd.
 
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop in dit bestand, deze dekt zowel de Anthropic chat-modellen als de Voyage AI embedding/rerank-modellen (RAG-pipeline)
@@ -64,6 +65,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Controleer of de DPA is gewijzigd: [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Als die is veranderd, privacypagina bijwerken.
 - Zijn er API-deprecaties aangekondigd? Controleer [docs.anthropic.com/changelog](https://docs.anthropic.com/en/release-notes/overview)
 - Worden de huidige model-IDs in de inventaris nog ondersteund? (Anthropic depreceert modellen met aankondiging)
+- **Harde deadline:** de huidige API-keys (arnobot + salescanvas-app) verlopen op 6 januari 2027, door Anthropic afgedwongen, geen eigen beleid. Ruim van tevoren nieuwe keys aanmaken en uitrollen, niet pas rond de deadline zelf.
 
 #### Voyage AI (embedding + rerank voor de RAG/kennisbank-pipeline, `lib/rag.ts`)
 - Controleer [docs.voyageai.com/docs/pricing](https://docs.voyageai.com/docs/pricing) op nieuwere modelgeneraties en gratis tokentoelagen (nieuwe modellen krijgen vaak 200 miljoen gratis tokens/maand, oudere modellen niet)
@@ -276,6 +278,8 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 - **Gap label↔tekst**: clamp(16px,3vw,40px)
 - **Container breedte gesprek**: maxWidth 812px, margin 0 auto
 - **Designregel**: AI-gegenereerde content = #1f2937 card. Gebruikersinput = transparant op #111827.
+
+**Let op:** `SparClient.tsx` heeft een eigen, losse nav-implementatie, niet de gedeelde `AdminNav`/`BotNav`-component. Bij elke navigatiewijziging in de rest van de app expliciet ook `SparClient.tsx` nalopen en apart bijwerken, anders loopt die stil uit de pas.
 
 ## Model-inventaris — controleer elk kwartaal
 
