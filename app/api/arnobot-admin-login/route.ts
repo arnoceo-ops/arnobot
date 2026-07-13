@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 
 // In-memory rate limiter: werkt per serverless instance (good enough voor admin endpoint)
 const ipAttempts = new Map<string, { count: number; firstAt: number }>()
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
     if (now - record.firstAt > WINDOW_MS) {
       ipAttempts.delete(ip)
     } else if (record.count >= MAX_ATTEMPTS) {
+      Sentry.captureMessage('admin_login_rate_limited', { level: 'error', tags: { ip } })
       return NextResponse.json({ error: 'Too many attempts' }, { status: 429 })
     }
   }
@@ -28,6 +30,7 @@ export async function POST(req: NextRequest) {
     } else {
       ipAttempts.set(ip, { count: 1, firstAt: now })
     }
+    Sentry.captureMessage('admin_login_failed', { level: 'warning', tags: { ip } })
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
