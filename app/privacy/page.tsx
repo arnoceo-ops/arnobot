@@ -150,6 +150,21 @@ export default function PrivacyPage() {
                   <td>Transactionele e-mails</td>
                   <td><a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">resend.com/legal/dpa</a></td>
                 </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Voyage AI</td>
+                  <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen</td>
+                  <td>SOC 2 · HIPAA, DPA op aanvraag</td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Sentry</td>
+                  <td>Foutmonitoring en performance-tracing</td>
+                  <td><a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener noreferrer">sentry.io/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Upstash</td>
+                  <td>Rate limiting (verwerkt IP-adressen)</td>
+                  <td>Geen publieke DPA, op aanvraag</td>
+                </tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
