@@ -203,9 +203,10 @@ export default async function AdminStatsPage() {
   // Periode-vergelijking: nieuwe gebruikers en gesprekken deze week vs de week ervoor
   const nieuwLaatste7Dagen = users?.filter(u => u.created_at >= sevenDaysAgo).length ?? 0
   const nieuwDaarvoor7Dagen = users?.filter(u => u.created_at >= veertienDaysAgo && u.created_at < sevenDaysAgo).length ?? 0
-  const gebruikersDeltaNote = nieuwDaarvoor7Dagen > 0
-    ? `${nieuwLaatste7Dagen >= nieuwDaarvoor7Dagen ? '+' : ''}${Math.round(((nieuwLaatste7Dagen - nieuwDaarvoor7Dagen) / nieuwDaarvoor7Dagen) * 100)}% vs vorige week (${nieuwDaarvoor7Dagen} nieuw)`
-    : `${nieuwLaatste7Dagen} nieuw deze week`
+  const gebruikersDeltaValue = nieuwDaarvoor7Dagen > 0
+    ? `${nieuwLaatste7Dagen >= nieuwDaarvoor7Dagen ? '+' : ''}${Math.round(((nieuwLaatste7Dagen - nieuwDaarvoor7Dagen) / nieuwDaarvoor7Dagen) * 100)}%`
+    : `${nieuwLaatste7Dagen} nieuw`
+  const gebruikersDeltaNote = nieuwDaarvoor7Dagen > 0 ? `${nieuwDaarvoor7Dagen} nieuw vorige week` : 'deze week'
 
   const logsDaarvoor7Dagen = (logs ?? []).filter(l => l.created_at >= veertienDaysAgo && l.created_at < sevenDaysAgo)
   const gesprekkenDaarvoor7Dagen = new Set(logsDaarvoor7Dagen.map(l => l.session_id)).size
@@ -220,7 +221,6 @@ export default async function AdminStatsPage() {
     const maandBedrag = u.interval === 'jaar' ? (u.bedrag as number) / 12 : (u.bedrag as number)
     return sum + maandBedrag
   }, 0)
-  const mrrOnbekendCount = betaaldeGebruikers.length - betaaldeGebruikersMetBedrag.length
 
   // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))
@@ -283,14 +283,10 @@ export default async function AdminStatsPage() {
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Stats</h1>
 
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', paddingBottom: 24, marginBottom: 40, borderBottom: '2px solid #f59e0b' }}>
-          <HeroStat label="TOTAAL GEBRUIKERS" value={String(totaalGebruikers)} note={gebruikersDeltaNote} />
-          <HeroStat label="CONVERSIERATIO" value={`${conversieratio}%`} note={`n=${totaalGebruikers}`} />
-          <HeroStat label="ACTIEF LAATSTE 7 DAGEN" value={String(actieveGebruikers.size)} note={`${actiefPercentage}% van actieve gebruikers`} />
-          <HeroStat
-            label="MRR"
-            value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'}
-            note={mrrOnbekendCount > 0 ? `${mrrOnbekendCount} van ${betaaldeGebruikers.length} betaald zonder bedrag` : undefined}
-          />
+          <HeroStat label="GEBRUIKERS" value={String(totaalGebruikers)} />
+          <HeroStat label="CONVERSIE" value={`${conversieratio}%`} />
+          <HeroStat label="ACTIEF 7D" value={String(actieveGebruikers.size)} />
+          <HeroStat label="MRR" value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'} />
         </div>
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEZONDHEIDSSCORE</p>
@@ -316,7 +312,8 @@ export default async function AdminStatsPage() {
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEBRUIKERS & GROEI</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 40 }}>
           <StatCard label="GEBRUIKERS" stats={[
-            { sublabel: 'TOTAAL', value: String(totaalGebruikers), note: gebruikersDeltaNote },
+            { sublabel: 'TOTAAL', value: String(totaalGebruikers) },
+            { sublabel: 'VS VORIGE WEEK', value: gebruikersDeltaValue, note: gebruikersDeltaNote },
           ]}>
             <SplitBar segments={[
               { label: 'BETAALD', value: betaaldCount, color: '#44cc88' },
