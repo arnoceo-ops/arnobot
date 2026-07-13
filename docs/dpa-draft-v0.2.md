@@ -1,4 +1,4 @@
-# Verwerkersovereenkomst — CONCEPT v0.1
+# Verwerkersovereenkomst — CONCEPT v0.2
 
 > **NIET-OFFICIEEL CONCEPT.** Dit is een startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. De meeste keuzes zijn ingevuld met een beargumenteerd voorstel (herkenbaar aan *cursieve toelichting*), gebaseerd op gangbare SaaS-praktijk of al bestaand beleid van ArnoBot. Artikel 11 (aansprakelijkheid) en Artikel 12 (toepasselijk recht) zijn bewust open gelaten: die raken reëel financieel risico en onderhandelingspositie, en zijn niet door AI te beslissen. Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
 
@@ -124,3 +124,27 @@ Deze overeenkomst eindigt automatisch bij beëindiging van de onderliggende dien
 ---
 
 *Concept opgesteld als input voor juridische beoordeling. Bevat geen bindende afspraken totdat beide partijen een door een jurist gecontroleerde definitieve versie ondertekenen.*
+
+---
+
+## Ondertekening
+
+Partijen verklaren bovenstaande te zijn overeengekomen en ondertekenen dit document ten blijke daarvan.
+
+**Namens Verwerkingsverantwoordelijke ("Klant")**
+
+| | |
+|---|---|
+| Naam | ______________________ |
+| Functie | ______________________ |
+| Datum | ______________________ |
+| Handtekening | ______________________ |
+
+**Namens Verwerker ("ArnoBot")**
+
+| | |
+|---|---|
+| Naam | Arno Diepeveen |
+| Functie | Oprichter, Royal Dutch Sales |
+| Datum | ______________________ |
+| Handtekening | ______________________ |
