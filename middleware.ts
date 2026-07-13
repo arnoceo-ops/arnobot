@@ -82,6 +82,12 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect()
   }
 
+  // Uitzondering op isProtectedBot hieronder: deze pagina moet je juist kunnen zien
+  // zonder dat de auto-trial-aanmaak hieronder alsnog voor je een account opent.
+  if (path === '/bot/uitnodiging-vereist') {
+    return nextWithNonce()
+  }
+
   if (isProtectedBot(req)) {
     await auth.protect()
     const { userId } = await auth()
@@ -127,6 +133,27 @@ export default clerkMiddleware(async (auth, req) => {
             }
             user = pending
           } else {
+            // Enterprise-domeingebonden teams: geen zelfbediening-trial voor deze
+            // domeinen, alleen toegang via de uitnodigingslink van de manager
+            // (/bot/team/join?code=...). Voorkomt dat iedereen met dat bedrijfsdomein
+            // zelf een account aanmaakt zodra enterprise SSO voor dat domein aanstaat.
+            const emailDomain = email.split('@')[1]?.toLowerCase()
+            if (emailDomain) {
+              const { data: gatedTeam } = await supabase
+                .from('arnobot_teams')
+                .select('invite_code')
+                .ilike('domain', emailDomain)
+                .maybeSingle()
+
+              if (gatedTeam) {
+                const joinCode = req.nextUrl.searchParams.get('code')
+                const hasValidInvite = path === '/bot/team/join' && joinCode === gatedTeam.invite_code
+                if (!hasValidInvite) {
+                  return NextResponse.redirect(new URL('/bot/uitnodiging-vereist', req.url))
+                }
+              }
+            }
+
             // Nieuwe gebruiker via LinkedIn OAuth — automatisch trial starten
             const linkedinAccount = clerkUser.externalAccounts?.find(
               (a: { provider: string }) => a.provider.includes('linkedin')
