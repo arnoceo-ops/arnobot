@@ -108,6 +108,9 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
         TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
         TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
         TR('E-mail', 'Resend: transactionele e-mail via DKIM-geverifieerd domein'),
+        TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
+        TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
+        TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
       ),
     ),
     Footer('1')
