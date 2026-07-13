@@ -89,7 +89,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Zijn er onverwachte 500-fouten of time-outs in de logs?
 
 ### 6. AVG & beveiliging gebruikers
-- Is het beveiligingsdocument (`/public/arnobot-beveiliging.pdf`) nog actueel?
+- Is het beveiligingsdocument voor gebruikers (`public/arnobot-beveiliging.pdf`, gegenereerd via `scripts/generate-security-pdf.mjs`, dat script opnieuw draaien na elke wijziging) nog actueel? Check niet alleen of het bestand recent is, maar of specifieke claims er nog kloppen: de leverancierslijst (incl. Voyage AI, Sentry, Upstash), genoemde cijfers (bijv. aantal npm audit-meldingen, rate-limit-drempels) en rechten/termijnen.
 - Zijn er nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Zijn er openstaande verwijderverzoeken of datavragen van gebruikers?
 
