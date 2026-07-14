@@ -2,17 +2,15 @@
 
 import { useSignUp, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function SignUpPage() {
   const { signUp } = useSignUp()
   const { isSignedIn } = useUser()
-  const router = useRouter()
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (isSignedIn) router.replace('/bot')
-  }, [isSignedIn, router])
+    if (isSignedIn) window.location.href = '/bot'
+  }, [isSignedIn])
 
   async function handleLinkedIn() {
     if (!signUp) return

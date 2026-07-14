@@ -2,7 +2,6 @@
 
 import { useSignIn, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 function getClerkFrontendApi(): string {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
@@ -44,7 +43,6 @@ async function linkedInViaDirectFetch(): Promise<boolean> {
 export default function SignInPage() {
   const { fetchStatus, signIn } = useSignIn()
   const { isSignedIn } = useUser()
-  const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [autoTriggered, setAutoTriggered] = useState(false)
@@ -69,8 +67,8 @@ export default function SignInPage() {
   }, [])
 
   useEffect(() => {
-    if (isSignedIn) router.replace('/bot')
-  }, [isSignedIn, router])
+    if (isSignedIn) window.location.href = '/bot'
+  }, [isSignedIn])
 
   // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
   // met loading=true en de knop disabled. pageshow detecteert dit en reset de state.
@@ -127,7 +125,7 @@ export default function SignInPage() {
         setEmailLoading(false)
         return
       }
-      router.push('/bot')
+      window.location.href = '/bot'
     } else {
       setEmailError('Inloggen niet voltooid. Probeer opnieuw.')
       setEmailLoading(false)

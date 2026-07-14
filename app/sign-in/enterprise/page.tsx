@@ -2,20 +2,18 @@
 
 import { useSignIn, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function EnterpriseSignInPage() {
   const { signIn } = useSignIn()
   const { isSignedIn } = useUser()
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (isSignedIn) router.replace('/bot')
-  }, [isSignedIn, router])
+    if (isSignedIn) window.location.href = '/bot'
+  }, [isSignedIn])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
