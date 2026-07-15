@@ -2,24 +2,31 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { client } from '@/sanity/client'
+
+type Testimonial = { _id: string; quote: string; name: string; role?: string }
+
+async function getTestimonials(): Promise<Testimonial[]> {
+  return await client.fetch(`*[_type == "testimonial"] | order(_createdAt desc)`, {}, { next: { revalidate: 0 } })
+}
 
 export const metadata: Metadata = {
-  title: 'ArnoBot: Jouw Personal Sales Coach',
-  description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 beschikbaar.',
+  title: 'ArnoBot: Sales coaching die nooit slaapt',
+  description: 'ArnoBot is jouw AI-salescoach, 24/7 beschikbaar. Gebouwd op decennia bewezen verkoopexpertise, geen generieke motivatiepraat.',
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'ArnoBot: Jouw Personal Sales Coach',
-    description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 beschikbaar.',
+    title: 'ArnoBot: Sales coaching die nooit slaapt',
+    description: 'ArnoBot is jouw AI-salescoach, 24/7 beschikbaar. Gebouwd op decennia bewezen verkoopexpertise, geen generieke motivatiepraat.',
     url: 'https://arno.bot',
     siteName: 'ArnoBot',
     locale: 'nl_NL',
     type: 'website',
-    images: [{ url: 'https://arno.bot/cyborg.jpg', width: 380, height: 380, alt: 'ArnoBot: Personal Sales Coach' }],
+    images: [{ url: 'https://arno.bot/cyborg.jpg', width: 380, height: 380, alt: 'ArnoBot: AI-salescoach' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ArnoBot: Jouw Personal Sales Coach',
-    description: 'ArnoBot is een op AI-gebaseerde persoonlijke salescoach, gebouwd op 40 jaar sales leadership van Arno Diepeveen. 24/7 beschikbaar.',
+    title: 'ArnoBot: Sales coaching die nooit slaapt',
+    description: 'ArnoBot is jouw AI-salescoach, 24/7 beschikbaar. Gebouwd op decennia bewezen verkoopexpertise, geen generieke motivatiepraat.',
     images: ['https://arno.bot/cyborg.jpg'],
   },
 }
@@ -27,6 +34,7 @@ export const metadata: Metadata = {
 export default async function ArnoBotLandingPage() {
   const { userId } = await auth()
   if (userId) redirect('/bot')
+  const testimonials = await getTestimonials()
   return (
     <>
       <style>{`
@@ -42,6 +50,11 @@ export default async function ArnoBotLandingPage() {
           border-bottom: 1px solid rgba(255,255,255,0.06);
           background: rgba(17,24,39,0.9); backdrop-filter: blur(12px);
         }
+        .nav-logo {
+          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          color: #f1f5f9; text-decoration: none;
+        }
+        .nav-logo span { color: #f59e0b; }
         .nav-spacer { flex: 1; }
         .nav-auth {
           display: flex; gap: 32px; align-items: center;
@@ -51,6 +64,12 @@ export default async function ArnoBotLandingPage() {
           color: #9ca3af; text-decoration: none; transition: color 0.2s;
         }
         .nav-login:hover { color: #f1f5f9; }
+        .nav-cta-btn {
+          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+          color: #111827; text-decoration: none; background: #f59e0b;
+          padding: 8px 20px; border-radius: 999px; transition: background 0.2s;
+        }
+        .nav-cta-btn:hover { background: #d97706; }
 
         /* ── CANVAS (light sections) ── */
         .canvas-section {
@@ -148,6 +167,54 @@ export default async function ArnoBotLandingPage() {
           font-weight: 400; text-transform: none; margin-top: 10px; line-height: 1.7;
         }
 
+        /* ── TESTIMONIALS ── */
+        .testimonial-section {
+          background: #f1f5f9; padding: 80px 60px; border-top: 3px solid #f59e0b;
+        }
+        .testimonial-inner { max-width: 1100px; margin: 0 auto; }
+        .testimonial-label {
+          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
+          text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+        }
+        .testimonial-heading {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
+          color: #1e293b; letter-spacing: 1px; margin-bottom: 48px;
+        }
+        .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+        .testimonial-card { background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px; }
+        .testimonial-quote {
+          font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.8; color: #1e293b; margin-bottom: 20px;
+        }
+        .testimonial-name {
+          font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600;
+          color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .testimonial-role { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; margin-top: 2px; }
+
+        /* ── FAQ ── */
+        .faq-section {
+          background: #f1f5f9; padding: 80px 60px; border-top: 3px solid #f59e0b;
+        }
+        .faq-inner { max-width: 900px; margin: 0 auto; }
+        .faq-label {
+          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
+          text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+        }
+        .faq-heading {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
+          color: #1e293b; letter-spacing: 1px; margin-bottom: 48px;
+        }
+        .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px 60px; }
+        .faq-item { }
+        .faq-q {
+          font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600;
+          color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+        }
+        .faq-a {
+          font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.8; color: #6b7280;
+        }
+        .faq-a a { color: #f59e0b; text-decoration: none; }
+
         /* ── FOOTER ── */
         footer {
           background: #0d1117; padding: 40px 60px;
@@ -161,7 +228,9 @@ export default async function ArnoBotLandingPage() {
 
         /* ── MOBILE ── */
         @media (max-width: 768px) {
-          .site-nav { padding: 12px 20px; }
+          .site-nav { padding: 12px 20px; height: auto; }
+          .nav-auth { gap: 16px; }
+          .nav-login-secondary { display: none; }
 
           .canvas-section { grid-template-columns: 1fr; }
           .canvas-left { padding: 48px 24px; border-right: none; border-bottom: 1px solid #ddd; justify-content: flex-start; }
@@ -176,66 +245,73 @@ export default async function ArnoBotLandingPage() {
           .subscribe-btn-dark { width: 100%; }
 
           footer { padding: 32px 24px; grid-template-columns: 1fr; gap: 12px; text-align: center; }
+
+          .faq-section { padding: 48px 24px; }
+          .faq-grid { grid-template-columns: 1fr; gap: 32px; }
+
+          .testimonial-section { padding: 48px 24px; }
         }
       `}</style>
 
-      {/* NAV — alleen auth */}
+      {/* NAV */}
       <nav className="site-nav">
+        <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
         <div className="nav-spacer" />
         <div className="nav-auth">
           {userId
             ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
             : <>
-                <Link href="/sign-up" className="nav-login">AANMELDEN</Link>
-                <Link href="/sign-in" className="nav-login">INLOGGEN</Link>
+                <Link href="/sign-in" className="nav-login nav-login-secondary">INLOGGEN</Link>
+                <Link href="/sign-up" className="nav-cta-btn">30 DAGEN GRATIS</Link>
               </>
           }
         </div>
       </nav>
 
-      {/* INTRO */}
+      {/* HERO */}
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
         <div className="subscribe-text-col">
           <img src="/cyborg.jpg" alt="ArnoBot" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />
         </div>
         <div className="canvas-right" style={{background:'#1e293b', justifyContent:'center'}}>
           <div style={{maxWidth:'540px'}}>
-            <p style={{fontSize:'13px', letterSpacing:'4px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'DM Sans', sans-serif", marginBottom:'16px'}}>ArnoBot Unlimited</p>
+            <p style={{fontSize:'13px', letterSpacing:'4px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'DM Sans', sans-serif", marginBottom:'16px'}}>AI-salescoach</p>
             <h2 style={{fontFamily:"'Barlow Condensed', sans-serif", fontSize:'clamp(32px, 3.5vw, 52px)', fontWeight:600, color:'#f1f5f9', lineHeight:1.1, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'20px'}}>
-              Jouw Personal Sales<br />Coach <span style={{color:'#f59e0b'}}>voor €97 p/m</span>
+              Sales coaching<br />die nooit <span style={{color:'#f59e0b'}}>slaapt</span>
             </h2>
             <p className="subscribe-body">
-              Dat is het equivalent van een kwartier consultancy. Wat jij hiervoor krijgt, is 24/7 toegang tot Arno's brein: 40 jaar sales leadership, 30 jaar bedrijven bouwen en 20 jaar sales blogs schrijven.<br /><br />Wat het je oplevert? Verkopen vanuit je unieke kracht. Sales mastery. Crushing targets. It's your call.
+              ArnoBot is 24/7 beschikbaar en gebouwd op decennia bewezen verkoopexpertise, geen generieke motivatiepraat. Je deelt je markt, je product en je targets, en krijgt advies dat daadwerkelijk op jouw situatie is toegesneden.
             </p>
+            <a href="/sign-up" className="subscribe-btn" style={{alignSelf:'flex-start', width:'260px'}}>30 dagen gratis</a>
           </div>
         </div>
       </section>
 
-      {/* PERSOONLIJK PROFIEL */}
+      {/* HOE HET WERKT */}
       <section className="canvas-section">
         <div className="canvas-left">
           <div className="canvas-left-inner">
             <div className="canvas-quote">
-              Jij bent de Man M/V.<br />
-              Wij de machine.<br />
-              Samen zijn we<br />
-              <em>onoverwinnelijk.</em>
+              Jij de expert.<br />
+              Wij de versterking.<br />
+              Samen<br />
+              <em>onverslaanbaar.</em>
             </div>
           </div>
         </div>
         <div className="canvas-right">
           <div style={{maxWidth:'540px', width:'100%'}}>
             <div className="feature-item" style={{paddingTop:'0'}}>
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">Met jouw profiel als uitgangspunt<small>Je geeft aan in welke markt je actief bent, wat je verkoopt, wat je targets zijn en wie je ideale klant is. ArnoBot begrijpt direct wie je bent en wat je nodig hebt.</small></span>
+              <span className="feature-arrow">1</span>
+              <span className="feature-text">Deel je situatie<small>Je geeft aan in welke markt je actief bent, wat je verkoopt, wat je targets zijn en wie je ideale klant is. ArnoBot begrijpt direct wie je bent en wat je nodig hebt.</small></span>
             </div>
             <div className="feature-item">
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">en jouw persoonlijke salesarchief<small>Elk gesprek wordt opgeslagen en blijft voor je beschikbaar. Hoe meer gesprekken je met ArnoBot voert, hoe scherper het inzicht in jouw manier van verkopen en waar de grootste kansen liggen.</small></span>
+              <span className="feature-arrow">2</span>
+              <span className="feature-text">Bouw je salesarchief op<small>Elk gesprek wordt opgeslagen en blijft voor je beschikbaar. Hoe meer gesprekken je voert, hoe scherper het inzicht in jouw manier van verkopen en waar de grootste kansen liggen.</small></span>
             </div>
             <div className="feature-item" style={{borderBottom:'none'}}>
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">naar maximale performance<small>ArnoBot herkent steeds beter jouw patronen, werkwijze en voorkeuren. Daardoor worden de adviezen steeds persoonlijker, relevanter en effectiever. Je ontsluit je maximale groeipotentie.</small></span>
+              <span className="feature-arrow">3</span>
+              <span className="feature-text">Krijg steeds scherper advies<small>ArnoBot herkent steeds beter jouw patronen, werkwijze en voorkeuren. Daardoor worden de adviezen steeds persoonlijker, relevanter en effectiever.</small></span>
             </div>
           </div>
         </div>
@@ -294,6 +370,25 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIALS — alleen tonen zodra er echte testimonials in Sanity staan */}
+      {testimonials.length > 0 && (
+        <section className="testimonial-section">
+          <div className="testimonial-inner">
+            <p className="testimonial-label">Wat gebruikers zeggen</p>
+            <h2 className="testimonial-heading">Geen loze beloftes</h2>
+            <div className="testimonial-grid">
+              {testimonials.map(t => (
+                <div className="testimonial-card" key={t._id}>
+                  <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+                  <p className="testimonial-name">{t.name}</p>
+                  {t.role && <p className="testimonial-role">{t.role}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FEATURES */}
       <section className="canvas-section">
         <div className="canvas-left">
@@ -324,7 +419,7 @@ export default async function ArnoBotLandingPage() {
             </div>
             <div className="feature-item" style={{borderBottom:'none'}}>
               <span className="feature-arrow">→</span>
-              <span className="feature-text">Overleg met Arno<small>Niet de bot, maar Arno in persoon. *</small></span>
+              <span className="feature-text">1:1 met de oprichter<small>Niet alleen de bot: persoonlijk overleg met sales-strateeg Arno Diepeveen. *</small></span>
             </div>
             <div style={{paddingTop:'28px'}}>
               <a href="/sign-up" style={{
@@ -350,9 +445,43 @@ export default async function ArnoBotLandingPage() {
           <div style={{maxWidth:'540px', width:'100%'}}>
             <h2 className="canvas-title" style={{color:'#f1f5f9'}}>ARNO<span style={{color:'#f59e0b'}}>LIVE.</span></h2>
             <p className="canvas-body" style={{color:'#9ca3af'}}>
-              Niet alleen de bot. Arno zelf. Persoonlijke online coaching op basis van jouw specifieke situatie. Voor als je nog harder vooruit wilt.
+              Persoonlijke online coaching met sales-strateeg Arno Diepeveen, op basis van jouw specifieke situatie. Voor als je nog harder vooruit wilt dan de bot alleen je brengt.
             </p>
             <p style={{fontFamily:"'DM Sans', sans-serif", fontSize:'12px', color:'#6b7280', letterSpacing:'0.5px', marginTop:'8px'}}>* Een half uur per kwartaal gratis bij een jaarabonnement.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="faq-section">
+        <div className="faq-inner">
+          <p className="faq-label">Veelgestelde vragen</p>
+          <h2 className="faq-heading">Nog twijfels?</h2>
+          <div className="faq-grid">
+            <div className="faq-item">
+              <p className="faq-q">Voor wie is ArnoBot?</p>
+              <p className="faq-a">Voor salesprofessionals, accountmanagers en salesmanagers die dagelijks met klanten en targets werken, van zelfstandig ondernemer tot corporate team.</p>
+            </div>
+            <div className="faq-item">
+              <p className="faq-q">Is dit een chatbot met standaardantwoorden?</p>
+              <p className="faq-a">Nee. ArnoBot kent jouw markt, product en targets, en bouwt met elk gesprek een archief op van jouw specifieke situatie. Geen generiek advies.</p>
+            </div>
+            <div className="faq-item">
+              <p className="faq-q">Kan ik elk moment opzeggen?</p>
+              <p className="faq-a">Ja, maandelijks opzegbaar, geen verborgen voorwaarden.</p>
+            </div>
+            <div className="faq-item">
+              <p className="faq-q">Is mijn data veilig?</p>
+              <p className="faq-a">Ja, gesprekken zijn privé en versleuteld opgeslagen, nooit gedeeld met derden. Lees het na in ons <a href="/privacy">privacybeleid</a>.</p>
+            </div>
+            <div className="faq-item">
+              <p className="faq-q">Wat kost het na de proefperiode?</p>
+              <p className="faq-a">€97 per maand of €777 per jaar, dat zijn 4 maanden gratis. Transparant, geen addertjes.</p>
+            </div>
+            <div className="faq-item">
+              <p className="faq-q">Werkt dit ook voor een heel salesteam?</p>
+              <p className="faq-a">Ja, neem <a href="mailto:arno@arno.bot">contact op</a> voor teamlicenties.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -364,7 +493,7 @@ export default async function ArnoBotLandingPage() {
           <Link href="/voorwaarden" className="footer-link">VOORWAARDEN</Link>
           <Link href="/privacy" className="footer-link">PRIVACY</Link>
         </span>
-        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2026 Royal Dutch Sales</span>
+        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2026 ArnoBot</span>
       </footer>
     </>
   )
