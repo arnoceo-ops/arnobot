@@ -167,6 +167,85 @@ export default async function ArnoBotLandingPage() {
           font-weight: 400; text-transform: none; margin-top: 10px; line-height: 1.7;
         }
 
+        /* ── CHAT PREVIEW (hero) ── */
+        .chat-preview {
+          width: 100%; max-width: 460px; background: #111827; border-radius: 10px;
+          border: 1px solid #374151; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+        }
+        .chat-preview-chrome {
+          display: flex; align-items: center; gap: 6px; padding: 12px 16px;
+          background: #1e293b; border-bottom: 1px solid #374151;
+        }
+        .chat-preview-dot { width: 9px; height: 9px; border-radius: 50%; background: #374151; }
+        .chat-preview-url {
+          margin-left: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: #6b7280;
+        }
+        .chat-row { padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; }
+        .chat-row-arno { background: #1f2937; }
+        .chat-label {
+          font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px;
+        }
+        .chat-label-user { color: #6b7280; }
+        .chat-label-arno { color: #f59e0b; }
+        .chat-text-user {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(15px, 2vw, 19px);
+          line-height: 1.4; color: #f1f5f9;
+        }
+        .chat-text-arno {
+          font-family: 'Space Mono', monospace; font-size: 13px; line-height: 1.8; color: #9ca3af;
+        }
+
+        /* ── DIFFERENTIATIE (waarom geen ChatGPT) ── */
+        .diff-section { background: #111827; padding: 64px 60px; border-top: 3px solid #f59e0b; }
+        .diff-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+        .diff-label {
+          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
+          text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+        }
+        .diff-heading {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
+          color: #f1f5f9; letter-spacing: 1px; margin-bottom: 40px;
+        }
+        .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #374151; border-radius: 4px; overflow: hidden; text-align: left; }
+        .diff-col { padding: 28px; }
+        .diff-col-generic { background: #1e293b; border-right: 1px solid #374151; }
+        .diff-col-arno { background: #1f2937; }
+        .diff-col-title {
+          font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px;
+          text-transform: uppercase; margin-bottom: 20px;
+        }
+        .diff-col-generic .diff-col-title { color: #6b7280; }
+        .diff-col-arno .diff-col-title { color: #f59e0b; }
+        .diff-point { font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; color: #9ca3af; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .diff-point:last-child { border-bottom: none; }
+        .diff-col-arno .diff-point { color: #f1f5f9; }
+
+        /* ── AUTORITEIT (LinkedIn-aanbeveling) ── */
+        .authority-section { background: #f1f5f9; padding: 56px 60px; border-top: 3px solid #f59e0b; }
+        .authority-inner { max-width: 700px; margin: 0 auto; text-align: center; }
+        .authority-quote {
+          font-family: 'Barlow Condensed', sans-serif; font-size: clamp(20px, 2.5vw, 28px); font-weight: 600;
+          color: #1e293b; line-height: 1.4; margin-bottom: 20px;
+        }
+        .authority-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: #f59e0b; text-transform: uppercase; }
+        .authority-role { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; margin-top: 2px; }
+
+        /* ── TRUST BADGES ── */
+        .trust-row {
+          display: flex; flex-wrap: wrap; justify-content: center; gap: 32px;
+          max-width: 760px; margin: 24px auto 0; padding-top: 20px; border-top: 1px solid #374151;
+        }
+        .trust-item { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #9ca3af; letter-spacing: 0.3px; }
+        .trust-item::before { content: '✓ '; color: #f59e0b; }
+
+        /* ── FINALE CTA ── */
+        .final-cta-section { background: #111827; padding: 72px 60px; border-top: 3px solid #f59e0b; text-align: center; }
+        .final-cta-heading {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 56px);
+          color: #f1f5f9; letter-spacing: 1px; margin-bottom: 24px;
+        }
+        .final-cta-sub { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; margin-top: 16px; }
+
         /* ── TESTIMONIALS ── */
         .testimonial-section {
           background: #f1f5f9; padding: 80px 60px; border-top: 3px solid #f59e0b;
@@ -250,6 +329,16 @@ export default async function ArnoBotLandingPage() {
           .faq-grid { grid-template-columns: 1fr; gap: 32px; }
 
           .testimonial-section { padding: 48px 24px; }
+
+          .diff-section { padding: 48px 24px; }
+          .diff-grid { grid-template-columns: 1fr; }
+          .diff-col-generic { border-right: none; border-bottom: 1px solid #374151; }
+
+          .authority-section { padding: 40px 24px; }
+
+          .final-cta-section { padding: 48px 24px; }
+
+          .chat-preview { max-width: 100%; }
         }
       `}</style>
 
@@ -271,7 +360,30 @@ export default async function ArnoBotLandingPage() {
       {/* HERO */}
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
         <div className="subscribe-text-col">
-          <img src="/cyborg.jpg" alt="ArnoBot" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />
+          <div className="chat-preview">
+            <div className="chat-preview-chrome">
+              <span className="chat-preview-dot" />
+              <span className="chat-preview-dot" />
+              <span className="chat-preview-dot" />
+              <span className="chat-preview-url">arno.bot/bot</span>
+            </div>
+            <div className="chat-row">
+              <span className="chat-label chat-label-user">JIJ</span>
+              <p className="chat-text-user">Ik verlies steeds dezelfde deal aan dezelfde concurrent. Wat doe ik fout?</p>
+            </div>
+            <div className="chat-row chat-row-arno">
+              <span className="chat-label chat-label-arno">ARNO</span>
+              <p className="chat-text-arno">Waarschijnlijk niks tijdens het gesprek zelf. Het gebeurt ervoor. Jij belt als de vijfde leverancier die hetzelfde verhaal vertelt. Wat weet jij over hun business dat de andere vier niet hebben genoemd?</p>
+            </div>
+            <div className="chat-row">
+              <span className="chat-label chat-label-user">JIJ</span>
+              <p className="chat-text-user">Niks eigenlijk.</p>
+            </div>
+            <div className="chat-row chat-row-arno">
+              <span className="chat-label chat-label-arno">ARNO</span>
+              <p className="chat-text-arno">Daar zit je antwoord. Ga terug, stel die vraag, en kom pas met je pitch als je het weet.</p>
+            </div>
+          </div>
         </div>
         <div className="canvas-right" style={{background:'#1e293b', justifyContent:'center'}}>
           <div style={{maxWidth:'540px'}}>
@@ -292,10 +404,10 @@ export default async function ArnoBotLandingPage() {
         <div className="canvas-left">
           <div className="canvas-left-inner">
             <div className="canvas-quote">
-              Jij de expert.<br />
-              Wij de versterking.<br />
-              Samen<br />
-              <em>onverslaanbaar.</em>
+              Jij bent de sales pro.<br />
+              Wij zijn je turbo.<br />
+              Scoren in de<br />
+              <em>overdrive.</em>
             </div>
           </div>
         </div>
@@ -314,6 +426,37 @@ export default async function ArnoBotLandingPage() {
               <span className="feature-text">Krijg steeds scherper advies<small>ArnoBot herkent steeds beter jouw patronen, werkwijze en voorkeuren. Daardoor worden de adviezen steeds persoonlijker, relevanter en effectiever.</small></span>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* WAAROM GEEN CHATGPT */}
+      <section className="diff-section">
+        <div className="diff-inner">
+          <p className="diff-label">Het verschil</p>
+          <h2 className="diff-heading">Waarom niet gewoon ChatGPT?</h2>
+          <div className="diff-grid">
+            <div className="diff-col diff-col-generic">
+              <p className="diff-col-title">Generieke AI</p>
+              <p className="diff-point">Vergeet elk gesprek zodra je het venster sluit</p>
+              <p className="diff-point">Algemeen advies uit het hele internet, ongefilterd</p>
+              <p className="diff-point">Kent jouw markt, product en targets niet</p>
+            </div>
+            <div className="diff-col diff-col-arno">
+              <p className="diff-col-title">ArnoBot</p>
+              <p className="diff-point">Onthoudt elk gesprek, bouwt een salesarchief van jou op</p>
+              <p className="diff-point">Alleen bewezen verkoopmethodiek, geen ruis</p>
+              <p className="diff-point">Kent je situatie al vanaf het eerste gesprek</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AUTORITEIT */}
+      <section className="authority-section">
+        <div className="authority-inner">
+          <p className="authority-quote">&ldquo;In 6 months I changed my daily routine with 180 degrees in doing only those things which bring revenue and money. In the end it resulted in 40% more selling time.&rdquo;</p>
+          <p className="authority-name">Patrick Citoen</p>
+          <p className="authority-role">Managing Director @ Amica Systems EU</p>
         </div>
       </section>
 
@@ -349,6 +492,9 @@ export default async function ArnoBotLandingPage() {
             <span style={{fontSize:'12px', color:'#6b7280', fontFamily:"'DM Sans', sans-serif", letterSpacing:'0.5px'}}>30 dagen gratis</span>
           </div>
         </div>
+        <p style={{maxWidth:'760px', margin:'16px auto 0', textAlign:'center', fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#6b7280', letterSpacing:'0.3px'}}>
+          Dat is minder dan een kwartier consultancy. Voor een hele maand 24/7 coaching.
+        </p>
         <div style={{maxWidth:'760px', margin:'20px auto 0', borderTop:'1px solid #374151', paddingTop:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'12px', textAlign:'center'}}>
           <span style={{fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#9ca3af', letterSpacing:'0.5px'}}>
             Wil je je hele salesteam uitrusten met ArnoBot als persoonlijke coach?
@@ -357,6 +503,11 @@ export default async function ArnoBotLandingPage() {
             fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'3px',
             color:'#f59e0b', textDecoration:'none', textTransform:'uppercase', whiteSpace:'nowrap'
           }}>Neem contact op →</a>
+        </div>
+        <div className="trust-row">
+          <span className="trust-item">Privé & versleuteld opgeslagen</span>
+          <span className="trust-item">Nooit gedeeld met derden</span>
+          <span className="trust-item">Maandelijks opzegbaar</span>
         </div>
       </section>
 
@@ -474,6 +625,13 @@ export default async function ArnoBotLandingPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* FINALE CTA */}
+      <section className="final-cta-section">
+        <h2 className="final-cta-heading">Klaar om te scoren?</h2>
+        <a href="/sign-up" className="subscribe-btn" style={{margin:'0 auto', width:'280px'}}>30 dagen gratis</a>
+        <p className="final-cta-sub">Geen creditcard nodig. Geen verplichtingen.</p>
       </section>
 
       {/* FOOTER */}
