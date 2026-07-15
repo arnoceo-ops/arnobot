@@ -375,7 +375,7 @@ export default async function ArnoBotLandingPage() {
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
         <div className="subscribe-text-col">
           <div className="hero-photo-wrap">
-            <img src="/arno-home.jpg" alt="Arno Diepeveen" className="hero-photo" />
+            <img src="/arno-home1.jpg" alt="Arno Diepeveen" className="hero-photo" />
             <span className="speedline speedline-1" />
             <span className="speedline speedline-2" />
             <span className="speedline speedline-3" />
