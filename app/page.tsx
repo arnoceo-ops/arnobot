@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { client } from '@/sanity/client'
+import HeroWordRotator from './HeroWordRotator'
 
 type Testimonial = { _id: string; quote: string; name: string; role?: string }
 
@@ -167,6 +168,12 @@ export default async function ArnoBotLandingPage() {
           font-weight: 400; text-transform: none; margin-top: 10px; line-height: 1.7;
         }
 
+        /* ── HERO WOORD-ROTATOR ── */
+        .hero-word-rotator {
+          display: inline-block; background: #f59e0b; color: #111827;
+          padding: 2px 16px; border-radius: 6px;
+        }
+
         /* ── HERO FOTO (diagonale uitsnede + speedlines voor snelheid) ── */
         .hero-photo-wrap { position: relative; width: 100%; max-width: 600px; }
         .hero-photo {
@@ -259,6 +266,20 @@ export default async function ArnoBotLandingPage() {
           color: #f1f5f9; letter-spacing: 1px; margin-bottom: 24px;
         }
         .final-cta-sub { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; margin-top: 16px; }
+
+        /* ── FEATURES (kaarten) ── */
+        .features-section { background: #f1f5f9; padding: 64px 60px; border-top: 3px solid #f59e0b; }
+        .features-inner { max-width: 1000px; margin: 0 auto; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+        .feature-card { background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 24px; }
+        .feature-card-num {
+          font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px; color: #f59e0b; margin-bottom: 10px;
+        }
+        .feature-card-title {
+          font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 600;
+          color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .feature-card-desc { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; line-height: 1.6; }
 
         /* ── TESTIMONIALS ── */
         .testimonial-section {
@@ -353,6 +374,9 @@ export default async function ArnoBotLandingPage() {
           .final-cta-section { padding: 48px 24px; }
 
           .chat-preview { max-width: 100%; }
+
+          .features-section { padding: 48px 24px; }
+          .features-grid { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -385,7 +409,7 @@ export default async function ArnoBotLandingPage() {
           <div style={{maxWidth:'540px'}}>
             <p style={{fontSize:'13px', letterSpacing:'4px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'DM Sans', sans-serif", marginBottom:'16px'}}>AI-salescoach</p>
             <h2 style={{fontFamily:"'Barlow Condensed', sans-serif", fontSize:'clamp(40px, 5vw, 68px)', fontWeight:600, color:'#f1f5f9', lineHeight:1.05, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'20px'}}>
-              <span style={{color:'#f59e0b'}}>Overperformance.</span><br />Iedere maand.
+              Haal je <HeroWordRotator />.<br />Iedere maand.
             </h2>
             <p className="subscribe-body">
               Geen generieke AI. Decennia bewezen sales-expertise, 24/7 beschikbaar.
@@ -399,11 +423,25 @@ export default async function ArnoBotLandingPage() {
       <section className="canvas-section">
         <div className="canvas-left">
           <div className="canvas-left-inner">
-            <div className="canvas-quote">
-              Jij bent de sales pro.<br />
-              Wij zijn je turbo.<br />
-              Scoren in<br />
-              <em>overdrive.</em>
+            <div className="canvas-quote" style={{marginBottom:'32px'}}>
+              Overperformance.<br />
+              <em>Iedere maand.</em>
+            </div>
+            <div className="chat-preview" style={{maxWidth:'100%'}}>
+              <div className="chat-preview-chrome">
+                <span className="chat-preview-dot" />
+                <span className="chat-preview-dot" />
+                <span className="chat-preview-dot" />
+                <span className="chat-preview-url">arno.bot/bot</span>
+              </div>
+              <div className="chat-row">
+                <span className="chat-label chat-label-user">JIJ</span>
+                <p className="chat-text-user">Ik verlies steeds dezelfde deal aan dezelfde concurrent.</p>
+              </div>
+              <div className="chat-row chat-row-arno">
+                <span className="chat-label chat-label-arno">ARNO</span>
+                <p className="chat-text-arno">Dan verlies je 'm niet in het gesprek. Je verliest 'm ervoor. Wat weet jij van hun business dat niemand anders vertelt?</p>
+              </div>
             </div>
           </div>
         </div>
@@ -433,13 +471,15 @@ export default async function ArnoBotLandingPage() {
           <div className="diff-grid">
             <div className="diff-col diff-col-generic">
               <p className="diff-col-title">Generieke AI</p>
-              <p className="diff-point">Vergeet elk gesprek</p>
-              <p className="diff-point">Advies voor iedereen, dus voor niemand</p>
+              <p className="diff-point">✗ Onthoudt losse flarden, geen samenhangend beeld van jouw situatie</p>
+              <p className="diff-point">✗ Adviseert vanuit het hele internet, niet vanuit bewezen salesmethodiek</p>
+              <p className="diff-point">✗ Je legt elke keer opnieuw de context uit</p>
             </div>
             <div className="diff-col diff-col-arno">
               <p className="diff-col-title">ArnoBot</p>
-              <p className="diff-point">Onthoudt je hele geschiedenis</p>
-              <p className="diff-point">Advies op maat van jouw markt</p>
+              <p className="diff-point">✓ Bouwt een samenhangend beeld op van jouw markt, targets en patronen</p>
+              <p className="diff-point">✓ Adviseert vanuit decennia bewezen verkoopexpertise</p>
+              <p className="diff-point">✓ Kent je situatie al vanaf het eerste gesprek</p>
             </div>
           </div>
         </div>
@@ -516,66 +556,58 @@ export default async function ArnoBotLandingPage() {
       )}
 
       {/* FEATURES */}
-      <section className="canvas-section">
-        <div className="canvas-left">
-          <div className="canvas-left-inner">
-            <div className="feature-item" style={{flexDirection:'row-reverse'}}>
-              <span className="feature-arrow">←</span>
-              <span className="feature-text" style={{textAlign:'right'}}>Unlimited sales coaching<small>24/7. Geen limiet.</small></span>
+      <section className="features-section">
+        <div className="features-inner">
+          <div className="features-grid">
+            <div className="feature-card">
+              <p className="feature-card-num">01</p>
+              <p className="feature-card-title">Unlimited sales coaching</p>
+              <p className="feature-card-desc">24/7. Geen limiet.</p>
             </div>
-            <div className="feature-item" style={{flexDirection:'row-reverse'}}>
-              <span className="feature-arrow">←</span>
-              <span className="feature-text" style={{textAlign:'right'}}>Jouw sales archief<small>Doorzoekbaar, altijd beschikbaar.</small></span>
+            <div className="feature-card">
+              <p className="feature-card-num">02</p>
+              <p className="feature-card-title">Jouw sales archief</p>
+              <p className="feature-card-desc">Doorzoekbaar, altijd beschikbaar.</p>
             </div>
-            <div className="feature-item" style={{flexDirection:'row-reverse'}}>
-              <span className="feature-arrow">←</span>
-              <span className="feature-text" style={{textAlign:'right'}}>PDF Export<small>Exporteer wat je wilt.</small></span>
+            <div className="feature-card">
+              <p className="feature-card-num">03</p>
+              <p className="feature-card-title">PDF export</p>
+              <p className="feature-card-desc">Exporteer wat je wilt.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">04</p>
+              <p className="feature-card-title">Personal training</p>
+              <p className="feature-card-desc">Trainingsschema op maat.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">05</p>
+              <p className="feature-card-title">Verdiep je expertise</p>
+              <p className="feature-card-desc">Blogs, boeken, video's.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">06</p>
+              <p className="feature-card-title">1:1 met de oprichter</p>
+              <p className="feature-card-desc">Overleg met Arno zelf. *</p>
             </div>
           </div>
-        </div>
-        <div className="canvas-right">
-          <div style={{maxWidth:'540px', width:'100%'}}>
-            <div className="feature-item">
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">Personal Training<small>Trainingsschema op maat.</small></span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">Verdiep je expertise<small>Blogs, boeken, video's.</small></span>
-            </div>
-            <div className="feature-item" style={{borderBottom:'none'}}>
-              <span className="feature-arrow">→</span>
-              <span className="feature-text">1:1 met de oprichter<small>Overleg met Arno zelf. *</small></span>
-            </div>
-            <div style={{paddingTop:'28px'}}>
-              <a href="/sign-up" style={{
-                display:'inline-block', textDecoration:'none', textAlign:'center',
-                background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
-                fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px'
-              }}>START NU.</a>
-            </div>
+          <div style={{textAlign:'center'}}>
+            <a href="/sign-up" style={{
+              display:'inline-block', textDecoration:'none', textAlign:'center',
+              background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
+              fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px'
+            }}>START NU.</a>
           </div>
         </div>
       </section>
 
-      {/* COMING SOON */}
-      <section className="canvas-section" style={{background:'#111827', borderTop:'3px solid #f59e0b'}}>
-        <div className="canvas-left" style={{borderRight:'1px solid #374151'}}>
-          <div className="canvas-left-inner" style={{display:'flex', justifyContent:'flex-end'}}>
-            <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'14px', letterSpacing:'6px', color:'#6b7280', border:'2px dashed #374151', padding:'8px 20px', display:'inline-block'}}>
-              BINNENKORT
-            </div>
-          </div>
-        </div>
-        <div className="canvas-right" style={{background:'#1e293b'}}>
-          <div style={{maxWidth:'540px', width:'100%'}}>
-            <h2 className="canvas-title" style={{color:'#f1f5f9'}}>ARNO<span style={{color:'#f59e0b'}}>LIVE.</span></h2>
-            <p className="canvas-body" style={{color:'#9ca3af'}}>
-              Persoonlijke coaching met Arno zelf. Voor als de bot niet ver genoeg gaat.
-            </p>
-            <p style={{fontFamily:"'DM Sans', sans-serif", fontSize:'12px', color:'#6b7280', letterSpacing:'0.5px', marginTop:'8px'}}>* Een half uur per kwartaal gratis bij een jaarabonnement.</p>
-          </div>
-        </div>
+      {/* ARNOLIVE */}
+      <section className="final-cta-section" style={{textAlign:'center', paddingBottom:'56px'}}>
+        <p className="testimonial-label" style={{textAlign:'center'}}>Binnenkort</p>
+        <h2 className="final-cta-heading" style={{marginBottom:'16px'}}>ARNO<span style={{color:'#f59e0b'}}>LIVE.</span></h2>
+        <p style={{fontFamily:"'DM Sans', sans-serif", fontSize:'16px', color:'#9ca3af', maxWidth:'480px', margin:'0 auto'}}>
+          Persoonlijke coaching met Arno zelf. Voor als de bot niet ver genoeg gaat.
+        </p>
+        <p style={{fontFamily:"'DM Sans', sans-serif", fontSize:'12px', color:'#6b7280', letterSpacing:'0.5px', marginTop:'12px'}}>* Een half uur per kwartaal gratis bij een jaarabonnement.</p>
       </section>
 
       {/* FAQ */}
