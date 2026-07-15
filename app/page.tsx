@@ -168,7 +168,7 @@ export default async function ArnoBotLandingPage() {
         }
 
         /* ── HERO FOTO (diagonale uitsnede + speedlines voor snelheid) ── */
-        .hero-photo-wrap { position: relative; width: 100%; max-width: 460px; }
+        .hero-photo-wrap { position: relative; width: 100%; max-width: 600px; }
         .hero-photo {
           width: 100%; height: auto; display: block;
           clip-path: polygon(0 0, 100% 0, 100% 88%, 85% 100%, 0 100%);
@@ -373,7 +373,7 @@ export default async function ArnoBotLandingPage() {
 
       {/* HERO */}
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
-        <div className="subscribe-text-col">
+        <div className="subscribe-text-col" style={{padding:'40px 30px'}}>
           <div className="hero-photo-wrap">
             <img src="/arno-home1.jpg" alt="Arno Diepeveen" className="hero-photo" />
             <span className="speedline speedline-1" />
