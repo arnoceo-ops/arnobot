@@ -402,7 +402,7 @@ export default async function ArnoBotLandingPage() {
             <div className="canvas-quote">
               Jij bent de sales pro.<br />
               Wij zijn je turbo.<br />
-              Scoren in de<br />
+              Scoren in<br />
               <em>overdrive.</em>
             </div>
           </div>
