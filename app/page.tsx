@@ -317,54 +317,44 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="subscribe-section">
-        <div className="subscribe-text-col" style={{alignItems:'center', padding:'80px 60px'}}>
-          <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'20px', textAlign:'center'}}>
-            <div style={{background:'transparent', fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'4px', padding:'6px 18px', visibility:'hidden'}}>4 maanden gratis</div>
-            <span style={{fontSize:'28px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per maand</span>
-            <div style={{display:'flex', alignItems:'baseline', gap:'8px'}}>
-              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(28px, 3vw, 44px)', color:'#6b7280', letterSpacing:0}}>€</span>
-              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(64px, 7vw, 104px)', color:'#f1f5f9', letterSpacing:'-2px', lineHeight:0.9}}>97</span>
+      {/* PRICING — bewust compact, geen dominante sectie */}
+      <section style={{background:'#1e293b', padding:'48px 60px', borderTop:'3px solid #f59e0b'}}>
+        <div style={{maxWidth:'760px', margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
+          <div style={{background:'#111827', border:'1px solid #374151', borderRadius:'4px', padding:'24px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', textAlign:'center'}}>
+            <span style={{fontSize:'14px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per maand</span>
+            <div style={{display:'flex', alignItems:'baseline', gap:'4px'}}>
+              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', color:'#6b7280'}}>€</span>
+              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(32px, 3vw, 44px)', color:'#f1f5f9', letterSpacing:'-1px', lineHeight:0.9}}>77</span>
             </div>
             <a href="/sign-up" style={{
               display:'inline-block', textDecoration:'none', textAlign:'center',
               background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
-              fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px',
+              fontSize:'15px', letterSpacing:'2px', padding:'8px 0', width:'110px', borderRadius:'999px',
               transition:'background 0.2s'
             }}>START NU.</a>
-            <a href="/sign-up" style={{
-              fontSize:'13px', color:'#9ca3af', fontFamily:"'DM Sans', sans-serif",
-              textDecoration:'none', letterSpacing:'1px'
-            }}>30 dagen Free Trial</a>
+            <span style={{fontSize:'12px', color:'#6b7280', fontFamily:"'DM Sans', sans-serif", letterSpacing:'0.5px'}}>30 dagen gratis</span>
           </div>
-        </div>
-        <div className="canvas-right" style={{background:'#1e293b', justifyContent:'center', alignItems:'flex-start', padding:'80px 60px'}}>
-          <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'20px', textAlign:'center'}}>
-            <div style={{background:'#f1f5f9', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'4px', textTransform:'uppercase', padding:'6px 18px', display:'inline-block'}}>4 maanden gratis</div>
-            <span style={{fontSize:'28px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per jaar</span>
-            <div style={{display:'flex', alignItems:'baseline', gap:'8px'}}>
-              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(28px, 3vw, 44px)', color:'#6b7280', letterSpacing:0}}>€</span>
-              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(64px, 7vw, 104px)', color:'#f1f5f9', letterSpacing:'-2px', lineHeight:0.9}}>777</span>
+          <div style={{background:'#111827', border:'1px solid #374151', borderRadius:'4px', padding:'24px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', textAlign:'center'}}>
+            <span style={{fontSize:'14px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per jaar <span style={{color:'#6b7280', textTransform:'none', letterSpacing:0}}>(3 mnd gratis)</span></span>
+            <div style={{display:'flex', alignItems:'baseline', gap:'4px'}}>
+              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'20px', color:'#6b7280'}}>€</span>
+              <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:'clamp(32px, 3vw, 44px)', color:'#f1f5f9', letterSpacing:'-1px', lineHeight:0.9}}>697</span>
             </div>
             <a href="/sign-up" style={{
               display:'inline-block', textDecoration:'none', textAlign:'center',
               background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
-              fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px',
+              fontSize:'15px', letterSpacing:'2px', padding:'8px 0', width:'110px', borderRadius:'999px',
               transition:'background 0.2s'
             }}>START NU.</a>
-            <a href="/sign-up" style={{
-              fontSize:'13px', color:'#9ca3af', fontFamily:"'DM Sans', sans-serif",
-              textDecoration:'none', letterSpacing:'1px'
-            }}>30 dagen Free Trial</a>
+            <span style={{fontSize:'12px', color:'#6b7280', fontFamily:"'DM Sans', sans-serif", letterSpacing:'0.5px'}}>30 dagen gratis</span>
           </div>
         </div>
-        <div style={{gridColumn:'1 / -1', borderTop:'1px solid #374151', padding:'28px 60px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px', textAlign:'center'}}>
+        <div style={{maxWidth:'760px', margin:'20px auto 0', borderTop:'1px solid #374151', paddingTop:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'12px', textAlign:'center'}}>
           <span style={{fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#9ca3af', letterSpacing:'0.5px'}}>
             Wil je je hele salesteam uitrusten met ArnoBot als persoonlijke coach?
           </span>
           <a href="mailto:arno@arno.bot" style={{
-            fontFamily:"'Bebas Neue', sans-serif", fontSize:'18px', letterSpacing:'3px',
+            fontFamily:"'Bebas Neue', sans-serif", fontSize:'16px', letterSpacing:'3px',
             color:'#f59e0b', textDecoration:'none', textTransform:'uppercase', whiteSpace:'nowrap'
           }}>Neem contact op →</a>
         </div>
@@ -476,7 +466,7 @@ export default async function ArnoBotLandingPage() {
             </div>
             <div className="faq-item">
               <p className="faq-q">Wat kost het na de proefperiode?</p>
-              <p className="faq-a">€97 per maand of €777 per jaar, dat zijn 4 maanden gratis. Transparant, geen addertjes.</p>
+              <p className="faq-a">€77 per maand of €697 per jaar, dat zijn 3 maanden gratis. Transparant, geen addertjes.</p>
             </div>
             <div className="faq-item">
               <p className="faq-q">Werkt dit ook voor een heel salesteam?</p>
