@@ -122,14 +122,14 @@ export default async function ArnoBotLandingPage() {
         .hero-photo-col { position: relative; flex: 1; max-width: 420px; width: 100%; }
 
         @media (min-width: 1024px) {
-          .hero-inner { flex-direction: row; align-items: flex-end; gap: 32px; }
-          .hero-copy { align-items: flex-start; text-align: left; padding-bottom: 96px; }
+          .hero-inner { flex-direction: row; align-items: flex-start; gap: 32px; }
+          .hero-copy { align-items: flex-start; text-align: left; }
           .hero-cta { align-self: flex-start; }
         }
 
         .hero-photo-glow {
           position: absolute; inset: -16px; border-radius: 24px;
-          background: rgba(245,158,11,0.1); filter: blur(32px);
+          background: rgba(245,158,11,0.35); filter: blur(40px);
         }
         .hero-photo-frame {
           position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 24px;
@@ -137,7 +137,7 @@ export default async function ArnoBotLandingPage() {
           box-shadow: 0 32px 64px rgba(0,0,0,0.5);
         }
         .hero-photo {
-          width: 100%; height: 100%; display: block; object-fit: contain;
+          width: 100%; height: 100%; display: block; object-fit: cover;
         }
 
         /* FEATURE GRID */
