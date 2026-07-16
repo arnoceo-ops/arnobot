@@ -167,10 +167,16 @@ export default async function ArnoBotLandingPage() {
         .feature-desc { line-height: 1.6; color: #94a3b8; }
 
         /* STATS BAND */
-        .stats-band { background: #f59e0b; padding: 80px 40px; }
-        .stats-grid { margin: 0 auto; max-width: 1152px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; text-align: center; }
-        .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(48px, 6vw, 72px); font-weight: 600; color: #171717; }
-        .stat-label { font-size: 18px; font-weight: 500; color: rgba(23,23,23,0.75); margin-top: 8px; }
+        .stats-band { max-width: 1152px; margin: 96px auto; padding: 0 40px; }
+        .stats-card {
+          background: #faf6ef; border-radius: 24px; padding: 64px 48px;
+          display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;
+        }
+        .stats-card > div { padding: 0 24px; }
+        .stats-card > div:not(:first-child) { border-left: 1px solid rgba(0,0,0,0.08); }
+        .stat-accent { display: block; width: 32px; height: 3px; background: #f59e0b; border-radius: 2px; margin: 0 auto 16px; }
+        .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #b45309; }
+        .stat-label { font-size: 15px; font-weight: 500; color: #57534e; margin-top: 8px; }
 
         /* TESTIMONIALS */
         .testimonial-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
@@ -231,8 +237,9 @@ export default async function ArnoBotLandingPage() {
           .hero-section { padding: 120px 20px 64px; }
           .features-section { padding: 56px 20px; }
           .features-grid { grid-template-columns: 1fr; }
-          .stats-band { padding: 48px 20px; }
-          .stats-grid { grid-template-columns: 1fr; gap: 32px; }
+          .stats-band { margin: 56px auto; padding: 0 16px; }
+          .stats-card { grid-template-columns: 1fr; padding: 40px 24px; gap: 32px; }
+          .stats-card > div:not(:first-child) { border-left: none; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px; }
           .testimonial-section { padding: 56px 20px; }
           .htc-grid { grid-template-columns: 1fr; }
           .cta-band { padding: 64px 20px; }
@@ -299,9 +306,10 @@ export default async function ArnoBotLandingPage() {
 
       {/* STATS BAND */}
       <section className="stats-band">
-        <div className="stats-grid">
+        <div className="stats-card">
           {STATS.map(stat => (
             <div key={stat.label}>
+              <span className="stat-accent" aria-hidden="true" />
               <p className="stat-num">{stat.value}</p>
               <p className="stat-label">{stat.label}</p>
             </div>
