@@ -318,7 +318,7 @@ export default async function ArnoBotLandingPage() {
       <section className="cta-band" id="cta">
         <div className="cta-glow" aria-hidden="true" />
         <div className="cta-inner">
-          <h2 className="cta-h2">Klaar om je targets te verpletteren?</h2>
+          <h2 className="cta-h2">Straks vragen ze hoe je het deed.</h2>
           <p className="cta-sub">Start met ArnoBot. Geen creditcard nodig, geen verplichtingen, alleen betere salesgesprekken.</p>
           <a href="/sign-up" className="cta-btn">30 dagen gratis</a>
         </div>
