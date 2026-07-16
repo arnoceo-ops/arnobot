@@ -177,7 +177,7 @@ export default async function ArnoBotLandingPage() {
         /* ── HERO FOTO (diagonale uitsnede + speedlines voor snelheid) ── */
         .hero-photo-wrap { position: relative; width: 100%; max-width: 600px; }
         .hero-photo {
-          width: 100%; height: auto; display: block;
+          width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center 78%; display: block;
           clip-path: polygon(0 0, 100% 0, 100% 88%, 85% 100%, 0 100%);
           box-shadow: 0 32px 64px rgba(0,0,0,0.45);
         }
@@ -399,7 +399,7 @@ export default async function ArnoBotLandingPage() {
       <section className="subscribe-section" style={{background: '#111827', paddingTop: '80px'}}>
         <div className="subscribe-text-col" style={{padding:'40px 30px'}}>
           <div className="hero-photo-wrap">
-            <img src="/arno-home1.jpg" alt="Arno Diepeveen" className="hero-photo" />
+            <img src="/arno-price.jpg" alt="Arno Diepeveen" className="hero-photo" />
             <span className="speedline speedline-1" />
             <span className="speedline speedline-2" />
             <span className="speedline speedline-3" />
@@ -487,6 +487,9 @@ export default async function ArnoBotLandingPage() {
 
       {/* PRICING — bewust compact, geen dominante sectie */}
       <section style={{background:'#1e293b', padding:'48px 60px', borderTop:'3px solid #f59e0b'}}>
+        <div style={{maxWidth:'260px', margin:'0 auto 24px'}}>
+          <img src="/arno-price.jpg" alt="Price is only an issue in the absence of value" style={{width:'100%', height:'auto', borderRadius:'8px', boxShadow:'0 16px 32px rgba(0,0,0,0.35)'}} />
+        </div>
         <div style={{maxWidth:'760px', margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
           <div style={{background:'#111827', border:'1px solid #374151', borderRadius:'4px', padding:'24px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', textAlign:'center'}}>
             <span style={{fontSize:'14px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per maand</span>
