@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { client } from '@/sanity/client'
 import HeroWordRotator from './HeroWordRotator'
+import TestimonialSlider from './TestimonialSlider'
 
 type Testimonial = { _id: string; quote: string; name: string; role?: string }
 
@@ -286,11 +287,11 @@ export default async function ArnoBotLandingPage() {
         .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 52px); color: #f59e0b; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; }
         .stat-label { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #9ca3af; letter-spacing: 0.3px; }
 
-        /* ── TESTIMONIALS (langzaam scrollende slider) ── */
+        /* ── TESTIMONIALS (2 tegelijk, roteren om de 3 seconden) ── */
         .testimonial-section {
-          background: #f1f5f9; padding: 80px 0; border-top: 3px solid #f59e0b; overflow: hidden;
+          background: #f1f5f9; padding: 80px 60px; border-top: 3px solid #f59e0b;
         }
-        .testimonial-inner { max-width: 1100px; margin: 0 auto 48px; padding: 0 60px; }
+        .testimonial-inner { max-width: 1100px; margin: 0 auto 48px; }
         .testimonial-label {
           font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
           text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
@@ -299,17 +300,17 @@ export default async function ArnoBotLandingPage() {
           font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
           color: #1e293b; letter-spacing: 1px;
         }
-        .testimonial-track-wrap { overflow: hidden; width: 100%; }
-        .testimonial-track {
-          display: flex; gap: 32px; width: max-content;
-          animation: testimonial-scroll 36s linear infinite;
+        .testimonial-grid {
+          max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
         }
-        .testimonial-track:hover { animation-play-state: paused; }
-        @keyframes testimonial-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+        .testimonial-card {
+          background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px;
+          animation: testimonial-fade 0.5s ease;
         }
-        .testimonial-card { background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px; flex: 0 0 380px; }
+        @keyframes testimonial-fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         .testimonial-quote {
           font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.8; color: #1e293b; margin-bottom: 20px;
         }
@@ -377,8 +378,8 @@ export default async function ArnoBotLandingPage() {
           .faq-section { padding: 48px 24px; }
           .faq-grid { grid-template-columns: 1fr; gap: 32px; }
 
-          .testimonial-section { padding: 48px 0; }
-          .testimonial-inner { padding: 0 24px; }
+          .testimonial-section { padding: 48px 24px; }
+          .testimonial-grid { grid-template-columns: 1fr; }
 
           .final-cta-section { padding: 48px 24px; }
 
@@ -528,30 +529,20 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS — vaste aanbevelingen over Arno's expertise, plus toekomstige productreviews uit Sanity. Traag scrollende slider, dubbele set voor een naadloze loop. */}
+      {/* TESTIMONIALS — vaste aanbevelingen over Arno's expertise, plus toekomstige productreviews uit Sanity. Toont er 2, roteert elke 3 seconden. */}
       <section className="testimonial-section">
         <div className="testimonial-inner">
           <p className="testimonial-label">Wat mensen over Arno zeggen</p>
           <h2 className="testimonial-heading">Geen loze beloftes</h2>
         </div>
-        <div className="testimonial-track-wrap">
-          <div className="testimonial-track">
-            {[...testimonials, ...testimonials].map((t, i) => (
-              <div className="testimonial-card" key={`${t._id}-${i}`}>
-                <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
-                <p className="testimonial-name">{t.name}</p>
-                {t.role && <p className="testimonial-role">{t.role}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
+        <TestimonialSlider testimonials={testimonials} />
       </section>
 
       {/* STATS — over de expertise en kennisbank, niet over het (nog kleine) gebruikersaantal */}
       <section className="stats-section">
         <div className="stats-grid">
           <div>
-            <p className="stat-num">42</p>
+            <p className="stat-num">42Y</p>
             <p className="stat-label">Sales expertise</p>
           </div>
           <div>
