@@ -119,25 +119,22 @@ export default async function ArnoBotLandingPage() {
           box-shadow: 0 20px 40px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
         .hero-cta:hover { transform: scale(1.05); }
-        .hero-photo-col { position: relative; flex: 1; max-width: 420px; width: 100%; }
+        .hero-photo-col { position: relative; flex: 1; max-width: 448px; width: 100%; }
 
         @media (min-width: 1024px) {
-          .hero-inner { flex-direction: row; align-items: flex-start; gap: 32px; }
-          .hero-copy { align-items: flex-start; text-align: left; }
+          .hero-inner { flex-direction: row; align-items: flex-end; gap: 32px; }
+          .hero-copy { align-items: flex-start; text-align: left; padding-bottom: 96px; }
           .hero-cta { align-self: flex-start; }
         }
 
         .hero-photo-glow {
-          position: absolute; inset: -16px; border-radius: 24px;
-          background: rgba(245,158,11,0.35); filter: blur(40px);
-        }
-        .hero-photo-frame {
-          position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 24px;
-          overflow: hidden; background: #0d1117;
-          box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+          position: absolute; inset: -16px; border-radius: 24px 24px 0 0;
+          background: rgba(245,158,11,0.1); filter: blur(40px);
         }
         .hero-photo {
-          width: 100%; height: 100%; display: block; object-fit: cover;
+          position: relative; width: 100%; aspect-ratio: 520 / 640; display: block;
+          border-radius: 24px 24px 0 0; object-fit: cover;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
         /* FEATURE GRID */
@@ -274,9 +271,7 @@ export default async function ArnoBotLandingPage() {
           </div>
           <div className="hero-photo-col">
             <div className="hero-photo-glow" aria-hidden="true" />
-            <div className="hero-photo-frame">
-              <img src="/team-founder.png" alt="De oprichter van ArnoBot, sales coach" className="hero-photo" />
-            </div>
+            <img src="/team-founder.png" alt="De oprichter van ArnoBot, sales coach" className="hero-photo" />
           </div>
         </div>
       </section>
