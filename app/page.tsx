@@ -487,9 +487,6 @@ export default async function ArnoBotLandingPage() {
 
       {/* PRICING — bewust compact, geen dominante sectie */}
       <section style={{background:'#1e293b', padding:'48px 60px', borderTop:'3px solid #f59e0b'}}>
-        <div style={{maxWidth:'260px', margin:'0 auto 24px'}}>
-          <img src="/arno-price.jpg" alt="Price is only an issue in the absence of value" style={{width:'100%', height:'auto', borderRadius:'8px', boxShadow:'0 16px 32px rgba(0,0,0,0.35)'}} />
-        </div>
         <div style={{maxWidth:'760px', margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
           <div style={{background:'#111827', border:'1px solid #374151', borderRadius:'4px', padding:'24px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', textAlign:'center'}}>
             <span style={{fontSize:'14px', letterSpacing:'3px', textTransform:'uppercase', color:'#f59e0b', fontFamily:"'Bebas Neue', sans-serif"}}>Per maand</span>
