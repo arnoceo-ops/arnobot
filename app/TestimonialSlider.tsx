@@ -8,12 +8,16 @@ export default function TestimonialSlider({ testimonials }: { testimonials: Test
   const [start, setStart] = useState(0)
 
   useEffect(() => {
-    if (testimonials.length <= 2) return
-    const id = setInterval(() => setStart(i => (i + 1) % testimonials.length), 3500)
+    if (testimonials.length <= 3) return
+    const id = setInterval(() => setStart(i => (i + 1) % testimonials.length), 5000)
     return () => clearInterval(id)
   }, [testimonials.length])
 
-  const visible = [testimonials[start], testimonials[(start + 1) % testimonials.length]]
+  const visible = [
+    testimonials[start],
+    testimonials[(start + 1) % testimonials.length],
+    testimonials[(start + 2) % testimonials.length],
+  ]
 
   return (
     <div className="testimonial-grid">

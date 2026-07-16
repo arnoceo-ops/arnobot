@@ -295,7 +295,7 @@ export default async function ArnoBotLandingPage() {
           color: #1e293b; letter-spacing: 1px;
         }
         .testimonial-grid {
-          max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+          max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px;
           overflow: hidden;
         }
         .testimonial-card {
