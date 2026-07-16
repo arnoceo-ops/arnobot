@@ -63,7 +63,7 @@ export default async function ArnoBotLandingPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
 
-        /* ── NAV ── */
+        /* NAV */
         .site-nav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 100;
           padding: 0 40px; height: 60px; display: flex; align-items: center;
@@ -89,7 +89,7 @@ export default async function ArnoBotLandingPage() {
         }
         .nav-cta-btn:hover { background: #d97706; }
 
-        /* ── HERO ── */
+        /* HERO */
         .hero-section { position: relative; overflow: hidden; padding: 140px 40px 96px; }
         .hero-glow {
           pointer-events: none; position: absolute; inset: 0;
@@ -140,7 +140,7 @@ export default async function ArnoBotLandingPage() {
           width: 100%; height: 100%; display: block; object-fit: contain;
         }
 
-        /* ── FEATURE GRID ── */
+        /* FEATURE GRID */
         .features-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
         .features-head { margin-bottom: 56px; max-width: 640px; }
         .section-eyebrow { margin-bottom: 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.3em; color: #f59e0b; }
@@ -166,13 +166,13 @@ export default async function ArnoBotLandingPage() {
         }
         .feature-desc { line-height: 1.6; color: #94a3b8; }
 
-        /* ── STATS BAND ── */
+        /* STATS BAND */
         .stats-band { background: #f59e0b; padding: 80px 40px; }
         .stats-grid { margin: 0 auto; max-width: 1152px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; text-align: center; }
         .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(48px, 6vw, 72px); font-weight: 600; color: #171717; }
         .stat-label { font-size: 18px; font-weight: 500; color: rgba(23,23,23,0.75); margin-top: 8px; }
 
-        /* ── TESTIMONIALS ── */
+        /* TESTIMONIALS */
         .testimonial-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
         .htc-header { margin-bottom: 56px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
         .testimonial-label { margin-bottom: 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.3em; color: #f59e0b; }
@@ -201,7 +201,7 @@ export default async function ArnoBotLandingPage() {
         .htc-dot { height: 8px; width: 8px; border-radius: 999px; border: none; background: rgba(148,163,184,0.4); cursor: pointer; transition: all 0.2s; }
         .htc-dot-active { width: 32px; background: #f59e0b; }
 
-        /* ── CTA BAND ── */
+        /* CTA BAND */
         .cta-band { position: relative; overflow: hidden; padding: 112px 40px; }
         .cta-glow {
           pointer-events: none; position: absolute; inset: 0;
@@ -221,7 +221,7 @@ export default async function ArnoBotLandingPage() {
         }
         .cta-btn:hover { transform: scale(1.05); }
 
-        /* ── MOBILE ── */
+        /* MOBILE */
         @media (max-width: 768px) {
           .site-nav { padding: 0 16px; }
           .nav-logo { font-size: 18px; letter-spacing: 2px; }
