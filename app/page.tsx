@@ -7,8 +7,26 @@ import HeroWordRotator from './HeroWordRotator'
 
 type Testimonial = { _id: string; quote: string; name: string; role?: string }
 
+// Vaste aanbevelingen over Arno's expertise (met toestemming, ook publiek op arno.blog/bio).
+// Toekomstige productgebruikers-testimonials uit Sanity komen hier gewoon bij.
+const FIXED_TESTIMONIALS: Testimonial[] = [
+  {
+    _id: 'fixed-harvey-lee',
+    quote: "Arno's ability to challenge the status quo and offer of different thinking is one of his key attributes as well as his focus on the desired outcomes.",
+    name: 'Harvey Lee',
+    role: 'Head of Product Marketing @ Epson',
+  },
+  {
+    _id: 'fixed-richard-maddocks',
+    quote: "Arno is one-of-a-kind in the world of sales. In my 40+ years of being involved in commercial activities, he stands out as 'the best in his field'.",
+    name: 'Richard Maddocks',
+    role: 'Trainer & Author of The Energy Book',
+  },
+]
+
 async function getTestimonials(): Promise<Testimonial[]> {
-  return await client.fetch(`*[_type == "testimonial"] | order(_createdAt desc)`, {}, { next: { revalidate: 0 } })
+  const dynamic: Testimonial[] = await client.fetch(`*[_type == "testimonial"] | order(_createdAt desc)`, {}, { next: { revalidate: 0 } })
+  return [...FIXED_TESTIMONIALS, ...dynamic]
 }
 
 export const metadata: Metadata = {
@@ -226,31 +244,6 @@ export default async function ArnoBotLandingPage() {
         .chat-preview-badge strong { display: block; font-size: 26px; letter-spacing: 0.5px; }
         .chat-preview-badge span { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
 
-        /* ── DIFFERENTIATIE (waarom geen ChatGPT) ── */
-        .diff-section { background: #111827; padding: 64px 60px; border-top: 3px solid #f59e0b; }
-        .diff-inner { max-width: 900px; margin: 0 auto; text-align: center; }
-        .diff-label {
-          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
-          text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
-        }
-        .diff-heading {
-          font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
-          color: #f1f5f9; letter-spacing: 1px; margin-bottom: 40px;
-        }
-        .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #374151; border-radius: 4px; overflow: hidden; text-align: left; }
-        .diff-col { padding: 28px; }
-        .diff-col-generic { background: #1e293b; border-right: 1px solid #374151; }
-        .diff-col-arno { background: #1f2937; }
-        .diff-col-title {
-          font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px;
-          text-transform: uppercase; margin-bottom: 20px;
-        }
-        .diff-col-generic .diff-col-title { color: #6b7280; }
-        .diff-col-arno .diff-col-title { color: #f59e0b; }
-        .diff-point { font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; color: #9ca3af; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .diff-point:last-child { border-bottom: none; }
-        .diff-col-arno .diff-point { color: #f1f5f9; }
-
         /* ── TRUST BADGES ── */
         .trust-row {
           display: flex; flex-wrap: wrap; justify-content: center; gap: 32px;
@@ -280,6 +273,12 @@ export default async function ArnoBotLandingPage() {
           color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
         }
         .feature-card-desc { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; line-height: 1.6; }
+
+        /* ── STATS (echte cijfers over de expertise, niet over gebruiksaantallen) ── */
+        .stats-section { background: #1e293b; padding: 56px 60px; border-top: 3px solid #f59e0b; }
+        .stats-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; text-align: center; }
+        .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 52px); color: #f59e0b; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; }
+        .stat-label { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #9ca3af; letter-spacing: 0.3px; }
 
         /* ── TESTIMONIALS ── */
         .testimonial-section {
@@ -365,18 +364,15 @@ export default async function ArnoBotLandingPage() {
 
           .testimonial-section { padding: 48px 24px; }
 
-          .diff-section { padding: 48px 24px; }
-          .diff-grid { grid-template-columns: 1fr; }
-          .diff-col-generic { border-right: none; border-bottom: 1px solid #374151; }
-
-          .authority-section { padding: 40px 24px; }
-
           .final-cta-section { padding: 48px 24px; }
 
           .chat-preview { max-width: 100%; }
 
           .features-section { padding: 48px 24px; }
           .features-grid { grid-template-columns: 1fr; }
+
+          .stats-section { padding: 40px 24px; }
+          .stats-grid { grid-template-columns: 1fr; gap: 24px; }
         }
       `}</style>
 
@@ -415,6 +411,51 @@ export default async function ArnoBotLandingPage() {
               Geen generieke AI. Decennia bewezen sales-expertise, 24/7 beschikbaar.
             </p>
             <a href="/sign-up" className="subscribe-btn" style={{alignSelf:'flex-start', width:'260px'}}>30 dagen gratis</a>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="features-section">
+        <div className="features-inner">
+          <div className="features-grid">
+            <div className="feature-card">
+              <p className="feature-card-num">01</p>
+              <p className="feature-card-title">Nooit meer zonder coach</p>
+              <p className="feature-card-desc">24/7 beschikbaar, geen wachttijd.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">02</p>
+              <p className="feature-card-title">Nooit een inzicht kwijt</p>
+              <p className="feature-card-desc">Je hele geschiedenis, doorzoekbaar.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">03</p>
+              <p className="feature-card-title">Je inzichten overal bij de hand</p>
+              <p className="feature-card-desc">Exporteer wat je nodig hebt.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">04</p>
+              <p className="feature-card-title">Groei volgens een plan</p>
+              <p className="feature-card-desc">Trainingsschema op maat van jouw doelen.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">05</p>
+              <p className="feature-card-title">Meer dan een chatbot</p>
+              <p className="feature-card-desc">40 jaar expertise als bron: blogs, boeken, video's.</p>
+            </div>
+            <div className="feature-card">
+              <p className="feature-card-num">06</p>
+              <p className="feature-card-title">Arno zelf binnen bereik</p>
+              <p className="feature-card-desc">Als de bot niet ver genoeg gaat. *</p>
+            </div>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <a href="/sign-up" style={{
+              display:'inline-block', textDecoration:'none', textAlign:'center',
+              background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
+              fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px'
+            }}>START NU.</a>
           </div>
         </div>
       </section>
@@ -463,24 +504,37 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* WAAROM GEEN CHATGPT */}
-      <section className="diff-section">
-        <div className="diff-inner">
-          <p className="diff-label">Het verschil</p>
-          <h2 className="diff-heading">Waarom niet gewoon ChatGPT?</h2>
-          <div className="diff-grid">
-            <div className="diff-col diff-col-generic">
-              <p className="diff-col-title">Generieke AI</p>
-              <p className="diff-point">✗ Onthoudt losse flarden, geen samenhangend beeld van jouw situatie</p>
-              <p className="diff-point">✗ Adviseert vanuit het hele internet, niet vanuit bewezen salesmethodiek</p>
-              <p className="diff-point">✗ Je legt elke keer opnieuw de context uit</p>
-            </div>
-            <div className="diff-col diff-col-arno">
-              <p className="diff-col-title">ArnoBot</p>
-              <p className="diff-point">✓ Bouwt een samenhangend beeld op van jouw markt, targets en patronen</p>
-              <p className="diff-point">✓ Adviseert vanuit decennia bewezen verkoopexpertise</p>
-              <p className="diff-point">✓ Kent je situatie al vanaf het eerste gesprek</p>
-            </div>
+      {/* TESTIMONIALS — vaste aanbevelingen over Arno's expertise, plus toekomstige productreviews uit Sanity */}
+      <section className="testimonial-section">
+        <div className="testimonial-inner">
+          <p className="testimonial-label">Wat mensen over Arno zeggen</p>
+          <h2 className="testimonial-heading">Geen loze beloftes</h2>
+          <div className="testimonial-grid">
+            {testimonials.map(t => (
+              <div className="testimonial-card" key={t._id}>
+                <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+                <p className="testimonial-name">{t.name}</p>
+                {t.role && <p className="testimonial-role">{t.role}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* STATS — over de expertise en kennisbank, niet over het (nog kleine) gebruikersaantal */}
+      <section className="stats-section">
+        <div className="stats-grid">
+          <div>
+            <p className="stat-num">40</p>
+            <p className="stat-label">Jaar sales-ervaring</p>
+          </div>
+          <div>
+            <p className="stat-num">188.000+</p>
+            <p className="stat-label">Woorden verkoopexpertise in de kennisbank</p>
+          </div>
+          <div>
+            <p className="stat-num">205</p>
+            <p className="stat-label">Geanalyseerde blogposts als bron</p>
           </div>
         </div>
       </section>
@@ -533,70 +587,6 @@ export default async function ArnoBotLandingPage() {
           <span className="trust-item">Privé & versleuteld opgeslagen</span>
           <span className="trust-item">Nooit gedeeld met derden</span>
           <span className="trust-item">Maandelijks opzegbaar</span>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS — alleen tonen zodra er echte testimonials in Sanity staan */}
-      {testimonials.length > 0 && (
-        <section className="testimonial-section">
-          <div className="testimonial-inner">
-            <p className="testimonial-label">Wat gebruikers zeggen</p>
-            <h2 className="testimonial-heading">Geen loze beloftes</h2>
-            <div className="testimonial-grid">
-              {testimonials.map(t => (
-                <div className="testimonial-card" key={t._id}>
-                  <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
-                  <p className="testimonial-name">{t.name}</p>
-                  {t.role && <p className="testimonial-role">{t.role}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* FEATURES */}
-      <section className="features-section">
-        <div className="features-inner">
-          <div className="features-grid">
-            <div className="feature-card">
-              <p className="feature-card-num">01</p>
-              <p className="feature-card-title">Unlimited sales coaching</p>
-              <p className="feature-card-desc">24/7. Geen limiet.</p>
-            </div>
-            <div className="feature-card">
-              <p className="feature-card-num">02</p>
-              <p className="feature-card-title">Jouw sales archief</p>
-              <p className="feature-card-desc">Doorzoekbaar, altijd beschikbaar.</p>
-            </div>
-            <div className="feature-card">
-              <p className="feature-card-num">03</p>
-              <p className="feature-card-title">PDF export</p>
-              <p className="feature-card-desc">Exporteer wat je wilt.</p>
-            </div>
-            <div className="feature-card">
-              <p className="feature-card-num">04</p>
-              <p className="feature-card-title">Personal training</p>
-              <p className="feature-card-desc">Trainingsschema op maat.</p>
-            </div>
-            <div className="feature-card">
-              <p className="feature-card-num">05</p>
-              <p className="feature-card-title">Verdiep je expertise</p>
-              <p className="feature-card-desc">Blogs, boeken, video's.</p>
-            </div>
-            <div className="feature-card">
-              <p className="feature-card-num">06</p>
-              <p className="feature-card-title">1:1 met de oprichter</p>
-              <p className="feature-card-desc">Overleg met Arno zelf. *</p>
-            </div>
-          </div>
-          <div style={{textAlign:'center'}}>
-            <a href="/sign-up" style={{
-              display:'inline-block', textDecoration:'none', textAlign:'center',
-              background:'#f59e0b', color:'#1e293b', fontFamily:"'Bebas Neue', sans-serif",
-              fontSize:'20px', letterSpacing:'3px', padding:'12px 0', width:'150px', borderRadius:'999px'
-            }}>START NU.</a>
-          </div>
         </div>
       </section>
 
