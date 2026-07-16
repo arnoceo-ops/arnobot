@@ -120,6 +120,13 @@ export default async function ArnoBotLandingPage() {
         }
         .hero-cta:hover { transform: scale(1.05); }
         .hero-photo-col { position: relative; flex: 1; max-width: 420px; width: 100%; }
+
+        @media (min-width: 1024px) {
+          .hero-inner { flex-direction: row; align-items: flex-end; gap: 32px; }
+          .hero-copy { align-items: flex-start; text-align: left; padding-bottom: 96px; }
+          .hero-cta { align-self: flex-start; }
+        }
+
         .hero-photo-glow {
           position: absolute; inset: -16px; border-radius: 24px 24px 0 0;
           background: rgba(245,158,11,0.1); filter: blur(32px);
