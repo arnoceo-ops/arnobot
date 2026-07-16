@@ -9,7 +9,7 @@ export default function TestimonialSlider({ testimonials }: { testimonials: Test
 
   useEffect(() => {
     if (testimonials.length <= 2) return
-    const id = setInterval(() => setStart(i => (i + 1) % testimonials.length), 3000)
+    const id = setInterval(() => setStart(i => (i + 1) % testimonials.length), 3500)
     return () => clearInterval(id)
   }, [testimonials.length])
 

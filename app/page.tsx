@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { client } from '@/sanity/client'
 import HeroWordRotator from './HeroWordRotator'
 import TestimonialSlider from './TestimonialSlider'
+import SiteFooter from './SiteFooter'
 
 type Testimonial = { _id: string; quote: string; name: string; role?: string }
 
@@ -299,7 +300,7 @@ export default async function ArnoBotLandingPage() {
         }
         .testimonial-card {
           background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px;
-          animation: testimonial-slide 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: testimonial-slide 1.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes testimonial-slide {
           from { opacity: 0; transform: translateX(-100%); }
@@ -338,16 +339,6 @@ export default async function ArnoBotLandingPage() {
         }
         .faq-a a { color: #f59e0b; text-decoration: none; }
 
-        /* ── FOOTER ── */
-        footer {
-          background: #0d1117; padding: 40px 60px;
-          display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-          border-top: 1px solid #1f2937;
-        }
-        .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #f59e0b; letter-spacing: 3px; text-decoration: none; }
-        .footer-copy { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; }
-        .footer-link { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
-        .footer-link:hover { color: #f1f5f9; }
 
         /* ── MOBILE ── */
         @media (max-width: 768px) {
@@ -366,8 +357,6 @@ export default async function ArnoBotLandingPage() {
           .subscribe-text-inner { text-align: left; }
           .subscribe-btn { align-self: stretch; width: 100%; }
           .subscribe-btn-dark { width: 100%; }
-
-          footer { padding: 32px 24px; grid-template-columns: 1fr; gap: 12px; text-align: center; }
 
           .faq-section { padding: 48px 24px; }
           .faq-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -472,7 +461,7 @@ export default async function ArnoBotLandingPage() {
       </section>
 
       {/* HOE HET WERKT */}
-      <section className="canvas-section">
+      <section className="canvas-section" id="hoe-het-werkt">
         <div className="canvas-left">
           <div className="canvas-left-inner">
             <div className="canvas-quote" style={{marginBottom:'32px'}}>
@@ -561,7 +550,7 @@ export default async function ArnoBotLandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="faq-section">
+      <section className="faq-section" id="faq">
         <div className="faq-inner">
           <p className="faq-label">Veelgestelde vragen</p>
           <h2 className="faq-heading">Nog twijfels?</h2>
@@ -584,7 +573,7 @@ export default async function ArnoBotLandingPage() {
             </div>
             <div className="faq-item">
               <p className="faq-q">Wat kost het na de proefperiode?</p>
-              <p className="faq-a">€77 per maand of €697 per jaar, dat zijn 3 maanden gratis. Transparant, geen addertjes.</p>
+              <p className="faq-a">€77 per maand of €697 per jaar, dat zijn 3 maanden gratis. Bekijk alle details op de <a href="/prijzen">prijzenpagina</a>.</p>
             </div>
             <div className="faq-item">
               <p className="faq-q">Werkt dit ook voor een heel salesteam?</p>
@@ -601,15 +590,7 @@ export default async function ArnoBotLandingPage() {
         <p className="final-cta-sub">Geen creditcard nodig. Geen verplichtingen.</p>
       </section>
 
-      {/* FOOTER */}
-      <footer>
-        <Link href="/" className="footer-logo">ARNOBOT.</Link>
-        <span style={{ display: 'flex', gap: 24 }}>
-          <Link href="/voorwaarden" className="footer-link">VOORWAARDEN</Link>
-          <Link href="/privacy" className="footer-link">PRIVACY</Link>
-        </span>
-        <span className="footer-copy" style={{ textAlign: 'right' }}>© 2026 ArnoBot</span>
-      </footer>
+      <SiteFooter />
     </>
   )
 }
