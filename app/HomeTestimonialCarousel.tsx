@@ -45,7 +45,7 @@ export default function HomeTestimonialCarousel() {
     >
       <div className="htc-header">
         <div>
-          <p className="testimonial-label">Klantverhalen</p>
+          <p className="testimonial-label">KLANTVERHALEN</p>
           <h2 className="testimonial-heading">Wat gebruikers zeggen</h2>
         </div>
         <div className="htc-nav">

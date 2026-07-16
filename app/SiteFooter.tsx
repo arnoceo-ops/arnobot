@@ -20,16 +20,13 @@ export default function SiteFooter() {
         }
         .site-footer-col a:hover { color: #f1f5f9; }
         .site-footer-bottom {
-          max-width: 1000px; margin: 24px auto 0; display: grid; grid-template-columns: 1fr auto 1fr;
-          align-items: center;
+          max-width: 1000px; margin: 24px auto 0; text-align: center;
         }
-        .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #f59e0b; letter-spacing: 3px; text-decoration: none; }
         .footer-copy { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; }
 
         @media (max-width: 768px) {
           .site-footer { padding: 40px 24px 24px; }
           .site-footer-inner { grid-template-columns: 1fr; gap: 28px; text-align: center; }
-          .site-footer-bottom { grid-template-columns: 1fr; gap: 12px; text-align: center; }
         }
       `}</style>
       <footer className="site-footer">
@@ -54,9 +51,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="site-footer-bottom">
-          <Link href="/" className="footer-logo">ARNOBOT.</Link>
-          <span />
-          <span className="footer-copy" style={{ textAlign: 'right' }}>© 2026 ArnoBot</span>
+          <span className="footer-copy">© 2026 ArnoBot</span>
         </div>
       </footer>
     </>

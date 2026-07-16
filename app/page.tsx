@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { Brain, Cpu, LineChart, MessageSquare, Mic, Target, User, Users, Zap } from 'lucide-react'
+import { Brain, LineChart, MessageSquare, Mic, Target, Zap } from 'lucide-react'
 import HeroWordRotator from './HeroWordRotator'
 import HomeTestimonialCarousel from './HomeTestimonialCarousel'
 import SiteFooter from './SiteFooter'
@@ -71,14 +71,14 @@ export default async function ArnoBotLandingPage() {
           background: rgba(17,24,39,0.9); backdrop-filter: blur(12px);
         }
         .nav-logo {
-          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
           color: #f1f5f9; text-decoration: none;
         }
         .nav-logo span { color: #f59e0b; }
         .nav-spacer { flex: 1; }
         .nav-auth { display: flex; gap: 32px; align-items: center; }
         .nav-login {
-          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
           color: #9ca3af; text-decoration: none; transition: color 0.2s;
         }
         .nav-login:hover { color: #f1f5f9; }
@@ -105,7 +105,7 @@ export default async function ArnoBotLandingPage() {
           font-family: 'Oswald', sans-serif; font-size: clamp(40px, 6vw, 72px); font-weight: 600;
           text-transform: uppercase; line-height: 1.05; color: #f8fafc;
         }
-        .hero-word-rotator-wrap { position: relative; display: inline-block; }
+        .hero-word-rotator-wrap { position: relative; display: block; min-height: 2.2em; }
         .hero-word-rotator { display: inline-block; color: #f59e0b; animation: hero-word-in 0.5s ease; }
         @keyframes hero-word-in {
           from { opacity: 0; transform: translateY(8px); }
@@ -165,30 +165,6 @@ export default async function ArnoBotLandingPage() {
           letter-spacing: 0.02em; color: #f8fafc;
         }
         .feature-desc { line-height: 1.6; color: #94a3b8; }
-
-        /* METHODE */
-        .method-section { margin: 0 auto; max-width: 1152px; padding: 0 40px 96px; }
-        .method-head { margin-bottom: 56px; max-width: 720px; }
-        .method-sub { margin-top: 16px; font-size: 16px; line-height: 1.6; color: #94a3b8; }
-        .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .method-card {
-          display: flex; flex-direction: column; gap: 12px; border-radius: 12px; background: #1e293b;
-          padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        .method-card-accent { box-shadow: 0 0 0 1px rgba(245,158,11,0.4), 0 10px 30px rgba(0,0,0,0.2); }
-        .method-icon {
-          display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;
-          border-radius: 8px; background: rgba(245,158,11,0.1); color: #f59e0b;
-        }
-        .method-index { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.2em; color: #f59e0b; }
-        .method-title {
-          font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 500; text-transform: uppercase;
-          letter-spacing: 0.02em; color: #f8fafc;
-        }
-        .method-desc { line-height: 1.6; color: #94a3b8; }
-        .method-link { color: #f59e0b; }
-        .method-tagline { margin-top: 40px; display: flex; align-items: center; gap: 16px; font-size: 15px; color: #94a3b8; }
-        .method-tagline-bar { display: block; width: 32px; height: 3px; flex-shrink: 0; background: #f59e0b; border-radius: 2px; }
 
         /* STATS BAND */
         .stats-band { max-width: 1152px; margin: 96px auto; padding: 0 40px; }
@@ -261,8 +237,6 @@ export default async function ArnoBotLandingPage() {
           .hero-section { padding: 120px 20px 64px; }
           .features-section { padding: 56px 20px; }
           .features-grid { grid-template-columns: 1fr; }
-          .method-section { padding: 0 20px 56px; }
-          .method-grid { grid-template-columns: 1fr; }
           .stats-band { margin: 56px auto; padding: 0 16px; }
           .stats-card { grid-template-columns: 1fr; padding: 40px 24px; gap: 32px; }
           .stats-card > div:not(:first-child) { border-left: none; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px; }
@@ -291,7 +265,7 @@ export default async function ArnoBotLandingPage() {
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
             <h1 className="hero-h1">
-              Elke dag dichter bij je <HeroWordRotator />
+              Elke dag dichter bij <HeroWordRotator />
             </h1>
             <p className="hero-sub">
               ArnoBot coacht je door elk salesgesprek, elke pipeline-review en elke deal. Persoonlijke AI-coaching op het niveau van een topcoach, altijd beschikbaar, altijd scherp.
@@ -330,39 +304,6 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* METHODE */}
-      <section className="method-section">
-        <div className="method-head">
-          <p className="section-eyebrow">DE METHODE</p>
-          <h2 className="section-h2">Geen AI zonder Arno. Geen Arno zonder AI.</h2>
-          <p className="method-sub">ArnoBot is geen anonieme chatbot. Elk advies is gebouwd op tien jaar salescoaching van Arno, en waar het er echt om spant, stapt hij zelf in.</p>
-        </div>
-        <div className="method-grid">
-          <div className="method-card">
-            <div className="method-icon"><User size={24} aria-hidden="true" /></div>
-            <span className="method-index">01</span>
-            <h3 className="method-title">Het fundament: Arno</h3>
-            <p className="method-desc">Tien jaar coaching, honderden trajecten en al zijn blogs en methodes vormen de kennisbasis.</p>
-          </div>
-          <div className="method-card method-card-accent">
-            <div className="method-icon"><Cpu size={24} aria-hidden="true" /></div>
-            <span className="method-index">02</span>
-            <h3 className="method-title">De versnelling: AI</h3>
-            <p className="method-desc">De AI luistert mee met elk gesprek, analyseert met Arno's methode en coacht dag en nacht.</p>
-          </div>
-          <div className="method-card">
-            <div className="method-icon"><Users size={24} aria-hidden="true" /></div>
-            <span className="method-index">03</span>
-            <h3 className="method-title">De mens: Arno stapt in</h3>
-            <p className="method-desc">Bij de deals en dips die er echt toe doen, schakelt Arno zelf bij via <Link href="/upgrade" className="method-link">ARNOLIVE</Link>.</p>
-          </div>
-        </div>
-        <p className="method-tagline">
-          <span className="method-tagline-bar" aria-hidden="true" />
-          Mens traint machine. Machine schaalt mens. Jij wint de deal.
-        </p>
-      </section>
-
       {/* STATS BAND */}
       <section className="stats-band">
         <div className="stats-card">
@@ -386,7 +327,7 @@ export default async function ArnoBotLandingPage() {
         <div className="cta-glow" aria-hidden="true" />
         <div className="cta-inner">
           <h2 className="cta-h2">Straks vragen ze hoe je het deed.</h2>
-          <p className="cta-sub">Start met ArnoBot. Geen creditcard nodig, geen verplichtingen, alleen betere salesgesprekken.</p>
+          <p className="cta-sub">Start met ArnoBot. Geen creditcard nodig, geen verplichtingen. Alleen betere salesgesprekken.</p>
           <a href="/sign-up" className="cta-btn">30 dagen gratis</a>
         </div>
       </section>
