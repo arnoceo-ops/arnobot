@@ -22,6 +22,12 @@ const FIXED_TESTIMONIALS: Testimonial[] = [
     name: 'Richard Maddocks',
     role: 'Trainer & Author of The Energy Book',
   },
+  {
+    _id: 'fixed-stephan-bosman',
+    quote: 'Arno facilitated Neomax with his knowledge & expertise which resulted in achieving our targets to do business with 60% of the Top 500 companies within 5 years.',
+    name: 'Stephan Bosman',
+    role: 'Managing Director @ Neomax',
+  },
 ]
 
 async function getTestimonials(): Promise<Testimonial[]> {
@@ -280,21 +286,30 @@ export default async function ArnoBotLandingPage() {
         .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 4vw, 52px); color: #f59e0b; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; }
         .stat-label { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #9ca3af; letter-spacing: 0.3px; }
 
-        /* ── TESTIMONIALS ── */
+        /* ── TESTIMONIALS (langzaam scrollende slider) ── */
         .testimonial-section {
-          background: #f1f5f9; padding: 80px 60px; border-top: 3px solid #f59e0b;
+          background: #f1f5f9; padding: 80px 0; border-top: 3px solid #f59e0b; overflow: hidden;
         }
-        .testimonial-inner { max-width: 1100px; margin: 0 auto; }
+        .testimonial-inner { max-width: 1100px; margin: 0 auto 48px; padding: 0 60px; }
         .testimonial-label {
           font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
           text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
         }
         .testimonial-heading {
           font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 48px);
-          color: #1e293b; letter-spacing: 1px; margin-bottom: 48px;
+          color: #1e293b; letter-spacing: 1px;
         }
-        .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
-        .testimonial-card { background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px; }
+        .testimonial-track-wrap { overflow: hidden; width: 100%; }
+        .testimonial-track {
+          display: flex; gap: 32px; width: max-content;
+          animation: testimonial-scroll 36s linear infinite;
+        }
+        .testimonial-track:hover { animation-play-state: paused; }
+        @keyframes testimonial-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .testimonial-card { background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px; flex: 0 0 380px; }
         .testimonial-quote {
           font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.8; color: #1e293b; margin-bottom: 20px;
         }
@@ -362,7 +377,8 @@ export default async function ArnoBotLandingPage() {
           .faq-section { padding: 48px 24px; }
           .faq-grid { grid-template-columns: 1fr; gap: 32px; }
 
-          .testimonial-section { padding: 48px 24px; }
+          .testimonial-section { padding: 48px 0; }
+          .testimonial-inner { padding: 0 24px; }
 
           .final-cta-section { padding: 48px 24px; }
 
@@ -490,28 +506,38 @@ export default async function ArnoBotLandingPage() {
           <div style={{maxWidth:'540px', width:'100%'}}>
             <div className="feature-item" style={{paddingTop:'0'}}>
               <span className="feature-arrow">1</span>
-              <span className="feature-text">Deel je situatie<small>Markt, product, targets. ArnoBot snapt het meteen.</small></span>
+              <span className="feature-text">Vertel je situatie<small>Markt, product, targets. Klaar in twee minuten.</small></span>
             </div>
             <div className="feature-item">
               <span className="feature-arrow">2</span>
-              <span className="feature-text">Bouw je salesarchief op<small>Elk gesprek blijft bewaard. Hoe meer, hoe scherper.</small></span>
+              <span className="feature-text">Stel je scherpste vraag<small>Een dode deal, een lastige klant, een team dat vastzit.</small></span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-arrow">3</span>
+              <span className="feature-text">Krijg een concreet antwoord<small>Geen algemeenheden, een directe en bruikbare volgende stap.</small></span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-arrow">4</span>
+              <span className="feature-text">Bouw je salesarchief op<small>Elk gesprek blijft bewaard, altijd terug te vinden.</small></span>
             </div>
             <div className="feature-item" style={{borderBottom:'none'}}>
-              <span className="feature-arrow">3</span>
-              <span className="feature-text">Krijg steeds scherper advies<small>Persoonlijker en raker met elk gesprek.</small></span>
+              <span className="feature-arrow">5</span>
+              <span className="feature-text">Word met elk gesprek scherper gekend<small>Patronen, blinde vlekken, kansen: ArnoBot ziet ze steeds beter.</small></span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TESTIMONIALS — vaste aanbevelingen over Arno's expertise, plus toekomstige productreviews uit Sanity */}
+      {/* TESTIMONIALS — vaste aanbevelingen over Arno's expertise, plus toekomstige productreviews uit Sanity. Traag scrollende slider, dubbele set voor een naadloze loop. */}
       <section className="testimonial-section">
         <div className="testimonial-inner">
           <p className="testimonial-label">Wat mensen over Arno zeggen</p>
           <h2 className="testimonial-heading">Geen loze beloftes</h2>
-          <div className="testimonial-grid">
-            {testimonials.map(t => (
-              <div className="testimonial-card" key={t._id}>
+        </div>
+        <div className="testimonial-track-wrap">
+          <div className="testimonial-track">
+            {[...testimonials, ...testimonials].map((t, i) => (
+              <div className="testimonial-card" key={`${t._id}-${i}`}>
                 <p className="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
                 <p className="testimonial-name">{t.name}</p>
                 {t.role && <p className="testimonial-role">{t.role}</p>}
@@ -526,15 +552,15 @@ export default async function ArnoBotLandingPage() {
         <div className="stats-grid">
           <div>
             <p className="stat-num">42</p>
-            <p className="stat-label">Jaar sales-ervaring</p>
+            <p className="stat-label">Sales expertise</p>
           </div>
           <div>
             <p className="stat-num">369.000+</p>
-            <p className="stat-label">Woorden verkoopexpertise</p>
+            <p className="stat-label">Woorden</p>
           </div>
           <div>
             <p className="stat-num">500+</p>
-            <p className="stat-label">Blogs</p>
+            <p className="stat-label">Blog posts</p>
           </div>
         </div>
       </section>
@@ -571,9 +597,6 @@ export default async function ArnoBotLandingPage() {
             <span style={{fontSize:'12px', color:'#6b7280', fontFamily:"'DM Sans', sans-serif", letterSpacing:'0.5px'}}>30 dagen gratis</span>
           </div>
         </div>
-        <p style={{maxWidth:'760px', margin:'16px auto 0', textAlign:'center', fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#6b7280', letterSpacing:'0.3px'}}>
-          Dat is minder dan een kwartier consultancy. Voor een hele maand 24/7 coaching.
-        </p>
         <div style={{maxWidth:'760px', margin:'20px auto 0', borderTop:'1px solid #374151', paddingTop:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'12px', textAlign:'center'}}>
           <span style={{fontFamily:"'DM Sans', sans-serif", fontSize:'13px', color:'#9ca3af', letterSpacing:'0.5px'}}>
             Wil je je hele salesteam uitrusten met ArnoBot als persoonlijke coach?
