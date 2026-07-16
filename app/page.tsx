@@ -177,7 +177,7 @@ export default async function ArnoBotLandingPage() {
         /* ── HERO FOTO (diagonale uitsnede + speedlines voor snelheid) ── */
         .hero-photo-wrap { position: relative; width: 100%; max-width: 600px; }
         .hero-photo {
-          width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center 78%; display: block;
+          width: 100%; height: auto; display: block;
           clip-path: polygon(0 0, 100% 0, 100% 88%, 85% 100%, 0 100%);
           box-shadow: 0 32px 64px rgba(0,0,0,0.45);
         }
