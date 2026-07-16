@@ -302,14 +302,15 @@ export default async function ArnoBotLandingPage() {
         }
         .testimonial-grid {
           max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+          overflow: hidden;
         }
         .testimonial-card {
           background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 28px;
-          animation: testimonial-fade 0.5s ease;
+          animation: testimonial-slide 0.6s ease;
         }
-        @keyframes testimonial-fade {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes testimonial-slide {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
         }
         .testimonial-quote {
           font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.8; color: #1e293b; margin-bottom: 20px;
