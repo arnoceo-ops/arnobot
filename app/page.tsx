@@ -525,16 +525,16 @@ export default async function ArnoBotLandingPage() {
       <section className="stats-section">
         <div className="stats-grid">
           <div>
-            <p className="stat-num">40</p>
+            <p className="stat-num">42</p>
             <p className="stat-label">Jaar sales-ervaring</p>
           </div>
           <div>
-            <p className="stat-num">188.000+</p>
-            <p className="stat-label">Woorden verkoopexpertise in de kennisbank</p>
+            <p className="stat-num">369.000+</p>
+            <p className="stat-label">Woorden verkoopexpertise</p>
           </div>
           <div>
-            <p className="stat-num">205</p>
-            <p className="stat-label">Geanalyseerde blogposts als bron</p>
+            <p className="stat-num">500+</p>
+            <p className="stat-label">Blogs</p>
           </div>
         </div>
       </section>
