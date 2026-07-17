@@ -135,7 +135,7 @@ export default async function ArnoBotLandingPage() {
         }
 
         .hero-photo-glow {
-          position: absolute; inset: -16px; border-radius: 24px 24px 0 0;
+          position: absolute; top: 0; right: -16px; bottom: -16px; left: -16px; border-radius: 0 0 24px 24px;
           background: rgba(245,158,11,0.1); filter: blur(40px);
         }
         .hero-photo {
