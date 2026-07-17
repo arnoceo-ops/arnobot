@@ -90,14 +90,14 @@ export default async function ArnoBotLandingPage() {
         .nav-cta-btn:hover { background: #d97706; }
 
         /* HERO */
-        .hero-section { position: relative; overflow: hidden; }
+        .hero-section { position: relative; }
         .hero-glow {
           pointer-events: none; position: absolute; inset: 0;
           background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(245,158,11,0.07), transparent 70%);
         }
         .hero-glow-bottom {
           pointer-events: none; position: absolute; inset: 0;
-          background: radial-gradient(ellipse 50% 60% at 70% 100%, rgba(245,158,11,0.12), transparent 70%);
+          background: radial-gradient(ellipse 60% 50% at 70% 100%, rgba(245,158,11,0.3), transparent 70%);
         }
         .hero-inner {
           position: relative; margin: 0 auto; max-width: 1152px; display: flex; flex-direction: column;
