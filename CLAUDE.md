@@ -55,6 +55,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Geen development-instance in productie?
 - Zijn er nieuwe beveiligingsinstellingen beschikbaar (bijv. device fingerprinting, bot-detectie)?
 - **Openstaand actiepunt:** inactivity timeout inschakelen (Clerk dashboard → Sessions). Vereist een betaald Clerk-plan voor productiegebruik, dus pas oppakken bij "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven. Geen "log uit bij browser sluiten"-optie beschikbaar bij Clerk, inactivity timeout is het dichtstbijzijnde alternatief.
+- **Openstaand actiepunt (deadline 18 januari 2027):** Clerk stopt op die datum met oude CBC-mode TLS-cipher suites op custom domains (Frontend API + Account Portal, dus ook `clerk.arno.bot`). Voor ArnoBot vermoedelijk geen actie nodig (moderne Vercel/Next.js-stack, reguliere browsers), maar bij de kwartaalcheck vlak vóór de deadline nog een keer bevestigen dat er geen legacy clients (oude mobiele app, custom HTTP-integratie) op Clerk aansluiten.
 
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)
