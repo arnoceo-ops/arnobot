@@ -103,15 +103,15 @@ export default async function ArnoBotLandingPage() {
         .hero-eyebrow { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; color: #f59e0b; }
         .hero-h1 {
           font-family: 'Oswald', sans-serif; font-size: 48px; font-weight: 600;
-          text-transform: uppercase; line-height: 1.05; color: #f8fafc;
+          text-transform: uppercase; line-height: 1.05; color: #f8fafc; text-wrap: balance;
         }
-        .hero-word-rotator-wrap { position: relative; display: block; min-height: 2.2em; }
+        .hero-word-rotator-wrap { position: relative; display: inline-block; }
         .hero-word-rotator { display: inline-block; color: #f59e0b; animation: hero-word-in 0.5s ease; }
         @keyframes hero-word-in {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .hero-sub { max-width: 576px; font-size: 18px; line-height: 1.625; color: #94a3b8; }
+        .hero-sub { max-width: 576px; font-size: 18px; line-height: 1.625; color: #94a3b8; text-wrap: pretty; }
         .hero-cta {
           display: inline-flex; align-items: center; border-radius: 6px; background: #f59e0b;
           padding: 16px 32px; font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600;
@@ -119,6 +119,7 @@ export default async function ArnoBotLandingPage() {
           box-shadow: 0 20px 40px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
         .hero-cta:hover { transform: scale(1.05); }
+        .hero-cta:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
         .hero-photo-col { position: relative; flex: 1; width: 100%; }
 
         @media (min-width: 768px) {
