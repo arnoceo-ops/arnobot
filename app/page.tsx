@@ -213,17 +213,20 @@ export default async function ArnoBotLandingPage() {
         .htc-dot-active { width: 32px; background: #f59e0b; }
 
         /* CTA BAND */
-        .cta-band { position: relative; overflow: hidden; padding: 112px 40px; }
+        .cta-band { position: relative; overflow: hidden; padding: 112px 24px; }
         .cta-glow {
           pointer-events: none; position: absolute; inset: 0;
           background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(245,158,11,0.12), transparent 70%);
         }
         .cta-inner { position: relative; margin: 0 auto; max-width: 768px; display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center; }
         .cta-h2 {
-          font-family: 'Oswald', sans-serif; font-size: clamp(30px, 5vw, 60px); font-weight: 600;
-          text-transform: uppercase; line-height: 1.15; color: #f8fafc;
+          font-family: 'Oswald', sans-serif; font-size: 36px; font-weight: 600;
+          text-transform: uppercase; line-height: 1.25; color: #f8fafc; text-wrap: balance;
         }
-        .cta-sub { max-width: 576px; font-size: 18px; line-height: 1.6; color: #94a3b8; }
+        @media (min-width: 768px) {
+          .cta-h2 { font-size: 60px; }
+        }
+        .cta-sub { max-width: 576px; font-size: 18px; line-height: 1.625; color: #94a3b8; text-wrap: pretty; }
         .cta-btn {
           display: inline-flex; align-items: center; border-radius: 6px; background: #f59e0b;
           padding: 20px 40px; font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
