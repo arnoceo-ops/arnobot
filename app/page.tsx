@@ -131,7 +131,6 @@ export default async function ArnoBotLandingPage() {
           .hero-inner { flex-direction: row; align-items: flex-end; gap: 32px; padding-bottom: 0; }
           .hero-copy { align-items: flex-start; text-align: left; padding-bottom: 96px; }
           .hero-cta { align-self: flex-start; }
-          .hero-h1 { font-size: 72px; }
           .hero-photo-col { max-width: 448px; }
         }
 

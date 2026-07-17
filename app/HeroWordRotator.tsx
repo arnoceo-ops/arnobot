@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-const WORDS = ['je klant', 'je beste gesprek', 'je vakmanschap', 'de handtekening']
+const WORDS = ['de klant', 'je beste gesprek', 'je vakmanschap', 'de handtekening']
 
 export default function HeroWordRotator() {
   const [index, setIndex] = useState(0)
