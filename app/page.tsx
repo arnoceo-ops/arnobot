@@ -269,9 +269,9 @@ export default async function ArnoBotLandingPage() {
 
       {/* HERO */}
       <section className="hero-section">
-        <div className="hero-glow" aria-hidden="true" />
-        <div className="hero-glow-bottom" aria-hidden="true" />
         <div className="hero-inner">
+          <div className="hero-glow" aria-hidden="true" />
+          <div className="hero-glow-bottom" aria-hidden="true" />
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
             <h1 className="hero-h1">
