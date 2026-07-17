@@ -269,7 +269,8 @@ export default async function ArnoBotLandingPage() {
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
             <h1 className="hero-h1">
-              Elke dag dichter bij <HeroWordRotator />
+              Elke dag dichter<br />
+              bij <HeroWordRotator />
             </h1>
             <p className="hero-sub">
               ArnoBot coacht je door elk salesgesprek, elke pipeline-review en elke deal. Persoonlijke AI-coaching op het niveau van een topcoach, altijd beschikbaar, altijd scherp.
