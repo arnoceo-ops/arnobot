@@ -178,7 +178,6 @@ export default async function ArnoBotLandingPage() {
         }
         .stats-card > div { padding: 0 24px; }
         .stats-card > div:not(:first-child) { border-left: 1px solid #e5ddd0; }
-        .stat-accent { display: block; width: 32px; height: 3px; background: #f59e0b; border-radius: 2px; margin: 0 auto 16px; }
         .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #d98b0f; }
         .stat-label { font-size: 15px; font-weight: 500; color: #6b6456; margin-top: 8px; }
 
@@ -314,7 +313,6 @@ export default async function ArnoBotLandingPage() {
         <div className="stats-card">
           {STATS.map(stat => (
             <div key={stat.label}>
-              <span className="stat-accent" aria-hidden="true" />
               <p className="stat-num">{stat.value}</p>
               <p className="stat-label">{stat.label}</p>
             </div>
