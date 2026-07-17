@@ -177,10 +177,10 @@ export default async function ArnoBotLandingPage() {
           display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;
         }
         .stats-card > div { padding: 0 24px; }
-        .stats-card > div:not(:first-child) { border-left: 1px solid rgba(0,0,0,0.08); }
+        .stats-card > div:not(:first-child) { border-left: 1px solid #e5ddd0; }
         .stat-accent { display: block; width: 32px; height: 3px; background: #f59e0b; border-radius: 2px; margin: 0 auto 16px; }
-        .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #b45309; }
-        .stat-label { font-size: 15px; font-weight: 500; color: #57534e; margin-top: 8px; }
+        .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #d98b0f; }
+        .stat-label { font-size: 15px; font-weight: 500; color: #6b6456; margin-top: 8px; }
 
         /* TESTIMONIALS */
         .testimonial-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
@@ -245,7 +245,7 @@ export default async function ArnoBotLandingPage() {
           .features-grid { grid-template-columns: 1fr; }
           .stats-band { margin: 56px auto; padding: 0 16px; }
           .stats-card { grid-template-columns: 1fr; padding: 40px 24px; gap: 32px; }
-          .stats-card > div:not(:first-child) { border-left: none; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px; }
+          .stats-card > div:not(:first-child) { border-left: none; padding-top: 0; }
           .testimonial-section { padding: 56px 20px; }
           .htc-grid { grid-template-columns: 1fr; }
           .cta-band { padding: 64px 20px; }
