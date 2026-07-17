@@ -131,7 +131,7 @@ export default async function ArnoBotLandingPage() {
         }
 
         .hero-photo {
-          position: relative; width: 100%; aspect-ratio: 520 / 640; display: block;
+          position: relative; width: 100%; aspect-ratio: 3 / 4; display: block;
           border-radius: 24px; object-fit: cover;
           box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
