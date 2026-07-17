@@ -34,8 +34,8 @@ Managers kunnen een teammodule gebruiken: ze zien de voortgang van hun verkopers
 ## Verdienmodel
 
 **Individual (ArnoBot Unlimited):**
-- Maandelijks: €97/maand
-- Jaarlijks: €777/jaar (= €64,75/maand, korting ~33%)
+- Maandelijks: €77/maand
+- Jaarlijks: €697/jaar (= €58,08/maand, korting ~24,6%)
 - Trial: 30 dagen gratis, geen creditcard vereist
 
 **Team (staffelprijs):**

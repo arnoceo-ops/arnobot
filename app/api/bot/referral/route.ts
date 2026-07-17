@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
   // Email naar referrer
   const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
   if (isValidEmail(referrer.email)) {
-    const body = `<strong style="color:#f1f5f9;">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b;">${code.toUpperCase()}</strong>.<br><br>Zodra ${newUserName} een betaald abonnement afsluit, ontvang jij €97 tegoed. Bij een maandabonnement nadat ${newUserName} drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`
+    const body = `<strong style="color:#f1f5f9;">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b;">${code.toUpperCase()}</strong>.<br><br>Zodra ${newUserName} een betaald abonnement afsluit, ontvang jij €77 tegoed. Bij een maandabonnement nadat ${newUserName} drie betaalmaanden heeft voltooid. Bij een jaarabonnement direct na de eerste betaling.`
     await resend.emails.send({
       from: 'ArnoBot <noreply@arno.bot>',
       to: referrer.email,

@@ -91,7 +91,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoeveel kost ArnoBot?',
-        a: 'ArnoBot kost €97 per maand of €777 per jaar. Je begint met een gratis proefperiode van 30 dagen, zonder verplichtingen. Na afloop kies je zelf of je doorgaat.',
+        a: 'ArnoBot kost €77 per maand of €697 per jaar. Je begint met een gratis proefperiode van 30 dagen, zonder verplichtingen. Na afloop kies je zelf of je doorgaat.',
       },
       {
         q: 'Hoe lang duurt de proefperiode?',
@@ -112,7 +112,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Hoe hoog is het tegoed?',
-        a: 'Per succesvolle referral ontvang je €97 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
+        a: 'Per succesvolle referral ontvang je €77 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
       },
     ],
   },
