@@ -95,10 +95,6 @@ export default async function ArnoBotLandingPage() {
           pointer-events: none; position: absolute; inset: 0;
           background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(245,158,11,0.07), transparent 70%);
         }
-        .hero-glow-bottom {
-          pointer-events: none; position: absolute; inset: 0;
-          background: radial-gradient(ellipse 60% 50% at 70% 100%, rgba(245,158,11,0.3), transparent 70%);
-        }
         .hero-inner {
           position: relative; margin: 0 auto; max-width: 1152px; display: flex; flex-direction: column;
           align-items: center; gap: 48px; padding: 64px 24px 80px;
@@ -140,7 +136,7 @@ export default async function ArnoBotLandingPage() {
 
         .hero-photo-glow {
           position: absolute; inset: -16px; border-radius: 24px;
-          background: rgba(245,158,11,0.1); filter: blur(40px);
+          background: rgba(245,158,11,0.35); filter: blur(40px);
         }
         .hero-photo {
           position: relative; width: 100%; aspect-ratio: 520 / 640; display: block;
@@ -271,7 +267,6 @@ export default async function ArnoBotLandingPage() {
       <section className="hero-section">
         <div className="hero-inner">
           <div className="hero-glow" aria-hidden="true" />
-          <div className="hero-glow-bottom" aria-hidden="true" />
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
             <h1 className="hero-h1">
