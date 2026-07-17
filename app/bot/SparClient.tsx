@@ -1020,7 +1020,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           width: 28px; height: 28px;
           display: flex; align-items: center; justify-content: center;
           background: none; border: none; border-radius: 50%;
-          color: #6b7280; font-size: 22px; line-height: 1; cursor: pointer; padding: 0;
+          color: rgb(241, 245, 249); font-size: 22px; line-height: 1; cursor: pointer; padding: 0;
         }
         .spar-attach-btn:hover { color: #f1f5f9; }
         .spar-textarea::placeholder { color: #4b5563; font-style: normal; font-size: 15px; font-weight: 400; }
