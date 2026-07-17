@@ -227,7 +227,7 @@ export default async function ArnoBotLandingPage() {
         .cta-sub { max-width: 576px; font-size: 18px; line-height: 1.625; color: #94a3b8; text-wrap: pretty; }
         .cta-btn {
           display: inline-flex; align-items: center; border-radius: 6px; background: #f59e0b;
-          padding: 20px 40px; font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
+          padding: 16px 32px; font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600;
           letter-spacing: 0.1em; color: #111827; text-decoration: none; text-transform: uppercase;
           box-shadow: 0 20px 40px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
