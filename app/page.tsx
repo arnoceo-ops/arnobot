@@ -173,6 +173,73 @@ export default async function ArnoBotLandingPage() {
         .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #d98b0f; }
         .stat-label { font-size: 15px; font-weight: 500; color: #6b6456; margin-top: 8px; }
 
+        /* WAAROM ARNOBOT */
+        .waarom-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
+        .waarom-eyebrow { margin-bottom: 18px; font-size: 14px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #f59e0b; }
+        .waarom-h2 {
+          font-family: 'Oswald', sans-serif; font-size: clamp(34px, 5vw, 54px); font-weight: 600;
+          line-height: 1.08; text-transform: uppercase; max-width: 18ch; color: #f8fafc;
+        }
+        .waarom-intro { margin-top: 20px; font-size: 18px; line-height: 1.65; color: #9ca3af; max-width: 54ch; }
+
+        .waarom-bron {
+          margin-top: 56px; background: #0d1526; border: 1px solid rgba(245,158,11,0.45);
+          border-radius: 12px; padding: 52px 48px; display: grid; grid-template-columns: 1fr 1.2fr;
+          gap: 44px; align-items: center;
+        }
+        .waarom-bron-stelling {
+          font-family: 'Oswald', sans-serif; font-weight: 500; font-size: clamp(26px, 3.2vw, 36px);
+          line-height: 1.18; text-transform: uppercase; color: #f8fafc;
+        }
+        .waarom-bron-stelling span { color: #f59e0b; }
+        .waarom-bron-toelichting {
+          font-size: 17px; line-height: 1.7; color: #9ca3af;
+          border-left: 2px solid rgba(245,158,11,0.35); padding-left: 28px;
+        }
+
+        .waarom-selectie { margin-top: 88px; position: relative; }
+        .waarom-selectie-kop {
+          font-family: 'Oswald', sans-serif; font-weight: 600; font-size: clamp(24px, 3vw, 32px);
+          text-transform: uppercase; line-height: 1.15; color: #f8fafc;
+        }
+        .waarom-kolommen { display: grid; grid-template-columns: 1fr 1.4fr; gap: 44px; margin-top: 32px; align-items: start; }
+        .waarom-nee {
+          font-size: 16px; line-height: 1.7; color: rgba(156,163,175,0.75);
+          border-top: 2px solid rgba(255,255,255,0.08); padding-top: 22px;
+        }
+        .waarom-ja {
+          font-size: 17px; line-height: 1.7; color: rgba(248,250,252,0.92);
+          border-top: 2px solid #f59e0b; padding-top: 22px;
+        }
+        .waarom-ja strong { color: #f59e0b; font-weight: 600; }
+        .waarom-stempel {
+          display: inline-block; margin-top: 26px; font-family: 'Oswald', sans-serif; font-weight: 600;
+          font-size: 15px; letter-spacing: 0.18em; text-transform: uppercase; color: #f59e0b;
+          border: 2px solid #f59e0b; border-radius: 4px; padding: 8px 18px; transform: rotate(-2deg);
+        }
+
+        .waarom-ingebouwd { margin-top: 88px; }
+        .waarom-ingebouwd-kop {
+          font-family: 'Oswald', sans-serif; font-weight: 600; font-size: clamp(24px, 3vw, 32px);
+          text-transform: uppercase; line-height: 1.15; color: #f8fafc;
+        }
+        .waarom-ingebouwd-kop span { color: #f59e0b; }
+        .waarom-ingebouwd-sub { margin-top: 12px; color: #9ca3af; font-size: 17px; max-width: 56ch; }
+        .waarom-punten { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+        .waarom-punt { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-left: 3px solid #f59e0b; border-radius: 12px; padding: 30px 34px 32px; }
+        .waarom-punt-tag {
+          font-family: 'Oswald', sans-serif; font-weight: 500; font-size: 13px; letter-spacing: 0.2em;
+          text-transform: uppercase; color: #f59e0b; margin-bottom: 12px;
+        }
+        .waarom-punt p { font-size: 16px; line-height: 1.65; color: rgba(248,250,252,0.88); }
+
+        @media (max-width: 860px) {
+          .waarom-bron { grid-template-columns: 1fr; padding: 40px 32px; gap: 28px; }
+          .waarom-bron-toelichting { border-left: none; border-top: 2px solid rgba(245,158,11,0.35); padding-left: 0; padding-top: 24px; }
+          .waarom-kolommen { grid-template-columns: 1fr; gap: 28px; }
+          .waarom-punten { grid-template-columns: 1fr; }
+        }
+
         /* TESTIMONIALS */
         .testimonial-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
         .htc-header { margin-bottom: 56px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
@@ -237,6 +304,7 @@ export default async function ArnoBotLandingPage() {
           .stats-band { margin: 56px auto; padding: 0 16px; }
           .stats-card { grid-template-columns: 1fr; padding: 40px 24px; gap: 32px; }
           .stats-card > div:not(:first-child) { border-left: none; padding-top: 0; }
+          .waarom-section { padding: 56px 20px; }
           .testimonial-section { padding: 56px 20px; }
           .htc-grid { grid-template-columns: 1fr; }
           .cta-band { padding: 64px 20px; }
@@ -307,6 +375,53 @@ export default async function ArnoBotLandingPage() {
               <p className="stat-label">{stat.label}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* WAAROM ARNOBOT */}
+      <section className="waarom-section" id="waarom-arnobot">
+        <p className="waarom-eyebrow">Waarom ArnoBot</p>
+        <h2 className="waarom-h2">Je weet wie er antwoordt.</h2>
+        <p className="waarom-intro">Elk advies in ArnoBot komt uit één bron: veertig jaar verkopen op topniveau. Duizenden deals, gewonnen en verloren, en alles wat daarvan is geleerd. Geen mening van iedereen, maar de aanpak van iemand.</p>
+
+        <div className="waarom-bron">
+          <p className="waarom-bron-stelling">Alsof je veertig jaar naast <span>één topverkoper</span> hebt gezeten.</p>
+          <p className="waarom-bron-toelichting">Je krijgt zijn manier van kijken, zijn afwegingen en zijn eerlijkheid. Hoe hij een gesprek opent, wanneer hij zwijgt, waarom hij een deal laat lopen. Dat leer je normaal alleen door jaren mee te lopen. Nu zit het in elk antwoord.</p>
+        </div>
+
+        <div className="waarom-selectie">
+          <p className="waarom-selectie-kop">Niet voor iedereen.</p>
+          <div className="waarom-kolommen">
+            <p className="waarom-nee">Zoek je een gemiddeld antwoord? Dat is overal te krijgen, en meestal gratis. Daar heb je ArnoBot niet voor nodig.</p>
+            <div>
+              <p className="waarom-ja">ArnoBot is gebouwd voor <strong>de sales elite</strong>, en voor iedere verkoper die daar deel van wil uitmaken. Voor wie de diepere lagen van het vak en van zichzelf wil leren kennen. Betere deals, sterkere klantrelaties, Champions League spelen in sales.</p>
+              <span className="waarom-stempel">No mediocrity.</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="waarom-ingebouwd">
+          <p className="waarom-ingebouwd-kop">Niets instellen, niets uitleggen.<br /><span>Het zit ingebouwd.</span></p>
+          <p className="waarom-ingebouwd-sub">Dit doet ArnoBot standaard, vanaf je eerste vraag.</p>
+
+          <div className="waarom-punten">
+            <div className="waarom-punt">
+              <p className="waarom-punt-tag">Jouw context</p>
+              <p>ArnoBot weet wie je bent, wat je verkoopt en waar je vorige deal strandde. Elk advies past bij jouw situatie, niet bij een gemiddelde verkoper.</p>
+            </div>
+            <div className="waarom-punt">
+              <p className="waarom-punt-tag">één advies</p>
+              <p>Geen vijf opties om uit te kiezen, maar één advies, met de reden erbij. Zo weet je wat je gaat doen en waarom.</p>
+            </div>
+            <div className="waarom-punt">
+              <p className="waarom-punt-tag">Jouw gesprekken</p>
+              <p>Feedback op wat jij zei in je echte salesgesprekken. Niet op een voorbeeld uit een boekje.</p>
+            </div>
+            <div className="waarom-punt">
+              <p className="waarom-punt-tag">De mens erachter</p>
+              <p>Loop je echt vast? Dan stopt de bot en begint de mens. Bij elk account is één persoonlijk gesprek met Arno inbegrepen, vanaf dag één.</p>
+            </div>
+          </div>
         </div>
       </section>
 
