@@ -91,10 +91,6 @@ export default async function ArnoBotLandingPage() {
 
         /* HERO */
         .hero-section { position: relative; }
-        .hero-glow {
-          pointer-events: none; position: absolute; inset: 0;
-          background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(245,158,11,0.07), transparent 70%);
-        }
         .hero-inner {
           position: relative; margin: 0 auto; max-width: 1152px; display: flex; flex-direction: column;
           align-items: center; gap: 48px; padding: 64px 24px 80px;
@@ -134,10 +130,6 @@ export default async function ArnoBotLandingPage() {
           .hero-photo-col { max-width: 448px; }
         }
 
-        .hero-photo-glow {
-          position: absolute; inset: -16px; border-radius: 24px;
-          background: rgba(245,158,11,0.35); filter: blur(40px);
-        }
         .hero-photo {
           position: relative; width: 100%; aspect-ratio: 520 / 640; display: block;
           border-radius: 24px; object-fit: cover;
@@ -266,7 +258,6 @@ export default async function ArnoBotLandingPage() {
       {/* HERO */}
       <section className="hero-section">
         <div className="hero-inner">
-          <div className="hero-glow" aria-hidden="true" />
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
             <h1 className="hero-h1">
@@ -279,8 +270,7 @@ export default async function ArnoBotLandingPage() {
             <a href="/sign-up" className="hero-cta">30 dagen gratis</a>
           </div>
           <div className="hero-photo-col">
-            <div className="hero-photo-glow" aria-hidden="true" />
-            <img src="/team-founder.png" alt="De oprichter van ArnoBot, sales coach" className="hero-photo" />
+            <img src="/cyborg.jpg" alt="Arno Diepeveen" className="hero-photo" />
           </div>
         </div>
       </section>
