@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : 'afgelopen kwartaal'
 
-  const response = await anthropic.messages.create({
+  const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 1500,
     system: `Je schrijft een redactionele briefing voor Arno Diepeveen. Arno is salesexpert en schrijft over sales, leiderschap en commercieel succes voor managers en eindbazen. De input zijn gesprekstitels en samenvattingen van gesprekken die gebruikers de ${periodeLabel} hebben gevoerd met ArnoBot, zijn AI-salescoach. Geef een briefing in drie onderdelen: THEMA'S, PATRONEN, BLOGINSPIRATIE. Schrijf direct. Geen inleiding. Begin gewoon. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes. Gebruik het woord "moeten" niet.`,
@@ -80,7 +80,14 @@ export async function POST(req: NextRequest) {
     }],
   })
 
-  const analyse = getText(response.content)
+  let analyse = getText(await callModel().then(r => r.content))
+  if (!analyse) {
+    analyse = getText(await callModel().then(r => r.content))
+  }
+  if (!analyse) {
+    console.error('[admin/blogs-analyse] lege analyse na retry')
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
 
   const { data: saved } = await supabase
     .from('arnobot_idee_analyses')

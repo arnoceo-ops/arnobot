@@ -109,32 +109,45 @@ export async function GET(req: NextRequest) {
 
     const sessieCount = rijkeSessies.length
 
-    const [zelfResponse, panelResponse] = await Promise.all([
-      anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
-        system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
-        messages: [{
-          role: 'user',
-          content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]`,
-        }],
-      }),
-      anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 3000,
-        system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
-        messages: [{
-          role: 'user',
-          content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
+    const callZelfModel = () => anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
+      messages: [{
+        role: 'user',
+        content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]`,
+      }],
+    })
+    const callPanelModel = () => anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 3000,
+      system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
+      messages: [{
+        role: 'user',
+        content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
   ? `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft zijn eigen observaties aangeleverd over wat ArnoBot zei in zijn antwoorden. Verwerk zijn input als een juryoordeel.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
   : `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: is dit zijn stem, zijn directheid, zijn timing?)\nScore: [X]/10\n[Oordeel: toon, authenticiteit, aanpak]\nKritisch punt: [één aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
 }\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
-        }],
-      }),
-    ])
+      }],
+    })
 
-    const zelfbeoordeling = getText(zelfResponse.content)
-    const expertpanel = getText(panelResponse.content)
+    const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
+
+    let zelfbeoordeling = getText(zelfResponse.content)
+    let expertpanel = getText(panelResponse.content)
+
+    if (!zelfbeoordeling) {
+      console.error('[cron/meta-analyse] lege zelfbeoordeling, retry')
+      zelfbeoordeling = getText(await callZelfModel().then(r => r.content))
+    }
+    if (!expertpanel) {
+      console.error('[cron/meta-analyse] leeg expertpanel, retry')
+      expertpanel = getText(await callPanelModel().then(r => r.content))
+    }
+    if (!zelfbeoordeling || !expertpanel) {
+      await notifyCronFailure('meta-analyse', new Error('Leeg AI-antwoord na retry, analyse overgeslagen'))
+      return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+    }
 
     await supabase
       .from('arnobot_meta_analyses')

@@ -277,6 +277,7 @@ Geef een diagnose en één concrete aanbeveling. Spreek de manager direct aan me
     }
     if (!summary) {
       console.error('[canvas/alignment] leeg summary-antwoord na retry, userId:', userId)
+      summary = 'Er kon geen analyse worden gegenereerd. Probeer het later opnieuw.'
     }
     const alignmentResultWithSummary: AlignmentResult = {
       ...alignmentResult,

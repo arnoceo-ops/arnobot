@@ -94,13 +94,15 @@ export async function GET() {
     ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\n${voortgangInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.\n\n${taalInstructie}`
     : `Je bent Arno Diepeveen. ${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg.\n\n${taalInstructie}`
 
+  const callModel = () => anthropic.messages.create({
+    model: 'claude-fable-5',
+    max_tokens: 600,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
   let response
   try {
-    response = await anthropic.messages.create({
-      model: 'claude-fable-5',
-      max_tokens: 600,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    response = await callModel()
   } catch (err: unknown) {
     console.error('[uitdaging] generate error', err)
     return NextResponse.json({ error: 'generate_error' }, { status: 500 })
@@ -111,7 +113,27 @@ export async function GET() {
     return NextResponse.json({ error: 'generate_error' }, { status: 500 })
   }
 
-  const uitdaging = getText(response.content).trim()
+  let uitdaging = getText(response.content).trim()
+
+  if (!uitdaging) {
+    console.error('[uitdaging] leeg antwoord, retry')
+    try {
+      response = await callModel()
+    } catch (err: unknown) {
+      console.error('[uitdaging] generate error bij retry', err)
+      return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+    }
+    if (response.stop_reason === 'refusal') {
+      console.error('[uitdaging] refusal bij retry')
+      return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+    }
+    uitdaging = getText(response.content).trim()
+  }
+
+  if (!uitdaging) {
+    console.error('[uitdaging] leeg antwoord na retry')
+    return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+  }
 
   return NextResponse.json({ uitdaging })
 }

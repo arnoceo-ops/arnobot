@@ -618,7 +618,23 @@ PROFIEL VAN DE GEBRUIKER:
           if (remainder) controller.enqueue(encoder.encode(remainder))
 
           const finalMessage = await anthropicStream.finalMessage()
-          const answer = getText(finalMessage.content)
+          let answer = getText(finalMessage.content)
+
+          if (!answer) {
+            console.error('[chat] leeg antwoord na streaming, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)')
+            const retryMessage = await client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: isWidget ? 1500 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+              system: systemPrompt,
+              messages,
+            })
+            answer = getText(retryMessage.content)
+            if (!answer) {
+              console.error('[chat] leeg antwoord na retry, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)')
+              answer = 'Sorry, kun je dat anders verwoorden? Ik kreeg geen goed antwoord terug.'
+            }
+            controller.enqueue(encoder.encode(answer))
+          }
 
           let logId: string | null = null
           if (isWidget) {

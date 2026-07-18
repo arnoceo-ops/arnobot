@@ -153,40 +153,53 @@ export async function POST(req: NextRequest) {
   const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : 'afgelopen kwartaal'
 
   // Stap 5: zelfbeoordeling en expertpanel parallel
-  const [zelfResponse, panelResponse] = await Promise.all([
-    anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
-      system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
+  const callZelfModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4000,
+    system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
 
 ${ARNOBOT_MANDAAT}
 
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
-      messages: [{
-        role: 'user',
-        content: `Hieronder staan ${sessieCount} echte gesprekken van de ${periodeLabel}. Analyseer jezelf kritisch.\n\n${transcripts}\n\nGeef een zelfbeoordeling in vier blokken. Begin elk blok met de naam in hoofdletters op een aparte regel:\n\nWAAR IK STERK WAS\n[concreet, met verwijzing naar de gesprekken. Minimaal 3 observaties.]\n\nWAAR IK TEKORT SCHOOT\n[eerlijk, specifiek. Geen algemeenheden. Minimaal 3 observaties.]\n\nKENNISHIATEN\n[welke vragen kwamen op terrein waar je onvoldoende diepgang had? Wees specifiek.]\n\nWAT IK ZOU VERBETEREN\n[concrete aanbevelingen voor de systeemprompt of kennisbasis. Minimaal 3 punten.]`,
-      }],
-    }),
-    anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
+    messages: [{
+      role: 'user',
+      content: `Hieronder staan ${sessieCount} echte gesprekken van de ${periodeLabel}. Analyseer jezelf kritisch.\n\n${transcripts}\n\nGeef een zelfbeoordeling in vier blokken. Begin elk blok met de naam in hoofdletters op een aparte regel:\n\nWAAR IK STERK WAS\n[concreet, met verwijzing naar de gesprekken. Minimaal 3 observaties.]\n\nWAAR IK TEKORT SCHOOT\n[eerlijk, specifiek. Geen algemeenheden. Minimaal 3 observaties.]\n\nKENNISHIATEN\n[welke vragen kwamen op terrein waar je onvoldoende diepgang had? Wees specifiek.]\n\nWAT IK ZOU VERBETEREN\n[concrete aanbevelingen voor de systeemprompt of kennisbasis. Minimaal 3 punten.]`,
+    }],
+  })
+  const callPanelModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 8000,
+    system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
 
 ${ARNOBOT_MANDAAT}
 
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
-      messages: [{
-        role: 'user',
-        content: `Hieronder staan ${sessieCount} echte gesprekken van ArnoBot de ${periodeLabel}. Laat elk jurylid een oordeel geven in hun eigen stem.\n\n${transcripts}\n\nGeef het oordeel van elk jurylid. Begin elke sectie met de naam in hoofdletters:\n\nMARSHALL GOLDSMITH\n(Executive Coach #1 ter wereld, auteur van "What Got You Here Won\'t Get You There". Zijn centrale overtuiging: echte coaching verandert specifiek gedrag, niet alleen inzicht. Accountability is alles.)\nScore: [X]/10\n[Concreet oordeel in 3-4 zinnen. Verwijs naar specifieke gesprekken. Was er een specifiek gedrag geïdentificeerd? Werd de vraag achter de vraag aangepakt?]\nKritisch punt: [één concrete aanbeveling]\n\nTONY ROBBINS\n(Life & Business Strategist, 50 miljoen mensen bereikt. Zijn centrale vraag: verliet de gebruiker dit gesprek sterker dan hij erin ging? Werd er een grotere visie gecreëerd?)\nScore: [X]/10\n[Concreet oordeel. Werden threats omgezet in opportunities? Is er peak state gecreëerd of bleef het intellectueel?]\nKritisch punt: [één concrete aanbeveling]\n\nELON MUSK\n(CEO Tesla, SpaceX, X. First principles denken. Geen geduld voor vaagheid. De meest directe weg naar resultaat.)\nScore: [X]/10\n[Concreet oordeel. Was het actiegericht? Werd de kern bereikt of bleef ArnoBot ronddraaien?]\nKritisch punt: [één concrete aanbeveling]\n\nDANIEL KAHNEMAN\n(Nobelprijswinnaar Psychologie, "Thinking, Fast and Slow". Menselijk gedrag wordt grotendeels gestuurd door System 1, niet System 2. De meeste coaching faalt omdat ze alleen System 2 aanspreekt.)\nScore: [X]/10\n[Concreet oordeel. Werden emotionele drijfveren aangesproken of bleef het rationeel advies?]\nKritisch punt: [één concrete aanbeveling]\n\nJORDAN BELFORT\n(Wolf of Wall Street, salestrainer. Zijn lens: was het advies commercieel scherp genoeg? Sluit de gebruiker na dit gesprek meer deals?)\nScore: [X]/10\n[Concreet oordeel. Waren de adviezen veldklaar en bruikbaar? Of te filosofisch?]\nKritisch punt: [één concrete aanbeveling]${arnoInputTekst
+    messages: [{
+      role: 'user',
+      content: `Hieronder staan ${sessieCount} echte gesprekken van ArnoBot de ${periodeLabel}. Laat elk jurylid een oordeel geven in hun eigen stem.\n\n${transcripts}\n\nGeef het oordeel van elk jurylid. Begin elke sectie met de naam in hoofdletters:\n\nMARSHALL GOLDSMITH\n(Executive Coach #1 ter wereld, auteur van "What Got You Here Won\'t Get You There". Zijn centrale overtuiging: echte coaching verandert specifiek gedrag, niet alleen inzicht. Accountability is alles.)\nScore: [X]/10\n[Concreet oordeel in 3-4 zinnen. Verwijs naar specifieke gesprekken. Was er een specifiek gedrag geïdentificeerd? Werd de vraag achter de vraag aangepakt?]\nKritisch punt: [één concrete aanbeveling]\n\nTONY ROBBINS\n(Life & Business Strategist, 50 miljoen mensen bereikt. Zijn centrale vraag: verliet de gebruiker dit gesprek sterker dan hij erin ging? Werd er een grotere visie gecreëerd?)\nScore: [X]/10\n[Concreet oordeel. Werden threats omgezet in opportunities? Is er peak state gecreëerd of bleef het intellectueel?]\nKritisch punt: [één concrete aanbeveling]\n\nELON MUSK\n(CEO Tesla, SpaceX, X. First principles denken. Geen geduld voor vaagheid. De meest directe weg naar resultaat.)\nScore: [X]/10\n[Concreet oordeel. Was het actiegericht? Werd de kern bereikt of bleef ArnoBot ronddraaien?]\nKritisch punt: [één concrete aanbeveling]\n\nDANIEL KAHNEMAN\n(Nobelprijswinnaar Psychologie, "Thinking, Fast and Slow". Menselijk gedrag wordt grotendeels gestuurd door System 1, niet System 2. De meeste coaching faalt omdat ze alleen System 2 aanspreekt.)\nScore: [X]/10\n[Concreet oordeel. Werden emotionele drijfveren aangesproken of bleef het rationeel advies?]\nKritisch punt: [één concrete aanbeveling]\n\nJORDAN BELFORT\n(Wolf of Wall Street, salestrainer. Zijn lens: was het advies commercieel scherp genoeg? Sluit de gebruiker na dit gesprek meer deals?)\nScore: [X]/10\n[Concreet oordeel. Waren de adviezen veldklaar en bruikbaar? Of te filosofisch?]\nKritisch punt: [één concrete aanbeveling]${arnoInputTekst
   ? `\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft deze maand zijn eigen observaties aangeleverd. Verwerk zijn input als een juryoordeel: zijn woorden staan er letterlijk in, jij voegt structuur en score toe.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken. Wat herkent hij? Wat bevestigt of weerspreekt de gesprekken zijn punt?]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
   : `\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: herkent de echte Arno zichzelf hierin? Is dit zijn stem, zijn directheid, zijn timing van confronteren?)\nScore: [X]/10\n[Concreet oordeel op toon, aanpak en authenticiteit van de stem]\nKritisch punt: [één concrete aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
 }${gebruikersJurorSection}\n\nOVERALL SCORE: [gemiddelde van zeven scores, of zes als gebruikers n.v.t. is]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]`,
-      }],
-    }),
-  ])
+    }],
+  })
 
-  const zelfbeoordeling = getText(zelfResponse.content)
-  const expertpanel = getText(panelResponse.content)
+  const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
+
+  let zelfbeoordeling = getText(zelfResponse.content)
+  let expertpanel = getText(panelResponse.content)
+
+  if (!zelfbeoordeling) {
+    console.error('[admin/meta-analyse] lege zelfbeoordeling, retry')
+    zelfbeoordeling = getText(await callZelfModel().then(r => r.content))
+  }
+  if (!expertpanel) {
+    console.error('[admin/meta-analyse] leeg expertpanel, retry')
+    expertpanel = getText(await callPanelModel().then(r => r.content))
+  }
+  if (!zelfbeoordeling || !expertpanel) {
+    console.error('[admin/meta-analyse] analyse na retry nog steeds (deels) leeg')
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
 
   const { data: saved } = await supabase
     .from('arnobot_meta_analyses')
