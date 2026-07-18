@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       }
 
       const scoreMessage = await client.messages.create({
-        model: 'claude-sonnet-5',
+        model: 'claude-sonnet-4-6',
         max_tokens: 150,
         messages: [
           {
@@ -71,8 +71,8 @@ Schaal:
     const relevant = await getRelevantChunks(query, 4)
     const context = formatChunksForPrompt(relevant)
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-5',
+    const callFeedbackModel = () => client.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       system: `Je bent ArnoBot, de ongefiltreerde, provocerende AI van Royal Dutch Sales. Je bent gebaseerd op Arno Diepeveen: sales strateeg, auteur, en iemand die al 20 jaar middelmatigheid in salesorganisaties benoemt zonder er omheen te draaien.
 
@@ -122,11 +122,17 @@ Beoordeel dit antwoord op diepgang, concretie en creativiteit/uniciteit. Is het 
       ],
     })
 
+    const extractText = (msg: Awaited<ReturnType<typeof callFeedbackModel>>) =>
+      msg.content.filter(block => block.type === 'text').map(block => block.text).join('')
 
-    const feedback = message.content
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('')
+    let feedback = extractText(await callFeedbackModel())
+    if (!feedback) {
+      feedback = extractText(await callFeedbackModel())
+    }
+    if (!feedback) {
+      console.error('[arnobot] leeg feedback-antwoord na retry, userId:', userId)
+      feedback = 'Er kon geen feedback worden gegenereerd op dit antwoord. Probeer het opnieuw.'
+    }
 
     return NextResponse.json({ feedback: removeAccents(feedback) })
   } catch (error) {

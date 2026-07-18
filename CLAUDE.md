@@ -332,11 +332,11 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 **Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren op of rond 1 augustus (livegang) — wacht minimaal een week na go-live.**
 
-**Openstaand actiepunt (2026-07-audit):** `app/api/cron/model-check/route.ts` bevat een eigen, hardgecodeerde `INVENTORY`-kopie die los staat van deze tabel en er inmiddels van afwijkt (bijv. `bot/uitdaging` stond daar nog als `claude-sonnet-5` i.p.v. `claude-fable-5`). Die kopie moet gelijkgetrokken worden met deze tabel, of vervangen worden door een verwijzing naar één bron, om toekomstige drift tussen beide te voorkomen.
+**Gedaan (2026-07-audit):** `app/api/cron/model-check/route.ts` bevatte een eigen, hardgecodeerde `INVENTORY`-kopie die los stond van deze tabel en er inmiddels van afweek (bijv. `bot/uitdaging` stond daar nog als `claude-sonnet-5` i.p.v. `claude-fable-5`). Gelijkgetrokken met deze tabel.
 
-**Openstaand actiepunt (2026-07-audit):** de routes hierboven zonder expliciete leeg-antwoord-bescherming (`canvas/alignment*`, `arnobot/route.ts`, `cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse`, e.a.) zijn bewust NIET meegenomen in deze fixronde: lager risico door kortere prompts of al aanwezige gedeeltelijke bescherming (JSON-fallbacks, try/catch). Bij een volgende kwartaalcheck opnieuw beoordelen of dit nog steeds volstaat, vooral als een van deze prompts qua lengte/complexiteit groeit.
+**Gedaan (2026-07-audit):** `arnobot/route.ts` (feedback-modus) en `canvas/alignment/route.ts` (summaryMsg) hadden geen expliciete leeg-antwoord-bescherming. Beide voorzien van retry-once + fallback, net als de eerdere fixronde.
 
-**Openstaand actiepunt (2026-07-audit):** `app/api/canvas/alignment-chat/alignment-chat-route.ts` is dode code (bevat een eigen Anthropic-aanroep maar volgt niet de Next.js route-conventie, wordt nergens aangeroepen). Opschonen of verwijderen bij gelegenheid, geen risico maar verwarrend bij toekomstige audits.
+**Openstaand actiepunt (2026-07-audit):** de routes hierboven zonder expliciete leeg-antwoord-bescherming (`cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse`, e.a.) zijn bewust NIET meegenomen in deze fixronde: lager risico door kortere prompts, Haiku (geen thinking-mode) of al aanwezige gedeeltelijke bescherming. Bij een volgende kwartaalcheck opnieuw beoordelen of dit nog steeds volstaat, vooral als een van deze prompts qua lengte/complexiteit groeit.
 
 ## E-mail crons — ALTIJD via email-templates.ts
 

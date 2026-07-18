@@ -121,7 +121,7 @@ async function analyseQuestion(questionId: string, answers: string[]): Promise<{
   const answersText = answers.map((a, i) => `Lid ${i + 1}: "${a}"`).join('\n');
 
   const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 200,
     messages: [{
       role: 'user',
@@ -251,8 +251,8 @@ export async function POST(req: NextRequest) {
     };
 
     // Generate ArnoBot summary
-    const summaryMsg = await anthropic.messages.create({
-      model: 'claude-sonnet-5',
+    const callSummaryModel = () => anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       messages: [{
         role: 'user',
@@ -267,8 +267,17 @@ ${results.slice(0, 3).map(q => `- ${q.label}: ${q.diagnose}`).join('\n')}
 Geef een diagnose en één concrete aanbeveling. Spreek de manager direct aan met "jouw team".`
       }]
     });
-    const summaryBlock = summaryMsg.content.find((b) => b.type === 'text');
-    const summary = summaryBlock && 'text' in summaryBlock ? summaryBlock.text : '';
+    const extractSummary = (msg: Awaited<ReturnType<typeof callSummaryModel>>) => {
+      const block = msg.content.find((b) => b.type === 'text')
+      return block && 'text' in block ? block.text : ''
+    }
+    let summary = extractSummary(await callSummaryModel())
+    if (!summary) {
+      summary = extractSummary(await callSummaryModel())
+    }
+    if (!summary) {
+      console.error('[canvas/alignment] leeg summary-antwoord na retry, userId:', userId)
+    }
     const alignmentResultWithSummary: AlignmentResult = {
       ...alignmentResult,
       summary,

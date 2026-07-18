@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     : ''
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 300,
     tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
     messages: [{

@@ -29,7 +29,7 @@ Profiel van de gebruiker:
     const contextHint = context ? `\n\nVorig antwoord van ArnoBot in dit gesprek:\n"${context.slice(0, 800)}"` : ''
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 200,
       system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${profielHint}${contextHint}
 
