@@ -2,7 +2,9 @@
 
 ## Maandelijkse check — roep aan met "doe de kwartaalcheck"
 
-Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
+Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
+
+**Werkwijze (besloten 2026-07, na een audit die aantoonde dat sequentieel doorlopen in één context dingen mist):** voer de secties hieronder uit als parallelle subagents, één per sectie, via de Agent-tool, in plaats van sequentieel in je eigen context af te werken. Sneller, grondiger, en voorkomt dat context vol raakt tijdens een lange doorloop waardoor latere secties oppervlakkiger worden nagelopen dan eerdere.
 
 ### 1. Beveiliging
 - `npm audit --production` — zijn er nieuwe high/critical kwetsbaarheden in runtime-code?
@@ -14,14 +16,15 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 ### 2. Dependencies & tooling
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK, Sanity?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
-- Check of Dependabot-PRs openstaan op GitHub en beoordeel ze
+- Check of Dependabot-PRs openstaan op GitHub en beoordeel ze. Gebruik hiervoor een agent die de open PR's ophaalt (`gh api`) en per PR het breaking-change-risico samenvat, in plaats van elke PR handmatig te doorlopen.
 - **Bekend en bewust geaccepteerd:** Dependabot-kwetsbaarheidsmeldingen over Sanity. Niet opnieuw aankaarten of als nieuw probleem behandelen, dit is al beoordeeld en geaccepteerd.
 
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop in dit bestand, deze dekt de Anthropic chat-modellen, de Voyage AI embedding/rerank-modellen (RAG-pipeline), en de OpenAI spraakmodellen (transcriptie/TTS)
 - Zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?
 - Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
-- **Vaste regel:** elke nieuwe externe AI/API-leverancier die aan arnobot wordt toegevoegd (nieuwe SDK, nieuw model, nieuwe derde partij) wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. Reden: Voyage AI, Sentry en Upstash zijn alle drie ooit toegevoegd zonder dat de check werd bijgewerkt, en zijn daardoor tijdlang buiten beeld gebleven (Voyage AI liep op verouderde modellen zonder dat iemand het merkte).
+- **Vaste regel:** elke nieuwe externe AI/API-leverancier die aan arnobot wordt toegevoegd (nieuwe SDK, nieuw model, nieuwe derde partij) wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. Reden: Voyage AI, Sentry, Upstash en OpenAI zijn alle vier ooit toegevoegd zonder dat de check werd bijgewerkt, en zijn daardoor tijdlang buiten beeld gebleven.
+- **Verplichte verificatiestap (besloten 2026-07, niet overslaan):** controleer niet alleen op nieuwere modellen, maar verifieer ook dat de tabel nog klopt met de daadwerkelijke code. Zoek via de import-graph (elk bestand dat `@anthropic-ai/sdk` of een andere AI-SDK importeert, en wat er precies op de client wordt aangeroepen — niet alleen op bekende methodenamen zoals `.messages.create(` grep'en, want dat mist varianten als `.messages.stream(`) en check `package.json` op AI-gerelateerde dependencies die nergens geïmporteerd worden. Reden: een eerdere grep-only audit miste zowel een `.messages.stream(`-aanroep in de hoofdchat als een volledig ongedocumenteerde OpenAI-integratie (spraak). Deze stap vervangt de behoefte aan een losse reminder daarvoor: de kwartaalcheck-gewoonte zelf is het herhalingsmechanisme.
 
 ### 4. Infrastructuur
 
@@ -88,16 +91,17 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - **Gevonden bij 2026-07-audit (import-graph-verificatieronde):** deze leverancier was volledig afwezig uit deze kwartaalcheck, uit de modelinventaris-tabel, uit de privacypagina (`app/privacy/page.tsx`) en uit het beveiligingsdocument (`scripts/generate-security-pdf.mjs`). Precies het patroon waar de "Vaste regel" in sectie 3 hierboven voor waarschuwt (Voyage AI, Sentry en Upstash zijn ooit hetzelfde overkomen), nu een vierde keer, en deze keer met stemdata van gebruikers.
 - `app/api/transcribe/route.ts`: Whisper (`whisper-1`) voor spraak-naar-tekst, rauwe `fetch()` naar `api.openai.com`, geen SDK.
 - `app/api/tts/route.ts`: TTS (`tts-1-hd`, stem `onyx`) voor tekst-naar-spraak, zelfde aanpak.
-- **Openstaand actiepunt:** OpenAI toevoegen aan de sub-verwerkerstabel in `app/privacy/page.tsx` en aan de leverancierslijst in `scripts/generate-security-pdf.mjs` (en dat script daarna opnieuw draaien). Vereist een bevestigde DPA-link en een correcte omschrijving van OpenAI's trainingsbeleid op API-data, beide nog niet geverifieerd. Dit is gebruikersgerichte juridische tekst, dus eerst voorstellen en akkoord vragen voordat het gepubliceerd wordt (zie "Nieuwe content of functionaliteit" verderop in dit bestand).
+- **Gedaan (2026-07):** OpenAI toegevoegd aan de sub-verwerkerstabel in `app/privacy/page.tsx`, aan de leverancierslijst in `scripts/generate-security-pdf.mjs` (PDF opnieuw gegenereerd, versie 1.0 naar 1.1), en aan `docs/dpa-draft-v0.6.md`/`docs/dpa-input.md`. DPA-link en trainingsbeleid geverifieerd via websearch vóór publicatie. `docs/dpa-draft-v0.6.pdf` moet nog handmatig gerenderd worden via de Markdown PDF-extensie.
 - Controleer [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1` en `tts-1-hd`.
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
 - Zijn er onverwachte 500-fouten of time-outs in de logs?
+- **UI-stijlconsistentie-sweep (besloten 2026-07):** gebruik een agent om alle pagina's/componenten te grep'en op hardcoded kleuren, fonts of spacing die afwijken van de Vaste Normen-tabel (zie "UI-stijl — ALTIJD consistent toepassen" verderop in dit bestand) en van de admin-UI-stijlnorm. Dit is een periodieke vangnet-sweep, geen vervanging van de doorlopende regel om afwijkingen direct te signaleren zodra je ze tegenkomt bij ander werk.
 
 ### 6. AVG & beveiliging gebruikers
-- Is het beveiligingsdocument voor gebruikers (`public/arnobot-beveiliging.pdf`, gegenereerd via `scripts/generate-security-pdf.mjs`, dat script opnieuw draaien na elke wijziging) nog actueel? Check niet alleen of het bestand recent is, maar of specifieke claims er nog kloppen: de leverancierslijst (incl. Voyage AI, Sentry, Upstash), genoemde cijfers (bijv. aantal npm audit-meldingen, rate-limit-drempels) en rechten/termijnen.
+- Is het beveiligingsdocument voor gebruikers (`public/arnobot-beveiliging.pdf`, gegenereerd via `scripts/generate-security-pdf.mjs`, dat script opnieuw draaien na elke wijziging) nog actueel? Check niet alleen of het bestand recent is, maar of specifieke claims er nog kloppen: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI), genoemde cijfers (bijv. aantal npm audit-meldingen, rate-limit-drempels) en rechten/termijnen.
 - Zijn er nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Zijn er openstaande verwijderverzoeken of datavragen van gebruikers?
 
