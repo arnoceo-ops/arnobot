@@ -18,7 +18,7 @@ Voer onderstaande punten volledig en in volgorde uit. Rapporteer elk punt explic
 - **Bekend en bewust geaccepteerd:** Dependabot-kwetsbaarheidsmeldingen over Sanity. Niet opnieuw aankaarten of als nieuw probleem behandelen, dit is al beoordeeld en geaccepteerd.
 
 ### 3. AI-modelinventaris
-- Zie de modelinventaris-tabel verderop in dit bestand, deze dekt zowel de Anthropic chat-modellen als de Voyage AI embedding/rerank-modellen (RAG-pipeline)
+- Zie de modelinventaris-tabel verderop in dit bestand, deze dekt de Anthropic chat-modellen, de Voyage AI embedding/rerank-modellen (RAG-pipeline), en de OpenAI spraakmodellen (transcriptie/TTS)
 - Zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?
 - Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
 - **Vaste regel:** elke nieuwe externe AI/API-leverancier die aan arnobot wordt toegevoegd (nieuwe SDK, nieuw model, nieuwe derde partij) wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. Reden: Voyage AI, Sentry en Upstash zijn alle drie ooit toegevoegd zonder dat de check werd bijgewerkt, en zijn daardoor tijdlang buiten beeld gebleven (Voyage AI liep op verouderde modellen zonder dat iemand het merkte).
@@ -83,6 +83,13 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Controleer [upstash.com/blog](https://upstash.com/blog) of changelog op breaking changes
 - Rate limit-drempels nog passend bij het huidige gebruikersaantal?
 - Quota/limiet binnen het huidige plan?
+
+#### OpenAI (spraak: transcriptie + tekst-naar-spraak, `app/api/transcribe/route.ts` + `app/api/tts/route.ts`)
+- **Gevonden bij 2026-07-audit (import-graph-verificatieronde):** deze leverancier was volledig afwezig uit deze kwartaalcheck, uit de modelinventaris-tabel, uit de privacypagina (`app/privacy/page.tsx`) en uit het beveiligingsdocument (`scripts/generate-security-pdf.mjs`). Precies het patroon waar de "Vaste regel" in sectie 3 hierboven voor waarschuwt (Voyage AI, Sentry en Upstash zijn ooit hetzelfde overkomen), nu een vierde keer, en deze keer met stemdata van gebruikers.
+- `app/api/transcribe/route.ts`: Whisper (`whisper-1`) voor spraak-naar-tekst, rauwe `fetch()` naar `api.openai.com`, geen SDK.
+- `app/api/tts/route.ts`: TTS (`tts-1-hd`, stem `onyx`) voor tekst-naar-spraak, zelfde aanpak.
+- **Openstaand actiepunt:** OpenAI toevoegen aan de sub-verwerkerstabel in `app/privacy/page.tsx` en aan de leverancierslijst in `scripts/generate-security-pdf.mjs` (en dat script daarna opnieuw draaien). Vereist een bevestigde DPA-link en een correcte omschrijving van OpenAI's trainingsbeleid op API-data, beide nog niet geverifieerd. Dit is gebruikersgerichte juridische tekst, dus eerst voorstellen en akkoord vragen voordat het gepubliceerd wordt (zie "Nieuwe content of functionaliteit" verderop in dit bestand).
+- Controleer [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1` en `tts-1-hd`.
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
@@ -329,6 +336,8 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/admin/meta-analyse/route.ts` (zelfbeoordeling + expertpanel) | `claude-sonnet-4-6` | Twee parallelle calls, direct opgeslagen in `arnobot_meta_analyses`. Hadden geen retry/leeg-check (2026-07-audit-verificatie); nu elk individueel retry-bij-leeg-antwoord, met expliciete foutrespons (niet opgeslagen) als één van beide na retry leeg blijft. | 2026-07 |
 | `app/api/cron/meta-analyse/route.ts` (zelfbeoordeling + expertpanel) | `claude-sonnet-4-6` | Geautomatiseerde maandelijkse tegenhanger van admin/meta-analyse, draait zonder mens die het resultaat voor opslag ziet. Had geen retry/leeg-check (2026-07-audit-verificatie); nu elk individueel retry-bij-leeg-antwoord, analyse wordt overgeslagen (niet opgeslagen, geen mail) als één van beide na retry leeg blijft. | 2026-07 |
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch, geen SDK) | Spraak-naar-tekst voor voice-input. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
+| `app/api/tts/route.ts` | `tts-1-hd` (OpenAI, stem `onyx`, rauwe fetch, geen SDK) | Tekst-naar-spraak. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
