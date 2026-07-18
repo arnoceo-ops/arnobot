@@ -1,6 +1,6 @@
-# Verwerkersovereenkomst — CONCEPT v0.5
+# Verwerkersovereenkomst — CONCEPT v0.6
 
-> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
+> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nieuw in v0.6: OpenAI toegevoegd als sub-verwerker (Artikel 5), naar aanleiding van een 2026-07-audit die vaststelde dat de Whisper/TTS-integratie nog nergens in de leverancierslijsten stond. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
 
 ---
 
@@ -70,6 +70,7 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | Clerk | Authenticatie en gebruikersbeheer | SOC 2 Type II |
 | Vercel | Hosting en deployment | — |
 | Anthropic | AI-verwerking voor coaching | — |
+| OpenAI | Spraakherkenning (Whisper) en tekst-naar-spraak voor voice-invoer | — |
 | Resend | Transactionele e-mails | — |
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA |
 | Sentry | Foutmonitoring en performance-tracing | — |

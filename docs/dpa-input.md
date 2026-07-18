@@ -45,6 +45,7 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | Clerk | Authenticatie en gebruikersbeheer | SOC 2 Type II | clerk.com/legal/dpa |
 | Vercel | Hosting en deployment | — | vercel.com/legal/dpa |
 | Anthropic | AI-verwerking voor coaching (geen training op klantdata) | — | anthropic.com/legal/dpa |
+| OpenAI | Spraakherkenning (Whisper) en tekst-naar-spraak voor voice-invoer (geen training op klantdata) | — | openai.com/policies/dpa |
 | Resend | Transactionele e-mails | — | resend.com/legal/dpa |
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA | Op aanvraag, geen publieke link |
 | Sentry | Foutmonitoring en performance-tracing | — | sentry.io/legal/dpa |
