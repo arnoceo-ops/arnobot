@@ -45,13 +45,20 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   if (!await checkProTier(userId)) return NextResponse.json({ error: 'Pro vereist' }, { status: 403 })
 
-  const [sessionsRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes] = await Promise.all([
+  const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, message_count, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50),
+    // Los van de 50-limiet hierboven (die de AI-analyse behapbaar houdt): het werkelijke totaal
+    // aantal gesprekken, voor tellingen die de gebruiker te zien krijgt (signalen, conversation_count).
+    // sessions.length zou daarvoor nooit boven de 50 kunnen uitkomen, ook niet bij bijvoorbeeld 65.
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId),
     supabase
       .from('arnobot_analyses')
       .select('id, analyse_text, created_at, session_count')
@@ -92,9 +99,10 @@ export async function POST() {
   ])
 
   const sessions = sessionsRes.data ?? []
+  const totalSessionCount = sessionCountRes.count ?? sessions.length
   const sparringSessions = (sparringRes.data ?? []).filter(s => s.debrief)
-  if (sessions.length < 5) {
-    return NextResponse.json({ error: 'te_weinig', count: sessions.length }, { status: 400 })
+  if (totalSessionCount < 5) {
+    return NextResponse.json({ error: 'te_weinig', count: totalSessionCount }, { status: 400 })
   }
 
   const analyses = analysesRes.data ?? []
@@ -188,12 +196,12 @@ export async function POST() {
   // kernscoring. Nieuwe tips van dit type horen HIER thuis, niet in de systeemprompt hieronder,
   // anders verdrukken ze de mindset/systeem/actie-diagnoses die wel AI-interpretatie vereisen.
   const signalen: string[] = []
-  const analyseRatio = analyses.length / Math.max(sessions.length, 1)
-  if (sessions.length >= 10 && analyseRatio < 0.2) {
-    signalen.push(`Je hebt ${sessions.length} gesprekken gevoerd maar pas ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Groei gaat het snelst via de route gesprek naar analyse naar coaching.`)
+  const analyseRatio = analyses.length / Math.max(totalSessionCount, 1)
+  if (totalSessionCount >= 10 && analyseRatio < 0.2) {
+    signalen.push(`Je hebt ${totalSessionCount} gesprekken gevoerd maar pas ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Groei gaat het snelst via de route gesprek naar analyse naar coaching.`)
   }
-  if (sessions.length >= 10 && sparringSessions.length === 0) {
-    signalen.push(`Je hebt ${sessions.length} coaching-gesprekken gevoerd maar nog niet gesparred. Oefenen in sparring helpt om wat je hier bespreekt ook echt te trainen.`)
+  if (totalSessionCount >= 10 && sparringSessions.length === 0) {
+    signalen.push(`Je hebt ${totalSessionCount} coaching-gesprekken gevoerd maar nog niet gesparred. Oefenen in sparring helpt om wat je hier bespreekt ook echt te trainen.`)
   }
 
   // Significante scoreverbeteringen detecteren (2+ punten stijging)
@@ -401,7 +409,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }
   } catch {}
 
-  const doc = { ...parsed, blogs, conversation_count: sessions.length, weinig_voortgang, stagnatie, signalen }
+  const doc = { ...parsed, blogs, conversation_count: totalSessionCount, weinig_voortgang, stagnatie, signalen }
   const payload = {
     ...doc,
     updated_at: new Date().toISOString(),
