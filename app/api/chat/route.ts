@@ -22,6 +22,14 @@ function detectPromptInjection(text: string): boolean {
   return INJECTION_PATTERNS.some(p => p.test(text))
 }
 
+// Sparsessies tellen niet standaard mee in het geheugen van gewone gesprekken (dat zou dit
+// al kwetsbare, complexiteitsgevoelige endpoint verder belasten voor alle gebruikers, ook wie
+// nooit spart). Alleen wanneer de gebruiker er zelf naar verwijst, wordt de sparring-historie
+// (laatste 10, zelfde grens als bij de coachingssynthese) opgehaald voor dit ene bericht.
+function detectSparringReference(text: string): boolean {
+  return /spar|oefengesprek/i.test(text)
+}
+
 const ALLOWED_ORIGINS = [
   'https://arno.bot',
   'https://www.arno.bot',
@@ -293,16 +301,24 @@ export async function POST(req: NextRequest) {
     // de RAG-pipeline hierboven, in plaats van pas na de RAG-context te beginnen. Beide hangen
     // alleen af van userId/tier/sessionId, niet van het RAG- of moderatie-resultaat.
     const memoryContextPromise: Promise<{ geheugentekst: string; prevSessionCount: number }> = (userId && !isWidget)
-      ? Promise.resolve(
+      ? Promise.all([
           supabase
             .from('arnobot_blog_sessions')
             .select('title, summary, feiten, uitdaging, actie_status, created_at')
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
             .order('created_at', { ascending: false })
-            .limit(tier === 'pro' ? 25 : 10)
-        )
-          .then(({ data: prevSessions }) => {
+            .limit(tier === 'pro' ? 25 : 10),
+          detectSparringReference(question)
+            ? supabase
+                .from('arnobot_sparring_sessions')
+                .select('persona, debrief, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(10)
+            : Promise.resolve({ data: null as { persona: string | null; debrief: string | null; created_at: string }[] | null }),
+        ])
+          .then(([{ data: prevSessions }, { data: sparringSessions }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -330,6 +346,14 @@ export async function POST(req: NextRequest) {
                   geheugentekst += `\n\nActie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}\n${statusTekst}`
                 }
               }
+            }
+            const relevanteSparring = (sparringSessions ?? []).filter(s => s.debrief)
+            if (relevanteSparring.length > 0) {
+              const sparringTekst = relevanteSparring.map(s => {
+                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                return `- ${datum} (rol: ${s.persona ?? 'onbekend'}):\n${s.debrief}`
+              }).join('\n\n')
+              geheugentekst += `\n\nSPARRING-OEFENSESSIES VAN DEZE GEBRUIKER (laatste ${relevanteSparring.length}, alleen relevant omdat de gebruiker er zelf naar verwijst):\n${sparringTekst}`
             }
             return { geheugentekst, prevSessionCount }
           })
