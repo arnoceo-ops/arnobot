@@ -124,8 +124,8 @@ export async function POST() {
 
   const trendContext = trendRegels ? `\n\nTEAMSCORES OVER TIJD (gemiddeld per maand):\n${trendRegels}` : ''
 
-  const result = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+  const callModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 600,
     system: `Je bent Arno Diepeveen, salescoach met 40 jaar ervaring. Direct, eerlijk, maar altijd gericht op groei.
 Je schrijft een teamanalyse voor de manager. Toon: motiverend én scherp. Geen lofzang, geen afbranden.
@@ -155,7 +155,14 @@ ${teamData}${trendContext}`
     }]
   })
 
-  const analyse = getText(result.content)
+  let analyse = getText(await callModel().then(r => r.content))
+  if (!analyse) {
+    analyse = getText(await callModel().then(r => r.content))
+  }
+  if (!analyse) {
+    console.error('[bot/team/spotlight] lege analyse na retry, team_id:', managerMember.team_id)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
 
   await supabase
     .from('arnobot_team_analyses')

@@ -128,14 +128,21 @@ export async function POST(req: NextRequest) {
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Benoem concreet wat er nieuw is, wat er doorgebroken is, en wat de volgende stap is. Max 3 alinea's.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
     : `Analyseer deze ${sessions.length} gesprekken en geef een patroonanalyse in Arno's stijl. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's.${profielText}\n\nGESPREKKEN:\n${sessiesText}`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+  const callModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 1500,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }]
   })
 
-  const analyse = getText(response.content)
+  let analyse = getText(await callModel().then(r => r.content))
+  if (!analyse) {
+    analyse = getText(await callModel().then(r => r.content))
+  }
+  if (!analyse) {
+    console.error('[bot/coaching-analyse] lege analyse na retry, userId:', userId)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
 
   const { data: saved } = await supabase
     .from('arnobot_analyses')

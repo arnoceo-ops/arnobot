@@ -84,15 +84,22 @@ REGELS:
     { role: 'user' as const, content: message },
   ]
 
-  const response = await Sentry.startSpan({ name: 'sparring.main-response', op: 'ai.claude' }, () =>
+  const callModel = () => Sentry.startSpan({ name: 'sparring.main-response', op: 'ai.claude' }, () =>
     anthropic.messages.create({
-      model: 'claude-sonnet-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 512,
       system: systemPrompt,
       messages,
     })
   )
 
-  const answer = getText(response.content)
+  let answer = getText(await callModel().then(r => r.content))
+  if (!answer) {
+    answer = getText(await callModel().then(r => r.content))
+  }
+  if (!answer) {
+    console.error('[sparring/chat] leeg antwoord na retry, userId:', userId)
+    answer = 'Sorry, kun je dat anders verwoorden?'
+  }
   return NextResponse.json({ answer })
 }

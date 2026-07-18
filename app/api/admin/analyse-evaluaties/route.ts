@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
     return delen
   }).join('\n\n---\n\n')
 
-  const res = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+  const callModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 1500,
     system: `Je bent Arno Diepeveen. Direct, ongefilterd. Je analyseert evaluaties van testers van jouw ArnoBot-app. Geen inleiding, geen conclusie-kopje. Gewoon de patronen, wat ze zeggen, wat het betekent, en wat je er concreet mee moet doen. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
     messages: [{
@@ -56,13 +56,20 @@ export async function POST(req: NextRequest) {
 4. Ideale doelgroep
 5. Tariefstelling
 6. Aanbevelingsbereidheid
-7. Wat je morgen moet aanpakken
+7. De concrete actie die hieruit volgt
 
 EVALUATIES:
 ${tekst}`,
     }],
   })
 
-  const analyse = getText(res.content)
+  let analyse = getText(await callModel().then(r => r.content))
+  if (!analyse) {
+    analyse = getText(await callModel().then(r => r.content))
+  }
+  if (!analyse) {
+    console.error('[admin/analyse-evaluaties] lege analyse na retry')
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
   return NextResponse.json({ analyse, count: evaluaties.length })
 }

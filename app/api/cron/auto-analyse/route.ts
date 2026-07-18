@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
       )
       .join('\n\n')
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-5',
+    const callModel = () => anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Je analyseert de gesprekken van iemand die jouw bot gebruikt en geeft een patroonanalyse. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's. Geen accenten op woorden voor nadruk.`,
       messages: [{
@@ -72,7 +72,14 @@ export async function GET(req: NextRequest) {
       }]
     })
 
-    const analyse = getText(response.content)
+    let analyse = getText(await callModel().then(r => r.content))
+    if (!analyse) {
+      analyse = getText(await callModel().then(r => r.content))
+    }
+    if (!analyse) {
+      console.error('[cron/auto-analyse] lege analyse na retry, userId:', userId)
+      continue
+    }
 
     await supabase.from('arnobot_analyses').insert({
       user_id: userId,

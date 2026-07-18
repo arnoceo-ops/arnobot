@@ -60,13 +60,20 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
 3. Eén herkenbaar patroon (gebruik coaching-context als beschikbaar, anders observeer vanuit het gesprek)
 4. Één concrete tip voor het volgende gesprek`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-5',
+  const callModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const debrief = getText(response.content)
+  let debrief = getText(await callModel().then(r => r.content))
+  if (!debrief) {
+    debrief = getText(await callModel().then(r => r.content))
+  }
+  if (!debrief) {
+    console.error('[sparring/debrief] lege debrief na retry, sessionId:', sessionId ?? '(onbekend)')
+    debrief = 'Er kon geen debrief worden gegenereerd voor dit gesprek.'
+  }
 
   // Sparring-gebruik loggen, analoog aan arnobot_blog_sessions voor gewone gesprekken (die
   // tot vanavond compleet ontbrak, waardoor "hoe vaak wordt sparren gebruikt" onbeantwoordbaar

@@ -291,22 +291,52 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | Route | Model | Reden | Laatste check |
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat) | `claude-sonnet-4-6` | Sonnet 5 teruggedraaid: bij lange/complexe vragen geen text block in response (thinking mode zonder output). Hercheck zodra stabiel gedrag bevestigd. | 2026-07 |
+| `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen binnen de hoofdchat, met expliciete fallbacks. | 2026-07 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | Grammaticale kwaliteit en voortgangsherkenning vereisen Fable. max_tokens 600 (thinking telt mee). Prompt uitgebreid met taalcontrole en progressie-instructie. | 2026-07 |
 | `app/api/bot/session-end/route.ts` (synthese) | `claude-haiku-4-5-20251001` | Drie snelle batch-calls per sessie, kwaliteit voldoende | 2026-07 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
 | `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. max_tokens 4000 (was 1600): thinking telt mee in het token budget, 1600 was te krap. Refusal check toegevoegd. getText() handelt thinking-blocks correct af. | 2026-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
-| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-5` | Patroonanalyse van max 20 gesprekken, Sonnet volstaat | 2026-07 |
-| `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-5` | Trend-bewuste teamanalyse op basis van gesprekken + historische scores. Opgewaardeerd van Haiku: cruciale boodschap voor manager vereist redeneervermogen. | 2026-07 |
+| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-4-6` | Gemigreerd van Sonnet 5 (2026-07-audit): kon bij langere prompts stil een leeg antwoord teruggeven dat direct als analyse werd opgeslagen. Nu retry-bij-leeg-antwoord, en bij aanhoudend leeg antwoord een zichtbare foutmelding i.p.v. een lege analyse. | 2026-07 |
+| `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-4-6` | Zelfde migratie/reden als coaching-analyse hierboven. Cruciale boodschap voor manager, mag niet stil leeg blijven. | 2026-07 |
 | `app/api/bot/team/1on1/route.ts` (1:1 agenda) | `claude-haiku-4-5-20251001` | Sonnet 5 teruggedraaid: thinking-mode kapt output af midden in een zin (zelfde probleem als hoofdchat). Haiku doet geen thinking, is 5-10x sneller en volstaat voor gestructureerde agenda op basis van aangeleverde data. | 2026-07 |
+| `app/api/sparring/debrief/route.ts` | `claude-sonnet-4-6` | **Bevestigde bug (2026-07):** stond nog op Sonnet 5, gaf bij lange sparring-transcripten (24-28 berichten) een lege debrief terug die stil werd opgeslagen (live geconstateerd: een testgebruiker had 2 sparsessies met een lege debrief, waardoor ArnoBot niet wist dat er gesparred was). Ontbrak eerder in deze tabel. Nu retry-bij-leeg-antwoord plus een zichtbare fallbacktekst i.p.v. een lege debrief. | 2026-07 |
+| `app/api/sparring/chat/route.ts` (live sparring-gesprek) | `claude-sonnet-4-6` | Zelfde sessie/oorzaak als sparring/debrief hierboven, ontbrak eveneens in deze tabel. Antwoord gaat live naar de gebruiker, nu met retry en een neutrale fallbackzin i.p.v. een leeg antwoord. | 2026-07 |
+| `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batchanalyse over max 20 gesprekken per gebruiker, zelfde risico als coaching-analyse. Ontbrak eerder in deze tabel. Bij aanhoudend leeg antwoord wordt die gebruiker overgeslagen i.p.v. een lege analyse op te slaan en een foutieve "bijgewerkt"-mail te versturen. | 2026-07 |
+| `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse, ontbrak eerder in deze tabel. Bevatte ook een tijdgebonden instructie in de prompt ("wat je morgen moet aanpakken"), losstaand gecorrigeerd naar tijdsneutrale taal. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | Genereert 3 zoekzinnen per vraag (multi-query expansion), eenvoudige herschrijftaak, Haiku volstaat | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy model, geen gratis toelage. Upgrade naar `voyage-4-large` bewust NIET losstaand gedaan: breekt de kennisbank-zoekfunctie volledig (0 treffers, live geverifieerd), want de hele kennisbank is met dit model vooraf ge-embed. Vereist eerst volledige her-embedding, zie openstaand actiepunt hierboven. | 2026-07 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy): door Voyage zelf bevestigd als strikt beter op kwaliteit, contextlengte, latency en throughput, zelfde prijs | 2026-07 |
 | `lib/rag.ts` (`getMultilingualEmbedding`, sessie-geheugen) | `voyage-multilingual-2` | Nog niet gecheckt op een nieuwere generatie, apart van de kennisbank-RAG hierboven. Los actiepunt. | nog niet gecheckt |
+| `app/api/bot/coaching-precheck/route.ts` | `claude-sonnet-5` | Losse ja/nee-check, expliciete fallback (`'nee'`), laag risico door korte prompt. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/bot/verfijn/route.ts` | `claude-sonnet-5` | Herschrijft een gebruikersvraag, expliciete fallback (de originele vraag), input gemaximeerd op 2000 tekens. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/bot/search-linkedin-profile/route.ts` | `claude-sonnet-5` (+ web_search tool) | Losse opzoektaak met expliciete "niet gevonden"-afhandeling. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Ontbrak eerder in deze tabel, nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
+| `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/canvas/alignment/route.ts` (samenvatting) | `claude-sonnet-5` | Los Canvas-onderdeel, kort prompt, nog geen expliciete leeg-check. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/canvas/alignment/route.ts` (vraaganalyse) | `claude-sonnet-5` | JSON-fallback bij parse-fout aanwezig, laag risico. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/canvas/alignment-chat/route.ts` | `claude-sonnet-5` | Fallback-tekst (`'Geen antwoord.'`) aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/arnobot/route.ts` (feedback-modus) | `claude-sonnet-5` | Kort prompt, nog geen expliciete leeg-check. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/arnobot/route.ts` (score-modus) | `claude-sonnet-5` | JSON.parse in try/catch vangt een leeg antwoord impliciet op. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-5` | Expliciete check op geldige JSON-structuur aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij een fout, nog niet expliciet bij een leeg (maar niet-foutend) antwoord. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/cron/model-check/route.ts` | `claude-haiku-4-5-20251001` | De modelcheck-cron zelf. Bevatte een eigen, verouderde kopie van deze inventaris die afweek van zowel de code als CLAUDE.md (zie openstaand actiepunt). | 2026-07 |
+| `app/api/admin/feedback-analyse/route.ts` | `claude-haiku-4-5-20251001` | Nog geen expliciete leeg-check. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/admin/blogs-analyse/route.ts` | `claude-sonnet-4-6` | Al op een stabiel model. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/admin/meta-analyse/route.ts` | `claude-sonnet-4-6` | Al op een stabiel model. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/cron/meta-analyse/route.ts` | `claude-sonnet-4-6` | Al op een stabiel model. Ontbrak eerder in deze tabel. | 2026-07 |
+| `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. Ontbrak eerder in deze tabel. | 2026-07 |
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
 **Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren op of rond 1 augustus (livegang) — wacht minimaal een week na go-live.**
+
+**Openstaand actiepunt (2026-07-audit):** `app/api/cron/model-check/route.ts` bevat een eigen, hardgecodeerde `INVENTORY`-kopie die los staat van deze tabel en er inmiddels van afwijkt (bijv. `bot/uitdaging` stond daar nog als `claude-sonnet-5` i.p.v. `claude-fable-5`). Die kopie moet gelijkgetrokken worden met deze tabel, of vervangen worden door een verwijzing naar één bron, om toekomstige drift tussen beide te voorkomen.
+
+**Openstaand actiepunt (2026-07-audit):** de routes hierboven zonder expliciete leeg-antwoord-bescherming (`canvas/alignment*`, `arnobot/route.ts`, `cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse`, e.a.) zijn bewust NIET meegenomen in deze fixronde: lager risico door kortere prompts of al aanwezige gedeeltelijke bescherming (JSON-fallbacks, try/catch). Bij een volgende kwartaalcheck opnieuw beoordelen of dit nog steeds volstaat, vooral als een van deze prompts qua lengte/complexiteit groeit.
+
+**Openstaand actiepunt (2026-07-audit):** `app/api/canvas/alignment-chat/alignment-chat-route.ts` is dode code (bevat een eigen Anthropic-aanroep maar volgt niet de Next.js route-conventie, wordt nergens aangeroepen). Opschonen of verwijderen bij gelegenheid, geen risico maar verwarrend bij toekomstige audits.
 
 ## E-mail crons — ALTIJD via email-templates.ts
 
