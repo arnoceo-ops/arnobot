@@ -315,9 +315,9 @@ export default function AccountPage() {
                 onClick={handleSetPassword}
                 disabled={settingPassword}
                 className="primary-btn"
-                style={{ ...btn, background: settingPassword ? '#374151' : '#f59e0b', color: settingPassword ? '#4b5563' : '#111827', cursor: settingPassword ? 'not-allowed' : 'pointer' }}
+                style={{ ...btn, alignSelf: 'flex-start', background: settingPassword ? '#374151' : '#f59e0b', color: settingPassword ? '#4b5563' : '#111827', cursor: settingPassword ? 'not-allowed' : 'pointer' }}
               >
-                {settingPassword ? 'BEZIG...' : 'WACHTWOORD INSTELLEN'}
+                {settingPassword ? 'BEZIG...' : 'VERZEND'}
               </button>
               {passwordError && <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1 }}>✗ {passwordError}</p>}
             </div>
