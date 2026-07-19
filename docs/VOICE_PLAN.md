@@ -4,6 +4,24 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 
 ---
 
+## Concept — nog NIET besloten, ter bespreking (2026-07-19, einde dag)
+
+Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat het niet verloren gaat, expliciet nog niet vastgesteld:
+
+- 30 dagen gratis trial (bestaand).
+- Tijdens trial: beperkte voice-toegang (~100 gesproken antwoorden, tekst onbeperkt). Bij plafond: upgrademelding naar een betaald abonnement. **Dit deel is al gebouwd** (zie hieronder, `hasVoiceAccess()`/`TRIAL_VOICE_CHAR_CAP`), sluit goed aan.
+- Nieuw idee: één in te plannen gesprek met Arno zelf, per gebruiker. **Onduidelijk:** voor iedereen tijdens de trial, of gekoppeld aan een specifiek abonnement? Gratis of betaald?
+- Na de trial: alleen betalende gebruikers kunnen de app nog gebruiken. Drie voorgestelde abonnementen:
+  - **Basis** (naam volgt nog): zonder "voice-voice", wel "voice-tekst". **Onduidelijk:** betekent dit dat spraak-naar-tekst (mic-invoer) en/of tekst-naar-spraak (voorlezen) behouden blijft, maar niet het volledige gesproken heen-en-weer-gesprek?
+  - **Premium**: voice-naar-voice, ~200 berichten, daarna "opwaarderen". **Onduidelijk:** naar bijkoopbundels (al genoemd in Besluit 4 hieronder) of naar een hogere laag?
+  - **Team**: nog geen details.
+- In de app: antwoorden altijd kort/normaal. Document-upload en uitgebreide antwoorden blijven exclusief voor de webapp.
+- Prijsnamen/structuur (basis/premium/team) vervangen mogelijk de huidige indeling (basis/pro + losse Voice-laag) uit Besluit 1 hieronder — nog niet afgestemd hoe dit zich verhoudt tot de bestaande `tier`-kolom.
+
+**Volgende stap:** met Arno doornemen, de drie onduidelijke punten oplossen, dan pas vertalen naar een concreet technisch plan en de bestaande Besluiten hieronder bijwerken.
+
+---
+
 ## Status
 
 **Laatst bijgewerkt:** 2026-07-19
