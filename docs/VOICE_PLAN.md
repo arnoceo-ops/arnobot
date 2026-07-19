@@ -15,7 +15,9 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 
 **Besluit publieke uitrol (herbevestigd 2026-07-19):** ook op de webapp, niet mobiel-only, maar uitsluitend voor Voice-abonnees (premium, €97/mnd) via de losse `voice_enabled`-kolom, zoals al vastgelegd in ontwerpvraag 2. Zie ook het overleg eerder deze sessie waarin dit expliciet is herbevestigd na een korte omweg via "misschien mobiel-only".
 
-**Eerstvolgende stap:** de admin-only testroutes ombouwen naar de echte, premium-gated integratie: `voice_enabled`-kolom op `approved_users`, en een voice-toggle in `SparClient.tsx` via een apart `VoiceMode.tsx`-component (bouwrichtlijn hieronder bij Fase 1). Dit raakt voor het eerst de gedeelde productiecomponent, dus eerst een plan voorleggen vóór er code komt, zoals bij de vorige bouwstap.
+**Gebouwd en live getest door Arno (2026-07-19):** de echte, premium-gated integratie staat in `SparClient.tsx` (`voice_enabled`-kolom op `approved_users`, nieuwe routes `app/api/chat-voice/route.ts` + `app/api/tts-voice/route.ts`, gedeelde logica in `lib/voice.ts`, hergebruikt door de admin-testroutes). **Architecturale correctie t.o.v. het eerdere `VoiceMode.tsx`-idee:** géén apart component gebruikt, de logica haakt direct in `ask()`/`speak()` in minimale, geïsoleerde branches, dat bleek een kleiner en veiliger diff-oppervlak dan een apart component optillen. Volledige voice-round-trip (toggle aan, vraag stellen, gesproken antwoord terug) live getest door Arno op productie: werkt. ElevenLabs toegevoegd aan privacypagina en beveiligingsdocument (versie 1.2), "Improve the models for everyone" uitgezet in het ElevenLabs-dashboard.
+
+**Eerstvolgende stap:** regressiecheck op de bestaande, niet-voice-flows (normale chat, sparren-modus, bestand bijvoegen, mic/STT, mobiel), dat was de kernzorg bij deze bouwstap en is nog niet expliciet bevestigd. Daarna: fase 2 (verbruiksplafond) uit de fasering hieronder.
 
 ---
 
