@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { fetchElevenLabsSpeech, isElevenLabsConfigured } from '@/lib/voice'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,23 +27,12 @@ export async function GET(req: NextRequest) {
   const text = (searchParams.get('text') || '').slice(0, 5000).trim()
   if (!text) return new NextResponse(null, { status: 400 })
 
-  const voiceId = process.env.ELEVENLABS_VOICE_ID
-  if (!process.env.ELEVENLABS_API_KEY || !voiceId) {
+  if (!isElevenLabsConfigured()) {
     console.error('[voice-test/tts] ELEVENLABS_API_KEY of ELEVENLABS_VOICE_ID ontbreekt')
     return NextResponse.json({ error: 'Voice niet geconfigureerd' }, { status: 500 })
   }
 
-  const elevenRes = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_44100_128`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text, model_id: 'eleven_flash_v2_5' }),
-    }
-  )
+  const elevenRes = await fetchElevenLabsSpeech(text)
 
   if (!elevenRes.ok || !elevenRes.body) {
     const errText = await elevenRes.text().catch(() => '')

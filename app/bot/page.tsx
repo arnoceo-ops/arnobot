@@ -19,12 +19,13 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
 
   const [profileRes, tierRes] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
-    serviceDb.from('approved_users').select('tier').eq('user_id', userId).single(),
+    serviceDb.from('approved_users').select('tier, voice_enabled').eq('user_id', userId).single(),
   ])
 
   if (!profileRes.data) redirect('/bot/qa')
 
   const tier = (tierRes.data?.tier as 'basis' | 'pro') ?? 'pro'
+  const voiceEnabled = tierRes.data?.voice_enabled === true
   const spar = await getSparPage()
   const { resume } = await searchParams
   return (
@@ -32,6 +33,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       userId={userId}
       profiel={profileRes.data.profiel}
       tier={tier}
+      voiceEnabled={voiceEnabled}
       taglineTitle="Ik ben ARNOBOT: Jouw 24/7 salescoach."
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       openers={spar?.openers ?? []}

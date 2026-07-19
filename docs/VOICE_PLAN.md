@@ -11,7 +11,11 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 
 **Gekozen (2026-07-19):** voor deze testfase Instant Voice Cloning gebruiken (een korte, snelle opname van Arno zelf, inbegrepen in het Starter-plan) in plaats van een generieke Nederlandse bibliotheekstem. Reden: het doel van deze test is niet alleen "klinkt ElevenLabs goed", maar vooral "klinkt ArnoBot als Arno", en dat kun je met een bibliotheekstem niet beoordelen. **Verworpen alternatief:** een Nederlandse bibliotheekstem (het oorspronkelijke voorstel in Besluit 2 hieronder) — sneller te kiezen maar test niet de eigenlijke productvraag. **Kanttekening:** Instant Voice Cloning is een snellere, lagere-kwaliteit variant dan de Professional Voice Clone die het einddoel blijft (zie Besluit 2). Een houterige instant clone is geen voorspelling van hoe de uiteindelijke Professional clone zal klinken, dat oordeel wordt uitgesteld tot dat traject. Deze testfase beoordeelt vooral latency, stijl en of het concept "een versie van mijn stem" sowieso werkt.
 
-**Eerstvolgende stap:** ElevenLabs-instant-clone opnemen en als voice-ID instellen, dan live testen op `/bot/admin/voice-test` (antwoordlengte, stijl, latency, autoplay-gedrag), inclusief een test op een telefoon-browser. Regressiecheck op de bestaande webapp vóór dit als afgerond geldt (zie het plan-bestand van deze sessie). Pas daarna: besluit over publieke uitrol (web-tier en/of mobiel-only, zie `docs/MOBILE_PLAN.md`).
+**Getest en goedgekeurd door Arno (2026-07-19):** live test op `/bot/admin/voice-test` met de instant-clone-stem geslaagd. Latency, antwoordstijl en stemkwaliteit akkoord.
+
+**Besluit publieke uitrol (herbevestigd 2026-07-19):** ook op de webapp, niet mobiel-only, maar uitsluitend voor Voice-abonnees (premium, €97/mnd) via de losse `voice_enabled`-kolom, zoals al vastgelegd in ontwerpvraag 2. Zie ook het overleg eerder deze sessie waarin dit expliciet is herbevestigd na een korte omweg via "misschien mobiel-only".
+
+**Eerstvolgende stap:** de admin-only testroutes ombouwen naar de echte, premium-gated integratie: `voice_enabled`-kolom op `approved_users`, en een voice-toggle in `SparClient.tsx` via een apart `VoiceMode.tsx`-component (bouwrichtlijn hieronder bij Fase 1). Dit raakt voor het eerst de gedeelde productiecomponent, dus eerst een plan voorleggen vóór er code komt, zoals bij de vorige bouwstap.
 
 ---
 

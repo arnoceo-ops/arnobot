@@ -44,12 +44,14 @@ interface Message {
   hint?: string | null
   log_id?: string | null
   feedback?: 'pos' | 'neg' | null
+  voiceAnswer?: boolean
 }
 
 interface Props {
   userId: string
   profiel: Record<string, unknown>
   tier: 'basis' | 'pro'
+  voiceEnabled: boolean
   taglineTitle: string
   taglineSub: string
   openers: string[]
@@ -141,7 +143,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, tier, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
+export default function SparClient({ userId, profiel, tier, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -223,6 +225,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const [dagelijksTeller, setDagelijksTeller] = useState<number | null>(null)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
+  const [voiceMode, setVoiceMode] = useState(false)
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
@@ -251,6 +254,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const synthesisRef = useRef<HTMLDivElement>(null)
@@ -579,6 +583,23 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     setSpeakingIdx(null)
     setTtsLoading(idx)
+
+    if (messages[idx]?.voiceAnswer) {
+      try {
+        const audio = new Audio(`/api/tts-voice?text=${encodeURIComponent(text)}`)
+        audioRef.current = audio
+        audio.onended = () => setSpeakingIdx(null)
+        audio.onerror = () => setSpeakingIdx(null)
+        setSpeakingIdx(idx)
+        await audio.play()
+      } catch {
+        setSpeakingIdx(null)
+      } finally {
+        setTtsLoading(null)
+      }
+      return
+    }
+
     try {
       const clean = text.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').replace(/_([^_]+)_/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       const res = await fetch('/api/tts', {
@@ -691,6 +712,22 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
 
   async function ask(question: string) {
     if (!question.trim() || loading || blocked) return
+    // Index vastleggen vóórdat setMessages hieronder het user-bericht toevoegt: deze
+    // functie voegt in de voice-tak precies twee berichten toe (user, dan arno), dus het
+    // arno-antwoord komt altijd op startLen + 1. messages is de waarde uit de render
+    // waarin deze ask() is aangemaakt, dus dit is de telling van vóór dit gesprek.
+    const startLen = messages.length
+
+    // Audio-element primen binnen dezelfde synchrone user-gesture (deze klik/Enter) die
+    // ask() aanroept, vóór de eerste await hieronder. Zonder dit telt de latere, echte
+    // audio.play() (na de awaited fetch) niet meer als user-gesture op mobiele
+    // Safari/webviews, die blokkeren dan het automatisch afspelen (VOICE_PLAN.md besluit 7).
+    if (voiceMode && sparModus !== 'sparren') {
+      if (!voiceAudioRef.current) voiceAudioRef.current = new Audio()
+      voiceAudioRef.current.play().catch(() => {})
+      voiceAudioRef.current.pause()
+    }
+
     setStarted(true)
     setMessages(prev => [...prev, { role: 'user', content: question }])
     setInput('')
@@ -719,6 +756,39 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           { role: 'user', content: question },
           { role: 'assistant', content: answer }
         ])
+      } else if (voiceMode) {
+        const res = await fetch('/api/chat-voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: question })
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          const msg = data.error === 'voice_not_enabled'
+            ? 'Voice is niet actief voor jouw account.'
+            : data.error === 'rate_limit'
+              ? 'Even rustig aan met de gesproken antwoorden. Probeer over een paar minuten opnieuw.'
+              : 'Er ging iets mis. Probeer opnieuw.'
+          setMessages(prev => [...prev, { role: 'arno', content: msg, hint: null }])
+          return
+        }
+        const answer = data.answer || 'Geen antwoord ontvangen.'
+        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null, voiceAnswer: true }])
+        setHistory(prev => [
+          ...prev,
+          { role: 'user', content: question },
+          { role: 'assistant', content: answer }
+        ])
+
+        // Automatisch afspelen op het al geprimede element (zie boven), zodat dit nog
+        // binnen dezelfde user-gesture-keten valt op mobiel.
+        const audio = voiceAudioRef.current ?? new Audio()
+        audioRef.current = audio
+        audio.src = `/api/tts-voice?text=${encodeURIComponent(answer)}`
+        audio.onended = () => setSpeakingIdx(null)
+        audio.onerror = () => setSpeakingIdx(null)
+        setSpeakingIdx(startLen + 1)
+        audio.play().catch(() => setSpeakingIdx(null))
       } else {
         const actieContext = (actieStatus && history.length === 0 && actieOpvolging)
           ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'ingepland' : 'nog niet gedaan'}] `
@@ -955,6 +1025,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
+          .spar-voice-toggle { height: 48px; width: 52px; flex-shrink: 0; }
           .spar-send { height: 48px; font-size: 17px; padding: 0 20px; }
           .spar-reset { height: 48px; padding: 0 16px; font-size: 15px; }
           .spar-openers { overflow-x: hidden; }
@@ -1040,6 +1111,14 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           color: #f59e0b; background: #374151;
           animation: micpulse 0.8s ease-in-out infinite;
         }
+        .spar-voice-toggle {
+          background: #1f2937; color: #6b7280;
+          font-size: 20px; border: 1px solid #374151;
+          padding: 0 18px; cursor: pointer; transition: all 0.2s;
+          height: 55px; display: flex; align-items: center; justify-content: center;
+        }
+        .spar-voice-toggle:hover { color: #f1f5f9; background: #374151; }
+        .spar-voice-toggle.active { color: #f59e0b; background: #374151; border-color: #f59e0b; }
         @keyframes micpulse {
           0%, 100% { background: #374151; box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
           50% { background: #2d2200; box-shadow: 0 0 0 6px rgba(245,158,11,0); }
@@ -1462,7 +1541,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'gesprek' ? '12px 0' : '11px 0', flex: '1 1 0', borderRadius: 999, background: sparModus === 'gesprek' ? '#f59e0b' : 'none', color: sparModus === 'gesprek' ? '#111827' : '#9ca3af', border: sparModus === 'gesprek' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
               >COACHING</button>
               <button
-                onClick={() => { setSparModus('sparren'); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
+                onClick={() => { setSparModus('sparren'); setVoiceMode(false); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', flex: '1 1 0', borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
               >SPARREN</button>
             </div>
@@ -1573,7 +1652,7 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
             <div className="spar-input-wrap">
-              {sparModus !== 'sparren' && (
+              {sparModus !== 'sparren' && !voiceMode && (
                 <>
                   <input
                     type="file"
@@ -1650,6 +1729,22 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
               </button>
             )}
             <div className="spar-buttons">
+              {voiceEnabled && sparModus !== 'sparren' && (
+                <button
+                  type="button"
+                  className={`spar-voice-toggle${voiceMode ? ' active' : ''}`}
+                  onClick={() => {
+                    setVoiceMode(v => {
+                      if (!v) { setAttachedFile(null); setFileError(null) }
+                      return !v
+                    })
+                  }}
+                  disabled={loading || blocked}
+                  title={voiceMode ? 'Voice-modus uit' : 'Voice-modus aan: gesproken antwoorden'}
+                >
+                  {voiceMode ? '🔊' : '🔈'}
+                </button>
+              )}
               {speechSupported && (
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
@@ -1829,25 +1924,29 @@ export default function SparClient({ userId, profiel, tier, taglineTitle, taglin
                       >
                         {ttsLoading === i ? '⏳' : speakingIdx === i ? '⏹' : '▶'}
                       </button>
-                      <button
-                        onClick={() => setTtsSpeedOpenIdx(ttsSpeedOpenIdx === i ? null : i)}
-                        title="Snelheid"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: ttsSpeedOpenIdx === i ? '#f59e0b' : '#6b7280', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
-                        onMouseEnter={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
-                        onMouseLeave={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
-                      >⚙</button>
-                      {ttsSpeedOpenIdx === i && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, background: '#1f2937', border: '1px solid #374151', padding: '6px 0', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-                          {[0.75, 1.0, 1.25].map(s => (
-                            <button
-                              key={s}
-                              onClick={() => { setTtsSpeed(s); localStorage.setItem('arnobot_tts_speed', String(s)); setTtsSpeedOpenIdx(null) }}
-                              style={{ display: 'block', width: '100%', textAlign: 'left', background: ttsSpeed === s ? '#374151' : 'none', border: 'none', cursor: 'pointer', padding: '7px 14px', fontFamily: "'Space Mono', monospace", fontSize: 11, color: ttsSpeed === s ? '#f59e0b' : '#9ca3af', letterSpacing: 1, whiteSpace: 'nowrap' }}
-                            >
-                              {s === 0.75 ? '0.75× langzamer' : s === 1.0 ? '1.0× normaal' : '1.25× sneller'}
-                            </button>
-                          ))}
-                        </div>
+                      {!msg.voiceAnswer && (
+                        <>
+                          <button
+                            onClick={() => setTtsSpeedOpenIdx(ttsSpeedOpenIdx === i ? null : i)}
+                            title="Snelheid"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: ttsSpeedOpenIdx === i ? '#f59e0b' : '#6b7280', fontSize: 11, padding: 0, lineHeight: 1, fontFamily: "'Space Mono', monospace", transition: 'color 0.15s' }}
+                            onMouseEnter={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                            onMouseLeave={e => { if (ttsSpeedOpenIdx !== i) (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
+                          >⚙</button>
+                          {ttsSpeedOpenIdx === i && (
+                            <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, background: '#1f2937', border: '1px solid #374151', padding: '6px 0', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+                              {[0.75, 1.0, 1.25].map(s => (
+                                <button
+                                  key={s}
+                                  onClick={() => { setTtsSpeed(s); localStorage.setItem('arnobot_tts_speed', String(s)); setTtsSpeedOpenIdx(null) }}
+                                  style={{ display: 'block', width: '100%', textAlign: 'left', background: ttsSpeed === s ? '#374151' : 'none', border: 'none', cursor: 'pointer', padding: '7px 14px', fontFamily: "'Space Mono', monospace", fontSize: 11, color: ttsSpeed === s ? '#f59e0b' : '#9ca3af', letterSpacing: 1, whiteSpace: 'nowrap' }}
+                                >
+                                  {s === 0.75 ? '0.75× langzamer' : s === 1.0 ? '1.0× normaal' : '1.25× sneller'}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

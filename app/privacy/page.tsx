@@ -151,6 +151,11 @@ export default function PrivacyPage() {
                   <td><a href="https://openai.com/policies/data-processing-addendum/" target="_blank" rel="noopener noreferrer">openai.com/policies/dpa</a></td>
                 </tr>
                 <tr>
+                  <td style={{ color: '#f1f5f9' }}>ElevenLabs</td>
+                  <td>Tekst-naar-spraak voor ArnoBot Voice-abonnees (gesproken antwoorden, geen training op jouw data)</td>
+                  <td><a href="https://elevenlabs.io/dpa" target="_blank" rel="noopener noreferrer">elevenlabs.io/dpa</a></td>
+                </tr>
+                <tr>
                   <td style={{ color: '#f1f5f9' }}>Resend</td>
                   <td>Transactionele e-mails</td>
                   <td><a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">resend.com/legal/dpa</a></td>
