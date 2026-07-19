@@ -7,8 +7,11 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 ## Status
 
 **Laatst bijgewerkt:** 2026-07-19
-**Waar we staan:** Plan compleet, ontwerpvragen beantwoord (zie onderaan), plus een mobiel-bewezen ontwerpeis toegevoegd na de `docs/MOBILE_PLAN.md`-audit (zie Fase 1 en Besluit 7 hieronder). Nog niets gebouwd: geen migraties uitgevoerd, geen code geschreven.
-**Eerstvolgende stap:** Akkoord van Arno om te starten met de bouw van Fase 1. Eerste stap daarin zijn de twee Supabase-migraties, die zoals altijd bij schema-wijzigingen ter bevestiging worden voorgelegd vóór er verder gebouwd wordt.
+**Waar we staan:** Scope van de eerste bouwstap bijgesteld tijdens deze sessie (zie hieronder): niet meteen een publieke voice-toggle in `SparClient.tsx`, maar eerst alleen de serverkant plus een volledig geïsoleerde admin-only testpagina op `/bot/admin/voice-test` (`app/api/admin/voice-test/chat/route.ts`, `app/api/admin/voice-test/tts/route.ts`), gebouwd en gepusht. Supabase-tabel `arnobot_elevenlabs_usage` aangemaakt en bevestigd. ElevenLabs-account aangemaakt (Starter-plan, API-key beperkt tot alleen Text to Speech). Nul wijzigingen aan `SparClient.tsx`/`/api/chat`/`/api/tts`/`/api/transcribe`.
+
+**Gekozen (2026-07-19):** voor deze testfase Instant Voice Cloning gebruiken (een korte, snelle opname van Arno zelf, inbegrepen in het Starter-plan) in plaats van een generieke Nederlandse bibliotheekstem. Reden: het doel van deze test is niet alleen "klinkt ElevenLabs goed", maar vooral "klinkt ArnoBot als Arno", en dat kun je met een bibliotheekstem niet beoordelen. **Verworpen alternatief:** een Nederlandse bibliotheekstem (het oorspronkelijke voorstel in Besluit 2 hieronder) — sneller te kiezen maar test niet de eigenlijke productvraag. **Kanttekening:** Instant Voice Cloning is een snellere, lagere-kwaliteit variant dan de Professional Voice Clone die het einddoel blijft (zie Besluit 2). Een houterige instant clone is geen voorspelling van hoe de uiteindelijke Professional clone zal klinken, dat oordeel wordt uitgesteld tot dat traject. Deze testfase beoordeelt vooral latency, stijl en of het concept "een versie van mijn stem" sowieso werkt.
+
+**Eerstvolgende stap:** ElevenLabs-instant-clone opnemen en als voice-ID instellen, dan live testen op `/bot/admin/voice-test` (antwoordlengte, stijl, latency, autoplay-gedrag), inclusief een test op een telefoon-browser. Regressiecheck op de bestaande webapp vóór dit als afgerond geldt (zie het plan-bestand van deze sessie). Pas daarna: besluit over publieke uitrol (web-tier en/of mobiel-only, zie `docs/MOBILE_PLAN.md`).
 
 ---
 
