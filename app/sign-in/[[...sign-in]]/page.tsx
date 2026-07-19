@@ -2,6 +2,8 @@
 
 import { useSignIn, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
+import AppSignIn from '../AppSignIn'
 
 function getClerkFrontendApi(): string {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
@@ -58,79 +60,14 @@ export default function SignInPage() {
   const [emailError, setEmailError] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
 
+  // Binnen de Capacitor-app tonen we een apart wachtwoord-inlogscherm i.p.v. de LinkedIn-flow
+  // hieronder (die springt naar de systeembrowser en keert niet terug naar de app, zie
+  // docs/MOBILE_PLAN.md). Start op false (zelfde als een gewone webbezoeker) om een
+  // hydration-mismatch te voorkomen, en wordt pas na de eerste client-render gezet.
+  const [isNativeApp, setIsNativeApp] = useState(false)
   useEffect(() => {
-    fetch('/api/auth-mode')
-      .then(res => res.json())
-      .then(data => setFallbackEnabled(!!data.linkedinFallbackEnabled))
-      .catch(() => setFallbackEnabled(false))
-      .finally(() => setFallbackChecked(true))
+    setIsNativeApp(Capacitor.isNativePlatform())
   }, [])
-
-  useEffect(() => {
-    if (isSignedIn) window.location.href = '/bot'
-  }, [isSignedIn])
-
-  // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
-  // met loading=true en de knop disabled. pageshow detecteert dit en reset de state.
-  useEffect(() => {
-    function handlePageShow(e: PageTransitionEvent) {
-      if (e.persisted) {
-        setLoading(false)
-        setAutoTriggered(false)
-      }
-    }
-    window.addEventListener('pageshow', handlePageShow)
-    return () => window.removeEventListener('pageshow', handlePageShow)
-  }, [])
-
-  // Auto-redirect naar LinkedIn alleen in de normale situatie. Staat de fallback aan
-  // (Arno heeft 'm bij een storing aangezet), dan wachten we tot de gebruiker zelf kiest.
-  useEffect(() => {
-    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled) {
-      setAutoTriggered(true)
-      handleLinkedIn()
-    }
-  }, [fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled])
-
-  async function handleEmailCodeRequest(e: React.FormEvent) {
-    e.preventDefault()
-    if (!signIn) return
-    setEmailLoading(true)
-    setEmailError('')
-    const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: emailValue })
-    if (sendError) {
-      setEmailError(sendError.longMessage || sendError.message || 'Kon geen code versturen. Controleer het e-mailadres.')
-      setEmailLoading(false)
-      return
-    }
-    setEmailStep('code')
-    setEmailLoading(false)
-  }
-
-  async function handleEmailCodeConfirm(e: React.FormEvent) {
-    e.preventDefault()
-    if (!signIn) return
-    setEmailLoading(true)
-    setEmailError('')
-    const { error: verifyError } = await signIn.emailCode.verifyCode({ code: codeValue })
-    if (verifyError) {
-      setEmailError(verifyError.longMessage || verifyError.message || 'Onjuiste code. Probeer opnieuw.')
-      setEmailLoading(false)
-      return
-    }
-    if (signIn.status === 'complete') {
-      const { error: finalizeError } = await signIn.finalize()
-      if (finalizeError) {
-        setEmailError(finalizeError.longMessage || finalizeError.message || 'Inloggen niet voltooid. Probeer opnieuw.')
-        setEmailLoading(false)
-        return
-      }
-      window.location.href = '/bot'
-    } else {
-      setEmailError('Inloggen niet voltooid. Probeer opnieuw.')
-      setEmailLoading(false)
-    }
-  }
 
   async function handleLinkedIn() {
     if (fetchStatus !== 'idle' || !signIn) {
@@ -181,6 +118,82 @@ export default function SignInPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetch('/api/auth-mode')
+      .then(res => res.json())
+      .then(data => setFallbackEnabled(!!data.linkedinFallbackEnabled))
+      .catch(() => setFallbackEnabled(false))
+      .finally(() => setFallbackChecked(true))
+  }, [])
+
+  useEffect(() => {
+    if (isSignedIn) window.location.href = '/bot'
+  }, [isSignedIn])
+
+  // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
+  // met loading=true en de knop disabled. pageshow detecteert dit en reset de state.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) {
+        setLoading(false)
+        setAutoTriggered(false)
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
+  // Auto-redirect naar LinkedIn alleen in de normale situatie. Staat de fallback aan
+  // (Arno heeft 'm bij een storing aangezet), dan wachten we tot de gebruiker zelf kiest.
+  useEffect(() => {
+    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled && !isNativeApp) {
+      setAutoTriggered(true)
+      handleLinkedIn()
+    }
+  }, [fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled, isNativeApp])
+
+  async function handleEmailCodeRequest(e: React.FormEvent) {
+    e.preventDefault()
+    if (!signIn) return
+    setEmailLoading(true)
+    setEmailError('')
+    const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: emailValue })
+    if (sendError) {
+      setEmailError(sendError.longMessage || sendError.message || 'Kon geen code versturen. Controleer het e-mailadres.')
+      setEmailLoading(false)
+      return
+    }
+    setEmailStep('code')
+    setEmailLoading(false)
+  }
+
+  async function handleEmailCodeConfirm(e: React.FormEvent) {
+    e.preventDefault()
+    if (!signIn) return
+    setEmailLoading(true)
+    setEmailError('')
+    const { error: verifyError } = await signIn.emailCode.verifyCode({ code: codeValue })
+    if (verifyError) {
+      setEmailError(verifyError.longMessage || verifyError.message || 'Onjuiste code. Probeer opnieuw.')
+      setEmailLoading(false)
+      return
+    }
+    if (signIn.status === 'complete') {
+      const { error: finalizeError } = await signIn.finalize()
+      if (finalizeError) {
+        setEmailError(finalizeError.longMessage || finalizeError.message || 'Inloggen niet voltooid. Probeer opnieuw.')
+        setEmailLoading(false)
+        return
+      }
+      window.location.href = '/bot'
+    } else {
+      setEmailError('Inloggen niet voltooid. Probeer opnieuw.')
+      setEmailLoading(false)
+    }
+  }
+
+  if (isNativeApp) return <AppSignIn />
 
   return (
     <>

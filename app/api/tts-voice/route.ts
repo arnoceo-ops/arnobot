@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
-import { fetchElevenLabsSpeech, isElevenLabsConfigured } from '@/lib/voice'
+import { fetchElevenLabsSpeech, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,10 +35,14 @@ export async function GET(req: NextRequest) {
 
   const { data: approved } = await supabase
     .from('approved_users')
-    .select('voice_enabled')
+    .select('voice_enabled, trial_start')
     .eq('user_id', userId)
     .single()
-  if (!approved?.voice_enabled) return new NextResponse(null, { status: 403 })
+  const access = await hasVoiceAccess(supabase, userId, {
+    voice_enabled: approved?.voice_enabled ?? false,
+    trial_start: approved?.trial_start ?? null,
+  })
+  if (!access.access) return new NextResponse(null, { status: 403 })
 
   const { searchParams } = new URL(req.url)
   const text = (searchParams.get('text') || '').slice(0, 5000).trim()

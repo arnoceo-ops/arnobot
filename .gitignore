@@ -61,3 +61,5 @@ next-env.d.ts
 # Build-tijd-kopie van public/, ongebruikt bij remote laden (server.url in capacitor.config.ts),
 # puur een duplicaat van bestanden die al elders in de repo staan (was 40MB).
 /android/app/src/main/assets/public/
+# Android Studio-projectinstellingen: lokale IDE-configuratie, geen projectcode.
+/android/.idea/

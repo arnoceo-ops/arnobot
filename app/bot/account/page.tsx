@@ -24,6 +24,11 @@ export default function AccountPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [appPassword, setAppPassword] = useState('')
+  const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
+  const [settingPassword, setSettingPassword] = useState(false)
+  const [passwordDone, setPasswordDone] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
 
@@ -95,6 +100,35 @@ export default function AccountPage() {
       setError(e instanceof Error ? e.message : 'Export mislukt')
     } finally {
       setExporting(false)
+    }
+  }
+
+  async function handleSetPassword() {
+    setPasswordError(null)
+    if (appPassword.length < 8) {
+      setPasswordError('Wachtwoord moet minimaal 8 tekens zijn.')
+      return
+    }
+    if (appPassword !== appPasswordConfirm) {
+      setPasswordError('Wachtwoorden komen niet overeen.')
+      return
+    }
+    setSettingPassword(true)
+    try {
+      const res = await fetch('/api/bot/set-app-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: appPassword })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Wachtwoord instellen mislukt')
+      setAppPassword('')
+      setAppPasswordConfirm('')
+      setPasswordDone(true)
+    } catch (e: unknown) {
+      setPasswordError(e instanceof Error ? e.message : 'Wachtwoord instellen mislukt')
+    } finally {
+      setSettingPassword(false)
     }
   }
 
@@ -253,6 +287,41 @@ export default function AccountPage() {
           <Link href="/bot/profiel" className="primary-btn" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}>
             PROFIEL AANPASSEN
           </Link>
+        </div>
+
+        {/* App-wachtwoord */}
+        <div style={section}>
+          <p style={label}>WACHTWOORD VOOR DE APP</p>
+          <p style={body}>
+            Je meldt je aan met LinkedIn. Voor de mobiele app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met je e-mailadres om in te loggen in de app.
+          </p>
+          {passwordDone ? (
+            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Wachtwoord ingesteld</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
+              <input
+                type="password"
+                value={appPassword}
+                onChange={e => setAppPassword(e.target.value)}
+                placeholder="Nieuw wachtwoord (min. 8 tekens)"
+              />
+              <input
+                type="password"
+                value={appPasswordConfirm}
+                onChange={e => setAppPasswordConfirm(e.target.value)}
+                placeholder="Herhaal wachtwoord"
+              />
+              <button
+                onClick={handleSetPassword}
+                disabled={settingPassword}
+                className="primary-btn"
+                style={{ ...btn, background: settingPassword ? '#374151' : '#f59e0b', color: settingPassword ? '#4b5563' : '#111827', cursor: settingPassword ? 'not-allowed' : 'pointer' }}
+              >
+                {settingPassword ? 'BEZIG...' : 'WACHTWOORD INSTELLEN'}
+              </button>
+              {passwordError && <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1 }}>✗ {passwordError}</p>}
+            </div>
+          )}
         </div>
 
         {/* Data export */}

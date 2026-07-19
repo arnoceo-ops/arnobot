@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { buildVoiceSystemPrompt } from '@/lib/systemPrompt'
 
@@ -41,6 +42,41 @@ export function stripMarkdownForSpeech(text: string): string {
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/_([^_]+)_/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+}
+
+// Ruwe schatting: ~100 gesproken antwoorden x ~500 tekens, de helft van de nog niet formeel
+// vastgestelde betaalde-cap-schatting uit VOICE_PLAN.md fase 2 ("ruim 200/mnd"). Makkelijk
+// aan te passen, geen harde onderzochte waarde. Betaalde Voice-abonnees (voice_enabled=true)
+// hebben bewust nog geen plafond-enforcement, dat is het bredere, nog niet gebouwde fase-2-werk.
+const TRIAL_VOICE_CHAR_CAP = 50_000
+
+export type VoiceAccessReason = 'paid' | 'trial' | 'trial_expired' | 'trial_cap_reached' | 'none'
+
+/**
+ * Bepaalt of een gebruiker nu voice-toegang heeft: betaalde Voice-abonnees altijd, anders
+ * gratis tijdens de eerste 30 dagen na trial_start (dezelfde canonieke berekening als
+ * middleware.ts:244-246 en cron/trial-emails/route.ts) tot aan TRIAL_VOICE_CHAR_CAP verbruik.
+ */
+export async function hasVoiceAccess(
+  supabase: SupabaseClient,
+  userId: string,
+  approvedUser: { voice_enabled: boolean; trial_start: string | null }
+): Promise<{ access: boolean; reason: VoiceAccessReason }> {
+  if (approvedUser.voice_enabled) return { access: true, reason: 'paid' }
+  if (!approvedUser.trial_start) return { access: false, reason: 'none' }
+
+  const trialEnd = new Date(new Date(approvedUser.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
+  if (new Date() >= trialEnd) return { access: false, reason: 'trial_expired' }
+
+  const { data } = await supabase
+    .from('arnobot_elevenlabs_usage')
+    .select('char_count')
+    .eq('user_id', userId)
+    .gte('created_at', approvedUser.trial_start)
+  const used = ((data ?? []) as { char_count: number }[]).reduce((sum, r) => sum + r.char_count, 0)
+  if (used >= TRIAL_VOICE_CHAR_CAP) return { access: false, reason: 'trial_cap_reached' }
+
+  return { access: true, reason: 'trial' }
 }
 
 export function isElevenLabsConfigured(): boolean {

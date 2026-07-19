@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
-import { getVoiceAnswer } from '@/lib/voice'
+import { getVoiceAnswer, hasVoiceAccess } from '@/lib/voice'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,10 +33,14 @@ export async function POST(req: NextRequest) {
 
   const { data: approved } = await supabase
     .from('approved_users')
-    .select('voice_enabled')
+    .select('voice_enabled, trial_start')
     .eq('user_id', userId)
     .single()
-  if (!approved?.voice_enabled) return NextResponse.json({ error: 'voice_not_enabled' }, { status: 403 })
+  const access = await hasVoiceAccess(supabase, userId, {
+    voice_enabled: approved?.voice_enabled ?? false,
+    trial_start: approved?.trial_start ?? null,
+  })
+  if (!access.access) return NextResponse.json({ error: 'voice_not_enabled', reason: access.reason }, { status: 403 })
 
   const { text } = await req.json().catch(() => ({}))
   if (!text || typeof text !== 'string' || !text.trim()) {

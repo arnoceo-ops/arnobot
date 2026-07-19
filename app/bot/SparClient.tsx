@@ -764,11 +764,15 @@ export default function SparClient({ userId, profiel, tier, voiceEnabled, taglin
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          const msg = data.error === 'voice_not_enabled'
-            ? 'Voice is niet actief voor jouw account.'
-            : data.error === 'rate_limit'
-              ? 'Even rustig aan met de gesproken antwoorden. Probeer over een paar minuten opnieuw.'
-              : 'Er ging iets mis. Probeer opnieuw.'
+          const msg = data.reason === 'trial_expired'
+            ? 'Je gratis proefperiode voor gesproken antwoorden is voorbij. Wil je doorgaan? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).'
+            : data.reason === 'trial_cap_reached'
+              ? 'Je hebt je gratis tegoed voor gesproken antwoorden voor deze proefperiode bereikt. Wil je meteen door? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).'
+              : data.error === 'voice_not_enabled'
+                ? 'Voice is niet actief voor jouw account.'
+                : data.error === 'rate_limit'
+                  ? 'Even rustig aan met de gesproken antwoorden. Probeer over een paar minuten opnieuw.'
+                  : 'Er ging iets mis. Probeer opnieuw.'
           setMessages(prev => [...prev, { role: 'arno', content: msg, hint: null }])
           return
         }
