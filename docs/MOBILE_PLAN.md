@@ -1,6 +1,6 @@
 # ArnoBot Voice — mobiele app (fase 4 uit VOICE_PLAN.md)
 
-Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via Capacitor voor App Store en Google Play. Dit is een audit- en voorbereidingsdocument. Er is nog geen Capacitor-code geschreven en er zijn nog geen productiewijzigingen gedaan, dat wacht op fase 1 t/m 3 van VOICE_PLAN.md.
+Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via Capacitor voor App Store en Google Play. Begon als audit-only, maar er is inmiddels een werkende Android-shell gebouwd en getest (zie Status). De mobiele app zelf staat sinds 2026-07-19 bewust losgekoppeld van livegang, zie het statusblok.
 
 ---
 
@@ -37,14 +37,14 @@ Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via C
 
 ## Volgorde — compleet stappenplan (vastgesteld 2026-07-19)
 
-1. **Nu, buiten Claude Code om:** Google Play-account aanmaken (zie Gekozen-notitie hierboven: Android eerst, geen Mac nodig). Apple Developer-account (**Individual**, geen D-U-N-S-nummer nodig, alleen naam + belastinggegevens) en Mac met Xcode regelen mogen wachten tot de iOS-kant aan de beurt is. **Bewust NIET meer parallel:** Arno's opnamemateriaal voor de Professional Voice Clone, dat komt pas ná de mobiele-appbouw (stap 6), samen met de pricingpagina-update, zie het statusblok hierboven voor de reden.
+1. **Deels gedaan.** Google Play-account aangemaakt (`koningkluk@gmail.com`, Persoonlijk account), maar accountverificatie loopt vast op een Google-fraudecontrole, zie het statusblok. Apple Developer-account (**Individual**, geen D-U-N-S-nummer nodig) en Mac met Xcode regelen mogen wachten tot de iOS-kant aan de beurt is. Arno's opnamemateriaal voor de Professional Voice Clone komt bewust pas ná de mobiele-appbouw (stap 6), samen met de pricingpagina-update.
 2. **Dit document:** audit, geen codewijzigingen. Afgerond.
-3. **VOICE_PLAN.md fase 1:** voice op de webapp, inclusief het mobiel-bewezen afspeelontwerp (besluit 7 in VOICE_PLAN.md). Testen op telefoon in de browser, dat is gratis generale repetitie voor de app.
-4. **VOICE_PLAN.md fase 2-3:** plafondlogica met tekst-fallback, daarna de pricingpagina. Betaalprovider-keuze is blokkerend vóór fase 3.
-5. **Testronde op de webapp** met bestaande testgebruikers, mobiel in de browser. Hier komt ook de eerste echte verbruiksdata binnen voor het latere cap-besluit.
-6. **Pas dan Capacitor, Android eerst:** de echte integratie — OAuth via systeembrowser, CORS-uitbreiding, microfoonpermissies, accountverwijdering, eerst en alleen voor Android. Sign in with Apple, Apple-specifieke CORS-origin en de rest van de iOS-kant volgen pas zodra Apple Developer + Mac geregeld zijn (zie stap 1). Vanaf hier is een reviewer-agent actief die elke wijziging langs een vaste checklist legt (breekt dit de bestaande webapp, raakt dit CORS/auth, staat er per ongeluk een prijsverwijzing in de app).
-7. **TestFlight (iOS) en de interne Android-track** met dezelfde testgroep. Dan pas een store-compliance-agent definiëren (met op dat moment actuele Apple/Google-richtlijnen als context, niet nu alvast), demo-account en privacylabels klaarzetten, submissie.
-8. **Na launch:** meten wie het voice-plafond raakt, dan pas beslissen over de bijkoopbundels.
+3. **Gedaan en live getest.** `docs/VOICE_PLAN.md` fase 1: voice op de webapp, premium-gated, inclusief het mobiel-bewezen afspeelontwerp (besluit 7). Nog niet apart getest op telefoon-in-browser (de generale-repetitie-stap), dat kan alsnog los van de mobiele app.
+4. **Deels gedaan.** Trial-voice-toegang (30 dagen gratis, met plafond) is gebouwd in `docs/VOICE_PLAN.md`, dat vult een deel van fase 2 in. De pricingpagina zelf (fase 3) blijft geblokkeerd op de betaalprovider-keuze.
+5. **Nog niet gedaan.** Testronde op de webapp met bestaande testgebruikers, mobiel in de browser.
+6. **Gestart, deels afgerond, deels bewust uitgesteld.** Capacitor-shell voor Android staat, remote laden werkt (na een navigatiefix), e-mail/wachtwoord-login werkt. OAuth-via-systeembrowser-met-deep-link is NIET gebouwd (zie Openstaande vragen: onbewezen terrein). CORS-uitbreiding bleek niet nodig (zie Technische vereisten). Microfoonpermissie gedeclareerd, nog niet functioneel getest. Accountverwijdering nog niet opgepakt. **Mobiele app vervolgens losgekoppeld van livegang en gepauzeerd**, zie het statusblok. Reviewer-agent is niet apart ingezet, de wijzigingen zijn steeds via Plan Mode + directe verificatie (build/lint/diff-review) gegaan.
+7. **Nog niet gedaan**, wacht tot de mobiele app weer wordt opgepakt.
+8. **Nog niet gedaan.**
 
 De rode draad: elke stap bewijst iets voordat de volgende stap geld of tijd kost. Voice bewijst zich op web voordat de app er is; de app bewijst zich bij testers voordat de stores erbij komen.
 
@@ -52,16 +52,16 @@ De rode draad: elke stap bewijst iets voordat de volgende stap geld of tijd kost
 
 ---
 
-## Technische vereisten (vastgesteld 2026-07-19)
+## Technische vereisten (vastgesteld 2026-07-19, bijgewerkt na de bouw)
 
-1. Capacitor als wrapper om de bestaande Next.js-app. Bestaande code maximaal hergebruiken, geen parallelle mobiele codebase.
-2. OAuth (Clerk, o.a. LinkedIn) mag nooit in een embedded webview lopen; Google en LinkedIn blokkeren dat actief. Systeembrowser (Capacitor Browser plugin) met deep link terug naar de app (custom URL scheme plus Universal Links/App Links). Wat Clerk hiervoor precies aanbeveelt voor Capacitor specifiek (in tegenstelling tot hun React Native/Expo-SDK) is nog niet onderzocht, zie Openstaande vragen.
-3. CORS-allowlist in `app/api/chat/route.ts` uitbreiden met de Capacitor-origins (`capacitor://localhost` en `https://localhost`), en controleren of er elders origin-checks zitten die de app zouden breken.
-4. Microfoontoegang netjes regelen: `NSMicrophoneUsageDescription` (iOS) en `RECORD_AUDIO` (Android) met een Nederlandse uitleg, toestemming pas vragen op het moment dat de gebruiker voice start, niet bij het opstarten van de app.
-5. Geen enkele aankoop-, upgrade- of prijsverwijzing in de app. De app is: inloggen en gebruiken. Alles rond betalen leeft op de website. Controleren dat er geen links naar de pricingpagina in de app-schermen terechtkomen.
-6. Sign in with Apple toevoegen via Clerk. Apple vereist dit zodra andere sociale logins (LinkedIn) worden aangeboden — Apple-richtlijn 4.8.
-7. Accountverwijdering vanuit de app mogelijk maken of er duidelijk naartoe linken — Apple-richtlijn 5.1.1(v).
-8. Rate limiting per Clerk user-id (zoals in VOICE_PLAN.md besluit 5), niet per IP — per-IP zou app-gebruikers achter provider-NAT onterecht raken.
+1. **Gedaan.** Capacitor als wrapper om de bestaande Next.js-app, remote laden, geen parallelle mobiele codebase. `capacitor.config.ts` toegevoegd.
+2. **Deels anders gelopen dan hier voorzien.** OAuth (Clerk, LinkedIn) via de systeembrowser is inderdaad nodig (bevestigd: springt automatisch naar Chrome), maar de deep-link-terugkoppeling naar de app is na onderzoek bewust NIET gebouwd, zie het statusblok en Openstaande vragen hieronder voor de reden. `@capacitor/browser` is wél toegevoegd, maar alleen voor een simpele "geen account, meld je aan op de website"-link vanaf het app-inlogscherm (geen deep link terug nodig voor die specifieke flow). Mobiel inloggen gebeurt met e-mail/wachtwoord, zie `docs/VOICE_PLAN.md`.
+3. **Vervalt, bevestigd niet nodig.** CORS-allowlist-uitbreiding bleek achteraf niet nodig: bij remote laden draait de WebView het echte `arno.bot`/`www.arno.bot`-origin, dus `app/api/chat/route.ts`'s CORS-allowlist hoeft niet aangepast. Zie Architectuurbesluit hieronder voor de onderbouwing. Wel nodig bleek `server.allowNavigation` in `capacitor.config.ts` zelf (Capacitor-eigen navigatie-allowlist, iets anders dan HTTP-CORS), inmiddels toegevoegd.
+4. **Deels gedaan.** `RECORD_AUDIO` gedeclareerd in `AndroidManifest.xml`. Werking in de praktijk (`getUserMedia()` in de WebView) nog niet getest, zie Twee risico's hieronder — dat blijft open tot er een werkende USB-kabel is voor een fysieke-toestel-test.
+5. Geen enkele aankoop-, upgrade- of prijsverwijzing in de app. De app is: inloggen en gebruiken. Alles rond betalen leeft op de website. Nog te controleren zodra er weer aan de mobiele UI gewerkt wordt.
+6. Sign in with Apple toevoegen via Clerk. Nog niet opgepakt, wacht op de iOS-kant (Apple Developer + Mac, zie Volgorde stap 1).
+7. Accountverwijdering vanuit de app mogelijk maken of er duidelijk naartoe linken — Apple-richtlijn 5.1.1(v). Nog niet opgepakt.
+8. **Al gedaan, maar dan via de webapp-routes.** Rate limiting per Clerk user-id zit al in `app/api/chat-voice/route.ts` en `app/api/tts-voice/route.ts` (Upstash, per userId), die routes worden straks door zowel web als de app gebruikt, dus dit vereiste is al vervuld voordat de app zelf klaar is.
 
 ---
 
@@ -95,15 +95,18 @@ De rode draad: elke stap bewijst iets voordat de volgende stap geld of tijd kost
 
 - **Apple: Individual-account later omzetten naar Organization.** Voor zover bekend biedt Apple geen soepele "upgrade" van een Individual- naar een Organization-account binnen hetzelfde Developer-account; vermoedelijk is een nieuwe enrollment als Organization nodig zodra de entiteit bestaat, met een app-transfer van het Individual-account naar het nieuwe Organization-account (Apple ondersteunt dat, met wel wat voorwaarden: de app moet al live staan, beide accounts in goede staat zijn, en niet alles gaat 1-op-1 mee, bv. bepaalde historische gegevens). Dit is niet 100% zeker, rechtstreeks bij Apple Developer-documentatie verifiëren vóórdat de eerste (Individual) enrollment start, zodat er geen verrassing is als de app straks weg moet van het huidige account.
 - **Google Play: testperiode-eis voor nieuwe accounts.** Bewering (nog niet geverifieerd): een organisatie-account zou zijn vrijgesteld van de verplichte closed-testing-periode (20 testers, 14 dagen) die geldt voor nieuwe persoonlijke accounts. Dit rechtstreeks bij Google Play Console controleren op het moment van accountaanmaak, niet aannemen.
-- **Clerk + Capacitor OAuth-ondersteuning.** Clerk heeft officiële ondersteuning voor React Native/Expo; wat het aanbevolen patroon is voor Capacitor specifiek (systeembrowser + deep link terugkoppelen aan een Clerk-sessie) is nog niet onderzocht in Clerk's documentatie.
+- **Clerk + Capacitor OAuth-ondersteuning — onderzocht (2026-07-19), niet definitief opgelost.** Clerk heeft officiële ondersteuning voor React Native/Expo, niet voor Capacitor specifiek. Websearch (een Ionic-forumdiscussie over exact hetzelfde symptoom, plus een werkende Clerk+Capacitor-tutorial die bewust geen OAuth dekt) bevestigt: dit is genuinely onbewezen terrein, ook breder in de community. Onduidelijk of Clerk's sessie/cookie-status na een systeembrowser-OAuth-hop correct overspringt naar de app-WebView (twee gescheiden cookie-opslagplekken). **Besluit:** niet nu bouwen, e-mail/wachtwoord is de bevestigd werkende weg voor mobiel. Herzien zodra Clerk duidelijkere Capacitor-documentatie publiceert.
 - **Remote laden en app-store-review.** Beide stores staan apps toe die primair een webapp tonen, zolang de app een native shell-functionaliteit toevoegt (hier: voice, microfoon, native permissies, Sign in with Apple) en niet puur een browser-wrapper zonder toegevoegde waarde is. Bij de eerste submissie expliciet in de reviewer-notes toelichten wat de native meerwaarde is.
 
 ---
 
-## Relevante bestaande code (referentie voor bouw, stap 6)
+## Relevante bestaande code (bijgewerkt na de bouw)
 
-- **Auth-gate:** `middleware.ts:91-260` (Clerk `clerkMiddleware`, auto-trial-provisioning, redirects).
-- **CORS:** `app/api/chat/route.ts:33-52` (`ALLOWED_ORIGINS`), hier komen de Capacitor-origins bij.
-- **OAuth-origin-afhankelijke code:** `app/sign-in/[[...sign-in]]/page.tsx`, `app/sign-in/enterprise/page.tsx`, `app/sign-up/[[...sign-up]]/page.tsx`, `app/ClerkAppProvider.tsx` (forceert bewust `window.location.href` i.p.v. Next.js-routing bij Clerk-redirects, om een router-cache-bug te omzeilen — testen bij de LinkedIn OAuth-flow op mobiel).
-- **Microfoon/opname:** `app/bot/SparClient.tsx` (state rond regel 179-180, 251-252; `startRecording`/`stopRecording` rond 270-306).
-- **Package.json:** geen `@capacitor/*` dependency aanwezig, moet vanaf nul toegevoegd worden in stap 6.
+- **Auth-gate:** `middleware.ts:91-260` (Clerk `clerkMiddleware`, auto-trial-provisioning, redirects). Ongewijzigd, blijkt niet nodig te wijzigen voor de app (remote laden).
+- **CORS:** `app/api/chat/route.ts:33-52` (`ALLOWED_ORIGINS`) — ongewijzigd gebleven, bevestigd niet nodig, zie Technische vereisten punt 3.
+- **Capacitor-configuratie:** `capacitor.config.ts` (appId `arno.bot`, appName ArnoBot, `server.url: https://www.arno.bot`, `server.allowNavigation`), `android/` (native projectskelet, `npx cap add android`).
+- **Mobiel inloggen:** `app/sign-in/AppSignIn.tsx` (nieuw, e-mail/wachtwoord via Clerk's `password`-strategie), conditionele branch in `app/sign-in/[[...sign-in]]/page.tsx` (`Capacitor.isNativePlatform()`-check), wachtwoord-instellen op `app/bot/account/page.tsx` + `app/api/bot/set-app-password/route.ts`. Volledig gedocumenteerd in `docs/VOICE_PLAN.md`.
+- **OAuth-origin-afhankelijke code:** `app/sign-in/[[...sign-in]]/page.tsx`, `app/sign-in/enterprise/page.tsx`, `app/sign-up/[[...sign-up]]/page.tsx`, `app/ClerkAppProvider.tsx` — ongewijzigd, blijft web-only zolang OAuth-in-de-app niet gebouwd wordt.
+- **Microfoon/opname:** `app/bot/SparClient.tsx` (state rond regel 179-180, 251-252; `startRecording`/`stopRecording` rond 270-306). Ongewijzigd; `RECORD_AUDIO`-permissie staat in `android/app/src/main/AndroidManifest.xml`, functionele werking nog niet bevestigd.
+- **App-icoon:** `public/arnobot-app-icon-source.png` (placeholder-bronbestand), nog niet toegepast op de daadwerkelijke Android-icoonbestanden.
+- **Package.json:** `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/browser` toegevoegd.
