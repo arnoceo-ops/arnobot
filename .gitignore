@@ -50,3 +50,14 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Capacitor Android — build-artefacten en machine-specifieke bestanden
+/android/app/build/
+/android/build/
+/android/.gradle/
+/android/local.properties
+/android/*.keystore
+/android/**/google-services.json
+# Build-tijd-kopie van public/, ongebruikt bij remote laden (server.url in capacitor.config.ts),
+# puur een duplicaat van bestanden die al elders in de repo staan (was 40MB).
+/android/app/src/main/assets/public/

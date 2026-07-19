@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ArnoBot</string>
+    <string name="title_activity_main">ArnoBot</string>
+    <string name="package_name">arno.bot</string>
+    <string name="custom_url_scheme">arno.bot</string>
+</resources>

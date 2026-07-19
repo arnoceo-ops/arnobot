@@ -16,7 +16,15 @@ Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via C
 
 **Belangrijke ontkoppeling (2026-07-19):** een geverifieerd Play Console-account is alleen nodig om te *publiceren/testen via de store* (de "App maken"-knop blijft grijs tot verificatie rond is). Het is **niet** nodig om te *bouwen*: Capacitor toevoegen, het Android-project lokaal opzetten, en lokaal testen (emulator of `adb install`) werkt volledig los van de Play Console-accountstatus. De accountverificatie hoeft dus niet meer af te wachten voordat de Capacitor-bouwstap start.
 
-**Eerstvolgende stap:** Capacitor-integratie starten (zie Architectuurbesluit hieronder), ongeacht de Play Console-status. Publiceren/testen via Play Console volgt zodra de accountverificatie daar rond is. Stemopnames en pricingpagina volgen pas ná de mobiele app.
+**Gebouwd (2026-07-19):** Capacitor-shell voor Android toegevoegd. `capacitor.config.ts` (appId `arno.bot`, appName ArnoBot, remote laden via `server.url: https://arno.bot`), `android/`-projectskelet gescaffold via `npx cap add android` (lukte zonder Java/SDK nodig te hebben, dat is puur een Node-scaffoldstap), microfoonpermissie gedeclareerd in het manifest (RECORD_AUDIO), `.gitignore` uitgebreid met build-artefacten. Bevestigd tijdens dit onderzoek: bij remote laden is **geen enkele CORS- of CSP-wijziging nodig** in `middleware.ts`/`next.config.ts`, de WebView draait het echte `arno.bot`-origin, precies zoals een normale browser. Dit weerlegt de eerdere aanname (technische vereiste 3) dat de CORS-allowlist Capacitor-origins nodig zou hebben, dat gold alleen bij lokaal bundelen.
+
+**Belangrijke beperking:** deze Windows-machine heeft geen Java/JDK, Android SDK of Gradle geïnstalleerd. Scaffolden lukte (puur Node), maar bouwen/draaien/testen van de app kan hier niet. **Actie vereist van Arno:** Android Studio installeren (bundelt JDK + SDK + Gradle + emulator in één installer), dan `android/` openen, Gradle laten syncen, en op een emulator of eigen toestel draaien (`npx cap run android` of via Android Studio's Run-knop).
+
+**Twee dingen nog niet bevestigd, expliciete test na installatie:**
+1. Werkt de bestaande mic-knop (spraak-naar-tekst) in de WebView? De permissie staat in het manifest, maar een WebView geeft `getUserMedia()` niet automatisch door zonder een native `onPermissionRequest`-override. Als het niet werkt: kleine vervolgstap in `MainActivity`.
+2. Werkt inloggen (e-mail/wachtwoord, bestaande sessie) in de WebView? LinkedIn-OAuth-login is bewust nog niet aangepakt in deze stap (blijft voorlopig gewone WebView-login, niet de uiteindelijke systeembrowser-flow die Apple/Google losstaand vereisen), dat komt in een latere stap.
+
+**Eerstvolgende stap:** Arno installeert Android Studio en test de basis-shell (opent de app, laadt arno.bot, inloggen, tekstchat, mic-knop). Resultaat terugkoppelen, dan pas verder met OAuth-via-systeembrowser en de rest van stap 6 in de volgorde hieronder.
 
 ---
 
