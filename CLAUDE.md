@@ -110,6 +110,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - **Gedaan (2026-07):** OpenAI toegevoegd aan de sub-verwerkerstabel in `app/privacy/page.tsx`, aan de leverancierslijst in `scripts/generate-security-pdf.mjs` (PDF opnieuw gegenereerd, versie 1.0 naar 1.1), en aan `docs/dpa-draft-v0.6.md`/`docs/dpa-input.md`. DPA-link en trainingsbeleid geverifieerd via websearch vóór publicatie. `docs/dpa-draft-v0.6.pdf` moet nog handmatig gerenderd worden via de Markdown PDF-extensie.
 - Controleer [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1` en `tts-1-hd`.
 
+#### ElevenLabs (tekst-naar-spraak voor ArnoBot Voice, `app/api/admin/voice-test/tts/route.ts`)
+- **Status (2026-07):** admin-only testfase. Alleen bereikbaar via `/bot/admin/voice-test`, achter het bestaande `arnobot_admin`-cookie-mechanisme, geen Clerk-gebruiker heeft hier toegang toe. Er gaat nog geen echte gebruikersdata doorheen, alleen Arno's eigen testvragen. Daarom bewust NOG NIET toegevoegd aan de privacypagina (`app/privacy/page.tsx`) of het beveiligingsdocument (`scripts/generate-security-pdf.mjs`), dat volgt zodra er een ship-besluit is over een publieke voice-feature (zie `docs/VOICE_PLAN.md`). Deze rij bestaat om te voorkomen dat ElevenLabs hetzelfde overkomt als Voyage AI, Sentry, Upstash en OpenAI (zie de "Vaste regel" in sectie 3 hierboven): nu al in de kwartaalcheck, vóórdat het een publieke feature wordt, niet pas achteraf ontdekt.
+- `app/api/admin/voice-test/tts/route.ts`: model Flash v2.5 (`eleven_flash_v2_5`), streaming audio, rauwe `fetch()` naar `api.elevenlabs.io`, geen SDK.
+- Verbruik (tekens per aanroep) wordt gelogd in `arnobot_elevenlabs_usage`.
+- Controleer [elevenlabs.io/docs](https://elevenlabs.io/docs) op API-wijzigingen. Zodra dit een publieke feature wordt: sub-verwerkerstabel in `app/privacy/page.tsx`, leverancierslijst in `scripts/generate-security-pdf.mjs`, en `docs/dpa-input.md` bijwerken, net als destijds bij OpenAI.
+
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
@@ -358,6 +364,8 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. Ontbrak eerder in deze tabel. | 2026-07 |
 | `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch, geen SDK) | Spraak-naar-tekst voor voice-input. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
 | `app/api/tts/route.ts` | `tts-1-hd` (OpenAI, stem `onyx`, rauwe fetch, geen SDK) | Tekst-naar-spraak. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
+| `app/api/admin/voice-test/chat/route.ts` (ArnoBot Voice, admin-only testfase) | `claude-sonnet-4-6` | Eigen, korte voice-systeeminstructie (`buildVoiceSystemPrompt` in `lib/systemPrompt.ts`, doellengte 400-600 tekens, gespreksachtig). Niet-streamend (`.messages.create()`), want bij zulke korte antwoorden weegt de streaming-boilerplate niet op tegen de winst. Zelfde retry-bij-leeg-antwoord-patroon als de hoofdchat. Alleen bereikbaar via `/bot/admin/voice-test`, geen publieke route. | 2026-07 |
+| `app/api/admin/voice-test/tts/route.ts` (ArnoBot Voice, admin-only testfase) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch, geen SDK) | Streaming tekst-naar-spraak, zie ElevenLabs-sectie hierboven voor status en scope. | 2026-07 |
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 

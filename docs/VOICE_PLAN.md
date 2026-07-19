@@ -59,7 +59,8 @@ App is inloggen en gebruiken. Betalen (nieuwe laag, bijkoopbundels) gebeurt op d
 - [ ] Nieuwe route `app/api/chat-voice/route.ts` met de voice-systeeminstructie (besluit 3, ontwerpvraag 1)
 - [ ] Nieuwe route voor ElevenLabs streaming TTS (besluit 2), naast het bestaande `app/api/tts/route.ts`
 - [ ] Afspeellogica die binnen de user-gesture start, met zichtbare afspeelknop als vangnet (besluit 7)
-- [ ] Voice-mode toggle in `SparClient.tsx`, achter de `voice_enabled`-flag (ontwerpvraag 2)
+- [ ] Voice-mode toggle in `SparClient.tsx`, achter de `voice_enabled`-flag (ontwerpvraag 2). **Bouwrichtlijn (2026-07-19):** nieuwe voice-logica/state in een apart component (bv. `VoiceMode.tsx`) dat `SparClient.tsx` conditioneel mount, niet doorweven in de bestaande 1600+ regels. Kleinste diff-oppervlak in het gedeelde bestand dat alle bot-gebruikers al gebruiken, kleinste kans op regressie voor niet-Voice-gebruikers.
+- [ ] Na fase 1: expliciet de bestaande tekst-chat-, TTS- en STT-flow opnieuw testen (regressiecheck) vóórdat fase 1 als afgerond geldt
 - [ ] Automatische ElevenLabs-playback voor Voice-abonnees i.p.v. de handmatige OpenAI-knop (ontwerpvraag 4)
 - [ ] `package.json`: ElevenLabs toevoegen
 - [ ] CLAUDE.md bijwerken: ElevenLabs toevoegen aan de kwartaalcheck-sectie en de modelinventaris-tabel, in dezelfde commit
