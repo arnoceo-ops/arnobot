@@ -1,5 +1,21 @@
 # Claude Code — project instructies
 
+## Sessie-start en -overdracht — ALTIJD
+
+Voortgang op meerdaagse trajecten leeft niet in het gesprek, maar in bestanden en git. Een sessie houdt geen geheugen over de vorige; alleen wat in bestanden en git staat, bestaat nog bij de volgende sessie.
+
+Meerdaagse plandocumenten (bv. `docs/VOICE_PLAN.md`, `docs/MOBILE_PLAN.md`) hebben bovenaan een statusblok: **Laatst bijgewerkt**, **Waar we staan**, **Eerstvolgende stap**, plus een afvinklijst per fase.
+
+**Bij de start van elke sessie waarin aan zo'n traject wordt gewerkt:** lees de statusblokken van de relevante documenten, vat in twee zinnen samen waar het traject staat en wat de eerstvolgende stap is, en wacht op akkoord voordat je verdergaat.
+
+**Aan het einde van zo'n sessie:** werk de statusblokken bij (laatst bijgewerkt, waar we staan, eerstvolgende stap, afvinklijst), inclusief openstaande punten en genomen besluiten.
+
+**Besluiten én verworpen alternatieven expliciet noteren**, niet alleen afgeronde taken. Bijvoorbeeld: "Gekozen: X. Verworpen: Y, want Z." Dit voorkomt dat een latere sessie hetzelfde vraagstuk opnieuw opent en anders beslist, dat sluipende heen-en-weer is de grootste voortgangskiller bij lange trajecten.
+
+**Git als onafhankelijke controle:** kleine commits met duidelijke berichten per afgeronde stap, zodat git log altijd laat zien wat er echt gebeurd is, los van wat een statusblok beweert.
+
+**Periodieke verse controle:** aan het eind van een fase een nieuwe sessie of subagent, zonder de aannames van de bouwsessie, laten verifiëren dat de statusblokken kloppen met de werkelijke code (bv. "het document zegt fase 1 af, maar staat de tekenteller nog als TODO in de code"). Geen extra hooks of automatisering hiervoor optuigen, dit is bewust lichtgewicht: statusblokken, deze werkafspraak, en discipline in kleine commits volstaan voor een traject van deze omvang.
+
 ## Maandelijkse check — roep aan met "doe de kwartaalcheck"
 
 Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
