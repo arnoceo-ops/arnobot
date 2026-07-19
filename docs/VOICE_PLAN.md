@@ -17,7 +17,9 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 
 **Gebouwd en live getest door Arno (2026-07-19):** de echte, premium-gated integratie staat in `SparClient.tsx` (`voice_enabled`-kolom op `approved_users`, nieuwe routes `app/api/chat-voice/route.ts` + `app/api/tts-voice/route.ts`, gedeelde logica in `lib/voice.ts`, hergebruikt door de admin-testroutes). **Architecturale correctie t.o.v. het eerdere `VoiceMode.tsx`-idee:** géén apart component gebruikt, de logica haakt direct in `ask()`/`speak()` in minimale, geïsoleerde branches, dat bleek een kleiner en veiliger diff-oppervlak dan een apart component optillen. Volledige voice-round-trip (toggle aan, vraag stellen, gesproken antwoord terug) live getest door Arno op productie: werkt. ElevenLabs toegevoegd aan privacypagina en beveiligingsdocument (versie 1.2), "Improve the models for everyone" uitgezet in het ElevenLabs-dashboard.
 
-**Eerstvolgende stap:** regressiecheck op de bestaande, niet-voice-flows (normale chat, sparren-modus, bestand bijvoegen, mic/STT, mobiel), dat was de kernzorg bij deze bouwstap en is nog niet expliciet bevestigd. Daarna: fase 2 (verbruiksplafond) uit de fasering hieronder.
+**Regressiecheck bevestigd door Arno (2026-07-19):** normale chat, de bestaande ▶-knop met OpenAI-stem en snelheidsmenu, sparren-modus, bestand bijvoegen, en de bestaande mic/STT-knop, allemaal gecheckt zonder voice-mode aan, geen van alle geraakt. Deze bouwstap geldt hiermee als afgerond.
+
+**Eerstvolgende stap:** nog geen admin-UI om `voice_enabled` bij andere gebruikers te zetten (alleen handmatige SQL, zoals nu bij Arno zelf); nodig zodra er echte testgebruikers bij komen. Daarna fase 2 (verbruiksplafond in tekens/kosten per maand) uit de fasering hieronder, vóóral omdat de huidige rate limits (30/uur chat, 60/uur tts) alleen misbruik afvangen, geen echte kostenbeheersing zijn.
 
 ---
 
