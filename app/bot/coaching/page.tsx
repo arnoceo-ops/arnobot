@@ -41,7 +41,7 @@ export default async function CoachingPage() {
               </p>
             </div>
             <Link
-              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Premium"
+              href="/bot/gesprek"
               style={{
                 display: 'inline-block', padding: '12px 36px',
                 background: '#f59e0b', color: '#111827',
@@ -50,7 +50,7 @@ export default async function CoachingPage() {
                 textDecoration: 'none', borderRadius: 999,
               }}
             >
-              UPGRADE NAAR PREMIUM →
+              PLAN EEN GESPREK MET ARNO →
             </Link>
           </div>
         </div>
