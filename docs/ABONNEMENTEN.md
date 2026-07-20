@@ -7,7 +7,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 ## Status
 
 **Laatst bijgewerkt:** 2026-07-20
-**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is gebouwd, getest en live. De upgrade- en gesprek-boekingsflows zijn gebouwd (zie "Upgrade- en boekingspagina's" hieronder). Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur.
+**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is volledig afgerond: gebouwd, getest, en de oude kolommen zijn gedropt (migratie 2 bevestigd). De upgrade- en gesprek-boekingsflows zijn gebouwd en getest (zie "Upgrade- en boekingspagina's" hieronder). Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur.
 **Eerstvolgende stap:** Geen actief bouwwerk. Openstaande besluiten hieronder bij "Nog niet besloten" oppakken zodra relevant (met name: `/prijzen` bijwerken, dat blijft sowieso geblokkeerd op de betaalprovider-keuze uit `docs/VOICE_PLAN.md` fase 3).
 
 ---
@@ -68,7 +68,7 @@ Besloten (2026-07-20): all-in, per seat/meerdere gebruikers, elke gebruiker in h
 - Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. Default gecorrigeerd op 2026-07-20 (stond eerst foutief op `'basis'`, zie hierboven); `middleware.ts` zet `plan` bovendien ook expliciet bij provisioning, dus dit is een vangnet, niet de enige bescherming.
 - Admin-beheer: `/bot/admin/gebruikers`, 3-way toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`). Geen self-serve upgradeflow, alles wordt handmatig door Arno gezet, zoals ook alle betalingen nu handmatig geregistreerd worden.
 - Gating-logica: `app/api/chat/route.ts` (berichtlimiet, sessiegeheugen, coaching-context), `app/api/bot/coaching*` (coaching-toegang), `lib/voice.ts` (`hasVoiceAccess`, voice-toegang).
-- De oude kolommen `tier` en `voice_enabled` staan (tijdelijk) nog in de database, maar worden nergens meer door de code gelezen. Ze worden gedropt zodra de regressietest van de migratie volledig is afgerond en bevestigd (zie `docs/VOICE_PLAN.md`).
+- De oude kolommen `tier` en `voice_enabled` zijn gedropt (2026-07-20, na bevestigde regressietest, zie `docs/VOICE_PLAN.md`). Geen legacy-kolommen meer.
 
 ---
 
