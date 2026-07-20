@@ -83,7 +83,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 
 #### Calendly (boeking van het gesprek met Arno)
 - **Toegevoegd (2026-07-20):** `app/api/webhooks/calendly/route.ts` ontvangt `invitee.created`-events, verifieert de `Calendly-Webhook-Signature`-header (HMAC-SHA256 met `CALENDLY_WEBHOOK_SIGNING_KEY`, 5 minuten replay-venster) en zet `arno_call_booked_at` op `approved_users` via een match op e-mailadres. `app/bot/gesprek/route.ts` is de stabiele interne link (in e-mails en op de account-pagina) die doorverwijst naar `ARNO_BOOKING_URL` — Arno kiest de definitieve scheduling-tool later, dus wisselen van tool is alleen een env var-wijziging, geen codewijziging.
-- **Vereist handmatige actie van Arno buiten de code:** in het Calendly-dashboard een webhook-subscription aanmaken die naar `https://arno.bot/api/webhooks/calendly` wijst, plus `ARNO_BOOKING_URL` en `CALENDLY_WEBHOOK_SIGNING_KEY` als env vars in Vercel zetten.
+- **Gedaan (2026-07-20):** webhook-subscription aangemaakt en env vars gezet. **Val niet terug in dezelfde fout als de eerste keer:** de callback-URL moet `https://www.arno.bot/api/webhooks/calendly` zijn (mét www) — `arno.bot` zonder www stuurt altijd 308-door naar www, en Calendly volgt die redirect niet bij het afleveren van webhooks, waardoor de eerste subscription nooit iets aflevert (bevestigd: `retry_started_at` liep op, niets kwam aan in de Vercel-logs).
 - Controleer bij een leverancierswissel of het nieuwe tool ook e-mailadres in het webhook-payload meestuurt (nu de matchsleutel), anders moet de matchlogica in de webhook-route mee veranderen.
 
 #### Anthropic

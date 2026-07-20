@@ -113,7 +113,7 @@ export default async function AdminStatsPage() {
     { data: sparringSessies },
     { count: qaViews },
     { count: coachingViews },
-    { count: arnoliveClicks },
+    { count: gesprekClicks },
     { data: analyses },
     { data: users },
     { data: logs },
@@ -125,7 +125,10 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'qa_page_view').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view').neq('user_id', E2E_TEST_USER_ID),
-    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_arnolive_click').neq('user_id', E2E_TEST_USER_ID),
+    // Telt zowel het oude event (vóór 2026-07-20, toen deze knop nog "BEKIJK ARNOLIVE" was
+    // en naar /upgrade linkte) als het nieuwe (sindsdien "PLAN GESPREK", linkt naar
+    // /bot/gesprek), zodat de teller niet stil terugvalt naar 0 door de omzetting.
+    supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).in('event_name', ['coaching_arnolive_click', 'coaching_gesprek_click']).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at, bedrag, interval').neq('email', E2E_TEST_USER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).neq('user_id', E2E_TEST_USER_ID),
@@ -391,7 +394,7 @@ export default async function AdminStatsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 40 }}>
           <StatCard label="Q&A" stats={[{ sublabel: 'BEZOEKEN', value: String(qaViews ?? 0) }]} />
           <StatCard label="COACHING" stats={[{ sublabel: 'BEZOEKEN', value: String(coachingViews ?? 0) }]} />
-          <StatCard label="ARNOLIVE" stats={[{ sublabel: 'CLICKS', value: String(arnoliveClicks ?? 0) }]} />
+          <StatCard label="GESPREK MET ARNO" stats={[{ sublabel: 'CLICKS', value: String(gesprekClicks ?? 0) }]} />
         </div>
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GESPREKKEN OVER TIJD</p>
