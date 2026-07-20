@@ -583,7 +583,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
             {/* Eerdere rapportages */}
             {history.length > 0 && (
               <div className="coaching-section">
-                <span className="coaching-label">EERDERE RAPPORTAGES</span>
+                <span className="coaching-label">ARCHIEF</span>
                 <div style={{ marginTop: 8 }}>
                   {history.map(h => (
                     <div key={h.id} style={{ borderTop: '1px solid #374151' }}>
