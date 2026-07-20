@@ -84,8 +84,15 @@ Besloten (2026-07-20): all-in, per seat/meerdere gebruikers, elke gebruiker in h
 
 ## Openstaande vragen / nog niet besloten
 
+**Blokkerend op de betaalprovider-keuze** (zie `docs/VOICE_PLAN.md` fase 3, `project_dunning_flow` in memory):
+- Of en wanneer `/prijzen` wordt bijgewerkt naar de drie-lagen-structuur. Expliciet blokkerend, niet zomaar los te trekken: fase 3 van VOICE_PLAN.md bundelt de pricingpagina met de upgradeflow, dus de pagina wacht op de providerkeuze (besloten 2026-07-20, bevestigd na een korte heroverweging in dezelfde sessie).
+- Self-serve checkout/upgradeflow, en de dunning-flow (herinneringen bij mislukte betaling) die daarop voortbouwt.
+
+**Niet-blokkerend, kan los opgepakt worden** (2026-07-20 als groep benoemd):
 - Implementatie van de bewaargrenzen (zie "Bewaargrenzen" hierboven): plan-afhankelijke cap op gesprekken (nieuw te bouwen opruimmechanisme) en op patroonanalyses (bestaande vlakke 20-cap plan-afhankelijk maken). Besluit staat vast, bouwwerk nog niet gestart.
-- Prijsstaffel voor `team`.
-- Of en wanneer `/prijzen` wordt bijgewerkt naar de drie-lagen-structuur (blokkeert op de betaalprovider-keuze, zie `docs/VOICE_PLAN.md` fase 3).
-- Of er ooit een betaalde tussenlaag komt zonder voice (zie "Belangrijke toelichting" hierboven) — op dit moment bewust niet aan de orde.
+- Prijsstaffel voor `team` vaststellen.
+- Exacte basis-prijs vaststellen (nu alleen "goedkoper dan premium" afgesproken, zie tabel hierboven).
 - Migratie/communicatie richting bestaande betalende klanten die met deze wijziging stilzwijgend voice-toegang erbij hebben gekregen zonder daar apart voor te betalen (zie "Belangrijke toelichting" hierboven) — nog geen besluit of/hoe dit gecommuniceerd wordt.
+
+**Overig:**
+- Of er ooit een betaalde tussenlaag komt zonder voice (zie "Belangrijke toelichting" hierboven) — op dit moment bewust niet aan de orde.
