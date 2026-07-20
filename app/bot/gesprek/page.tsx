@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import Script from 'next/script'
 import BotNav from '../BotNav'
 
 const supabase = createClient(
@@ -21,13 +20,17 @@ export default async function GesprekPage() {
 
   const bookingUrl = process.env.ARNO_BOOKING_URL
 
-  let embedUrl: string | null = null
+  let bookingLink: string | null = null
   if (bookingUrl) {
     const url = new URL(bookingUrl)
     if (data?.email) url.searchParams.set('email', data.email)
     const naam = [data?.voornaam, data?.achternaam].filter(Boolean).join(' ')
     if (naam) url.searchParams.set('name', naam)
-    embedUrl = url.toString()
+    // Onveranderlijke koppeling voor de webhook (zie app/api/webhooks/calendly/route.ts):
+    // komt terug in payload.tracking.utm_content, ongeacht wat iemand in het Calendly-
+    // formulier zelf invult.
+    url.searchParams.set('utm_content', userId)
+    bookingLink = url.toString()
   } else {
     console.error('[bot/gesprek] ARNO_BOOKING_URL ontbreekt')
   }
@@ -52,21 +55,29 @@ export default async function GesprekPage() {
           <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
             Je hebt je persoonlijke gesprek met Arno al ingepland op {new Date(data.arno_call_booked_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}.
           </p>
-        ) : !embedUrl ? (
+        ) : !bookingLink ? (
           <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
             Het inplannen is tijdelijk niet beschikbaar. Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a> om je gesprek te regelen.
           </p>
         ) : (
           <>
             <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 32 }}>
-              Elke gebruiker krijgt één persoonlijk gesprek met Arno zelf. Kies hieronder een moment dat jou uitkomt.
+              Elke gebruiker krijgt één persoonlijk gesprek met Arno zelf. Plan hieronder een moment dat jou uitkomt, je opent daarvoor Calendly in een nieuw tabblad.
             </p>
-            <div
-              className="calendly-inline-widget"
-              data-url={embedUrl}
-              style={{ minWidth: 320, height: 700 }}
-            />
-            <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="afterInteractive" />
+            <a
+              href={bookingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block', padding: '12px 36px',
+                background: '#f59e0b', color: '#111827',
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: 18, letterSpacing: 3,
+                textDecoration: 'none', borderRadius: 999,
+              }}
+            >
+              PLAN JE GESPREK →
+            </a>
           </>
         )}
       </div>

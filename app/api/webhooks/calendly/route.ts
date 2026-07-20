@@ -49,15 +49,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true })
   }
 
+  // Boekingen via /bot/gesprek dragen de Clerk userId mee als utm_content: onveranderlijk,
+  // in tegenstelling tot het e-mailveld dat iemand in het Calendly-formulier kan overtypen.
+  // Alleen bij een boeking buiten de app om (kale publieke link, geen utm_content) valt dit
+  // terug op e-mailmatching.
+  const userId = payload.payload?.tracking?.utm_content
   const email = payload.payload?.email
-  if (typeof email !== 'string' || !email) {
-    return NextResponse.json({ error: 'Geen e-mailadres in payload' }, { status: 400 })
+
+  const match = typeof userId === 'string' && userId
+    ? supabase.from('approved_users').update({ arno_call_booked_at: new Date().toISOString() }).eq('user_id', userId)
+    : typeof email === 'string' && email
+      ? supabase.from('approved_users').update({ arno_call_booked_at: new Date().toISOString() }).eq('email', email)
+      : null
+
+  if (!match) {
+    return NextResponse.json({ error: 'Geen userId of e-mailadres in payload' }, { status: 400 })
   }
 
-  const { error } = await supabase
-    .from('approved_users')
-    .update({ arno_call_booked_at: new Date().toISOString() })
-    .eq('email', email)
+  const { error } = await match
 
   if (error) {
     console.error('[webhooks/calendly] update mislukt:', error.message)
