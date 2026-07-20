@@ -7,8 +7,16 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 ## Status
 
 **Laatst bijgewerkt:** 2026-07-20
-**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is gebouwd, getest en live. Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur.
+**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is gebouwd, getest en live. De upgrade- en gesprek-boekingsflows zijn gebouwd (zie "Upgrade- en boekingspagina's" hieronder). Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur.
 **Eerstvolgende stap:** Geen actief bouwwerk. Openstaande besluiten hieronder bij "Nog niet besloten" oppakken zodra relevant (met name: `/prijzen` bijwerken, dat blijft sowieso geblokkeerd op de betaalprovider-keuze uit `docs/VOICE_PLAN.md` fase 3).
+
+---
+
+## Upgrade- en boekingspagina's
+
+- **`/bot/gesprek`**: het ene gratis gesprek met Arno (zie ook `docs/VOICE_PLAN.md`). Echte pagina met Calendly-embed (voorgevuld met naam/e-mail), toont een "al gepland"-status zodra `arno_call_booked_at` gevuld is. Bereikbaar vanuit de dag21-mail en vanuit de coaching-pagina (premium/team-weergave, verdwijnt zodra al gepland).
+- **`/bot/upgrade`**: handmatige upgrade-aanvraag, geen self-serve betaling (die bestaat nog niet, zie "Technische implementatie" hieronder). Toont een basis→premium-sectie (alleen voor `plan=basis`) en een premium→team-sectie (voor iedereen behalve `plan=team`), beide met een knop die een mailto naar arno@arno.bot opent én een klik-event logt (`upgrade_premium_click`/`upgrade_team_click`). Bereikbaar vanuit de coaching-blokkade voor basis-gebruikers.
+- **`/arnolive`** (voorheen `/upgrade`): Arno's eigen consulting-aanbod (ArnoLive-retainer + ArnoPrime-heidagen), los van de ArnoBot-abonnementen zelf. Puur verplaatst om de naamsclash met `/bot/upgrade` op te lossen, inhoud ongewijzigd.
 
 ---
 
