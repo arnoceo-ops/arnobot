@@ -1434,7 +1434,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </nav>
           {menuOpen && (
             <div className="mob-menu" onClick={() => setMenuOpen(false)}>
-              <span className="active">ARNOBOT</span>
+              {mode === 'sparren'
+                ? <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot')}>ARNOBOT</button>
+                : <span className="active">ARNOBOT</span>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
               {isBouwer && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
@@ -1448,7 +1450,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         <nav className="site-nav">
           <div className="nav-spacer" />
           <div className="nav-links">
-            <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>
+            {mode === 'sparren'
+              ? <button className="nav-flow" onClick={() => handleNavAttempt('/bot')}>ARNOBOT</button>
+              : <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>}
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
             {isBouwer && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
