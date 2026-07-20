@@ -50,7 +50,6 @@ interface Message {
 interface Props {
   userId: string
   profiel: Record<string, unknown>
-  plan: 'basis' | 'premium' | 'team'
   voiceEnabled: boolean
   taglineTitle: string
   taglineSub: string
@@ -143,7 +142,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, plan, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -220,7 +219,6 @@ export default function SparClient({ userId, profiel, plan, voiceEnabled, taglin
     reader.readAsDataURL(file)
   }
   const [shareCopied, setShareCopied] = useState(false)
-  const [dagelijksTeller, setDagelijksTeller] = useState<number | null>(null)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
   const [voiceMode, setVoiceMode] = useState(false)
@@ -790,7 +788,6 @@ export default function SparClient({ userId, profiel, plan, voiceEnabled, taglin
             if (!isBestandsfout) setAttachedFile(null)
             if (res.status === 429 && data.error === 'dagelijks_limiet') {
               setBlocked(true)
-              setDagelijksTeller(25)
               setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
             } else if (res.status === 429 && data.error === 'dual_session') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
@@ -806,8 +803,6 @@ export default function SparClient({ userId, profiel, plan, voiceEnabled, taglin
             return
           }
           setAttachedFile(null)
-
-          if (data.dagelijks_gebruikt != null) setDagelijksTeller(data.dagelijks_gebruikt)
 
           if (data.blocked) {
             setBlocked(true)
@@ -833,8 +828,6 @@ export default function SparClient({ userId, profiel, plan, voiceEnabled, taglin
         // Streaming hoofdantwoord: tekst komt in brokjes binnen, direct op het scherm bijgewerkt.
         setAttachedFile(null)
         const hintHeader = res.headers.get('X-Hint')
-        const dagelijksHeader = res.headers.get('X-Dagelijks-Gebruikt')
-        if (dagelijksHeader != null) setDagelijksTeller(Number(dagelijksHeader))
 
         if (!res.body) {
           setMessages(prev => [...prev, { role: 'arno', content: 'Geen antwoord ontvangen.' }])
@@ -1761,11 +1754,6 @@ export default function SparClient({ userId, profiel, plan, voiceEnabled, taglin
               )}
             </div>
           </div>
-          {plan === 'basis' && dagelijksTeller !== null && (
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: dagelijksTeller >= 20 ? '#f59e0b' : '#4b5563', letterSpacing: 2, textAlign: 'center', marginTop: 10, width: '100%', maxWidth: 812 }}>
-              {dagelijksTeller} / 25 vragen gebruikt vandaag
-            </p>
-          )}
           {verfijnFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Dit snap ik niet. Typ een echte vraag en ik maak hem scherper.
