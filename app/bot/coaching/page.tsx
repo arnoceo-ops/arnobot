@@ -18,7 +18,7 @@ export default async function CoachingPage() {
   )
   const { data } = await supabase
     .from('approved_users')
-    .select('plan')
+    .select('plan, arno_call_booked_at')
     .eq('user_id', userId)
     .single()
 
@@ -41,7 +41,7 @@ export default async function CoachingPage() {
               </p>
             </div>
             <Link
-              href="/bot/gesprek"
+              href="/bot/upgrade"
               style={{
                 display: 'inline-block', padding: '12px 36px',
                 background: '#f59e0b', color: '#111827',
@@ -50,7 +50,7 @@ export default async function CoachingPage() {
                 textDecoration: 'none', borderRadius: 999,
               }}
             >
-              PLAN EEN GESPREK MET ARNO →
+              UPGRADE →
             </Link>
           </div>
         </div>
@@ -58,5 +58,5 @@ export default async function CoachingPage() {
     )
   }
 
-  return <CoachingClient userId={userId} />
+  return <CoachingClient userId={userId} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
 }

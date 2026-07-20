@@ -16,14 +16,14 @@ function buildCSP(nonce: string, allowWasm = false): string {
   const clerkUnsafeEval = isDevInstance ? " 'unsafe-eval'" : ''
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://assets.calendly.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com https://assets.calendly.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     "img-src 'self' data: blob: https://images.squarespace-cdn.com https://cdn.sanity.io https://img.clerk.com https://assets.feedblitz.com",
-    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com",
-    "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
+    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://calendly.com https://assets.calendly.com",
+    "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com https://calendly.com",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",

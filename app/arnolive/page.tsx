@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export const metadata = {
   title: 'Upgrade · Royal Dutch Sales',
 }
@@ -65,7 +67,7 @@ export default function UpgradePage() {
       `}</style>
 
       <nav className="up-nav">
-        <a href="/" className="up-nav-logo">ROYAL DUTCH <span>SALES.</span></a>
+        <Link href="/" className="up-nav-logo">ROYAL DUTCH <span>SALES.</span></Link>
         <a href="/bot" className="up-nav-back">← TERUG NAAR ARNOBOT</a>
       </nav>
 
@@ -118,7 +120,7 @@ export default function UpgradePage() {
         <div className="up-intro-block">
           <div className="up-intro-text">
             <span className="up-intro-eyebrow">Gratis · 30 minuten</span>
-            <h2 className="up-intro-title">Eerst kijken of je 't aandurft?</h2>
+            <h2 className="up-intro-title">Eerst kijken of je &apos;t aandurft?</h2>
             <p className="up-intro-sub">Plan een kennismakingsgesprek met Arno. Geen pitch, geen druk. Gewoon kijken of het klikt en wat voor jou werkt.</p>
           </div>
           <a href="https://calendly.com/arnodiepeveen/30min" target="_blank" rel="noopener noreferrer" className="up-intro-cta">

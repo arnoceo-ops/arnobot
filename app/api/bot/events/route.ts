@@ -4,7 +4,7 @@ import { logEvent } from '@/lib/events'
 
 // Vaste, expliciete lijst i.p.v. een willekeurige string uit de client accepteren: voorkomt
 // dat de events-tabel wordt volgeplempt met arbitraire waarden vanuit een aangepast verzoek.
-const ALLOWED_CLIENT_EVENTS = new Set(['coaching_arnolive_click'])
+const ALLOWED_CLIENT_EVENTS = new Set(['coaching_gesprek_click', 'upgrade_premium_click', 'upgrade_team_click'])
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()

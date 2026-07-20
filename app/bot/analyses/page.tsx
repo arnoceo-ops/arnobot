@@ -752,23 +752,9 @@ export default function GeschiedenisPage() {
         {/* Analyses sectie */}
         {analyseLimiet && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 16 }}>
-            <div style={{ border: '1px solid #f59e0b', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', lineHeight: 1.9, marginBottom: 16 }}>
-                Je hebt vandaag al een analyse gemaakt. Basis-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug of upgrade naar Premium voor onbeperkte analyses.
-              </p>
-              <Link
-                href="/bot/gesprek"
-                style={{
-                  display: 'inline-block', padding: '10px 28px',
-                  background: '#f59e0b', color: '#111827',
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontSize: 16, letterSpacing: 3,
-                  textDecoration: 'none', borderRadius: 999,
-                }}
-              >
-                PLAN EEN GESPREK MET ARNO →
-              </Link>
-            </div>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', lineHeight: 1.9, border: '1px solid #f59e0b', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
+              Je hebt vandaag al een analyse gemaakt. Basis-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug of upgrade naar Premium voor onbeperkte analyses.
+            </p>
           </div>
         )}
 

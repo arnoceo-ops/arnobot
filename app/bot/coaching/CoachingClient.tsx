@@ -58,6 +58,7 @@ interface ScoreEntry {
 
 interface Props {
   userId: string
+  gesprekBookedAt: string | null
 }
 
 const PIJLAR_COLOR = '#f1f5f9'
@@ -68,7 +69,7 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
   dalend:   { arrow: '↓', color: '#cc2200' },
 }
 
-export default function CoachingClient({ userId }: Props) {
+export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
   const { user } = useUser()
   const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
@@ -565,24 +566,24 @@ export default function CoachingClient({ userId }: Props) {
           </div>
         )}
 
-        {doc && !isTeamMember && (
+        {doc && !isTeamMember && !gesprekBookedAt && (
           <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-              Wil je dit aanpakken met Arno zelf?<br />
-              Maandelijks 45 minuten. Direct. Ongefilterd.
+              Wil je dit doorspreken met Arno zelf?<br />
+              Elke gebruiker krijgt één gratis gesprek.
             </p>
             <a
-              href="/upgrade"
+              href="/bot/gesprek"
               onClick={() => {
                 fetch('/api/bot/events', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ eventName: 'coaching_arnolive_click' }),
+                  body: JSON.stringify({ eventName: 'coaching_gesprek_click' }),
                 }).catch(() => {})
               }}
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', textDecoration: 'none', borderRadius: 999, whiteSpace: 'nowrap' }}
             >
-              BEKIJK ARNOLIVE →
+              PLAN JE GESPREK →
             </a>
           </div>
         )}
