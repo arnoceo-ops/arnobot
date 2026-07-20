@@ -17,6 +17,7 @@ export default function UpgradeButton({ href, label, eventName }: { href: string
         fontFamily: "'Bebas Neue', sans-serif",
         fontSize: 18, letterSpacing: 3,
         textDecoration: 'none', borderRadius: 999,
+        minWidth: 260, textAlign: 'center',
       }}
     >
       {label}

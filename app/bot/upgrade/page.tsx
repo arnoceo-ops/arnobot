@@ -49,7 +49,7 @@ export default async function UpgradePage() {
             </p>
             <UpgradeButton
               href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Premium"
-              label="VRAAG PREMIUM AAN →"
+              label="VRAAG AAN →"
               eventName="upgrade_premium_click"
             />
           </div>
@@ -63,7 +63,7 @@ export default async function UpgradePage() {
             </p>
             <UpgradeButton
               href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Team"
-              label="VRAAG TEAM AAN →"
+              label="VRAAG AAN →"
               eventName="upgrade_team_click"
             />
           </div>
