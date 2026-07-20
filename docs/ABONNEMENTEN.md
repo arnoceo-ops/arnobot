@@ -65,7 +65,7 @@ Besloten (2026-07-20): all-in, per seat/meerdere gebruikers, elke gebruiker in h
 
 ## Technische implementatie
 
-- Kolom `plan` (`text`, `NOT NULL`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. Kolom-default staat nog op `'basis'` (oorspronkelijke, foutieve waarde, zie hierboven) en moet nog gewijzigd worden naar `'premium'` als vangnet; `middleware.ts` zet `plan` inmiddels wel al expliciet, dus dit vangnet is niet meer het enige dat nieuwe gebruikers beschermt.
+- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. Default gecorrigeerd op 2026-07-20 (stond eerst foutief op `'basis'`, zie hierboven); `middleware.ts` zet `plan` bovendien ook expliciet bij provisioning, dus dit is een vangnet, niet de enige bescherming.
 - Admin-beheer: `/bot/admin/gebruikers`, 3-way toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`). Geen self-serve upgradeflow, alles wordt handmatig door Arno gezet, zoals ook alle betalingen nu handmatig geregistreerd worden.
 - Gating-logica: `app/api/chat/route.ts` (berichtlimiet, sessiegeheugen, coaching-context), `app/api/bot/coaching*` (coaching-toegang), `lib/voice.ts` (`hasVoiceAccess`, voice-toegang).
 - De oude kolommen `tier` en `voice_enabled` staan (tijdelijk) nog in de database, maar worden nergens meer door de code gelezen. Ze worden gedropt zodra de regressietest van de migratie volledig is afgerond en bevestigd (zie `docs/VOICE_PLAN.md`).
