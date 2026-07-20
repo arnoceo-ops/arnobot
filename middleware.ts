@@ -169,6 +169,11 @@ export default clerkMiddleware(async (auth, req) => {
               linkedin: linkedinUrl,
               trial_start: new Date().toISOString(),
               is_active: true,
+              // Trial-gebruikers krijgen volledige functionaliteit (coaching, voice, hoge
+              // limieten), niet het basis-plan. Wie na de trial voor het goedkopere basis-
+              // abonnement kiest, verliest die functionaliteit dan bewust. Expliciet gezet
+              // i.p.v. te leunen op de kolom-default, die stond hier eerder foutief op 'basis'.
+              plan: 'premium',
             }
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
             const suffix = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')

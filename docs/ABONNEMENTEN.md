@@ -24,16 +24,20 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 | | **Basis** | **Premium** | **Team** |
 |---|---|---|---|
-| Prijs | Gratis (trial) / geen apart betaald basis-product op dit moment | €97/maand (zie toelichting hieronder) | Op aanvraag, geen vaste prijs |
+| Prijs | Betaald, goedkoper dan premium, exact bedrag nog niet vastgesteld | €97/maand (zie toelichting hieronder) | Op aanvraag, geen vaste prijs |
 | Chatberichten/dag | 25 | 100 | 100 |
 | Sessiegeheugen (vorige gesprekken meegenomen) | 10 | 25 | 25 |
 | Coaching (rapport, coachingsdiagnose in chat) | Nee | Ja | Ja |
 | Spraak-naar-tekst invoer (mic-knop) | Ja | Ja | Ja |
 | Gesproken antwoorden (ElevenLabs voice-naar-voice) | Nee, behalve tijdelijk tijdens de trial (zie hieronder) | Ja | Ja |
 | Uitgebreide/lange antwoorden, document-upload | Ja (webapp) | Ja (webapp) | Ja (webapp) |
-| Wie | Trial-gebruikers na afloop van gratis voice-tegoed, en iedereen zonder betaald abonnement | Betalende individuele abonnees | Meerdere gebruikers/seats onder één (bedrijfs)deal, elke gebruiker krijgt premium-niveau |
+| Wie | Gebruikers die na de trial bewust voor het goedkopere abonnement kiezen | Trial-gebruikers (zie hieronder) én betalende premium-abonnees | Meerdere gebruikers/seats onder één (bedrijfs)deal, elke gebruiker krijgt premium-niveau |
 
-**Trial-uitzondering (dekt `basis` gedeeltelijk):** iedereen krijgt tijdens de eerste 30 dagen (trial) ook gratis toegang tot gesproken antwoorden, tot een plafond van circa 50.000 tekens (`TRIAL_VOICE_CHAR_CAP` in `lib/voice.ts`). Dit staat los van de `plan`-kolom en geldt voor iedereen met een lopende trial, ook als hun `plan` op `basis` staat. Na de trial (of eerder bij het bereiken van het plafond) valt dit weg, tenzij iemand `premium` of `team` is.
+**Trial krijgt volledige functionaliteit (besloten en bevestigd 2026-07-20):** iedere nieuwe gebruiker krijgt bij aanmelden expliciet `plan='premium'` (`middleware.ts`, provisioning bij eerste LinkedIn-login), niet `basis`. Dat betekent tijdens de 30 dagen trial: volledige coaching, gesproken antwoorden, en de hoge berichtlimiet, precies zoals vóór de migratie ook al zo werkte (toen stond `tier` default op `pro`). Pas als iemand na de trial bewust voor het goedkopere `basis`-abonnement kiest, verliest die coaching, voice en de hoge limiet.
+
+**Gevonden en gefixt (2026-07-20, zelfde dag als de migratie):** de nieuwe `plan`-kolom kreeg aanvankelijk kolom-default `'basis'`, en `middleware.ts` zette `plan` nooit expliciet bij provisioning. Nieuwe trial-aanmeldingen kregen daardoor stilzwijgend een beperkte trial-ervaring (geen coaching, geen voice, 25 berichten/dag) in plaats van de bedoelde volledige functionaliteit. Ontdekt vóórdat er nieuwe gebruikers door geraakt zijn. Gefixt door `plan: 'premium'` expliciet in `newRow` te zetten; de kolom-default in Supabase moet nog gelijkgetrokken worden (zie Technische implementatie).
+
+**Losstaande, kleinere voice-uitzondering:** iedereen met een lopende trial krijgt sowieso ook los van `plan` gratis voice-toegang tot een plafond van circa 50.000 tekens (`TRIAL_VOICE_CHAR_CAP` in `lib/voice.ts`). Dit was vóór de fix hierboven de enige trial-functionaliteit die basis-gebruikers hadden; nu `plan='premium'` de trial-standaard is, is dit vooral relevant als vangnet voor iemand die handmatig op `basis` gezet wordt tijdens een lopende trial.
 
 ---
 
@@ -61,7 +65,7 @@ Besloten (2026-07-20): all-in, per seat/meerdere gebruikers, elke gebruiker in h
 
 ## Technische implementatie
 
-- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'basis'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`.
+- Kolom `plan` (`text`, `NOT NULL`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. Kolom-default staat nog op `'basis'` (oorspronkelijke, foutieve waarde, zie hierboven) en moet nog gewijzigd worden naar `'premium'` als vangnet; `middleware.ts` zet `plan` inmiddels wel al expliciet, dus dit vangnet is niet meer het enige dat nieuwe gebruikers beschermt.
 - Admin-beheer: `/bot/admin/gebruikers`, 3-way toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`). Geen self-serve upgradeflow, alles wordt handmatig door Arno gezet, zoals ook alle betalingen nu handmatig geregistreerd worden.
 - Gating-logica: `app/api/chat/route.ts` (berichtlimiet, sessiegeheugen, coaching-context), `app/api/bot/coaching*` (coaching-toegang), `lib/voice.ts` (`hasVoiceAccess`, voice-toegang).
 - De oude kolommen `tier` en `voice_enabled` staan (tijdelijk) nog in de database, maar worden nergens meer door de code gelezen. Ze worden gedropt zodra de regressietest van de migratie volledig is afgerond en bevestigd (zie `docs/VOICE_PLAN.md`).
