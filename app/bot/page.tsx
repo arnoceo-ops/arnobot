@@ -3,6 +3,7 @@ import SparClient from './SparClient'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import { isElevenLabsConfigured } from '@/lib/voice'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,9 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   if (!profileRes.data) redirect('/bot/qa')
 
   const plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'premium'
-  const voiceEnabled = plan !== 'basis'
+  // isElevenLabsConfigured() als extra schakelaar: ELEVENLABS_API_KEY tijdelijk weghalen in
+  // Vercel verbergt de voice-knop meteen én voorkomt kosten, zonder losse feature-flag.
+  const voiceEnabled = plan !== 'basis' && isElevenLabsConfigured()
   const spar = await getSparPage()
   const { resume } = await searchParams
   return (
