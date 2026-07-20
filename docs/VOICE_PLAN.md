@@ -4,9 +4,9 @@ Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voic
 
 ---
 
-## Concept — nog NIET besloten, ter bespreking (2026-07-19, einde dag)
+## Concept — grotendeels besloten en gebouwd (2026-07-20), zie Status hieronder voor details
 
-Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat het niet verloren gaat, expliciet nog niet vastgesteld:
+Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat het niet verloren gaat. De twee resterende open onderdelen (agenda-boeking, basis/premium/team-structuur) zijn op 2026-07-20 besloten en gebouwd, zie de Status-sectie verderop voor de volledige uitwerking.
 
 - 30 dagen gratis trial (bestaand).
 - Tijdens trial: beperkte voice-toegang (~100 gesproken antwoorden, tekst onbeperkt). Bij plafond: upgrademelding naar een betaald abonnement. **Dit deel is al gebouwd** (zie hieronder, `hasVoiceAccess()`/`TRIAL_VOICE_CHAR_CAP`), sluit goed aan.
@@ -14,12 +14,11 @@ Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat 
 - Na de trial: alleen betalende gebruikers kunnen de app nog gebruiken. Drie voorgestelde abonnementen:
   - **Basis** (naam volgt nog): **verduidelijkt** — de huidige regels blijven gelden (mic-knop voor spraak-naar-tekst-invoer, tekst als output), geen voice-naar-voice-gesprek. Het volledige gesproken heen-en-weer-gesprek (ElevenLabs) is exclusief voor premium.
   - **Premium**: voice-naar-voice, ~200 berichten/maand, daarna **bijkoopbundels** (verduidelijkt, bv. 100 gesprekken voor €10, exacte prijs/aantal nog uit te zoeken) — geen upgrade naar een hogere laag, gewoon losse bundels bijkopen, zoals al genoemd in Besluit 4 hieronder.
-  - **Team**: nog geen details.
+  - **Team: besloten en gebouwd (2026-07-20)** — all-in: per seat/meerdere gebruikers, elke gebruiker in het team krijgt premium-niveau (incl. voice). Prijs op aanvraag, geen self-serve prijs. Blijft bewust losstaand van de bestaande, andere teamfunctie (`arnobot_teams`/`arnobot_team_members`, zelf-service tot 25 leden, collaboration-feature zonder billing-koppeling) — geen technische koppeling tussen de twee.
 - In de app: antwoorden altijd kort/normaal. Document-upload en uitgebreide antwoorden blijven exclusief voor de webapp.
-- Prijsnamen/structuur (basis/premium/team) vervangen mogelijk de huidige indeling (basis/pro + losse Voice-laag) uit Besluit 1 hieronder — nog niet afgestemd hoe dit zich verhoudt tot de bestaande `tier`-kolom.
+- **Besloten en gebouwd (2026-07-20):** basis/premium/team vervangt de oude `tier`(`'basis'|'pro'`)+`voice_enabled`-combinatie volledig via één nieuwe kolom `plan` (`'basis'|'premium'|'team'`) op `approved_users`. Premium = de oude combinatie pro+voice_enabled=true, één product op één prijs (€97/mnd). Zie Status hieronder voor de volledige migratie en de lijst gewijzigde bestanden.
 - **Besluit, meteen uitgevoerd (2026-07-19):** de bestaande per-bericht OpenAI-TTS-knop (▶, `tts-1-hd`/`onyx`) wordt uit `SparClient.tsx` verwijderd. Reden van Arno: kwaliteit is "schandalig slecht", en nu het volledige gesproken gesprek toch exclusief voor premium wordt, heeft een matige gratis versie ernaast geen functie meer. De onderliggende `/api/tts`-route blijft ongebruikt maar aanwezig, niet apart opgeruimd. De ElevenLabs-voice-mode-toggle en de herafspeelknop op voice-antwoorden blijven volledig intact, dit raakt alleen het oude OpenAI-pad.
-
-**Volgende stap:** de resterende twee grote onderdelen (agenda-boekingsfunctie, 3-abonnementen-herstructurering incl. hoe dit zich verhoudt tot de bestaande `tier`-kolom en `voice_enabled`) zijn te groot om er nu nog doorheen te jagen. Apart plannen in een volgende sessie, zie de sessie-start-synthese hieronder.
+- **Gesprek-met-Arno-boeking: besloten en gebouwd (2026-07-20).** Zie Status hieronder voor de volledige uitwerking (Calendly, redirect-pagina, webhook, dag21-reminder).
 
 ---
 
@@ -54,7 +53,24 @@ Dit is bedoeld om als openingsbericht te plakken in een nieuwe sessie. Kopieer a
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-07-19
+**Laatst bijgewerkt:** 2026-07-20
+
+**Gebouwd en gepusht (2026-07-20): plan-kolom + gesprek-met-Arno-boeking.**
+
+*Abonnementsherstructurering:* `tier`(`'basis'|'pro'`)+`voice_enabled` volledig vervangen door één kolom `plan` (`'basis'|'premium'|'team'`) op `approved_users`. Migratie uitgevoerd door Arno (bestaande, tot dan toe ongebruikte lege `plan`-kolom uit een eerdere, niet-afgemaakte poging kwam aan het licht en is hergebruikt/gevuld i.p.v. opnieuw aangemaakt). Backfill: `tier='pro' OR voice_enabled=true` → `premium`, anders `basis`. Alle 8+ bestanden die tier/voice_enabled checkten zijn omgezet (`app/bot/page.tsx`, `SparClient.tsx`, `lib/voice.ts` (`hasVoiceAccess`), `chat-voice`/`tts-voice`-routes, `app/api/chat/route.ts`, coaching/coaching-analyse/coaching-precheck-routes, `app/bot/coaching/page.tsx`), admin-toggle vervangen (`TierToggle.tsx` → `PlanToggle.tsx`, 3-way, `/api/admin/tier` → `/api/admin/plan`). `tier`/`voice_enabled`-kolommen zijn bewust nog NIET gedropt (aparte, apart te bevestigen migratie, zie Eerstvolgende stap). Team-plan blijft losstaand van de bestaande teamfunctie (`arnobot_teams`), zie Concept-blok hierboven.
+
+*Gesprek-met-Arno-boeking:* Calendly gekozen als scheduling-tool voor nu (Arno kiest de definitieve tool later). Nieuwe kolom `arno_call_booked_at` op `approved_users`. Interne, stabiele redirect-pagina `app/bot/gesprek/route.ts` (wijst naar env var `ARNO_BOOKING_URL`, zodat een toekomstige toolwissel geen codewijziging is en oude e-maillinks niet breken) i.p.v. Calendly direct te linken. Nieuwe webhook `app/api/webhooks/calendly/route.ts` (HMAC-SHA256-signatuurverificatie + 5 min replay-venster, matcht op e-mailadres, zet `arno_call_booked_at`). Boekingskaart toegevoegd op `app/bot/account/page.tsx`. Reminder-e-mail `dag21_gesprek` toegevoegd aan `lib/email-templates.ts` + trigger in de bestaande `app/api/cron/trial-emails/route.ts`-loop (geen nieuwe cron-route, hergebruikt het bestaande dag-gebaseerde patroon van dag14/dag25).
+
+Build (`npm run build`) en typecheck slagen. Lint schoon voor alle nieuwe/gewijzigde bestanden (140 bestaande lint-issues in ongerelateerde bestanden, niet door deze sessie geraakt). Handmatige browsertest kon lokaal niet: alle `/bot/*`-pagina's geven lokaal 404 (bevestigd dat dit ook al voor onaangeraakte pagina's als `/bot/qa` gold, dus een bestaand omgevingsprobleem, geen regressie van deze sessie). Regressietest moet dus op staging/productie door Arno.
+
+**Eerstvolgende stap:**
+1. Arno test op productie: adminpagina plan-toggle (3 standen), hoofdchat als basis- vs premium-gebruiker (limieten), coaching-toegang, voice-toggle, account-pagina boekingskaart.
+2. Arno regelt buiten de code om: Calendly-webhook-subscription naar `https://arno.bot/api/webhooks/calendly`, plus env vars `ARNO_BOOKING_URL` en `CALENDLY_WEBHOOK_SIGNING_KEY` in Vercel.
+3. Pas na bevestigde regressietest: migratie 2 (kolommen `tier` en `voice_enabled` droppen, apart te bevestigen SQL).
+
+---
+
+**Laatst bijgewerkt (vorige sessie):** 2026-07-19
 **Waar we staan:** Scope van de eerste bouwstap bijgesteld tijdens deze sessie (zie hieronder): niet meteen een publieke voice-toggle in `SparClient.tsx`, maar eerst alleen de serverkant plus een volledig geïsoleerde admin-only testpagina op `/bot/admin/voice-test` (`app/api/admin/voice-test/chat/route.ts`, `app/api/admin/voice-test/tts/route.ts`), gebouwd en gepusht. Supabase-tabel `arnobot_elevenlabs_usage` aangemaakt en bevestigd. ElevenLabs-account aangemaakt (Starter-plan, API-key beperkt tot alleen Text to Speech). Nul wijzigingen aan `SparClient.tsx`/`/api/chat`/`/api/tts`/`/api/transcribe`.
 
 **Gekozen (2026-07-19):** voor deze testfase Instant Voice Cloning gebruiken (een korte, snelle opname van Arno zelf, inbegrepen in het Starter-plan) in plaats van een generieke Nederlandse bibliotheekstem. Reden: het doel van deze test is niet alleen "klinkt ElevenLabs goed", maar vooral "klinkt ArnoBot als Arno", en dat kun je met een bibliotheekstem niet beoordelen. **Verworpen alternatief:** een Nederlandse bibliotheekstem (het oorspronkelijke voorstel in Besluit 2 hieronder) — sneller te kiezen maar test niet de eigenlijke productvraag. **Kanttekening:** Instant Voice Cloning is een snellere, lagere-kwaliteit variant dan de Professional Voice Clone die het einddoel blijft (zie Besluit 2). Een houterige instant clone is geen voorspelling van hoe de uiteindelijke Professional clone zal klinken, dat oordeel wordt uitgesteld tot dat traject. Deze testfase beoordeelt vooral latency, stijl en of het concept "een versie van mijn stem" sowieso werkt.

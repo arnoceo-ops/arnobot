@@ -46,23 +46,23 @@ export function stripMarkdownForSpeech(text: string): string {
 
 // Ruwe schatting: ~100 gesproken antwoorden x ~500 tekens, de helft van de nog niet formeel
 // vastgestelde betaalde-cap-schatting uit VOICE_PLAN.md fase 2 ("ruim 200/mnd"). Makkelijk
-// aan te passen, geen harde onderzochte waarde. Betaalde Voice-abonnees (voice_enabled=true)
+// aan te passen, geen harde onderzochte waarde. Betaalde Voice-abonnees (plan premium/team)
 // hebben bewust nog geen plafond-enforcement, dat is het bredere, nog niet gebouwde fase-2-werk.
 const TRIAL_VOICE_CHAR_CAP = 50_000
 
 export type VoiceAccessReason = 'paid' | 'trial' | 'trial_expired' | 'trial_cap_reached' | 'none'
 
 /**
- * Bepaalt of een gebruiker nu voice-toegang heeft: betaalde Voice-abonnees altijd, anders
+ * Bepaalt of een gebruiker nu voice-toegang heeft: premium/team-abonnees altijd, anders
  * gratis tijdens de eerste 30 dagen na trial_start (dezelfde canonieke berekening als
  * middleware.ts:244-246 en cron/trial-emails/route.ts) tot aan TRIAL_VOICE_CHAR_CAP verbruik.
  */
 export async function hasVoiceAccess(
   supabase: SupabaseClient,
   userId: string,
-  approvedUser: { voice_enabled: boolean; trial_start: string | null }
+  approvedUser: { plan: 'basis' | 'premium' | 'team'; trial_start: string | null }
 ): Promise<{ access: boolean; reason: VoiceAccessReason }> {
-  if (approvedUser.voice_enabled) return { access: true, reason: 'paid' }
+  if (approvedUser.plan !== 'basis') return { access: true, reason: 'paid' }
   if (!approvedUser.trial_start) return { access: false, reason: 'none' }
 
   const trialEnd = new Date(new Date(approvedUser.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)

@@ -52,6 +52,7 @@ export type EmailType =
   | 'first_conversation'
   | 'dag14'
   | 'first_coaching'
+  | 'dag21_gesprek'
   | 'dag25'
   | 'betaalwaarschuwing'
   | 'geblokkeerd'
@@ -74,6 +75,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   first_conversation:    { label: 'Eerste gesprek',         description: 'Dag 1-30:na het allereerste gesprek',                                category: 'user' },
   dag14:                 { label: 'Dag 14',                 description: 'Dag 14:halverwege de trial',                                         category: 'user' },
   first_coaching:        { label: 'Eerste coaching',        description: 'Dag 5-30:na 5+ sessies, nog geen rapport aangevraagd',               category: 'user' },
+  dag21_gesprek:         { label: 'Dag 21 - gesprek Arno',  description: 'Dag 21:nog geen gesprek met Arno ingepland',                        category: 'user' },
   dag25:                 { label: 'Dag 25',                 description: 'Dag 25:trial bijna afgelopen, opt-in CTA',                          category: 'user' },
   betaalwaarschuwing:    { label: 'Betaalwaarschuwing',     description: 'Dag 25+:7 dagen na opt-in zonder betaling',                         category: 'user' },
   geblokkeerd:           { label: 'Geblokkeerd',            description: 'Dag 26+:24u na waarschuwing, nog steeds geen betaling',             category: 'user' },
@@ -144,6 +146,14 @@ export function getEmailTemplate(
         html: mail(
           `Je hebt inmiddels ${options?.sessionCount ?? 5} gesprekken gevoerd met ArnoBot. Genoeg voor een eerste coachingsrapport.<br><br>ArnoBot analyseert je gesprekken en geeft je een persoonlijk advies op basis van wat hij van jou weet. Niet generiek. Jouw patronen, jouw blinde vlekken, jouw volgende stap.`,
           'VRAAG COACHING AAN →', 'https://arno.bot/bot/coaching'
+        ),
+      }
+    case 'dag21_gesprek':
+      return {
+        subject: `${prefix}${naam}, heb je al een gesprek met Arno ingepland?`,
+        html: mail(
+          `Bij ArnoBot hoort een persoonlijk gesprek met Arno zelf. Dat gesprek staat nog niet in de agenda.<br><br>Je trial loopt over negen dagen af. Plan het gesprek in voordat je proefperiode stopt, dan heb je er nog het volle profijt van.`,
+          'PLAN JE GESPREK →', 'https://arno.bot/bot/gesprek'
         ),
       }
     case 'dag25':

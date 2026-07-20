@@ -18,11 +18,11 @@ export default async function CoachingPage() {
   )
   const { data } = await supabase
     .from('approved_users')
-    .select('tier')
+    .select('plan')
     .eq('user_id', userId)
     .single()
 
-  if (!data || data.tier === 'basis') {
+  if (!data || data.plan === 'basis') {
     return (
       <>
         <style>{`

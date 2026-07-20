@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data: users } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at')
+    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at, arno_call_booked_at')
     .not('trial_start', 'is', null)
     .is('paid_at', null)
     .eq('is_active', true)
@@ -145,6 +145,11 @@ export async function GET(req: NextRequest) {
     // Dag 14 — altijd
     if (!emailType && days >= 14 && !sentTypes.has('dag14')) {
       emailType = 'dag14'
+    }
+
+    // Dag 21 — alleen als nog geen gesprek met Arno geboekt is
+    if (!emailType && days >= 21 && !sentTypes.has('dag21_gesprek') && !user.arno_call_booked_at) {
+      emailType = 'dag21_gesprek'
     }
 
     // Dag 25 — altijd, met echte opt-in CTA

@@ -50,7 +50,7 @@ interface Message {
 interface Props {
   userId: string
   profiel: Record<string, unknown>
-  tier: 'basis' | 'pro'
+  plan: 'basis' | 'premium' | 'team'
   voiceEnabled: boolean
   taglineTitle: string
   taglineSub: string
@@ -143,7 +143,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, tier, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
+export default function SparClient({ userId, profiel, plan, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -1761,7 +1761,7 @@ export default function SparClient({ userId, profiel, tier, voiceEnabled, taglin
               )}
             </div>
           </div>
-          {tier === 'basis' && dagelijksTeller !== null && (
+          {plan === 'basis' && dagelijksTeller !== null && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: dagelijksTeller >= 20 ? '#f59e0b' : '#4b5563', letterSpacing: 2, textAlign: 'center', marginTop: 10, width: '100%', maxWidth: 812 }}>
               {dagelijksTeller} / 25 vragen gebruikt vandaag
             </p>

@@ -43,8 +43,8 @@ Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via C
 4. **Deels gedaan.** Trial-voice-toegang (30 dagen gratis, met plafond) is gebouwd in `docs/VOICE_PLAN.md`, dat vult een deel van fase 2 in. De pricingpagina zelf (fase 3) blijft geblokkeerd op de betaalprovider-keuze.
 5. **Nog niet gedaan.** Testronde op de webapp met bestaande testgebruikers, mobiel in de browser.
 6. **Gestart, deels afgerond, deels bewust uitgesteld.** Capacitor-shell voor Android staat, remote laden werkt (na een navigatiefix), e-mail/wachtwoord-login werkt. OAuth-via-systeembrowser-met-deep-link is NIET gebouwd (zie Openstaande vragen: onbewezen terrein). CORS-uitbreiding bleek niet nodig (zie Technische vereisten). Microfoonpermissie gedeclareerd, nog niet functioneel getest. Accountverwijdering nog niet opgepakt. **Mobiele app vervolgens losgekoppeld van livegang en gepauzeerd**, zie het statusblok. Reviewer-agent is niet apart ingezet, de wijzigingen zijn steeds via Plan Mode + directe verificatie (build/lint/diff-review) gegaan.
-7. **Nog niet gedaan**, wacht tot de mobiele app weer wordt opgepakt.
-8. **Nog niet gedaan.**
+7. **Nog niet gedaan**, wacht tot de mobiele app weer wordt opgepakt. Omvat: accountverwijdering (technische vereiste 7, geldt voor zowel Apple als Google Play), store-listing-materiaal (technische vereiste 9), en de store-compliance-agent-inzet vlak vóór submissie (zie "Bewust niet nu optuigen" hieronder).
+8. **Nog niet gedaan.** Submissie zelf, afhankelijk van een afgeronde Google Play-accountverificatie (zie Status) en de closed-testing-eis (zie Openstaande vragen).
 
 De rode draad: elke stap bewijst iets voordat de volgende stap geld of tijd kost. Voice bewijst zich op web voordat de app er is; de app bewijst zich bij testers voordat de stores erbij komen.
 
@@ -60,8 +60,9 @@ De rode draad: elke stap bewijst iets voordat de volgende stap geld of tijd kost
 4. **Deels gedaan.** `RECORD_AUDIO` gedeclareerd in `AndroidManifest.xml`. Werking in de praktijk (`getUserMedia()` in de WebView) nog niet getest, zie Twee risico's hieronder — dat blijft open tot er een werkende USB-kabel is voor een fysieke-toestel-test.
 5. Geen enkele aankoop-, upgrade- of prijsverwijzing in de app. De app is: inloggen en gebruiken. Alles rond betalen leeft op de website. Nog te controleren zodra er weer aan de mobiele UI gewerkt wordt.
 6. Sign in with Apple toevoegen via Clerk. Nog niet opgepakt, wacht op de iOS-kant (Apple Developer + Mac, zie Volgorde stap 1).
-7. Accountverwijdering vanuit de app mogelijk maken of er duidelijk naartoe linken — Apple-richtlijn 5.1.1(v). Nog niet opgepakt.
+7. Accountverwijdering vanuit de app mogelijk maken of er duidelijk naartoe linken — Apple-richtlijn 5.1.1(v). **Gevonden bij 2026-07-20-audit: dit is niet alleen een Apple-eis.** Google Play heeft sinds 2023 een eigen "User Data"-beleid dat hetzelfde vereist voor apps met accountregistratie: in-app verwijdering of een duidelijke link ernaartoe, plus een openbare toelichting in de Play Console (Data Safety-sectie). Moet dus al vóór de Android-submissie geregeld zijn, niet pas bij de iOS-kant. Nog niet opgepakt.
 8. **Al gedaan, maar dan via de webapp-routes.** Rate limiting per Clerk user-id zit al in `app/api/chat-voice/route.ts` en `app/api/tts-voice/route.ts` (Upstash, per userId), die routes worden straks door zowel web als de app gebruikt, dus dit vereiste is al vervuld voordat de app zelf klaar is.
+9. **Store-listing-materiaal — ontbrak volledig in dit document, toegevoegd bij 2026-07-20-audit.** Vóór submissie verplicht: screenshots, appbeschrijving, privacybeleid-link, en het Data Safety-formulier in de Play Console (welke data wordt verzameld/gedeeld — relevant gezien Clerk, Supabase, OpenAI en ElevenLabs). Nog niet opgepakt, geen blocker voor bouwen/lokaal testen, wel voor submissie.
 
 ---
 

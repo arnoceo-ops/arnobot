@@ -33,11 +33,11 @@ export async function POST(req: NextRequest) {
 
   const { data: approved } = await supabase
     .from('approved_users')
-    .select('voice_enabled, trial_start')
+    .select('plan, trial_start')
     .eq('user_id', userId)
     .single()
   const access = await hasVoiceAccess(supabase, userId, {
-    voice_enabled: approved?.voice_enabled ?? false,
+    plan: (approved?.plan as 'basis' | 'premium' | 'team') ?? 'basis',
     trial_start: approved?.trial_start ?? null,
   })
   if (!access.access) return NextResponse.json({ error: 'voice_not_enabled', reason: access.reason }, { status: 403 })

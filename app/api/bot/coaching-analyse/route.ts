@@ -19,17 +19,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const sessionIds: string[] | undefined = body.sessionIds
 
-  const [tierRes, todayRes] = await Promise.all([
-    supabase.from('approved_users').select('tier').eq('user_id', userId).single(),
+  const [planRes, todayRes] = await Promise.all([
+    supabase.from('approved_users').select('plan').eq('user_id', userId).single(),
     supabase.from('arnobot_analyses').select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
   ])
-  const tier = (tierRes.data?.tier as 'basis' | 'pro') ?? 'basis'
+  const plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
   const todayCount = todayRes.count ?? 0
 
-  if (tier === 'basis' && todayCount >= 1) {
-    return NextResponse.json({ error: 'dagelijks_limiet', tier: 'basis' }, { status: 429 })
+  if (plan === 'basis' && todayCount >= 1) {
+    return NextResponse.json({ error: 'dagelijks_limiet', plan: 'basis' }, { status: 429 })
   }
 
   const { data } = await supabase

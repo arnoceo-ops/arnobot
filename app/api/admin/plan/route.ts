@@ -15,18 +15,18 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { userId, tier } = body
-  if (!userId || !['basis', 'pro'].includes(tier)) {
+  const { userId, plan } = body
+  if (!userId || !['basis', 'premium', 'team'].includes(plan)) {
     return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
   }
 
   const { error } = await supabase
     .from('approved_users')
-    .update({ tier })
+    .update({ plan })
     .eq('user_id', userId)
 
   if (error) {
-    console.error('Tier update error:', error.message)
+    console.error('Plan update error:', error.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
   return NextResponse.json({ ok: true })

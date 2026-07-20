@@ -274,21 +274,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Tier + dagelijks gebruik
-    let tier: 'basis' | 'pro' = 'basis'
+    // Plan + dagelijks gebruik
+    let plan: 'basis' | 'premium' | 'team' = 'basis'
     let todayUsage = 0
     if (!isWidget) {
-      const [tierRes, todayRes] = await Promise.all([
-        supabase.from('approved_users').select('tier').eq('user_id', userId!).single(),
+      const [planRes, todayRes] = await Promise.all([
+        supabase.from('approved_users').select('plan').eq('user_id', userId!).single(),
         supabase
           .from('arnobot_rds_logs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId!)
           .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
       ])
-      tier = (tierRes.data?.tier as 'basis' | 'pro') ?? 'basis'
+      plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
       todayUsage = todayRes.count ?? 0
-      const dagelijksMax = tier === 'pro' ? 100 : 25
+      const dagelijksMax = plan !== 'basis' ? 100 : 25
       if (todayUsage >= dagelijksMax) {
         return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
       }
@@ -299,7 +299,7 @@ export async function POST(req: NextRequest) {
 
     // Gespreksgeheugen en coachingsdiagnose starten nu al, parallel aan de moderatie-check en
     // de RAG-pipeline hierboven, in plaats van pas na de RAG-context te beginnen. Beide hangen
-    // alleen af van userId/tier/sessionId, niet van het RAG- of moderatie-resultaat.
+    // alleen af van userId/plan/sessionId, niet van het RAG- of moderatie-resultaat.
     const memoryContextPromise: Promise<{ geheugentekst: string; prevSessionCount: number }> = (userId && !isWidget)
       ? Promise.all([
           supabase
@@ -308,7 +308,7 @@ export async function POST(req: NextRequest) {
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
             .order('created_at', { ascending: false })
-            .limit(tier === 'pro' ? 25 : 10),
+            .limit(plan !== 'basis' ? 25 : 10),
           detectSparringReference(question)
             ? supabase
                 .from('arnobot_sparring_sessions')
@@ -359,7 +359,7 @@ export async function POST(req: NextRequest) {
           })
       : Promise.resolve({ geheugentekst: '', prevSessionCount: 0 })
 
-    const coachingContextPromise: Promise<string> = (!isWidget && tier === 'pro' && userId)
+    const coachingContextPromise: Promise<string> = (!isWidget && plan !== 'basis' && userId)
       ? Promise.resolve(
           supabase
             .from('arnobot_coaching')
@@ -660,7 +660,7 @@ PROFIEL VAN DE GEBRUIKER:
 
     const responseHeaders: Record<string, string> = { ...corsHeaders(origin), 'Content-Type': 'text/plain; charset=utf-8' }
     if (hint) responseHeaders['X-Hint'] = hint
-    if (!isWidget && tier === 'basis') responseHeaders['X-Dagelijks-Gebruikt'] = String(todayUsage + 1)
+    if (!isWidget && plan === 'basis') responseHeaders['X-Dagelijks-Gebruikt'] = String(todayUsage + 1)
 
     return new Response(readable, { headers: responseHeaders })
   } catch (err) {
