@@ -1588,7 +1588,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
                 <button
                   key={optie}
-                  onClick={() => setAntwoordLengte(optie)}
+                  onClick={() => {
+                    setAntwoordLengte(optie)
+                    // Voice-mode geeft altijd een kort antwoord (eigen systeeminstructie in
+                    // /api/chat-voice), dat botst met een expliciete keuze voor UITGEBREID.
+                    // Automatisch uitzetten voorkomt een voice-toggle die aan blijft staan
+                    // terwijl de knop er zelf niet meer is (zie hieronder).
+                    if (optie === 'uitgebreid' && voiceMode) setVoiceMode(false)
+                  }}
                   style={{
                     fontFamily: "'Bebas Neue', sans-serif",
                     fontSize: 13, letterSpacing: 2,
@@ -1700,7 +1707,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </button>
             )}
             <div className="spar-buttons">
-              {voiceEnabled && sparModus !== 'sparren' && (
+              {voiceEnabled && sparModus !== 'sparren' && antwoordLengte !== 'uitgebreid' && (
                 <button
                   type="button"
                   className={`spar-voice-toggle${voiceMode ? ' active' : ''}`}
@@ -1713,7 +1720,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   disabled={loading || blocked}
                   title={voiceMode ? 'Voice-modus uit' : 'Voice-modus aan: gesproken antwoorden'}
                 >
-                  {voiceMode ? '🔊' : '🔈'}
+                  {voiceMode ? '🔊' : '🔇'}
                 </button>
               )}
               {speechSupported && (
