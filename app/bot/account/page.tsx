@@ -31,8 +31,6 @@ export default function AccountPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
-  const [gesprekBookedAt, setGesprekBookedAt] = useState<string | null>(null)
-  const [gesprekLoaded, setGesprekLoaded] = useState(false)
 
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
@@ -52,11 +50,6 @@ export default function AccountPage() {
         }
       })
       .catch(() => {})
-    fetch('/api/bot/gesprek-status')
-      .then(r => r.json())
-      .then(d => setGesprekBookedAt(d.booked_at ?? null))
-      .catch(() => {})
-      .finally(() => setGesprekLoaded(true))
   }, [])
 
   if (!isLoaded) return (
@@ -294,23 +287,6 @@ export default function AccountPage() {
           <Link href="/bot/profiel" className="primary-btn" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}>
             PROFIEL AANPASSEN
           </Link>
-        </div>
-
-        {/* Gesprek met Arno */}
-        <div style={section}>
-          <p style={label}>GESPREK MET ARNO</p>
-          {!gesprekLoaded ? null : gesprekBookedAt ? (
-            <p style={body}>
-              Je hebt je persoonlijke gesprek met Arno al ingepland op {new Date(gesprekBookedAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}.
-            </p>
-          ) : (
-            <>
-              <p style={body}>Elke gebruiker krijgt één persoonlijk gesprek met Arno zelf. Dat gesprek staat nog niet in de agenda.</p>
-              <a href="/bot/gesprek" className="primary-btn" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}>
-                PLAN JE GESPREK →
-              </a>
-            </>
-          )}
         </div>
 
         {/* App-wachtwoord */}
