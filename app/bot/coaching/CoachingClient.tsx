@@ -45,6 +45,31 @@ interface SavedAnalyse {
   session_count: number
 }
 
+interface CoachingHistoryEntry {
+  id: string
+  created_at: string
+  mindset_score: number | null
+  mindset_diagnose: string | null
+  systeem_score: number | null
+  systeem_diagnose: string | null
+  actie_score: number | null
+  actie_diagnose: string | null
+  voortgang: string | null
+}
+
+function getReportTitle(entry: CoachingHistoryEntry): string {
+  const clean = (entry.voortgang ?? '').replace(/\n/g, ' ').trim()
+  if (!clean) return 'Coachingsrapportage'
+  if (clean.length <= 80) return clean
+  const cut = clean.slice(0, 77)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut) + '...'
+}
+
+function formatHistoryDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 // SCOREGESCHIEDENIS — zet op false om te verbergen
 const SCORE_HISTORY_ENABLED = true
 
@@ -84,6 +109,8 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [progressSignal, setProgressSignal] = useState<boolean | null>(null)
+  const [history, setHistory] = useState<CoachingHistoryEntry[]>([])
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
 
   useEffect(() => {
     const cacheKey = `arnobot_coaching_doc_${userId}`
@@ -155,6 +182,10 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
       .then(r => r.json())
       .then(data => setAnalyses(data.analyses ?? []))
       .catch(() => {})
+    fetch('/api/bot/coaching-history')
+      .then(r => r.json())
+      .then(data => setHistory(data.history ?? []))
+      .catch(() => {})
 
     if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
       setIsTeamMember(true)
@@ -212,6 +243,10 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
         const precheckKey = `arnobot_coaching_precheck_${userId}_${new Date().toISOString().slice(0, 10)}`
         localStorage.removeItem(precheckKey)
         setProgressSignal(null)
+        fetch('/api/bot/coaching-history')
+          .then(r => r.json())
+          .then(d => setHistory(d.history ?? []))
+          .catch(() => {})
       } else if (data.error) {
         setError('Er ging iets mis. Probeer opnieuw.')
       }
@@ -541,6 +576,59 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
                 <span className="coaching-label">PROGRESSIE</span>
                 <div style={{ marginTop: 16 }}>
                   <ProgressieChart history={scoreHistory} />
+                </div>
+              </div>
+            )}
+
+            {/* Eerdere rapportages */}
+            {history.length > 0 && (
+              <div className="coaching-section">
+                <span className="coaching-label">EERDERE RAPPORTAGES</span>
+                <div style={{ marginTop: 8 }}>
+                  {history.map(h => (
+                    <div key={h.id} style={{ borderTop: '1px solid #374151' }}>
+                      <button
+                        onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
+                        style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0', fontFamily: "'Space Mono', monospace" }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+                          <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120 }}>
+                            {formatHistoryDate(h.created_at)}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 200 }}>
+                            <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
+                              {getReportTitle(h)}
+                            </p>
+                          </div>
+                          <span style={{ color: expandedHistoryId === h.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                            {expandedHistoryId === h.id ? '↑ SLUITEN' : '↓ OPEN'}
+                          </span>
+                        </div>
+                      </button>
+                      {expandedHistoryId === h.id && (
+                        <div style={{ paddingBottom: 32 }}>
+                          {h.mindset_diagnose && (
+                            <div style={{ marginBottom: 20 }}>
+                              <span className="coaching-label" style={{ color: '#f1f5f9', marginBottom: 6 }}>MINDSET</span>
+                              <p className="coaching-body">{h.mindset_diagnose}</p>
+                            </div>
+                          )}
+                          {h.systeem_diagnose && (
+                            <div style={{ marginBottom: 20 }}>
+                              <span className="coaching-label" style={{ color: '#f1f5f9', marginBottom: 6 }}>SYSTEEM</span>
+                              <p className="coaching-body">{h.systeem_diagnose}</p>
+                            </div>
+                          )}
+                          {h.actie_diagnose && (
+                            <div>
+                              <span className="coaching-label" style={{ color: '#f1f5f9', marginBottom: 6 }}>ACTIE</span>
+                              <p className="coaching-body">{h.actie_diagnose}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

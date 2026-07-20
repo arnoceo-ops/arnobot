@@ -476,5 +476,32 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     if (scoreErr) console.error('[coaching scores insert]', scoreErr.message)
   }
 
+  // Geschiedenis van eerdere coachingsrapportages, analoog aan arnobot_team_analyses:
+  // aparte insert-only tabel naast arnobot_coaching (dat 1 rij per gebruiker blijft),
+  // zodat geen van de bestaande .single()/.maybeSingle()-consumers van arnobot_coaching geraakt wordt.
+  const { error: historyErr } = await supabase.from('arnobot_coaching_history').insert({
+    user_id: userId,
+    mindset_score: doc.mindset_score,
+    mindset_diagnose: doc.mindset_diagnose,
+    systeem_score: doc.systeem_score,
+    systeem_diagnose: doc.systeem_diagnose,
+    actie_score: doc.actie_score,
+    actie_diagnose: doc.actie_diagnose,
+    voortgang: doc.voortgang,
+  })
+  if (historyErr) {
+    console.error('[coaching history insert]', historyErr.message)
+  } else {
+    const { data: allHistory } = await supabase
+      .from('arnobot_coaching_history')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    if (allHistory && allHistory.length > 5) {
+      const toDelete = allHistory.slice(5).map(r => r.id)
+      await supabase.from('arnobot_coaching_history').delete().in('id', toDelete)
+    }
+  }
+
   return NextResponse.json({ coaching: doc })
 }
