@@ -10,15 +10,16 @@ Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat 
 
 - 30 dagen gratis trial (bestaand).
 - Tijdens trial: beperkte voice-toegang (~100 gesproken antwoorden, tekst onbeperkt). Bij plafond: upgrademelding naar een betaald abonnement. **Dit deel is al gebouwd** (zie hieronder, `hasVoiceAccess()`/`TRIAL_VOICE_CHAR_CAP`), sluit goed aan.
-- Nieuw idee: één in te plannen gesprek met Arno zelf, per gebruiker. **Onduidelijk:** voor iedereen tijdens de trial, of gekoppeld aan een specifiek abonnement? Gratis of betaald?
+- Eén in te plannen gesprek met Arno zelf, **voor iedereen** (verduidelijkt): trial-gebruikers moeten het binnen hun 30 dagen inplannen, betaalde gebruikers kunnen het gebruiken wanneer ze willen, geen tijdslimiet. Nog niet uitgewerkt: planningsmechanisme (koppeling met Arno's agenda), en hoe bijgehouden wordt of iemand 'm al gebruikt heeft. Substantiële nieuwe feature, apart te plannen.
 - Na de trial: alleen betalende gebruikers kunnen de app nog gebruiken. Drie voorgestelde abonnementen:
-  - **Basis** (naam volgt nog): zonder "voice-voice", wel "voice-tekst". **Onduidelijk:** betekent dit dat spraak-naar-tekst (mic-invoer) en/of tekst-naar-spraak (voorlezen) behouden blijft, maar niet het volledige gesproken heen-en-weer-gesprek?
-  - **Premium**: voice-naar-voice, ~200 berichten, daarna "opwaarderen". **Onduidelijk:** naar bijkoopbundels (al genoemd in Besluit 4 hieronder) of naar een hogere laag?
+  - **Basis** (naam volgt nog): **verduidelijkt** — de huidige regels blijven gelden (mic-knop voor spraak-naar-tekst-invoer, tekst als output), geen voice-naar-voice-gesprek. Het volledige gesproken heen-en-weer-gesprek (ElevenLabs) is exclusief voor premium.
+  - **Premium**: voice-naar-voice, ~200 berichten/maand, daarna **bijkoopbundels** (verduidelijkt, bv. 100 gesprekken voor €10, exacte prijs/aantal nog uit te zoeken) — geen upgrade naar een hogere laag, gewoon losse bundels bijkopen, zoals al genoemd in Besluit 4 hieronder.
   - **Team**: nog geen details.
 - In de app: antwoorden altijd kort/normaal. Document-upload en uitgebreide antwoorden blijven exclusief voor de webapp.
 - Prijsnamen/structuur (basis/premium/team) vervangen mogelijk de huidige indeling (basis/pro + losse Voice-laag) uit Besluit 1 hieronder — nog niet afgestemd hoe dit zich verhoudt tot de bestaande `tier`-kolom.
+- **Besluit, meteen uitgevoerd (2026-07-19):** de bestaande per-bericht OpenAI-TTS-knop (▶, `tts-1-hd`/`onyx`) wordt uit `SparClient.tsx` verwijderd. Reden van Arno: kwaliteit is "schandalig slecht", en nu het volledige gesproken gesprek toch exclusief voor premium wordt, heeft een matige gratis versie ernaast geen functie meer. De onderliggende `/api/tts`-route blijft ongebruikt maar aanwezig, niet apart opgeruimd. De ElevenLabs-voice-mode-toggle en de herafspeelknop op voice-antwoorden blijven volledig intact, dit raakt alleen het oude OpenAI-pad.
 
-**Volgende stap:** met Arno doornemen, de drie onduidelijke punten oplossen, dan pas vertalen naar een concreet technisch plan en de bestaande Besluiten hieronder bijwerken.
+**Volgende stap:** de resterende twee grote onderdelen (agenda-boekingsfunctie, 3-abonnementen-herstructurering incl. hoe dit zich verhoudt tot de bestaande `tier`-kolom en `voice_enabled`) zijn te groot om er nu nog doorheen te jagen. Apart plannen in een volgende sessie.
 
 ---
 
