@@ -7,8 +7,8 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 ## Status
 
 **Laatst bijgewerkt:** 2026-07-20
-**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is volledig afgerond: gebouwd, getest, en de oude kolommen zijn gedropt (migratie 2 bevestigd). De upgrade- en gesprek-boekingsflows zijn gebouwd en getest (zie "Upgrade- en boekingspagina's" hieronder). Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur.
-**Eerstvolgende stap:** Geen actief bouwwerk. Openstaande besluiten hieronder bij "Nog niet besloten" oppakken zodra relevant (met name: `/prijzen` bijwerken, dat blijft sowieso geblokkeerd op de betaalprovider-keuze uit `docs/VOICE_PLAN.md` fase 3).
+**Waar we staan:** De technische omzetting van `tier`(`basis`/`pro`)+`voice_enabled` naar één kolom `plan`(`basis`/`premium`/`team`) is volledig afgerond: gebouwd, getest, en de oude kolommen zijn gedropt (migratie 2 bevestigd). De upgrade- en gesprek-boekingsflows zijn gebouwd en getest (zie "Upgrade- en boekingspagina's" hieronder). Prijsstelling voor `team` staat nog niet vast. De publieke prijspagina (`/prijzen`) toont nog de oude, enkele prijs en is nog niet bijgewerkt naar de drie-lagen-structuur. Nieuw besloten (2026-07-20, zie "Bewaargrenzen" hieronder): plan-afhankelijke bovengrenzen voor bewaarde gesprekken en patroonanalyses, nog niet gebouwd.
+**Eerstvolgende stap:** Bewaargrenzen implementeren (zie "Bewaargrenzen" hieronder): plan-afhankelijke cap op `arnobot_blog_sessions` (nieuw opruimmechanisme, bestaat nu nog niet) en de bestaande vlakke 20-cap op `arnobot_analyses` (`app/api/bot/coaching-analyse/route.ts:158-167`) plan-afhankelijk maken. Daarna de overige besluiten hieronder bij "Nog niet besloten" oppakken zodra relevant (met name: `/prijzen` bijwerken, dat blijft sowieso geblokkeerd op de betaalprovider-keuze uit `docs/VOICE_PLAN.md` fase 3).
 
 ---
 
@@ -30,12 +30,18 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 |---|---|---|---|
 | Prijs | Betaald, goedkoper dan premium, exact bedrag nog niet vastgesteld | €97/maand (zie toelichting hieronder) | Op aanvraag, geen vaste prijs |
 | Chatberichten/dag | 25 | 100 | 100 |
-| Sessiegeheugen (vorige gesprekken meegenomen) | 10 | 25 | 25 |
+| Sessiegeheugen (vorige gesprekken meegenomen in chatcontext) | 10 | 25 | 25 |
+| Gesprekken bewaard (archief/BIEB, hard limiet) | 25 | 100 | 100 |
+| Patroonanalyses bewaard (archief/BIEB) | 5 | 15 | 15 |
 | Coaching (rapport, coachingsdiagnose in chat) | Nee | Ja | Ja |
 | Spraak-naar-tekst invoer (mic-knop) | Ja | Ja | Ja |
 | Gesproken antwoorden (ElevenLabs voice-naar-voice) | Nee, behalve tijdelijk tijdens de trial (zie hieronder) | Ja | Ja |
 | Uitgebreide/lange antwoorden, document-upload | Ja (webapp) | Ja (webapp) | Ja (webapp) |
 | Wie | Gebruikers die na de trial bewust voor het goedkopere abonnement kiezen | Trial-gebruikers (zie hieronder) én betalende premium-abonnees | Meerdere gebruikers/seats onder één (bedrijfs)deal, elke gebruiker krijgt premium-niveau |
+
+**Bewaargrenzen (besloten 2026-07-20, nog niet gebouwd):** twee nieuwe, plan-afhankelijke bovengrenzen op opgeslagen data, niet te verwarren met "Sessiegeheugen" hierboven (dat bepaalt hoeveel eerdere gesprekken worden meegenomen als context in de chat, geen opslaglimiet).
+- **Gesprekken bewaard**: bij overschrijding van de grens wordt het oudste gesprek verwijderd. Aanleiding: geen technische noodzaak (de sessions-route haalt tot 100 op zonder probleem), maar het maakt zoeken in gesprekken behapbaarder voor de gebruiker. Er bestaat op dit moment geen enkel opruimmechanisme voor `arnobot_blog_sessions`, dit moet nieuw gebouwd worden.
+- **Patroonanalyses bewaard**: de bestaande opruimlogica in `app/api/bot/coaching-analyse/route.ts:158-167` (nu een vlakke grens van 20 voor iedereen) moet plan-afhankelijk gemaakt worden (5/15/15). Let op: bij het verlagen van de grens voor een gebruiker die er al meer heeft opgeslagen, verwijdert de bestaande logica bij de eerstvolgende nieuwe analyse automatisch de oudste tot de nieuwe grens gehaald is. Onomkeerbaar, dus bewust afwegen bij het bouwen wanneer/hoe dit voor bestaande gebruikers ingaat.
 
 **Trial krijgt volledige functionaliteit (besloten en bevestigd 2026-07-20):** iedere nieuwe gebruiker krijgt bij aanmelden expliciet `plan='premium'` (`middleware.ts`, provisioning bij eerste LinkedIn-login), niet `basis`. Dat betekent tijdens de 30 dagen trial: volledige coaching, gesproken antwoorden, en de hoge berichtlimiet, precies zoals vóór de migratie ook al zo werkte (toen stond `tier` default op `pro`). Pas als iemand na de trial bewust voor het goedkopere `basis`-abonnement kiest, verliest die coaching, voice en de hoge limiet.
 
@@ -78,6 +84,7 @@ Besloten (2026-07-20): all-in, per seat/meerdere gebruikers, elke gebruiker in h
 
 ## Openstaande vragen / nog niet besloten
 
+- Implementatie van de bewaargrenzen (zie "Bewaargrenzen" hierboven): plan-afhankelijke cap op gesprekken (nieuw te bouwen opruimmechanisme) en op patroonanalyses (bestaande vlakke 20-cap plan-afhankelijk maken). Besluit staat vast, bouwwerk nog niet gestart.
 - Prijsstaffel voor `team`.
 - Of en wanneer `/prijzen` wordt bijgewerkt naar de drie-lagen-structuur (blokkeert op de betaalprovider-keuze, zie `docs/VOICE_PLAN.md` fase 3).
 - Of er ooit een betaalde tussenlaag komt zonder voice (zie "Belangrijke toelichting" hierboven) — op dit moment bewust niet aan de orde.
