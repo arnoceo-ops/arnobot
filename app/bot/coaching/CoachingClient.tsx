@@ -352,6 +352,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link href="/bot/sparren" className="pdf-btn" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
             <button className="generate-btn" onClick={generate} disabled={generating || loading}>
               {generating ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>

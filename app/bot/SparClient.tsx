@@ -55,6 +55,7 @@ interface Props {
   taglineSub: string
   openers: string[]
   resumeSessionId?: string
+  mode?: 'gesprek' | 'sparren'
 }
 
 const STRATEGISCH_ROLLEN = ['VP of Sales', 'CEO/DGA']
@@ -142,7 +143,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId, mode = 'gesprek' }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -242,11 +243,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
   const [actieStatus, setActieStatus] = useState<'ja' | 'deels' | 'nee' | null>(null)
-  const [sparModus, setSparModus] = useState<'gesprek' | 'sparren'>('gesprek')
+  const [sparModus] = useState<'gesprek' | 'sparren'>(mode)
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
+  useEffect(() => {
+    if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
+      setSparPersona(PERSONAS[rolCategorie][0].key)
+    }
+  }, [sparModus, rolCategorie, sparPersona])
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -1503,75 +1509,61 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && rolCategorie && (
+        {!started && sparModus === 'sparren' && rolCategorie && (
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-
-            <div style={{ display: 'flex', gap: 8, marginBottom: sparModus === 'sparren' ? 'clamp(24px,4vw,40px)' : 0, width: '100%', maxWidth: 480 }}>
-              <button
-                onClick={() => setSparModus('gesprek')}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'gesprek' ? '12px 0' : '11px 0', flex: '1 1 0', borderRadius: 999, background: sparModus === 'gesprek' ? '#f59e0b' : 'none', color: sparModus === 'gesprek' ? '#111827' : '#9ca3af', border: sparModus === 'gesprek' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
-              >COACHING</button>
-              <button
-                onClick={() => { setSparModus('sparren'); setVoiceMode(false); if (!sparPersona) setSparPersona(PERSONAS[rolCategorie][0].key) }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparModus === 'sparren' ? '12px 0' : '11px 0', flex: '1 1 0', borderRadius: 999, background: sparModus === 'sparren' ? '#f59e0b' : 'none', color: sparModus === 'sparren' ? '#111827' : '#9ca3af', border: sparModus === 'sparren' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
-              >SPARREN</button>
-            </div>
-
-            {sparModus === 'sparren' && (
-              <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
-                <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>ARNOBOT ALS SPARRING PARTNER</p>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 16 }}>
-                    Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
-                  </p>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-                    Je speelt het gesprek vanuit jouw rol. ArnoBot speelt de ander. En dat gesprek loopt niet altijd zoals jij wilt. Je kiest een weerstand: licht, stevig of zwaar, voert eventueel een korte context in en begint het gesprek. Test real life situaties. Have fun!
-                  </p>
+            <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>ARNOBOT ALS SPARRING PARTNER</p>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 16 }}>
+                  Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
+                </p>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+                  Je speelt het gesprek vanuit jouw rol. ArnoBot speelt de ander. En dat gesprek loopt niet altijd zoals jij wilt. Je kiest een weerstand: licht, stevig of zwaar, voert eventueel een korte context in en begint het gesprek. Test real life situaties. Have fun!
+                </p>
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
+                  {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
+                    <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
-                    {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
-                      <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {p.label}
-                      </button>
-                    ))}
+                {PERSONAS[rolCategorie].some(p => p.key === 'anders') && (
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
+                    <button onClick={() => setSparPersona('anders')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === 'anders' ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === 'anders' ? '#f59e0b' : 'none', color: sparPersona === 'anders' ? '#111827' : '#9ca3af', border: sparPersona === 'anders' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
+                      Anders
+                    </button>
                   </div>
-                  {PERSONAS[rolCategorie].some(p => p.key === 'anders') && (
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
-                      <button onClick={() => setSparPersona('anders')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === 'anders' ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === 'anders' ? '#f59e0b' : 'none', color: sparPersona === 'anders' ? '#111827' : '#9ca3af', border: sparPersona === 'anders' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                        Anders
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WEERSTAND</p>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['licht', 'stevig', 'zwaar'] as const).map(w => (
-                      <button key={w} onClick={() => setSparWeerstand(w)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: isMobile ? 1 : 3, flex: isMobile ? 1 : undefined, width: isMobile ? undefined : 122, padding: sparWeerstand === w ? '12px 0' : '11px 0', borderRadius: 999, background: sparWeerstand === w ? '#f59e0b' : 'none', color: sparWeerstand === w ? '#111827' : '#9ca3af', border: sparWeerstand === w ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                        {w.charAt(0).toUpperCase() + w.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>
-                    {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE (OPTIONEEL)'}
-                  </p>
-                  <textarea
-                    value={sparContext}
-                    onChange={e => setSparContext(e.target.value)}
-                    onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
-                    placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
-                    rows={2}
-                    className="spar-context-textarea"
-                    style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
-                  />
+                )}
+              </div>
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WEERSTAND</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(['licht', 'stevig', 'zwaar'] as const).map(w => (
+                    <button key={w} onClick={() => setSparWeerstand(w)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: isMobile ? 1 : 3, flex: isMobile ? 1 : undefined, width: isMobile ? undefined : 122, padding: sparWeerstand === w ? '12px 0' : '11px 0', borderRadius: 999, background: sparWeerstand === w ? '#f59e0b' : 'none', color: sparWeerstand === w ? '#111827' : '#9ca3af', border: sparWeerstand === w ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
+                      {w.charAt(0).toUpperCase() + w.slice(1)}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
+              <div>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>
+                  {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE (OPTIONEEL)'}
+                </p>
+                <textarea
+                  value={sparContext}
+                  onChange={e => setSparContext(e.target.value)}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
+                  placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
+                  rows={2}
+                  className="spar-context-textarea"
+                  style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
