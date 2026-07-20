@@ -581,9 +581,9 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
                   body: JSON.stringify({ eventName: 'coaching_gesprek_click' }),
                 }).catch(() => {})
               }}
-              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', textDecoration: 'none', borderRadius: 999, whiteSpace: 'nowrap' }}
+              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', textDecoration: 'none', borderRadius: 999, whiteSpace: 'nowrap', minWidth: 220, textAlign: 'center' }}
             >
-              PLAN JE GESPREK →
+              PLAN GESPREK →
             </a>
           </div>
         )}
