@@ -19,7 +19,36 @@ Arno's ruwe schets van een uitgebreider abonnementsmodel, hier vastgelegd zodat 
 - Prijsnamen/structuur (basis/premium/team) vervangen mogelijk de huidige indeling (basis/pro + losse Voice-laag) uit Besluit 1 hieronder — nog niet afgestemd hoe dit zich verhoudt tot de bestaande `tier`-kolom.
 - **Besluit, meteen uitgevoerd (2026-07-19):** de bestaande per-bericht OpenAI-TTS-knop (▶, `tts-1-hd`/`onyx`) wordt uit `SparClient.tsx` verwijderd. Reden van Arno: kwaliteit is "schandalig slecht", en nu het volledige gesproken gesprek toch exclusief voor premium wordt, heeft een matige gratis versie ernaast geen functie meer. De onderliggende `/api/tts`-route blijft ongebruikt maar aanwezig, niet apart opgeruimd. De ElevenLabs-voice-mode-toggle en de herafspeelknop op voice-antwoorden blijven volledig intact, dit raakt alleen het oude OpenAI-pad.
 
-**Volgende stap:** de resterende twee grote onderdelen (agenda-boekingsfunctie, 3-abonnementen-herstructurering incl. hoe dit zich verhoudt tot de bestaande `tier`-kolom en `voice_enabled`) zijn te groot om er nu nog doorheen te jagen. Apart plannen in een volgende sessie.
+**Volgende stap:** de resterende twee grote onderdelen (agenda-boekingsfunctie, 3-abonnementen-herstructurering incl. hoe dit zich verhoudt tot de bestaande `tier`-kolom en `voice_enabled`) zijn te groot om er nu nog doorheen te jagen. Apart plannen in een volgende sessie, zie de sessie-start-synthese hieronder.
+
+---
+
+## Sessie-start-synthese: agenda-boeking + abonnementsherstructurering
+
+Dit is bedoeld om als openingsbericht te plakken in een nieuwe sessie. Kopieer alles hieronder tot aan de volgende `---`.
+
+> We gaan twee samenhangende, nog niet geïmplementeerde onderdelen van ArnoBot Voice uitwerken. Lees eerst `docs/VOICE_PLAN.md` (het hele "Concept"-blok bovenaan, en de Status hieronder) en `docs/MOBILE_PLAN.md`, vat in twee zinnen samen waar we staan, en wacht op akkoord voordat je verdergaat, zoals gebruikelijk bij dit project.
+>
+> **Onderdeel 1 — één in te plannen gesprek met Arno, per gebruiker**
+> Besloten: geldt voor iedereen. Trial-gebruikers moeten het binnen hun 30-dagen-trial inplannen, betaalde gebruikers kunnen het gebruiken wanneer ze willen, geen tijdslimiet.
+> Nog open, eerst uitzoeken/beslissen:
+> - Bouw je dit met een bestaande scheduling-tool (bv. Calendly/SavvyCal/Cal.com, embed of link) of met een eigen Google Calendar-integratie? Een bestaande tool is vermoedelijk veel sneller en betrouwbaarder dan zelf een boekingsflow plus agenda-koppeling bouwen, dat zou ik als eerste vraag voorleggen aan Arno, met een duidelijke aanbeveling.
+> - Let op: deze Claude Code-sessie heeft mogelijk Google Calendar-MCP-tools beschikbaar (`mcp__claude_ai_Google_Calendar__*`), maar dat is iets anders dan een integratie die de ArnoBot-productie-app zelf kan gebruiken. Niet verwarren: die MCP-tools zijn voor Claude Code zelf tijdens een sessie, niet voor eindgebruikers van de app.
+> - Hoe wordt bijgehouden of een gebruiker zijn ene gesprek al gebruikt heeft (nieuwe kolom op `approved_users`, of een aparte tabel)?
+> - Waar in de UI komt dit te staan (webapp en/of app)?
+>
+> **Onderdeel 2 — drie abonnementen: basis, premium, team**
+> Besloten (zie het Concept-blok in VOICE_PLAN.md voor de volledige context):
+> - **Basis**: geen voice-naar-voice-gesprek, wel de bestaande mic-knop (spraak-naar-tekst-invoer), tekst als output.
+> - **Premium**: volledig gesproken heen-en-weer-gesprek (ElevenLabs), ~200 berichten/maand, daarna bijkoopbundels (richting: 100 gesprekken voor €10, exacte prijs/aantal nog te bepalen).
+> - **Team**: nog geen details, moet nog uitgedacht worden.
+> Nog open:
+> - Hoe verhoudt basis/premium/team zich tot de bestaande `tier`-kolom (`'basis' | 'pro'`) en de losse `voice_enabled`-boolean op `approved_users`? Vervangt dit die kolommen, of komt het ernaast?
+> - Migratie van bestaande gebruikers naar de nieuwe indeling.
+> - Prijzen voor premium en team.
+> - Hoe dit samenhangt met fase 3 (pricingpagina) uit VOICE_PLAN.md, die al blokkeert op de nog te kiezen betaalprovider.
+>
+> Begin met vragen stellen over de onduidelijke punten hierboven, dan pas een plan.
 
 ---
 
