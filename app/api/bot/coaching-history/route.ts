@@ -16,7 +16,6 @@ export async function GET() {
     .select('id, created_at, mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(5)
 
   return NextResponse.json({ history: data ?? [] })
 }

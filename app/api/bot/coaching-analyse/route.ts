@@ -36,8 +36,9 @@ export async function POST(req: NextRequest) {
     .from('arnobot_blog_sessions')
     .select('title, summary, message_count, created_at, session_id')
     .eq('user_id', userId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(100)
 
   let sessions = data ?? []
 

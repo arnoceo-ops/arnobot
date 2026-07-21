@@ -96,6 +96,29 @@ export async function GET() {
     )
   }
 
+  // Bewaargrens: alleen basis (25 gesprekken), premium/team onbeperkt.
+  // Zachte verwijdering via deleted_at, zelfde mechanisme als de handmatige DELETE
+  // in app/api/bot/session/route.ts, zodat dit consistent blijft met bestaand gedrag.
+  const { data: planRow } = await supabase
+    .from('approved_users')
+    .select('plan')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const plan = (planRow?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
+
+  if (plan === 'basis') {
+    const { data: allSessions } = await supabase
+      .from('arnobot_blog_sessions')
+      .select('session_id')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+    if (allSessions && allSessions.length > 25) {
+      const toSoftDelete = allSessions.slice(25).map(s => s.session_id)
+      await supabase.from('arnobot_blog_sessions').update({ deleted_at: new Date().toISOString() }).in('session_id', toSoftDelete)
+    }
+  }
+
   // Backfill embeddings voor sessies die er nog geen hebben
   const { data: noEmbedding } = await supabase
     .from('arnobot_blog_sessions')

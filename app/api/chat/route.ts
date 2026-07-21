@@ -308,6 +308,7 @@ export async function POST(req: NextRequest) {
             .select('title, summary, feiten, uitdaging, actie_status, created_at')
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false })
             .limit(plan !== 'basis' ? 25 : 10),
           detectSparringReference(question)

@@ -51,6 +51,7 @@ export async function POST() {
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, message_count, created_at')
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(50),
     // Los van de 50-limiet hierboven (die de AI-analyse behapbaar houdt): het werkelijke totaal
@@ -59,7 +60,8 @@ export async function POST() {
     supabase
       .from('arnobot_blog_sessions')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId),
+      .eq('user_id', userId)
+      .is('deleted_at', null),
     supabase
       .from('arnobot_analyses')
       .select('id, analyse_text, created_at, session_count')
@@ -87,6 +89,7 @@ export async function POST() {
       .from('arnobot_blog_sessions')
       .select('actie_status')
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .not('actie_status', 'is', null)
       .not('actie_status', 'eq', 'skip')
       .order('created_at', { ascending: false })
@@ -490,19 +493,10 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     actie_diagnose: doc.actie_diagnose,
     voortgang: doc.voortgang,
   })
-  if (historyErr) {
-    console.error('[coaching history insert]', historyErr.message)
-  } else {
-    const { data: allHistory } = await supabase
-      .from('arnobot_coaching_history')
-      .select('id')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    if (allHistory && allHistory.length > 5) {
-      const toDelete = allHistory.slice(5).map(r => r.id)
-      await supabase.from('arnobot_coaching_history').delete().in('id', toDelete)
-    }
-  }
+  if (historyErr) console.error('[coaching history insert]', historyErr.message)
+  // Bewust geen opruiming/cap op arnobot_coaching_history: coachingsrapporten komen traag
+  // binnen (voortgang-gate, 48u+3 gesprekken), dus een cap zou op termijn de nulmeting van
+  // een trouwe gebruiker wegknippen. Opslagkosten zijn verwaarloosbaar op deze frequentie.
 
   return NextResponse.json({ coaching: doc })
 }
