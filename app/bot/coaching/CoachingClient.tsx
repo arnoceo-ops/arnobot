@@ -389,8 +389,8 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/bot/sparren" className="pdf-btn" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
-            <button className="generate-btn" onClick={generate} disabled={generating || loading}>
+            <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
+            <button className="generate-btn" onClick={generate} disabled={generating || loading} title="Genereer je coachingsadvies op basis van mindset, systeem en actie">
               {generating ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <span className="loading-dot" />
@@ -401,7 +401,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
               ) : doc ? 'ADVISEER →' : 'GENEREER COACHING →'}
             </button>
             {doc && (
-              <button className="pdf-btn no-print" onClick={() => window.print()}>DOWNLOAD PDF ↓</button>
+              <button className="pdf-btn no-print" onClick={() => window.print()} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
             )}
             {isUpToDate && (
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af', letterSpacing: 1 }}>✓ Advies is actueel</p>
