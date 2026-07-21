@@ -273,7 +273,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
-  const [sparContextMode, setSparContextMode] = useState<'zelf' | 'verzin'>('zelf')
   const [startingSparring, setStartingSparring] = useState(false)
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
   useEffect(() => {
@@ -281,10 +280,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setSparPersona(PERSONAS[rolCategorie][0].key)
     }
   }, [sparModus, rolCategorie, sparPersona])
-  useEffect(() => {
-    // "Anders" gebruikt context als rolomschrijving zelf, ArnoBot kan daar niks bij verzinnen.
-    if (sparPersona === 'anders') setSparContextMode('zelf')
-  }, [sparPersona])
   const [sparHistory, setSparHistory] = useState<SparHistoryEntry[]>([])
   const [expandedSparHistoryId, setExpandedSparHistoryId] = useState<string | null>(null)
   const [showAllSparHistory, setShowAllSparHistory] = useState(false)
@@ -747,13 +742,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   async function startSparring() {
-    if ((sparContextMode === 'zelf' && !sparContext.trim()) || startingSparring) return
+    if ((sparPersona === 'anders' && !sparContext.trim()) || startingSparring) return
     setStartingSparring(true)
     try {
       const res = await fetch('/api/sparring/open', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContextMode === 'zelf' ? sparContext : '', profiel })
+        body: JSON.stringify({ rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContext, profiel })
       })
       const data = await res.json()
       const answer = data.answer || 'Kom binnen. Ga zitten.'
@@ -1641,38 +1636,26 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE'}
                 </p>
                 {sparPersona !== 'anders' && (
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                    <button onClick={() => setSparContextMode('zelf')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2, flex: 1, padding: sparContextMode === 'zelf' ? '11px 8px' : '10px 8px', borderRadius: 999, background: sparContextMode === 'zelf' ? '#f59e0b' : 'none', color: sparContextMode === 'zelf' ? '#111827' : '#9ca3af', border: sparContextMode === 'zelf' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                      IK SCHRIJF ZELF
-                    </button>
-                    <button onClick={() => setSparContextMode('verzin')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2, flex: 1, padding: sparContextMode === 'verzin' ? '11px 8px' : '10px 8px', borderRadius: 999, background: sparContextMode === 'verzin' ? '#f59e0b' : 'none', color: sparContextMode === 'verzin' ? '#111827' : '#9ca3af', border: sparContextMode === 'verzin' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                      LAAT ARNOBOT VERZINNEN
-                    </button>
-                  </div>
-                )}
-                {sparContextMode === 'zelf' && (
-                  <textarea
-                    value={sparContext}
-                    onChange={e => setSparContext(e.target.value)}
-                    onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = !sparContext.trim() ? '#f59e0b' : '#374151' }}
-                    placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
-                    rows={2}
-                    className="spar-context-textarea"
-                    style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${!sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
-                  />
-                )}
-                {sparContextMode === 'verzin' && (
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, lineHeight: 1.8, color: '#6b7280' }}>
-                    ArnoBot verzint een passende situatie op basis van je profiel en opent daarmee het gesprek.
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, lineHeight: 1.8, color: '#6b7280', marginBottom: 16 }}>
+                    Vul hieronder de context van het gesprek in of laat ArnoBot de keuze maken door niets in te vullen en direct op VERSTUUR te klikken.
                   </p>
                 )}
+                <textarea
+                  value={sparContext}
+                  onChange={e => setSparContext(e.target.value)}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
+                  placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
+                  rows={2}
+                  className="spar-context-textarea"
+                  style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
                 <button
                   onClick={startSparring}
-                  disabled={(sparContextMode === 'zelf' && !sparContext.trim()) || startingSparring}
-                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: (sparContextMode === 'zelf' && !sparContext.trim()) || startingSparring ? '#374151' : '#f59e0b', color: (sparContextMode === 'zelf' && !sparContext.trim()) || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: (sparContextMode === 'zelf' && !sparContext.trim()) || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+                  disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? '#374151' : '#f59e0b', color: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
                 >
                   {startingSparring ? (
                     <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -1687,7 +1670,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && <div className={`spar-input-area${started ? ' active' : ''}`}>
+        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && <div className={`spar-input-area${started && sparModus !== 'sparren' ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
