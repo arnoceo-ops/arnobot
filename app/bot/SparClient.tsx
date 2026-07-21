@@ -1570,7 +1570,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
               <div>
-                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>ARNOBOT ALS SPARRING PARTNER</p>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+                <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 24 }}>SPARRING PARTNER</h1>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 16 }}>
                   Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
                 </p>
@@ -1841,7 +1842,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
           <div style={{ background: '#111827', padding: '0 clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ width: '100%', maxWidth: 812, borderTop: '1px solid #374151', paddingTop: 40 }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARCHIEF</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 48 }}>ARCHIEF</h2>
               <div>
                 {(showAllSparHistory ? sparHistory : sparHistory.slice(0, 5)).map(h => {
                   const personaLabel = h.rol_categorie && h.persona
