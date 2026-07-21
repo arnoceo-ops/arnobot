@@ -1604,7 +1604,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
                 <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 24 }}>SPARRING PARTNER</h1>
-                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#f1f5f9' }}>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>
                   Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
                 </p>
               </div>
@@ -1640,8 +1640,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE'}
                 </p>
                 {sparPersona !== 'anders' && (
-                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, lineHeight: 1.8, color: '#6b7280', marginBottom: 16 }}>
-                    Vul hieronder de context van het gesprek in of laat ArnoBot de keuze maken door niets in te vullen en direct op VERSTUUR te klikken.
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', marginBottom: 16 }}>
+                    Vul hieronder de context van het gesprek in of laat ArnoBot de keuze maken door niets in te vullen en direct op STUUR te klikken.
                   </p>
                 )}
                 <textarea
@@ -1674,7 +1674,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     onClick={startSparring}
                     disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
                   >
-                    {startingSparring ? '...' : 'VERSTUUR →'}
+                    {startingSparring ? '...' : 'STUUR →'}
                   </button>
                 </div>
               </div>
@@ -1686,7 +1686,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
-              {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 44 }}>hoe concreter jouw info, hoe beter mijn output</span>}
+              {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 44 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
           {sparModus === 'gesprek' && (
