@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { computeMsaScore } from '@/lib/msa'
 
 function formatLast(iso: string | null) {
   if (!iso) return ''
@@ -35,7 +36,7 @@ interface Member {
 
 function msaTotal(m: Member): number | null {
   if (m.mindset_score == null || m.systeem_score == null || m.actie_score == null) return null
-  return Math.max(1, Math.ceil((m.mindset_score * m.systeem_score * m.actie_score) / 1.25))
+  return computeMsaScore(m.mindset_score, m.systeem_score, m.actie_score)
 }
 
 interface TeamAnalyse {
@@ -380,7 +381,7 @@ export default function TeamClient() {
                   {(() => {
                     const last = teamScores[teamScores.length - 1]
                     if (!last.mindset_score || !last.systeem_score || !last.actie_score) return null
-                    const score = Math.max(1, Math.ceil((last.mindset_score * last.systeem_score * last.actie_score) / 1.25))
+                    const score = computeMsaScore(last.mindset_score, last.systeem_score, last.actie_score)
                     const pct = score
                     return (
                       <div style={{ marginTop: 24 }}>

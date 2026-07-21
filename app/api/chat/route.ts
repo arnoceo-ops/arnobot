@@ -71,6 +71,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
+import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
@@ -369,7 +370,7 @@ export async function POST(req: NextRequest) {
         )
           .then(({ data: coachingDoc }) => {
             if (coachingDoc?.mindset_score != null) {
-              const msa = Math.max(1, Math.ceil((coachingDoc.mindset_score * coachingDoc.systeem_score * coachingDoc.actie_score) / 1.25))
+              const msa = computeMsaScore(coachingDoc.mindset_score, coachingDoc.systeem_score, coachingDoc.actie_score)
               const punten = (coachingDoc.ontwikkelpunten as {tekst:string;pijlar:string}[] | null)?.map(p => `[${p.pijlar}] ${p.tekst}`).join(' | ') ?? ''
               return `\n\nCOACHINGSDIAGNOSE (MSA ${msa}/100):\nVoortgang: ${coachingDoc.voortgang}\nMindset (${coachingDoc.mindset_score}/5): ${coachingDoc.mindset_diagnose}\nSysteem (${coachingDoc.systeem_score}/5): ${coachingDoc.systeem_diagnose}\nActie (${coachingDoc.actie_score}/5): ${coachingDoc.actie_diagnose}${punten ? `\nOntwikkelpunten: ${punten}` : ''}`
             }

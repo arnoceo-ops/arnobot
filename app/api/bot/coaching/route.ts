@@ -7,6 +7,7 @@ import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
+import { computeMsaScore } from '@/lib/msa'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -458,7 +459,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }
   }
 
-  const msaScore = Math.max(1, Math.ceil((parsed.mindset_score * parsed.systeem_score * parsed.actie_score) / 1.25))
+  const msaScore = computeMsaScore(parsed.mindset_score, parsed.systeem_score, parsed.actie_score)
   const prevScore = prevScoreRes.data as { mindset_score: number; systeem_score: number; actie_score: number; created_at: string } | null
   const canSaveScore = !prevScore || (() => {
     const hoursSince = (Date.now() - new Date(prevScore.created_at).getTime()) / 3600000

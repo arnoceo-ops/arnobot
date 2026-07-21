@@ -5,6 +5,7 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useUser } from '@clerk/nextjs'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
+import { computeMsaScore } from '@/lib/msa'
 
 function renderMd(text: string): string {
   return text
@@ -267,7 +268,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
   const hasMSA = doc?.mindset_score != null && doc?.systeem_score != null && doc?.actie_score != null
 
   const msaScore = hasMSA
-    ? Math.max(1, Math.ceil((doc!.mindset_score * doc!.systeem_score * doc!.actie_score) / 1.25))
+    ? computeMsaScore(doc!.mindset_score, doc!.systeem_score, doc!.actie_score)
     : null
 
   const msaPijlars = hasMSA ? [
