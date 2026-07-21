@@ -1541,9 +1541,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <h1 className="spar-title">ARNO<span>BOT.</span></h1>
             <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
           </div>
-        </div>
-        <div style={{ maxWidth: 812, margin: '0 auto', width: '100%', padding: '0 clamp(16px,4vw,20px)' }}>
-          <div style={{ borderBottom: '2px solid #f59e0b' }} />
+          <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b', marginTop: 'clamp(20px,3vw,36px)' }} />
         </div>
 
         {teamPrompt && !started && (

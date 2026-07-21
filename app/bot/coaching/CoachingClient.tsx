@@ -368,12 +368,13 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
       </div>
 
       {uitdaging && (
-        <div className="no-print" style={{ borderBottom: '2px solid #f59e0b', background: '#111827', padding: 'clamp(96px,12vw,120px) clamp(20px,6vw,60px) clamp(48px,6vw,64px)' }}>
+        <div className="no-print" style={{ background: '#111827', padding: 'clamp(96px,12vw,120px) clamp(20px,6vw,60px) 0' }}>
           <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, fontWeight: 400, color: '#f59e0b', display: 'block', marginBottom: 24 }}>THOUGHT OF THE DAY</span>
             <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '28px 32px' }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 2, color: '#9ca3af' }} dangerouslySetInnerHTML={{ __html: renderMd(uitdaging) }} />
             </div>
+            <div style={{ borderBottom: '2px solid #f59e0b', marginTop: 'clamp(48px,6vw,64px)' }} />
           </div>
         </div>
       )}
