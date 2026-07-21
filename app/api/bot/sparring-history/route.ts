@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('arnobot_sparring_sessions')
-    .select('session_id, rol_categorie, persona, weerstand, debrief, message_count, favoriet, created_at')
+    .select('session_id, rol_categorie, persona, weerstand, debrief, message_count, favoriet, transcript, created_at')
     .eq('user_id', userId)
     .not('debrief', 'is', null)
     .order('created_at', { ascending: false })

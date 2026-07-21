@@ -67,6 +67,7 @@ interface SparHistoryEntry {
   debrief: string | null
   message_count: number | null
   favoriet: boolean
+  transcript: { role: 'user' | 'arno'; content: string }[] | null
   created_at: string
 }
 
@@ -281,6 +282,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sparHistory, setSparHistory] = useState<SparHistoryEntry[]>([])
   const [expandedSparHistoryId, setExpandedSparHistoryId] = useState<string | null>(null)
   const [showAllSparHistory, setShowAllSparHistory] = useState(false)
+  const [expandedTranscriptId, setExpandedTranscriptId] = useState<string | null>(null)
   useEffect(() => {
     if (sparModus === 'sparren' && plan !== 'basis') {
       fetch('/api/bot/sparring-history')
@@ -1621,73 +1623,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
-          <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: '100%', maxWidth: 812 }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARCHIEF</p>
-              <div>
-                {(showAllSparHistory ? sparHistory : sparHistory.slice(0, 5)).map(h => {
-                  const personaLabel = h.rol_categorie && h.persona
-                    ? (PERSONAS[h.rol_categorie]?.find(p => p.key === h.persona)?.label ?? h.persona)
-                    : null
-                  const isOpen = expandedSparHistoryId === h.session_id
-                  return (
-                    <div key={h.session_id} style={{ borderTop: '1px solid #374151' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0' }}>
-                        <button
-                          onClick={() => toggleSparFavoriet(h.session_id, h.favoriet)}
-                          title={h.favoriet ? 'Verwijderen uit favorieten' : 'Markeren als favoriet'}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 20, lineHeight: 1, color: h.favoriet ? '#f59e0b' : '#374151', flexShrink: 0, transition: 'color 0.15s' }}
-                        >
-                          {h.favoriet ? '★' : '☆'}
-                        </button>
-                        <button
-                          onClick={() => setExpandedSparHistoryId(isOpen ? null : h.session_id)}
-                          style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: "'Space Mono', monospace", minWidth: 0 }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120 }}>
-                              {formatSparHistoryDate(h.created_at)}
-                              {personaLabel && ` · ${personaLabel.toUpperCase()}${h.weerstand ? ` · ${h.weerstand.toUpperCase()}` : ''}`}
-                            </span>
-                            <div style={{ flex: 1, minWidth: 200 }}>
-                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
-                                {getSparHistoryTitle(h)}
-                              </p>
-                            </div>
-                            <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
-                              {isOpen ? '↑ SLUITEN' : '↓ OPEN'}
-                            </span>
-                          </div>
-                        </button>
-                      </div>
-                      {isOpen && (
-                        <div style={{ paddingBottom: 28, paddingLeft: 36 }}>
-                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap' }}>
-                            {h.debrief}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              {sparHistory.length > 5 && (
-                <div style={{ borderTop: '1px solid #374151', padding: '28px 0', textAlign: 'center' }}>
-                  <button
-                    onClick={() => setShowAllSparHistory(v => !v)}
-                    style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '11px 32px', borderRadius: 999, transition: 'all 0.15s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
-                  >
-                    {showAllSparHistory ? 'TOON MINDER ↑' : `TOON ALLE ${sparHistory.length} SESSIES ↓`}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
@@ -1901,6 +1836,98 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </div>
           )}
         </div>}
+
+        {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
+          <div style={{ background: '#111827', borderTop: '2px solid #f59e0b', padding: 'clamp(56px,8vw,80px) clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '100%', maxWidth: 812 }}>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARCHIEF</p>
+              <div>
+                {(showAllSparHistory ? sparHistory : sparHistory.slice(0, 5)).map(h => {
+                  const personaLabel = h.rol_categorie && h.persona
+                    ? (PERSONAS[h.rol_categorie]?.find(p => p.key === h.persona)?.label ?? h.persona)
+                    : null
+                  const isOpen = expandedSparHistoryId === h.session_id
+                  const isTranscriptOpen = expandedTranscriptId === h.session_id
+                  return (
+                    <div key={h.session_id} style={{ borderTop: '1px solid #374151' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0' }}>
+                        <button
+                          onClick={() => toggleSparFavoriet(h.session_id, h.favoriet)}
+                          title={h.favoriet ? 'Verwijderen uit favorieten' : 'Markeren als favoriet'}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 20, lineHeight: 1, color: h.favoriet ? '#f59e0b' : '#374151', flexShrink: 0, transition: 'color 0.15s' }}
+                        >
+                          {h.favoriet ? '★' : '☆'}
+                        </button>
+                        <button
+                          onClick={() => setExpandedSparHistoryId(isOpen ? null : h.session_id)}
+                          style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: "'Space Mono', monospace", minWidth: 0 }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120 }}>
+                              {formatSparHistoryDate(h.created_at)}
+                              {personaLabel && ` · ${personaLabel.toUpperCase()}${h.weerstand ? ` · ${h.weerstand.toUpperCase()}` : ''}`}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                              <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
+                                {getSparHistoryTitle(h)}
+                              </p>
+                            </div>
+                            <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                              {isOpen ? '↑ SLUITEN' : '↓ OPEN'}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+                      {isOpen && (
+                        <div style={{ paddingBottom: 28, paddingLeft: 36 }}>
+                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', whiteSpace: 'pre-wrap', marginBottom: h.transcript?.length ? 16 : 0 }}>
+                            {h.debrief}
+                          </p>
+                          {!!h.transcript?.length && (
+                            <>
+                              <button
+                                onClick={() => setExpandedTranscriptId(isTranscriptOpen ? null : h.session_id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2, color: isTranscriptOpen ? '#f59e0b' : '#6b7280', padding: 0 }}
+                              >
+                                {isTranscriptOpen ? '↑ VERBERG VOLLEDIG GESPREK' : '↓ TOON VOLLEDIG GESPREK'}
+                              </button>
+                              {isTranscriptOpen && (
+                                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                  {h.transcript.map((m, i) => (
+                                    <div key={i}>
+                                      <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: m.role === 'user' ? '#6b7280' : '#f59e0b' }}>
+                                        {m.role === 'user' ? 'JIJ' : (personaLabel ?? 'ARNO').toUpperCase()}
+                                      </span>
+                                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 14, lineHeight: 1.8, color: '#9ca3af', whiteSpace: 'pre-wrap', marginTop: 4 }}>
+                                        {m.content}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {sparHistory.length > 5 && (
+                <div style={{ borderTop: '1px solid #374151', padding: '28px 0', textAlign: 'center' }}>
+                  <button
+                    onClick={() => setShowAllSparHistory(v => !v)}
+                    style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '11px 32px', borderRadius: 999, transition: 'all 0.15s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                  >
+                    {showAllSparHistory ? 'TOON MINDER ↑' : `TOON ALLE ${sparHistory.length} SESSIES ↓`}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {actieOpvolging && !actieBeantwoord && !started && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>

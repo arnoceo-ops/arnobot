@@ -96,6 +96,11 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
       weerstand: weerstand ?? null,
       debrief,
       message_count: messages.length,
+      // Volledige transcript apart bewaard (naast de debrief), zodat een sparsessie achteraf
+      // net als een gewoon gesprek in het archief helemaal terug te lezen is. De chat-route
+      // zelf (app/api/sparring/chat/route.ts) is stateless en logt niks, dit is dus de enige
+      // plek waar de volledige conversatie ooit vastgelegd wordt.
+      transcript: messages,
     }, { onConflict: 'session_id' })
     if (logError) console.error('[sparring/debrief] loggen mislukt:', logError.message)
   }
