@@ -1014,7 +1014,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .spar-hero {
           display: grid;
           grid-template-columns: auto auto;
-          gap: clamp(24px, 4vw, 80px);
+          column-gap: clamp(24px, 4vw, 80px);
+          row-gap: clamp(12px, 2vw, 20px);
           justify-content: center;
           align-items: flex-end;
           padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
@@ -1541,7 +1542,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <h1 className="spar-title">ARNO<span>BOT.</span></h1>
             <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
           </div>
-          <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b', marginTop: 'clamp(20px,3vw,36px)' }} />
+          <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
         </div>
 
         {teamPrompt && !started && (
