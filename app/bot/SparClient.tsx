@@ -1015,7 +1015,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: grid;
           grid-template-columns: auto auto;
           column-gap: clamp(24px, 4vw, 80px);
-          row-gap: clamp(12px, 2vw, 20px);
+          row-gap: clamp(48px, 6vw, 64px);
           justify-content: center;
           align-items: flex-end;
           padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
