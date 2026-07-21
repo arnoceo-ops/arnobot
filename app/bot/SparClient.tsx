@@ -1646,13 +1646,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
                 <textarea
                   value={sparContext}
-                  onChange={e => setSparContext(e.target.value)}
+                  onChange={e => {
+                    setSparContext(e.target.value)
+                    e.target.style.height = '0px'
+                    e.target.style.height = e.target.scrollHeight + 'px'
+                  }}
                   onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
                   onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
                   placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
-                  rows={2}
+                  rows={1}
                   className="spar-context-textarea"
-                  style={{ width: '100%', maxWidth: 650, background: '#1f2937', border: `2px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                  style={{ width: '100%', maxWidth: 650, minHeight: 55, lineHeight: '29px', background: '#1f2937', border: `2px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '13px 16px', resize: 'none', overflow: 'hidden', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
                 />
                 <div className="spar-buttons" style={{ justifyContent: 'flex-start', marginTop: 10 }}>
                   {speechSupported && (
