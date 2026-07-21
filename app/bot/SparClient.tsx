@@ -1613,8 +1613,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
-                  {PERSONAS[rolCategorie].map(p => (
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
+                  {PERSONAS[rolCategorie].slice(0, 3).map(p => (
+                    <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
+                  {PERSONAS[rolCategorie].slice(3).map(p => (
                     <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {p.label}
                     </button>
@@ -1648,24 +1655,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
                   rows={2}
                   className="spar-context-textarea"
-                  style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                  style={{ width: '100%', maxWidth: 650, background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
-                <button
-                  onClick={startSparring}
-                  disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
-                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? '#374151' : '#f59e0b', color: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: (sparPersona === 'anders' && !sparContext.trim()) || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
-                >
-                  {startingSparring ? (
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                      <span className="loading-dot" />
-                      <span className="loading-dot" />
-                      <span className="loading-dot" />
-                    </span>
-                  ) : 'VERSTUUR →'}
-                </button>
-              </div>
+              <button
+                className="spar-send"
+                onClick={startSparring}
+                disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
+              >
+                {startingSparring ? '...' : 'VERSTUUR →'}
+              </button>
             </div>
           </div>
         )}
