@@ -1928,23 +1928,28 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                           onClick={() => setExpandedSparHistoryId(isOpen ? null : h.session_id)}
                           style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: "'Space Mono', monospace", minWidth: 0 }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-                            <div style={{ width: 160, flexShrink: 0 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '160px minmax(200px, 1fr) auto', alignItems: 'center', columnGap: 24 }}>
+                            <div>
                               <span style={{ display: 'block', color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                                 {formatSparHistoryDate(h.created_at)}
                               </span>
                               {personaLabel && (
                                 <span style={{ display: 'block', color: '#6b7280', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', marginTop: 2 }}>
-                                  {personaLabel.toUpperCase()}{h.weerstand ? ` · ${h.weerstand.toUpperCase()}` : ''}
+                                  {personaLabel.toUpperCase()}
+                                </span>
+                              )}
+                              {h.weerstand && (
+                                <span style={{ display: 'block', color: '#6b7280', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', marginTop: 2 }}>
+                                  {h.weerstand.toUpperCase()}
                                 </span>
                               )}
                             </div>
-                            <div style={{ flex: 1, minWidth: 200 }}>
+                            <div>
                               <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
                                 {getSparHistoryTitle(h)}
                               </p>
                             </div>
-                            <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                            <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, whiteSpace: 'nowrap' }}>
                               {isOpen ? '↑ SLUITEN' : '↓ OPEN'}
                             </span>
                           </div>
