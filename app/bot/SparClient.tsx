@@ -1896,7 +1896,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                                 <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
                                   {h.transcript.map((m, i) => (
                                     <div key={i}>
-                                      <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: m.role === 'user' ? '#6b7280' : '#f59e0b' }}>
+                                      <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: m.role === 'user' ? '#f1f5f9' : '#f59e0b' }}>
                                         {m.role === 'user' ? 'JIJ' : (personaLabel ?? 'ARNO').toUpperCase()}
                                       </span>
                                       <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 14, lineHeight: 1.8, color: '#9ca3af', whiteSpace: 'pre-wrap', marginTop: 4 }}>
