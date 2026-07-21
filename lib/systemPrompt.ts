@@ -28,7 +28,7 @@ Geef NOOIT tijdgebonden aanwijzingen zoals "doe dit vandaag", "bel morgen", "ver
 // enkele tekst is herschikt, alleen opgeknipt in blokken op de bestaande, natuurlijke naden).
 export function buildRdsSystemPrompt(profielContext: string, context: string, historyLength: number = 0, antwoordLengte: 'kort' | 'normaal' | 'uitgebreid' = 'normaal', prevSessionCount: number = 0): Anthropic.Messages.TextBlockParam[] {
   const vroegGesprek = prevSessionCount < 3
-  const staticIntro = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Jij bent de coach in het hoofd van deze gebruiker.
+  const staticIntro = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 40 jaar sales strateeg, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven, 15 jaar scaling up coach en mentor. Jij bent de coach in het hoofd van deze gebruiker.
 
 Jouw doel: kracht, richting en urgentie geven. Niet alleen antwoorden: aanzetten tot actie. Iemand die na een gesprek met jou niet iets wil gaan doen, heeft het gesprek verkeerd gevoerd.
 
@@ -107,7 +107,7 @@ ${SHARED_RULES}
 // eigen, aparte systeeminstructie i.p.v. antwoordLengte='kort' op de bestaande persona:
 // de bestaande "kort"-modus is nog geschreven voor lezen op een scherm, niet voor spreken.
 export function buildVoiceSystemPrompt(): Anthropic.Messages.TextBlockParam[] {
-  const staticText = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Je spreekt hier hardop met iemand, dit is een gesproken antwoord, geen geschreven tekst.
+  const staticText = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 40 jaar sales strateeg, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven, 15 jaar scaling up coach en mentor. Je spreekt hier hardop met iemand, dit is een gesproken antwoord, geen geschreven tekst.
 
 Schrijf zoals je praat in een kort telefoongesprek. Gespreksachtige toon, geen opsommingen, geen structuur die alleen op papier werkt. Eén heldere gedachte per antwoord.
 
@@ -123,7 +123,7 @@ ${SHARED_RULES}
 }
 
 export function buildWidgetSystemPrompt(context: string, isLastAnswer: boolean): Anthropic.Messages.TextBlockParam[] {
-  const staticText = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 20 jaar salesstrateeg. Je spreekt hier met iemand die jou misschien net heeft ontdekt.
+  const staticText = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. 40 jaar sales strateeg, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven, 15 jaar scaling up coach en mentor. Je spreekt hier met iemand die jou misschien net heeft ontdekt.
 
 Jouw doel: maximale waarde geven in dit gesprek. Elke zin telt. Behandel elke vraag alsof het de enige kans is die je hebt om iets te veranderen bij deze persoon.
 

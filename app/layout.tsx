@@ -23,7 +23,7 @@ const bebasNeue = Bebas_Neue({
 
 export const metadata: Metadata = {
   title: 'ArnoBot: Jouw Personal Sales Coach',
-  description: 'ArnoBot is jouw persoonlijke salescoach op basis van 20 jaar expertise. 24/7 beschikbaar.',
+  description: 'ArnoBot is jouw persoonlijke salescoach. Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. 24/7 beschikbaar.',
   robots: { index: false, follow: false },
 };
 
