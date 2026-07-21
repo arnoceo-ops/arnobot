@@ -273,6 +273,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
+  const [startingSparring, setStartingSparring] = useState(false)
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
   useEffect(() => {
     if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
@@ -737,6 +738,28 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       reset()
     } finally {
       setSynthesisLoading(false)
+    }
+  }
+
+  async function startSparring() {
+    if (!sparContext.trim() || startingSparring) return
+    setStartingSparring(true)
+    try {
+      const res = await fetch('/api/sparring/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContext })
+      })
+      const data = await res.json()
+      const answer = data.answer || 'Kom binnen. Ga zitten.'
+      setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
+      setHistory(prev => [...prev, { role: 'assistant', content: answer }])
+      setStarted(true)
+    } catch {
+      setMessages(prev => [...prev, { role: 'arno', content: 'Kom binnen. Ga zitten.', hint: null, log_id: null, feedback: null }])
+      setStarted(true)
+    } finally {
+      setStartingSparring(false)
     }
   }
 
@@ -1608,24 +1631,38 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>
-                  {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE (OPTIONEEL)'}
+                  {sparPersona === 'anders' ? 'SITUATIESCHETS' : 'SITUATIE'}
                 </p>
                 <textarea
                   value={sparContext}
                   onChange={e => setSparContext(e.target.value)}
                   onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
-                  onBlur={e => { e.currentTarget.style.borderColor = sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = !sparContext.trim() ? '#f59e0b' : '#374151' }}
                   placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
                   rows={2}
                   className="spar-context-textarea"
-                  style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                  style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${!sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
                 />
               </div>
+              <button
+                onClick={startSparring}
+                disabled={!sparContext.trim() || startingSparring}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: !sparContext.trim() || startingSparring ? '#374151' : '#f59e0b', color: !sparContext.trim() || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: !sparContext.trim() || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', alignSelf: 'flex-start' }}
+              >
+                {startingSparring ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
+                    <span>ARNOBOT OPENT HET GESPREK</span>
+                  </span>
+                ) : 'BEGIN HET GESPREK →'}
+              </button>
             </div>
           </div>
         )}
 
-        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && <div className={`spar-input-area${started ? ' active' : ''}`}>
+        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && <div className={`spar-input-area${started ? ' active' : ''}`}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
@@ -1790,7 +1827,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <button
                 className="spar-send"
                 onClick={() => ask(input)}
-                disabled={loading || blocked || !input.trim() || (sparModus === 'sparren' && sparPersona === 'anders' && !sparContext.trim())}
+                disabled={loading || blocked || !input.trim()}
               >
                 {loading ? '...' : 'STUUR →'}
               </button>
