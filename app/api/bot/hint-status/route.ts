@@ -29,15 +29,19 @@ export async function GET() {
       .maybeSingle(),
     supabase
       .from('arnobot_coaching')
-      .select('created_at')
+      .select('updated_at')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
   ])
 
   const lastAnalysisDate = lastAnalysisRes.data?.created_at ?? null
-  const lastCoachingDate = lastCoachingRes.data?.created_at ?? null
+  // arnobot_coaching wordt bij een nieuwe generatie geüpdatet, niet opnieuw aangemaakt:
+  // created_at blijft dus de allereerste generatiedatum. updated_at is de echte laatste
+  // generatie, en moet hier gebruikt worden, anders telt "analyses sinds laatste coaching"
+  // nooit meer terug naar 0 na een nieuwe generatie.
+  const lastCoachingDate = (lastCoachingRes.data as { updated_at?: string } | null)?.updated_at ?? null
   const now = new Date()
 
   const daysSinceLastAnalysis = lastAnalysisDate
