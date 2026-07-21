@@ -1624,7 +1624,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
           <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ width: '100%', maxWidth: 812 }}>
-              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>GESCHIEDENIS</p>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARCHIEF</p>
               <div>
                 {(showAllSparHistory ? sparHistory : sparHistory.slice(0, 5)).map(h => {
                   const personaLabel = h.rol_categorie && h.persona
