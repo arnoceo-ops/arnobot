@@ -35,13 +35,13 @@ export default function PrivacyPage() {
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Verantwoordelijke</h2>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 20 }}>
-              ArnoBot (arno.bot) is een product van Royal Dutch Sales, gevestigd in Lissabon, Portugal.
+              ArnoBot (arno.bot) is een product van Royal Dutch Sales, gevestigd in Amsterdam, Nederland.
             </p>
             <table>
               <tbody>
                 <tr><td style={{ color: '#f1f5f9', width: '40%' }}>Bedrijf</td><td>Royal Dutch Sales</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Handelsnaam</td><td>ArnoBot</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Vestigingsplaats</td><td>Lissabon, Portugal</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Vestigingsplaats</td><td>Amsterdam, Nederland</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Contactpersoon</td><td>Arno Diepeveen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Privacycontact</td><td><a href="mailto:privacy@arno.bot">privacy@arno.bot</a></td></tr>
               </tbody>

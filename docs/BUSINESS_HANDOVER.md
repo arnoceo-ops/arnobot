@@ -19,7 +19,7 @@ De app is gebouwd door Arno Diepeveen, oprichter van Royal Dutch Sales, als verl
 **Live URL:** https://arno.bot  
 **Bedrijf:** Royal Dutch Sales  
 **Oprichter:** Arno Diepeveen  
-**Vestiging:** Lisboa, Portugal
+**Vestiging:** Amsterdam, Nederland
 
 ---
 

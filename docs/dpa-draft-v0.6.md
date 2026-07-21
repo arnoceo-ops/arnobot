@@ -8,9 +8,9 @@
 
 **Verwerkingsverantwoordelijke ("Klant")**: [PLACEHOLDER: naam en gegevens klant]
 
-**Verwerker ("ArnoBot")**: Royal Dutch Sales B.V., handelsnaam ArnoBot, gevestigd te [PLACEHOLDER: vestigingsplaats, adres nog onbekend], Nederland (KVK: [PLACEHOLDER: KVK-nummer nog onbekend]). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
+**Verwerker ("ArnoBot")**: Royal Dutch Sales B.V., handelsnaam ArnoBot, gevestigd te Amsterdam, Nederland (KVK: [PLACEHOLDER: KVK-nummer nog onbekend]). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
 
-*Let op, nog openstaand: de privacypagina van arno.bot vermeldt momenteel "gevestigd in Lissabon, Portugal". Arno heeft bevestigd dat de BV en vestigingsplaats Nederlands zijn; hij komt op de afhandeling van die inconsistentie later terug.*
+*Let op: vestigingsplaats voorlopig op Amsterdam gezet (2026-07-21), in lijn met de privacypagina en algemene voorwaarden. Exact straatadres en KVK-nummer nog aan te vullen.*
 
 ---
 

@@ -24,14 +24,14 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.0 · Juni 2026 · Royal Dutch Sales, Lissabon, Portugal.
+            Versie 2.0 · Juni 2026 · Royal Dutch Sales, Amsterdam, Nederland.
           </p>
 
           {[
             {
               num: 'ARTIKEL 1', title: 'Definities',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Royal Dutch Sales:</strong> gevestigd in Lissabon, Portugal, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Royal Dutch Sales:</strong> gevestigd in Amsterdam, Nederland, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>ArnoBot:</strong> het digitale AI-coachingsplatform toegankelijk via arno.bot.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Gebruiker:</strong> de natuurlijke of rechtspersoon die zich aanmeldt voor en gebruik maakt van ArnoBot.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}><strong style={{ color: '#f1f5f9' }}>Abonnement:</strong> de overeenkomst tussen Royal Dutch Sales en de Gebruiker voor toegang tot ArnoBot tegen de overeengekomen vergoeding.</p>,
