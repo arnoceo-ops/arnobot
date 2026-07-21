@@ -2080,7 +2080,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        <div className="spar-conversation">
+        <div className="spar-conversation" style={sparModus === 'sparren' ? { flex: '0 0 auto' } : undefined}>
           {messages.map((msg, i) => (
             msg.role === 'user' ? (
               <div key={i} ref={i === messages.length - 1 ? lastMessageRef : undefined} className="msg-user" style={isMobile ? { flexDirection: 'column', gap: 4 } : {}}>
