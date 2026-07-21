@@ -32,6 +32,7 @@ export default async function SparrenPage() {
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       openers={[]}
       mode="sparren"
+      plan={plan}
     />
   )
 }

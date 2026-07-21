@@ -79,7 +79,15 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
   // tot vanavond compleet ontbrak, waardoor "hoe vaak wordt sparren gebruikt" onbeantwoordbaar
   // was). sessionId kan ontbreken bij oudere clients die nog niet zijn bijgewerkt, dan gewoon
   // niet loggen in plaats van de debrief zelf te laten falen.
-  if (typeof sessionId === 'string' && sessionId) {
+  // Basis: geen opslag (besloten 2026-07-20). Onbeperkt voor premium/team, geen cap.
+  const { data: planRow } = await supabase
+    .from('approved_users')
+    .select('plan')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const plan = (planRow?.plan as 'basis' | 'premium' | 'team') ?? 'premium'
+
+  if (plan !== 'basis' && typeof sessionId === 'string' && sessionId) {
     const { error: logError } = await supabase.from('arnobot_sparring_sessions').upsert({
       user_id: userId,
       session_id: sessionId,
