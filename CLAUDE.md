@@ -305,7 +305,8 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 - **Container**: maxWidth 812, padding 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px'
 - **Style-tag**: altijd bovenaan met font-import, `* { box-sizing: border-box; margin: 0; padding: 0; }`, body met font-weight 400
 - **Achtergrond**: #111827 pagina, #1f2937 voor cards/inputs
-- **Amber scheidingslijn** (horizontale hero-divider): altijd `2px solid #f59e0b` — nooit dikker. Geldt voor `border-bottom` op hero-secties (sparren, team, teamlid) en `border-top` op sectie-scheidingen (Q&A FAQ-blok).
+- **Amber scheidingslijn** (horizontale hero-divider): altijd `2px solid #f59e0b` — nooit dikker, en altijd **kolombreedte (maxWidth 812), nooit paginabreedte**. Referentie: de header-divider op de teampagina (`app/bot/team/TeamClient.tsx`). Geldt voor `border-bottom` op hero-secties (sparren, team, teamlid) en `border-top` op sectie-scheidingen (Q&A FAQ-blok). Correctie 2026-07-21: de hero-divider op `/bot` en `/bot/sparren` (`app/bot/SparClient.tsx`) stond eerder abusievelijk paginabreed (border direct op de full-bleed hero-container), nu verplaatst naar een aparte, kolombrede binnendiv.
+- **Scheiding tussen secties ónder de hero** (dus niet de hero-divider zelf): geen amber, gewoon `1px solid #374151`, kolombreedte. Amber is gereserveerd voor de ene hero-divider bovenaan een pagina, niet voor losse sectiegrenzen daaronder.
 
 ## Gespreksstijl (ArnoBot + Bieb) — REFERENTIE is SparClient.tsx, nooit zelf afwijken
 - **JIJ-label**: Bebas Neue 18px, letterSpacing 3, kleur **#6b7280**, whiteSpace nowrap, paddingTop 2px, minWidth 48px

@@ -1012,7 +1012,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
         .spar-hero {
-          border-bottom: 2px solid #f59e0b;
           display: grid;
           grid-template-columns: auto auto;
           gap: clamp(24px, 4vw, 80px);
@@ -1543,6 +1542,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
           </div>
         </div>
+        <div style={{ maxWidth: 812, margin: '0 auto', width: '100%', padding: '0 clamp(16px,4vw,20px)' }}>
+          <div style={{ borderBottom: '2px solid #f59e0b' }} />
+        </div>
 
         {teamPrompt && !started && (
           <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -1838,8 +1840,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         </div>}
 
         {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
-          <div style={{ background: '#111827', borderTop: '2px solid #f59e0b', padding: 'clamp(56px,8vw,80px) clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: '100%', maxWidth: 812 }}>
+          <div style={{ background: '#111827', padding: '0 clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '100%', maxWidth: 812, borderTop: '1px solid #374151', paddingTop: 40 }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARCHIEF</p>
               <div>
                 {(showAllSparHistory ? sparHistory : sparHistory.slice(0, 5)).map(h => {
