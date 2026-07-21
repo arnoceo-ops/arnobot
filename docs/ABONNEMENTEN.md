@@ -35,6 +35,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 | Patroonanalyses bewaard (archief/BIEB) | 20 | 20 | 20 |
 | Eerdere coachingsrapportages (geschiedenis op coachingspagina) | Nee (heeft sowieso geen coaching) | Onbeperkt | Onbeperkt |
 | Patroonanalyses genereren (nieuwe aanmaken, los van bewaargrens hierboven) | Max 1 per dag | Onbeperkt | Onbeperkt |
+| Sparsessies bewaard (geschiedenis op /bot/sparren) | Nee, wordt niet opgeslagen | Onbeperkt | Onbeperkt |
 | Coaching (rapport, coachingsdiagnose in chat) | Nee | Ja | Ja |
 | Spraak-naar-tekst invoer (mic-knop) | Ja | Ja | Ja |
 | Gesproken antwoorden (ElevenLabs voice-naar-voice) | Nee, behalve tijdelijk tijdens de trial (zie hieronder) | Ja | Ja |
@@ -48,6 +49,8 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 - **Input-limiet bij patroonanalyse genereren**: `app/api/bot/coaching-analyse/route.ts:40` verlaagd van 200 naar 100. Losstaand van de (voor premium/team onbeperkte) bewaargrens hierboven: een patroonanalyse gebruikt hoe dan ook alleen de meest recente 100 gesprekken als invoer, ongeacht hoeveel er in totaal bewaard blijven.
 
 **Patroonanalyses genereren, dagelijkse limiet (bestaand, nu pas hier gedocumenteerd):** `app/api/bot/coaching-analyse/route.ts:31-33` blokkeert een nieuwe generatie voor `plan=basis` als er die dag al 1 is gemaakt (429 `dagelijks_limiet`). Premium/team hebben hier geen limiet. Dit is losstaand van de bewaargrens hierboven (dat is hoeveel er blijven staan, dit is hoe vaak je een nieuwe mag maken) en bewust gehandhaafd (2026-07-20): een direct voelbare, actieve limiet werkt als een echte upgradehefboom, in tegenstelling tot de bewaargrenzen die pas na maanden gevoeld worden.
+
+**Sparsessies-geschiedenis (besloten en gebouwd 2026-07-20):** eigen sectie "GESCHIEDENIS" onderaan `/bot/sparren`, zelfde stijl als het archief (datum, titel uit de debrieftekst, uitklap), standaard 5 tonen met een TOON ALLE-knop voor de rest. Tabel `arnobot_sparring_sessions` bestond al (gevuld door `app/api/sparring/debrief/route.ts` bij het afsluiten van een sparsessie), maar had voorheen geen plan-onderscheid: iedereen werd opgeslagen. Nu: basis wordt niet meer opgeslagen, premium/team onbeperkt, geen cap. Nieuw: een `favoriet`-kolom (boolean) waarmee een gebruiker een sparsessie kan markeren met een ster, via `PATCH /api/bot/sparring-history`.
 
 **Coachingsgeschiedenis (besloten en gebouwd 2026-07-20, cap losgelaten 2026-07-20):** eigen sectie "ARCHIEF" op de coachingspagina, tussen PROGRESSIE en ARNO.BLOGS, analoog aan de bestaande `arnobot_team_analyses` (teampagina, zie hieronder) en `arnobot_1on1_log` (teamlid-pagina): een aparte, insert-only tabel `arnobot_coaching_history` naast `arnobot_coaching` zelf. Bewust géén wijziging aan `arnobot_coaching` (dat blijft 1 rij per gebruiker, upsert): een audit wees uit dat 9 andere plekken in de code (o.a. `app/api/chat/route.ts`, de hoofdchat) ervan uitgaan dat die tabel precies 1 rij per gebruiker heeft, en zouden breken bij een omzetting naar meerdere rijen.
 - Bij elke generatie (`POST /api/bot/coaching`) wordt naast de bestaande upsert ook een snapshot weggeschreven naar `arnobot_coaching_history`.
