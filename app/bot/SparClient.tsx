@@ -318,7 +318,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setSpeechSupported(true)
   }, [])
 
-  async function startRecording(e: React.MouseEvent | React.TouchEvent) {
+  async function startRecording(e: React.MouseEvent | React.TouchEvent, setTarget: React.Dispatch<React.SetStateAction<string>> = setInput) {
     e.preventDefault()
     if (recording || transcribing || loading || blocked) return
     try {
@@ -338,8 +338,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           const res = await fetch('/api/transcribe', { method: 'POST', body: form })
           const data = await res.json()
           if (data.transcript) {
-            setInput(prev => prev ? `${prev} ${data.transcript}` : data.transcript)
-            setResizeInput(true)
+            setTarget(prev => prev ? `${prev} ${data.transcript}` : data.transcript)
+            if (setTarget === setInput) setResizeInput(true)
           }
         } catch {}
         finally { setTranscribing(false) }
@@ -1655,16 +1655,32 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   placeholder={sparPersona === 'anders' ? 'Beschrijf wie ArnoBot speelt en de context van het gesprek.' : 'Wat is de context van het gesprek?'}
                   rows={2}
                   className="spar-context-textarea"
-                  style={{ width: '100%', maxWidth: 650, background: '#1f2937', border: `1.5px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
+                  style={{ width: '100%', maxWidth: 650, background: '#1f2937', border: `2px solid ${sparPersona === 'anders' && !sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
                 />
+                <div className="spar-buttons" style={{ justifyContent: 'flex-start', marginTop: 10 }}>
+                  {speechSupported && (
+                    <button
+                      className={`spar-mic${recording ? ' recording' : ''}`}
+                      onMouseDown={e => startRecording(e, setSparContext)}
+                      onMouseUp={stopRecording}
+                      onMouseLeave={() => { if (recording) stopRecording() }}
+                      onTouchStart={e => startRecording(e, setSparContext)}
+                      onTouchEnd={stopRecording}
+                      disabled={startingSparring || transcribing}
+                      title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
+                    >
+                      {transcribing ? '⏳' : '🎤'}
+                    </button>
+                  )}
+                  <button
+                    className="spar-send"
+                    onClick={startSparring}
+                    disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
+                  >
+                    {startingSparring ? '...' : 'VERSTUUR →'}
+                  </button>
+                </div>
               </div>
-              <button
-                className="spar-send"
-                onClick={startSparring}
-                disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
-              >
-                {startingSparring ? '...' : 'VERSTUUR →'}
-              </button>
             </div>
           </div>
         )}
