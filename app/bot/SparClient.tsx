@@ -1605,7 +1605,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
                 <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 24 }}>SPARRING PARTNER</h1>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af' }}>
-                  Kies een rol voor ArnoBot waarmee je een gesprek wilt voeren. Bijvoorbeeld een eindbaas die je aanspreekt op niet gehaalde cijfers, een CEO die je businesscase afschiet, een klant die de prijs te hoog vindt of maar niet wil worden overtuigd. Wat jij wilt.
+                  Dit is het spreekwoordelijke trapveldje naast het stadion. Hier oefen je moeilijke gesprekken in eender welke situatie. Je bepaalt zelf de weerstand. ArnoBot is je vaste Sparring Partner en kruipt in de huid van wie jij wilt. Beoordeel zelf je veerkracht.
                 </p>
               </div>
               <div>
