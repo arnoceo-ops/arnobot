@@ -1599,7 +1599,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         )}
 
         {!started && sparModus === 'sparren' && rolCategorie && (
-          <div style={{ background: '#111827', padding: 'clamp(80px,12vw,120px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+          <div style={{ background: '#111827', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
@@ -1613,20 +1613,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WIE IS JE GESPREKSPARTNER?</p>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8, marginBottom: PERSONAS[rolCategorie].some(p => p.key === 'anders') ? 8 : 0 }}>
-                  {PERSONAS[rolCategorie].filter(p => p.key !== 'anders').map(p => (
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
+                  {PERSONAS[rolCategorie].map(p => (
                     <button key={p.key} onClick={() => setSparPersona(p.key)} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === p.key ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === p.key ? '#f59e0b' : 'none', color: sparPersona === p.key ? '#111827' : '#9ca3af', border: sparPersona === p.key ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {p.label}
                     </button>
                   ))}
                 </div>
-                {PERSONAS[rolCategorie].some(p => p.key === 'anders') && (
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
-                    <button onClick={() => setSparPersona('anders')} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: sparPersona === 'anders' ? '12px 8px' : '11px 8px', borderRadius: 999, background: sparPersona === 'anders' ? '#f59e0b' : 'none', color: sparPersona === 'anders' ? '#111827' : '#9ca3af', border: sparPersona === 'anders' ? 'none' : '1px solid #374151', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center' }}>
-                      Anders
-                    </button>
-                  </div>
-                )}
               </div>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>WEERSTAND</p>
@@ -1892,7 +1885,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         </div>}
 
         {!started && sparModus === 'sparren' && plan !== 'basis' && sparHistory.length > 0 && (
-          <div style={{ background: '#111827', padding: '0 clamp(20px,5vw,60px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ background: '#111827', padding: '0 clamp(16px,4vw,20px) 40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ width: '100%', maxWidth: 812, borderTop: '1px solid #374151', paddingTop: 40 }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
               <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 48 }}>ARCHIEF</h2>
