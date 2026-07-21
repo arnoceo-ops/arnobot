@@ -6,6 +6,7 @@ import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useAuth, useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
+import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
 
 function formatLastDate(iso: string | null): string {
@@ -1558,6 +1559,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         </nav>
       )}
+      <VersionBanner />
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 

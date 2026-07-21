@@ -6,6 +6,7 @@ import { useClerk, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import NotificationBell from '@/app/bot/components/NotificationBell'
+import VersionBanner from '@/app/bot/components/VersionBanner'
 
 interface Props {
   active: 'bot' | 'archief' | 'coaching' | 'team' | 'account' | 'profiel' | 'qa'
@@ -146,6 +147,7 @@ export default function BotNav({ active }: Props) {
           </div>
         )}
         {feedbackModal}
+        <VersionBanner />
       </>
     )
   }
@@ -191,6 +193,7 @@ export default function BotNav({ active }: Props) {
         </div>
       </nav>
       {feedbackModal}
+      <VersionBanner />
     </>
   )
 }
