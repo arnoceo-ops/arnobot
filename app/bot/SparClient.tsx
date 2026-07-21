@@ -659,6 +659,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       reset()
       return
     }
+    // Bij sparren opent ArnoBot altijd als eerste: messages.length > 0 betekent dus niet
+    // automatisch dat de gebruiker ook zelf iets heeft gezegd. Zonder eigen reactie is er
+    // niks om te debriefen of te bewaren.
+    if (sparModus === 'sparren' && !messages.some(m => m.role === 'user')) {
+      reset()
+      return
+    }
     if (showSluiten) setShowSluiten(false)
     setInput('')
     if (inputRef.current) inputRef.current.style.height = '55px'
