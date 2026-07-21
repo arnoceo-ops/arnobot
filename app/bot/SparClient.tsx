@@ -1554,19 +1554,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 
-        <div className="spar-hero">
-          <div className="hero-photo">
-            {(() => {
-              const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
-              return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
-            })()}
+        {mode !== 'sparren' && (
+          <div className="spar-hero">
+            <div className="hero-photo">
+              {(() => {
+                const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
+                return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
+              })()}
+            </div>
+            <div className="hero-text">
+              <h1 className="spar-title">ARNO<span>BOT.</span></h1>
+              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
+            </div>
+            <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
           </div>
-          <div className="hero-text">
-            <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-            <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
-          </div>
-          <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
-        </div>
+        )}
 
         {teamPrompt && !started && (
           <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -1590,7 +1592,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         )}
 
         {!started && sparModus === 'sparren' && rolCategorie && (
-          <div style={{ background: '#111827', padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+          <div style={{ background: '#111827', padding: 'clamp(80px,12vw,120px) clamp(20px,5vw,60px) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <div style={{ width: '100%', maxWidth: 812, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 32 }}>
               <div>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
@@ -1644,20 +1646,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   style={{ width: '100%', background: '#1f2937', border: `1.5px solid ${!sparContext.trim() ? '#f59e0b' : '#374151'}`, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, padding: '12px 16px', resize: 'none', outline: 'none', borderRadius: 4, caretColor: '#f59e0b' }}
                 />
               </div>
-              <button
-                onClick={startSparring}
-                disabled={!sparContext.trim() || startingSparring}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: !sparContext.trim() || startingSparring ? '#374151' : '#f59e0b', color: !sparContext.trim() || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: !sparContext.trim() || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', alignSelf: 'flex-start' }}
-              >
-                {startingSparring ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <span className="loading-dot" />
-                    <span className="loading-dot" />
-                    <span className="loading-dot" />
-                    <span>ARNOBOT OPENT HET GESPREK</span>
-                  </span>
-                ) : 'BEGIN HET GESPREK →'}
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
+                <button
+                  onClick={startSparring}
+                  disabled={!sparContext.trim() || startingSparring}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 8px', borderRadius: 999, background: !sparContext.trim() || startingSparring ? '#374151' : '#f59e0b', color: !sparContext.trim() || startingSparring ? '#6b7280' : '#111827', border: 'none', cursor: !sparContext.trim() || startingSparring ? 'not-allowed' : 'pointer', transition: 'all 0.15s', textAlign: 'center' }}
+                >
+                  {startingSparring ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                      <span className="loading-dot" />
+                      <span className="loading-dot" />
+                      <span className="loading-dot" />
+                    </span>
+                  ) : 'VERSTUUR →'}
+                </button>
+              </div>
             </div>
           </div>
         )}
