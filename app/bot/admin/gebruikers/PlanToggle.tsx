@@ -8,7 +8,7 @@ type Plan = typeof PLANS[number]
 const COLORS: Record<Plan, { bg: string; color: string }> = {
   basis: { bg: '#374151', color: '#9ca3af' },
   premium: { bg: '#f59e0b', color: '#111827' },
-  team: { bg: '#44cc88', color: '#111827' },
+  team: { bg: '#22c55e', color: '#111827' },
 }
 
 export default function PlanToggle({ userId, currentPlan }: { userId: string; currentPlan: Plan }) {
@@ -39,7 +39,7 @@ export default function PlanToggle({ userId, currentPlan }: { userId: string; cu
         letterSpacing: '2px',
         fontWeight: 700,
         padding: '3px 8px',
-        borderRadius: 3,
+        borderRadius: 999,
         border: 'none',
         cursor: loading ? 'wait' : 'pointer',
         background: COLORS[plan].bg,

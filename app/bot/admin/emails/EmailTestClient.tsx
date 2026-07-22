@@ -59,13 +59,13 @@ export default function EmailTestClient() {
         gap: 24,
         background: '#1f2937',
         padding: '16px 24px',
-        borderLeft: `3px solid ${results[type] === 'ok' ? '#44cc88' : results[type] === 'error' ? '#cc2200' : results[type] === 'skipped' ? '#6b7280' : '#374151'}`,
+        borderLeft: `3px solid ${results[type] === 'ok' ? '#22c55e' : results[type] === 'error' ? '#cc2200' : results[type] === 'skipped' ? '#6b7280' : '#374151'}`,
       }}>
         <p style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9', letterSpacing: 1, margin: 0 }}>{label}</p>
         <p style={{ fontSize: 14, color: '#6b7280', letterSpacing: 1, margin: 0 }}>{description}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {results[type] === 'ok' && (
-            <span style={{ fontSize: 12, color: '#44cc88', letterSpacing: 2 }}>VERZONDEN</span>
+            <span style={{ fontSize: 12, color: '#22c55e', letterSpacing: 2 }}>VERZONDEN</span>
           )}
           {results[type] === 'skipped' && (
             <span style={{ fontSize: 12, color: '#6b7280', letterSpacing: 2 }}>OVERGESLAGEN</span>
@@ -82,7 +82,7 @@ export default function EmailTestClient() {
               letterSpacing: 2,
               fontWeight: 700,
               padding: '6px 16px',
-              borderRadius: 3,
+              borderRadius: 999,
               border: '1px solid #374151',
               cursor: sending === type ? 'wait' : 'pointer',
               background: 'transparent',

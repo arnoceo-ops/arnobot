@@ -275,8 +275,8 @@ export default function MetaAnalyseClient() {
                 onClick={saveInput}
                 disabled={inputSaving || !input.trim()}
                 style={{
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontSize: 16,
+                  fontFamily: 'sans-serif',
+                  fontSize: 12,
                   letterSpacing: 3,
                   padding: '10px 28px',
                   borderRadius: 999,
@@ -361,10 +361,10 @@ export default function MetaAnalyseClient() {
         onClick={generate}
         disabled={loading}
         style={{
-          fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: 18,
+          fontFamily: 'sans-serif',
+          fontSize: 12,
           letterSpacing: 3,
-          fontWeight: 400,
+          fontWeight: 700,
           width: 300,
           padding: '12px 0',
           borderRadius: 999,
@@ -403,8 +403,8 @@ export default function MetaAnalyseClient() {
           onClick={generateFeedbackAnalyse}
           disabled={feedbackLoading}
           style={{
-            fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: 18,
+            fontFamily: 'sans-serif',
+            fontSize: 12,
             letterSpacing: 3,
             width: 300,
             padding: '12px 0',

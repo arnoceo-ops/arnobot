@@ -12,7 +12,6 @@ export default async function EmailsOverzichtPage() {
 
   return (
     <div style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9' }}>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" />
       <style href="overzicht-print" precedence="default">{`
         @media print {
           .no-print { display: none !important; }
@@ -36,7 +35,7 @@ export default async function EmailsOverzichtPage() {
         <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', marginBottom: 8 }}>
           Alle e-mails en crons die ArnoBot verstuurt, gesorteerd per categorie.
         </p>
-        <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, marginBottom: 48 }}>
+        <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', letterSpacing: 1, marginBottom: 48 }}>
           Let op: het PDF-overzicht en de admin-crons zijn handmatig te onderhouden. De NAAR GEBRUIKERS sectie op de admin-pagina werkt automatisch via email-templates.ts.
         </p>
 
@@ -84,7 +83,7 @@ export default async function EmailsOverzichtPage() {
         </Section>
 
         <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #1f2937' }}>
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, lineHeight: 1.8 }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', letterSpacing: 1, lineHeight: 1.8 }}>
             Marketing-mails (inactivity nudge, geen gesprek nudge, win-back) bevatten een opt-out link via arno.bot/optout/&#123;userId&#125;.<br />
             Alle verstuurde mails zijn terug te vinden op resend.com/emails.<br />
             ArnoBot Admin: arno.bot
@@ -100,7 +99,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   return (
     <div style={{ marginBottom: 56 }}>
       <h2 style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 20, letterSpacing: 1, color: '#f59e0b', marginBottom: 4 }}>{title}</h2>
-      <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, marginBottom: 20 }}>{subtitle}</p>
+      <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', letterSpacing: 1, marginBottom: 20 }}>{subtitle}</p>
       {children}
     </div>
   )
@@ -122,7 +121,7 @@ function Table({ rows }: { rows: Row[] }) {
   }
   const td: CSSProperties = {
     fontFamily: 'sans-serif',
-    fontSize: 12,
+    fontSize: 14,
     color: '#9ca3af',
     padding: '10px 12px 10px 0',
     borderBottom: '1px solid #1f2937',

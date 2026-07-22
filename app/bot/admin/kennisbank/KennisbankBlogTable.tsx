@@ -35,7 +35,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
   })
 
   function arrow(c: SortCol) {
-    if (col !== c) return <span style={{ opacity: 0.3 }}> ↕</span>
+    if (col !== c) return <span style={{ color: '#6b7280' }}> ↕</span>
     return <span style={{ color: '#f59e0b' }}>{dir === 'asc' ? ' ↑' : ' ↓'}</span>
   }
 

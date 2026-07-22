@@ -78,7 +78,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
         <button
           onClick={saveManual}
           disabled={saving || !inputValue.trim()}
-          style={{ fontSize: '12px', letterSpacing: '2px', color: '#44cc88', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ fontSize: '12px', letterSpacing: '2px', color: '#22c55e', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {saving ? '...' : 'OPSLAAN'}
         </button>
@@ -89,7 +89,7 @@ export default function SearchLinkedIn({ userId, name, email, hasLinkedin }: { u
   if (notFound) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-        <span style={{ fontSize: '12px', letterSpacing: '1px', color: '#cc4444', fontWeight: 700 }}>NIET GEVONDEN</span>
+        <span style={{ fontSize: '12px', letterSpacing: '1px', color: '#cc2200', fontWeight: 700 }}>NIET GEVONDEN</span>
         <button
           onClick={() => setShowInput(true)}
           style={{ fontSize: '12px', letterSpacing: '2px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}

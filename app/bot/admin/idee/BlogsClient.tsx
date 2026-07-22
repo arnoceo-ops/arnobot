@@ -142,10 +142,10 @@ export default function BlogsClient() {
               letterSpacing: 3,
               fontWeight: 700,
               padding: '8px 20px',
-              borderRadius: 4,
+              borderRadius: 999,
               border: '1px solid',
               borderColor: selected === p.days ? '#f59e0b' : '#374151',
-              background: selected === p.days ? '#1e293b' : 'transparent',
+              background: selected === p.days ? '#1f2937' : 'transparent',
               color: selected === p.days ? '#f59e0b' : '#6b7280',
               cursor: 'pointer',
             }}
@@ -160,10 +160,10 @@ export default function BlogsClient() {
         onClick={generate}
         disabled={loading}
         style={{
-          fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: 18,
+          fontFamily: 'sans-serif',
+          fontSize: 12,
           letterSpacing: 3,
-          fontWeight: 400,
+          fontWeight: 700,
           padding: '12px 36px',
           borderRadius: 999,
           border: 'none',
@@ -182,9 +182,9 @@ export default function BlogsClient() {
 
       {/* Archief */}
       {archiveLoading ? (
-        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
+        <p style={{ color: '#6b7280', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
-        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
+        <p style={{ color: '#6b7280', fontSize: 12, letterSpacing: 2 }}>Nog geen analyses gegenereerd.</p>
       ) : (
         <div>
           <p style={{ color: '#f59e0b', fontSize: 12, fontWeight: 700, letterSpacing: 4, marginBottom: 16 }}>
@@ -209,7 +209,7 @@ export default function BlogsClient() {
                       textAlign: 'left',
                     }}
                   >
-                    <span style={{ color: '#374151', fontSize: 12, flexShrink: 0 }}>
+                    <span style={{ color: '#6b7280', fontSize: 12, flexShrink: 0 }}>
                       {isOpen ? '▼' : '▶'}
                     </span>
                     <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 700, flexShrink: 0 }}>

@@ -80,7 +80,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
               <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>BEOORDELINGEN</p>
             </div>
             <div style={{ textAlign: 'center', minWidth: 80 }}>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#cc4444', lineHeight: 1 }}>
+              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#cc2200', lineHeight: 1 }}>
                 {totalRatings - positiveRatings}
               </span>
               <p style={{ fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>NEGATIEF</p>
@@ -154,7 +154,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
 
       {/* Evaluaties lijst */}
       {evaluaties.length === 0 && (
-        <p style={{ color: '#374151', fontSize: 12, letterSpacing: 3 }}>NOG GEEN EVALUATIES ONTVANGEN</p>
+        <p style={{ color: '#6b7280', fontSize: 12, letterSpacing: 3 }}>NOG GEEN EVALUATIES ONTVANGEN</p>
       )}
       {evaluaties.map(e => (
         <div key={e.id} style={{ background: '#1f2937', marginBottom: 2 }}>
@@ -169,7 +169,7 @@ export default function EvaluatiesClient({ evaluaties, totalRatings, positiveRat
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{e.naam ?? 'Anoniem'}</span>
               {e.aanbevelen && (
-                <span style={{ fontSize: 12, letterSpacing: 2, color: e.aanbevelen === 'Ja' ? '#44cc88' : e.aanbevelen === 'Nee' ? '#cc4444' : '#f59e0b' }}>
+                <span style={{ fontSize: 12, letterSpacing: 2, color: e.aanbevelen === 'Ja' ? '#22c55e' : e.aanbevelen === 'Nee' ? '#cc2200' : '#f59e0b' }}>
                   {e.aanbevelen === 'Ja' ? 'BEVEELT AAN' : e.aanbevelen === 'Nee' ? 'BEVEELT NIET AAN' : 'MISSCHIEN'}
                 </span>
               )}

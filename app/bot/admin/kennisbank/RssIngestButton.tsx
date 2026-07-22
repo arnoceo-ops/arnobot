@@ -34,8 +34,8 @@ export default function RssIngestButton() {
         onClick={trigger}
         disabled={state === 'loading'}
         style={{
-          fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: 15,
+          fontFamily: 'sans-serif',
+          fontSize: 12,
           letterSpacing: 3,
           padding: '8px 24px',
           borderRadius: 999,
@@ -51,7 +51,7 @@ export default function RssIngestButton() {
       {result && (
         <span style={{
           fontSize: 12,
-          color: state === 'error' ? '#cc4444' : '#6b7280',
+          color: state === 'error' ? '#cc2200' : '#6b7280',
           letterSpacing: 1,
         }}>
           {result}

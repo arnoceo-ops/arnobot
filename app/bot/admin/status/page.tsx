@@ -202,11 +202,11 @@ export default async function AdminStatusPage() {
               <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>PERFORMANCE</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div>
-                  <p style={{ fontFamily: 'sans-serif', fontSize: 10, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>GEMIDDELD</p>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>GEMIDDELD</p>
                   <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{avgMs ? `${avgMs}ms` : '—'}</p>
                 </div>
                 <div>
-                  <p style={{ fontFamily: 'sans-serif', fontSize: 10, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>P95</p>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>P95</p>
                   <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{p95 ? `${p95}ms` : '—'}</p>
                 </div>
               </div>
@@ -218,15 +218,15 @@ export default async function AdminStatusPage() {
               <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>BESCHIKBAARHEID</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div>
-                  <p style={{ fontFamily: 'sans-serif', fontSize: 10, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>VANDAAG</p>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>VANDAAG</p>
                   <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{availDay !== null ? `${availDay}%` : '—'}</p>
                 </div>
                 <div>
-                  <p style={{ fontFamily: 'sans-serif', fontSize: 10, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DEZE WEEK</p>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DEZE WEEK</p>
                   <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{availWeek !== null ? `${availWeek}%` : '—'}</p>
                 </div>
                 <div>
-                  <p style={{ fontFamily: 'sans-serif', fontSize: 10, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DOWN</p>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>DOWN</p>
                   <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{downSeconds > 0 ? `${Math.round(downSeconds / 60)}min` : '0s'}</p>
                 </div>
               </div>
@@ -240,7 +240,7 @@ export default async function AdminStatusPage() {
           <details style={{ background: '#1f2937', borderRadius: 4, marginBottom: 40 }}>
             <summary style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', padding: '14px 20px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>MONITOR CONFIGURATIE</span>
-              <span style={{ fontSize: 10 }}>▼</span>
+              <span style={{ fontSize: 12 }}>▼</span>
             </summary>
             <div style={{ padding: '0 20px 16px' }}>
               {[

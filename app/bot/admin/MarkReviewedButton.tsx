@@ -33,8 +33,8 @@ export default function MarkReviewedButton({ flagId }: { flagId: number }) {
       disabled={loading}
       style={{
         fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
-        padding: '3px 8px', borderRadius: 3, border: '1px solid #374151',
-        cursor: loading ? 'wait' : 'pointer', background: 'transparent', color: '#6b7280',
+        padding: '3px 8px', borderRadius: 999, border: '1px solid #374151',
+        cursor: loading ? 'wait' : 'pointer', background: 'transparent', color: '#9ca3af',
         whiteSpace: 'nowrap',
       }}
     >

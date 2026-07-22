@@ -19,7 +19,7 @@ export default function PaidButton({
   if (paid) {
     return (
       <div style={{ textAlign: 'right' }}>
-        <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: '#44cc88', display: 'block' }}>
+        <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: '#22c55e', display: 'block' }}>
           BETAALD
         </span>
         {expiresAt && (
@@ -52,7 +52,7 @@ export default function PaidButton({
         onClick={() => setExpanded(true)}
         style={{
           fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
-          padding: '3px 8px', borderRadius: 3, border: '1px solid #374151',
+          padding: '3px 8px', borderRadius: 999, border: '1px solid #374151',
           cursor: 'pointer', background: 'transparent', color: '#9ca3af',
           whiteSpace: 'nowrap',
         }}
@@ -70,7 +70,7 @@ export default function PaidButton({
         onChange={e => setExpires(e.target.value)}
         style={{
           fontSize: '12px', padding: '3px 6px', background: '#111827',
-          border: '1px solid #374151', color: '#f1f5f9', borderRadius: 3,
+          border: '1px solid #374151', color: '#f1f5f9', borderRadius: 4,
           width: '100%',
         }}
       />
@@ -80,7 +80,7 @@ export default function PaidButton({
           disabled={loading || !expires}
           style={{
             fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
-            padding: '3px 8px', borderRadius: 3, border: 'none',
+            padding: '3px 8px', borderRadius: 999, border: 'none',
             cursor: loading || !expires ? 'not-allowed' : 'pointer',
             background: expires ? '#f59e0b' : '#374151',
             color: expires ? '#111827' : '#6b7280',
@@ -92,7 +92,7 @@ export default function PaidButton({
         <button
           onClick={() => setExpanded(false)}
           style={{
-            fontSize: '12px', padding: '3px 6px', borderRadius: 3,
+            fontSize: '12px', padding: '3px 6px', borderRadius: 999,
             border: '1px solid #374151', background: 'transparent',
             color: '#6b7280', cursor: 'pointer',
           }}

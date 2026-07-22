@@ -85,17 +85,17 @@ export default async function AdminWidgetPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>VAN</label>
             <input type="date" name="from" defaultValue={from} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
+              style={{ background: '#1f2937', border: '1px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>TOT EN MET</label>
             <input type="date" name="to" defaultValue={to} lang="nl"
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
+              style={{ background: '#1f2937', border: '1px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>SORTERING</label>
             <select name="sort" defaultValue={sort}
-              style={{ background: '#1f2937', border: '1px solid #222', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
+              style={{ background: '#1f2937', border: '1px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>
               <option value="count_desc">Meeste vragen eerst</option>
@@ -103,7 +103,7 @@ export default async function AdminWidgetPage({
             </select>
           </div>
           <button type="submit"
-            style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px', alignSelf: 'flex-end' }}>
+            style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px', alignSelf: 'flex-end' }}>
             LAAD
           </button>
           {sessionList.length > 0 && (
@@ -115,7 +115,7 @@ export default async function AdminWidgetPage({
       </div>
 
       {sessionList.length === 0 ? (
-        <p style={{ color: '#6b7280' }}>Geen gesprekken gevonden voor {dateRange}.</p>
+        <p style={{ color: '#6b7280', fontSize: '14px' }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
         <div>
           <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>

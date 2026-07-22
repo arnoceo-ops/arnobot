@@ -23,8 +23,7 @@ export default function AdminMobileNav({ active }: { active: string }) {
 
   return (
     <div className="admin-mob-nav">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" />
-      <span style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9' }}>
+      <span style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: 14, letterSpacing: 3, color: '#f1f5f9' }}>
         ARNO<span style={{ color: '#f59e0b' }}>BOT</span>
       </span>
       <button
@@ -43,8 +42,9 @@ export default function AdminMobileNav({ active }: { active: string }) {
               key={l.href}
               href={l.href}
               style={{
-                fontFamily: "'Bebas Neue', Impact, sans-serif",
-                fontSize: 28,
+                fontFamily: 'sans-serif',
+                fontWeight: 700,
+                fontSize: 12,
                 letterSpacing: 3,
                 color: l.href === active ? '#f59e0b' : '#9ca3af',
                 textDecoration: 'none',

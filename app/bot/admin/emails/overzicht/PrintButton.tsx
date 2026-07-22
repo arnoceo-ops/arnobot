@@ -10,7 +10,7 @@ export function PrintButton() {
         letterSpacing: 2,
         padding: '6px 16px',
         border: '1px solid #374151',
-        borderRadius: 3,
+        borderRadius: 999,
         background: 'transparent',
         color: '#9ca3af',
         cursor: 'pointer',

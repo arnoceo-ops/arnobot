@@ -215,14 +215,14 @@ export default async function ArnoBotAdminPage({
           </div>
           <div className="admin-form-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <button type="submit"
-              style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px' }}>
+              style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px' }}>
               LAAD
             </button>
             {sessionList.length > 0 && (
               <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
                   href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
-                  style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                   ↓ DOWNLOAD CSV
                 </a>
@@ -234,7 +234,7 @@ export default async function ArnoBotAdminPage({
       </div>
 
       {sessionList.length === 0 ? (
-        <p style={{ color: '#6b7280' }}>Geen gesprekken gevonden voor {dateRange}.</p>
+        <p style={{ color: '#6b7280', fontSize: '14px' }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
         <div>
           <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>

@@ -37,7 +37,7 @@ export default function LinkedInFallbackToggle({ initialEnabled }: { initialEnab
         onClick={toggle}
         disabled={loading}
         style={{
-          fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 16, letterSpacing: 2,
+          fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2,
           padding: '8px 20px', borderRadius: 999,
           border: enabled ? '1px solid #f59e0b' : '1px solid #374151',
           background: enabled ? '#f59e0b' : 'transparent',

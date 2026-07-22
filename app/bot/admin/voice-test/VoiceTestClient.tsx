@@ -143,7 +143,7 @@ export default function VoiceTestClient() {
             disabled={busy || transcribing}
             title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
             style={{
-              background: recording ? '#f59e0b' : '#1f2937', border: '1.5px solid #374151',
+              background: recording ? '#f59e0b' : '#1f2937', border: '1.5px solid #374151', borderRadius: 999,
               color: recording ? '#111827' : '#f1f5f9', padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
             }}
           >
@@ -153,7 +153,7 @@ export default function VoiceTestClient() {
             type="submit"
             disabled={busy || !input.trim()}
             style={{
-              background: '#f59e0b', color: '#111827', border: 'none', padding: '10px 24px',
+              background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 24px',
               fontWeight: 700, fontSize: '12px', letterSpacing: '1px', cursor: busy ? 'default' : 'pointer',
               opacity: busy || !input.trim() ? 0.6 : 1,
             }}
@@ -182,7 +182,7 @@ export default function VoiceTestClient() {
                 onClick={() => playAnswer(t.answer)}
                 disabled={busy}
                 style={{
-                  background: 'none', border: '1px solid #374151', color: '#9ca3af',
+                  background: 'none', border: '1px solid #374151', borderRadius: 999, color: '#9ca3af',
                   padding: '6px 16px', fontSize: '12px', letterSpacing: '1px', cursor: 'pointer',
                 }}
               >
