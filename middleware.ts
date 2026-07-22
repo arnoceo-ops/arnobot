@@ -32,18 +32,6 @@ function buildCSP(nonce: string, allowWasm = false): string {
   ].join('; ')
 }
 
-const isPublicRoute = createRouteMatcher([
-  '/canvas-aanmelden(.*)',
-  '/api/canvas/aanmelden(.*)',
-  '/bot-aanmelden(.*)',
-  '/aanmelden(.*)',
-  '/evaluatie(.*)',
-  '/api/evaluatie(.*)',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/sso-callback(.*)',
-])
-
 const isProtectedBot = createRouteMatcher(['/bot', '/bot/:path*'])
 const isAdminRoute = createRouteMatcher(['/bot/admin', '/bot/admin/:path*'])
 
@@ -76,10 +64,6 @@ export default clerkMiddleware(async (auth, req) => {
   // Admin routes: cookie-auth wordt per pagina afgehandeld.
   if (isAdminRoute(req)) {
     return nextWithNonce()
-  }
-
-  if (!isPublicRoute(req) && path.startsWith('/canvas')) {
-    await auth.protect()
   }
 
   // Uitzondering op isProtectedBot hieronder: deze pagina moet je juist kunnen zien
