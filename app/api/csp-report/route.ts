@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
     const blocked   = report['blocked-uri'] ?? null
     const page      = report['document-uri'] ?? null
 
+    // Negeer meldingen van buiten productie (bv. localhost tijdens lokaal
+    // ontwikkelen) — anders komt elke lokale dev-sessie in de Telegram-
+    // meldingen en de violations-tabel terecht naast echte gebruikersmeldingen.
+    let hostname = ''
+    try { hostname = page ? new URL(page).hostname : '' } catch {}
+    if (!hostname.endsWith('arno.bot')) {
+      return new NextResponse(null, { status: 204 })
+    }
+
     await supabase.from('arnobot_csp_violations').insert({
       document_uri: page,
       violated_directive: directive,
