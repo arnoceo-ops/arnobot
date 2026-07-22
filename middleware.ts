@@ -113,7 +113,7 @@ export default clerkMiddleware(async (auth, req) => {
               .eq('email', email)
             if (updateErr) {
               console.error('Pending user update failed:', updateErr.message)
-              return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
+              return NextResponse.redirect(new URL('/sign-in', req.url))
             }
             user = pending
           } else {
@@ -170,7 +170,7 @@ export default clerkMiddleware(async (auth, req) => {
             )
             if (insertErr) {
               console.error('New user insert failed:', insertErr.message)
-              return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
+              return NextResponse.redirect(new URL('/sign-in', req.url))
             }
             user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
             // Referral cookie verwerken
@@ -220,7 +220,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     if (!user || user.is_active === false) {
-      return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
+      return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 
     let toegestaan = false
@@ -236,7 +236,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     if (!toegestaan) {
-      return NextResponse.redirect(new URL('/bot-aanmelden', req.url))
+      return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 
     const welcome_seen = (user as any).welcome_seen as boolean | null
