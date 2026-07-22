@@ -288,7 +288,7 @@ export default function BotProfielPage() {
                   )}
                   {answers.gebruik === 'team' && (
                     <div style={{ marginTop: 20, background: '#1f2937', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
-                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>COMING SEPTEMBER 2026</p>
+                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>COMING SEPTEMBER 2026</p>
                       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>
                         ArnoBot Team is in ontwikkeling. Je kunt je nu alvast aanmelden. Zodra het live gaat, ben jij de eerste die het weet.
                       </p>

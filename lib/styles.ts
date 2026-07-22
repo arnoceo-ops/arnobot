@@ -49,17 +49,6 @@ export const text = {
     marginBottom: 16,
   } satisfies CSSProperties,
 
-  // Amber label met bold — ALLEEN voor synthesetitels (SYNTHESE / TERUGBLIK)
-  labelSynthese: {
-    fontFamily: fonts.mono,
-    fontWeight: 700,
-    fontSize: 13,
-    letterSpacing: 4,
-    color: colors.amber,
-    display: 'block',
-    marginBottom: 16,
-  } satisfies CSSProperties,
-
   // Subkop binnen AI-content — wit, niet amber
   subheading: {
     fontFamily: fonts.mono,

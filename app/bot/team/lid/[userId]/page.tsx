@@ -377,7 +377,7 @@ export default function LidPage() {
                     {agenda && (
                       <div style={{ marginTop: 32 }}>
                         <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 24 }}>
-                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
+                          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
                           <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
                         </div>
 
