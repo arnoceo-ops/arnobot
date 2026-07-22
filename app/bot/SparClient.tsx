@@ -2355,17 +2355,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   value={feedbackText}
                   onChange={e => setFeedbackText(e.target.value)}
                   placeholder="Wat kan er beter? Wat werkt goed? Alles is welkom."
-                  style={{ width: '100%', minHeight: 120, background: '#111827', border: '1px solid #374151', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 13, padding: '12px 16px', resize: 'vertical', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+                  style={{ width: '100%', minHeight: 120, background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', resize: 'vertical', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button
                     onClick={sendFeedback}
                     disabled={feedbackLoading || !feedbackText.trim()}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 28px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', borderRadius: 999, opacity: feedbackLoading || !feedbackText.trim() ? 0.5 : 1 }}
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', borderRadius: 999, opacity: feedbackLoading || !feedbackText.trim() ? 0.5 : 1 }}
                   >{feedbackLoading ? '...' : 'VERSTUUR'}</button>
                   <button
                     onClick={() => setFeedbackOpen(false)}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '11px 28px', background: 'none', color: '#6b7280', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
+                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
                   >ANNULEER</button>
                 </div>
               </>

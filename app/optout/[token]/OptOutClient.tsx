@@ -34,7 +34,7 @@ export default function OptOutClient({ token, sig }: { token: string; sig: strin
 
           {state === 'done' ? (
             <>
-              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, color: '#f1f5f9', marginBottom: 24, lineHeight: 1 }}>
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', marginBottom: 24, lineHeight: 1 }}>
                 Je bent uitgeschreven
               </h1>
               <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
@@ -43,7 +43,7 @@ export default function OptOutClient({ token, sig }: { token: string; sig: strin
             </>
           ) : (
             <>
-              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, color: '#f1f5f9', marginBottom: 16, lineHeight: 1 }}>
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', marginBottom: 16, lineHeight: 1 }}>
                 Geen herinneringen meer
               </h1>
               <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 40 }}>
@@ -61,7 +61,7 @@ export default function OptOutClient({ token, sig }: { token: string; sig: strin
                   fontFamily: "'Bebas Neue', sans-serif",
                   fontSize: 18,
                   letterSpacing: 3,
-                  padding: '12px 36px',
+                  padding: '12px 32px',
                   borderRadius: 999,
                   border: '1px solid #cc2200',
                   background: 'transparent',

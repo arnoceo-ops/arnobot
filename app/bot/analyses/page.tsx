@@ -348,8 +348,8 @@ export default function GeschiedenisPage() {
         .sort-btn {
           background: #1f2937; border: none; box-shadow: inset 0 0 0 1px #f59e0b; color: #9ca3af;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 15px; letter-spacing: 3px;
-          padding: 9px 20px; cursor: pointer; transition: all 0.15s;
+          font-size: 18px; letter-spacing: 3px;
+          padding: 12px 32px; cursor: pointer; transition: all 0.15s;
           border-radius: 999px;
         }
         .sort-btn:hover { color: #f1f5f9; }
@@ -370,16 +370,16 @@ export default function GeschiedenisPage() {
         .delete-bar-cancel {
           background: none; border: none; box-shadow: inset 0 0 0 1px #f59e0b; cursor: pointer;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 16px; letter-spacing: 3px; color: #f1f5f9;
-          transition: all 0.15s; padding: 11px 0;
+          font-size: 18px; letter-spacing: 3px; color: #f1f5f9;
+          transition: all 0.15s; padding: 12px 0;
           width: 180px; text-align: center; border-radius: 999px;
         }
         .delete-bar-cancel:hover { color: #f59e0b; }
         .delete-bar-btn {
           background: #f59e0b; border: none; cursor: pointer;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 16px; letter-spacing: 3px; color: #111827;
-          padding: 11px 0; transition: background 0.15s;
+          font-size: 18px; letter-spacing: 3px; color: #111827;
+          padding: 12px 0; transition: background 0.15s;
           width: 180px; text-align: center; border-radius: 999px;
         }
         .delete-bar-btn:hover { background: #d97706; }
@@ -387,8 +387,8 @@ export default function GeschiedenisPage() {
         .delete-bar-outline {
           background: #f59e0b; border: none; box-shadow: none; cursor: pointer;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 16px; letter-spacing: 3px; color: #111827;
-          padding: 11px 0; transition: background 0.15s;
+          font-size: 18px; letter-spacing: 3px; color: #111827;
+          padding: 12px 0; transition: background 0.15s;
           width: 180px; text-align: center; border-radius: 999px;
         }
         .delete-bar-outline:hover { background: #d97706; }
@@ -396,8 +396,8 @@ export default function GeschiedenisPage() {
         .delete-bar-destructive {
           background: none; border: none; box-shadow: inset 0 0 0 1px #cc2200; cursor: pointer;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 16px; letter-spacing: 3px; color: #cc2200;
-          padding: 11px 0; transition: all 0.15s;
+          font-size: 18px; letter-spacing: 3px; color: #cc2200;
+          padding: 12px 0; transition: all 0.15s;
           width: 180px; text-align: center; border-radius: 999px;
         }
         .delete-bar-destructive:hover { box-shadow: inset 0 0 0 1px #ff3300; color: #ff3300; }
@@ -470,7 +470,7 @@ export default function GeschiedenisPage() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Zoek in gesprekken..."
             style={{
-              width: '100%', background: '#1f2937', border: '1px solid #374151',
+              width: '100%', background: '#1f2937', border: '1.5px solid #374151',
               borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace",
               fontSize: 15, padding: '12px 16px', paddingRight: 44, outline: 'none', letterSpacing: 1,
             }}
@@ -544,7 +544,7 @@ export default function GeschiedenisPage() {
 
         {!loading && !searchLoading && visibleSessions.length === 0 && (
           <div style={{ padding: '48px 0', textAlign: 'center' }}>
-            <p style={{ color: '#374151', fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 }}>
+            <p style={{ color: '#6b7280', fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 }}>
               {search ? 'Geen gesprekken gevonden' : 'Nog geen gesprekken'}
             </p>
             {!search && (
@@ -653,7 +653,7 @@ export default function GeschiedenisPage() {
                       <p style={{ color: '#9ca3af', fontSize: 15, fontFamily: "'Space Mono', monospace", lineHeight: 1.9, marginBottom: session.blog_suggestions?.length ? 24 : 0 }} dangerouslySetInnerHTML={{ __html: renderContent(session.summary) }} />
                       {session.blog_suggestions && session.blog_suggestions.length > 0 && (
                         <div style={{ borderTop: '1px solid #374151', paddingTop: 20 }}>
-                          <p style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Bebas Neue', sans-serif" }}>VERDER LEZEN</p>
+                          <p style={{ color: '#f1f5f9', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Space Mono', monospace" }}>VERDER LEZEN</p>
                           {session.blog_suggestions.map((b, i) => (
                             <a key={i} href={b.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
                               display: 'block', color: '#9ca3af', textDecoration: 'none',
@@ -740,7 +740,7 @@ export default function GeschiedenisPage() {
           <div style={{ borderTop: '1px solid #374151', padding: '28px 0', textAlign: 'center' }}>
             <button
               onClick={() => setShowAllSessions(v => !v)}
-              style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '11px 32px', borderRadius: 999, transition: 'all 0.15s' }}
+              style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', padding: '12px 32px', borderRadius: 999, transition: 'all 0.15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
             >
@@ -796,7 +796,7 @@ export default function GeschiedenisPage() {
 
             {activeAnalyse && !isDuplicateAnalyse && (
               <div style={{ marginBottom: 28, background: '#1f2937', borderLeft: `3px solid ${isDeltaAnalyse ? '#f59e0b' : '#f59e0b'}`, padding: '20px 24px' }}>
-                <p style={{ color: '#f59e0b', fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>
+                <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>
                   {isDeltaAnalyse ? 'WAT ER VERANDERD IS' : 'NIEUW GEGENEREERD'}
                 </p>
                 <div style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, fontFamily: "'Space Mono', monospace", marginBottom: 16 }} dangerouslySetInnerHTML={{ __html: renderAnalyseText(activeAnalyse) }} />
@@ -893,7 +893,7 @@ export default function GeschiedenisPage() {
             <div style={{ borderTop: '1px solid #374151', padding: '28px 0', textAlign: 'center' }}>
               <button
                 onClick={() => setShowAllAnalyses(v => !v)}
-                style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '11px 32px', borderRadius: 999, transition: 'all 0.15s' }}
+                style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', padding: '12px 32px', borderRadius: 999, transition: 'all 0.15s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
               >

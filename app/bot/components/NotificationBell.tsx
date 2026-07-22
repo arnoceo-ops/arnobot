@@ -110,7 +110,7 @@ export default function NotificationBell({ onNavigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #374151' }}>
-              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: 4, color: '#f59e0b' }}>NOTIFICATIES</span>
+              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b' }}>NOTIFICATIES</span>
             </div>
             {notifications.length === 0 ? (
               <div style={{ padding: 20, fontFamily: "'Space Mono',monospace", fontSize: 13, color: '#6b7280' }}>Geen notificaties</div>

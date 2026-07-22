@@ -375,7 +375,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 2, color: '#9ca3af' }} dangerouslySetInnerHTML={{ __html: renderMd(uitdaging) }} />
             </div>
           </div>
-          <div style={{ maxWidth: 812, margin: '0 auto', borderBottom: '2px solid #f59e0b', marginTop: 'clamp(48px,6vw,64px)' }} />
+          <div style={{ maxWidth: 680, margin: '0 auto', borderBottom: '2px solid #f59e0b', marginTop: 'clamp(48px,6vw,64px)' }} />
         </div>
       )}
 
