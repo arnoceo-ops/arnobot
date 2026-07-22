@@ -400,7 +400,7 @@
       '<div class="ab-cta-card ab-cta-card--primary">',
       '<div class="ab-cta-card-title">PRAAT MET ARNO</div>',
       '<div class="ab-cta-card-body">Niet de bot. Arno zelf. 30 minuten, gratis, geen verplichtingen.</div>',
-      '<a href="https://arno.to/arnolive" target="_blank" rel="noopener noreferrer" class="ab-cta-btn--primary">PLAN EEN GRATIS GESPREK &rarr;</a>',
+      '<a href="https://calendly.com/arnobot/ab" target="_blank" rel="noopener noreferrer" class="ab-cta-btn--primary">PLAN EEN GRATIS GESPREK &rarr;</a>',
       '</div>',
       '<div class="ab-cta-card ab-cta-card--secondary">',
       '<div class="ab-cta-card-title">ARNOBOT UNLIMITED</div>',
