@@ -35,7 +35,7 @@ export default async function RootLayout({
   const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
     <ClerkAppProvider nonce={nonce}>
-      <html lang="nl">
+      <html lang="nl" style={{ backgroundColor: '#111827', colorScheme: 'dark' }}>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
         >
