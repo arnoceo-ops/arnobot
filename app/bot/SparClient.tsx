@@ -1327,7 +1327,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
         .msg-arno-text {
           font-size: 15px; line-height: 1.9; color: #9ca3af;
-          max-width: 680px; white-space: pre-wrap;
+          white-space: pre-wrap;
         }
 
         .msg-loading {
