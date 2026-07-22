@@ -215,8 +215,8 @@ export default function SignInPage() {
       <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111827', padding: '40px 20px' }}>
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 6, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT UNLIMITED</p>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 44, letterSpacing: 1, lineHeight: 1 }}>INLOGGEN</h1>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT UNLIMITED</p>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1 }}>INLOGGEN</h1>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button className="li-btn" onClick={handleLinkedIn} type="button" disabled={loading}>
@@ -228,7 +228,7 @@ export default function SignInPage() {
               {loading ? 'VERBINDEN MET LINKEDIN...' : 'DOORGAAN MET LINKEDIN'}
             </button>
           </div>
-          {error && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
+          {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           {fetchStatus === 'fetching' && <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>LADEN...</p>}
 
           {fallbackEnabled && emailStep === 'email' && (
@@ -242,12 +242,12 @@ export default function SignInPage() {
                 value={emailValue}
                 onChange={e => setEmailValue(e.target.value)}
                 placeholder="jouw@linkedinmail.nl"
-                style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14 }}
+                style={{ padding: '10px 14px', borderRadius: 4, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14 }}
               />
               <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13, alignSelf: 'center', width: 'auto' }}>
                 {emailLoading ? 'VERSTUREN...' : 'VERSTUUR CODE'}
               </button>
-              {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
+              {emailError && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
             </form>
           )}
 
@@ -263,12 +263,12 @@ export default function SignInPage() {
                 value={codeValue}
                 onChange={e => setCodeValue(e.target.value)}
                 placeholder="6-cijferige code"
-                style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14, letterSpacing: 4, textAlign: 'center' }}
+                style={{ padding: '10px 14px', borderRadius: 4, border: '1px solid #374151', background: '#1f2937', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14, letterSpacing: 4, textAlign: 'center' }}
               />
               <button type="submit" disabled={emailLoading} className="li-btn" style={{ background: '#f59e0b', color: '#111827', padding: '6px 20px', fontSize: 13, alignSelf: 'center', width: 'auto' }}>
                 {emailLoading ? 'BEVESTIGEN...' : 'BEVESTIG'}
               </button>
-              {emailError && <p style={{ color: '#cc3300', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
+              {emailError && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{emailError}</p>}
             </form>
           )}
 
