@@ -758,13 +758,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContext, profiel })
       })
-      const data = await res.json()
-      const answer = data.answer || 'Kom binnen. Ga zitten.'
-      setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
-      setHistory(prev => [...prev, { role: 'assistant', content: answer }])
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.answer) {
+        setMessages(prev => [...prev, { role: 'arno', content: 'Dit gesprek kon niet gestart worden. Pas je rolomschrijving aan en probeer opnieuw.', hint: null, log_id: null, feedback: null }])
+      } else {
+        const answer = data.answer
+        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
+        setHistory(prev => [...prev, { role: 'assistant', content: answer }])
+      }
       setStarted(true)
     } catch {
-      setMessages(prev => [...prev, { role: 'arno', content: 'Kom binnen. Ga zitten.', hint: null, log_id: null, feedback: null }])
+      setMessages(prev => [...prev, { role: 'arno', content: 'Dit gesprek kon niet gestart worden. Probeer opnieuw.', hint: null, log_id: null, feedback: null }])
       setStarted(true)
     } finally {
       setStartingSparring(false)
@@ -809,14 +813,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: question, history, rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContext })
         })
-        const data = await res.json()
-        const answer = data.answer || 'Er ging iets mis.'
-        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
-        setHistory(prev => [
-          ...prev,
-          { role: 'user', content: question },
-          { role: 'assistant', content: answer }
-        ])
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data.answer) {
+          const msg = 'Dit antwoord kon niet worden gegenereerd. Probeer je bericht anders te formuleren, of start het gesprek opnieuw.'
+          setMessages(prev => [...prev, { role: 'arno', content: msg, hint: null, log_id: null, feedback: null }])
+        } else {
+          const answer = data.answer
+          setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
+          setHistory(prev => [
+            ...prev,
+            { role: 'user', content: question },
+            { role: 'assistant', content: answer }
+          ])
+        }
       } else if (voiceMode) {
         const res = await fetch('/api/chat-voice', {
           method: 'POST',

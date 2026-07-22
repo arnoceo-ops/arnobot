@@ -59,13 +59,17 @@ REGELS:
     })
   )
 
-  let answer = getText(await callModel().then(r => r.content))
-  if (!answer) {
-    answer = getText(await callModel().then(r => r.content))
+  let answer = ''
+  for (let i = 0; i < 2 && !answer; i++) {
+    try {
+      answer = getText(await callModel().then(r => r.content))
+    } catch (e) {
+      Sentry.captureException(e)
+    }
   }
   if (!answer) {
     console.error('[sparring/chat] leeg antwoord na retry, userId:', userId)
-    answer = 'Sorry, kun je dat anders verwoorden?'
+    return NextResponse.json({ error: 'Kon geen antwoord genereren' }, { status: 502 })
   }
   return NextResponse.json({ answer })
 }

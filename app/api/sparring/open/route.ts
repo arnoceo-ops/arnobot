@@ -64,13 +64,17 @@ REGELS:
     })
   )
 
-  let answer = getText(await callModel().then(r => r.content))
-  if (!answer) {
-    answer = getText(await callModel().then(r => r.content))
+  let answer = ''
+  for (let i = 0; i < 2 && !answer; i++) {
+    try {
+      answer = getText(await callModel().then(r => r.content))
+    } catch (e) {
+      Sentry.captureException(e)
+    }
   }
   if (!answer) {
     console.error('[sparring/open] lege opening na retry, userId:', userId)
-    answer = 'Kom binnen. Ga zitten.'
+    return NextResponse.json({ error: 'Kon geen opening genereren' }, { status: 502 })
   }
   return NextResponse.json({ answer })
 }
