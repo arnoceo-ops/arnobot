@@ -160,8 +160,8 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je aangeeft door te willen gaan.<br><br>Klik hieronder om te bevestigen. Je ontvangt dan een factuur van Arno. Je toegang blijft actief totdat de factuur is voldaan.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
-          'JA, IK GA DOOR →', 'https://arno.bot/bot/doorgaan'
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je aangeeft door te willen gaan.<br><br>Kies hieronder je abonnement. Je ontvangt dan een factuur van ArnoBot. Je toegang blijft actief totdat de factuur is voldaan.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
+          'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }
     case 'betaalwaarschuwing':
