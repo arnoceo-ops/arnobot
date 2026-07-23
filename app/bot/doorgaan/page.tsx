@@ -145,7 +145,7 @@ export default function DoorgaanPage() {
         {status === 'idle' && (
           <>
             <p style={body}>
-              Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van Arno. Je toegang blijft actief totdat de factuur is voldaan.
+              Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.
             </p>
 
             <div className="doorgaan-toggle">
