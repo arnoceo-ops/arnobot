@@ -71,7 +71,7 @@ export default function DoorgaanPage() {
         .primary-btn:hover { transform: scale(1.03); }
         .doorgaan-toggle {
           display: inline-flex; background: #111827; border: 1px solid #374151;
-          border-radius: 999px; padding: 3px; margin-bottom: 20px;
+          border-radius: 999px; padding: 3px; align-self: flex-start;
         }
         .doorgaan-toggle button {
           font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
@@ -79,21 +79,28 @@ export default function DoorgaanPage() {
           background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .doorgaan-toggle button.actief { background: #f59e0b; color: #111827; }
-        .plan-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+        .plan-cols { max-width: 820px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
         .plan-card {
           background: #1e293b; border: 1px solid #374151; border-radius: 12px;
-          padding: 28px; display: flex; flex-direction: column; gap: 12px;
+          padding: 32px; display: flex; flex-direction: column; gap: 16px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .plan-kop { font-size: 15px; color: #f8fafc; line-height: 1.5; min-height: 46px; }
+        .plan-scarcity { font-size: 15px; font-weight: 400; color: #f59e0b; }
         .plan-naam { font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; }
-        .plan-prijs { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 36px; color: #f8fafc; line-height: 1; }
-        .plan-periode { font-size: 13px; color: #6b7280; }
-        .plan-bullets { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
-        .plan-bullets li { font-size: 14px; color: #94a3b8; padding-left: 16px; position: relative; }
+        .plan-amount { display: flex; align-items: baseline; gap: 6px; }
+        .plan-currency { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 20px; color: #6b7280; }
+        .plan-prijs { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: clamp(40px, 4vw, 52px); color: #f8fafc; letter-spacing: -0.5px; line-height: 0.9; }
+        .plan-periode { font-size: 14px; color: #6b7280; }
+        .plan-note { font-size: 13px; color: #f59e0b; }
+        .plan-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+        .plan-bullets li { font-size: 14px; color: #94a3b8; line-height: 1.5; padding-left: 18px; position: relative; }
         .plan-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
+        .plan-plus { font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-top: 4px; }
         .plan-btn {
-          margin-top: auto; align-self: flex-start; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
-          letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 22px; border-radius: 6px;
+          margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center;
+          font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
+          letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 24px; border-radius: 6px;
           background: #f59e0b; color: #111827; border: none; cursor: pointer;
           box-shadow: 0 12px 24px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
@@ -107,7 +114,7 @@ export default function DoorgaanPage() {
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
         <p style={label}>Abonnement</p>
-        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 40 }}>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 16 }}>
           Doorgaan met ArnoBot.
         </h1>
 
@@ -148,23 +155,33 @@ export default function DoorgaanPage() {
               Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.
             </p>
 
-            <div className="doorgaan-toggle">
-              <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>Maandelijks</button>
-              <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>Jaarlijks</button>
-            </div>
-
             <div className="plan-cols">
               <div className="plan-card">
                 <span className="plan-naam">Premium</span>
-                <div>
-                  <span className="plan-prijs">€{cyclus === 'maandelijks' ? '97' : '777'}</span>
-                  <span className="plan-periode"> {cyclus === 'maandelijks' ? '/ maand' : '/ jaar (4 mnd gratis)'}</span>
+                <p className="plan-kop">Coaching op elk moment, in je eigen tempo.</p>
+                <p className="plan-scarcity" style={{ visibility: 'hidden' }} aria-hidden="true">Beperkt aantal plekken.</p>
+
+                <div className="doorgaan-toggle">
+                  <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>Maandelijks</button>
+                  <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>Jaarlijks</button>
                 </div>
+
+                <div>
+                  <div className="plan-amount">
+                    <span className="plan-currency">€</span>
+                    <span className="plan-prijs">{cyclus === 'maandelijks' ? '97' : '777'}</span>
+                    <span className="plan-periode">{cyclus === 'maandelijks' ? '/ maand' : '/ jaar'}</span>
+                  </div>
+                  {cyclus === 'jaarlijks' && <span className="plan-note">4 maanden gratis</span>}
+                </div>
+
                 <ul className="plan-bullets">
                   <li>Onbeperkt aantal gesprekken</li>
-                  <li>Coaching en patroonanalyses</li>
+                  <li>Onbeperkt aantal gespreksanalyses</li>
+                  <li>Actiegericht coachingsadvies</li>
                   <li>Sparring met een realistische gesprekspartner</li>
                   <li>Gesproken antwoorden</li>
+                  <li>Alle output terug te vinden in archief</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('premium')} disabled={submittingPlan !== null}>
                   {submittingPlan === 'premium' ? 'Bezig...' : 'Kies Premium'}
@@ -173,12 +190,24 @@ export default function DoorgaanPage() {
 
               <div className="plan-card">
                 <span className="plan-naam">Elite</span>
-                <div>
-                  <span className="plan-prijs">€397</span>
-                  <span className="plan-periode"> / maand</span>
+                <p className="plan-kop">Man & Machine. Arno zelf wordt ingeschakeld.</p>
+                <p className="plan-scarcity">Beperkt aantal plekken.</p>
+
+                <div className="doorgaan-toggle" style={{ visibility: 'hidden' }} aria-hidden="true">
+                  <button>Maandelijks</button>
+                  <button>Jaarlijks</button>
                 </div>
+
+                <div>
+                  <div className="plan-amount">
+                    <span className="plan-currency">€</span>
+                    <span className="plan-prijs">397</span>
+                    <span className="plan-periode">/ maand</span>
+                  </div>
+                </div>
+
+                <span className="plan-plus">Alles van Premium, plus:</span>
                 <ul className="plan-bullets">
-                  <li>Alles van Premium, plus:</li>
                   <li>Iedere maand een persoonlijk gesprek met Arno</li>
                   <li>Rechtstreeks contact met Arno via Telegram</li>
                   <li>Toegang tot de Elite Member Community</li>
