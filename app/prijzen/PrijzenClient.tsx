@@ -200,7 +200,7 @@ export default function PrijzenClient() {
 
           <p className="prijzen-command-privacy">Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
-          <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Command" className="prijzen-command-cta">Vraag een demo aan</a>
+          <Link href="/command-aanvraag" className="prijzen-command-cta">Vraag een demo aan</Link>
         </div>
       </div>
     </>

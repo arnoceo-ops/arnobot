@@ -10,9 +10,15 @@ const supabase = createClient(
 )
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function POST() {
+export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const gekozenPlan = body?.plan
+  if (gekozenPlan !== 'premium' && gekozenPlan !== 'elite') {
+    return NextResponse.json({ error: 'Ongeldige plankeuze' }, { status: 400 })
+  }
 
   const { data: user } = await supabase
     .from('approved_users')
@@ -28,15 +34,17 @@ export async function POST() {
 
   await supabase
     .from('approved_users')
-    .update({ renewal_requested_at: now })
+    .update({ renewal_requested_at: now, plan: gekozenPlan })
     .eq('user_id', userId)
+
+  const planLabel = gekozenPlan === 'elite' ? 'Elite (€397/maand)' : 'Premium (€97/maand of €777/jaar)'
 
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
-    subject: `Doorgaan: ${user.voornaam || user.email || userId}`,
+    subject: `Doorgaan (${gekozenPlan === 'elite' ? 'Elite' : 'Premium'}): ${user.voornaam || user.email || userId}`,
     html: emailHtml(
-      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft bevestigd dat hij wil doorgaan met ArnoBot.<br><br><strong style="color:#f59e0b;">Actie: stuur een factuur naar ${user.email || userId}.</strong><br><br>Na betaling: registreer via de admin pagina onder Gebruikers.`,
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft bevestigd dat hij wil doorgaan met ArnoBot, gekozen abonnement: <strong style="color:#f59e0b;">${planLabel}</strong>.<br><br><strong style="color:#f59e0b;">Actie: stuur een factuur naar ${user.email || userId}.</strong><br><br>Het plan staat al automatisch goed in Supabase, na betaling alleen nog \`paid_at\` registreren via de admin pagina onder Gebruikers.`,
       'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
     ),
   }).catch(() => {})
@@ -50,12 +58,13 @@ export async function GET() {
 
   const { data } = await supabase
     .from('approved_users')
-    .select('renewal_requested_at, paid_at')
+    .select('renewal_requested_at, paid_at, plan')
     .eq('user_id', userId)
     .maybeSingle()
 
   return NextResponse.json({
     renewal_requested_at: data?.renewal_requested_at ?? null,
     paid_at: data?.paid_at ?? null,
+    plan: data?.plan ?? null,
   })
 }
