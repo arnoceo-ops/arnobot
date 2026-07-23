@@ -150,6 +150,11 @@ export default function PrijzenPreviewClient() {
           <span className="prijzen-tier-naam">Elite</span>
           <p className="prijzen-tier-kop">Man & Machine. Arno zelf wordt ingeschakeld.</p>
 
+          <div className="prijzen-toggle" style={{ visibility: 'hidden' }} aria-hidden="true">
+            <button>MAANDELIJKS</button>
+            <button>JAARLIJKS</button>
+          </div>
+
           <div>
             <div className="prijzen-tier-amount">
               <span className="prijzen-tier-currency">€</span>
@@ -173,7 +178,7 @@ export default function PrijzenPreviewClient() {
       {/* TEAM */}
       <div className="prijzen-team-section">
         <span className="prijzen-team-naam">Team</span>
-        <h2 className="prijzen-team-kop">Elke 1:1 al voorbereid voordat je begint.</h2>
+        <h2 className="prijzen-team-kop">Coaching wordt een makkie.</h2>
         <p className="prijzen-team-subkop">Voor sales managers die hun team willen zien groeien.</p>
 
         <ul className="prijzen-team-bullets">
