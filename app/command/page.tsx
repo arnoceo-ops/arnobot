@@ -126,11 +126,11 @@ export default function CommandAanvraagPage() {
         {status === 'done' ? (
           <div style={{ background: '#1e293b', border: '1px solid #374151', borderRadius: 8, padding: '24px 28px' }}>
             <p style={{ color: '#44cc88', fontSize: 15, marginBottom: 8, fontWeight: 500 }}>Aanvraag ontvangen.</p>
-            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.7 }}>Arno neemt persoonlijk contact met je op om het verder te bespreken.</p>
+            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.7 }}>Je ontvangt automatisch een offerte die je digitaal kunt ondertekenen.</p>
           </div>
         ) : (
           <>
-            <p className="ca-sub">Vul je gegevens in, dan nemen we contact op om Command voor jouw team in te richten. Geen automatische betaling, dit is een aanvraag, geen bestelling.</p>
+            <p className="ca-sub">Vul je gegevens in, dan sturen we je automatisch een offerte die je digitaal kunt ondertekenen. Geen automatische betaling, dit is een aanvraag, geen bestelling.</p>
 
             <form onSubmit={submit}>
               <fieldset className="ca-fieldset">
