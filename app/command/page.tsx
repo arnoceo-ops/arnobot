@@ -216,7 +216,7 @@ export default function CommandAanvraagPage() {
                   ) : (
                     <>
                       <p className="ca-prijs-num">€{prijs} {cyclus === 'jaarlijks' ? '/ jaar' : '/ maand'}</p>
-                      <p className="ca-prijs-sub">Excl. btw, indicatief op basis van de staffel. Definitief bedrag volgt van Arno.</p>
+                      <p className="ca-prijs-sub">Exclusief BTW</p>
                     </>
                   )}
                 </div>
