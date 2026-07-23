@@ -10,12 +10,14 @@ type PlanKeuze = 'premium' | 'elite'
 
 export default function DoorgaanPage() {
   const { isLoaded } = useUser()
-  const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid' | 'already_requested' | 'done' | 'error'>('loading')
+  const previewIdle = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'idle'
+  const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid' | 'already_requested' | 'done' | 'error'>(previewIdle ? 'idle' : 'loading')
   const [gekozenPlan, setGekozenPlan] = useState<PlanKeuze | null>(null)
   const [submittingPlan, setSubmittingPlan] = useState<PlanKeuze | null>(null)
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
 
   useEffect(() => {
+    if (previewIdle) return
     fetch('/api/bot/confirm-renewal')
       .then(r => r.json())
       .then(d => {
@@ -24,7 +26,7 @@ export default function DoorgaanPage() {
         else setStatus('idle')
       })
       .catch(() => setStatus('idle'))
-  }, [])
+  }, [previewIdle])
 
   if (!isLoaded || status === 'loading') return null
 
