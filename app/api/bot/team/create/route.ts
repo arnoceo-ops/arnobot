@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -7,9 +7,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const BOUWER_EMAIL = 'linkedin@royaldutchsales.com'
+
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const user = await currentUser()
+  const email = user?.primaryEmailAddress?.emailAddress ?? ''
+  if (email !== BOUWER_EMAIL) return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
 
   const { name } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Teamnaam is verplicht' }, { status: 400 })
