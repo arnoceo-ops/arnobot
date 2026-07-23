@@ -16,85 +16,86 @@ export default function PrijzenPreviewClient() {
           border-radius: 999px; padding: 3px; align-self: flex-start;
         }
         .prijzen-toggle button {
-          font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1.5px;
-          padding: 6px 16px; border-radius: 999px; border: none; cursor: pointer;
-          background: transparent; color: #9ca3af; transition: all 0.2s;
+          font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
+          text-transform: uppercase; padding: 6px 16px; border-radius: 999px; border: none; cursor: pointer;
+          background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .prijzen-toggle button.actief { background: #f59e0b; color: #111827; }
 
         .prijzen-cols { max-width: 820px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .prijzen-tier-card {
-          background: #1e293b; border: 1px solid #374151; border-radius: 8px;
+          background: #1e293b; border: 1px solid #374151; border-radius: 12px;
           padding: 32px; display: flex; flex-direction: column; gap: 16px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .prijzen-tier-kop {
-          font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; line-height: 1.5; min-height: 46px;
+          font-size: 15px; color: #94a3b8; line-height: 1.5; min-height: 46px;
         }
         .prijzen-tier-naam {
-          font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #f59e0b;
-          font-family: 'Bebas Neue', sans-serif;
+          font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
         }
         .prijzen-tier-amount { display: flex; align-items: baseline; gap: 6px; }
-        .prijzen-tier-currency { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #6b7280; }
-        .prijzen-tier-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 4vw, 52px); color: #f1f5f9; letter-spacing: -1px; line-height: 0.9; }
-        .prijzen-tier-periode { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #6b7280; }
-        .prijzen-tier-note { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #f59e0b; }
-        .prijzen-tier-subnote { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #6b7280; }
+        .prijzen-tier-currency { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 20px; color: #6b7280; }
+        .prijzen-tier-num { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: clamp(40px, 4vw, 52px); color: #f8fafc; letter-spacing: -0.5px; line-height: 0.9; }
+        .prijzen-tier-periode { font-size: 14px; color: #6b7280; }
+        .prijzen-tier-note { font-size: 13px; color: #f59e0b; }
+        .prijzen-tier-subnote { font-size: 13px; color: #6b7280; }
 
         .prijzen-tier-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
         .prijzen-tier-bullets li {
-          font-family: 'DM Sans', sans-serif; font-size: 14px; color: #9ca3af; line-height: 1.5;
+          font-size: 14px; color: #94a3b8; line-height: 1.5;
           padding-left: 18px; position: relative;
         }
         .prijzen-tier-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
         .prijzen-tier-plus {
-          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1px;
+          font-size: 13px; font-weight: 500; letter-spacing: 0.1em;
           text-transform: uppercase; color: #6b7280; margin-top: 4px;
         }
 
         .prijzen-tier-cta {
-          margin-top: auto; align-self: flex-start; display: inline-block; text-decoration: none; text-align: center;
-          background: #f59e0b; color: #1e293b; font-family: 'Bebas Neue', sans-serif;
-          font-size: 18px; letter-spacing: 2px; padding: 10px 20px; border-radius: 999px;
-          transition: background 0.2s;
+          margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center;
+          text-decoration: none; text-align: center; border-radius: 6px; background: #f59e0b;
+          padding: 12px 24px; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
+          letter-spacing: 0.1em; color: #111827; text-transform: uppercase;
+          box-shadow: 0 12px 24px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
-        .prijzen-tier-cta:hover { background: #d97706; }
+        .prijzen-tier-cta:hover { transform: scale(1.05); }
 
         .prijzen-team-section {
           max-width: 820px; margin: 48px auto 0; background: #17202f; border: 1px solid #1f2937;
-          border-radius: 8px; padding: 40px;
+          border-radius: 12px; padding: 40px;
         }
         .prijzen-team-naam {
-          font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #f59e0b;
-          font-family: 'Bebas Neue', sans-serif; margin-bottom: 12px; display: block;
+          font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
+          margin-bottom: 12px; display: block;
         }
         .prijzen-team-kop {
-          font-family: 'Barlow Condensed', sans-serif; font-size: clamp(24px, 3vw, 32px); font-weight: 600;
-          color: #f1f5f9; letter-spacing: 0.5px; margin-bottom: 8px;
+          font-family: 'Oswald', sans-serif; font-size: clamp(24px, 3vw, 32px); font-weight: 600;
+          text-transform: uppercase; color: #f8fafc; line-height: 1.15; margin-bottom: 8px;
         }
         .prijzen-team-subkop {
-          font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af; margin-bottom: 28px;
+          font-size: 15px; color: #94a3b8; margin-bottom: 28px;
         }
         .prijzen-team-bullets {
           list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px;
           margin-bottom: 28px;
         }
         .prijzen-team-bullets li {
-          font-family: 'DM Sans', sans-serif; font-size: 14px; color: #9ca3af; line-height: 1.5;
+          font-size: 14px; color: #94a3b8; line-height: 1.5;
           padding-left: 18px; position: relative;
         }
         .prijzen-team-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
         .prijzen-team-privacy {
-          font-family: 'DM Sans', sans-serif; font-size: 14px; color: #f1f5f9;
+          font-size: 14px; color: #f8fafc;
           border-left: 2px solid #f59e0b; padding-left: 16px; margin-bottom: 28px; line-height: 1.6;
         }
         .prijzen-team-cta {
-          display: inline-block; text-decoration: none; text-align: center;
-          background: none; border: 1px solid #f59e0b; color: #f59e0b;
-          font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px;
-          padding: 11px 32px; border-radius: 999px; transition: all 0.2s;
+          display: inline-flex; align-items: center; text-decoration: none; text-align: center;
+          background: none; border: 1.5px solid #f59e0b; color: #f59e0b; border-radius: 6px;
+          font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1em;
+          text-transform: uppercase; padding: 11px 24px; transition: all 0.2s;
         }
-        .prijzen-team-cta:hover { background: #f59e0b; color: #1e293b; }
+        .prijzen-team-cta:hover { background: #f59e0b; color: #111827; }
 
         @media (max-width: 768px) {
           .prijzen-cols { grid-template-columns: 1fr; }

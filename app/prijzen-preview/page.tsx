@@ -14,10 +14,10 @@ export default async function PrijzenPreviewPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;600;900&family=DM+Sans:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #111827; color: #f1f5f9; font-family: 'DM Sans', sans-serif; font-size: 15px; }
+        body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
 
         .site-nav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -26,34 +26,28 @@ export default async function PrijzenPreviewPage() {
           background: rgba(17,24,39,0.9); backdrop-filter: blur(12px);
         }
         .nav-logo {
-          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
           color: #f1f5f9; text-decoration: none;
         }
         .nav-logo span { color: #f59e0b; }
         .nav-spacer { flex: 1; }
         .nav-auth { display: flex; gap: 32px; align-items: center; }
         .nav-login {
-          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
           color: #9ca3af; text-decoration: none; transition: color 0.2s;
         }
         .nav-login:hover { color: #f1f5f9; }
-        .nav-cta-btn {
-          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
-          color: #111827; text-decoration: none; background: #f59e0b;
-          padding: 8px 20px; border-radius: 999px; transition: background 0.2s;
-        }
-        .nav-cta-btn:hover { background: #d97706; }
 
         .prijzen-hero { padding: 160px 60px 40px; text-align: center; }
         .prijzen-label {
-          font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 4px;
+          font-size: 14px; font-weight: 600; letter-spacing: 0.3em;
           text-transform: uppercase; color: #f59e0b; margin-bottom: 16px;
         }
         .prijzen-title {
-          font-family: 'Barlow Condensed', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 600;
-          text-transform: uppercase; letter-spacing: 1px; color: #f1f5f9; margin-bottom: 16px;
+          font-family: 'Oswald', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 600;
+          text-transform: uppercase; line-height: 1.1; color: #f8fafc; margin-bottom: 16px;
         }
-        .prijzen-sub { font-family: 'DM Sans', sans-serif; font-size: 16px; color: #9ca3af; max-width: 480px; margin: 0 auto; }
+        .prijzen-sub { font-size: 18px; line-height: 1.625; color: #94a3b8; max-width: 480px; margin: 0 auto; }
 
         .prijzen-section { padding: 0 60px 80px; }
 
@@ -61,11 +55,11 @@ export default async function PrijzenPreviewPage() {
           display: flex; flex-wrap: wrap; justify-content: center; gap: 32px;
           max-width: 820px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid #374151;
         }
-        .prijzen-trust-item { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #9ca3af; letter-spacing: 0.3px; }
+        .prijzen-trust-item { font-size: 13px; color: #94a3b8; letter-spacing: 0.3px; }
         .prijzen-trust-item::before { content: '✓ '; color: #f59e0b; }
 
         .prijzen-preview-badge {
-          text-align: center; font-family: 'DM Sans', sans-serif; font-size: 12px;
+          text-align: center; font-size: 12px;
           letter-spacing: 2px; text-transform: uppercase; color: #6b7280;
           padding-top: 76px;
         }
@@ -82,10 +76,7 @@ export default async function PrijzenPreviewPage() {
         <div className="nav-auth">
           {userId
             ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
-            : <>
-                <Link href="/sign-in" className="nav-login">INLOGGEN</Link>
-                <Link href="/sign-up" className="nav-cta-btn">30 DAGEN GRATIS</Link>
-              </>
+            : <Link href="/sign-in" className="nav-login">LOGIN</Link>
           }
         </div>
       </nav>
