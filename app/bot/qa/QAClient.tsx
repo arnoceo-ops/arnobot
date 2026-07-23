@@ -112,7 +112,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Hoe hoog is het tegoed?',
-        a: 'Per succesvolle referral ontvang je €77 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
+        a: 'Per succesvolle referral ontvang je €97 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
       },
     ],
   },

@@ -57,23 +57,23 @@ export default function ReferralSpelregelsPage() {
               <tbody>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Maandabonnement (€77/m)</td>
-                  <td>Eerste maand gratis: €77</td>
+                  <td>Maandabonnement (€97/m)</td>
+                  <td>Eerste maand gratis: €97</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Jaarabonnement (€697/j)</td>
-                  <td>€77 korting: €620</td>
+                  <td>Jaarabonnement (€777/j)</td>
+                  <td>€97 korting: €680</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
                   <td>Bij maandabonnement nieuwe gebruiker</td>
-                  <td>€77 tegoed na 3 betaalmaanden (maand 5)</td>
+                  <td>€97 tegoed na 3 betaalmaanden (maand 5)</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
                   <td>Bij jaarabonnement nieuwe gebruiker</td>
-                  <td>€77 tegoed direct na eerste jaarlijkse betaling</td>
+                  <td>€97 tegoed direct na eerste jaarlijkse betaling</td>
                 </tr>
               </tbody>
             </table>
