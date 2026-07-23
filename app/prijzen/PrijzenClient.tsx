@@ -5,12 +5,17 @@ import Link from 'next/link'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
-export default function PrijzenPreviewClient() {
+export default function PrijzenClient() {
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
 
   return (
     <>
       <style>{`
+        .prijzen-groep-kop {
+          text-align: center; font-family: 'Oswald', sans-serif; font-size: clamp(22px, 3vw, 28px);
+          font-weight: 600; text-transform: uppercase; color: #f8fafc; margin-bottom: 28px;
+        }
+
         .prijzen-toggle {
           display: inline-flex; background: #111827; border: 1px solid #374151;
           border-radius: 999px; padding: 3px; align-self: flex-start;
@@ -64,47 +69,47 @@ export default function PrijzenPreviewClient() {
         }
         .prijzen-tier-cta:hover { transform: scale(1.05); }
 
-        .prijzen-team-section {
-          max-width: 400px; margin: 20px auto 0; background: #1e293b; border: 1px solid #374151;
-          border-radius: 12px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        .prijzen-command-groep { margin-top: 80px; }
+        .prijzen-command-card {
+          max-width: 600px; margin: 0 auto; background: #1e293b; border: 1px solid #374151;
+          border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
           display: flex; flex-direction: column; gap: 16px;
         }
-        .prijzen-team-naam {
-          font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
-        }
-        .prijzen-team-kop {
-          font-family: 'Oswald', sans-serif; font-size: clamp(22px, 3vw, 26px); font-weight: 600;
+        .prijzen-command-kop {
+          font-family: 'Oswald', sans-serif; font-size: clamp(24px, 3vw, 30px); font-weight: 600;
           text-transform: uppercase; color: #f8fafc; line-height: 1.15;
         }
-        .prijzen-team-subkop {
+        .prijzen-command-subkop {
           font-size: 15px; color: #94a3b8;
         }
-        .prijzen-team-bullets {
-          list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0;
+        .prijzen-command-bullets {
+          list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; margin: 4px 0;
         }
-        .prijzen-team-bullets li {
+        .prijzen-command-bullets li {
           font-size: 14px; color: #94a3b8; line-height: 1.5;
           padding-left: 18px; position: relative;
         }
-        .prijzen-team-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
-        .prijzen-team-privacy {
+        .prijzen-command-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
+        .prijzen-command-privacy {
           font-size: 13px; color: #f8fafc;
           border-left: 2px solid #f59e0b; padding-left: 16px; line-height: 1.6;
         }
-        .prijzen-team-cta {
+        .prijzen-command-cta {
           margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center;
           text-decoration: none; text-align: center; border-radius: 6px; background: #f59e0b;
           padding: 12px 24px; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
           letter-spacing: 0.1em; color: #111827; text-transform: uppercase;
           box-shadow: 0 12px 24px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
-        .prijzen-team-cta:hover { transform: scale(1.05); }
+        .prijzen-command-cta:hover { transform: scale(1.05); }
 
         @media (max-width: 768px) {
           .prijzen-cols { grid-template-columns: 1fr; }
+          .prijzen-command-bullets { grid-template-columns: 1fr; }
         }
       `}</style>
 
+      <h2 className="prijzen-groep-kop">Individueel</h2>
       <div className="prijzen-cols">
         {/* PREMIUM */}
         <div className="prijzen-tier-card">
@@ -177,24 +182,26 @@ export default function PrijzenPreviewClient() {
         </div>
       </div>
 
-      {/* TEAM */}
-      <div className="prijzen-team-section">
-        <span className="prijzen-team-naam">Team</span>
-        <h2 className="prijzen-team-kop">Elke 1:1 al voorbereid voordat je begint.</h2>
-        <p className="prijzen-team-subkop">Voor sales managers die een dream team willen bouwen.</p>
+      {/* COMMAND */}
+      <div className="prijzen-command-groep">
+        <h2 className="prijzen-groep-kop">Command</h2>
+        <div className="prijzen-command-card">
+          <h3 className="prijzen-command-kop">Elke 1:1 al voorbereid voordat je begint.</h3>
+          <p className="prijzen-command-subkop">Voor sales managers die een dream team willen bouwen.</p>
 
-        <ul className="prijzen-team-bullets">
-          <li>Teamoverzicht: individuele scores</li>
-          <li>Teamvoortgang als trend over tijd</li>
-          <li>Vroeg signaal bij stagnatie</li>
-          <li>AI-voorbereiding voor elke 1:1</li>
-          <li>Volledig 1:1 archief met eigen notities</li>
-          <li>Wekelijkse Team Spotlight</li>
-        </ul>
+          <ul className="prijzen-command-bullets">
+            <li>Teamoverzicht: individuele scores</li>
+            <li>Teamvoortgang als trend over tijd</li>
+            <li>Vroeg signaal bij stagnatie</li>
+            <li>AI-voorbereiding voor elke 1:1</li>
+            <li>Volledig 1:1 archief met eigen notities</li>
+            <li>Wekelijkse Team Spotlight</li>
+          </ul>
 
-        <p className="prijzen-team-privacy">Coaching gebiedt privacy. Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
+          <p className="prijzen-command-privacy">Coaching gebiedt privacy. Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
-        <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team" className="prijzen-team-cta">Vraag een demo aan</a>
+          <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Command" className="prijzen-command-cta">Vraag een demo aan</a>
+        </div>
       </div>
     </>
   )
