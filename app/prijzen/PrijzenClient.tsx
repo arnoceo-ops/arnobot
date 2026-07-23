@@ -200,7 +200,7 @@ export default function PrijzenClient() {
 
           <p className="prijzen-command-privacy">Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
-          <Link href="/command-aanvraag" className="prijzen-command-cta">Vraag een demo aan</Link>
+          <Link href="/command" className="prijzen-command-cta">Vraag een demo aan</Link>
         </div>
       </div>
     </>

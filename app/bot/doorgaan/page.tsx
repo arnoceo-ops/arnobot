@@ -180,7 +180,7 @@ export default function DoorgaanPage() {
             </div>
 
             <p style={{ ...body, marginBottom: 0 }}>
-              Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft nog 30 dagen bewaard. Op zoek naar Command, het teamabonnement? <Link href="/command-aanvraag" style={{ color: '#f59e0b' }}>Vraag een demo aan</Link>.
+              Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft nog 30 dagen bewaard. Op zoek naar Command, het teamabonnement? <Link href="/command" style={{ color: '#f59e0b' }}>Vraag een demo aan</Link>.
             </p>
           </>
         )}
