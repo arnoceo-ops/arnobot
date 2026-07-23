@@ -232,6 +232,16 @@ De admin-sectie gebruikt een eigen, bewust andere stijlnorm dan de "Vaste normen
 - **H1**: sans-serif, fontWeight 700, fontSize 48px, letterSpacing -1px, kleur `#f1f5f9` (dus NIET de Bebas Neue 64px H1-norm van de rest van de app)
 - **Witte tekst/koppen**: `#f1f5f9`
 
+### Conversiepagina's binnen /bot (bijv. /bot/doorgaan) — volgen de marketingstijl, niet de Vaste normen
+
+Besloten 2026-07-23: pagina's die inhoudelijk bij de marketing-/conversieflow horen (een abonnement kiezen, upgraden), ook al zitten ze achter de login binnen `/bot`, gebruiken bewust dezelfde stijl als de publieke marketingpagina's (`/prijzen`, de homepage), niet de standaard `/bot`-stijl (Space Mono/Bebas Neue) uit de "Vaste normen" hierboven. Referentie: `app/bot/doorgaan/page.tsx`, naast `/prijzen` en `/` zelf.
+
+- **Font**: Figtree (body), Oswald (koppen/labels/knoppen, uppercase via CSS `text-transform`, niet hardcoded in de tekst zelf), zelfde Google Fonts-import als `/prijzen`
+- **Kleuren**: `#f8fafc` (wit), `#94a3b8` (gedempt), niet de `#f1f5f9`/`#9ca3af` van de Vaste normen
+- **Primaire knop**: radius 6px, volle amber achtergrond, gloed-schaduw (`box-shadow: 0 12px 24px rgba(245,158,11,0.25)`), hover = `scale(1.03-1.05)`, niet de pil-vorm/donkerder-wordende-achtergrond van de Vaste normen
+- **`BotNav` blijft ongewijzigd**: dat is een gedeeld component, sitebreed gebruikt op elke `/bot`-pagina. Bebas Neue in de navigatielinks botst niet met deze stijl, de homepage-nav gebruikt zelf ook Bebas Neue voor `nav-login`.
+- **Bij twijfel of een nieuwe `/bot`-pagina onder deze uitzondering valt**: alleen als de pagina zelf een keuze/conversiemoment is (abonnement kiezen, betalen, upgraden), niet voor gewone functionaliteit binnen de app. Bij twijfel: vragen aan Arno, niet zelf beslissen.
+
 ## Streepjes — ABSOLUUT VERBOD — for ever and ever
 
 De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed het - maar") worden NOOIT gebruikt in arno.bot. Nergens. Nooit.
