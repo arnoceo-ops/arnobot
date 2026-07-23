@@ -120,7 +120,7 @@ export default function CommandAanvraagPage() {
       </nav>
 
       <div className="ca-wrap">
-        <p className="ca-label">Command</p>
+        <p className="ca-label">Team</p>
         <h1 className="ca-title">Vraag een Command-abonnement aan.</h1>
 
         {status === 'done' ? (
