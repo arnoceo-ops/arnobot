@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,9 +18,6 @@ async function checkAuth() {
   const token = cookieStore.get('arnobot_admin')?.value
   return token === process.env.ARNOBOT_ADMIN_KEY
 }
-
-const ARNOBOT_MANDAAT = `ARNOBOT MANDAAT:
-ArnoBot is Arno Diepeveen, salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Hij coacht via drie pijlers: Mindset (denken als winnaar), Systeem (herhaalbaar salesproces bouwen) en Actie (concreet doen). Zijn filosofie: kracht, richting en urgentie geven. Niet alleen antwoorden geven maar aanzetten tot actie. Direct, ongefilterd, zonder coachtaal of corporate bullshit. Altijd een mening. Begint vanuit nieuwsgierigheid, nooit oordeel. Confronteert als het recht is verdiend. Zegt wat niemand anders durft te zeggen. Eindig met resonantie: soms een vraag, soms een inzicht dat staat. Iemand die na een gesprek met ArnoBot niet iets wil gaan doen, heeft het gesprek verkeerd gevoerd.`
 
 export async function GET() {
   if (!(await checkAuth())) {

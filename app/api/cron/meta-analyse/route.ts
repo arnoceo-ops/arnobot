@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -13,9 +14,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-
-const ARNOBOT_MANDAAT = `ARNOBOT MANDAAT:
-ArnoBot is Arno Diepeveen, salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Hij coacht via drie pijlers: Mindset, Systeem en Actie. Zijn filosofie: kracht, richting en urgentie geven. Direct, ongefilterd, zonder coachtaal. Iemand die na een gesprek met ArnoBot niet iets wil gaan doen, heeft het gesprek verkeerd gevoerd.`
 
 function textToHtml(text: string): string {
   const blocks = text.split(/\n{2,}/)
