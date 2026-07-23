@@ -151,7 +151,12 @@ export async function POST() {
             content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}${newSparringText}\n\nIs er kwalitatief iets veranderd in het patroon?`,
           }],
         }))
-        precheckText = getText(precheck.content, 'nee').trim().toLowerCase()
+        // Leeg antwoord behandelen we hetzelfde als een gegooide fout hieronder: fail-open
+        // naar "ja", nooit fail-closed. Een technisch mankement in de precheck mag nooit een
+        // gebruiker blokkeren die zelf niets fout heeft gedaan.
+        const rawPrecheck = getText(precheck.content, '')
+        if (!rawPrecheck) console.error('[coaching precheck] leeg antwoord, behandel als "ja"')
+        precheckText = rawPrecheck ? rawPrecheck.trim().toLowerCase() : 'ja'
       } catch (err: any) {
         console.error('[coaching precheck error]', err?.status, err?.message ?? err)
         // precheck mislukt: laat generatie door, behandel als "ja"
