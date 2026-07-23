@@ -141,26 +141,26 @@ export default function CommandAanvraagPage() {
                 </div>
                 <div className="ca-row">
                   <div className="ca-field">
-                    <label>KvK-nummer</label>
-                    <input value={kvkNummer} onChange={e => setKvkNummer(e.target.value)} />
+                    <label>KvK-nummer *</label>
+                    <input required value={kvkNummer} onChange={e => setKvkNummer(e.target.value)} />
                   </div>
                   <div className="ca-field">
-                    <label>Btw-nummer</label>
-                    <input value={btwNummer} onChange={e => setBtwNummer(e.target.value)} />
+                    <label>Btw-nummer *</label>
+                    <input required value={btwNummer} onChange={e => setBtwNummer(e.target.value)} />
                   </div>
                 </div>
                 <div className="ca-field" style={{ marginBottom: 16 }}>
-                  <label>Factuuradres</label>
-                  <input value={factuuradres} onChange={e => setFactuuradres(e.target.value)} placeholder="Straat en huisnummer" />
+                  <label>Factuuradres *</label>
+                  <input required value={factuuradres} onChange={e => setFactuuradres(e.target.value)} placeholder="Straat en huisnummer" />
                 </div>
                 <div className="ca-row" style={{ marginBottom: 0 }}>
                   <div className="ca-field">
-                    <label>Postcode</label>
-                    <input value={postcode} onChange={e => setPostcode(e.target.value)} />
+                    <label>Postcode *</label>
+                    <input required value={postcode} onChange={e => setPostcode(e.target.value)} />
                   </div>
                   <div className="ca-field">
-                    <label>Plaats</label>
-                    <input value={plaats} onChange={e => setPlaats(e.target.value)} />
+                    <label>Plaats *</label>
+                    <input required value={plaats} onChange={e => setPlaats(e.target.value)} />
                   </div>
                 </div>
               </fieldset>
@@ -173,8 +173,8 @@ export default function CommandAanvraagPage() {
                     <input required value={aanvragerNaam} onChange={e => setAanvragerNaam(e.target.value)} />
                   </div>
                   <div className="ca-field">
-                    <label>Functie</label>
-                    <input value={functie} onChange={e => setFunctie(e.target.value)} />
+                    <label>Functie *</label>
+                    <input required value={functie} onChange={e => setFunctie(e.target.value)} />
                   </div>
                 </div>
                 <div className="ca-row" style={{ marginBottom: 0 }}>
@@ -183,8 +183,8 @@ export default function CommandAanvraagPage() {
                     <input required type="email" value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
                   <div className="ca-field">
-                    <label>Telefoon</label>
-                    <input value={telefoon} onChange={e => setTelefoon(e.target.value)} />
+                    <label>Telefoon *</label>
+                    <input required value={telefoon} onChange={e => setTelefoon(e.target.value)} />
                   </div>
                 </div>
               </fieldset>

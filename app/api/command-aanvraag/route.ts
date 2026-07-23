@@ -25,7 +25,12 @@ export async function POST(req: Request) {
     aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
   } = body
 
-  if (!bedrijfsnaam?.trim() || !aanvragerNaam?.trim() || !email?.trim() || !isValidEmail(email)) {
+  if (
+    !bedrijfsnaam?.trim() || !kvkNummer?.trim() || !btwNummer?.trim() ||
+    !factuuradres?.trim() || !postcode?.trim() || !plaats?.trim() ||
+    !aanvragerNaam?.trim() || !functie?.trim() || !telefoon?.trim() ||
+    !email?.trim() || !isValidEmail(email)
+  ) {
     return NextResponse.json({ error: 'Vul de verplichte velden in' }, { status: 400 })
   }
   const seats = Number(aantalSeats)
