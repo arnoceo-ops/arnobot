@@ -191,7 +191,7 @@ export default function PrijzenPreviewClient() {
           <li>Wekelijkse Team Spotlight</li>
         </ul>
 
-        <p className="prijzen-team-privacy">Eerlijke coaching vraagt om privacy. Jij ziet nooit de gesprekken zelf, alleen wat ertoe doet.</p>
+        <p className="prijzen-team-privacy">Coaching gebiedt privacy. Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
         <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team" className="prijzen-team-cta">Vraag een demo aan</a>
       </div>
