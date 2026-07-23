@@ -71,13 +71,13 @@ export default function CommandAanvraagPage() {
         .ca-wrap { max-width: 640px; margin: 0 auto; padding: 140px 24px 80px; }
         .ca-label { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; }
         .ca-title { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 600; text-transform: uppercase; line-height: 1.1; color: #f8fafc; margin-bottom: 16px; }
-        .ca-sub { font-size: 16px; line-height: 1.65; color: #94a3b8; margin-bottom: 40px; }
+        .ca-sub { font-size: 18px; line-height: 1.625; color: #94a3b8; margin-bottom: 40px; }
 
         .ca-fieldset { border: none; margin-bottom: 32px; }
-        .ca-fieldset legend { font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; padding: 0; }
+        .ca-fieldset legend { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; padding: 0; }
         .ca-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
         .ca-field { display: flex; flex-direction: column; gap: 6px; }
-        .ca-field label { font-size: 13px; color: #94a3b8; }
+        .ca-field label { font-size: 14px; color: #94a3b8; }
         .ca-field input {
           background: #1e293b; border: 1px solid #374151; border-radius: 6px; padding: 10px 14px;
           color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; outline: none; transition: border-color 0.15s;
