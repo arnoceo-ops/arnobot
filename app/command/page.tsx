@@ -63,14 +63,18 @@ export default function CommandAanvraagPage() {
         }
         .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #f1f5f9; text-decoration: none; }
         .nav-logo span { color: #f59e0b; }
+        .nav-spacer { flex: 1; }
+        .nav-auth { display: flex; gap: 32px; align-items: center; }
+        .nav-login { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+        .nav-login:hover { color: #f1f5f9; }
 
         .ca-wrap { max-width: 640px; margin: 0 auto; padding: 140px 24px 80px; }
         .ca-label { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; }
-        .ca-title { font-family: 'Oswald', sans-serif; font-size: clamp(30px, 4vw, 42px); font-weight: 600; text-transform: uppercase; line-height: 1.15; color: #f8fafc; margin-bottom: 16px; }
+        .ca-title { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 600; text-transform: uppercase; line-height: 1.1; color: #f8fafc; margin-bottom: 16px; }
         .ca-sub { font-size: 16px; line-height: 1.65; color: #94a3b8; margin-bottom: 40px; }
 
         .ca-fieldset { border: none; margin-bottom: 32px; }
-        .ca-fieldset legend { font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; padding: 0; }
+        .ca-fieldset legend { font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; padding: 0; }
         .ca-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
         .ca-field { display: flex; flex-direction: column; gap: 6px; }
         .ca-field label { font-size: 13px; color: #94a3b8; }
@@ -106,6 +110,13 @@ export default function CommandAanvraagPage() {
 
       <nav className="site-nav">
         <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
+        <div className="nav-spacer" />
+        <div className="nav-auth">
+          {isSignedIn
+            ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
+            : <Link href="/sign-in" className="nav-login">LOGIN</Link>
+          }
+        </div>
       </nav>
 
       <div className="ca-wrap">
@@ -211,7 +222,7 @@ export default function CommandAanvraagPage() {
                 </div>
               </fieldset>
 
-              {status === 'error' && <p style={{ color: '#ff6b6b', fontSize: 14, marginBottom: 16 }}>{errorMsg}</p>}
+              {status === 'error' && <p style={{ color: '#cc2200', fontSize: 14, marginBottom: 16 }}>{errorMsg}</p>}
 
               <button type="submit" className="ca-submit" disabled={status === 'submitting'}>
                 {status === 'submitting' ? 'Bezig...' : 'Aanvraag versturen'}
