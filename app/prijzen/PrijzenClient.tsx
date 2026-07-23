@@ -37,7 +37,7 @@ export default function PrijzenClient() {
           font-size: 15px; color: #94a3b8; line-height: 1.5; min-height: 46px;
         }
         .prijzen-tier-scarcity {
-          font-size: 15px; font-weight: 700; color: rgb(248, 250, 252);
+          font-size: 15px; font-weight: 400; color: #f59e0b;
         }
         .prijzen-tier-naam {
           font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
@@ -75,12 +75,11 @@ export default function PrijzenClient() {
           border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
           display: flex; flex-direction: column; gap: 16px;
         }
-        .prijzen-command-kop {
-          font-family: 'Oswald', sans-serif; font-size: clamp(24px, 3vw, 30px); font-weight: 600;
-          text-transform: uppercase; color: #f8fafc; line-height: 1.15;
+        .prijzen-command-naam {
+          font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
         }
-        .prijzen-command-subkop {
-          font-size: 15px; color: #94a3b8;
+        .prijzen-command-kop {
+          font-size: 15px; color: #94a3b8; line-height: 1.5;
         }
         .prijzen-command-bullets {
           list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; margin: 4px 0;
@@ -115,6 +114,7 @@ export default function PrijzenClient() {
         <div className="prijzen-tier-card">
           <span className="prijzen-tier-naam">Premium</span>
           <p className="prijzen-tier-kop">Coaching op elk moment, in je eigen tempo.</p>
+          <p className="prijzen-tier-scarcity" style={{ visibility: 'hidden' }} aria-hidden="true">Beperkt aantal plekken.</p>
 
           <div className="prijzen-toggle">
             <button
@@ -184,10 +184,10 @@ export default function PrijzenClient() {
 
       {/* COMMAND */}
       <div className="prijzen-command-groep">
-        <h2 className="prijzen-groep-kop">Command</h2>
+        <h2 className="prijzen-groep-kop">Team</h2>
         <div className="prijzen-command-card">
-          <h3 className="prijzen-command-kop">Elke 1:1 al voorbereid voordat je begint.</h3>
-          <p className="prijzen-command-subkop">Voor sales managers die een dream team willen bouwen.</p>
+          <span className="prijzen-command-naam">Command</span>
+          <p className="prijzen-command-kop">Elke 1:1 al voorbereid voordat je begint.</p>
 
           <ul className="prijzen-command-bullets">
             <li>Teamoverzicht: individuele scores</li>
@@ -198,7 +198,7 @@ export default function PrijzenClient() {
             <li>Wekelijkse Team Spotlight</li>
           </ul>
 
-          <p className="prijzen-command-privacy">Coaching gebiedt privacy. Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
+          <p className="prijzen-command-privacy">Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
           <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Command" className="prijzen-command-cta">Vraag een demo aan</a>
         </div>
