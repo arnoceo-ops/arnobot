@@ -79,7 +79,7 @@ export default async function PrijzenPage() {
       <section className="prijzen-hero">
         <p className="prijzen-label">Prijzen</p>
         <h1 className="prijzen-title">Transparant. Geen addertjes.</h1>
-        <p className="prijzen-sub">30 dagen gratis proberen, daarna kies je het niveau dat bij je past.</p>
+        <p className="prijzen-sub">30 dagen gratis, daarna maak je een definitieve keuze.</p>
       </section>
 
       <section className="prijzen-section">
