@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
-export default function PrijzenClient() {
+export default function PrijzenClient({ demoLink }: { demoLink: string | null }) {
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
 
   return (
@@ -200,7 +200,10 @@ export default function PrijzenClient() {
 
           <p className="prijzen-command-privacy">Managers zien nooit de inhoud van de gesprekken, alleen wat ertoe doet.</p>
 
-          <Link href="/command" className="prijzen-command-cta">Vraag een demo aan</Link>
+          {demoLink
+            ? <a href={demoLink} target="_blank" rel="noopener noreferrer" className="prijzen-command-cta">Vraag een demo aan</a>
+            : <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Command" className="prijzen-command-cta">Vraag een demo aan</a>
+          }
         </div>
       </div>
     </>
