@@ -180,7 +180,7 @@ export default function PrijzenPreviewClient() {
       {/* TEAM */}
       <div className="prijzen-team-section">
         <span className="prijzen-team-naam">Team</span>
-        <h2 className="prijzen-team-kop">Coaching wordt een makkie.</h2>
+        <h2 className="prijzen-team-kop">Elke 1:1 al voorbereid voordat je begint.</h2>
         <p className="prijzen-team-subkop">Voor sales managers die een dream team willen bouwen.</p>
 
         <ul className="prijzen-team-bullets">
