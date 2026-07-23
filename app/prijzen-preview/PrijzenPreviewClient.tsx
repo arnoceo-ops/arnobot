@@ -11,14 +11,13 @@ export default function PrijzenPreviewClient() {
   return (
     <>
       <style>{`
-        .prijzen-toggle-wrap { display: flex; justify-content: center; margin-bottom: 40px; }
         .prijzen-toggle {
-          display: inline-flex; background: #1e293b; border: 1px solid #374151;
-          border-radius: 999px; padding: 4px;
+          display: inline-flex; background: #111827; border: 1px solid #374151;
+          border-radius: 999px; padding: 3px; align-self: flex-start;
         }
         .prijzen-toggle button {
-          font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
-          padding: 8px 24px; border-radius: 999px; border: none; cursor: pointer;
+          font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1.5px;
+          padding: 6px 16px; border-radius: 999px; border: none; cursor: pointer;
           background: transparent; color: #9ca3af; transition: all 0.2s;
         }
         .prijzen-toggle button.actief { background: #f59e0b; color: #111827; }
@@ -54,9 +53,9 @@ export default function PrijzenPreviewClient() {
         }
 
         .prijzen-tier-cta {
-          margin-top: auto; display: inline-block; text-decoration: none; text-align: center;
+          margin-top: auto; align-self: flex-start; display: inline-block; text-decoration: none; text-align: center;
           background: #f59e0b; color: #1e293b; font-family: 'Bebas Neue', sans-serif;
-          font-size: 18px; letter-spacing: 2px; padding: 12px 32px; border-radius: 999px;
+          font-size: 18px; letter-spacing: 2px; padding: 10px 20px; border-radius: 999px;
           transition: background 0.2s;
         }
         .prijzen-tier-cta:hover { background: #d97706; }
@@ -104,28 +103,26 @@ export default function PrijzenPreviewClient() {
         }
       `}</style>
 
-      <div className="prijzen-toggle-wrap">
-        <div className="prijzen-toggle">
-          <button
-            className={cyclus === 'maandelijks' ? 'actief' : ''}
-            onClick={() => setCyclus('maandelijks')}
-          >
-            MAANDELIJKS
-          </button>
-          <button
-            className={cyclus === 'jaarlijks' ? 'actief' : ''}
-            onClick={() => setCyclus('jaarlijks')}
-          >
-            JAARLIJKS
-          </button>
-        </div>
-      </div>
-
       <div className="prijzen-cols">
         {/* PREMIUM */}
         <div className="prijzen-tier-card">
           <span className="prijzen-tier-naam">Premium</span>
           <p className="prijzen-tier-kop">Coaching op elk moment, in je eigen tempo.</p>
+
+          <div className="prijzen-toggle">
+            <button
+              className={cyclus === 'maandelijks' ? 'actief' : ''}
+              onClick={() => setCyclus('maandelijks')}
+            >
+              MAANDELIJKS
+            </button>
+            <button
+              className={cyclus === 'jaarlijks' ? 'actief' : ''}
+              onClick={() => setCyclus('jaarlijks')}
+            >
+              JAARLIJKS
+            </button>
+          </div>
 
           <div>
             <div className="prijzen-tier-amount">
@@ -151,7 +148,7 @@ export default function PrijzenPreviewClient() {
         {/* ELITE */}
         <div className="prijzen-tier-card">
           <span className="prijzen-tier-naam">Elite</span>
-          <p className="prijzen-tier-kop">Coaching, met de mens erachter, gegarandeerd elke maand.</p>
+          <p className="prijzen-tier-kop">Man & Machine. Arno zelf wordt ingeschakeld.</p>
 
           <div>
             <div className="prijzen-tier-amount">
@@ -159,7 +156,6 @@ export default function PrijzenPreviewClient() {
               <span className="prijzen-tier-num">397</span>
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
-            <span className="prijzen-tier-subnote">Alleen maandelijks, vanwege het beperkt aantal plekken.</span>
           </div>
 
           <span className="prijzen-tier-plus">Alles van Premium, plus:</span>
@@ -168,7 +164,7 @@ export default function PrijzenPreviewClient() {
             <li>Toegang tot de Elite Member Community</li>
             <li>Rechtstreeks contact met Arno via Telegram</li>
           </ul>
-          <span className="prijzen-tier-subnote">Zeer beperkt aantal plekken.</span>
+          <span className="prijzen-tier-subnote">Beperkt aantal plekken.</span>
 
           <Link href="/sign-up" className="prijzen-tier-cta">Start nu</Link>
         </div>
