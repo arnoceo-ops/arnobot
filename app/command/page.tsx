@@ -130,7 +130,7 @@ export default function CommandAanvraagPage() {
           </div>
         ) : (
           <>
-            <p className="ca-sub">Vul je gegevens in, dan sturen we je automatisch een offerte die je digitaal kunt ondertekenen. Geen automatische betaling, dit is een aanvraag, geen bestelling.</p>
+            <p className="ca-sub">Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.</p>
 
             <form onSubmit={submit}>
               <fieldset className="ca-fieldset">
