@@ -31,6 +31,9 @@ export default function PrijzenPreviewClient() {
         .prijzen-tier-kop {
           font-size: 15px; color: #94a3b8; line-height: 1.5; min-height: 46px;
         }
+        .prijzen-tier-scarcity {
+          font-size: 15px; font-weight: 700; color: rgb(248, 250, 252);
+        }
         .prijzen-tier-naam {
           font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
         }
@@ -148,6 +151,7 @@ export default function PrijzenPreviewClient() {
         <div className="prijzen-tier-card">
           <span className="prijzen-tier-naam">Elite</span>
           <p className="prijzen-tier-kop">Man & Machine. Arno zelf wordt ingeschakeld.</p>
+          <p className="prijzen-tier-scarcity">Beperkt aantal plekken.</p>
 
           <div className="prijzen-toggle" style={{ visibility: 'hidden' }} aria-hidden="true">
             <button>MAANDELIJKS</button>
@@ -168,7 +172,6 @@ export default function PrijzenPreviewClient() {
             <li>Toegang tot de Elite Member Community</li>
             <li>Rechtstreeks contact met Arno via Telegram</li>
           </ul>
-          <span className="prijzen-tier-subnote">Beperkt aantal plekken.</span>
 
           <Link href="/sign-up" className="prijzen-tier-cta">Start nu</Link>
         </div>
