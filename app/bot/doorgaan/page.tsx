@@ -127,7 +127,7 @@ export default function DoorgaanPage() {
         {status === 'already_requested' && (
           <>
             <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
-              <p style={body}>Je hebt gekozen voor {planLabel ?? 'een abonnement'}. Arno stuurt je een factuur. Je toegang blijft actief totdat de factuur is voldaan.</p>
+              <p style={body}>Je hebt gekozen voor {planLabel ?? 'een abonnement'}. ArnoBot stuurt je een factuur. Je toegang blijft actief totdat de factuur is voldaan.</p>
               <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
             </div>
             <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
@@ -140,7 +140,7 @@ export default function DoorgaanPage() {
           <>
             <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #44cc88', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
               <p style={{ ...body, color: '#44cc88', marginBottom: 8 }}>✓ Bevestiging ontvangen, {planLabel}.</p>
-              <p style={body}>Arno stuurt je een factuur op het e-mailadres van je account. Je toegang blijft actief totdat de factuur is voldaan.</p>
+              <p style={body}>ArnoBot stuurt je een factuur op het e-mailadres van je account. Je toegang blijft actief totdat de factuur is voldaan.</p>
               <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
             </div>
             <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
