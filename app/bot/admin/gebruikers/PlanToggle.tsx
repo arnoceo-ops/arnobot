@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 
-const PLANS = ['basis', 'premium', 'team'] as const
+const PLANS = ['basis', 'premium', 'elite', 'team'] as const
 type Plan = typeof PLANS[number]
 
 const COLORS: Record<Plan, { bg: string; color: string }> = {
   basis: { bg: '#374151', color: '#9ca3af' },
   premium: { bg: '#f59e0b', color: '#111827' },
+  elite: { bg: '#a855f7', color: '#111827' },
   team: { bg: '#22c55e', color: '#111827' },
 }
 
