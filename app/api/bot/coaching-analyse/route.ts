@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -123,7 +124,15 @@ export async function POST(req: NextRequest) {
     )
     .join('\n\n')
 
-  const systemPrompt = `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
+  const systemPrompt = `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}
+
+${RULE_NO_INVENTED_DETAILS}`
 
   const userContent = isDelta
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Benoem concreet wat er nieuw is, wat er doorgebroken is, en wat de volgende stap is. Max 3 alinea's.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`

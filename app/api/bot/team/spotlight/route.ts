@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -145,7 +146,15 @@ Maximaal 250 woorden totaal. Schrijf in eerste persoon, alsof je de manager pers
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).
-Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".`,
+Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}
+
+${RULE_NO_INVENTED_DETAILS}`,
     messages: [{
       role: 'user',
       content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van de gesprekssamenvatingen en scoreontwikkeling van zijn teamleden.

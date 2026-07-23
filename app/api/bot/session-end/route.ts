@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks, getVoyageEmbedding } from '@/lib/rag'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,7 +65,13 @@ export async function POST(req: NextRequest) {
   const callSummaryModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 300,
-    system: 'Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. Direct, ongefilterd, geen bullshit. Geen corporate taal. Geen accenten op woorden voor nadruk. Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.',
+    system: `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. Direct, ongefilterd, geen bullshit. Geen corporate taal. Geen accenten op woorden voor nadruk. Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}`,
     messages: [{
       role: 'user',
       content: `Schrijf een feitelijke terugblik op dit gesprek in 2 tot 3 volledige zinnen. Bij één centraal thema volstaan 2 zinnen. Elke zin moet een volledig afgeronde gedachte zijn. Nooit halverwege afbreken. Beschrijf alleen wat er besproken is: het onderwerp en de richting van het gesprek. Geen analyse, geen oordelen, geen "ik heb uitgewerkt" of "ik heb geconcludeerd". Alleen wat er aan de orde was. Spreek de gebruiker direct aan met "je" of "jij", nooit als "de gebruiker". Je schrijft als Arno, direct tegen de persoon met wie je gesproken hebt.\n\n${conversationText}`
@@ -73,7 +80,15 @@ export async function POST(req: NextRequest) {
   const callFeitenModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 200,
-    system: 'Extraheer alleen concrete, feitelijke informatie uit dit gesprek. Denk aan: producten, diensten, bedrijfsnaam, markt, specifieke situaties, namen, cijfers, uitdagingen, doelen. Geen interpretaties, geen advies. Alleen feiten die de gebruiker heeft gedeeld. Maximaal 8 korte bullets, elk op een nieuwe regel als losse zin.',
+    system: `Extraheer alleen concrete, feitelijke informatie uit dit gesprek. Denk aan: producten, diensten, bedrijfsnaam, markt, specifieke situaties, namen, cijfers, uitdagingen, doelen. Geen interpretaties, geen advies. Alleen feiten die de gebruiker heeft gedeeld. Maximaal 8 korte bullets, elk op een nieuwe regel als losse zin.
+
+${RULE_NO_DASH}
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}`,
     messages: [{
       role: 'user',
       content: `Extraheer de feiten uit dit gesprek:\n\n${conversationText}`
@@ -82,7 +97,15 @@ export async function POST(req: NextRequest) {
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 80,
-    system: 'Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin, beginnen met een werkwoord. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.',
+    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin, beginnen met een werkwoord. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}
+
+${RULE_NO_INVENTED_DETAILS}`,
     messages: [{
       role: 'user',
       content: `Wat is de concrete uitdaging of actie voor de gebruiker na dit gesprek?\n\n${conversationText}`

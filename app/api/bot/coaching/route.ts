@@ -8,6 +8,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -304,7 +305,16 @@ Kies de drie meest urgente ontwikkelpunten op basis van de laagste scores en ste
 
 De richting-waarden mogen alleen zijn: "stijgend", "stabiel" of "dalend".
 De pijlar-waarden mogen alleen zijn: "mindset", "systeem" of "actie".
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`,
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
+
+${RULE_ENGLISH_TERMS}
+
+${RULE_NO_CRUDE_LANGUAGE}
+
+${RULE_NEVER_BREAK_CHARACTER}
+
+${RULE_NO_INVENTED_DETAILS}
+${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`,
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
