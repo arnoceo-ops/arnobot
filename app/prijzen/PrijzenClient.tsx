@@ -34,7 +34,7 @@ export default function PrijzenClient() {
           box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .prijzen-tier-kop {
-          font-size: 15px; color: #94a3b8; line-height: 1.5; min-height: 46px;
+          font-size: 15px; color: #f8fafc; line-height: 1.5; min-height: 46px;
         }
         .prijzen-tier-scarcity {
           font-size: 15px; font-weight: 400; color: #f59e0b;
@@ -79,7 +79,7 @@ export default function PrijzenClient() {
           font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b;
         }
         .prijzen-command-kop {
-          font-size: 15px; color: #94a3b8; line-height: 1.5;
+          font-size: 15px; color: #f8fafc; line-height: 1.5;
         }
         .prijzen-command-bullets {
           list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; margin: 4px 0;
