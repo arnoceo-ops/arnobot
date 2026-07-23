@@ -174,8 +174,8 @@ export default function PrijzenClient() {
           <span className="prijzen-tier-plus">Alles van Premium, plus:</span>
           <ul className="prijzen-tier-bullets">
             <li>Iedere maand een persoonlijk gesprek met Arno</li>
-            <li>Toegang tot de Elite Member Community</li>
             <li>Rechtstreeks contact met Arno via Telegram</li>
+            <li>Toegang tot de Elite Member Community</li>
           </ul>
 
           <Link href="/sign-up" className="prijzen-tier-cta">Start nu</Link>
