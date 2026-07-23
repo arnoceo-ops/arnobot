@@ -42,12 +42,20 @@ export default function BotNav({ active }: Props) {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const [bouwer, setBouwer] = useState(false)
+  const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
 
   useEffect(() => {
     if (isLoaded) setBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
   }, [isLoaded, user])
 
-  const isBouwer = bouwer
+  useEffect(() => {
+    fetch('/api/bot/plan')
+      .then(r => r.json())
+      .then(d => setHeeftTeamPlan(d.plan === 'team'))
+      .catch(() => {})
+  }, [])
+
+  const isBouwer = bouwer || heeftTeamPlan
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return

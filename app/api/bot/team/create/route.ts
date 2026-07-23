@@ -15,7 +15,14 @@ export async function POST(req: Request) {
 
   const user = await currentUser()
   const email = user?.primaryEmailAddress?.emailAddress ?? ''
-  if (email !== BOUWER_EMAIL) return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
+  if (email !== BOUWER_EMAIL) {
+    const { data: approved } = await supabase
+      .from('approved_users')
+      .select('plan')
+      .eq('user_id', userId)
+      .single()
+    if (approved?.plan !== 'team') return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
+  }
 
   const { name } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Teamnaam is verplicht' }, { status: 400 })

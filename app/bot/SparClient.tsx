@@ -257,9 +257,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const { sessionId: clerkSessionId } = useAuth()
   const { showAnalysesHint, convsSinceLastAnalysis, dismissAnalysesHint, refreshHints } = useProgressHints()
   const [isBouwer, setIsBouwer] = useState(false)
+  const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
   useEffect(() => {
     if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
   }, [isLoaded, user])
+  useEffect(() => {
+    fetch('/api/bot/plan')
+      .then(r => r.json())
+      .then(d => setHeeftTeamPlan(d.plan === 'team'))
+      .catch(() => {})
+  }, [])
   useEffect(() => {
     if (showSluiten && showAnalysesHint) {
       sessionStorage.setItem('arnobot_analyses_nudge_gezien', '1')
@@ -1531,7 +1538,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 : <span className="active">ARNOBOT</span>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
-              {isBouwer && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
+              {(isBouwer || heeftTeamPlan) && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
               <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
@@ -1547,7 +1554,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               : <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>}
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
-            {isBouwer && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
+            {(isBouwer || heeftTeamPlan) && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
             <button onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
             <button onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
           </div>
