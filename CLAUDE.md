@@ -354,11 +354,6 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 | `app/api/bot/search-linkedin-profile/route.ts` | `claude-sonnet-4-6` (+ web_search tool) | Losse opzoektaak met expliciete "niet gevonden"-afhandeling. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Ontbrak eerder in deze tabel, nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
-| `app/api/canvas/alignment/route.ts` (samenvatting) | `claude-sonnet-4-6` | Los Canvas-onderdeel, kort prompt. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). Had al een retry-bij-leeg-antwoord maar miste de laatste stap: bij aanhoudend leeg antwoord werd de lege summary alsnog opgeslagen in `canvas_alignment`. Nu ook een tekstuele fallback. | 2026-07 |
-| `app/api/canvas/alignment/route.ts` (vraaganalyse) | `claude-sonnet-4-6` | JSON-fallback bij parse-fout aanwezig, laag risico. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
-| `app/api/canvas/alignment-chat/route.ts` | `claude-sonnet-4-6` | Fallback-tekst (`'Geen antwoord.'`) aanwezig. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
-| `app/api/arnobot/route.ts` (feedback-modus) | `claude-sonnet-4-6` | Kort prompt. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). Heeft inmiddels retry-bij-leeg-antwoord plus een tekstuele fallback. | 2026-07 |
-| `app/api/arnobot/route.ts` (score-modus) | `claude-sonnet-4-6` | JSON.parse in try/catch vangt een leeg antwoord impliciet op. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur aanwezig. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij een fout, nog niet expliciet bij een leeg (maar niet-foutend) antwoord. Ontbrak eerder in deze tabel. | 2026-07 |
@@ -383,7 +378,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 **Gedaan (2026-07-audit):** `app/api/cron/model-check/route.ts` bevatte een eigen, hardgecodeerde `INVENTORY`-kopie die los stond van deze tabel en er inmiddels van afweek (bijv. `bot/uitdaging` stond daar nog als `claude-sonnet-5` i.p.v. `claude-fable-5`). Gelijkgetrokken met deze tabel.
 
-**Gedaan (2026-07-audit):** `arnobot/route.ts` (feedback-modus) en `canvas/alignment/route.ts` (summaryMsg) hadden geen expliciete leeg-antwoord-bescherming. Beide voorzien van retry-once + fallback, net als de eerdere fixronde.
+**Gedaan (2026-07-audit):** `arnobot/route.ts` (feedback-modus) en `canvas/alignment/route.ts` (summaryMsg) hadden geen expliciete leeg-antwoord-bescherming. Beide voorzien van retry-once + fallback, net als de eerdere fixronde. **Achterhaald (2026-07-23):** beide routes zijn inmiddels verwijderd, samen met de rest van RDS Canvas (nooit functioneel, zie project-geheugen). Deze notitie blijft staan als historisch record, niet als actuele status.
 
 **Gedaan (2026-07-audit, onafhankelijke verificatieronde):** een tweede, onafhankelijke sweep-agent zocht niet alleen op `.messages.create(` maar ook op `.messages.stream(` en op offline scripts, en vond wat de eerste fixronde had gemist:
 - **Kritiek:** `app/api/chat/route.ts` (hoofdchat) gebruikt `.messages.stream(`, niet `.messages.create(`, en werd daardoor door de eerste grep-gebaseerde audit volledig gemist. Dit is de route met het hoogste verkeer en had geen retry/fallback. Alsnog voorzien van dezelfde bescherming.
