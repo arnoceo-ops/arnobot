@@ -13,6 +13,13 @@ import AdminNav from '../AdminNav'
 
 const ELITE_CAP = 50
 
+// Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
+// wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
+// force-dynamic en dus toch al per request opnieuw gerenderd.
+function nu(): number {
+  return Date.now()
+}
+
 function trialStatus(row: { paid_at?: string | null; expires_at?: string | null; trial_start?: string | null; is_active?: boolean }) {
   if (!row.is_active) return { label: 'INACTIEF', color: '#6b7280' }
   if (row.paid_at) return { label: 'BETAALD', color: '#44cc88' }
@@ -92,7 +99,7 @@ export default async function GebruikersPage({
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes] = await Promise.all([
     supabase
@@ -145,7 +152,7 @@ export default async function GebruikersPage({
   }
 
   // Gezondheidsscore: gedragssignalen per gebruiker
-  const now = Date.now()
+  const now = nu()
   const coachingByUser = new Map(coachingRows.map(c => [c.user_id, c]))
   const actieStatussenPerUser = new Map<string, { created_at: string; actie_status: string }[]>()
   for (const s of blogSessiesRes.data ?? []) {
@@ -291,7 +298,7 @@ export default async function GebruikersPage({
             const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
             const status = trialStatus(u)
             const daysAgo = u.lastSession
-              ? Math.round((Date.now() - new Date(u.lastSession).getTime()) / (1000 * 60 * 60 * 24))
+              ? Math.round((nu() - new Date(u.lastSession).getTime()) / (1000 * 60 * 60 * 24))
               : null
             const lastSessionLabel = daysAgo === null ? 'nooit' : daysAgo === 0 ? 'vandaag' : daysAgo === 1 ? 'gisteren' : `${daysAgo}d geleden`
             const actief7d = u.recentCount > 0

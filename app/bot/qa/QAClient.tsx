@@ -173,18 +173,17 @@ const FAQ_GROUPS = [
 
 export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
   const [openKey, setOpenKey] = useState<string | null>(null)
-  const [isTeamMember, setIsTeamMember] = useState(false)
+  const [isTeamMember, setIsTeamMember] = useState(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
+  )
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
-      setIsTeamMember(true)
-      return
-    }
+    if (isTeamMember) return
     fetch('/api/bot/team/status')
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
       .catch(() => {})
-  }, [])
+  }, [isTeamMember])
 
   return (
     <>
