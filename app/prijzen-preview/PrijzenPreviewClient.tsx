@@ -180,12 +180,12 @@ export default function PrijzenPreviewClient() {
       <div className="prijzen-team-section">
         <span className="prijzen-team-naam">Team</span>
         <h2 className="prijzen-team-kop">Coaching wordt een makkie.</h2>
-        <p className="prijzen-team-subkop">Voor sales managers die hun team willen zien groeien.</p>
+        <p className="prijzen-team-subkop">Voor sales managers die een dream team willen bouwen.</p>
 
         <ul className="prijzen-team-bullets">
           <li>Teamoverzicht: individuele scores</li>
-          <li>Vroeg signaal bij stagnatie</li>
           <li>Teamvoortgang als trend over tijd</li>
+          <li>Vroeg signaal bij stagnatie</li>
           <li>AI-voorbereiding voor elke 1:1</li>
           <li>Volledig 1:1 archief met eigen notities</li>
           <li>Wekelijkse Team Spotlight</li>
