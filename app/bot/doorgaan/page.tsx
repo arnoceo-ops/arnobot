@@ -30,9 +30,14 @@ export default function DoorgaanPage() {
 
   if (!isLoaded || status === 'loading') return null
 
-  const label: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8, display: 'block' }
-  const body: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 24 }
-  const btn: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer' }
+  const label: React.CSSProperties = { fontSize: 14, fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 16, display: 'block' }
+  const body: React.CSSProperties = { fontSize: 16, lineHeight: 1.65, color: '#94a3b8', marginBottom: 24 }
+  const btn: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', borderRadius: 6, background: '#f59e0b',
+    padding: '14px 32px', fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 600,
+    letterSpacing: '0.1em', color: '#111827', textTransform: 'uppercase', border: 'none', cursor: 'pointer',
+    boxShadow: '0 12px 24px rgba(245,158,11,0.25)',
+  }
 
   async function kies(plan: PlanKeuze) {
     setSubmittingPlan(plan)
@@ -59,38 +64,41 @@ export default function DoorgaanPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
-        .primary-btn:hover { background: #d97706 !important; }
+        body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
+        .primary-btn { transition: transform 0.2s; }
+        .primary-btn:hover { transform: scale(1.03); }
         .doorgaan-toggle {
           display: inline-flex; background: #111827; border: 1px solid #374151;
           border-radius: 999px; padding: 3px; margin-bottom: 20px;
         }
         .doorgaan-toggle button {
-          font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px;
-          padding: 6px 18px; border-radius: 999px; border: none; cursor: pointer;
-          background: transparent; color: #9ca3af; transition: all 0.2s;
+          font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
+          text-transform: uppercase; padding: 6px 16px; border-radius: 999px; border: none; cursor: pointer;
+          background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .doorgaan-toggle button.actief { background: #f59e0b; color: #111827; }
         .plan-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
         .plan-card {
-          background: #1f2937; border: 1px solid #374151; border-radius: 8px;
+          background: #1e293b; border: 1px solid #374151; border-radius: 12px;
           padding: 28px; display: flex; flex-direction: column; gap: 12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .plan-naam { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 4px; color: #f59e0b; }
-        .plan-prijs { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: #f1f5f9; line-height: 1; }
-        .plan-periode { font-family: 'Space Mono', monospace; font-size: 13px; color: #6b7280; }
+        .plan-naam { font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; }
+        .plan-prijs { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 36px; color: #f8fafc; line-height: 1; }
+        .plan-periode { font-size: 13px; color: #6b7280; }
         .plan-bullets { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
-        .plan-bullets li { font-family: 'Space Mono', monospace; font-size: 14px; color: #9ca3af; padding-left: 16px; position: relative; }
+        .plan-bullets li { font-size: 14px; color: #94a3b8; padding-left: 16px; position: relative; }
         .plan-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
         .plan-btn {
-          margin-top: auto; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
-          padding: 10px 24px; border-radius: 999px; background: #f59e0b; color: #111827;
-          border: none; cursor: pointer; align-self: flex-start; transition: background 0.2s;
+          margin-top: auto; align-self: flex-start; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
+          letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 22px; border-radius: 6px;
+          background: #f59e0b; color: #111827; border: none; cursor: pointer;
+          box-shadow: 0 12px 24px rgba(245,158,11,0.25); transition: transform 0.2s;
         }
-        .plan-btn:hover { background: #d97706; }
-        .plan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .plan-btn:hover { transform: scale(1.05); }
+        .plan-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         @media (max-width: 640px) { .plan-cols { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -98,38 +106,38 @@ export default function DoorgaanPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
-        <p style={label}>ABONNEMENT</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 40 }}>
-          DOORGAAN MET ARNOBOT.
+        <p style={label}>Abonnement</p>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 40 }}>
+          Doorgaan met ArnoBot.
         </h1>
 
         {status === 'already_paid' && (
-          <div style={{ background: '#1f2937', borderLeft: '3px solid #44cc88', padding: '20px 24px', marginBottom: 32 }}>
+          <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #44cc88', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
             <p style={{ ...body, marginBottom: 0, color: '#44cc88' }}>Je abonnement is actief. Betaling is ontvangen.</p>
           </div>
         )}
 
         {status === 'already_requested' && (
           <>
-            <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 32 }}>
+            <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
               <p style={body}>Je hebt gekozen voor {planLabel ?? 'een abonnement'}. Arno stuurt je een factuur. Je toegang blijft actief totdat de factuur is voldaan.</p>
               <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
             </div>
-            <Link href="/bot" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }} className="primary-btn">
-              TERUG NAAR ARNOBOT
+            <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
+              Terug naar ArnoBot
             </Link>
           </>
         )}
 
         {status === 'done' && (
           <>
-            <div style={{ background: '#1f2937', borderLeft: '3px solid #44cc88', padding: '20px 24px', marginBottom: 32 }}>
+            <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #44cc88', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
               <p style={{ ...body, color: '#44cc88', marginBottom: 8 }}>✓ Bevestiging ontvangen, {planLabel}.</p>
               <p style={body}>Arno stuurt je een factuur op het e-mailadres van je account. Je toegang blijft actief totdat de factuur is voldaan.</p>
               <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
             </div>
-            <Link href="/bot" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }} className="primary-btn">
-              TERUG NAAR ARNOBOT
+            <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
+              Terug naar ArnoBot
             </Link>
           </>
         )}
@@ -141,13 +149,13 @@ export default function DoorgaanPage() {
             </p>
 
             <div className="doorgaan-toggle">
-              <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-              <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+              <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>Maandelijks</button>
+              <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>Jaarlijks</button>
             </div>
 
             <div className="plan-cols">
               <div className="plan-card">
-                <span className="plan-naam">PREMIUM</span>
+                <span className="plan-naam">Premium</span>
                 <div>
                   <span className="plan-prijs">€{cyclus === 'maandelijks' ? '97' : '777'}</span>
                   <span className="plan-periode"> {cyclus === 'maandelijks' ? '/ maand' : '/ jaar (4 mnd gratis)'}</span>
@@ -159,12 +167,12 @@ export default function DoorgaanPage() {
                   <li>Gesproken antwoorden</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('premium')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'premium' ? 'BEZIG...' : 'KIES PREMIUM'}
+                  {submittingPlan === 'premium' ? 'Bezig...' : 'Kies Premium'}
                 </button>
               </div>
 
               <div className="plan-card">
-                <span className="plan-naam">ELITE</span>
+                <span className="plan-naam">Elite</span>
                 <div>
                   <span className="plan-prijs">€397</span>
                   <span className="plan-periode"> / maand</span>
@@ -176,7 +184,7 @@ export default function DoorgaanPage() {
                   <li>Toegang tot de Elite Member Community</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('elite')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'elite' ? 'BEZIG...' : 'KIES ELITE'}
+                  {submittingPlan === 'elite' ? 'Bezig...' : 'Kies Elite'}
                 </button>
               </div>
             </div>
