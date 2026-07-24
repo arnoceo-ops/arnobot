@@ -139,7 +139,7 @@ export default function CommandAanvraagPage() {
           <>
             <p className="ca-sub">
               Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.
-              {isLoaded && !isSignedIn && ' Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.'}
+              {isLoaded && !isSignedIn && <><br />Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.</>}
             </p>
 
             <form onSubmit={submit}>
