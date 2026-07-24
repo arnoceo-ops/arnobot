@@ -11,7 +11,9 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 De nieuwe `/prijzen`-pagina staat live, gebouwd in de stijl van de homepage (Figtree/Oswald), met Premium en Elite naast elkaar (maandelijks/jaarlijks-toggle) en Command als aparte, bredere kaart eronder zonder zichtbare prijs. `/bot/doorgaan` (trial-einde) toont nu een echte Premium/Elite-keuze in plaats van één generieke "ja ik ga door"-knop. `/command` is een nieuw, publiek aanvraagformulier voor Command (factuurgegevens, aanvrager, seats, facturatiecyclus, live berekende staffelprijs).
 
-**Eerstvolgende stap:** DocuSeal-integratie afbouwen (offerte-template + API-koppeling vanuit `/command`, zie "Command-aanvraagflow" hieronder, API-key staat al klaar als env var). Daarna: seat-wijzigingen na ondertekening (zie geheugen `project-team-pricing`), Telegram-toegang Elite (wacht op Arno's nieuwe telefoonnummer), Basis-retentieflow, Circle, betaalprovider (bewust in die volgorde, laatste twee bewust helemaal achteraan).
+**Eerstvolgende stap:** DocuSeal-integratie afbouwen (offerte-template + API-koppeling vanuit `/command`, zie "Command-aanvraagflow" hieronder, API-key staat al klaar als env var, template moet Arno nog bouwen in DocuSeal zelf). Daarna: DocuSeal-webhook voor automatische Supabase-inrichting bij ondertekening, seat-wijzigingen na ondertekening (zie geheugen `project-team-pricing`), Basis-retentieflow, Circle, betaalprovider (bewust in die volgorde, laatste twee bewust helemaal achteraan).
+
+**Sinds de vorige versie van dit document ook afgerond:** `command_manager` losgekoppeld van `plan` (zie "Command-managerdashboard" hieronder), Command heeft nu een niveau-keuze (Premium/Elite, geen mix, zie "Command-aanvraagflow"), en Telegram-toegang voor Elite staat live (Arno gebruikt zijn bestaande nummer, geen apart account nodig gebleken).
 
 ---
 
@@ -26,7 +28,7 @@ De nieuwe `/prijzen`-pagina staat live, gebouwd in de stijl van de homepage (Fig
 | Coaching | Nee | Ja | Ja | Ja |
 | Gesproken antwoorden | Nee | Ja | Ja | Ja |
 | Command-managerdashboard | Nee | Nee | Nee | Ja |
-| Extra bij Elite | — | — | 1x/maand persoonlijk gesprek met Arno (nog geen herhaalbare boeking, zie onder), Telegram (nog niet gebouwd, wacht op nummer), Elite Member Community (nog niet gebouwd) | — |
+| Extra bij Elite | — | — | 1x/maand persoonlijk gesprek met Arno (nog geen herhaalbare boeking, zie onder), Telegram (live, `/bot/account`), Elite Member Community (nog niet gebouwd) | — |
 | Wie | Alleen als save-offer bij opzegging | Standaard betaalde individuele tier, ook trial-default | Individueel, hoog-contact, max. 50 (capaciteitsteller in admin) | Meerdere seats onder één deal, elke gebruiker krijgt Premium-niveau + managerdashboard |
 
 **Trial-default:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (`middleware.ts`), niet `basis`. Dit is ongewijzigd sinds de vorige migratie.
@@ -39,21 +41,29 @@ Besloten (2026-07-23): de site noemt dit plan overal "Command", maar de onderlig
 
 Op `/prijzen` staat de groepskop boven de kaart "Team" (generieke, herkenbare term, parallel aan "Individueel" boven Premium/Elite), en "Command" als het amber productlabel in de kaart zelf (parallel aan hoe "Premium"/"Elite" onder "Individueel" staan).
 
-### Command-managerdashboard nu écht gekoppeld aan het plan
+### Command-managerdashboard: toegang losgekoppeld van `plan` (herzien 2026-07-23)
 
-Was tot 2026-07-23 volledig hardcoded aan één bouwersaccount (`linkedin@royaldutchsales.com`), losstaand van elk betaalplan. Nu gekoppeld: `/bot/team` (pagina + de team-aanmaak-API) checkt `plan === 'team'`, naast de bouwer-uitzondering die blijft bestaan voor testdoeleinden. De TEAM-navigatielink in `BotNav.tsx` en `SparClient.tsx` gebruikt dezelfde check, via een nieuwe route `/api/bot/plan` (geeft het eigen plan van de ingelogde gebruiker terug, client-side bruikbaar).
+Was tot 2026-07-23 volledig hardcoded aan één bouwersaccount (`linkedin@royaldutchsales.com`), daarna kort gekoppeld aan `plan === 'team'`. Diezelfde dag alweer herzien: `plan` is nu weer zuiver het functieniveau van een individu (basis/premium/elite), en dashboardtoegang draait op een nieuwe, losse kolom **`command_manager`** (boolean op `approved_users`). `/bot/team` (pagina + team-aanmaak-API) checkt `command_manager === true`, naast de bouwer-uitzondering. `/api/bot/plan` geeft nu zowel `plan` als `commandManager` terug; `BotNav.tsx`/`SparClient.tsx` tonen de TEAM-link op basis van `commandManager`.
+
+**Waarom losgekoppeld:** een Command-team kan straks volledig Premium-niveau óf volledig Elite-niveau zijn (zie "Command-aanvraagflow" hieronder), en met `plan==='team'` als enige schakelaar was er geen manier om iemand tegelijk Elite-functies te geven én toegang tot het managerdashboard. Voorbereiding op een scenario dat Arno noemde: bij het naderen van de Elite-cap (50) gaat hij mogelijk met gecertificeerde coaches werken, dat vraagt om meer flexibiliteit dan één overbelaste kolom kan bieden.
+
+`PlanToggle.tsx` (admin) staat sindsdien alleen nog op basis/premium/elite, `team` is niet meer actief toekenbaar via die toggle (bestaande rijen met `plan='team'` blijven geldig, cyclen er bij de eerstvolgende klik gewoon uit). Command-managerschap wordt apart gezet via de nieuwe `CommandManagerToggle` in `/bot/admin/gebruikers`.
 
 **Belangrijk, ongewijzigd:** dit blijft losstaand van de collaboration-teamfunctie zelf (`arnobot_teams`/`arnobot_team_members`, tot 25 leden, gaat over gezamenlijke coaching-dashboards/1:1's). Er is nog steeds geen technische koppeling tussen "aantal seats waarvoor betaald is" en "aantal leden in het collaboration-team". Zie "Openstaand: seat-wijzigingen" hieronder, dat is precies dit gat.
 
 ### Command-prijsstaffel
 
-Volledige staffel en rekenmechaniek (gestaffeld/marginaal, niet vlak per tier) staat in het geheugen `project-team-pricing`, niet hier gedupliceerd. Kort: geanchored op €97 (Premium-prijs) voor 2-5 seats, aflopend tot €77 bij 11-20 seats, daarboven volledig maatwerk. Geïmplementeerd in `lib/commandPricing.ts`, hergebruikt door zowel het interne prijsanker als de live berekening op `/command`.
+Volledige staffel en rekenmechaniek (gestaffeld/marginaal, niet vlak per tier) staat in het geheugen `project-team-pricing`, niet hier gedupliceerd. Premium-niveau: geanchored op €97 voor 2-5 seats, aflopend tot €77 bij 11-20 seats. **Elite-niveau (besloten 2026-07-23): vlak €397/seat, geen staffelkorting, en alleen maandelijks** (net als het individuele Elite-plan, i.v.m. de gedeelde capaciteitscap). Boven 20 seats, op beide niveaus: volledig maatwerk. Geïmplementeerd in `lib/commandPricing.ts` (`berekenCommandPrijs(seats, cyclus, niveau)`), hergebruikt door zowel het interne prijsanker als de live berekening op `/command`.
+
+**Belangrijk, besloten 2026-07-23: geen mix van niveaus binnen één Command-deal.** Een team is in zijn geheel Premium óf in zijn geheel Elite, niet per seat gemixt. Reden: de manager nodigt elk lid apart uit, en het is voor hem/haar een simpele keuze, niet een per-persoon-instelling.
 
 ### Command-aanvraagflow (`/command`)
 
-Nieuwe, publieke pagina (geen `/bot`-prefix, dus geen inlog vereist, bezoekers vanaf `/prijzen` hebben vaak nog geen account). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager (naam/functie/e-mail/telefoon), bestelnummer (optioneel), aantal seats, facturatiecyclus (maandelijks/jaarlijks), met live berekende staffelprijs excl. btw.
+Nieuwe, publieke pagina (geen `/bot`-prefix, dus geen inlog vereist, bezoekers vanaf `/prijzen` hebben vaak nog geen account). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager (naam/functie/e-mail/telefoon), bestelnummer (optioneel), **niveau (Premium/Elite, zie hierboven)**, aantal seats, facturatiecyclus (maandelijks/jaarlijks, uitgeschakeld bij Elite), met live berekende staffelprijs excl. btw. Alle velden verplicht behalve bestelnummer.
 
-Opslag: nieuwe tabel `arnobot_command_requests` (Supabase), plus een e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/command-aanvraag/route.ts`).
+Opslag: nieuwe tabel `arnobot_command_requests` (Supabase, inclusief kolom `niveau`), plus een e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/command-aanvraag/route.ts`).
+
+**Automatische Supabase-inrichting bij ondertekening (afgesproken richting, nog te bouwen):** zodra de DocuSeal-webhook er is, zet die automatisch `command_manager=true` en `plan` (premium of elite, zoals gekozen op het formulier) voor de aanvrager. `paid_at` blijft apart, handmatig door Arno gezet zodra de factuur echt betaald is, zelfde patroon als bij Premium/Elite via `/bot/doorgaan`: toegang direct bij bevestiging, betaalstatus volgt apart. Open vraag, nog niet besloten: hoe om te gaan met een aanvrager die nog geen ArnoBot-account heeft op het moment van ondertekenen (vermoedelijk een pending-rij, zelfde patroon als bij referral-aanmeldingen in `middleware.ts`, die actief wordt bij de eerste login).
 
 **In opbouw (2026-07-23):** dit wordt uitgebreid met automatische offertegeneratie + digitale ondertekening via **DocuSeal**. Gekozen boven PandaDoc, DocuSign, Qwilr en anderen omdat DocuSeal als enige transparant en betaalbaar is over API-toegang: gratis onbeperkte sandbox, productie-API + webhooks vanaf het Pro-plan ($20/user/maand + $0,20/verstuurd document). Bij de andere aanbieders bleek API-toegang pas bij een dure/onduidelijke Enterprise-laag te zitten. Arno heeft al een Pro-abonnement. API-key staat als environment variable (`DOCUSEAL_API_KEY`, Production + Preview, versleuteld via Vercel).
 
@@ -76,7 +86,7 @@ Individuele, hoog-contact tier boven Premium. €397/maand, bewust alleen maande
 **Wat Elite belooft, wat daarvan al werkt:**
 - Alles van Premium: werkt automatisch, de kernlogica (berichtlimiet, coaching, sessiegeheugen, patroonanalyses, voice) is overal geschreven als "alles behalve basis", niet als een expliciete allowlist, dus `elite` viel daar al automatisch onder zodra de databasewaarde bestond.
 - 1 uur per maand persoonlijk gesprek met Arno: **nog niet gebouwd**. De bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit, geen herhaling. Uitbreiding naar terugkerende boekingen is bewust uitgesteld tot Arno een betaald Calendly-account heeft.
-- Rechtstreeks contact via Telegram: **nog niet gebouwd**, wacht op een nieuw, apart telefoonnummer voor een dedicated Telegram-account (niet hetzelfde handle als elders in de app gebruikt, om de exclusiviteit niet te verdunnen). Concept: 1:1, geen groep (Arno's expliciete keuze, de "Elite Member Community" hieronder is al de plek voor leden onderling).
+- Rechtstreeks contact via Telegram: **live** (2026-07-23), sectie op `/bot/account`, alleen zichtbaar bij `plan='elite'`. Arno gebruikt zijn bestaande Telegram-nummer (`t.me/arnodiepeveen`), geen apart account nodig gebleken: dat nummer wordt al uitsluitend voor ArnoBot-gerelateerd contact gebruikt (geen persoonlijk gebruik ernaast). Bewust: geen gegarandeerde reactietijd, dat staat expliciet in de copy. Concept blijft 1:1, geen groep (Arno's expliciete keuze, de "Elite Member Community" hieronder is al de plek voor leden onderling). Let op: hetzelfde handle wordt ook al gebruikt in de team-join-trustflow (`/bot/team/join`, "check met Arno voordat je toetreedt"), die twee doelgroepen komen dus in dezelfde inbox terecht, bewust geaccepteerd door Arno.
 - Elite Member Community: **nog niet gebouwd**, wordt later Circle (bewust als allerlaatste in de bouwvolgorde gepland).
 
 ### Technisch: `elite` als plan-waarde
@@ -122,11 +132,10 @@ Bij het doorzoeken van de hele codebase op resterende `€77`/`€697`-vermeldin
 ## Openstaande vragen / nog niet besloten
 
 **Actief in opbouw:**
-- DocuSeal-offertetemplate + API-koppeling voor `/command` (zie "Command-aanvraagflow" hierboven)
+- DocuSeal-offertetemplate (Arno, in DocuSeal zelf) + de API-koppeling en webhook vanuit `/command` (zie "Command-aanvraagflow" hierboven)
 
 **Bewust uitgesteld, met reden:**
 - Seat-wijzigingen ná ondertekening (zie geheugen `project-team-pricing`)
-- Telegram-toegang Elite: wacht op Arno's nieuwe, dedicated telefoonnummer
 - Herhaalbare maandelijkse boeking voor Elite (nu maar één boeking ooit mogelijk): wacht op een betaald Calendly-account
 - Basis-retentieflow (het €47-save-offer daadwerkelijk tonen bij een opzegpoging): bouwen bij de eerste keer dat iemand echt probeert op te zeggen, niet eerder
 - Elite Member Community (Circle): bewust als allerlaatste in de Deel B-bouwvolgorde
