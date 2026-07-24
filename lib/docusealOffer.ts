@@ -3,6 +3,11 @@ import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/comm
 const DOCUSEAL_TEMPLATE_ID = 5160507
 const DOCUSEAL_API_URL = 'https://api.docuseal.com/submissions'
 
+// Uit tot het brondocument in DocuSeal correct is (2026-07-24: velden liepen
+// over elkaar heen, tekst plakte aan elkaar). Zet op true zodra het template
+// geverifieerd klopt, zie docs/ABONNEMENTEN.md.
+const OFFERTE_AUTOMATISERING_ACTIEF = false
+
 // Geen "(excl. btw)"-achtervoegsel hier, de offertetekst zelf zegt dat al
 // in de zin eromheen ("De investering: ..., exclusief btw, voor...").
 function prijsTekstVoorOfferte(seats: number, cyclus: Cyclus, niveau: CommandNiveau): string {
@@ -46,6 +51,10 @@ export async function maakCommandOfferte(params: {
   niveau: CommandNiveau
   cyclus: Cyclus
 }): Promise<{ ok: boolean; error?: string }> {
+  if (!OFFERTE_AUTOMATISERING_ACTIEF) {
+    return { ok: false, error: 'Offerte-automatisering tijdelijk uitgeschakeld, template nog in opbouw' }
+  }
+
   const apiKey = process.env.DOCUSEAL_API_KEY
   if (!apiKey) return { ok: false, error: 'DOCUSEAL_API_KEY ontbreekt' }
 
