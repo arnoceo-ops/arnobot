@@ -6,7 +6,7 @@ const DOCUSEAL_API_URL = 'https://api.docuseal.com/submissions'
 // Uit tot het brondocument in DocuSeal correct is (2026-07-24: velden liepen
 // over elkaar heen, tekst plakte aan elkaar). Zet op true zodra het template
 // geverifieerd klopt, zie docs/ABONNEMENTEN.md.
-const OFFERTE_AUTOMATISERING_ACTIEF = false
+export const OFFERTE_AUTOMATISERING_ACTIEF = false
 
 // Geen "(excl. btw)"-achtervoegsel hier, de offertetekst zelf zegt dat al
 // in de zin eromheen ("De investering: ..., exclusief btw, voor...").
