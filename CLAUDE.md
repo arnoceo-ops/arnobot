@@ -80,6 +80,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - DKIM nog geldig? (Resend dashboard → Domains)
 - Geen bounces of spam-klachten die aandacht vragen?
 - Controleer [resend.com/changelog](https://resend.com/changelog) op API-wijzigingen
+- **Gedaan (2026-07-24):** DMARC-record van `arno.bot` bijgewerkt naar de nieuwe DMARCbis-spec (RFC 9989/9990/9991, mei 2026). Record bevatte geen `pct`-tag, dus geen gedwongen migratie nodig. Wel `np=reject` toegevoegd om spoofing via niet-bestaande subdomeinen te blokkeren (was onbeschermd door `sp=none`). Huidig record: `v=DMARC1; p=quarantine; rua=mailto:re+bpy4n6idets@dmarc.postmarkapp.com; sp=none; np=reject; aspf=r;`. DKIM (`resend._domainkey.arno.bot`) geverifieerd als correct ingesteld, DMARC-alignment voor Resend-mails (`info@arno.bot`/`noreply@arno.bot`) loopt via DKIM, niet via SPF (SPF bevat alleen Proton).
 
 #### Calendly (boeking van het gesprek met Arno)
 - **Toegevoegd (2026-07-20):** `app/api/webhooks/calendly/route.ts` ontvangt `invitee.created`-events, verifieert de `Calendly-Webhook-Signature`-header (HMAC-SHA256 met `CALENDLY_WEBHOOK_SIGNING_KEY`, 5 minuten replay-venster) en zet `arno_call_booked_at` op `approved_users` via een match op e-mailadres. `app/bot/gesprek/route.ts` is de stabiele interne link (in e-mails en op de account-pagina) die doorverwijst naar `ARNO_BOOKING_URL` — Arno kiest de definitieve scheduling-tool later, dus wisselen van tool is alleen een env var-wijziging, geen codewijziging.
