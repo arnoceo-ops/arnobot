@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs'
 import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
 
 export default function CommandAanvraagPage() {
-  const { isSignedIn } = useUser()
+  const { isSignedIn, isLoaded } = useUser()
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -137,13 +137,10 @@ export default function CommandAanvraagPage() {
           </div>
         ) : (
           <>
-            <p className="ca-sub">Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.</p>
-
-            {!isSignedIn && (
-              <p style={{ color: '#6b7280', fontSize: 13, marginTop: -24, marginBottom: 40 }}>
-                Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.
-              </p>
-            )}
+            <p className="ca-sub">
+              Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.
+              {isLoaded && !isSignedIn && ' Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.'}
+            </p>
 
             <form onSubmit={submit}>
               <fieldset className="ca-fieldset">
