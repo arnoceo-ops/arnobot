@@ -24,6 +24,7 @@ export default function AccountPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [plan, setPlan] = useState<string | null>(null)
   const [appPassword, setAppPassword] = useState('')
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
@@ -40,6 +41,10 @@ export default function AccountPage() {
     fetch('/api/bot/team/status')
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
+      .catch(() => {})
+    fetch('/api/bot/plan')
+      .then(r => r.json())
+      .then(d => setPlan(d.plan ?? null))
       .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
@@ -254,6 +259,20 @@ export default function AccountPage() {
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
             <ReferralSection inAccount />
           </>
+        )}
+
+        {/* Elite — Telegram-toegang, alleen zichtbaar voor plan=elite */}
+        {plan === 'elite' && (
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 48, marginTop: 56 }}>
+            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ELITE</p>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', color: '#f1f5f9', lineHeight: 1 }}>RECHTSTREEKS CONTACT</h1>
+            <p style={body}>
+              Als Elite-lid kun je Arno rechtstreeks appen via Telegram, voor vragen tussendoor. Geen gegarandeerde reactietijd, Arno leest dit wekelijks.
+            </p>
+            <a href="https://t.me/arnodiepeveen" target="_blank" rel="noopener noreferrer" className="primary-btn" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}>
+              OPEN TELEGRAM
+            </a>
+          </div>
         )}
 
         {/* Gegevens — tweede sectie */}
