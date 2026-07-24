@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenCommandPrijs, type Cyclus } from '@/lib/commandPricing'
+import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
 
 export default function CommandAanvraagPage() {
   const { isSignedIn } = useUser()
@@ -22,9 +22,15 @@ export default function CommandAanvraagPage() {
   const [telefoon, setTelefoon] = useState('')
   const [bestelnummer, setBestelnummer] = useState('')
   const [aantalSeats, setAantalSeats] = useState(2)
+  const [niveau, setNiveau] = useState<CommandNiveau>('premium')
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
 
-  const prijs = useMemo(() => berekenCommandPrijs(aantalSeats, cyclus), [aantalSeats, cyclus])
+  const prijs = useMemo(() => berekenCommandPrijs(aantalSeats, cyclus, niveau), [aantalSeats, cyclus, niveau])
+
+  function kiesNiveau(volgende: CommandNiveau) {
+    setNiveau(volgende)
+    if (volgende === 'elite') setCyclus('maandelijks')
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +42,7 @@ export default function CommandAanvraagPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
+          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, niveau, cyclus,
         }),
       })
       const data = await res.json()
@@ -91,6 +97,7 @@ export default function CommandAanvraagPage() {
           background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .ca-toggle button.actief { background: #f59e0b; color: #111827; }
+        .ca-toggle button:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .ca-prijs-box { background: #1e293b; border: 1px solid #374151; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; }
         .ca-prijs-num { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 600; color: #f8fafc; }
@@ -191,6 +198,15 @@ export default function CommandAanvraagPage() {
 
               <fieldset className="ca-fieldset">
                 <legend>Team</legend>
+
+                <div className="ca-field" style={{ marginBottom: 16 }}>
+                  <label>Niveau *</label>
+                  <div className="ca-toggle">
+                    <button type="button" className={niveau === 'premium' ? 'actief' : ''} onClick={() => kiesNiveau('premium')}>PREMIUM</button>
+                    <button type="button" className={niveau === 'elite' ? 'actief' : ''} onClick={() => kiesNiveau('elite')}>ELITE</button>
+                  </div>
+                </div>
+
                 <div className="ca-row">
                   <div className="ca-field">
                     <label>Aantal seats (inclusief jijzelf) *</label>
@@ -204,8 +220,11 @@ export default function CommandAanvraagPage() {
 
                 <div className="ca-toggle">
                   <button type="button" className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-                  <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+                  <button type="button" disabled={niveau === 'elite'} className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
                 </div>
+                {niveau === 'elite' && (
+                  <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>Elite-niveau is alleen maandelijks beschikbaar, vanwege het beperkt aantal plekken.</p>
+                )}
 
                 <div className="ca-prijs-box">
                   {prijs === null ? (

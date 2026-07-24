@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenCommandPrijs, type Cyclus } from '@/lib/commandPricing'
+import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const {
     bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
+    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, niveau, cyclus,
   } = body
 
   if (
@@ -37,11 +37,17 @@ export async function POST(req: Request) {
   if (!Number.isFinite(seats) || seats < 2) {
     return NextResponse.json({ error: 'Ongeldig aantal seats' }, { status: 400 })
   }
+  if (niveau !== 'premium' && niveau !== 'elite') {
+    return NextResponse.json({ error: 'Ongeldig niveau' }, { status: 400 })
+  }
   if (cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
     return NextResponse.json({ error: 'Ongeldige facturatiecyclus' }, { status: 400 })
   }
+  if (niveau === 'elite' && cyclus !== 'maandelijks') {
+    return NextResponse.json({ error: 'Elite-niveau is alleen maandelijks beschikbaar' }, { status: 400 })
+  }
 
-  const prijs = berekenCommandPrijs(seats, cyclus as Cyclus)
+  const prijs = berekenCommandPrijs(seats, cyclus as Cyclus, niveau as CommandNiveau)
 
   const { error } = await supabase.from('arnobot_command_requests').insert({
     user_id: userId,
@@ -57,6 +63,7 @@ export async function POST(req: Request) {
     telefoon: telefoon?.trim() || null,
     bestelnummer: bestelnummer?.trim() || null,
     aantal_seats: seats,
+    niveau,
     cyclus,
     berekende_prijs_per_maand: cyclus === 'jaarlijks' && prijs !== null ? prijs / 8 : prijs,
   })
@@ -76,7 +83,7 @@ export async function POST(req: Request) {
     subject: `Nieuwe Command-aanvraag: ${bedrijfsnaam}`,
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Command-abonnement aangevraagd.<br><br>` +
-      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal seats: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
+      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Niveau: ${niveau === 'elite' ? 'Elite' : 'Premium'}<br>Aantal seats: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
     ),
