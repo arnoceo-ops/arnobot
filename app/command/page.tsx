@@ -132,8 +132,8 @@ export default function CommandAanvraagPage() {
 
         {status === 'done' ? (
           <div style={{ background: '#1e293b', border: '1px solid #374151', borderRadius: 8, padding: '24px 28px' }}>
-            <p style={{ color: '#44cc88', fontSize: 15, marginBottom: 8, fontWeight: 500 }}>Aanvraag ontvangen.</p>
-            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.7 }}>Je ontvangt automatisch een offerte die je digitaal kunt ondertekenen.</p>
+            <p style={{ color: '#44cc88', fontSize: 15, marginBottom: 8, fontWeight: 500 }}>Dank voor je aanvraag.</p>
+            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.7 }}>Je krijgt van ons binnen 24 uur een offerte toegestuurd.</p>
           </div>
         ) : (
           <>
