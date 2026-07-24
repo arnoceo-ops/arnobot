@@ -1,7 +1,15 @@
-import { commandPrijsWeergave, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
+import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
 
 const DOCUSEAL_TEMPLATE_ID = 5160507
 const DOCUSEAL_API_URL = 'https://api.docuseal.com/submissions'
+
+// Geen "(excl. btw)"-achtervoegsel hier, de offertetekst zelf zegt dat al
+// in de zin eromheen ("De investering: ..., exclusief btw, voor...").
+function prijsTekstVoorOfferte(seats: number, cyclus: Cyclus, niveau: CommandNiveau): string {
+  const prijs = berekenCommandPrijs(seats, cyclus, niveau)
+  if (prijs === null) return 'Op maat, we stellen een voorstel voor je op'
+  return `€${prijs} ${cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'}`
+}
 
 function voordelenTekst(niveau: CommandNiveau): string {
   if (niveau === 'elite') {
@@ -59,7 +67,7 @@ export async function maakCommandOfferte(params: {
     niveau: params.niveau === 'elite' ? 'Elite' : 'Premium',
     aantal_seats: String(params.aantalSeats),
     cyclus: params.cyclus,
-    prijs_per_maand: commandPrijsWeergave(params.aantalSeats, params.cyclus, params.niveau),
+    prijs_per_maand: prijsTekstVoorOfferte(params.aantalSeats, params.cyclus, params.niveau),
     voordelen_tekst: voordelenTekst(params.niveau),
     looptijd_tekst: looptijdTekst(params.cyclus),
     offertenummer: `CMD-${params.requestId}`,
