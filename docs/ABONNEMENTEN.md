@@ -69,7 +69,15 @@ Opslag: nieuwe tabel `arnobot_command_requests` (Supabase, inclusief kolom `nive
 
 **In opbouw (2026-07-23):** dit wordt uitgebreid met automatische offertegeneratie + digitale ondertekening via **DocuSeal**. Gekozen boven PandaDoc, DocuSign, Qwilr en anderen omdat DocuSeal als enige transparant en betaalbaar is over API-toegang: gratis onbeperkte sandbox, productie-API + webhooks vanaf het Pro-plan ($20/user/maand + $0,20/verstuurd document). Bij de andere aanbieders bleek API-toegang pas bij een dure/onduidelijke Enterprise-laag te zitten. Arno heeft al een Pro-abonnement. API-key staat als environment variable (`DOCUSEAL_API_KEY`, Production + Preview, versleuteld via Vercel).
 
-**Nog te doen:** offerte-template bouwen in DocuSeal (met merge-velden voor de bovenstaande formuliergegevens), dan de API-koppeling bouwen vanuit `/api/command-aanvraag` (automatisch offerte genereren en versturen + webhook voor ondertekeningsmelding). Offerte-inhoud/voorwaarden worden vooraf aan Arno voorgelegd, dat is een juridisch document, geen route die zomaar zelf ingevuld wordt.
+**Offertetekst en -aanpak vastgesteld (2026-07-24), Arno bouwt het template nu zelf in DocuSeal:**
+- **Toon:** bewust commercieel, geen juridisch/artikel-gestructureerd document. Verwijst voor de juridische dekking (looptijd-details, gegevensverwerking, overmacht) naar de bestaande `arno.bot/voorwaarden` en `arno.bot/privacy`, dupliceert die niet.
+- **Niveau-afhankelijke en cyclus-afhankelijke inhoud:** opgelost via twee merge-velden waarvan de tekst zelf al bepaald is vóórdat DocuSeal ze invult (`voordelen_tekst`, `looptijd_tekst`), niet via losse templates per niveau/cyclus en niet via DocuSeal-conditionele logica. De if/else die bepaalt welke zin in die twee velden komt, hoort in code te staan (bij de API-koppeling hieronder), niet in DocuSeal zelf. Reden: één bron van waarheid, zelfde patroon als `lib/commandPricing.ts` en `lib/email-templates.ts`, en maar één template te onderhouden.
+- **Organisatie:** apart folder "ArnoBot Command" in Arno's DocuSeal-account (dat account is niet aan ArnoBot gebonden, Arno kan het ook voor andere, losstaande contracten gebruiken).
+- Volledige merge-veldenlijst en de vier tekstvarianten (Premium/Elite × maandelijks/jaarlijks) staan uitgewerkt in de sessie van 2026-07-24, niet hier gedupliceerd.
+
+**Nog te doen na het template:** de API-koppeling bouwen vanuit `/api/command-aanvraag` (automatisch offerte genereren en versturen, inclusief het berekenen van `voordelen_tekst`/`looptijd_tekst` op basis van niveau/cyclus) + webhook voor ondertekeningsmelding.
+
+**Bewust afgevangen, geen open risico:** bij Elite-niveau krijgt elk teamlid individueel toegang tot Arno's maandelijkse gesprek en Telegram (niet alleen de manager), wat in theorie tegen de Elite-cap van 50 kan aanlopen bij een grote Elite-Command-deal. Arno checkt dit handmatig vooraf, vóórdat de `/command`-pagina naar een potentiële manager gaat, dus dit hoeft niet als los actiepunt behandeld te worden.
 
 De `/command`-pagina belooft dit al tekstueel ("je ontvangt automatisch een offerte die je digitaal kunt ondertekenen") vooruitlopend op de bouw, bewust: geen live gebruikers op dit moment, dus geen risico dat iemand een belofte ziet die nog niet klopt.
 
