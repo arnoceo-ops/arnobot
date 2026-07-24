@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
+import { berekenCommandPrijs, commandPrijsWeergave, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
+import { maakCommandOfferte } from '@/lib/docusealOffer'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
 
   const prijs = berekenCommandPrijs(seats, cyclus as Cyclus, niveau as CommandNiveau)
 
-  const { error } = await supabase.from('arnobot_command_requests').insert({
+  const { data: inserted, error } = await supabase.from('arnobot_command_requests').insert({
     user_id: userId,
     bedrijfsnaam: bedrijfsnaam.trim(),
     kvk_nummer: kvkNummer?.trim() || null,
@@ -66,16 +67,33 @@ export async function POST(req: Request) {
     niveau,
     cyclus,
     berekende_prijs_per_maand: cyclus === 'jaarlijks' && prijs !== null ? prijs / 8 : prijs,
-  })
+  }).select('id').single()
 
-  if (error) {
-    console.error('Command-aanvraag opslaan mislukt:', error.message)
+  if (error || !inserted) {
+    console.error('Command-aanvraag opslaan mislukt:', error?.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
 
-  const prijsTekst = prijs === null
-    ? 'meer dan 20 seats, geen automatische staffelprijs, maatwerk'
-    : `€${prijs} ${cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'} (excl. btw)`
+  const prijsTekst = commandPrijsWeergave(seats, cyclus as Cyclus, niveau as CommandNiveau)
+
+  const offerte = await maakCommandOfferte({
+    requestId: inserted.id,
+    bedrijfsnaam: bedrijfsnaam.trim(),
+    kvkNummer: kvkNummer?.trim() || null,
+    btwNummer: btwNummer?.trim() || null,
+    factuuradres: factuuradres?.trim() || null,
+    postcode: postcode?.trim() || null,
+    plaats: plaats?.trim() || null,
+    aanvragerNaam: aanvragerNaam.trim(),
+    functie: functie?.trim() || null,
+    email: email.trim(),
+    telefoon: telefoon?.trim() || null,
+    bestelnummer: bestelnummer?.trim() || null,
+    aantalSeats: seats,
+    niveau: niveau as CommandNiveau,
+    cyclus: cyclus as Cyclus,
+  })
+  if (!offerte.ok) console.error('DocuSeal-offerte aanmaken mislukt:', offerte.error)
 
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
@@ -84,7 +102,10 @@ export async function POST(req: Request) {
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Command-abonnement aangevraagd.<br><br>` +
       `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Niveau: ${niveau === 'elite' ? 'Elite' : 'Premium'}<br>Aantal seats: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
-      `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
+      `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}` +
+      (offerte.ok
+        ? `<br><span style="color:#44cc88;">DocuSeal-offerte automatisch verstuurd naar ${email}.</span>`
+        : `<br><span style="color:#cc2200;">DocuSeal-offerte NIET automatisch verstuurd (${offerte.error}). Stuur 'm handmatig.</span>`),
       'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
     ),
   }).catch(() => {})

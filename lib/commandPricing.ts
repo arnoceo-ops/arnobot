@@ -40,3 +40,9 @@ export function berekenCommandPrijs(seats: number, cyclus: Cyclus, niveau: Comma
   if (perMaand === null) return null
   return cyclus === 'jaarlijks' ? perMaand * 8 : perMaand
 }
+
+export function commandPrijsWeergave(seats: number, cyclus: Cyclus, niveau: CommandNiveau = 'premium'): string {
+  const prijs = berekenCommandPrijs(seats, cyclus, niveau)
+  if (prijs === null) return 'Op maat, we stellen een voorstel voor je op'
+  return `€${prijs} ${cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'} (excl. btw)`
+}
