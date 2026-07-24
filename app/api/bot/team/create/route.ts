@@ -15,13 +15,15 @@ export async function POST(req: Request) {
 
   const user = await currentUser()
   const email = user?.primaryEmailAddress?.emailAddress ?? ''
-  if (email !== BOUWER_EMAIL) {
-    const { data: approved } = await supabase
-      .from('approved_users')
-      .select('command_manager')
-      .eq('user_id', userId)
-      .single()
-    if (!approved?.command_manager) return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
+
+  const { data: approved } = await supabase
+    .from('approved_users')
+    .select('command_manager, plan')
+    .eq('user_id', userId)
+    .single()
+
+  if (email !== BOUWER_EMAIL && !approved?.command_manager) {
+    return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
   }
 
   const { name } = await req.json()
@@ -35,9 +37,13 @@ export async function POST(req: Request) {
 
   if (existing) return NextResponse.json({ error: 'Je bent al lid van een team' }, { status: 400 })
 
+  // Het niveau van het team volgt het eigen plan van de manager (die is bij het
+  // onboarden al op het juiste niveau gezet), 'elite' expliciet, anders 'premium'.
+  const niveau = approved?.plan === 'elite' ? 'elite' : 'premium'
+
   const { data: team, error } = await supabase
     .from('arnobot_teams')
-    .insert({ name: name.trim(), manager_id: userId })
+    .insert({ name: name.trim(), manager_id: userId, niveau })
     .select()
     .single()
 

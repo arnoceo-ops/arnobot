@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const { data: team } = await supabase
     .from('arnobot_teams')
-    .select('id, name')
+    .select('id, name, niveau')
     .eq('invite_code', invite_code)
     .single()
 
@@ -44,6 +44,15 @@ export async function POST(req: Request) {
     .insert({ team_id: team.id, user_id: userId, role: 'member' })
 
   if (error) return NextResponse.json({ error: 'Joinen mislukt' }, { status: 500 })
+
+  // Teamlid krijgt het niveau van het team (premium of elite), zodat iedereen
+  // in een Command-deal daadwerkelijk het niveau krijgt waarvoor betaald is.
+  if (team.niveau === 'premium' || team.niveau === 'elite') {
+    await supabase
+      .from('approved_users')
+      .update({ plan: team.niveau })
+      .eq('user_id', userId)
+  }
 
   return NextResponse.json({ team })
 }
