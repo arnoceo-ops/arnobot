@@ -139,6 +139,12 @@ export default function CommandAanvraagPage() {
           <>
             <p className="ca-sub">Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.</p>
 
+            {!isSignedIn && (
+              <p style={{ color: '#6b7280', fontSize: 13, marginTop: -24, marginBottom: 40 }}>
+                Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.
+              </p>
+            )}
+
             <form onSubmit={submit}>
               <fieldset className="ca-fieldset">
                 <legend>Bedrijfsgegevens</legend>
@@ -247,12 +253,6 @@ export default function CommandAanvraagPage() {
                 {status === 'submitting' ? 'Bezig...' : 'Aanvraag versturen'}
               </button>
             </form>
-
-            {!isSignedIn && (
-              <p style={{ color: '#6b7280', fontSize: 13, marginTop: 24 }}>
-                Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.
-              </p>
-            )}
           </>
         )}
       </div>
