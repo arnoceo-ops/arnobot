@@ -1,10 +1,9 @@
 export type Cyclus = 'maandelijks' | 'jaarlijks'
 export type CommandNiveau = 'premium' | 'elite'
 
-// Premium-niveau: geanchored op de individuele Premium-prijs (€97).
-// Elite-niveau: voorstel, geanchored op de individuele Elite-prijs (€397),
-// zelfde relatieve kortingscurve als Premium (10,3% bij 6-10, 20,6% bij 11-20).
-// Nog niet door Arno bevestigd, zie docs/ABONNEMENTEN.md.
+// Premium-niveau: geanchored op de individuele Premium-prijs (€97), gestaffeld.
+// Elite-niveau: vlak €397/seat, geen staffelkorting (besloten door Arno), en
+// alleen maandelijks (zie de cyclus-check in app/api/command-aanvraag/route.ts).
 const SCHIJVEN: Record<CommandNiveau, { tot: number; prijs: number }[]> = {
   premium: [
     { tot: 5, prijs: 97 },
@@ -12,9 +11,7 @@ const SCHIJVEN: Record<CommandNiveau, { tot: number; prijs: number }[]> = {
     { tot: 20, prijs: 77 },
   ],
   elite: [
-    { tot: 5, prijs: 397 },
-    { tot: 10, prijs: 356 },
-    { tot: 20, prijs: 315 },
+    { tot: 20, prijs: 397 },
   ],
 }
 
