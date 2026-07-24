@@ -13,9 +13,9 @@ export async function GET() {
 
   const { data } = await supabase
     .from('approved_users')
-    .select('plan')
+    .select('plan, command_manager')
     .eq('user_id', userId)
     .single()
 
-  return NextResponse.json({ plan: data?.plan ?? null })
+  return NextResponse.json({ plan: data?.plan ?? null, commandManager: data?.command_manager ?? false })
 }

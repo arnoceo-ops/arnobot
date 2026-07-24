@@ -19,10 +19,10 @@ export default async function TeamPage() {
   if (email !== BOUWER_EMAIL) {
     const { data } = await supabase
       .from('approved_users')
-      .select('plan')
+      .select('command_manager')
       .eq('user_id', userId)
       .single()
-    if (data?.plan !== 'team') redirect('/bot')
+    if (!data?.command_manager) redirect('/bot')
   }
 
   return <TeamClient />

@@ -8,6 +8,7 @@ import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
 import { computeHealthScore, HEALTH_BUCKET_META, type HealthBucket } from '@/lib/healthScore'
 import SearchLinkedIn from './SearchLinkedIn'
 import PlanToggle from './PlanToggle'
+import CommandManagerToggle from './CommandManagerToggle'
 import PaidButton from './PaidButton'
 import AdminNav from '../AdminNav'
 
@@ -104,7 +105,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, renewal_requested_at, trial_reactivated_at, nudge_opt_out')
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out')
       .neq('email', E2E_TEST_USER_EMAIL),
     supabase
       .from('arnobot_rds_logs')
@@ -237,6 +238,7 @@ export default async function GebruikersPage({
     if (sort === 'analyses') { av = a.analysesCount; bv = b.analysesCount }
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'plan') { av = a.plan || ''; bv = b.plan || '' }
+    if (sort === 'command_manager') { av = a.command_manager ? 1 : 0; bv = b.command_manager ? 1 : 0 }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
     if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
     if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
@@ -252,7 +254,7 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -286,6 +288,7 @@ export default async function GebruikersPage({
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} vertical />
           <SortHeader label="GEZONDHEID" field="gezondheid" sort={sort} dir={dir} vertical />
           <SortHeader label="PLAN" field="plan" sort={sort} dir={dir} vertical />
+          <SortHeader label="COMMAND" field="command_manager" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
           <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
@@ -374,6 +377,10 @@ export default async function GebruikersPage({
                 {/* Plan */}
                 <div style={{ textAlign: 'center' }}>
                   <PlanToggle userId={u.user_id} currentPlan={(u.plan as 'basis' | 'premium' | 'elite' | 'team') ?? 'basis'} />
+                </div>
+                {/* Command manager */}
+                <div style={{ textAlign: 'center' }}>
+                  <CommandManagerToggle userId={u.user_id} initial={!!(u as { command_manager?: boolean }).command_manager} />
                 </div>
                 {/* Referral aanmeldingen */}
                 <div style={{ textAlign: 'center' }}>

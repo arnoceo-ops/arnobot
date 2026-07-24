@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 
-const PLANS = ['basis', 'premium', 'elite', 'team'] as const
-type Plan = typeof PLANS[number]
+const PLANS = ['basis', 'premium', 'elite'] as const
+type Plan = typeof PLANS[number] | 'team'
 
 const COLORS: Record<Plan, { bg: string; color: string }> = {
   basis: { bg: '#374151', color: '#9ca3af' },
   premium: { bg: '#f59e0b', color: '#111827' },
   elite: { bg: '#a855f7', color: '#111827' },
+  // 'team' is niet meer actief toekenbaar (functieniveau en Command-managerschap zijn
+  // losgekoppeld, zie command_manager), maar oudere rijen kunnen deze waarde nog hebben.
   team: { bg: '#22c55e', color: '#111827' },
 }
 
@@ -17,7 +19,8 @@ export default function PlanToggle({ userId, currentPlan }: { userId: string; cu
   const [loading, setLoading] = useState(false)
 
   async function cycle() {
-    const nextPlan = PLANS[(PLANS.indexOf(plan) + 1) % PLANS.length]
+    const idx = (PLANS as readonly string[]).indexOf(plan)
+    const nextPlan = PLANS[(idx + 1) % PLANS.length]
     setLoading(true)
     try {
       const res = await fetch('/api/admin/plan', {

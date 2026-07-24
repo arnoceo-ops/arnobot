@@ -264,7 +264,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => setHeeftTeamPlan(d.plan === 'team'))
+      .then(d => setHeeftTeamPlan(!!d.commandManager))
       .catch(() => {})
   }, [])
   useEffect(() => {

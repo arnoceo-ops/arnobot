@@ -51,7 +51,7 @@ export default function BotNav({ active }: Props) {
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => setHeeftTeamPlan(d.plan === 'team'))
+      .then(d => setHeeftTeamPlan(!!d.commandManager))
       .catch(() => {})
   }, [])
 

@@ -18,10 +18,10 @@ export async function POST(req: Request) {
   if (email !== BOUWER_EMAIL) {
     const { data: approved } = await supabase
       .from('approved_users')
-      .select('plan')
+      .select('command_manager')
       .eq('user_id', userId)
       .single()
-    if (approved?.plan !== 'team') return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
+    if (!approved?.command_manager) return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
   }
 
   const { name } = await req.json()
