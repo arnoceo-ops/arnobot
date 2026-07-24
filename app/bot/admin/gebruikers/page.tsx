@@ -13,6 +13,7 @@ import PaidButton from './PaidButton'
 import AdminNav from '../AdminNav'
 
 const ELITE_CAP = 50
+const BOUWER_EMAIL = 'linkedin@royaldutchsales.com'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
 // wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
@@ -253,6 +254,13 @@ export default async function GebruikersPage({
     if (av > bv) return dir === 'asc' ? 1 : -1
     return 0
   })
+
+  // Bouwersaccount altijd bovenaan, ongeacht de gekozen sortering.
+  const bouwerIndex = sorted.findIndex(u => u.email === BOUWER_EMAIL)
+  if (bouwerIndex > 0) {
+    const [bouwer] = sorted.splice(bouwerIndex, 1)
+    sorted.unshift(bouwer)
+  }
 
   const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 60px 60px 90px 50px 80px'
 
