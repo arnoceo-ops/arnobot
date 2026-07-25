@@ -43,6 +43,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Expose-Headers': 'X-Hint',
   }
 }
 
@@ -407,7 +408,7 @@ Reactie van de gebruiker: "${question}"
 Antwoord met precies één woord:
 ONGEPAST: seksueel, beledigend of trollen
 OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
-OK: logisch vervolg op het gesprek of relevant voor sales/business`
+OK: logisch vervolg op het gesprek of relevant voor sales/business, of een reactie die kritiek geeft op het gesprek zelf (bijvoorbeeld dat ArnoBot alleen maar terugvraagt in plaats van antwoord geeft). Dat is geen afdwalen, dat is een terechte reactie op de bot.`
         : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
 
       const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check', op: 'ai.claude' }, () =>
@@ -428,13 +429,13 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business`
       if (check.includes('OFFTOPIC')) {
         const alreadyWarned = history && history.some(
           (m: { role: string; content: string }) =>
-            m.role === 'assistant' && m.content?.includes('Zullen we het zakelijk houden?')
+            m.role === 'assistant' && m.content?.includes('Interessant, maar laten we het over jouw sales hebben.')
         )
         if (alreadyWarned) {
           await supabase.from('arno_blog_widget_blocked').upsert({ ip }, { onConflict: 'ip' })
           return NextResponse.json({ redirect: LOST_URL }, { headers: corsHeaders(origin) })
         }
-        return NextResponse.json({ answer: 'Zullen we het zakelijk houden?', hint: null }, { headers: corsHeaders(origin) })
+        return NextResponse.json({ answer: 'Interessant, maar laten we het over jouw sales hebben.', hint: null }, { headers: corsHeaders(origin) })
       }
     }
 
@@ -535,7 +536,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
     let hint: string | null = null
     const limitEnabled = process.env.ARNOBOT_LIMIT_ENABLED === 'true'
     if (limitEnabled && ip && !userId) {
-      const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       const { count } = await supabase
         .from('arno_blog_widget_logs')
         .select('*', { count: 'exact', head: true })
@@ -543,11 +544,11 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
         .gte('created_at', since)
 
       const n = count ?? 0
-      if (n >= 4) {
+      if (n >= 5) {
         return NextResponse.json({ blocked: true }, { headers: corsHeaders(origin) })
       }
-      if (n === 2) hint = 'last_chance'
-      if (n === 3) hint = 'salescanvas'
+      if (n === 3) hint = 'last_chance'
+      if (n === 4) hint = 'salescanvas'
     }
 
     // ragContextPromise draait al sinds het begin van dit verzoek, parallel aan de moderatie-
