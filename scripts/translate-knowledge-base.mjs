@@ -28,7 +28,7 @@ for (const line of envVars.split('\n')) {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const MODEL = 'claude-opus-4-8' // Eenmalige, belangrijke vertaalslag van de kern-IP: kwaliteit boven kosten
+const MODEL = 'claude-opus-5' // Eenmalige, belangrijke vertaalslag van de kern-IP: kwaliteit boven kosten
 const CONCURRENCY = 4
 const OUT_DRAFT = join(__dirname, '..', 'data', 'chief_sales_updates_en_draft.txt')
 const OUT_NOTES = join(__dirname, '..', 'data', 'translation-review-notes.md')
