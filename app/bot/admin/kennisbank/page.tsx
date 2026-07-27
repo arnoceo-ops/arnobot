@@ -59,9 +59,28 @@ export default async function KennisbankPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // PostgREST clamt server-side altijd op zijn eigen max-rows instelling (hier 1000), ongeacht
+  // een client-side .limit(). Zonder deze paginering vielen de tellingen hieronder (chunks,
+  // blogs, video's) stil te laag uit zodra de kennisbank over de 1000 chunks groeide.
+  async function fetchAllChunks(): Promise<{ data: ChunkRow[] | null; error: { message: string } | null }> {
+    const pageSize = 1000
+    const all: ChunkRow[] = []
+    for (let from = 0; ; from += pageSize) {
+      const { data: page, error: pageError } = await supabase
+        .from('blog_chunks')
+        .select('source, url')
+        .range(from, from + pageSize - 1)
+      if (pageError) return { data: null, error: pageError }
+      if (!page || page.length === 0) break
+      all.push(...(page as ChunkRow[]))
+      if (page.length < pageSize) break
+    }
+    return { data: all, error: null }
+  }
+
   const [{ data, error }, { data: metaData }] = await Promise.all([
-    supabase.from('blog_chunks').select('source, url'),
-    supabase.from('arnobot_meta').select('key, value').in('key', ['last_embed_run', 'last_embed_chunks', 'last_embed_sources']),
+    fetchAllChunks(),
+    supabase.from('arnobot_meta').select('key, value').in('key', ['last_embed_run', 'last_embed_chunks', 'last_embed_sources', 'last_rss_run']),
   ])
 
   const meta: Record<string, string> = {}
@@ -137,7 +156,12 @@ export default async function KennisbankPage() {
             )}
           </div>
           <div style={{ borderTop: '1px solid #374151', paddingTop: 16 }}>
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>RSS INGEST: loopt automatisch elke zaterdag om middernacht UTC</p>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>RSS INGEST: loopt automatisch elke zaterdag om middernacht UTC</p>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: meta['last_rss_run'] ? '#f1f5f9' : '#374151', marginBottom: 12 }}>
+              {meta['last_rss_run']
+                ? `Laatst gedraaid: ${new Date(meta['last_rss_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                : 'Laatst gedraaid: nog nooit'}
+            </p>
             <RssIngestButton />
           </div>
         </div>
