@@ -22,6 +22,8 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
   const [loadingUrl, setLoadingUrl] = useState<string | null>(null)
   const [chunksByUrl, setChunksByUrl] = useState<Record<string, Chunk[]>>({})
   const [errorUrl, setErrorUrl] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [countOverride, setCountOverride] = useState<Record<string, number>>({})
 
   function toggle(c: SortCol) {
     if (col === c) {
@@ -51,6 +53,22 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
       setErrorUrl(url)
     } finally {
       setLoadingUrl(null)
+    }
+  }
+
+  async function handleDelete(url: string, id: string) {
+    if (!window.confirm('Deze chunk definitief verwijderen uit de kennisbank? Dit kan niet ongedaan gemaakt worden.')) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/admin/kennisbank-chunks?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Verwijderen mislukt')
+      setChunksByUrl(prev => ({ ...prev, [url]: prev[url].filter(c => c.id !== id) }))
+      setCountOverride(prev => ({ ...prev, [url]: (prev[url] ?? blogs.find(b => b.url === url)?.count ?? 1) - 1 }))
+    } catch {
+      window.alert('Verwijderen is mislukt. Probeer het opnieuw.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -169,7 +187,7 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
                         padding: 0,
                       }}
                     >
-                      {b.count}x{isExpanded ? ' ↑' : ' ↓'}
+                      {countOverride[b.url] ?? b.count}x{isExpanded ? ' ↑' : ' ↓'}
                     </button>
                   ) : (
                     <span>{b.count}x</span>
@@ -188,7 +206,26 @@ export default function KennisbankBlogTable({ blogs }: { blogs: BlogRow[] }) {
                       )}
                       {chunksByUrl[b.url!]?.map((chunk, idx) => (
                         <div key={chunk.id} style={{ borderLeft: '2px solid #374151', paddingLeft: 12 }}>
-                          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 6 }}>CHUNK {idx + 1}</p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280' }}>CHUNK {idx + 1}</p>
+                            <button
+                              onClick={() => handleDelete(b.url!, chunk.id)}
+                              disabled={deletingId === chunk.id}
+                              style={{
+                                fontFamily: 'sans-serif',
+                                fontSize: 12,
+                                letterSpacing: 1,
+                                color: '#cc4444',
+                                background: 'none',
+                                border: 'none',
+                                cursor: deletingId === chunk.id ? 'default' : 'pointer',
+                                opacity: deletingId === chunk.id ? 0.5 : 1,
+                                padding: 0,
+                              }}
+                            >
+                              {deletingId === chunk.id ? 'BEZIG...' : 'VERWIJDER'}
+                            </button>
+                          </div>
                           {chunk.context && (
                             <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginBottom: 6, fontStyle: 'italic' }}>{chunk.context}</p>
                           )}

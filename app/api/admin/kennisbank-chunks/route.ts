@@ -26,3 +26,23 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ chunks: data ?? [] })
 }
+
+export async function DELETE(req: NextRequest) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('arnobot_admin')?.value
+  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const id = req.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'Geen id opgegeven' }, { status: 400 })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { error } = await supabase.from('blog_chunks').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
