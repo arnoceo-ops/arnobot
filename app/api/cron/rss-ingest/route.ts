@@ -24,15 +24,25 @@ function extractTag(xml: string, tag: string): string {
   return plainMatch ? plainMatch[1].trim() : ''
 }
 
-function parseRssItems(xml: string): { title: string; url: string; content: string }[] {
+function parseRssItems(xml: string): { title: string; url: string; content: string; pubDate: string }[] {
   const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)]
   return itemMatches.map(m => {
     const item = m[1]
     const title = extractTag(item, 'title')
     const url = extractTag(item, 'link') || extractTag(item, 'guid')
     const content = extractTag(item, 'content:encoded') || extractTag(item, 'description')
-    return { title, url, content }
+    const pubDate = extractTag(item, 'pubDate')
+    return { title, url, content, pubDate }
   }).filter(i => i.url && i.title)
+}
+
+// Admin-kennisbankpagina (app/bot/admin/kennisbank/page.tsx, parseBlogSource) leest de datum
+// uit "Titel (datum)" aan het eind van de source-string. Zonder deze suffix krijgt een RSS-post
+// geen sorteerbare datum en zakt hij onzichtbaar onderaan de lijst weg.
+function formatSourceDate(pubDate: string): string {
+  const date = new Date(pubDate)
+  if (isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 // ── HTML → plain text ─────────────────────────────────────────────────────────
@@ -101,6 +111,15 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   return json.data.map((d: { embedding: number[] }) => d.embedding)
 }
 
+// Laat de admin-kennisbankpagina (app/bot/admin/kennisbank/page.tsx) tonen wanneer deze cron
+// voor het laatst daadwerkelijk gedraaid heeft, los van het handmatige embed-chunks.mjs-script
+// dat zijn eigen last_embed_run bijhoudt. Ook bijwerken als er niets nieuws te verwerken was,
+// anders lijkt een lange periode zonder nieuwe blogposts alsnog op een niet-draaiende cron.
+async function markRssRun(): Promise<void> {
+  const now = new Date().toISOString()
+  await supabase.from('arnobot_meta').upsert([{ key: 'last_rss_run', value: now, updated_at: now }])
+}
+
 // ── Cron handler ──────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization')
@@ -114,7 +133,10 @@ export async function GET(req: NextRequest) {
     if (!rssRes.ok) throw new Error(`RSS fetch mislukt: ${rssRes.status}`)
     const rssXml = await rssRes.text()
     const items = parseRssItems(rssXml)
-    if (items.length === 0) return NextResponse.json({ ok: true, new: 0, message: 'Geen items in RSS' })
+    if (items.length === 0) {
+      await markRssRun()
+      return NextResponse.json({ ok: true, new: 0, message: 'Geen items in RSS' })
+    }
 
     // 2. Welke URLs bestaan al in blog_chunks?
     const urls = items.map(i => i.url)
@@ -125,7 +147,10 @@ export async function GET(req: NextRequest) {
     const existingUrls = new Set((existing ?? []).map(r => r.url))
 
     const newItems = items.filter(i => !existingUrls.has(i.url)).slice(0, MAX_NEW_PER_RUN)
-    if (newItems.length === 0) return NextResponse.json({ ok: true, new: 0, message: 'Geen nieuwe artikelen' })
+    if (newItems.length === 0) {
+      await markRssRun()
+      return NextResponse.json({ ok: true, new: 0, message: 'Geen nieuwe artikelen' })
+    }
 
     // 3. Nieuwe artikelen verwerken
     let totalInserted = 0
@@ -133,7 +158,8 @@ export async function GET(req: NextRequest) {
       const text = htmlToText(item.content)
       if (text.length < 100) continue
 
-      const source = `${item.title}`
+      const formattedDate = formatSourceDate(item.pubDate)
+      const source = formattedDate ? `${item.title} (${formattedDate})` : item.title
       const rawChunks = makeChunks(text, source, item.url)
       if (rawChunks.length === 0) continue
 
@@ -184,6 +210,7 @@ export async function GET(req: NextRequest) {
       }).catch(() => {})
     }
 
+    await markRssRun()
     return NextResponse.json({ ok: true, new: newItems.length, chunks: totalInserted })
   } catch (err) {
     await notifyCronFailure('rss-ingest', err)
