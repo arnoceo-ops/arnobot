@@ -12,6 +12,12 @@ type Inputs = {
   coachingKostenPerSynthese: number
   uitdagingPerGebruiker: number
   uitdagingKostenPerStuk: number
+  pctSparring: number
+  sparringSessiesPerGebruiker: number
+  berichtenPerSparringSessie: number
+  kostenPerSparringBericht: number
+  kostenPerDebrief: number
+  overigeAnthropicPerGebruiker: number
   pctVoice: number
   voiceInteracties: number
   tekensPerAntwoord: number
@@ -44,6 +50,18 @@ const DEFAULT_INPUTS: Inputs = {
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruiker: 10,
   uitdagingKostenPerStuk: 0.025,
+  // Sparring (app/api/sparring/*, Sonnet 4.6), gebaseerd op echt gemeten gebruik
+  // uit juli 2026: 9 sessies, 2 gebruikers, gem. 17,7 berichten/sessie.
+  pctSparring: 25,
+  sparringSessiesPerGebruiker: 4,
+  berichtenPerSparringSessie: 18,
+  kostenPerSparringBericht: 0.006,
+  kostenPerDebrief: 0.015,
+  // Vangnet voor de rest van de modelinventaris: session-end (Haiku, 3 calls),
+  // coaching-precheck, blog-synthese, verfijn, sessies-zoeken. Stuk voor stuk
+  // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
+  // elke route apart te modelleren.
+  overigeAnthropicPerGebruiker: 0.05,
   pctVoice: 40,
   voiceInteracties: 100,
   tekensPerAntwoord: 500,
@@ -96,6 +114,14 @@ function computeForN(inputs: Inputs, n: number) {
     + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
   )
 
+  const sparringGebruikers = n * (inputs.pctSparring / 100)
+  const totaalSparringSessies = sparringGebruikers * inputs.sparringSessiesPerGebruiker
+  const totaalSparringBerichten = totaalSparringSessies * inputs.berichtenPerSparringSessie
+  const sparringKosten = totaalSparringBerichten * inputs.kostenPerSparringBericht
+    + totaalSparringSessies * inputs.kostenPerDebrief
+
+  const overigeAnthropicKosten = n * inputs.overigeAnthropicPerGebruiker
+
   const voiceGebruikers = n * (inputs.pctVoice / 100)
   const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
   const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
@@ -113,10 +139,12 @@ function computeForN(inputs: Inputs, n: number) {
     + (inputs.clerkPro ? 100 : 0)
     + sentryUsd
 
-  const totaal = vastKosten + anthropicKosten + fable5Kosten + eleven.price + whisperKosten + upstashKosten
+  const totaal = vastKosten + anthropicKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
+    + eleven.price + whisperKosten + upstashKosten
 
   return {
-    vastKosten, anthropicKosten, fable5Kosten, elevenPrice: eleven.price, elevenName: eleven.name,
+    vastKosten, anthropicKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
+    elevenPrice: eleven.price, elevenName: eleven.name,
     whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
@@ -247,6 +275,20 @@ export default function KostenCalculatorClient() {
             </div>
 
             <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Sparring</div>
+              <NumberField label="% gebruikers dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} onChange={v => set('pctSparring', v)} />
+              <NumberField label="Sessies per sparring-gebruiker/maand" hint="gemeten juli 2026: 9 sessies / 2 gebruikers ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
+              <NumberField label="Berichten per sparringsessie" hint="gemeten juli 2026: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
+              <NumberField label="Kosten per sparringbericht ($)" hint="app/api/sparring/chat, Sonnet 4.6, geen RAG" value={inputs.kostenPerSparringBericht} step={0.001} onChange={v => set('kostenPerSparringBericht', v)} />
+              <NumberField label="Kosten per debrief ($)" hint="app/api/sparring/debrief, volledig transcript als input" value={inputs.kostenPerDebrief} step={0.001} onChange={v => set('kostenPerDebrief', v)} />
+            </div>
+
+            <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Overige Anthropic-routes</div>
+              <NumberField label="Overig, per gebruiker/maand ($)" hint="session-end (Haiku x3), coaching-precheck, blog-synthese, verfijn, sessies-zoeken" value={inputs.overigeAnthropicPerGebruiker} step={0.01} onChange={v => set('overigeAnthropicPerGebruiker', v)} />
+            </div>
+
+            <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + Whisper)</div>
               <NumberField label="% gebruikers met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} onChange={v => set('pctVoice', v)} />
               <NumberField label="Interacties per Voice-gebruiker/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
@@ -323,6 +365,8 @@ export default function KostenCalculatorClient() {
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Vaste infrastructuur</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.vastKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat + BIEB</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
