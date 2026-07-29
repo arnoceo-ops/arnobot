@@ -1107,7 +1107,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .spar-openers { overflow-x: hidden; }
           .opener-toggle { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 812px; }
           .toggle-btn { font-size: 11px; letter-spacing: 0px; padding: 7px 4px; border-radius: 4px; }
-          .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
+          .opener-toggle .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
           .spar-input-row { max-width: 100%; }
         }
 
@@ -2063,7 +2063,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <>
                 <span className="spar-discipline-label">of kies een discipline</span>
                 {isMobile ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 240, margin: '0 auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 180, margin: '0 auto' }}>
                     <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
                     <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
                     <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>SALES</button>
