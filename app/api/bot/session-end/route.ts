@@ -97,7 +97,7 @@ ${RULE_NEVER_BREAK_CHARACTER}`,
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 150,
-    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 15 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
+    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 20 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
 
 ${RULE_ENGLISH_TERMS}
 
