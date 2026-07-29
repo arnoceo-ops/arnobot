@@ -26,12 +26,15 @@ type Inputs = {
   nGebruikers: number
 }
 
+// Uitgangspunt: "redelijk actieve" gebruikers, niet het ruwe gemeten gemiddelde.
+// Bewust aan de hoge kant gekozen (besloten 2026-07-29) zodat de pagina bij het
+// openen nooit een te optimistisch beeld geeft, dat achteraf tegenvalt.
 const DEFAULT_INPUTS: Inputs = {
-  berichten: 30,
-  anthropicPerBericht: 0.0148,
+  berichten: 75,
+  anthropicPerBericht: 0.015,
   biebPerGebruiker: 0.01,
-  pctVoice: 30,
-  voiceInteracties: 30,
+  pctVoice: 40,
+  voiceInteracties: 100,
   tekensPerAntwoord: 500,
   creditPerTeken: 0.5,
   kostenPerInteractie: 0.004,
