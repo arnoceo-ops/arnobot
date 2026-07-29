@@ -2063,7 +2063,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <>
                 <span className="spar-discipline-label">of kies een discipline</span>
                 {isMobile ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 240, margin: '0 auto' }}>
                     <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
                     <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
                     <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>SALES</button>
