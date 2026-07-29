@@ -20,7 +20,6 @@ export default function KostenLoginPage() {
     })
     if (res.ok) {
       router.push('/kosten')
-      router.refresh()
     } else {
       setError('Verkeerd wachtwoord.')
     }
