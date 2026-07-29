@@ -31,9 +31,18 @@ export default function AccountPage() {
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
   const [passwordDone, setPasswordDone] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
+
+  useEffect(() => {
+    // Clerk weet al of dit account een wachtwoord heeft (LinkedIn-only-accounts hebben er
+    // standaard geen), dus hier geen aparte API-call voor nodig. Zonder deze sync toonde de
+    // pagina na elke herlaad/nieuwe login weer de lege invoervelden, ook als het wachtwoord
+    // al goed stond, want passwordDone was tot nu toe puur lokale state.
+    if (user?.passwordEnabled) setPasswordDone(true)
+  }, [user?.passwordEnabled])
 
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
@@ -132,6 +141,7 @@ export default function AccountPage() {
       setAppPassword('')
       setAppPasswordConfirm('')
       setPasswordDone(true)
+      setShowPasswordForm(false)
     } catch (e: unknown) {
       setPasswordError(e instanceof Error ? e.message : 'Wachtwoord instellen mislukt')
     } finally {
@@ -314,10 +324,18 @@ export default function AccountPage() {
         <div style={section}>
           <p style={label}>WACHTWOORD VOOR DE APP</p>
           <p style={body}>
-            Je meldt je aan met LinkedIn. Voor de mobiele app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met je e-mailadres om in te loggen in de app.
+            Je meldt je aan met LinkedIn. Voor de mobiele app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met hetzelfde e-mailadres als je LinkedIn-account om in te loggen in de app.
           </p>
-          {passwordDone ? (
-            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Wachtwoord ingesteld</p>
+          {passwordDone && !showPasswordForm ? (
+            <p style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <span style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Wachtwoord ingesteld</span>
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: '4px', color: '#6b7280' }}
+              >
+                WIJZIGEN
+              </button>
+            </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
               <input

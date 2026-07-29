@@ -93,6 +93,16 @@ export default function AppSignIn() {
             {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           </form>
 
+          <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
+              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, padding: 0 }}
+            >
+              Wachtwoord vergeten?
+            </button>
+          </p>
+
           <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
             Nog geen account?{' '}
             <button
