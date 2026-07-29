@@ -2064,11 +2064,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 <span className="spar-discipline-label">of kies een discipline</span>
                 {isMobile ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} style={{ flex: 1 }} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
-                      <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} style={{ flex: 1 }} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
-                    </div>
-                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} style={{ width: 'calc(50% - 1px)', alignSelf: 'center' }} onClick={() => setOpenerModus('sales')}>SALES</button>
+                    <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
+                    <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
+                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>SALES</button>
                   </div>
                 ) : (
                   <div className="opener-toggle">

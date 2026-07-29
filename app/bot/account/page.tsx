@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
+import { useIsMobile } from '@/hooks/useBreakpoint'
 
 export default function AccountPage() {
   const { user, isLoaded } = useUser()
+  const isMobile = useIsMobile()
   const { signOut } = useClerk()
   const router = useRouter()
 
@@ -188,7 +190,7 @@ export default function AccountPage() {
         </div>
 
         {/* Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: sysStatus !== 'UP' && sysStatus !== null ? 16 : 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: sysStatus !== 'UP' && sysStatus !== null ? 16 : 32 }}>
           <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 16 }}>PERFORMANCE</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
