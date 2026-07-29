@@ -783,7 +783,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   async function ask(question: string) {
-    if (!question.trim() || loading || blocked) return
+    // 4000 tekens is de harde grens in app/api/chat/route.ts, hier herhaald zodat een te lang
+    // bericht nooit als vage "Ongeldig verzoek" 400 terugkomt, maar al vooraf wordt tegengehouden.
+    if (!question.trim() || loading || blocked || question.length > 4000) return
     // Index vastleggen vóórdat setMessages hieronder het user-bericht toevoegt: deze
     // functie voegt in de voice-tak precies twee berichten toe (user, dan arno), dus het
     // arno-antwoord komt altijd op startLen + 1. messages is de waarde uit de render
@@ -1869,7 +1871,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <button
                 className="spar-send"
                 onClick={() => ask(input)}
-                disabled={loading || blocked || !input.trim()}
+                disabled={loading || blocked || !input.trim() || input.length > 4000}
               >
                 {loading ? '...' : 'STUUR →'}
               </button>
@@ -1890,6 +1892,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               )}
             </div>
           </div>
+          {input.length > 3500 && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: input.length > 4000 ? '#cc4444' : '#6b7280', textAlign: 'center', marginTop: 8 }}>
+              {input.length}/4000 tekens{input.length > 4000 ? ', maak je bericht wat korter' : ''}
+            </p>
+          )}
           {verfijnFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Dit snap ik niet. Typ een echte vraag en ik maak hem scherper.
