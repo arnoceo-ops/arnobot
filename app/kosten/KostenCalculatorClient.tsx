@@ -8,6 +8,10 @@ type Inputs = {
   berichten: number
   anthropicPerBericht: number
   biebPerGebruiker: number
+  coachingPerGebruiker: number
+  coachingKostenPerSynthese: number
+  uitdagingPerGebruiker: number
+  uitdagingKostenPerStuk: number
   pctVoice: number
   voiceInteracties: number
   tekensPerAntwoord: number
@@ -33,10 +37,20 @@ const DEFAULT_INPUTS: Inputs = {
   berichten: 75,
   anthropicPerBericht: 0.015,
   biebPerGebruiker: 0.01,
+  // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
+  // (max_tokens 4000) en de uitdaging-route (max_tokens 600). Ontbrak eerder
+  // volledig in deze calculator, alleen hoofdchat + BIEB (Sonnet 4.6) waren erin.
+  coachingPerGebruiker: 3,
+  coachingKostenPerSynthese: 0.18,
+  uitdagingPerGebruiker: 10,
+  uitdagingKostenPerStuk: 0.025,
   pctVoice: 40,
   voiceInteracties: 100,
   tekensPerAntwoord: 500,
-  creditPerTeken: 0.5,
+  // ElevenLabs bevestigt zelf alleen een bereik van 0,5 tot 1 credit/teken voor
+  // Flash/Turbo bij API-gebruik, geen exact getal. 1,0 is de veilige kant van
+  // dat bevestigde bereik, niet de gunstigste kant uit derde-partij-bronnen.
+  creditPerTeken: 1.0,
   kostenPerInteractie: 0.004,
   tiers: [
     { name: 'Starter', credits: 30000, price: 6 },
@@ -77,6 +91,10 @@ function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: number; 
 function computeForN(inputs: Inputs, n: number) {
   const totaalBerichten = n * inputs.berichten
   const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht + n * inputs.biebPerGebruiker
+  const fable5Kosten = n * (
+    inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
+    + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
+  )
 
   const voiceGebruikers = n * (inputs.pctVoice / 100)
   const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
@@ -95,10 +113,10 @@ function computeForN(inputs: Inputs, n: number) {
     + (inputs.clerkPro ? 100 : 0)
     + sentryUsd
 
-  const totaal = vastKosten + anthropicKosten + eleven.price + whisperKosten + upstashKosten
+  const totaal = vastKosten + anthropicKosten + fable5Kosten + eleven.price + whisperKosten + upstashKosten
 
   return {
-    vastKosten, anthropicKosten, elevenPrice: eleven.price, elevenName: eleven.name,
+    vastKosten, anthropicKosten, fable5Kosten, elevenPrice: eleven.price, elevenName: eleven.name,
     whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
@@ -215,9 +233,17 @@ export default function KostenCalculatorClient() {
           <div>
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Hoofdchat &amp; gebruik</div>
-              <NumberField label="Berichten per gebruiker per maand" hint="gemeten gemiddelde juli 2026: 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
+              <NumberField label="Berichten per gebruiker per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
               <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat + Haiku-RAG-herschrijving" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
               <NumberField label="BIEB-kosten per gebruiker/maand ($)" hint="losse gespreksanalyse" value={inputs.biebPerGebruiker} step={0.001} onChange={v => set('biebPerGebruiker', v)} />
+            </div>
+
+            <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Fable 5 (coaching-synthese &amp; uitdaging)</div>
+              <NumberField label="Coaching-syntheses per gebruiker/maand" hint="app/api/bot/coaching/route.ts, hoofdsynthese" value={inputs.coachingPerGebruiker} onChange={v => set('coachingPerGebruiker', v)} />
+              <NumberField label="Kosten per coaching-synthese ($)" hint="max_tokens 4000, thinking telt mee" value={inputs.coachingKostenPerSynthese} step={0.01} onChange={v => set('coachingKostenPerSynthese', v)} />
+              <NumberField label="Uitdagingen per gebruiker/maand" hint="app/api/bot/uitdaging/route.ts" value={inputs.uitdagingPerGebruiker} onChange={v => set('uitdagingPerGebruiker', v)} />
+              <NumberField label="Kosten per uitdaging ($)" hint="max_tokens 600" value={inputs.uitdagingKostenPerStuk} step={0.005} onChange={v => set('uitdagingKostenPerStuk', v)} />
             </div>
 
             <div style={cardStyle}>
@@ -225,7 +251,7 @@ export default function KostenCalculatorClient() {
               <NumberField label="% gebruikers met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} onChange={v => set('pctVoice', v)} />
               <NumberField label="Interacties per Voice-gebruiker/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
               <NumberField label="Tekens per gesproken antwoord" hint="doellengte buildVoiceSystemPrompt: 400-600" value={inputs.tekensPerAntwoord} step={10} onChange={v => set('tekensPerAntwoord', v)} />
-              <NumberField label="ElevenLabs credits per teken" hint="Flash v2.5" value={inputs.creditPerTeken} step={0.05} onChange={v => set('creditPerTeken', v)} />
+              <NumberField label="ElevenLabs credits per teken" hint="Flash v2.5, ElevenLabs zelf bevestigt 0,5-1, dit is de veilige kant" value={inputs.creditPerTeken} step={0.05} onChange={v => set('creditPerTeken', v)} />
               <NumberField label="Whisper + Anthropic-voice per interactie ($)" value={inputs.kostenPerInteractie} step={0.0005} onChange={v => set('kostenPerInteractie', v)} />
 
               <details open={tiersOpen} onToggle={e => setTiersOpen((e.target as HTMLDetailsElement).open)} style={{ marginTop: 10 }}>
@@ -296,6 +322,7 @@ export default function KostenCalculatorClient() {
               <div style={{ marginTop: 16 }}>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Vaste infrastructuur</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.vastKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat + BIEB</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
