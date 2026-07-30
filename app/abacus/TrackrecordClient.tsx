@@ -181,14 +181,17 @@ export default function TrackrecordClient({ prijzen }: Props) {
                 {rij.werkelijke_kosten_usd !== null ? (
                   <div style={statValue}>{fmtUSD(rij.werkelijke_kosten_usd)}</div>
                 ) : (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input
-                      type="number"
-                      placeholder="bedrag"
-                      value={werkelijkInput[rij.maand] ?? ''}
-                      onChange={e => setWerkelijkInput(prev => ({ ...prev, [rij.maand]: e.target.value }))}
-                      style={{ ...numberInputStyle, width: 90 }}
-                    />
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      $
+                      <input
+                        type="number"
+                        placeholder="bedrag in dollar"
+                        value={werkelijkInput[rij.maand] ?? ''}
+                        onChange={e => setWerkelijkInput(prev => ({ ...prev, [rij.maand]: e.target.value }))}
+                        style={{ ...numberInputStyle, width: 90 }}
+                      />
+                    </label>
                     <button
                       onClick={() => handleWerkelijk(rij.maand)}
                       disabled={opslaan === rij.maand}
