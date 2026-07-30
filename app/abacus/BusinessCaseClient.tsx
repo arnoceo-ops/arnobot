@@ -42,8 +42,8 @@ const numberInputStyle: React.CSSProperties = {
 }
 const fieldLabelStyle: React.CSSProperties = { fontSize: 13.5, color: '#f1f5f9' }
 
-function NumberField({ label, hint, value, onChange, step = 1, large = false }: {
-  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number; large?: boolean
+function NumberField({ label, hint, value, onChange, step = 1 }: {
+  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number
 }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -51,12 +51,20 @@ function NumberField({ label, hint, value, onChange, step = 1, large = false }: 
         <div style={fieldLabelStyle}>{label}</div>
         {hint && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{hint}</div>}
       </div>
+      <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%' }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
+    </div>
+  )
+}
+
+function TariefField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div>
+      <div style={statLabel}>{label}</div>
       <input
         type="number"
         value={value}
-        step={step}
-        style={{ ...numberInputStyle, width: '100%', ...(large ? { fontSize: 22, fontWeight: 700 } : {}) }}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        style={{ ...numberInputStyle, width: 100, fontSize: 22, fontWeight: 700, textAlign: 'left' }}
       />
     </div>
   )
@@ -90,15 +98,21 @@ export default function BusinessCaseClient({
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 8 }}>
+        <TariefField label="Tarief Basis (€)" value={prijzen.basis} onChange={v => setPrijzen({ ...prijzen, basis: v })} />
+        <TariefField label="Tarief Premium (€)" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} />
+        <TariefField label="Tarief Elite (€)" value={prijzen.elite} onChange={v => setPrijzen({ ...prijzen, elite: v })} />
+      </div>
+      <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 18 }}>
+        Wordt ook gebruikt bij het afsluiten van een maand op Trackrecord.
+      </p>
+
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
           Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
-        <NumberField label="Tarief Basis (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.basis} onChange={v => setPrijzen({ ...prijzen, basis: v })} large />
-        <NumberField label="Tarief Premium (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} large />
-        <NumberField label="Tarief Elite (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.elite} onChange={v => setPrijzen({ ...prijzen, elite: v })} large />
         <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
