@@ -184,25 +184,18 @@ export default function BusinessCaseClient({
           <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzet - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzet, scenario.kostenEur + scenario.betaalKosten)}</div></div>
         </div>
+      </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 20, paddingTop: 16 }}>
-          <NumberField label="Doelwinst per maand (€)" hint="hoeveel gebruikers heb je hiervoor nodig, bij de tarieven en %-verdeling hierboven" value={doelWinst} step={100} onChange={setDoelWinst} />
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={statLabel}>Benodigd aantal gebruikers</div>
-              <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
-            </div>
-            {benodigdeGebruikers !== null && (
-              <button
-                onClick={() => setNGebruikers(benodigdeGebruikers)}
-                style={{
-                  fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-                  padding: '10px 18px', borderRadius: 999, border: 'none', cursor: 'pointer', background: '#f59e0b', color: '#111827',
-                }}
-              >
-                Vul dit aantal in
-              </button>
-            )}
+      <div style={cardStyle}>
+        <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
+        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
+          Los uitgangspunt, staat los van &quot;Totaal aantal gebruikers&quot; hierboven en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.
+        </p>
+        <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} />
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
+          <div>
+            <div style={statLabel}>Benodigd aantal gebruikers</div>
+            <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
           </div>
         </div>
       </div>

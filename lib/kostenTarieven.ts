@@ -225,9 +225,15 @@ export const DEFAULT_TIER_VERDELING: TierVerdeling = { basis: 58, premium: 40, e
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 
 export function berekenOmzetEnBetaalprovider(prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number) {
-  const basisN = Math.round(n * (verdeling.basis / 100))
-  const premiumN = Math.round(n * (verdeling.premium / 100))
-  const eliteN = Math.round(n * (verdeling.elite / 100))
+  // Bij optellen tot 100% of minder verandert er niets (rest = niet
+  // meegeteld, bv. freemium of onbekend). Bij meer dan 100% (tikfout, of een
+  // aanroeper die zelf ook nog een ander segment zoals freemium meetelt)
+  // schalen we proportioneel terug, zodat basisN+premiumN+eliteN nooit meer
+  // dan n kan zijn.
+  const noemer = Math.max(verdeling.basis + verdeling.premium + verdeling.elite, 100)
+  const basisN = Math.round(n * (verdeling.basis / noemer))
+  const premiumN = Math.round(n * (verdeling.premium / noemer))
+  const eliteN = Math.round(n * (verdeling.elite / noemer))
   const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
   const aandeel = betaalprovider.pctCreditcard / 100
   const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
