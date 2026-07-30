@@ -52,6 +52,12 @@ export const TARIEVEN = {
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
   upstashPricePer100k: 0.2,
+  // Omzettarieven per plan, EUR/maand. Command/team heeft geen vlak tarief
+  // (staffel per seat, zie project-team-pricing) en telt daarom niet mee in
+  // de omzetprognose, alleen het aantal gebruikers wordt getoond.
+  prijsBasisEur: 37,
+  prijsPremiumEur: 77,
+  prijsEliteEur: 397,
 }
 
 export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: number; name: string } {

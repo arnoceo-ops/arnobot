@@ -36,6 +36,14 @@ type Meting = {
   voice_tekens_count: number
 }
 
+type Omzet = {
+  basis_gebruikers: number
+  premium_gebruikers: number
+  elite_gebruikers: number
+  team_gebruikers: number
+  prognose_omzet_eur: number
+}
+
 async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
   const { start, eind } = maandRange(maand)
 
@@ -62,7 +70,40 @@ async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
   }
 }
 
-function berekenPrognose(m: Meting): number {
+// Puntmeting van de huidige abonneebasis, geen maandfilter: dit is een
+// momentopname (hoeveel betalende gebruikers heb je nu per plan), geen
+// telling van nieuwe aanmeldingen die specifieke maand.
+async function meetOmzet(): Promise<Omzet> {
+  const { data } = await supabase
+    .from('approved_users')
+    .select('plan')
+    .not('paid_at', 'is', null)
+    .eq('is_active', true)
+
+  const rows = (data ?? []) as { plan: string | null }[]
+  const tel = (plan: string) => rows.filter(r => r.plan === plan).length
+
+  const basis = tel('basis')
+  const premium = tel('premium')
+  const elite = tel('elite')
+  const team = tel('team')
+
+  const prognoseOmzetEur = basis * TARIEVEN.prijsBasisEur
+    + premium * TARIEVEN.prijsPremiumEur
+    + elite * TARIEVEN.prijsEliteEur
+  // Command/team heeft geen vlak tarief (staffel per seat), telt niet mee in
+  // de omzetprognose, alleen het aantal wordt getoond.
+
+  return {
+    basis_gebruikers: basis,
+    premium_gebruikers: premium,
+    elite_gebruikers: elite,
+    team_gebruikers: team,
+    prognose_omzet_eur: prognoseOmzetEur,
+  }
+}
+
+function berekenPrognoseKostenUsd(m: Meting): number {
   const anthropicKosten = m.berichten_count * TARIEVEN.anthropicPerBericht
   const analysesKosten = m.analyses_count * TARIEVEN.kostenPerAnalyse
   const fable5Kosten = m.gebruikers_count * (
@@ -100,8 +141,15 @@ export async function GET() {
 
   let liveHuidigeMaand = null
   if (!alAfgesloten) {
-    const meting = await meetGebruikVoorMaand(huidigeMaand)
-    liveHuidigeMaand = { maand: huidigeMaand, ...meting, prognose_usd: berekenPrognose(meting) }
+    const [meting, omzet] = await Promise.all([meetGebruikVoorMaand(huidigeMaand), meetOmzet()])
+    const prognoseKostenUsd = berekenPrognoseKostenUsd(meting)
+    liveHuidigeMaand = {
+      maand: huidigeMaand,
+      ...meting,
+      ...omzet,
+      prognose_usd: prognoseKostenUsd,
+      prognose_kosten_eur: prognoseKostenUsd / TARIEVEN.fxRateEurUsd,
+    }
   }
 
   return NextResponse.json({ geschiedenis: geschiedenis ?? [], liveHuidigeMaand })
@@ -111,22 +159,25 @@ export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const { action, maand, werkelijkeKosten } = body as { action?: string; maand?: string; werkelijkeKosten?: number }
+  const { action, maand, werkelijkeKosten, werkelijkeOmzet } = body as {
+    action?: string; maand?: string; werkelijkeKosten?: number; werkelijkeOmzet?: number
+  }
 
   if (action === 'afsluiten') {
     const doelMaand = typeof maand === 'string' && maand ? maand : huidigeMaandIso()
-    const meting = await meetGebruikVoorMaand(doelMaand)
-    const prognose = berekenPrognose(meting)
+    const [meting, omzet] = await Promise.all([meetGebruikVoorMaand(doelMaand), meetOmzet()])
+    const prognose = berekenPrognoseKostenUsd(meting)
 
     const { error } = await supabase.from('arnobot_kosten_tracking').upsert({
       maand: doelMaand,
       ...meting,
+      ...omzet,
       prognose_usd: prognose,
       afgesloten_op: new Date().toISOString(),
     }, { onConflict: 'maand' })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ ok: true, maand: doelMaand, prognose_usd: prognose })
+    return NextResponse.json({ ok: true, maand: doelMaand, prognose_usd: prognose, prognose_omzet_eur: omzet.prognose_omzet_eur })
   }
 
   if (action === 'werkelijk') {
@@ -136,6 +187,19 @@ export async function POST(req: NextRequest) {
     const { error } = await supabase
       .from('arnobot_kosten_tracking')
       .update({ werkelijke_kosten_usd: werkelijkeKosten })
+      .eq('maand', maand)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'werkelijkOmzet') {
+    if (typeof maand !== 'string' || !maand || typeof werkelijkeOmzet !== 'number') {
+      return NextResponse.json({ error: 'maand en werkelijkeOmzet zijn verplicht' }, { status: 400 })
+    }
+    const { error } = await supabase
+      .from('arnobot_kosten_tracking')
+      .update({ werkelijke_omzet_eur: werkelijkeOmzet })
       .eq('maand', maand)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
