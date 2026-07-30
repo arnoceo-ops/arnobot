@@ -44,8 +44,17 @@ const cardHeadStyle: React.CSSProperties = {
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
 const statLabel: React.CSSProperties = { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }
 const statValue: React.CSSProperties = { fontSize: 16, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
+const priceInputStyle: React.CSSProperties = {
+  width: 70, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6,
+  color: '#f1f5f9', padding: '5px 8px', fontSize: 13, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
+}
 
-export default function BusinessCaseClient() {
+type Props = {
+  prijzen: { basis: number; premium: number; elite: number }
+  setPrijzen: (p: { basis: number; premium: number; elite: number }) => void
+}
+
+export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
   const [geschiedenis, setGeschiedenis] = useState<Rij[]>([])
   const [live, setLive] = useState<LiveMaand | null>(null)
   const [loading, setLoading] = useState(true)
@@ -96,20 +105,39 @@ export default function BusinessCaseClient() {
     <div>
       {error && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
-      {live && (
-        <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
-          <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Lopende maand: {fmtMaand(live.maand)}</div>
-          <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            Live gemeten uit `approved_users`: {live.basis_gebruikers ?? 0} basis, {live.premium_gebruikers ?? 0} premium, {live.elite_gebruikers ?? 0} elite, {live.team_gebruikers ?? 0} Command (niet meegeteld in omzet, geen vlak tarief). Tarieven: €{37} / €{77} / €{397}.
-          </p>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-            <div><div style={statLabel}>Omzet</div><div style={{ ...statValue, fontSize: 22, color: '#f59e0b' }}>{fmtEUR(live.prognose_omzet_eur)}</div></div>
-            <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(live.prognose_kosten_eur)}</div></div>
-            <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR((live.prognose_omzet_eur ?? 0) - live.prognose_kosten_eur)}</div></div>
-            <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(live.prognose_omzet_eur, live.prognose_kosten_eur)}</div></div>
+      {live && (() => {
+        const liveOmzet = (live.basis_gebruikers ?? 0) * prijzen.basis
+          + (live.premium_gebruikers ?? 0) * prijzen.premium
+          + (live.elite_gebruikers ?? 0) * prijzen.elite
+        return (
+          <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
+            <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Lopende maand: {fmtMaand(live.maand)}</div>
+            <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
+              Live gemeten uit `approved_users`: {live.basis_gebruikers ?? 0} basis, {live.premium_gebruikers ?? 0} premium, {live.elite_gebruikers ?? 0} elite, {live.team_gebruikers ?? 0} Command (niet meegeteld in omzet, geen vlak tarief).
+            </p>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
+              <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Basis €<input type="number" value={prijzen.basis} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, basis: parseFloat(e.target.value) || 0 })} />
+              </label>
+              <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Premium €<input type="number" value={prijzen.premium} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, premium: parseFloat(e.target.value) || 0 })} />
+              </label>
+              <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Elite €<input type="number" value={prijzen.elite} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, elite: parseFloat(e.target.value) || 0 })} />
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <div><div style={statLabel}>Omzet</div><div style={{ ...statValue, fontSize: 22, color: '#f59e0b' }}>{fmtEUR(liveOmzet)}</div></div>
+              <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(live.prognose_kosten_eur)}</div></div>
+              <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(liveOmzet - live.prognose_kosten_eur)}</div></div>
+              <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(liveOmzet, live.prognose_kosten_eur)}</div></div>
+            </div>
+            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
+              Deze prijzen worden gebruikt zodra je de maand afsluit op het Trackrecord-tabblad, dus stel ze hier in vóórdat je afsluit.
+            </p>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Geschiedenis</div>

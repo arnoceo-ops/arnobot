@@ -15,6 +15,10 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function KostenPageClient() {
   const [tab, setTab] = useState<Tab>('calculator')
+  // Gedeeld tussen Trackrecord (gebruikt dit bij "sluit maand af") en Business
+  // case (waar je ze instelt), zodat wat je op tab 3 ziet ook echt wordt
+  // vastgelegd als je op tab 2 een maand afsluit.
+  const [prijzen, setPrijzen] = useState({ basis: 37, premium: 77, elite: 397 })
 
   return (
     <>
@@ -52,7 +56,7 @@ export default function KostenPageClient() {
               Prognose wordt berekend uit écht gemeten gebruik die maand, niet uit de instelbare aannames van de calculator hiernaast. Zo toetst dit of de tarieven zelf kloppen.
             </p>
           </div>
-          <TrackrecordClient />
+          <TrackrecordClient prijzen={prijzen} />
         </div>
       )}
 
@@ -65,7 +69,7 @@ export default function KostenPageClient() {
               Omzet is het aantal betalende gebruikers per plan (echt gemeten uit `approved_users`) keer het tarief per plan. Command telt niet mee, dat heeft geen vlak tarief.
             </p>
           </div>
-          <BusinessCaseClient />
+          <BusinessCaseClient prijzen={prijzen} setPrijzen={setPrijzen} />
         </div>
       )}
     </>

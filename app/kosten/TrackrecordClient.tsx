@@ -43,7 +43,11 @@ const cardHeadStyle: React.CSSProperties = {
 }
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
 
-export default function TrackrecordClient() {
+type Props = {
+  prijzen: { basis: number; premium: number; elite: number }
+}
+
+export default function TrackrecordClient({ prijzen }: Props) {
   const [geschiedenis, setGeschiedenis] = useState<Meting[]>([])
   const [liveHuidigeMaand, setLiveHuidigeMaand] = useState<Meting | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,7 +80,12 @@ export default function TrackrecordClient() {
       const res = await fetch('/api/kosten-tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'afsluiten' }),
+        body: JSON.stringify({
+          action: 'afsluiten',
+          prijsBasis: prijzen.basis,
+          prijsPremium: prijzen.premium,
+          prijsElite: prijzen.elite,
+        }),
       })
       if (res.ok) await laadData()
       else setError('Afsluiten mislukt.')

@@ -72,8 +72,10 @@ async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
 
 // Puntmeting van de huidige abonneebasis, geen maandfilter: dit is een
 // momentopname (hoeveel betalende gebruikers heb je nu per plan), geen
-// telling van nieuwe aanmeldingen die specifieke maand.
-async function meetOmzet(): Promise<Omzet> {
+// telling van nieuwe aanmeldingen die specifieke maand. Prijzen per plan zijn
+// optioneel overschrijfbaar vanuit de client (los instelbaar op het Business
+// case-tabblad), zodat "sluit maand af" precies vastlegt wat daar te zien was.
+async function meetOmzet(prijzen?: { basis?: number; premium?: number; elite?: number }): Promise<Omzet> {
   const { data } = await supabase
     .from('approved_users')
     .select('plan')
@@ -88,9 +90,11 @@ async function meetOmzet(): Promise<Omzet> {
   const elite = tel('elite')
   const team = tel('team')
 
-  const prognoseOmzetEur = basis * TARIEVEN.prijsBasisEur
-    + premium * TARIEVEN.prijsPremiumEur
-    + elite * TARIEVEN.prijsEliteEur
+  const prijsBasis = prijzen?.basis ?? TARIEVEN.prijsBasisEur
+  const prijsPremium = prijzen?.premium ?? TARIEVEN.prijsPremiumEur
+  const prijsElite = prijzen?.elite ?? TARIEVEN.prijsEliteEur
+
+  const prognoseOmzetEur = basis * prijsBasis + premium * prijsPremium + elite * prijsElite
   // Command/team heeft geen vlak tarief (staffel per seat), telt niet mee in
   // de omzetprognose, alleen het aantal wordt getoond.
 
@@ -159,13 +163,17 @@ export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const { action, maand, werkelijkeKosten, werkelijkeOmzet } = body as {
+  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium, prijsElite } = body as {
     action?: string; maand?: string; werkelijkeKosten?: number; werkelijkeOmzet?: number
+    prijsBasis?: number; prijsPremium?: number; prijsElite?: number
   }
 
   if (action === 'afsluiten') {
     const doelMaand = typeof maand === 'string' && maand ? maand : huidigeMaandIso()
-    const [meting, omzet] = await Promise.all([meetGebruikVoorMaand(doelMaand), meetOmzet()])
+    const [meting, omzet] = await Promise.all([
+      meetGebruikVoorMaand(doelMaand),
+      meetOmzet({ basis: prijsBasis, premium: prijsPremium, elite: prijsElite }),
+    ])
     const prognose = berekenPrognoseKostenUsd(meting)
 
     const { error } = await supabase.from('arnobot_kosten_tracking').upsert({
