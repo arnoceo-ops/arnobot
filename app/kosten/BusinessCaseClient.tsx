@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { DEFAULT_INPUTS, computeForN } from '@/lib/kostenTarieven'
+import {
+  DEFAULT_INPUTS, computeForN, berekenOmzetEnBetaalprovider,
+  type Prijzen, type TierVerdeling, type Betaalprovider,
+} from '@/lib/kostenTarieven'
 
 type Rij = {
   maand: string
@@ -73,13 +76,21 @@ function NumberField({ label, hint, value, onChange, step = 1 }: {
 }
 
 type Props = {
-  prijzen: { basis: number; premium: number; elite: number }
-  setPrijzen: (p: { basis: number; premium: number; elite: number }) => void
+  prijzen: Prijzen
+  setPrijzen: (p: Prijzen) => void
   nGebruikers: number
   setNGebruikers: (n: number) => void
+  tierVerdeling: TierVerdeling
+  setTierVerdeling: (v: TierVerdeling) => void
+  betaalprovider: Betaalprovider
+  setBetaalprovider: (b: Betaalprovider) => void
 }
 
-export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, setNGebruikers }: Props) {
+export default function BusinessCaseClient({
+  prijzen, setPrijzen, nGebruikers, setNGebruikers,
+  tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
+  betaalprovider, setBetaalprovider,
+}: Props) {
   const [geschiedenis, setGeschiedenis] = useState<Rij[]>([])
   const [live, setLive] = useState<LiveMaand | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,18 +98,12 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
   const [werkelijkInput, setWerkelijkInput] = useState<Record<string, string>>({})
   const [opslaan, setOpslaan] = useState<string | null>(null)
 
-  // Verdeling per tier voor het scenario. Het totaal aantal gebruikers
-  // (nGebruikers) is gedeeld met de Calculator (tab 1): instellen hier
-  // beweegt tab 1 mee, en andersom, één en dezelfde waarde.
-  const [scenarioPct, setScenarioPct] = useState({ basis: 58, premium: 40, elite: 2 })
-
   // Betaalprovider (Emirates NBD Pay / Network International): geen publiek
   // tarief, dit is een marktbenchmark voor internationaal uitgegeven kaarten
   // (3,2-3,9% + vast bedrag), niet een offerte. % creditcard staat nu op 100,
   // ruimte gelaten voor later: jaarbetalingen via factuur (geen kaartkosten)
-  // tellen dan niet meer mee in dit percentage.
-  const [betaalprovider, setBetaalprovider] = useState({ mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 })
-
+  // tellen dan niet meer mee in dit percentage. Instellingen + tarieven +
+  // %-verdeling zijn gedeeld met tab 1, zie lib/kostenTarieven.ts.
   function betaalproviderKosten(omzet: number, aantalTransacties: number): number {
     const aandeel = betaalprovider.pctCreditcard / 100
     return omzet * aandeel * (betaalprovider.mdrPct / 100) + aantalTransacties * aandeel * betaalprovider.mdrFixed
@@ -142,13 +147,10 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
   }
 
   const scenario = useMemo(() => {
-    const basisN = Math.round(nGebruikers * (scenarioPct.basis / 100))
-    const premiumN = Math.round(nGebruikers * (scenarioPct.premium / 100))
-    const eliteN = Math.round(nGebruikers * (scenarioPct.elite / 100))
-    const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
+    const { basisN, premiumN, eliteN, omzet, betaalproviderKosten: betaalKosten } =
+      berekenOmzetEnBetaalprovider(prijzen, scenarioPct, betaalprovider, nGebruikers)
     const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    const betaalKosten = betaalproviderKosten(omzet, basisN + premiumN + eliteN)
     return { basisN, premiumN, eliteN, omzet, kostenEur, betaalKosten }
   }, [nGebruikers, scenarioPct, prijzen, betaalprovider])
 

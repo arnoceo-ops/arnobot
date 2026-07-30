@@ -210,3 +210,27 @@ export function computeForN(inputs: Inputs, n: number) {
     whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
+
+// Betaalprovider (Emirates NBD Pay / Network International): geen publiek
+// tarief, marktbenchmark voor internationaal uitgegeven kaarten. Gedeeld
+// tussen Calculator (tab 1, telt mee in de totale kosten) en het
+// Scenario-blok op Business case (tab 3), zodat beide exact dezelfde omzet-
+// en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
+export type Prijzen = { basis: number; premium: number; elite: number }
+export type TierVerdeling = { basis: number; premium: number; elite: number }
+export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
+
+export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
+export const DEFAULT_TIER_VERDELING: TierVerdeling = { basis: 58, premium: 40, elite: 2 }
+export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
+
+export function berekenOmzetEnBetaalprovider(prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number) {
+  const basisN = Math.round(n * (verdeling.basis / 100))
+  const premiumN = Math.round(n * (verdeling.premium / 100))
+  const eliteN = Math.round(n * (verdeling.elite / 100))
+  const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
+  const aandeel = betaalprovider.pctCreditcard / 100
+  const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
+    + (basisN + premiumN + eliteN) * aandeel * betaalprovider.mdrFixed
+  return { basisN, premiumN, eliteN, omzet, betaalproviderKosten }
+}

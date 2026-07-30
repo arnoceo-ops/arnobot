@@ -4,6 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
+import { DEFAULT_PRIJZEN, DEFAULT_TIER_VERDELING, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -18,11 +19,16 @@ export default function KostenPageClient() {
   // Gedeeld tussen Trackrecord (gebruikt dit bij "sluit maand af") en Business
   // case (waar je ze instelt), zodat wat je op tab 3 ziet ook echt wordt
   // vastgelegd als je op tab 2 een maand afsluit.
-  const [prijzen, setPrijzen] = useState({ basis: 37, premium: 77, elite: 397 })
+  const [prijzen, setPrijzen] = useState(DEFAULT_PRIJZEN)
   // Gedeeld tussen Calculator (tab 1) en het Scenario-blok op Business case
   // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
   // andere automatisch mee, in beide richtingen.
   const [nGebruikers, setNGebruikers] = useState(250)
+  // %-verdeling per tier en betaalprovider-instellingen: ook gedeeld, zodat
+  // tab 1 (Calculator) de betaalprovider-kosten als onderdeel van de totale
+  // kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is.
+  const [tierVerdeling, setTierVerdeling] = useState(DEFAULT_TIER_VERDELING)
+  const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
 
   return (
     <>
@@ -49,7 +55,15 @@ export default function KostenPageClient() {
         </div>
       </div>
 
-      {tab === 'calculator' && <KostenCalculatorClient nGebruikers={nGebruikers} setNGebruikers={setNGebruikers} />}
+      {tab === 'calculator' && (
+        <KostenCalculatorClient
+          nGebruikers={nGebruikers}
+          setNGebruikers={setNGebruikers}
+          prijzen={prijzen}
+          tierVerdeling={tierVerdeling}
+          betaalprovider={betaalprovider}
+        />
+      )}
 
       {tab === 'trackrecord' && (
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px,3vw,32px) 64px' }}>
@@ -73,7 +87,12 @@ export default function KostenPageClient() {
               Omzet is het aantal betalende gebruikers per plan (echt gemeten uit `approved_users`) keer het tarief per plan. Command telt niet mee, dat heeft geen vlak tarief.
             </p>
           </div>
-          <BusinessCaseClient prijzen={prijzen} setPrijzen={setPrijzen} nGebruikers={nGebruikers} setNGebruikers={setNGebruikers} />
+          <BusinessCaseClient
+            prijzen={prijzen} setPrijzen={setPrijzen}
+            nGebruikers={nGebruikers} setNGebruikers={setNGebruikers}
+            tierVerdeling={tierVerdeling} setTierVerdeling={setTierVerdeling}
+            betaalprovider={betaalprovider} setBetaalprovider={setBetaalprovider}
+          />
         </div>
       )}
     </>

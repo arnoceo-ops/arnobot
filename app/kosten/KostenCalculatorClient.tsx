@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { DEFAULT_INPUTS, computeForN, type Inputs } from '@/lib/kostenTarieven'
+import {
+  DEFAULT_INPUTS, computeForN, type Inputs,
+  berekenOmzetEnBetaalprovider, type Prijzen, type TierVerdeling, type Betaalprovider,
+} from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
   return '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -82,11 +85,22 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 type Props = {
   nGebruikers: number
   setNGebruikers: (n: number) => void
+  prijzen: Prijzen
+  tierVerdeling: TierVerdeling
+  betaalprovider: Betaalprovider
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, prijzen, tierVerdeling, betaalprovider }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
+
+  // Betaalprovider-kosten (Emirates NBD Pay) horen hier ook bij de totale
+  // kosten, ook al zijn ze zelf omzet-afhankelijk: dat is precies waarom
+  // tarieven/verdeling/betaalprovider-instellingen gedeeld zijn met tab 3.
+  function betaalproviderKostenUsd(n: number): number {
+    const { betaalproviderKosten } = berekenOmzetEnBetaalprovider(prijzen, tierVerdeling, betaalprovider, n)
+    return betaalproviderKosten * inputs.fxRate
+  }
 
   function set<K extends keyof Inputs>(key: K, value: Inputs[K]) {
     setInputs(prev => ({ ...prev, [key]: value }))
@@ -99,10 +113,21 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers }: 
     })
   }
 
-  const result = useMemo(() => computeForN(inputs, nGebruikers), [inputs, nGebruikers])
+  const result = useMemo(() => {
+    const basis = computeForN(inputs, nGebruikers)
+    const betaalKosten = betaalproviderKostenUsd(nGebruikers)
+    const totaal = basis.totaal + betaalKosten
+    return { ...basis, betaalKosten, totaal, perGebruiker: nGebruikers > 0 ? totaal / nGebruikers : 0 }
+  }, [inputs, nGebruikers, prijzen, tierVerdeling, betaalprovider])
+
   const scaleRows = useMemo(
-    () => [10, 50, 100, 200, 500].map(n => ({ n, ...computeForN(inputs, n) })),
-    [inputs]
+    () => [10, 50, 100, 200, 500].map(n => {
+      const basis = computeForN(inputs, n)
+      const betaalKosten = betaalproviderKostenUsd(n)
+      const totaal = basis.totaal + betaalKosten
+      return { n, ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
+    }),
+    [inputs, prijzen, tierVerdeling, betaalprovider]
   )
 
   return (
@@ -243,11 +268,15 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers }: 
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Emirates NBD Pay)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
                 <div style={{ ...breakdownLineStyle, borderBottom: 'none' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>Totaal</span>
                   <span style={{ color: '#f59e0b', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</span>
                 </div>
               </div>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
+                Betaalprovider-kosten gebruiken de tarieven, %-verdeling en betaalprovider-instellingen van tab 3 (Business case), dit tabblad kent zelf geen prijzen.
+              </p>
             </div>
 
             <div style={cardStyle}>
