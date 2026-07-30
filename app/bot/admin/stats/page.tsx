@@ -375,6 +375,23 @@ export default async function AdminStatsPage() {
           )}
         </div>
 
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BEZOEKER → FREEMIUM / FREEMIUM → PAID</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
+          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>BEZOEKER → FREEMIUM</p>
+              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#6b7280', lineHeight: 1 }}>n.v.t.</p>
+            </div>
+            <div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>FREEMIUM → PAID</p>
+              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#6b7280', lineHeight: 1 }}>n.v.t.</p>
+            </div>
+          </div>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
+            ArnoBot heeft geen permanente gratis laag, alleen een tijdelijke trial. Deze twee worden pas meetbaar als daar ooit voor gekozen wordt.
+          </p>
+        </div>
+
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER KANAAL</p>
         <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
