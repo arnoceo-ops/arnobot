@@ -92,6 +92,18 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
   // beweegt tab 1 mee, en andersom, één en dezelfde waarde.
   const [scenarioPct, setScenarioPct] = useState({ basis: 58, premium: 40, elite: 2 })
 
+  // Betaalprovider (Emirates NBD Pay / Network International): geen publiek
+  // tarief, dit is een marktbenchmark voor internationaal uitgegeven kaarten
+  // (3,2-3,9% + vast bedrag), niet een offerte. % creditcard staat nu op 100,
+  // ruimte gelaten voor later: jaarbetalingen via factuur (geen kaartkosten)
+  // tellen dan niet meer mee in dit percentage.
+  const [betaalprovider, setBetaalprovider] = useState({ mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 })
+
+  function betaalproviderKosten(omzet: number, aantalTransacties: number): number {
+    const aandeel = betaalprovider.pctCreditcard / 100
+    return omzet * aandeel * (betaalprovider.mdrPct / 100) + aantalTransacties * aandeel * betaalprovider.mdrFixed
+  }
+
   async function laadData() {
     setLoading(true)
     setError('')
@@ -136,8 +148,9 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
     const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
     const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    return { basisN, premiumN, eliteN, omzet, kostenEur }
-  }, [nGebruikers, scenarioPct, prijzen])
+    const betaalKosten = betaalproviderKosten(omzet, basisN + premiumN + eliteN)
+    return { basisN, premiumN, eliteN, omzet, kostenEur, betaalKosten }
+  }, [nGebruikers, scenarioPct, prijzen, betaalprovider])
 
   const pctTotaal = scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
 
@@ -151,6 +164,9 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
         const liveOmzet = (live.basis_gebruikers ?? 0) * prijzen.basis
           + (live.premium_gebruikers ?? 0) * prijzen.premium
           + (live.elite_gebruikers ?? 0) * prijzen.elite
+        const liveAantal = (live.basis_gebruikers ?? 0) + (live.premium_gebruikers ?? 0) + (live.elite_gebruikers ?? 0)
+        const liveBetaalKosten = betaalproviderKosten(liveOmzet, liveAantal)
+        const liveKostenTotaal = live.prognose_kosten_eur + liveBetaalKosten
         return (
           <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
             <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Lopende maand: {fmtMaand(live.maand)}</div>
@@ -170,9 +186,10 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <div><div style={statLabel}>Omzet</div><div style={headlineValueStyle}>{fmtEUR(liveOmzet)}</div></div>
-              <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(live.prognose_kosten_eur)}</div></div>
-              <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(liveOmzet - live.prognose_kosten_eur)}</div></div>
-              <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(liveOmzet, live.prognose_kosten_eur)}</div></div>
+              <div><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(live.prognose_kosten_eur)}</div></div>
+              <div><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(liveBetaalKosten)}</div></div>
+              <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(liveOmzet - liveKostenTotaal)}</div></div>
+              <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(liveOmzet, liveKostenTotaal)}</div></div>
             </div>
             <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
               Deze prijzen worden gebruikt zodra je de maand afsluit op het Trackrecord-tabblad, dus stel ze hier in vóórdat je afsluit.
@@ -201,10 +218,21 @@ export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, s
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
           <div><div style={statLabel}>Omzet</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzet)}</div></div>
-          <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
-          <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzet - scenario.kostenEur)}</div></div>
-          <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzet, scenario.kostenEur)}</div></div>
+          <div><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
+          <div><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
+          <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzet - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+          <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzet, scenario.kostenEur + scenario.betaalKosten)}</div></div>
         </div>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
+        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
+          Emirates NBD publiceert geen vast tarief voor kaartbetalingen, dit is een marktbenchmark voor internationaal uitgegeven kaarten (3,2-3,9% + vast bedrag per transactie), geen offerte. Vraag een echte offerte op zodra de bankrekening actief is.
+        </p>
+        <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: v })} />
+        <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: v })} />
+        <NumberField label="% van omzet via creditcard" hint="rest verondersteld via jaarfactuur, geen kaartkosten" value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })} />
       </div>
 
       <div style={cardStyle}>
