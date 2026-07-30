@@ -116,16 +116,27 @@ export default function BusinessCaseClient({
   const [freemiumPct, setFreemiumPct] = useState(0)
   const [doelWinst, setDoelWinst] = useState(10000)
 
+  const pctTotaal = freemiumPct + scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+
   const scenario = useMemo(() => {
+    // Freemium + Basis + Premium + Elite horen samen nooit meer dan het totaal
+    // aantal gebruikers op te leveren. Bij optellen tot 100% of minder verandert
+    // er niets (rest = niet meegeteld). Bij meer dan 100% (bv. een tikfout)
+    // schalen we alle vier proportioneel terug op dezelfde noemer, zodat de
+    // verdeling hieronder altijd optelt tot nGebruikers, nooit meer.
+    const noemer = Math.max(pctTotaal, 100)
+    const genormaliseerdeVerdeling: TierVerdeling = {
+      basis: (scenarioPct.basis / noemer) * 100,
+      premium: (scenarioPct.premium / noemer) * 100,
+      elite: (scenarioPct.elite / noemer) * 100,
+    }
     const { basisN, premiumN, eliteN, omzet, betaalproviderKosten: betaalKosten } =
-      berekenOmzetEnBetaalprovider(prijzen, scenarioPct, betaalprovider, nGebruikers)
+      berekenOmzetEnBetaalprovider(prijzen, genormaliseerdeVerdeling, betaalprovider, nGebruikers)
     const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    const freemiumN = Math.round(nGebruikers * (freemiumPct / 100))
+    const freemiumN = Math.round(nGebruikers * (freemiumPct / noemer))
     return { basisN, premiumN, eliteN, freemiumN, omzet, kostenEur, betaalKosten }
-  }, [nGebruikers, scenarioPct, prijzen, betaalprovider, freemiumPct])
-
-  const pctTotaal = freemiumPct + scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+  }, [nGebruikers, scenarioPct, prijzen, betaalprovider, freemiumPct, pctTotaal])
 
   const benodigdeGebruikers = useMemo(
     () => benodigdeGebruikersVoorWinst(doelWinst, prijzen, scenarioPct, betaalprovider),
@@ -154,7 +165,11 @@ export default function BusinessCaseClient({
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
         {pctTotaal !== 100 && (
-          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>Percentages tellen op tot {pctTotaal}%, niet 100%.</p>
+          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>
+            {pctTotaal < 100
+              ? `Percentages tellen op tot ${pctTotaal}%, niet 100%. De resterende ${100 - pctTotaal}% wordt niet meegeteld in de verdeling.`
+              : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het totaal aantal gebruikers oplevert.`}
+          </p>
         )}
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
