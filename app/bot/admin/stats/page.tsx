@@ -107,6 +107,7 @@ export default async function AdminStatsPage() {
   const now = Date.now()
   const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
   const veertienDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const dertigDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
     { count: coachingGesprekken },
@@ -120,6 +121,8 @@ export default async function AdminStatsPage() {
     { data: referrals },
     { data: coachingDocs },
     { data: blogSessies },
+    { data: pageviews30d },
+    { data: eerstePageview },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').neq('user_id', E2E_TEST_USER_ID),
@@ -135,6 +138,8 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_referrals').select('status, referred_user_id').neq('referrer_user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').neq('user_id', E2E_TEST_USER_ID),
     supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_pageviews').select('anon_id, created_at').gte('created_at', dertigDaysAgo),
+    supabase.from('arnobot_pageviews').select('created_at').order('created_at', { ascending: true }).limit(1),
   ])
 
   const sparringGesprekken = sparringSessies?.length ?? 0
@@ -188,6 +193,17 @@ export default async function AdminStatsPage() {
     ? Math.round((referralGebruikers.filter(u => u.paid_at).length / referralGebruikers.length) * 100) : 0
   const overigKanaalConversie = overigGebruikers.length > 0
     ? Math.round((overigGebruikers.filter(u => u.paid_at).length / overigGebruikers.length) * 100) : 0
+
+  // Bezoeker -> Trial: unieke anonieme bezoekers (arnobot_pageviews, geen
+  // Clerk-koppeling) tegenover nieuwe trials in dezelfde laatste-30-dagen
+  // periode. Pas betrouwbaar zodra de teller minstens 30 dagen heeft gedraaid,
+  // anders vertekent een gedeeltelijke periode het beeld.
+  const bezoekersLaatste30Dagen = new Set((pageviews30d ?? []).map(p => p.anon_id)).size
+  const trialsLaatste30Dagen = users?.filter(u => u.created_at >= dertigDaysAgo).length ?? 0
+  const bezoekerTrialRatio = bezoekersLaatste30Dagen > 0 ? Math.round((trialsLaatste30Dagen / bezoekersLaatste30Dagen) * 100) : 0
+  const trackingSinds = eerstePageview?.[0]?.created_at as string | undefined
+  const trackingDagen = trackingSinds ? Math.floor((now - new Date(trackingSinds).getTime()) / (24 * 60 * 60 * 1000)) : 0
+  const voldoendeTrackingData = !!trackingSinds && trackingDagen >= 30
 
   // Cohortdenken: conversie per aanmeldmaand i.p.v. één blended cijfer over alle gebruikers ooit
   const cohortMap: Record<string, { totaal: number; betaald: number }> = {}
@@ -341,6 +357,22 @@ export default async function AdminStatsPage() {
             { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
             { sublabel: 'CONVERSIES', value: String(referralConversies) },
           ]} />
+        </div>
+
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BEZOEKER → TRIAL (LAATSTE 30 DAGEN)</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
+          {voldoendeTrackingData ? (
+            <>
+              <RatioBar label="CONVERSIE" ratio={bezoekerTrialRatio} note={`${trialsLaatste30Dagen} trials / ${bezoekersLaatste30Dagen} bezoekers`} />
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
+                Bezoekers = unieke anonieme sessies op de publieke marketingpagina&apos;s, niet gekoppeld aan een account.
+              </p>
+            </>
+          ) : (
+            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f59e0b' }}>
+              Onvoldoende data: bezoekerstracking draait pas {trackingDagen} {trackingDagen === 1 ? 'dag' : 'dagen'}, minimaal 30 dagen nodig voor een betrouwbaar cijfer.
+            </p>
+          )}
         </div>
 
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER KANAAL</p>

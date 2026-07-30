@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkAppProvider from "./ClerkAppProvider";
 import SentryUserIdentifier from "./components/SentryUserIdentifier";
+import PageviewTracker from "./components/PageviewTracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,7 @@ export default async function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
         >
           <SentryUserIdentifier />
+          <PageviewTracker />
           {children}
         </body>
       </html>
