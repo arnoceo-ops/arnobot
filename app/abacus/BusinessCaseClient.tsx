@@ -18,6 +18,33 @@ function margePct(omzet: number | null, kosten: number | null): string {
   return `${(((omzet - kosten) / omzet) * 100).toFixed(0)}%`
 }
 
+// Binaire zoektocht naar het kleinste aantal gebruikers waarbij de winst de
+// doelwinst haalt, uitgaande van dezelfde tarieven/%-verdeling/betaalprovider-
+// instellingen als het scenarioblok. Winst is niet perfect lineair (staffels
+// bij ElevenLabs/Upstash, vaste kosten per maand), maar wel monotoon stijgend
+// in n, dus binaire zoektocht volstaat, geen closed-form nodig.
+const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
+
+function winstBijN(n: number, prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider): number {
+  const { omzet, betaalproviderKosten } = berekenOmzetEnBetaalprovider(prijzen, verdeling, betaalprovider, n)
+  const kostenEur = computeForN(DEFAULT_INPUTS, n).totaal / FX_EUR_USD
+  return omzet - kostenEur - betaalproviderKosten
+}
+
+function benodigdeGebruikersVoorWinst(
+  doelWinstEur: number, prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider
+): number | null {
+  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, prijzen, verdeling, betaalprovider) < doelWinstEur) return null
+  let lo = 0
+  let hi = MAX_GEBRUIKERS_ZOEKGRENS
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2)
+    if (winstBijN(mid, prijzen, verdeling, betaalprovider) >= doelWinstEur) hi = mid
+    else lo = mid + 1
+  }
+  return lo
+}
+
 // Zelfde stijlconstanten als KostenCalculatorClient.tsx (tab 1), bewust
 // letterlijk gelijk gehouden zodat alle drie de tabbladen consistent ogen.
 const cardStyle: React.CSSProperties = {
@@ -86,15 +113,24 @@ export default function BusinessCaseClient({
   tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
   betaalprovider, setBetaalprovider,
 }: Props) {
+  const [freemiumPct, setFreemiumPct] = useState(0)
+  const [doelWinst, setDoelWinst] = useState(10000)
+
   const scenario = useMemo(() => {
     const { basisN, premiumN, eliteN, omzet, betaalproviderKosten: betaalKosten } =
       berekenOmzetEnBetaalprovider(prijzen, scenarioPct, betaalprovider, nGebruikers)
     const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    return { basisN, premiumN, eliteN, omzet, kostenEur, betaalKosten }
-  }, [nGebruikers, scenarioPct, prijzen, betaalprovider])
+    const freemiumN = Math.round(nGebruikers * (freemiumPct / 100))
+    return { basisN, premiumN, eliteN, freemiumN, omzet, kostenEur, betaalKosten }
+  }, [nGebruikers, scenarioPct, prijzen, betaalprovider, freemiumPct])
 
-  const pctTotaal = scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+  const pctTotaal = freemiumPct + scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+
+  const benodigdeGebruikers = useMemo(
+    () => benodigdeGebruikersVoorWinst(doelWinst, prijzen, scenarioPct, betaalprovider),
+    [doelWinst, prijzen, scenarioPct, betaalprovider]
+  )
 
   return (
     <div>
@@ -113,16 +149,17 @@ export default function BusinessCaseClient({
           Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
+        <NumberField label="% Freemium" hint="geen omzet, telt wel mee in de AI/infra-kosten" value={freemiumPct} onChange={setFreemiumPct} />
         <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
         {pctTotaal !== 100 && (
-          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>Percentages tellen op tot {pctTotaal}%, niet 100%. De rest wordt als niet-betalend beschouwd.</p>
+          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>Percentages tellen op tot {pctTotaal}%, niet 100%.</p>
         )}
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
             <div style={statLabel}>Verdeling</div>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basisN} basis &middot; {scenario.premiumN} premium &middot; {scenario.eliteN} elite</div>
+            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.freemiumN} freemium &middot; {scenario.basisN} basis &middot; {scenario.premiumN} premium &middot; {scenario.eliteN} elite</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
@@ -131,6 +168,27 @@ export default function BusinessCaseClient({
           <div><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
           <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzet - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzet, scenario.kostenEur + scenario.betaalKosten)}</div></div>
+        </div>
+
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 20, paddingTop: 16 }}>
+          <NumberField label="Doelwinst per maand (€)" hint="hoeveel gebruikers heb je hiervoor nodig, bij de tarieven en %-verdeling hierboven" value={doelWinst} step={100} onChange={setDoelWinst} />
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={statLabel}>Benodigd aantal gebruikers</div>
+              <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
+            </div>
+            {benodigdeGebruikers !== null && (
+              <button
+                onClick={() => setNGebruikers(benodigdeGebruikers)}
+                style={{
+                  fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+                  padding: '10px 18px', borderRadius: 999, border: 'none', cursor: 'pointer', background: '#f59e0b', color: '#111827',
+                }}
+              >
+                Vul dit aantal in
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
