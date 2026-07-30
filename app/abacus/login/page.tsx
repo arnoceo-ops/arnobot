@@ -30,7 +30,7 @@ export default function KostenLoginPage() {
     <main style={{ background: '#111827', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
       <div style={{ width: '100%', maxWidth: '400px', padding: '0 24px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '12px' }}>ARNOBOT</p>
-        <h1 style={{ color: '#f1f5f9', fontSize: '48px', fontWeight: 700, margin: '0 0 40px 0', letterSpacing: '-1px' }}>Kosten</h1>
+        <h1 style={{ color: '#f1f5f9', fontSize: '48px', fontWeight: 700, margin: '0 0 40px 0', letterSpacing: '-1px' }}>Abacus</h1>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input
             type="password"
