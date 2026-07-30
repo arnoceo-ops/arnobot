@@ -211,6 +211,21 @@ export function computeForN(inputs: Inputs, n: number) {
   }
 }
 
+// Freemium-gebruikers kunnen alleen sparren en gesprekken voeren (geen
+// analyses, geen coaching/Fable 5, geen voice), dus draagt maar een deel van
+// computeForN bij: hoofdchat-berichten + sparring, verder niets. Vaste
+// infrastructuurkosten worden niet nogmaals meegeteld, die zitten al één keer
+// in computeForN voor de betalende gebruikers.
+export function computeFreemiumKostenPerGebruiker(inputs: Inputs): number {
+  const anthropicKosten = inputs.berichten * inputs.anthropicPerBericht
+  const sparringAandeel = inputs.pctSparring / 100
+  const sparringKosten = sparringAandeel * (
+    inputs.sparringSessiesPerGebruiker * inputs.berichtenPerSparringSessie * inputs.kostenPerSparringBericht
+    + inputs.sparringSessiesPerGebruiker * inputs.kostenPerDebrief
+  )
+  return anthropicKosten + sparringKosten
+}
+
 // Betaalprovider (Emirates NBD Pay / Network International): geen publiek
 // tarief, marktbenchmark voor internationaal uitgegeven kaarten. Gedeeld
 // tussen Calculator (tab 1, telt mee in de totale kosten) en het

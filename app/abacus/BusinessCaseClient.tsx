@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, computeForN, berekenOmzetEnBetaalprovider,
+  DEFAULT_INPUTS, computeForN, computeFreemiumKostenPerGebruiker, berekenOmzetEnBetaalprovider,
   type Prijzen, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
@@ -116,27 +116,25 @@ export default function BusinessCaseClient({
   const [freemiumPct, setFreemiumPct] = useState(0)
   const [doelWinst, setDoelWinst] = useState(10000)
 
-  const pctTotaal = freemiumPct + scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+  // Freemium staat los van de %-pool van Basis/Premium/Elite: het is een extra
+  // laag bovenop het aantal betalende gebruikers, geen slice eruit. Basis+
+  // Premium+Elite mogen samen nog steeds niet boven 100% van de betalende
+  // gebruikers uitkomen (berekenOmzetEnBetaalprovider schaalt dat zelf terug
+  // indien nodig, zie lib/kostenTarieven.ts).
+  const pctTotaal = scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
 
   const scenario = useMemo(() => {
-    // Freemium + Basis + Premium + Elite horen samen nooit meer dan het totaal
-    // aantal gebruikers op te leveren. Bij optellen tot 100% of minder verandert
-    // er niets (rest = niet meegeteld). Bij meer dan 100% (bv. een tikfout)
-    // schalen we alle vier proportioneel terug op dezelfde noemer, zodat de
-    // verdeling hieronder altijd optelt tot nGebruikers, nooit meer.
-    const noemer = Math.max(pctTotaal, 100)
-    const genormaliseerdeVerdeling: TierVerdeling = {
-      basis: (scenarioPct.basis / noemer) * 100,
-      premium: (scenarioPct.premium / noemer) * 100,
-      elite: (scenarioPct.elite / noemer) * 100,
-    }
     const { basisN, premiumN, eliteN, omzet, betaalproviderKosten: betaalKosten } =
-      berekenOmzetEnBetaalprovider(prijzen, genormaliseerdeVerdeling, betaalprovider, nGebruikers)
-    const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
+      berekenOmzetEnBetaalprovider(prijzen, scenarioPct, betaalprovider, nGebruikers)
+    const freemiumN = Math.round(nGebruikers * (freemiumPct / 100))
+    // Freemium-gebruikers kunnen alleen sparren en gesprekken voeren (geen
+    // analyses, coaching of voice), dus tellen niet mee in de volle
+    // computeForN, alleen in hun eigen beperkte kostenformule.
+    const freemiumKostenUsd = freemiumN * computeFreemiumKostenPerGebruiker(DEFAULT_INPUTS)
+    const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal + freemiumKostenUsd
     const kostenEur = kostenUsd / FX_EUR_USD
-    const freemiumN = Math.round(nGebruikers * (freemiumPct / noemer))
     return { basisN, premiumN, eliteN, freemiumN, omzet, kostenEur, betaalKosten }
-  }, [nGebruikers, scenarioPct, prijzen, betaalprovider, freemiumPct, pctTotaal])
+  }, [nGebruikers, scenarioPct, prijzen, betaalprovider, freemiumPct])
 
   const benodigdeGebruikers = useMemo(
     () => benodigdeGebruikersVoorWinst(doelWinst, prijzen, scenarioPct, betaalprovider),
@@ -159,8 +157,7 @@ export default function BusinessCaseClient({
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
           Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
-        <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
-        <NumberField label="% Freemium" hint="geen omzet, telt wel mee in de AI/infra-kosten" value={freemiumPct} onChange={setFreemiumPct} />
+        <NumberField label="Aantal betalende gebruikers" hint="gedeeld met de Calculator (tab 1); freemium hieronder komt hier los bovenop" value={nGebruikers} onChange={setNGebruikers} />
         <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
@@ -168,13 +165,14 @@ export default function BusinessCaseClient({
           <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>
             {pctTotaal < 100
               ? `Percentages tellen op tot ${pctTotaal}%, niet 100%. De resterende ${100 - pctTotaal}% wordt niet meegeteld in de verdeling.`
-              : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het totaal aantal gebruikers oplevert.`}
+              : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het aantal betalende gebruikers oplevert.`}
           </p>
         )}
+        <NumberField label="% Freemium (extra, bovenop de betalende gebruikers)" hint="geen omzet, alleen sparren en gesprekken (geen analyses, coaching of voice), telt naar rato mee in de kosten" value={freemiumPct} onChange={setFreemiumPct} />
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
             <div style={statLabel}>Verdeling</div>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.freemiumN} freemium &middot; {scenario.basisN} basis &middot; {scenario.premiumN} premium &middot; {scenario.eliteN} elite</div>
+            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basisN} basis &middot; {scenario.premiumN} premium &middot; {scenario.eliteN} elite ({nGebruikers} betalend) + {scenario.freemiumN} freemium</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
