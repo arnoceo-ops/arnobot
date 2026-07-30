@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-
-type Tier = { name: string; credits: number; price: number }
+import { TARIEVEN, type Tier } from '@/lib/kostenTarieven'
 
 type Inputs = {
   berichten: number
@@ -41,58 +40,56 @@ type Inputs = {
 // Uitgangspunt: "redelijk actieve" gebruikers, niet het ruwe gemeten gemiddelde.
 // Bewust aan de hoge kant gekozen (besloten 2026-07-29) zodat de pagina bij het
 // openen nooit een te optimistisch beeld geeft, dat achteraf tegenvalt.
+// Alle $-tarieven komen uit lib/kostenTarieven.ts, dezelfde bron die de
+// trackrecord-route (api/kosten-tracking) gebruikt om de prognose op echt
+// gemeten gebruik te berekenen. Alleen de volume-aannames hieronder (hoeveel
+// berichten/analyses/sessies een "redelijk actieve" gebruiker doet) zijn
+// calculator-specifiek en leven niet in het gedeelde bestand.
 const DEFAULT_INPUTS: Inputs = {
   berichten: 60,
-  anthropicPerBericht: 0.015,
+  anthropicPerBericht: TARIEVEN.anthropicPerBericht,
   // Analyses (app/api/bot/coaching-analyse/route.ts, Sonnet 4.6, heet in de app
-  // "Analyses" op /bot/analyses, niet meer "BIEB"). Kosten per analyse ~$0,007
-  // (juli 2026 gemeten output ~1263 tekens + geschatte input van meegestuurde
-  // sessiesamenvattingen). Aantal op 8/maand gezet door Arno (2026-07-29).
+  // "Analyses" op /bot/analyses, niet meer "BIEB"). Aantal op 8/maand gezet
+  // door Arno (2026-07-29).
   analysesPerGebruiker: 8,
-  kostenPerAnalyse: 0.007,
+  kostenPerAnalyse: TARIEVEN.kostenPerAnalyse,
   // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
   // (max_tokens 4000) en de uitdaging-route (max_tokens 600).
-  coachingPerGebruiker: 2,
-  coachingKostenPerSynthese: 0.18,
-  uitdagingPerGebruiker: 10,
-  uitdagingKostenPerStuk: 0.025,
+  coachingPerGebruiker: TARIEVEN.coachingPerGebruikerPerMaand,
+  coachingKostenPerSynthese: TARIEVEN.coachingKostenPerSynthese,
+  uitdagingPerGebruiker: TARIEVEN.uitdagingPerGebruikerPerMaand,
+  uitdagingKostenPerStuk: TARIEVEN.uitdagingKostenPerStuk,
   // Sparring (app/api/sparring/*, Sonnet 4.6), gebaseerd op echt gemeten gebruik
   // uit juli 2026: 9 sessies, 2 gebruikers, gem. 17,7 berichten/sessie.
   pctSparring: 20,
   sparringSessiesPerGebruiker: 5,
   berichtenPerSparringSessie: 12,
-  kostenPerSparringBericht: 0.006,
-  kostenPerDebrief: 0.015,
+  kostenPerSparringBericht: TARIEVEN.kostenPerSparringBericht,
+  kostenPerDebrief: TARIEVEN.kostenPerDebrief,
   // Vangnet voor de rest van de modelinventaris: session-end (Haiku, 3 calls),
   // coaching-precheck, blog-synthese, verfijn, sessies-zoeken. Stuk voor stuk
   // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
   // elke route apart te modelleren.
-  overigeAnthropicPerGebruiker: 0.05,
+  overigeAnthropicPerGebruiker: TARIEVEN.overigeAnthropicPerGebruikerPerMaand,
   pctVoice: 30,
   voiceInteracties: 100,
-  tekensPerAntwoord: 500,
+  tekensPerAntwoord: TARIEVEN.tekensPerVoiceAntwoord,
   // ElevenLabs bevestigt zelf alleen een bereik van 0,5 tot 1 credit/teken voor
   // Flash/Turbo bij API-gebruik, geen exact getal. 1,0 is de veilige kant van
   // dat bevestigde bereik, niet de gunstigste kant uit derde-partij-bronnen.
-  creditPerTeken: 1.0,
-  kostenPerInteractie: 0.004,
-  tiers: [
-    { name: 'Starter', credits: 30000, price: 6 },
-    { name: 'Creator', credits: 121000, price: 22 },
-    { name: 'Pro', credits: 600000, price: 99 },
-    { name: 'Scale', credits: 1800000, price: 299 },
-    { name: 'Business', credits: 6000000, price: 990 },
-  ],
-  vercelSeats: 1,
-  vercelPerSeat: 20,
+  creditPerTeken: TARIEVEN.creditPerTeken,
+  kostenPerInteractie: TARIEVEN.kostenPerVoiceInteractie,
+  tiers: TARIEVEN.tiers,
+  vercelSeats: TARIEVEN.vercelSeats,
+  vercelPerSeat: TARIEVEN.vercelPerSeat,
   supabasePro: true,
-  clerkPro: false,
-  sentryEur: 26,
-  fxRate: 1.08,
-  upstashFreeLimit: 500000,
-  upstashPerBericht: 10,
-  upstashPrice: 0.2,
-  domeinPerJaar: 52,
+  clerkPro: TARIEVEN.clerkProActief,
+  sentryEur: TARIEVEN.sentryEur,
+  fxRate: TARIEVEN.fxRateEurUsd,
+  upstashFreeLimit: TARIEVEN.upstashFreeLimit,
+  upstashPerBericht: TARIEVEN.upstashPerBericht,
+  upstashPrice: TARIEVEN.upstashPricePer100k,
+  domeinPerJaar: TARIEVEN.domeinPerJaarUsd,
   nGebruikers: 50,
 }
 
