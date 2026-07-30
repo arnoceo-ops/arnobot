@@ -29,6 +29,10 @@ export default function KostenPageClient() {
   // kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is.
   const [tierVerdeling, setTierVerdeling] = useState(DEFAULT_TIER_VERDELING)
   const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
+  // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
+  // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
+  // Business case, verder alleen in geheugen (niet opgeslagen).
+  const [schrijfWachtwoord, setSchrijfWachtwoord] = useState('')
 
   return (
     <>
@@ -74,7 +78,7 @@ export default function KostenPageClient() {
               Prognose wordt berekend uit écht gemeten gebruik die maand, niet uit de instelbare aannames van de calculator hiernaast. Zo toetst dit of de tarieven zelf kloppen.
             </p>
           </div>
-          <TrackrecordClient prijzen={prijzen} />
+          <TrackrecordClient prijzen={prijzen} schrijfWachtwoord={schrijfWachtwoord} setSchrijfWachtwoord={setSchrijfWachtwoord} />
         </div>
       )}
 
