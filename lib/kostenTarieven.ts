@@ -231,27 +231,33 @@ export function computeFreemiumKostenPerGebruiker(inputs: Inputs): number {
 // tussen Calculator (tab 1, telt mee in de totale kosten) en het
 // Scenario-blok op Business case (tab 3), zodat beide exact dezelfde omzet-
 // en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
+// Prijzen behoudt elite: dat tarief is nog steeds nodig voor Trackrecord (het
+// afsluiten van een maand rekent met échte Elite-klanten uit approved_users).
+// TierVerdeling (de %-verdeling in het hypothetische Scenario-blok en de
+// Doelwinst-solver) heeft geen elite meer, maar wel freemium: gebruikers
+// worden daar verdeeld over freemium, basis en premium, geen aparte
+// betalend/niet-betalend-laag.
 export type Prijzen = { basis: number; premium: number; elite: number }
-export type TierVerdeling = { basis: number; premium: number; elite: number }
+export type TierVerdeling = { freemium: number; basis: number; premium: number }
 export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
-export const DEFAULT_TIER_VERDELING: TierVerdeling = { basis: 58, premium: 40, elite: 2 }
+export const DEFAULT_TIER_VERDELING: TierVerdeling = { freemium: 60, basis: 32, premium: 8 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 
 export function berekenOmzetEnBetaalprovider(prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number) {
   // Bij optellen tot 100% of minder verandert er niets (rest = niet
-  // meegeteld, bv. freemium of onbekend). Bij meer dan 100% (tikfout, of een
-  // aanroeper die zelf ook nog een ander segment zoals freemium meetelt)
-  // schalen we proportioneel terug, zodat basisN+premiumN+eliteN nooit meer
-  // dan n kan zijn.
-  const noemer = Math.max(verdeling.basis + verdeling.premium + verdeling.elite, 100)
+  // meegeteld). Bij meer dan 100% (tikfout) schalen we proportioneel terug,
+  // zodat freemiumN+basisN+premiumN nooit meer dan n kan zijn.
+  const noemer = Math.max(verdeling.freemium + verdeling.basis + verdeling.premium, 100)
+  const freemiumN = Math.round(n * (verdeling.freemium / noemer))
   const basisN = Math.round(n * (verdeling.basis / noemer))
   const premiumN = Math.round(n * (verdeling.premium / noemer))
-  const eliteN = Math.round(n * (verdeling.elite / noemer))
-  const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
+  // Freemium betaalt niet, telt dus niet mee in de omzet en niet als
+  // creditcardtransactie bij de betaalprovider-fee.
+  const omzet = basisN * prijzen.basis + premiumN * prijzen.premium
   const aandeel = betaalprovider.pctCreditcard / 100
   const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
-    + (basisN + premiumN + eliteN) * aandeel * betaalprovider.mdrFixed
-  return { basisN, premiumN, eliteN, omzet, betaalproviderKosten }
+    + (basisN + premiumN) * aandeel * betaalprovider.mdrFixed
+  return { freemiumN, basisN, premiumN, omzet, betaalproviderKosten }
 }
