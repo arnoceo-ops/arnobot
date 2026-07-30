@@ -19,7 +19,7 @@ export default function KostenLoginPage() {
       body: JSON.stringify({ password }),
     })
     if (res.ok) {
-      router.push('/kosten')
+      router.push('/abacus')
     } else {
       setError('Verkeerd wachtwoord.')
     }
