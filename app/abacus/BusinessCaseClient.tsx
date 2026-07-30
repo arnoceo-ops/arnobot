@@ -68,7 +68,7 @@ type Props = {
 }
 
 export default function BusinessCaseClient({
-  prijzen, nGebruikers, setNGebruikers,
+  prijzen, setPrijzen, nGebruikers, setNGebruikers,
   tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
   betaalprovider, setBetaalprovider,
 }: Props) {
@@ -90,6 +90,9 @@ export default function BusinessCaseClient({
           Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
+        <NumberField label="Tarief Basis (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.basis} onChange={v => setPrijzen({ ...prijzen, basis: v })} />
+        <NumberField label="Tarief Premium (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} />
+        <NumberField label="Tarief Elite (€)" hint="wordt ook gebruikt bij het afsluiten van een maand op Trackrecord" value={prijzen.elite} onChange={v => setPrijzen({ ...prijzen, elite: v })} />
         <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
