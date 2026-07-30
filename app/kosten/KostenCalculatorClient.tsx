@@ -7,7 +7,8 @@ type Tier = { name: string; credits: number; price: number }
 type Inputs = {
   berichten: number
   anthropicPerBericht: number
-  biebPerGebruiker: number
+  analysesPerGebruiker: number
+  kostenPerAnalyse: number
   coachingPerGebruiker: number
   coachingKostenPerSynthese: number
   uitdagingPerGebruiker: number
@@ -43,10 +44,14 @@ type Inputs = {
 const DEFAULT_INPUTS: Inputs = {
   berichten: 60,
   anthropicPerBericht: 0.015,
-  biebPerGebruiker: 0.01,
+  // Analyses (app/api/bot/coaching-analyse/route.ts, Sonnet 4.6, heet in de app
+  // "Analyses" op /bot/analyses, niet meer "BIEB"). Kosten per analyse ~$0,007
+  // (juli 2026 gemeten output ~1263 tekens + geschatte input van meegestuurde
+  // sessiesamenvattingen). Aantal op 8/maand gezet door Arno (2026-07-29).
+  analysesPerGebruiker: 8,
+  kostenPerAnalyse: 0.007,
   // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
-  // (max_tokens 4000) en de uitdaging-route (max_tokens 600). Ontbrak eerder
-  // volledig in deze calculator, alleen hoofdchat + BIEB (Sonnet 4.6) waren erin.
+  // (max_tokens 4000) en de uitdaging-route (max_tokens 600).
   coachingPerGebruiker: 2,
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruiker: 10,
@@ -110,7 +115,8 @@ function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: number; 
 
 function computeForN(inputs: Inputs, n: number) {
   const totaalBerichten = n * inputs.berichten
-  const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht + n * inputs.biebPerGebruiker
+  const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
+  const analysesKosten = n * inputs.analysesPerGebruiker * inputs.kostenPerAnalyse
   const fable5Kosten = n * (
     inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
     + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
@@ -143,11 +149,11 @@ function computeForN(inputs: Inputs, n: number) {
     + sentryUsd
     + domeinPerMaand
 
-  const totaal = vastKosten + anthropicKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
+  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
     + eleven.price + whisperKosten + upstashKosten
 
   return {
-    vastKosten, anthropicKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
+    vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
     whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
@@ -267,7 +273,12 @@ export default function KostenCalculatorClient() {
               <div style={cardHeadStyle}><span style={dotStyle} />Hoofdchat &amp; gebruik</div>
               <NumberField label="Berichten per gebruiker per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
               <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat + Haiku-RAG-herschrijving" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
-              <NumberField label="BIEB-kosten per gebruiker/maand ($)" hint="losse gespreksanalyse" value={inputs.biebPerGebruiker} step={0.001} onChange={v => set('biebPerGebruiker', v)} />
+            </div>
+
+            <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Analyses</div>
+              <NumberField label="Analyses per gebruiker per maand" hint="app/api/bot/coaching-analyse, heet /bot/analyses in de app, was BIEB" value={inputs.analysesPerGebruiker} onChange={v => set('analysesPerGebruiker', v)} />
+              <NumberField label="Kosten per analyse ($)" hint="juli 2026 gemeten output ~1263 tekens + geschatte input" value={inputs.kostenPerAnalyse} step={0.001} onChange={v => set('kostenPerAnalyse', v)} />
             </div>
 
             <div style={cardStyle}>
@@ -368,7 +379,8 @@ export default function KostenCalculatorClient() {
 
               <div style={{ marginTop: 16 }}>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Vaste infrastructuur</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.vastKosten)}</span></div>
-                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat + BIEB</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Analyses</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.analysesKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
