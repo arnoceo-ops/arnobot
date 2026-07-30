@@ -123,6 +123,11 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Verbruik (tekens per aanroep) wordt gelogd in `arnobot_elevenlabs_usage`, met de echte Clerk `userId` voor de publieke routes en de vaste waarde `'admin-voice-test'` voor de admin-testroute.
 - Controleer [elevenlabs.io/docs](https://elevenlabs.io/docs) op API-wijzigingen.
 
+#### Kostencalculator (`/kosten`, wachtwoord-gated businesscase-tool)
+- `app/kosten/KostenCalculatorClient.tsx` bevat harde standaardwaarden voor externe tarieven: Vercel Pro ($20/seat), Supabase Pro ($25), Clerk Pro ($100), ElevenLabs-plan-tiers (Starter/Creator/Pro/Scale/Business, credits + prijs), Anthropic/Fable 5-kosten per aanroep, en de domeinverlenging bij Porkbun ($52/jaar).
+- Controleer bij elke kwartaalcheck of deze bedragen nog kloppen met de live pricing-pagina's van elke leverancier (Vercel, Supabase, Clerk, ElevenLabs, Porkbun). Prijswijzigingen bij deze leveranciers komen niet vaak voor, maar als het gebeurt: bijwerken in dezelfde commit als deze check, niet uitstellen.
+- Sentry en Upstash staan hier bewust niet als hardcoded bedrag in, die zijn zelf al instelbare velden in de calculator (Arno vult zijn eigen actuele factuurbedrag in), dus geen externe check nodig voor die twee.
+
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
