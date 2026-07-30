@@ -33,6 +33,7 @@ type Inputs = {
   upstashFreeLimit: number
   upstashPerBericht: number
   upstashPrice: number
+  domeinPerJaar: number
   nGebruikers: number
 }
 
@@ -40,21 +41,21 @@ type Inputs = {
 // Bewust aan de hoge kant gekozen (besloten 2026-07-29) zodat de pagina bij het
 // openen nooit een te optimistisch beeld geeft, dat achteraf tegenvalt.
 const DEFAULT_INPUTS: Inputs = {
-  berichten: 75,
+  berichten: 60,
   anthropicPerBericht: 0.015,
   biebPerGebruiker: 0.01,
   // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
   // (max_tokens 4000) en de uitdaging-route (max_tokens 600). Ontbrak eerder
   // volledig in deze calculator, alleen hoofdchat + BIEB (Sonnet 4.6) waren erin.
-  coachingPerGebruiker: 3,
+  coachingPerGebruiker: 2,
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruiker: 10,
   uitdagingKostenPerStuk: 0.025,
   // Sparring (app/api/sparring/*, Sonnet 4.6), gebaseerd op echt gemeten gebruik
   // uit juli 2026: 9 sessies, 2 gebruikers, gem. 17,7 berichten/sessie.
-  pctSparring: 25,
-  sparringSessiesPerGebruiker: 4,
-  berichtenPerSparringSessie: 18,
+  pctSparring: 20,
+  sparringSessiesPerGebruiker: 5,
+  berichtenPerSparringSessie: 12,
   kostenPerSparringBericht: 0.006,
   kostenPerDebrief: 0.015,
   // Vangnet voor de rest van de modelinventaris: session-end (Haiku, 3 calls),
@@ -62,7 +63,7 @@ const DEFAULT_INPUTS: Inputs = {
   // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
   // elke route apart te modelleren.
   overigeAnthropicPerGebruiker: 0.05,
-  pctVoice: 40,
+  pctVoice: 30,
   voiceInteracties: 100,
   tekensPerAntwoord: 500,
   // ElevenLabs bevestigt zelf alleen een bereik van 0,5 tot 1 credit/teken voor
@@ -77,7 +78,7 @@ const DEFAULT_INPUTS: Inputs = {
     { name: 'Scale', credits: 1800000, price: 299 },
     { name: 'Business', credits: 6000000, price: 990 },
   ],
-  vercelSeats: 2,
+  vercelSeats: 1,
   vercelPerSeat: 20,
   supabasePro: true,
   clerkPro: false,
@@ -86,6 +87,7 @@ const DEFAULT_INPUTS: Inputs = {
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
   upstashPrice: 0.2,
+  domeinPerJaar: 52,
   nGebruikers: 50,
 }
 
@@ -134,10 +136,12 @@ function computeForN(inputs: Inputs, n: number) {
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
 
   const sentryUsd = inputs.sentryEur * inputs.fxRate
+  const domeinPerMaand = inputs.domeinPerJaar / 12
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
     + (inputs.supabasePro ? 25 : 0)
     + (inputs.clerkPro ? 100 : 0)
     + sentryUsd
+    + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
     + eleven.price + whisperKosten + upstashKosten
@@ -277,8 +281,8 @@ export default function KostenCalculatorClient() {
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Sparring</div>
               <NumberField label="% gebruikers dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} onChange={v => set('pctSparring', v)} />
-              <NumberField label="Sessies per sparring-gebruiker/maand" hint="gemeten juli 2026: 9 sessies / 2 gebruikers ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
-              <NumberField label="Berichten per sparringsessie" hint="gemeten juli 2026: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
+              <NumberField label="Sessies per sparring-gebruiker/maand" hint="juli 2026 gemeten: 9 sessies/2 gebruikers ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
+              <NumberField label="Berichten per sparringsessie" hint="juli 2026 gemeten: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
               <NumberField label="Kosten per sparringbericht ($)" hint="app/api/sparring/chat, Sonnet 4.6, geen RAG" value={inputs.kostenPerSparringBericht} step={0.001} onChange={v => set('kostenPerSparringBericht', v)} />
               <NumberField label="Kosten per debrief ($)" hint="app/api/sparring/debrief, volledig transcript als input" value={inputs.kostenPerDebrief} step={0.001} onChange={v => set('kostenPerDebrief', v)} />
             </div>
@@ -319,7 +323,8 @@ export default function KostenCalculatorClient() {
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Vaste infrastructuurkosten</div>
-              <NumberField label="Vercel Pro, aantal seats" value={inputs.vercelSeats} onChange={v => set('vercelSeats', v)} />
+              <NumberField label="Domeinverlenging (Porkbun, $/jaar)" value={inputs.domeinPerJaar} onChange={v => set('domeinPerJaar', v)} />
+              <NumberField label="Vercel Pro, aantal seats" hint="1 = alleen jijzelf" value={inputs.vercelSeats} onChange={v => set('vercelSeats', v)} />
               <NumberField label="Vercel prijs per seat ($)" value={inputs.vercelPerSeat} onChange={v => set('vercelPerSeat', v)} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={fieldLabelStyle}>Supabase Pro ($25/maand)</div>
