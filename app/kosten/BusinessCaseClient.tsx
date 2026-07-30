@@ -47,10 +47,9 @@ const cardHeadStyle: React.CSSProperties = {
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
 const statLabel: React.CSSProperties = { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }
 const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
-const headlineValueStyle: React.CSSProperties = {
-  fontSize: 22, fontWeight: 700, color: '#f59e0b', lineHeight: 1.3,
-  fontVariantNumeric: 'tabular-nums',
-}
+// Zelfde stijl als statValue, alleen amber: bewust geen eigen lineHeight, zodat
+// de tekst exact op dezelfde baseline staat als de andere bedragen ernaast.
+const headlineValueStyle: React.CSSProperties = { ...statValue, color: '#f59e0b' }
 // Identiek aan numberInputStyle in KostenCalculatorClient.tsx
 const numberInputStyle: React.CSSProperties = {
   width: 84, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6,
