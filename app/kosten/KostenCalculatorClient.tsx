@@ -1,13 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { DEFAULT_INPUTS as SHARED_DEFAULT_INPUTS, computeForN, type Inputs as SharedInputs } from '@/lib/kostenTarieven'
-
-// nGebruikers leeft alleen hier (welk aantal je op dit moment aan het
-// verkennen bent in de calculator), niet in het gedeelde scenario-object.
-type Inputs = SharedInputs & { nGebruikers: number }
-
-const DEFAULT_INPUTS: Inputs = { ...SHARED_DEFAULT_INPUTS, nGebruikers: 50 }
+import { DEFAULT_INPUTS, computeForN, type Inputs } from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
   return '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -85,7 +79,12 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   )
 }
 
-export default function KostenCalculatorClient() {
+type Props = {
+  nGebruikers: number
+  setNGebruikers: (n: number) => void
+}
+
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
@@ -100,7 +99,7 @@ export default function KostenCalculatorClient() {
     })
   }
 
-  const result = useMemo(() => computeForN(inputs, inputs.nGebruikers), [inputs])
+  const result = useMemo(() => computeForN(inputs, nGebruikers), [inputs, nGebruikers])
   const scaleRows = useMemo(
     () => [10, 50, 100, 200, 500].map(n => ({ n, ...computeForN(inputs, n) })),
     [inputs]
@@ -221,9 +220,9 @@ export default function KostenCalculatorClient() {
                 <input
                   id="nGebruikers"
                   type="number"
-                  value={inputs.nGebruikers}
+                  value={nGebruikers}
                   style={{ ...numberInputStyle, width: 90, fontSize: 16, fontWeight: 700, padding: '8px 10px' }}
-                  onChange={e => set('nGebruikers', parseFloat(e.target.value) || 0)}
+                  onChange={e => setNGebruikers(parseFloat(e.target.value) || 0)}
                 />
               </div>
               <div style={{ fontSize: 12.5, color: '#94a3b8' }}>Totale kosten per gebruiker per maand</div>

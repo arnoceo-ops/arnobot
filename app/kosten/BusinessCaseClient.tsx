@@ -76,9 +76,11 @@ function NumberField({ label, hint, value, onChange, step = 1 }: {
 type Props = {
   prijzen: { basis: number; premium: number; elite: number }
   setPrijzen: (p: { basis: number; premium: number; elite: number }) => void
+  nGebruikers: number
+  setNGebruikers: (n: number) => void
 }
 
-export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
+export default function BusinessCaseClient({ prijzen, setPrijzen, nGebruikers, setNGebruikers }: Props) {
   const [geschiedenis, setGeschiedenis] = useState<Rij[]>([])
   const [live, setLive] = useState<LiveMaand | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,11 +88,9 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
   const [werkelijkInput, setWerkelijkInput] = useState<Record<string, string>>({})
   const [opslaan, setOpslaan] = useState<string | null>(null)
 
-  // Scenario: hypothetisch aantal gebruikers + verdeling per tier, los van de
-  // live/echte meting hierboven. Standaard op Arno's eigen voorbeeld (250
-  // gebruikers, 58/40/2%). Kosten hergebruiken exact dezelfde computeForN als
-  // de Calculator (tab 1).
-  const [scenarioN, setScenarioN] = useState(250)
+  // Verdeling per tier voor het scenario. Het totaal aantal gebruikers
+  // (nGebruikers) is gedeeld met de Calculator (tab 1): instellen hier
+  // beweegt tab 1 mee, en andersom, één en dezelfde waarde.
   const [scenarioPct, setScenarioPct] = useState({ basis: 58, premium: 40, elite: 2 })
 
   async function laadData() {
@@ -131,14 +131,14 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
   }
 
   const scenario = useMemo(() => {
-    const basisN = Math.round(scenarioN * (scenarioPct.basis / 100))
-    const premiumN = Math.round(scenarioN * (scenarioPct.premium / 100))
-    const eliteN = Math.round(scenarioN * (scenarioPct.elite / 100))
+    const basisN = Math.round(nGebruikers * (scenarioPct.basis / 100))
+    const premiumN = Math.round(nGebruikers * (scenarioPct.premium / 100))
+    const eliteN = Math.round(nGebruikers * (scenarioPct.elite / 100))
     const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
-    const kostenUsd = computeForN(DEFAULT_INPUTS, scenarioN).totaal
+    const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
     return { basisN, premiumN, eliteN, omzet, kostenEur }
-  }, [scenarioN, scenarioPct, prijzen])
+  }, [nGebruikers, scenarioPct, prijzen])
 
   const pctTotaal = scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
 
@@ -187,7 +187,7 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
           Hypothetisch, los van de echte meting hierboven: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
-        <NumberField label="Totaal aantal gebruikers" value={scenarioN} onChange={setScenarioN} />
+        <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
         <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
         <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
         <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />

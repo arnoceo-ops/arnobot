@@ -19,6 +19,10 @@ export default function KostenPageClient() {
   // case (waar je ze instelt), zodat wat je op tab 3 ziet ook echt wordt
   // vastgelegd als je op tab 2 een maand afsluit.
   const [prijzen, setPrijzen] = useState({ basis: 37, premium: 77, elite: 397 })
+  // Gedeeld tussen Calculator (tab 1) en het Scenario-blok op Business case
+  // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
+  // andere automatisch mee, in beide richtingen.
+  const [nGebruikers, setNGebruikers] = useState(250)
 
   return (
     <>
@@ -45,7 +49,7 @@ export default function KostenPageClient() {
         </div>
       </div>
 
-      {tab === 'calculator' && <KostenCalculatorClient />}
+      {tab === 'calculator' && <KostenCalculatorClient nGebruikers={nGebruikers} setNGebruikers={setNGebruikers} />}
 
       {tab === 'trackrecord' && (
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px,3vw,32px) 64px' }}>
@@ -69,7 +73,7 @@ export default function KostenPageClient() {
               Omzet is het aantal betalende gebruikers per plan (echt gemeten uit `approved_users`) keer het tarief per plan. Command telt niet mee, dat heeft geen vlak tarief.
             </p>
           </div>
-          <BusinessCaseClient prijzen={prijzen} setPrijzen={setPrijzen} />
+          <BusinessCaseClient prijzen={prijzen} setPrijzen={setPrijzen} nGebruikers={nGebruikers} setNGebruikers={setNGebruikers} />
         </div>
       )}
     </>
