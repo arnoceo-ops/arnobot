@@ -42,6 +42,18 @@ const cardHeadStyle: React.CSSProperties = {
   color: '#94a3b8', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8,
 }
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
+const statLabel: React.CSSProperties = { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }
+const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
+const headlineValueStyle: React.CSSProperties = {
+  fontSize: 22, fontWeight: 700, color: '#f59e0b', lineHeight: 1.3,
+  fontVariantNumeric: 'tabular-nums', marginBottom: 14,
+}
+// Identiek aan numberInputStyle in KostenCalculatorClient.tsx
+const numberInputStyle: React.CSSProperties = {
+  background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6,
+  color: '#f1f5f9', padding: '7px 10px', fontSize: 13.5, textAlign: 'right',
+  fontVariantNumeric: 'tabular-nums',
+}
 
 type Props = {
   prijzen: { basis: number; premium: number; elite: number }
@@ -127,7 +139,7 @@ export default function TrackrecordClient({ prijzen }: Props) {
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 12 }}>
             Live berekend uit echt gemeten gebruik tot nu toe deze maand: {liveHuidigeMaand.gebruikers_count} gebruikers, {liveHuidigeMaand.berichten_count} berichten, {liveHuidigeMaand.analyses_count} analyses, {liveHuidigeMaand.sparring_sessies_count} sparringsessies, {liveHuidigeMaand.voice_interacties_count} voice-interacties.
           </p>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#f59e0b', fontVariantNumeric: 'tabular-nums', marginBottom: 14 }}>
+          <div style={headlineValueStyle}>
             {fmtUSD(liveHuidigeMaand.prognose_usd)}
           </div>
           <button
@@ -162,13 +174,13 @@ export default function TrackrecordClient({ prijzen }: Props) {
             </div>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div>
-                <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prognose</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(rij.prognose_usd)}</div>
+                <div style={statLabel}>Prognose</div>
+                <div style={statValue}>{fmtUSD(rij.prognose_usd)}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Werkelijk</div>
+                <div style={statLabel}>Werkelijk</div>
                 {rij.werkelijke_kosten_usd !== null ? (
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(rij.werkelijke_kosten_usd)}</div>
+                  <div style={statValue}>{fmtUSD(rij.werkelijke_kosten_usd)}</div>
                 ) : (
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input
@@ -176,7 +188,7 @@ export default function TrackrecordClient({ prijzen }: Props) {
                       placeholder="bedrag"
                       value={werkelijkInput[rij.maand] ?? ''}
                       onChange={e => setWerkelijkInput(prev => ({ ...prev, [rij.maand]: e.target.value }))}
-                      style={{ width: 90, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6, color: '#f1f5f9', padding: '5px 8px', fontSize: 13 }}
+                      style={{ ...numberInputStyle, width: 90 }}
                     />
                     <button
                       onClick={() => handleWerkelijk(rij.maand)}
@@ -189,8 +201,8 @@ export default function TrackrecordClient({ prijzen }: Props) {
                 )}
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Afwijking</div>
-                <div style={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: rij.werkelijke_kosten_usd === null ? '#6b7280' : '#f59e0b' }}>
+                <div style={statLabel}>Afwijking</div>
+                <div style={{ ...statValue, color: rij.werkelijke_kosten_usd === null ? '#6b7280' : '#f59e0b' }}>
                   {afwijkingPct(rij.prognose_usd, rij.werkelijke_kosten_usd)}
                 </div>
               </div>

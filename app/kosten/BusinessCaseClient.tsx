@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { DEFAULT_INPUTS, computeForN } from '@/lib/kostenTarieven'
 
 type Rij = {
   maand: string
@@ -33,6 +34,8 @@ function margePct(omzet: number | null, kosten: number | null): string {
   return `${(((omzet - kosten) / omzet) * 100).toFixed(0)}%`
 }
 
+// Zelfde stijlconstanten als KostenCalculatorClient.tsx (tab 1), bewust
+// letterlijk gelijk gehouden zodat alle drie de tabbladen consistent ogen.
 const cardStyle: React.CSSProperties = {
   background: '#1a2333', border: '1px solid #2d3a4f', borderRadius: 12,
   padding: '20px 22px', marginBottom: 18,
@@ -43,10 +46,31 @@ const cardHeadStyle: React.CSSProperties = {
 }
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
 const statLabel: React.CSSProperties = { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }
-const statValue: React.CSSProperties = { fontSize: 16, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
-const priceInputStyle: React.CSSProperties = {
-  width: 70, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6,
-  color: '#f1f5f9', padding: '5px 8px', fontSize: 13, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
+const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
+const headlineValueStyle: React.CSSProperties = {
+  fontSize: 22, fontWeight: 700, color: '#f59e0b', lineHeight: 1.3,
+  fontVariantNumeric: 'tabular-nums',
+}
+// Identiek aan numberInputStyle in KostenCalculatorClient.tsx
+const numberInputStyle: React.CSSProperties = {
+  width: 84, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6,
+  color: '#f1f5f9', padding: '7px 10px', fontSize: 13.5, textAlign: 'right',
+  fontVariantNumeric: 'tabular-nums',
+}
+const fieldLabelStyle: React.CSSProperties = { fontSize: 13.5, color: '#f1f5f9' }
+
+function NumberField({ label, hint, value, onChange, step = 1 }: {
+  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number
+}) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <div>
+        <div style={fieldLabelStyle}>{label}</div>
+        {hint && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{hint}</div>}
+      </div>
+      <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%' }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
+    </div>
+  )
 }
 
 type Props = {
@@ -61,6 +85,13 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
   const [error, setError] = useState('')
   const [werkelijkInput, setWerkelijkInput] = useState<Record<string, string>>({})
   const [opslaan, setOpslaan] = useState<string | null>(null)
+
+  // Scenario: hypothetisch aantal gebruikers + verdeling per tier, los van de
+  // live/echte meting hierboven. Standaard op Arno's eigen voorbeeld (250
+  // gebruikers, 58/40/2%). Kosten hergebruiken exact dezelfde computeForN als
+  // de Calculator (tab 1).
+  const [scenarioN, setScenarioN] = useState(250)
+  const [scenarioPct, setScenarioPct] = useState({ basis: 58, premium: 40, elite: 2 })
 
   async function laadData() {
     setLoading(true)
@@ -99,6 +130,18 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
     }
   }
 
+  const scenario = useMemo(() => {
+    const basisN = Math.round(scenarioN * (scenarioPct.basis / 100))
+    const premiumN = Math.round(scenarioN * (scenarioPct.premium / 100))
+    const eliteN = Math.round(scenarioN * (scenarioPct.elite / 100))
+    const omzet = basisN * prijzen.basis + premiumN * prijzen.premium + eliteN * prijzen.elite
+    const kostenUsd = computeForN(DEFAULT_INPUTS, scenarioN).totaal
+    const kostenEur = kostenUsd / FX_EUR_USD
+    return { basisN, premiumN, eliteN, omzet, kostenEur }
+  }, [scenarioN, scenarioPct, prijzen])
+
+  const pctTotaal = scenarioPct.basis + scenarioPct.premium + scenarioPct.elite
+
   if (loading) return <p style={{ color: '#94a3b8', fontSize: 14 }}>Laden...</p>
 
   return (
@@ -117,17 +160,17 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
             </p>
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
               <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Basis €<input type="number" value={prijzen.basis} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, basis: parseFloat(e.target.value) || 0 })} />
+                Basis €<input type="number" value={prijzen.basis} style={{ ...numberInputStyle, width: 70 }} onChange={e => setPrijzen({ ...prijzen, basis: parseFloat(e.target.value) || 0 })} />
               </label>
               <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Premium €<input type="number" value={prijzen.premium} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, premium: parseFloat(e.target.value) || 0 })} />
+                Premium €<input type="number" value={prijzen.premium} style={{ ...numberInputStyle, width: 70 }} onChange={e => setPrijzen({ ...prijzen, premium: parseFloat(e.target.value) || 0 })} />
               </label>
               <label style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Elite €<input type="number" value={prijzen.elite} style={priceInputStyle} onChange={e => setPrijzen({ ...prijzen, elite: parseFloat(e.target.value) || 0 })} />
+                Elite €<input type="number" value={prijzen.elite} style={{ ...numberInputStyle, width: 70 }} onChange={e => setPrijzen({ ...prijzen, elite: parseFloat(e.target.value) || 0 })} />
               </label>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-              <div><div style={statLabel}>Omzet</div><div style={{ ...statValue, fontSize: 22, color: '#f59e0b' }}>{fmtEUR(liveOmzet)}</div></div>
+              <div><div style={statLabel}>Omzet</div><div style={headlineValueStyle}>{fmtEUR(liveOmzet)}</div></div>
               <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(live.prognose_kosten_eur)}</div></div>
               <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(liveOmzet - live.prognose_kosten_eur)}</div></div>
               <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(liveOmzet, live.prognose_kosten_eur)}</div></div>
@@ -138,6 +181,32 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
           </div>
         )
       })()}
+
+      <div style={cardStyle}>
+        <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
+        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
+          Hypothetisch, los van de echte meting hierboven: kies een totaal aantal gebruikers en een verdeling over de tiers. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
+        </p>
+        <NumberField label="Totaal aantal gebruikers" value={scenarioN} onChange={setScenarioN} />
+        <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
+        <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
+        <NumberField label="% Elite" value={scenarioPct.elite} onChange={v => setScenarioPct({ ...scenarioPct, elite: v })} />
+        {pctTotaal !== 100 && (
+          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>Percentages tellen op tot {pctTotaal}%, niet 100%. De rest wordt als niet-betalend beschouwd.</p>
+        )}
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
+          <div>
+            <div style={statLabel}>Verdeling</div>
+            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basisN} basis &middot; {scenario.premiumN} premium &middot; {scenario.eliteN} elite</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
+          <div><div style={statLabel}>Omzet</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzet)}</div></div>
+          <div><div style={statLabel}>Kosten</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
+          <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzet - scenario.kostenEur)}</div></div>
+          <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzet, scenario.kostenEur)}</div></div>
+        </div>
+      </div>
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Geschiedenis</div>
@@ -184,7 +253,7 @@ export default function BusinessCaseClient({ prijzen, setPrijzen }: Props) {
                         placeholder="bedrag"
                         value={werkelijkInput[rij.maand] ?? ''}
                         onChange={e => setWerkelijkInput(prev => ({ ...prev, [rij.maand]: e.target.value }))}
-                        style={{ width: 90, background: '#1f2937', border: '1.5px solid #2d3a4f', borderRadius: 6, color: '#f1f5f9', padding: '5px 8px', fontSize: 13 }}
+                        style={{ ...numberInputStyle, width: 90 }}
                       />
                       <button
                         onClick={() => handleWerkelijkOmzet(rij.maand)}

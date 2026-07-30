@@ -1,159 +1,19 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { TARIEVEN, type Tier } from '@/lib/kostenTarieven'
+import { DEFAULT_INPUTS as SHARED_DEFAULT_INPUTS, computeForN, type Inputs as SharedInputs } from '@/lib/kostenTarieven'
 
-type Inputs = {
-  berichten: number
-  anthropicPerBericht: number
-  analysesPerGebruiker: number
-  kostenPerAnalyse: number
-  coachingPerGebruiker: number
-  coachingKostenPerSynthese: number
-  uitdagingPerGebruiker: number
-  uitdagingKostenPerStuk: number
-  pctSparring: number
-  sparringSessiesPerGebruiker: number
-  berichtenPerSparringSessie: number
-  kostenPerSparringBericht: number
-  kostenPerDebrief: number
-  overigeAnthropicPerGebruiker: number
-  pctVoice: number
-  voiceInteracties: number
-  tekensPerAntwoord: number
-  creditPerTeken: number
-  kostenPerInteractie: number
-  tiers: Tier[]
-  vercelSeats: number
-  vercelPerSeat: number
-  supabasePro: boolean
-  clerkPro: boolean
-  sentryEur: number
-  fxRate: number
-  upstashFreeLimit: number
-  upstashPerBericht: number
-  upstashPrice: number
-  domeinPerJaar: number
-  nGebruikers: number
-}
+// nGebruikers leeft alleen hier (welk aantal je op dit moment aan het
+// verkennen bent in de calculator), niet in het gedeelde scenario-object.
+type Inputs = SharedInputs & { nGebruikers: number }
 
-// Uitgangspunt: "redelijk actieve" gebruikers, niet het ruwe gemeten gemiddelde.
-// Bewust aan de hoge kant gekozen (besloten 2026-07-29) zodat de pagina bij het
-// openen nooit een te optimistisch beeld geeft, dat achteraf tegenvalt.
-// Alle $-tarieven komen uit lib/kostenTarieven.ts, dezelfde bron die de
-// trackrecord-route (api/kosten-tracking) gebruikt om de prognose op echt
-// gemeten gebruik te berekenen. Alleen de volume-aannames hieronder (hoeveel
-// berichten/analyses/sessies een "redelijk actieve" gebruiker doet) zijn
-// calculator-specifiek en leven niet in het gedeelde bestand.
-const DEFAULT_INPUTS: Inputs = {
-  berichten: 60,
-  anthropicPerBericht: TARIEVEN.anthropicPerBericht,
-  // Analyses (app/api/bot/coaching-analyse/route.ts, Sonnet 4.6, heet in de app
-  // "Analyses" op /bot/analyses, niet meer "BIEB"). Aantal op 8/maand gezet
-  // door Arno (2026-07-29).
-  analysesPerGebruiker: 8,
-  kostenPerAnalyse: TARIEVEN.kostenPerAnalyse,
-  // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
-  // (max_tokens 4000) en de uitdaging-route (max_tokens 600).
-  coachingPerGebruiker: TARIEVEN.coachingPerGebruikerPerMaand,
-  coachingKostenPerSynthese: TARIEVEN.coachingKostenPerSynthese,
-  uitdagingPerGebruiker: TARIEVEN.uitdagingPerGebruikerPerMaand,
-  uitdagingKostenPerStuk: TARIEVEN.uitdagingKostenPerStuk,
-  // Sparring (app/api/sparring/*, Sonnet 4.6), gebaseerd op echt gemeten gebruik
-  // uit juli 2026: 9 sessies, 2 gebruikers, gem. 17,7 berichten/sessie.
-  pctSparring: 20,
-  sparringSessiesPerGebruiker: 5,
-  berichtenPerSparringSessie: 12,
-  kostenPerSparringBericht: TARIEVEN.kostenPerSparringBericht,
-  kostenPerDebrief: TARIEVEN.kostenPerDebrief,
-  // Vangnet voor de rest van de modelinventaris: session-end (Haiku, 3 calls),
-  // coaching-precheck, blog-synthese, verfijn, sessies-zoeken. Stuk voor stuk
-  // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
-  // elke route apart te modelleren.
-  overigeAnthropicPerGebruiker: TARIEVEN.overigeAnthropicPerGebruikerPerMaand,
-  pctVoice: 30,
-  voiceInteracties: 100,
-  tekensPerAntwoord: TARIEVEN.tekensPerVoiceAntwoord,
-  // ElevenLabs bevestigt zelf alleen een bereik van 0,5 tot 1 credit/teken voor
-  // Flash/Turbo bij API-gebruik, geen exact getal. 1,0 is de veilige kant van
-  // dat bevestigde bereik, niet de gunstigste kant uit derde-partij-bronnen.
-  creditPerTeken: TARIEVEN.creditPerTeken,
-  kostenPerInteractie: TARIEVEN.kostenPerVoiceInteractie,
-  tiers: TARIEVEN.tiers,
-  vercelSeats: TARIEVEN.vercelSeats,
-  vercelPerSeat: TARIEVEN.vercelPerSeat,
-  supabasePro: true,
-  clerkPro: TARIEVEN.clerkProActief,
-  sentryEur: TARIEVEN.sentryEur,
-  fxRate: TARIEVEN.fxRateEurUsd,
-  upstashFreeLimit: TARIEVEN.upstashFreeLimit,
-  upstashPerBericht: TARIEVEN.upstashPerBericht,
-  upstashPrice: TARIEVEN.upstashPricePer100k,
-  domeinPerJaar: TARIEVEN.domeinPerJaarUsd,
-  nGebruikers: 50,
-}
+const DEFAULT_INPUTS: Inputs = { ...SHARED_DEFAULT_INPUTS, nGebruikers: 50 }
 
 function fmtUSD(n: number): string {
   return '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 function fmtUSD0(n: number): string {
   return '$' + Math.round(n).toLocaleString('nl-NL')
-}
-
-function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: number; name: string } {
-  if (creditsNeeded <= 0) return { price: 0, name: '-' }
-  for (const t of tiers) {
-    if (creditsNeeded <= t.credits) return { price: t.price, name: t.name }
-  }
-  const business = tiers[tiers.length - 1]
-  const multiples = Math.ceil(creditsNeeded / business.credits)
-  return { price: business.price * multiples, name: `${business.name} x${multiples}` }
-}
-
-function computeForN(inputs: Inputs, n: number) {
-  const totaalBerichten = n * inputs.berichten
-  const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
-  const analysesKosten = n * inputs.analysesPerGebruiker * inputs.kostenPerAnalyse
-  const fable5Kosten = n * (
-    inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
-    + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
-  )
-
-  const sparringGebruikers = n * (inputs.pctSparring / 100)
-  const totaalSparringSessies = sparringGebruikers * inputs.sparringSessiesPerGebruiker
-  const totaalSparringBerichten = totaalSparringSessies * inputs.berichtenPerSparringSessie
-  const sparringKosten = totaalSparringBerichten * inputs.kostenPerSparringBericht
-    + totaalSparringSessies * inputs.kostenPerDebrief
-
-  const overigeAnthropicKosten = n * inputs.overigeAnthropicPerGebruiker
-
-  const voiceGebruikers = n * (inputs.pctVoice / 100)
-  const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
-  const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
-  const creditsNodig = totaalTekens * inputs.creditPerTeken
-  const eleven = elevenLabsCost(creditsNodig, inputs.tiers)
-  const whisperKosten = totaalInteracties * inputs.kostenPerInteractie
-
-  const upstashCommands = totaalBerichten * inputs.upstashPerBericht
-  const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
-  const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
-
-  const sentryUsd = inputs.sentryEur * inputs.fxRate
-  const domeinPerMaand = inputs.domeinPerJaar / 12
-  const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
-    + (inputs.supabasePro ? 25 : 0)
-    + (inputs.clerkPro ? 100 : 0)
-    + sentryUsd
-    + domeinPerMaand
-
-  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + upstashKosten
-
-  return {
-    vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
-    elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
-  }
 }
 
 const cardStyle: React.CSSProperties = {
