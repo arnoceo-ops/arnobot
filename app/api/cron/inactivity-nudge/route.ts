@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
-import { E2E_TEST_USER_EMAIL } from '@/lib/e2eTestAccount'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     .eq('nudge_opt_out', false)
     .not('email', 'is', null)
     .neq('email', E2E_TEST_USER_EMAIL)
+    .neq('email', MANUAL_TEST_USER_EMAIL)
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
 

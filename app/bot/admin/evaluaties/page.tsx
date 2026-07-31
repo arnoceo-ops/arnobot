@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_ID } from '@/lib/e2eTestAccount'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 export const dynamic = 'force-dynamic'
 import EvaluatiesClient from './EvaluatiesClient'
@@ -19,12 +19,13 @@ export default async function EvaluatiesPage() {
 
   const [{ data: evaluaties }, { data: ratingsRaw }, { data: negRaw }] = await Promise.all([
     supabase.from('arnobot_evaluaties').select('*').order('created_at', { ascending: false }),
-    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).neq('user_id', E2E_TEST_USER_ID),
+    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase
       .from('arnobot_rds_logs')
       .select('question, answer, created_at, user_id')
       .eq('feedback', 'neg')
       .neq('user_id', E2E_TEST_USER_ID)
+      .neq('user_id', MANUAL_TEST_USER_ID)
       .order('created_at', { ascending: false })
       .limit(10),
   ])

@@ -108,7 +108,7 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
           # Echte Supabase: nodig voor auth.setup.ts (approved_users/profiel seeden). Zelfde
           # database als productie, geen apart testproject; het testaccount is uitgesloten
-          # van e-mailcrons (zie lib/email-templates.ts, E2E_TEST_USER_EMAIL).
+          # van e-mailcrons (zie lib/internalTestAccounts.ts, E2E_TEST_USER_EMAIL).
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # Niveau-2-tests raken /api/chat nooit echt (page.route onderschept in de browser),
