@@ -14,51 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      canvas_answers: {
-        Row: {
-          answer: string | null
-          created_at: string
-          id: string
-          question_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          answer?: string | null
-          created_at?: string
-          id?: string
-          question_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          answer?: string | null
-          created_at?: string
-          id?: string
-          question_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      invites: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          invited_by: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id?: string
-          invited_by: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          invited_by?: string
-        }
-        Relationships: []
-      }
       user_profiles: {
         Row: {
           created_at: string | null
