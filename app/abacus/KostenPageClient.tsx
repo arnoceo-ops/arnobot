@@ -4,7 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
-import { DEFAULT_PRIJZEN, DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
+import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -16,21 +16,17 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function KostenPageClient() {
   const [tab, setTab] = useState<Tab>('calculator')
-  // Gedeeld tussen Trackrecord (gebruikt dit bij "sluit maand af") en Business
-  // case (waar je ze instelt), zodat wat je op tab 3 ziet ook echt wordt
-  // vastgelegd als je op tab 2 een maand afsluit.
-  const [prijzen, setPrijzen] = useState(DEFAULT_PRIJZEN)
   // Gedeeld tussen Calculator (tab 1) en het Scenario-blok op Business case
   // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
   // andere automatisch mee, in beide richtingen.
   const [nGebruikers, setNGebruikers] = useState(250)
   // %-verdeling per tier (Basic/Pro) en %-betaalcyclus per tier: gedeeld,
   // zodat tab 1 (Calculator) de betaalprovider-kosten als onderdeel van de
-  // totale kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is. Los
-  // van `prijzen` hierboven, dat blijft de échte live Basis/Premium/Elite-
-  // prijs voor Trackrecord. De Basic/Pro-tarieven zelf (SCENARIO_PRIJZEN) zijn
-  // definitief vast (besloten 2026-07-31), geen state meer, direct uit
-  // lib/kostenTarieven.ts geïmporteerd waar nodig.
+  // totale kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is.
+  // Zowel de échte live Basis/Premium/Elite-prijs (Trackrecord, DEFAULT_PRIJZEN)
+  // als de Basic/Pro-scenariotarieven (SCENARIO_PRIJZEN) zijn definitief vast
+  // (besloten 2026-07-31), geen state meer, direct uit lib/kostenTarieven.ts
+  // geïmporteerd waar nodig.
   const [tierVerdeling, setTierVerdeling] = useState(DEFAULT_TIER_VERDELING)
   const [billingSplit, setBillingSplit] = useState(DEFAULT_BILLING_SPLIT)
   const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
@@ -83,7 +79,7 @@ export default function KostenPageClient() {
               Prognose wordt berekend uit écht gemeten gebruik die maand, niet uit de instelbare aannames van de calculator hiernaast. Zo toetst dit of de tarieven zelf kloppen.
             </p>
           </div>
-          <TrackrecordClient prijzen={prijzen} schrijfWachtwoord={schrijfWachtwoord} setSchrijfWachtwoord={setSchrijfWachtwoord} />
+          <TrackrecordClient schrijfWachtwoord={schrijfWachtwoord} setSchrijfWachtwoord={setSchrijfWachtwoord} />
         </div>
       )}
 
@@ -97,7 +93,6 @@ export default function KostenPageClient() {
             </p>
           </div>
           <BusinessCaseClient
-            prijzen={prijzen} setPrijzen={setPrijzen}
             nGebruikers={nGebruikers} setNGebruikers={setNGebruikers}
             tierVerdeling={tierVerdeling} setTierVerdeling={setTierVerdeling}
             billingSplit={billingSplit} setBillingSplit={setBillingSplit}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { DEFAULT_PRIJZEN } from '@/lib/kostenTarieven'
 
 type Meting = {
   maand: string
@@ -55,12 +56,11 @@ const numberInputStyle: React.CSSProperties = {
 }
 
 type Props = {
-  prijzen: { basis: number; premium: number; elite: number }
   schrijfWachtwoord: string
   setSchrijfWachtwoord: (v: string) => void
 }
 
-export default function TrackrecordClient({ prijzen, schrijfWachtwoord, setSchrijfWachtwoord }: Props) {
+export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwoord }: Props) {
   const [geschiedenis, setGeschiedenis] = useState<Meting[]>([])
   const [liveHuidigeMaand, setLiveHuidigeMaand] = useState<Meting | null>(null)
   const [loading, setLoading] = useState(true)
@@ -95,9 +95,9 @@ export default function TrackrecordClient({ prijzen, schrijfWachtwoord, setSchri
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'afsluiten',
-          prijsBasis: prijzen.basis,
-          prijsPremium: prijzen.premium,
-          prijsElite: prijzen.elite,
+          prijsBasis: DEFAULT_PRIJZEN.basis,
+          prijsPremium: DEFAULT_PRIJZEN.premium,
+          prijsElite: DEFAULT_PRIJZEN.elite,
           schrijfWachtwoord,
         }),
       })

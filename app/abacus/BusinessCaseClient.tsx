@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN,
-  type Prijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
+  DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN,
+  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
 const FX_EUR_USD = 1.08
@@ -102,8 +102,6 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
 }
 
 type Props = {
-  prijzen: Prijzen
-  setPrijzen: (p: Prijzen) => void
   nGebruikers: number
   setNGebruikers: (n: number) => void
   tierVerdeling: TierVerdeling
@@ -115,17 +113,12 @@ type Props = {
 }
 
 export default function BusinessCaseClient({
-  prijzen, setPrijzen, nGebruikers, setNGebruikers,
+  nGebruikers, setNGebruikers,
   tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
   billingSplit, setBillingSplit,
   betaalprovider, setBetaalprovider,
 }: Props) {
   const [doelWinst, setDoelWinst] = useState(10000)
-
-  // Basic en Pro zijn samen 100% van het totaal aantal gebruikers. Geen
-  // freemium meer (definitief geschrapt), geen elite (dat tarief blijft
-  // alleen intact op Trackrecord/de live app voor echte Elite-klanten).
-  const pctTotaal = scenarioPct.basic + scenarioPct.pro
 
   const scenario = useMemo(() => {
     const { basicN, proN, omzet, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld } =
@@ -142,12 +135,8 @@ export default function BusinessCaseClient({
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 8 }}>
-        <TariefField label="Tarief Basis (€)" value={prijzen.basis} onChange={v => setPrijzen({ ...prijzen, basis: v })} />
-        <TariefField label="Tarief Premium (€)" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} />
-      </div>
       <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 18 }}>
-        Live prijzen zoals ze nu op arno.bot staan, gebruikt bij het afsluiten van een maand op Trackrecord. Los van het Scenario-blok hieronder, dat gebruikt de nieuwe Basic/Pro-tarieven. Elite-tarief staat niet meer hier instelbaar, blijft vast op €{prijzen.elite} (lib/kostenTarieven.ts).
+        Tarief Basis €{DEFAULT_PRIJZEN.basis}, Tarief Premium €{DEFAULT_PRIJZEN.premium}, Tarief Elite €{DEFAULT_PRIJZEN.elite}. Vaste live prijzen (lib/kostenTarieven.ts), gebruikt bij het afsluiten van een maand op Trackrecord. Los van het Scenario-blok hieronder, dat gebruikt de nieuwe Basic/Pro-tarieven.
       </p>
 
       <div style={cardStyle}>
@@ -159,21 +148,14 @@ export default function BusinessCaseClient({
             Tarieven &amp; betaalcyclus &middot; Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd of €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd of €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-            <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />
-            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
+            <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
+            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
             <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
             <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
           </div>
         </div>
-        {pctTotaal !== 100 && (
-          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 12 }}>
-            {pctTotaal < 100
-              ? `Percentages tellen op tot ${pctTotaal}%, niet 100%. De resterende ${100 - pctTotaal}% wordt niet meegeteld in de verdeling.`
-              : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het totaal aantal gebruikers oplevert.`}
-          </p>
-        )}
 
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>

@@ -55,7 +55,9 @@ export const TARIEVEN = {
   // Omzettarieven per plan, EUR/maand. Command/team heeft geen vlak tarief
   // (staffel per seat, zie project-team-pricing) en telt daarom niet mee in
   // de omzetprognose, alleen het aantal gebruikers wordt getoond.
-  prijsBasisEur: 37,
+  // prijsBasisEur op 38 vastgezet (besloten/bevestigd 2026-07-31), gelijk aan
+  // SCENARIO_PRIJZEN.basicMaandelijks hieronder.
+  prijsBasisEur: 38,
   prijsPremiumEur: 77,
   prijsEliteEur: 397,
 }
@@ -312,8 +314,8 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 // meer instelbaar in de UI, de enige keuzeopties zijn de %-verdeling
 // (TierVerdeling) en de %-betaalcyclus per tier (ScenarioBillingSplit).
 export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 38, basicJaarlijksTotaal: 347, proMaandelijks: 77, proJaarlijksTotaal: 707 }
-export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 30, proPctJaarlijks: 30 }
-export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 70, pro: 30 }
+export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 20, proPctJaarlijks: 10 }
+export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 
 function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, pctJaarlijks: number): number {
