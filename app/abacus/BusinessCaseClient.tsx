@@ -145,10 +145,9 @@ export default function BusinessCaseClient({
       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 8 }}>
         <TariefField label="Tarief Basis (€)" value={prijzen.basis} onChange={v => setPrijzen({ ...prijzen, basis: v })} />
         <TariefField label="Tarief Premium (€)" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} />
-        <TariefField label="Tarief Elite (€)" value={prijzen.elite} onChange={v => setPrijzen({ ...prijzen, elite: v })} />
       </div>
       <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 18 }}>
-        Wordt ook gebruikt bij het afsluiten van een maand op Trackrecord.
+        Wordt ook gebruikt bij het afsluiten van een maand op Trackrecord. Elite-tarief (voor echte Elite-klanten) staat niet meer hier instelbaar, blijft vast op €{prijzen.elite} (lib/kostenTarieven.ts).
       </p>
 
       <div style={cardStyle}>
