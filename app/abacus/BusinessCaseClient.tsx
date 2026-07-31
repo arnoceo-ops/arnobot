@@ -101,6 +101,19 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
   )
 }
 
+// Zelfde weergave als TariefField, maar zonder input: voor tarieven die niet
+// meer instelbaar zijn (Basic/Pro zijn definitief vast, zie lib/kostenTarieven.ts).
+function TariefDisplay({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div style={statLabel}>{label}</div>
+      <div style={{ ...numberInputStyle, width: 100, fontSize: 22, fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
 type Props = {
   nGebruikers: number
   setNGebruikers: (n: number) => void
@@ -135,17 +148,21 @@ export default function BusinessCaseClient({
 
   return (
     <div>
-      <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 18 }}>
-        Tarief Basis €{DEFAULT_PRIJZEN.basis}, Tarief Premium €{DEFAULT_PRIJZEN.premium}, Tarief Elite €{DEFAULT_PRIJZEN.elite}. Vaste live prijzen (lib/kostenTarieven.ts), gebruikt bij het afsluiten van een maand op Trackrecord. Los van het Scenario-blok hieronder, dat gebruikt de nieuwe Basic/Pro-tarieven.
-      </p>
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 18 }}>
+        <TariefDisplay label="Basic (€)" value={String(DEFAULT_PRIJZEN.basis)} />
+        <TariefDisplay label="Pro (€)" value={String(DEFAULT_PRIJZEN.premium)} />
+      </div>
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12 }}>
-            Tarieven &amp; betaalcyclus &middot; Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd of €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd of €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+            Verdeling abonnementen &amp; betaalcyclus
+          </div>
+          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+            Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
             <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
