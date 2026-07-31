@@ -123,10 +123,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Verbruik (tekens per aanroep) wordt gelogd in `arnobot_elevenlabs_usage`, met de echte Clerk `userId` voor de publieke routes en de vaste waarde `'admin-voice-test'` voor de admin-testroute.
 - Controleer [elevenlabs.io/docs](https://elevenlabs.io/docs) op API-wijzigingen.
 
-#### Kostencalculator (`/kosten`, wachtwoord-gated businesscase-tool)
-- `app/kosten/KostenCalculatorClient.tsx` bevat harde standaardwaarden voor externe tarieven: Vercel Pro ($20/seat), Supabase Pro ($25), Clerk Pro ($100), ElevenLabs-plan-tiers (Starter/Creator/Pro/Scale/Business, credits + prijs), Anthropic/Fable 5-kosten per aanroep, en de domeinverlenging bij Porkbun ($52/jaar).
+#### Kostencalculator (Abacus, `/abacus`, wachtwoord-gated businesscase-tool)
+- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven: Vercel Pro ($20/seat), Supabase Pro ($25), Clerk Pro ($100), ElevenLabs-plan-tiers (Starter/Creator/Pro/Scale/Business, credits + prijs), Anthropic/Fable 5-kosten per aanroep, en de domeinverlenging bij Porkbun ($52/jaar). Verdeeld over drie tabbladen (`app/abacus/KostenCalculatorClient.tsx`, `TrackrecordClient.tsx`, `BusinessCaseClient.tsx`), maar alle tarieven zelf staan gecentraliseerd in `lib/kostenTarieven.ts`.
 - Controleer bij elke kwartaalcheck of deze bedragen nog kloppen met de live pricing-pagina's van elke leverancier (Vercel, Supabase, Clerk, ElevenLabs, Porkbun). Prijswijzigingen bij deze leveranciers komen niet vaak voor, maar als het gebeurt: bijwerken in dezelfde commit als deze check, niet uitstellen.
 - Sentry en Upstash staan hier bewust niet als hardcoded bedrag in, die zijn zelf al instelbare velden in de calculator (Arno vult zijn eigen actuele factuurbedrag in), dus geen externe check nodig voor die twee.
+- **Gedaan (2026-07-31):** vaste-infrastructuurkosten-aanname (Vercel + Supabase, samen $77/maand in de standaardinstelling) gecontroleerd tegen écht gemeten verbruik in de Vercel- en Supabase-dashboards, niet geschat. Bij 5.000 gebruikers (500-625x de huidige belasting) blijven Vercel edge requests/databandbreedte ruim onder de gratis inclusies, en Supabase-egress ruim onder de 250GB van het Pro-plan. Supabase's MAU-tarief (100.000 gratis, daarna $0,00325/MAU) is sowieso niet van toepassing: ArnoBot gebruikt Clerk voor authenticatie, niet Supabase Auth, dus die teller staat altijd op 0. Conclusie: geen schaalformule voor vaste kosten nodig tot en met minstens 5.000 gebruikers.
+- **Gedaan (2026-07-31):** `supabasePro`-standaardwaarde in `DEFAULT_INPUTS` gecorrigeerd van `true` naar `false`: de Supabase-organisatie stond nog echt op het Free-plan, niet Pro. Upgrade blijft bewust uitgesteld tot de 50-actieve-gebruikersmijlpaal (zie "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven).
 
 ### 5. Werking van de app
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
