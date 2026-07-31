@@ -12,6 +12,9 @@ function fmtUSD(n: number): string {
 function fmtUSD0(n: number): string {
   return '$' + Math.round(n).toLocaleString('nl-NL')
 }
+function fmtEUR0(n: number): string {
+  return '€' + Math.round(n).toLocaleString('nl-NL')
+}
 
 const cardStyle: React.CSSProperties = {
   background: '#1a2333', border: '1px solid #2d3a4f', borderRadius: 12,
@@ -259,6 +262,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               </div>
               <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 Totaal alle kosten: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</b> / maand
+                <span style={{ color: '#6b7280' }}> (&asymp; {fmtEUR0(result.totaal / inputs.fxRate)}, vergelijk met tab 3)</span>
               </div>
 
               <div style={{ marginTop: 16 }}>
