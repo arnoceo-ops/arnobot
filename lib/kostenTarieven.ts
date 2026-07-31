@@ -157,11 +157,10 @@ export const DEFAULT_INPUTS: Inputs = {
   tiers: TARIEVEN.tiers,
   vercelSeats: TARIEVEN.vercelSeats,
   vercelPerSeat: TARIEVEN.vercelPerSeat,
-  // Gecheckt 2026-07-31: Supabase-org staat echt nog op het Free-plan, niet
-  // Pro. Upgrade is bewust uitgesteld tot de 50-actieve-gebruikersmijlpaal
-  // (zie CLAUDE.md). Standaard hier op false zodat tab 1 bij het openen de
-  // huidige realiteit toont; zelf aanzetten voor toekomstscenario's.
-  supabasePro: false,
+  // Arno gaat binnenkort echt upgraden naar Supabase Pro (2026-07-31), dus
+  // weer op true. Was kort op false gezet (nog op Free-plan op het moment
+  // van checken), zie CLAUDE.md voor de context van die check.
+  supabasePro: true,
   clerkPro: TARIEVEN.clerkProActief,
   sentryEur: TARIEVEN.sentryEur,
   fxRate: TARIEVEN.fxRateEurUsd,
