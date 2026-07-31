@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return NextResponse.json({ error: 'Telegram niet geconfigureerd' }, { status: 500 })
 
-  const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 200)
+  const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ')
   const text = `Feedback van ${tgSafe(naam)}\n\n${tgSafe(feedback.trim())}`
   const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
