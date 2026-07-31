@@ -11,6 +11,6 @@ export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
 
 // Arno's eigen handmatige testaccount, voor interactief rondklikken buiten zijn echte
 // gebruiksaccount om. Ingelogd via de verborgen route app/sign-in/intern/page.tsx, niet via
-// LinkedIn. MANUAL_TEST_USER_ID wordt pas bekend zodra het account in Clerk is aangemaakt.
+// LinkedIn.
 export const MANUAL_TEST_USER_EMAIL = 'test@arno.bot'
-export const MANUAL_TEST_USER_ID = ''
+export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
