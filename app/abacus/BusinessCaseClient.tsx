@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, computeForN, berekenScenarioOmzetEnBetaalprovider,
+  DEFAULT_INPUTS, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider,
   type Prijzen, type ScenarioPrijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
@@ -29,8 +29,8 @@ function winstBijN(
   n: number, scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
   verdeling: TierVerdeling, betaalprovider: Betaalprovider
 ): number {
-  const { omzet, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, verdeling, betaalprovider, n)
-  const kostenEur = computeForN(DEFAULT_INPUTS, n).totaal / FX_EUR_USD
+  const { basicN, proN, omzet, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, verdeling, betaalprovider, n)
+  const kostenEur = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN).totaal / FX_EUR_USD
   return omzet - kostenEur - betaalproviderKosten
 }
 
@@ -132,7 +132,7 @@ export default function BusinessCaseClient({
   const scenario = useMemo(() => {
     const { basicN, proN, omzet, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld } =
       berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, scenarioPct, betaalprovider, nGebruikers)
-    const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
+    const kostenUsd = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
     return { basicN, proN, omzet, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
   }, [nGebruikers, scenarioPct, scenarioPrijzen, billingSplit, betaalprovider])
@@ -155,7 +155,7 @@ export default function BusinessCaseClient({
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over Basic en Pro. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
+          Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over Basic en Pro. Kostenaannames komen uit dezelfde basis als de Calculator (tab 1), maar per tier: Basic heeft hetzelfde hoofdchatvolume als Pro, geen coaching of voice (geen toegang) en een lagere analyses-aanname (harde 1x/dag-limiet).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
         <NumberField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />

@@ -211,6 +211,78 @@ export function computeForN(inputs: Inputs, n: number) {
   }
 }
 
+// Basic en Pro in het Scenario-blok (tab 3): geen aparte kostenformule zoals
+// eerder bij freemium, want Basic heeft hetzelfde hoofdchatvolume als Pro
+// (besloten 2026-07-31: chat is de kernfunctionaliteit, geen reden om lager
+// gebruik aan te nemen). Wel harde, in de code afgedwongen verschillen:
+// - Coaching/Fable 5: geen toegang voor Basic (`plan==='basis'` geblokkeerd
+//   in app/api/bot/coaching/route.ts en coaching-precheck/route.ts).
+// - Voice: geen toegang voor Basic (lib/voice.ts, hasVoiceAccess).
+// - Analyses: wel toegang, maar hard gelimiteerd tot 1x/dag
+//   (coaching-analyse/route.ts), dus een veel lagere maandaanname dan Pro's
+//   instelbare aantal.
+// - Sparren: geen tier-check gevonden in de routes, dus gelijk voor beide.
+// Bewust een losse functie i.p.v. hergebruik van computeForN met n=totaal:
+// vaste kosten mogen maar één keer meetellen, en de voice/coaching/analyses-
+// termen moeten per tier een andere N gebruiken, dat past niet in de bestaande
+// computeForN-signatuur zonder tab 1 (die geen tier-onderscheid kent) te
+// compliceren. Zelfde rekenregels als computeForN, hou bij een tariefwijziging
+// beide functies synchroon.
+const BASIC_ANALYSES_PER_MAAND = 4
+
+export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: number) {
+  const n = basicN + proN
+  const totaalBerichten = n * inputs.berichten
+  const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
+
+  const analysesKosten = (proN * inputs.analysesPerGebruiker + basicN * BASIC_ANALYSES_PER_MAAND) * inputs.kostenPerAnalyse
+
+  const fable5Kosten = proN * (
+    inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
+    + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
+  )
+
+  const sparringGebruikers = n * (inputs.pctSparring / 100)
+  const totaalSparringSessies = sparringGebruikers * inputs.sparringSessiesPerGebruiker
+  const totaalSparringBerichten = totaalSparringSessies * inputs.berichtenPerSparringSessie
+  const sparringKosten = totaalSparringBerichten * inputs.kostenPerSparringBericht
+    + totaalSparringSessies * inputs.kostenPerDebrief
+
+  // Bundelt coaching-gerelateerde (precheck, blog-synthese) en niet-
+  // gerelateerde (session-end, verfijn, sessies-zoeken) routes, verwaarloosbaar
+  // bedrag, hier niet verder uitgesplitst, toegepast op Pro (grootste overlap
+  // met coaching-routes).
+  const overigeAnthropicKosten = proN * inputs.overigeAnthropicPerGebruiker
+
+  const voiceGebruikers = proN * (inputs.pctVoice / 100)
+  const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
+  const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
+  const creditsNodig = totaalTekens * inputs.creditPerTeken
+  const eleven = elevenLabsCost(creditsNodig, inputs.tiers)
+  const whisperKosten = totaalInteracties * inputs.kostenPerInteractie
+
+  const upstashCommands = totaalBerichten * inputs.upstashPerBericht
+  const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
+  const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
+
+  const sentryUsd = inputs.sentryEur * inputs.fxRate
+  const domeinPerMaand = inputs.domeinPerJaar / 12
+  const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
+    + (inputs.supabasePro ? 25 : 0)
+    + (inputs.clerkPro ? 100 : 0)
+    + sentryUsd
+    + domeinPerMaand
+
+  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
+    + eleven.price + whisperKosten + upstashKosten
+
+  return {
+    vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
+    elevenPrice: eleven.price, elevenName: eleven.name,
+    whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+  }
+}
+
 // Betaalprovider (Emirates NBD Pay / Network International): geen publiek
 // tarief, marktbenchmark voor internationaal uitgegeven kaarten. Gedeeld
 // tussen Calculator (tab 1, telt mee in de totale kosten) en het
