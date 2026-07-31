@@ -297,28 +297,28 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 // ScenarioPrijzen/TierVerdeling/ScenarioBillingSplit zijn het losse,
 // hypothetische model voor het Scenario-blok en de Doelwinst-solver: geen
 // freemium meer (besloten, definitief geschrapt), twee tiers, Basic en Pro
-// (interne Abacus-namen, nog niet per se de namen op arno.bot/prijzen). Elk
-// heeft een maand- en een jaarprijs (jaarprijs als prijs-per-maand-
-// equivalent), plus een eigen %-splitsing hoeveel klanten van die tier
-// maandelijks vs. jaarlijks betalen, want die twee klantgroepen leveren een
-// andere gemiddelde omzet per gebruiker op.
+// (interne Abacus-namen, nog niet per se de namen op arno.bot/prijzen).
 export type Prijzen = { basis: number; premium: number; elite: number }
-export type ScenarioPrijzen = { basicMaandelijks: number; basicJaarlijks: number; proMaandelijks: number; proJaarlijks: number }
+// basicJaarlijksTotaal/proJaarlijksTotaal zijn de jaarprijs zelf (het bedrag
+// dat je één keer per jaar betaalt), niet een per-maand-equivalent: die
+// omrekening (/12) gebeurt in gemiddeldePrijsPerMaand hieronder.
+export type ScenarioPrijzen = { basicMaandelijks: number; basicJaarlijksTotaal: number; proMaandelijks: number; proJaarlijksTotaal: number }
 export type ScenarioBillingSplit = { basicPctJaarlijks: number; proPctJaarlijks: number }
 export type TierVerdeling = { basic: number; pro: number }
 export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
-// Definitieve Abacus-tarieven (besloten 2026-07-31): Basic 38/maand of 29/maand
-// bij jaarbetaling (347/jaar). Pro 77/maand of 59/maand bij jaarbetaling (707/jaar).
-export const DEFAULT_SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 38, basicJaarlijks: 29, proMaandelijks: 77, proJaarlijks: 59 }
+// Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-07-31): niet
+// meer instelbaar in de UI, de enige keuzeopties zijn de %-verdeling
+// (TierVerdeling) en de %-betaalcyclus per tier (ScenarioBillingSplit).
+export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 38, basicJaarlijksTotaal: 347, proMaandelijks: 77, proJaarlijksTotaal: 707 }
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 30, proPctJaarlijks: 30 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 70, pro: 30 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 
-function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijks: number, pctJaarlijks: number): number {
+function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, pctJaarlijks: number): number {
   const aandeelJaarlijks = pctJaarlijks / 100
-  return aandeelJaarlijks * jaarlijks + (1 - aandeelJaarlijks) * maandelijks
+  return aandeelJaarlijks * (jaarlijksTotaal / 12) + (1 - aandeelJaarlijks) * maandelijks
 }
 
 export function berekenScenarioOmzetEnBetaalprovider(
@@ -331,8 +331,8 @@ export function berekenScenarioOmzetEnBetaalprovider(
   const noemer = Math.max(verdeling.basic + verdeling.pro, 100)
   const basicN = Math.round(n * (verdeling.basic / noemer))
   const proN = Math.round(n * (verdeling.pro / noemer))
-  const basicPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.basicMaandelijks, scenarioPrijzen.basicJaarlijks, billingSplit.basicPctJaarlijks)
-  const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijks, billingSplit.proPctJaarlijks)
+  const basicPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.basicMaandelijks, scenarioPrijzen.basicJaarlijksTotaal, billingSplit.basicPctJaarlijks)
+  const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijksTotaal, billingSplit.proPctJaarlijks)
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
   const aandeel = betaalprovider.pctCreditcard / 100
   const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)

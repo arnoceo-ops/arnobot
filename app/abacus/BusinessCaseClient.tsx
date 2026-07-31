@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider,
-  type Prijzen, type ScenarioPrijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
+  DEFAULT_INPUTS, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN,
+  type Prijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
 const FX_EUR_USD = 1.08
@@ -26,24 +26,24 @@ function margePct(omzet: number | null, kosten: number | null): string {
 const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
 
 function winstBijN(
-  n: number, scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
+  n: number, billingSplit: ScenarioBillingSplit,
   verdeling: TierVerdeling, betaalprovider: Betaalprovider
 ): number {
-  const { basicN, proN, omzet, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, verdeling, betaalprovider, n)
+  const { basicN, proN, omzet, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n)
   const kostenEur = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN).totaal / FX_EUR_USD
   return omzet - kostenEur - betaalproviderKosten
 }
 
 function benodigdeGebruikersVoorWinst(
-  doelWinstEur: number, scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
+  doelWinstEur: number, billingSplit: ScenarioBillingSplit,
   verdeling: TierVerdeling, betaalprovider: Betaalprovider
 ): number | null {
-  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, scenarioPrijzen, billingSplit, verdeling, betaalprovider) < doelWinstEur) return null
+  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider) < doelWinstEur) return null
   let lo = 0
   let hi = MAX_GEBRUIKERS_ZOEKGRENS
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2)
-    if (winstBijN(mid, scenarioPrijzen, billingSplit, verdeling, betaalprovider) >= doelWinstEur) hi = mid
+    if (winstBijN(mid, billingSplit, verdeling, betaalprovider) >= doelWinstEur) hi = mid
     else lo = mid + 1
   }
   return lo
@@ -108,8 +108,6 @@ type Props = {
   setNGebruikers: (n: number) => void
   tierVerdeling: TierVerdeling
   setTierVerdeling: (v: TierVerdeling) => void
-  scenarioPrijzen: ScenarioPrijzen
-  setScenarioPrijzen: (p: ScenarioPrijzen) => void
   billingSplit: ScenarioBillingSplit
   setBillingSplit: (b: ScenarioBillingSplit) => void
   betaalprovider: Betaalprovider
@@ -119,7 +117,7 @@ type Props = {
 export default function BusinessCaseClient({
   prijzen, setPrijzen, nGebruikers, setNGebruikers,
   tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
-  scenarioPrijzen, setScenarioPrijzen, billingSplit, setBillingSplit,
+  billingSplit, setBillingSplit,
   betaalprovider, setBetaalprovider,
 }: Props) {
   const [doelWinst, setDoelWinst] = useState(10000)
@@ -131,15 +129,15 @@ export default function BusinessCaseClient({
 
   const scenario = useMemo(() => {
     const { basicN, proN, omzet, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld } =
-      berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, scenarioPct, betaalprovider, nGebruikers)
+      berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers)
     const kostenUsd = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
     return { basicN, proN, omzet, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
-  }, [nGebruikers, scenarioPct, scenarioPrijzen, billingSplit, betaalprovider])
+  }, [nGebruikers, scenarioPct, billingSplit, betaalprovider])
 
   const benodigdeGebruikers = useMemo(
-    () => benodigdeGebruikersVoorWinst(doelWinst, scenarioPrijzen, billingSplit, scenarioPct, betaalprovider),
-    [doelWinst, scenarioPrijzen, billingSplit, scenarioPct, betaalprovider]
+    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider),
+    [doelWinst, billingSplit, scenarioPct, betaalprovider]
   )
 
   return (
@@ -158,25 +156,27 @@ export default function BusinessCaseClient({
           Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over Basic en Pro. Kostenaannames komen uit dezelfde basis als de Calculator (tab 1), maar per tier: Basic heeft hetzelfde hoofdchatvolume als Pro, geen coaching of voice (geen toegang) en een lagere analyses-aanname (harde 1x/dag-limiet).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
-        <NumberField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />
-        <NumberField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
+
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12 }}>
+            Verdeling &amp; betaalcyclus &middot; tarieven vast: Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd of €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd of €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
+          </div>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+            <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />
+            <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
+          </div>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
+            <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+          </div>
+        </div>
         {pctTotaal !== 100 && (
-          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>
+          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 12 }}>
             {pctTotaal < 100
               ? `Percentages tellen op tot ${pctTotaal}%, niet 100%. De resterende ${100 - pctTotaal}% wordt niet meegeteld in de verdeling.`
               : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het totaal aantal gebruikers oplevert.`}
           </p>
         )}
-
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>Tarieven &amp; betaalcyclus</div>
-          <NumberField label="Basic per maand (€)" hint="bij maandbetaling" value={scenarioPrijzen.basicMaandelijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, basicMaandelijks: v })} />
-          <NumberField label="Basic per maand bij jaarbetaling (€)" hint="jaarprijs / 12" value={scenarioPrijzen.basicJaarlijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, basicJaarlijks: v })} />
-          <NumberField label="% Basic-klanten dat jaarlijks betaalt" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
-          <NumberField label="Pro per maand (€)" hint="bij maandbetaling" value={scenarioPrijzen.proMaandelijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, proMaandelijks: v })} />
-          <NumberField label="Pro per maand bij jaarbetaling (€)" hint="jaarprijs / 12" value={scenarioPrijzen.proJaarlijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, proJaarlijks: v })} />
-          <NumberField label="% Pro-klanten dat jaarlijks betaalt" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
-        </div>
 
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>

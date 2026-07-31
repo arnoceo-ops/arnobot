@@ -4,7 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
-import { DEFAULT_PRIJZEN, DEFAULT_TIER_VERDELING, DEFAULT_SCENARIO_PRIJZEN, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
+import { DEFAULT_PRIJZEN, DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -24,13 +24,14 @@ export default function KostenPageClient() {
   // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
   // andere automatisch mee, in beide richtingen.
   const [nGebruikers, setNGebruikers] = useState(250)
-  // %-verdeling per tier (Basic/Pro), Basic/Pro-tarieven (maand + jaar) en
-  // betaalprovider-instellingen: ook gedeeld, zodat tab 1 (Calculator) de
-  // betaalprovider-kosten als onderdeel van de totale kosten kan tonen,
-  // i.p.v. dat die alleen op tab 3 zichtbaar is. Los van `prijzen` hierboven,
-  // dat blijft de échte live Basis/Premium/Elite-prijs voor Trackrecord.
+  // %-verdeling per tier (Basic/Pro) en %-betaalcyclus per tier: gedeeld,
+  // zodat tab 1 (Calculator) de betaalprovider-kosten als onderdeel van de
+  // totale kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is. Los
+  // van `prijzen` hierboven, dat blijft de échte live Basis/Premium/Elite-
+  // prijs voor Trackrecord. De Basic/Pro-tarieven zelf (SCENARIO_PRIJZEN) zijn
+  // definitief vast (besloten 2026-07-31), geen state meer, direct uit
+  // lib/kostenTarieven.ts geïmporteerd waar nodig.
   const [tierVerdeling, setTierVerdeling] = useState(DEFAULT_TIER_VERDELING)
-  const [scenarioPrijzen, setScenarioPrijzen] = useState(DEFAULT_SCENARIO_PRIJZEN)
   const [billingSplit, setBillingSplit] = useState(DEFAULT_BILLING_SPLIT)
   const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
   // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
@@ -68,7 +69,6 @@ export default function KostenPageClient() {
           nGebruikers={nGebruikers}
           setNGebruikers={setNGebruikers}
           tierVerdeling={tierVerdeling}
-          scenarioPrijzen={scenarioPrijzen}
           billingSplit={billingSplit}
           betaalprovider={betaalprovider}
         />
@@ -100,7 +100,6 @@ export default function KostenPageClient() {
             prijzen={prijzen} setPrijzen={setPrijzen}
             nGebruikers={nGebruikers} setNGebruikers={setNGebruikers}
             tierVerdeling={tierVerdeling} setTierVerdeling={setTierVerdeling}
-            scenarioPrijzen={scenarioPrijzen} setScenarioPrijzen={setScenarioPrijzen}
             billingSplit={billingSplit} setBillingSplit={setBillingSplit}
             betaalprovider={betaalprovider} setBetaalprovider={setBetaalprovider}
           />

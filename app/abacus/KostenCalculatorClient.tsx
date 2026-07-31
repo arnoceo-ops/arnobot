@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import {
   DEFAULT_INPUTS, computeForN, type Inputs,
-  berekenScenarioOmzetEnBetaalprovider, type ScenarioPrijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
+  berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
@@ -86,20 +86,20 @@ type Props = {
   nGebruikers: number
   setNGebruikers: (n: number) => void
   tierVerdeling: TierVerdeling
-  scenarioPrijzen: ScenarioPrijzen
   billingSplit: ScenarioBillingSplit
   betaalprovider: Betaalprovider
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, scenarioPrijzen, billingSplit, betaalprovider }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
   // Betaalprovider-kosten (Emirates NBD Pay) horen hier ook bij de totale
   // kosten, ook al zijn ze zelf omzet-afhankelijk: dat is precies waarom
-  // tarieven/verdeling/betaalprovider-instellingen gedeeld zijn met tab 3.
+  // verdeling/betaalprovider-instellingen gedeeld zijn met tab 3. Tarieven
+  // zelf (SCENARIO_PRIJZEN) zijn definitief vast, geen gedeelde state.
   function betaalproviderKostenUsd(n: number): number {
-    const { betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider, n)
+    const { betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n)
     return betaalproviderKosten * inputs.fxRate
   }
 
@@ -119,7 +119,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
     const betaalKosten = betaalproviderKostenUsd(nGebruikers)
     const totaal = basis.totaal + betaalKosten
     return { ...basis, betaalKosten, totaal, perGebruiker: nGebruikers > 0 ? totaal / nGebruikers : 0 }
-  }, [inputs, nGebruikers, scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider])
+  }, [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider])
 
   const scaleRows = useMemo(
     () => [10, 50, 100, 200, 500].map(n => {
@@ -128,7 +128,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
       const totaal = basis.totaal + betaalKosten
       return { n, ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
     }),
-    [inputs, scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider]
+    [inputs, billingSplit, tierVerdeling, betaalprovider]
   )
 
   return (
