@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import {
-  DEFAULT_INPUTS, computeForN, type Inputs,
+  DEFAULT_INPUTS, computeScenarioKosten, type Inputs,
   berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
@@ -94,13 +94,22 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
-  // Betaalprovider-kosten (Emirates NBD Pay) horen hier ook bij de totale
-  // kosten, ook al zijn ze zelf omzet-afhankelijk: dat is precies waarom
-  // verdeling/betaalprovider-instellingen gedeeld zijn met tab 3. Tarieven
-  // zelf (SCENARIO_PRIJZEN) zijn definitief vast, geen gedeelde state.
-  function betaalproviderKostenUsd(n: number): number {
-    const { betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n)
-    return betaalproviderKosten * inputs.fxRate
+  // Tier-bewust, net als tab 3 (Business case): de instelbare aannames
+  // hieronder (analyses, coaching, voice, enzovoort) gelden voor Pro-
+  // gebruikers, Basic-gebruikers krijgen automatisch nul coaching/voice en
+  // een vaste lage analyses-aanname (computeScenarioKosten in
+  // lib/kostenTarieven.ts). Zo geven tab 1 en tab 3 bij hetzelfde aantal
+  // gebruikers en dezelfde %-verdeling ook hetzelfde antwoord. Betaalprovider-
+  // kosten horen hier ook bij de totale kosten, ook al zijn ze zelf omzet-
+  // afhankelijk: vandaar dat verdeling/betaalprovider-instellingen gedeeld
+  // zijn met tab 3. Tarieven zelf (SCENARIO_PRIJZEN) zijn definitief vast,
+  // geen gedeelde state.
+  function berekenKostenVoorN(n: number) {
+    const { basicN, proN, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n)
+    const basis = computeScenarioKosten(inputs, basicN, proN)
+    const betaalKosten = betaalproviderKosten * inputs.fxRate
+    const totaal = basis.totaal + betaalKosten
+    return { ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
   }
 
   function set<K extends keyof Inputs>(key: K, value: Inputs[K]) {
@@ -114,20 +123,13 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
     })
   }
 
-  const result = useMemo(() => {
-    const basis = computeForN(inputs, nGebruikers)
-    const betaalKosten = betaalproviderKostenUsd(nGebruikers)
-    const totaal = basis.totaal + betaalKosten
-    return { ...basis, betaalKosten, totaal, perGebruiker: nGebruikers > 0 ? totaal / nGebruikers : 0 }
-  }, [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider])
+  const result = useMemo(
+    () => berekenKostenVoorN(nGebruikers),
+    [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider]
+  )
 
   const scaleRows = useMemo(
-    () => [10, 50, 100, 200, 500].map(n => {
-      const basis = computeForN(inputs, n)
-      const betaalKosten = betaalproviderKostenUsd(n)
-      const totaal = basis.totaal + betaalKosten
-      return { n, ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
-    }),
+    () => [10, 50, 100, 200, 500].map(n => ({ n, ...berekenKostenVoorN(n) })),
     [inputs, billingSplit, tierVerdeling, betaalprovider]
   )
 
@@ -145,7 +147,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
           <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
           <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kostencalculator per gebruiker</h1>
           <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Alles herberekent live.
+            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Gelden voor Pro-gebruikers; Basic krijgt automatisch nul coaching/voice en een vaste lage analyses-aanname, dezelfde %-verdeling als tab 3 (Business case). Alles herberekent live.
           </p>
         </div>
 
@@ -276,7 +278,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-                Betaalprovider-kosten gebruiken de tarieven, %-verdeling en betaalprovider-instellingen van tab 3 (Business case), dit tabblad kent zelf geen prijzen.
+                %-verdeling Basic/Pro, betaalcyclus en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen.
               </p>
             </div>
 
