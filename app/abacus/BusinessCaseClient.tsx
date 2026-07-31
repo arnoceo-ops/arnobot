@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, computeForN, computeFreemiumKostenPerGebruiker, berekenOmzetEnBetaalprovider,
-  type Prijzen, type TierVerdeling, type Betaalprovider,
+  DEFAULT_INPUTS, computeForN, berekenScenarioOmzetEnBetaalprovider,
+  type Prijzen, type ScenarioPrijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
 const FX_EUR_USD = 1.08
@@ -25,22 +25,25 @@ function margePct(omzet: number | null, kosten: number | null): string {
 // in n, dus binaire zoektocht volstaat, geen closed-form nodig.
 const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
 
-function winstBijN(n: number, prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider): number {
-  const { freemiumN, basisN, premiumN, omzet, betaalproviderKosten } = berekenOmzetEnBetaalprovider(prijzen, verdeling, betaalprovider, n)
-  const kostenEur = (computeForN(DEFAULT_INPUTS, basisN + premiumN).totaal
-    + freemiumN * computeFreemiumKostenPerGebruiker(DEFAULT_INPUTS)) / FX_EUR_USD
+function winstBijN(
+  n: number, scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider
+): number {
+  const { omzet, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, verdeling, betaalprovider, n)
+  const kostenEur = computeForN(DEFAULT_INPUTS, n).totaal / FX_EUR_USD
   return omzet - kostenEur - betaalproviderKosten
 }
 
 function benodigdeGebruikersVoorWinst(
-  doelWinstEur: number, prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider
+  doelWinstEur: number, scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider
 ): number | null {
-  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, prijzen, verdeling, betaalprovider) < doelWinstEur) return null
+  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, scenarioPrijzen, billingSplit, verdeling, betaalprovider) < doelWinstEur) return null
   let lo = 0
   let hi = MAX_GEBRUIKERS_ZOEKGRENS
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2)
-    if (winstBijN(mid, prijzen, verdeling, betaalprovider) >= doelWinstEur) hi = mid
+    if (winstBijN(mid, scenarioPrijzen, billingSplit, verdeling, betaalprovider) >= doelWinstEur) hi = mid
     else lo = mid + 1
   }
   return lo
@@ -105,6 +108,10 @@ type Props = {
   setNGebruikers: (n: number) => void
   tierVerdeling: TierVerdeling
   setTierVerdeling: (v: TierVerdeling) => void
+  scenarioPrijzen: ScenarioPrijzen
+  setScenarioPrijzen: (p: ScenarioPrijzen) => void
+  billingSplit: ScenarioBillingSplit
+  setBillingSplit: (b: ScenarioBillingSplit) => void
   betaalprovider: Betaalprovider
   setBetaalprovider: (b: Betaalprovider) => void
 }
@@ -112,32 +119,27 @@ type Props = {
 export default function BusinessCaseClient({
   prijzen, setPrijzen, nGebruikers, setNGebruikers,
   tierVerdeling: scenarioPct, setTierVerdeling: setScenarioPct,
+  scenarioPrijzen, setScenarioPrijzen, billingSplit, setBillingSplit,
   betaalprovider, setBetaalprovider,
 }: Props) {
   const [doelWinst, setDoelWinst] = useState(10000)
 
-  // Freemium, Basis en Premium zijn samen 100% van het totaal aantal
-  // gebruikers, geen aparte betalend/niet-betalend-laag: freemium is gewoon
-  // één van de drie tiers, met prijs €0. Elite bestaat hier bewust niet, dat
-  // tarief blijft alleen intact op Trackrecord/de live app (echte klanten).
-  const pctTotaal = scenarioPct.freemium + scenarioPct.basis + scenarioPct.premium
+  // Basic en Pro zijn samen 100% van het totaal aantal gebruikers. Geen
+  // freemium meer (definitief geschrapt), geen elite (dat tarief blijft
+  // alleen intact op Trackrecord/de live app voor echte Elite-klanten).
+  const pctTotaal = scenarioPct.basic + scenarioPct.pro
 
   const scenario = useMemo(() => {
-    const { freemiumN, basisN, premiumN, omzet, betaalproviderKosten: betaalKosten } =
-      berekenOmzetEnBetaalprovider(prijzen, scenarioPct, betaalprovider, nGebruikers)
-    // Freemium-gebruikers kunnen alleen sparren en gesprekken voeren (geen
-    // analyses, coaching of voice), dus tellen niet mee in de volle
-    // computeForN (die geldt alleen voor de betalende basisN+premiumN), alleen
-    // in hun eigen beperkte kostenformule.
-    const kostenUsd = computeForN(DEFAULT_INPUTS, basisN + premiumN).totaal
-      + freemiumN * computeFreemiumKostenPerGebruiker(DEFAULT_INPUTS)
+    const { basicN, proN, omzet, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld } =
+      berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, scenarioPct, betaalprovider, nGebruikers)
+    const kostenUsd = computeForN(DEFAULT_INPUTS, nGebruikers).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    return { freemiumN, basisN, premiumN, omzet, kostenEur, betaalKosten }
-  }, [nGebruikers, scenarioPct, prijzen, betaalprovider])
+    return { basicN, proN, omzet, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
+  }, [nGebruikers, scenarioPct, scenarioPrijzen, billingSplit, betaalprovider])
 
   const benodigdeGebruikers = useMemo(
-    () => benodigdeGebruikersVoorWinst(doelWinst, prijzen, scenarioPct, betaalprovider),
-    [doelWinst, prijzen, scenarioPct, betaalprovider]
+    () => benodigdeGebruikersVoorWinst(doelWinst, scenarioPrijzen, billingSplit, scenarioPct, betaalprovider),
+    [doelWinst, scenarioPrijzen, billingSplit, scenarioPct, betaalprovider]
   )
 
   return (
@@ -147,18 +149,17 @@ export default function BusinessCaseClient({
         <TariefField label="Tarief Premium (€)" value={prijzen.premium} onChange={v => setPrijzen({ ...prijzen, premium: v })} />
       </div>
       <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 18 }}>
-        Wordt ook gebruikt bij het afsluiten van een maand op Trackrecord. Elite-tarief (voor echte Elite-klanten) staat niet meer hier instelbaar, blijft vast op €{prijzen.elite} (lib/kostenTarieven.ts).
+        Live prijzen zoals ze nu op arno.bot staan, gebruikt bij het afsluiten van een maand op Trackrecord. Los van het Scenario-blok hieronder, dat gebruikt de nieuwe Basic/Pro-tarieven. Elite-tarief staat niet meer hier instelbaar, blijft vast op €{prijzen.elite} (lib/kostenTarieven.ts).
       </p>
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over freemium, basis en premium. Kosten komen uit dezelfde berekening als de Calculator (tab 1), op maat gemaakt per tier: freemium kan alleen sparren en gesprekken voeren.
+          Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over Basic en Pro. Kosten komen uit dezelfde berekening als de Calculator (tab 1).
         </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
-        <NumberField label="% Freemium" hint="geen omzet, alleen sparren en gesprekken (geen analyses, coaching of voice)" value={scenarioPct.freemium} onChange={v => setScenarioPct({ ...scenarioPct, freemium: v })} />
-        <NumberField label="% Basis" value={scenarioPct.basis} onChange={v => setScenarioPct({ ...scenarioPct, basis: v })} />
-        <NumberField label="% Premium" value={scenarioPct.premium} onChange={v => setScenarioPct({ ...scenarioPct, premium: v })} />
+        <NumberField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />
+        <NumberField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
         {pctTotaal !== 100 && (
           <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 8 }}>
             {pctTotaal < 100
@@ -166,10 +167,25 @@ export default function BusinessCaseClient({
               : `Percentages tellen op tot ${pctTotaal}%, meer dan 100%. De verdeling hieronder is proportioneel herschaald zodat die nooit meer dan het totaal aantal gebruikers oplevert.`}
           </p>
         )}
+
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>Tarieven &amp; betaalcyclus</div>
+          <NumberField label="Basic per maand (€)" hint="bij maandbetaling" value={scenarioPrijzen.basicMaandelijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, basicMaandelijks: v })} />
+          <NumberField label="Basic per maand bij jaarbetaling (€)" hint="jaarprijs / 12" value={scenarioPrijzen.basicJaarlijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, basicJaarlijks: v })} />
+          <NumberField label="% Basic-klanten dat jaarlijks betaalt" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
+          <NumberField label="Pro per maand (€)" hint="bij maandbetaling" value={scenarioPrijzen.proMaandelijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, proMaandelijks: v })} />
+          <NumberField label="Pro per maand bij jaarbetaling (€)" hint="jaarprijs / 12" value={scenarioPrijzen.proJaarlijks} onChange={v => setScenarioPrijzen({ ...scenarioPrijzen, proJaarlijks: v })} />
+          <NumberField label="% Pro-klanten dat jaarlijks betaalt" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+        </div>
+
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
             <div style={statLabel}>Verdeling</div>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.freemiumN} freemium &middot; {scenario.basisN} basis &middot; {scenario.premiumN} premium</div>
+            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro</div>
+          </div>
+          <div>
+            <div style={statLabel}>Gemiddelde prijs/maand</div>
+            <div style={{ fontSize: 13, color: '#94a3b8' }}>€{scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; €{scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>

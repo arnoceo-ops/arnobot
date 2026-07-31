@@ -211,53 +211,59 @@ export function computeForN(inputs: Inputs, n: number) {
   }
 }
 
-// Freemium-gebruikers kunnen alleen sparren en gesprekken voeren (geen
-// analyses, geen coaching/Fable 5, geen voice), dus draagt maar een deel van
-// computeForN bij: hoofdchat-berichten + sparring, verder niets. Vaste
-// infrastructuurkosten worden niet nogmaals meegeteld, die zitten al één keer
-// in computeForN voor de betalende gebruikers.
-export function computeFreemiumKostenPerGebruiker(inputs: Inputs): number {
-  const anthropicKosten = inputs.berichten * inputs.anthropicPerBericht
-  const sparringAandeel = inputs.pctSparring / 100
-  const sparringKosten = sparringAandeel * (
-    inputs.sparringSessiesPerGebruiker * inputs.berichtenPerSparringSessie * inputs.kostenPerSparringBericht
-    + inputs.sparringSessiesPerGebruiker * inputs.kostenPerDebrief
-  )
-  return anthropicKosten + sparringKosten
-}
-
 // Betaalprovider (Emirates NBD Pay / Network International): geen publiek
 // tarief, marktbenchmark voor internationaal uitgegeven kaarten. Gedeeld
 // tussen Calculator (tab 1, telt mee in de totale kosten) en het
 // Scenario-blok op Business case (tab 3), zodat beide exact dezelfde omzet-
 // en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
-// Prijzen behoudt elite: dat tarief is nog steeds nodig voor Trackrecord (het
-// afsluiten van een maand rekent met échte Elite-klanten uit approved_users).
-// TierVerdeling (de %-verdeling in het hypothetische Scenario-blok en de
-// Doelwinst-solver) heeft geen elite meer, maar wel freemium: gebruikers
-// worden daar verdeeld over freemium, basis en premium, geen aparte
-// betalend/niet-betalend-laag.
+//
+// Prijzen (basis/premium/elite) is losstaand: dat blijft de échte, huidige
+// live prijs zoals die nu op arno.bot staat, gebruikt door Trackrecord bij
+// het afsluiten van een maand met écht gemeten Basis/Premium/Elite-klanten
+// uit approved_users. Wordt hier bewust niet aangeraakt.
+//
+// ScenarioPrijzen/TierVerdeling/ScenarioBillingSplit zijn het losse,
+// hypothetische model voor het Scenario-blok en de Doelwinst-solver: geen
+// freemium meer (besloten, definitief geschrapt), twee tiers, Basic en Pro
+// (interne Abacus-namen, nog niet per se de namen op arno.bot/prijzen). Elk
+// heeft een maand- en een jaarprijs (jaarprijs als prijs-per-maand-
+// equivalent), plus een eigen %-splitsing hoeveel klanten van die tier
+// maandelijks vs. jaarlijks betalen, want die twee klantgroepen leveren een
+// andere gemiddelde omzet per gebruiker op.
 export type Prijzen = { basis: number; premium: number; elite: number }
-export type TierVerdeling = { freemium: number; basis: number; premium: number }
+export type ScenarioPrijzen = { basicMaandelijks: number; basicJaarlijks: number; proMaandelijks: number; proJaarlijks: number }
+export type ScenarioBillingSplit = { basicPctJaarlijks: number; proPctJaarlijks: number }
+export type TierVerdeling = { basic: number; pro: number }
 export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
-export const DEFAULT_TIER_VERDELING: TierVerdeling = { freemium: 60, basis: 32, premium: 8 }
+// Definitieve Abacus-tarieven (besloten 2026-07-31): Basic 38/maand of 29/maand
+// bij jaarbetaling (347/jaar). Pro 77/maand of 59/maand bij jaarbetaling (707/jaar).
+export const DEFAULT_SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 38, basicJaarlijks: 29, proMaandelijks: 77, proJaarlijks: 59 }
+export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 30, proPctJaarlijks: 30 }
+export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 70, pro: 30 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 
-export function berekenOmzetEnBetaalprovider(prijzen: Prijzen, verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number) {
+function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijks: number, pctJaarlijks: number): number {
+  const aandeelJaarlijks = pctJaarlijks / 100
+  return aandeelJaarlijks * jaarlijks + (1 - aandeelJaarlijks) * maandelijks
+}
+
+export function berekenScenarioOmzetEnBetaalprovider(
+  scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number
+) {
   // Bij optellen tot 100% of minder verandert er niets (rest = niet
   // meegeteld). Bij meer dan 100% (tikfout) schalen we proportioneel terug,
-  // zodat freemiumN+basisN+premiumN nooit meer dan n kan zijn.
-  const noemer = Math.max(verdeling.freemium + verdeling.basis + verdeling.premium, 100)
-  const freemiumN = Math.round(n * (verdeling.freemium / noemer))
-  const basisN = Math.round(n * (verdeling.basis / noemer))
-  const premiumN = Math.round(n * (verdeling.premium / noemer))
-  // Freemium betaalt niet, telt dus niet mee in de omzet en niet als
-  // creditcardtransactie bij de betaalprovider-fee.
-  const omzet = basisN * prijzen.basis + premiumN * prijzen.premium
+  // zodat basicN+proN nooit meer dan n kan zijn.
+  const noemer = Math.max(verdeling.basic + verdeling.pro, 100)
+  const basicN = Math.round(n * (verdeling.basic / noemer))
+  const proN = Math.round(n * (verdeling.pro / noemer))
+  const basicPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.basicMaandelijks, scenarioPrijzen.basicJaarlijks, billingSplit.basicPctJaarlijks)
+  const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijks, billingSplit.proPctJaarlijks)
+  const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
   const aandeel = betaalprovider.pctCreditcard / 100
   const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
-    + (basisN + premiumN) * aandeel * betaalprovider.mdrFixed
-  return { freemiumN, basisN, premiumN, omzet, betaalproviderKosten }
+    + (basicN + proN) * aandeel * betaalprovider.mdrFixed
+  return { basicN, proN, omzet, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
 }

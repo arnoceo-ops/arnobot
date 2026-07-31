@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import {
   DEFAULT_INPUTS, computeForN, type Inputs,
-  berekenOmzetEnBetaalprovider, type Prijzen, type TierVerdeling, type Betaalprovider,
+  berekenScenarioOmzetEnBetaalprovider, type ScenarioPrijzen, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
 } from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
@@ -85,12 +85,13 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 type Props = {
   nGebruikers: number
   setNGebruikers: (n: number) => void
-  prijzen: Prijzen
   tierVerdeling: TierVerdeling
+  scenarioPrijzen: ScenarioPrijzen
+  billingSplit: ScenarioBillingSplit
   betaalprovider: Betaalprovider
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, prijzen, tierVerdeling, betaalprovider }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, scenarioPrijzen, billingSplit, betaalprovider }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
@@ -98,7 +99,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, pr
   // kosten, ook al zijn ze zelf omzet-afhankelijk: dat is precies waarom
   // tarieven/verdeling/betaalprovider-instellingen gedeeld zijn met tab 3.
   function betaalproviderKostenUsd(n: number): number {
-    const { betaalproviderKosten } = berekenOmzetEnBetaalprovider(prijzen, tierVerdeling, betaalprovider, n)
+    const { betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider, n)
     return betaalproviderKosten * inputs.fxRate
   }
 
@@ -118,7 +119,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, pr
     const betaalKosten = betaalproviderKostenUsd(nGebruikers)
     const totaal = basis.totaal + betaalKosten
     return { ...basis, betaalKosten, totaal, perGebruiker: nGebruikers > 0 ? totaal / nGebruikers : 0 }
-  }, [inputs, nGebruikers, prijzen, tierVerdeling, betaalprovider])
+  }, [inputs, nGebruikers, scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider])
 
   const scaleRows = useMemo(
     () => [10, 50, 100, 200, 500].map(n => {
@@ -127,7 +128,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, pr
       const totaal = basis.totaal + betaalKosten
       return { n, ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
     }),
-    [inputs, prijzen, tierVerdeling, betaalprovider]
+    [inputs, scenarioPrijzen, billingSplit, tierVerdeling, betaalprovider]
   )
 
   return (
