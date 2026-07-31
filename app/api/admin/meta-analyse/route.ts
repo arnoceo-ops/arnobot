@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,6 +51,8 @@ export async function POST(req: NextRequest) {
     .not('session_id', 'is', null)
     .order('created_at', { ascending: false })
     .limit(30)
+    .neq('user_id', E2E_TEST_USER_ID)
+    .neq('user_id', MANUAL_TEST_USER_ID)
 
   if (ownerUserId) sessieQuery = sessieQuery.neq('user_id', ownerUserId)
   const { data: alleSessies } = await sessieQuery
