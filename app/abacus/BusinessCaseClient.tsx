@@ -152,21 +152,18 @@ export default function BusinessCaseClient({
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
-        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Hypothetisch, los van echte meting: kies een totaal aantal gebruikers en een verdeling over Basic en Pro. Kostenaannames komen uit dezelfde basis als de Calculator (tab 1), maar per tier: Basic heeft hetzelfde hoofdchatvolume als Pro, geen coaching of voice (geen toegang) en een lagere analyses-aanname (harde 1x/dag-limiet).
-        </p>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12 }}>
-            Verdeling &amp; betaalcyclus &middot; tarieven vast: Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd of €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd of €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
+            Tarieven &amp; betaalcyclus &middot; Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd of €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd of €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
             <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ ...scenarioPct, basic: v })} />
-            <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
+            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ ...scenarioPct, pro: v })} />
+            <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
             <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
           </div>
         </div>
