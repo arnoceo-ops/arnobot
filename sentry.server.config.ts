@@ -10,7 +10,12 @@ import * as Sentry from "@sentry/nextjs";
 // rapportage, niet stilzwijgend aannemen dat het productie is. Live gevonden (2026-07): een
 // CI-run zonder geconfigureerde secrets had een lege sleutel (niet pk_test_), en de oude
 // !isE2ETestRun-logica liet dat gewoon als "productiefout" doorsturen.
-const isProduction = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_') ?? false
+// NODE_ENV === 'production' toegevoegd (2026-08): .env.local gebruikt bewust de echte
+// pk_live_-key voor lokaal testen, dus de pk_live_-check alleen was niet genoeg om een
+// lokale `next dev`-sessie te onderscheiden van een echte Vercel-build. Live gevonden:
+// een lokale webpack dev-cache ENOENT belandde hierdoor in de Sentry-productiefeed.
+const isProduction = process.env.NODE_ENV === 'production'
+  && (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_') ?? false)
 
 Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
