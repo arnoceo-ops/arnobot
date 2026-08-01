@@ -241,7 +241,7 @@ export default async function AdminStatsPage() {
     cohortMap[maand].totaal++
     if (u.paid_at) cohortMap[maand].betaald++
   }
-  const cohorten = Object.keys(cohortMap).sort().slice(-6).map(maand => ({
+  const cohorten = Object.keys(cohortMap).sort().slice(-6).reverse().map(maand => ({
     maand,
     ratio: cohortMap[maand].totaal > 0 ? Math.round((cohortMap[maand].betaald / cohortMap[maand].totaal) * 100) : 0,
     n: cohortMap[maand].totaal,
