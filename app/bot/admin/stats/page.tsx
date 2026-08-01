@@ -369,7 +369,7 @@ export default async function AdminStatsPage() {
   const groeiContent = (
     <div>
       <SubHeading label="FUNNEL: KLIK → TRIAL → BETAALD → OPGEZEGD" />
-      <StatCard label="VOLLEDIGE LIJN" full
+      <StatCard label="ALLE CONVERSIES" full
         footnote="Klik = unieke bezoekers die op de aanmeldknop klikten vóór er een account bestaat. Trial kan hoger uitvallen dan klik: eerdere aanmeldingen en signups buiten de aanmeldknop om (LinkedIn, directe link) tellen niet mee bij klik.">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <FunnelBar label="KLIK" value={ctaClicks} max={funnelMax} />
@@ -378,41 +378,14 @@ export default async function AdminStatsPage() {
           <FunnelBar label="OPGEZEGD" value={opgezegdCount} max={funnelMax} note={betaaldCount > 0 ? `${churnRatio}% van betalend` : undefined} />
         </div>
         <a href="https://eu.posthog.com/project/238288" target="_blank" rel="noopener noreferrer"
-          style={{ display: 'inline-block', fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 1, color: '#f59e0b', textDecoration: 'none', marginTop: 16 }}>
-          Meer detail (verkeersbronnen, heatmaps, sessie-analyse) → Open in PostHog
+          style={{
+            display: 'inline-block', marginTop: 16, padding: '10px 20px', borderRadius: 4,
+            border: '1px solid #f59e0b', color: '#f59e0b', fontFamily: 'sans-serif', fontSize: 12,
+            letterSpacing: 2, textDecoration: 'none',
+          }}>
+          OPEN IN POSTHOG
         </a>
       </StatCard>
-
-      <SubHeading label="KANALEN & ACCOUNTSTATUS" />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <StatCard label="CHURN"
-          footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
-          <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
-          {Object.keys(opgezegdPerMaand).length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <TrendChart data={opgezegdPerMaand} />
-            </div>
-          )}
-        </StatCard>
-        <StatCard label="STATUS"
-          footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn hierboven, dat telt alleen betaalde abonnementen die zijn opgezegd.">
-          <SplitBar segments={[
-            { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
-            { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
-          ]} />
-        </StatCard>
-        <StatCard label="CONVERSIES">
-          <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{referralConversies}</p>
-        </StatCard>
-        <StatCard label="REFERRALS"
-          footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
-          <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1, marginBottom: 16 }}>{referralAanmeldingen}</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
-            <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
-          </div>
-        </StatCard>
-      </div>
 
       <SubHeading label="COHORTEN (GROEIT MEE MET DE TIJD)" />
       <TileGrid>
@@ -429,6 +402,37 @@ export default async function AdminStatsPage() {
           )}
         </StatCard>
       </TileGrid>
+
+      <SubHeading label="KANALEN & ACCOUNTSTATUS" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <StatCard label="STATUS"
+          footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn hiernaast, dat telt alleen betaalde abonnementen die zijn opgezegd.">
+          <SplitBar segments={[
+            { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
+            { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
+          ]} />
+        </StatCard>
+        <StatCard label="CHURN"
+          footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
+          <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
+          {Object.keys(opgezegdPerMaand).length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <TrendChart data={opgezegdPerMaand} />
+            </div>
+          )}
+        </StatCard>
+        <StatCard label="CONVERSIES">
+          <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{referralConversies}</p>
+        </StatCard>
+        <StatCard label="REFERRALS"
+          footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
+          <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1, marginBottom: 16 }}>{referralAanmeldingen}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
+            <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
+          </div>
+        </StatCard>
+      </div>
     </div>
   )
 
