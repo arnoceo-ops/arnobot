@@ -94,7 +94,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.2  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 1.3  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
     el(View, { style: s.body1 },
       el(View, { style: s.intro },
@@ -113,6 +113,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
         TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
         TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
         TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
+        TR('Bezoekersanalyse', 'PostHog: anonieme klik- en paginabezoek-analyse op de publieke marketingpagina\'s, EU-hosting (Frankfurt)'),
       ),
     ),
     Footer('1')

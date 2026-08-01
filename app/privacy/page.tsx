@@ -175,6 +175,11 @@ export default function PrivacyPage() {
                   <td>Rate limiting (verwerkt IP-adressen)</td>
                   <td>Geen publieke DPA, op aanvraag</td>
                 </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>PostHog</td>
+                  <td>Anonieme bezoekersanalyse en klik-tracking op de publieke marketingpagina&apos;s, EU-hosting (Frankfurt)</td>
+                  <td>DPA op aanvraag</td>
+                </tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
