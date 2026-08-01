@@ -81,7 +81,7 @@ const numberInputStyle: React.CSSProperties = {
 const fieldLabelStyle: React.CSSProperties = { fontSize: 13.5, color: '#f1f5f9' }
 
 function NumberField({ label, hint, value, onChange, step = 1 }: {
-  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number
+  label: string; hint?: React.ReactNode; value: number; onChange: (v: number) => void; step?: number
 }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -191,7 +191,8 @@ export default function BusinessCaseClient({
             Team
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            €{SCENARIO_TEAM_PRIJS.basis}/account + €{SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie. Gemiddeld aantal teamleden is inclusief de manager zelf.
+            <div>€{SCENARIO_TEAM_PRIJS.basis}/account + €{SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie.</div>
+            <div>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
             <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
@@ -199,36 +200,42 @@ export default function BusinessCaseClient({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
-          <div>
-            <div style={statLabel}>Verdeling</div>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden</div>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+            Omzet, kosten, winst
           </div>
-          <div>
-            <div style={statLabel}>Gemiddelde prijs/maand</div>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>€{scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; €{scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
+            <div>
+              <div style={statLabel}>Verdeling</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden</div>
+            </div>
+            <div>
+              <div style={statLabel}>Gemiddelde prijs/maand</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>€{scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; €{scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', justifyContent: 'start', columnGap: 10, rowGap: 10, marginTop: 12 }}>
-          <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
-          <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
-          <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', justifyContent: 'start', columnGap: 10, rowGap: 10, marginTop: 12 }}>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
 
-          <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
-          <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
-          <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-          <div />
-          <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
-          <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+            <div />
+            <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+          </div>
         </div>
       </div>
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
-        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Berekening staat los van &quot;Totaal aantal gebruikers&quot; en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.
-        </p>
+        <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
+          <div>Berekening staat los van &quot;Totaal aantal gebruikers&quot; en verandert dat veld niet.</div>
+          <div>Rekent met dezelfde tarieven en %-verdeling.</div>
+        </div>
         <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} />
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
@@ -242,7 +249,14 @@ export default function BusinessCaseClient({
         <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
         <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: v })} />
         <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: v })} />
-        <NumberField label="% van omzet via creditcard" hint="geldt alleen voor Solo (Basic/Pro), Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten" value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })} />
+        <NumberField
+          label="% van omzet via creditcard"
+          hint={<>
+            <div>Geldt alleen voor Solo (Basic/Pro).</div>
+            <div>Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten.</div>
+          </>}
+          value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })}
+        />
       </div>
     </div>
   )
