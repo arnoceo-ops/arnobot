@@ -70,7 +70,7 @@ const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '
 // de tekst exact op dezelfde baseline staat als de andere bedragen ernaast.
 const headlineValueStyle: React.CSSProperties = { ...statValue, color: '#f59e0b' }
 const statCellStyle: React.CSSProperties = {
-  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px',
+  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', textAlign: 'right',
 }
 // Identiek aan numberInputStyle in KostenCalculatorClient.tsx
 const numberInputStyle: React.CSSProperties = {
