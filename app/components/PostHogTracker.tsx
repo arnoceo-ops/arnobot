@@ -20,7 +20,12 @@ export default function PostHogTracker() {
     if (!initialized.current) {
       posthog.init(key, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
-        person_profiles: 'identified_only',
+        // 'always' i.p.v. 'identified_only': de ingebouwde dashboard-tegels (Active/Daily/
+        // Weekly users, Retention) tellen unieke personen, niet losse events. Zonder een
+        // Person-profiel per anonieme bezoeker blijven die tegels op 0 staan, ook al komen
+        // de losse Pageview-events wel binnen. Verandert niet wélke data verzameld wordt,
+        // alleen hoe PostHog 'm intern organiseert.
+        person_profiles: 'always',
         // Bewust uit: dit is een anonieme marketingpagina-tracker, geen productanalyse van
         // ingelogde klanten. Alleen expliciet aanzetten na een eigen, los besluit daarover.
         disable_session_recording: true,
