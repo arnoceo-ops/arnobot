@@ -98,7 +98,7 @@ function RatioBar({ label, ratio, note }: { label: string; ratio: number; note?:
 }
 
 function TrendChart({ data }: { data: Record<string, number> }) {
-  const maanden = Object.keys(data).sort().slice(-6)
+  const maanden = Object.keys(data).sort().slice(-6).reverse()
   if (maanden.length === 0) {
     return <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
   }
