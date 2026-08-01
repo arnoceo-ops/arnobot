@@ -6,6 +6,7 @@ import { Brain, LineChart, MessageSquare, Mic, Target, Zap } from 'lucide-react'
 import HeroWordRotator from './HeroWordRotator'
 import HomeTestimonialCarousel from './HomeTestimonialCarousel'
 import SiteFooter from './SiteFooter'
+import SignupCTA from './components/SignupCTA'
 
 const FEATURES = [
   {
@@ -335,7 +336,7 @@ export default async function ArnoBotLandingPage() {
             <p className="hero-sub">
               ArnoBot coacht je door elk salesgesprek, elke pipeline-review en elke deal. Persoonlijke AI-coaching op het niveau van een topcoach, altijd beschikbaar, altijd scherp.
             </p>
-            <a href="/sign-up" className="hero-cta">30 dagen gratis</a>
+            <SignupCTA className="hero-cta">30 dagen gratis</SignupCTA>
           </div>
           <div className="hero-photo-col">
             <img src="/cyborg.jpg" alt="Arno Diepeveen" className="hero-photo" />
@@ -436,7 +437,7 @@ export default async function ArnoBotLandingPage() {
         <div className="cta-inner">
           <h2 className="cta-h2">Straks vragen ze hoe je het deed.</h2>
           <p className="cta-sub">Start met ArnoBot. Geen creditcard nodig, geen verplichtingen. Alleen betere salesgesprekken.</p>
-          <a href="/sign-up" className="cta-btn">30 dagen gratis</a>
+          <SignupCTA className="cta-btn">30 dagen gratis</SignupCTA>
         </div>
       </section>
 

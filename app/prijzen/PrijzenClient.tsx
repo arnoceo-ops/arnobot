@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import SignupCTA from '../components/SignupCTA'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
@@ -149,7 +149,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             <li>Alle output terug te vinden in archief</li>
           </ul>
 
-          <Link href="/sign-up" className="prijzen-tier-cta">Start nu</Link>
+          <SignupCTA className="prijzen-tier-cta">Start nu</SignupCTA>
         </div>
 
         {/* ELITE */}
@@ -178,7 +178,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             <li>Toegang tot de Elite Member Community</li>
           </ul>
 
-          <Link href="/sign-up" className="prijzen-tier-cta">Start nu</Link>
+          <SignupCTA className="prijzen-tier-cta">Start nu</SignupCTA>
         </div>
       </div>
 

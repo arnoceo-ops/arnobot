@@ -165,6 +165,7 @@ export default async function AdminStatsPage() {
     { data: referrals },
     { data: coachingDocs },
     { data: blogSessies },
+    { data: ctaClickRows },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
@@ -179,6 +180,7 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_referrals').select('status, referred_user_id').neq('referrer_user_id', E2E_TEST_USER_ID).neq('referrer_user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
+    supabase.from('arnobot_cta_clicks').select('anon_id'),
   ])
 
   const sparringGesprekken = sparringSessies?.length ?? 0
@@ -206,12 +208,11 @@ export default async function AdminStatsPage() {
   const opgezegdCount = users?.filter(u => u.cancelled_at).length ?? 0
   const conversieratio = totaalGebruikers > 0 ? Math.round((betaaldCount / totaalGebruikers) * 100) : 0
 
-  // Klik-tracking (bezoeker klikt op de aanmeldknop vóór er een account bestaat) bestaat nog
-  // niet, zie geheugen "project-stats-page-funnel": lib/events.ts vereist al een Clerk-userId,
-  // arnobot_pageviews logt alleen paginabezoeken, geen klik-events. Bewust hardcoded op 0
-  // i.p.v. de hele trechter-tegel te verbergen, zodat het gat zelf zichtbaar blijft.
-  const ctaClicks = 0
-  const funnelMax = Math.max(totaalGebruikers, 1)
+  // Klik op de aanmeldknop vóór er een account bestaat (arnobot_cta_clicks, zelfde anonieme
+  // arnobot_vid-cookie als pageviews). Unieke bezoekers tellen, niet ruwe rijen: iemand die
+  // twee keer klikt is nog steeds één bezoeker in de trechter.
+  const ctaClicks = new Set((ctaClickRows ?? []).map(r => r.anon_id)).size
+  const funnelMax = Math.max(totaalGebruikers, ctaClicks, 1)
 
   const logsLaatste7Dagen = (logs ?? []).filter(l => l.created_at >= sevenDaysAgo)
   const actieveGebruikers = new Set(logsLaatste7Dagen.map(l => l.user_id))
@@ -369,9 +370,9 @@ export default async function AdminStatsPage() {
     <div>
       <SubHeading label="FUNNEL: KLIK → TRIAL → BETAALD → OPGEZEGD" />
       <StatCard label="VOLLEDIGE LIJN" full
-        footnote="Klik = bezoeker klikte op de aanmeldknop vóór er een account bestaat. Die stap wordt nog niet getrackt, staat daarom vast op 0. Percentages zijn t.o.v. de vorige stap.">
+        footnote="Klik = unieke bezoekers die op de aanmeldknop klikten vóór er een account bestaat, sinds het invoeren van deze meting. Trial kan hoger uitvallen dan klik: eerdere aanmeldingen en signups buiten de aanmeldknop om (LinkedIn, directe link) tellen niet mee bij klik. Percentages zijn t.o.v. de vorige stap.">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <FunnelBar label="KLIK" value={ctaClicks} max={funnelMax} note="nog niet getrackt" />
+          <FunnelBar label="KLIK" value={ctaClicks} max={funnelMax} />
           <FunnelBar label="TRIAL GESTART" value={totaalGebruikers} max={funnelMax} note={`${gebruikersDeltaValue} ${gebruikersDeltaNote}`} />
           <FunnelBar label="BETALEND" value={betaaldCount} max={funnelMax} note={`${conversieratio}% van trial`} />
           <FunnelBar label="OPGEZEGD" value={opgezegdCount} max={funnelMax} note={betaaldCount > 0 ? `${churnRatio}% van betalend` : undefined} />

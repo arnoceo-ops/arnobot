@@ -5,10 +5,9 @@ import { Redis } from '@upstash/redis'
 import { randomUUID } from 'crypto'
 import { isBotUserAgent } from '@/lib/botDetection'
 
-// Anonieme pageview-teller voor de publieke marketingpagina's, om de
-// Bezoeker -> Trial conversie te kunnen meten naast de al bestaande
-// Trial -> Paid conversie op /bot/admin/stats. Geen IP-opslag, geen koppeling
-// aan een Clerk user_id, alleen een willekeurige sessie-cookie.
+// Klik op de aanmeldknop vóórdat er een account bestaat, dus nog niet te loggen via
+// lib/events.ts (die vereist een Clerk user_id). Zelfde anonieme arnobot_vid-cookie als
+// track-pageview, zodat klik en bezoek aan dezelfde bezoeker te koppelen zijn.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,12 +19,12 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-// Per-IP: max 20 pageviews per minuut. Ruim genoeg voor normaal doorklikken,
-// voorkomt dat een enkel script of misgelopen bot de tabel volpompt.
+// Klikken zijn zeldzamer dan pageviews, dus een lager plafond volstaat; vooral bedoeld
+// om een misgelopen script niet de tabel te laten volpompen.
 const ipRateLimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(20, '1 m'),
-  prefix: 'arnobot:pageview-ip',
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  prefix: 'arnobot:cta-click-ip',
 })
 
 export async function POST(req: NextRequest) {
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (!success) return NextResponse.json({ ok: true })
 
   const body = await req.json().catch(() => ({}))
-  const { path, referrer } = body as { path?: string; referrer?: string }
+  const { path } = body as { path?: string }
   if (typeof path !== 'string' || !path) {
     return NextResponse.json({ error: 'path is verplicht' }, { status: 400 })
   }
@@ -51,19 +50,17 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Fire-and-forget: een mislukte insert (bv. tabel nog niet aangemaakt) mag
-  // nooit de pagina-request van een bezoeker laten falen. Supabase-js gooit
-  // normaliter geen exception bij een DB-fout (geeft { error } terug), vandaar
-  // de expliciete check naast de try/catch.
+  // Fire-and-forget: een mislukte insert mag nooit de klik/navigatie van een bezoeker
+  // blokkeren. Supabase-js gooit normaliter geen exception bij een DB-fout (geeft
+  // { error } terug), vandaar de expliciete check naast de try/catch.
   try {
-    const { error } = await supabase.from('arnobot_pageviews').insert({
+    const { error } = await supabase.from('arnobot_cta_clicks').insert({
       anon_id: anonId,
       path: path.slice(0, 300),
-      referrer: typeof referrer === 'string' ? referrer.slice(0, 300) : null,
     })
-    if (error) console.error('track-pageview insert mislukt', error.message)
+    if (error) console.error('track-cta-click insert mislukt', error.message)
   } catch (err) {
-    console.error('track-pageview insert mislukt', err)
+    console.error('track-cta-click insert mislukt', err)
   }
 
   return res
