@@ -27,11 +27,18 @@ export async function POST(req: NextRequest) {
   } catch {}
 
   if (!userId) {
+    // Alleen recente sessies (laatste 2 uur): sendBeacon bij het sluiten van een tab hoort
+    // door dezelfde origin altijd cookies mee te sturen, dus dit pad is puur een vangnet
+    // voor randgevallen, niet de normale route. Zonder tijdslimiet zou een oude, ooit
+    // gelekte sessionId (bijv. via logs) hier permanent bruikbaar blijven om als een
+    // andere gebruiker data te schrijven (IDOR); met deze limiet is dat venster klein.
+    const tweeUurGeleden = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     const { data: logRow } = await supabase
       .from('arnobot_rds_logs')
       .select('user_id')
       .eq('session_id', sessionId)
       .not('user_id', 'is', null)
+      .gte('created_at', tweeUurGeleden)
       .limit(1)
       .single()
     userId = logRow?.user_id ?? null
