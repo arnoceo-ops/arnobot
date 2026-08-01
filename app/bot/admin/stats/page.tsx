@@ -370,7 +370,7 @@ export default async function AdminStatsPage() {
     <div>
       <SubHeading label="FUNNEL: KLIK → TRIAL → BETAALD → OPGEZEGD" />
       <StatCard label="VOLLEDIGE LIJN" full
-        footnote="Klik = unieke bezoekers die op de aanmeldknop klikten vóór er een account bestaat, sinds het invoeren van deze meting. Trial kan hoger uitvallen dan klik: eerdere aanmeldingen en signups buiten de aanmeldknop om (LinkedIn, directe link) tellen niet mee bij klik. Percentages zijn t.o.v. de vorige stap.">
+        footnote="Klik = unieke bezoekers die op de aanmeldknop klikten vóór er een account bestaat. Trial kan hoger uitvallen dan klik: eerdere aanmeldingen en signups buiten de aanmeldknop om (LinkedIn, directe link) tellen niet mee bij klik.">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <FunnelBar label="KLIK" value={ctaClicks} max={funnelMax} />
           <FunnelBar label="TRIAL GESTART" value={totaalGebruikers} max={funnelMax} note={`${gebruikersDeltaValue} ${gebruikersDeltaNote}`} />
@@ -384,18 +384,6 @@ export default async function AdminStatsPage() {
       </StatCard>
 
       <TileGrid>
-        <StatCard label="CONVERSIE PER AANMELDMAAND" span={2}
-          footnote="Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.">
-          {cohorten.length === 0 ? (
-            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {cohorten.map(c => (
-                <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
-              ))}
-            </div>
-          )}
-        </StatCard>
         <StatCard label="CHURN OVER TIJD" span={2}
           footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
           <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
@@ -425,6 +413,22 @@ export default async function AdminStatsPage() {
             <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
             <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
           </div>
+        </StatCard>
+      </TileGrid>
+
+      <SubHeading label="COHORTEN (GROEIT MEE MET DE TIJD)" />
+      <TileGrid>
+        <StatCard label="CONVERSIE PER AANMELDMAAND" full
+          footnote="Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen. Krijgt er elke maand een rij bij, tot maximaal de laatste 6 maanden.">
+          {cohorten.length === 0 ? (
+            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {cohorten.map(c => (
+                <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
+              ))}
+            </div>
+          )}
         </StatCard>
       </TileGrid>
     </div>
