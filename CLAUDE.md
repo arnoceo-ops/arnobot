@@ -30,10 +30,10 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - **Gedaan (juli 2026):** RLS ingeschakeld op alle gebruikerstabellen met Clerk JWT-integratie als defense-in-depth.
 
 ### 2. Dependencies & tooling
-- Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK, Sanity?
+- Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
 - Check of Dependabot-PRs openstaan op GitHub en beoordeel ze. Gebruik hiervoor een agent die de open PR's ophaalt (`gh api`) en per PR het breaking-change-risico samenvat, in plaats van elke PR handmatig te doorlopen.
-- **Bekend en bewust geaccepteerd:** Dependabot-kwetsbaarheidsmeldingen over Sanity. Niet opnieuw aankaarten of als nieuw probleem behandelen, dit is al beoordeeld en geaccepteerd.
+- **Gedaan (2026-08-01):** `sanity`, `next-sanity` en `@portabletext/react` volledig verwijderd uit `package.json`. Bleken niet meer gebruikt: de enige aanroep (`app/bot/page.tsx`) haalde een `sparPage`-document op voor een `openers`-prop die `SparClient.tsx` al niet meer las (echte openers komen client-side uit Supabase via de `refresh-openers`-cron). De eerdere notitie hier ("bewust geaccepteerd") was dus feitelijk onjuist, dit was geen geaccepteerd risico maar dode code die nooit is opgeruimd na een eerdere migratie. Loste 8 Dependabot-kwetsbaarheden in één keer op. CSP (`proxy.ts`) en image-config (`next.config.ts`) ook ontdaan van de overbodig geworden `cdn.sanity.io`-toegang. Les: bij "bewust geaccepteerd"-notities voortaan ook periodiek checken of de dependency zelf nog wel gebruikt wordt, niet alleen of de kwetsbaarheid zelf nog relevant is.
 
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop in dit bestand, deze dekt de Anthropic chat-modellen, de Voyage AI embedding/rerank-modellen (RAG-pipeline), en de OpenAI spraakmodellen (transcriptie/TTS)
