@@ -383,8 +383,9 @@ export default async function AdminStatsPage() {
         </a>
       </StatCard>
 
+      <SubHeading label="KANALEN & ACCOUNTSTATUS" />
       <TileGrid>
-        <StatCard label="CHURN OVER TIJD" span={2}
+        <StatCard label="CHURN"
           footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
           <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
           {Object.keys(opgezegdPerMaand).length > 0 && (
@@ -393,22 +394,25 @@ export default async function AdminStatsPage() {
             </div>
           )}
         </StatCard>
-      </TileGrid>
-
-      <SubHeading label="KANALEN & ACCOUNTSTATUS" />
-      <TileGrid>
         <StatCard label="STATUS"
-          footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn hierboven, dat telt alleen betaalde abonnementen die zijn opgezegd.">
+          footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn hiernaast, dat telt alleen betaalde abonnementen die zijn opgezegd.">
           <SplitBar segments={[
             { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
             { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
           ]} />
         </StatCard>
-        <StatCard label="REFERRALS & KANAAL" span={2} stats={[
-          { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
-          { sublabel: 'CONVERSIES', value: String(referralConversies) },
-        ]}
+        <StatCard label="REFERRALS" span={2}
           footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
+          <div style={{ display: 'flex', gap: 32, marginBottom: 16 }}>
+            <div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>REFERRALS</p>
+              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{referralAanmeldingen}</p>
+            </div>
+            <div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>CONVERSIES</p>
+              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: '#f1f5f9', lineHeight: 1 }}>{referralConversies}</p>
+            </div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
             <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
