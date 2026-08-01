@@ -469,7 +469,7 @@ export default async function AdminStatsPage() {
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/stats" />
 
-      <div className="admin-content" style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
+      <div className="admin-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Stats</h1>
 
