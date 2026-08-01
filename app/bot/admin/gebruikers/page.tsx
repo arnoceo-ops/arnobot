@@ -93,7 +93,7 @@ export default async function GebruikersPage({
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
 
   const params = await searchParams
-  const sort = params.sort || 'aangemeld'
+  const sort = params.sort || 'laatste'
   const dir = params.dir || 'desc'
 
   const supabase = createClient(
