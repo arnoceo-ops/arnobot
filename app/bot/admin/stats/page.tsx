@@ -377,6 +377,10 @@ export default async function AdminStatsPage() {
           <FunnelBar label="BETALEND" value={betaaldCount} max={funnelMax} note={`${conversieratio}% van trial`} />
           <FunnelBar label="OPGEZEGD" value={opgezegdCount} max={funnelMax} note={betaaldCount > 0 ? `${churnRatio}% van betalend` : undefined} />
         </div>
+        <a href="https://eu.posthog.com/project/238288" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'inline-block', fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 1, color: '#f59e0b', textDecoration: 'none', marginTop: 16 }}>
+          Meer detail (verkeersbronnen, heatmaps, sessie-analyse) → Open in PostHog
+        </a>
       </StatCard>
 
       <TileGrid>

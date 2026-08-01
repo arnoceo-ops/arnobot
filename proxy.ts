@@ -19,13 +19,15 @@ function buildCSP(nonce: string, allowWasm = false): string {
   const clerkUnsafeEval = (isDevInstance || process.env.NODE_ENV === 'development') ? " 'unsafe-eval'" : ''
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com https://eu-assets.i.posthog.com`,
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     "img-src 'self' data: blob: https://images.squarespace-cdn.com https://cdn.sanity.io https://img.clerk.com https://assets.feedblitz.com",
-    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu-assets.i.posthog.com https://eu.i.posthog.com",
+    // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin,
+    // dus geen apart posthog.com-domein hier meer nodig, 'self' dekt het al.
+    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com",
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",

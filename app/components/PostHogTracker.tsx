@@ -19,7 +19,12 @@ export default function PostHogTracker() {
     if (!key) return
     if (!initialized.current) {
       posthog.init(key, {
-        api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+        // Relatief pad i.p.v. rechtstreeks eu.i.posthog.com: loopt via de reverse proxy
+        // in next.config.ts (rewrites), zodat ad-blockers die het PostHog-domein blokkeren
+        // dit verkeer niet meer als "analytics" herkennen. ui_host blijft het echte
+        // PostHog-domein, alleen gebruikt om terugverwijzende links te bouwen.
+        api_host: '/site-relay',
+        ui_host: 'https://eu.posthog.com',
         // 'always' i.p.v. 'identified_only': de ingebouwde dashboard-tegels (Active/Daily/
         // Weekly users, Retention) tellen unieke personen, niet losse events. Zonder een
         // Person-profiel per anonieme bezoeker blijven die tegels op 0 staan, ook al komen

@@ -27,6 +27,19 @@ const nextConfig: NextConfig = {
       { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
     ]
   },
+  // Reverse proxy voor PostHog (zelfde truc als de Sentry-tunnel hieronder,
+  // tunnelRoute: "/monitoring"): stuurt bezoekersanalyse-verkeer via ons eigen domein
+  // i.p.v. rechtstreeks naar eu.i.posthog.com, wat veel ad-blockers standaard blokkeren
+  // (PostHog waarschuwt zelf voor 10-25% dataverlies hierdoor). Bewust geen voor de hand
+  // liggende naam als /analytics of /posthog, zie posthog.com/docs/advanced/proxy/nextjs.
+  async rewrites() {
+    return [
+      { source: '/site-relay/static/:path*', destination: 'https://eu-assets.i.posthog.com/static/:path*' },
+      { source: '/site-relay/array/:path*', destination: 'https://eu-assets.i.posthog.com/array/:path*' },
+      { source: '/site-relay/:path*', destination: 'https://eu.i.posthog.com/:path*' },
+    ]
+  },
+  skipTrailingSlashRedirect: true,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
