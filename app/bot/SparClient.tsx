@@ -54,7 +54,6 @@ interface Props {
   voiceEnabled: boolean
   taglineTitle: string
   taglineSub: string
-  openers: string[]
   resumeSessionId?: string
   mode?: 'gesprek' | 'sparren'
   plan?: 'basis' | 'premium' | 'team'
@@ -170,7 +169,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, openers, resumeSessionId, mode = 'gesprek', plan = 'premium' }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, mode = 'gesprek', plan = 'premium' }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()

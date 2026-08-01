@@ -1,4 +1,3 @@
-import { client } from '@/sanity/client'
 import SparClient from './SparClient'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
@@ -9,10 +8,6 @@ const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-async function getSparPage() {
-  return await client.fetch(`*[_type == "sparPage"][0]`, {}, { next: { revalidate: 0 } })
-}
 
 export default async function BotPage({ searchParams }: { searchParams: Promise<{ resume?: string }> }) {
   const { userId } = await auth()
@@ -29,7 +24,6 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   // isElevenLabsConfigured() als extra schakelaar: ELEVENLABS_API_KEY tijdelijk weghalen in
   // Vercel verbergt de voice-knop meteen én voorkomt kosten, zonder losse feature-flag.
   const voiceEnabled = plan !== 'basis' && isElevenLabsConfigured()
-  const spar = await getSparPage()
   const { resume } = await searchParams
   return (
     <SparClient
@@ -38,7 +32,6 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       voiceEnabled={voiceEnabled}
       taglineTitle="Ik ben ARNOBOT: Jouw 24/7 salescoach."
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
-      openers={spar?.openers ?? []}
       resumeSessionId={resume}
     />
   )

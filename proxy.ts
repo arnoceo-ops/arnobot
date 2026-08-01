@@ -24,7 +24,7 @@ function buildCSP(nonce: string, allowWasm = false): string {
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
-    "img-src 'self' data: blob: https://images.squarespace-cdn.com https://cdn.sanity.io https://img.clerk.com https://assets.feedblitz.com",
+    "img-src 'self' data: blob: https://images.squarespace-cdn.com https://img.clerk.com https://assets.feedblitz.com",
     // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin,
     // dus geen apart posthog.com-domein hier meer nodig, 'self' dekt het al.
     "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com",
