@@ -413,7 +413,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
-**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren op of rond 1 augustus (livegang) — wacht minimaal een week na go-live.**
+**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block te produceren. Hercheck of Anthropic dit gedrag heeft aangepast, of schakel extended thinking bewust in met `budget_tokens` zodat Sonnet 5 altijd ook een text block produceert. Test eerst op staging voordat je terugzet naar Sonnet 5. **Niet uitvoeren rond de commerciële livegang — wacht minimaal een week na go-live.** Correctie (2026-08-01): livegang was hier nog genoteerd als 1 augustus 2026, maar is met een of twee maanden uitgesteld (nu vermoedelijk september/oktober 2026). Check bij Arno de actuele geplande datum vóór je dit oppakt, ga niet af op een datum die eerder in dit document heeft gestaan.
 
 **Gedaan (2026-07-audit):** `app/api/cron/model-check/route.ts` bevatte een eigen, hardgecodeerde `INVENTORY`-kopie die los stond van deze tabel en er inmiddels van afweek (bijv. `bot/uitdaging` stond daar nog als `claude-sonnet-5` i.p.v. `claude-fable-5`). Gelijkgetrokken met deze tabel.
 
