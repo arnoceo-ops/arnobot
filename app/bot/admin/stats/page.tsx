@@ -234,6 +234,19 @@ export default async function AdminStatsPage() {
     n: cohortMap[maand].totaal,
   }))
 
+  // Churn: opgezegd als percentage van iedereen die ooit betaald heeft (niet van het totaal
+  // aantal gebruikers, dat verwatert het cijfer met trials die nooit betaald hebben), plus
+  // een trend per opzegmaand zodat zichtbaar is of het stijgt of daalt, niet alleen een kaal
+  // totaal zonder richting.
+  const churnRatio = betaaldCount > 0 ? Math.round((opgezegdCount / betaaldCount) * 100) : 0
+  const opgezegdPerMaand: Record<string, number> = {}
+  for (const u of users ?? []) {
+    const cancelledAt = (u as { cancelled_at?: string | null }).cancelled_at
+    if (!cancelledAt) continue
+    const maand = cancelledAt.slice(0, 7)
+    opgezegdPerMaand[maand] = (opgezegdPerMaand[maand] ?? 0) + 1
+  }
+
   // Periode-vergelijking: nieuwe gebruikers en gesprekken deze week vs de week ervoor
   const nieuwLaatste7Dagen = users?.filter(u => u.created_at >= sevenDaysAgo).length ?? 0
   const nieuwDaarvoor7Dagen = users?.filter(u => u.created_at >= veertienDaysAgo && u.created_at < sevenDaysAgo).length ?? 0
@@ -417,6 +430,19 @@ export default async function AdminStatsPage() {
             )}
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
               Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.
+            </p>
+          </div>
+
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12, marginTop: 40 }}>CHURN</p>
+          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
+            <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
+            {Object.keys(opgezegdPerMaand).length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <TrendChart data={opgezegdPerMaand} />
+              </div>
+            )}
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
+              Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.
             </p>
           </div>
         </MacroSection>
