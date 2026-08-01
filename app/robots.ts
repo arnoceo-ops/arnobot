@@ -27,6 +27,8 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
     ],
-    sitemap: 'https://arno.bot/sitemap.xml',
+    // www, niet kaal: arno.bot zonder www stuurt altijd een 308-redirect naar www.arno.bot
+    // (bevestigd bij de Calendly-webhook-fix, zie CLAUDE.md), dus dit moet de canonieke vorm zijn.
+    sitemap: 'https://www.arno.bot/sitemap.xml',
   }
 }
