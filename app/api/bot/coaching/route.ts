@@ -266,9 +266,7 @@ export async function POST() {
         .join('\n\n')
     : ''
 
-  let response
-  try {
-    response = await Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
+  const callModel = () => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
     model: 'claude-fable-5',
     max_tokens: 4000,
     system: `Je bent Arno Diepeveen. Salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
@@ -320,6 +318,10 @@ ${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJ
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
     }]
   }))
+
+  let response
+  try {
+    response = await callModel()
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
     return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
@@ -330,7 +332,26 @@ ${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJ
     return NextResponse.json({ error: 'generate_error', detail: 'refusal' }, { status: 500 })
   }
 
-  const raw = getText(response.content)
+  let raw = getText(response.content)
+
+  if (!raw) {
+    try {
+      response = await callModel()
+    } catch (err: any) {
+      console.error('[coaching generate error - retry]', err?.status, err?.message ?? err)
+      return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
+    }
+    if (response.stop_reason === 'refusal') {
+      console.error('[coaching refusal - retry]', response.stop_reason)
+      return NextResponse.json({ error: 'generate_error', detail: 'refusal' }, { status: 500 })
+    }
+    raw = getText(response.content)
+  }
+
+  if (!raw) {
+    console.error('[coaching] lege hoofdsynthese na retry')
+    return NextResponse.json({ error: 'generate_error', detail: 'empty_after_retry' }, { status: 500 })
+  }
 
   let parsed: {
     voortgang: string
