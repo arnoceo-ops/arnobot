@@ -206,19 +206,18 @@ export default function BusinessCaseClient({
             <div style={{ fontSize: 13, color: '#94a3b8' }}>€{scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; €{scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', columnGap: 28, rowGap: 12, marginTop: 12 }}>
           <div><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
           <div><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
           <div><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
-        </div>
-        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
+
           <div><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
           <div><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
           <div><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
-        </div>
-        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
-          <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+
+          <div />
           <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
+          <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
         </div>
       </div>
 
