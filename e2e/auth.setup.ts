@@ -30,7 +30,7 @@ setup('authenticeren als testgebruiker', async ({ page }) => {
   await page.goto('/')
   await clerk.signIn({ page, emailAddress: TEST_USER_EMAIL })
 
-  // Eerste bezoek aan /bot triggert middleware.ts om automatisch een approved_users-rij aan
+  // Eerste bezoek aan /bot triggert proxy.ts om automatisch een approved_users-rij aan
   // te maken (trial-start). Op de allereerste run ooit stuurt dat door naar /bot/welkom
   // (welcome_seen nog niet gezet); op elke volgende run is het account al geseed door een
   // vorige testrun en komt de test meteen op /bot. Beide gevallen moeten werken, niet alleen

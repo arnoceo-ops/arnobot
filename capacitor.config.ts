@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 // Remote laden: de shell laadt arno.bot zoals een gewone browser, in plaats van een
 // statische export te bundelen. Architectuurbesluit + onderbouwing in docs/MOBILE_PLAN.md
-// (middleware.ts en next.config.ts zijn hierdoor bewust ongewijzigd, geen CORS/CSP-aanpassing
+// (proxy.ts en next.config.ts zijn hierdoor bewust ongewijzigd, geen CORS/CSP-aanpassing
 // nodig: de WebView draait letterlijk het arno.bot-origin, zoals in een normale browser).
 //
 // url wijst rechtstreeks naar www.arno.bot (het canonieke domein waar arno.bot altijd naar

@@ -33,7 +33,7 @@ De nieuwe `/prijzen`-pagina staat live, gebouwd in de stijl van de homepage (Fig
 | Extra bij Elite | — | — | 1x/maand persoonlijk gesprek met Arno (nog geen herhaalbare boeking, zie onder), Telegram (live, `/bot/account`), Elite Member Community (nog niet gebouwd) | — |
 | Wie | Alleen als save-offer bij opzegging | Standaard betaalde individuele tier, ook trial-default | Individueel, hoog-contact, max. 50 (capaciteitsteller in admin) | Meerdere seats onder één deal, elke gebruiker krijgt Premium-niveau + managerdashboard |
 
-**Trial-default:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (`middleware.ts`), niet `basis`. Dit is ongewijzigd sinds de vorige migratie.
+**Trial-default:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (`proxy.ts`), niet `basis`. Dit is ongewijzigd sinds de vorige migratie.
 
 ---
 
@@ -65,7 +65,7 @@ Nieuwe, publieke pagina (geen `/bot`-prefix, dus geen inlog vereist, bezoekers v
 
 Opslag: nieuwe tabel `arnobot_command_requests` (Supabase, inclusief kolom `niveau`), plus een e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/command-aanvraag/route.ts`).
 
-**Automatische Supabase-inrichting bij ondertekening (afgesproken richting, nog te bouwen):** zodra de DocuSeal-webhook er is, zet die automatisch `command_manager=true` en `plan` (premium of elite, zoals gekozen op het formulier) voor de aanvrager. `paid_at` blijft apart, handmatig door Arno gezet zodra de factuur echt betaald is, zelfde patroon als bij Premium/Elite via `/bot/doorgaan`: toegang direct bij bevestiging, betaalstatus volgt apart. Open vraag, nog niet besloten: hoe om te gaan met een aanvrager die nog geen ArnoBot-account heeft op het moment van ondertekenen (vermoedelijk een pending-rij, zelfde patroon als bij referral-aanmeldingen in `middleware.ts`, die actief wordt bij de eerste login).
+**Automatische Supabase-inrichting bij ondertekening (afgesproken richting, nog te bouwen):** zodra de DocuSeal-webhook er is, zet die automatisch `command_manager=true` en `plan` (premium of elite, zoals gekozen op het formulier) voor de aanvrager. `paid_at` blijft apart, handmatig door Arno gezet zodra de factuur echt betaald is, zelfde patroon als bij Premium/Elite via `/bot/doorgaan`: toegang direct bij bevestiging, betaalstatus volgt apart. Open vraag, nog niet besloten: hoe om te gaan met een aanvrager die nog geen ArnoBot-account heeft op het moment van ondertekenen (vermoedelijk een pending-rij, zelfde patroon als bij referral-aanmeldingen in `proxy.ts`, die actief wordt bij de eerste login).
 
 **Ontbrekende koppeling, opgemerkt 2026-07-24:** er is momenteel geen technische link tussen een `arnobot_command_requests`-rij (de oorspronkelijke aanvraag), de `approved_users`-rij die Arno er later handmatig bij zoekt en instelt, en het `arnobot_teams`-team dat de manager vervolgens aanmaakt. Drie losse records, alleen in Arno's eigen hoofd aan elkaar geknoopt. Besloten: dit niet nu apart oplossen met een losse kolom/migratie, maar meenemen in de DocuSeal-webhook hierboven, die zet bij het inrichten automatisch de originele `arnobot_command_requests.id` op de aanvrager (en later op het team), zodat de keten aanvraag → manager → team vanzelf ontstaat als onderdeel van dat werk, in plaats van als apart tussenstapje.
 

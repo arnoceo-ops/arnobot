@@ -26,7 +26,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - `npm audit --production` — zijn er nieuwe high/critical kwetsbaarheden in runtime-code?
 - Controleer of alle API-routes nog auth hebben (nieuwe routes kunnen dit missen)
 - Check of error-responses nog geen interne details lekken
-- Controleer `middleware.ts` op volledigheid van scanner-blokkering
+- Controleer `proxy.ts` op volledigheid van scanner-blokkering
 - **Gedaan (juli 2026):** RLS ingeschakeld op alle gebruikerstabellen met Clerk JWT-integratie als defense-in-depth.
 
 ### 2. Dependencies & tooling
@@ -57,6 +57,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Controleer [vercel.com/changelog](https://vercel.com/changelog) op breaking changes die arno.bot raken
 - Check build logs op deprecation warnings (`next build` output in Vercel)
 - Zijn er nieuwe platform-limieten of wijzigingen in het huidige plan?
+- **Gedaan (2026-08-01):** `middleware.ts` → `proxy.ts` gemigreerd (Next.js 16 deprecation-warning in build logs, geen afgedwongen verwijderdatum). Vóór uitvoering onderzocht: (1) Clerk's `clerkMiddleware()` werkt ongewijzigd onder de nieuwe conventie, geen codewijziging nodig aan de auth-logica zelf. (2) `proxy.ts` dwingt Node.js runtime af (Edge Runtime niet meer selecteerbaar), maar Vercel's Routing Middleware draait sinds Fluid Compute sowieso al wereldwijd gedistribueerd, ongeacht runtime-keuze, dus geen verwachte latency-regressie voor de EU-gebruikers van arno.bot. (3) Bekende Sentry/Turbopack-instrumentatiebug (proxy-isolate krijgt geen `Sentry.init()` in productie, github.com/getsentry/sentry-javascript#21713) raakt alleen Turbopack-builds; arno.bot draait bewust op `next build --webpack` (`package.json`), dus niet van toepassing. De officiële codemod (`@next/codemod middleware-to-proxy`) transformeerde niets, want die herkent alleen een letterlijk `middleware`-identifier, niet Clerk's `export default clerkMiddleware(...)`-patroon; migratie was daarom een handmatige bestandshernoeming (`git mv`), geen inhoudelijke wijziging. Lokaal geverifieerd: dev-server start zonder de deprecation-warning, onbeveiligde `/bot`-toegang, admin-cookie-gating, scanner-blokkering en de `/blog`-redirect werken nog. Niet lokaal te verifiëren: de nieuwe-gebruiker-aanmaak/referral-afhandeling, die vereist een echte eerste Clerk-login. Aandachtspunt voor een volgende keer dat dit bestand ingrijpend wijzigt: Next.js raadt zelf aan zware logica (DB-calls, externe fetches) uit Proxy te halen naar een Data Access Layer, `proxy.ts` doet nu nog veel meer dan dat (trial-aanmaak, referral-verwerking, Telegram-notificatie), geen actie nu, wel iets om in het achterhoofd te houden.
 
 #### Supabase (project: wxrsmmzqbmoeackirsxc — arno.bot)
 - Open het dashboard en scan op banners of waarschuwingen — Supabase toont deprecated features actief in de UI

@@ -355,7 +355,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 
 **Gebruikersauthenticatie:** Clerk (`@clerk/nextjs`). Gebruikers loggen in via e-mail/wachtwoord of LinkedIn OAuth.
 
-**Toegangslogica (middleware.ts):**
+**Toegangslogica (proxy.ts):**
 1. Scanner-requests (`.env`, `wp-admin`, etc.) → direct 404
 2. Admin-routes (`/bot/admin/*`) → cookie-gebaseerd (`arnobot_admin`)
 3. Bot-routes (`/bot/*`) → Clerk auth vereist + `approved_users` check
@@ -371,7 +371,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 
 ## Beveiliging
 
-- **CSP (Content Security Policy):** Gegenereerd per request met nonce in `middleware.ts`. Blokkeert inline scripts zonder nonce.
+- **CSP (Content Security Policy):** Gegenereerd per request met nonce in `proxy.ts`. Blokkeert inline scripts zonder nonce.
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`.
 - **Rate limiting:** Upstash Redis via `@upstash/ratelimit`. Actief op AI-routes.
 - **Prompt injection detectie:** Regex-check op inkomende berichten in `/api/chat` voor veelgebruikte injectionpatronen (NL + EN).

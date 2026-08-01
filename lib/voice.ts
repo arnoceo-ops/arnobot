@@ -55,7 +55,7 @@ export type VoiceAccessReason = 'paid' | 'trial' | 'trial_expired' | 'trial_cap_
 /**
  * Bepaalt of een gebruiker nu voice-toegang heeft: premium/team-abonnees altijd, anders
  * gratis tijdens de eerste 30 dagen na trial_start (dezelfde canonieke berekening als
- * middleware.ts:244-246 en cron/trial-emails/route.ts) tot aan TRIAL_VOICE_CHAR_CAP verbruik.
+ * proxy.ts:244-246 en cron/trial-emails/route.ts) tot aan TRIAL_VOICE_CHAR_CAP verbruik.
  */
 export async function hasVoiceAccess(
   supabase: SupabaseClient,
