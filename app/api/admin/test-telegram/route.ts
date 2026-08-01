@@ -24,22 +24,15 @@ export async function POST() {
 
   const results: Record<string, { configured: boolean; ok?: boolean; error?: string }> = {}
 
-  // Bot 1: nieuwe gebruikers
-  const t1 = process.env.TELEGRAM_NEW_USER_BOT_TOKEN
-  const c1 = process.env.TELEGRAM_NEW_USER_CHAT_ID
-  if (t1 && c1) {
-    results.nieuwe_gebruikers = { configured: true, ...(await sendTg(t1, c1, 'ArnoBot test: nieuwe-gebruikers bot werkt.')) }
+  // Enige bot in gebruik sinds de samenvoeging van ArnoBot Feedback + ArnoBot NewUsers
+  // in de ArnoBot-groep (2026-08-01). Gebruikt voor feedback, CSP-meldingen, cron-fouten,
+  // rate-limit-waarschuwingen en overzichtsmails, niet alleen RSS-ingest.
+  const botToken = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (botToken && chatId) {
+    results.arnobot = { configured: true, ...(await sendTg(botToken, chatId, 'ArnoBot test: bot werkt.')) }
   } else {
-    results.nieuwe_gebruikers = { configured: false }
-  }
-
-  // Bot 2: RSS ingest
-  const t2 = process.env.TELEGRAM_BOT_TOKEN
-  const c2 = process.env.TELEGRAM_CHAT_ID
-  if (t2 && c2) {
-    results.rss_ingest = { configured: true, ...(await sendTg(t2, c2, 'ArnoBot test: RSS-ingest bot werkt.')) }
-  } else {
-    results.rss_ingest = { configured: false }
+    results.arnobot = { configured: false }
   }
 
   return NextResponse.json({ results })
