@@ -362,7 +362,8 @@ export default async function AdminStatsPage() {
         { label: 'TRIAL', value: trialCount, color: '#f59e0b' },
       ]} />
     </StatCard>,
-    <StatCard key="status" label="STATUS">
+    <StatCard key="status" label="STATUS"
+      footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn (zie CHURN-tegel), dat telt alleen betaalde abonnementen die zijn opgezegd.">
       <SplitBar segments={[
         { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
         { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
