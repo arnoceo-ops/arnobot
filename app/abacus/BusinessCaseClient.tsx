@@ -207,7 +207,7 @@ export default function BusinessCaseClient({
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
             <div>
               <div style={statLabel}>Verdeling</div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden &middot; {scenario.basicN + scenario.proN + scenario.teamLeden} totaal</div>
             </div>
             <div>
               <div style={statLabel}>Gemiddelde prijs/maand</div>
