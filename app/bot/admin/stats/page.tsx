@@ -17,15 +17,16 @@ const supabase = createClient(
 // dezelfde kaart-vormgeving, zodat het als één samenhangend dashboard oogt i.p.v. een
 // mengelmoes van losse doosjes. `span` laat een tegel 2 kolommen innemen in de grid
 // hieronder, voor content die meer breedte nodig heeft (trends, meerdere ratiobalken).
-function StatCard({ label, span, stats = [], footnote, children }: {
+function StatCard({ label, span, full, stats = [], footnote, children }: {
   label: string
   span?: number
+  full?: boolean
   stats?: { sublabel: string; value: string; warn?: boolean; note?: string }[]
   footnote?: string
   children?: React.ReactNode
 }) {
   return (
-    <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, gridColumn: span ? `span ${span}` : undefined }}>
+    <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, gridColumn: full ? '1 / -1' : span ? `span ${span}` : undefined }}>
       <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>{label}</p>
       {stats.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: children ? 16 : 0 }}>
@@ -46,8 +47,31 @@ function StatCard({ label, span, stats = [], footnote, children }: {
 
 function TileGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'stretch' }}>
       {children}
+    </div>
+  )
+}
+
+function SubHeading({ label }: { label: string }) {
+  return (
+    <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', margin: '32px 0 16px' }}>{label}</p>
+  )
+}
+
+// Trechter: elke stap als balk t.o.v. de grootste bekende stap, met een los toelichtend
+// getal per stap (percentage van de vorige stap, of een kanttekening als de stap nog geen
+// echte data heeft). Bewust geen % voor de eerste stap, die heeft geen "vorige stap".
+function FunnelBar({ label, value, max, note }: { label: string; value: number; max: number; note?: string }) {
+  const width = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+      <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', letterSpacing: 1, minWidth: 130, flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, background: '#111827', borderRadius: 2, height: 20 }}>
+        <div style={{ width: `${width}%`, background: '#f59e0b', borderRadius: 2, height: '100%' }} />
+      </div>
+      <span style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 22, color: '#f1f5f9', minWidth: 36, textAlign: 'right' }}>{value}</span>
+      <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', minWidth: 150, textAlign: 'right', flexShrink: 0 }}>{note ?? ''}</span>
     </div>
   )
 }
@@ -129,7 +153,6 @@ export default async function AdminStatsPage() {
   const now = Date.now()
   const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
   const veertienDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString()
-  const dertigDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
     { count: coachingGesprekken },
@@ -142,8 +165,6 @@ export default async function AdminStatsPage() {
     { data: referrals },
     { data: coachingDocs },
     { data: blogSessies },
-    { data: pageviews30d },
-    { data: eerstePageview },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
@@ -158,8 +179,6 @@ export default async function AdminStatsPage() {
     supabase.from('arnobot_referrals').select('status, referred_user_id').neq('referrer_user_id', E2E_TEST_USER_ID).neq('referrer_user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
-    supabase.from('arnobot_pageviews').select('anon_id, created_at').gte('created_at', dertigDaysAgo),
-    supabase.from('arnobot_pageviews').select('created_at').order('created_at', { ascending: true }).limit(1),
   ])
 
   const sparringGesprekken = sparringSessies?.length ?? 0
@@ -182,11 +201,17 @@ export default async function AdminStatsPage() {
   // Groei & activiteit op sum-niveau
   const totaalGebruikers = users?.length ?? 0
   const betaaldCount = users?.filter(u => u.paid_at).length ?? 0
-  const trialCount = totaalGebruikers - betaaldCount
   const actiefCount = users?.filter(u => u.is_active).length ?? 0
   const inactiefCount = totaalGebruikers - actiefCount
   const opgezegdCount = users?.filter(u => u.cancelled_at).length ?? 0
   const conversieratio = totaalGebruikers > 0 ? Math.round((betaaldCount / totaalGebruikers) * 100) : 0
+
+  // Klik-tracking (bezoeker klikt op de aanmeldknop vóór er een account bestaat) bestaat nog
+  // niet, zie geheugen "project-stats-page-funnel": lib/events.ts vereist al een Clerk-userId,
+  // arnobot_pageviews logt alleen paginabezoeken, geen klik-events. Bewust hardcoded op 0
+  // i.p.v. de hele trechter-tegel te verbergen, zodat het gat zelf zichtbaar blijft.
+  const ctaClicks = 0
+  const funnelMax = Math.max(totaalGebruikers, 1)
 
   const logsLaatste7Dagen = (logs ?? []).filter(l => l.created_at >= sevenDaysAgo)
   const actieveGebruikers = new Set(logsLaatste7Dagen.map(l => l.user_id))
@@ -206,19 +231,6 @@ export default async function AdminStatsPage() {
     ? Math.round((referralGebruikers.filter(u => u.paid_at).length / referralGebruikers.length) * 100) : 0
   const overigKanaalConversie = overigGebruikers.length > 0
     ? Math.round((overigGebruikers.filter(u => u.paid_at).length / overigGebruikers.length) * 100) : 0
-
-  // Bezoeker -> Trial: unieke anonieme bezoekers (arnobot_pageviews, geen
-  // Clerk-koppeling) tegenover nieuwe trials in dezelfde laatste-30-dagen
-  // periode. Pas betrouwbaar zodra de teller minstens 30 dagen heeft gedraaid,
-  // anders vertekent een gedeeltelijke periode het beeld. Tegel wordt hieronder
-  // helemaal niet getoond zolang dat niet het geval is, i.p.v. een maand lang
-  // een kaart met alleen een "onvoldoende data"-waarschuwing te tonen.
-  const bezoekersLaatste30Dagen = new Set((pageviews30d ?? []).map(p => p.anon_id)).size
-  const trialsLaatste30Dagen = users?.filter(u => u.created_at >= dertigDaysAgo).length ?? 0
-  const bezoekerTrialRatio = bezoekersLaatste30Dagen > 0 ? Math.round((trialsLaatste30Dagen / bezoekersLaatste30Dagen) * 100) : 0
-  const trackingSinds = eerstePageview?.[0]?.created_at as string | undefined
-  const trackingDagen = trackingSinds ? Math.floor((now - new Date(trackingSinds).getTime()) / (24 * 60 * 60 * 1000)) : 0
-  const voldoendeTrackingData = !!trackingSinds && trackingDagen >= 30
 
   // Cohortdenken: conversie per aanmeldmaand i.p.v. één blended cijfer over alle gebruikers ooit
   const cohortMap: Record<string, { totaal: number; betaald: number }> = {}
@@ -353,61 +365,65 @@ export default async function AdminStatsPage() {
     </TileGrid>
   )
 
-  const groeiTiles = [
-    <StatCard key="groei" label="GROEI" stats={[
-      { sublabel: 'VS VORIGE WEEK', value: gebruikersDeltaValue, note: gebruikersDeltaNote },
-    ]}>
-      <SplitBar segments={[
-        { label: 'BETAALD', value: betaaldCount, color: '#44cc88' },
-        { label: 'TRIAL', value: trialCount, color: '#f59e0b' },
-      ]} />
-    </StatCard>,
-    <StatCard key="status" label="STATUS"
-      footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn (zie CHURN-tegel), dat telt alleen betaalde abonnementen die zijn opgezegd.">
-      <SplitBar segments={[
-        { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
-        { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
-      ]} />
-    </StatCard>,
-    <StatCard key="referrals" label="REFERRALS" stats={[
-      { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
-      { sublabel: 'CONVERSIES', value: String(referralConversies) },
-    ]} />,
-    voldoendeTrackingData ? (
-      <StatCard key="bezoeker-trial" label="BEZOEKER → TRIAL (30D)" span={2}
-        footnote="Bezoekers = unieke anonieme sessies op de publieke marketingpagina's, niet gekoppeld aan een account.">
-        <RatioBar label="CONVERSIE" ratio={bezoekerTrialRatio} note={`${trialsLaatste30Dagen} trials / ${bezoekersLaatste30Dagen} bezoekers`} />
+  const groeiContent = (
+    <div>
+      <SubHeading label="FUNNEL: KLIK → TRIAL → BETAALD → OPGEZEGD" />
+      <StatCard label="VOLLEDIGE LIJN" full
+        footnote="Klik = bezoeker klikte op de aanmeldknop vóór er een account bestaat. Die stap wordt nog niet getrackt, staat daarom vast op 0. Percentages zijn t.o.v. de vorige stap.">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <FunnelBar label="KLIK" value={ctaClicks} max={funnelMax} note="nog niet getrackt" />
+          <FunnelBar label="TRIAL GESTART" value={totaalGebruikers} max={funnelMax} note={`${gebruikersDeltaValue} ${gebruikersDeltaNote}`} />
+          <FunnelBar label="BETALEND" value={betaaldCount} max={funnelMax} note={`${conversieratio}% van trial`} />
+          <FunnelBar label="OPGEZEGD" value={opgezegdCount} max={funnelMax} note={betaaldCount > 0 ? `${churnRatio}% van betalend` : undefined} />
+        </div>
       </StatCard>
-    ) : null,
-    <StatCard key="kanaal" label="CONVERSIE PER KANAAL"
-      footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
-        <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
-      </div>
-    </StatCard>,
-    <StatCard key="cohorten" label="CONVERSIE PER AANMELDMAAND" span={2}
-      footnote="Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.">
-      {cohorten.length === 0 ? (
-        <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {cohorten.map(c => (
-            <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
-          ))}
-        </div>
-      )}
-    </StatCard>,
-    <StatCard key="churn" label="CHURN" span={2}
-      footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
-      <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
-      {Object.keys(opgezegdPerMaand).length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <TrendChart data={opgezegdPerMaand} />
-        </div>
-      )}
-    </StatCard>,
-  ].filter(Boolean)
+
+      <TileGrid>
+        <StatCard label="CONVERSIE PER AANMELDMAAND" span={2}
+          footnote="Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.">
+          {cohorten.length === 0 ? (
+            <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {cohorten.map(c => (
+                <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
+              ))}
+            </div>
+          )}
+        </StatCard>
+        <StatCard label="CHURN OVER TIJD" span={2}
+          footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
+          <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
+          {Object.keys(opgezegdPerMaand).length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <TrendChart data={opgezegdPerMaand} />
+            </div>
+          )}
+        </StatCard>
+      </TileGrid>
+
+      <SubHeading label="KANALEN & ACCOUNTSTATUS" />
+      <TileGrid>
+        <StatCard label="STATUS"
+          footnote="Inactief = toegang uitgeschakeld, ook door een verlopen trial die nooit betaald heeft. Niet hetzelfde als churn hierboven, dat telt alleen betaalde abonnementen die zijn opgezegd.">
+          <SplitBar segments={[
+            { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
+            { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
+          ]} />
+        </StatCard>
+        <StatCard label="REFERRALS & KANAAL" span={2} stats={[
+          { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
+          { sublabel: 'CONVERSIES', value: String(referralConversies) },
+        ]}
+          footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
+            <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
+          </div>
+        </StatCard>
+      </TileGrid>
+    </div>
+  )
 
   const gebruikTiles = (
     <TileGrid>
@@ -455,7 +471,7 @@ export default async function AdminStatsPage() {
 
         <StatsTabs tabs={[
           { key: 'gezondheid', label: 'GEZONDHEID & RETENTIE', content: gezondheidTiles },
-          { key: 'groei', label: 'GROEI & FUNNEL', content: <TileGrid>{groeiTiles}</TileGrid> },
+          { key: 'groei', label: 'GROEI & FUNNEL', content: groeiContent },
           { key: 'gebruik', label: 'GEBRUIK', content: gebruikTiles },
         ]} />
       </div>
