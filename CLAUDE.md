@@ -241,6 +241,13 @@ De admin-sectie gebruikt een eigen, bewust andere stijlnorm dan de "Vaste normen
 - **H1**: sans-serif, fontWeight 700, fontSize 48px, letterSpacing -1px, kleur `#f1f5f9` (dus NIET de Bebas Neue 64px H1-norm van de rest van de app)
 - **Witte tekst/koppen**: `#f1f5f9`
 
+**Admin dashboard-pagina's (data-overzichten zoals `/bot/admin/stats`, niet tabel-pagina's zoals `/bot/admin/gebruikers`):** besloten 2026-08-01, referentie `app/bot/admin/stats/page.tsx` + `app/bot/admin/stats/StatsTabs.tsx`. Reden: een eerdere versie groepeerde alleen inhoudelijk (secties met dividers) maar bleef vastzitten in de smalle 800px-kolombreedte van de "Vaste normen" (bedoeld voor lopende tekst, niet voor data), waardoor elk blokje de volle breedte kreeg en onder elkaar stapelde in plaats van een scanbaar overzicht te vormen.
+- **Breed canvas**: `maxWidth` rond 1400px, geen 800px-kolom zoals de rest van `/bot`.
+- **Eén universele tegel-component** voor alle content (statlijst, splitbar, ratiobalken, trend), niet losse ad-hoc boxen per widget-type: zelfde achtergrond/radius/padding/amber-label, zodat het als één samenhangend geheel oogt.
+- **Responsive grid van tegels** (`repeat(auto-fit, minmax(280px,1fr))`), tegels die meer ruimte nodig hebben (trends, meerdere ratiobalken) nemen 2 kolommen in via een `span`-prop, in plaats van dat alles noodgedwongen onder elkaar staat.
+- **Tabs per macro-onderwerp** (bijv. Gezondheid & Retentie / Groei & Funnel / Gebruik) als lichte client component die alleen zichtbaarheid toggelt (geen herfetch van data), met de top-KPI's altijd zichtbaar boven de tabs. Data blijft volledig server-side opgehaald in de paginacomponent zelf; de client-tabs krijgen kant-en-klare, server-gerenderde content doorgegeven, geen eigen databevraging.
+- **Relevantie boven volledigheid**: een sectie die permanent of tijdelijk niks zinnigs kan tonen (bijv. een ratio die pas na 30 dagen tracking betrouwbaar wordt) hoort niet als kaart met een waarschuwing te blijven staan, maar wordt achterwege gelaten totdat er daadwerkelijk iets te tonen is.
+
 ### Conversiepagina's binnen /bot (bijv. /bot/doorgaan) — volgen de marketingstijl, niet de Vaste normen
 
 Besloten 2026-07-23: pagina's die inhoudelijk bij de marketing-/conversieflow horen (een abonnement kiezen, upgraden), ook al zitten ze achter de login binnen `/bot`, gebruiken bewust dezelfde stijl als de publieke marketingpagina's (`/prijzen`, de homepage), niet de standaard `/bot`-stijl (Space Mono/Bebas Neue) uit de "Vaste normen" hierboven. Referentie: `app/bot/doorgaan/page.tsx`, naast `/prijzen` en `/` zelf.

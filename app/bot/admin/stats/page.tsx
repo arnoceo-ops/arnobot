@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { E2E_TEST_USER_ID, E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_ID, MANUAL_TEST_USER_EMAIL } from '@/lib/internalTestAccounts'
 import { computeHealthScore, HEALTH_BUCKET_META } from '@/lib/healthScore'
 import AdminNav from '../AdminNav'
+import StatsTabs from './StatsTabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,20 +13,41 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-function StatCard({ label, stats, children }: { label: string; stats: { sublabel: string; value: string; warn?: boolean; note?: string }[]; children?: React.ReactNode }) {
+// Universele tegel: elk blok op de pagina (statlijst, splitbar, ratiobars, trend) krijgt
+// dezelfde kaart-vormgeving, zodat het als één samenhangend dashboard oogt i.p.v. een
+// mengelmoes van losse doosjes. `span` laat een tegel 2 kolommen innemen in de grid
+// hieronder, voor content die meer breedte nodig heeft (trends, meerdere ratiobalken).
+function StatCard({ label, span, stats = [], footnote, children }: {
+  label: string
+  span?: number
+  stats?: { sublabel: string; value: string; warn?: boolean; note?: string }[]
+  footnote?: string
+  children?: React.ReactNode
+}) {
   return (
-    <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
+    <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, gridColumn: span ? `span ${span}` : undefined }}>
       <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', marginBottom: 16 }}>{label}</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {stats.map(s => (
-          <div key={s.sublabel}>
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>{s.sublabel}</p>
-            <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: s.warn ? '#f59e0b' : '#f1f5f9', lineHeight: 1 }}>{s.value}</p>
-            {s.note && <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 2 }}>{s.note}</p>}
-          </div>
-        ))}
-      </div>
-      {children && <div style={{ marginTop: 16 }}>{children}</div>}
+      {stats.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: children ? 16 : 0 }}>
+          {stats.map(s => (
+            <div key={s.sublabel}>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 2 }}>{s.sublabel}</p>
+              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 24, color: s.warn ? '#f59e0b' : '#f1f5f9', lineHeight: 1 }}>{s.value}</p>
+              {s.note && <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 2 }}>{s.note}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+      {children}
+      {footnote && <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>{footnote}</p>}
+    </div>
+  )
+}
+
+function TileGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
+      {children}
     </div>
   )
 }
@@ -99,21 +121,6 @@ function TrendChart({ data }: { data: Record<string, number> }) {
   )
 }
 
-function MacroSection({ title, first, children }: { title: string; first?: boolean; children: React.ReactNode }) {
-  return (
-    <section style={{ marginTop: first ? 0 : 56, paddingTop: first ? 0 : 32, borderTop: first ? 'none' : '1px solid #374151' }}>
-      <h2 style={{
-        fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, letterSpacing: 2, color: '#f1f5f9',
-        marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10,
-      }}>
-        <span style={{ width: 8, height: 8, borderRadius: 2, background: '#f59e0b', flexShrink: 0, display: 'inline-block' }} />
-        {title}
-      </h2>
-      {children}
-    </section>
-  )
-}
-
 export default async function AdminStatsPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -130,7 +137,6 @@ export default async function AdminStatsPage() {
     { count: qaViews },
     { count: coachingViews },
     { count: gesprekClicks },
-    { data: analyses },
     { data: users },
     { data: logs },
     { data: referrals },
@@ -147,7 +153,6 @@ export default async function AdminStatsPage() {
     // en naar /upgrade linkte) als het nieuwe (sindsdien "PLAN GESPREK", linkt naar
     // /bot/gesprek), zodat de teller niet stil terugvalt naar 0 door de omzetting.
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).in('event_name', ['coaching_arnolive_click', 'coaching_gesprek_click']).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
-    supabase.from('arnobot_analyses').select('created_at').order('created_at', { ascending: true }).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at, bedrag, interval').neq('email', E2E_TEST_USER_EMAIL).neq('email', MANUAL_TEST_USER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID),
     supabase.from('arnobot_referrals').select('status, referred_user_id').neq('referrer_user_id', E2E_TEST_USER_ID).neq('referrer_user_id', MANUAL_TEST_USER_ID),
@@ -163,13 +168,6 @@ export default async function AdminStatsPage() {
   const sparringRatio = totaalGesprekken > 0 ? Math.round((sparringGesprekken / totaalGesprekken) * 100) : 0
   const coachingRatio = totaalGesprekken > 0 ? 100 - sparringRatio : 0
   const coachingVragen = (logs ?? []).length
-
-  // Analyses per maand, alleen de laatste 6 maanden met data
-  const perMaand: Record<string, number> = {}
-  for (const a of analyses ?? []) {
-    const maand = (a.created_at as string).slice(0, 7)
-    perMaand[maand] = (perMaand[maand] ?? 0) + 1
-  }
 
   // Gesprekken per maand (unieke sessies uit de coaching-logs)
   const gesprekkenPerMaandSessies: Record<string, Set<string>> = {}
@@ -212,7 +210,9 @@ export default async function AdminStatsPage() {
   // Bezoeker -> Trial: unieke anonieme bezoekers (arnobot_pageviews, geen
   // Clerk-koppeling) tegenover nieuwe trials in dezelfde laatste-30-dagen
   // periode. Pas betrouwbaar zodra de teller minstens 30 dagen heeft gedraaid,
-  // anders vertekent een gedeeltelijke periode het beeld.
+  // anders vertekent een gedeeltelijke periode het beeld. Tegel wordt hieronder
+  // helemaal niet getoond zolang dat niet het geval is, i.p.v. een maand lang
+  // een kaart met alleen een "onvoldoende data"-waarschuwing te tonen.
   const bezoekersLaatste30Dagen = new Set((pageviews30d ?? []).map(p => p.anon_id)).size
   const trialsLaatste30Dagen = users?.filter(u => u.created_at >= dertigDaysAgo).length ?? 0
   const bezoekerTrialRatio = bezoekersLaatste30Dagen > 0 ? Math.round((trialsLaatste30Dagen / bezoekersLaatste30Dagen) * 100) : 0
@@ -261,13 +261,18 @@ export default async function AdminStatsPage() {
     ? `${gesprekkenLaatste7Dagen >= gesprekkenDaarvoor7Dagen ? '+' : ''}${Math.round(((gesprekkenLaatste7Dagen - gesprekkenDaarvoor7Dagen) / gesprekkenDaarvoor7Dagen) * 100)}% vs vorige week (${gesprekkenDaarvoor7Dagen})`
     : undefined
 
-  // MRR: alleen betrouwbaar zodra bedrag + interval bekend zijn (handmatig of via betaalprovider)
+  // MRR: alleen betrouwbaar zodra bedrag + interval bekend zijn (handmatig of via betaalprovider).
+  // Geen fallback op planprijs: MRR wordt pas echt gevuld zodra er een betaalprovider actief is
+  // die bedrag/interval automatisch zet, dat is de eigenlijke fix, niet een schatting hier.
   const betaaldeGebruikers = users?.filter(u => u.paid_at) ?? []
   const betaaldeGebruikersMetBedrag = betaaldeGebruikers.filter(u => u.bedrag != null && u.interval)
   const mrr = betaaldeGebruikersMetBedrag.reduce((sum, u) => {
     const maandBedrag = u.interval === 'jaar' ? (u.bedrag as number) / 12 : (u.bedrag as number)
     return sum + maandBedrag
   }, 0)
+  const mrrNote = betaaldeGebruikersMetBedrag.length === 0 && betaaldCount > 0
+    ? 'wordt betrouwbaar zodra betaalprovider actief is'
+    : undefined
 
   // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))
@@ -321,11 +326,122 @@ export default async function AdminStatsPage() {
     else neutraalCount++
   }
 
+  const gezondheidTiles = (
+    <TileGrid>
+      <StatCard label="GEZONDHEIDSSCORE" span={2}>
+        <SplitBar segments={[
+          { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
+          { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
+          { label: HEALTH_BUCKET_META.risico.label, value: risicoCount, color: HEALTH_BUCKET_META.risico.color },
+        ]} />
+        {risicoCount > 0 && (
+          <p style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#cc4444', marginTop: 16 }}>
+            {risicoCount} {risicoCount === 1 ? 'gebruiker vertoont' : 'gebruikers vertonen'} risicosignalen, bekijk de gebruikerspagina voor wie dit betreft.
+          </p>
+        )}
+        {onbekendCount > 0 && (
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 12 }}>
+            {onbekendCount} {onbekendCount === 1 ? 'gebruiker heeft' : 'gebruikers hebben'} nog geen coachingsdocument, niet meegenomen in de score.
+          </p>
+        )}
+      </StatCard>
+      <StatCard label="ACTIVITEIT (LAATSTE 7 DAGEN)" stats={[
+        { sublabel: 'AANDEEL ACTIEF', value: `${actiefPercentage}%`, warn: actiefPercentage < 50, note: `${actieveGebruikers.size} van ${actiefCount} actieve gebruikers` },
+        { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
+        { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
+      ]} />
+    </TileGrid>
+  )
+
+  const groeiTiles = [
+    <StatCard key="groei" label="GROEI" stats={[
+      { sublabel: 'VS VORIGE WEEK', value: gebruikersDeltaValue, note: gebruikersDeltaNote },
+    ]}>
+      <SplitBar segments={[
+        { label: 'BETAALD', value: betaaldCount, color: '#44cc88' },
+        { label: 'TRIAL', value: trialCount, color: '#f59e0b' },
+      ]} />
+    </StatCard>,
+    <StatCard key="status" label="STATUS">
+      <SplitBar segments={[
+        { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
+        { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
+      ]} />
+    </StatCard>,
+    <StatCard key="referrals" label="REFERRALS" stats={[
+      { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
+      { sublabel: 'CONVERSIES', value: String(referralConversies) },
+    ]} />,
+    voldoendeTrackingData ? (
+      <StatCard key="bezoeker-trial" label="BEZOEKER → TRIAL (30D)" span={2}
+        footnote="Bezoekers = unieke anonieme sessies op de publieke marketingpagina's, niet gekoppeld aan een account.">
+        <RatioBar label="CONVERSIE" ratio={bezoekerTrialRatio} note={`${trialsLaatste30Dagen} trials / ${bezoekersLaatste30Dagen} bezoekers`} />
+      </StatCard>
+    ) : null,
+    <StatCard key="kanaal" label="CONVERSIE PER KANAAL"
+      footnote="OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
+        <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
+      </div>
+    </StatCard>,
+    <StatCard key="cohorten" label="CONVERSIE PER AANMELDMAAND" span={2}
+      footnote="Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.">
+      {cohorten.length === 0 ? (
+        <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {cohorten.map(c => (
+            <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
+          ))}
+        </div>
+      )}
+    </StatCard>,
+    <StatCard key="churn" label="CHURN" span={2}
+      footnote="Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.">
+      <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
+      {Object.keys(opgezegdPerMaand).length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <TrendChart data={opgezegdPerMaand} />
+        </div>
+      )}
+    </StatCard>,
+  ].filter(Boolean)
+
+  const gebruikTiles = (
+    <TileGrid>
+      <StatCard label="COACHING VS SPARREN" span={2}>
+        <SplitBar segments={[
+          { label: 'COACHING', value: coachingGesprekken ?? 0, color: '#f59e0b' },
+          { label: 'SPARREN', value: sparringGesprekken, color: '#f1f5f9' },
+        ]} />
+      </StatCard>
+      <StatCard label="COACHING" stats={[
+        { sublabel: 'GESPREKKEN', value: String(coachingGesprekken ?? 0) },
+        { sublabel: 'VRAGEN', value: String(coachingVragen) },
+        { sublabel: 'AANDEEL', value: `${coachingRatio}%` },
+      ]} />
+      <StatCard label="SPARREN" stats={[
+        { sublabel: 'GESPREKKEN', value: String(sparringGesprekken), warn: sparringGesprekken === 0 },
+        { sublabel: 'VRAGEN', value: String(sparringVragen), warn: sparringVragen === 0 },
+        { sublabel: 'AANDEEL', value: `${sparringRatio}%`, warn: sparringRatio === 0 },
+      ]} />
+      <StatCard label="BEZOEKEN & ENGAGEMENT" stats={[
+        { sublabel: 'Q&A BEZOEKEN', value: String(qaViews ?? 0) },
+        { sublabel: 'COACHING BEZOEKEN', value: String(coachingViews ?? 0) },
+        { sublabel: 'GESPREK MET ARNO CLICKS', value: String(gesprekClicks ?? 0) },
+      ]} />
+      <StatCard label="GESPREKKEN OVER TIJD" span={2}>
+        <TrendChart data={gesprekkenPerMaand} />
+      </StatCard>
+    </TileGrid>
+  )
+
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/stats" />
 
-      <div className="admin-content" style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px' }}>
+      <div className="admin-content" style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Stats</h1>
 
@@ -333,158 +449,14 @@ export default async function AdminStatsPage() {
           <HeroStat label="GEBRUIKERS" value={String(totaalGebruikers)} />
           <HeroStat label="CONVERSIE" value={`${conversieratio}%`} note={`n=${totaalGebruikers}`} />
           <HeroStat label="ACTIEF 7D" value={String(actieveGebruikers.size)} />
-          <HeroStat label="MRR" value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'} />
+          <HeroStat label="MRR" value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'} note={mrrNote} />
         </div>
 
-        <MacroSection title="GEZONDHEID & RETENTIE" first>
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEZONDHEIDSSCORE</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 12 }}>
-            <SplitBar segments={[
-              { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
-              { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
-              { label: HEALTH_BUCKET_META.risico.label, value: risicoCount, color: HEALTH_BUCKET_META.risico.color },
-            ]} />
-          </div>
-          {risicoCount > 0 && (
-            <p style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#cc4444', marginBottom: 12 }}>
-              {risicoCount} {risicoCount === 1 ? 'gebruiker vertoont' : 'gebruikers vertonen'} risicosignalen, bekijk de gebruikerspagina voor wie dit betreft.
-            </p>
-          )}
-          {onbekendCount > 0 && (
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginBottom: 40 }}>
-              {onbekendCount} {onbekendCount === 1 ? 'gebruiker heeft' : 'gebruikers hebben'} nog geen coachingsdocument, niet meegenomen in de score.
-            </p>
-          )}
-          {onbekendCount === 0 && <div style={{ marginBottom: 40 }} />}
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>ACTIVITEIT (LAATSTE 7 DAGEN)</p>
-          <StatCard label="ACTIVITEIT" stats={[
-            { sublabel: 'AANDEEL ACTIEF', value: `${actiefPercentage}%`, warn: actiefPercentage < 50, note: `${actieveGebruikers.size} van ${actiefCount} actieve gebruikers` },
-            { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
-            { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
-          ]} />
-        </MacroSection>
-
-        <MacroSection title="GROEI & FUNNEL">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 40 }}>
-            <StatCard label="GROEI" stats={[
-              { sublabel: 'TOTAAL', value: String(totaalGebruikers) },
-              { sublabel: 'VS VORIGE WEEK', value: gebruikersDeltaValue, note: gebruikersDeltaNote },
-            ]}>
-              <SplitBar segments={[
-                { label: 'BETAALD', value: betaaldCount, color: '#44cc88' },
-                { label: 'TRIAL', value: trialCount, color: '#f59e0b' },
-              ]} />
-            </StatCard>
-            <StatCard label="STATUS" stats={[
-              { sublabel: 'OPGEZEGD', value: String(opgezegdCount), warn: opgezegdCount > 0 },
-            ]}>
-              <SplitBar segments={[
-                { label: 'ACTIEF', value: actiefCount, color: '#44cc88' },
-                { label: 'INACTIEF', value: inactiefCount, color: '#6b7280' },
-              ]} />
-            </StatCard>
-            <StatCard label="REFERRALS" stats={[
-              { sublabel: 'AANMELDINGEN', value: String(referralAanmeldingen) },
-              { sublabel: 'CONVERSIES', value: String(referralConversies) },
-            ]} />
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BEZOEKER → TRIAL (LAATSTE 30 DAGEN)</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
-            {voldoendeTrackingData ? (
-              <>
-                <RatioBar label="CONVERSIE" ratio={bezoekerTrialRatio} note={`${trialsLaatste30Dagen} trials / ${bezoekersLaatste30Dagen} bezoekers`} />
-                <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
-                  Bezoekers = unieke anonieme sessies op de publieke marketingpagina&apos;s, niet gekoppeld aan een account.
-                </p>
-              </>
-            ) : (
-              <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f59e0b' }}>
-                Onvoldoende data: bezoekerstracking draait pas {trackingDagen} {trackingDagen === 1 ? 'dag' : 'dagen'}, minimaal 30 dagen nodig voor een betrouwbaar cijfer.
-              </p>
-            )}
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER KANAAL</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <RatioBar label="REFERRAL" ratio={referralKanaalConversie} note={`n=${referralGebruikers.length}`} />
-              <RatioBar label="OVERIG" ratio={overigKanaalConversie} note={`n=${overigGebruikers.length}`} />
-            </div>
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
-              OVERIG = organisch, LinkedIn en direct verkeer, niet los te herleiden zonder aparte trackinglink per kanaal.
-            </p>
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>CONVERSIE PER AANMELDMAAND</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
-            {cohorten.length === 0 ? (
-              <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen data.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {cohorten.map(c => (
-                  <RatioBar key={c.maand} label={c.maand} ratio={c.ratio} note={`n=${c.n}`} />
-                ))}
-              </div>
-            )}
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
-              Cohorten binnen de proefperiode (30 dagen) zijn nog niet compleet, hun conversieratio kan nog stijgen.
-            </p>
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12, marginTop: 40 }}>CHURN</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
-            <RatioBar label="OPGEZEGD" ratio={churnRatio} note={`${opgezegdCount} van ${betaaldCount} ooit betaald`} />
-            {Object.keys(opgezegdPerMaand).length > 0 && (
-              <div style={{ marginTop: 20 }}>
-                <TrendChart data={opgezegdPerMaand} />
-              </div>
-            )}
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 16 }}>
-              Percentage van gebruikers die ooit betaald hebben (paid_at gezet), niet van het totaal aantal aanmeldingen.
-            </p>
-          </div>
-        </MacroSection>
-
-        <MacroSection title="GEBRUIK">
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GESPREKKEN: COACHING VS SPARREN</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 12 }}>
-            <SplitBar segments={[
-              { label: 'COACHING', value: coachingGesprekken ?? 0, color: '#f59e0b' },
-              { label: 'SPARREN', value: sparringGesprekken, color: '#f1f5f9' },
-            ]} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 40 }}>
-            <StatCard label="COACHING" stats={[
-              { sublabel: 'GESPREKKEN', value: String(coachingGesprekken ?? 0) },
-              { sublabel: 'VRAGEN', value: String(coachingVragen) },
-              { sublabel: 'AANDEEL', value: `${coachingRatio}%` },
-            ]} />
-            <StatCard label="SPARREN" stats={[
-              { sublabel: 'GESPREKKEN', value: String(sparringGesprekken), warn: sparringGesprekken === 0 },
-              { sublabel: 'VRAGEN', value: String(sparringVragen), warn: sparringVragen === 0 },
-              { sublabel: 'AANDEEL', value: `${sparringRatio}%`, warn: sparringRatio === 0 },
-            ]} />
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BEZOEKEN & ENGAGEMENT</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 40 }}>
-            <StatCard label="Q&A" stats={[{ sublabel: 'BEZOEKEN', value: String(qaViews ?? 0) }]} />
-            <StatCard label="COACHING" stats={[{ sublabel: 'BEZOEKEN', value: String(coachingViews ?? 0) }]} />
-            <StatCard label="GESPREK MET ARNO" stats={[{ sublabel: 'CLICKS', value: String(gesprekClicks ?? 0) }]} />
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GESPREKKEN OVER TIJD</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20, marginBottom: 40 }}>
-            <TrendChart data={gesprekkenPerMaand} />
-          </div>
-
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>ANALYSES OVER TIJD</p>
-          <div style={{ background: '#1f2937', borderRadius: 4, padding: 20 }}>
-            <TrendChart data={perMaand} />
-          </div>
-        </MacroSection>
+        <StatsTabs tabs={[
+          { key: 'gezondheid', label: 'GEZONDHEID & RETENTIE', content: gezondheidTiles },
+          { key: 'groei', label: 'GROEI & FUNNEL', content: <TileGrid>{groeiTiles}</TileGrid> },
+          { key: 'gebruik', label: 'GEBRUIK', content: gebruikTiles },
+        ]} />
       </div>
     </main>
   )
