@@ -215,9 +215,12 @@ export default clerkMiddleware(async (auth, req) => {
                 }
               }
             }
-            // Telegram notificatie — bewust awaited: fire-and-forget wordt op Edge Runtime afgekapt
-            const tgToken = process.env.TELEGRAM_NEW_USER_BOT_TOKEN
-            const tgChat = process.env.TELEGRAM_NEW_USER_CHAT_ID
+            // Telegram notificatie — bewust awaited: fire-and-forget wordt op Edge Runtime afgekapt.
+            // Zelfde bot/groep als de rest van de Telegram-meldingen sinds de samenvoeging van
+            // ArnoBot Feedback + ArnoBot NewUsers tot één ArnoBot-groep (2026-08-01); de aparte
+            // TELEGRAM_NEW_USER_BOT_TOKEN/TELEGRAM_NEW_USER_CHAT_ID bestaan niet meer (bot verwijderd).
+            const tgToken = process.env.TELEGRAM_BOT_TOKEN
+            const tgChat = process.env.TELEGRAM_CHAT_ID
             if (tgToken && tgChat) {
               const refCodeForTg = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
               const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
