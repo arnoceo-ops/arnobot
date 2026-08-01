@@ -70,6 +70,7 @@ export async function GET() {
       downSeconds,
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error('[bot/instatus]', e)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
   }
 }

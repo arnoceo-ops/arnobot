@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
     .update({ paid_at: new Date().toISOString(), is_active: true, expires_at: expiresAt ?? null })
     .eq('user_id', userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/payment]', error.message)
+    return NextResponse.json({ error: 'Bijwerken mislukt' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }

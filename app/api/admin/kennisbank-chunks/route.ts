@@ -23,7 +23,10 @@ export async function GET(req: NextRequest) {
     .eq('url', url)
     .order('id', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/kennisbank-chunks GET]', error.message)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
   return NextResponse.json({ chunks: data ?? [] })
 }
 
@@ -43,6 +46,9 @@ export async function DELETE(req: NextRequest) {
   )
 
   const { error } = await supabase.from('blog_chunks').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/kennisbank-chunks DELETE]', error.message)
+    return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

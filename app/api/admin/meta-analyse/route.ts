@@ -30,7 +30,10 @@ export async function GET() {
     .select('id, created_at, session_count, period_days, zelfbeoordeling_text, expertpanel_text')
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/meta-analyse]', error.message)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
   return NextResponse.json(data ?? [])
 }
 

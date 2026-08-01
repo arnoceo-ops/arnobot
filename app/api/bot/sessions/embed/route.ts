@@ -19,7 +19,10 @@ export async function GET() {
     .is('embedding', null)
     .limit(20)
 
-  if (fetchErr) return NextResponse.json({ error: fetchErr.message })
+  if (fetchErr) {
+    console.error('[bot/sessions/embed fetch]', fetchErr.message)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
 
   const results: { session_id: string; ok: boolean; error?: string }[] = []
 
@@ -34,7 +37,8 @@ export async function GET() {
       if (updateErr) throw new Error(updateErr.message)
       results.push({ session_id: s.session_id, ok: true })
     } catch (e) {
-      results.push({ session_id: s.session_id, ok: false, error: String(e) })
+      console.error('[bot/sessions/embed]', s.session_id, e)
+      results.push({ session_id: s.session_id, ok: false, error: 'Embedding mislukt' })
     }
   }
 

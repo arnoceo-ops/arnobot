@@ -93,6 +93,9 @@ export async function POST(req: NextRequest) {
     html: template.html,
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/test-email]', error.message)
+    return NextResponse.json({ error: 'Versturen mislukt' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

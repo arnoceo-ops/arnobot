@@ -147,7 +147,10 @@ export async function GET() {
     .select('*')
     .order('maand', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[kosten-tracking GET]', error.message)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
 
   const huidigeMaand = huidigeMaandIso()
   const alAfgesloten = (geschiedenis ?? []).some(r => r.maand === huidigeMaand)
@@ -199,7 +202,10 @@ export async function POST(req: NextRequest) {
       afgesloten_op: new Date().toISOString(),
     }, { onConflict: 'maand' })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[kosten-tracking afsluiten]', error.message)
+      return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+    }
     return NextResponse.json({ ok: true, maand: doelMaand, prognose_usd: prognose, prognose_omzet_eur: omzet.prognose_omzet_eur })
   }
 
@@ -212,7 +218,10 @@ export async function POST(req: NextRequest) {
       .update({ werkelijke_kosten_usd: werkelijkeKosten })
       .eq('maand', maand)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[kosten-tracking werkelijk]', error.message)
+      return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   }
 
@@ -225,7 +234,10 @@ export async function POST(req: NextRequest) {
       .update({ werkelijke_omzet_eur: werkelijkeOmzet })
       .eq('maand', maand)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[kosten-tracking werkelijkOmzet]', error.message)
+      return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   }
 

@@ -19,7 +19,10 @@ export async function POST(req: NextRequest) {
     .select('user_id, voornaam, referral_code')
     .not('referral_code', 'is', null)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[backfill-referral-names]', error.message)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
 
   const results = []
   for (const u of users ?? []) {

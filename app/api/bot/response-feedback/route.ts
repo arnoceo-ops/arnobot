@@ -24,7 +24,10 @@ export async function POST(req: Request) {
     .is('feedback', null)
     .select('id')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[response-feedback]', error.message)
+    return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+  }
   if (!data || data.length === 0) return NextResponse.json({ error: 'Al beoordeeld' }, { status: 409 })
   return NextResponse.json({ ok: true })
 }
