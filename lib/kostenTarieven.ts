@@ -55,10 +55,11 @@ export const TARIEVEN = {
   // Omzettarieven per plan, EUR/maand. Command/team heeft geen vlak tarief
   // (staffel per seat, zie project-team-pricing) en telt daarom niet mee in
   // de omzetprognose, alleen het aantal gebruikers wordt getoond.
-  // prijsBasisEur op 38 vastgezet (besloten/bevestigd 2026-07-31), gelijk aan
-  // SCENARIO_PRIJZEN.basicMaandelijks hieronder.
-  prijsBasisEur: 38,
-  prijsPremiumEur: 77,
+  // prijsBasisEur/prijsPremiumEur vastgezet op 29/59 (besloten/bevestigd
+  // 2026-08-01, vervangt het eerdere 38/77 van 2026-07-31), gelijk aan
+  // SCENARIO_PRIJZEN.basicMaandelijks/proMaandelijks hieronder.
+  prijsBasisEur: 29,
+  prijsPremiumEur: 59,
   prijsEliteEur: 397,
 }
 
@@ -313,10 +314,14 @@ export type TierVerdeling = { basic: number; pro: number }
 export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
-// Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-07-31): niet
-// meer instelbaar in de UI, de enige keuzeopties zijn de %-verdeling
-// (TierVerdeling) en de %-betaalcyclus per tier (ScenarioBillingSplit).
-export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 38, basicJaarlijksTotaal: 347, proMaandelijks: 77, proJaarlijksTotaal: 707 }
+// Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-08-01,
+// vervangt het eerdere 38/347/77/707 van 2026-07-31): niet meer instelbaar
+// in de UI, de enige keuzeopties zijn de %-verdeling (TierVerdeling) en de
+// %-betaalcyclus per tier (ScenarioBillingSplit). TARIEVEN.prijsBasisEur/
+// prijsPremiumEur hierboven zijn in dezelfde beslissing meegewijzigd naar
+// 29/59. Nog niet doorgevoerd op arno.bot/prijzen zelf, dat is een apart,
+// nog niet gepland traject (zie project_basic_pro_rename_pending geheugen).
+export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 59, proJaarlijksTotaal: 468 }
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 20, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
