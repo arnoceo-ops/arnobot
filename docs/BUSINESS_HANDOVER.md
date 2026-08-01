@@ -5,7 +5,7 @@ Dit document is bedoeld voor iemand die ArnoBot moet overnemen of draaiende moet
 Secties gemarkeerd met `[ARNO: ...]` zijn door Arno nog in te vullen.
 
 <!-- AUTO:UPDATED -->
-Laatste automatische update: 2026-07-06
+Laatste automatische update: 2026-08-01
 <!-- /AUTO:UPDATED -->
 
 ---
