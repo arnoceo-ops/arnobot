@@ -2,7 +2,7 @@ import PublicNav from '@/app/components/PublicNav'
 
 export const metadata = {
   title: 'Algemene voorwaarden: ArnoBot',
-  robots: 'noindex',
+  robots: { index: true, follow: true },
 }
 
 export default function VoorwaardenPage() {

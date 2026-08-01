@@ -1,0 +1,12 @@
+# ArnoBot
+
+> ArnoBot is een AI-salescoach van Royal Dutch Sales, gebouwd door Arno Diepeveen. Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. 24/7 beschikbaar op arno.bot.
+
+ArnoBot is bedoeld voor verkopers en salesteams. De coaching bestaat uit: onbeperkt oefenen in gesimuleerde verkoopgesprekken tegen een realistische tegenspeler, concreet coachingsadvies na elk gesprek, een geheugen dat elk gesprek laat voortbouwen op het vorige, en gesproken antwoorden.
+
+## Belangrijkste pagina's
+
+- [Prijzen](https://arno.bot/prijzen): abonnementen en tarieven, 30 dagen gratis
+- [Command](https://arno.bot/command): ArnoBot voor teams, meerdere seats onder één deal met een managerdashboard
+- [Privacy](https://arno.bot/privacy): privacybeleid en gegevensverwerking
+- [Algemene voorwaarden](https://arno.bot/voorwaarden)

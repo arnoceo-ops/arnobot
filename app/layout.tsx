@@ -29,6 +29,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'ArnoBot',
+  url: 'https://arno.bot',
+  logo: 'https://arno.bot/arnobot-logo.png',
+  description: 'ArnoBot is een AI-salescoach, gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching.',
+  founder: {
+    '@type': 'Person',
+    name: 'Arno Diepeveen',
+  },
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -41,6 +54,11 @@ export default async function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
         >
+          <script
+            type="application/ld+json"
+            nonce={nonce}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          />
           <SentryUserIdentifier />
           <PageviewTracker />
           <PostHogTracker />
