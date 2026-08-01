@@ -92,9 +92,6 @@ export default function KostenPageClient() {
           <div style={{ marginBottom: 24 }}>
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
             <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Business case: omzet, kosten en marge</h1>
-            <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-              Hypothetisch scenario, geen echt gemeten data (dat staat op tab Trackrecord): omzet is de instelbare %-verdeling Basic/Pro keer het tarief per tier, plus Team als los aantal teamklanten keer zijn eigen formuletarief.
-            </p>
           </div>
           <BusinessCaseClient
             nGebruikers={nGebruikers} setNGebruikers={setNGebruikers}

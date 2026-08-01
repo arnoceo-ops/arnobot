@@ -188,11 +188,11 @@ export default function BusinessCaseClient({
             Team
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            €{SCENARIO_TEAM_PRIJS.basis}/account + €{SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie. Los van &quot;Totaal aantal gebruikers&quot; hierboven: een teamklant is een manager-account, geen los individu uit die pool. Gemiddeld aantal teamleden is inclusief de manager zelf.
+            €{SCENARIO_TEAM_PRIJS.basis}/account + €{SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie. Gemiddeld aantal teamleden is inclusief de manager zelf.
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-            <TariefField label="Aantal teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
-            <TariefField label="Gem. teamleden per account" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
+            <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
+            <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
           </div>
         </div>
 
@@ -207,11 +207,16 @@ export default function BusinessCaseClient({
           </div>
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
-          <div><div style={statLabel}>Omzet Basic/Pro</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
+          <div><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
           <div><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
           <div><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
+        </div>
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
           <div><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
           <div><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
+          <div><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
+        </div>
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
           <div><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           <div><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
         </div>
@@ -220,7 +225,7 @@ export default function BusinessCaseClient({
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
         <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Los uitgangspunt, staat los van &quot;Totaal aantal gebruikers&quot; hierboven en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.
+          Berekening staat los van &quot;Totaal aantal gebruikers&quot; en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.
         </p>
         <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} />
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
@@ -233,12 +238,9 @@ export default function BusinessCaseClient({
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
-        <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          Emirates NBD publiceert geen vast tarief voor kaartbetalingen, dit is een marktbenchmark voor internationaal uitgegeven kaarten (3,2-3,9% + vast bedrag per transactie), geen offerte. Vraag een echte offerte op zodra de bankrekening actief is.
-        </p>
         <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: v })} />
         <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: v })} />
-        <NumberField label="% van omzet via creditcard" hint="rest verondersteld via jaarfactuur of Command Team Subscription, geen kaartkosten" value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })} />
+        <NumberField label="% van omzet via creditcard" hint="geldt alleen voor Solo (Basic/Pro), Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten" value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })} />
       </div>
     </div>
   )

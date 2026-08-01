@@ -346,14 +346,14 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 // 29/59. Nog niet doorgevoerd op arno.bot/prijzen zelf, dat is een apart,
 // nog niet gepland traject (zie project_basic_pro_rename_pending geheugen).
 export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 59, proJaarlijksTotaal: 468 }
-export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 20, proPctJaarlijks: 10 }
+export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
 // Vast Team-tarief (besloten 2026-08-01): €97 basis per teamaccount + €49 per
 // gebruiker/maand, geen jaaroptie, dus geen ScenarioBillingSplit nodig zoals
 // bij Basic/Pro. Zelfde bedragen als het /prijzen-conceptartifact.
 export const SCENARIO_TEAM_PRIJS = { basis: 97, perGebruiker: 49 }
-export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 6 }
+export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 5 }
 
 function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, pctJaarlijks: number): number {
   const aandeelJaarlijks = pctJaarlijks / 100
@@ -376,14 +376,14 @@ export function berekenScenarioOmzetEnBetaalprovider(
   const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijksTotaal, billingSplit.proPctJaarlijks)
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
   // Team is los van n: aantal teamaccounts × (basistarief + leden × tarief
-  // per gebruiker). Elk team-account is één factuur/transactie (mdrFixed
-  // dus per account, niet per teamlid), Team betaalt via dezelfde
-  // betaalprovider als Basic/Pro.
+  // per gebruiker). Team-betalingen lopen via factuur, niet via de
+  // betaalprovider (besloten 2026-08-01), dus teamOmzet telt wel mee in
+  // omzetTotaal maar niet in de betaalproviderKosten hieronder.
   const teamLeden = team.aantalKlanten * team.gemiddeldeLeden
   const teamOmzet = team.aantalKlanten * (teamPrijs.basis + team.gemiddeldeLeden * teamPrijs.perGebruiker)
   const omzetTotaal = omzet + teamOmzet
   const aandeel = betaalprovider.pctCreditcard / 100
-  const betaalproviderKosten = omzetTotaal * aandeel * (betaalprovider.mdrPct / 100)
-    + (basicN + proN + team.aantalKlanten) * aandeel * betaalprovider.mdrFixed
+  const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
+    + (basicN + proN) * aandeel * betaalprovider.mdrFixed
   return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
 }
