@@ -207,7 +207,7 @@ export default function BusinessCaseClient({
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
             <div>
               <div style={statLabel}>Verdeling</div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden &middot; {scenario.basicN + scenario.proN + scenario.teamLeden} totaal</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden</div>
             </div>
             <div>
               <div style={statLabel}>Gemiddelde prijs/maand</div>
@@ -223,7 +223,7 @@ export default function BusinessCaseClient({
             <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div />
+            <div style={statCellStyle}><div style={statLabel}>Totaal gebruikers</div><div style={statValue}>{scenario.basicN + scenario.proN + scenario.teamLeden}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
