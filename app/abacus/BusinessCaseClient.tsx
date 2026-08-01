@@ -225,7 +225,7 @@ export default function BusinessCaseClient({
 
             <div style={statCellStyle}><div style={statLabel}># users</div><div style={statValue}>{scenario.basicN + scenario.proN + scenario.teamLeden}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={statValue}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
         </div>
       </div>
