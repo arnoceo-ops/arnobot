@@ -37,7 +37,7 @@ const INVENTORY = [
   { route: 'app/api/admin/test-email/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Admin-testtool, geen gebruikersgerichte output' },
   { route: 'lib/rag.ts (queryherschrijving RAG)', model: 'claude-haiku-4-5-20251001', reden: 'Eenvoudige herschrijftaak' },
   { route: 'scripts/embed-chunks.mjs (contextgeneratie)', model: 'claude-haiku-4-5-20251001', reden: 'Offline kennisbank-ingest, fallback-tekst aanwezig' },
-  { route: 'scripts/translate-knowledge-base.mjs', model: 'claude-opus-4-8', reden: 'Offline vertaalscript, enige Opus-gebruik in de codebase' },
+  { route: 'scripts/translate-knowledge-base.mjs', model: 'claude-opus-5', reden: 'Offline vertaalscript, enige Opus-gebruik in de codebase' },
 ]
 
 type AdviesMap = Record<string, { actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }>
