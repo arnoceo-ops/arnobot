@@ -1,6 +1,6 @@
 # Verwerkersovereenkomst — CONCEPT v0.6
 
-> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nieuw in v0.6: OpenAI toegevoegd als sub-verwerker (Artikel 5), naar aanleiding van een 2026-07-audit die vaststelde dat de Whisper/TTS-integratie nog nergens in de leverancierslijsten stond. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
+> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nieuw in v0.6: OpenAI toegevoegd als sub-verwerker (Artikel 5), naar aanleiding van een 2026-07-audit die vaststelde dat de Whisper/TTS-integratie nog nergens in de leverancierslijsten stond. Bijgewerkt 2026-08-01 (kwartaalcheck van 1 augustus): ElevenLabs, PostHog en Calendly toegevoegd aan Artikel 5, stonden hier nog niet terwijl ze al wel op de live privacypagina staan. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
 
 ---
 
@@ -75,6 +75,9 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA |
 | Sentry | Foutmonitoring en performance-tracing | — |
 | Upstash | Rate limiting | — |
+| ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees | — |
+| PostHog | Anonieme bezoekersanalyse op de publieke marketingpagina's | EU (Frankfurt) |
+| Calendly | Boeken van een kennismakingsgesprek met Arno | — |
 
 ArnoBot informeert de Klant schriftelijk (e-mail volstaat) over voorgenomen wijzigingen in deze lijst. De Klant kan binnen 30 dagen na kennisgeving schriftelijk bezwaar maken op redelijke, gedocumenteerde gronden. Partijen overleggen te goeder trouw over een oplossing; bij het uitblijven daarvan kan de Klant de overeenkomst beëindigen conform Artikel 13.
 

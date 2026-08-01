@@ -50,8 +50,11 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA | Op aanvraag, geen publieke link |
 | Sentry | Foutmonitoring en performance-tracing | — | sentry.io/legal/dpa |
 | Upstash | Rate limiting (verwerkt IP-adressen) | — | Geen publieke DPA, op aanvraag |
+| ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees (geen training op klantdata) | — | elevenlabs.io/dpa |
+| PostHog | Anonieme bezoekersanalyse op de publieke marketingpagina's | EU (Frankfurt) | Op aanvraag |
+| Calendly | Boeken van een kennismakingsgesprek met Arno | — | calendly.com/legal/data-processing-addendum |
 
-**Let op**: voor Voyage AI en Upstash is er geen publiek self-service DPA-document gevonden. Vóór ondertekening met een corporate klant moet actief bij deze twee partijen een DPA worden opgevraagd, of moet worden bevestigd dat een DPA niet noodzakelijk is gezien de aard van de verwerking.
+**Let op**: voor Voyage AI, Upstash en PostHog is er geen publiek self-service DPA-document gevonden. Vóór ondertekening met een corporate klant moet actief bij deze partijen een DPA worden opgevraagd, of moet worden bevestigd dat een DPA niet noodzakelijk is gezien de aard van de verwerking.
 
 ## Doorgifte buiten de EER
 
@@ -86,5 +89,5 @@ Inzage, rectificatie, verwijdering en overdraagbaarheid. Gebruikers kunnen dit d
 
 ## Openstaand vóór ondertekening
 
-- DPA opvragen bij Voyage AI en Upstash, of expliciet motiveren waarom niet nodig
+- DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom niet nodig
 - SOC 2 Type II / ISO 27001-status van Royal Dutch Sales zelf: nog niet aanwezig, indien de klant dit als harde eis stelt is dit een apart traject

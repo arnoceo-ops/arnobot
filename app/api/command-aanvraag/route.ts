@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
 import { berekenCommandPrijs, commandPrijsWeergave, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
-import { maakCommandOfferte, OFFERTE_AUTOMATISERING_ACTIEF } from '@/lib/docusealOffer'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -76,27 +75,6 @@ export async function POST(req: Request) {
 
   const prijsTekst = commandPrijsWeergave(seats, cyclus as Cyclus, niveau as CommandNiveau)
 
-  const offerte = OFFERTE_AUTOMATISERING_ACTIEF
-    ? await maakCommandOfferte({
-        requestId: inserted.id,
-        bedrijfsnaam: bedrijfsnaam.trim(),
-        kvkNummer: kvkNummer?.trim() || null,
-        btwNummer: btwNummer?.trim() || null,
-        factuuradres: factuuradres?.trim() || null,
-        postcode: postcode?.trim() || null,
-        plaats: plaats?.trim() || null,
-        aanvragerNaam: aanvragerNaam.trim(),
-        functie: functie?.trim() || null,
-        email: email.trim(),
-        telefoon: telefoon?.trim() || null,
-        bestelnummer: bestelnummer?.trim() || null,
-        aantalSeats: seats,
-        niveau: niveau as CommandNiveau,
-        cyclus: cyclus as Cyclus,
-      })
-    : null
-  if (offerte && !offerte.ok) console.error('DocuSeal-offerte aanmaken mislukt:', offerte.error)
-
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
@@ -104,12 +82,7 @@ export async function POST(req: Request) {
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Command-abonnement aangevraagd.<br><br>` +
       `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Niveau: ${niveau === 'elite' ? 'Elite' : 'Premium'}<br>Aantal seats: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
-      `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}` +
-      (offerte
-        ? offerte.ok
-          ? `<br><span style="color:#44cc88;">DocuSeal-offerte automatisch verstuurd naar ${email}.</span>`
-          : `<br><span style="color:#cc2200;">DocuSeal-offerte NIET automatisch verstuurd (${offerte.error}). Stuur 'm handmatig.</span>`
-        : ''),
+      `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
     ),
   }).catch(() => {})

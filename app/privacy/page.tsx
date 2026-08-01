@@ -180,6 +180,11 @@ export default function PrivacyPage() {
                   <td>Anonieme bezoekersanalyse en klik-tracking op de publieke marketingpagina&apos;s, EU-hosting (Frankfurt)</td>
                   <td>DPA op aanvraag</td>
                 </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Calendly</td>
+                  <td>Boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres</td>
+                  <td><a href="https://calendly.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">calendly.com/legal/dpa</a></td>
+                </tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
