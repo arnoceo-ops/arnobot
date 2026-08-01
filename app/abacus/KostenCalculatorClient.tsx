@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import {
   DEFAULT_INPUTS, computeScenarioKosten, type Inputs,
-  berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider,
+  berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
+  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario,
 } from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
@@ -91,9 +92,10 @@ type Props = {
   tierVerdeling: TierVerdeling
   billingSplit: ScenarioBillingSplit
   betaalprovider: Betaalprovider
+  teamScenario: TeamScenario
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
@@ -108,8 +110,8 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
   // zijn met tab 3. Tarieven zelf (SCENARIO_PRIJZEN) zijn definitief vast,
   // geen gedeelde state.
   function berekenKostenVoorN(n: number) {
-    const { basicN, proN, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n)
-    const basis = computeScenarioKosten(inputs, basicN, proN)
+    const { basicN, proN, teamLeden, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, teamScenario)
+    const basis = computeScenarioKosten(inputs, basicN, proN, teamLeden)
     const betaalKosten = betaalproviderKosten * inputs.fxRate
     const totaal = basis.totaal + betaalKosten
     return { ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
@@ -128,12 +130,12 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
   const result = useMemo(
     () => berekenKostenVoorN(nGebruikers),
-    [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider]
+    [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider, teamScenario]
   )
 
   const scaleRows = useMemo(
     () => [10, 50, 100, 200, 500].map(n => ({ n, ...berekenKostenVoorN(n) })),
-    [inputs, billingSplit, tierVerdeling, betaalprovider]
+    [inputs, billingSplit, tierVerdeling, betaalprovider, teamScenario]
   )
 
   return (
@@ -275,6 +277,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Emirates NBD Pay)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
                 <div style={{ ...breakdownLineStyle, borderBottom: 'none' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>Totaal</span>
@@ -282,7 +285,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-                %-verdeling Basic/Pro, betaalcyclus en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen.
+                %-verdeling Basic/Pro, betaalcyclus, Team-aantallen en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen. Teamleden (inclusief de manager) tellen mee als extra Pro-gebruikers, plus een kleine teamspecifieke meerkost.
               </p>
             </div>
 

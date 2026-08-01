@@ -52,6 +52,11 @@ export const TARIEVEN = {
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
   upstashPricePer100k: 0.2,
+  // Teamspecifieke meerkost per teamlid/maand (1:1-voorbereiding via
+  // app/api/bot/team/1on1/route.ts, Haiku, en teamoverzicht-aggregatie),
+  // bovenop de gewone Pro-kosten die een teamlid toch al genereert. Ruime
+  // schatting, geen event-log om tegen te meten (besloten 2026-08-01).
+  teamOverheadPerLidPerMaandUsd: 0.03,
   // Omzettarieven per plan, EUR/maand. Command/team heeft geen vlak tarief
   // (staffel per seat, zie project-team-pricing) en telt daarom niet mee in
   // de omzetprognose, alleen het aantal gebruikers wordt getoond.
@@ -116,6 +121,7 @@ export type Inputs = {
   upstashPerBericht: number
   upstashPrice: number
   domeinPerJaar: number
+  teamOverheadPerLid: number
 }
 
 // Uitgangspunt: "redelijk actieve" gebruikers, niet het ruwe gemeten gemiddelde.
@@ -169,6 +175,7 @@ export const DEFAULT_INPUTS: Inputs = {
   upstashPerBericht: TARIEVEN.upstashPerBericht,
   upstashPrice: TARIEVEN.upstashPricePer100k,
   domeinPerJaar: TARIEVEN.domeinPerJaarUsd,
+  teamOverheadPerLid: TARIEVEN.teamOverheadPerLidPerMaandUsd,
 }
 
 export function computeForN(inputs: Inputs, n: number) {
@@ -236,14 +243,22 @@ export function computeForN(inputs: Inputs, n: number) {
 // beide functies synchroon.
 const BASIC_ANALYSES_PER_MAAND = 4
 
-export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: number) {
-  const n = basicN + proN
+// teamLeden (besloten 2026-08-01): Team-leden krijgen "Alles van Pro, plus:",
+// dus tellen voor analyses/coaching/voice/overige-Anthropic mee als extra
+// Pro-gebruikers (proEffectief), en voor hoofdchat/sparring/Upstash als extra
+// gebruikers in n. teamOverheadKosten is de kleine, aparte meerkost van de
+// teamspecifieke routes (1:1-voorbereiding, teamoverzicht), die een gewone
+// Pro-gebruiker niet heeft. Telt hierdoor niet dubbel: het is een aanvulling
+// bovenop, geen vervanging van, de Pro-kostenregels hierboven.
+export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: number, teamLeden: number = 0) {
+  const proEffectief = proN + teamLeden
+  const n = basicN + proEffectief
   const totaalBerichten = n * inputs.berichten
   const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
 
-  const analysesKosten = (proN * inputs.analysesPerGebruiker + basicN * BASIC_ANALYSES_PER_MAAND) * inputs.kostenPerAnalyse
+  const analysesKosten = (proEffectief * inputs.analysesPerGebruiker + basicN * BASIC_ANALYSES_PER_MAAND) * inputs.kostenPerAnalyse
 
-  const fable5Kosten = proN * (
+  const fable5Kosten = proEffectief * (
     inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
     + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
   )
@@ -258,9 +273,9 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   // gerelateerde (session-end, verfijn, sessies-zoeken) routes, verwaarloosbaar
   // bedrag, hier niet verder uitgesplitst, toegepast op Pro (grootste overlap
   // met coaching-routes).
-  const overigeAnthropicKosten = proN * inputs.overigeAnthropicPerGebruiker
+  const overigeAnthropicKosten = proEffectief * inputs.overigeAnthropicPerGebruiker
 
-  const voiceGebruikers = proN * (inputs.pctVoice / 100)
+  const voiceGebruikers = proEffectief * (inputs.pctVoice / 100)
   const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
   const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
   const creditsNodig = totaalTekens * inputs.creditPerTeken
@@ -271,6 +286,8 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
 
+  const teamOverheadKosten = teamLeden * inputs.teamOverheadPerLid
+
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
@@ -280,12 +297,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + upstashKosten
+    + eleven.price + whisperKosten + upstashKosten + teamOverheadKosten
 
   return {
     vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 
@@ -312,6 +329,13 @@ export type ScenarioPrijzen = { basicMaandelijks: number; basicJaarlijksTotaal: 
 export type ScenarioBillingSplit = { basicPctJaarlijks: number; proPctJaarlijks: number }
 export type TierVerdeling = { basic: number; pro: number }
 export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
+// Team staat los van TierVerdeling: geen % van "Totaal aantal gebruikers",
+// want een teamklant is geen individu maar een manager-account met eigen
+// teamleden eronder (besloten 2026-08-01, optie B uit het gesprek over hoe
+// Team in Abacus te modelleren). aantalKlanten = aantal teamaccounts,
+// gemiddeldeLeden = totaal aantal betalende gebruikers per account,
+// inclusief de manager zelf (die ook chat/coacht en dus kosten genereert).
+export type TeamScenario = { aantalKlanten: number; gemiddeldeLeden: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
 // Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-08-01,
@@ -325,6 +349,11 @@ export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJa
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 20, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
+// Vast Team-tarief (besloten 2026-08-01): €97 basis per teamaccount + €49 per
+// gebruiker/maand, geen jaaroptie, dus geen ScenarioBillingSplit nodig zoals
+// bij Basic/Pro. Zelfde bedragen als het /prijzen-conceptartifact.
+export const SCENARIO_TEAM_PRIJS = { basis: 97, perGebruiker: 49 }
+export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 6 }
 
 function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, pctJaarlijks: number): number {
   const aandeelJaarlijks = pctJaarlijks / 100
@@ -333,7 +362,9 @@ function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, p
 
 export function berekenScenarioOmzetEnBetaalprovider(
   scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number,
+  teamPrijs: typeof SCENARIO_TEAM_PRIJS = SCENARIO_TEAM_PRIJS,
+  team: TeamScenario = DEFAULT_TEAM_SCENARIO
 ) {
   // Bij optellen tot 100% of minder verandert er niets (rest = niet
   // meegeteld). Bij meer dan 100% (tikfout) schalen we proportioneel terug,
@@ -344,8 +375,15 @@ export function berekenScenarioOmzetEnBetaalprovider(
   const basicPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.basicMaandelijks, scenarioPrijzen.basicJaarlijksTotaal, billingSplit.basicPctJaarlijks)
   const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijksTotaal, billingSplit.proPctJaarlijks)
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
+  // Team is los van n: aantal teamaccounts × (basistarief + leden × tarief
+  // per gebruiker). Elk team-account is één factuur/transactie (mdrFixed
+  // dus per account, niet per teamlid), Team betaalt via dezelfde
+  // betaalprovider als Basic/Pro.
+  const teamLeden = team.aantalKlanten * team.gemiddeldeLeden
+  const teamOmzet = team.aantalKlanten * (teamPrijs.basis + team.gemiddeldeLeden * teamPrijs.perGebruiker)
+  const omzetTotaal = omzet + teamOmzet
   const aandeel = betaalprovider.pctCreditcard / 100
-  const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
-    + (basicN + proN) * aandeel * betaalprovider.mdrFixed
-  return { basicN, proN, omzet, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
+  const betaalproviderKosten = omzetTotaal * aandeel * (betaalprovider.mdrPct / 100)
+    + (basicN + proN + team.aantalKlanten) * aandeel * betaalprovider.mdrFixed
+  return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
 }

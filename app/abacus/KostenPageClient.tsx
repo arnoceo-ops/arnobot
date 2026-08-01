@@ -4,7 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
-import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER } from '@/lib/kostenTarieven'
+import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -30,6 +30,9 @@ export default function KostenPageClient() {
   const [tierVerdeling, setTierVerdeling] = useState(DEFAULT_TIER_VERDELING)
   const [billingSplit, setBillingSplit] = useState(DEFAULT_BILLING_SPLIT)
   const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
+  // Team staat los van tierVerdeling (zie TeamScenario in lib/kostenTarieven.ts),
+  // zelfde gedeeld-tussen-tab-1-en-3-patroon als hierboven.
+  const [teamScenario, setTeamScenario] = useState(DEFAULT_TEAM_SCENARIO)
   // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
   // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
   // Business case, verder alleen in geheugen (niet opgeslagen).
@@ -67,6 +70,7 @@ export default function KostenPageClient() {
           tierVerdeling={tierVerdeling}
           billingSplit={billingSplit}
           betaalprovider={betaalprovider}
+          teamScenario={teamScenario}
         />
       )}
 
@@ -89,7 +93,7 @@ export default function KostenPageClient() {
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
             <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Business case: omzet, kosten en marge</h1>
             <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-              Omzet is het aantal betalende gebruikers per plan (echt gemeten uit `approved_users`) keer het tarief per plan. Command telt niet mee, dat heeft geen vlak tarief.
+              Hypothetisch scenario, geen echt gemeten data (dat staat op tab Trackrecord): omzet is de instelbare %-verdeling Basic/Pro keer het tarief per tier, plus Team als los aantal teamklanten keer zijn eigen formuletarief.
             </p>
           </div>
           <BusinessCaseClient
@@ -97,6 +101,7 @@ export default function KostenPageClient() {
             tierVerdeling={tierVerdeling} setTierVerdeling={setTierVerdeling}
             billingSplit={billingSplit} setBillingSplit={setBillingSplit}
             betaalprovider={betaalprovider} setBetaalprovider={setBetaalprovider}
+            teamScenario={teamScenario} setTeamScenario={setTeamScenario}
           />
         </div>
       )}
