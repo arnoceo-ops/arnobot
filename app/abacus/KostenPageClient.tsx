@@ -88,7 +88,7 @@ export default function KostenPageClient() {
       )}
 
       {tab === 'businesscase' && (
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 64px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 64px' }}>
           <div style={{ marginBottom: 24 }}>
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
             <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Business case: omzet, kosten en marge</h1>
