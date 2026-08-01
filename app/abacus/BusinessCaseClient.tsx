@@ -10,7 +10,7 @@ const FX_EUR_USD = 1.08
 
 function fmtEUR(n: number | null): string {
   if (n === null || n === undefined) return '-'
-  return '€' + n.toLocaleString('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return '€ ' + n.toLocaleString('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 function margePct(omzet: number | null, kosten: number | null): string {
@@ -174,7 +174,7 @@ export default function BusinessCaseClient({
             Verdeling abonnementen &amp; betaalcyclus
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            Basic €{SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; €{SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro €{SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; €{SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
+            Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
             <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
@@ -191,7 +191,7 @@ export default function BusinessCaseClient({
             Team
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            <div>€{SCENARIO_TEAM_PRIJS.basis}/account + €{SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie.</div>
+            <div>€ {SCENARIO_TEAM_PRIJS.basis}/account + € {SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie.</div>
             <div>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
@@ -211,7 +211,7 @@ export default function BusinessCaseClient({
             </div>
             <div>
               <div style={statLabel}>Gemiddelde prijs/maand</div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>€{scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; €{scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>€ {scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; € {scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', justifyContent: 'start', columnGap: 10, rowGap: 10, marginTop: 12 }}>

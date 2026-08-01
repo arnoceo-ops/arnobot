@@ -14,7 +14,7 @@ function fmtUSD0(n: number): string {
   return '$' + Math.round(n).toLocaleString('nl-NL')
 }
 function fmtEUR0(n: number): string {
-  return '€' + Math.round(n).toLocaleString('nl-NL')
+  return '€ ' + Math.round(n).toLocaleString('nl-NL')
 }
 
 const cardStyle: React.CSSProperties = {
