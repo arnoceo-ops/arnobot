@@ -151,6 +151,9 @@ export default function BusinessCaseClient({
     return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
   }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario])
 
+  const totaalGebruikers = scenario.basicN + scenario.proN + scenario.teamLeden
+  const pctTeamVanTotaal = totaalGebruikers > 0 ? (scenario.teamLeden / totaalGebruikers) * 100 : 0
+
   const benodigdeGebruikers = useMemo(
     () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario),
     [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario]
@@ -197,6 +200,7 @@ export default function BusinessCaseClient({
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
             <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
             <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
+            <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
           </div>
         </div>
 
@@ -223,7 +227,7 @@ export default function BusinessCaseClient({
             <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}># users</div><div style={statValue}>{(scenario.basicN + scenario.proN + scenario.teamLeden).toLocaleString('nl-NL')}</div></div>
+            <div style={statCellStyle}><div style={statLabel}># users</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
