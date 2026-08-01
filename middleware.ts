@@ -11,9 +11,12 @@ function buildCSP(nonce: string, allowWasm = false): string {
   const isDevInstance = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_test_') ?? false
   const clerkScriptSrc = isDevInstance ? 'https://*.accounts.dev' : 'https://clerk.arno.bot'
   // Clerk's development-instance gebruikt een dev-browser handshake (JWT-verificatie via
-  // redirects) die 'unsafe-eval' vereist. Productie (pk_live_) heeft dit nooit nodig, dus
-  // dit verzwakt de CSP van de live app niet.
-  const clerkUnsafeEval = isDevInstance ? " 'unsafe-eval'" : ''
+  // redirects) die 'unsafe-eval' vereist. Ook Next.js' eigen dev-server (webpack Fast
+  // Refresh/HMR) gebruikt eval() voor module-wrapping, los van Clerk: zonder deze
+  // toevoeging faalt hydratie/interactiviteit stil bij `npm run dev` (2026-08-01
+  // ontdekt tijdens het testen van de Abacus Team-feature). NODE_ENV is altijd
+  // 'production' in een `next build`, dus dit verzwakt de CSP van de live app niet.
+  const clerkUnsafeEval = (isDevInstance || process.env.NODE_ENV === 'development') ? " 'unsafe-eval'" : ''
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
