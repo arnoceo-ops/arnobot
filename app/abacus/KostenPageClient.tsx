@@ -44,7 +44,7 @@ export default function KostenPageClient() {
         * { box-sizing: border-box; }
         body { background: #111827; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
       `}</style>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 0' }}>
+      <div style={{ maxWidth: tab === 'businesscase' ? 800 : 1180, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 0' }}>
         <div style={{ display: 'inline-flex', background: '#1a2333', border: '1px solid #2d3a4f', borderRadius: 999, padding: 3, marginBottom: 8 }}>
           {TABS.map(t => (
             <button
