@@ -25,9 +25,13 @@ function buildCSP(nonce: string, allowWasm = false): string {
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     "img-src 'self' data: blob: https://images.squarespace-cdn.com https://img.clerk.com https://assets.feedblitz.com",
-    // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin,
-    // dus geen apart posthog.com-domein hier meer nodig, 'self' dekt het al.
-    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com",
+    // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin voor
+    // normaal verkeer, 'self' dekt dat al. eu.i.posthog.com blijft daarnaast toegestaan als
+    // vangnet: posthog-js negeert een custom api_host bij interne retries (bekende bug,
+    // github.com/PostHog/posthog/issues/20461, live bevestigd 2026-08-01 via herhaalde CSP-
+    // schendingen met retry_count-parameters), zonder dit werden die retry-events geblokkeerd
+    // en stil verloren i.p.v. alsnog aankomen.
+    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com",
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",
