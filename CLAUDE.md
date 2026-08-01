@@ -16,7 +16,7 @@ Meerdaagse plandocumenten (bv. `docs/VOICE_PLAN.md`, `docs/MOBILE_PLAN.md`) hebb
 
 **Periodieke verse controle:** aan het eind van een fase een nieuwe sessie of subagent, zonder de aannames van de bouwsessie, laten verifiëren dat de statusblokken kloppen met de werkelijke code (bv. "het document zegt fase 1 af, maar staat de tekenteller nog als TODO in de code"). Geen extra hooks of automatisering hiervoor optuigen, dit is bewust lichtgewicht: statusblokken, deze werkafspraak, en discipline in kleine commits volstaan voor een traject van deze omvang.
 
-## Maandelijkse check — roep aan met "doe de kwartaalcheck"
+## Maandelijkse check — roep aan met "doe de maandcheck"
 
 Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
 
@@ -40,7 +40,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - Zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?
 - Beoordeel altijd op kwaliteit eerst, dan pas op kosten — noem de prijs, maar laat die het besluit niet sturen
 - **Vaste regel:** elke nieuwe externe AI/API-leverancier die aan arnobot wordt toegevoegd (nieuwe SDK, nieuw model, nieuwe derde partij) wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. Reden: Voyage AI, Sentry, Upstash en OpenAI zijn alle vier ooit toegevoegd zonder dat de check werd bijgewerkt, en zijn daardoor tijdlang buiten beeld gebleven.
-- **Verplichte verificatiestap (besloten 2026-07, niet overslaan):** controleer niet alleen op nieuwere modellen, maar verifieer ook dat de tabel nog klopt met de daadwerkelijke code. Zoek via de import-graph (elk bestand dat `@anthropic-ai/sdk` of een andere AI-SDK importeert, en wat er precies op de client wordt aangeroepen — niet alleen op bekende methodenamen zoals `.messages.create(` grep'en, want dat mist varianten als `.messages.stream(`) en check `package.json` op AI-gerelateerde dependencies die nergens geïmporteerd worden. Reden: een eerdere grep-only audit miste zowel een `.messages.stream(`-aanroep in de hoofdchat als een volledig ongedocumenteerde OpenAI-integratie (spraak). Deze stap vervangt de behoefte aan een losse reminder daarvoor: de kwartaalcheck-gewoonte zelf is het herhalingsmechanisme.
+- **Verplichte verificatiestap (besloten 2026-07, niet overslaan):** controleer niet alleen op nieuwere modellen, maar verifieer ook dat de tabel nog klopt met de daadwerkelijke code. Zoek via de import-graph (elk bestand dat `@anthropic-ai/sdk` of een andere AI-SDK importeert, en wat er precies op de client wordt aangeroepen — niet alleen op bekende methodenamen zoals `.messages.create(` grep'en, want dat mist varianten als `.messages.stream(`) en check `package.json` op AI-gerelateerde dependencies die nergens geïmporteerd worden. Reden: een eerdere grep-only audit miste zowel een `.messages.stream(`-aanroep in de hoofdchat als een volledig ongedocumenteerde OpenAI-integratie (spraak). Deze stap vervangt de behoefte aan een losse reminder daarvoor: de maandcheck-gewoonte zelf is het herhalingsmechanisme.
 
 ### 4. Infrastructuur
 
@@ -75,7 +75,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Geen development-instance in productie?
 - Zijn er nieuwe beveiligingsinstellingen beschikbaar (bijv. device fingerprinting, bot-detectie)?
 - **Openstaand actiepunt:** inactivity timeout inschakelen (Clerk dashboard → Sessions). Vereist een betaald Clerk-plan voor productiegebruik, dus pas oppakken bij "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven. Geen "log uit bij browser sluiten"-optie beschikbaar bij Clerk, inactivity timeout is het dichtstbijzijnde alternatief.
-- **Openstaand actiepunt (deadline 18 januari 2027):** Clerk stopt op die datum met oude CBC-mode TLS-cipher suites op custom domains (Frontend API + Account Portal, dus ook `clerk.arno.bot`). Voor ArnoBot vermoedelijk geen actie nodig (moderne Vercel/Next.js-stack, reguliere browsers), maar bij de kwartaalcheck vlak vóór de deadline nog een keer bevestigen dat er geen legacy clients (oude mobiele app, custom HTTP-integratie) op Clerk aansluiten.
+- **Openstaand actiepunt (deadline 18 januari 2027):** Clerk stopt op die datum met oude CBC-mode TLS-cipher suites op custom domains (Frontend API + Account Portal, dus ook `clerk.arno.bot`). Voor ArnoBot vermoedelijk geen actie nodig (moderne Vercel/Next.js-stack, reguliere browsers), maar bij de maandcheck vlak vóór de deadline nog een keer bevestigen dat er geen legacy clients (oude mobiele app, custom HTTP-integratie) op Clerk aansluiten.
 
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)
@@ -111,7 +111,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Quota/limiet binnen het huidige plan?
 
 #### OpenAI (spraak: transcriptie + tekst-naar-spraak, `app/api/transcribe/route.ts` + `app/api/tts/route.ts`)
-- **Gevonden bij 2026-07-audit (import-graph-verificatieronde):** deze leverancier was volledig afwezig uit deze kwartaalcheck, uit de modelinventaris-tabel, uit de privacypagina (`app/privacy/page.tsx`) en uit het beveiligingsdocument (`scripts/generate-security-pdf.mjs`). Precies het patroon waar de "Vaste regel" in sectie 3 hierboven voor waarschuwt (Voyage AI, Sentry en Upstash zijn ooit hetzelfde overkomen), nu een vierde keer, en deze keer met stemdata van gebruikers.
+- **Gevonden bij 2026-07-audit (import-graph-verificatieronde):** deze leverancier was volledig afwezig uit deze maandcheck, uit de modelinventaris-tabel, uit de privacypagina (`app/privacy/page.tsx`) en uit het beveiligingsdocument (`scripts/generate-security-pdf.mjs`). Precies het patroon waar de "Vaste regel" in sectie 3 hierboven voor waarschuwt (Voyage AI, Sentry en Upstash zijn ooit hetzelfde overkomen), nu een vierde keer, en deze keer met stemdata van gebruikers.
 - `app/api/transcribe/route.ts`: Whisper (`whisper-1`) voor spraak-naar-tekst, rauwe `fetch()` naar `api.openai.com`, geen SDK.
 - `app/api/tts/route.ts`: TTS (`tts-1-hd`, stem `onyx`) voor tekst-naar-spraak, zelfde aanpak.
 - **Gedaan (2026-07):** OpenAI toegevoegd aan de sub-verwerkerstabel in `app/privacy/page.tsx`, aan de leverancierslijst in `scripts/generate-security-pdf.mjs` (PDF opnieuw gegenereerd, versie 1.0 naar 1.1), en aan `docs/dpa-draft-v0.6.md`/`docs/dpa-input.md`. DPA-link en trainingsbeleid geverifieerd via websearch vóór publicatie. `docs/dpa-draft-v0.6.pdf` moet nog handmatig gerenderd worden via de Markdown PDF-extensie.
@@ -139,7 +139,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 
 #### Kostencalculator (Abacus, `/abacus`, wachtwoord-gated businesscase-tool)
 - `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven: Vercel Pro ($20/seat), Supabase Pro ($25), Clerk Pro ($100), ElevenLabs-plan-tiers (Starter/Creator/Pro/Scale/Business, credits + prijs), Anthropic/Fable 5-kosten per aanroep, en de domeinverlenging bij Porkbun ($52/jaar). Verdeeld over drie tabbladen (`app/abacus/KostenCalculatorClient.tsx`, `TrackrecordClient.tsx`, `BusinessCaseClient.tsx`), maar alle tarieven zelf staan gecentraliseerd in `lib/kostenTarieven.ts`.
-- Controleer bij elke kwartaalcheck of deze bedragen nog kloppen met de live pricing-pagina's van elke leverancier (Vercel, Supabase, Clerk, ElevenLabs, Porkbun). Prijswijzigingen bij deze leveranciers komen niet vaak voor, maar als het gebeurt: bijwerken in dezelfde commit als deze check, niet uitstellen.
+- Bij elke kwartaalcheck gecontroleerd tegen de live pricing-pagina's van elke leverancier (Vercel, Supabase, Clerk, ElevenLabs, Porkbun), zie de kwartaalcheck-sectie verderop in dit bestand. Niet bij de maandcheck, prijswijzigingen bij deze leveranciers komen niet vaak genoeg voor om dat maandelijks te rechtvaardigen.
 - Sentry en Upstash staan hier bewust niet als hardcoded bedrag in, die zijn zelf al instelbare velden in de calculator (Arno vult zijn eigen actuele factuurbedrag in), dus geen externe check nodig voor die twee.
 - **Gedaan (2026-07-31):** vaste-infrastructuurkosten-aanname (Vercel + Supabase, samen $77/maand in de standaardinstelling) gecontroleerd tegen écht gemeten verbruik in de Vercel- en Supabase-dashboards, niet geschat. Bij 5.000 gebruikers (500-625x de huidige belasting) blijven Vercel edge requests/databandbreedte ruim onder de gratis inclusies, en Supabase-egress ruim onder de 250GB van het Pro-plan. Supabase's MAU-tarief (100.000 gratis, daarna $0,00325/MAU) is sowieso niet van toepassing: ArnoBot gebruikt Clerk voor authenticatie, niet Supabase Auth, dus die teller staat altijd op 0. Conclusie: geen schaalformule voor vaste kosten nodig tot en met minstens 5.000 gebruikers.
 - **Gedaan (2026-07-31):** `supabasePro`-standaardwaarde in `DEFAULT_INPUTS` gecorrigeerd van `true` naar `false`: de Supabase-organisatie stond nog echt op het Free-plan, niet Pro. Upgrade blijft bewust uitgesteld tot de 50-actieve-gebruikersmijlpaal (zie "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven).
@@ -148,7 +148,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
 - Zijn er onverwachte 500-fouten of time-outs in de logs?
-- **UI-stijlconsistentie-sweep (besloten 2026-07):** gebruik een agent om alle pagina's/componenten te grep'en op hardcoded kleuren, fonts of spacing die afwijken van de Vaste Normen-tabel (zie "UI-stijl — ALTIJD consistent toepassen" verderop in dit bestand) en van de admin-UI-stijlnorm. Dit is een periodieke vangnet-sweep, geen vervanging van de doorlopende regel om afwijkingen direct te signaleren zodra je ze tegenkomt bij ander werk.
+- UI-stijlconsistentie-sweep hoort bij de kwartaalcheck, zie verderop in dit bestand. Niet bij de maandcheck, stijldrift stapelt langzaam genoeg dat een maandelijkse sweep overkill is. Geldt los van de doorlopende regel om afwijkingen direct te signaleren zodra je ze tegenkomt bij ander werk.
 
 ### 6. AVG & beveiliging gebruikers
 - Is het beveiligingsdocument voor gebruikers (`public/arnobot-beveiliging.pdf`, gegenereerd via `scripts/generate-security-pdf.mjs`, dat script opnieuw draaien na elke wijziging) nog actueel? Check niet alleen of het bestand recent is, maar of specifieke claims er nog kloppen: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI), genoemde cijfers (bijv. aantal npm audit-meldingen, rate-limit-drempels) en rechten/termijnen.
@@ -158,6 +158,24 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 ### 7. Beveiligingsheaders
 - Test `arno.bot` op [securityheaders.com](https://securityheaders.com) — target grade A
 - Test op [observatory.mozilla.org](https://observatory.mozilla.org)
+
+---
+
+## Kwartaalcheck — roep aan met "doe de kwartaalcheck"
+
+**Besloten (2026-08-01):** de kwartaalcheck is geen andere naam voor de maandcheck, maar een aparte, minder frequente laag erbovenop. Voer eerst de volledige maandcheck hierboven uit (secties 1-7), en voeg daarna deze vier punten toe. Reden voor de scheiding: sommige dingen veranderen te snel om maandelijks over te slaan (dependencies, vendor-changelogs, modelkeuzes, security headers), andere juist te langzaam om elke maand opnieuw grondig te doen (stijldrift, tarieven, documentatie-diepte). Zelfde werkwijze als de maandcheck: parallelle subagents per punt, niet sequentieel in eigen context.
+
+### 8. Kostencalculator-tarieven vs. live pricing
+Controleer de hardcoded tarieven in `lib/kostenTarieven.ts` (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Porkbun-domeinverlenging) tegen de actuele pricing-pagina's van elke leverancier. Zie "Kostencalculator (Abacus...)" hierboven voor de volledige context. Prijswijzigingen bij deze leveranciers komen niet vaak voor, maar als het gebeurt: bijwerken in dezelfde commit als deze check.
+
+### 9. UI-stijlconsistentie-sweep
+Gebruik een agent om alle pagina's/componenten te grep'en op hardcoded kleuren, fonts of spacing die afwijken van de Vaste Normen-tabel (zie "UI-stijl — ALTIJD consistent toepassen" verderop in dit bestand) en van de admin-UI-stijlnorm. Dit is een periodieke vangnet-sweep, geen vervanging van de doorlopende regel om afwijkingen direct te signaleren zodra je ze tegenkomt bij ander werk.
+
+### 10. Grondige AVG/DPA-documentatie-doorlichting
+Dieper dan de maandelijkse check in sectie 6 (die vooral checkt of de leverancierslijst compleet is). Lees `app/privacy/page.tsx`, `public/arnobot-beveiliging.pdf`-brontekst (`scripts/generate-security-pdf.mjs`) en de DPA-concepten (`docs/dpa-draft-v0.6.md`, `docs/dpa-input.md`) volledig door, niet alleen de leverancierstabellen. Kloppen genoemde cijfers (rate-limit-drempels, bewaartermijnen, aantal npm audit-meldingen) nog met de code? Kloppen rechten/termijnen nog met de praktijk? Doorzoek ook de codebase op externe `fetch()`-calls/SDK-imports die weleens gemist worden omdat ze geen "grote" leverancier lijken (bijv. Telegram, DocuSeal, Calendly zijn hier ooit gemist, zie geheugen).
+
+### 11. Terugblik op bewust uitgestelde besluiten
+Doorzoek CLAUDE.md op "bewust uitgesteld", "openstaand actiepunt" en vergelijkbare markeringen. Voor elk: is de reden om uit te stellen nog steeds geldig, of is de situatie (gebruikersaantal, schaal, tijd verstreken) inmiddels veranderd zodat het opgepakt zou moeten worden? Rapporteer dit als lijst, laat Arno beslissen welke items alsnog oppakken.
 
 ---
 
@@ -361,7 +379,7 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 
 **Let op:** `SparClient.tsx` heeft een eigen, losse nav-implementatie, niet de gedeelde `AdminNav`/`BotNav`-component. Bij elke navigatiewijziging in de rest van de app expliciet ook `SparClient.tsx` nalopen en apart bijwerken, anders loopt die stil uit de pas.
 
-## Model-inventaris — controleer elk kwartaal
+## Model-inventaris — controleer elke maand
 
 Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een nieuwe Anthropic release) of dit nog de juiste keuzes zijn.
 
@@ -430,7 +448,7 @@ Elke route gebruikt een bewust gekozen model. Controleer elke maand (of na een n
 
 **Gedaan (2026-07-audit, verificatieronde):** `app/api/cron/model-check/route.ts`'s `INVENTORY`-constante bevatte nog de OUDE (foute) modelnamen voor de 9 hierboven gecorrigeerde routes, omdat die er in de vorige fixronde 1-op-1 uit deze tabel zijn gekopieerd terwijl de tabel toen zelf nog fout was. Nu opnieuw gelijkgetrokken, inclusief de twee ontbrekende scripts.
 
-**Openstaand actiepunt (2026-07-audit):** de routes hierboven zonder expliciete leeg-antwoord-bescherming (`cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse`, e.a.) zijn bewust NIET meegenomen in deze fixronde: lager risico door kortere prompts, Haiku (geen thinking-mode) of al aanwezige gedeeltelijke bescherming. Bij een volgende kwartaalcheck opnieuw beoordelen of dit nog steeds volstaat, vooral als een van deze prompts qua lengte/complexiteit groeit.
+**Openstaand actiepunt (2026-07-audit):** de routes hierboven zonder expliciete leeg-antwoord-bescherming (`cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse`, e.a.) zijn bewust NIET meegenomen in deze fixronde: lager risico door kortere prompts, Haiku (geen thinking-mode) of al aanwezige gedeeltelijke bescherming. Bij een volgende maandcheck opnieuw beoordelen of dit nog steeds volstaat, vooral als een van deze prompts qua lengte/complexiteit groeit.
 
 ## E-mail crons — ALTIJD via email-templates.ts
 
