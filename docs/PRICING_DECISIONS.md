@@ -1,0 +1,87 @@
+# ArnoBot Pricing — Beslissingen
+
+Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat deze keuzes opnieuw ter discussie komen. Wijzigingen hier alleen na expliciet nieuw besluit van Arno.
+
+## Tiers en bedragen
+
+### Basic
+- €19/maand bij jaarbetaling (€228/jaar totaal)
+- €29/maand bij maandelijkse betaling
+- 30 dagen gratis proberen
+
+**Features:**
+- Dagelijkse gesprekken en rollenspel met ArnoBot
+- Eén gespreksanalyse per dag
+- Geheugen over je recente gesprekken
+
+### Pro
+- €39/maand bij jaarbetaling (€468/jaar totaal)
+- €59/maand bij maandelijkse betaling
+- 30 dagen gratis proberen
+- Copy-patroon: "Alles van Basic, plus:"
+
+**Features (bovenop Basic):**
+- Coachingdocument: mindset, systeem en actie in kaart
+- Aanzienlijk meer ruimte om te chatten en oefenen
+- Gesproken antwoorden, Arno's stem als coach
+- Uitgebreider gespreksgeheugen
+- Volledig archief van al je output
+
+### Team
+- €97/maand vast bedrag (platformtarief voor de manager laag)
+- **+ €49 per gebruiker/maand** (niet degressief, geen staffelkorting, vaste formule)
+- Vanaf 3 gebruikers
+- **Uitsluitend maandelijks opzegbaar. Geen jaaroptie.**
+- **Geen aparte trial.** De manager start zelf als individuele Pro-gebruiker (30 dagen gratis) en upgradet later naar Team wanneer hij zijn team wil meenemen. Deze upgrade-flow moet functioneel bestaan in de app (zie open punt onderaan).
+- Copy-patroon: "Alles van Pro, plus:", geldt per teamlid (elk teamlid krijgt volledige Pro-functionaliteit)
+
+**Features (bovenop Pro, per teamlid):**
+- Teamoverzicht: individuele scores
+- Teamvoortgang als trend over tijd
+- Vroeg signaal bij stagnatie
+- AI-voorbereiding voor elke 1:1
+- Volledig 1:1 archief met eigen notities
+
+**Exclusief voor de manager (niet voor teamleden):**
+- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument.
+- Privacy garantie: managers zien nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen die ertoe doen. Deze toelichting hoort thuis op de losstaande `/team` pagina, niet in de prijzenkaart zelf.
+
+## Waarom deze bedragen zo zijn gekozen
+
+- **Team-seat (€49) vs. solo Pro maandelijks (€59):** lichte volumekorting bij gelijk commitment niveau (beide maandelijks opzegbaar, geen jaarverplichting). Bewust géén korting t.o.v. de jaarlijkse solo-prijs (€39), want dat zou minder commitment (Team, maandelijks) belonen met een lagere prijs dan meer commitment (solo, jaarlijks), omgekeerde SaaS-logica.
+- **Waarom geen jaaroptie bij Team:** teamgrootte fluctueert (aannames, vertrek), maandelijkse flexibiliteit is functioneel relevanter voor deze doelgroep dan een jaarkorting.
+- **Waarom €97 basistarief:** dit is niet een aparte "platformfee" los van gebruik, het is de eigen Pro-waarde van de manager (€59, want hij krijgt zelf ook alles van Pro) plus €38 opslag voor de manager-exclusieve laag: teamoverzicht, teamvoortgang-trends, vroegsignalering, AI-voorbereiding voor 1:1's en het leiderschapsaccount. Ter vergelijking: een teamlid betaalt €49 voor uitsluitend zijn eigen Pro-toegang, zonder die manager-laag. De opslag van €38 voor een volledig extra functionaliteitslaag is daarmee eerder behoudend dan overdreven geprijsd.
+- **Waarom geen aparte Team-trial:** teamdata opbouwen kost weken, een aflopende trial zou net op het waardevolle moment data laten "verdwijnen". De impliciete trial (manager begint solo als Pro) lost dit al op zonder omzet weg te geven aan een segment dat toch al laagdrempelig maandelijks kan op- en afzeggen.
+
+## UI-gedrag
+
+- **Eén gedeelde jaar/maand-toggle** boven Basic en Pro. Niet twee losse toggles per kaart, dat zou oneerlijke kruisvergelijkingen mogelijk maken (bijv. Basic maandelijks naast Pro jaarlijks).
+- **Team reageert niet op de toggle**, blijft altijd hetzelfde bedrag tonen. Duidelijk communiceren dat de toggle alleen voor Basic/Pro geldt (bijv. subtekst onder de toggle).
+- **Team-kaart toont geen prijsdetails/staffel**, alleen het basisbedrag + per-gebruiker bedrag. CTA linkt door naar `arno.bot/team` voor verdere toelichting (privacy, rekenvoorbeelden, leiderschapsaccount uitleg).
+- Geen kwantificering van jaarbesparing in copy (geen "bespaar X maanden"), bedragen kunnen wijzigen, tekst zou dan achterhaald raken. Toggle communiceert het voordeel puur door het bedrag zelf te tonen.
+
+## Feature-taal: logica
+
+Kwalificatieve, relatieve taal in plaats van kale getallen (Grok/ChatGPT-stijl), om twee redenen: (1) voorkomt dat copy moet meebewegen bij elke backend-capwijziging, (2) voorkomt dat kopers puur op kwantiteit gaan vergelijken in plaats van op coaching waarde. De bullets zelf staan hierboven onder "Tiers en bedragen", niet hier herhaald, om te voorkomen dat de twee plekken uit elkaar gaan lopen bij een toekomstige wijziging.
+
+Onderliggende thema's per tier: Basic is gesprek/rollenspel gericht ("boven water" in de ijsberg metafoor), Pro is persoonlijke groei gericht ("onder water"). Het coachingdocument staat bewust bovenaan bij Pro, dat is het sterkste onderscheid met Basic.
+
+Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgelegd zodat copy waarachtig blijft):
+- Chatberichten: Basic 25/dag, Premium/Elite/Team 100/dag (4x)
+- Sessiegeheugen: Basic 10 vorige gesprekken, Premium 25 (2,5x)
+- Voice: geen maandelijkse cap voor betalende gebruikers op dit moment (alleen 30 voice-berichten/uur rate-limit tegen misbruik). Trial-gebruikers: 50.000 tekens cap.
+- Coaching synthese (`/coaching`, mindset/systeem/actie-scores): exclusief Premium+, Basic krijgt 403.
+- Team: erft alle Pro-functionaliteit (bevestigd), inclusief coachingdocument.
+
+(De plan-waarden `premium`/`elite` hierboven zijn de huidige interne/database-namen vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder.)
+
+## Open punt: ArnoBot app-vermelding
+
+**Nog niet op de pricing pagina gezet.** De Android-app (Capacitor) is volgens Arno "bijna klaar" en zou Pro-exclusief worden, maar volgens de eerdere Deel B-planning zat dit nog in een latere bouwfase zonder bevestigde releasedatum. Bullet ("Toegang tot de ArnoBot app") pas toevoegen aan Pro zodra de app daadwerkelijk live is, niet vooruitlopend communiceren, anders belooft de pricing pagina iets dat een nieuwe Pro-koper op dag één niet kan gebruiken.
+
+## Open punten voor Deel B / techniek
+
+- **Naamswijziging in code:** de daadwerkelijke Basic/Pro-hernoeming (was Basis/Premium) en de nieuwe tarieven moeten nog doorgevoerd worden op `arno.bot/prijzen` zelf en in `approved_users.plan`-gerelateerde code, e-mails en checkout. Dit document en het conceptartefact lopen daar bewust op vooruit.
+- **Voice-cap fase 2:** momenteel geen maandelijkse limiet voor betalende gebruikers. Zodra er ooit wel een cap wordt gebouwd (nog niet gepland), moet de "Gesproken antwoorden" bullet bij Pro opnieuw beoordeeld worden.
+- **Verifiëren, niet aannemen:** bestaat de upgrade flow van individuele Pro-trial naar Team al in de app (facturatie overgang, teamleden uitnodigen vanuit bestaand Pro-account, meenemen van de manager's eigen gespreksdata)? Zo niet, dit toevoegen aan de Deel B werklijst.
+- Referentie implementatie (visueel/structureel prototype): conceptartefact "ArnoBot: Prijzen (concept)".
