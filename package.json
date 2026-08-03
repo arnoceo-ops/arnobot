@@ -45,7 +45,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "pdf-parse": "^2.4.5",
-    "puppeteer": "^25.3.0",
+    "puppeteer": "^25.4.0",
     "tailwindcss": "^4",
     "typescript": "^6",
     "vitest": "^4.1.10"
