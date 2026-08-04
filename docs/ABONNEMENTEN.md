@@ -1,6 +1,8 @@
 # ArnoBot abonnementsstructuur — basis/premium/elite/team
 
-Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet telkens opnieuw uit git-geschiedenis of losse sessies opgezocht hoeven te worden. **Bij elke wijziging aan de abonnementsstructuur dit document in dezelfde commit bijwerken.**
+Referentiedocument voor de huidige, **live** plan-structuur, zodat besluiten hierover niet telkens opnieuw uit git-geschiedenis of losse sessies opgezocht hoeven te worden. **Bij elke wijziging aan de abonnementsstructuur dit document in dezelfde commit bijwerken.**
+
+> **Aankomend besluit, nog niet live (2026-08-02):** Basis/Premium worden hernoemd naar Basic/Pro met nieuwe tarieven (€19/€29 en €39/€59), Command wordt volledig ingetrokken als naam en heet voortaan overal gewoon Team met een vaste, publieke prijs (€97 basis + €49/gebruiker, geen staffelkorting meer), en Basic is niet langer een verborgen retentietier, het wordt een normale, publiek zichtbare instaptier. Facturatie blijft voorlopig handmatig, ook voor Team, tot er een payment provider is aangesloten. Volledige onderbouwing en definitieve cijfers: `docs/PRICING_DECISIONS.md`. Dit document hieronder beschrijft nog de huidige live situatie (Basis/Premium/Elite/Command) en wordt pas herschreven zodra de daadwerkelijke uitrol plaatsvindt, conform de regel hierboven dat dit document in dezelfde commit meegaat als de code-wijziging zelf.
 
 ---
 
