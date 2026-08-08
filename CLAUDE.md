@@ -50,7 +50,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 #### Milestone: Pro-upgrades bij 50 actieve gebruikers
 Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorvoeren (nu bewust uitgesteld, niet omdat het onbelangrijk is maar omdat het bij de huidige schaal nog niet in verhouding staat):
 - **Vercel Firewall** aanzetten
-- **Supabase PITR** (Point-In-Time Recovery, echte databasebackups) aanzetten, huidige gratis plan biedt dit niet
+- **Supabase PITR** (Point-In-Time Recovery, echte databasebackups) aanzetten, huidige gratis plan biedt dit niet. **Direct daarna, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, controleren dat alle tabellen/rijen/encoding kloppen, tijdelijk project weer verwijderen). Een reminder hiervoor kwam op 2026-08-08 al eens te vroeg binnen (gratis plan biedt geen downloadbare dump, dus niet uit te voeren), toen bewust overgeslagen, niet vergeten, hoort dus bij déze upgrade-stap.
 - **Clerk**: inactivity timeout inschakelen (zie hieronder bij Clerk) en session limits aanscherpen
 
 #### Vercel
@@ -83,7 +83,13 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - DKIM nog geldig? (Resend dashboard → Domains)
 - Geen bounces of spam-klachten die aandacht vragen?
 - Controleer [resend.com/changelog](https://resend.com/changelog) op API-wijzigingen
+- Binnen de gratis verzendlimiet? (Resend dashboard → Usage)
 - **Gedaan (2026-07-24):** DMARC-record van `arno.bot` bijgewerkt naar de nieuwe DMARCbis-spec (RFC 9989/9990/9991, mei 2026). Record bevatte geen `pct`-tag, dus geen gedwongen migratie nodig. Wel `np=reject` toegevoegd om spoofing via niet-bestaande subdomeinen te blokkeren (was onbeschermd door `sp=none`). Huidig record: `v=DMARC1; p=quarantine; rua=mailto:re+bpy4n6idets@dmarc.postmarkapp.com; sp=none; np=reject; aspf=r;`. DKIM (`resend._domainkey.arno.bot`) geverifieerd als correct ingesteld, DMARC-alignment voor Resend-mails (`info@arno.bot`/`noreply@arno.bot`) loopt via DKIM, niet via SPF (SPF bevat alleen Proton).
+
+#### VisualPing (monitoring van leverancierspagina's, bijv. DPA-wijzigingen)
+- **Toegevoegd aan deze lijst (2026-08-08):** stond nergens in de leverancierslijst terwijl al actief gebruikt (o.a. monitoring van Supabase's DPA-pagina, meldt wijzigingen per e-mail). Geen eigen infra/code in arnobot, puur een extern monitoring-abonnement, dus geen eigen sub-verwerkerstabel-vermelding nodig (verwerkt geen gebruikersdata van arno.bot, alleen publieke leverancierspagina's).
+- Gratis tier: 65 checks/maand. Huidig gebruik (2026-08): 5 URL's op 2-wekelijkse monitoring = 10 checks/maand, ruim binnen de limiet.
+- Check bij groei van het aantal gemonitorde URL's of de 65/maand-limiet niet in zicht komt.
 
 #### Calendly (boeking van het gesprek met Arno)
 - **Toegevoegd (2026-07-20):** `app/api/webhooks/calendly/route.ts` ontvangt `invitee.created`-events, verifieert de `Calendly-Webhook-Signature`-header (HMAC-SHA256 met `CALENDLY_WEBHOOK_SIGNING_KEY`, 5 minuten replay-venster) en zet `arno_call_booked_at` op `approved_users` via een match op e-mailadres. `app/bot/gesprek/route.ts` is de stabiele interne link (in e-mails en op de account-pagina) die doorverwijst naar `ARNO_BOOKING_URL` — Arno kiest de definitieve scheduling-tool later, dus wisselen van tool is alleen een env var-wijziging, geen codewijziging.
