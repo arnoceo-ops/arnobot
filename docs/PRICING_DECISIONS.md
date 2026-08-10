@@ -20,12 +20,12 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - 30 dagen gratis proberen
 - Copy-patroon: "Alles van Basic, plus:"
 
-**Features (bovenop Basic):**
-- Coaching op mindset, systeem en actie
+**Features (bovenop Basic), volgorde besloten 2026-08-02:**
 - Onbeperkt chatten en oefenen
-- Gesproken antwoorden, Arno's stem
 - Uitgebreider gespreksgeheugen
 - Volledig archief van al je output
+- Coaching op mindset, systeem en actie
+- Gesproken antwoorden, Arno's stem
 - De ArnoBot-app (Android)
 
 ### Team
@@ -45,7 +45,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Volledig 1:1 archief met eigen notities
 
 **Exclusief voor de manager (niet voor teamleden):**
-- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument.
+- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument. **Op de prijzenkaart zelf (besloten 2026-08-02) staat deze bullet als eerste** van de zes, vóór "Teamoverzicht: individuele scores", ondanks dat de kaart zelf geen visueel onderscheid maakt tussen manager-exclusieve en per-teamlid features (blijft één platte lijst, zie hierboven).
 - Privacy garantie: managers zien nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen die ertoe doen. Deze toelichting hoort thuis op de losstaande `/team` pagina, niet in de prijzenkaart zelf.
 
 ## Waarom deze bedragen zo zijn gekozen
@@ -62,15 +62,17 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 ## UI-gedrag
 
 - **Eén gedeelde jaar/maand-toggle** boven Basic en Pro. Niet twee losse toggles per kaart, dat zou oneerlijke kruisvergelijkingen mogelijk maken (bijv. Basic maandelijks naast Pro jaarlijks).
-- **Team reageert niet op de toggle**, blijft altijd hetzelfde bedrag tonen. Duidelijk communiceren dat de toggle alleen voor Basic/Pro geldt (bijv. subtekst onder de toggle).
+- **Team reageert niet op de toggle**, blijft altijd hetzelfde bedrag tonen. **Herzien (2026-08-02):** de eerdere subtekst onder de toggle ("Geldt voor Basic en Pro. Team is altijd maandelijks.") is bewust verwijderd, Arno vond het overbodig naast de kaarten zelf.
+- **Basic-bullets vullen de beschikbare hoogte** (besloten 2026-08-02): Basic heeft met 3 bullets minder dan Pro/Team (6), dus de bullet-lijst krijgt `flex: 1; justify-content: space-between` zodat de 3 items over dezelfde hoogte verdelen als de langere lijsten ernaast, in plaats van bovenaan te blijven hangen met een lege ruimte eronder.
 - **Team-kaart toont geen prijsdetails/staffel**, alleen het basisbedrag + per-gebruiker bedrag. CTA linkt door naar `arno.bot/team` voor verdere toelichting (privacy, rekenvoorbeelden, leiderschapsaccount uitleg).
 - Geen kwantificering van jaarbesparing in copy (geen "bespaar X maanden"), bedragen kunnen wijzigen, tekst zou dan achterhaald raken. Toggle communiceert het voordeel puur door het bedrag zelf te tonen.
+- **Pagina-eyebrow (besloten 2026-08-02):** het amber label bovenaan de hero (`app/prijzen/page.tsx`) is "Tarieven", niet "Prijzen".
 
 ## Feature-taal: logica
 
 Kwalificatieve, relatieve taal in plaats van kale getallen (Grok/ChatGPT-stijl), om twee redenen: (1) voorkomt dat copy moet meebewegen bij elke backend-capwijziging, (2) voorkomt dat kopers puur op kwantiteit gaan vergelijken in plaats van op coaching waarde. De bullets zelf staan hierboven onder "Tiers en bedragen", niet hier herhaald, om te voorkomen dat de twee plekken uit elkaar gaan lopen bij een toekomstige wijziging.
 
-Onderliggende thema's per tier: Basic is gesprek/rollenspel gericht ("boven water" in de ijsberg metafoor), Pro is persoonlijke groei gericht ("onder water"). Het coachingdocument staat bewust bovenaan bij Pro, dat is het sterkste onderscheid met Basic.
+Onderliggende thema's per tier: Basic is gesprek/rollenspel gericht ("boven water" in de ijsberg metafoor), Pro is persoonlijke groei gericht ("onder water"). Het coachingdocument was aanvankelijk bewust de eerste bullet bij Pro als sterkste onderscheid met Basic; op 2026-08-02 heeft Arno de volgorde losgekoppeld van die redenering en expliciet een andere volgorde gekozen (zie de bullet-lijst hierboven), coaching staat nu op de vierde plek.
 
 Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgelegd zodat copy waarachtig blijft):
 - Chatberichten: Basic 25/dag, Premium/Elite/Team 100/dag (4x)

@@ -24,7 +24,6 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .prijzen-toggle button.actief { background: #f59e0b; color: #111827; }
-        .prijzen-toggle-note { font-size: 13px; color: #f59e0b; }
 
         .prijzen-cols { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
         .prijzen-tier-card {
@@ -48,7 +47,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
         .prijzen-tier-billingnote { font-size: 13px; color: #94a3b8; min-height: 18px; }
         .prijzen-tier-trial { font-size: 13px; color: #f59e0b; min-height: 18px; }
 
-        .prijzen-tier-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+        .prijzen-tier-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; flex: 1; justify-content: space-between; }
         .prijzen-tier-bullets li {
           font-size: 14px; color: #94a3b8; line-height: 1.5;
           padding-left: 18px; position: relative;
@@ -92,7 +91,6 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             MAANDELIJKS
           </button>
         </div>
-        <p className="prijzen-toggle-note">Geldt voor Basic en Pro. Team is altijd maandelijks.</p>
       </div>
 
       <div className="prijzen-cols">
@@ -141,11 +139,11 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
 
           <span className="prijzen-tier-plus">Alles van Basic, plus:</span>
           <ul className="prijzen-tier-bullets">
-            <li>Coaching op mindset, systeem en actie</li>
             <li>Onbeperkt chatten en oefenen</li>
-            <li>Gesproken antwoorden, Arno's stem</li>
             <li>Uitgebreider gespreksgeheugen</li>
             <li>Volledig archief van al je output</li>
+            <li>Coaching op mindset, systeem en actie</li>
+            <li>Gesproken antwoorden, Arno's stem</li>
             <li>De ArnoBot-app (Android)</li>
           </ul>
 
@@ -168,12 +166,12 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
 
           <span className="prijzen-tier-plus">Alles van Pro, plus:</span>
           <ul className="prijzen-tier-bullets">
+            <li>Eigen leiderschapsaccount</li>
             <li>Teamoverzicht: individuele scores</li>
             <li>Teamvoortgang als trend over tijd</li>
             <li>Vroeg signaal bij stagnatie</li>
             <li>AI-voorbereiding voor elke 1:1</li>
             <li>Volledig 1:1 archief met eigen notities</li>
-            <li>Eigen leiderschapsaccount</li>
           </ul>
 
           {demoLink
