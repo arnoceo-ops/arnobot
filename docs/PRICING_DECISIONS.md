@@ -10,7 +10,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - 30 dagen gratis proberen
 
 **Features:**
-- Dagelijkse gesprekken en rollenspel met ArnoBot
+- Dagelijks sparren met ArnoBot
 - Eén gespreksanalyse per dag
 - Geheugen over je recente gesprekken
 
@@ -21,9 +21,9 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Copy-patroon: "Alles van Basic, plus:"
 
 **Features (bovenop Basic):**
-- Coachingdocument: mindset, systeem en actie in kaart
-- Aanzienlijk meer ruimte om te chatten en oefenen
-- Gesproken antwoorden, Arno's stem als coach
+- Coachingdocument: mindset, systeem, actie
+- Onbeperkt chatten en oefenen
+- Gesproken antwoorden, Arno's stem
 - Uitgebreider gespreksgeheugen
 - Volledig archief van al je output
 - De ArnoBot-app (Android)
@@ -55,6 +55,10 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - **Waarom €97 basistarief:** dit is niet een aparte "platformfee" los van gebruik, het is de eigen Pro-waarde van de manager (€59, want hij krijgt zelf ook alles van Pro) plus €38 opslag voor de manager-exclusieve laag: teamoverzicht, teamvoortgang-trends, vroegsignalering, AI-voorbereiding voor 1:1's en het leiderschapsaccount. Ter vergelijking: een teamlid betaalt €49 voor uitsluitend zijn eigen Pro-toegang, zonder die manager-laag. De opslag van €38 voor een volledig extra functionaliteitslaag is daarmee eerder behoudend dan overdreven geprijsd.
 - **Waarom geen aparte Team-trial:** teamdata opbouwen kost weken, een aflopende trial zou net op het waardevolle moment data laten "verdwijnen". De impliciete trial (manager begint solo als Pro) lost dit al op zonder omzet weg te geven aan een segment dat toch al laagdrempelig maandelijks kan op- en afzeggen.
 
+**Eén regel per bullet (besloten 2026-08-02):** elke feature-bullet moet in de kaartlay-out op één regel passen, niet uitwrappen naar een tweede regel. Reden: bij ongelijke regelaantallen per bullet ontstaat een rommelig, ongelijkmatig ritme tussen de drie kaarten. Bij het herzien van te lange bullets altijd eerst proberen te verkorten zonder de kern te verliezen, pas als dat niet lukt de inhoud zelf aanpassen (zoals bij "onbeperkt" hierboven).
+
+**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle).
+
 ## UI-gedrag
 
 - **Eén gedeelde jaar/maand-toggle** boven Basic en Pro. Niet twee losse toggles per kaart, dat zou oneerlijke kruisvergelijkingen mogelijk maken (bijv. Basic maandelijks naast Pro jaarlijks).
@@ -76,6 +80,8 @@ Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgele
 - Team: erft alle Pro-functionaliteit (bevestigd), inclusief coachingdocument.
 
 (De plan-waarden `premium`/`elite` hierboven zijn de huidige interne/database-namen vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder.)
+
+**Bewust gekozen woord "onbeperkt" bij Pro (besloten 2026-08-02):** de Pro-bullet "Onbeperkt chatten en oefenen" is strikt genomen niet letterlijk waar, er zit een dagelijkse cap van 100 berichten achter (zie hierboven). Bewust geaccepteerd door Arno omdat (1) het functioneel als onbeperkt aanvoelt voor normaal gebruik, en (2) een preciezere formulering niet op één regel paste, wat een harde eis was voor de kaartlay-out (zie "Eén regel per bullet" hieronder).
 
 ## ArnoBot app-vermelding (besloten 2026-08-02, herzien)
 
