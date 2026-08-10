@@ -190,41 +190,43 @@ export default function BusinessCaseClient({
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} formatThousands />
 
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
-            Verdeling abonnementen &amp; betaalcyclus
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+              Verdeling abonnementen &amp; betaalcyclus
+            </div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+              Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+              <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
+              <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
+              <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
-          </div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-            <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
-            <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
-          </div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-            <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
-            <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
-          </div>
-        </div>
 
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
-            Team
-          </div>
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker</div>
-            <div>Jaarlijks (maand-equivalent): € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/gebruiker (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr)</div>
-            <div style={{ marginTop: 4 }}>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
-          </div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-            <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
-            <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
-            <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
-          </div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-            <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
-            <TariefDisplay label="Team basis gem./mnd (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
-            <TariefDisplay label="Team p/gebruiker gem./mnd (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+              Team
+            </div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+              <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker</div>
+              <div>Jaarlijks (maand-equivalent): € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/gebruiker (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr)</div>
+              <div style={{ marginTop: 4 }}>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+              <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
+              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
+              <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
+              <TariefDisplay label="Team basis gem./mnd (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
+              <TariefDisplay label="Team p/gebruiker gem./mnd (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
+            </div>
           </div>
         </div>
 
