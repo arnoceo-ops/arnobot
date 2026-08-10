@@ -123,13 +123,25 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
   )
 }
 
+// Vaste breedte (100px), geen ruimte om mee te groeien zoals de bredere
+// stat-cellen verderop in de pagina. Bij een lange waarde (bijv. "€ 11.000")
+// past het 22px-standaardfont niet meer op één regel en wrapt het vak naar
+// twee regels, wat de hele rij ernaast scheeftrekt. Schaalt het font i.p.v.
+// het vak te laten groeien.
+function fitFontSize(value: string): number {
+  if (value.length <= 6) return 22
+  if (value.length <= 8) return 18
+  if (value.length <= 10) return 15
+  return 13
+}
+
 // Zelfde weergave als TariefField, maar zonder input: voor tarieven die niet
 // meer instelbaar zijn (Basic/Pro zijn definitief vast, zie lib/kostenTarieven.ts).
 function TariefDisplay({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div style={statLabel}>{label}</div>
-      <div style={{ ...numberInputStyle, width: 100, fontSize: 22, fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+      <div style={{ ...numberInputStyle, width: 100, fontSize: fitFontSize(value), fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
         {value}
       </div>
     </div>
