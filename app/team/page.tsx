@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 
 export default function TeamAanvraagPage() {
   const { isSignedIn, isLoaded } = useUser()
@@ -22,8 +22,9 @@ export default function TeamAanvraagPage() {
   const [telefoon, setTelefoon] = useState('')
   const [bestelnummer, setBestelnummer] = useState('')
   const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_GEBRUIKERS)
+  const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
 
-  const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats), [aantalSeats])
+  const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats, cyclus), [aantalSeats, cyclus])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,7 +36,7 @@ export default function TeamAanvraagPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats,
+          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
         }),
       })
       const data = await res.json()
@@ -205,13 +206,25 @@ export default function TeamAanvraagPage() {
                     <input value={bestelnummer} onChange={e => setBestelnummer(e.target.value)} />
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>Team is uitsluitend maandelijks opzegbaar, vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.</p>
+
+                <div className="ca-toggle">
+                  <button type="button" className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
+                  <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+                </div>
+                <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
+                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Maandelijks opzegbaar.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
+                </p>
 
                 <div className="ca-prijs-box">
                   {prijs === null ? (
                     <>
                       <p className="ca-prijs-num">Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers</p>
                       <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
+                    </>
+                  ) : cyclus === 'jaarlijks' ? (
+                    <>
+                      <p className="ca-prijs-num">€{prijs * 12} / jaar</p>
+                      <p className="ca-prijs-sub">€77 platformtarief + €39 per gebruiker, maand-equivalent, exclusief btw</p>
                     </>
                   ) : (
                     <>

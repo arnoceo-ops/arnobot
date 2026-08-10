@@ -4,7 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
-import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO } from '@/lib/kostenTarieven'
+import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -31,8 +31,10 @@ export default function KostenPageClient() {
   const [billingSplit, setBillingSplit] = useState(DEFAULT_BILLING_SPLIT)
   const [betaalprovider, setBetaalprovider] = useState(DEFAULT_BETAALPROVIDER)
   // Team staat los van tierVerdeling (zie TeamScenario in lib/kostenTarieven.ts),
-  // zelfde gedeeld-tussen-tab-1-en-3-patroon als hierboven.
+  // zelfde gedeeld-tussen-tab-1-en-3-patroon als hierboven. teamBillingSplit
+  // (2026-08-10, bij de Team-jaaroptie) volgt hetzelfde patroon als billingSplit.
   const [teamScenario, setTeamScenario] = useState(DEFAULT_TEAM_SCENARIO)
+  const [teamBillingSplit, setTeamBillingSplit] = useState(DEFAULT_TEAM_BILLING_SPLIT)
   // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
   // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
   // Business case, verder alleen in geheugen (niet opgeslagen).
@@ -71,6 +73,7 @@ export default function KostenPageClient() {
           billingSplit={billingSplit}
           betaalprovider={betaalprovider}
           teamScenario={teamScenario}
+          teamBillingSplit={teamBillingSplit}
         />
       )}
 
@@ -99,6 +102,7 @@ export default function KostenPageClient() {
             billingSplit={billingSplit} setBillingSplit={setBillingSplit}
             betaalprovider={betaalprovider} setBetaalprovider={setBetaalprovider}
             teamScenario={teamScenario} setTeamScenario={setTeamScenario}
+            teamBillingSplit={teamBillingSplit} setTeamBillingSplit={setTeamBillingSplit}
           />
         </div>
       )}

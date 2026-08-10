@@ -336,6 +336,10 @@ export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: 
 // gemiddeldeLeden = totaal aantal betalende gebruikers per account,
 // inclusief de manager zelf (die ook chat/coacht en dus kosten genereert).
 export type TeamScenario = { aantalKlanten: number; gemiddeldeLeden: number }
+// %-verdeling maandelijks/jaarlijks voor Team, zelfde patroon als
+// ScenarioBillingSplit voor Basic/Pro (besloten 2026-08-10, bij de invoering
+// van de Team-jaaroptie).
+export type TeamBillingSplit = { pctJaarlijks: number }
 
 export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
 // Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-08-01,
@@ -349,11 +353,23 @@ export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJa
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
-// Vast Team-tarief (besloten 2026-08-01): €97 basis per teamaccount + €49 per
-// gebruiker/maand, geen jaaroptie, dus geen ScenarioBillingSplit nodig zoals
-// bij Basic/Pro. Zelfde bedragen als het /prijzen-conceptartifact.
-export const SCENARIO_TEAM_PRIJS = { basis: 97, perGebruiker: 49 }
+// Team-tarief (besloten 2026-08-01, jaaroptie toegevoegd 2026-08-10): €97
+// basis + €49/gebruiker/maand bij maandelijkse betaling, €77 + €39/gebruiker
+// als maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, bewust
+// minder dan Basic/Pro's ~34%, zie lib/teamPricing.ts voor de volledige
+// onderbouwing). Zelfde structuur als ScenarioPrijzen hierboven.
+export type ScenarioTeamPrijzen = {
+  basisMaandelijks: number; basisJaarlijksTotaal: number
+  perGebruikerMaandelijks: number; perGebruikerJaarlijksTotaal: number
+}
+export const SCENARIO_TEAM_PRIJS: ScenarioTeamPrijzen = {
+  basisMaandelijks: 97, basisJaarlijksTotaal: 924,
+  perGebruikerMaandelijks: 49, perGebruikerJaarlijksTotaal: 468,
+}
 export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 5 }
+// Startaanname, instelbaar op de Business case-tab: nog geen gemeten data
+// over hoeveel Team-klanten voor jaarlijks kiezen (de optie is nieuw).
+export const DEFAULT_TEAM_BILLING_SPLIT: TeamBillingSplit = { pctJaarlijks: 20 }
 
 function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, pctJaarlijks: number): number {
   const aandeelJaarlijks = pctJaarlijks / 100
@@ -363,8 +379,9 @@ function gemiddeldePrijsPerMaand(maandelijks: number, jaarlijksTotaal: number, p
 export function berekenScenarioOmzetEnBetaalprovider(
   scenarioPrijzen: ScenarioPrijzen, billingSplit: ScenarioBillingSplit,
   verdeling: TierVerdeling, betaalprovider: Betaalprovider, n: number,
-  teamPrijs: typeof SCENARIO_TEAM_PRIJS = SCENARIO_TEAM_PRIJS,
-  team: TeamScenario = DEFAULT_TEAM_SCENARIO
+  teamPrijs: ScenarioTeamPrijzen = SCENARIO_TEAM_PRIJS,
+  team: TeamScenario = DEFAULT_TEAM_SCENARIO,
+  teamBillingSplit: TeamBillingSplit = DEFAULT_TEAM_BILLING_SPLIT
 ) {
   // Bij optellen tot 100% of minder verandert er niets (rest = niet
   // meegeteld). Bij meer dan 100% (tikfout) schalen we proportioneel terug,
@@ -376,14 +393,17 @@ export function berekenScenarioOmzetEnBetaalprovider(
   const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijksTotaal, billingSplit.proPctJaarlijks)
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
   // Team is los van n: aantal teamaccounts × (basistarief + leden × tarief
-  // per gebruiker). Team-betalingen lopen via factuur, niet via de
-  // betaalprovider (besloten 2026-08-01), dus teamOmzet telt wel mee in
-  // omzetTotaal maar niet in de betaalproviderKosten hieronder.
+  // per gebruiker), beide componenten geblend over maandelijks/jaarlijks met
+  // dezelfde gemiddeldePrijsPerMaand-logica als Basic/Pro. Team-betalingen
+  // lopen via factuur, niet via de betaalprovider (besloten 2026-08-01), dus
+  // teamOmzet telt wel mee in omzetTotaal maar niet in betaalproviderKosten.
   const teamLeden = team.aantalKlanten * team.gemiddeldeLeden
-  const teamOmzet = team.aantalKlanten * (teamPrijs.basis + team.gemiddeldeLeden * teamPrijs.perGebruiker)
+  const teamBasisGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.basisMaandelijks, teamPrijs.basisJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
+  const teamPerGebruikerGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.perGebruikerMaandelijks, teamPrijs.perGebruikerJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
+  const teamOmzet = team.aantalKlanten * (teamBasisGemiddeld + team.gemiddeldeLeden * teamPerGebruikerGemiddeld)
   const omzetTotaal = omzet + teamOmzet
   const aandeel = betaalprovider.pctCreditcard / 100
   const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
     + (basicN + proN) * aandeel * betaalprovider.mdrFixed
-  return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
+  return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
 }

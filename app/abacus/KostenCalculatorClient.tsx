@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import {
   DEFAULT_INPUTS, computeScenarioKosten, type Inputs,
   berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
-  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario,
+  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
 
 function fmtUSD(n: number): string {
@@ -93,9 +93,10 @@ type Props = {
   billingSplit: ScenarioBillingSplit
   betaalprovider: Betaalprovider
   teamScenario: TeamScenario
+  teamBillingSplit: TeamBillingSplit
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario, teamBillingSplit }: Props) {
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   const [tiersOpen, setTiersOpen] = useState(false)
 
@@ -110,7 +111,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
   // zijn met tab 3. Tarieven zelf (SCENARIO_PRIJZEN) zijn definitief vast,
   // geen gedeelde state.
   function berekenKostenVoorN(n: number) {
-    const { basicN, proN, teamLeden, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, teamScenario)
+    const { basicN, proN, teamLeden, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
     const basis = computeScenarioKosten(inputs, basicN, proN, teamLeden)
     const betaalKosten = betaalproviderKosten * inputs.fxRate
     const totaal = basis.totaal + betaalKosten
@@ -130,12 +131,12 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
   const result = useMemo(
     () => berekenKostenVoorN(nGebruikers),
-    [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider, teamScenario]
+    [inputs, nGebruikers, billingSplit, tierVerdeling, betaalprovider, teamScenario, teamBillingSplit]
   )
 
   const scaleRows = useMemo(
     () => [10, 50, 100, 200, 500].map(n => ({ n, ...berekenKostenVoorN(n) })),
-    [inputs, billingSplit, tierVerdeling, betaalprovider, teamScenario]
+    [inputs, billingSplit, tierVerdeling, betaalprovider, teamScenario, teamBillingSplit]
   )
 
   return (

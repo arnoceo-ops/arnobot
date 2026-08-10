@@ -9,13 +9,14 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 ## Status
 
 **Laatst bijgewerkt:** 2026-08-10
-**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven. Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Belangrijkste openstaande punt: de database-kolommen `niveau`/`cyclus` op `arnobot_command_requests` bestaan nog uit de oude Command-staffelflow en krijgen nu een vaste filler-waarde, zie "Team-aanvraagflow" hieronder.
+**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`, Business case-tab) heeft dezelfde Team-jaaroptie nu ook als instelbaar scenario (%-schuif "Team jaarlijks"), zodat het effect op de Doelwinst-solver live te verkennen is.
 **Eerstvolgende stap:** geen vaste volgorde afgesproken:
 - `[ ]` `/prijzen` koppelen aan `lib/kostenTarieven.ts` in plaats van eigen hardgecodeerde bedragen
 - `[ ]` Besluiten of de wekelijkse Team Spotlight-bullet terugkomt op de Team-kaart
 - `[ ]` Verifiëren of de upgrade-flow individuele Pro-trial → Team al functioneel bestaat in de app
 - `[ ]` Besluiten of Elite nog actief aan nieuwe klanten aangeboden wordt nu de tier niet meer op `/prijzen` of `/bot/doorgaan` als publieke keuze staat (zie "Elite" hieronder)
-- `[ ]` Overwegen of `arnobot_command_requests` en de `niveau`/`cyclus`-kolommen ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow")
+- `[ ]` Elite terugbrengen in de `/team`-aanvraagflow, incl. surplus-tarief (nog niet vastgesteld, zie geheugen `project-team-pricing`)
+- `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow")
 
 ---
 
@@ -23,7 +24,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 | | **Basic** (`basis`) | **Pro** (`premium`) | **Team** (`team`) | **Elite** (`elite`) |
 |---|---|---|---|---|
-| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd platformtarief + €49/gebruiker/mnd, vanaf 3 gebruikers, alleen maandelijks | €397/maand, alleen maandelijks, individueel |
+| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77/mnd-equiv. + €39/gebruiker/mnd-equiv. bij jaarbetaling (~20% korting), vanaf 3 gebruikers | €397/maand, alleen maandelijks, individueel |
 | Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel | **Nee**, sinds de 2026-08-02 redesign niet meer als kaart getoond |
 | Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial: manager start zelf als Pro (zie hieronder) | N.v.t., alleen handmatig toegekend |
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) | Ja |
@@ -33,7 +34,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 **Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro, of Elite via een aparte route) volgt pas bij `/bot/doorgaan`.
 
-Volledige onderbouwing van deze bedragen (waarom €97 platformtarief, waarom geen staffel meer, waarom geen jaaroptie bij Team, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
+Volledige onderbouwing van deze bedragen (waarom €97 platformtarief, waarom geen staffel meer, waarom Team een kleinere jaarkorting krijgt dan Basic/Pro, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
 
 ---
 
@@ -77,7 +78,7 @@ Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer p
 - **`lib/kostenTarieven.ts` vs. `/prijzen`:** `/prijzen` hardcodet zijn eigen bedragen, verwijst niet naar `TARIEVEN.prijsBasisEur`/`prijsPremiumEur` (die wel al op de nieuwe 29/59 staan). Twee plekken die bij een volgende prijswijziging uit elkaar kunnen lopen. Geen gebruikersgerichte pagina, interne Abacus-koppeling, apart traject.
 - **`arnobot_command_requests`-kolommen `niveau`/`cyclus`:** deze tabel (en zijn kolomnamen) is niet hernoemd/gemigreerd bij de `/command` → `/team`-rename (zie "Team-aanvraagflow" hieronder), om geen Supabase-migratie nodig te hebben voor iets dat puur intern is. De app stuurt nu altijd de vaste waarden `'premium'`/`'maandelijks'` in, ook al bestaat die keuze niet meer in de UI. Cosmetisch, geen functioneel probleem, wel iets om ooit op te schonen.
 
-**Opgelost (2026-08-10):** `/bot/doorgaan` synchroon met Basic/Pro, `/command` verplaatst naar `/team` met de vlakke Team-prijs (geen staffel, geen niveau-keuze, geen jaaroptie), en de referral-copy (7 bestanden + FAQ) bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder).
+**Opgelost (2026-08-10):** `/bot/doorgaan` synchroon met Basic/Pro, `/command` verplaatst naar `/team` met de vlakke Team-prijs (geen staffel, geen niveau-keuze) inclusief een nieuwe jaaroptie (~20% korting), en de referral-copy (7 bestanden + FAQ) bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder).
 
 ---
 
@@ -95,19 +96,21 @@ Dashboardtoegang draait op een losse kolom **`command_manager`** (boolean op `ap
 
 ### Team-aanvraagflow (`/team`, tot 2026-08-10 `/command`)
 
-**Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen), geen jaaroptie meer, geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49 per gebruiker/maand, vanaf 3 gebruikers, uitsluitend maandelijks. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
+**Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen als publieke keuze op deze pagina, zie open punt hieronder), geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49/gebruiker/maand, of €77 + €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, toegevoegd later dezelfde dag), vanaf 3 gebruikers. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
 
-Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, live berekende prijs excl. btw.
+**Open punt (2026-08-10):** Arno wil Elite alsnog laten bestaan als keuze binnen deze aanvraagflow (niet op `/prijzen` of `/bot/doorgaan`, alleen hier). Nog niet gebouwd, wacht op een vastgesteld "surplus"-tarief, zie geheugen `project-team-pricing`.
+
+Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. btw.
 
 Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), plus e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/team-aanvraag/route.ts`).
 
-**Vestigiale kolommen `niveau`/`cyclus`:** deze tabel heeft nog kolommen uit de oude staffelflow die niet meer overeenkomen met wat de UI aanbiedt. De route stuurt nu altijd `niveau: 'premium'` en `cyclus: 'maandelijks'` mee als vaste, geldige filler-waarden, zodat er geen Supabase-schema-migratie nodig is. Puur cosmetisch record-technisch, geen functionele impact, zie ook "Bekende inconsistenties" hierboven.
+**Vestigiale kolom `niveau`, `cyclus` weer betekenisvol:** de tabel heeft nog een `niveau`-kolom uit de oude staffelflow die niet meer overeenkomt met wat de UI aanbiedt (geen niveau-keuze meer), de route stuurt hiervoor nu altijd `'premium'` als vaste, geldige filler-waarde, geen Supabase-migratie nodig. `cyclus` is sinds de jaaroptie weer een echte, betekenisvolle waarde (`'maandelijks'`/`'jaarlijks'`), niet langer vestigiaal.
 
 **Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is.
 
 **Afgerond en losgelaten: DocuSeal-offerte-automatisering.** Was gebouwd en getest, maar het brondocument-template liep vast op opmaakproblemen en heeft nooit echt gedraaid. Besloten (2026-08-01): niet hervatten. Arno gebruikt DocuSeal niet meer en heeft geen account meer. De code (`lib/docusealOffer.ts` en de aanroep ervan) is verwijderd.
 
-**Openstaand: seat-wijzigingen ná ondertekening.** Zie geheugen `project-team-pricing` voor de volledige uitwerking. Volledig handmatig voorlopig, het onderliggende gat (geen koppeling tussen `/bot/team`-lidmaatschap en betaalde seats) moet eerder opgelost worden dan de facturatielogica zelf. **Ook nog niet besloten (2026-08-10):** of Team ooit een jaaroptie krijgt. Technisch eenvoudig, maar bewust uitgesteld vanwege fluctuerende teamgrootte en het ontbreken van een betaalprovider (handmatige facturatie maakt een true-up bij tussentijdse seat-wijzigingen extra handwerk). Bij concrete vraag van een klant: jaarprijs vastzetten op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijfactureren tot de volgende jaarvernieuwing, weggevallen seats niet terugbetalen (gangbare aanpak).
+**Openstaand: seat-wijzigingen ná ondertekening.** Zie geheugen `project-team-pricing` voor de volledige uitwerking. Volledig handmatig voorlopig, het onderliggende gat (geen koppeling tussen `/bot/team`-lidmaatschap en betaalde seats) moet eerder opgelost worden dan de facturatielogica zelf. **Jaaroptie alsnog gebouwd (2026-08-10):** eerder bewust uitgesteld vanwege fluctuerende teamgrootte, op Arno's verzoek alsnog toegevoegd met een true-up-model: jaarprijs staat vast op het aantal gebruikers bij tekenen, nieuwe gebruikers worden apart maandelijks bijgefactureerd tot de volgende jaarvernieuwing, weggevallen gebruikers worden niet terugbetaald. Dit true-up-proces zelf is (nog) niet in code afgedwongen, blijft net als de rest van de facturatie handmatig.
 
 **Doorverwijzing "Vraag een demo aan":** knop op `/prijzen` en `/bot/doorgaan`, linkt naar de bestaande Calendly-boeking (`ARNO_BOOKING_URL`), niet naar `/team`. Arno gebruikt voorlopig hetzelfde Calendly-event voor demo-aanvragen en de losse "gratis gesprek"-boeking tijdens de trial.
 
@@ -164,5 +167,5 @@ Volledige onderbouwing en de discussie die tot deze regel leidde staat in het ge
 **Nog te beoordelen:**
 - Of en wanneer bestaande betalende klanten geïnformeerd worden over prijswijzigingen die hen raken sinds de vorige migratie
 - Status van Elite nu de tier nergens meer publiek kiesbaar is (zie "Elite" hierboven)
-- Of Team ooit een jaaroptie krijgt (zie "Team-aanvraagflow" hierboven)
+- Elite terugbrengen als keuze binnen de `/team`-aanvraagflow, incl. het surplus-tarief (zie "Team-aanvraagflow" hierboven)
 - Alle punten uit de "Eerstvolgende stap"-lijst bovenaan dit document

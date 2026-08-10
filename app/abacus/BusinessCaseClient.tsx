@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import {
   DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
-  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario,
+  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
 
 const FX_EUR_USD = 1.08
@@ -31,23 +31,23 @@ const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
 // vaste aannames tijdens het zoeken.
 function winstBijN(
   n: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit
 ): number {
-  const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team)
+  const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team, teamBillingSplit)
   const kostenEur = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN, teamLeden).totaal / FX_EUR_USD
   return omzetTotaal - kostenEur - betaalproviderKosten
 }
 
 function benodigdeGebruikersVoorWinst(
   doelWinstEur: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit
 ): number | null {
-  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider, team) < doelWinstEur) return null
+  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider, team, teamBillingSplit) < doelWinstEur) return null
   let lo = 0
   let hi = MAX_GEBRUIKERS_ZOEKGRENS
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2)
-    if (winstBijN(mid, billingSplit, verdeling, betaalprovider, team) >= doelWinstEur) hi = mid
+    if (winstBijN(mid, billingSplit, verdeling, betaalprovider, team, teamBillingSplit) >= doelWinstEur) hi = mid
     else lo = mid + 1
   }
   return lo
@@ -147,6 +147,8 @@ type Props = {
   setBetaalprovider: (b: Betaalprovider) => void
   teamScenario: TeamScenario
   setTeamScenario: (t: TeamScenario) => void
+  teamBillingSplit: TeamBillingSplit
+  setTeamBillingSplit: (t: TeamBillingSplit) => void
 }
 
 export default function BusinessCaseClient({
@@ -155,23 +157,24 @@ export default function BusinessCaseClient({
   billingSplit, setBillingSplit,
   betaalprovider, setBetaalprovider,
   teamScenario, setTeamScenario,
+  teamBillingSplit, setTeamBillingSplit,
 }: Props) {
   const [doelWinst, setDoelWinst] = useState(10000)
 
   const scenario = useMemo(() => {
-    const { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld } =
-      berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers, SCENARIO_TEAM_PRIJS, teamScenario)
+    const { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld } =
+      berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
     const kostenUsd = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN, teamLeden).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
-    return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld }
-  }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario])
+    return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
+  }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario, teamBillingSplit])
 
   const totaalGebruikers = scenario.basicN + scenario.proN + scenario.teamLeden
   const pctTeamVanTotaal = totaalGebruikers > 0 ? (scenario.teamLeden / totaalGebruikers) * 100 : 0
 
   const benodigdeGebruikers = useMemo(
-    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario),
-    [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario]
+    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit),
+    [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit]
   )
 
   return (
@@ -179,8 +182,8 @@ export default function BusinessCaseClient({
       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 18 }}>
         <TariefDisplay label="Basic (€)" value={String(DEFAULT_PRIJZEN.basis)} />
         <TariefDisplay label="Pro (€)" value={String(DEFAULT_PRIJZEN.premium)} />
-        <TariefDisplay label="Team basis (€)" value={String(SCENARIO_TEAM_PRIJS.basis)} />
-        <TariefDisplay label="Team per gebruiker (€)" value={String(SCENARIO_TEAM_PRIJS.perGebruiker)} />
+        <TariefDisplay label="Team basis (€)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Team per gebruiker (€)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
       </div>
 
       <div style={cardStyle}>
@@ -209,13 +212,18 @@ export default function BusinessCaseClient({
             Team
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            <div>€ {SCENARIO_TEAM_PRIJS.basis}/account + € {SCENARIO_TEAM_PRIJS.perGebruiker}/gebruiker/maand, geen jaaroptie.</div>
+            <div>€ {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker/maand &middot; € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr</div>
             <div>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
           </div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
             <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
             <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
             <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
+          </div>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+            <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
+            <TariefDisplay label="Team basis gem./mnd (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
+            <TariefDisplay label="Team p/gebruiker gem./mnd (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
           </div>
         </div>
 

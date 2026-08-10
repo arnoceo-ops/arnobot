@@ -29,10 +29,10 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - De ArnoBot-app (Android)
 
 ### Team
-- €97/maand vast bedrag (platformtarief voor de manager laag)
-- **+ €49 per gebruiker/maand** (niet degressief, geen staffelkorting, vaste formule)
+- €97/maand vast bedrag (platformtarief voor de manager laag), of €77/maand-equivalent bij jaarlijkse vooruitbetaling (€924/jaar)
+- **+ €49 per gebruiker/maand** (niet degressief, geen staffelkorting, vaste formule), of €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (€468/gebruiker/jaar)
 - Vanaf 3 gebruikers
-- **Uitsluitend maandelijks opzegbaar. Geen jaaroptie.**
+- **Jaaroptie toegevoegd (besloten 2026-08-10):** ~20% korting bij vooruitbetalen, bewust minder dan Basic/Pro's ~34% (Team is een volledig platform hoger: managerlaag, teamoverzicht en coaching zijn voor elk lid inbegrepen, niet alleen voor de manager). €39/gebruiker/maand is bewust exact gelijk aan Pro's jaarprijs, zodat een teamlid nooit goedkoper uitpakt dan een solo Pro-jaarabonnee (zelfde principe als bij de €49-maandprijs t.o.v. Pro €59/maand). Seat-wijzigingen tijdens een lopend jaarcontract: true-up, volledig handmatig (jaarprijs vast op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijgefactureerd tot de volgende jaarvernieuwing, weggevallen seats niet terugbetaald), gangbare aanpak bij SaaS-jaarcontracten. Was eerder bewust uitgesteld vanwege fluctuerende teamgrootte, nu alsnog gebouwd op Arno's verzoek.
 - **Geen aparte trial.** De manager start zelf als individuele Pro-gebruiker (30 dagen gratis) en upgradet later naar Team wanneer hij zijn team wil meenemen. Deze upgrade-flow moet functioneel bestaan in de app (zie open punt onderaan).
 - **Facturatie voorlopig handmatig** (bevestigd 2026-08-02), net als Basic/Pro nu al werken (geen payment provider aangesloten). Geen aparte, uitgebreide aanvraagflow met factuurgegevens/KvK/btw meer zoals de oude Command-staffel had, dat vervalt samen met de staffel zelf. Zodra er een payment provider is aangesloten, wordt dit voor alle tiers tegelijk geautomatiseerd, niet Team als eerste of enige uitzondering.
 - Copy-patroon: "Alles van Pro, plus:", geldt per teamlid (elk teamlid krijgt volledige Pro-functionaliteit)

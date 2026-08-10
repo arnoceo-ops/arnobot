@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const {
     bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats,
+    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
   } = body
 
   if (
@@ -37,12 +37,16 @@ export async function POST(req: Request) {
   if (!Number.isFinite(seats) || seats < TEAM_MIN_GEBRUIKERS) {
     return NextResponse.json({ error: `Minimaal ${TEAM_MIN_GEBRUIKERS} gebruikers` }, { status: 400 })
   }
+  if (cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
+    return NextResponse.json({ error: 'Ongeldige facturatiecyclus' }, { status: 400 })
+  }
 
-  const prijs = berekenTeamPrijsPerMaand(seats)
+  const prijs = berekenTeamPrijsPerMaand(seats, cyclus as Cyclus)
 
-  // niveau/cyclus: kolommen uit de oude Command-staffelflow, blijven bestaan in Supabase
-  // (geen migratie om dit te vermijden), krijgen nu een vaste waarde. Team heeft geen
-  // niveau-keuze meer en is uitsluitend maandelijks, zie docs/PRICING_DECISIONS.md.
+  // niveau: kolom uit de oude Command-staffelflow (Premium/Elite-keuze), blijft bestaan
+  // in Supabase (geen migratie om dit te vermijden), krijgt nu een vaste waarde. Team
+  // heeft geen niveau-keuze meer, zie docs/PRICING_DECISIONS.md. cyclus is wel weer
+  // betekenisvol sinds de jaaroptie (2026-08-10).
   const { data: inserted, error } = await supabase.from('arnobot_command_requests').insert({
     user_id: userId,
     bedrijfsnaam: bedrijfsnaam.trim(),
@@ -58,7 +62,7 @@ export async function POST(req: Request) {
     bestelnummer: bestelnummer?.trim() || null,
     aantal_seats: seats,
     niveau: 'premium',
-    cyclus: 'maandelijks',
+    cyclus,
     berekende_prijs_per_maand: prijs,
   }).select('id').single()
 
@@ -67,7 +71,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
 
-  const prijsTekst = teamPrijsWeergave(seats)
+  const prijsTekst = teamPrijsWeergave(seats, cyclus as Cyclus)
 
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
