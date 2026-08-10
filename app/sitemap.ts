@@ -17,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: 'https://www.arno.bot/command',
+      url: 'https://www.arno.bot/team',
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,

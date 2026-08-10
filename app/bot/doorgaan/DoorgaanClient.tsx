@@ -6,7 +6,7 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
-type PlanKeuze = 'premium' | 'elite'
+type PlanKeuze = 'basis' | 'premium'
 
 export default function DoorgaanClient({ demoLink }: { demoLink: string | null }) {
   const { isLoaded } = useUser()
@@ -14,7 +14,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid' | 'already_requested' | 'done' | 'error'>(previewIdle ? 'idle' : 'loading')
   const [gekozenPlan, setGekozenPlan] = useState<PlanKeuze | null>(null)
   const [submittingPlan, setSubmittingPlan] = useState<PlanKeuze | null>(null)
-  const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
+  const [cyclus, setCyclus] = useState<Cyclus>('jaarlijks')
 
   useEffect(() => {
     if (previewIdle) return
@@ -59,7 +59,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     }
   }
 
-  const planLabel = gekozenPlan === 'elite' ? 'Elite (€397/maand)' : gekozenPlan === 'premium' ? 'Premium' : null
+  const planLabel = gekozenPlan === 'premium' ? 'Pro' : gekozenPlan === 'basis' ? 'Basic' : null
 
   return (
     <>
@@ -69,9 +69,12 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
         .primary-btn { transition: transform 0.2s; }
         .primary-btn:hover { transform: scale(1.03); }
+        .doorgaan-toggle-rij {
+          display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 24px;
+        }
         .doorgaan-toggle {
           display: inline-flex; background: #111827; border: 1px solid #374151;
-          border-radius: 999px; padding: 3px; align-self: flex-start;
+          border-radius: 999px; padding: 3px;
         }
         .doorgaan-toggle button {
           font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
@@ -85,18 +88,18 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
           padding: 32px; display: flex; flex-direction: column; gap: 16px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .plan-card.aanbevolen { border-color: rgba(245,158,11,0.35); }
         .plan-kop { font-size: 15px; color: #f8fafc; line-height: 1.5; min-height: 46px; }
-        .plan-scarcity { font-size: 15px; font-weight: 400; color: #f59e0b; }
         .plan-naam { font-size: 13px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; }
         .plan-amount { display: flex; align-items: baseline; gap: 6px; }
         .plan-currency { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 20px; color: #6b7280; }
         .plan-prijs { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: clamp(40px, 4vw, 52px); color: #f8fafc; letter-spacing: -0.5px; line-height: 0.9; }
         .plan-periode { font-size: 14px; color: #6b7280; }
-        .plan-note { font-size: 13px; color: #f59e0b; }
+        .plan-billingnote { font-size: 13px; color: #94a3b8; min-height: 18px; }
+        .plan-plus { font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; }
         .plan-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
         .plan-bullets li { font-size: 14px; color: #94a3b8; line-height: 1.5; padding-left: 18px; position: relative; }
         .plan-bullets li::before { content: '•'; color: #f59e0b; position: absolute; left: 0; }
-        .plan-plus { font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-top: 4px; }
         .plan-btn {
           margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center;
           font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
@@ -155,74 +158,74 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
               Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.
             </p>
 
+            <div className="doorgaan-toggle-rij">
+              <div className="doorgaan-toggle">
+                <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>Jaarlijks</button>
+                <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>Maandelijks</button>
+              </div>
+            </div>
+
             <div className="plan-cols">
               <div className="plan-card">
-                <span className="plan-naam">Premium</span>
-                <p className="plan-kop">Coaching op elk moment, in je eigen tempo.</p>
-                <p className="plan-scarcity" style={{ visibility: 'hidden' }} aria-hidden="true">Beperkt aantal plekken.</p>
-
-                <div className="doorgaan-toggle">
-                  <button className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>Maandelijks</button>
-                  <button className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>Jaarlijks</button>
-                </div>
+                <span className="plan-naam">Basic</span>
+                <p className="plan-kop">Een gesprekspartner die nooit moe wordt.</p>
 
                 <div>
                   <div className="plan-amount">
                     <span className="plan-currency">€</span>
-                    <span className="plan-prijs">{cyclus === 'maandelijks' ? '97' : '777'}</span>
-                    <span className="plan-periode">{cyclus === 'maandelijks' ? '/ maand' : '/ jaar'}</span>
+                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? '19' : '29'}</span>
+                    <span className="plan-periode">/ maand</span>
                   </div>
-                  {cyclus === 'jaarlijks' && <span className="plan-note">4 maanden gratis</span>}
+                  <p className="plan-billingnote">
+                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €228 per jaar' : 'Maandelijks opzegbaar.'}
+                  </p>
                 </div>
 
                 <ul className="plan-bullets">
-                  <li>Onbeperkt aantal gesprekken</li>
-                  <li>Onbeperkt aantal gespreksanalyses</li>
-                  <li>Actiegericht coachingsadvies</li>
-                  <li>Sparring met een realistische gesprekspartner</li>
-                  <li>Gesproken antwoorden</li>
-                  <li>Alle output terug te vinden in archief</li>
+                  <li>Dagelijks sparren met ArnoBot</li>
+                  <li>Eén gespreksanalyse per dag</li>
+                  <li>Geheugen over je recente gesprekken</li>
                 </ul>
-                <button className="plan-btn" onClick={() => kies('premium')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'premium' ? 'Bezig...' : 'Kies Premium'}
+                <button className="plan-btn" onClick={() => kies('basis')} disabled={submittingPlan !== null}>
+                  {submittingPlan === 'basis' ? 'Bezig...' : 'Kies Basic'}
                 </button>
               </div>
 
-              <div className="plan-card">
-                <span className="plan-naam">Elite</span>
-                <p className="plan-kop">Man & Machine. Arno zelf wordt ingeschakeld.</p>
-                <p className="plan-scarcity">Beperkt aantal plekken.</p>
-
-                <div className="doorgaan-toggle" style={{ visibility: 'hidden' }} aria-hidden="true">
-                  <button>Maandelijks</button>
-                  <button>Jaarlijks</button>
-                </div>
+              <div className="plan-card aanbevolen">
+                <span className="plan-naam">Pro</span>
+                <p className="plan-kop">Je topcoach, altijd binnen handbereik.</p>
 
                 <div>
                   <div className="plan-amount">
                     <span className="plan-currency">€</span>
-                    <span className="plan-prijs">397</span>
+                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? '39' : '59'}</span>
                     <span className="plan-periode">/ maand</span>
                   </div>
+                  <p className="plan-billingnote">
+                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €468 per jaar' : 'Maandelijks opzegbaar.'}
+                  </p>
                 </div>
 
-                <span className="plan-plus">Alles van Premium, plus:</span>
+                <span className="plan-plus">Alles van Basic, plus:</span>
                 <ul className="plan-bullets">
-                  <li>Iedere maand een persoonlijk gesprek met Arno</li>
-                  <li>Rechtstreeks contact met Arno via Telegram</li>
-                  <li>Toegang tot de Elite Member Community</li>
+                  <li>Onbeperkt chatten en oefenen</li>
+                  <li>Uitgebreider gespreksgeheugen</li>
+                  <li>Volledig archief van al je output</li>
+                  <li>Coaching op mindset, systeem en actie</li>
+                  <li>Gesproken antwoorden, Arno's stem</li>
+                  <li>De ArnoBot-app (Android)</li>
                 </ul>
-                <button className="plan-btn" onClick={() => kies('elite')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'elite' ? 'Bezig...' : 'Kies Elite'}
+                <button className="plan-btn" onClick={() => kies('premium')} disabled={submittingPlan !== null}>
+                  {submittingPlan === 'premium' ? 'Bezig...' : 'Kies Pro'}
                 </button>
               </div>
             </div>
 
             <p style={{ ...body, marginBottom: 0 }}>
-              Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft daarna nog 30 dagen bewaard. Op zoek naar Command, het teamabonnement?{' '}
+              Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft daarna nog 30 dagen bewaard. Op zoek naar Team, het teamabonnement?{' '}
               {demoLink
                 ? <a href={demoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
-                : <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Command" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
+                : <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
               }.
             </p>
           </>

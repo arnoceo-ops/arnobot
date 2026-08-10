@@ -158,7 +158,7 @@ export default function EvaluatiePage() {
               )}
             </Block>
 
-            <Block nr="06" title="Wat vind je van de tariefstelling?" sub="€97 P/M · 4 MAANDEN GRATIS: €777 P/J · PER GEBRUIKER">
+            <Block nr="06" title="Wat vind je van de tariefstelling?" sub="BASIC €19-29 · PRO €39-59 · TEAM €97 + €49 PP">
               <textarea rows={3} value={tariefstelling} onChange={e => setTariefstelling(e.target.value)} placeholder="Te duur, precies goed, te laag? Graag met onderbouwing." />
             </Block>
 
@@ -171,7 +171,7 @@ export default function EvaluatiePage() {
               {aanbevelen === 'Ja' && (
                 <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
                   <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-                    Gebruik dan de referral code op de accountpagina. Per betalende referral ontvang je €97 tegoed, automatisch verrekend op je volgende factuur.
+                    Gebruik dan de referral code op de accountpagina. Bij Pro of Team ontvang je tegoed, maximaal je eigen maandprijs, automatisch verrekend op je volgende factuur.
                   </p>
                 </div>
               )}

@@ -8,7 +8,7 @@ import posthog from 'posthog-js'
 // product zelf, ingelogde klanten) hoort hier niet bij, dat is een principieel andere
 // privacy-afweging (sessie-opnames van betalende klanten i.p.v. anonieme bezoekers) die
 // niet stilzwijgend is meegenomen met deze toevoeging.
-const UITGESLOTEN_PREFIXES = ['/bot', '/abacus', '/api', '/sign-in', '/sign-up', '/sso-callback', '/clerk-proxy', '/monitoring', '/command']
+const UITGESLOTEN_PREFIXES = ['/bot', '/abacus', '/api', '/sign-in', '/sign-up', '/sso-callback', '/clerk-proxy', '/monitoring']
 
 export default function PostHogTracker() {
   const pathname = usePathname()

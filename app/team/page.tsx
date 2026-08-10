@@ -3,9 +3,9 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenCommandPrijs, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
+import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
-export default function CommandAanvraagPage() {
+export default function TeamAanvraagPage() {
   const { isSignedIn, isLoaded } = useUser()
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -21,28 +21,21 @@ export default function CommandAanvraagPage() {
   const [email, setEmail] = useState('')
   const [telefoon, setTelefoon] = useState('')
   const [bestelnummer, setBestelnummer] = useState('')
-  const [aantalSeats, setAantalSeats] = useState(2)
-  const [niveau, setNiveau] = useState<CommandNiveau>('premium')
-  const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
+  const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_GEBRUIKERS)
 
-  const prijs = useMemo(() => berekenCommandPrijs(aantalSeats, cyclus, niveau), [aantalSeats, cyclus, niveau])
-
-  function kiesNiveau(volgende: CommandNiveau) {
-    setNiveau(volgende)
-    if (volgende === 'elite') setCyclus('maandelijks')
-  }
+  const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats), [aantalSeats])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setStatus('submitting')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/command-aanvraag', {
+      const res = await fetch('/api/team-aanvraag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, niveau, cyclus,
+          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats,
         }),
       })
       const data = await res.json()
@@ -128,7 +121,7 @@ export default function CommandAanvraagPage() {
 
       <div className="ca-wrap">
         <p className="ca-label">Team</p>
-        <h1 className="ca-title">Vraag een Command-abonnement aan.</h1>
+        <h1 className="ca-title">Vraag een Team-abonnement aan.</h1>
 
         {status === 'done' ? (
           <div style={{ background: '#1e293b', border: '1px solid #374151', borderRadius: 8, padding: '24px 28px' }}>
@@ -202,43 +195,28 @@ export default function CommandAanvraagPage() {
               <fieldset className="ca-fieldset">
                 <legend>Team</legend>
 
-                <div className="ca-field" style={{ marginBottom: 16 }}>
-                  <label>Niveau *</label>
-                  <div className="ca-toggle">
-                    <button type="button" className={niveau === 'premium' ? 'actief' : ''} onClick={() => kiesNiveau('premium')}>PREMIUM</button>
-                    <button type="button" className={niveau === 'elite' ? 'actief' : ''} onClick={() => kiesNiveau('elite')}>ELITE</button>
-                  </div>
-                </div>
-
                 <div className="ca-row">
                   <div className="ca-field">
-                    <label>Aantal seats (inclusief jijzelf) *</label>
-                    <input required type="number" min={2} value={aantalSeats} onChange={e => setAantalSeats(Number(e.target.value))} />
+                    <label>Aantal gebruikers (inclusief jijzelf) *</label>
+                    <input required type="number" min={TEAM_MIN_GEBRUIKERS} value={aantalSeats} onChange={e => setAantalSeats(Number(e.target.value))} />
                   </div>
                   <div className="ca-field">
                     <label>Bestelnummer (optioneel)</label>
                     <input value={bestelnummer} onChange={e => setBestelnummer(e.target.value)} />
                   </div>
                 </div>
-
-                <div className="ca-toggle">
-                  <button type="button" className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-                  <button type="button" disabled={niveau === 'elite'} className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
-                </div>
-                {niveau === 'elite' && (
-                  <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>Elite-niveau is alleen maandelijks beschikbaar, vanwege het beperkt aantal plekken.</p>
-                )}
+                <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>Team is uitsluitend maandelijks opzegbaar, vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.</p>
 
                 <div className="ca-prijs-box">
                   {prijs === null ? (
                     <>
-                      <p className="ca-prijs-num">Op maat</p>
-                      <p className="ca-prijs-sub">Meer dan 20 seats, geen automatische staffelprijs. Arno stelt een voorstel op maat op.</p>
+                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers</p>
+                      <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
                     </>
                   ) : (
                     <>
-                      <p className="ca-prijs-num">€{prijs} {cyclus === 'jaarlijks' ? '/ jaar' : '/ maand'}</p>
-                      <p className="ca-prijs-sub">Exclusief BTW</p>
+                      <p className="ca-prijs-num">€{prijs} / maand</p>
+                      <p className="ca-prijs-sub">€97 platformtarief + €49 per gebruiker, exclusief btw</p>
                     </>
                   )}
                 </div>

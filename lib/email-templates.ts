@@ -218,7 +218,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${newUser} heeft zich aangemeld via jouw referral code`,
         html: mail(
-          `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich zojuist aangemeld via jouw referral link.<br><br>Zodra ${newUser} een betaald abonnement afsluit, ontvang jij €97 tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`,
+          `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich zojuist aangemeld via jouw referral link.<br><br>Kiest ${newUser} voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, maximaal je eigen maandprijs. Bij Basic ontvang je geen tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account'
         ),
       }

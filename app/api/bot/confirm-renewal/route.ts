@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}))
   const gekozenPlan = body?.plan
-  if (gekozenPlan !== 'premium' && gekozenPlan !== 'elite') {
+  if (gekozenPlan !== 'basis' && gekozenPlan !== 'premium') {
     return NextResponse.json({ error: 'Ongeldige plankeuze' }, { status: 400 })
   }
 
@@ -37,12 +37,12 @@ export async function POST(req: Request) {
     .update({ renewal_requested_at: now, plan: gekozenPlan })
     .eq('user_id', userId)
 
-  const planLabel = gekozenPlan === 'elite' ? 'Elite (€397/maand)' : 'Premium (€97/maand of €777/jaar)'
+  const planLabel = gekozenPlan === 'basis' ? 'Basic (€29/maand of €19/maand bij jaarbetaling)' : 'Pro (€59/maand of €39/maand bij jaarbetaling)'
 
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
-    subject: `Doorgaan (${gekozenPlan === 'elite' ? 'Elite' : 'Premium'}): ${user.voornaam || user.email || userId}`,
+    subject: `Doorgaan (${gekozenPlan === 'basis' ? 'Basic' : 'Pro'}): ${user.voornaam || user.email || userId}`,
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft bevestigd dat hij wil doorgaan met ArnoBot, gekozen abonnement: <strong style="color:#f59e0b;">${planLabel}</strong>.<br><br><strong style="color:#f59e0b;">Actie: stuur een factuur naar ${user.email || userId}.</strong><br><br>Het plan staat al automatisch goed in Supabase, na betaling alleen nog \`paid_at\` registreren via de admin pagina onder Gebruikers.`,
       'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'

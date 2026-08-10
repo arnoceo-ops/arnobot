@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenCommandPrijs, commandPrijsWeergave, type Cyclus, type CommandNiveau } from '@/lib/commandPricing'
+import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const {
     bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, niveau, cyclus,
+    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats,
   } = body
 
   if (
@@ -34,21 +34,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Vul de verplichte velden in' }, { status: 400 })
   }
   const seats = Number(aantalSeats)
-  if (!Number.isFinite(seats) || seats < 2) {
-    return NextResponse.json({ error: 'Ongeldig aantal seats' }, { status: 400 })
-  }
-  if (niveau !== 'premium' && niveau !== 'elite') {
-    return NextResponse.json({ error: 'Ongeldig niveau' }, { status: 400 })
-  }
-  if (cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
-    return NextResponse.json({ error: 'Ongeldige facturatiecyclus' }, { status: 400 })
-  }
-  if (niveau === 'elite' && cyclus !== 'maandelijks') {
-    return NextResponse.json({ error: 'Elite-niveau is alleen maandelijks beschikbaar' }, { status: 400 })
+  if (!Number.isFinite(seats) || seats < TEAM_MIN_GEBRUIKERS) {
+    return NextResponse.json({ error: `Minimaal ${TEAM_MIN_GEBRUIKERS} gebruikers` }, { status: 400 })
   }
 
-  const prijs = berekenCommandPrijs(seats, cyclus as Cyclus, niveau as CommandNiveau)
+  const prijs = berekenTeamPrijsPerMaand(seats)
 
+  // niveau/cyclus: kolommen uit de oude Command-staffelflow, blijven bestaan in Supabase
+  // (geen migratie om dit te vermijden), krijgen nu een vaste waarde. Team heeft geen
+  // niveau-keuze meer en is uitsluitend maandelijks, zie docs/PRICING_DECISIONS.md.
   const { data: inserted, error } = await supabase.from('arnobot_command_requests').insert({
     user_id: userId,
     bedrijfsnaam: bedrijfsnaam.trim(),
@@ -63,25 +57,25 @@ export async function POST(req: Request) {
     telefoon: telefoon?.trim() || null,
     bestelnummer: bestelnummer?.trim() || null,
     aantal_seats: seats,
-    niveau,
-    cyclus,
-    berekende_prijs_per_maand: cyclus === 'jaarlijks' && prijs !== null ? prijs / 8 : prijs,
+    niveau: 'premium',
+    cyclus: 'maandelijks',
+    berekende_prijs_per_maand: prijs,
   }).select('id').single()
 
   if (error || !inserted) {
-    console.error('Command-aanvraag opslaan mislukt:', error?.message)
+    console.error('Team-aanvraag opslaan mislukt:', error?.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
 
-  const prijsTekst = commandPrijsWeergave(seats, cyclus as Cyclus, niveau as CommandNiveau)
+  const prijsTekst = teamPrijsWeergave(seats)
 
   await resend.emails.send({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
-    subject: `Nieuwe Command-aanvraag: ${bedrijfsnaam}`,
+    subject: `Nieuwe Team-aanvraag: ${bedrijfsnaam}`,
     html: emailHtml(
-      `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Command-abonnement aangevraagd.<br><br>` +
-      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Niveau: ${niveau === 'elite' ? 'Elite' : 'Premium'}<br>Aantal seats: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
+      `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Team-abonnement aangevraagd.<br><br>` +
+      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
     ),

@@ -63,3 +63,6 @@ next-env.d.ts
 /android/app/src/main/assets/public/
 # Android Studio-projectinstellingen: lokale IDE-configuratie, geen projectcode.
 /android/.idea/
+
+# Claude Code: persoonlijke permission-overrides, niet gedeeld met andere bijdragers.
+/.claude/settings.local.json

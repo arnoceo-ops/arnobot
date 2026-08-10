@@ -91,7 +91,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoeveel kost ArnoBot?',
-        a: 'ArnoBot heeft meerdere niveaus. Premium, het meest gekozen abonnement, kost €97 per maand of €777 per jaar. Bekijk het volledige overzicht op de prijzenpagina. Je begint altijd met een gratis proefperiode van 30 dagen, zonder verplichtingen.',
+        a: 'ArnoBot heeft meerdere niveaus, vanaf €19 per maand. Pro, het meest gekozen abonnement, kost €39 per maand bij jaarbetaling of €59 per maand bij maandbetaling. Bekijk het volledige overzicht op de prijzenpagina. Je begint altijd met een gratis proefperiode van 30 dagen, zonder verplichtingen.',
       },
       {
         q: 'Hoe lang duurt de proefperiode?',
@@ -108,11 +108,11 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt het referralprogramma?',
-        a: 'Deel je persoonlijke referral-link vanuit je profiel. Zodra iemand zich aanmeldt via jouw link en een betaald abonnement afsluit, ontvang jij tegoed en wordt dat verrekend op de factuur. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.',
+        a: 'Deel je persoonlijke referral-link vanuit je profiel. Kiest de nieuwe gebruiker voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, verrekend op je factuur. Kiest de nieuwe gebruiker voor Basic, dan ontstaat er geen tegoed. Bij een maandabonnement ontvang je het tegoed na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.',
       },
       {
         q: 'Hoe hoog is het tegoed?',
-        a: 'Per succesvolle referral ontvang je €97 tegoed. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
+        a: 'Het tegoed is nooit hoger dan wat je zelf per maand betaalt: bij Basic €19 of €29, bij Pro €39 of €59, bij Team €49. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
       },
     ],
   },

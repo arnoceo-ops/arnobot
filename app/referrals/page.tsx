@@ -27,7 +27,7 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.3 · Juni 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.4 · Augustus 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
@@ -46,6 +46,8 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 3</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Kortingen bij conversie</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Nieuwe gebruikers krijgen, ongeacht het gekozen abonnement, hun eerste betaalmaand gratis. Bij een jaarabonnement wordt dat verrekend als korting op de jaarfactuur.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Referrers ontvangen alleen tegoed als de nieuwe gebruiker voor Pro of Team kiest, niet bij Basic. Het tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement.</p>
             <table>
               <thead>
                 <tr>
@@ -57,23 +59,23 @@ export default function ReferralSpelregelsPage() {
               <tbody>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Maandabonnement (€97/m)</td>
-                  <td>Eerste maand gratis: €97</td>
+                  <td>Elk abonnement, maandelijks</td>
+                  <td>Eerste maand gratis</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Jaarabonnement (€777/j)</td>
-                  <td>€97 korting: €680</td>
+                  <td>Elk abonnement, jaarlijks</td>
+                  <td>Eerste maand verrekend als korting op de jaarfactuur</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
-                  <td>Bij maandabonnement nieuwe gebruiker</td>
-                  <td>€97 tegoed na 3 betaalmaanden (maand 5)</td>
+                  <td>Nieuwe gebruiker kiest Pro of Team</td>
+                  <td>Tegoed, maximaal jouw eigen maandprijs (Basic €19-29, Pro €39-59, Team €49)</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
-                  <td>Bij jaarabonnement nieuwe gebruiker</td>
-                  <td>€97 tegoed direct na eerste jaarlijkse betaling</td>
+                  <td>Nieuwe gebruiker kiest Basic</td>
+                  <td>Geen tegoed</td>
                 </tr>
               </tbody>
             </table>
@@ -83,7 +85,7 @@ export default function ReferralSpelregelsPage() {
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 4</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Geldigheid van een referral</h2>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit binnen de 30-daagse trial of uiterlijk 15 dagen daarna. Wie na die periode converteert, ontvangt geen referralkorting meer.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij een maandabonnement ontvangt de referrer zijn tegoed nadat de nieuwe gebruiker drie aaneengesloten betaalmaanden heeft voltooid. Dat is in de vijfde maand na aanmelding: één trialmaand, één gratis referralmaand en drie betaalmaanden. Bij een jaarabonnement wordt het tegoed direct na de eerste jaarlijkse betaling bijgeschreven.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij een maandabonnement ontvangt de referrer zijn tegoed nadat de nieuwe gebruiker drie aaneengesloten betaalmaanden heeft voltooid. Dat is in de vijfde maand na aanmelding: één trialmaand, één gratis referralmaand en drie betaalmaanden. Bij een jaarabonnement wordt het tegoed direct na de eerste jaarlijkse betaling bijgeschreven. Dit geldt alleen als de nieuwe gebruiker voor Pro of Team heeft gekozen, bij Basic ontstaat geen tegoed.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>

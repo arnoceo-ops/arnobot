@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-const PUBLIC_PATHS = ['/$', '/prijzen', '/command', '/privacy', '/voorwaarden', '/gesprek/']
+const PUBLIC_PATHS = ['/$', '/prijzen', '/team', '/privacy', '/voorwaarden', '/gesprek/']
 
 // Bekende AI-crawlers expliciet dezelfde toegang geven als gewone zoekmachines, i.p.v.
 // impliciet op de '*'-regel leunen: zichtbaar bedoeld beleid, en toekomstbestendig als

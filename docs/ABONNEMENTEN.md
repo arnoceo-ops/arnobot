@@ -1,133 +1,155 @@
-# ArnoBot abonnementsstructuur — basis/premium/elite/team
+# ArnoBot abonnementsstructuur — basic/pro/team (elite intern)
 
-Referentiedocument voor de huidige, **live** plan-structuur, zodat besluiten hierover niet telkens opnieuw uit git-geschiedenis of losse sessies opgezocht hoeven te worden. **Bij elke wijziging aan de abonnementsstructuur dit document in dezelfde commit bijwerken.**
+Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet telkens opnieuw uit git-geschiedenis of losse sessies opgezocht hoeven te worden. **Bij elke wijziging aan de abonnementsstructuur dit document in dezelfde commit bijwerken.**
 
-> **Aankomend besluit, nog niet live (2026-08-02):** Basis/Premium worden hernoemd naar Basic/Pro met nieuwe tarieven (€19/€29 en €39/€59), Command wordt volledig ingetrokken als naam en heet voortaan overal gewoon Team met een vaste, publieke prijs (€97 basis + €49/gebruiker, geen staffelkorting meer), en Basic is niet langer een verborgen retentietier, het wordt een normale, publiek zichtbare instaptier. Facturatie blijft voorlopig handmatig, ook voor Team, tot er een payment provider is aangesloten. Volledige onderbouwing en definitieve cijfers: `docs/PRICING_DECISIONS.md`. Dit document hieronder beschrijft nog de huidige live situatie (Basis/Premium/Elite/Command) en wordt pas herschreven zodra de daadwerkelijke uitrol plaatsvindt, conform de regel hierboven dat dit document in dezelfde commit meegaat als de code-wijziging zelf.
+**Bron van waarheid voor bedragen, features en onderbouwing is `docs/PRICING_DECISIONS.md`.** Dit document (ABONNEMENTEN.md) is het overzichtsdocument: status, technische implementatie, historie en openstaande inconsistenties. Bij een afwijking tussen de twee documenten: PRICING_DECISIONS.md wint, en dit document wordt gecorrigeerd.
 
 ---
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-08-01
-**Waar we staan:** De abonnementsstructuur is volledig herzien: Premium ging van €77 naar €97/maand (€777/jaar), er is een nieuwe Elite-tier bijgekomen (€397/maand, individueel, hoog-contact), en het oude Team-product heet nu "Command" in alle marketinguitingen (interne databasewaarde blijft `plan='team'`, alleen de naam naar buiten toe veranderde). Basis is niet langer de gratis instap: het is nu een verborgen, betaalde retentietier (€47/maand) die alleen getoond wordt bij een opzegpoging, nooit als publieke keuze.
-
-De nieuwe `/prijzen`-pagina staat live, gebouwd in de stijl van de homepage (Figtree/Oswald), met Premium en Elite naast elkaar (maandelijks/jaarlijks-toggle) en Command als aparte, bredere kaart eronder zonder zichtbare prijs. `/bot/doorgaan` (trial-einde) toont nu een echte Premium/Elite-keuze in plaats van één generieke "ja ik ga door"-knop. `/command` is een nieuw, publiek aanvraagformulier voor Command (factuurgegevens, aanvrager, seats, facturatiecyclus, live berekende staffelprijs).
-
-**Besloten (2026-08-01): DocuSeal-integratie volledig stopgezet, niet gepauzeerd.** Arno gebruikt DocuSeal niet meer en heeft geen account meer. `lib/docusealOffer.ts` en de DocuSeal-aanroep in `app/api/command-aanvraag/route.ts` zijn verwijderd uit de codebase. Verworpen: het template alsnog programmatisch opbouwen (was de eerdere "eerstvolgende stap"), en elke vorm van automatische offertegeneratie/digitale ondertekening als kortetermijnplan. Command-aanvragen via `/command` werken onveranderd voor hun kernfunctie: de aanvraag wordt opgeslagen in Supabase en Arno krijgt een interne meldmail, de offerte wordt gewoon handmatig verstuurd, zoals altijd al de praktijk was (de automatisering heeft nooit echt gedraaid, stond vanaf de eerste live test al uit). Als offerte-automatisering ooit weer wordt opgepakt: opnieuw beoordelen welke tool dan het beste past, niet zomaar DocuSeal hervatten.
-
-**Sinds de vorige versie van dit document ook afgerond:** `command_manager` losgekoppeld van `plan` (zie "Command-managerdashboard" hieronder), Command heeft nu een niveau-keuze (Premium/Elite, geen mix, zie "Command-aanvraagflow"), en Telegram-toegang voor Elite staat live (Arno gebruikt zijn bestaande nummer, geen apart account nodig gebleken).
+**Laatst bijgewerkt:** 2026-08-10
+**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven. Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Belangrijkste openstaande punt: de database-kolommen `niveau`/`cyclus` op `arnobot_command_requests` bestaan nog uit de oude Command-staffelflow en krijgen nu een vaste filler-waarde, zie "Team-aanvraagflow" hieronder.
+**Eerstvolgende stap:** geen vaste volgorde afgesproken:
+- `[ ]` `/prijzen` koppelen aan `lib/kostenTarieven.ts` in plaats van eigen hardgecodeerde bedragen
+- `[ ]` Besluiten of de wekelijkse Team Spotlight-bullet terugkomt op de Team-kaart
+- `[ ]` Verifiëren of de upgrade-flow individuele Pro-trial → Team al functioneel bestaat in de app
+- `[ ]` Besluiten of Elite nog actief aan nieuwe klanten aangeboden wordt nu de tier niet meer op `/prijzen` of `/bot/doorgaan` als publieke keuze staat (zie "Elite" hieronder)
+- `[ ]` Overwegen of `arnobot_command_requests` en de `niveau`/`cyclus`-kolommen ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow")
 
 ---
 
-## De vier plannen
+## De tiers (marketingnaam / databasewaarde)
 
-| | **Basis** | **Premium** | **Elite** | **Team (Command)** |
+| | **Basic** (`basis`) | **Pro** (`premium`) | **Team** (`team`) | **Elite** (`elite`) |
 |---|---|---|---|---|
-| Prijs | €47/maand, **niet publiek**, alleen bij opzegpoging | €97/maand of €777/jaar | €397/maand, alleen maandelijks | Op aanvraag, geen vaste prijs (intern anker: zie geheugen `project-team-pricing`) |
-| Zichtbaar op `/prijzen` | Nee | Ja | Ja | Ja, zonder prijs |
-| Chatberichten/dag | Laag (retentie, bewust streng) | 100 | 100 | 100 |
-| Sessiegeheugen | Kort | 25 | 25 | 25 |
-| Coaching | Nee | Ja | Ja | Ja |
+| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd platformtarief + €49/gebruiker/mnd, vanaf 3 gebruikers, alleen maandelijks | €397/maand, alleen maandelijks, individueel |
+| Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel | **Nee**, sinds de 2026-08-02 redesign niet meer als kaart getoond |
+| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial: manager start zelf als Pro (zie hieronder) | N.v.t., alleen handmatig toegekend |
+| Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) | Ja |
 | Gesproken antwoorden | Nee | Ja | Ja | Ja |
-| Command-managerdashboard | Nee | Nee | Nee | Ja |
-| Extra bij Elite | — | — | 1x/maand persoonlijk gesprek met Arno (nog geen herhaalbare boeking, zie onder), Telegram (live, `/bot/account`), Elite Member Community (nog niet gebouwd) | — |
-| Wie | Alleen als save-offer bij opzegging | Standaard betaalde individuele tier, ook trial-default | Individueel, hoog-contact, max. 50 (capaciteitsteller in admin) | Meerdere seats onder één deal, elke gebruiker krijgt Premium-niveau + managerdashboard |
+| Command/Team-managerdashboard | Nee | Nee | Ja | Nee |
+| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager | 1x/maand gesprek met Arno (nog niet herhaalbaar), Telegram-toegang (live), Elite Member Community (nog niet gebouwd) |
 
-**Trial-default:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (`proxy.ts`), niet `basis`. Dit is ongewijzigd sinds de vorige migratie.
+**Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro, of Elite via een aparte route) volgt pas bij `/bot/doorgaan`.
 
----
-
-## Command (voorheen "Team"), marketingnaam versus databasewaarde
-
-Besloten (2026-07-23): de site noemt dit plan overal "Command", maar de onderliggende Supabase-waarde blijft `plan='team'`. Bewuste keuze om geen datamigratie te hoeven doen voor een naamswijziging die puur marketing is. Bij toekomstig werk aan deze tier: zoek in de database op `team`, niet op `command`.
-
-Op `/prijzen` staat de groepskop boven de kaart "Team" (generieke, herkenbare term, parallel aan "Individueel" boven Premium/Elite), en "Command" als het amber productlabel in de kaart zelf (parallel aan hoe "Premium"/"Elite" onder "Individueel" staan).
-
-### Command-managerdashboard: toegang losgekoppeld van `plan` (herzien 2026-07-23)
-
-Was tot 2026-07-23 volledig hardcoded aan één bouwersaccount (`linkedin@royaldutchsales.com`), daarna kort gekoppeld aan `plan === 'team'`. Diezelfde dag alweer herzien: `plan` is nu weer zuiver het functieniveau van een individu (basis/premium/elite), en dashboardtoegang draait op een nieuwe, losse kolom **`command_manager`** (boolean op `approved_users`). `/bot/team` (pagina + team-aanmaak-API) checkt `command_manager === true`, naast de bouwer-uitzondering. `/api/bot/plan` geeft nu zowel `plan` als `commandManager` terug; `BotNav.tsx`/`SparClient.tsx` tonen de TEAM-link op basis van `commandManager`.
-
-**Waarom losgekoppeld:** een Command-team kan straks volledig Premium-niveau óf volledig Elite-niveau zijn (zie "Command-aanvraagflow" hieronder), en met `plan==='team'` als enige schakelaar was er geen manier om iemand tegelijk Elite-functies te geven én toegang tot het managerdashboard. Voorbereiding op een scenario dat Arno noemde: bij het naderen van de Elite-cap (50) gaat hij mogelijk met gecertificeerde coaches werken, dat vraagt om meer flexibiliteit dan één overbelaste kolom kan bieden.
-
-`PlanToggle.tsx` (admin) staat sindsdien alleen nog op basis/premium/elite, `team` is niet meer actief toekenbaar via die toggle (bestaande rijen met `plan='team'` blijven geldig, cyclen er bij de eerstvolgende klik gewoon uit). Command-managerschap wordt apart gezet via de nieuwe `CommandManagerToggle` in `/bot/admin/gebruikers`.
-
-**Belangrijk, ongewijzigd:** dit blijft losstaand van de collaboration-teamfunctie zelf (`arnobot_teams`/`arnobot_team_members`, tot 25 leden, gaat over gezamenlijke coaching-dashboards/1:1's). Er is nog steeds geen technische koppeling tussen "aantal seats waarvoor betaald is" en "aantal leden in het collaboration-team". Zie "Openstaand: seat-wijzigingen" hieronder, dat is precies dit gat.
-
-### Command-prijsstaffel
-
-Volledige staffel en rekenmechaniek (gestaffeld/marginaal, niet vlak per tier) staat in het geheugen `project-team-pricing`, niet hier gedupliceerd. Premium-niveau: geanchored op €97 voor 2-5 seats, aflopend tot €77 bij 11-20 seats. **Elite-niveau (besloten 2026-07-23): vlak €397/seat, geen staffelkorting, en alleen maandelijks** (net als het individuele Elite-plan, i.v.m. de gedeelde capaciteitscap). Boven 20 seats, op beide niveaus: volledig maatwerk. Geïmplementeerd in `lib/commandPricing.ts` (`berekenCommandPrijs(seats, cyclus, niveau)`), hergebruikt door zowel het interne prijsanker als de live berekening op `/command`.
-
-**Belangrijk, besloten 2026-07-23: geen mix van niveaus binnen één Command-deal.** Een team is in zijn geheel Premium óf in zijn geheel Elite, niet per seat gemixt. Reden: de manager nodigt elk lid apart uit, en het is voor hem/haar een simpele keuze, niet een per-persoon-instelling.
-
-### Command-aanvraagflow (`/command`)
-
-Nieuwe, publieke pagina (geen `/bot`-prefix, dus geen inlog vereist, bezoekers vanaf `/prijzen` hebben vaak nog geen account). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager (naam/functie/e-mail/telefoon), bestelnummer (optioneel), **niveau (Premium/Elite, zie hierboven)**, aantal seats, facturatiecyclus (maandelijks/jaarlijks, uitgeschakeld bij Elite), met live berekende staffelprijs excl. btw. Alle velden verplicht behalve bestelnummer.
-
-Opslag: nieuwe tabel `arnobot_command_requests` (Supabase, inclusief kolom `niveau`), plus een e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/command-aanvraag/route.ts`).
-
-**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is. Was ooit gepland als automatisering via een DocuSeal-webhook (zie hieronder), dat plan is losgelaten samen met DocuSeal zelf, niet vervangen door een andere automatisering.
-
-**Ontbrekende koppeling, opgemerkt 2026-07-24, nog steeds open:** er is geen technische link tussen een `arnobot_command_requests`-rij (de oorspronkelijke aanvraag), de `approved_users`-rij die Arno er later handmatig bij zoekt en instelt, en het `arnobot_teams`-team dat de manager vervolgens aanmaakt. Drie losse records, alleen in Arno's eigen hoofd aan elkaar geknoopt. Zolang het proces handmatig blijft, ook geen technische prioriteit; bij een toekomstige automatisering (welke tool dan ook) alsnog oplossen.
-
-**Afgerond en weer losgelaten: DocuSeal-offerte-automatisering.** Was gekozen boven PandaDoc, DocuSign, Qwilr en anderen vanwege transparante/betaalbare API-toegang. De API-koppeling (`lib/docusealOffer.ts`) is gebouwd en getest, maar het brondocument-template liep in juli 2026 vast op terugkerende opmaakproblemen in Word/Google Docs en de automatisering heeft daardoor nooit echt gedraaid (`OFFERTE_AUTOMATISERING_ACTIEF` stond vanaf de eerste live test al op `false`). Besloten (2026-08-01): niet hervatten. Arno gebruikt DocuSeal niet meer en heeft geen account meer. De code (`lib/docusealOffer.ts` en de aanroep ervan in `app/api/command-aanvraag/route.ts`) is verwijderd.
-
-**Bewust afgevangen, geen open risico:** bij Elite-niveau krijgt elk teamlid individueel toegang tot Arno's maandelijkse gesprek en Telegram (niet alleen de manager), wat in theorie tegen de Elite-cap van 50 kan aanlopen bij een grote Elite-Command-deal. Arno checkt dit handmatig vooraf, vóórdat de `/command`-pagina naar een potentiële manager gaat, dus dit hoeft niet als los actiepunt behandeld te worden.
-
-**Doorverwijzing "Vraag een demo aan":** deze knop staat op `/prijzen` én `/bot/doorgaan`, en linkt naar de bestaande Calendly-boeking (`ARNO_BOOKING_URL`, hetzelfde event als de losse "gratis gesprek"-boeking tijdens de trial, zie `/bot/gesprek`). **Niet** naar `/command`, dat is geen demo-aanvraag maar het eigenlijke bestel-/aanvraagformulier, bedoeld voor ná het gesprek. Arno gebruikt voorlopig hetzelfde Calendly-event voor beide doeleinden; een apart Command-specifiek event volgt zodra hij een betaald Calendly-account heeft.
-
-**Openstaand: seat-wijzigingen ná ondertekening.** Zie geheugen `project-team-pricing` voor de volledige uitwerking. Kort: volledig handmatig voorlopig (Arno herberekent met de staffel, stuurt aangepaste offerte), maar het onderliggende gat (geen koppeling tussen `/bot/team`-lidmaatschap en betaalde seats) moet eerder opgelost worden dan de facturatielogica zelf.
+Volledige onderbouwing van deze bedragen (waarom €97 platformtarief, waarom geen staffel meer, waarom geen jaaroptie bij Team, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
 
 ---
 
-## Elite (nieuw, besloten 2026-07-23)
+## Functionele grenzen per tier (code-realiteit, niet marketingtaal)
 
-Individuele, hoog-contact tier boven Premium. €397/maand, bewust alleen maandelijks (geen jaaroptie, i.v.m. de capaciteitscap).
+De marketingcopy op `/prijzen` gebruikt bewust kwalificatieve taal ("onbeperkt", "uitgebreider") in plaats van kale getallen, zie `docs/PRICING_DECISIONS.md`. Dit zijn de daadwerkelijke, in code afgedwongen grenzen erachter, losgetrokken van die copy zodat de twee nooit per ongeluk uit elkaar lopen in dit document:
 
-**Capaciteitscap:** hard maximum van 50 actieve Elite-klanten. Nog geen publieke wachtlijst-mechanisme (komt pas zodra de 50 in zicht is, of eerder als Arno het te veel voelt worden). Wel al een teller in `/bot/admin/gebruikers` ("Elite: X / 50", amber vanaf 45, rood + "cap bereikt" bij 50), zodat Arno het zelf ziet vóór hij handmatig iemand op Elite zet.
+| Functionaliteit | Basic | Pro | Team (per lid) |
+|---|---|---|---|
+| Chatberichten/dag | 25 | 100 | 100, erft van Pro |
+| Gespreksanalyses/dag | 1 | Onbeperkt | Onbeperkt |
+| Sessiegeheugen (vorige gesprekken als context) | 10 | 25 | 25 |
+| Coachingdocument (mindset/systeem/actie-scores) | **Nee, harde blokkade (403)** | Ja | Ja |
+| Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap | Ja |
+| Rollenspel/sparring | Ja | Ja | Ja |
+| Teamoverzicht, 1:1-voorbereiding, leiderschapsaccount | Nee | Nee | Ja, exclusief manager-laag |
 
-**Wat Elite belooft, wat daarvan al werkt:**
-- Alles van Premium: werkt automatisch, de kernlogica (berichtlimiet, coaching, sessiegeheugen, patroonanalyses, voice) is overal geschreven als "alles behalve basis", niet als een expliciete allowlist, dus `elite` viel daar al automatisch onder zodra de databasewaarde bestond.
-- 1 uur per maand persoonlijk gesprek met Arno: **nog niet gebouwd**. De bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit, geen herhaling. Uitbreiding naar terugkerende boekingen is bewust uitgesteld tot Arno een betaald Calendly-account heeft.
-- Rechtstreeks contact via Telegram: **live** (2026-07-23), sectie op `/bot/account`, alleen zichtbaar bij `plan='elite'`. Arno gebruikt zijn bestaande Telegram-nummer (`t.me/arnodiepeveen`), geen apart account nodig gebleken: dat nummer wordt al uitsluitend voor ArnoBot-gerelateerd contact gebruikt (geen persoonlijk gebruik ernaast). Bewust: geen gegarandeerde reactietijd, dat staat expliciet in de copy. Concept blijft 1:1, geen groep (Arno's expliciete keuze, de "Elite Member Community" hieronder is al de plek voor leden onderling). Let op: hetzelfde handle wordt ook al gebruikt in de team-join-trustflow (`/bot/team/join`, "check met Arno voordat je toetreedt"), die twee doelgroepen komen dus in dezelfde inbox terecht, bewust geaccepteerd door Arno.
-- Elite Member Community: **nog niet gebouwd**, wordt later Circle (bewust als allerlaatste in de bouwvolgorde gepland).
+**Belangrijk onderscheid:** bij Basic is coachingdocument en voice niet een afgeslankte versie, het is een harde nul (expliciete blokkade/geen toegang). Dit is een principieel verschil, geen gradueel verschil, en hoort dus ook zo in copy terug te komen (niet als "minder", maar als "niet inbegrepen").
 
-### Technisch: `elite` als plan-waarde
+**Kanttekening:** deze cijfers zijn de huidige code-realiteit onder de bestaande `basis`/`premium`-plan-waarden, nog niet herbouwd onder de naam Basic/Pro zelf (zie "Bekende inconsistenties" hieronder voor waar de naamgeving nog niet is doorgevoerd). Ze zijn wel de beste beschikbare basis om nu mee te werken, bron: directe code-inspectie plus `docs/PRICING_DECISIONS.md`, sectie "Onderliggende technische realiteit".
 
-Database-migratie uitgevoerd (2026-07-23): CHECK-constraint op `approved_users.plan` uitgebreid van `('basis','premium','team')` naar `('basis','premium','elite','team')`. `PlanToggle.tsx` en `POST /api/admin/plan` zijn bijgewerkt om `elite` daadwerkelijk te kunnen toekennen (stond eerder alleen in de database toe, niet in de admin-tooling).
+---
+
+## Elite: nog actief, maar nergens meer publiek kiesbaar
+
+Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer publiek kiesbaar: `/prijzen` toont de tier al sinds 2026-08-02 niet meer, en `/bot/doorgaan` bood tot 2026-08-10 nog een Premium/Elite-keuze bij trial-einde, die is bij het synchroniseren met Basic/Pro vervangen (Elite is uit die keuze verdwenen, niet bewust een besluit om Elite af te bouwen, gewoon een gevolg van 1:1 overnemen van de nieuwe `/prijzen`-structuur). De tier bestaat verder nog volledig:
+- Nog toekenbaar via de admin `PlanToggle.tsx` (`/bot/admin/gebruikers`)
+- Capaciteitscap van 50 actieve Elite-klanten blijft gelden, zichtbaar als teller in de admin-gebruikerslijst
+- Telegram-toegang (`t.me/arnodiepeveen`) blijft live voor Elite-klanten via `/bot/account`
+
+**Nog niet expliciet besloten, nu urgenter:** met Elite nergens meer publiek zichtbaar, kan een nieuwe klant het niet meer zelf kiezen, alleen via een handmatige toekenning door Arno. Is dat gewenst (Elite wordt bewust alleen nog handmatig/op aanvraag toegekend, zoals de oude verborgen Basis-retentietier), of moet Elite ergens terugkomen als zichtbare keuze? Bij twijfel eerst aan Arno voorleggen voordat hierop verder gebouwd wordt.
+
+**1 uur/maand gesprek met Arno:** nog niet gebouwd, bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit. Uitbreiding naar herhaalbare boekingen wacht op een betaald Calendly-account.
+
+**Elite Member Community:** nog niet gebouwd, wordt later Circle, bewust achteraan gepland.
+
+---
+
+## Bekende inconsistenties, nog open (2026-08-10)
+
+- **`lib/kostenTarieven.ts` vs. `/prijzen`:** `/prijzen` hardcodet zijn eigen bedragen, verwijst niet naar `TARIEVEN.prijsBasisEur`/`prijsPremiumEur` (die wel al op de nieuwe 29/59 staan). Twee plekken die bij een volgende prijswijziging uit elkaar kunnen lopen. Geen gebruikersgerichte pagina, interne Abacus-koppeling, apart traject.
+- **`arnobot_command_requests`-kolommen `niveau`/`cyclus`:** deze tabel (en zijn kolomnamen) is niet hernoemd/gemigreerd bij de `/command` → `/team`-rename (zie "Team-aanvraagflow" hieronder), om geen Supabase-migratie nodig te hebben voor iets dat puur intern is. De app stuurt nu altijd de vaste waarden `'premium'`/`'maandelijks'` in, ook al bestaat die keuze niet meer in de UI. Cosmetisch, geen functioneel probleem, wel iets om ooit op te schonen.
+
+**Opgelost (2026-08-10):** `/bot/doorgaan` synchroon met Basic/Pro, `/command` verplaatst naar `/team` met de vlakke Team-prijs (geen staffel, geen niveau-keuze, geen jaaroptie), en de referral-copy (7 bestanden + FAQ) bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder).
+
+---
+
+## Team (voorheen "Command"), marketingnaam versus databasewaarde
+
+Besloten (2026-07-23): de site noemde dit plan een tijd lang overal "Command"; sinds de 2026-08-02 redesign heet de marketingnaam weer "Team" (zie tabel hierboven). **Uitgebreid (2026-08-10):** ook de publieke aanvraagpagina zelf is hernoemd, `/command` bestaat niet meer, is nu `/team` (`app/team/page.tsx`, API-route `app/api/team-aanvraag/route.ts`). De onderliggende Supabase-waarde `plan='team'` en de tabelnaam `arnobot_command_requests` zijn bewust **niet** meegehernoemd, geen datamigratie nodig voor iets dat puur marketing/URL is. Bij toekomstig werk aan deze tier: zoek in de database op `team`/`arnobot_command_requests`, niet op `command`.
+
+### Command-managerdashboard: toegang losgekoppeld van `plan`
+
+Dashboardtoegang draait op een losse kolom **`command_manager`** (boolean op `approved_users`, naam bewust ongewijzigd, zelfde reden als hierboven), niet op `plan` zelf. `/bot/team` (pagina + team-aanmaak-API) checkt `command_manager === true`, naast de bouwer-uitzondering. `/api/bot/plan` geeft zowel `plan` als `commandManager` terug; `BotNav.tsx`/`SparClient.tsx` tonen de TEAM-link op basis van `commandManager`.
+
+**Waarom losgekoppeld:** ten tijde van dit ontwerp kon een Team-groep volledig Pro-niveau óf volledig Elite-niveau zijn (via de oude `/command`-staffelflow), en met `plan==='team'` als enige schakelaar was er geen manier om iemand tegelijk Elite-functies te geven én toegang tot het managerdashboard. Inmiddels (2026-08-10) heeft Team geen niveau-keuze meer, maar de kolom blijft losgekoppeld, geen reden om dat terug te draaien.
+
+**Belangrijk, ongewijzigd:** dit blijft losstaand van de collaboration-teamfunctie zelf (`arnobot_teams`/`arnobot_team_members`, tot 25 leden, gaat over gezamenlijke coaching-dashboards/1:1's). Geen technische koppeling tussen "aantal seats waarvoor betaald is" en "aantal leden in het collaboration-team".
+
+### Team-aanvraagflow (`/team`, tot 2026-08-10 `/command`)
+
+**Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen), geen jaaroptie meer, geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49 per gebruiker/maand, vanaf 3 gebruikers, uitsluitend maandelijks. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
+
+Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, live berekende prijs excl. btw.
+
+Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), plus e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/team-aanvraag/route.ts`).
+
+**Vestigiale kolommen `niveau`/`cyclus`:** deze tabel heeft nog kolommen uit de oude staffelflow die niet meer overeenkomen met wat de UI aanbiedt. De route stuurt nu altijd `niveau: 'premium'` en `cyclus: 'maandelijks'` mee als vaste, geldige filler-waarden, zodat er geen Supabase-schema-migratie nodig is. Puur cosmetisch record-technisch, geen functionele impact, zie ook "Bekende inconsistenties" hierboven.
+
+**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is.
+
+**Afgerond en losgelaten: DocuSeal-offerte-automatisering.** Was gebouwd en getest, maar het brondocument-template liep vast op opmaakproblemen en heeft nooit echt gedraaid. Besloten (2026-08-01): niet hervatten. Arno gebruikt DocuSeal niet meer en heeft geen account meer. De code (`lib/docusealOffer.ts` en de aanroep ervan) is verwijderd.
+
+**Openstaand: seat-wijzigingen ná ondertekening.** Zie geheugen `project-team-pricing` voor de volledige uitwerking. Volledig handmatig voorlopig, het onderliggende gat (geen koppeling tussen `/bot/team`-lidmaatschap en betaalde seats) moet eerder opgelost worden dan de facturatielogica zelf. **Ook nog niet besloten (2026-08-10):** of Team ooit een jaaroptie krijgt. Technisch eenvoudig, maar bewust uitgesteld vanwege fluctuerende teamgrootte en het ontbreken van een betaalprovider (handmatige facturatie maakt een true-up bij tussentijdse seat-wijzigingen extra handwerk). Bij concrete vraag van een klant: jaarprijs vastzetten op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijfactureren tot de volgende jaarvernieuwing, weggevallen seats niet terugbetalen (gangbare aanpak).
+
+**Doorverwijzing "Vraag een demo aan":** knop op `/prijzen` en `/bot/doorgaan`, linkt naar de bestaande Calendly-boeking (`ARNO_BOOKING_URL`), niet naar `/team`. Arno gebruikt voorlopig hetzelfde Calendly-event voor demo-aanvragen en de losse "gratis gesprek"-boeking tijdens de trial.
+
+**PostHog/Pageview-tracking (2026-08-10):** `/command` stond in de `UITGESLOTEN_PREFIXES`-lijst van `PostHogTracker.tsx`/`PageviewTracker.tsx`, zonder duidelijke reden hiervoor terug te vinden (de eerdere PostHog-scope-notitie in CLAUDE.md noemt alleen `/bot`, `/abacus`, `/api` en auth-routes als bedoelde uitsluitingen). Bij de rename is dit niet meegenomen naar `/team`: de pagina wordt nu getrackt, net als `/prijzen`. Als dit een bewuste, ongedocumenteerde keuze was, moet `/team` alsnog teruggezet worden in beide uitsluitingslijsten.
 
 ---
 
 ## Trial-einde-flow (`/bot/doorgaan`)
 
-Volledig herbouwd (2026-07-23). Was: één generieke "JA, IK GA DOOR"-knop, geen plankeuze, alles verder handmatig via Arno. Nu: een echte keuze tussen Premium en Elite (zelfde bullets, prijzen en maand/jaar-toggle als op `/prijzen`, letterlijk overgenomen, niet herschreven), die bij het kiezen meteen `plan` zet op de gekozen waarde (`POST /api/bot/confirm-renewal` accepteert nu een `plan`-parameter). Arno hoeft dus niet meer zelf te bepalen welk plan iemand kreeg, dat staat al goed zodra hij de factuur stuurt.
+**Gesynchroniseerd met Basic/Pro (2026-08-10).** Biedt nu dezelfde keuze als `/prijzen`: Basic en Pro, met een gedeelde jaarlijks/maandelijks-toggle boven de twee kaarten (niet meer twee losse toggles per kaart zoals de oude Premium/Elite-versie). Elite is uit deze flow verdwenen (geen bewust besluit om Elite af te bouwen, gevolg van 1:1 overnemen van `/prijzen`, zie "Elite" hierboven). Zet bij het kiezen `plan` op de gekozen waarde (`POST /api/bot/confirm-renewal` accepteert nu `'basis'` of `'premium'` als `plan`-parameter, was `'premium'`/`'elite'`).
 
-**Stijluitzondering, bewust vastgelegd in CLAUDE.md:** deze pagina (en toekomstige vergelijkbare conversiemomenten binnen `/bot`) gebruikt de marketingstijl (Figtree/Oswald, zoals `/prijzen` en de homepage), niet de standaard `/bot`-stijl (Space Mono/Bebas Neue). Reden: dit is inhoudelijk een conversiemoment, geen gewone in-app functionaliteit. `BotNav` zelf blijft ongewijzigd (gedeeld component, en gebruikt toch al Bebas Neue net als de homepage-nav).
+**Stijluitzondering, vastgelegd in CLAUDE.md:** deze pagina (en toekomstige vergelijkbare conversiemomenten binnen `/bot`) gebruikt de marketingstijl (Figtree/Oswald, zoals `/prijzen` en de homepage), niet de standaard `/bot`-stijl (Space Mono/Bebas Neue). Reden: dit is inhoudelijk een conversiemoment, geen gewone in-app functionaliteit.
 
-Technisch gesplitst in een server `page.tsx` (leest `ARNO_BOOKING_URL` server-side) en een `DoorgaanClient.tsx` (de interactieve logica), omdat environment variables niet direct in een `'use client'`-bestand te lezen zijn. Zelfde opzet als `/prijzen` + `PrijzenClient.tsx`.
+Technisch gesplitst in een server `page.tsx` (leest `ARNO_BOOKING_URL` server-side) en een `DoorgaanClient.tsx` (interactieve logica).
 
-Preview-modus: `?preview=idle` in de URL toont de Premium/Elite-keuze ongeacht de echte renewal-status van de ingelogde gebruiker, zonder Supabase aan te raken. Nodig omdat Arno's eigen bouwersaccount al `paid_at` heeft staan. Zelfde patroon als `?previewMember=1` op de Q&A-pagina.
+Preview-modus: `?preview=idle` in de URL toont de plankeuze ongeacht de echte renewal-status van de ingelogde gebruiker, zonder Supabase aan te raken.
 
-**Vaste regel, ontdekt bij het herbouwen:** in alle factuur-gerelateerde copy is **ArnoBot** de afzender, nooit de persoon Arno ("ArnoBot stuurt je een factuur", niet "Arno stuurt je een factuur"). Geldt niet voor support-verwijzingen ("mail naar arno@arno.bot bij vragen"), dat is een andere context.
+**Vaste regel:** in alle factuur-gerelateerde copy is **ArnoBot** de afzender, nooit de persoon Arno ("ArnoBot stuurt je een factuur"). Geldt niet voor support-verwijzingen ("mail naar arno@arno.bot bij vragen").
 
 ---
 
-## Oude prijzen elders in de app, bijgewerkt (2026-07-23)
+## Referralprogramma, herzien na de Basic/Pro/Team-rename (2026-08-10)
 
-Bij het doorzoeken van de hele codebase op resterende `€77`/`€697`-vermeldingen (de oude Premium-prijs) kwamen zes plekken naar boven, allemaal bijgewerkt naar de nieuwe prijzen:
+Volledige onderbouwing en de discussie die tot deze regel leidde staat in het geheugen `project-referral-basic-exclusion`, hier alleen de vastgestelde regel:
 
-- `app/bot/qa/QAClient.tsx`: hoofdprijs-FAQ herschreven (verwijst nu naar meerdere niveaus + de prijzenpagina, niet meer naar één vast bedrag) en de referral-FAQ (€77 → €97)
-- Referral-tegoed, vijf plekken (`lib/email-templates.ts`, `app/api/bot/referral/route.ts`, `app/bot/profiel/ReferralSection.tsx`, `app/referrals/page.tsx`): €77 → €97, gekoppeld aan optie A (tegoed = één maand Premium op de huidige prijs)
-- `app/evaluatie/page.tsx`: interne evaluatievraag, ook bijgewerkt (lager risico, alleen intern zichtbaar)
-- Dag25-mail (`lib/email-templates.ts`): "factuur van Arno" → "factuur van ArnoBot" (zie vaste regel hierboven), en de knoptekst van "JA, IK GA DOOR" naar "KIES JE ABONNEMENT", passend bij de nieuwe Premium/Elite-keuze op de pagina waar hij naartoe linkt
+- **Trigger:** er ontstaat alleen tegoed voor de referrer als de nieuw geworven gebruiker zelf voor Pro of Team kiest. Kiest die voor Basic, dan ontstaat er geen tegoed, voor niemand.
+- **Plafond:** het tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement: Basic €19 of €29, Pro €39 of €59, Team €49.
+- **Nieuwe gebruiker (ongewijzigd):** krijgt altijd de eerste betaalmaand gratis, ongeacht welk abonnement gekozen wordt. Dat staat los van de referrer-trigger hierboven.
+
+**Doorgevoerd in 8 plekken:** `app/bot/qa/QAClient.tsx` (hoofdprijs-FAQ + 2 referral-FAQ's), `app/referrals/page.tsx` (spelregels-document, versie 1.3 → 1.4), `app/bot/profiel/ReferralSection.tsx`, `app/api/bot/referral/route.ts`, `lib/email-templates.ts` (`referral_aanmelding`-template), `app/evaluatie/page.tsx`.
+
+**Niet aangepast, bewust:** het Supabase-veld `referral_credit` op `approved_users` wordt nergens in de code automatisch opgehoogd, alleen uitgelezen. Het toekennen van tegoed is en blijft volledig handmatig (Arno berekent en vult het zelf in), deze wijziging verandert daar niets aan, alleen de copy die uitlegt hoeveel dat tegoed hoort te zijn.
 
 ---
 
 ## Technische implementatie
 
-- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','elite','team'))`) op Supabase-tabel `approved_users`. Migratie 2026-07-23, zie "Elite" hierboven.
-- Admin-beheer: `/bot/admin/gebruikers`, 4-way toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`), plus de Elite-capaciteitsteller. Geen self-serve upgradeflow voor Command, wel voor Premium/Elite bij trial-einde (zie hierboven). Alle betalingen blijven handmatig geregistreerd, ook voor Premium/Elite (geen betaalprovider, zie "Openstaande vragen").
-- Nieuwe route `/api/bot/plan` (GET): geeft het plan van de ingelogde gebruiker terug, gebruikt door client-side navigatie (`BotNav`, `SparClient`) om de TEAM-link te tonen, en herbruikt voor de nog te bouwen Telegram-toegangscontrole.
-- Gating-logica ongewijzigd van patroon: `app/api/chat/route.ts`, `app/api/bot/coaching*`, `lib/voice.ts` (`hasVoiceAccess`) — allemaal "alles behalve basis", geen aparte code nodig per nieuw plan.
+- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','elite','team'))`) op Supabase-tabel `approved_users`. **Blijft intern `basis`/`premium`/`elite`/`team`, geen migratie naar `basic`/`pro`** (besloten 2026-08-02): alleen de naar buiten getoonde tekst op `/prijzen` is Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Command/Team.
+- Admin-beheer: `/bot/admin/gebruikers`, toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`, waarden basis/premium/elite, `team` niet meer actief toekenbaar via deze toggle), plus de Elite-capaciteitsteller. Command-managerschap apart via `CommandManagerToggle`.
+- Route `/api/bot/plan` (GET): geeft `plan` én `commandManager` van de ingelogde gebruiker terug, gebruikt door client-side navigatie (`BotNav`, `SparClient`).
+- Gating-logica: `app/api/chat/route.ts`, `app/api/bot/coaching*`, `lib/voice.ts` (`hasVoiceAccess`) — allemaal "alles behalve basis", geen aparte code nodig per nieuw plan (dus `elite` viel hier al automatisch onder toen de waarde bestond).
+- Alle betalingen blijven handmatig geregistreerd, voor elke tier, geen payment provider aangesloten.
 
 ---
 
@@ -136,9 +158,11 @@ Bij het doorzoeken van de hele codebase op resterende `€77`/`€697`-vermeldin
 **Bewust uitgesteld, met reden:**
 - Seat-wijzigingen ná ondertekening (zie geheugen `project-team-pricing`)
 - Herhaalbare maandelijkse boeking voor Elite (nu maar één boeking ooit mogelijk): wacht op een betaald Calendly-account
-- Basis-retentieflow (het €47-save-offer daadwerkelijk tonen bij een opzegpoging): bouwen bij de eerste keer dat iemand echt probeert op te zeggen, niet eerder
-- Elite Member Community (Circle): bewust als allerlaatste in de Deel B-bouwvolgorde
-- Betaalprovider/Stripe: bewust helemaal achteraan, na alle andere Deel B-onderdelen (expliciete correctie van Arno op een eerdere volgorde die dit juist vooraan zette)
+- Elite Member Community (Circle): bewust als allerlaatste in de bouwvolgorde
+- Betaalprovider/Stripe: bewust helemaal achteraan, na alle andere onderdelen
 
 **Nog te beoordelen:**
-- Of en wanneer bestaande betalende klanten geïnformeerd worden over prijswijzigingen die hen raken sinds de vorige migratie (nog geen besluit)
+- Of en wanneer bestaande betalende klanten geïnformeerd worden over prijswijzigingen die hen raken sinds de vorige migratie
+- Status van Elite nu de tier nergens meer publiek kiesbaar is (zie "Elite" hierboven)
+- Of Team ooit een jaaroptie krijgt (zie "Team-aanvraagflow" hierboven)
+- Alle punten uit de "Eerstvolgende stap"-lijst bovenaan dit document
