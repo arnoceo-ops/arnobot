@@ -190,12 +190,12 @@ export default function BusinessCaseClient({
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} formatThousands />
 
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
               Verdeling abonnementen &amp; betaalcyclus
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, minHeight: 32 }}>
               Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28, marginBottom: 12 }}>
@@ -216,7 +216,7 @@ export default function BusinessCaseClient({
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
               Team
             </div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, minHeight: 32 }}>
               <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/user</div>
               <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
             </div>
