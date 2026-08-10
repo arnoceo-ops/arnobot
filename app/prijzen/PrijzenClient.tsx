@@ -162,10 +162,10 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, per maand' : '+ €49 per gebruiker, vanaf 3 gebruikers'}
+              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, vanaf 3 gebruikers' : '+ €49 per gebruiker, vanaf 3 gebruikers'}
             </p>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '€924 + €468 per jaar, vanaf 3 gebruikers' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? '€924 + €468 per gebruiker, per jaar' : 'Maandelijks opzegbaar.'}
             </p>
           </div>
 
