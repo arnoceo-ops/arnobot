@@ -97,7 +97,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
         {/* BASIC */}
         <div className="prijzen-tier-card">
           <span className="prijzen-tier-naam">Basic</span>
-          <p className="prijzen-tier-kop">Een gesprekspartner die nooit moe wordt.</p>
+          <p className="prijzen-tier-kop">24/7 ongefilterd advies</p>
 
           <div className="prijzen-tier-price-block">
             <div className="prijzen-tier-amount">
@@ -106,7 +106,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €228 per jaar' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? '€228 per jaar.' : 'Maandelijks opzegbaar.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
@@ -132,7 +132,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €468 per jaar' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? '€468 per jaar.' : 'Maandelijks opzegbaar.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
@@ -162,10 +162,10 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, per maand' : '+ €49 per gebruiker, per maand'}
+              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, per maand' : '+ €49 per gebruiker, vanaf 3 gebruikers'}
             </p>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €924 + €468/gebruiker per jaar' : 'Maandelijks opzegbaar.'} Vanaf 3 gebruikers.
+              {cyclus === 'jaarlijks' ? '€924 + €468 per jaar, vanaf 3 gebruikers' : 'Maandelijks opzegbaar.'}
             </p>
           </div>
 
