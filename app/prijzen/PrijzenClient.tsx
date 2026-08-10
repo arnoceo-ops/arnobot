@@ -47,7 +47,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
         .prijzen-tier-billingnote { font-size: 13px; color: #94a3b8; min-height: 18px; }
         .prijzen-tier-trial { font-size: 13px; color: #f59e0b; min-height: 18px; }
 
-        .prijzen-tier-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; }
+        .prijzen-tier-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 4px 0; flex: 1; }
         .prijzen-tier-bullets li {
           font-size: 14px; color: #94a3b8; line-height: 1.5; min-height: 21px;
           padding-left: 18px; position: relative;
@@ -59,7 +59,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
         }
 
         .prijzen-tier-cta {
-          margin-top: auto; display: flex; align-items: center; justify-content: center;
+          margin-top: 24px; display: flex; align-items: center; justify-content: center;
           text-decoration: none; text-align: center; border-radius: 6px; background: #f59e0b;
           padding: 12px 24px; font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600;
           letter-spacing: 0.1em; color: #111827; text-transform: uppercase;
