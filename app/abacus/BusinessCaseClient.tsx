@@ -199,6 +199,14 @@ export default function BusinessCaseClient({
               Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+              <TariefDisplay label="# Basic" value={String(scenario.basicN)} />
+              <TariefDisplay label="# Pro" value={String(scenario.proN)} />
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+              <TariefDisplay label="€ Basic" value={fmtEUR(scenario.basicN * scenario.basicPrijsGemiddeld)} />
+              <TariefDisplay label="€ Pro" value={fmtEUR(scenario.proN * scenario.proPrijsGemiddeld)} />
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
               <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
             </div>
@@ -213,8 +221,8 @@ export default function BusinessCaseClient({
               Team
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-              <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker</div>
-              <div>Jaarlijks (maand-equivalent): € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/gebruiker (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr)</div>
+              <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/user</div>
+              <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
               <div style={{ marginTop: 4 }}>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -224,8 +232,8 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
-              <TariefDisplay label="Team basis gem./mnd (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
-              <TariefDisplay label="Team p/gebruiker gem./mnd (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
+              <TariefDisplay label="Team basis (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
+              <TariefDisplay label="Team p/user (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
             </div>
           </div>
         </div>
