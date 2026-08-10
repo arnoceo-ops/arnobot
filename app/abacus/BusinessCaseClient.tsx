@@ -205,10 +205,10 @@ export default function BusinessCaseClient({
               <TariefDisplay label="# Pro" value={String(scenario.proN)} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28 }}>
-              <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
-              <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
-              <TariefDisplay label="€ Basic" value={String(Math.round(scenario.basicN * scenario.basicPrijsGemiddeld))} />
-              <TariefDisplay label="€ Pro" value={String(Math.round(scenario.proN * scenario.proPrijsGemiddeld))} />
+              <TariefField label="% BASIS x12" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
+              <TariefField label="% PRO x12" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+              <TariefDisplay label="€ Basic" value={'€ ' + Math.round(scenario.basicN * scenario.basicPrijsGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="€ Pro" value={'€ ' + Math.round(scenario.proN * scenario.proPrijsGemiddeld).toLocaleString('nl-NL')} />
             </div>
           </div>
 
@@ -219,7 +219,6 @@ export default function BusinessCaseClient({
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
               <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/user</div>
               <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
-              <div style={{ marginTop: 4 }}>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
