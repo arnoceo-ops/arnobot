@@ -219,8 +219,8 @@ export default function BusinessCaseClient({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28, marginBottom: 12 }}>
               <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
               <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
-              <TariefDisplay label="# Basic" value={String(scenario.basicN)} />
-              <TariefDisplay label="# Pro" value={String(scenario.proN)} />
+              <TariefDisplay label="# Basic" value={scenario.basicN.toLocaleString('nl-NL')} />
+              <TariefDisplay label="# Pro" value={scenario.proN.toLocaleString('nl-NL')} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28 }}>
               <TariefField label="% BASIS x12" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
