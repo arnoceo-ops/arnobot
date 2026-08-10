@@ -245,8 +245,8 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
-              <TariefDisplay label="Team basis (€)" value={scenario.teamBasisGemiddeld.toFixed(2)} />
-              <TariefDisplay label="Team p/user (€)" value={scenario.teamPerGebruikerGemiddeld.toFixed(2)} />
+              <TariefDisplay label="Team basis" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="Team p/user" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
             </div>
           </div>
         </div>
