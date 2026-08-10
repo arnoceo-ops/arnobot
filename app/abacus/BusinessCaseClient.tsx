@@ -212,8 +212,9 @@ export default function BusinessCaseClient({
             Team
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
-            <div>€ {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker/maand &middot; € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr</div>
-            <div>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
+            <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/gebruiker</div>
+            <div>Jaarlijks (maand-equivalent): € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/gebruiker (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/gebruiker/jr)</div>
+            <div style={{ marginTop: 4 }}>Gemiddeld aantal teamleden is inclusief de manager zelf.</div>
           </div>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
             <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />

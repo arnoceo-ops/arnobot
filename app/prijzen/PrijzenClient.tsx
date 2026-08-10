@@ -158,10 +158,15 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <div className="prijzen-tier-price-block">
             <div className="prijzen-tier-amount">
               <span className="prijzen-tier-currency">€</span>
-              <span className="prijzen-tier-num">97</span>
+              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? '77' : '97'}</span>
+              <span className="prijzen-tier-periode">/ maand</span>
             </div>
-            <p className="prijzen-tier-billingnote">+ €49 per gebruiker, per maand</p>
-            <p className="prijzen-tier-billingnote">Maandelijks opzegbaar · vanaf 3 gebruikers</p>
+            <p className="prijzen-tier-billingnote">
+              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, per maand' : '+ €49 per gebruiker, per maand'}
+            </p>
+            <p className="prijzen-tier-billingnote">
+              {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €924 + €468/gebruiker per jaar' : 'Maandelijks opzegbaar.'} Vanaf 3 gebruikers.
+            </p>
           </div>
 
           <span className="prijzen-tier-plus">Alles van Pro, plus:</span>
