@@ -141,7 +141,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
 
           <span className="prijzen-tier-plus">Alles van Basic, plus:</span>
           <ul className="prijzen-tier-bullets">
-            <li>Coachingdocument: mindset, systeem, actie</li>
+            <li>Coaching op mindset, systeem en actie</li>
             <li>Onbeperkt chatten en oefenen</li>
             <li>Gesproken antwoorden, Arno's stem</li>
             <li>Uitgebreider gespreksgeheugen</li>

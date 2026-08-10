@@ -80,8 +80,13 @@ const numberInputStyle: React.CSSProperties = {
 }
 const fieldLabelStyle: React.CSSProperties = { fontSize: 13.5, color: '#f1f5f9' }
 
-function NumberField({ label, hint, value, onChange, step = 1 }: {
-  label: string; hint?: React.ReactNode; value: number; onChange: (v: number) => void; step?: number
+// formatThousands: toont/parseert de waarde met een duizendtal-punt (nl-NL,
+// bv. "10.000"), voor gehele-getal-velden als aantal gebruikers/doelwinst.
+// Bewust een losse tak i.p.v. het standaard number-input aanpassen: nl-NL
+// gebruikt een komma als decimaalteken, dat zou de percentage-/decimaalvelden
+// elders (stap 0.1/0.01) juist breken.
+function NumberField({ label, hint, value, onChange, step = 1, formatThousands = false }: {
+  label: string; hint?: React.ReactNode; value: number; onChange: (v: number) => void; step?: number; formatThousands?: boolean
 }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -89,7 +94,17 @@ function NumberField({ label, hint, value, onChange, step = 1 }: {
         <div style={fieldLabelStyle}>{label}</div>
         {hint && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{hint}</div>}
       </div>
-      <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%' }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
+      {formatThousands ? (
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value.toLocaleString('nl-NL')}
+          style={{ ...numberInputStyle, width: '100%' }}
+          onChange={e => onChange(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
+        />
+      ) : (
+        <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%' }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
+      )}
     </div>
   )
 }
@@ -170,7 +185,7 @@ export default function BusinessCaseClient({
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
-        <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} />
+        <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} formatThousands />
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
@@ -240,7 +255,7 @@ export default function BusinessCaseClient({
           <div>Berekening staat los van &quot;Totaal aantal gebruikers&quot; en verandert dat veld niet.</div>
           <div>Rekent met dezelfde tarieven en %-verdeling.</div>
         </div>
-        <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} />
+        <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} formatThousands />
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
             <div style={statLabel}>Benodigd aantal gebruikers</div>

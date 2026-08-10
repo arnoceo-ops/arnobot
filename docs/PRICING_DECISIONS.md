@@ -21,7 +21,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Copy-patroon: "Alles van Basic, plus:"
 
 **Features (bovenop Basic):**
-- Coachingdocument: mindset, systeem, actie
+- Coaching op mindset, systeem en actie
 - Onbeperkt chatten en oefenen
 - Gesproken antwoorden, Arno's stem
 - Uitgebreider gespreksgeheugen
