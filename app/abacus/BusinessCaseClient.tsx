@@ -78,6 +78,12 @@ const numberInputStyle: React.CSSProperties = {
   color: '#f1f5f9', padding: '7px 10px', fontSize: 13.5, textAlign: 'right',
   fontVariantNumeric: 'tabular-nums',
 }
+// Herkenning voor zelf-instelbare velden (besloten met Arno): een subtiele
+// amber-tint op de rand, dezelfde kleur die de rest van de admin-UI al
+// gebruikt voor "dit is actionable/interactief" i.p.v. een nieuwe kleurtaal.
+// Alleen op echte <input>-velden (NumberField, TariefField), nooit op
+// TariefDisplay (berekende, niet-instelbare waarden), die blijft neutraal.
+const editableBorder = '1.5px solid rgba(245,158,11,0.35)'
 const fieldLabelStyle: React.CSSProperties = { fontSize: 13.5, color: '#f1f5f9' }
 
 // formatThousands: toont/parseert de waarde met een duizendtal-punt (nl-NL,
@@ -99,11 +105,11 @@ function NumberField({ label, hint, value, onChange, step = 1, formatThousands =
           type="text"
           inputMode="numeric"
           value={value.toLocaleString('nl-NL')}
-          style={{ ...numberInputStyle, width: '100%' }}
+          style={{ ...numberInputStyle, width: '100%', border: editableBorder }}
           onChange={e => onChange(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
         />
       ) : (
-        <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%' }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
+        <input type="number" value={value} step={step} style={{ ...numberInputStyle, width: '100%', border: editableBorder }} onChange={e => onChange(parseFloat(e.target.value) || 0)} />
       )}
     </div>
   )
@@ -117,7 +123,7 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
         type="number"
         value={value}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
-        style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'left' }}
+        style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'left', border: editableBorder }}
       />
     </div>
   )
