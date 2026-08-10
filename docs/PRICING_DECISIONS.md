@@ -26,6 +26,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Gesproken antwoorden, Arno's stem als coach
 - Uitgebreider gespreksgeheugen
 - Volledig archief van al je output
+- De ArnoBot-app (Android)
 
 ### Team
 - €97/maand vast bedrag (platformtarief voor de manager laag)
@@ -76,9 +77,11 @@ Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgele
 
 (De plan-waarden `premium`/`elite` hierboven zijn de huidige interne/database-namen vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder.)
 
-## Open punt: ArnoBot app-vermelding
+## ArnoBot app-vermelding (besloten 2026-08-02, herzien)
 
-**Nog niet op de pricing pagina gezet.** De Android-app (Capacitor) is volgens Arno "bijna klaar" en zou Pro-exclusief worden, maar volgens de eerdere Deel B-planning zat dit nog in een latere bouwfase zonder bevestigde releasedatum. Bullet ("Toegang tot de ArnoBot app") pas toevoegen aan Pro zodra de app daadwerkelijk live is, niet vooruitlopend communiceren, anders belooft de pricing pagina iets dat een nieuwe Pro-koper op dag één niet kan gebruiken.
+**Bewust vooruitlopend op de pricing pagina gezet**, omslag ten opzichte van de eerdere "niet vooruitlopend communiceren"-regel hieronder. Arno's expliciete afweging: de Android-app (Capacitor) is "al bijna geregeld", dat risico is klein genoeg om nu al te communiceren. Bullet bij Pro: "De ArnoBot-app (Android)", bewust zonder iPhone te noemen omdat die nog niet in zicht is. Team krijgt geen aparte appbullet, dat valt al onder "Alles van Pro, plus:" (Team erft alle Pro-functionaliteit, zie hierboven), een losse vermelding zou juist suggereren dat het iets aparts is in plaats van iets dat al inbegrepen is.
+
+Oorspronkelijke, nu ingehaalde overweging (bewaard als context): de eerdere regel was juist om dit pas te communiceren zodra de app daadwerkelijk live is, om te voorkomen dat de pricing pagina iets belooft dat een nieuwe Pro-koper op dag één niet kan gebruiken. Die afweging staat, Arno heeft 'm bewust opzijgezet voor dit specifieke geval.
 
 ## Open punten voor Deel B / techniek
 
