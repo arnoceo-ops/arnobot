@@ -5,8 +5,18 @@ import {
   DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
+import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
 const FX_EUR_USD = 1.08
+
+// Stille clamping i.p.v. een blokkade/foutmelding: dit is Arno's eigen interne
+// tool, geen productieformulier. Voorkomt praktisch onmogelijke scenario's
+// (bijv. % Pro dat via 100-% Basic negatief wordt bij het intypen van >100 in
+// % Basic) die zonder validatie stilletjes onzinnige uitkomsten opleverden,
+// zie het gesprek dat hiertoe leidde.
+function clamp(v: number, min: number, max = Infinity): number {
+  return Math.min(Math.max(v, min), max)
+}
 
 function fmtEUR(n: number | null): string {
   if (n === null || n === undefined) return '-'
@@ -217,14 +227,14 @@ export default function BusinessCaseClient({
               Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28, marginBottom: 12 }}>
-              <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
-              <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
+              <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => { const c = clamp(v, 0, 100); setScenarioPct({ basic: c, pro: 100 - c }) }} />
+              <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => { const c = clamp(v, 0, 100); setScenarioPct({ basic: 100 - c, pro: c }) }} />
               <TariefDisplay label="# Basic" value={scenario.basicN.toLocaleString('nl-NL')} />
               <TariefDisplay label="# Pro" value={scenario.proN.toLocaleString('nl-NL')} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28 }}>
-              <TariefField label="% BASIS x12" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
-              <TariefField label="% PRO x12" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+              <TariefField label="% BASIS x12" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: clamp(v, 0, 100) })} />
+              <TariefField label="% PRO x12" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: clamp(v, 0, 100) })} />
               <TariefDisplay label="€ Basic" value={'€ ' + Math.round(scenario.basicN * scenario.basicPrijsGemiddeld).toLocaleString('nl-NL')} />
               <TariefDisplay label="€ Pro" value={'€ ' + Math.round(scenario.proN * scenario.proPrijsGemiddeld).toLocaleString('nl-NL')} />
             </div>
@@ -239,12 +249,12 @@ export default function BusinessCaseClient({
               <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-              <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: v })} />
-              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: v })} />
+              <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0) })} />
+              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_GEBRUIKERS) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-              <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: v })} />
+              <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: clamp(v, 0, 100) })} />
               <TariefDisplay label="Team basis" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
               <TariefDisplay label="Team p/user" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
             </div>
@@ -298,15 +308,15 @@ export default function BusinessCaseClient({
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
-        <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: v })} />
-        <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: v })} />
+        <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: clamp(v, 0) })} />
+        <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: clamp(v, 0) })} />
         <NumberField
           label="% van omzet via creditcard"
           hint={<>
             <div>Geldt alleen voor Solo (Basic/Pro).</div>
             <div>Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten.</div>
           </>}
-          value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: v })}
+          value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: clamp(v, 0, 100) })}
         />
       </div>
     </div>
