@@ -198,21 +198,17 @@ export default function BusinessCaseClient({
             <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
               Basic € {SCENARIO_PRIJZEN.basicMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.basicJaarlijksTotaal}/jr, Pro € {SCENARIO_PRIJZEN.proMaandelijks}/mnd &middot; € {SCENARIO_PRIJZEN.proJaarlijksTotaal}/jr
             </div>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28, marginBottom: 12 }}>
+              <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
+              <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
               <TariefDisplay label="# Basic" value={String(scenario.basicN)} />
               <TariefDisplay label="# Pro" value={String(scenario.proN)} />
             </div>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-              <TariefDisplay label="€ Basic" value={fmtEUR(scenario.basicN * scenario.basicPrijsGemiddeld)} />
-              <TariefDisplay label="€ Pro" value={fmtEUR(scenario.proN * scenario.proPrijsGemiddeld)} />
-            </div>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-              <TariefField label="% Basic" value={scenarioPct.basic} onChange={v => setScenarioPct({ basic: v, pro: 100 - v })} />
-              <TariefField label="% Pro" value={scenarioPct.pro} onChange={v => setScenarioPct({ basic: 100 - v, pro: v })} />
-            </div>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 100px)', gap: 28 }}>
               <TariefField label="% Basic jaarlijks" value={billingSplit.basicPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, basicPctJaarlijks: v })} />
               <TariefField label="% Pro jaarlijks" value={billingSplit.proPctJaarlijks} onChange={v => setBillingSplit({ ...billingSplit, proPctJaarlijks: v })} />
+              <TariefDisplay label="€ Basic" value={String(Math.round(scenario.basicN * scenario.basicPrijsGemiddeld))} />
+              <TariefDisplay label="€ Pro" value={String(Math.round(scenario.proN * scenario.proPrijsGemiddeld))} />
             </div>
           </div>
 
