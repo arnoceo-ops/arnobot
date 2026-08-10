@@ -117,7 +117,7 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
         type="number"
         value={value}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
-        style={{ ...numberInputStyle, width: 100, fontSize: 22, fontWeight: 700, textAlign: 'left' }}
+        style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'left' }}
       />
     </div>
   )
@@ -141,7 +141,7 @@ function TariefDisplay({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div style={statLabel}>{label}</div>
-      <div style={{ ...numberInputStyle, width: 100, fontSize: fitFontSize(value), fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+      <div style={{ ...numberInputStyle, width: 100, height: 44, fontSize: fitFontSize(value), fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
         {value}
       </div>
     </div>
@@ -202,7 +202,7 @@ export default function BusinessCaseClient({
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} formatThousands />
 
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48 }}>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 80 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
               Verdeling abonnementen &amp; betaalcyclus
