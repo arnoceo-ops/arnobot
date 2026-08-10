@@ -5,6 +5,22 @@ import SignupCTA from '../components/SignupCTA'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
+// Eén bron voor de getoonde bedragen: zowel de kaarten als het live-berekende
+// kortingspercentage bij de toggle lezen hieruit, zodat een toekomstige
+// prijswijziging nooit een verouderd "bespaar X%"-label kan achterlaten
+// (besloten 2026-08-10, zie docs/PRICING_DECISIONS.md voor de "geen
+// hardgecodeerde besparingstekst"-reden die hiermee wordt opgelost).
+const BASIC_MAANDELIJKS = 29
+const BASIC_JAARLIJKS = 19
+const PRO_MAANDELIJKS = 59
+const PRO_JAARLIJKS = 39
+const basicKortingPct = Math.round((1 - BASIC_JAARLIJKS / BASIC_MAANDELIJKS) * 100)
+const proKortingPct = Math.round((1 - PRO_JAARLIJKS / PRO_MAANDELIJKS) * 100)
+// Team heeft een lager, apart percentage (~20%, zie PRICING_DECISIONS.md),
+// daarom "tot X%": een waarachtige bovengrens i.p.v. een gemiddelde dat voor
+// geen enkele kaart precies klopt.
+const maxKortingPct = Math.max(basicKortingPct, proKortingPct)
+
 export default function PrijzenClient({ demoLink }: { demoLink: string | null }) {
   const [cyclus, setCyclus] = useState<Cyclus>('jaarlijks')
 
@@ -24,6 +40,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           background: transparent; color: #94a3b8; transition: all 0.2s;
         }
         .prijzen-toggle button.actief { background: #f59e0b; color: #111827; }
+        .prijzen-toggle-korting { font-size: 13px; color: #f59e0b; min-height: 18px; }
 
         .prijzen-cols { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
         .prijzen-tier-card {
@@ -91,6 +108,9 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             MAANDELIJKS
           </button>
         </div>
+        {cyclus === 'jaarlijks' && (
+          <p className="prijzen-toggle-korting">Bespaar tot {maxKortingPct}% bij jaarbetaling</p>
+        )}
       </div>
 
       <div className="prijzen-cols">
@@ -102,11 +122,11 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <div className="prijzen-tier-price-block">
             <div className="prijzen-tier-amount">
               <span className="prijzen-tier-currency">€</span>
-              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? '19' : '29'}</span>
+              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? BASIC_JAARLIJKS : BASIC_MAANDELIJKS}</span>
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '€228 per jaar.' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? `€${BASIC_JAARLIJKS * 12} per jaar.` : 'Maandelijks opzegbaar.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
@@ -128,11 +148,11 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <div className="prijzen-tier-price-block">
             <div className="prijzen-tier-amount">
               <span className="prijzen-tier-currency">€</span>
-              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? '39' : '59'}</span>
+              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? PRO_JAARLIJKS : PRO_MAANDELIJKS}</span>
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '€468 per jaar.' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? `€${PRO_JAARLIJKS * 12} per jaar.` : 'Maandelijks opzegbaar.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
