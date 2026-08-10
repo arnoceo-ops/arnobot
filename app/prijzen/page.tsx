@@ -6,7 +6,7 @@ import PrijzenClient from './PrijzenClient'
 
 export const metadata: Metadata = {
   title: 'ArnoBot: Prijzen',
-  description: 'Transparante prijzen voor je AI-salescoach. 30 dagen gratis, daarna vanaf €97 per maand.',
+  description: 'Transparante prijzen voor je AI-salescoach. 30 dagen gratis, daarna vanaf €19 per maand.',
   robots: { index: true, follow: true },
 }
 

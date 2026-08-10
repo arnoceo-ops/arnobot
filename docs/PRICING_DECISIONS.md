@@ -89,9 +89,25 @@ Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgele
 
 Oorspronkelijke, nu ingehaalde overweging (bewaard als context): de eerdere regel was juist om dit pas te communiceren zodra de app daadwerkelijk live is, om te voorkomen dat de pricing pagina iets belooft dat een nieuwe Pro-koper op dag één niet kan gebruiken. Die afweging staat, Arno heeft 'm bewust opzijgezet voor dit specifieke geval.
 
-## Open punten voor Deel B / techniek
+## Database-waarde `plan`: blijft `basis`/`premium` (besloten 2026-08-02)
 
-- **Naamswijziging in code:** de daadwerkelijke Basic/Pro-hernoeming (was Basis/Premium) en de nieuwe tarieven moeten nog doorgevoerd worden op `arno.bot/prijzen` zelf en in `approved_users.plan`-gerelateerde code, e-mails en checkout. Dit document en het conceptartefact lopen daar bewust op vooruit.
+`approved_users.plan` blijft intern `"basis"`/`"premium"` (geen migratie, geen CHECK-constraint-wijziging, geen code-aanpassing op de honderden plekken die op deze waarde checken). Alleen de naar buiten getoonde tekst wordt Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Team: de database zegt nog steeds `"team"`, ongeacht of de marketingnaam "Command" of "Team" was/is.
+
+**Waarom:** optie B (database-waarden ook omzetten naar `basic`/`pro`) vereist een echte migratie van bestaande gebruikersrijen plus het bijwerken van elke plek in de code die op `plan` checkt, puur voor een woordwijziging zonder functionele meerwaarde. Meer werk, meer risico op een moment waarop database en code niet synchroon lopen. Optie A (huidige aanpak) is al bewezen bij Team/Command.
+
+## Trial-standaard: bestaande aanpak blijft (bevestigd 2026-08-02)
+
+Elke nieuwe gebruiker krijgt bij aanmelden nog steeds `plan='premium'` als trial, ongeacht welke kaart (Basic/Pro/Team) hij aanklikt op `/prijzen` (alle "Start nu"-knoppen linken nu al naar dezelfde generieke `/sign-up`, geen tier-specifieke registratie). Iedereen proeft dus de volledige Pro-ervaring tijdens de 30 dagen, en kiest pas definitief bij `/bot/doorgaan`. Geen wijziging nodig, dit is al hoe het werkt voor Premium/Elite en blijft zo voor Basic/Pro/Team.
+
+## `/prijzen` live gezet (2026-08-02)
+
+`app/prijzen/PrijzenClient.tsx` en `app/prijzen/page.tsx` (metadata) zijn bijgewerkt naar de Basic/Pro/Team-driekolom uit dit document, getest in de browser (toggle, Pro-uitlichting, Team blijft vast). Bewust **niet** meegenomen in deze stap, blijft open voor een vervolgronde:
+
+- **`app/bot/doorgaan/DoorgaanClient.tsx`**: neemt volgens `ABONNEMENTEN.md` letterlijk dezelfde bullets/prijzen/toggle over van `/prijzen`, loopt nu dus uit de pas met de nieuwe pagina.
+- **Koppeling aan `lib/kostenTarieven.ts`**: `/prijzen` hardcodet de bedragen nog zelf, verwijst niet naar `TARIEVEN.prijsBasisEur`/`prijsPremiumEur` (die al wel op 29/59 staan). Twee plekken die uit elkaar kunnen lopen bij een volgende prijswijziging.
+- **`lib/email-templates.ts` + `QAClient.tsx`** (referral-FAQ): bevatten nog oude bedragen/namen.
+- **`/command`**: bestaande publieke aanvraagpagina (staffelprijs, factuurgegevens, "vraag een demo aan"), nog niet besloten of die verdwijnt/redirect of blijft bestaan naast de nieuwe self-serve Team-instap.
+- **Wekelijkse Team Spotlight-bullet**: staat nog op de oude live Command-kaart, ontbreekt in de bullet-set hierboven. Nog niet besloten of die terugkomt.
 - **Voice-cap fase 2:** momenteel geen maandelijkse limiet voor betalende gebruikers. Zodra er ooit wel een cap wordt gebouwd (nog niet gepland), moet de "Gesproken antwoorden" bullet bij Pro opnieuw beoordeeld worden.
 - **Verifiëren, niet aannemen:** bestaat de upgrade flow van individuele Pro-trial naar Team al in de app (facturatie overgang, teamleden uitnodigen vanuit bestaand Pro-account, meenemen van de manager's eigen gespreksdata)? Zo niet, dit toevoegen aan de Deel B werklijst.
 - Referentie implementatie (visueel/structureel prototype): conceptartefact "ArnoBot: Prijzen (concept)".
