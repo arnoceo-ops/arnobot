@@ -252,7 +252,7 @@ export default function TeamAanvraagPage() {
                 )}
 
                 <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor €{TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid.
+                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor € {TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid.
                 </p>
 
                 <div className="ca-prijs-box">
@@ -263,18 +263,18 @@ export default function TeamAanvraagPage() {
                     </>
                   ) : cyclus === 'jaarlijks' ? (
                     <>
-                      <p className="ca-prijs-num">€{prijsMetElite * 12} / jaar</p>
+                      <p className="ca-prijs-num">€ {(prijsMetElite * 12).toLocaleString('nl-NL')} / jaar</p>
                       <p className="ca-prijs-sub">
-                        €77 platformtarief + €39 per gebruiker, maand-equivalent
-                        {eliteInteresse && <> + €{TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief btw
+                        € 77 platformtarief + € 39 per gebruiker, maand-equivalent
+                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief btw
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="ca-prijs-num">€{prijsMetElite} / maand</p>
+                      <p className="ca-prijs-num">€ {prijsMetElite.toLocaleString('nl-NL')} / maand</p>
                       <p className="ca-prijs-sub">
-                        €97 platformtarief + €49 per gebruiker
-                        {eliteInteresse && <> + €{TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief btw
+                        € 97 platformtarief + € 49 per gebruiker
+                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief btw
                       </p>
                     </>
                   )}
