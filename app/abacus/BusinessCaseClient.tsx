@@ -133,7 +133,7 @@ function TariefField({ label, value, onChange }: { label: string; value: number;
         type="number"
         value={value}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
-        style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'left', border: editableBorder }}
+        style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'right', border: editableBorder }}
       />
     </div>
   )
@@ -157,7 +157,7 @@ function TariefDisplay({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div style={statLabel}>{label}</div>
-      <div style={{ ...numberInputStyle, width: 100, height: 44, fontSize: fitFontSize(value), fontWeight: 700, textAlign: 'left', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+      <div style={{ ...numberInputStyle, width: 100, height: 44, fontSize: fitFontSize(value), fontWeight: 700, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
         {value}
       </div>
     </div>
