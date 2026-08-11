@@ -123,7 +123,7 @@ const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '
 // de tekst exact op dezelfde baseline staat als de andere bedragen ernaast.
 const headlineValueStyle: React.CSSProperties = { ...statValue, color: '#f59e0b' }
 const statCellStyle: React.CSSProperties = {
-  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', textAlign: 'right', height: 64,
+  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', textAlign: 'right', minHeight: 64,
 }
 // Identiek aan numberInputStyle in KostenCalculatorClient.tsx
 const numberInputStyle: React.CSSProperties = {
@@ -340,18 +340,18 @@ export default function BusinessCaseClient({
               <div style={{ fontSize: 13, color: '#94a3b8' }}>€ {scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; € {scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 100px)', columnGap: 10, rowGap: 10, marginTop: 12 }}>
-            <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.omzet)) }}>{fmtEUR(scenario.omzet)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.teamOmzet)) }}>{fmtEUR(scenario.teamOmzet)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={{ ...headlineValueStyle, fontSize: fitFontSize(fmtEUR(scenario.omzetTotaal)) }}>{fmtEUR(scenario.omzetTotaal)}</div></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', width: 1122, columnGap: 10, rowGap: 10, marginTop: 12 }}>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.kostenEur)) }}>{fmtEUR(scenario.kostenEur)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.betaalKosten)) }}>{fmtEUR(scenario.betaalKosten)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.kostenEur + scenario.betaalKosten)) }}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}># users (incl. team)</div><div style={{ ...statValue, fontSize: fitFontSize(totaalGebruikers.toLocaleString('nl-NL')) }}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
+            <div style={statCellStyle}><div style={statLabel}># users (incl. team)</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={{ ...headlineValueStyle, fontSize: fitFontSize(fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)) }}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
         </div>
       </div>
