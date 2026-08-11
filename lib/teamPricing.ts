@@ -25,6 +25,16 @@ export const TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS = 49
 export const TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS = 39
 export const TEAM_MIN_GEBRUIKERS = 3
 
+// Elite-surplus binnen een Team-aanvraag (besloten 2026-08-11, zie
+// docs/PRICING_DECISIONS.md): Elite is geen publieke keuze meer, maar Arno
+// wil het nog wel kunnen aanbieden binnen een Team-offerte, uitgevoerd door
+// hemzelf of een door hem aangewezen coach. Surplus = exact het verschil
+// tussen solo Elite (€397/maand) en solo Pro (€59/maand) = €338/maand extra
+// per Elite-teamlid, bovenop het gewone Team-per-gebruikertarief. Bewust
+// geen aparte jaarkorting op dit bedrag (Elite zelf heeft geen jaarprijs):
+// hetzelfde surplus geldt ongeacht de gekozen Team-facturatiecyclus.
+export const TEAM_ELITE_SURPLUS_PER_MAAND = 338
+
 export function berekenTeamPrijsPerMaand(gebruikers: number, cyclus: Cyclus = 'maandelijks'): number | null {
   if (!Number.isFinite(gebruikers) || gebruikers < TEAM_MIN_GEBRUIKERS) return null
   const basis = cyclus === 'jaarlijks' ? TEAM_BASISTARIEF_JAARLIJKS : TEAM_BASISTARIEF_MAANDELIJKS

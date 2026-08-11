@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
 
 export default function TeamAanvraagPage() {
   const { isSignedIn, isLoaded } = useUser()
@@ -23,6 +23,8 @@ export default function TeamAanvraagPage() {
   const [bestelnummer, setBestelnummer] = useState('')
   const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_GEBRUIKERS)
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
+  const [eliteInteresse, setEliteInteresse] = useState(false)
+  const [eliteAantal, setEliteAantal] = useState(1)
 
   const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats, cyclus), [aantalSeats, cyclus])
 
@@ -37,6 +39,7 @@ export default function TeamAanvraagPage() {
         body: JSON.stringify({
           bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
           aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
+          eliteAantal: eliteInteresse ? eliteAantal : 0,
         }),
       })
       const data = await res.json()
@@ -199,7 +202,14 @@ export default function TeamAanvraagPage() {
                 <div className="ca-row">
                   <div className="ca-field">
                     <label>Aantal gebruikers (inclusief jijzelf) *</label>
-                    <input required type="number" min={TEAM_MIN_GEBRUIKERS} value={aantalSeats} onChange={e => setAantalSeats(Number(e.target.value))} />
+                    <input
+                      required type="number" min={TEAM_MIN_GEBRUIKERS} value={aantalSeats}
+                      onChange={e => {
+                        const val = Number(e.target.value)
+                        setAantalSeats(val)
+                        setEliteAantal(prev => Math.min(prev, Math.max(1, val)))
+                      }}
+                    />
                   </div>
                   <div className="ca-field">
                     <label>Bestelnummer (optioneel)</label>
@@ -213,6 +223,30 @@ export default function TeamAanvraagPage() {
                 </div>
                 <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
                   {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Maandelijks opzegbaar.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
+                </p>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={eliteInteresse}
+                    onChange={e => setEliteInteresse(e.target.checked)}
+                    style={{ width: 16, height: 16, accentColor: '#f59e0b' }}
+                  />
+                  <span style={{ fontSize: 14, color: '#94a3b8' }}>Ook Elite-niveau voor een deel van je team</span>
+                </label>
+
+                {eliteInteresse && (
+                  <div className="ca-field" style={{ marginBottom: 12, maxWidth: 220 }}>
+                    <label>Aantal Elite-teamleden</label>
+                    <input
+                      type="number" min={1} max={aantalSeats} value={eliteAantal}
+                      onChange={e => setEliteAantal(Math.min(aantalSeats, Math.max(1, Number(e.target.value))))}
+                    />
+                  </div>
+                )}
+
+                <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor €{TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid. We nemen dit mee in je offerte.
                 </p>
 
                 <div className="ca-prijs-box">

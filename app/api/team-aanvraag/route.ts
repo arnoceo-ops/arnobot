@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const {
     bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
+    aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus, eliteAantal,
   } = body
 
   if (
@@ -40,8 +40,13 @@ export async function POST(req: Request) {
   if (cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
     return NextResponse.json({ error: 'Ongeldige facturatiecyclus' }, { status: 400 })
   }
+  const eliteCount = Number(eliteAantal) || 0
+  if (eliteCount < 0 || eliteCount > seats) {
+    return NextResponse.json({ error: 'Ongeldig aantal Elite-teamleden' }, { status: 400 })
+  }
 
   const prijs = berekenTeamPrijsPerMaand(seats, cyclus as Cyclus)
+  const eliteSurplusTotaal = eliteCount * TEAM_ELITE_SURPLUS_PER_MAAND
 
   // niveau: kolom uit de oude Command-staffelflow (Premium/Elite-keuze), blijft bestaan
   // in Supabase (geen migratie om dit te vermijden), krijgt nu een vaste waarde. Team
@@ -64,6 +69,7 @@ export async function POST(req: Request) {
     niveau: 'premium',
     cyclus,
     berekende_prijs_per_maand: prijs,
+    elite_aantal: eliteCount || null,
   }).select('id').single()
 
   if (error || !inserted) {
@@ -79,7 +85,7 @@ export async function POST(req: Request) {
     subject: `Nieuwe Team-aanvraag: ${bedrijfsnaam}`,
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Team-abonnement aangevraagd.<br><br>` +
-      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
+      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
     ),
