@@ -340,7 +340,7 @@ export default function BusinessCaseClient({
               <div style={{ fontSize: 13, color: '#94a3b8' }}>€ {scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; € {scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', justifyContent: 'start', columnGap: 10, rowGap: 10, marginTop: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(150px, 1fr))', columnGap: 10, rowGap: 10, marginTop: 12 }}>
             <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
@@ -349,7 +349,7 @@ export default function BusinessCaseClient({
             <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}># gebruikers (incl. team)</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
+            <div style={statCellStyle}><div style={statLabel}># users (incl. team)</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
