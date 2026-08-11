@@ -110,12 +110,20 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
   // afhankelijk: vandaar dat verdeling/betaalprovider-instellingen gedeeld
   // zijn met tab 3. Tarieven zelf (SCENARIO_PRIJZEN) zijn definitief vast,
   // geen gedeelde state.
+  // perGebruiker deelt bewust door het werkelijke totaal (basicN+proN+teamLeden),
+  // niet door n (dat is alleen het solo-aantal): totaal bevat namelijk ook de
+  // kosten van teamleden (die in computeScenarioKosten al als volwaardige
+  // Pro-gebruikers meetellen, qua kosten nauwelijks anders dan een gewone Pro-
+  // gebruiker). Delen door alleen n zou dezelfde kosten over te weinig mensen
+  // uitsmeren, en het cijfer structureel opblazen zodra er een teamscenario
+  // is ingesteld (besloten 2026-08-11, gevonden door Arno).
   function berekenKostenVoorN(n: number) {
     const { basicN, proN, teamLeden, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, tierVerdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
     const basis = computeScenarioKosten(inputs, basicN, proN, teamLeden)
     const betaalKosten = betaalproviderKosten * inputs.fxRate
     const totaal = basis.totaal + betaalKosten
-    return { ...basis, betaalKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0 }
+    const totaalGebruikers = basicN + proN + teamLeden
+    return { ...basis, betaalKosten, totaal, totaalGebruikers, perGebruiker: totaalGebruikers > 0 ? totaal / totaalGebruikers : 0 }
   }
 
   function set<K extends keyof Inputs>(key: K, value: Inputs[K]) {
@@ -264,6 +272,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={{ fontSize: 'clamp(36px,5vw,48px)', fontWeight: 800, color: '#f59e0b', lineHeight: 1, margin: '4px 0 2px', fontVariantNumeric: 'tabular-nums' }}>
                 {fmtUSD(result.perGebruiker)}
               </div>
+              <div style={{ fontSize: 11.5, color: '#6b7280' }}>Incl. team: {result.totaalGebruikers.toLocaleString('nl-NL')} gebruikers</div>
               <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 Totaal alle kosten: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</b> / maand
                 <span style={{ color: '#6b7280' }}> (&asymp; {fmtEUR0(result.totaal / inputs.fxRate)}, vergelijk met tab 3)</span>
@@ -296,7 +305,8 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Gebruikers</th>
+                    <th style={{ textAlign: 'left', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Solo</th>
+                    <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Incl. team</th>
                     <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Totaal/mnd</th>
                     <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Per gebruiker</th>
                   </tr>
@@ -305,6 +315,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                   {scaleRows.map(row => (
                     <tr key={row.n}>
                       <td style={{ padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{row.n.toLocaleString('nl-NL')}</td>
+                      <td style={{ textAlign: 'right', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#6b7280' }}>{row.totaalGebruikers.toLocaleString('nl-NL')}</td>
                       <td style={{ textAlign: 'right', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{fmtUSD0(row.totaal)}</td>
                       <td style={{ textAlign: 'right', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#f59e0b', fontWeight: 700 }}>{fmtUSD(row.perGebruiker)}</td>
                     </tr>
