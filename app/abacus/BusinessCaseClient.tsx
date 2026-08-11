@@ -249,8 +249,12 @@ export default function BusinessCaseClient({
   // zichtbare melding als het teamvolume het solo-aantal met een veelvoud overstijgt,
   // zodat een verouderd/vergeten teamscenario (bijv. nog ingesteld op een veel grotere
   // testschaal) niet onopgemerkt een intern inconsistent totaalbeeld oplevert.
-  const teamVsSoloRatio = nGebruikers > 0 ? scenario.teamLeden / nGebruikers : (scenario.teamLeden > 0 ? Infinity : 0)
-  const teamVolumeWaarschuwing = scenario.teamLeden > 0 && teamVsSoloRatio > 5
+  // Alleen relevant als er ook echt een solo-aantal is om tegen af te zetten: bij 0
+  // solo-gebruikers is "alleen teamklanten" een volkomen valide scenario, geen
+  // afwijking om te signaleren (besloten 2026-08-11, was eerder een Infinity-bug
+  // die de melding altijd liet afvuren zodra solo op 0 stond).
+  const teamVsSoloRatio = nGebruikers > 0 ? scenario.teamLeden / nGebruikers : 0
+  const teamVolumeWaarschuwing = nGebruikers > 0 && scenario.teamLeden > 0 && teamVsSoloRatio > 5
 
   const benodigdeGebruikers = useMemo(
     () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit),
