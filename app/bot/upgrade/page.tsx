@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import BotNav from '../BotNav'
 import UpgradeButton from './UpgradeButton'
+import { SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,12 +44,12 @@ export default async function UpgradePage() {
 
         {plan === 'basis' && (
           <div style={section}>
-            <p style={label}>PREMIUM</p>
+            <p style={label}>PRO</p>
             <p style={body}>
               Onbeperkte coaching, gesproken antwoorden met ArnoBot Voice, en 100 berichten per dag in plaats van 25. Vraag hieronder een upgrade aan, Arno regelt de rest persoonlijk.
             </p>
             <UpgradeButton
-              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Premium"
+              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Pro"
               label="VRAAG AAN →"
               eventName="upgrade_premium_click"
             />
@@ -59,11 +60,11 @@ export default async function UpgradePage() {
           <div style={section}>
             <p style={label}>TEAM</p>
             <p style={body}>
-              Voor meerdere gebruikers onder één deal. Iedereen in het team krijgt premium-niveau. Prijs op aanvraag, afgestemd op de grootte van je team.
+              Voor meerdere gebruikers onder één deal. Iedereen in het team krijgt Pro-niveau. Vanaf €{SCENARIO_TEAM_PRIJS.basisMaandelijks} per maand + €{SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks} per gebruiker, vanaf 3 gebruikers. Bekijk de actuele prijs en vraag je team aan.
             </p>
             <UpgradeButton
-              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Team"
-              label="VRAAG AAN →"
+              href="/team"
+              label="BEKIJK TEAM →"
               eventName="upgrade_team_click"
             />
           </div>

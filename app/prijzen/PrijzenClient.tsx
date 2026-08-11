@@ -2,15 +2,21 @@
 
 import { useState } from 'react'
 import SignupCTA from '../components/SignupCTA'
+import { SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
-// Eén bron voor de getoonde bedragen, zodat Basic/Pro nergens dubbel als losse
-// hardgecodeerde strings staan.
-const BASIC_MAANDELIJKS = 29
-const BASIC_JAARLIJKS = 19
-const PRO_MAANDELIJKS = 59
-const PRO_JAARLIJKS = 39
+// Bedragen komen uit lib/kostenTarieven.ts, dezelfde bron als Abacus
+// (besloten 2026-08-10): voorkomt dat /prijzen en de interne rekentool
+// stilletjes uit elkaar lopen bij een toekomstige prijswijziging.
+const BASIC_MAANDELIJKS = SCENARIO_PRIJZEN.basicMaandelijks
+const BASIC_JAARLIJKS = SCENARIO_PRIJZEN.basicJaarlijksTotaal / 12
+const PRO_MAANDELIJKS = SCENARIO_PRIJZEN.proMaandelijks
+const PRO_JAARLIJKS = SCENARIO_PRIJZEN.proJaarlijksTotaal / 12
+const TEAM_BASIS_MAANDELIJKS = SCENARIO_TEAM_PRIJS.basisMaandelijks
+const TEAM_BASIS_JAARLIJKS = SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12
+const TEAM_PERGEBRUIKER_MAANDELIJKS = SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks
+const TEAM_PERGEBRUIKER_JAARLIJKS = SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12
 
 export default function PrijzenClient({ demoLink }: { demoLink: string | null }) {
   const [cyclus, setCyclus] = useState<Cyclus>('jaarlijks')
@@ -165,14 +171,18 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <div className="prijzen-tier-price-block">
             <div className="prijzen-tier-amount">
               <span className="prijzen-tier-currency">€</span>
-              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? '77' : '97'}</span>
+              <span className="prijzen-tier-num">{cyclus === 'jaarlijks' ? TEAM_BASIS_JAARLIJKS : TEAM_BASIS_MAANDELIJKS}</span>
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '+ €39 per gebruiker, vanaf 3 gebruikers' : '+ €49 per gebruiker, vanaf 3 gebruikers'}
+              {cyclus === 'jaarlijks'
+                ? `+ €${TEAM_PERGEBRUIKER_JAARLIJKS} per gebruiker, vanaf 3 gebruikers`
+                : `+ €${TEAM_PERGEBRUIKER_MAANDELIJKS} per gebruiker, vanaf 3 gebruikers`}
             </p>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? '€924 + €468 per gebruiker, per jaar' : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks'
+                ? `€${TEAM_BASIS_JAARLIJKS * 12} + €${TEAM_PERGEBRUIKER_JAARLIJKS * 12} per gebruiker, per jaar`
+                : 'Maandelijks opzegbaar.'}
             </p>
           </div>
 
