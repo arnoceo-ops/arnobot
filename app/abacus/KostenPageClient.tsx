@@ -4,7 +4,7 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
-import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT } from '@/lib/kostenTarieven'
+import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, DEFAULT_INPUTS, type Inputs } from '@/lib/kostenTarieven'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -35,6 +35,13 @@ export default function KostenPageClient() {
   // (2026-08-10, bij de Team-jaaroptie) volgt hetzelfde patroon als billingSplit.
   const [teamScenario, setTeamScenario] = useState(DEFAULT_TEAM_SCENARIO)
   const [teamBillingSplit, setTeamBillingSplit] = useState(DEFAULT_TEAM_BILLING_SPLIT)
+  // Instelbare aannames (berichten/gebruiker, coaching, voice, enz.): stond
+  // eerder alleen lokaal in KostenCalculatorClient, waardoor tab 3 altijd
+  // DEFAULT_INPUTS gebruikte en aanpassingen op tab 1 nergens in doorwerkten
+  // (besloten 2026-08-11, gevonden bij audit + bevestigd door Arno: dit was
+  // altijd de bedoeling, zie de Inputs-type-comment in lib/kostenTarieven.ts).
+  // Nu gedeeld, zelfde patroon als de rest van deze state.
+  const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
   // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
   // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
   // Business case, verder alleen in geheugen (niet opgeslagen).
@@ -74,6 +81,8 @@ export default function KostenPageClient() {
           betaalprovider={betaalprovider}
           teamScenario={teamScenario}
           teamBillingSplit={teamBillingSplit}
+          inputs={inputs}
+          setInputs={setInputs}
         />
       )}
 
@@ -103,6 +112,7 @@ export default function KostenPageClient() {
             betaalprovider={betaalprovider} setBetaalprovider={setBetaalprovider}
             teamScenario={teamScenario} setTeamScenario={setTeamScenario}
             teamBillingSplit={teamBillingSplit} setTeamBillingSplit={setTeamBillingSplit}
+            inputs={inputs}
           />
         </div>
       )}

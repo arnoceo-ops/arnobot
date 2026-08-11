@@ -44,6 +44,12 @@ export const TARIEVEN = {
   vercelSeats: 1,
   vercelPerSeat: 20,
   supabaseProUsd: 25,
+  // Bevestigd door Arno: op 2026-08-10 geüpgraded naar Supabase Pro. Zelfde
+  // patroon als clerkProActief hieronder (besloten 2026-08-11, gevonden bij
+  // audit: vasteKostenPerMaand() telde supabaseProUsd voorheen altijd mee,
+  // zonder toggle, terwijl computeScenarioKosten dat wél voorwaardelijk deed
+  // via inputs.supabasePro).
+  supabaseProActief: true,
   clerkProUsd: 100,
   clerkProActief: false,
   sentryEur: 26,
@@ -94,16 +100,19 @@ export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: n
 
 export function vasteKostenPerMaand(): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
-    + TARIEVEN.supabaseProUsd
+    + (TARIEVEN.supabaseProActief ? TARIEVEN.supabaseProUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
     + TARIEVEN.sentryEur * TARIEVEN.fxRateEurUsd
     + TARIEVEN.domeinPerJaarUsd / 12
 }
 
-// Volledige input-set voor computeForN: TARIEVEN (rates) + instelbare
-// volume-aannames. Gedeeld tussen de Calculator (tab 1, instelbaar per
-// gebruiker) en het Scenario-blok op Business case (tab 3, hypothetisch
-// gebruikersaantal), zodat beide exact dezelfde rekenregels gebruiken.
+// Volledige input-set voor computeScenarioKosten: TARIEVEN (rates) +
+// instelbare volume-aannames. State leeft in KostenPageClient.tsx en wordt
+// gedeeld tussen de Calculator (tab 1, instelbaar per gebruiker) en het
+// Scenario-blok op Business case (tab 3, hypothetisch gebruikersaantal),
+// zodat beide daadwerkelijk exact dezelfde rekenregels gebruiken (besloten
+// 2026-08-11: stond hiervoor alleen lokaal in tab 1, tab 3 gebruikte altijd
+// DEFAULT_INPUTS ongeacht wat op tab 1 was aangepast, zie audit-bevindingen).
 export type Inputs = {
   berichten: number
   anthropicPerBericht: number
@@ -178,10 +187,9 @@ export const DEFAULT_INPUTS: Inputs = {
   tiers: TARIEVEN.tiers,
   vercelSeats: TARIEVEN.vercelSeats,
   vercelPerSeat: TARIEVEN.vercelPerSeat,
-  // Arno gaat binnenkort echt upgraden naar Supabase Pro (2026-07-31), dus
-  // weer op true. Was kort op false gezet (nog op Free-plan op het moment
-  // van checken), zie CLAUDE.md voor de context van die check.
-  supabasePro: true,
+  // Bevestigd 2026-08-10 daadwerkelijk geüpgraded. Sinds 2026-08-11 (audit)
+  // niet meer los hardgecodeerd, maar dezelfde bron als vasteKostenPerMaand().
+  supabasePro: TARIEVEN.supabaseProActief,
   clerkPro: TARIEVEN.clerkProActief,
   sentryEur: TARIEVEN.sentryEur,
   fxRate: TARIEVEN.fxRateEurUsd,
@@ -190,52 +198,6 @@ export const DEFAULT_INPUTS: Inputs = {
   upstashPrice: TARIEVEN.upstashPricePer100k,
   domeinPerJaar: TARIEVEN.domeinPerJaarUsd,
   teamOverheadPerLid: TARIEVEN.teamOverheadPerLidPerMaandUsd,
-}
-
-export function computeForN(inputs: Inputs, n: number) {
-  const totaalBerichten = n * inputs.berichten
-  const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
-  const analysesKosten = n * inputs.analysesPerGebruiker * inputs.kostenPerAnalyse
-  const fable5Kosten = n * (
-    inputs.coachingPerGebruiker * inputs.coachingKostenPerSynthese
-    + inputs.uitdagingPerGebruiker * inputs.uitdagingKostenPerStuk
-  )
-
-  const sparringGebruikers = n * (inputs.pctSparring / 100)
-  const totaalSparringSessies = sparringGebruikers * inputs.sparringSessiesPerGebruiker
-  const totaalSparringBerichten = totaalSparringSessies * inputs.berichtenPerSparringSessie
-  const sparringKosten = totaalSparringBerichten * inputs.kostenPerSparringBericht
-    + totaalSparringSessies * inputs.kostenPerDebrief
-
-  const overigeAnthropicKosten = n * inputs.overigeAnthropicPerGebruiker
-
-  const voiceGebruikers = n * (inputs.pctVoice / 100)
-  const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
-  const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
-  const creditsNodig = totaalTekens * inputs.creditPerTeken
-  const eleven = elevenLabsCost(creditsNodig, inputs.tiers)
-  const whisperKosten = totaalInteracties * inputs.kostenPerInteractie
-
-  const upstashCommands = totaalBerichten * inputs.upstashPerBericht
-  const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
-  const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
-
-  const sentryUsd = inputs.sentryEur * inputs.fxRate
-  const domeinPerMaand = inputs.domeinPerJaar / 12
-  const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
-    + (inputs.supabasePro ? 25 : 0)
-    + (inputs.clerkPro ? 100 : 0)
-    + sentryUsd
-    + domeinPerMaand
-
-  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + upstashKosten
-
-  return {
-    vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
-    elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, upstashKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
-  }
 }
 
 // Basic en Pro in het Scenario-blok (tab 3): geen aparte kostenformule zoals
@@ -249,12 +211,8 @@ export function computeForN(inputs: Inputs, n: number) {
 //   (coaching-analyse/route.ts), dus een veel lagere maandaanname dan Pro's
 //   instelbare aantal.
 // - Sparren: geen tier-check gevonden in de routes, dus gelijk voor beide.
-// Bewust een losse functie i.p.v. hergebruik van computeForN met n=totaal:
-// vaste kosten mogen maar één keer meetellen, en de voice/coaching/analyses-
-// termen moeten per tier een andere N gebruiken, dat past niet in de bestaande
-// computeForN-signatuur zonder tab 1 (die geen tier-onderscheid kent) te
-// compliceren. Zelfde rekenregels als computeForN, hou bij een tariefwijziging
-// beide functies synchroon.
+// Vaste kosten tellen maar één keer mee, de voice/coaching/analyses-termen
+// gebruiken per tier een andere N (proEffectief vs. basicN, zie hieronder).
 const BASIC_ANALYSES_PER_MAAND = 4
 
 // teamLeden (besloten 2026-08-01): Team-leden krijgen "Alles van Pro, plus:",

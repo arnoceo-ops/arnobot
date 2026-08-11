@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import {
-  DEFAULT_INPUTS, computeScenarioKosten, type Inputs,
+  computeScenarioKosten, type Inputs,
   berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
@@ -105,10 +105,11 @@ type Props = {
   betaalprovider: Betaalprovider
   teamScenario: TeamScenario
   teamBillingSplit: TeamBillingSplit
+  inputs: Inputs
+  setInputs: React.Dispatch<React.SetStateAction<Inputs>>
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario, teamBillingSplit }: Props) {
-  const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs, setInputs }: Props) {
   const [tiersOpen, setTiersOpen] = useState(false)
 
   // Tier-bewust, net als tab 3 (Business case): de instelbare aannames

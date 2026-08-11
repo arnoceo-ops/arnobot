@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import {
-  TARIEVEN, DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
-  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
+  TARIEVEN, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
+  type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
 import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
@@ -45,23 +45,23 @@ const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
 // vaste aannames tijdens het zoeken.
 function winstBijN(
   n: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): number {
   const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team, teamBillingSplit)
-  const kostenEur = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN, teamLeden).totaal / FX_EUR_USD
+  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / FX_EUR_USD
   return omzetTotaal - kostenEur - betaalproviderKosten
 }
 
 function benodigdeGebruikersVoorWinst(
   doelWinstEur: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit
+  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): number | null {
-  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider, team, teamBillingSplit) < doelWinstEur) return null
+  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs) < doelWinstEur) return null
   let lo = 0
   let hi = MAX_GEBRUIKERS_ZOEKGRENS
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2)
-    if (winstBijN(mid, billingSplit, verdeling, betaalprovider, team, teamBillingSplit) >= doelWinstEur) hi = mid
+    if (winstBijN(mid, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs) >= doelWinstEur) hi = mid
     else lo = mid + 1
   }
   return lo
@@ -80,28 +80,28 @@ const MAX_SCHAAL_ZOEKGRENS = 10_000_000
 
 function winstBijSchaal(
   schaal: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
-  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit
+  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): number {
   const team: TeamScenario = { aantalKlanten: baseTeam.aantalKlanten * schaal, gemiddeldeLeden: baseTeam.gemiddeldeLeden }
-  return winstBijN(baseN * schaal, billingSplit, verdeling, betaalprovider, team, teamBillingSplit)
+  return winstBijN(baseN * schaal, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs)
 }
 
 function benodigdeSchaalVoorWinst(
   doelWinstEur: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
-  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit
+  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): { solo: number; teamKlanten: number; teamLeden: number; totaal: number } | null {
   // Bij solo=0 én teamklanten=0 kan een factor niets laten groeien (0 x schaal
   // blijft altijd 0), dus onbepaald i.p.v. eindeloos zoeken.
   if (baseN <= 0 && baseTeam.aantalKlanten <= 0) return null
   let hi = 1
-  while (winstBijSchaal(hi, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit) < doelWinstEur) {
+  while (winstBijSchaal(hi, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit, inputs) < doelWinstEur) {
     if (hi > MAX_SCHAAL_ZOEKGRENS) return null
     hi *= 2
   }
   let lo = 0
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2
-    if (winstBijSchaal(mid, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit) >= doelWinstEur) hi = mid
+    if (winstBijSchaal(mid, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit, inputs) >= doelWinstEur) hi = mid
     else lo = mid
   }
   const solo = Math.round(baseN * hi)
@@ -224,6 +224,7 @@ type Props = {
   setTeamScenario: (t: TeamScenario) => void
   teamBillingSplit: TeamBillingSplit
   setTeamBillingSplit: (t: TeamBillingSplit) => void
+  inputs: Inputs
 }
 
 export default function BusinessCaseClient({
@@ -233,16 +234,17 @@ export default function BusinessCaseClient({
   betaalprovider, setBetaalprovider,
   teamScenario, setTeamScenario,
   teamBillingSplit, setTeamBillingSplit,
+  inputs,
 }: Props) {
   const [doelWinst, setDoelWinst] = useState(10000)
 
   const scenario = useMemo(() => {
     const { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld } =
       berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
-    const kostenUsd = computeScenarioKosten(DEFAULT_INPUTS, basicN, proN, teamLeden).totaal
+    const kostenUsd = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal
     const kostenEur = kostenUsd / FX_EUR_USD
     return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
-  }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario, teamBillingSplit])
+  }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs])
 
   const totaalGebruikers = scenario.basicN + scenario.proN + scenario.teamLeden
   const pctTeamVanTotaal = totaalGebruikers > 0 ? (scenario.teamLeden / totaalGebruikers) * 100 : 0
@@ -261,12 +263,12 @@ export default function BusinessCaseClient({
   const teamVolumeWaarschuwing = nGebruikers > 0 && scenario.teamLeden > 0 && teamVsSoloRatio > 5
 
   const benodigdeGebruikers = useMemo(
-    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit),
-    [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit]
+    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit, inputs),
+    [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit, inputs]
   )
   const benodigdeSchaal = useMemo(
-    () => benodigdeSchaalVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit),
-    [doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit]
+    () => benodigdeSchaalVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit, inputs),
+    [doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit, inputs]
   )
 
   return (
