@@ -27,6 +27,12 @@ export default function TeamAanvraagPage() {
   const [eliteAantal, setEliteAantal] = useState(1)
 
   const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats, cyclus), [aantalSeats, cyclus])
+  // Elite-surplus meteen in de getoonde prijs verwerkt (besloten 2026-08-11,
+  // op Arno's verzoek): geen aparte jaarkorting op dit bedrag, dus telt bij
+  // jaarlijks gewoon voor het volle bedrag mee in de x12-jaarprijs, net als
+  // het platformtarief/gebruikerstarief dat al doen.
+  const eliteSurplusTotaal = eliteInteresse ? eliteAantal * TEAM_ELITE_SURPLUS_PER_MAAND : 0
+  const prijsMetElite = prijs === null ? null : prijs + eliteSurplusTotaal
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -246,24 +252,30 @@ export default function TeamAanvraagPage() {
                 )}
 
                 <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor €{TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid. We nemen dit mee in je offerte.
+                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor €{TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid.
                 </p>
 
                 <div className="ca-prijs-box">
-                  {prijs === null ? (
+                  {prijsMetElite === null ? (
                     <>
                       <p className="ca-prijs-num">Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers</p>
                       <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
                     </>
                   ) : cyclus === 'jaarlijks' ? (
                     <>
-                      <p className="ca-prijs-num">€{prijs * 12} / jaar</p>
-                      <p className="ca-prijs-sub">€77 platformtarief + €39 per gebruiker, maand-equivalent, exclusief btw</p>
+                      <p className="ca-prijs-num">€{prijsMetElite * 12} / jaar</p>
+                      <p className="ca-prijs-sub">
+                        €77 platformtarief + €39 per gebruiker, maand-equivalent
+                        {eliteInteresse && <> + €{TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief btw
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p className="ca-prijs-num">€{prijs} / maand</p>
-                      <p className="ca-prijs-sub">€97 platformtarief + €49 per gebruiker, exclusief btw</p>
+                      <p className="ca-prijs-num">€{prijsMetElite} / maand</p>
+                      <p className="ca-prijs-sub">
+                        €97 platformtarief + €49 per gebruiker
+                        {eliteInteresse && <> + €{TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief btw
+                      </p>
                     </>
                   )}
                 </div>
