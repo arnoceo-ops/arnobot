@@ -249,8 +249,8 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
           <div style={{ position: 'sticky', top: 20 }}>
             <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
               <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Resultaat</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <label style={{ fontSize: 12.5, color: '#94a3b8' }} htmlFor="nGebruikers">Aantal gebruikers</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <label style={{ fontSize: 12.5, color: '#94a3b8' }} htmlFor="nGebruikers">Aantal solo-gebruikers</label>
                 <input
                   id="nGebruikers"
                   type="number"
@@ -259,6 +259,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                   onChange={e => setNGebruikers(parseFloat(e.target.value) || 0)}
                 />
               </div>
+              <p style={{ fontSize: 11.5, color: '#6b7280', marginBottom: 14 }}>Basic + Pro. Team-leden komen hier apart bovenop, zie toelichting onderaan.</p>
               <div style={{ fontSize: 12.5, color: '#94a3b8' }}>Totale kosten per gebruiker per maand</div>
               <div style={{ fontSize: 'clamp(36px,5vw,48px)', fontWeight: 800, color: '#f59e0b', lineHeight: 1, margin: '4px 0 2px', fontVariantNumeric: 'tabular-nums' }}>
                 {fmtUSD(result.perGebruiker)}

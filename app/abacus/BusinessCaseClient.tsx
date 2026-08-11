@@ -199,6 +199,15 @@ export default function BusinessCaseClient({
 
   const totaalGebruikers = scenario.basicN + scenario.proN + scenario.teamLeden
   const pctTeamVanTotaal = totaalGebruikers > 0 ? (scenario.teamLeden / totaalGebruikers) * 100 : 0
+  // Team schaalt bewust los van nGebruikers (zie berekenScenarioOmzetEnBetaalprovider
+  // in lib/kostenTarieven.ts), zodat teamgroei onafhankelijk van solo-groei te
+  // verkennen is. Geen harde blokkade hierop (zelfde reden als de clamp()-functie
+  // hierboven: intern tool, legitieme stresstest-scenario's moeten kunnen), wel een
+  // zichtbare melding als het teamvolume het solo-aantal met een veelvoud overstijgt,
+  // zodat een verouderd/vergeten teamscenario (bijv. nog ingesteld op een veel grotere
+  // testschaal) niet onopgemerkt een intern inconsistent totaalbeeld oplevert.
+  const teamVsSoloRatio = nGebruikers > 0 ? scenario.teamLeden / nGebruikers : (scenario.teamLeden > 0 ? Infinity : 0)
+  const teamVolumeWaarschuwing = scenario.teamLeden > 0 && teamVsSoloRatio > 5
 
   const benodigdeGebruikers = useMemo(
     () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit),
@@ -216,7 +225,11 @@ export default function BusinessCaseClient({
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
-        <NumberField label="Totaal aantal gebruikers" hint="gedeeld met de Calculator (tab 1)" value={nGebruikers} onChange={setNGebruikers} formatThousands />
+        <NumberField
+          label="Aantal solo-gebruikers (Basic + Pro)"
+          hint="Excl. Team, dat schaalt hieronder los (zie &quot;# teamklanten&quot;). Gedeeld met de Calculator (tab 1)."
+          value={nGebruikers} onChange={setNGebruikers} formatThousands
+        />
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 80 }}>
           <div>
@@ -253,6 +266,11 @@ export default function BusinessCaseClient({
               <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_GEBRUIKERS) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
+            {teamVolumeWaarschuwing && (
+              <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginBottom: 12 }}>
+                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} teamleden is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo-gebruikers hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: clamp(v, 0, 100) })} />
               <TariefDisplay label="Team basis" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
@@ -284,7 +302,7 @@ export default function BusinessCaseClient({
             <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}># users</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
+            <div style={statCellStyle}><div style={statLabel}># gebruikers (incl. team)</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
@@ -294,13 +312,13 @@ export default function BusinessCaseClient({
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
         <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          <div>Berekening staat los van &quot;Totaal aantal gebruikers&quot; en verandert dat veld niet.</div>
-          <div>Rekent met dezelfde tarieven en %-verdeling.</div>
+          <div>Berekening staat los van &quot;Aantal solo-gebruikers&quot; hierboven en verandert dat veld niet.</div>
+          <div>Team-scenario (# teamklanten/# teamleden) blijft tijdens het zoeken constant, alleen het aantal solo-gebruikers wordt gevarieerd. Rekent met dezelfde tarieven en %-verdeling.</div>
         </div>
         <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} formatThousands />
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
           <div>
-            <div style={statLabel}>Benodigd aantal gebruikers</div>
+            <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
             <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
           </div>
         </div>
