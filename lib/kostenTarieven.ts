@@ -347,8 +347,8 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 // in de UI, de enige keuzeopties zijn de %-verdeling (TierVerdeling) en de
 // %-betaalcyclus per tier (ScenarioBillingSplit). TARIEVEN.prijsBasisEur/
 // prijsPremiumEur hierboven zijn in dezelfde beslissing meegewijzigd naar
-// 29/59. Nog niet doorgevoerd op arno.bot/prijzen zelf, dat is een apart,
-// nog niet gepland traject (zie project_basic_pro_rename_pending geheugen).
+// 29/59. Sinds 2026-08-10 importeert app/prijzen/PrijzenClient.tsx deze
+// constanten direct, dezelfde bron, geen losse hardgecodeerde bedragen meer.
 export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 59, proJaarlijksTotaal: 468 }
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }

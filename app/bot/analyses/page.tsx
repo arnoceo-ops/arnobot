@@ -753,7 +753,7 @@ export default function GeschiedenisPage() {
         {analyseLimiet && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 16 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', lineHeight: 1.9, border: '1px solid #f59e0b', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
-              Je hebt vandaag al een analyse gemaakt. Basis-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug of <Link href="/bot/upgrade" style={{ color: '#f59e0b', textDecoration: 'underline' }}>upgrade naar Premium</Link> voor onbeperkte analyses.
+              Je hebt vandaag al een analyse gemaakt. Basic-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug of <Link href="/bot/upgrade" style={{ color: '#f59e0b', textDecoration: 'underline' }}>upgrade naar Pro</Link> voor onbeperkte analyses.
             </p>
           </div>
         )}

@@ -2,6 +2,8 @@
 
 Dit document legt de besluiten vast voor de nieuwe abonnementslaag "ArnoBot Voice" en de bijbehorende technische aanpak. Besluiten hieronder staan vast. Zie Status voor waar het traject nu staat, en Beantwoorde ontwerpvragen onderaan voor de ontwerpbeslissingen genomen na de eerste audit.
 
+**Let op (2026-08-10):** de bedragen/namen hieronder (bijv. "basis/premium/team", €97/mnd) zijn een momentopname van 2026-07-19/20. De abonnementsstructuur is sindsdien verder herzien naar Basic/Pro/Team met nieuwe tarieven, zie `docs/PRICING_DECISIONS.md` voor de actuele, geldende bedragen. Dit document blijft staan als historisch besluitenlog voor de voice-functionaliteit zelf, niet als actuele prijsbron.
+
 ---
 
 ## Concept — grotendeels besloten en gebouwd (2026-07-20), zie Status hieronder voor details

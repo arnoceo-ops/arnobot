@@ -14,6 +14,11 @@ const COLORS: Record<Plan, { bg: string; color: string }> = {
   team: { bg: '#22c55e', color: '#111827' },
 }
 
+// Databasewaarde blijft basis/premium/elite/team (geen migratie, zie
+// docs/PRICING_DECISIONS.md), alleen het getoonde label volgt de huidige
+// marketingnaam (Basic/Pro/Elite/Team) i.p.v. de rauwe kolomwaarde.
+const LABELS: Record<Plan, string> = { basis: 'BASIC', premium: 'PRO', elite: 'ELITE', team: 'TEAM' }
+
 export default function PlanToggle({ userId, currentPlan }: { userId: string; currentPlan: Plan }) {
   const [plan, setPlan] = useState(currentPlan)
   const [loading, setLoading] = useState(false)
@@ -52,7 +57,7 @@ export default function PlanToggle({ userId, currentPlan }: { userId: string; cu
         minWidth: 68,
       }}
     >
-      {plan.toUpperCase()}
+      {LABELS[plan]}
     </button>
   )
 }

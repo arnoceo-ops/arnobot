@@ -9,13 +9,13 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 ## Status
 
 **Laatst bijgewerkt:** 2026-08-10
-**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`, Business case-tab) heeft dezelfde Team-jaaroptie nu ook als instelbaar scenario (%-schuif "Team jaarlijks"), zodat het effect op de Doelwinst-solver live te verkennen is.
+**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`, Business case-tab) heeft dezelfde Team-jaaroptie nu ook als instelbaar scenario (%-schuif "Team jaarlijks"), zodat het effect op de Doelwinst-solver live te verkennen is. `/prijzen` haalt zijn bedragen nu ook uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd.
+**Gevonden bij de financiële doorlichting (2026-08-10):** `/bot/upgrade` (bestaande gebruikers die willen upgraden) verwees nog naar "Premium" i.p.v. "Pro", en zei bij Team "prijs op aanvraag" terwijl Team al een echte berekende prijs heeft. Naam gecorrigeerd, Team-knop linkt nu naar `/team` i.p.v. een kale mailto. "Team Spotlight" (`app/api/bot/team/spotlight`) bleek een al bestaande, werkende functie die geen bullet meer heeft op de nieuwe Team-kaart, zie open punt hieronder.
 **Eerstvolgende stap:** geen vaste volgorde afgesproken:
-- `[ ]` `/prijzen` koppelen aan `lib/kostenTarieven.ts` in plaats van eigen hardgecodeerde bedragen
-- `[ ]` Besluiten of de wekelijkse Team Spotlight-bullet terugkomt op de Team-kaart
-- `[ ]` Verifiëren of de upgrade-flow individuele Pro-trial → Team al functioneel bestaat in de app
+- `[ ]` Besluiten of/hoe de Team Spotlight-functie (bestaat al, werkt al) terugkomt als bullet op de `/prijzen`-Team-kaart
 - `[ ]` Besluiten of Elite nog actief aan nieuwe klanten aangeboden wordt nu de tier niet meer op `/prijzen` of `/bot/doorgaan` als publieke keuze staat (zie "Elite" hieronder)
 - `[ ]` Elite terugbrengen in de `/team`-aanvraagflow, incl. surplus-tarief (nog niet vastgesteld, zie geheugen `project-team-pricing`)
+- `[ ]` `app/bot/upgrade/page.tsx`'s `plan`-type dekt geen `'elite'` (alleen `'basis'|'premium'|'team'`), een Elite-gebruiker krijgt daardoor onbedoeld de "upgrade naar Team"-sectie te zien. Niet aangepast, want onduidelijk of Elite-gebruikers dat aanbod wel/niet zouden moeten zien, is een productbeslissing
 - `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow")
 
 ---

@@ -5,7 +5,7 @@ Dit document is bedoeld voor iemand die ArnoBot moet overnemen of draaiende moet
 Secties gemarkeerd met `[ARNO: ...]` zijn door Arno nog in te vullen.
 
 <!-- AUTO:UPDATED -->
-Laatste automatische update: 2026-08-01
+Laatste automatische update: 2026-08-10
 <!-- /AUTO:UPDATED -->
 
 ---
@@ -33,17 +33,31 @@ Managers kunnen een teammodule gebruiken: ze zien de voortgang van hun verkopers
 
 ## Verdienmodel
 
-**Individual (ArnoBot Unlimited):**
-- Maandelijks: €77/maand
-- Jaarlijks: €697/jaar (= €58,08/maand, korting ~24,6%)
+Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke tier. Volledige onderbouwing en beslissingsgeschiedenis: `docs/PRICING_DECISIONS.md`.
+
+**Basic:**
+- Maandelijks: €29/maand
+- Jaarlijks: €228/jaar (= €19/maand, korting ~34%)
 - Trial: 30 dagen gratis, geen creditcard vereist
 
-**Team (staffelprijs):**
-- [ARNO: vul de actieve teamprijzen in zodra de teammodule live is]
+**Pro:**
+- Maandelijks: €59/maand
+- Jaarlijks: €468/jaar (= €39/maand, korting ~34%)
+- Trial: 30 dagen gratis, geen creditcard vereist
+
+**Team:**
+- €97/maand platformtarief (managerlaag) + €49/gebruiker/maand, vanaf 3 gebruikers
+- Jaarlijks: €924/jaar platform + €468/gebruiker/jaar (= €77 + €39/maand-equivalent, korting ~20%)
+- Geen aparte trial: de manager start zelf als individuele Pro-gebruiker en upgradet later. Aanvraag via https://arno.bot/team (formulier, geen automatische betaling)
+
+**Elite (niet publiek, alleen handmatig toe te kennen):**
+- €397/maand, individueel, hoog-contact, maximaal 50 actieve klanten
+- Staat niet meer op de prijzenpagina, alleen toekenbaar via het admin-paneel
 
 **Referral:**
 - Elke gebruiker heeft een referralcode
-- Geslaagde referral (iemand schrijft in) geeft de referrer een credit
+- Tegoed ontstaat alleen als de nieuw geworven gebruiker voor Pro of Team kiest (niet bij Basic)
+- Tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement
 - Credit werkt als korting op de volgende verlengingsbetaling, niet als cashback
 
 **Betalingsverwerking:**

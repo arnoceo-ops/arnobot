@@ -104,13 +104,13 @@ Elke nieuwe gebruiker krijgt bij aanmelden nog steeds `plan='premium'` als trial
 
 ## `/prijzen` live gezet (2026-08-02)
 
-`app/prijzen/PrijzenClient.tsx` en `app/prijzen/page.tsx` (metadata) zijn bijgewerkt naar de Basic/Pro/Team-driekolom uit dit document, getest in de browser (toggle, Pro-uitlichting, Team blijft vast). Bewust **niet** meegenomen in deze stap, blijft open voor een vervolgronde:
+`app/prijzen/PrijzenClient.tsx` en `app/prijzen/page.tsx` (metadata) zijn bijgewerkt naar de Basic/Pro/Team-driekolom uit dit document, getest in de browser (toggle, Pro-uitlichting, Team blijft vast). Wat toen bewust nog open bleef, status per 2026-08-10 (financiële doorlichting):
 
-- **`app/bot/doorgaan/DoorgaanClient.tsx`**: neemt volgens `ABONNEMENTEN.md` letterlijk dezelfde bullets/prijzen/toggle over van `/prijzen`, loopt nu dus uit de pas met de nieuwe pagina.
-- **Koppeling aan `lib/kostenTarieven.ts`**: `/prijzen` hardcodet de bedragen nog zelf, verwijst niet naar `TARIEVEN.prijsBasisEur`/`prijsPremiumEur` (die al wel op 29/59 staan). Twee plekken die uit elkaar kunnen lopen bij een volgende prijswijziging.
-- **`lib/email-templates.ts` + `QAClient.tsx`** (referral-FAQ): bevatten nog oude bedragen/namen.
-- **`/command`**: bestaande publieke aanvraagpagina (staffelprijs, factuurgegevens, "vraag een demo aan"), nog niet besloten of die verdwijnt/redirect of blijft bestaan naast de nieuwe self-serve Team-instap.
-- **Wekelijkse Team Spotlight-bullet**: staat nog op de oude live Command-kaart, ontbreekt in de bullet-set hierboven. Nog niet besloten of die terugkomt.
-- **Voice-cap fase 2:** momenteel geen maandelijkse limiet voor betalende gebruikers. Zodra er ooit wel een cap wordt gebouwd (nog niet gepland), moet de "Gesproken antwoorden" bullet bij Pro opnieuw beoordeeld worden.
-- **Verifiëren, niet aannemen:** bestaat de upgrade flow van individuele Pro-trial naar Team al in de app (facturatie overgang, teamleden uitnodigen vanuit bestaand Pro-account, meenemen van de manager's eigen gespreksdata)? Zo niet, dit toevoegen aan de Deel B werklijst.
+- **`app/bot/doorgaan/DoorgaanClient.tsx`**: ✅ opgelost, synchroon met `/prijzen`.
+- **Koppeling aan `lib/kostenTarieven.ts`**: ✅ opgelost, `/prijzen` importeert nu `SCENARIO_PRIJZEN`/`SCENARIO_TEAM_PRIJS` direct.
+- **`lib/email-templates.ts` + `QAClient.tsx`** (referral-FAQ): ✅ opgelost, samen met de bredere referral-trigger/plafondregel (zie `docs/ABONNEMENTEN.md`, "Referralprogramma").
+- **`/command`**: ✅ opgelost, verplaatst naar `/team` (geen redirect, geen dubbele pagina meer).
+- **Wekelijkse Team Spotlight-bullet**: nog open. De functie zelf bestaat en werkt (`app/api/bot/team/spotlight`), staat alleen niet als bullet op de nieuwe Team-kaart. Besluit nodig: terugbrengen of niet.
+- **Voice-cap fase 2:** nog steeds niet van toepassing, geen maandelijkse limiet gebouwd, geen wijziging nodig totdat dat verandert.
+- **Upgrade-flow individuele Pro-trial → Team**: geverifieerd (2026-08-10): bestaat als `/bot/upgrade`, maar is een handmatige mailto-aanvraag (Arno regelt de rest persoonlijk), geen geautomatiseerde facturatie-overgang of teamleden-uitnodiging. Consistent met de rest van Team's facturatieproces (ook handmatig), dus geen gat t.o.v. wat er al was, maar ook geen zelfstandige/geautomatiseerde flow.
 - Referentie implementatie (visueel/structureel prototype): conceptartefact "ArnoBot: Prijzen (concept)".
