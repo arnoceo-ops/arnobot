@@ -321,6 +321,15 @@ export default function BusinessCaseClient({
             <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
             <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
           </div>
+          <div>
+            <div style={statLabel}>Totaal incl. huidig teamscenario</div>
+            <div style={statValue}>
+              {benodigdeGebruikers === null ? '-' : (benodigdeGebruikers + scenario.teamLeden).toLocaleString('nl-NL')}
+            </div>
+            <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
+              = solo-gebruikers hierboven + de huidige {scenario.teamLeden.toLocaleString('nl-NL')} teamleden ({teamScenario.aantalKlanten} klanten &times; {teamScenario.gemiddeldeLeden})
+            </div>
+          </div>
         </div>
       </div>
 
