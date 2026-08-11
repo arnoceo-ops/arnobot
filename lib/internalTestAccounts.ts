@@ -7,7 +7,7 @@
 // Playwright E2E-testaccount (aangemaakt tegen de Clerk development-instance, zie
 // e2e/auth.setup.ts).
 export const E2E_TEST_USER_EMAIL = 'playwright-test@arno.bot'
-export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
+export const E2E_TEST_USER_ID = 'user_3HltNz2a86Bb1GtefjvZaDV005w'
 
 // Arno's eigen handmatige testaccount, voor interactief rondklikken buiten zijn echte
 // gebruiksaccount om. Ingelogd via de verborgen route app/sign-in/intern/page.tsx, niet via
