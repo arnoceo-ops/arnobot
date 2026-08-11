@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import {
-  DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
+  TARIEVEN, DEFAULT_INPUTS, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
 import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
-const FX_EUR_USD = 1.08
+// Was een losse hardgecodeerde 1.08 (besloten 2026-08-11, gevonden bij audit):
+// liep bij een toekomstige koerswijziging in TARIEVEN stil uit de pas met de
+// rest van de codebase. Nu dezelfde bron als tab 1/Trackrecord.
+const FX_EUR_USD = TARIEVEN.fxRateEurUsd
 
 // Stille clamping i.p.v. een blokkade/foutmelding: dit is Arno's eigen interne
 // tool, geen productieformulier. Voorkomt praktisch onmogelijke scenario's
@@ -20,7 +23,8 @@ function clamp(v: number, min: number, max = Infinity): number {
 
 function fmtEUR(n: number | null): string {
   if (n === null || n === undefined) return '-'
-  return '€ ' + n.toLocaleString('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const sign = n < 0 ? '-' : ''
+  return sign + '€ ' + Math.abs(n).toLocaleString('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 function margePct(omzet: number | null, kosten: number | null): string {
@@ -270,8 +274,8 @@ export default function BusinessCaseClient({
       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 18 }}>
         <TariefDisplay label="Basic (€)" value={String(DEFAULT_PRIJZEN.basis)} />
         <TariefDisplay label="Pro (€)" value={String(DEFAULT_PRIJZEN.premium)} />
-        <TariefDisplay label="Team basis (€)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
-        <TariefDisplay label="Team per user (€)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Team basis (vast, €)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Team p/user (vast, €)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
       </div>
 
       <div style={cardStyle}>
@@ -279,7 +283,7 @@ export default function BusinessCaseClient({
         <NumberField
           label="Aantal solo users (Basic + Pro)"
           hint="Excl. Team, dat schaalt hieronder los (zie &quot;# teamklanten&quot;). Gedeeld met de Calculator (tab 1)."
-          value={nGebruikers} onChange={setNGebruikers} formatThousands
+          value={nGebruikers} onChange={v => setNGebruikers(clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS))} formatThousands
         />
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 80 }}>
@@ -313,8 +317,8 @@ export default function BusinessCaseClient({
               <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
-              <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0) })} />
-              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_GEBRUIKERS) })} />
+              <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS) })} />
+              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_GEBRUIKERS, 10000) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
             {teamVolumeWaarschuwing && (
@@ -324,8 +328,8 @@ export default function BusinessCaseClient({
             )}
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: clamp(v, 0, 100) })} />
-              <TariefDisplay label="Team basis" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
-              <TariefDisplay label="Team p/user" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="Team basis (blend)" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="Team p/user (blend)" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
             </div>
           </div>
         </div>

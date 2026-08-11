@@ -68,14 +68,28 @@ export const TARIEVEN = {
   prijsEliteEur: 397,
 }
 
+// Boven de Business-tier: volle Business-tiers kopen voor het grootste deel,
+// en voor het restant de goedkoopste tier die dat nog dekt (kan een kleinere
+// tier zijn dan Business, dus niet altijd nog een hele Business erbij).
+// Besloten 2026-08-11 (gevonden bij audit): de oude versie kocht altijd hele
+// Business-tiers ook voor een klein restant (bv. €1980 i.p.v. €996 net boven
+// de grens), een structurele overschatting bij schaal. Geen volledige
+// combinatie-optimalisatie (tiers liggen dicht bij elkaar qua prijs/credit,
+// marginale winst daarvan is verwaarloosbaar voor een interne schattingstool).
 export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: number; name: string } {
   if (creditsNeeded <= 0) return { price: 0, name: '-' }
   for (const t of tiers) {
     if (creditsNeeded <= t.credits) return { price: t.price, name: t.name }
   }
   const business = tiers[tiers.length - 1]
-  const multiples = Math.ceil(creditsNeeded / business.credits)
-  return { price: business.price * multiples, name: `${business.name} x${multiples}` }
+  const wholeBusinessTiers = Math.floor(creditsNeeded / business.credits)
+  const rest = creditsNeeded - wholeBusinessTiers * business.credits
+  if (rest === 0) return { price: business.price * wholeBusinessTiers, name: `${business.name} x${wholeBusinessTiers}` }
+  const restTier = tiers.find(t => rest <= t.credits) ?? business
+  return {
+    price: business.price * wholeBusinessTiers + restTier.price,
+    name: `${business.name} x${wholeBusinessTiers} + ${restTier.name}`,
+  }
 }
 
 export function vasteKostenPerMaand(): number {
@@ -386,9 +400,15 @@ export function berekenScenarioOmzetEnBetaalprovider(
   // Bij optellen tot 100% of minder verandert er niets (rest = niet
   // meegeteld). Bij meer dan 100% (tikfout) schalen we proportioneel terug,
   // zodat basicN+proN nooit meer dan n kan zijn.
-  const noemer = Math.max(verdeling.basic + verdeling.pro, 100)
+  const totaalPct = verdeling.basic + verdeling.pro
+  const noemer = Math.max(totaalPct, 100)
   const basicN = Math.round(n * (verdeling.basic / noemer))
-  const proN = Math.round(n * (verdeling.pro / noemer))
+  // Bij >=100% (dus geen bewust niet-meegeteld restdeel): proN = n - basicN
+  // i.p.v. los afgerond, zodat basicN+proN altijd exact n is (voorkomt een
+  // ±1-afwijking bij .5-grensgevallen, besloten 2026-08-11, gevonden bij
+  // audit). Bij <100% blijft losse afronding correct, daar is het restdeel
+  // juist bewust niet meegeteld.
+  const proN = totaalPct >= 100 ? n - basicN : Math.round(n * (verdeling.pro / noemer))
   const basicPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.basicMaandelijks, scenarioPrijzen.basicJaarlijksTotaal, billingSplit.basicPctJaarlijks)
   const proPrijsGemiddeld = gemiddeldePrijsPerMaand(scenarioPrijzen.proMaandelijks, scenarioPrijzen.proJaarlijksTotaal, billingSplit.proPctJaarlijks)
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld

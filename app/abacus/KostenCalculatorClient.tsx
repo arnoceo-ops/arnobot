@@ -7,14 +7,25 @@ import {
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
 
+// Zelfde stille clamping als BusinessCaseClient.tsx (besloten 2026-08-11,
+// gevonden bij audit: dit tabblad miste de bescherming die tab 3 al kreeg,
+// waardoor bv. %-velden zoals pctSparring/pctVoice zonder waarschuwing >100
+// geaccepteerd werden).
+function clamp(v: number, min: number, max = Infinity): number {
+  return Math.min(Math.max(v, min), max)
+}
+
 function fmtUSD(n: number): string {
-  return '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const sign = n < 0 ? '-' : ''
+  return sign + '$' + Math.abs(n).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 function fmtUSD0(n: number): string {
-  return '$' + Math.round(n).toLocaleString('nl-NL')
+  const sign = n < 0 ? '-' : ''
+  return sign + '$' + Math.round(Math.abs(n)).toLocaleString('nl-NL')
 }
 function fmtEUR0(n: number): string {
-  return '€ ' + Math.round(n).toLocaleString('nl-NL')
+  const sign = n < 0 ? '-' : ''
+  return sign + '€ ' + Math.round(Math.abs(n)).toLocaleString('nl-NL')
 }
 
 const cardStyle: React.CSSProperties = {
@@ -42,8 +53,8 @@ const breakdownLineStyle: React.CSSProperties = {
   borderBottom: '1px solid rgba(255,255,255,0.04)',
 }
 
-function NumberField({ label, hint, value, onChange, step = 1 }: {
-  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number
+function NumberField({ label, hint, value, onChange, step = 1, min = 0, max = Infinity }: {
+  label: string; hint?: string; value: number; onChange: (v: number) => void; step?: number; min?: number; max?: number
 }) {
   return (
     <div style={fieldRowStyle}>
@@ -56,7 +67,7 @@ function NumberField({ label, hint, value, onChange, step = 1 }: {
         value={value}
         step={step}
         style={numberInputStyle}
-        onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        onChange={e => onChange(clamp(parseFloat(e.target.value) || 0, min, max))}
       />
     </div>
   )
@@ -189,7 +200,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Sparring</div>
-              <NumberField label="% users dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} onChange={v => set('pctSparring', v)} />
+              <NumberField label="% users dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} max={100} onChange={v => set('pctSparring', v)} />
               <NumberField label="Sessies per sparring-user/maand" hint="juli 2026 gemeten: 9 sessies/2 users ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
               <NumberField label="Berichten per sparringsessie" hint="juli 2026 gemeten: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
               <NumberField label="Kosten per sparringbericht ($)" hint="app/api/sparring/chat, Sonnet 4.6, geen RAG" value={inputs.kostenPerSparringBericht} step={0.001} onChange={v => set('kostenPerSparringBericht', v)} />
@@ -203,7 +214,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + Whisper)</div>
-              <NumberField label="% users met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} onChange={v => set('pctVoice', v)} />
+              <NumberField label="% users met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} max={100} onChange={v => set('pctVoice', v)} />
               <NumberField label="Interacties per Voice-user/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
               <NumberField label="Tekens per gesproken antwoord" hint="doellengte buildVoiceSystemPrompt: 400-600" value={inputs.tekensPerAntwoord} step={10} onChange={v => set('tekensPerAntwoord', v)} />
               <NumberField label="ElevenLabs credits per teken" hint="Flash v2.5, ElevenLabs zelf bevestigt 0,5-1, dit is de veilige kant" value={inputs.creditPerTeken} step={0.05} onChange={v => set('creditPerTeken', v)} />
@@ -264,7 +275,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                   type="number"
                   value={nGebruikers}
                   style={{ ...numberInputStyle, width: 90, fontSize: 16, fontWeight: 700, padding: '8px 10px' }}
-                  onChange={e => setNGebruikers(parseFloat(e.target.value) || 0)}
+                  onChange={e => setNGebruikers(clamp(parseFloat(e.target.value) || 0, 0, 2_000_000))}
                 />
               </div>
               <p style={{ fontSize: 11.5, color: '#6b7280', marginBottom: 14 }}>Basic + Pro. Team-leden komen hier apart bovenop, zie toelichting onderaan.</p>
