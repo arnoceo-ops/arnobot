@@ -5,7 +5,7 @@ Dit document is bedoeld voor iemand die ArnoBot moet overnemen of draaiende moet
 Secties gemarkeerd met `[ARNO: ...]` zijn door Arno nog in te vullen.
 
 <!-- AUTO:UPDATED -->
-Laatste automatische update: 2026-08-10
+Laatste automatische update: 2026-08-11
 <!-- /AUTO:UPDATED -->
 
 ---
@@ -76,15 +76,20 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | Supabase | Database | [ARNO: vul in] | supabase.com |
 | Clerk | Inloggen | [ARNO: vul in] | clerk.com |
 | Anthropic | AI (Claude) | Variabel, per gebruik | console.anthropic.com |
+| OpenAI | Spraak (Whisper transcriptie + TTS) | Variabel, per gebruik | platform.openai.com |
+| ElevenLabs | ArnoBot Voice (tekst-naar-spraak) | Variabel, per gebruik (Voice-abonnees) | elevenlabs.io |
+| VoyageAI | Embeddings (zoeken) | Variabel, per gebruik | voyageai.com |
 | Resend | E-mail | [ARNO: vul in] | resend.com |
 | Upstash | Rate limiting | [ARNO: vul in] | upstash.com |
-| Sanity | CMS (blog) | [ARNO: vul in] | sanity.io |
-| VoyageAI | Embeddings (zoeken) | Variabel, per gebruik | voyageai.com |
+| Sentry | Foutmonitoring | [ARNO: vul in] | sentry.io |
+| PostHog | Bezoekersanalyse (marketingpagina's) | [ARNO: vul in] | posthog.com |
+| Calendly | Boeking gesprek met Arno | [ARNO: vul in] | calendly.com |
+| VisualPing | Monitoring leverancierspagina's (bijv. DPA-wijzigingen) | [ARNO: vul in] | visualping.io |
 | Cloudflare/DNS | Domeinnaam arno.bot | [ARNO: vul in + registrar] | [ARNO: vul in] |
 | GitHub | Code-opslag | [ARNO: vul in of gratis] | github.com |
 | Telegram | Admin-notificaties | Gratis | — |
 
-**Anthropic en VoyageAI zijn variabele kosten** — ze groeien mee met het gebruik. Bij weinig gebruikers zijn ze laag; bij veel gebruikers kunnen ze significant oplopen. Houd de usage-dashboards bij.
+**Anthropic, OpenAI, ElevenLabs en VoyageAI zijn variabele kosten** — ze groeien mee met het gebruik. Bij weinig gebruikers zijn ze laag; bij veel gebruikers kunnen ze significant oplopen. Houd de usage-dashboards bij.
 
 **Totaal vaste kosten per maand:** [ARNO: vul in als je de bovenstaande items hebt ingevuld]
 
@@ -100,10 +105,15 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | Supabase | [ARNO: vul in] | supabase.com |
 | Clerk | [ARNO: vul in] | clerk.com |
 | Anthropic | [ARNO: vul in] | console.anthropic.com |
+| OpenAI | [ARNO: vul in] | platform.openai.com |
+| ElevenLabs | [ARNO: vul in] | elevenlabs.io |
+| VoyageAI | [ARNO: vul in] | voyageai.com |
 | Resend | [ARNO: vul in] | resend.com |
 | Upstash | [ARNO: vul in] | upstash.com |
-| Sanity | [ARNO: vul in] | sanity.io |
-| VoyageAI | [ARNO: vul in] | voyageai.com |
+| Sentry | [ARNO: vul in] | sentry.io |
+| PostHog | [ARNO: vul in] | posthog.com |
+| Calendly | [ARNO: vul in] | calendly.com |
+| VisualPing | [ARNO: vul in] | visualping.io |
 | GitHub | [ARNO: vul in] | github.com |
 | Cloudflare/DNS | [ARNO: vul in] | cloudflare.com of andere registrar |
 | Telegram | [ARNO: vul in] | t.me |
@@ -234,4 +244,4 @@ Noteer hier grote wijzigingen die niet uit de code blijken: prijsverhogingen, ni
 | 2026-07 | Teammodule (fase 1) live: 1:1-agenda, spotlight, scores |
 | 2026-07 | WhatsApp-support toegevoegd aan alle fout-states |
 | 2026-07 | 1:1-agenda overgeschakeld van Sonnet 5 naar Haiku wegens timeout-probleem |
-| [ARNO: voeg toe] | Livegang arno.bot (~1 augustus 2026) |
+| [ARNO: voeg toe] | Livegang arno.bot (oorspronkelijk gepland ~1 augustus 2026, uitgesteld met 1-2 maanden, check bij Arno de actuele datum vóór je hierop bouwt) |

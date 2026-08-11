@@ -189,6 +189,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <span className="prijzen-tier-plus">Alles van Pro, plus:</span>
           <ul className="prijzen-tier-bullets">
             <li>Eigen leiderschapsaccount</li>
+            <li>Team Spotlight: collectieve analyse</li>
             <li>Teamoverzicht: individuele scores</li>
             <li>Teamvoortgang als trend over tijd</li>
             <li>Vroeg signaal bij stagnatie</li>

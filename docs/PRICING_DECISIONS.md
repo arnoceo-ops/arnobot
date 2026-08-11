@@ -45,8 +45,18 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Volledig 1:1 archief met eigen notities
 
 **Exclusief voor de manager (niet voor teamleden):**
-- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument. **Op de prijzenkaart zelf (besloten 2026-08-02) staat deze bullet als eerste** van de zes, vóór "Teamoverzicht: individuele scores", ondanks dat de kaart zelf geen visueel onderscheid maakt tussen manager-exclusieve en per-teamlid features (blijft één platte lijst, zie hierboven).
+- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument. **Op de prijzenkaart zelf (besloten 2026-08-02) staat deze bullet als eerste**, ondanks dat de kaart zelf geen visueel onderscheid maakt tussen manager-exclusieve en per-teamlid features (blijft één platte lijst, zie hierboven).
+- Team Spotlight: collectieve analyse van het hele team (`app/api/bot/team/spotlight`). Bestond al functioneel sinds fase 1 van de teammodule, stond alleen nog niet als bullet op de prijzenkaart. **Toegevoegd als 2e bullet (besloten 2026-08-11)**, direct na "Eigen leiderschapsaccount": een tastbaar, werkend verschil dat de hogere Team-prijs rechtvaardigt, in plaats van het als verrassing pas na aankoop te tonen.
 - Privacy garantie: managers zien nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen die ertoe doen. Deze toelichting hoort thuis op de losstaande `/team` pagina, niet in de prijzenkaart zelf.
+
+**Elite-optie binnen de `/team`-offerte-aanvraag (besloten 2026-08-11):**
+Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen publieke kaart meer, maar Arno wil het nog wel kunnen aanbieden aan individuele teamleden binnen een Team-offerte. Overwogen opties:
+- **Gekozen: surplus = exact het verschil tussen solo Elite (€397) en solo Pro (€59) = €338/maand extra per Elite-teamlid**, bovenop het gewone Team-per-gebruikertarief (€49 of €39). Geen bundelkorting op dit bedrag: die extra's kosten altijd hetzelfde, ongeacht via welke route (solo of Team) iemand ze afneemt.
+- **Verworpen: een verlaagde "bundel"-prijs op de €338.** Zou de schaarste van Arno's eigen tijd (de capaciteitscap van 50 Elite-klanten) verwateren door 'm goedkoper te maken via een bulkdeal.
+- **Verworpen: geen surplus, Elite-extra's gratis meenemen binnen Team-capaciteit.** Ondergewaardeert Arno's eigen tijd.
+- Geen aparte jaarprijs voor dit surplus (Elite zelf heeft geen jaaroptie): hetzelfde bedrag geldt ongeacht de gekozen Team-facturatiecyclus.
+- Reden dat Arno voor het niet-verwaterde bedrag kon kiezen zonder de capaciteitscap direct te laten knellen: de uitvoering (het maandelijkse gesprek) hoeft niet altijd door Arno zelf, kan ook door een door hem aangewezen coach gebeuren. Geen publieke vermelding hiervan nu, puur Arno's eigen leveringsflexibiliteit.
+- Implementatie: `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, checkbox + aantal-veld op `/team`, opgeslagen in nieuwe kolom `elite_aantal` op `arnobot_command_requests` (SQL-migratie, zie `docs/ABONNEMENTEN.md` voor de exacte statement en of Arno die al bevestigd heeft uitgevoerd vóór je hierop verder bouwt).
 
 ## Waarom deze bedragen zo zijn gekozen
 

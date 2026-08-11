@@ -8,13 +8,11 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-08-10
-**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`, Business case-tab) heeft dezelfde Team-jaaroptie nu ook als instelbaar scenario (%-schuif "Team jaarlijks"), zodat het effect op de Doelwinst-solver live te verkennen is. `/prijzen` haalt zijn bedragen nu ook uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd.
-**Gevonden bij de financiële doorlichting (2026-08-10):** `/bot/upgrade` (bestaande gebruikers die willen upgraden) verwees nog naar "Premium" i.p.v. "Pro", en zei bij Team "prijs op aanvraag" terwijl Team al een echte berekende prijs heeft. Naam gecorrigeerd, Team-knop linkt nu naar `/team` i.p.v. een kale mailto. "Team Spotlight" (`app/api/bot/team/spotlight`) bleek een al bestaande, werkende functie die geen bullet meer heeft op de nieuwe Team-kaart, zie open punt hieronder.
+**Laatst bijgewerkt:** 2026-08-11
+**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`, Business case-tab) heeft dezelfde Team-jaaroptie nu ook als instelbaar scenario (%-schuif "Team jaarlijks"), zodat het effect op de Doelwinst-solver live te verkennen is. `/prijzen` haalt zijn bedragen nu ook uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd. **Besloten (2026-08-11):** Team Spotlight staat nu als 2e bullet op de `/prijzen`-Team-kaart; Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar (geen publieke kaart), en is teruggebracht als optie binnen de `/team`-offerte-aanvraag met een vastgesteld surplus-tarief van €338/maand per Elite-teamlid (`lib/teamPricing.ts`, `TEAM_ELITE_SURPLUS_PER_MAAND`). Uitvoering (het maandelijkse gesprek) kan door Arno zelf of een door hem aangewezen coach gebeuren, geen aparte publieke vermelding hiervan.
+**Gevonden bij de financiële doorlichting (2026-08-10):** `/bot/upgrade` (bestaande gebruikers die willen upgraden) verwees nog naar "Premium" i.p.v. "Pro", en zei bij Team "prijs op aanvraag" terwijl Team al een echte berekende prijs heeft. Naam gecorrigeerd, Team-knop linkt nu naar `/team` i.p.v. een kale mailto.
 **Eerstvolgende stap:** geen vaste volgorde afgesproken:
-- `[ ]` Besluiten of/hoe de Team Spotlight-functie (bestaat al, werkt al) terugkomt als bullet op de `/prijzen`-Team-kaart
-- `[ ]` Besluiten of Elite nog actief aan nieuwe klanten aangeboden wordt nu de tier niet meer op `/prijzen` of `/bot/doorgaan` als publieke keuze staat (zie "Elite" hieronder)
-- `[ ]` Elite terugbrengen in de `/team`-aanvraagflow, incl. surplus-tarief (nog niet vastgesteld, zie geheugen `project-team-pricing`)
+- `[ ]` **Actie vereist van Arno:** SQL-migratie voor de nieuwe `elite_aantal`-kolom op `arnobot_command_requests` nog niet bevestigd uitgevoerd, zie "Team-aanvraagflow" hieronder. Zolang dit niet bevestigd is, blijft de Elite-code in `/team` en `app/api/team-aanvraag/route.ts` ongepusht.
 - `[ ]` `app/bot/upgrade/page.tsx`'s `plan`-type dekt geen `'elite'` (alleen `'basis'|'premium'|'team'`), een Elite-gebruiker krijgt daardoor onbedoeld de "upgrade naar Team"-sectie te zien. Niet aangepast, want onduidelijk of Elite-gebruikers dat aanbod wel/niet zouden moeten zien, is een productbeslissing
 - `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow")
 
@@ -65,7 +63,7 @@ Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer p
 - Capaciteitscap van 50 actieve Elite-klanten blijft gelden, zichtbaar als teller in de admin-gebruikerslijst
 - Telegram-toegang (`t.me/arnodiepeveen`) blijft live voor Elite-klanten via `/bot/account`
 
-**Nog niet expliciet besloten, nu urgenter:** met Elite nergens meer publiek zichtbaar, kan een nieuwe klant het niet meer zelf kiezen, alleen via een handmatige toekenning door Arno. Is dat gewenst (Elite wordt bewust alleen nog handmatig/op aanvraag toegekend, zoals de oude verborgen Basis-retentietier), of moet Elite ergens terugkomen als zichtbare keuze? Bij twijfel eerst aan Arno voorleggen voordat hierop verder gebouwd wordt.
+**Besloten (2026-08-11):** Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar, zoals de oude verborgen Basis-retentietier, geen publieke kaart op `/prijzen`. Wel weer zichtbaar als optie binnen de `/team`-offerte-aanvraag (zie "Team-aanvraagflow" hieronder), niet als zelfstandige publieke keuze.
 
 **1 uur/maand gesprek met Arno:** nog niet gebouwd, bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit. Uitbreiding naar herhaalbare boekingen wacht op een betaald Calendly-account.
 
@@ -73,12 +71,13 @@ Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer p
 
 ---
 
-## Bekende inconsistenties, nog open (2026-08-10)
+## Bekende inconsistenties, nog open
 
-- **`lib/kostenTarieven.ts` vs. `/prijzen`:** `/prijzen` hardcodet zijn eigen bedragen, verwijst niet naar `TARIEVEN.prijsBasisEur`/`prijsPremiumEur` (die wel al op de nieuwe 29/59 staan). Twee plekken die bij een volgende prijswijziging uit elkaar kunnen lopen. Geen gebruikersgerichte pagina, interne Abacus-koppeling, apart traject.
-- **`arnobot_command_requests`-kolommen `niveau`/`cyclus`:** deze tabel (en zijn kolomnamen) is niet hernoemd/gemigreerd bij de `/command` → `/team`-rename (zie "Team-aanvraagflow" hieronder), om geen Supabase-migratie nodig te hebben voor iets dat puur intern is. De app stuurt nu altijd de vaste waarden `'premium'`/`'maandelijks'` in, ook al bestaat die keuze niet meer in de UI. Cosmetisch, geen functioneel probleem, wel iets om ooit op te schonen.
+- **`arnobot_command_requests`-kolommen `niveau`/`cyclus`:** deze tabel (en zijn kolomnamen) is niet hernoemd/gemigreerd bij de `/command` → `/team`-rename (zie "Team-aanvraagflow" hieronder), om geen Supabase-migratie nodig te hebben voor iets dat puur intern is. De app stuurt nu altijd de vaste waarde `'premium'` voor `niveau` in, ook al bestaat die keuze niet meer in de UI. Cosmetisch, geen functioneel probleem, wel iets om ooit op te schonen.
 
 **Opgelost (2026-08-10):** `/bot/doorgaan` synchroon met Basic/Pro, `/command` verplaatst naar `/team` met de vlakke Team-prijs (geen staffel, geen niveau-keuze) inclusief een nieuwe jaaroptie (~20% korting), en de referral-copy (7 bestanden + FAQ) bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder).
+**Opgelost (2026-08-10):** `/prijzen` hardcodete eerder zijn eigen bedragen los van `lib/kostenTarieven.ts`. Haalt nu dezelfde constanten op als Abacus (`SCENARIO_PRIJZEN`, `SCENARIO_TEAM_PRIJS`), geen losse hardgecodeerde bedragen meer.
+**Opgelost (2026-08-11):** Team Spotlight-bullet toegevoegd aan `/prijzen`, Elite publieke status besloten (handmatig/op-aanvraag), Elite-surplustarief vastgesteld en gebouwd in de `/team`-aanvraagflow (zie "Team-aanvraagflow" hieronder voor de nog openstaande SQL-actie).
 
 ---
 
@@ -98,7 +97,13 @@ Dashboardtoegang draait op een losse kolom **`command_manager`** (boolean op `ap
 
 **Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen als publieke keuze op deze pagina, zie open punt hieronder), geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49/gebruiker/maand, of €77 + €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, toegevoegd later dezelfde dag), vanaf 3 gebruikers. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
 
-**Open punt (2026-08-10):** Arno wil Elite alsnog laten bestaan als keuze binnen deze aanvraagflow (niet op `/prijzen` of `/bot/doorgaan`, alleen hier). Nog niet gebouwd, wacht op een vastgesteld "surplus"-tarief, zie geheugen `project-team-pricing`.
+**Elite-optie (besloten en gebouwd 2026-08-11, nog niet live):** `/team` heeft nu een checkbox "Ook Elite-niveau voor een deel van je team" plus een aantal-veld, met een vast surplus van €338/maand per Elite-teamlid (`TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, = verschil tussen solo Elite €397 en solo Pro €59, geen aparte jaarkorting op dit bedrag). De API-route (`app/api/team-aanvraag/route.ts`) valideert en slaat dit op in een nieuwe kolom `elite_aantal` op `arnobot_command_requests`, en vermeldt het in de offerte-notificatiemail.
+
+**Actie vereist van Arno vóór dit live gaat:** voer de volgende SQL uit in Supabase (SQL Editor, project wxrsmmzqbmoeackirsxc):
+```sql
+ALTER TABLE arnobot_command_requests ADD COLUMN elite_aantal integer;
+```
+Bevestig na uitvoering dat de kolom is aangemaakt (bijv. via Table Editor), pas daarna wordt deze wijziging gecommit en gepusht — zonder de kolom faalt elke `/team`-aanvraag stil op de insert.
 
 Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. btw.
 
