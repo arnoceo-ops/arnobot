@@ -63,6 +63,49 @@ function benodigdeGebruikersVoorWinst(
   return lo
 }
 
+// Proportionele variant (besloten 2026-08-11, op Arno's verzoek naast de
+// vaste-teamscenario-variant hierboven, niet als vervanging): i.p.v. team
+// vast te houden terwijl alleen solo groeit, schalen solo-aantal én #
+// teamklanten hier met dezelfde factor mee. Gemiddelde teamgrootte
+// (# teamleden) is bewust een vast kenmerk, geen volumeknop, en schaalt niet
+// mee. Zoekt op een continue schaalfactor i.p.v. een geheel aantal, vandaar
+// een vaste-iteratiecount binaire zoektocht i.p.v. de integer-loop hierboven:
+// 60 iteraties is ruim genoeg voor praktische precisie op elke realistische
+// schaal.
+const MAX_SCHAAL_ZOEKGRENS = 10_000_000
+
+function winstBijSchaal(
+  schaal: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
+  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit
+): number {
+  const team: TeamScenario = { aantalKlanten: baseTeam.aantalKlanten * schaal, gemiddeldeLeden: baseTeam.gemiddeldeLeden }
+  return winstBijN(baseN * schaal, billingSplit, verdeling, betaalprovider, team, teamBillingSplit)
+}
+
+function benodigdeSchaalVoorWinst(
+  doelWinstEur: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
+  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit
+): { solo: number; teamKlanten: number; teamLeden: number; totaal: number } | null {
+  // Bij solo=0 én teamklanten=0 kan een factor niets laten groeien (0 x schaal
+  // blijft altijd 0), dus onbepaald i.p.v. eindeloos zoeken.
+  if (baseN <= 0 && baseTeam.aantalKlanten <= 0) return null
+  let hi = 1
+  while (winstBijSchaal(hi, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit) < doelWinstEur) {
+    if (hi > MAX_SCHAAL_ZOEKGRENS) return null
+    hi *= 2
+  }
+  let lo = 0
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (winstBijSchaal(mid, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit) >= doelWinstEur) hi = mid
+    else lo = mid
+  }
+  const solo = Math.round(baseN * hi)
+  const teamKlanten = Math.round(baseTeam.aantalKlanten * hi)
+  const teamLeden = teamKlanten * baseTeam.gemiddeldeLeden
+  return { solo, teamKlanten, teamLeden, totaal: solo + teamLeden }
+}
+
 // Zelfde stijlconstanten als KostenCalculatorClient.tsx (tab 1), bewust
 // letterlijk gelijk gehouden zodat alle drie de tabbladen consistent ogen.
 const cardStyle: React.CSSProperties = {
@@ -213,6 +256,10 @@ export default function BusinessCaseClient({
     () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit),
     [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit]
   )
+  const benodigdeSchaal = useMemo(
+    () => benodigdeSchaalVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit),
+    [doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit]
+  )
 
   return (
     <div>
@@ -312,22 +359,64 @@ export default function BusinessCaseClient({
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
         <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          <div>Berekening staat los van &quot;Aantal solo-gebruikers&quot; hierboven en verandert dat veld niet.</div>
-          <div>Team-scenario (# teamklanten/# teamleden) blijft tijdens het zoeken constant, alleen het aantal solo-gebruikers wordt gevarieerd. Rekent met dezelfde tarieven en %-verdeling.</div>
+          <div>Berekening staat los van &quot;Aantal solo-gebruikers&quot; hierboven en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.</div>
+          <div>Twee varianten hieronder, zelfde doelbedrag, andere aanname over hoe team meegroeit.</div>
         </div>
         <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} formatThousands />
-        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 16 }}>
+
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 80 }}>
           <div>
-            <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
-            <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
-          </div>
-          <div>
-            <div style={statLabel}>Totaal incl. huidig teamscenario</div>
-            <div style={statValue}>
-              {benodigdeGebruikers === null ? '-' : (benodigdeGebruikers + scenario.teamLeden).toLocaleString('nl-NL')}
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+              Team blijft vast
             </div>
-            <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
-              = solo-gebruikers hierboven + de huidige {scenario.teamLeden.toLocaleString('nl-NL')} teamleden ({teamScenario.aantalKlanten} klanten &times; {teamScenario.gemiddeldeLeden})
+            <div style={{ fontSize: 12, lineHeight: '17px', color: '#6b7280', marginBottom: 12, height: 34 }}>
+              Team-scenario (# teamklanten/# teamleden) blijft tijdens het zoeken op de huidige instelling, alleen solo groeit.
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <div>
+                <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
+                <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
+              </div>
+              <div>
+                <div style={statLabel}>Totaal incl. huidig teamscenario</div>
+                <div style={statValue}>
+                  {benodigdeGebruikers === null ? '-' : (benodigdeGebruikers + scenario.teamLeden).toLocaleString('nl-NL')}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
+                  = solo hierboven + de huidige {scenario.teamLeden.toLocaleString('nl-NL')} teamleden ({teamScenario.aantalKlanten} klanten &times; {teamScenario.gemiddeldeLeden})
+                </div>
+              </div>
+            </div>
+            {benodigdeGebruikers === 0 && (
+              <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginTop: 12 }}>
+                Je huidige teamscenario haalt dit doelbedrag al, zonder solo-gebruikers.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 4 }}>
+              Team schaalt mee
+            </div>
+            <div style={{ fontSize: 12, lineHeight: '17px', color: '#6b7280', marginBottom: 12, height: 34 }}>
+              Solo-aantal en # teamklanten groeien in dezelfde verhouding als nu. Gemiddelde teamgrootte blijft gelijk.
+            </div>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <div>
+                <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
+                <div style={headlineValueStyle}>{benodigdeSchaal === null ? 'niet haalbaar' : benodigdeSchaal.solo.toLocaleString('nl-NL')}</div>
+              </div>
+              <div>
+                <div style={statLabel}>Benodigd # teamklanten</div>
+                <div style={statValue}>{benodigdeSchaal === null ? '-' : benodigdeSchaal.teamKlanten.toLocaleString('nl-NL')}</div>
+                <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
+                  {benodigdeSchaal === null ? '' : `= ${benodigdeSchaal.teamLeden.toLocaleString('nl-NL')} teamleden bij ${teamScenario.gemiddeldeLeden}/klant`}
+                </div>
+              </div>
+              <div>
+                <div style={statLabel}>Totaal</div>
+                <div style={statValue}>{benodigdeSchaal === null ? '-' : benodigdeSchaal.totaal.toLocaleString('nl-NL')}</div>
+              </div>
             </div>
           </div>
         </div>
