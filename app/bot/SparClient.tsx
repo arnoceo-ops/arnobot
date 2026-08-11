@@ -46,6 +46,7 @@ interface Message {
   log_id?: string | null
   feedback?: 'pos' | 'neg' | null
   voiceAnswer?: boolean
+  retryQuestion?: string
 }
 
 interface Props {
@@ -781,7 +782,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
-  async function ask(question: string) {
+  async function ask(question: string, forceSession: boolean = false) {
     // 4000 tekens is de harde grens in app/api/chat/route.ts, hier herhaald zodat een te lang
     // bericht nooit als vage "Ongeldig verzoek" 400 terugkomt, maar al vooraf wordt tegengehouden.
     if (!question.trim() || loading || blocked || question.length > 4000) return
@@ -802,17 +803,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
 
     setStarted(true)
-    setMessages(prev => [...prev, { role: 'user', content: question }])
-    setInput('')
-    if (inputRef.current) { inputRef.current.style.height = '55px' }
+    if (!forceSession) {
+      setMessages(prev => [...prev, { role: 'user', content: question }])
+      setInput('')
+      if (inputRef.current) { inputRef.current.style.height = '55px' }
+      // Bij versturen verdwijnt een eventuele verfijn-suggestie/melding, ook als er niet expliciet
+      // op GEBRUIK DIT of NEGEER is geklikt.
+      setVerfijndSuggestie('')
+      setVerfijnFout(false)
+      setVerfijnAlGoed(false)
+      setInputIsVerfijnd(false)
+    }
     setLoading(true)
     setStreamingStarted(false)
-    // Bij versturen verdwijnt een eventuele verfijn-suggestie/melding, ook als er niet expliciet
-    // op GEBRUIK DIT of NEGEER is geklikt.
-    setVerfijndSuggestie('')
-    setVerfijnFout(false)
-    setVerfijnAlGoed(false)
-    setInputIsVerfijnd(false)
 
     try {
       if (sparModus === 'sparren') {
@@ -878,7 +881,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile })
+          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile, forceSession })
         })
 
         // Blokkades/nudges/foutmeldingen komen nog steeds als JSON terug (early return op de
@@ -896,7 +899,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               setBlocked(true)
               setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
             } else if (res.status === 429 && data.error === 'dual_session') {
-              setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt al een actief gesprek open op een ander venster of apparaat. Sluit dat eerst en probeer opnieuw.' }])
+              setMessages(prev => [...prev, { role: 'arno', content: '', hint: 'dual_session', retryQuestion: question }])
             } else if (data.error === 'bestandstype_niet_ondersteund') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_te_groot') {
@@ -2191,6 +2194,18 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 {msg.hint === 'last_chance' && (
                   <div className="msg-hint">
                     Lekker bezig. Je hebt nog één kans om echt tot de kern te komen.
+                  </div>
+                )}
+                {msg.hint === 'dual_session' && (
+                  <div className="msg-cta">
+                    <p>Je hebt al een actief gesprek open op een ander venster of apparaat.</p>
+                    <button
+                      className="msg-cta-btn"
+                      style={{ border: 'none', cursor: 'pointer' }}
+                      onClick={() => msg.retryQuestion && ask(msg.retryQuestion, true)}
+                    >
+                      DIT BEN IK, GA HIER VERDER
+                    </button>
                   </div>
                 )}
                 {(msg.hint === 'salescanvas' || msg.hint === 'blocked') && (

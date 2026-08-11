@@ -178,7 +178,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument } = body
+    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
     const antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
@@ -264,15 +264,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
       }
 
-      // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd)
+      // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd).
+      // TTL bewust kort (120s, was 600s): de lock ververst toch bij elk bericht van dezelfde
+      // sessie, dus een kortere TTL beperkt alleen hoe lang een verlaten/vervangen sessie
+      // (tabblad gesloten, cache geleegd waardoor het lokale sessie-ID verandert) een nieuwe
+      // sessie kan blokkeren, zonder de daadwerkelijke dubbel-gebruik-bescherming te verzwakken.
+      // forceSession (client stuurt dit na expliciete "dit ben ik"-bevestiging) overschrijft de
+      // lock altijd, blijft achter Clerk-auth dus alleen de accounteigenaar zelf kan dit.
       if (userId !== process.env.ARNOBOT_OWNER_USER_ID && typeof clientSessionId === 'string' && clientSessionId.length > 0) {
         const lockKey = `arnobot:active:${userId}`
         const activeSid = await redis.get<string>(lockKey)
-        if (activeSid && activeSid !== clientSessionId) {
+        if (activeSid && activeSid !== clientSessionId && !forceSession) {
           await notifyRateLimit(userId, 'dubbele sessie (twee vensters/apparaten)', `arnobot:notify:dual:${userId}`)
           return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
         }
-        await redis.set(lockKey, clientSessionId, { ex: 600 })
+        await redis.set(lockKey, clientSessionId, { ex: 120 })
       }
     }
 
