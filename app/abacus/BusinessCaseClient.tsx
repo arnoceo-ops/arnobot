@@ -123,7 +123,7 @@ const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '
 // de tekst exact op dezelfde baseline staat als de andere bedragen ernaast.
 const headlineValueStyle: React.CSSProperties = { ...statValue, color: '#f59e0b' }
 const statCellStyle: React.CSSProperties = {
-  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', textAlign: 'right',
+  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '10px 14px', textAlign: 'right', height: 64,
 }
 // Identiek aan numberInputStyle in KostenCalculatorClient.tsx
 const numberInputStyle: React.CSSProperties = {
@@ -267,13 +267,13 @@ export default function BusinessCaseClient({
         <TariefDisplay label="Basic (€)" value={String(DEFAULT_PRIJZEN.basis)} />
         <TariefDisplay label="Pro (€)" value={String(DEFAULT_PRIJZEN.premium)} />
         <TariefDisplay label="Team basis (€)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
-        <TariefDisplay label="Team per gebruiker (€)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Team per user (€)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
       </div>
 
       <div style={cardStyle}>
         <div style={cardHeadStyle}><span style={dotStyle} />Scenario: prognose bij schaal</div>
         <NumberField
-          label="Aantal solo-gebruikers (Basic + Pro)"
+          label="Aantal solo users (Basic + Pro)"
           hint="Excl. Team, dat schaalt hieronder los (zie &quot;# teamklanten&quot;). Gedeeld met de Calculator (tab 1)."
           value={nGebruikers} onChange={setNGebruikers} formatThousands
         />
@@ -315,7 +315,7 @@ export default function BusinessCaseClient({
             </div>
             {teamVolumeWaarschuwing && (
               <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginBottom: 12 }}>
-                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} teamleden is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo-gebruikers hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
+                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} teamleden is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo users hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
               </p>
             )}
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
@@ -340,26 +340,26 @@ export default function BusinessCaseClient({
               <div style={{ fontSize: 13, color: '#94a3b8' }}>€ {scenario.basicPrijsGemiddeld.toFixed(2)} basic &middot; € {scenario.proPrijsGemiddeld.toFixed(2)} pro</div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(150px, 1fr))', columnGap: 10, rowGap: 10, marginTop: 12 }}>
-            <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={statValue}>{fmtEUR(scenario.omzet)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={statValue}>{fmtEUR(scenario.teamOmzet)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal)}</div></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 100px)', columnGap: 10, rowGap: 10, marginTop: 12 }}>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Solo</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.omzet)) }}>{fmtEUR(scenario.omzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet Team</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.teamOmzet)) }}>{fmtEUR(scenario.teamOmzet)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Omzet totaal</div><div style={{ ...headlineValueStyle, fontSize: fitFontSize(fmtEUR(scenario.omzetTotaal)) }}>{fmtEUR(scenario.omzetTotaal)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={statValue}>{fmtEUR(scenario.kostenEur)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={statValue}>{fmtEUR(scenario.betaalKosten)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={statValue}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten AI/infra</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.kostenEur)) }}>{fmtEUR(scenario.kostenEur)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Betaalprovider</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.betaalKosten)) }}>{fmtEUR(scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Kosten totaal</div><div style={{ ...statValue, fontSize: fitFontSize(fmtEUR(scenario.kostenEur + scenario.betaalKosten)) }}>{fmtEUR(scenario.kostenEur + scenario.betaalKosten)}</div></div>
 
-            <div style={statCellStyle}><div style={statLabel}># users (incl. team)</div><div style={statValue}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
+            <div style={statCellStyle}><div style={statLabel}># users (incl. team)</div><div style={{ ...statValue, fontSize: fitFontSize(totaalGebruikers.toLocaleString('nl-NL')) }}>{totaalGebruikers.toLocaleString('nl-NL')}</div></div>
             <div style={statCellStyle}><div style={statLabel}>Marge</div><div style={statValue}>{margePct(scenario.omzetTotaal, scenario.kostenEur + scenario.betaalKosten)}</div></div>
-            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={headlineValueStyle}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
+            <div style={statCellStyle}><div style={statLabel}>Winst</div><div style={{ ...headlineValueStyle, fontSize: fitFontSize(fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)) }}>{fmtEUR(scenario.omzetTotaal - scenario.kostenEur - scenario.betaalKosten)}</div></div>
           </div>
         </div>
       </div>
 
       <div style={cardStyle}>
-        <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel gebruikers heb je nodig?</div>
+        <div style={cardHeadStyle}><span style={dotStyle} />Doelwinst: hoeveel users heb je nodig?</div>
         <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 4 }}>
-          <div>Berekening staat los van &quot;Aantal solo-gebruikers&quot; hierboven en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.</div>
+          <div>Berekening staat los van &quot;Aantal solo users&quot; hierboven en verandert dat veld niet. Rekent met dezelfde tarieven en %-verdeling.</div>
           <div>Twee varianten hieronder, zelfde doelbedrag, andere aanname over hoe team meegroeit.</div>
         </div>
         <NumberField label="Doelwinst per maand (€)" value={doelWinst} step={100} onChange={setDoelWinst} formatThousands />
@@ -374,7 +374,7 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <div>
-                <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
+                <div style={statLabel}>Benodigd aantal solo users</div>
                 <div style={headlineValueStyle}>{benodigdeGebruikers === null ? 'niet haalbaar' : benodigdeGebruikers.toLocaleString('nl-NL')}</div>
               </div>
               <div>
@@ -389,7 +389,7 @@ export default function BusinessCaseClient({
             </div>
             {benodigdeGebruikers === 0 && (
               <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginTop: 12 }}>
-                Je huidige teamscenario haalt dit doelbedrag al, zonder solo-gebruikers.
+                Je huidige teamscenario haalt dit doelbedrag al, zonder solo users.
               </p>
             )}
           </div>
@@ -403,7 +403,7 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <div>
-                <div style={statLabel}>Benodigd aantal solo-gebruikers</div>
+                <div style={statLabel}>Benodigd aantal solo users</div>
                 <div style={headlineValueStyle}>{benodigdeSchaal === null ? 'niet haalbaar' : benodigdeSchaal.solo.toLocaleString('nl-NL')}</div>
               </div>
               <div>

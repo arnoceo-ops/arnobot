@@ -159,9 +159,9 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 64px' }}>
         <div style={{ marginBottom: 32 }}>
           <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
-          <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kostencalculator per gebruiker</h1>
+          <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kostencalculator per user</h1>
           <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Gelden voor Pro-gebruikers; Basic krijgt automatisch nul coaching/voice en een vaste lage analyses-aanname, dezelfde %-verdeling als tab 3 (Business case). Alles herberekent live.
+            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Gelden voor Pro-users; Basic krijgt automatisch nul coaching/voice en een vaste lage analyses-aanname, dezelfde %-verdeling als tab 3 (Business case). Alles herberekent live.
           </p>
         </div>
 
@@ -169,28 +169,28 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
           <div>
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Hoofdchat &amp; gebruik</div>
-              <NumberField label="Berichten per gebruiker per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
+              <NumberField label="Berichten per user per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
               <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat + Haiku-RAG-herschrijving" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
             </div>
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Analyses</div>
-              <NumberField label="Analyses per gebruiker per maand" hint="app/api/bot/coaching-analyse, heet /bot/analyses in de app, was BIEB" value={inputs.analysesPerGebruiker} onChange={v => set('analysesPerGebruiker', v)} />
+              <NumberField label="Analyses per user per maand" hint="app/api/bot/coaching-analyse, heet /bot/analyses in de app, was BIEB" value={inputs.analysesPerGebruiker} onChange={v => set('analysesPerGebruiker', v)} />
               <NumberField label="Kosten per analyse ($)" hint="juli 2026 gemeten output ~1263 tekens + geschatte input" value={inputs.kostenPerAnalyse} step={0.001} onChange={v => set('kostenPerAnalyse', v)} />
             </div>
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Fable 5 (coaching-synthese &amp; uitdaging)</div>
-              <NumberField label="Coaching-syntheses per gebruiker/maand" hint="app/api/bot/coaching/route.ts, hoofdsynthese" value={inputs.coachingPerGebruiker} onChange={v => set('coachingPerGebruiker', v)} />
+              <NumberField label="Coaching-syntheses per user/maand" hint="app/api/bot/coaching/route.ts, hoofdsynthese" value={inputs.coachingPerGebruiker} onChange={v => set('coachingPerGebruiker', v)} />
               <NumberField label="Kosten per coaching-synthese ($)" hint="max_tokens 4000, thinking telt mee" value={inputs.coachingKostenPerSynthese} step={0.01} onChange={v => set('coachingKostenPerSynthese', v)} />
-              <NumberField label="Uitdagingen per gebruiker/maand" hint="app/api/bot/uitdaging/route.ts" value={inputs.uitdagingPerGebruiker} onChange={v => set('uitdagingPerGebruiker', v)} />
+              <NumberField label="Uitdagingen per user/maand" hint="app/api/bot/uitdaging/route.ts" value={inputs.uitdagingPerGebruiker} onChange={v => set('uitdagingPerGebruiker', v)} />
               <NumberField label="Kosten per uitdaging ($)" hint="max_tokens 600" value={inputs.uitdagingKostenPerStuk} step={0.005} onChange={v => set('uitdagingKostenPerStuk', v)} />
             </div>
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Sparring</div>
-              <NumberField label="% gebruikers dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} onChange={v => set('pctSparring', v)} />
-              <NumberField label="Sessies per sparring-gebruiker/maand" hint="juli 2026 gemeten: 9 sessies/2 gebruikers ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
+              <NumberField label="% users dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} onChange={v => set('pctSparring', v)} />
+              <NumberField label="Sessies per sparring-user/maand" hint="juli 2026 gemeten: 9 sessies/2 users ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
               <NumberField label="Berichten per sparringsessie" hint="juli 2026 gemeten: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
               <NumberField label="Kosten per sparringbericht ($)" hint="app/api/sparring/chat, Sonnet 4.6, geen RAG" value={inputs.kostenPerSparringBericht} step={0.001} onChange={v => set('kostenPerSparringBericht', v)} />
               <NumberField label="Kosten per debrief ($)" hint="app/api/sparring/debrief, volledig transcript als input" value={inputs.kostenPerDebrief} step={0.001} onChange={v => set('kostenPerDebrief', v)} />
@@ -198,13 +198,13 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Overige Anthropic-routes</div>
-              <NumberField label="Overig, per gebruiker/maand ($)" hint="session-end (Haiku x3), coaching-precheck, blog-synthese, verfijn, sessies-zoeken" value={inputs.overigeAnthropicPerGebruiker} step={0.01} onChange={v => set('overigeAnthropicPerGebruiker', v)} />
+              <NumberField label="Overig, per user/maand ($)" hint="session-end (Haiku x3), coaching-precheck, blog-synthese, verfijn, sessies-zoeken" value={inputs.overigeAnthropicPerGebruiker} step={0.01} onChange={v => set('overigeAnthropicPerGebruiker', v)} />
             </div>
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + Whisper)</div>
-              <NumberField label="% gebruikers met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} onChange={v => set('pctVoice', v)} />
-              <NumberField label="Interacties per Voice-gebruiker/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
+              <NumberField label="% users met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} onChange={v => set('pctVoice', v)} />
+              <NumberField label="Interacties per Voice-user/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
               <NumberField label="Tekens per gesproken antwoord" hint="doellengte buildVoiceSystemPrompt: 400-600" value={inputs.tekensPerAntwoord} step={10} onChange={v => set('tekensPerAntwoord', v)} />
               <NumberField label="ElevenLabs credits per teken" hint="Flash v2.5, ElevenLabs zelf bevestigt 0,5-1, dit is de veilige kant" value={inputs.creditPerTeken} step={0.05} onChange={v => set('creditPerTeken', v)} />
               <NumberField label="Whisper + Anthropic-voice per interactie ($)" value={inputs.kostenPerInteractie} step={0.0005} onChange={v => set('kostenPerInteractie', v)} />
@@ -242,7 +242,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
                   <div style={fieldLabelStyle}>Clerk Pro ($100/maand)</div>
-                  <div style={fieldHintStyle}>alleen nodig voor inactivity-timeout, niet voor gebruikersaantal (Free dekt tot 50.000 MRU)</div>
+                  <div style={fieldHintStyle}>alleen nodig voor inactivity-timeout, niet voor aantal users (Free dekt tot 50.000 MRU)</div>
                 </div>
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
@@ -258,7 +258,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
               <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Resultaat</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <label style={{ fontSize: 12.5, color: '#94a3b8' }} htmlFor="nGebruikers">Aantal solo-gebruikers</label>
+                <label style={{ fontSize: 12.5, color: '#94a3b8' }} htmlFor="nGebruikers">Aantal solo users</label>
                 <input
                   id="nGebruikers"
                   type="number"
@@ -268,11 +268,11 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 />
               </div>
               <p style={{ fontSize: 11.5, color: '#6b7280', marginBottom: 14 }}>Basic + Pro. Team-leden komen hier apart bovenop, zie toelichting onderaan.</p>
-              <div style={{ fontSize: 12.5, color: '#94a3b8' }}>Totale kosten per gebruiker per maand</div>
+              <div style={{ fontSize: 12.5, color: '#94a3b8' }}>Totale kosten per user per maand</div>
               <div style={{ fontSize: 'clamp(36px,5vw,48px)', fontWeight: 800, color: '#f59e0b', lineHeight: 1, margin: '4px 0 2px', fontVariantNumeric: 'tabular-nums' }}>
                 {fmtUSD(result.perGebruiker)}
               </div>
-              <div style={{ fontSize: 11.5, color: '#6b7280' }}>Incl. team: {result.totaalGebruikers.toLocaleString('nl-NL')} gebruikers</div>
+              <div style={{ fontSize: 11.5, color: '#6b7280' }}>Incl. team: {result.totaalGebruikers.toLocaleString('nl-NL')} users</div>
               <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 Totaal alle kosten: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</b> / maand
                 <span style={{ color: '#6b7280' }}> (&asymp; {fmtEUR0(result.totaal / inputs.fxRate)}, vergelijk met tab 3)</span>
@@ -296,7 +296,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-                %-verdeling Basic/Pro, betaalcyclus, Team-aantallen en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen. Teamleden (inclusief de manager) tellen mee als extra Pro-gebruikers, plus een kleine teamspecifieke meerkost.
+                %-verdeling Basic/Pro, betaalcyclus, Team-aantallen en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen. Teamleden (inclusief de manager) tellen mee als extra Pro-users, plus een kleine teamspecifieke meerkost.
               </p>
             </div>
 
@@ -308,7 +308,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                     <th style={{ textAlign: 'left', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Solo</th>
                     <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Incl. team</th>
                     <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Totaal/mnd</th>
-                    <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Per gebruiker</th>
+                    <th style={{ textAlign: 'right', fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280', fontWeight: 600, padding: '6px 4px', borderBottom: '1px solid #2d3a4f' }}>Per user</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -322,7 +322,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                   ))}
                 </tbody>
               </table>
-              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10, lineHeight: 1.6 }}>Zelfde variabelen als hierboven, alleen het aantal gebruikers wijzigt per rij.</p>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10, lineHeight: 1.6 }}>Zelfde variabelen als hierboven, alleen het aantal users wijzigt per rij.</p>
             </div>
 
             <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>

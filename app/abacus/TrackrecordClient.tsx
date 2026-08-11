@@ -152,7 +152,7 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
         <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
           <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Lopende maand: {fmtMaand(liveHuidigeMaand.maand)}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 12 }}>
-            Live berekend uit echt gemeten gebruik tot nu toe deze maand: {liveHuidigeMaand.gebruikers_count} gebruikers, {liveHuidigeMaand.berichten_count} berichten, {liveHuidigeMaand.analyses_count} analyses, {liveHuidigeMaand.sparring_sessies_count} sparringsessies, {liveHuidigeMaand.voice_interacties_count} voice-interacties.
+            Live berekend uit echt gemeten gebruik tot nu toe deze maand: {liveHuidigeMaand.gebruikers_count} users, {liveHuidigeMaand.berichten_count} berichten, {liveHuidigeMaand.analyses_count} analyses, {liveHuidigeMaand.sparring_sessies_count} sparringsessies, {liveHuidigeMaand.voice_interacties_count} voice-interacties.
           </p>
           <div style={headlineValueStyle}>
             {fmtUSD(liveHuidigeMaand.prognose_usd)}
@@ -184,7 +184,7 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', textTransform: 'capitalize' }}>{fmtMaand(rij.maand)}</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>
-                {rij.gebruikers_count} gebruikers &middot; {rij.berichten_count} berichten
+                {rij.gebruikers_count} users &middot; {rij.berichten_count} berichten
               </span>
             </div>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
