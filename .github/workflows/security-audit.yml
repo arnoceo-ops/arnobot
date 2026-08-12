@@ -149,8 +149,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run niveau-3 E2E-test (echte backend-keten, gemockte AI-servers)
-        run: npx playwright test --project=chromium --grep "echte backend-keten"
+      - name: Run niveau-3 E2E-tests (echte backend-keten, gemockte AI-servers)
+        run: npx playwright test e2e/backend-integration.spec.ts --project=chromium
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.E2E_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
@@ -168,9 +168,10 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
-        # Kost echte tokens (een paar cent per run), vandaar alleen nightly, niet bij elke
-        # push. Verifieert dat lib/contract.test.ts's aannames over de vorm van Anthropic/
-        # Voyage-responses nog kloppen, zie lib/contract.test.ts voor de toelichting.
+        # Kost echte tokens (een paar cent per run), vandaar alleen wekelijks (maandag
+        # 08:00 UTC, zie de cron hierboven), niet bij elke push. Verifieert dat
+        # lib/contract.test.ts's aannames over de vorm van Anthropic/Voyage-responses nog
+        # kloppen, zie lib/contract.test.ts voor de toelichting.
 
   lint:
     name: ESLint (informatief, blokkeert niet)

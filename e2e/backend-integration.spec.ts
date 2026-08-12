@@ -9,8 +9,8 @@ import { test, expect } from '@playwright/test'
 // Let op bij snel handmatig herhaald draaien: de echte dual-session-lock (max 1 actief
 // gesprek per gebruiker, 2 minuten TTL in Redis, zie chat/route.ts) slaat na een eerste
 // geslaagde run terecht aan bij een volgende run kort erna met een andere sessionId. Dat is
-// geen bug, dat bewijst dat die functie ook echt werkt. In CI (nightly-cadans) speelt dit
-// niet, alleen bij handmatige iteratie binnen dezelfde 2 minuten.
+// geen bug, dat bewijst dat die functie ook echt werkt. In CI (wekelijkse cadans, maandag
+// 08:00 UTC) speelt dit niet, alleen bij handmatige iteratie binnen dezelfde 2 minuten.
 
 test('echte backend-keten verwerkt een chatbericht met gemockte Anthropic/Voyage-aanroepen', async ({ page }) => {
   await page.goto('/bot')

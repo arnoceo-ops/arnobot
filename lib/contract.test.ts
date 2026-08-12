@@ -4,9 +4,9 @@ import Anthropic from '@anthropic-ai/sdk'
 // Contracttests: verifiëren dat de lokale mock-servers (e2e/mocks/mockAnthropicServer.ts,
 // mockVoyageServer.ts) nog overeenkomen met de daadwerkelijke vorm van de echte Anthropic/
 // Voyage-API's. Draaien NIET bij elke push (kosten echte tokens, echte netwerkaanroepen),
-// alleen als RUN_CONTRACT_TESTS=true staat, wat de nightly-CI-job expliciet aanzet. Als een
-// van deze API's ooit hun vorm wijzigt, valt dat hier op vóórdat de mock stilletjes uit de
-// pas gaat lopen met de werkelijkheid.
+// alleen als RUN_CONTRACT_TESTS=true staat, wat de wekelijkse CI-job (maandag 08:00 UTC)
+// expliciet aanzet. Als een van deze API's ooit hun vorm wijzigt, valt dat hier op vóórdat
+// de mock stilletjes uit de pas gaat lopen met de werkelijkheid.
 const shouldRun = process.env.RUN_CONTRACT_TESTS === 'true'
 
 describe.skipIf(!shouldRun)('contract: Anthropic /v1/messages', () => {
