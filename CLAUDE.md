@@ -50,7 +50,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 #### Milestone: Pro-upgrades bij 50 actieve gebruikers
 Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorvoeren (nu bewust uitgesteld, niet omdat het onbelangrijk is maar omdat het bij de huidige schaal nog niet in verhouding staat):
 - **Vercel Firewall** aanzetten
-- **Supabase PITR** (Point-In-Time Recovery, echte databasebackups) aanzetten, huidige gratis plan biedt dit niet. **Direct daarna, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, controleren dat alle tabellen/rijen/encoding kloppen, tijdelijk project weer verwijderen). Een reminder hiervoor kwam op 2026-08-08 al eens te vroeg binnen (gratis plan biedt geen downloadbare dump, dus niet uit te voeren), toen bewust overgeslagen, niet vergeten, hoort dus bij déze upgrade-stap.
+- **Supabase PITR** (Point-In-Time Recovery) aanzetten, $100/maand extra bovenop het al actieve Supabase Pro-abonnement (bevestigd 2026-08-10 geüpgraded, zie hieronder). **Correctie (2026-08-11):** de eerdere aanname "gratis plan biedt geen backups" klopte niet meer zodra Pro actief is, Pro geeft al gratis dagelijkse backups met 7 dagen bewaartermijn zonder PITR. PITR voegt alleen precisie toe (herstel tot op de minuut i.p.v. de laatste nachtelijke snapshot), pas de moeite waard zodra een dag dataverlies echt pijn zou doen. Sinds 2026-08-11 automatisch verwerkt in Abacus (`lib/kostenTarieven.ts`, `TARIEVEN.supabasePitrDrempel = 50`, geen handmatige toggle meer): telt vanaf 50 gebruikers automatisch mee in zowel het scenario-tabblad als Trackrecord. **Direct bij het daadwerkelijk aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, controleren dat alle tabellen/rijen/encoding kloppen, tijdelijk project weer verwijderen). Een reminder hiervoor kwam op 2026-08-08 al eens te vroeg binnen (gratis plan bood toen geen downloadbare dump, dus niet uit te voeren), toen bewust overgeslagen, niet vergeten, hoort dus bij déze upgrade-stap.
 - **Clerk**: inactivity timeout inschakelen (zie hieronder bij Clerk) en session limits aanscherpen
 
 #### Vercel
@@ -65,9 +65,10 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Controleer [supabase.com/changelog](https://supabase.com/changelog) op breaking changes
 - Check Settings → API op deprecated key-formaten of migratiewaarschuwingen
 - Zijn er schema-wijzigingen nodig voor nieuwe features?
-- Database binnen limieten? (free: 500MB — check Settings → Billing → Usage)
+- Database binnen limieten? (Pro: 8GB inbegrepen — check Settings → Billing → Usage)
 - **Gedaan (juli 2026):** gemigreerd van legacy JWT-keys naar nieuwe publishable/secret keys (`sb_publishable_...` / `sb_secret_...`) in `.env.local` en Vercel. Legacy keys daarna uitgeschakeld in Supabase dashboard. Geen codewijzigingen nodig geweest.
-- **Openstaand actiepunt:** geen echte databasebackups (PITR) op het huidige gratis plan. Zie "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven.
+- **Gedaan (2026-08-10):** geüpgraded naar Supabase Pro ($25/maand), voorkomt auto-verwijdering van inactieve projecten. Geeft ook meteen gratis dagelijkse backups (7 dagen bewaartermijn) zonder PITR nodig te hebben.
+- **Openstaand actiepunt:** PITR (preciezer herstel dan de gratis dagelijkse backup) nog niet aangezet. Zie "Milestone: Pro-upgrades bij 50 actieve gebruikers" hierboven voor de volledige afweging en de nu geautomatiseerde Abacus-drempel.
 
 #### Clerk (app: clerk.arno.bot)
 - Controleer [clerk.com/changelog](https://clerk.com/changelog) op breaking changes in SDK of JWT-formaat
