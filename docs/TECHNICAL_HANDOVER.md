@@ -218,8 +218,7 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/tts` | Text-to-speech |
 | `/api/transcribe` | Spraakherkenning |
 | `/api/bot/openers` | Gespreksopeners ophalen |
-| `/api/bot/sessions/embed` | Embeddings opslaan |
-| `/api/bot/backfill-embeddings` | Embeddings backfill |
+| `/api/bot/backfill-embeddings` | Embeddings backfill (cron, dagelijks 04:05) |
 | `/api/bot/actieopvolging` | Actieopvolging |
 
 ---
@@ -292,7 +291,7 @@ Gesprekssessies na afsluiting, met synthese.
 | `summary` | Samenvatting van het gesprek |
 | `feiten` | Kernpunten (bullets) |
 | `uitdaging` | Actie/uitdaging voor de gebruiker |
-| `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Gevuld via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen (zie modeltabel hieronder). Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped). Nog niet gebruikt in de hoofdchat-geheugeninjectie (`chat/route.ts`), wel getest via de debug-route `app/api/bot/sessions/embed/route.ts`. |
+| `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Drie schrijvers: `session-end/route.ts` (bij sessie-einde), `sessions/route.ts` (backfill bij het laden van de Bieb-pagina) en `backfill-embeddings/route.ts` (dagelijkse cron, vangnet voor de rest). Allemaal via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen. Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped). Nog niet gebruikt in de hoofdchat-geheugeninjectie (`chat/route.ts`). |
 | `deleted_at` | Soft delete timestamp |
 
 ### `arnobot_analyses`

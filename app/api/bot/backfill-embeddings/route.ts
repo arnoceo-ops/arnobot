@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getVoyageEmbedding } from '@/lib/rag'
+import { embedSessionText } from '@/lib/rag'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,8 +24,7 @@ export async function GET(req: NextRequest) {
   let processed = 0
   for (const s of sessions) {
     try {
-      const text = [s.title, s.summary, s.feiten].filter(Boolean).join('\n\n')
-      const embedding = await getVoyageEmbedding(text)
+      const embedding = await embedSessionText(s.title, s.summary, s.feiten)
       await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', s.session_id)
       processed++
       // Kleine pauze om rate limits te respecteren
