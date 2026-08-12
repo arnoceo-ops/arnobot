@@ -22,6 +22,13 @@ const ROOT = join(import.meta.dirname, '..')
 const KNOWN_EXTERNAL_PREFIXES = ['/api/webhooks/']
 const KNOWN_MANUAL_ROUTES = new Set([
   '/api/test/email-preview',
+  // Getrieerd 2026-08-12 (zie CLAUDE.md): admin-only, handmatig via curl/Postman aangeroepen,
+  // geen UI-knop. test-telegram is een herbruikbare diagnosetool, de twee backfill-routes zijn
+  // eenmalige migraties die mogelijk al hun werk gedaan hebben, bewust niet verwijderd totdat
+  // Arno bevestigt of ze nog nodig zijn.
+  '/api/admin/test-telegram',
+  '/api/bot/backfill-linkedin',
+  '/api/bot/backfill-referral-names',
 ])
 
 function walk(dir, matcher, results = []) {

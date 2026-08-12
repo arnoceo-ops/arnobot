@@ -77,7 +77,6 @@ export default async function EmailsOverzichtPage() {
             { name: 'Doorgaan bevestigd',    trigger: 'Event: bot/confirm-renewal',                  ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker doorgaan na trial bevestigt',         type: 'Admin' },
             { name: 'Account verwijderd',    trigger: 'Event: bot/delete-account',                   ontvanger: 'delete@arno.bot',     wanneer: 'Als een gebruiker zijn account verwijdert',             type: 'Admin' },
             { name: 'Evaluatie',             trigger: 'Event: api/evaluatie',                        ontvanger: 'evaluatie@arno.bot',  wanneer: 'Als een gebruiker een evaluatie instuurt',              type: 'Admin' },
-            { name: 'Archief gedeeld',       trigger: 'Event: bot/share-overview',                   ontvanger: 'Coach (extern)',       wanneer: 'Als een gebruiker zijn archief deelt met een coach',    type: 'Admin' },
             { name: 'Team waitlist',         trigger: 'Event: bot/profiel',                          ontvanger: 'waitlist@arno.bot',   wanneer: 'Als iemand zich aanmeldt voor de teamwaitlist',         type: 'Admin' },
           ]} />
         </Section>

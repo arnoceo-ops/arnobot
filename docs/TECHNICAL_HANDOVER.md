@@ -158,7 +158,6 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/bot/coaching` | Coachingrapport genereren |
 | `/api/bot/coaching-analyse` | BIEB-analyse genereren |
 | `/api/bot/uitdaging` | Uitdaging/actie genereren na gesprek |
-| `/api/bot/analyse` | Analyse aanvragen |
 | `/api/bot/team/spotlight` | Maandelijkse teamanalyse |
 | `/api/bot/team/1on1` | 1:1-agenda genereren |
 | `/api/sparring/chat` | Sparringsmodus (oefengesprek) |
@@ -178,7 +177,6 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/bot/referral` | Referralstatus ophalen |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen |
 | `/api/bot/confirm-renewal` | Verlenging bevestigen |
-| `/api/bot/nudge-opt-out` | Afmelden marketingmails |
 
 ### Team
 
