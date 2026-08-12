@@ -185,7 +185,7 @@ export default async function ArnoBotAdminPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>GEBRUIKER</label>
             <input
-              type="text" name="naam" list="gebruikers-list"
+              type="text" name="naam" list="gebruikers-list" className="admin-input"
               defaultValue={filterNaam || naamParam}
               placeholder="Zoek op naam..."
               style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}
@@ -197,17 +197,17 @@ export default async function ArnoBotAdminPage({
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>VAN</label>
-            <input type="date" name="from" defaultValue={from} lang="nl"
+            <input type="date" name="from" defaultValue={from} lang="nl" className="admin-input"
               style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>TOT EN MET</label>
-            <input type="date" name="to" defaultValue={to} lang="nl"
+            <input type="date" name="to" defaultValue={to} lang="nl" className="admin-input"
               style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>SORTERING</label>
-            <select name="sort" defaultValue={sort}
+            <select name="sort" defaultValue={sort} className="admin-input"
               style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>

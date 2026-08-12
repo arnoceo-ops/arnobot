@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 const NAV_LINKS = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
-  { href: '/bot/admin', label: 'ARNOBOT' },
+  { href: '/bot/admin', label: 'GESPREKKEN' },
   { href: '/bot/admin/status', label: 'STATUS' },
   { href: '/bot/admin/meta-analyse', label: 'META' },
   { href: '/bot/admin/voice-test', label: 'VOICE' },

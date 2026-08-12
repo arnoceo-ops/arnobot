@@ -66,7 +66,8 @@ function AnalyseText({ text }: { text: string }) {
 function periodLabel(days: number) {
   if (days === 7) return 'WEEK'
   if (days === 30) return 'MAAND'
-  return 'KWARTAAL'
+  if (days === 90) return 'KWARTAAL'
+  return `${days}D`
 }
 
 function formatDate(iso: string) {
@@ -75,6 +76,7 @@ function formatDate(iso: string) {
 
 export default function BlogsClient() {
   const [selected, setSelected] = useState(7)
+  const [customDays, setCustomDays] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
@@ -131,28 +133,58 @@ export default function BlogsClient() {
   return (
     <div>
       {/* Periode-knoppen */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 32 }}>
         {periods.map(p => (
           <button
             key={p.days}
-            onClick={() => setSelected(p.days)}
+            onClick={() => { setSelected(p.days); setCustomDays('') }}
             style={{
               fontFamily: 'sans-serif',
               fontSize: 12,
               letterSpacing: 3,
-              fontWeight: 700,
-              padding: '8px 20px',
-              borderRadius: 999,
+              fontWeight: 400,
+              width: 148,
+              padding: '8px 0',
+              borderRadius: 4,
               border: '1px solid',
-              borderColor: selected === p.days ? '#f59e0b' : '#374151',
-              background: selected === p.days ? '#1f2937' : 'transparent',
-              color: selected === p.days ? '#f59e0b' : '#6b7280',
+              borderColor: selected === p.days && !customDays ? '#f59e0b' : '#374151',
+              background: selected === p.days && !customDays ? '#1e293b' : 'transparent',
+              color: selected === p.days && !customDays ? '#f59e0b' : '#6b7280',
               cursor: 'pointer',
+              textAlign: 'center',
             }}
           >
             {p.label}
           </button>
         ))}
+        <input
+          type="number"
+          min={1}
+          max={365}
+          value={customDays}
+          onChange={e => {
+            const v = e.target.value
+            setCustomDays(v)
+            const n = parseInt(v, 10)
+            if (!isNaN(n) && n > 0) setSelected(n)
+          }}
+          placeholder="X DAGEN"
+          style={{
+            fontFamily: 'sans-serif',
+            fontSize: 12,
+            letterSpacing: 3,
+            fontWeight: 400,
+            width: 148,
+            padding: '8px 0',
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: customDays ? '#f59e0b' : '#374151',
+            background: customDays ? '#1e293b' : 'transparent',
+            color: customDays ? '#f59e0b' : '#6b7280',
+            outline: 'none',
+            textAlign: 'center',
+          }}
+        />
       </div>
 
       {/* Genereer-knop */}

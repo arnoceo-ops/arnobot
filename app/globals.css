@@ -24,6 +24,10 @@ body {
 }
 
 
+/* Admin pages — inputs (VAN/TOT/naam/sortering e.d.), zelfde look als de periode-selectors op Meta/Blogs */
+.admin-input { border-radius: 4px; transition: border-color 0.15s; }
+.admin-input:focus { border-color: #f59e0b; outline: none; }
+
 /* Admin pages — hamburger nav (mobile only) */
 .admin-mob-nav { display: none; }
 

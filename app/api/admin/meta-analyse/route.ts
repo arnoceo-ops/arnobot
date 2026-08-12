@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
     .join('\n\n====\n\n')
 
   const sessieCount = rijkeSessies.length
-  const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : 'afgelopen kwartaal'
+  const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : days === 90 ? 'afgelopen kwartaal' : `afgelopen ${days} dagen`
 
   // Stap 5: zelfbeoordeling en expertpanel parallel
   const callZelfModel = () => anthropic.messages.create({

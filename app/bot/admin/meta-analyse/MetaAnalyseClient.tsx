@@ -89,7 +89,8 @@ function AnalyseText({ text }: { text: string }) {
 function periodLabel(days: number) {
   if (days === 7) return 'WEEK'
   if (days === 30) return 'MAAND'
-  return 'KWARTAAL'
+  if (days === 90) return 'KWARTAAL'
+  return `${days}D`
 }
 
 function formatDate(iso: string) {

@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     )
     .join('\n\n')
 
-  const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : 'afgelopen kwartaal'
+  const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : days === 90 ? 'afgelopen kwartaal' : `afgelopen ${days} dagen`
 
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',
