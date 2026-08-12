@@ -200,3 +200,25 @@ jobs:
         # te scannen in plaats van alleen de diff, ook met checks:write
         # rechten. Output blijft zichtbaar in de Actions-log. Opruimen van de
         # 66 bestaande fouten is een apart, later op te pakken project.
+
+  orphan-routes:
+    name: Wees-routes (informatief, blokkeert niet)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Controleer API-routes zonder gevonden aanroeper
+        run: node scripts/check-orphan-routes.mjs
+        continue-on-error: true
+        # Blokkeert bewust niet: het script kan legitieme false positives geven (devtools-
+        # routes die alleen handmatig bezocht worden, iets dat via een absolute URL wordt
+        # aangeroepen). Toegevoegd 2026-08-12 nadat app/api/bot/sessions/embed/route.ts
+        # sinds juni 2026 ongebruikt bleek en pas bij toeval werd gevonden. Output blijft
+        # zichtbaar in de Actions-log; bevestigde false positives toevoegen aan
+        # KNOWN_MANUAL_ROUTES in het script zelf, niet hier onderdrukken.
