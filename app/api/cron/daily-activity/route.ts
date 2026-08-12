@@ -70,13 +70,22 @@ export async function GET(req: NextRequest) {
     }))
     .sort((a, b) => b.count - a.count)
 
+  // Het venster is een rollend etmaal (laatste 24 uur), geen kalenderdag. Bij activiteit
+  // van "gisteren" die nog net binnen dat venster valt, staat er anders alleen een tijd bij
+  // zonder datum, wat het laat lijken alsof het vandaag was terwijl dateLabel hierboven
+  // altijd de datum van dit cron-moment toont, niet van de activiteit zelf.
+  const vandaag = now.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
   const lines = rows.map((r, i) => {
+    const activiteitDatum = new Date(r.lastActive).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
     const tijd = new Date(r.lastActive).toLocaleTimeString('nl-NL', {
       timeZone: 'Europe/Amsterdam',
       hour: '2-digit',
       minute: '2-digit',
     })
-    return `${i + 1}. ${r.name} · ${r.count} berichten · ${tijd}`
+    const wanneer = activiteitDatum === vandaag
+      ? tijd
+      : `${new Date(r.lastActive).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'short' })}, ${tijd}`
+    return `${i + 1}. ${r.name} · ${r.count} berichten · ${wanneer}`
   })
 
   const text = `📊 ARNOBOT DAGELIJKS · ${dateLabel}\n\n${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief:\n\n${lines.join('\n')}`
