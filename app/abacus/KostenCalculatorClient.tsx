@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import {
-  computeScenarioKosten, type Inputs,
+  TARIEVEN, computeScenarioKosten, type Inputs,
   berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
@@ -254,11 +254,11 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div style={fieldLabelStyle}>Supabase PITR ($100/maand)</div>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: result.totaalGebruikers >= 50 ? '#f59e0b' : '#6b7280' }}>
-                    {result.totaalGebruikers >= 50 ? 'AAN' : 'UIT'}
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: result.totaalGebruikers >= TARIEVEN.supabasePitrDrempel ? '#f59e0b' : '#6b7280' }}>
+                    {result.totaalGebruikers >= TARIEVEN.supabasePitrDrempel ? 'AAN' : 'UIT'}
                   </span>
                 </div>
-                <div style={fieldHintStyle}>Geen aparte toggle: telt automatisch mee zodra het aantal users (incl. team) de 50 bereikt. Pro geeft al gratis dagelijkse backups (7 dagen); dit voegt alleen herstel tot op de minuut toe.</div>
+                <div style={fieldHintStyle}>Geen aparte toggle: telt automatisch mee zodra het aantal users (incl. team) de {TARIEVEN.supabasePitrDrempel} bereikt. Pro geeft al gratis dagelijkse backups (7 dagen); dit voegt alleen herstel tot op de minuut toe.</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>

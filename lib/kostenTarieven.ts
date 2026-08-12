@@ -58,10 +58,11 @@ export const TARIEVEN = {
   // alleen precisie toe (herstel tot op de minuut i.p.v. laatste nachtelijke
   // snapshot). Geen handmatige toggle (besloten 2026-08-11, op Arno's
   // verzoek): telt automatisch mee zodra het gebruikersaantal de drempel
-  // haalt, zelfde 50-actieve-gebruikersmijlpaal als de andere Pro-upgrades
-  // in CLAUDE.md, zodat dit niet vergeten kan worden aan te zetten.
+  // haalt, zodat dit niet vergeten kan worden aan te zetten. Bewust een
+  // hogere drempel (100) dan de andere Pro-upgrades in CLAUDE.md (50):
+  // Arno's eigen keuze (2026-08-11), losse drempel, geen gekoppelde mijlpaal.
   supabasePitrUsd: 100,
-  supabasePitrDrempel: 50,
+  supabasePitrDrempel: 100,
   clerkProUsd: 100,
   clerkProActief: false,
   sentryEur: 26,
