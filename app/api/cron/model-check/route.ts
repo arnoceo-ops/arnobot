@@ -116,20 +116,54 @@ function escapeHtml(text: string): string {
 }
 
 function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorstel: string): string {
-  const tableRows = rows.map(item => {
-    const advies = adviezen[item.route]
-    const adviesHtml = advies
-      ? `<span style="color: ${actiekleur(advies.actie)}; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;">${escapeHtml(advies.actie)}</span><br><span style="color: #9ca3af;">${escapeHtml(advies.tekst)}</span>`
-      : '<span style="color: #4b5563;">n.v.t.</span>'
+  const actionRows = rows.filter(r => adviezen[r.route] && adviezen[r.route].actie !== 'blijven')
+  const restRows = rows.filter(r => !actionRows.includes(r))
 
+  const actionTableRows = actionRows.map(item => {
+    const advies = adviezen[item.route]
     return `
     <tr>
       <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${escapeHtml(item.route)}</td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #f59e0b; font-size: 13px; font-family: Arial,-apple-system,sans-serif; white-space: nowrap; vertical-align: top;">${escapeHtml(item.model)}</td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${escapeHtml(item.reden)}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${adviesHtml}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;"><span style="color: ${actiekleur(advies.actie)}; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;">${escapeHtml(advies.actie)}</span><br><span style="color: #9ca3af;">${escapeHtml(advies.tekst)}</span></td>
     </tr>
   `}).join('')
+
+  const actionSection = actionRows.length > 0
+    ? `
+      <p style="color: #f59e0b; font-size: 11px; letter-spacing: 3px; margin: 0 0 12px;">AANDACHT NODIG (${actionRows.length})</p>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">ROUTE</th>
+            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">MODEL</th>
+            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">REDEN</th>
+            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">ADVIES</th>
+          </tr>
+        </thead>
+        <tbody>${actionTableRows}</tbody>
+      </table>
+    `
+    : `<p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">Geen routes die deze maand aandacht nodig hebben.</p>`
+
+  const restTableRows = restRows.map(item => {
+    const advies = adviezen[item.route]
+    const tekst = advies ? escapeHtml(advies.tekst) : 'nog geen advies'
+    return `
+    <tr>
+      <td style="padding: 6px 12px; border-bottom: 1px solid #1f2937; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif;">${escapeHtml(item.route)}</td>
+      <td style="padding: 6px 12px; border-bottom: 1px solid #1f2937; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; white-space: nowrap;">${escapeHtml(item.model)}</td>
+      <td style="padding: 6px 12px; border-bottom: 1px solid #1f2937; color: #4b5563; font-size: 13px; font-family: Arial,-apple-system,sans-serif;">${tekst}</td>
+    </tr>
+  `}).join('')
+
+  const restSection = `
+    <p style="color: #6b7280; font-size: 11px; letter-spacing: 3px; margin: 0 0 12px;">OVERIGE ROUTES, BLIJVEN (${restRows.length})</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+      <tbody>${restTableRows}</tbody>
+    </table>
+  `
 
   const voorstelHtml = voorstel && voorstel.trim() && !/^geen wijzigingen nodig$/i.test(voorstel.trim())
     ? `
@@ -149,17 +183,8 @@ function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorste
         Controleer altijd zelf de bronnen voordat je iets doorvoert.
       </p>
 
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
-        <thead>
-          <tr>
-            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">ROUTE</th>
-            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">MODEL</th>
-            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">REDEN</th>
-            <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">ADVIES</th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
+      ${actionSection}
+      ${restSection}
 
       ${voorstelHtml}
 
