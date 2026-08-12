@@ -102,7 +102,7 @@ Build (`npm run build`), typecheck en lint zijn na elke stap gecontroleerd. Regr
 Nieuwe laag "ArnoBot Voice" voor €97/maand, naast de bestaande Unlimited-laag (€77/maand, zie `app/prijzen/page.tsx`). Voice in en voice uit, eerst op de webapp, later in de (nog te bouwen) mobiele app.
 
 ### 2. TTS-leverancier
-ElevenLabs API rechtstreeks (geen reseller), model Flash v2.5, streaming audio. Dit vervangt de huidige OpenAI `tts-1-hd`/`onyx`-implementatie (`app/api/tts/route.ts`) niet, maar komt er in de voice-flow naast: ArnoBot Voice-gebruikers krijgen ElevenLabs, de bestaande TTS-knop per bericht (niet-voice-gebruikers) blijft op OpenAI staan tenzij hier later anders over besloten wordt.
+ElevenLabs API rechtstreeks (geen reseller), model Flash v2.5, streaming audio. **Achterhaald door het besluit van 2026-07-19 hierboven:** de OpenAI-TTS-knop is uit `SparClient.tsx` verwijderd, niet naast ElevenLabs blijven bestaan zoals hier oorspronkelijk gepland. `app/api/tts/route.ts` zelf is op 2026-08-12 alsnog opgeruimd (was tot dan bewust ongebruikt achtergelaten).
 
 Stem: Professional Voice Clone van Arno. Tot die klaar is, een Nederlandse stem uit de ElevenLabs-bibliotheek, stem-ID als env-variabele (bijvoorbeeld `ELEVENLABS_VOICE_ID`) zodat wisselen naar de clone geen codewijziging vereist.
 
@@ -167,7 +167,7 @@ Er bestaat nog geen generiek feature-flag-mechanisme in de codebase (geverifieer
 
 - **Clerk auth-patroon**: `const { userId } = await auth()` + 401-check, zie `app/api/transcribe/route.ts:2-6`. Voor ingelogde gebruikers wordt `userId` nooit uit de request body vertrouwd (`app/api/chat/route.ts:237-242`).
 - **STT**: `app/api/transcribe/route.ts` (Whisper, ruwe fetch, geen SDK). Frontend-opname in `app/bot/SparClient.tsx` (state rond regel 179-180, 251-252; `startRecording`/`stopRecording` rond 270-306; mic-knop UI rond 1652-1666).
-- **TTS**: `app/api/tts/route.ts` (OpenAI `tts-1-hd`/`onyx`, geen streaming, volledige buffer). Afspelen via `speak()` in `SparClient.tsx:572-604` (`Audio()`-API, geen `<audio>`-element).
+- **TTS**: was `app/api/tts/route.ts` (OpenAI `tts-1-hd`/`onyx`), verwijderd op 2026-08-12 (zie besluit 2026-07-19 hierboven). `speak()` in `SparClient.tsx` roept nu uitsluitend `/api/tts-voice` (ElevenLabs) aan, ongeacht plan.
 - **CORS**: alleen in `app/api/chat/route.ts:33-52` (`ALLOWED_ORIGINS`: arno.bot, www.arno.bot, arno.blog, www.arno.blog). `transcribe` en `tts` hebben geen CORS-headers, alleen same-origin gebruik vanuit `arno.bot`.
 - **Abonnement**: alles zit plat in de Supabase-tabel `approved_users` (geen aparte subscriptions-tabel, geen Clerk publicMetadata voor abonnementsstatus). Relevante kolommen: `tier` ('basis'/'pro'), `is_active`, `paid_at`, `expires_at`, `trial_start`.
 - **Rate limiting**: Upstash-instanties direct in `app/api/chat/route.ts:130-147`, geen gedeelde `lib/ratelimit.ts`. `transcribe` en `tts` hebben momenteel geen eigen rate limiting.
@@ -180,6 +180,6 @@ Er bestaat nog geen generiek feature-flag-mechanisme in de codebase (geverifieer
 1. **Route-opzet voor de voice-chatflow**: nieuwe losse route (bv. `app/api/chat-voice/route.ts`), niet als flag binnen de bestaande `app/api/chat/route.ts`. Eigen CORS/rate-limit-instellingen, raakt de bestaande hoofdchat niet aan.
 2. **Feature flag voor toegang tot ArnoBot Voice**: losse boolean-kolom op `approved_users` (bv. `voice_enabled`), onafhankelijk van de bestaande `tier`-kolom (basis/pro). Voice is een addon, geen vervanging van basis/pro.
 3. **STT-leverancier**: blijft OpenAI Whisper via het bestaande `app/api/transcribe/route.ts`. Geen nieuwe leverancier voor spraakherkenning, alleen TTS gaat naar ElevenLabs.
-4. **Bestaande per-bericht TTS-knop (OpenAI tts-1-hd/onyx) in `SparClient.tsx`**: voor Voice-abonnees vervangen door automatische ElevenLabs-playback (Flash v2.5, straks Arno's clone) na elk antwoord. Niet-Voice-gebruikers behouden de bestaande handmatige OpenAI-knop ongewijzigd.
+4. **Bestaande per-bericht TTS-knop (OpenAI tts-1-hd/onyx) in `SparClient.tsx`**: voor Voice-abonnees vervangen door automatische ElevenLabs-playback (Flash v2.5, straks Arno's clone) na elk antwoord. ~~Niet-Voice-gebruikers behouden de bestaande handmatige OpenAI-knop ongewijzigd.~~ **Achterhaald, zelfde dag:** zie het besluit bovenaan dit document (2026-07-19), de OpenAI-knop is toen voor iedereen verwijderd, niet alleen vervangen voor Voice-abonnees.
 
 Deze vier antwoorden zijn verwerkt in de fasering hierboven en zijn leidend voor de bouw van fase 1.

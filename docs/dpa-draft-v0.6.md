@@ -70,7 +70,7 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | Clerk | Authenticatie en gebruikersbeheer | SOC 2 Type II |
 | Vercel | Hosting en deployment | — |
 | Anthropic | AI-verwerking voor coaching | — |
-| OpenAI | Spraakherkenning (Whisper) en tekst-naar-spraak voor voice-invoer | — |
+| OpenAI | Spraakherkenning (Whisper) voor voice-invoer | — |
 | Resend | Transactionele e-mails | — |
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA |
 | Sentry | Foutmonitoring en performance-tracing | — |

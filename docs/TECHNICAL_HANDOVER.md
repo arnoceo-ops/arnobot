@@ -215,7 +215,6 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/csp-report` | CSP-schendingen ontvangen |
 | `/api/beveiliging-pdf` | Beveiligings-PDF genereren |
 | `/api/feedback` | Feedbackformulier |
-| `/api/tts` | Text-to-speech |
 | `/api/transcribe` | Spraakherkenning |
 | `/api/bot/openers` | Gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Embeddings backfill (cron, dagelijks 04:05) |
@@ -439,7 +438,6 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 | `app/api/cron/meta-analyse/route.ts` (zelfbeoordeling + expertpanel) | `claude-sonnet-4-6` | Geautomatiseerde maandelijkse tegenhanger van admin/meta-analyse, draait zonder mens die het resultaat voor opslag ziet. Had geen retry/leeg-check (2026-07-audit-verificatie); nu elk individueel retry-bij-leeg-antwoord, analyse wordt overgeslagen (niet opgeslagen, geen mail) als één van beide na retry leeg blijft. | 2026-07 |
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. Ontbrak eerder in deze tabel. | 2026-07 |
 | `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch, geen SDK) | Spraak-naar-tekst voor voice-input. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
-| `app/api/tts/route.ts` | `tts-1-hd` (OpenAI, stem `onyx`, rauwe fetch, geen SDK) | Tekst-naar-spraak. Ontbrak volledig uit deze tabel én uit de privacypagina/beveiligingsdocument (2026-07-audit-verificatieronde, zie OpenAI-sectie hierboven). | 2026-07 |
 | `app/api/chat-voice/route.ts` (ArnoBot Voice, echte gebruikers, `plan` premium/team) | `claude-sonnet-4-6` | Eigen, korte voice-systeeminstructie (`buildVoiceSystemPrompt` in `lib/systemPrompt.ts`, doellengte 400-600 tekens, gespreksachtig). Niet-streamend (`.messages.create()`), want bij zulke korte antwoorden weegt de streaming-boilerplate niet op tegen de winst. Claude-call-plus-retry-logica in `lib/voice.ts` (`getVoiceAnswer`), gedeeld met de admin-testroute. Eigen Upstash-rate-limiter (30/uur per gebruiker, `arnobot:voice-chat`), los van de hoofdchat-limiter. | 2026-07 |
 | `app/api/tts-voice/route.ts` (ArnoBot Voice, echte gebruikers, `plan` premium/team) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch, geen SDK) | Streaming tekst-naar-spraak, ElevenLabs-fetch-logica in `lib/voice.ts` (`fetchElevenLabsSpeech`), gedeeld met de admin-testroute. Verbruik gelogd in `arnobot_elevenlabs_usage` met de echte Clerk `userId`. Eigen rate-limiter (60/uur, `arnobot:voice-tts`). | 2026-07 |
 | `app/api/admin/voice-test/chat/route.ts` (ArnoBot Voice, admin-only testfase) | `claude-sonnet-4-6` | Interne testroute voor stem/latency/stijl, blijft bestaan naast de publieke route. Gebruikt dezelfde `getVoiceAnswer()` uit `lib/voice.ts`. Alleen bereikbaar via `/bot/admin/voice-test`, geen Clerk-auth. | 2026-07 |

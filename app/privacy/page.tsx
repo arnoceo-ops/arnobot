@@ -147,7 +147,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>OpenAI</td>
-                  <td>Spraakherkenning (Whisper) en tekst-naar-spraak voor voice-invoer (geen training op jouw data)</td>
+                  <td>Spraakherkenning (Whisper) voor voice-invoer (geen training op jouw data)</td>
                   <td><a href="https://openai.com/policies/data-processing-addendum/" target="_blank" rel="noopener noreferrer">openai.com/policies/dpa</a></td>
                 </tr>
                 <tr>
