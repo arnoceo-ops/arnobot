@@ -68,6 +68,18 @@ async function getEmbedding(text: string): Promise<number[]> {
   return getVoyageEmbedding(text)
 }
 
+// Enige plek die een sessie-samenvatting embedt voor arnobot_blog_sessions.embedding.
+// Bewust apart van getEmbedding()/getVoyageEmbedding() hierboven (die zijn voor de
+// kennisbank-RAG, ander model). Alle schrijvers van deze kolom (session-end, de backfill
+// in sessions/route.ts, en de debug-route sessions/embed/route.ts) moeten hier doorheen,
+// niet zelf getMultilingualEmbedding() aanroepen: anders kan opnieuw een deel van de kolom
+// op een ander model gaan lopen dan de rest zonder dat iemand het merkt (gebeurde 10-11 juni
+// 2026 met voyage-3-large vs voyage-multilingual-2, pas op 12 augustus ontdekt en hersteld).
+export async function embedSessionText(title: string | null, summary: string | null, feiten: string | null): Promise<number[]> {
+  const text = [title, summary, feiten].filter(Boolean).join('\n')
+  return getMultilingualEmbedding(text)
+}
+
 async function rerankChunks(
   query: string,
   chunks: { content: string; context: string | null; source: string | null; url: string | null }[],

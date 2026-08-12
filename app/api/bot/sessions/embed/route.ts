@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getMultilingualEmbedding } from '@/lib/rag'
+import { embedSessionText, getMultilingualEmbedding } from '@/lib/rag'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,8 +28,7 @@ export async function GET() {
 
   for (const s of sessions ?? []) {
     try {
-      const text = [s.title, s.summary, s.feiten].filter(Boolean).join('\n')
-      const emb = await getMultilingualEmbedding(text)
+      const emb = await embedSessionText(s.title, s.summary, s.feiten)
       const { error: updateErr } = await supabase
         .from('arnobot_blog_sessions')
         .update({ embedding: emb })

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { getRelevantChunks, getVoyageEmbedding } from '@/lib/rag'
+import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
@@ -217,8 +217,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
 
   // Embedding genereren en opslaan (voor semantisch zoeken)
   try {
-    const embeddingText = [title, summary, feiten].filter(Boolean).join('\n\n')
-    const embedding = await getVoyageEmbedding(embeddingText)
+    const embedding = await embedSessionText(title, summary, feiten)
     await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
   } catch (e) {
     console.error('[session-end] Embedding error:', e)

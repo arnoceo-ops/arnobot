@@ -292,6 +292,7 @@ Gesprekssessies na afsluiting, met synthese.
 | `summary` | Samenvatting van het gesprek |
 | `feiten` | Kernpunten (bullets) |
 | `uitdaging` | Actie/uitdaging voor de gebruiker |
+| `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Gevuld via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen (zie modeltabel hieronder). Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped). Nog niet gebruikt in de hoofdchat-geheugeninjectie (`chat/route.ts`), wel getest via de debug-route `app/api/bot/sessions/embed/route.ts`. |
 | `deleted_at` | Soft delete timestamp |
 
 ### `arnobot_analyses`
@@ -406,7 +407,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | Genereert 3 zoekzinnen per vraag (multi-query expansion), eenvoudige herschrijftaak, Haiku volstaat | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy model, geen gratis toelage. Upgrade naar `voyage-4-large` bewust NIET losstaand gedaan: breekt de kennisbank-zoekfunctie volledig (0 treffers, live geverifieerd), want de hele kennisbank is met dit model vooraf ge-embed. Vereist eerst volledige her-embedding, zie openstaand actiepunt hierboven. | 2026-07 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy): door Voyage zelf bevestigd als strikt beter op kwaliteit, contextlengte, latency en throughput, zelfde prijs | 2026-07 |
-| `lib/rag.ts` (`getMultilingualEmbedding`, sessie-geheugen) | `voyage-multilingual-2` | Nog niet gecheckt op een nieuwere generatie, apart van de kennisbank-RAG hierboven. Los actiepunt. | nog niet gecheckt |
+| `lib/rag.ts` (`embedSessionText`, sessie-geheugen) | `voyage-multilingual-2` | **Bug gevonden en gefixt (2026-08-12):** `session-end/route.ts` schreef sinds 10 juni 2026 embeddings weg met `voyage-3-large` i.p.v. `voyage-multilingual-2`, een gemiste migratie. Alle 88 bestaande sessies opnieuw geëmbed, alle schrijvers geconsolideerd naar deze ene gedeelde functie. Zie CLAUDE.md sectie 3 ("Embedding-consistentiecheck") voor de volledige toedracht. Nog niet gecheckt op een nieuwere modelgeneratie, apart actiepunt. | 2026-08-12 |
 | `app/api/bot/coaching-precheck/route.ts` | `claude-sonnet-4-6` | Losse ja/nee-check, expliciete fallback (`'nee'`), laag risico door korte prompt. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift, code was al gemigreerd, deze tabelrij niet). | 2026-07 |
 | `app/api/bot/verfijn/route.ts` | `claude-sonnet-4-6` | Herschrijft een gebruikersvraag, expliciete fallback (de originele vraag), input gemaximeerd op 2000 tekens. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/bot/search-linkedin-profile/route.ts` | `claude-sonnet-4-6` (+ web_search tool) | Losse opzoektaak met expliciete "niet gevonden"-afhandeling. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
