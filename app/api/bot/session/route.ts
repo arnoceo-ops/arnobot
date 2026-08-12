@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,6 +49,8 @@ export async function DELETE(req: NextRequest) {
     .update({ deleted_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('session_id', sessionId)
+
+  await pruneEntitiesForDeletedSessions(userId, [sessionId])
 
   return NextResponse.json({ ok: true })
 }

@@ -291,8 +291,22 @@ Gesprekssessies na afsluiting, met synthese.
 | `summary` | Samenvatting van het gesprek |
 | `feiten` | Kernpunten (bullets) |
 | `uitdaging` | Actie/uitdaging voor de gebruiker |
-| `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Drie schrijvers: `session-end/route.ts` (bij sessie-einde), `sessions/route.ts` (backfill bij het laden van de Bieb-pagina) en `backfill-embeddings/route.ts` (dagelijkse cron, vangnet voor de rest). Allemaal via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen. Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped). Nog niet gebruikt in de hoofdchat-geheugeninjectie (`chat/route.ts`). |
-| `deleted_at` | Soft delete timestamp |
+| `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Drie schrijvers: `session-end/route.ts` (bij sessie-einde), `sessions/route.ts` (backfill bij het laden van de Bieb-pagina) en `backfill-embeddings/route.ts` (dagelijkse cron, vangnet voor de rest). Allemaal via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen. Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped, filtert sinds 2026-08-12 ook `deleted_at`). Gebruikt in `chat/route.ts` als aanvulling op de recency-geheugeninjectie (`findSemanticallyRelevantOlderSessions`, top 3 Basic/top 8 Pro+Team). |
+| `deleted_at` | Soft delete timestamp. Twee schrijvers: de Basic-retentiecap (`sessions/route.ts`) en de handmatige DELETE (`session/route.ts`, enkelvoud). Beide roepen ook `pruneEntitiesForDeletedSessions()` aan (zie `arnobot_memory_entities` hieronder), zodat verwijderde sessies ook uit het entiteitengeheugen verdwijnen. |
+
+### `arnobot_memory_entities`
+Patroongeheugen over sessies heen: namen, bedrijven en terugkerende thema's die een gebruiker vaker noemt. Toegevoegd 2026-08-12, gedeelde logica in `lib/memoryEntities.ts` (RLS aan, zelfde patroon als `arnobot_blog_sessions`).
+
+| Kolom | Inhoud |
+|---|---|
+| `user_id` | Clerk user ID |
+| `entity_name` | Naam van de entiteit, uniek per gebruiker (`UNIQUE(user_id, entity_name)`) |
+| `entity_type` | `persoon` / `bedrijf` / `thema`, vrije tekst, geen enum-dwang |
+| `session_ids` | Array van sessie-ids waarin deze entiteit genoemd is |
+| `mention_count` | Lengte van `session_ids`, opnieuw berekend bij elke wijziging i.p.v. los bijgehouden, voorkomt drift |
+| `first_mentioned_at` / `last_mentioned_at` | Voor weergave, niet voor retentie-logica |
+
+**Schrijvers (extractie):** `session-end/route.ts` en de wees-sessie-reparatie in `sessions/route.ts`, allebei via `extractAndStoreEntities()`. **Schrijvers (pruning):** de twee `deleted_at`-schrijvers hierboven, via `pruneEntitiesForDeletedSessions()`. Geen enkele plek roept de onderliggende Haiku-extractie of tabel-writes rechtstreeks aan, precies om de fout van vanochtend (losse aanroepen die uit de pas gaan lopen) niet te herhalen. **Lezer:** `chat/route.ts` via `findRecurringEntitiesInQuestion()`, case-insensitive substring-match van bekende entiteitsnamen in de nieuwe vraag.
 
 ### `arnobot_analyses`
 BIEB-analyses. Elke analyse dekt de afgelopen gesprekken.
@@ -412,6 +426,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 | `app/api/bot/search-linkedin-profile/route.ts` | `claude-sonnet-4-6` (+ web_search tool) | Losse opzoektaak met expliciete "niet gevonden"-afhandeling. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Ontbrak eerder in deze tabel, nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
+| `lib/memoryEntities.ts` (`extractAndStoreEntities`) | `claude-haiku-4-5-20251001` | Nieuw (2026-08-12): extraheert namen/bedrijven/thema's per sessie voor `arnobot_memory_entities`. JSON-fallback (`[]`) bij parse-fout, hele extractie faalt stil (try/catch, geen retry, laag risico: optioneel patroongeheugen, geen kritiek pad). | 2026-08-12 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur aanwezig. Stond hier eerder foutief als `claude-sonnet-5` vermeld (2026-07-audit-drift). | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst aanwezig. Ontbrak eerder in deze tabel. | 2026-07 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij een fout, nog niet expliciet bij een leeg (maar niet-foutend) antwoord. Ontbrak eerder in deze tabel. | 2026-07 |

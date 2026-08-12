@@ -71,6 +71,7 @@ import { getText, StreamingDashSanitizer } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt, embedSessionQuery } from '@/lib/rag'
+import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
@@ -392,8 +393,9 @@ export async function POST(req: NextRequest) {
                 .limit(10)
             : Promise.resolve({ data: null as { persona: string | null; debrief: string | null; created_at: string }[] | null }),
           findSemanticallyRelevantOlderSessions(userId, sessionId, question),
+          findRecurringEntitiesInQuestion(userId, question),
         ])
-          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten]) => {
+          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -442,6 +444,13 @@ export async function POST(req: NextRequest) {
                 return `- ${datum}: ${inhoud}`
               }).join('\n')
               geheugentekst += `\n\nMOGELIJK RELEVANTE OUDERE GESPREKKEN (buiten de recente geschiedenis hierboven, gevonden op basis van de huidige vraag, gebruik alleen als het echt aansluit):\n${oudereTekst}`
+            }
+            if (terugkerendeEntiteiten.length > 0) {
+              const entiteitenTekst = terugkerendeEntiteiten.map(e => {
+                const datum = new Date(e.last_mentioned_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                return `- ${e.entity_name}${e.entity_type ? ` (${e.entity_type})` : ''}: eerder genoemd in ${e.mention_count} gesprek${e.mention_count === 1 ? '' : 'ken'}, laatst op ${datum}`
+              }).join('\n')
+              geheugentekst += `\n\nTERUGKERENDE NAMEN/THEMA'S IN DEZE VRAAG (patroon over meerdere gesprekken heen, gebruik alleen als het de vraag versterkt):\n${entiteitenTekst}`
             }
             return { geheugentekst, prevSessionCount }
           })

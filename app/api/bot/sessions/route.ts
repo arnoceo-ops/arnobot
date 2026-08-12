@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { embedSessionText } from '@/lib/rag'
+import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,6 +92,12 @@ export async function GET() {
           created_at: createdAt,
           ...(embedding ? { embedding } : {}),
         }, { onConflict: 'session_id' })
+
+        try {
+          await extractAndStoreEntities(userId, sessionId, conversationText)
+        } catch (e) {
+          console.error('[sessions] Entiteiten-extractie error (wees-sessie):', e)
+        }
       })
     )
   }
@@ -115,6 +122,7 @@ export async function GET() {
     if (allSessions && allSessions.length > 25) {
       const toSoftDelete = allSessions.slice(25).map(s => s.session_id)
       await supabase.from('arnobot_blog_sessions').update({ deleted_at: new Date().toISOString() }).in('session_id', toSoftDelete)
+      await pruneEntitiesForDeletedSessions(userId, toSoftDelete)
     }
   }
 

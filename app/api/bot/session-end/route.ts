@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks, embedSessionText } from '@/lib/rag'
+import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
@@ -221,6 +222,13 @@ ${RULE_NO_INVENTED_DETAILS}`,
     await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
   } catch (e) {
     console.error('[session-end] Embedding error:', e)
+  }
+
+  // Entiteiten extraheren voor het patroongeheugen (namen, bedrijven, terugkerende thema's)
+  try {
+    await extractAndStoreEntities(userId, sessionId, conversationText)
+  } catch (e) {
+    console.error('[session-end] Entiteiten-extractie error:', e)
   }
 
   return NextResponse.json({ ok: true, summary, blogs: blogSuggestions })
