@@ -82,6 +82,7 @@ export default function BlogsClient() {
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
   const [archiveLoading, setArchiveLoading] = useState(true)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/blogs-analyse')
@@ -90,6 +91,26 @@ export default function BlogsClient() {
       .catch(() => {})
       .finally(() => setArchiveLoading(false))
   }, [])
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Deze analyse definitief verwijderen? Dit kan niet ongedaan gemaakt worden.')) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/admin/blogs-analyse?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Verwijderen mislukt')
+      setAnalyses(prev => prev.filter(a => a.id !== id))
+      setOpenIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    } catch {
+      window.alert('Verwijderen is mislukt. Probeer het opnieuw.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   function toggleOpen(id: string) {
     setOpenIds(prev => {
@@ -227,33 +248,54 @@ export default function BlogsClient() {
               const isOpen = openIds.has(a.id)
               return (
                 <div key={a.id} style={{ background: '#1f2937', border: '1px solid #374151' }}>
-                  <button
-                    onClick={() => toggleOpen(a.id)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      padding: '16px 20px',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span style={{ color: '#6b7280', fontSize: 12, flexShrink: 0 }}>
-                      {isOpen ? '▼' : '▶'}
-                    </span>
-                    <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 700, flexShrink: 0 }}>
-                      {periodLabel(a.period_days)}
-                    </span>
-                    <span style={{ color: '#9ca3af', fontSize: 14, flexShrink: 0 }}>
-                      {formatDate(a.created_at)}
-                    </span>
-                    <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
-                      {a.session_count} gesprekken
-                    </span>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <button
+                      onClick={() => toggleOpen(a.id)}
+                      style={{
+                        flexGrow: 1,
+                        minWidth: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 16,
+                        padding: '16px 20px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ color: '#6b7280', fontSize: 12, flexShrink: 0 }}>
+                        {isOpen ? '▼' : '▶'}
+                      </span>
+                      <span style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 3, fontWeight: 700, flexShrink: 0 }}>
+                        {periodLabel(a.period_days)}
+                      </span>
+                      <span style={{ color: '#9ca3af', fontSize: 14, flexShrink: 0 }}>
+                        {formatDate(a.created_at)}
+                      </span>
+                      <span style={{ color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
+                        {a.session_count} gesprekken
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      disabled={deletingId === a.id}
+                      style={{
+                        fontFamily: 'sans-serif',
+                        fontSize: 12,
+                        letterSpacing: 1,
+                        color: '#cc4444',
+                        background: 'none',
+                        border: 'none',
+                        cursor: deletingId === a.id ? 'default' : 'pointer',
+                        opacity: deletingId === a.id ? 0.5 : 1,
+                        padding: '16px 20px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {deletingId === a.id ? 'BEZIG...' : 'VERWIJDER'}
+                    </button>
+                  </div>
                   {isOpen && (
                     <div style={{ padding: '20px 24px 28px 24px', borderTop: '1px solid #374151' }}>
                       <AnalyseText text={a.analyse_text} />

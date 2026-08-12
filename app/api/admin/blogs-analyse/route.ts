@@ -37,6 +37,23 @@ export async function GET() {
   return NextResponse.json(data ?? [])
 }
 
+export async function DELETE(req: NextRequest) {
+  if (!(await checkAuth())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const id = req.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'Geen id opgegeven' }, { status: 400 })
+
+  const { error } = await supabase.from('arnobot_idee_analyses').delete().eq('id', id)
+  if (error) {
+    console.error('[admin/blogs-analyse] verwijderen mislukt:', error.message)
+    return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}
+
 export async function POST(req: NextRequest) {
   if (!(await checkAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
