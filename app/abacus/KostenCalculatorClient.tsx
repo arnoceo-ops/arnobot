@@ -251,6 +251,15 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={fieldLabelStyle}>Supabase Pro ($25/maand)</div>
                 <Toggle checked={inputs.supabasePro} onChange={v => set('supabasePro', v)} />
               </div>
+              <div style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={fieldLabelStyle}>Supabase PITR ($100/maand)</div>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: result.totaalGebruikers >= 50 ? '#f59e0b' : '#6b7280' }}>
+                    {result.totaalGebruikers >= 50 ? 'AAN' : 'UIT'}
+                  </span>
+                </div>
+                <div style={fieldHintStyle}>Geen aparte toggle: telt automatisch mee zodra het aantal users (incl. team) de 50 bereikt. Pro geeft al gratis dagelijkse backups (7 dagen); dit voegt alleen herstel tot op de minuut toe.</div>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
                   <div style={fieldLabelStyle}>Clerk Pro ($100/maand)</div>

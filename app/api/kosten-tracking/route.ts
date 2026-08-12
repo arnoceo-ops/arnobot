@@ -135,7 +135,7 @@ function berekenPrognoseKostenUsd(m: Meting): number {
   const upstashOverage = Math.max(0, upstashCommands - TARIEVEN.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * TARIEVEN.upstashPricePer100k
 
-  return vasteKostenPerMaand() + anthropicKosten + analysesKosten + fable5Kosten
+  return vasteKostenPerMaand(m.gebruikers_count) + anthropicKosten + analysesKosten + fable5Kosten
     + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
 }
 

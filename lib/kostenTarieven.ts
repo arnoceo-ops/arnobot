@@ -50,6 +50,18 @@ export const TARIEVEN = {
   // zonder toggle, terwijl computeScenarioKosten dat wél voorwaardelijk deed
   // via inputs.supabasePro).
   supabaseProActief: true,
+  // PITR (Point-in-Time Recovery), $ per maand bij 7 dagen bewaartermijn
+  // (geverifieerd tegen supabase.com/docs, 2026-08-11). Los van
+  // supabaseProUsd: dat is het basisplan (voorkomt auto-verwijdering van
+  // inactieve projecten), dit is een add-on erbovenop. Pro geeft al gratis
+  // dagelijkse backups (7 dagen bewaartermijn) zonder PITR, dus dit voegt
+  // alleen precisie toe (herstel tot op de minuut i.p.v. laatste nachtelijke
+  // snapshot). Geen handmatige toggle (besloten 2026-08-11, op Arno's
+  // verzoek): telt automatisch mee zodra het gebruikersaantal de drempel
+  // haalt, zelfde 50-actieve-gebruikersmijlpaal als de andere Pro-upgrades
+  // in CLAUDE.md, zodat dit niet vergeten kan worden aan te zetten.
+  supabasePitrUsd: 100,
+  supabasePitrDrempel: 50,
   clerkProUsd: 100,
   clerkProActief: false,
   sentryEur: 26,
@@ -98,9 +110,12 @@ export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: n
   }
 }
 
-export function vasteKostenPerMaand(): number {
+// gebruikersAantal: echt gemeten actieve gebruikers deze maand (Trackrecord).
+// PITR telt automatisch mee zodra dat de mijlpaal-drempel haalt.
+export function vasteKostenPerMaand(gebruikersAantal: number): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? TARIEVEN.supabaseProUsd : 0)
+    + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
     + TARIEVEN.sentryEur * TARIEVEN.fxRateEurUsd
     + TARIEVEN.domeinPerJaarUsd / 12
@@ -263,8 +278,9 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
-    + (inputs.supabasePro ? 25 : 0)
-    + (inputs.clerkPro ? 100 : 0)
+    + (inputs.supabasePro ? TARIEVEN.supabaseProUsd : 0)
+    + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
+    + (inputs.clerkPro ? TARIEVEN.clerkProUsd : 0)
     + sentryUsd
     + domeinPerMaand
 
