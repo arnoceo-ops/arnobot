@@ -87,6 +87,13 @@ export async function embedSessionText(title: string | null, summary: string | n
   return getMultilingualEmbedding(text)
 }
 
+// Embedt een chatvraag om tegen arnobot_blog_sessions.embedding te matchen (match_sessions
+// RPC). Moet hetzelfde model zijn als embedSessionText hierboven, anders vergelijk je twee
+// incompatibele vectorruimtes.
+export async function embedSessionQuery(text: string): Promise<number[]> {
+  return getMultilingualEmbedding(text)
+}
+
 async function rerankChunks(
   query: string,
   chunks: { content: string; context: string | null; source: string | null; url: string | null }[],

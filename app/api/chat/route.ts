@@ -70,7 +70,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText, StreamingDashSanitizer } from '@/lib/ai'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
+import { getRelevantChunksMultiQuery, formatChunksForPrompt, embedSessionQuery } from '@/lib/rag'
 import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
@@ -186,6 +186,59 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// Aanvulling op de recency-laag hierboven/hieronder (laatste 10/25 sessies): vindt oudere
+// sessies die buiten dat venster vallen maar semantisch relevant zijn voor de huidige vraag.
+// Voor beide plannen, niet Pro-only (dit is een kwaliteitsfix op een laag die Basic al heeft,
+// geen nieuwe premium-feature), maar Pro krijgt meer kandidaten, zelfde verhouding als de
+// bestaande 10/25-split. Geen hard drempel-cutoff (dat faalde eerder bij de Bieb-zoekfunctie,
+// zie geheugen), alleen een lage ondergrens om pure ruis niet als "relevant" te presenteren.
+const SEMANTIC_MEMORY_CANDIDATES = 15
+const SEMANTIC_MEMORY_MIN_SIMILARITY = 0.3
+const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
+
+type OudereSessie = { session_id: string; summary: string | null; feiten: string | null; created_at: string }
+
+async function findSemanticallyRelevantOlderSessions(
+  targetUserId: string,
+  currentSessionId: string,
+  vraag: string
+): Promise<OudereSessie[]> {
+  try {
+    const queryEmbedding = await embedSessionQuery(vraag)
+    const { data: matches, error } = await supabase.rpc('match_sessions', {
+      query_embedding: queryEmbedding,
+      match_user_id: targetUserId,
+      match_count: SEMANTIC_MEMORY_CANDIDATES,
+    })
+    if (error) {
+      console.error('[chat] match_sessions RPC-fout:', error.message)
+      return []
+    }
+    const candidateIds = ((matches ?? []) as { session_id: string; similarity: number }[])
+      .filter(m => m.session_id !== currentSessionId && m.similarity >= SEMANTIC_MEMORY_MIN_SIMILARITY)
+      .map(m => m.session_id)
+    if (candidateIds.length === 0) return []
+
+    // match_sessions filtert niet op deleted_at (bevestigd 2026-08-12, zie geheugen), dus hier
+    // alsnog uitsluiten: anders komt soft-deleted content (bijv. Basic-gebruikers boven de
+    // 25-sessie-grens) terug in het geheugen terwijl die voor de gebruiker verwijderd is.
+    const { data: validRows } = await supabase
+      .from('arnobot_blog_sessions')
+      .select('session_id, summary, feiten, created_at')
+      .in('session_id', candidateIds)
+      .is('deleted_at', null)
+    if (!validRows?.length) return []
+
+    const similarityOrder = new Map(candidateIds.map((id, i) => [id, i]))
+    return [...validRows].sort(
+      (a, b) => (similarityOrder.get(a.session_id) ?? 0) - (similarityOrder.get(b.session_id) ?? 0)
+    )
+  } catch (e) {
+    console.error('[chat] semantische geheugenretrieval mislukt:', e)
+    return []
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -324,7 +377,7 @@ export async function POST(req: NextRequest) {
       ? Promise.all([
           supabase
             .from('arnobot_blog_sessions')
-            .select('title, summary, feiten, uitdaging, actie_status, created_at')
+            .select('session_id, title, summary, feiten, uitdaging, actie_status, created_at')
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
             .is('deleted_at', null)
@@ -338,8 +391,9 @@ export async function POST(req: NextRequest) {
                 .order('created_at', { ascending: false })
                 .limit(10)
             : Promise.resolve({ data: null as { persona: string | null; debrief: string | null; created_at: string }[] | null }),
+          findSemanticallyRelevantOlderSessions(userId, sessionId, question),
         ])
-          .then(([{ data: prevSessions }, { data: sparringSessions }]) => {
+          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -375,6 +429,19 @@ export async function POST(req: NextRequest) {
                 return `- ${datum} (rol: ${s.persona ?? 'onbekend'}):\n${s.debrief}`
               }).join('\n\n')
               geheugentekst += `\n\nSPARRING-OEFENSESSIES VAN DEZE GEBRUIKER (laatste ${relevanteSparring.length}, alleen relevant omdat de gebruiker er zelf naar verwijst):\n${sparringTekst}`
+            }
+            const recentSessionIds = new Set((prevSessions ?? []).map(s => s.session_id))
+            const semantischeTopN = plan !== 'basis' ? SEMANTIC_MEMORY_TOP_N.overig : SEMANTIC_MEMORY_TOP_N.basis
+            const relevanteOudereSessies = oudereKandidaten
+              .filter(s => !recentSessionIds.has(s.session_id))
+              .slice(0, semantischeTopN)
+            if (relevanteOudereSessies.length > 0) {
+              const oudereTekst = relevanteOudereSessies.map(s => {
+                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                const inhoud = [s.summary, s.feiten].filter(Boolean).join(' ')
+                return `- ${datum}: ${inhoud}`
+              }).join('\n')
+              geheugentekst += `\n\nMOGELIJK RELEVANTE OUDERE GESPREKKEN (buiten de recente geschiedenis hierboven, gevonden op basis van de huidige vraag, gebruik alleen als het echt aansluit):\n${oudereTekst}`
             }
             return { geheugentekst, prevSessionCount }
           })
