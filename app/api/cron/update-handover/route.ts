@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
         body: JSON.stringify({
           from: 'ArnoBot <info@arno.bot>',
           to: 'arno@arno.bot',
-          subject: `[ArnoBot] Overdrachts­documenten bijgewerkt — ${now}`,
+          subject: `[ArnoBot] Overdrachts­documenten bijgewerkt, ${now}`,
           html: `
             <div style="font-family:Arial,sans-serif;background:#111827;color:#f1f5f9;padding:40px;max-width:560px;margin:0 auto;">
               <p style="color:#f59e0b;font-size:12px;letter-spacing:4px;margin-bottom:24px;">ARNOBOT ADMIN</p>

@@ -1,72 +1,108 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
-import { getText } from '@/lib/ai'
+import { stripDashPunctuation } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
+
+export const maxDuration = 120
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const INVENTORY = [
-  { route: 'app/api/chat/route.ts (hoofdchat, streaming)', model: 'claude-sonnet-4-6', reden: 'Sonnet 5 teruggedraaid: geen text block bij thinking mode op lange vragen. Retry+fallback na streaming toegevoegd' },
-  { route: 'app/api/chat/route.ts (RAG-queryherschrijving/checks)', model: 'claude-haiku-4-5-20251001', reden: 'Korte classificatie/herschrijfstappen, expliciete fallbacks' },
-  { route: 'app/api/bot/uitdaging/route.ts', model: 'claude-fable-5', reden: 'Grammaticale kwaliteit en voortgangsherkenning vereisen Fable. Retry-bij-leeg-antwoord toegevoegd' },
-  { route: 'app/api/bot/session-end/route.ts (synthese/feiten/uitdaging)', model: 'claude-haiku-4-5-20251001', reden: 'Drie parallelle batch-calls per sessie, elk met retry-bij-leeg-antwoord' },
-  { route: 'app/api/bot/coaching/route.ts (precheck)', model: 'claude-sonnet-5', reden: 'Ja/nee vraag, Fable 5 overkill' },
-  { route: 'app/api/bot/coaching/route.ts (hoofdsynthese)', model: 'claude-fable-5', reden: 'Hoogste kwaliteit voor de belangrijkste synthese' },
-  { route: 'app/api/bot/coaching/route.ts (blog-synthese)', model: 'claude-haiku-4-5-20251001', reden: 'Korte labels per blog' },
-  { route: 'app/api/bot/coaching-analyse/route.ts (BIEB)', model: 'claude-sonnet-4-6', reden: 'Was Sonnet 5, gaf soms lege analyse terug (2026-07 gefixt)' },
-  { route: 'app/api/bot/team/spotlight/route.ts', model: 'claude-sonnet-4-6', reden: 'Zelfde migratie/reden als coaching-analyse' },
-  { route: 'app/api/bot/team/1on1/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Sonnet 5 teruggedraaid: kapte output af midden in een zin' },
-  { route: 'app/api/sparring/debrief/route.ts', model: 'claude-sonnet-4-6', reden: 'Was Sonnet 5, bevestigde bug: lege debrief bij lange transcripten (2026-07 gefixt)' },
-  { route: 'app/api/sparring/chat/route.ts', model: 'claude-sonnet-4-6', reden: 'Zelfde sessie/oorzaak als sparring/debrief' },
-  { route: 'app/api/cron/auto-analyse/route.ts', model: 'claude-sonnet-4-6', reden: 'Was Sonnet 5, zelfde risico als coaching-analyse (2026-07 gefixt)' },
-  { route: 'app/api/admin/analyse-evaluaties/route.ts', model: 'claude-sonnet-4-6', reden: 'Was Sonnet 5 (2026-07 gefixt)' },
-  { route: 'app/api/bot/coaching-precheck/route.ts', model: 'claude-sonnet-4-6', reden: 'Losse ja/nee-check, expliciete fallback' },
-  { route: 'app/api/bot/verfijn/route.ts', model: 'claude-sonnet-4-6', reden: 'Herschrijft gebruikersvraag, expliciete fallback' },
-  { route: 'app/api/bot/search-linkedin-profile/route.ts', model: 'claude-sonnet-4-6', reden: 'Opzoektaak met web_search tool' },
-  { route: 'app/api/bot/sessions/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Nog niet beoordeeld op leeg-antwoord-risico' },
-  { route: 'app/api/bot/sessions/search/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'JSON-fallback bij parse-fout' },
-  { route: 'app/api/cron/refresh-openers/route.ts', model: 'claude-sonnet-4-6', reden: 'Expliciete JSON-structuurcheck aanwezig' },
-  { route: 'app/api/cron/rss-ingest/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Expliciete fallback-tekst aanwezig' },
-  { route: 'app/api/cron/inactivity-nudge/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Valt terug op generieke e-mailtemplate bij fout' },
-  { route: 'app/api/admin/feedback-analyse/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Nog geen expliciete leeg-check' },
-  { route: 'app/api/admin/blogs-analyse/route.ts', model: 'claude-sonnet-4-6', reden: 'Retry-bij-leeg-antwoord toegevoegd, foutrespons i.p.v. lege analyse' },
-  { route: 'app/api/admin/meta-analyse/route.ts (zelfbeoordeling + expertpanel)', model: 'claude-sonnet-4-6', reden: 'Retry-bij-leeg-antwoord toegevoegd, foutrespons i.p.v. lege analyse' },
-  { route: 'app/api/cron/meta-analyse/route.ts (zelfbeoordeling + expertpanel)', model: 'claude-sonnet-4-6', reden: 'Retry-bij-leeg-antwoord toegevoegd, overgeslagen i.p.v. lege analyse' },
-  { route: 'app/api/admin/test-email/route.ts', model: 'claude-haiku-4-5-20251001', reden: 'Admin-testtool, geen gebruikersgerichte output' },
-  { route: 'lib/rag.ts (queryherschrijving RAG)', model: 'claude-haiku-4-5-20251001', reden: 'Eenvoudige herschrijftaak' },
-  { route: 'scripts/embed-chunks.mjs (contextgeneratie)', model: 'claude-haiku-4-5-20251001', reden: 'Offline kennisbank-ingest, fallback-tekst aanwezig' },
-  { route: 'scripts/translate-knowledge-base.mjs', model: 'claude-opus-5', reden: 'Offline vertaalscript, enige Opus-gebruik in de codebase' },
-]
+const REPO = 'arnoceo-ops/arnobot'
+const BRANCH = 'master'
 
+type ModelRow = { route: string; model: string; reden: string; laatsteCheck: string }
 type AdviesMap = Record<string, { actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }>
 
-async function getAdviezen(): Promise<AdviesMap> {
-  const inventarisText = INVENTORY.map(i =>
-    `- ${i.route}: huidig model ${i.model} (${i.reden})`
-  ).join('\n')
-
-  const res = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 600,
-    system: 'Je bent een technisch adviseur voor een productie-app die draait op Anthropic-modellen. Je geeft per route een beknopt advies op basis van de nieuwste beschikbare modellen en prijs/kwaliteitsverhouding. Wees direct en concreet.',
-    messages: [{
-      role: 'user',
-      content: `Dit zijn de huidige modelkeuzes voor ArnoBot, een sales coaching chatbot:\n\n${inventarisText}\n\nBeschikbare Anthropic modellen (meest recent): Fable 5 ($10/$50 per 1M tokens, reasoning), Opus 4.8 ($5/$25, sterk), Sonnet 4.6 ($3/$15, gebalanceerd), Haiku 4.5 ($1/$5, snel/goedkoop).\n\nGeef per route een advies. Return als JSON array:\n[{"route": "exacte route naam", "actie": "blijven|overwegen|switchen", "tekst": "één zin advies max 12 woorden"}]`
-    }]
+async function getClaudeMd(token: string): Promise<string | null> {
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/CLAUDE.md?ref=${BRANCH}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
   })
+  if (!res.ok) return null
+  const data = await res.json()
+  return Buffer.from(data.content, 'base64').toString('utf8')
+}
 
-  const raw = getText(res.content, '[]')
-  const match = raw.match(/\[[\s\S]*\]/)
-  if (!match) return {}
+function extractModelsTable(claudeMd: string): string {
+  const start = claudeMd.indexOf('## Model-inventaris')
+  if (start === -1) return ''
+  const section = claudeMd.slice(start)
+  const tableStart = section.indexOf('| Route |')
+  if (tableStart === -1) return ''
+  const afterTable = section.slice(tableStart)
+  // Tabel eindigt bij eerste lege regel na de tabelrijen
+  const tableEnd = afterTable.search(/\n\s*\n[^|]/)
+  const raw = tableEnd === -1 ? afterTable : afterTable.slice(0, tableEnd)
+  return raw.trim()
+}
 
-  const parsed: { route: string; actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }[] = JSON.parse(match[0])
-  const map: AdviesMap = {}
-  for (const item of parsed) {
-    map[item.route] = { actie: item.actie, tekst: item.tekst }
+function parseModelsTable(markdown: string): ModelRow[] {
+  const rows: ModelRow[] = []
+  for (const rawLine of markdown.split('\n')) {
+    const line = rawLine.trim()
+    if (!line.startsWith('|')) continue
+    if (/^\|[\s-]+\|/.test(line)) continue // scheidingsregel (|---|---|)
+    const cells = line.slice(1, -1).split('|').map(c => c.trim().replace(/`/g, ''))
+    if (cells.length < 4) continue
+    if (cells[0] === 'Route') continue // headerregel
+    rows.push({ route: cells[0], model: cells[1], reden: cells[2], laatsteCheck: cells[3] })
   }
-  return map
+  return rows
+}
+
+async function getAdviezen(rows: ModelRow[]): Promise<{ adviezen: AdviesMap; voorstel: string }> {
+  const inventarisText = rows.map(r => `- ${r.route}: huidig model ${r.model} (${r.reden})`).join('\n')
+
+  const prompt = `Dit zijn de huidige modelkeuzes voor ArnoBot, een sales coaching chatbot (bron: de modelinventaris-tabel in CLAUDE.md):
+
+${inventarisText}
+
+Zoek via web_search de meest actuele stand op van:
+- Anthropic: modellenlijst/release notes op docs.anthropic.com en pricing op platform.claude.com/docs/pricing
+- Voyage AI: modellen en pricing op docs.voyageai.com/docs/pricing (embedding- en rerank-modellen)
+
+Vergelijk de huidige keuzes hierboven met wat je vindt. Let vooral op: nieuwe modelgeneraties, aangekondigde deprecations, en prijs/kwaliteitsverschillen. Kwaliteit weegt zwaarder dan prijs bij het advies.
+
+Geef het resultaat terug als JSON, exact dit formaat, niets anders:
+{"adviezen": [{"route": "exacte route-string uit de lijst hierboven", "actie": "blijven|overwegen|switchen", "tekst": "max 12 woorden"}], "voorstel": "platte tekst met voorgestelde wijzigingen voor de CLAUDE.md-modelinventaristabel, of \\"Geen wijzigingen nodig\\" als er niets te wijzigen is"}
+
+Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = stripDashPunctuation(
+      res.content.filter(b => b.type === 'text').map(b => b.text).join('\n')
+    )
+    const match = text.match(/\{[\s\S]*\}/)
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[0]) as {
+          adviezen: { route: string; actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }[]
+          voorstel: string
+        }
+        const map: AdviesMap = {}
+        for (const item of parsed.adviezen ?? []) {
+          map[item.route] = { actie: item.actie, tekst: item.tekst }
+        }
+        return { adviezen: map, voorstel: parsed.voorstel || '' }
+      } catch {
+        // val door naar retry
+      }
+    }
+  }
+  return { adviezen: {}, voorstel: '' }
 }
 
 function actiekleur(actie: 'blijven' | 'overwegen' | 'switchen'): string {
@@ -75,21 +111,32 @@ function actiekleur(actie: 'blijven' | 'overwegen' | 'switchen'): string {
   return '#f87171'
 }
 
-function buildEmail(date: string, adviezen: AdviesMap): string {
-  const rows = INVENTORY.map(item => {
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorstel: string): string {
+  const tableRows = rows.map(item => {
     const advies = adviezen[item.route]
     const adviesHtml = advies
-      ? `<span style="color: ${actiekleur(advies.actie)}; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;">${advies.actie}</span><br><span style="color: #9ca3af;">${advies.tekst}</span>`
+      ? `<span style="color: ${actiekleur(advies.actie)}; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 2px;">${escapeHtml(advies.actie)}</span><br><span style="color: #9ca3af;">${escapeHtml(advies.tekst)}</span>`
       : '<span style="color: #4b5563;">n.v.t.</span>'
 
     return `
     <tr>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${item.route}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #f59e0b; font-size: 13px; font-family: Arial,-apple-system,sans-serif; white-space: nowrap; vertical-align: top;">${item.model}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${item.reden}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #9ca3af; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${escapeHtml(item.route)}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #f59e0b; font-size: 13px; font-family: Arial,-apple-system,sans-serif; white-space: nowrap; vertical-align: top;">${escapeHtml(item.model)}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #374151; color: #6b7280; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${escapeHtml(item.reden)}</td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #374151; font-size: 13px; font-family: Arial,-apple-system,sans-serif; vertical-align: top;">${adviesHtml}</td>
     </tr>
   `}).join('')
+
+  const voorstelHtml = voorstel && voorstel.trim() && !/^geen wijzigingen nodig$/i.test(voorstel.trim())
+    ? `
+      <p style="color: #f59e0b; font-size: 11px; letter-spacing: 3px; margin: 0 0 12px;">VOORGESTELDE WIJZIGING IN CLAUDE.MD</p>
+      <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0 0 32px; white-space: pre-wrap;">${escapeHtml(voorstel)}</p>
+    `
+    : `<p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">Geen wijzigingen voorgesteld op basis van het live onderzoek.</p>`
 
   return `
     <div style="background: #111827; color: #f1f5f9; padding: 48px 40px 40px; max-width: 800px; margin: 0 auto; font-family: Arial,-apple-system,sans-serif;">
@@ -98,8 +145,8 @@ function buildEmail(date: string, adviezen: AdviesMap): string {
       <p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">${date}</p>
 
       <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
-        Automatische check op huidige modelkeuzes. Het advies is gegenereerd door Claude op basis van bekende modellen en prijs/kwaliteit.<br>
-        Controleer altijd zelf de Anthropic pricing voor de laatste stand.
+        Automatische check op de huidige modelkeuzes. De modelinventaris is live opgehaald uit CLAUDE.md, het advies is gegenereerd door Claude op basis van een live zoekopdracht naar de actuele Anthropic- en Voyage AI-pricingpagina's, niet uit trainingskennis.<br><br>
+        Controleer altijd zelf de bronnen voordat je iets doorvoert.
       </p>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
@@ -111,11 +158,13 @@ function buildEmail(date: string, adviezen: AdviesMap): string {
             <th style="text-align: left; padding: 8px 12px; color: #f59e0b; font-size: 11px; letter-spacing: 3px; border-bottom: 2px solid #374151;">ADVIES</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>${tableRows}</tbody>
       </table>
 
+      ${voorstelHtml}
+
       <p style="color: #6b7280; font-size: 13px; line-height: 1.8; margin: 0 0 8px;">
-        Na een wijziging: update CLAUDE.md (modelinventaris-tabel) en de INVENTORY in deze route.
+        Na een wijziging: update CLAUDE.md (modelinventaris-tabel). Deze cron leest die tabel voortaan live uit, dus geen aparte kopie meer om bij te houden.
       </p>
       <p style="color: #6b7280; font-size: 13px;">
         Prijzen: <a href="https://platform.claude.com/docs/en/about-claude/pricing" style="color: #f59e0b;">platform.claude.com/docs/pricing</a>
@@ -134,9 +183,29 @@ export async function GET(req: NextRequest) {
     day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam',
   })
 
-  let adviezen: AdviesMap = {}
+  const githubToken = process.env.GITHUB_TOKEN
+  if (!githubToken) {
+    await notifyCronFailure('model-check', new Error('GITHUB_TOKEN niet geconfigureerd'))
+    return NextResponse.json({ error: 'github_token_missing' }, { status: 500 })
+  }
+
+  let rows: ModelRow[]
   try {
-    adviezen = await getAdviezen()
+    const claudeMd = await getClaudeMd(githubToken)
+    if (!claudeMd) throw new Error('CLAUDE.md niet gevonden of niet leesbaar via GitHub API')
+    rows = parseModelsTable(extractModelsTable(claudeMd))
+    if (rows.length === 0) throw new Error('Modelinventaris-tabel leeg of niet gevonden in CLAUDE.md')
+  } catch (e) {
+    await notifyCronFailure('model-check', e)
+    return NextResponse.json({ error: 'claude_md_fetch_failed' }, { status: 500 })
+  }
+
+  let adviezen: AdviesMap = {}
+  let voorstel = ''
+  try {
+    const result = await getAdviezen(rows)
+    adviezen = result.adviezen
+    voorstel = result.voorstel
   } catch (e) {
     console.error('[model-check] advies genereren mislukt:', e)
   }
@@ -146,7 +215,7 @@ export async function GET(req: NextRequest) {
       from: 'Arno <arno@arno.bot>',
       to: 'model@arno.bot',
       subject: `Modelcheck ${date}`,
-      html: buildEmail(date, adviezen),
+      html: buildEmail(date, rows, adviezen, voorstel),
     })
     return NextResponse.json({ ok: true, sent: date })
   } catch (e) {
