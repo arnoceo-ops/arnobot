@@ -29,7 +29,11 @@ async function expandQuery(query: string): Promise<string> {
   }
 }
 
-export async function getVoyageEmbedding(text: string): Promise<number[]> {
+// Niet exporteren: alleen embedSessionText() (sessies) en getEmbedding()/kennisbank-RAG
+// hieronder mogen dit rechtstreeks aanroepen. Een route die zelf een embedding-model kiest
+// is precies hoe de model-mix van 10-12 augustus 2026 ontstond, zie geheugen. Nu een
+// TypeScript-compile-fout in plaats van een conventie die iemand kan missen.
+async function getVoyageEmbedding(text: string): Promise<number[]> {
   const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {
@@ -46,8 +50,9 @@ export async function getVoyageEmbedding(text: string): Promise<number[]> {
   return json.data[0].embedding
 }
 
-// Voor Nederlandse gesprekken en cross-language zoekopdrachten
-export async function getMultilingualEmbedding(text: string): Promise<number[]> {
+// Voor Nederlandse gesprekken en cross-language zoekopdrachten. Niet exporteren, zelfde
+// reden als getVoyageEmbedding hierboven: alleen embedSessionText() mag dit aanroepen.
+async function getMultilingualEmbedding(text: string): Promise<number[]> {
   const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {

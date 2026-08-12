@@ -28,6 +28,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - Check of error-responses nog geen interne details lekken
 - Controleer `proxy.ts` op volledigheid van scanner-blokkering
 - **Gedaan (juli 2026):** RLS ingeschakeld op alle gebruikerstabellen met Clerk JWT-integratie als defense-in-depth.
+- **Wezen-routes-check (toegevoegd 2026-08-12):** voor elke map onder `app/api/**`, controleer of er nog een aanroeper is: een client-side `fetch()`/`.tsx`-referentie, een andere server-side aanroep, of een cron in `vercel.json`. Een route zonder aanroeper is dode code die stil blijft rondslingeren en bij een volgend refactor makkelijk vergeten wordt mee te nemen. Reden: `app/api/bot/sessions/embed/route.ts` bleek een sinds juni 2026 ongebruikte debug-route, twee maanden onopgemerkt, pas gevonden bij het opsporen van een ander bug (zie de embedding-consistentiecheck hierboven). Check ook expliciet `vercel.json`'s cronlijst als aanroeper, niet alleen client-side fetches: een cron-only route heeft geen enkele `.tsx`-referentie en wordt daardoor makkelijk over het hoofd gezien bij een grep op gebruik.
 
 ### 2. Dependencies & tooling
 - Zijn er major versie-updates beschikbaar voor: Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK?
