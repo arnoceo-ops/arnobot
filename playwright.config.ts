@@ -68,8 +68,24 @@ export default defineConfig({
     // ondersteund) en slaat de ingelogde sessie op. Alle andere projects hergebruiken die
     // sessie via storageState, zodat niet elke test opnieuw hoeft in te loggen.
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    // Niveau-3-tests (echte backend-keten, zie backend-integration.spec.ts) horen uitsluitend
+    // in de aparte 'chromium-backend'-project, nooit in 'chromium' (niveau-2, page.route-mocks).
+    // Eerder via een --grep-invert op titeltekst geregeld, wat fragiel bleek: een nieuwe test
+    // in backend-integration.spec.ts zonder exact die titeltekst werd niet uitgesloten en
+    // draaide per ongeluk mee in de niveau-2-CI-job, die geen Redis/mock-Anthropic-omgeving
+    // heeft (11 augustus 2026). Bestandsnaam-gebaseerde scheiding kan dat niet meer missen.
     {
       name: 'chromium',
+      testIgnore: /backend-integration\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'chromium-backend',
+      testMatch: /backend-integration\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',

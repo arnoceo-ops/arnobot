@@ -101,7 +101,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run niveau-2 E2E-tests (golden path, scenario's, a11y)
-        run: npx playwright test --project=chromium --grep-invert "echte backend-keten"
+        run: npx playwright test --project=chromium
         env:
           # Clerk DEVELOPMENT-instance (@clerk/testing weigert een production secret key).
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.E2E_CLERK_PUBLISHABLE_KEY }}
@@ -130,7 +130,7 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
-  e2e-nightly:
+  e2e-weekly:
     name: Playwright E2E (echte backend) + contracttests
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule'
@@ -150,7 +150,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run niveau-3 E2E-tests (echte backend-keten, gemockte AI-servers)
-        run: npx playwright test e2e/backend-integration.spec.ts --project=chromium
+        run: npx playwright test --project=chromium-backend
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.E2E_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
