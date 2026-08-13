@@ -58,5 +58,5 @@ export default async function CoachingPage() {
     )
   }
 
-  return <CoachingClient userId={userId} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
+  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
 }

@@ -84,6 +84,7 @@ interface ScoreEntry {
 
 interface Props {
   userId: string
+  plan: string
   gesprekBookedAt: string | null
 }
 
@@ -95,7 +96,7 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
   dalend:   { arrow: '↓', color: '#cc2200' },
 }
 
-export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
+export default function CoachingClient({ userId, plan, gesprekBookedAt }: Props) {
   const { user } = useUser()
   const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
@@ -657,7 +658,7 @@ export default function CoachingClient({ userId, gesprekBookedAt }: Props) {
           </div>
         )}
 
-        {doc && !isTeamMember && !gesprekBookedAt && (
+        {doc && plan === 'premium' && !isTeamMember && !gesprekBookedAt && (
           <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Wil je dit doorspreken met Arno zelf?<br />
