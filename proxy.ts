@@ -161,6 +161,17 @@ export default clerkMiddleware(async (auth, req) => {
             const linkedinUrl = (linkedinAccount as { username?: string | null } | undefined)?.username
               ? `https://www.linkedin.com/in/${(linkedinAccount as { username: string }).username}`
               : null
+            // Sales-development-attributie: een aanmelding via /aanmelden?sd=<token> zet
+            // command_manager meteen aan, zodat de manager zonder wachttijd op Arno direct
+            // door kan naar het aanmaken van zijn team en het uitnodigen van teamleden. Tokens
+            // zijn lange, willekeurige strings in env vars (niet raadbaar), geen simpele naam
+            // in de link zelf. Zie docs/SALES_DEVELOPMENT.md.
+            const sdToken = req.cookies.get('arnobot_sd')?.value
+            let sdSource: string | undefined
+            if (sdToken) {
+              if (process.env.SD_TOKEN_STEFANIE && sdToken === process.env.SD_TOKEN_STEFANIE) sdSource = 'Stefanie'
+              else if (process.env.SD_TOKEN_ANNIEK && sdToken === process.env.SD_TOKEN_ANNIEK) sdSource = 'Anniek'
+            }
             const newRow = {
               user_id: userId,
               email: email || null,
@@ -174,6 +185,7 @@ export default clerkMiddleware(async (auth, req) => {
               // abonnement kiest, verliest die functionaliteit dan bewust. Expliciet gezet
               // i.p.v. te leunen op de kolom-default, die stond hier eerder foutief op 'basis'.
               plan: 'premium',
+              ...(sdSource ? { command_manager: true } : {}),
             }
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
             const suffix = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
@@ -224,7 +236,7 @@ export default clerkMiddleware(async (auth, req) => {
             if (tgToken && tgChat) {
               const refCodeForTg = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
               const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
-              const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${tgSafe(clerkUser.firstName || '')} ${tgSafe(clerkUser.lastName || '')}\nEmail: ${tgSafe(email || '')}\nLinkedIn: ${tgSafe(linkedinUrl || 'onbekend')}${refCodeForTg ? `\nReferral: ${tgSafe(refCodeForTg)}` : ''}`
+              const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${tgSafe(clerkUser.firstName || '')} ${tgSafe(clerkUser.lastName || '')}\nEmail: ${tgSafe(email || '')}\nLinkedIn: ${tgSafe(linkedinUrl || 'onbekend')}${refCodeForTg ? `\nReferral: ${tgSafe(refCodeForTg)}` : ''}${sdSource ? `\nSales development: via ${sdSource}, command_manager direct aangezet` : ''}`
               await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

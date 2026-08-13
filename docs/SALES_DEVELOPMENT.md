@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Eerste versie, activatieproces gecorrigeerd nadat Arno terecht aangaf dat de collaboration-teamfunctie hier al voor bestaat. Slechts één handmatige stap (command_manager aanzetten, één klik), daarna is teamleden uitnodigen al volledig zelfbediening voor de manager. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis team-trial. Rolbezetting: Stefanie en Anniek.
-**Eerstvolgende stap:** Beslissen of Stefanie en Anniek zelf adminpagina-toegang krijgen om stap 2 (command_manager aanzetten) zelf te kunnen doen, of dat dit voorlopig bij Arno blijft.
+**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial.
+**Eerstvolgende stap:** De links delen met Stefanie en Anniek. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -28,15 +28,23 @@ Sales development: actief, outbound sales teams bij andere bedrijven (typisch ge
 
 ## Praktisch: hoe een trial wordt geactiveerd
 
-**Gecorrigeerd (2026-08-13):** de eerdere versie van dit document beweerde dat er geen enkele manier bestaat om dit te activeren zonder een handmatige Supabase-bewerking. Dat klopte niet: er bestaat al een volledig zelfbedieningsmechanisme voor precies dit scenario, de collaboration-teamfunctie (`arnobot_teams`/`arnobot_team_members`, los van billing/`plan`, zie `docs/ABONNEMENTEN.md`).
+**Volledig geautomatiseerd (gebouwd 2026-08-13).** Eerdere versies van dit document beschreven eerst een handmatige Supabase-bewerking, daarna een handmatige klik door Arno. Beide klopten niet meer: Arno wilde geen enkele leemte tussen aanmelden en teamleden uitnodigen, dus is er een persoonlijke link per SDR gebouwd die dit automatisch regelt.
+
+**De links (niet delen buiten Stefanie/Anniek, functioneren als een wachtwoord):**
+- Stefanie: `https://arno.bot/aanmelden?sd=e53a3dfd5ab974b85baea67d6c6b1f1e`
+- Anniek: `https://arno.bot/aanmelden?sd=36aabe733fc2e17baab60325dcbca996`
 
 **Hoe het werkt:**
-1. De manager van de prospect meldt zich gewoon aan via de normale weg. Krijgt automatisch de standaard 30-dagen Pro-trial, geen actie nodig van wie dan ook.
-2. **Enige echte handmatige stap:** Arno zet `command_manager=true` voor die manager. Dit is één klik op de bestaande knop in `/bot/admin/gebruikers` (`CommandManagerToggle.tsx`), geen Supabase-bewerking, kost seconden.
-3. De manager maakt vanaf dat moment zelf het team aan (`/bot/team/create`) en nodigt zelf de teamleden uit via een uitnodigingscode (`/bot/team/join`). Elk lid dat joint krijgt automatisch `plan='premium'` (Pro-niveau), volledig zelfbediening, geen verdere actie van Arno nodig. Maximaal 25 leden per team.
-4. Na 30 dagen: gesprek over conversie naar een echte betaalde Team-deal. Dát traject is wél volledig handmatig (`plan='team'`, facturatie, zie `docs/ABONNEMENTEN.md`, sectie "Team-aanvraagflow"), maar dat gebeurt pas bij een daadwerkelijke aankoop, niet tijdens de trial zelf.
+1. Stefanie of Anniek stuurt haar eigen link naar een prospect (in een outbound-mail, LinkedIn-bericht, etc.).
+2. De prospect klikt de link (zet een cookie, stuurt door naar de gewone inlogpagina) en meldt zich aan zoals elke andere gebruiker.
+3. Bij het aanmaken van het account herkent het systeem de cookie en zet `command_manager=true` meteen mee, in dezelfde stap, geen aparte handeling van wie dan ook nodig.
+4. Arno krijgt de gebruikelijke Telegram-melding van een nieuwe gebruiker, nu met erbij vermeld via wie (Stefanie of Anniek) deze binnenkwam, dat geeft meteen ook attributie/tracking zonder dat daar apart iets voor gebouwd hoefde te worden.
+5. De manager kan direct door naar `/bot/team`, team aanmaken, teamleden uitnodigen (`/bot/team/join`, elk lid krijgt automatisch Pro-niveau). Geen wachttijd, geen tussenstap.
+6. Na 30 dagen: gesprek over conversie naar een echte betaalde Team-deal. Dát traject blijft wél volledig handmatig (`plan='team'`, facturatie, zie `docs/ABONNEMENTEN.md`, sectie "Team-aanvraagflow"), maar dat gebeurt pas bij een daadwerkelijke aankoop, niet tijdens de trial zelf.
 
-**Openstaande vraag, nog niet besloten:** moeten Stefanie en Anniek zelf toegang krijgen tot de adminpagina om stap 2 zelf te kunnen doen, zonder Arno erbij nodig te hebben voor elke trial? Dat is een losse toegangsbeslissing (wachtwoord/rechten), geen technisch bouwwerk.
+**Beveiliging:** de tokens in de links zijn lange, willekeurige strings (niet een simpele naam of code), zodat ze niet te raden zijn. Alleen wie de link letterlijk heeft, kan 'm gebruiken. Serverside opgeslagen als de environment-variabelen `SD_TOKEN_STEFANIE`/`SD_TOKEN_ANNIEK`, moeten in zowel `.env.local` als Vercel gezet worden vóórdat dit in productie werkt.
+
+**Status:** env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie.
 
 ---
 
