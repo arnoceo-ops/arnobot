@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import DownloadOneOnOneButton from '@/app/bot/team/DownloadOneOnOneButton'
 
 interface Coaching {
   mindset_score: number | null
@@ -381,23 +382,35 @@ export default function LidPage() {
                           <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
                         </div>
 
-                        {!saved ? (
-                          <button className="btn-save" onClick={bewaar1on1} disabled={saveLoading}>
-                            {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
-                          </button>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
-                              ✓ OPGESLAGEN
-                            </p>
-                            <button
-                              onClick={() => { setAgenda(''); setSaved(false) }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
-                            >
-                              SLUITEN
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          {!saved ? (
+                            <button className="btn-save" onClick={bewaar1on1} disabled={saveLoading}>
+                              {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
                             </button>
-                          </div>
-                        )}
+                          ) : (
+                            <>
+                              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
+                                ✓ OPGESLAGEN
+                              </p>
+                              <button
+                                onClick={() => { setAgenda(''); setSaved(false) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
+                              >
+                                SLUITEN
+                              </button>
+                            </>
+                          )}
+                          <DownloadOneOnOneButton
+                            naam={data.name}
+                            datum={new Date().toISOString()}
+                            aandachtspunt={aandachtspunt || null}
+                            agenda={agenda}
+                            notitie={null}
+                            mindsetScore={data.coaching?.mindset_score ?? null}
+                            systeemScore={data.coaching?.systeem_score ?? null}
+                            actieScore={data.coaching?.actie_score ?? null}
+                          />
+                        </div>
                       </div>
                     )}
                   </>
@@ -473,16 +486,30 @@ export default function LidPage() {
                               </div>
                             </div>
                           ) : (
-                            <button
-                              className="btn-note"
-                              onClick={() => {
-                                setNoteOpenId(h.id)
-                                setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' }))
-                                setNoteSavedId(null)
-                              }}
-                            >
-                              {h.notitie ? 'BEWERK NOTITIE' : 'VOEG NOTITIE TOE'}
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                              <button
+                                className="btn-note"
+                                onClick={() => {
+                                  setNoteOpenId(h.id)
+                                  setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' }))
+                                  setNoteSavedId(null)
+                                }}
+                              >
+                                {h.notitie ? 'BEWERK NOTITIE' : 'VOEG NOTITIE TOE'}
+                              </button>
+                              {h.agenda && data && (
+                                <DownloadOneOnOneButton
+                                  naam={data.name}
+                                  datum={h.created_at}
+                                  aandachtspunt={h.aandachtspunt}
+                                  agenda={h.agenda}
+                                  notitie={h.notitie}
+                                  mindsetScore={h.mindset_score}
+                                  systeemScore={h.systeem_score}
+                                  actieScore={h.actie_score}
+                                />
+                              )}
+                            </div>
                           )}
                           {noteSavedId === h.id && !isNoteOpen && (
                             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88', marginLeft: 8 }}>✓</span>
