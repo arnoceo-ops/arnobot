@@ -27,6 +27,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Coaching op mindset, systeem en actie
 - Gesproken antwoorden, Arno's stem
 - De ArnoBot-app (Android)
+- **Toegevoegd (besloten 2026-08-13):** eenmalig gratis gesprek met Arno zelf, ontgrendeld zodra er een coachingdocument is gegenereerd (dus na minimaal 5 sessies, niet vanaf dag één). Niet voor Basic, en niet voor teamleden onder een Team-abonnement (dat verloopt via de manager, buiten de app om, bewust geen in-app bouw hiervoor). Technische gating: `plan === 'premium'` in `app/bot/coaching/CoachingClient.tsx`. Zie ABONNEMENTEN.md, sectie "Gesprek met Arno (eenmalig, Pro)" voor de volledige implementatie.
 
 ### Team
 - €97/maand vast bedrag (platformtarief voor de manager laag), of €77/maand-equivalent bij jaarlijkse vooruitbetaling (€924/jaar)

@@ -8,10 +8,11 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-08-11
-**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`) is deze sessie grondig doorgelicht door twee onafhankelijke audit-agents (formules + UI-laag), 10 bevestigde bugs gefixed, incl. een kritieke: tab 3 (Business case) gebruikte altijd vaste standaardaannames i.p.v. tab 1's live ingestelde aannames, nu écht gedeeld. `/prijzen` haalt zijn bedragen uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd. **Besloten (2026-08-11):** Team Spotlight staat als 2e bullet op de `/prijzen`-Team-kaart; Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar (geen publieke kaart), en is teruggebracht als optie binnen de `/team`-offerte-aanvraag met een vastgesteld surplus-tarief van €338/maand per Elite-teamlid (`lib/teamPricing.ts`, `TEAM_ELITE_SURPLUS_PER_MAAND`), inmiddels ook direct verwerkt in de getoonde prijs op `/team` zelf (niet alleen als toelichtende tekst). Uitvoering (het maandelijkse gesprek) kan door Arno zelf of een door hem aangewezen coach gebeuren, geen aparte publieke vermelding hiervan. **Elite-ervaring in de app (besloten 2026-08-11):** een Elite-gebruiker ziet in de app bewust hetzelfde als een Pro-gebruiker (geen aparte Elite-UI); Arno behandelt Elite-relaties zelf buiten de app om via losse afspraken.
+**Laatst bijgewerkt:** 2026-08-13
+**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`) is deze sessie grondig doorgelicht door twee onafhankelijke audit-agents (formules + UI-laag), 10 bevestigde bugs gefixed, incl. een kritieke: tab 3 (Business case) gebruikte altijd vaste standaardaannames i.p.v. tab 1's live ingestelde aannames, nu écht gedeeld. `/prijzen` haalt zijn bedragen uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd. **Besloten (2026-08-11):** Team Spotlight staat als 2e bullet op de `/prijzen`-Team-kaart; Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar (geen publieke kaart), en is teruggebracht als optie binnen de `/team`-offerte-aanvraag met een vastgesteld surplus-tarief van €338/maand per Elite-teamlid (`lib/teamPricing.ts`, `TEAM_ELITE_SURPLUS_PER_MAAND`), inmiddels ook direct verwerkt in de getoonde prijs op `/team` zelf (niet alleen als toelichtende tekst). Uitvoering (het maandelijkse gesprek) kan door Arno zelf of een door hem aangewezen coach gebeuren, geen aparte publieke vermelding hiervan. **Elite-ervaring in de app (besloten 2026-08-11):** een Elite-gebruiker ziet in de app bewust hetzelfde als een Pro-gebruiker (geen aparte Elite-UI); Arno behandelt Elite-relaties zelf buiten de app om via losse afspraken. **Besloten (2026-08-13):** het eenmalige gratis gesprek met Arno is nu expliciet Pro-only (`plan === 'premium'`, naast de bestaande coachingdocument-drempel en team-uitsluiting), zie de nieuwe sectie "Gesprek met Arno (eenmalig, Pro)" verderop in dit document voor de volledige gating.
 **Gevonden bij de financiële doorlichting (2026-08-10):** `/bot/upgrade` (bestaande gebruikers die willen upgraden) verwees nog naar "Premium" i.p.v. "Pro", en zei bij Team "prijs op aanvraag" terwijl Team al een echte berekende prijs heeft. Naam gecorrigeerd, Team-knop linkt nu naar `/team` i.p.v. een kale mailto.
-**Eerstvolgende stap:** geen vaste volgorde afgesproken:
+**Eerstvolgende stap:**
+- `[ ]` Marketinguitingen laten kloppen met de nieuwe Pro-only-gating: knoptekst op de coachingpagina ("Elke gebruiker krijgt één gratis gesprek") en de homepage-claim ("vanaf dag één", `app/page.tsx`) spreken de nieuwe realiteit nog tegen. Nog niet voorgesteld/uitgevoerd, volgende stap in de sessie van 2026-08-13.
 - `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow"). Puur interne naamgeving, geen zichtbaar "Command"-restje voor gebruikers.
 - `[ ]` **Openstaand bij Arno (niet code):** Supabase PITR nog niet aangezet ondanks Pro-upgrade op 2026-08-10, zie CLAUDE.md-milestone-sectie voor de restore-test die daarna hoort.
 
@@ -27,7 +28,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) | Ja |
 | Gesproken antwoorden | Nee | Ja | Ja | Ja |
 | Command/Team-managerdashboard | Nee | Nee | Ja | Nee |
-| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager | 1x/maand gesprek met Arno (nog niet herhaalbaar), Telegram-toegang (live), Elite Member Community (nog niet gebouwd) |
+| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android), 1x gratis gesprek met Arno (na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager | 1x/maand gesprek met Arno (nog niet herhaalbaar), Telegram-toegang (live), Elite Member Community (nog niet gebouwd) |
 
 **Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro, of Elite via een aparte route) volgt pas bij `/bot/doorgaan`.
 
@@ -67,6 +68,22 @@ Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer p
 **1 uur/maand gesprek met Arno:** nog niet gebouwd, bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit. Uitbreiding naar herhaalbare boekingen wacht op een betaald Calendly-account.
 
 **Elite Member Community:** nog niet gebouwd, wordt later Circle, bewust achteraan gepland.
+
+---
+
+## Gesprek met Arno (eenmalig, Pro)
+
+**Besloten (2026-08-13):** het eenmalige gratis gesprek met Arno (`/bot/gesprek`, Calendly-boeking, zie hierboven) is expliciet een Pro-only feature. Eerder stond de knop op de coachingpagina open voor iedereen die geen teamlid was, ongeacht plan; Team-managers (`plan='team'`) konden 'm bijvoorbeeld ook bereiken.
+
+**Gating, alle vier moeten kloppen** (`app/bot/coaching/CoachingClient.tsx`):
+1. `doc` — er moet al een coachingdocument bestaan (minimaal 5 sessies gevoerd, zie de coaching-drempel elders in de code). **Bewuste keuze, niet een technische bijkomstigheid:** Arno wil eerst aantoonbare activiteit zien (sessies gevoerd, coachingdocument aangevraagd en gelezen) voordat iemand met hem in gesprek kan.
+2. `plan === 'premium'` — alleen Pro. Basic bereikt de coachingpagina sowieso al niet (harde blokkade, zie functionele-grenzen-tabel hierboven).
+3. `!isTeamMember` — teamleden zien deze knop nooit, ook niet als ze zelf een coachingdocument hebben. Een gesprek met Arno voor een teamlid verloopt bewust via de manager, buiten de app om; geen in-app equivalent gepland (bevestigd 2026-08-13).
+4. `!gesprekBookedAt` — verdwijnt na de eerste boeking (eenmalig, net als bij Elite hierboven, dezelfde onderliggende infrastructuur).
+
+**Nuance teamleden vs. plan-veld:** een teamlid erft bij het joinen het `plan` van zijn team (`premium` of `elite`, zie `app/api/bot/team/join/route.ts`), dus puur op het `plan`-veld afgaan zou teamleden per ongeluk meenemen. Vandaar dat `!isTeamMember` een aparte, noodzakelijke voorwaarde is, niet overbodig naast de plan-check.
+
+**Nog niet gedaan:** de knoptekst zelf ("Elke gebruiker krijgt één gratis gesprek") en de homepage-claim ("Bij elk account is één persoonlijk gesprek met Arno inbegrepen, vanaf dag één", `app/page.tsx`) zijn nog niet bijgewerkt naar deze Pro-only, na-coachingdocument-realiteit. Volgende stap, nog niet uitgevoerd.
 
 ---
 
