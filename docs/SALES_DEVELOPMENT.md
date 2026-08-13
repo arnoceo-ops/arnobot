@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Eerste versie. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis team-trial. Rolbezetting: Stefanie en Anniek.
-**Eerstvolgende stap:** Het praktische activatieproces (nu volledig handmatig via Arno) een paar keer in de praktijk draaien, dan beoordelen of een eigen adminfunctie de moeite waard wordt.
+**Waar we staan:** Eerste versie, activatieproces gecorrigeerd nadat Arno terecht aangaf dat de collaboration-teamfunctie hier al voor bestaat. Slechts één handmatige stap (command_manager aanzetten, één klik), daarna is teamleden uitnodigen al volledig zelfbediening voor de manager. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis team-trial. Rolbezetting: Stefanie en Anniek.
+**Eerstvolgende stap:** Beslissen of Stefanie en Anniek zelf adminpagina-toegang krijgen om stap 2 (command_manager aanzetten) zelf te kunnen doen, of dat dit voorlopig bij Arno blijft.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -28,15 +28,15 @@ Sales development: actief, outbound sales teams bij andere bedrijven (typisch ge
 
 ## Praktisch: hoe een trial wordt geactiveerd
 
-**Belangrijk, vooraf gecheckt (2026-08-13):** er bestaat op dit moment geen zelfbedieningsfunctie om iemand op Team-niveau te zetten, ook niet via de adminpagina. De bestaande plan-toggle in `/bot/admin/gebruikers` cyclet alleen door Basic/Pro/Elite, `team` is daar bewust uit gehaald. Team-toegang wordt uitsluitend geregeld door een rechtstreekse aanpassing in Supabase.
+**Gecorrigeerd (2026-08-13):** de eerdere versie van dit document beweerde dat er geen enkele manier bestaat om dit te activeren zonder een handmatige Supabase-bewerking. Dat klopte niet: er bestaat al een volledig zelfbedieningsmechanisme voor precies dit scenario, de collaboration-teamfunctie (`arnobot_teams`/`arnobot_team_members`, los van billing/`plan`, zie `docs/ABONNEMENTEN.md`).
 
-**Proces, voorlopig volledig handmatig (besloten 2026-08-13, startpunt, geen bouwwerk vooraf):**
-1. Stefanie of Anniek krijgt akkoord van een prospect om te starten met de gratis team-trial.
-2. Ze geven de benodigde gegevens door aan Arno (bedrijfsnaam, e-mailadressen van de deelnemers, gewenste startdatum).
-3. Arno zet de team-rij(en) handmatig klaar in Supabase, zelfde soort handeling als nu al gebeurt bij een betaalde Team-aanvraag via `/team` (zie `docs/ABONNEMENTEN.md`, sectie "Team-aanvraagflow").
-4. Na afloop van de 30 dagen: handmatig gesprek over conversie naar betaald, of het aflopen van de toegang als er niet geconverteerd wordt.
+**Hoe het werkt:**
+1. De manager van de prospect meldt zich gewoon aan via de normale weg. Krijgt automatisch de standaard 30-dagen Pro-trial, geen actie nodig van wie dan ook.
+2. **Enige echte handmatige stap:** Arno zet `command_manager=true` voor die manager. Dit is één klik op de bestaande knop in `/bot/admin/gebruikers` (`CommandManagerToggle.tsx`), geen Supabase-bewerking, kost seconden.
+3. De manager maakt vanaf dat moment zelf het team aan (`/bot/team/create`) en nodigt zelf de teamleden uit via een uitnodigingscode (`/bot/team/join`). Elk lid dat joint krijgt automatisch `plan='premium'` (Pro-niveau), volledig zelfbediening, geen verdere actie van Arno nodig. Maximaal 25 leden per team.
+4. Na 30 dagen: gesprek over conversie naar een echte betaalde Team-deal. Dát traject is wél volledig handmatig (`plan='team'`, facturatie, zie `docs/ABONNEMENTEN.md`, sectie "Team-aanvraagflow"), maar dat gebeurt pas bij een daadwerkelijke aankoop, niet tijdens de trial zelf.
 
-**Wanneer dit heroverwegen:** als het aantal trials per maand groot genoeg wordt dat dit handmatige proces een bottleneck wordt, is de volgende stap een eigen, eenvoudige adminfunctie waarmee Stefanie/Anniek zelf een tijdelijke team-trial kunnen activeren zonder Arno erbij nodig te hebben. Bewust niet nu al gebouwd, eerst het proces een paar keer echt draaien.
+**Openstaande vraag, nog niet besloten:** moeten Stefanie en Anniek zelf toegang krijgen tot de adminpagina om stap 2 zelf te kunnen doen, zonder Arno erbij nodig te hebben voor elke trial? Dat is een losse toegangsbeslissing (wachtwoord/rechten), geen technisch bouwwerk.
 
 ---
 
@@ -58,7 +58,7 @@ Ze zijn niet alleen verkoper van dit product, ze zijn ook zelf gebruiker ervan. 
 
 ## Wat je niet moet beloven
 
-- Geen zelfbedieningsactivatie van de trial suggereren richting een prospect, dat bestaat niet, alles loopt via Arno.
+- De start van de trial (`command_manager` aanzetten) blijft een handmatige stap door Arno, dat naar een prospect suggereren als iets dat ze zelf kunnen instellen is onjuist. Het uitnodigen van teamleden daarna is wel echt zelfbediening voor de manager zelf.
 - Geen kenmerken noemen die nog GEPLAND zijn in `docs/SALES_BIJBEL.md`, alleen LIVE.
 - Geen concreet verdienpotentieel/commissiestructuur communiceren totdat die met Arno is vastgesteld en hier is vastgelegd.
 
@@ -68,4 +68,4 @@ Ze zijn niet alleen verkoper van dit product, ze zijn ook zelf gebruiker ervan. 
 
 - Concrete commissiestructuur voor Stefanie en Anniek op geconverteerde trials, zodra vastgesteld
 - Een lijst van doelbedrijven/wie ze actief gaan benaderen
-- Beslissing of/wanneer een eigen adminfunctie voor trial-activatie de moeite waard wordt
+- Beslissing of Stefanie/Anniek eigen adminpagina-toegang krijgen (zie "Openstaande vraag" hierboven)
