@@ -184,7 +184,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                 <ul className="plan-bullets">
                   <li>Dagelijks sparren met ArnoBot</li>
                   <li>Eén gespreksanalyse per dag</li>
-                  <li>Geheugen over je recente gesprekken</li>
+                  <li>Geheugen van je recente gesprekken</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('basis')} disabled={submittingPlan !== null}>
                   {submittingPlan === 'basis' ? 'Bezig...' : 'Kies Basic'}

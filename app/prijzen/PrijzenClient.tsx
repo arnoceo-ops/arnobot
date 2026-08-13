@@ -127,7 +127,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
           <ul className="prijzen-tier-bullets">
             <li>Dagelijks sparren met ArnoBot</li>
             <li>Eén gespreksanalyse per dag</li>
-            <li>Geheugen over je recente gesprekken</li>
+            <li>Geheugen van je recente gesprekken</li>
           </ul>
 
           <SignupCTA className="prijzen-tier-cta">Start nu</SignupCTA>
