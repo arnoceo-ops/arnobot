@@ -274,9 +274,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }, [showSluiten, showAnalysesHint])
   const [teamPrompt, setTeamPrompt] = useState(false)
   const [isManager, setIsManager] = useState(false)
-  const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
+  const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string; vraagVervolg: boolean } | null>(null)
+  const [actieGetoondOp, setActieGetoondOp] = useState<number | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
   const [actieStatus, setActieStatus] = useState<'ja' | 'deels' | 'nee' | null>(null)
+  const [actieWachtOpElaboratie, setActieWachtOpElaboratie] = useState(false)
+  const [actieElaboratieInput, setActieElaboratieInput] = useState('')
   const [sparSuggestie, setSparSuggestie] = useState<{ uitdaging: string; created_at: string } | null>(null)
   const [sparSuggestieAfgewezen, setSparSuggestieAfgewezen] = useState(false)
   const [sparModus] = useState<'gesprek' | 'sparren'>(mode)
@@ -540,6 +543,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       .then(d => {
         if (d.uitdaging && !localStorage.getItem(`arnobot_actie_beantwoord_${d.sessionId}`)) {
           setActieOpvolging(d)
+          setActieGetoondOp(Date.now())
         }
       })
       .catch(() => {})
@@ -2078,32 +2082,70 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <div style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 500, width: '100%', padding: 'clamp(24px,5vw,40px)' }}>
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ACTIE-REMINDER</p>
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 28 }}>{actieOpvolging.uitdaging}</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {([
-                  { label: 'JA, GEDAAN', status: 'ja' as const, primary: true },
-                  { label: 'INGEPLAND', status: 'deels' as const, primary: false },
-                  { label: 'NOG NIET', status: 'nee' as const, primary: false },
-                ] as const).map(({ label, status, primary }) => (
+              {!actieWachtOpElaboratie ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {([
+                    { label: 'JA, GEDAAN', status: 'ja' as const, primary: true },
+                    { label: 'INGEPLAND', status: 'deels' as const, primary: false },
+                    { label: 'NOG NIET', status: 'nee' as const, primary: false },
+                  ] as const).map(({ label, status, primary }) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        if (status === 'ja' && actieOpvolging.vraagVervolg) {
+                          setActieWachtOpElaboratie(true)
+                          return
+                        }
+                        const klikMs = actieGetoondOp ? Date.now() - actieGetoondOp : undefined
+                        setActieStatus(status)
+                        setActieBeantwoord(true)
+                        localStorage.setItem(`arnobot_actie_beantwoord_${actieOpvolging.sessionId}`, status)
+                        fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status, klikMs }) }).catch(() => {})
+                      }}
+                      style={{
+                        flex: 1,
+                        fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
+                        padding: '10px 4px', borderRadius: 999, cursor: 'pointer',
+                        background: primary ? '#f59e0b' : 'none',
+                        color: primary ? '#111827' : '#9ca3af',
+                        border: primary ? 'none' : '1px solid #374151',
+                        transition: 'all 0.15s',
+                      }}
+                    >{label}</button>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 400, color: '#9ca3af', marginBottom: 12 }}>Wat heb je precies gedaan?</p>
+                  <textarea
+                    value={actieElaboratieInput}
+                    onChange={e => setActieElaboratieInput(e.target.value)}
+                    rows={2}
+                    autoFocus
+                    style={{ width: '100%', background: '#111827', border: '1.5px solid #374151', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 14, padding: '10px 12px', outline: 'none', resize: 'none', marginBottom: 12 }}
+                    onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
+                    onBlur={e => { e.currentTarget.style.borderColor = '#374151' }}
+                  />
                   <button
-                    key={status}
+                    disabled={actieElaboratieInput.trim().length < 10}
                     onClick={() => {
-                      setActieStatus(status)
+                      const klikMs = actieGetoondOp ? Date.now() - actieGetoondOp : undefined
+                      setActieStatus('ja')
                       setActieBeantwoord(true)
-                      localStorage.setItem(`arnobot_actie_beantwoord_${actieOpvolging.sessionId}`, status)
-                      fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status }) }).catch(() => {})
+                      localStorage.setItem(`arnobot_actie_beantwoord_${actieOpvolging.sessionId}`, 'ja')
+                      fetch('/api/bot/actieopvolging', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: actieOpvolging.sessionId, status: 'ja', klikMs, elaboratie: actieElaboratieInput }) }).catch(() => {})
                     }}
                     style={{
-                      flex: 1,
+                      width: '100%',
                       fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
-                      padding: '10px 4px', borderRadius: 999, cursor: 'pointer',
-                      background: primary ? '#f59e0b' : 'none',
-                      color: primary ? '#111827' : '#9ca3af',
-                      border: primary ? 'none' : '1px solid #374151',
+                      padding: '10px 4px', borderRadius: 999, cursor: actieElaboratieInput.trim().length < 10 ? 'default' : 'pointer',
+                      background: '#f59e0b', color: '#111827', border: 'none',
+                      opacity: actieElaboratieInput.trim().length < 10 ? 0.4 : 1,
                       transition: 'all 0.15s',
                     }}
-                  >{label}</button>
-                ))}
-              </div>
+                  >VERSTUUR</button>
+                </div>
+              )}
             </div>
           </div>
         )}

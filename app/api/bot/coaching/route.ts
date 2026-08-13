@@ -9,6 +9,7 @@ import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
+import { berekenActiePatroon } from '@/lib/actiePatroon'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -197,7 +198,16 @@ export async function POST() {
     } else if (aantalDeels >= 3) {
       actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Patroon: acties worden structureel ingepland maar niet afgerond. Benoem dit direct in de actie_diagnose. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt.`
     } else if (aantalJa >= 4) {
-      actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Patroon: de gebruiker zet afspraken consequent om in actie. Verwerk dit als positief signaal in de actie_diagnose.`
+      // Een hoog ja-percentage is niet per definitie positief: kan ook reflexief klikken zijn
+      // om de pop-up weg te krijgen, niet oprechte uitvoering. berekenActiePatroon() combineert
+      // het percentage met klik-snelheid om dat onderscheid te maken (percentage alleen zou ook
+      // een oprecht goed presterende gebruiker verdacht maken).
+      const patroon = await berekenActiePatroon(userId)
+      if (patroon.geescaleerd) {
+        actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Let op: dit hoge "gedaan"-percentage gaat samen met opvallend snelle bevestigingen, mogelijk een reflex om de melding weg te klikken in plaats van oprechte uitvoering. Benoem dit niet als beschuldiging maar als eerlijke, nieuwsgierige constatering in de actie_diagnose: bijvoorbeeld dat je merkt dat acties steeds als gedaan worden gemarkeerd maar dat je in de gesprekken zelf weinig concrete verandering terugziet, en vraag wat daar precies achter zit. Geen aannames over de reden, het patroon zelf is een feit. Arno doet dit niet om te controleren maar vanuit oprechte betrokkenheid bij dat de gebruiker ook echt vooruitkomt.`
+      } else {
+        actieOpvolgingContext = `\n\nACTIEOPVOLGING: De gebruiker geeft bij het begin van sessies aan of de vorige actie is gedaan. Recente antwoorden (meest recent eerst): ${recentLabels}. Patroon: de gebruiker zet afspraken consequent om in actie. Verwerk dit als positief signaal in de actie_diagnose.`
+      }
     }
   }
 

@@ -216,7 +216,7 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/transcribe` | Spraakherkenning |
 | `/api/bot/openers` | Gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Embeddings backfill (cron, dagelijks 04:05) |
-| `/api/bot/actieopvolging` | Actieopvolging (meest recente open actie, in-app popup) |
+| `/api/bot/actieopvolging` | Actieopvolging (meest recente open actie, in-app popup). Toegevoegd 2026-08-13: detecteert reflexief "ja"-klikken (hoog percentage + snelle klikken, `lib/actiePatroon.ts`), vraagt dan een korte toelichting i.p.v. alleen een klik. Patroon wordt ook meegewogen in de coaching-synthese (`app/api/bot/coaching/route.ts`). |
 
 ---
 
@@ -291,6 +291,8 @@ Gesprekssessies na afsluiting, met synthese.
 | `feiten` | Kernpunten (bullets) |
 | `uitdaging` | Actie/uitdaging voor de gebruiker |
 | `actie_status` | `'ja'`/`'deels'`/`'nee'`/`null`. Geschreven via `PATCH /api/bot/actieopvolging` (in-app popup bij het openen van de app, één keer per browsersessie). Zolang dit `null` is, telt de sessie mee als "open actie": in `chat/route.ts`'s achtergrondcontext en als kandidaat voor de `uitdaging-herinnering`-cron (zie hieronder). Bewust geen los overzicht meer op `/bot/analyses` (verwijderd 2026-08-13, die pagina toont uitsluitend gesprekken). |
+| `actie_klik_ms` | Milliseconden tussen het tonen van de pop-up en de klik. Toegevoegd 2026-08-13 om reflexief "ja"-klikken te detecteren (zie `lib/actiePatroon.ts`). |
+| `actie_elaboratie` | Optioneel, max 500 tekens. Ingevuld als de gebruiker bij "JA, GEDAAN" een vervolgvraag kreeg ("wat heb je precies gedaan?"), zie `lib/actiePatroon.ts` voor wanneer dat gebeurt. |
 | `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Drie schrijvers: `session-end/route.ts` (bij sessie-einde), `sessions/route.ts` (backfill bij het laden van de Bieb-pagina) en `backfill-embeddings/route.ts` (dagelijkse cron, vangnet voor de rest). Allemaal via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen. Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped, filtert sinds 2026-08-12 ook `deleted_at`). Gebruikt in `chat/route.ts` als aanvulling op de recency-geheugeninjectie (`findSemanticallyRelevantOlderSessions`, top 3 Basic/top 8 Pro+Team). |
 | `deleted_at` | Soft delete timestamp. Twee schrijvers: de Basic-retentiecap (`sessions/route.ts`) en de handmatige DELETE (`session/route.ts`, enkelvoud). Beide roepen ook `pruneEntitiesForDeletedSessions()` aan (zie `arnobot_memory_entities` hieronder), zodat verwijderde sessies ook uit het entiteitengeheugen verdwijnen. |
 
