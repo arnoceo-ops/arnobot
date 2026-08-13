@@ -107,14 +107,6 @@ En als jullie op een gegeven moment weer regelmatig gaan werven, kijken we gewoo
 
 ---
 
-## NotebookLM-instructie voor de kickoff-pitch aan Stefanie en Anniek
-
-Te gebruiken in NotebookLM na het uploaden van `docs/SALES_BIJBEL.md` en dit document, in het instructieveld bij het genereren van dia's. Bijgewerkt 2026-08-13 met de nu vastgestelde commissiestructuur.
-
-"Maak een presentatie voor een kickoff-pitch aan twee nieuwe sales development-medewerkers (Stefanie en Anniek) die ArnoBot Team gaan verkopen aan sales teams bij andere bedrijven, via een gratis dertig dagen team-trial. Gebruik uitsluitend de geüploade documenten als bron, verzin geen cijfers of features die daar niet in staan. Gebruik nooit een kenmerk dat in de Sales Bijbel als GEPLAND staat gemarkeerd, alleen LIVE-kenmerken. Toon: direct, energiek, geen corporate taal, geen opsommingen van kenmerken zonder uitleg waarom het ertoe doet. Structuur: begin met de kans en de kernbelofte, dan het aanbod dat ze gaan verkopen, dan waarom dit makkelijk verkoopt, dan waarom dit ook voor henzelf interessant is, dan hoe het praktisch werkt, dan de commissiestructuur exact zoals in het document beschreven, verzin geen andere percentages of voorwaarden, sluit af met de volgende stap."
-
----
-
 ## Wat je niet moet beloven
 
 - Geen kenmerken noemen die nog GEPLAND zijn in `docs/SALES_BIJBEL.md`, alleen LIVE.
