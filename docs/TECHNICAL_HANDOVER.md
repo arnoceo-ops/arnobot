@@ -382,6 +382,10 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 5. `welcome_seen` niet waar → redirect `/bot/welkom`
 6. `onboarding_done` niet waar → redirect `/bot/profiel`
 
+**Sales-development-attributie (proxy.ts):** `/aanmelden?sd=<token>` zet een cookie (`arnobot_sd`, `app/aanmelden/page.tsx`). Bij accountaanmaak matcht `proxy.ts` die cookie tegen de env vars `SD_TOKEN_STEFANIE`/`SD_TOKEN_ANNIEK` en zet bij een match `command_manager=true` mee in dezelfde insert, geen aparte handeling nodig. Zie `docs/SALES_DEVELOPMENT.md` voor de volledige uitleg. Persoonlijke links (niet delen buiten Stefanie/Anniek):
+- Stefanie: `https://arno.bot/aanmelden?sd=e53a3dfd5ab974b85baea67d6c6b1f1e`
+- Anniek: `https://arno.bot/aanmelden?sd=36aabe733fc2e17baab60325dcbca996`
+
 **Admin-authenticatie:** Aparte cookie (`arnobot_admin`). Login via `/bot/admin/login` met het `ARNOBOT_ADMIN_KEY` environment variable als wachtwoord. Niet via Clerk.
 
 **API-route beveiliging:** Alle `/api/bot/*` routes roepen `auth()` aan (Clerk server-side). Crons controleren `Authorization: Bearer {CRON_SECRET}`.
