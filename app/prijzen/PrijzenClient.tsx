@@ -156,6 +156,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             <li>Uitgebreider gespreksgeheugen</li>
             <li>Volledig archief van al je output</li>
             <li>Coaching op mindset, systeem en actie</li>
+            <li>Eén gesprek met Arno zelf</li>
             <li>Gesproken antwoorden, Arno's stem</li>
             <li>De ArnoBot-app (Android)</li>
           </ul>

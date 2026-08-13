@@ -12,11 +12,58 @@ export default async function GesprekPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const { data } = await supabase
-    .from('approved_users')
-    .select('email, voornaam, achternaam, arno_call_booked_at')
-    .eq('user_id', userId)
-    .single()
+  const [userRes, coachingRes, memberRes, profileRes] = await Promise.all([
+    supabase
+      .from('approved_users')
+      .select('email, voornaam, achternaam, arno_call_booked_at, plan, paid_at')
+      .eq('user_id', userId)
+      .single(),
+    supabase
+      .from('arnobot_coaching')
+      .select('mindset_score, systeem_score, actie_score')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('arnobot_team_members')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('arnobot_blog_profiles')
+      .select('profiel')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ])
+
+  const data = userRes.data
+  const heeftCoachingDocument = coachingRes.data?.mindset_score != null
+    && coachingRes.data?.systeem_score != null
+    && coachingRes.data?.actie_score != null
+  const gebruik = (profileRes.data?.profiel as { gebruik?: string } | null)?.gebruik ?? null
+  const isTeamMember = !!memberRes.data && memberRes.data.role !== 'manager' && gebruik !== 'individueel'
+  const magBoeken = data?.plan === 'premium' && !!data?.paid_at && heeftCoachingDocument && !isTeamMember
+
+  if (!magBoeken && !data?.arno_call_booked_at) {
+    return (
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
+        `}</style>
+        <BotNav active="account" />
+        <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
+          <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>
+            GESPREK MET ARNO
+          </h1>
+          <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
+            Dit gesprek is voor betalende Pro-gebruikers, zodra er een coachingdocument is. Ga naar je coachingpagina om te zien waar je staat.
+          </p>
+        </div>
+      </>
+    )
+  }
 
   const bookingUrl = process.env.ARNO_BOOKING_URL
 

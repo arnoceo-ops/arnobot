@@ -18,7 +18,7 @@ export default async function CoachingPage() {
   )
   const { data } = await supabase
     .from('approved_users')
-    .select('plan, arno_call_booked_at')
+    .select('plan, arno_call_booked_at, paid_at')
     .eq('user_id', userId)
     .single()
 
@@ -58,5 +58,5 @@ export default async function CoachingPage() {
     )
   }
 
-  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
+  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} paid={!!data?.paid_at} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
 }
