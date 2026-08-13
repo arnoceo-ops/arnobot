@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
-**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
+**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur nu vastgesteld, zie de sectie hieronder. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
+**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. De commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder). Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -73,16 +73,56 @@ Zie ook `docs/DEMO_VIDEO_SCRIPT.md`: het script voor de pre-demo video die Stefa
 
 ---
 
+## Commissiestructuur (vastgesteld 2026-08-13)
+
+**Fase 1, jaar 1 van een aangebrachte klant:** 40% van de gefactureerde omzet, vanaf de eerste betaalde factuur (dus na de gratis trial, niet vanaf het moment van aanmelden).
+
+**Fase 2, jaar 2 en verder:** 20%, zolang de SDR actief blijft.
+
+**Wat "actief" betekent:** er komt regelmatig een nieuwe aanmelding binnen via haar eigen link, geen quotum, geen minimum aantal uren. Zodra er drie maanden zijn verstreken zonder enige nieuwe aanmelding, is ze automatisch inactief. Geen beoordeling nodig, geen gesprek dat dit hoeft te bepalen.
+
+**Fase 3, uitloop bij inactiviteit:** zodra een SDR inactief wordt, vallen alle klanten die op dat moment nog 40% of 20% opleverden automatisch terug naar 5%, met een maximum van één jaar per klant. Na dat jaar: 0% voor die klant.
+
+**Nieuwe klant tijdens inactiviteit:** brengt een inactieve SDR toch nog een nieuwe klant aan, dan levert die specifieke klant, vanaf zijn eerste factuur, 20% op voor één jaar (niet 40%, en dit maakt de SDR niet automatisch weer actief voor toekomstige klanten). Na dat jaar valt ook deze klant terug naar de 5%-uitloop, met zijn eigen maximum van één jaar vanaf dat moment, daarna 0%.
+
+**Handmatige herbeoordeling:** laat een inactieve SDR weer een duidelijk patroon van regelmaat zien, dan kan Arno op eigen inzicht besluiten haar terug te zetten op de volledige actieve structuur (fase 1/fase 2). Geen automatische regel hiervoor, puur zijn eigen beoordeling.
+
+**De link zelf:** blijft altijd bruikbaar, ook na volledige stopzetting van actieve inzet. Er is geen moment waarop een link technisch wordt gedeactiveerd, dat hoeft ook niet, het bepaalt alleen welke fase van toepassing is.
+
+**Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden:** een blijvend opgeslagen koppeling tussen een klant en de SDR die hem aanbracht. Staat nu alleen in een Telegram-melding, niet opvraagbaar of automatisch te controleren. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat).
+
+---
+
+## Hoe dit te communiceren aan Stefanie en Anniek
+
+Spreektaal, geen intern jargon zoals "fase 1" of "SDR":
+
+"Jullie krijgen 40 procent van wat een klant betaalt, in het eerste jaar. Blijft die klant daarna, dan krijgen jullie 20 procent, zolang jullie zelf actief blijven werven. Actief betekent gewoon: er komt af en toe iemand nieuw binnen via jullie link, geen quotum, geen minimum aantal uren.
+
+Als er drie maanden niemand nieuw binnenkomt via jullie link, gaat de vergoeding op alles wat er dan nog loopt automatisch omlaag naar 5 procent, voor maximaal nog een jaar, daarna stopt het voor die klanten.
+
+Jullie link blijft altijd werken, ook daarna. Breng je in die periode alsnog iemand nieuw aan, dan krijg je daar gewoon 20 procent van voor een jaar.
+
+En als jullie op een gegeven moment weer regelmatig gaan werven, kijken we gewoon samen of dat weer terug kan naar de volledige regeling."
+
+---
+
+## NotebookLM-instructie voor de kickoff-pitch aan Stefanie en Anniek
+
+Te gebruiken in NotebookLM na het uploaden van `docs/SALES_BIJBEL.md` en dit document, in het instructieveld bij het genereren van dia's. Bijgewerkt 2026-08-13 met de nu vastgestelde commissiestructuur.
+
+"Maak een presentatie voor een kickoff-pitch aan twee nieuwe sales development-medewerkers (Stefanie en Anniek) die ArnoBot Team gaan verkopen aan sales teams bij andere bedrijven, via een gratis dertig dagen team-trial. Gebruik uitsluitend de geüploade documenten als bron, verzin geen cijfers of features die daar niet in staan. Gebruik nooit een kenmerk dat in de Sales Bijbel als GEPLAND staat gemarkeerd, alleen LIVE-kenmerken. Toon: direct, energiek, geen corporate taal, geen opsommingen van kenmerken zonder uitleg waarom het ertoe doet. Structuur: begin met de kans en de kernbelofte, dan het aanbod dat ze gaan verkopen, dan waarom dit makkelijk verkoopt, dan waarom dit ook voor henzelf interessant is, dan hoe het praktisch werkt, dan de commissiestructuur exact zoals in het document beschreven, verzin geen andere percentages of voorwaarden, sluit af met de volgende stap."
+
+---
+
 ## Wat je niet moet beloven
 
-- De start van de trial (`command_manager` aanzetten) blijft een handmatige stap door Arno, dat naar een prospect suggereren als iets dat ze zelf kunnen instellen is onjuist. Het uitnodigen van teamleden daarna is wel echt zelfbediening voor de manager zelf.
 - Geen kenmerken noemen die nog GEPLAND zijn in `docs/SALES_BIJBEL.md`, alleen LIVE.
-- Geen concreet verdienpotentieel/commissiestructuur communiceren totdat die met Arno is vastgesteld en hier is vastgelegd.
+- De commissiestructuur exact communiceren zoals hierboven vastgelegd, geen andere percentages, voorwaarden of garanties toezeggen.
 
 ---
 
 ## Nog toe te voegen
 
-- Concrete commissiestructuur voor Stefanie en Anniek op geconverteerde trials, zodra vastgesteld
 - Een lijst van doelbedrijven/wie ze actief gaan benaderen
-- Beslissing of Stefanie/Anniek eigen adminpagina-toegang krijgen (zie "Openstaande vraag" hierboven)
+- Beslissing of Stefanie/Anniek eigen adminpagina-toegang krijgen
