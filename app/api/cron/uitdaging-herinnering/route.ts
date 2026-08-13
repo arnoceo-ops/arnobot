@@ -12,9 +12,11 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Oplopende tussenpozen (Ebbinghaus-vergeetcurve, zie docs/SALES_BIJBEL.md), niet één
-// willekeurig moment. Stuurt alleen als actie_status nog nooit is ingevuld: heeft de
-// gebruiker al ja/deels/nee gegeven (via de bestaande in-app actieopvolging-check), dan is
-// de terugkoppeling al gebeurd via dat kanaal, geen dubbele herinnering per e-mail nodig.
+// willekeurig moment. Stuurt alleen als actie_status nog nooit is ingevuld (heeft de
+// gebruiker al ja/deels/nee gegeven, dan is de terugkoppeling al gebeurd) EN de gebruiker
+// sinds de sessie niet meer actief is geweest in de app (anders heeft die de in-app pop-up
+// en het overzicht op /bot/analyses al gehad, e-mail zou dan alleen nog vervelend zijn
+// bovenop wat er al is, niet een nieuw bereik toevoegen, zie geheugen 2026-08-13).
 const INTERVALLEN_DAGEN = [1, 3, 7]
 const VENSTER_UUR = 3 // marge rond elk interval, voorkomt dat de cron een dag mist door timing
 
@@ -54,6 +56,17 @@ export async function GET(req: NextRequest) {
           .eq('interval_dagen', dagen)
           .maybeSingle()
         if (alGestuurd) continue
+
+        // E-mail is voor wie niet meer terugkomt, niet een extra kanaal bovenop iemand die
+        // wel actief blijft: die heeft de in-app pop-up en het overzicht op /bot/analyses al.
+        // Zonder deze check zou iemand die de pop-up zag maar niet beantwoordde (geen dwang
+        // om te klikken) alsnog 3 e-mails krijgen over iets wat al onder ogen is geweest.
+        const { count: actiefSindsSessie } = await supabase
+          .from('arnobot_rds_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', sessie.user_id)
+          .gt('created_at', sessie.created_at)
+        if ((actiefSindsSessie ?? 0) > 0) continue
 
         const { data: user } = await supabase
           .from('approved_users')
