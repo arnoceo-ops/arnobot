@@ -1,7 +1,7 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur nu vastgesteld, zie de sectie hieronder. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
+**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur nu volledig vastgesteld, inclusief deel 2 (gedeeld aandeel in de rest van het bedrijf, met plafond en dezelfde stilte-regel), zie de sectie hieronder. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
 **Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. De commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder). Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
@@ -73,7 +73,11 @@ Zie ook `docs/DEMO_VIDEO_SCRIPT.md`: het script voor de pre-demo video die Stefa
 
 ---
 
-## Commissiestructuur (vastgesteld 2026-08-13)
+## Commissiestructuur (vastgesteld 2026-08-13, uitgebreid met deel 2 zelfde dag)
+
+Bestaat uit twee delen: wat een SDR verdient over haar eigen aangebrachte klanten, en een gedeeld aandeel in de rest van het bedrijf.
+
+### Deel 1: eigen aangebrachte klanten
 
 **Fase 1, jaar 1 van een aangebrachte klant:** 40% van de gefactureerde omzet, vanaf de eerste betaalde factuur (dus na de gratis trial, niet vanaf het moment van aanmelden).
 
@@ -89,7 +93,19 @@ Zie ook `docs/DEMO_VIDEO_SCRIPT.md`: het script voor de pre-demo video die Stefa
 
 **De link zelf:** blijft altijd bruikbaar, ook na volledige stopzetting van actieve inzet. Er is geen moment waarop een link technisch wordt gedeactiveerd, dat hoeft ook niet, het bepaalt alleen welke fase van toepassing is.
 
-**Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden:** een blijvend opgeslagen koppeling tussen een klant en de SDR die hem aanbracht. Staat nu alleen in een Telegram-melding, niet opvraagbaar of automatisch te controleren. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat).
+### Deel 2: gedeeld aandeel in de rest van het bedrijf
+
+Naast hun eigen klanten krijgen Stefanie en Anniek ook een aandeel in alle overige nieuwe omzet van ArnoBot: Team- én Solo-klanten die via een ander kanaal binnenkomen dan hun eigen link, bijvoorbeeld organisch, via Arno zelf, of via andere marketingkanalen.
+
+**Verdeling:** die totale "buiten hen om"-omzet wordt 50/50 verdeeld tussen Stefanie en Anniek. Elk krijgt daarover 40% commissie, dus feitelijk 20% van de totale buiten-hen-om-omzet per persoon, 40% van het totaal samen.
+
+**Plafond:** iemands aandeel uit dit gedeelde deel kan nooit hoger zijn dan haar eigen commissiebedrag (dus ná toepassing van fase 1/2/3 hierboven, niet de ruwe klantomzet) over haar eigen aangebrachte klanten. Met andere woorden: maximaal een verdubbeling van wat ze al aan eigen commissie verdient, nooit meer. Geen eigen aanbreng, dan ook geen aanspraak op dit gedeelde deel.
+
+**Zelfde stilte-regel geldt hier ook:** wordt een SDR inactief (drie maanden zonder eigen aanmelding), dan valt ook haar aandeel in het gedeelde deel automatisch terug naar de 5%-uitloop (max één jaar), precies zoals bij haar eigen klanten. Bewuste keuze om niet twee verschillende afbouwmechanismen naast elkaar te hebben: één regel die overal geldt, in plaats van een aparte regel per onderdeel.
+
+### Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden
+
+Een blijvend opgeslagen koppeling tussen een klant en de SDR die hem aanbracht. Staat nu alleen in een Telegram-melding, niet opvraagbaar of automatisch te controleren. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat). Voor deel 2 is bovendien een manier nodig om de totale nieuwe omzet buiten Stefanie/Anniek om te meten, nog niet ontworpen.
 
 ---
 
@@ -99,7 +115,9 @@ Spreektaal, geen intern jargon zoals "fase 1" of "SDR":
 
 "Jullie krijgen 40 procent van wat een klant betaalt, in het eerste jaar. Blijft die klant daarna, dan krijgen jullie 20 procent, zolang jullie zelf actief blijven werven. Actief betekent gewoon: er komt af en toe iemand nieuw binnen via jullie link, geen quotum, geen minimum aantal uren.
 
-Als er drie maanden niemand nieuw binnenkomt via jullie link, gaat de vergoeding op alles wat er dan nog loopt automatisch omlaag naar 5 procent, voor maximaal nog een jaar, daarna stopt het voor die klanten.
+Daarnaast krijgen jullie samen ook een deel van de rest van het bedrijf, dus ook van klanten die niet via jullie eigen link binnenkomen. Dat wordt eerlijk tussen jullie tweeën verdeeld, en jullie krijgen daar allebei 40 procent commissie over jullie eigen helft. Wel zit er een grens op: dat deel kan nooit meer zijn dan wat je al aan je eigen klanten verdient, dus hooguit een verdubbeling, nooit meer.
+
+Als er drie maanden niemand nieuw binnenkomt via jullie link, gaat de vergoeding op alles wat er dan nog loopt, ook dat gedeelde deel, automatisch omlaag naar 5 procent, voor maximaal nog een jaar, daarna stopt het voor die klanten.
 
 Jullie link blijft altijd werken, ook daarna. Breng je in die periode alsnog iemand nieuw aan, dan krijg je daar gewoon 20 procent van voor een jaar.
 
