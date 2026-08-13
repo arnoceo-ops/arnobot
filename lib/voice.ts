@@ -2,12 +2,31 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { buildVoiceSystemPrompt } from '@/lib/systemPrompt'
+import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const VOICE_MODEL = 'claude-sonnet-4-6'
 const VOICE_MAX_TOKENS = 500
 const ELEVENLABS_MODEL_ID = 'eleven_flash_v2_5'
+
+// TIJDELIJK (besloten 2026-08-13, Arno): voice-out staat uit voor iedereen behalve Arno's
+// eigen twee accounts, ook voor bestaande betalende Pro/Team-klanten die het al gebruikten
+// (bewuste keuze, geen abuis). Reden: nog geen commerciële livegang, Arno wil ElevenLabs
+// voice-out eerst alleen zelf verder testen. MANUAL_TEST_USER_ID = zijn handmatige
+// testaccount (test@arno.bot); de tweede waarde is zijn echte LinkedIn-account
+// (linkedin@royaldutchsales.com, elders in de codebase bekend als BOUWER_EMAIL, hier als
+// userId omdat deze routes geen e-mail ophalen). Verwijder VOICE_LAUNCH_RESTRICTED (en de
+// check in hasVoiceAccess/isVoiceLaunchAllowed) zodra ArnoBot Voice commercieel live gaat.
+const VOICE_LAUNCH_RESTRICTED = true
+const VOICE_ALLOWED_USER_IDS: string[] = [
+  MANUAL_TEST_USER_ID,
+  'user_3Eg9FPzi0PlJEPI3togJKyoyXE6', // linkedin@royaldutchsales.com
+]
+
+export function isVoiceLaunchAllowed(userId: string): boolean {
+  return !VOICE_LAUNCH_RESTRICTED || VOICE_ALLOWED_USER_IDS.includes(userId)
+}
 
 /**
  * Vraagt een kort, gespreksachtig antwoord op via de voice-systeeminstructie.
@@ -62,6 +81,7 @@ export async function hasVoiceAccess(
   userId: string,
   approvedUser: { plan: 'basis' | 'premium' | 'team'; trial_start: string | null }
 ): Promise<{ access: boolean; reason: VoiceAccessReason }> {
+  if (!isVoiceLaunchAllowed(userId)) return { access: false, reason: 'none' }
   if (approvedUser.plan !== 'basis') return { access: true, reason: 'paid' }
   if (!approvedUser.trial_start) return { access: false, reason: 'none' }
 

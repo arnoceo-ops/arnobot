@@ -45,7 +45,7 @@ De marketingcopy op `/prijzen` gebruikt bewust kwalificatieve taal ("onbeperkt",
 | Gespreksanalyses/dag | 1 | Onbeperkt | Onbeperkt |
 | Sessiegeheugen (vorige gesprekken als context) | 10 | 25 | 25 |
 | Coachingdocument (mindset/systeem/actie-scores) | **Nee, harde blokkade (403)** | Ja | Ja |
-| Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap | Ja |
+| Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap, **tijdelijk uitgezet voor iedereen buiten Arno's eigen accounts, zie `docs/VOICE_PLAN.md`** | Ja, zelfde tijdelijke uitzetting |
 | Rollenspel/sparring | Ja | Ja | Ja |
 | Teamoverzicht, 1:1-voorbereiding, leiderschapsaccount | Nee | Nee | Ja, exclusief manager-laag |
 
