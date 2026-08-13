@@ -23,12 +23,9 @@ const KNOWN_EXTERNAL_PREFIXES = ['/api/webhooks/']
 const KNOWN_MANUAL_ROUTES = new Set([
   '/api/test/email-preview',
   // Getrieerd 2026-08-12 (zie CLAUDE.md): admin-only, handmatig via curl/Postman aangeroepen,
-  // geen UI-knop. test-telegram is een herbruikbare diagnosetool, de twee backfill-routes zijn
-  // eenmalige migraties die mogelijk al hun werk gedaan hebben, bewust niet verwijderd totdat
-  // Arno bevestigt of ze nog nodig zijn.
+  // geen UI-knop. Herbruikbare diagnosetool, geen eenmalige migratie zoals de twee
+  // backfill-routes die op 2026-08-13 alsnog verwijderd zijn (Arno herkende ze niet meer).
   '/api/admin/test-telegram',
-  '/api/bot/backfill-linkedin',
-  '/api/bot/backfill-referral-names',
 ])
 
 function walk(dir, matcher, results = []) {

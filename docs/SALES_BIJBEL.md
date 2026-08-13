@@ -19,9 +19,11 @@ Bij twijfel of iets nog live is: niet aannemen, navragen bij Arno of een technis
 ## Unique Selling Points en Unique Buying Reasons
 
 ### 1. Echt geheugen over gesprekken heen — LIVE
-De meeste AI-coaching (en generiek ChatGPT-gebruik) start elk gesprek op nul. ArnoBot onthoudt wat iemand weken geleden deelde en brengt dat actief terug wanneer het relevant is, inclusief patronen (dezelfde naam, hetzelfde bezwaar) die pas zichtbaar worden over meerdere gesprekken heen.
+**Let op de precieze formulering (gecorrigeerd 2026-08-13):** het is niet juist om te zeggen dat een standaard AI-tool "geen geheugen" heeft of "elk gesprek op nul begint". Binnen één lopend gesprek heeft elke LLM wel degelijk toegang tot alles wat daarvoor gezegd is. Wat wél waar is, en wat het echte verschil maakt: (1) zodra je een nieuwe chat opent, een nieuwe dag begint, of een ander apparaat gebruikt, is die koppeling voor een standaardtool weg, tenzij je het zelf weer herhaalt; (2) zelfs binnen één gesprek verwatert de bruikbaarheid van iets dat vroeg in dat gesprek gezegd is naarmate er meer bijkomt, een bekend, breed gedocumenteerd kenmerk van hoe taalmodellen met lange gesprekken omgaan, geen ontwerpfout van een specifieke tool. Zeg dit dus nooit als "ChatGPT onthoudt niks", dat is aantoonbaar onjuist en een prospect met technische kennis prikt daar zo doorheen. Zeg wel: ArnoBot's geheugen is gestructureerd en blijft *precies zo scherp* na honderd gesprekken als na het eerste, omdat het niet leunt op een steeds langer wordend, verwaterend gesprek maar op gerichte opslag en terugkoppeling.
 
-**Pitch-zin:** "De meeste AI vergeet je zodra je het tabblad sluit, ArnoBot niet."
+ArnoBot onthoudt wat iemand weken geleden deelde en brengt dat gericht terug wanneer het relevant is, inclusief patronen (dezelfde naam, hetzelfde bezwaar) die pas zichtbaar worden over meerdere gesprekken heen, zonder dat de kwaliteit daarvan afneemt naarmate er meer gesprekken bijkomen.
+
+**Pitch-zin:** "Bij de meeste AI-tools verwatert wat je eerder deelde naarmate het gesprek langer wordt, en is het na een nieuwe sessie sowieso weg. Bij ArnoBot blijft het scherp, hoe lang je 'm ook al gebruikt."
 
 ### 2. Directe accountability — LIVE
 ArnoBot onthoudt niet alleen wat er is afgesproken, maar checkt actief of het ook is gedaan, en benoemt het rechtstreeks als het antwoord niet klopt met eerder gedrag. Geen menselijke coach checkt dat structureel bij elk gesprek, een generieke chatbot heeft niets om tegen te checken.
