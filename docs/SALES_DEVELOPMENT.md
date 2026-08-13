@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-08-13
 **Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial.
-**Eerstvolgende stap:** De links delen met Stefanie en Anniek. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
+**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid, zodat zij zelf ervaren hoe teamlidmaatschap werkt vóórdat ze het verkopen. Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -61,6 +61,7 @@ Ze zijn niet alleen verkoper van dit product, ze zijn ook zelf gebruiker ervan. 
 - **Ze pitchen vanuit eigen ervaring**, niet vanuit een script. Een prospect voelt het verschil tussen "ik heb dit bestudeerd" en "ik gebruik dit zelf".
 - **Het maakt hen zelf beter**, los van deze functie: 24/7 sparring, accountability-tracking, een eigen coachingsdiagnose.
 - **Het is makkelijker te verkopen dan een gemiddeld product.** De kernbelofte in de Sales Bijbel is een sterk verhaal met weinig prijsweerstand, dat betekent voor hen concreet minder tijd kwijt aan bezwaren pareren.
+- **Ze maken zelf een echt teamlidmaatschap mee, niet alleen een demo.** Sinds 2026-08-13 heeft Arno's eigen account (`command_manager=true`, hetzelfde mechanisme als bij elke andere manager) een eigen team, waar Stefanie en Anniek als lid (niet als manager) in zitten. Ze ervaren zo zelf hoe het is om als teamlid gecoacht en gevolgd te worden, vóórdat ze dat bij een prospect verkopen.
 
 ---
 
