@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial.
-**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid, zodat zij zelf ervaren hoe teamlidmaatschap werkt vóórdat ze het verkopen. Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
+**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
+**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -61,7 +61,15 @@ Ze zijn niet alleen verkoper van dit product, ze zijn ook zelf gebruiker ervan. 
 - **Ze pitchen vanuit eigen ervaring**, niet vanuit een script. Een prospect voelt het verschil tussen "ik heb dit bestudeerd" en "ik gebruik dit zelf".
 - **Het maakt hen zelf beter**, los van deze functie: 24/7 sparring, accountability-tracking, een eigen coachingsdiagnose.
 - **Het is makkelijker te verkopen dan een gemiddeld product.** De kernbelofte in de Sales Bijbel is een sterk verhaal met weinig prijsweerstand, dat betekent voor hen concreet minder tijd kwijt aan bezwaren pareren.
-- **Ze maken zelf een echt teamlidmaatschap mee, niet alleen een demo.** Sinds 2026-08-13 heeft Arno's eigen account (`command_manager=true`, hetzelfde mechanisme als bij elke andere manager) een eigen team, waar Stefanie en Anniek als lid (niet als manager) in zitten. Ze ervaren zo zelf hoe het is om als teamlid gecoacht en gevolgd te worden, vóórdat ze dat bij een prospect verkopen.
+- **Ze maken zelf een echt teamlidmaatschap mee, niet alleen een demo.** Sinds 2026-08-13 staat `command_manager=true` op Arno's eigen account (zelfde mechanisme als bij elke andere manager), zodat hij zelf een team kan aanmaken en Stefanie en Anniek als lid kan uitnodigen. **Nog niet uitgevoerd**, Arno moet dat team nog daadwerkelijk aanmaken via `/bot/team`.
+
+### Managerervaring voor Stefanie en Anniek (bewust uitgesteld)
+
+Lidmaatschap alleen laat zien hoe het is om gecoacht te worden, niet hoe het is om zelf manager te zijn, en juist dát verkopen ze aan een prospect. Besloten (2026-08-13, Arno): een apart, klein demoteam voor Stefanie en Anniek samen, met een paar fake teamleden met realistische activiteit (zelfde recept als "Team Hippios"), waarin beiden manager zijn en dus een echt gevuld managerdashboard zien. Uitgesteld naar een later stadium, geen huidige actie.
+
+**Technische reden voor een apart team, niet gecombineerd met bovenstaand lidmaatschap:** iemand kan maar in één team tegelijk zitten (`/api/bot/team/create` en `/team/join` blokkeren allebei expliciet een tweede lidmaatschap). Manager zijn op hetzelfde kleine team als waar ze zelf lid van zijn levert bovendien een bijna leeg dashboard op, managers worden zelf uitgesloten van de ledenlijst die ze te zien krijgen.
+
+Zie ook `docs/DEMO_VIDEO_SCRIPT.md`: het script voor de pre-demo video die Stefanie en Anniek naar een prospect sturen vóór het live gesprek, staat al klaar en wordt opgenomen zodra dit demoteam er is (opnemen tegen fake data, nooit tegen echte klantdata).
 
 ---
 
