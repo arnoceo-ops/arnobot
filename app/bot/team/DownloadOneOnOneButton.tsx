@@ -40,11 +40,11 @@ export default function DownloadOneOnOneButton({ size = 'small', ...props }: Dow
 
   return (
     <button
-      className={size === 'large' ? 'btn-save' : 'btn-note'}
+      className={size === 'large' ? 'pdf-btn' : 'btn-note'}
       onClick={handleDownload}
       disabled={loading}
     >
-      {loading ? 'GENEREREN...' : '↓ DOWNLOAD PDF'}
+      {loading ? 'GENEREREN...' : 'DOWNLOAD PDF ↓'}
     </button>
   )
 }

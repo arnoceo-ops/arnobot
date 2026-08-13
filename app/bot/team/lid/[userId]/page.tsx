@@ -260,6 +260,9 @@ export default function LidPage() {
         .btn-save { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; background:none; border:1px solid #374151; color:#9ca3af; border-radius:999px; cursor:pointer; transition:all 0.2s; }
         .btn-save:hover { border-color:#f59e0b; color:#f59e0b; }
         .btn-save:disabled { opacity:0.4; cursor:not-allowed; }
+        .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
+        .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
+        .pdf-btn:disabled { opacity:0.4; cursor:not-allowed; }
         .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:15px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:vertical; min-height:80px; line-height:1.7; transition:border-color 0.15s; }
         .notitie-input:focus { border-color:#f59e0b; }
         .notitie-input::placeholder { color:#4b5563; }
