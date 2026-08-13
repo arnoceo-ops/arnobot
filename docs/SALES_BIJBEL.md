@@ -1,8 +1,8 @@
 # ArnoBot Sales Bijbel
 
 **Laatst bijgewerkt:** 2026-08-12
-**Waar we staan:** Eerste versie. Unique selling points (USP's) en unique buying reasons (UBR's) verzameld en geprioriteerd voor het salesteam. Nog geen bezwaarafhandeling, concurrentievergelijking, of pitch-scripts.
-**Eerstvolgende stap:** Met Arno bepalen welk onderdeel hierna wordt uitgewerkt: bezwaarafhandeling, concurrentievergelijking, of het Ebbinghaus/vergeetcurve-argument (sectie 3 hieronder) verder uitwerken zodra optie 3 (proactieve herinnering) gebouwd is.
+**Waar we staan:** 11 van de 12 punten LIVE, inclusief de vergeetcurve-herinnering (punt 11, dezelfde dag nog gebouwd: getimede e-mail, in-app overzicht, sparring-herhaling, maandelijkse patroonsamenvatting). Alleen "Man & Machine" (punt 12) blijft GEPLAND. Nog geen bezwaarafhandeling, concurrentievergelijking, of pitch-scripts.
+**Eerstvolgende stap:** Met Arno bepalen welk onderdeel hierna wordt uitgewerkt: bezwaarafhandeling of concurrentievergelijking.
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
 
@@ -68,14 +68,18 @@ De manager krijgt zicht op patronen over het hele team (bijv. terugkerende blind
 
 **Sterk omdat:** dit is waar een salesbaas daadwerkelijk op stuurt, niet op één individueel gesprek.
 
+### 11. De vergeetcurve-herinnering (Ebbinghaus) — LIVE (2026-08-12)
+Wetenschappelijk fundament: Hermann Ebbinghaus toonde aan dat mensen zonder herhaling 50 tot 70 procent van nieuwe informatie binnen 24 uur vergeten. De meeste coaching (menselijk of AI) doet niets tussen sessies om dat tegen te gaan. ArnoBot bestrijdt dit nu op vier manieren tegelijk: (1) een getimede e-mailherinnering op dag 1, 3 en 7 na een sessie als de actie nog niet is beantwoord, opgebouwd als actieve terughaalvraag ("weet je nog wat je actie was?") in plaats van 'm gewoon te herhalen, wat wetenschappelijk sterker beklijft; (2) een permanent overzicht van alle openstaande acties in de app zelf, niet afhankelijk van of iemand een e-mail opent; (3) oude, nog onopgeloste uitdagingen komen terug als sparring-oefening, de sterkste vorm van herhaling omdat het echt oefenen is, niet alleen lezen; (4) een maandelijkse samenvatting van terugkerende namen/thema's uit iemands gesprekken, patroonherkenning in plaats van los feit.
+
+**Pitch-zin:** "de meeste coaching verdampt binnen een dag als er niks mee gebeurt, ArnoBot is het enige dat daar structureel iets tegen doet, op vier manieren tegelijk."
+
+**Sterk omdat:** geen concurrent kan dit repliceren op dezelfde manier (zie de oorspronkelijke onderbouwing hieronder), en het is nu een tastbaar, werkend kenmerk, geen visie meer.
+
+**Oorspronkelijke onderbouwing (waarom dit meer is dan een leuk feitje):** het is falsifieerbaar en citeerbaar wetenschappelijk feit, geen marketingclaim. Het geeft een naam aan een probleem dat iedereen voelt maar niet kan benoemen ("goed gesprek gehad, twee weken later weet je niet meer wat je zou doen"). Het verplaatst het gesprek van "vertrouw ons" naar "dit is aantoonbaar hoe geheugen werkt, en hier is wat we eraan doen".
+
 ---
 
 ## Gepland — nog NIET pitchen als bestaand kenmerk
-
-### 11. De vergeetcurve-herinnering (Ebbinghaus) — GEPLAND
-Wetenschappelijk fundament: Hermann Ebbinghaus toonde aan dat mensen zonder herhaling 50 tot 70 procent van nieuwe informatie binnen 24 uur vergeten. De meeste coaching (menselijk of AI) doet niets tussen sessies om dat tegen te gaan, ArnoBot's geheugen (punt 1) is daar al de eerste stap in. Het geplande stuk: een actieve, getimede herinnering aan de laatste concrete actie, 2 tot 7 dagen na een sessie.
-
-**Waarom dit nu al noemen, ook al is het nog niet live:** het is het onderliggende wetenschappelijke argument voor waarom punt 1 (geheugen) meer is dan een technisch kenmerk. Mag als visie/richting genoemd worden ("we bouwen dit uit"), niet als iets dat een klant vandaag krijgt.
 
 ### 12. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
 Puur toekomstplan. Geen certificeringsprogramma, geen aangestelde coaches, geen publieke aankondiging. Niet noemen in een klantgesprek, zelfs niet als richting.

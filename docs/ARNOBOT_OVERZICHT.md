@@ -40,6 +40,7 @@ Dit is het meest technisch uitgebreide onderdeel van het product en vandaag (12 
 2. **Samenvattingen en feiten uit eerdere gesprekken:** concrete details (namen, bedrijven, cijfers, situaties) die een gebruiker eerder deelde, komen automatisch terug als achtergrondcontext, zonder dat de gebruiker ze opnieuw hoeft uit te leggen.
 3. **Semantische retrieval buiten het recente venster (nieuw, 12 augustus 2026):** de twee lagen hierboven keken alleen naar de laatste 10 (Basic) of 25 (Pro/Team) gesprekken. Sinds vandaag zoekt ArnoBot ook actief in oudere, buiten dat venster vallende gesprekken naar content die relevant is voor de huidige vraag, op basis van betekenis, niet alleen recentheid. Een gebruiker die drie maanden geleden een vergelijkbaar probleem besprak, krijgt dat nu terug, ook als het gesprek allang buiten de standaardgeschiedenis valt.
 4. **Patroongeheugen over namen, bedrijven en thema's (nieuw, 12 augustus 2026):** ArnoBot herkent nu wanneer een naam, bedrijf of onderwerp al eerder is genoemd, ook in gesprekken die niet meer in de directe geschiedenis staan, en meldt dat expliciet ("dit is niet de eerste keer dat dit ter sprake komt"). Dit is het begin van echte patroonherkenning over de volledige relatie met een gebruiker heen, niet alleen losse gesprekken.
+5. **Actieve herinnering met oplopende tussenpozen (nieuw, 12 augustus 2026):** als een actie na een sessie nog niet is beantwoord, volgt een e-mailherinnering op dag 1, 3 en 7, opgebouwd als terughaalvraag ("weet je nog wat je actie was?") in plaats van 'm gewoon te herhalen. Daarnaast: een permanent overzicht van alle openstaande acties in de app zelf, oude onopgeloste uitdagingen die terugkomen als sparring-oefening, en een maandelijkse samenvatting van terugkerende namen/thema's.
 
 Dit hele geheugensysteem is wetenschappelijk onderbouwd vanuit de **vergeetcurve van Ebbinghaus**: zonder actieve herhaling vergeet een mens 50 tot 70 procent van nieuwe informatie binnen 24 uur. Zie `docs/SALES_BIJBEL.md` voor de volledige uitwerking van dit punt als verkoopargument.
 
@@ -117,7 +118,6 @@ Voor een eerlijke, geloofwaardige presentatie, geen enkele van deze als bestaand
 
 - **Nog geen geautomatiseerde betaalverwerking.** Alles loopt via handmatige facturatie/registratie door Arno zelf.
 - **Nog geen iOS-app.** Een Android-app (Capacitor) is in aanbouw en al aangekondigd op de prijzenpagina, iPhone nog niet.
-- **Nog geen proactieve, getimede herinneringen aan acties** (het vergeetcurve-argument, zie sectie 3.2). Het onderliggende geheugen bestaat al, de actieve e-mailherinnering nog niet.
 - **Nog geen herhaalbare maandelijkse boeking voor Elite-klanten** (momenteel technisch maar één boeking ooit mogelijk).
 - **Elite Member Community** (later mogelijk via Circle): nog niet gebouwd, bewust achteraan gepland.
 - **"Man & Machine"-positionering** (gecertificeerde menselijke coaches naast de AI): puur een toekomstplan, geen bestaand aanbod, geen publieke vermelding.
@@ -133,8 +133,7 @@ ArnoBot bevindt zich in de vroege commerciële fase. De livegang was oorspronkel
 ## 8. Roadmap, kort
 
 Niet uitputtend, de belangrijkste bekende vervolgstappen:
-- Actieve vergeetcurve-herinnering per e-mail (zie sectie 6)
-- Verdere uitbouw van het patroongeheugen (sectie 3.2, laag 4) naarmate er meer gebruiksdata is om op te bouwen
+- Verdere uitbouw van het patroongeheugen en de vergeetcurve-herinnering (sectie 3.2) naarmate er meer gebruiksdata is om op te bouwen: de mechanismen zijn live, het effect wordt pas goed zichtbaar bij meer gebruiksgeschiedenis
 - Android-app afronden, iOS op termijn
 - Betaalprovider aansluiten voor geautomatiseerde facturatie op alle tiers
 - Herhaalbare Elite-boekingen, Elite Member Community

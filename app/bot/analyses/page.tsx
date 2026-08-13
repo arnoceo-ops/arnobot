@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import BotNav from '../BotNav'
+import OpenActiesWidget from './OpenActiesWidget'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useProgressHints } from '@/hooks/useProgressHints'
 
@@ -446,6 +447,8 @@ export default function GeschiedenisPage() {
 
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>GESPREKKEN</h1>
+
+        <OpenActiesWidget />
 
         {!loading && sessions.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 48 }}>

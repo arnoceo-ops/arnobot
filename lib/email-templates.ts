@@ -65,6 +65,8 @@ export type EmailType =
   | 'inactivity_dag60'
   | 'bieb_bijgewerkt'
   | 'kwartaal_doel'
+  | 'uitdaging_herinnering'
+  | 'patroon_samenvatting'
   | 'referral_aanmelding'
   | 'admin_derde_trial'
 
@@ -88,6 +90,8 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   inactivity_dag60:      { label: 'Inactivity dag 60',      description: 'Recurring:60 dagen geen activiteit, abonnement wordt opgezegd',    category: 'user' },
   bieb_bijgewerkt:       { label: 'Archief bijgewerkt',     description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
   kwartaal_doel:         { label: 'Kwartaaldoel check',     description: 'Recurring:bij kwartaalstart, check of jaardoel nog klopt',          category: 'user' },
+  uitdaging_herinnering: { label: 'Uitdaging herinnering',  description: 'Recurring:dag 1/3/7 na een sessie, actie nog niet beantwoord',      category: 'user' },
+  patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring:maandelijks, terugkerende namen/thema\'s uit gesprekken', category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
 }
@@ -96,7 +100,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[] }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -288,6 +292,27 @@ export function getEmailTemplate(
         html: mail(
           `Nieuw kwartaal, nieuw momentum.<br><br>Je hebt in je profiel dit als doel neergezet:<br><br><em style="color:#f1f5f9;">"${doel}"</em><br><br>Klopt dit nog? Of heeft het afgelopen kwartaal je perspectief verschoven? Pas je doel aan in je profiel als dat zo is. Of gebruik het als startpunt voor een gesprek vandaag.`,
           'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
+    case 'uitdaging_herinnering': {
+      const uitdaging = options?.uitdaging ?? ''
+      return {
+        subject: `${prefix}${naam}, weet je nog wat je actie was?`,
+        html: mail(
+          `Na je laatste gesprek stond er één concrete actie voor je klaar. Weet je nog welke?<br><br><em style="color:#f1f5f9;">${uitdaging}</em><br><br>Gedaan? Nog niet begonnen? Beide is prima om te delen, ArnoBot gebruikt het om je beter te helpen, niet om af te rekenen.`,
+          'GEEF EEN UPDATE →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    }
+    case 'patroon_samenvatting': {
+      const patronen = options?.patronen ?? []
+      const lijst = patronen.map(p => `- ${p.naam} (${p.aantal}x genoemd)`).join('<br>')
+      return {
+        subject: `${prefix}${naam}, dit kwam de afgelopen tijd vaker terug.`,
+        html: mail(
+          `ArnoBot ziet patronen in je gesprekken die je zelf misschien niet zo scherp hebt. Dit kwam de afgelopen tijd meerdere keren terug:<br><br>${lijst}<br><br>Soms is het patroon zelf de belangrijkste inzicht, niet het losse gesprek. Kijk of er iets bij zit om verder uit te pakken.`,
+          'SPAR ER VERDER OVER →', 'https://arno.bot/bot', optOutNote
         ),
       }
     }

@@ -216,7 +216,8 @@ Beveiligd via cookie (`arnobot_admin`), niet via Clerk. Login via `/bot/admin/lo
 | `/api/transcribe` | Spraakherkenning |
 | `/api/bot/openers` | Gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Embeddings backfill (cron, dagelijks 04:05) |
-| `/api/bot/actieopvolging` | Actieopvolging |
+| `/api/bot/actieopvolging` | Actieopvolging (meest recente open actie, in-app popup) |
+| `/api/bot/open-acties` | Alle open acties (overzicht op `/bot/analyses`) |
 
 ---
 
@@ -229,6 +230,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/trial-emails` | Dagelijks 04:05 | Lifecycle e-mails: dag1, dag4, dag14, dag25, first_conversation, first_coaching |
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
 | `/api/cron/daily-activity` | Dagelijks 03:00 | Dagelijks activiteitsrapport naar arno@arno.bot |
+| `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 als nog niet beantwoord (Ebbinghaus-vergeetcurve, zie `docs/SALES_BIJBEL.md`) |
 | `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers naar arno@arno.bot |
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | BIEB-analyse aanmaken als gebruiker 5+ nieuwe gesprekken heeft |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
@@ -238,6 +240,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/data-cleanup` | 1e vd maand 04:05 | Verwijderde gesprekken opschonen, inactieve users flaggen |
 | `/api/cron/milestone-check` | 1e vd maand 04:05 | Alert als 50+ actieve gebruikers bereikt (Pro-upgrade trigger) |
 | `/api/cron/kwartaal-doel` | 1e vd maand 04:05 | Kwartaaldoelcheck en rapport |
+| `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's (mention_count >= 3) uit `arnobot_memory_entities` als e-mail |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor BIEB-contentverrijking |
 | `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachts­documenten bijwerken (dit bestand) |
 
@@ -288,11 +291,15 @@ Gesprekssessies na afsluiting, met synthese.
 | `summary` | Samenvatting van het gesprek |
 | `feiten` | Kernpunten (bullets) |
 | `uitdaging` | Actie/uitdaging voor de gebruiker |
+| `actie_status` | `'ja'`/`'deels'`/`'nee'`/`null`. Geschreven via `PATCH /api/bot/actieopvolging` (in-app popup bij het openen van de app, één keer per browsersessie) of via de widget op `/bot/analyses` (`OpenActiesWidget.tsx`). Zolang dit `null` is, telt de sessie mee als "open actie": in `chat/route.ts`'s achtergrondcontext, in het overzicht op `/bot/analyses`, en als kandidaat voor de `uitdaging-herinnering`-cron (zie hieronder). |
 | `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, voor semantisch zoeken. Drie schrijvers: `session-end/route.ts` (bij sessie-einde), `sessions/route.ts` (backfill bij het laden van de Bieb-pagina) en `backfill-embeddings/route.ts` (dagelijkse cron, vangnet voor de rest). Allemaal via de gedeelde `embedSessionText()` in `lib/rag.ts`, nooit rechtstreeks een embedding-functie aanroepen. Doorzoekbaar via de Supabase-functie `match_sessions` (user-gescoped, filtert sinds 2026-08-12 ook `deleted_at`). Gebruikt in `chat/route.ts` als aanvulling op de recency-geheugeninjectie (`findSemanticallyRelevantOlderSessions`, top 3 Basic/top 8 Pro+Team). |
 | `deleted_at` | Soft delete timestamp. Twee schrijvers: de Basic-retentiecap (`sessions/route.ts`) en de handmatige DELETE (`session/route.ts`, enkelvoud). Beide roepen ook `pruneEntitiesForDeletedSessions()` aan (zie `arnobot_memory_entities` hieronder), zodat verwijderde sessies ook uit het entiteitengeheugen verdwijnen. |
 
 ### `arnobot_memory_entities`
 Patroongeheugen over sessies heen: namen, bedrijven en terugkerende thema's die een gebruiker vaker noemt. Toegevoegd 2026-08-12, gedeelde logica in `lib/memoryEntities.ts` (RLS aan, zelfde patroon als `arnobot_blog_sessions`).
+
+### `arnobot_uitdaging_reminders_log`
+Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`session_id` + `interval_dagen`, `UNIQUE`-constraint). Toegevoegd 2026-08-12 samen met de `uitdaging-herinnering`-cron. RLS aan, zelfde patroon als de andere gebruikerstabellen.
 
 | Kolom | Inhoud |
 |---|---|

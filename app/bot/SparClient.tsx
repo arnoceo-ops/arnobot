@@ -277,6 +277,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string } | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
   const [actieStatus, setActieStatus] = useState<'ja' | 'deels' | 'nee' | null>(null)
+  const [sparSuggestie, setSparSuggestie] = useState<{ uitdaging: string; created_at: string } | null>(null)
+  const [sparSuggestieAfgewezen, setSparSuggestieAfgewezen] = useState(false)
   const [sparModus] = useState<'gesprek' | 'sparren'>(mode)
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
@@ -542,6 +544,25 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       })
       .catch(() => {})
   }, [clerkSessionId])
+
+  // Suggestie om een oude, nog onopgeloste uitdaging als sparring-scenario te oefenen (actief
+  // terughalen door te oefenen, sterker dan alleen herinneren, zie docs/SALES_BIJBEL.md). Alleen
+  // relevant in sparring-modus, alleen als de uitdaging al minstens 14 dagen oud is: te vers en
+  // dit overlapt met de gewone actieopvolging-check hierboven.
+  useEffect(() => {
+    if (sparModus !== 'sparren' || !clerkSessionId) return
+    if (sessionStorage.getItem('arnobot_spar_suggestie_getoond')) return
+    sessionStorage.setItem('arnobot_spar_suggestie_getoond', '1')
+    fetch('/api/bot/open-acties')
+      .then(r => r.json())
+      .then(d => {
+        const acties: { uitdaging: string; created_at: string }[] = d.acties ?? []
+        const veertienDagenGeleden = Date.now() - 14 * 24 * 60 * 60 * 1000
+        const oudste = acties.filter(a => new Date(a.created_at).getTime() < veertienDagenGeleden).at(-1)
+        if (oudste) setSparSuggestie(oudste)
+      })
+      .catch(() => {})
+  }, [sparModus, clerkSessionId])
 
   useEffect(() => {
     function handleUnload(e: BeforeUnloadEvent) {
@@ -1614,6 +1635,27 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   setTeamPrompt(false)
                   fetch('/api/bot/team/dismiss-prompt', { method: 'POST' }).catch(() => {})
                 }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 24px', background: 'none', color: '#6b7280', border: 'none', cursor: 'pointer' }}
+              >LATER</button>
+            </div>
+          </div>
+        )}
+
+        {!started && sparModus === 'sparren' && sparSuggestie && !sparSuggestieAfgewezen && (
+          <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', margin: 0 }}>
+              Nog een openstaande uitdaging van eerder: &quot;{sparSuggestie.uitdaging}&quot;. Oefen 'm hier.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => {
+                  setSparContext(sparSuggestie.uitdaging)
+                  setSparSuggestieAfgewezen(true)
+                }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 24px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer' }}
+              >OEFEN DIT</button>
+              <button
+                onClick={() => setSparSuggestieAfgewezen(true)}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 24px', background: 'none', color: '#6b7280', border: 'none', cursor: 'pointer' }}
               >LATER</button>
             </div>

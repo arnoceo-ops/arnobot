@@ -13,6 +13,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/uitdaging-herinnering",
+      "schedule": "10 3 * * *"
+    },
+    {
       "path": "/api/cron/weekly-top-users",
       "schedule": "5 4 * * 6"
     },
@@ -59,6 +63,10 @@
     {
       "path": "/api/cron/meta-analyse-reminder",
       "schedule": "0 8 27 * *"
+    },
+    {
+      "path": "/api/cron/patroon-samenvatting",
+      "schedule": "20 4 1 * *"
     },
     {
       "path": "/api/cron/rss-ingest",
