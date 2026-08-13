@@ -1,8 +1,8 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-12
-**Waar we staan:** 11 van de 12 punten LIVE, inclusief de vergeetcurve-herinnering (punt 11, dezelfde dag nog gebouwd: getimede e-mail, in-app overzicht, sparring-herhaling, maandelijkse patroonsamenvatting). Alleen "Man & Machine" (punt 12) blijft GEPLAND. Nog geen bezwaarafhandeling, concurrentievergelijking, of pitch-scripts.
-**Eerstvolgende stap:** Met Arno bepalen welk onderdeel hierna wordt uitgewerkt: bezwaarafhandeling of concurrentievergelijking.
+**Laatst bijgewerkt:** 2026-08-13
+**Waar we staan:** 11 van de 12 USP-punten LIVE, plus sinds vandaag een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (punt 12) blijft GEPLAND.
+**Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
 
@@ -13,6 +13,32 @@ Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat 
 Elke USP/UBR in dit document is gelabeld **LIVE** of **GEPLAND**. Een salesgesprek mag alleen **LIVE**-punten als bestaand kenmerk noemen. **GEPLAND**-punten mogen als richting/visie genoemd worden ("we werken hieraan"), nooit als iets dat een klant vandaag krijgt. Overpromising aan een salesbaas die zelf sales doet voor de kost, is de snelste manier om geloofwaardigheid te verliezen.
 
 Bij twijfel of iets nog live is: niet aannemen, navragen bij Arno of een technische sessie voordat het in een klantgesprek gebruikt wordt. Dit document wordt bijgewerkt zodra iets van GEPLAND naar LIVE verschuift.
+
+---
+
+## De kernbelofte: wat een manager, hoe goed ook, nooit alleen kan
+
+Dit is het verhaal dat vóór alle losse USP's komt, niet ertussen. De USP's hieronder zijn het bewijs, dit is de kern. Verkoop niet een chatbot-abonnement. Verkoop wat een salesbaas, met alle inzet, ervaring en goede wil van de wereld, structureel nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Dat is een ander gesprek dan "is dit de kosten waard", en het is het gesprek waar je wil zijn: als het waardeverhaal groot genoeg is, verdwijnt het prijsbezwaar vanzelf, in plaats van dat je het achteraf moet pareren.
+
+**Opening om te testen:** *"Je koopt geen chatbot-abonnement. Je koopt structureel wat je beste manager, hoe goed hij ook is, nooit alleen had kunnen leveren, tegen elke prijs."*
+
+### Zes dingen die geen manager kan, ongeacht hoe goed hij is
+
+**1. Overal tegelijk zijn.** Een manager coacht één persoon tegelijk. ArnoBot is voor elke verkoper op het team tegelijk beschikbaar, op het exacte moment dat het nodig is: vlak vóór een lastig gesprek, laat op een avond vol twijfel, in het weekend na een verloren deal. Geen manager kan zichzelf klonen naar tien gelijktijdige coachingsgesprekken.
+
+**2. Nooit een slechte dag.** Een manager heeft vermoeidheid, andere prioriteiten, een vakantie, een humeur, een dag waarop hij zelf onder druk staat. De kwaliteit van ArnoBot verandert niet met hoe druk, moe of afgeleid iemand is. Elke verkoper krijgt altijd dezelfde volle aandacht, ook de verkoper die op nummer twintig van de lijst staat.
+
+**3. Perfect geheugen over een heel team, voor altijd.** Geen manager onthoudt exact wat elke verkoper drie maanden geleden beloofde, en kan dat feilloos naast wat er vandaag gezegd wordt leggen, voor elk teamlid tegelijk. Dit is precies waar de techniek achter ArnoBot vandaag nog aan gebouwd is (zie punt 1 en 11 hieronder): geen marketingclaim, een structurele eigenschap van hoe het systeem werkt.
+
+**4. Geen politiek, geen favoritisme, geen ego.** Feedback van een manager is, hoe onbedoeld ook, gekleurd door de relatie met die persoon, angst om een topverkoper te demotiveren, kantoorpolitiek, wie het dichtst bij hem staat. ArnoBot geeft iedereen dezelfde eerlijke, ongefilterde spiegel, gebaseerd op iemands eigen patronen, niet op de organisatiedynamiek eromheen.
+
+**5. Eerlijkheid die een manager nooit rechtstreeks krijgt.** Een verkoper zal tegen zijn eigen baas zelden toegeven dat hij ergens onzeker over is of een fout heeft gemaakt, dat voelt als carrièrerisico. Tegen een AI, zonder dat gevolg, wel. Het privacymodel (de manager ziet nooit de ruwe gesprekken, alleen de synthese, zie punt 5 hieronder) is daarom niet primair een privacyfeature. Het is wat die eerlijkheid überhaupt mogelijk maakt, eerlijkheid die geen enkele manager met welke aanpak dan ook zelf zou kunnen afdwingen.
+
+**6. Kwaliteit die niet verwatert als het team groeit.** Bij een groeiend team krijgt elke individuele verkoper vanzelf minder aandacht van de manager, dat is geen kwestie van inzet maar van beschikbare uren. Verkoper twintig krijgt bij ArnoBot exact dezelfde kwaliteit coaching als verkoper één. Dit is het argument dat het sterkst meegroeit met de dealgrootte: hoe groter het team, hoe groter het gat dat een manager alleen nooit had kunnen dichten, en hoe groter de rechtvaardiging voor een prijs die daarbij past.
+
+### Waarom dit een hogere prijs rechtvaardigt, niet alleen een redelijke
+
+Zodra het gesprek gaat over "wat had dit gekost om zelf te organiseren" in plaats van "wat kost dit abonnement", verschuift het referentiepunt. Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Reken dit niet voor met verzonnen ROI-cijfers (die heeft dit document nog niet, zie de "case studies"-sectie hieronder), maar met de logica zelf: één extra gesloten deal per verkoper, één keer per kwartaal, dekt voor de meeste teams het hele abonnement voor het hele team ruimschoots. Dat is een conservatieve, verdedigbare claim, geen verzonnen percentage.
 
 ---
 
