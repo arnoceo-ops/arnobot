@@ -26,7 +26,9 @@ De meeste AI-coaching (en generiek ChatGPT-gebruik) start elk gesprek op nul. Ar
 ### 2. Directe accountability — LIVE
 ArnoBot onthoudt niet alleen wat er is afgesproken, maar checkt actief of het ook is gedaan, en benoemt het rechtstreeks als het antwoord niet klopt met eerder gedrag. Geen menselijke coach checkt dat structureel bij elk gesprek, een generieke chatbot heeft niets om tegen te checken.
 
-**Sterk voor:** salesbazen. Dit is precies het gedrag dat zij van hun eigen mensen willen, nu geautomatiseerd.
+**Verdieping (2026-08-13):** een zelfrapportagesysteem is alleen zo goed als de eerlijkheid van de klikken erachter. ArnoBot herkent daarom het patroon van reflexief "ja, gedaan" klikken zonder de actie echt uit te voeren, door klik-snelheid te combineren met het ja-percentage over tijd. Bij een verdacht patroon vraagt ArnoBot een korte toelichting in plaats van alleen een klik te accepteren, en het patroon zelf komt terug in de coachingsdiagnose als eerlijke constatering. Dit is een concreet, technisch antwoord op de logische vraag "hoe weet je dat mensen niet gewoon overal ja op klikken", niet een aanname dat zelfrapportage klopt.
+
+**Sterk voor:** salesbazen. Dit is precies het gedrag dat zij van hun eigen mensen willen, nu geautomatiseerd, inclusief bescherming tegen het gamen van diezelfde zelfrapportage.
 
 ### 3. Sparring, geen advies maar oefenen — LIVE
 Geen lijstje tips, maar een live, weerbarstig oefengesprek tegen een AI-tegenstander (een lastige prospect, een sceptische CFO). Sales is een vaardigheid die je oefent, geen kennis die je leest.
