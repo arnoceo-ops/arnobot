@@ -11,9 +11,10 @@ interface DownloadOneOnOneButtonProps {
   mindsetScore: number | null
   systeemScore: number | null
   actieScore: number | null
+  size?: 'large' | 'small'
 }
 
-export default function DownloadOneOnOneButton(props: DownloadOneOnOneButtonProps) {
+export default function DownloadOneOnOneButton({ size = 'small', ...props }: DownloadOneOnOneButtonProps) {
   const [loading, setLoading] = useState(false)
 
   async function handleDownload() {
@@ -39,10 +40,9 @@ export default function DownloadOneOnOneButton(props: DownloadOneOnOneButtonProp
 
   return (
     <button
-      className="btn-note"
+      className={size === 'large' ? 'btn-save' : 'btn-note'}
       onClick={handleDownload}
       disabled={loading}
-      style={{ color: loading ? undefined : '#f59e0b', borderColor: loading ? undefined : '#f59e0b' }}
     >
       {loading ? 'GENEREREN...' : '↓ DOWNLOAD PDF'}
     </button>

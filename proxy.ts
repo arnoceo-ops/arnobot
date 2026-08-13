@@ -48,7 +48,12 @@ const SCANNER_PATTERNS = /^\/(\.env|\.git|\.svn|wp-admin|wp-login\.php|phpMyAdmi
 
 export default clerkMiddleware(async (auth, req) => {
   const nonce = crypto.randomUUID().replace(/-/g, '')
-  const csp = buildCSP(nonce, isAdminRoute(req))
+  // wasm-unsafe-eval geldt voor heel /bot, niet alleen /bot/admin: @react-pdf/renderer
+  // (client-side PDF-download, o.a. admin-export en de 1:1-agenda in /bot/team) compileert
+  // een WASM-module, en elke nieuwe PDF-downloadknop op een niet-adminpagina zou anders
+  // opnieuw stil breken op deze CSP-regel. wasm-unsafe-eval staat alleen WASM-compilatie toe,
+  // niet willekeurige string-eval zoals 'unsafe-eval' dat wel doet.
+  const csp = buildCSP(nonce, isProtectedBot(req))
 
   function nextWithNonce(): NextResponse {
     const reqHeaders = new Headers(req.headers)

@@ -401,6 +401,7 @@ export default function LidPage() {
                             </>
                           )}
                           <DownloadOneOnOneButton
+                            size="large"
                             naam={data.name}
                             datum={new Date().toISOString()}
                             aandachtspunt={aandachtspunt || null}
