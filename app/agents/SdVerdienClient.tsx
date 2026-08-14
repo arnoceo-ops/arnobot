@@ -448,7 +448,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
           <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Performance Fee</h1>
           <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, maxWidth: '64ch', marginTop: 10 }}>
-            Vul in hoeveel klanten je gemiddeld per maand aanbrengt, hoe groot ze zijn, en hoeveel er gemiddeld weer opzeggen. De grafiek laat per maand zien wat nieuw is, wat doorloopt, en wat je kwijtraakt, plus de opgetelde lijn daaronder.
+            Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd.
           </p>
           {isAdmin && (
             <div style={{ display: 'flex', gap: 6, background: '#1f2937', border: '1.5px solid #2d3a4d', borderRadius: 9, padding: 3, width: 'fit-content', marginTop: 18 }}>
@@ -498,7 +498,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           </Field>
           <Field label="Churn">
             <NumberInput value={churnPct} onChange={setChurnPct} min={0} max={30} step={0.5} />
-            <Unit>% opzeggingen / maand</Unit>
+            <Unit>% opzeggingen</Unit>
           </Field>
           <Field label="Groei in wervingstempo">
             <NumberInput value={groeiPct} onChange={setGroeiPct} min={0} max={200} step={5} />
@@ -567,7 +567,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
         <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in de rest van het bedrijf</h2>
           <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3, maxWidth: '68ch' }}>
-            Naast je eigen klanten hierboven krijg je ook een deel van alle omzet die buiten de links van jou en je collega om binnenkomt, zowel solo als team. Die pool bestaat uit groeiende solo-omzet (hieronder per jaar in te vullen, met dezelfde churn als hierboven) plus teamklanten die buiten de links om binnenkomen.
+            Naast je eigen klanten krijg je ook een deel van de omzet (20%) die niet door agents is gegenereerd, van zowel solo- als teamabonnementen.
           </p>
           <div style={{ marginTop: 18, maxWidth: 420 }}>
             <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe solo-omzet van de rest van het bedrijf, per jaar</label>
