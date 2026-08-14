@@ -406,12 +406,20 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const soloGebruikers = Math.round(soloOmzetPerMaand[maandIdx] / SOLO_OMZET_PER_GEBRUIKER_PER_MAAND)
   const totaalGebruikers = teamGebruikersEigen + teamGebruikersBuiten + soloGebruikers
 
-  // ArnoBot-weergave: bedrijfsdeel over eigen aangebrachte klanten (ruwe omzet minus wat
-  // de SDR zelf krijgt), dus de 60%/80%-tegenhanger van deel 1. Alleen deze klanten, geen
-  // aanname nodig over wat de collega uit de gedeelde pool krijgt.
-  const bedrijfsdeelDezeMaand = dMaand.ruweOmzet - dMaand.netto
-  const bedrijfsdeelCumulatief = data.reduce((s, d) => s + (d.ruweOmzet - d.netto), 0)
-  const bedrijfsdeelPct = dMaand.ruweOmzet > 0 ? (bedrijfsdeelDezeMaand / dMaand.ruweOmzet) * 100 : 0
+  // ArnoBot-weergave: totaalplaatje van dit scenario, geen dubbeling van de agent-inputs
+  // die al op de andere toggle staan. Totale omzet = eigen klantenboek van deze agent plus
+  // de gedeelde pool (solo + team buiten de links om). Uitkering aan de agent = exact
+  // hetzelfde bedrag als de agent zelf op de andere toggle ziet (eigen commissie + haar
+  // aandeel uit de pool). Wat ArnoBot overhoudt is simpelweg het verschil.
+  const totaleOmzetDezeMaand = dMaand.ruweOmzet + dDeel2.pool
+  const uitkeringAgentDezeMaand = dMaand.netto + dDeel2.bedrag
+  const arnobotOverDezeMaand = totaleOmzetDezeMaand - uitkeringAgentDezeMaand
+  const arnobotOverPct = totaleOmzetDezeMaand > 0 ? (arnobotOverDezeMaand / totaleOmzetDezeMaand) * 100 : 0
+
+  const cumTotaleOmzet = data.reduce((s, d) => s + d.ruweOmzet, 0) + deel2.reduce((s, x) => s + x.pool, 0)
+  const cumUitkeringAgent = cum5jrEigen + cumDeel2
+  const cumArnobotOver = cumTotaleOmzet - cumUitkeringAgent
+  const cumArnobotOverPct = cumTotaleOmzet > 0 ? (cumArnobotOver / cumTotaleOmzet) * 100 : 0
 
   useEffect(() => {
     if (canvasRef.current) tekenChart(canvasRef.current, data, deel2, gemarkeerdeMaand)
@@ -470,18 +478,42 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(20px, 3vw, 32px)' }}>
             <p style={{ fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 12 }}>ArnoBot-weergave, alleen voor jou zichtbaar</p>
             <p style={{ fontSize: 14, color: '#8b96a8', lineHeight: 1.7, marginBottom: 18 }}>
-              Het bedrijfsdeel over de klanten die deze Sales Agent zelf aanbrengt: de omgekeerde kant van hun 40%/20%-commissie. Gaat uitsluitend over hun eigen klanten, geen aanname nodig over de collega of de gedeelde pool.
+              Het totaalplaatje van dit scenario: de volledige omzet die binnenkomt (eigen klanten van deze Sales Agent plus de gedeelde pool), wat daarvan aan haar wordt uitgekeerd, en wat ArnoBot zelf overhoudt. De inputvelden en detailtegels staan al op de Sales Agent-weergave, hier niet opnieuw.
             </p>
+
+            <p style={{ fontSize: 12, color: '#5b6576', marginBottom: 10 }}>Maand {gemarkeerdeMaand}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Bedrijfsdeel, maand {gemarkeerdeMaand}</span>
-                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{eur(bedrijfsdeelDezeMaand)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{bedrijfsdeelPct.toFixed(0)}% van de ruwe klantomzet die maand</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totale omzet</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{eur(totaleOmzetDezeMaand)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>eigen klanten plus de gedeelde pool</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Bedrijfsdeel, cumulatief over 5 jaar</span>
-                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{eur(bedrijfsdeelCumulatief)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>tegenover {eur(cum5jrEigen)} aan hun eigen commissie</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agent</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(uitkeringAgentDezeMaand)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>eigen commissie plus haar aandeel uit de pool</span>
+              </div>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Wat ArnoBot overhoudt</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#34d399' }}>{eur(arnobotOverDezeMaand)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{arnobotOverPct.toFixed(0)}% van de totale omzet</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 12, color: '#5b6576', marginTop: 20, marginBottom: 10 }}>Cumulatief over 5 jaar</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totale omzet</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{eur(cumTotaleOmzet)}</span>
+              </div>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agent</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(cumUitkeringAgent)}</span>
+              </div>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Wat ArnoBot overhoudt</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#34d399' }}>{eur(cumArnobotOver)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{cumArnobotOverPct.toFixed(0)}% van de totale omzet</span>
               </div>
             </div>
           </section>
