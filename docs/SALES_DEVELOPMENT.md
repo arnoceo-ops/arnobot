@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-14
-**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur nu volledig vastgesteld, inclusief deel 2 (gedeeld aandeel in de rest van het bedrijf, met plafond en dezelfde stilte-regel) en het good-leave/bad-leave-onderscheid (2026-08-14), zie de sectie hieronder. Er is ook een interactieve rekentool ("Wat Je Verdient") gebouwd waarmee Stefanie/Anniek hun eigen scenario's kunnen verkennen, alleen als los artifact, niet in dit document opgeslagen. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
-**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. De commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder). Daarna: de sd-links delen met prospects. Env vars staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
+**Waar we staan:** Volledig geautomatiseerd. Een persoonlijke link per SDR (Stefanie/Anniek) zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur nu volledig vastgesteld, inclusief deel 2 (gedeeld aandeel in de rest van het bedrijf, met plafond en dezelfde stilte-regel) en het good-leave/bad-leave-onderscheid (2026-08-14), zie de sectie hieronder. De interactieve rekentool ("Wat Je Verdient") is inmiddels een echte, wachtwoordbeveiligde pagina op `arno.bot/agents`, geen los artifact meer, zie de sectie hieronder. Een apart demoteam waarin Stefanie en Anniek zelf manager zijn (voor hun eigen rehearsal én als bron voor de pre-demo video) is bewust uitgesteld naar een later stadium, zie de sectie hieronder.
+**Eerstvolgende stap:** `SD_VERDIEN_PASSWORD` toevoegen aan Vercel (nog niet gedaan, zie sectie "De verdientool" hieronder). Arno's eigen team aanmaken op `/bot/team` (nu mogelijk, `command_manager=true` staat sinds 2026-08-13 op zijn echte LinkedIn-account) en Stefanie en Anniek daarin uitnodigen als lid. De commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder). Daarna: de sd-links delen met prospects. Env vars van de sd-links zelf staan al in Vercel (bevestigd door Arno, 2026-08-13), dit werkt dus al in productie. `.env.local` is alleen nog nodig als lokaal getest moet worden, niet voor productiegebruik.
 
 Dit document vervangt een eerdere, verkeerd geframede versie die uitging van het aannemen van verkopers om zelf voor Arno te werken. Het gaat om iets anders: een verkoopfunctie die actief sales teams bij bedrijven benadert om ze op ArnoBot aan te sluiten.
 
@@ -112,6 +112,21 @@ Naast hun eigen klanten krijgen Stefanie en Anniek ook een aandeel in alle overi
 ### Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden
 
 Een blijvend opgeslagen koppeling tussen een klant en de SDR die hem aanbracht. Staat nu alleen in een Telegram-melding, niet opvraagbaar of automatisch te controleren. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat). Voor deel 2 is bovendien een manier nodig om de totale nieuwe omzet buiten Stefanie/Anniek om te meten, nog niet ontworpen.
+
+---
+
+## De verdientool (`arno.bot/agents`)
+
+Interactieve rekentool waarmee een SDR haar eigen scenario's kan verkennen: hoeveel klanten per maand, hoe groot, churn, groei in wervingstempo, en de solo-/teamomzet buiten de links om. Rekent live door met exact dezelfde formules als de commissiestructuur hierboven (per-cohort simulatie met churn en groei, het plafond, de 20%-per-persoon-pool).
+
+**Toegang, gelaagd:**
+- Stefanie en Anniek loggen in met een los wachtwoord (env var `SD_VERDIEN_PASSWORD`, cookie `arnobot_sd_verdien`), zien alleen hun eigen scenario.
+- Arno heeft geen aparte login nodig: is hij al ingelogd op `/bot/admin` (bestaande `arnobot_admin`-cookie), dan krijgt hij op dezelfde pagina automatisch ook een schakelaar "ArnoBot-weergave" te zien, met het bedrijfsdeel over dezelfde klanten (de 60%/80%-tegenhanger van de SDR-commissie). Die schakelaar is voor Stefanie/Anniek onzichtbaar, niet alleen verborgen maar functioneel niet bereikbaar zonder het admin-wachtwoord.
+- Losstaand van `/bot` en `/bot/admin`: geen Clerk-login nodig, eigen cookie-auth per pagina (`app/agents/page.tsx`), zelfde patroon als de admin-login maar met een eigen wachtwoord.
+
+**Status (2026-08-14):** gebouwd, lokaal getest (redirects, wachtwoordcontrole, cookie-scheiding tussen SDR- en adminweergave, alle drie bevestigd werkend). **Openstaand:** `SD_VERDIEN_PASSWORD` moet nog aan Vercel toegevoegd worden voordat dit in productie werkt, nog niet bevestigd door Arno.
+
+**Voorgeschiedenis:** begon als los Claude-artifact, maar een artifact heeft geen login en geen gedeelde state tussen pagina's. Toen bleek dat Stefanie/Anniek anders ook de geplande ArnoBot-alleen-weergave zouden zien, is het omgezet naar een echte pagina in de codebase, wat zowel de toegangsscheiding als de gedeelde berekening in één keer oploste.
 
 ---
 
