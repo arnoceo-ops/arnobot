@@ -604,9 +604,9 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
                 }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Cumulatief over 5 jaar</span>
-                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#f59e0b' }}>{eur(cumDeel2)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>totaal incl. eigen klanten: {eur(cumDeel2 + cum5jrEigen)}</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totaal, over 5 jaar</span>
+                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#f59e0b' }}>{eur(cumDeel2 + cum5jrEigen)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>waarvan {eur(cumDeel2)} uit non-agent omzet</span>
               </div>
             </div>
             <p style={{ fontSize: 12, color: '#5b6576', marginTop: 14 }}>
