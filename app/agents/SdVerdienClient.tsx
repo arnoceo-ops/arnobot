@@ -119,6 +119,32 @@ function berekenRuweOmzetPerMaand(instroom: number, omzetPerKlant: number, churn
   return perMaand
 }
 
+// ArnoBot-weergave (bedrijfsbreed): gaat uit van twee symmetrische agents met exact
+// dezelfde instroom/churn/groei-aannames als hierboven ingevuld. Eigen-boek-cijfers
+// (new/recurring/churn/netto/ruweOmzet/klantenAantal) en het per-agent geplafonneerde
+// pool-aandeel verdubbelen dus voor "beide agents samen". De pool zelf (solo- en
+// team-buiten-omzet) is al bedrijfsbreed en verdubbelt niet.
+function naarBedrijfsData(data: Maand[]): Maand[] {
+  return data.map(d => ({
+    ...d,
+    newBusiness: d.newBusiness * 2,
+    recurringBusiness: d.recurringBusiness * 2,
+    churn: d.churn * 2,
+    netto: d.netto * 2,
+    ruweOmzet: d.ruweOmzet * 2,
+    klantenAantal: d.klantenAantal * 2,
+  }))
+}
+
+function naarBedrijfsDeel2(deel2: Deel2[]): Deel2[] {
+  return deel2.map(x => ({
+    ...x,
+    bedrag: x.bedrag * 2,
+    onbegrensd: x.onbegrensd * 2,
+    plafond: x.plafond * 2,
+  }))
+}
+
 // Deel 2: gedeeld aandeel in de rest van het bedrijf. Pool = solo-omzet plus teamklanten
 // die buiten de SD-links om binnenkomen (geen teamexpansie binnen hun eigen klanten, dat
 // wordt bewust niet apart gemodelleerd, middelt in de praktijk tegen churn). 50/50 verdeeld
@@ -371,6 +397,124 @@ function tekenTotaalChart(
   ;(canvas as any)._count = data.length
 }
 
+// ArnoBot-weergave: één grafiek die het hele scenario samenvat (totale omzet, gesplitst
+// in wat er naar de agents gaat en wat ArnoBot overhoudt), in plaats van de agent-
+// persoonlijke grafieken en detailtegels. Zelfde opzet als tekenTotaalChart hierboven,
+// maar dan op de bedrijfsbrede (verdubbelde) cijfers.
+function tekenBedrijfsChart(
+  canvas: HTMLCanvasElement,
+  dataBedrijf: Maand[],
+  deel2Bedrijf: Deel2[],
+  markMaand: number
+) {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const dpr = window.devicePixelRatio || 1
+  const cssWidth = canvas.clientWidth || 1120
+  const cssHeight = 300
+  canvas.width = cssWidth * dpr
+  canvas.height = cssHeight * dpr
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, cssWidth, cssHeight)
+
+  const padL = 60, padR = 66, padT = 16, padB = 26
+  const w = cssWidth - padL - padR
+  const h = cssHeight - padT - padB
+
+  const uitkeringen = dataBedrijf.map((d, i) => d.netto + deel2Bedrijf[i].bedrag)
+  const totalen = dataBedrijf.map((d, i) => d.ruweOmzet + deel2Bedrijf[i].pool)
+  const overhoud = totalen.map((t, i) => t - uitkeringen[i])
+
+  const maxTotal = Math.max(...totalen, 1)
+  const niceMax = Math.ceil(maxTotal / 100) * 100 || 100
+  const zeroY = padT + h
+  const scaleY = h / niceMax
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+  ctx.fillStyle = '#5b6576'
+  ctx.font = '11px ui-sans-serif, sans-serif'
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'middle';
+  [1, 0.75, 0.5, 0.25, 0].forEach(frac => {
+    const val = niceMax * frac
+    const y = zeroY - val * scaleY
+    ctx.beginPath()
+    ctx.moveTo(padL, y)
+    ctx.lineTo(padL + w, y)
+    ctx.stroke()
+    ctx.fillText('€' + Math.round(val), padL - 10, y)
+  })
+
+  const slotW = w / dataBedrijf.length
+  const barW = slotW - 1
+  const cumValues: number[] = []
+  let running = 0
+  totalen.forEach(v => { running += v; cumValues.push(running) })
+  const maxCum = Math.max(...cumValues, 1)
+  const niceMaxCum = Math.ceil(maxCum / 1000) * 1000 || 1000
+
+  dataBedrijf.forEach((d, i) => {
+    const x = padL + i * slotW
+
+    if (d.maand === markMaand) {
+      ctx.fillStyle = 'rgba(255,255,255,0.07)'
+      ctx.fillRect(x, padT, barW, h)
+    }
+
+    const uitkeringH = uitkeringen[i] * scaleY
+    ctx.fillStyle = '#a78bfa'
+    ctx.fillRect(x, zeroY - uitkeringH, barW, uitkeringH)
+
+    const overhoudH = overhoud[i] * scaleY
+    ctx.fillStyle = '#34d399'
+    ctx.fillRect(x, zeroY - uitkeringH - overhoudH, barW, overhoudH)
+
+    if (d.maand === markMaand) {
+      ctx.strokeStyle = 'rgba(241,245,249,0.5)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x + 0.5, padT + 0.5, barW - 1, h - 1)
+    }
+  })
+
+  ctx.strokeStyle = '#f1f5f9'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  cumValues.forEach((v, i) => {
+    const x = padL + i * slotW + barW / 2
+    const y = padT + h - (v / niceMaxCum) * h
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+  })
+  ctx.stroke()
+
+  ctx.fillStyle = '#f1f5f9'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle';
+  [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
+    const val = niceMaxCum * frac
+    const y = padT + h - frac * h
+    ctx.fillText('€' + Math.round(val).toLocaleString('nl-NL'), padL + w + 8, y)
+  })
+
+  ctx.fillStyle = '#5b6576'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  for (let jaar = 1; jaar <= 5; jaar++) {
+    const maandIdx = jaar * 12 - 1
+    const x = padL + maandIdx * slotW + slotW / 2
+    ctx.fillText('jaar ' + jaar, x, padT + h + 8)
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+  ctx.beginPath()
+  ctx.moveTo(padL, zeroY)
+  ctx.lineTo(padL + w, zeroY)
+  ctx.stroke()
+
+  ;(canvas as any)._padL = padL
+  ;(canvas as any)._slotW = slotW
+  ;(canvas as any)._count = dataBedrijf.length
+}
+
 export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const [instroom, setInstroom] = useState(4)
   const [seats, setSeats] = useState(5)
@@ -384,6 +528,9 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvasTotaalRef = useRef<HTMLCanvasElement>(null)
+  const canvasBedrijfRef = useRef<HTMLCanvasElement>(null)
+
+  const isBedrijfsWeergave = weergave === 'arnobot' && isAdmin
 
   const p = PRIJZEN[facturatie]
   const omzetPerKlant = p.platform + seats * p.perSeat
@@ -392,10 +539,14 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const soloOmzetPerMaand = berekenSoloOmzetPerMaand(soloJaarOmzet, churnPct, groeiPct)
   const teamBuitenOmzetPerMaand = berekenRuweOmzetPerMaand(instroomBuiten, omzetPerKlant, churnPct, groeiPct)
   const deel2 = berekenDeel2(data, soloOmzetPerMaand, teamBuitenOmzetPerMaand)
+  const dataBedrijf = naarBedrijfsData(data)
+  const deel2Bedrijf = naarBedrijfsDeel2(deel2)
 
   const maandIdx = Math.max(1, Math.min(HORIZON, gemarkeerdeMaand)) - 1
   const dMaand = data[maandIdx]
   const dDeel2 = deel2[maandIdx]
+  const dMaandBedrijf = dataBedrijf[maandIdx]
+  const dDeel2Bedrijf = deel2Bedrijf[maandIdx]
 
   const cum5jrEigen = data.reduce((s, d) => s + d.netto, 0)
   const cum5jrDeel2 = deel2.reduce((s, d) => s + d.bedrag, 0)
@@ -406,31 +557,34 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const soloGebruikers = Math.round(soloOmzetPerMaand[maandIdx] / SOLO_OMZET_PER_GEBRUIKER_PER_MAAND)
   const totaalGebruikers = teamGebruikersEigen + teamGebruikersBuiten + soloGebruikers
 
-  // ArnoBot-weergave: totaalplaatje van dit scenario, geen dubbeling van de agent-inputs
-  // die al op de andere toggle staan. Totale omzet = eigen klantenboek van deze agent plus
-  // de gedeelde pool (solo + team buiten de links om). Uitkering aan de agent = exact
-  // hetzelfde bedrag als de agent zelf op de andere toggle ziet (eigen commissie + haar
-  // aandeel uit de pool). Wat ArnoBot overhoudt is simpelweg het verschil.
-  const totaleOmzetDezeMaand = dMaand.ruweOmzet + dDeel2.pool
-  const uitkeringAgentDezeMaand = dMaand.netto + dDeel2.bedrag
-  const arnobotOverDezeMaand = totaleOmzetDezeMaand - uitkeringAgentDezeMaand
+  // ArnoBot-weergave: totaalplaatje van dit scenario op bedrijfsbrede (verdubbelde, zie
+  // naarBedrijfsData/naarBedrijfsDeel2) cijfers, geen dubbeling van de agent-inputs die al
+  // op de andere toggle staan. Totale omzet = klantenboek van beide agents samen plus de
+  // gedeelde pool (die zelf al bedrijfsbreed is, niet verdubbeld). Uitkering aan de agents
+  // = hun gecombineerde eigen commissie plus hun gecombineerde, elk geplafonneerde aandeel
+  // uit de pool. Wat ArnoBot overhoudt is simpelweg het verschil.
+  const totaleOmzetDezeMaand = dMaandBedrijf.ruweOmzet + dDeel2Bedrijf.pool
+  const uitkeringAgentsDezeMaand = dMaandBedrijf.netto + dDeel2Bedrijf.bedrag
+  const arnobotOverDezeMaand = totaleOmzetDezeMaand - uitkeringAgentsDezeMaand
   const arnobotOverPct = totaleOmzetDezeMaand > 0 ? (arnobotOverDezeMaand / totaleOmzetDezeMaand) * 100 : 0
 
-  const cumTotaleOmzet = data.reduce((s, d) => s + d.ruweOmzet, 0) + deel2.reduce((s, x) => s + x.pool, 0)
-  const cumUitkeringAgent = cum5jrEigen + cumDeel2
-  const cumArnobotOver = cumTotaleOmzet - cumUitkeringAgent
+  const cumTotaleOmzet = dataBedrijf.reduce((s, d) => s + d.ruweOmzet, 0) + deel2Bedrijf.reduce((s, x) => s + x.pool, 0)
+  const cumUitkeringAgents = dataBedrijf.reduce((s, d) => s + d.netto, 0) + deel2Bedrijf.reduce((s, x) => s + x.bedrag, 0)
+  const cumArnobotOver = cumTotaleOmzet - cumUitkeringAgents
   const cumArnobotOverPct = cumTotaleOmzet > 0 ? (cumArnobotOver / cumTotaleOmzet) * 100 : 0
 
   useEffect(() => {
     if (canvasRef.current) tekenChart(canvasRef.current, data, deel2, gemarkeerdeMaand)
     if (canvasTotaalRef.current) tekenTotaalChart(canvasTotaalRef.current, data, deel2, gemarkeerdeMaand)
+    if (canvasBedrijfRef.current) tekenBedrijfsChart(canvasBedrijfRef.current, dataBedrijf, deel2Bedrijf, gemarkeerdeMaand)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [instroom, seats, churnPct, groeiPct, soloJaarOmzet, instroomBuiten, facturatie, gemarkeerdeMaand])
+  }, [instroom, seats, churnPct, groeiPct, soloJaarOmzet, instroomBuiten, facturatie, gemarkeerdeMaand, weergave])
 
   useEffect(() => {
     function onResize() {
       if (canvasRef.current) tekenChart(canvasRef.current, data, deel2, gemarkeerdeMaand)
       if (canvasTotaalRef.current) tekenTotaalChart(canvasTotaalRef.current, data, deel2, gemarkeerdeMaand)
+      if (canvasBedrijfRef.current) tekenBedrijfsChart(canvasBedrijfRef.current, dataBedrijf, deel2Bedrijf, gemarkeerdeMaand)
     }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
@@ -478,7 +632,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(20px, 3vw, 32px)' }}>
             <p style={{ fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 12 }}>ArnoBot-weergave, alleen voor jou zichtbaar</p>
             <p style={{ fontSize: 14, color: '#8b96a8', lineHeight: 1.7, marginBottom: 18 }}>
-              Het totaalplaatje van dit scenario: de volledige omzet die binnenkomt (eigen klanten van deze Sales Agent plus de gedeelde pool), wat daarvan aan haar wordt uitgekeerd, en wat ArnoBot zelf overhoudt. De inputvelden en detailtegels staan al op de Sales Agent-weergave, hier niet opnieuw.
+              Het totaalplaatje: de volledige omzet die binnenkomt (klanten van beide agents samen plus de gedeelde pool), wat daarvan aan de agents wordt uitgekeerd, en wat ArnoBot zelf overhoudt. Gaat uit van twee symmetrische agents, elk met de ingevulde cijfers hierboven. De inputvelden en detailtegels per agent staan al op de Sales Agent-weergave, hier niet opnieuw.
             </p>
 
             <p style={{ fontSize: 12, color: '#5b6576', marginBottom: 10 }}>Maand {gemarkeerdeMaand}</p>
@@ -489,9 +643,9 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
                 <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>eigen klanten plus de gedeelde pool</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agent</span>
-                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(uitkeringAgentDezeMaand)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>eigen commissie plus haar aandeel uit de pool</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agents</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(uitkeringAgentsDezeMaand)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>eigen commissie plus aandeel uit de pool, samen</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
                 <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Wat ArnoBot overhoudt</span>
@@ -507,8 +661,8 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
                 <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>{eur(cumTotaleOmzet)}</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agent</span>
-                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(cumUitkeringAgent)}</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Uitkering aan de agents</span>
+                <span style={{ display: 'block', fontSize: 28, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums', color: '#a78bfa' }}>{eur(cumUitkeringAgents)}</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '20px 22px' }}>
                 <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Wat ArnoBot overhoudt</span>
@@ -551,102 +705,110 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
               >Jaarlijks</button>
             </div>
           </div>
+          <Field label="Nieuwe Solo-omzet">
+            <span style={{ color: '#5b6576', fontSize: 13 }}>€</span>
+            <ThousandsInput value={soloJaarOmzet} onChange={setSoloJaarOmzet} min={0} width={110} />
+            <Unit>per jaar</Unit>
+          </Field>
+          <Field label="Nieuwe Team-omzet">
+            <NumberInput value={instroomBuiten} onChange={setInstroomBuiten} min={0} max={20} step={1} />
+            <Unit>klanten/mnd, niet agents</Unit>
+          </Field>
         </section>
 
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-          <QsTile label="Deze maand (maand 1)" value={eur(data[0].netto + deel2[0].bedrag)} sub="wat je nu verdient" />
-          <QsTile label="Na 12 maanden" value={eur(data[11].netto + deel2[11].bedrag)} sub="maandelijkse verdiensten op dat moment" />
-          <QsTile label="Cumulatief over 5 jaar" value={eur(cum5jrEigen + cum5jrDeel2)} sub="opgeteld, na churn en jouw activiteit" />
-        </section>
-
-        <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Agents Fee over 5 jaar</h2>
-          <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Elke staaf toont wat jij die maand persoonlijk opbouwt: nieuw, doorlopend, churn en jouw eigen aandeel uit de gedeelde pool. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
-          <div style={{ overflowX: 'auto', marginTop: 14 }}>
-            <canvas ref={canvasRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasRef.current && handleCanvasClick(canvasRef.current, e)} />
-          </div>
-          <Legend items={[
-            ['#f59e0b', 'New business'],
-            ['#34d399', 'Recurring business'],
-            ['#f87171', 'Churn'],
-            ['#a78bfa', 'non-agent omzet'],
-          ]} withLine />
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #2d3a4d', display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: '#8b96a8' }}>
-            <span style={{ fontWeight: 700, color: '#f1f5f9', width: '100%', fontSize: 14 }}>Maand {dMaand.maand}</span>
-            <span>New business: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.newBusiness)}</b></span>
-            <span>Recurring, eigen omzet: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.recurringBusiness)}</b></span>
-            <span>Recurring, bedrijfsomzet: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.bedrag)}</b></span>
-            <span>Churn: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>-{eur(dMaand.churn)}</b></span>
-            <span>Netto deze maand: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.netto + dDeel2.bedrag)}</b></span>
-            <span style={{ fontWeight: 700, color: '#f1f5f9', width: '100%', fontSize: 14, marginTop: 4 }}>
-              Totaal aantal gebruikers: <b style={{ fontVariantNumeric: 'tabular-nums' }}>{aantal(totaalGebruikers)}</b> ({aantal(teamGebruikersEigen)} eigen team, {aantal(teamGebruikersBuiten)} team buiten links, {aantal(soloGebruikers)} solo)
-            </span>
-          </div>
-        </section>
-
-        <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Wat jij persoonlijk meeneemt per maand</h2>
-          <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Eén staaf per maand, in twee kleuren: jouw eigen aandeel over zelf aangebrachte klanten, en jouw eigen aandeel uit de gedeelde pool, niet van jou en je collega samen. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
-          <div style={{ overflowX: 'auto', marginTop: 14 }}>
-            <canvas ref={canvasTotaalRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasTotaalRef.current && handleCanvasClick(canvasTotaalRef.current, e)} />
-          </div>
-          <Legend items={[
-            ['#f59e0b', 'Eigen aandeel'],
-            ['#a78bfa', 'non-agent omzet'],
-          ]} withLine />
-        </section>
-
-        <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in non-agent omzet</h2>
-          <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>
-            Naast je eigen klanten krijg je ook een deel van de omzet (20%) die niet door agents is gegenereerd, van zowel solo- als teamabonnementen.
-          </p>
-          <div style={{ marginTop: 18, maxWidth: 420 }}>
-            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe Solo-omzet</label>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ color: '#5b6576', fontSize: 13 }}>€</span>
-              <ThousandsInput value={soloJaarOmzet} onChange={setSoloJaarOmzet} min={0} width={120} />
-              <Unit>per jaar</Unit>
+        {isBedrijfsWeergave ? (
+          <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700 }}>Omzet ArnoBot en afdracht agents, totaal</h2>
+            <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Elke staaf toont de totale omzet die maand, gesplitst in wat er naar de agents gaat en wat ArnoBot overhoudt. De lijn erboven is de cumulatieve totale omzet, rechteras.</p>
+            <div style={{ overflowX: 'auto', marginTop: 14 }}>
+              <canvas ref={canvasBedrijfRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasBedrijfRef.current && handleCanvasClick(canvasBedrijfRef.current, e)} />
             </div>
-          </div>
-          <div style={{ marginTop: 18, maxWidth: 420 }}>
-            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe Team-omzet</label>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <NumberInput value={instroomBuiten} onChange={setInstroomBuiten} min={0} max={20} step={1} />
-              <Unit>klanten per maand</Unit>
-            </div>
-            <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>niet door agents gegenereerd</span>
-          </div>
+            <Legend items={[
+              ['#a78bfa', 'Afdracht aan de agents'],
+              ['#34d399', 'Wat ArnoBot overhoudt'],
+            ]} withLine />
+          </section>
+        ) : (
+          <>
+            <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <QsTile label="Deze maand (maand 1)" value={eur(data[0].netto + deel2[0].bedrag)} sub="wat je nu verdient" />
+              <QsTile label="Na 12 maanden" value={eur(data[11].netto + deel2[11].bedrag)} sub="maandelijkse verdiensten op dat moment" />
+              <QsTile label="Cumulatief over 5 jaar" value={eur(cum5jrEigen + cum5jrDeel2)} sub="opgeteld, na churn en jouw activiteit" />
+            </section>
 
-          <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #2d3a4d' }}>
-            <p style={{ fontSize: 12, color: '#5b6576', marginBottom: 12 }}>Maand {dMaand.maand}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
-              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Pool die maand</span>
-                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6 }}>{eur(dDeel2.pool)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{eur(dDeel2.soloOmzet)} solo + {eur(dDeel2.teamBuitenOmzet)} team</span>
+            <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700 }}>Agents Fee over 5 jaar</h2>
+              <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Elke staaf toont wat jij die maand persoonlijk opbouwt: nieuw, doorlopend, churn en jouw eigen aandeel uit de gedeelde pool. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
+              <div style={{ overflowX: 'auto', marginTop: 14 }}>
+                <canvas ref={canvasRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasRef.current && handleCanvasClick(canvasRef.current, e)} />
               </div>
-              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Jouw aandeel uit non-agent omzet</span>
-                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#a78bfa' }}>{eur(dDeel2.bedrag)}</span>
-                <span style={{
-                  display: 'inline-block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginTop: 6,
-                  background: dDeel2.geplafonneerd ? 'rgba(251, 146, 60, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                  color: dDeel2.geplafonneerd ? '#fb923c' : '#34d399',
-                }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>bovenop je eigen commissie van {eur(dDeel2.plafond)} die maand</span>
+              <Legend items={[
+                ['#f59e0b', 'New business'],
+                ['#34d399', 'Recurring business'],
+                ['#f87171', 'Churn'],
+                ['#a78bfa', 'non-agent omzet'],
+              ]} withLine />
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #2d3a4d', display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: '#8b96a8' }}>
+                <span style={{ fontWeight: 700, color: '#f1f5f9', width: '100%', fontSize: 14 }}>Maand {dMaand.maand}</span>
+                <span>New business: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.newBusiness)}</b></span>
+                <span>Recurring, eigen omzet: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.recurringBusiness)}</b></span>
+                <span>Recurring, bedrijfsomzet: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.bedrag)}</b></span>
+                <span>Churn: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>-{eur(dMaand.churn)}</b></span>
+                <span>Netto deze maand: <b style={{ color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }}>{eur(dMaand.netto + dDeel2.bedrag)}</b></span>
+                <span style={{ fontWeight: 700, color: '#f1f5f9', width: '100%', fontSize: 14, marginTop: 4 }}>
+                  Totaal aantal gebruikers: <b style={{ fontVariantNumeric: 'tabular-nums' }}>{aantal(totaalGebruikers)}</b> ({aantal(teamGebruikersEigen)} eigen team, {aantal(teamGebruikersBuiten)} team buiten links, {aantal(soloGebruikers)} solo)
+                </span>
               </div>
-              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totaal, over 5 jaar</span>
-                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#f59e0b' }}>{eur(cumDeel2 + cum5jrEigen)}</span>
-                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>waarvan {eur(cumDeel2)} uit non-agent omzet</span>
+            </section>
+
+            <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700 }}>Wat jij persoonlijk meeneemt per maand</h2>
+              <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Eén staaf per maand, in twee kleuren: jouw eigen aandeel over zelf aangebrachte klanten, en jouw eigen aandeel uit de gedeelde pool, niet van jou en je collega samen. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
+              <div style={{ overflowX: 'auto', marginTop: 14 }}>
+                <canvas ref={canvasTotaalRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasTotaalRef.current && handleCanvasClick(canvasTotaalRef.current, e)} />
               </div>
-            </div>
-            <p style={{ fontSize: 12, color: '#5b6576', marginTop: 14 }}>
-              Zonder plafond zou je aandeel {eur(dDeel2.onbegrensd)} zijn geweest (20% van de pool), je eigen commissie die maand is {eur(dDeel2.plafond)}, je krijgt het laagste van de twee.
-            </p>
-          </div>
-        </section>
+              <Legend items={[
+                ['#f59e0b', 'Eigen aandeel'],
+                ['#a78bfa', 'non-agent omzet'],
+              ]} withLine />
+            </section>
+
+            <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in non-agent omzet</h2>
+              <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>
+                Naast je eigen klanten krijg je ook een deel van de omzet (20%) die niet door agents is gegenereerd, van zowel solo- als teamabonnementen. In te vullen hierboven bij Nieuwe Solo-omzet en Nieuwe Team-omzet.
+              </p>
+              <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #2d3a4d' }}>
+                <p style={{ fontSize: 12, color: '#5b6576', marginBottom: 12 }}>Maand {dMaand.maand}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
+                  <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                    <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Pool die maand</span>
+                    <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6 }}>{eur(dDeel2.pool)}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{eur(dDeel2.soloOmzet)} solo + {eur(dDeel2.teamBuitenOmzet)} team</span>
+                  </div>
+                  <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                    <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Jouw aandeel uit non-agent omzet</span>
+                    <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#a78bfa' }}>{eur(dDeel2.bedrag)}</span>
+                    <span style={{
+                      display: 'inline-block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginTop: 6,
+                      background: dDeel2.geplafonneerd ? 'rgba(251, 146, 60, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                      color: dDeel2.geplafonneerd ? '#fb923c' : '#34d399',
+                    }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>bovenop je eigen commissie van {eur(dDeel2.plafond)} die maand</span>
+                  </div>
+                  <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                    <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totaal, over 5 jaar</span>
+                    <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#f59e0b' }}>{eur(cumDeel2 + cum5jrEigen)}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>waarvan {eur(cumDeel2)} uit non-agent omzet</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: '#5b6576', marginTop: 14 }}>
+                  Zonder plafond zou je aandeel {eur(dDeel2.onbegrensd)} zijn geweest (20% van de pool), je eigen commissie die maand is {eur(dDeel2.plafond)}, je krijgt het laagste van de twee.
+                </p>
+              </div>
+            </section>
+          </>
+        )}
 
         <footer style={{ fontSize: 12, color: '#5b6576', lineHeight: 1.6, borderTop: '1px solid #2d3a4d', paddingTop: 20 }}>
           Dit is een rekenvoorbeeld om je eigen situatie mee te verkennen, geen garantie of toezegging. Gebaseerd op het ArnoBot Team-tarief (platformtarief plus een bedrag per gebruiker, vanaf 3 gebruikers) en een aangenomen, gelijkmatig churn-percentage, niet op werkelijke opzeggingen.
