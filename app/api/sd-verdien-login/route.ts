@@ -22,6 +22,22 @@ export async function POST(req: NextRequest) {
 
   const { password } = await req.json()
 
+  // Arno's eigen adminwachtwoord werkt hier ook: zet dan de bestaande arnobot_admin-cookie
+  // (zelfde als /bot/admin/login), zodat hij in één stap zowel op /agents als op /bot/admin
+  // is ingelogd, geen apart wachtwoord voor zichzelf nodig.
+  if (password === process.env.ARNOBOT_ADMIN_KEY) {
+    ipAttempts.delete(ip)
+    const res = NextResponse.json({ ok: true })
+    res.cookies.set('arnobot_admin', process.env.ARNOBOT_ADMIN_KEY!, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 30,
+      path: '/',
+    })
+    return res
+  }
+
   if (password !== process.env.SD_VERDIEN_PASSWORD) {
     await new Promise(r => setTimeout(r, 500))
     const current = ipAttempts.get(ip)

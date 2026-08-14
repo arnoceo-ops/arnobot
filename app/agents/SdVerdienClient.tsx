@@ -446,7 +446,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
 
         <header style={{ paddingBottom: 8, borderBottom: '1px solid #2d3a4d' }}>
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
-          <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Performance Fee</h1>
+          <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Agents Fee</h1>
           <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, marginTop: 10 }}>
             Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd. Dat aandeel kent wel een plafond: je krijgt nooit meer uit die pool dan wat je zelf aan eigen klanten verdient.
           </p>
@@ -528,7 +528,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
         </section>
 
         <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Performance Fee over 5 jaar</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Agents Fee over 5 jaar</h2>
           <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Elke staaf toont wat jij die maand persoonlijk opbouwt: nieuw, doorlopend, churn en jouw eigen aandeel uit de gedeelde pool. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
           <div style={{ overflowX: 'auto', marginTop: 14 }}>
             <canvas ref={canvasRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasRef.current && handleCanvasClick(canvasRef.current, e)} />
