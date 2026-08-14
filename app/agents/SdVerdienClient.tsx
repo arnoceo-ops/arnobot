@@ -810,9 +810,11 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           </>
         )}
 
-        <footer style={{ fontSize: 12, color: '#5b6576', lineHeight: 1.6, borderTop: '1px solid #2d3a4d', paddingTop: 20 }}>
-          Dit is een rekenvoorbeeld om je eigen situatie mee te verkennen, geen garantie of toezegging. Gebaseerd op het ArnoBot Team-tarief (platformtarief plus een bedrag per gebruiker, vanaf 3 gebruikers) en een aangenomen, gelijkmatig churn-percentage, niet op werkelijke opzeggingen.
-        </footer>
+        {!isBedrijfsWeergave && (
+          <footer style={{ fontSize: 12, color: '#5b6576', lineHeight: 1.6, borderTop: '1px solid #2d3a4d', paddingTop: 20 }}>
+            Dit is een rekenvoorbeeld om je eigen situatie mee te verkennen, geen garantie of toezegging. Gebaseerd op het ArnoBot Team-tarief (platformtarief plus een bedrag per gebruiker, vanaf 3 gebruikers) en een aangenomen, gelijkmatig churn-percentage, niet op werkelijke opzeggingen.
+          </footer>
+        )}
       </div>
     </div>
   )
