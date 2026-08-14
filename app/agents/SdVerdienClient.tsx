@@ -446,7 +446,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
 
         <header style={{ paddingBottom: 8, borderBottom: '1px solid #2d3a4d' }}>
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
-          <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Wat je verdient</h1>
+          <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Performance Fee</h1>
           <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, maxWidth: '64ch', marginTop: 10 }}>
             Vul in hoeveel klanten je gemiddeld per maand aanbrengt, hoe groot ze zijn, en hoeveel er gemiddeld weer opzeggen. De grafiek laat per maand zien wat nieuw is, wat doorloopt, en wat je kwijtraakt, plus de opgetelde lijn daaronder.
           </p>
