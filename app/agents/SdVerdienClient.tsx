@@ -374,10 +374,10 @@ function tekenTotaalChart(
 export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const [instroom, setInstroom] = useState(4)
   const [seats, setSeats] = useState(5)
-  const [churnPct, setChurnPct] = useState(5)
+  const [churnPct, setChurnPct] = useState(10)
   const [groeiPct, setGroeiPct] = useState(20)
-  const [soloJaarOmzet, setSoloJaarOmzet] = useState(33120)
-  const [instroomBuiten, setInstroomBuiten] = useState(1)
+  const [soloJaarOmzet, setSoloJaarOmzet] = useState(36000)
+  const [instroomBuiten, setInstroomBuiten] = useState(2)
   const [facturatie, setFacturatie] = useState<Facturatie>('maandelijks')
   const [gemarkeerdeMaand, setGemarkeerdeMaand] = useState(1)
   const [weergave, setWeergave] = useState<'agent' | 'arnobot'>('agent')
@@ -497,7 +497,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
             <Unit>seats</Unit>
           </Field>
           <Field label="Churn">
-            <NumberInput value={churnPct} onChange={setChurnPct} min={0} max={30} step={0.5} />
+            <NumberInput value={churnPct} onChange={v => setChurnPct(Math.round(v))} min={0} max={30} step={1} />
             <Unit>% opzeggingen</Unit>
           </Field>
           <Field label="Groei in wervingstempo">
@@ -528,7 +528,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
         </section>
 
         <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Jouw inkomsten per maand, over 5 jaar</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Performance Fee over 5 jaar</h2>
           <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>Elke staaf toont wat jij die maand persoonlijk opbouwt: nieuw, doorlopend, churn en jouw eigen aandeel uit de gedeelde pool. De lijn erboven is jouw cumulatieve totaal, rechteras.</p>
           <div style={{ overflowX: 'auto', marginTop: 14 }}>
             <canvas ref={canvasRef} width={1120} height={300} style={{ display: 'block', width: '100%', height: 300, cursor: 'crosshair' }} onClick={e => canvasRef.current && handleCanvasClick(canvasRef.current, e)} />
@@ -537,7 +537,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
             ['#f59e0b', 'New business'],
             ['#34d399', 'Recurring business'],
             ['#f87171', 'Churn'],
-            ['#a78bfa', 'Gedeeld aandeel (rest van het bedrijf)'],
+            ['#a78bfa', 'non-agent omzet'],
           ]} withLine />
           <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #2d3a4d', display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13, color: '#8b96a8' }}>
             <span style={{ fontWeight: 700, color: '#f1f5f9', width: '100%', fontSize: 14 }}>Maand {dMaand.maand}</span>
@@ -560,47 +560,58 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           </div>
           <Legend items={[
             ['#f59e0b', 'Eigen aandeel'],
-            ['#a78bfa', 'Gedeeld aandeel (rest van het bedrijf)'],
+            ['#a78bfa', 'non-agent omzet'],
           ]} withLine />
         </section>
 
         <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in de rest van het bedrijf</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in non-agent omzet</h2>
           <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3, maxWidth: '68ch' }}>
             Naast je eigen klanten krijg je ook een deel van de omzet (20%) die niet door agents is gegenereerd, van zowel solo- als teamabonnementen.
           </p>
           <div style={{ marginTop: 18, maxWidth: 420 }}>
-            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe solo-omzet van de rest van het bedrijf, per jaar</label>
+            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe Solo-omzet</label>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
               <span style={{ color: '#5b6576', fontSize: 13 }}>€</span>
-              <NumberInput value={soloJaarOmzet} onChange={setSoloJaarOmzet} min={0} step={1000} width={120} />
+              <ThousandsInput value={soloJaarOmzet} onChange={setSoloJaarOmzet} min={0} width={120} />
+              <Unit>per jaar</Unit>
             </div>
-            <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>elk jaar komt er een nieuw blok bij, dat daarna net als teamklanten uitdooft met hetzelfde churn-percentage hierboven</span>
           </div>
           <div style={{ marginTop: 18, maxWidth: 420 }}>
-            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe teamklanten buiten de SD-links om, per maand</label>
+            <label style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 10 }}>Nieuwe Team-omzet</label>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
               <NumberInput value={instroomBuiten} onChange={setInstroomBuiten} min={0} max={20} step={1} />
-              <Unit>gemiddeld</Unit>
+              <Unit>klanten per maand</Unit>
             </div>
-            <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>bijvoorbeeld doordat jij zelf een Team-deal sluit, zelfde prijs/seats/churn als hierboven</span>
+            <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>niet door agents gegenereerd</span>
           </div>
 
-          <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #2d3a4d', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 15, color: '#f1f5f9' }}>
-              Jouw aandeel in maand {dMaand.maand}: <b style={{ color: '#a78bfa', fontVariantNumeric: 'tabular-nums', fontSize: 20 }}>{eur(dDeel2.bedrag)}</b> per maand
-              <span style={{
-                display: 'inline-block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginLeft: 8,
-                background: dDeel2.geplafonneerd ? 'rgba(251, 146, 60, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                color: dDeel2.geplafonneerd ? '#fb923c' : '#34d399',
-              }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
+          <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #2d3a4d' }}>
+            <p style={{ fontSize: 12, color: '#5b6576', marginBottom: 12 }}>Maand {dMaand.maand}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Pool die maand</span>
+                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6 }}>{eur(dDeel2.pool)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{eur(dDeel2.soloOmzet)} solo + {eur(dDeel2.teamBuitenOmzet)} team</span>
+              </div>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Jouw aandeel</span>
+                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#a78bfa' }}>{eur(dDeel2.bedrag)}</span>
+                <span style={{
+                  display: 'inline-block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginTop: 6,
+                  background: dDeel2.geplafonneerd ? 'rgba(251, 146, 60, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                  color: dDeel2.geplafonneerd ? '#fb923c' : '#34d399',
+                }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
+              </div>
+              <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Cumulatief over 5 jaar</span>
+                <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#f59e0b' }}>{eur(cumDeel2)}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>totaal incl. eigen klanten: {eur(cumDeel2 + cum5jrEigen)}</span>
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: '#5b6576' }}>
-              De pool die maand: <b style={{ color: '#8b96a8', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.soloOmzet)}</b> solo-omzet + <b style={{ color: '#8b96a8', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.teamBuitenOmzet)}</b> teamklanten buiten de links om = <b style={{ color: '#8b96a8', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.pool)}</b>. Zonder plafond zou jouw aandeel <b style={{ color: '#8b96a8', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.onbegrensd)}</b> zijn (20% van die pool), je eigen commissie die maand is <b style={{ color: '#8b96a8', fontVariantNumeric: 'tabular-nums' }}>{eur(dDeel2.plafond)}</b>, dus je krijgt het laagste van de twee.
-            </div>
-            <div style={{ fontSize: 14, color: '#8b96a8', marginTop: 4 }}>
-              Cumulatief over 5 jaar: <b style={{ color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>{eur(cumDeel2)}</b>. Opgeteld bij wat je zelf aan eigen klanten verdient, komt jouw persoonlijke totaal op <b style={{ color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>{eur(cumDeel2 + cum5jrEigen)}</b>.
-            </div>
+            <p style={{ fontSize: 12, color: '#5b6576', marginTop: 14 }}>
+              Zonder plafond zou je aandeel {eur(dDeel2.onbegrensd)} zijn geweest (20% van de pool), je eigen commissie die maand is {eur(dDeel2.plafond)}, je krijgt het laagste van de twee.
+            </p>
           </div>
         </section>
 
@@ -630,6 +641,24 @@ function NumberInput({ value, onChange, min, max, step, width }: { value: number
       max={max}
       step={step}
       onChange={e => onChange(Math.max(min ?? 0, parseFloat(e.target.value) || 0))}
+      style={{ width: width ?? 76, background: '#1f2937', border: '1.5px solid #2d3a4d', borderRadius: 8, color: '#f1f5f9', fontSize: 18, fontWeight: 700, fontVariantNumeric: 'tabular-nums', padding: '8px 10px', fontFamily: 'inherit' }}
+    />
+  )
+}
+
+// Toont een geheel getal met duizendtalpunten (nl-NL) terwijl je typt, i.p.v. een kaal
+// getal zonder opmaak. Native number-inputs ondersteunen dat niet, vandaar een text-input
+// die alleen cijfers doorlaat en bij elke wijziging herformatteert.
+function ThousandsInput({ value, onChange, min, width }: { value: number; onChange: (v: number) => void; min?: number; width?: number }) {
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={value.toLocaleString('nl-NL')}
+      onChange={e => {
+        const digits = e.target.value.replace(/\D/g, '')
+        onChange(Math.max(min ?? 0, digits ? parseInt(digits, 10) : 0))
+      }}
       style={{ width: width ?? 76, background: '#1f2937', border: '1.5px solid #2d3a4d', borderRadius: 8, color: '#f1f5f9', fontSize: 18, fontWeight: 700, fontVariantNumeric: 'tabular-nums', padding: '8px 10px', fontFamily: 'inherit' }}
     />
   )
