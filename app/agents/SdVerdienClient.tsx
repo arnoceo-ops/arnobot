@@ -447,7 +447,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
         <header style={{ paddingBottom: 8, borderBottom: '1px solid #2d3a4d' }}>
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
           <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Performance Fee</h1>
-          <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, maxWidth: '64ch', marginTop: 10 }}>
+          <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, marginTop: 10 }}>
             Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd.
           </p>
           {isAdmin && (
@@ -469,7 +469,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
         {weergave === 'arnobot' && isAdmin && (
           <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(20px, 3vw, 32px)' }}>
             <p style={{ fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600, marginBottom: 12 }}>ArnoBot-weergave, alleen voor jou zichtbaar</p>
-            <p style={{ fontSize: 14, color: '#8b96a8', lineHeight: 1.7, maxWidth: '68ch', marginBottom: 18 }}>
+            <p style={{ fontSize: 14, color: '#8b96a8', lineHeight: 1.7, marginBottom: 18 }}>
               Het bedrijfsdeel over de klanten die deze Sales Agent zelf aanbrengt: de omgekeerde kant van hun 40%/20%-commissie. Gaat uitsluitend over hun eigen klanten, geen aanname nodig over de collega of de gedeelde pool.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
@@ -566,7 +566,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
 
         <section style={{ background: '#1a2333', border: '1px solid #2d3a4d', borderRadius: 14, padding: '24px clamp(16px, 3vw, 28px) 20px' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700 }}>Plus: jouw aandeel in non-agent omzet</h2>
-          <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3, maxWidth: '68ch' }}>
+          <p style={{ fontSize: 13, color: '#5b6576', marginTop: 3 }}>
             Naast je eigen klanten krijg je ook een deel van de omzet (20%) die niet door agents is gegenereerd, van zowel solo- als teamabonnementen.
           </p>
           <div style={{ marginTop: 18, maxWidth: 420 }}>
