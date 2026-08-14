@@ -448,7 +448,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
           <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Performance Fee</h1>
           <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, marginTop: 10 }}>
-            Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd.
+            Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd. Dat aandeel kent wel een plafond: je krijgt nooit meer uit die pool dan wat je zelf aan eigen klanten verdient.
           </p>
           {isAdmin && (
             <div style={{ display: 'flex', gap: 6, background: '#1f2937', border: '1.5px solid #2d3a4d', borderRadius: 9, padding: 3, width: 'fit-content', marginTop: 18 }}>
@@ -595,13 +595,14 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
                 <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 4 }}>{eur(dDeel2.soloOmzet)} solo + {eur(dDeel2.teamBuitenOmzet)} team</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
-                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Jouw aandeel</span>
+                <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Jouw aandeel uit non-agent omzet</span>
                 <span style={{ display: 'block', fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums', marginTop: 6, color: '#a78bfa' }}>{eur(dDeel2.bedrag)}</span>
                 <span style={{
                   display: 'inline-block', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginTop: 6,
                   background: dDeel2.geplafonneerd ? 'rgba(251, 146, 60, 0.15)' : 'rgba(52, 211, 153, 0.15)',
                   color: dDeel2.geplafonneerd ? '#fb923c' : '#34d399',
                 }}>{dDeel2.geplafonneerd ? 'geplafonneerd' : 'volledig uitbetaald'}</span>
+                <span style={{ display: 'block', fontSize: 12, color: '#5b6576', marginTop: 6 }}>bovenop je eigen commissie van {eur(dDeel2.plafond)} die maand</span>
               </div>
               <div style={{ background: '#1f2937', border: '1px solid #2d3a4d', borderRadius: 14, padding: '18px 20px' }}>
                 <span style={{ display: 'block', fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8b96a8', fontWeight: 600 }}>Totaal, over 5 jaar</span>
