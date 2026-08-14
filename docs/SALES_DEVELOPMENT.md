@@ -107,6 +107,8 @@ Naast hun eigen klanten krijgen Stefanie en Anniek ook een aandeel in alle overi
 
 **Bewust niet apart meegerekend:** organische groei binnen een klant die een SDR zelf heeft aangebracht (bijvoorbeeld doordat de klant zelf seats toevoegt zonder actieve inzet van de SDR) telt niet mee in dit gedeelde deel en wordt niet apart berekend. Arno middelt dit in de praktijk tegen churn. Zou dit wel apart meegerekend worden, dan zou een SDR via het gedeelde deel meeprofiteren van klanten die haar collega aanbracht, wat niet de bedoeling is.
 
+**Afbakening: precies twee personen (toegevoegd 2026-08-14).** Deze hele regeling (50/50-verdeling, plafond, stilte-regel) rekent met exact twee SDR's, Stefanie en Anniek. Zij kunnen onderling besluiten een derde persoon te betrekken en die uit hun eigen deel te betalen, dat is hun eigen interne afspraak. Arno en ArnoBot faciliteren, tracken of erkennen die derde persoon niet apart, de pool en het plafond blijven berekend alsof er twee personen zijn.
+
 ### Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden
 
 Een blijvend opgeslagen koppeling tussen een klant en de SDR die hem aanbracht. Staat nu alleen in een Telegram-melding, niet opvraagbaar of automatisch te controleren. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat). Voor deel 2 is bovendien een manier nodig om de totale nieuwe omzet buiten Stefanie/Anniek om te meten, nog niet ontworpen.
