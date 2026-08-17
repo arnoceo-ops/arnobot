@@ -1,10 +1,10 @@
 # ArnoBot Pre-demo video script
 
 **Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** Concept-script klaar, nog niet opgenomen. Wacht op het demoteam met fake teamleden (zie `docs/SALES_DEVELOPMENT.md`, sectie "Managerervaring voor Stefanie en Anniek", bewust uitgesteld naar een later stadium).
+**Waar we staan:** Concept-script klaar, nog niet opgenomen. Wacht op het demoteam met fake teamleden (zie `docs/SALES_DEVELOPMENT.md`, sectie "Managerervaring voor de sales agents", bewust uitgesteld naar een later stadium).
 **Eerstvolgende stap:** Zodra het demoteam er staat: dit script tegen dat scherm opnemen, met Arno naar het resultaat kijken vóór het naar een prospect gaat.
 
-Doel: een korte video die Stefanie of Anniek naar een prospect stuurt vóórdat het live gesprek plaatsvindt. Geen volledige featuretour, wel genoeg om nieuwsgierig te maken en de kernbelofte te laten landen. Gebaseerd op de kernbelofte en de LIVE USP's uit `docs/SALES_BIJBEL.md`, geen nieuwe claims.
+Doel: een korte video die een sales agent naar een prospect stuurt vóórdat het live gesprek plaatsvindt. Geen volledige featuretour, wel genoeg om nieuwsgierig te maken en de kernbelofte te laten landen. Gebaseerd op de kernbelofte en de LIVE USP's uit `docs/SALES_BIJBEL.md`, geen nieuwe claims.
 
 **Lengte:** 2,5 tot 3 minuten. Langer werkt averechts voor een pre-demo teaser.
 **Vorm:** ongepolijste screen-recording met voice-over (Loom of vergelijkbaar), geen montage-animaties nodig. Snel te maken, snel te updaten als de app verandert.
