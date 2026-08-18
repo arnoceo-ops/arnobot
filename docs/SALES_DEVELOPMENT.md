@@ -40,7 +40,7 @@ Sales development: actief, outbound sales teams bij andere bedrijven (typisch ge
 - Link Sales Agent 1: `https://arno.bot/aanmelden?sd=e53a3dfd5ab974b85baea67d6c6b1f1e`
 - Link Sales Agent 2: `https://arno.bot/aanmelden?sd=36aabe733fc2e17baab60325dcbca996`
 
-*Huidige bezetting (operationeel, apart van de regeling zelf): Sales Agent 1 = Stefanie, Sales Agent 2 = Anniek. Bij een kandidaatwissel alleen deze regel aanpassen, en de bijbehorende link/env var opnieuw uitgeven aan de nieuwe kandidaat.*
+*Huidige bezetting (operationeel, apart van de regeling zelf): nog niet definitief vastgesteld (2026-08-18), namen bewust hier niet genoemd. Zodra de kandidaten vaststaan: alleen deze regel aanpassen, de rest van dit document blijft ongewijzigd. De env var-namen (`SD_TOKEN_STEFANIE`/`SD_TOKEN_ANNIEK`) zijn historische labels uit de eerste opzet en hoeven niet overeen te komen met de uiteindelijke kandidaten.*
 
 **Hoe het werkt:**
 1. De sales agent stuurt haar eigen link naar een prospect (in een outbound-mail, LinkedIn-bericht, etc.).
