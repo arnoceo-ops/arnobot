@@ -45,10 +45,40 @@ export async function DELETE(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  const { data: chunk, error: fetchError } = await supabase
+    .from('blog_chunks')
+    .select('url')
+    .eq('id', id)
+    .maybeSingle()
+  if (fetchError) {
+    console.error('[admin/kennisbank-chunks DELETE fetch]', fetchError.message)
+    return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+  }
+
   const { error } = await supabase.from('blog_chunks').delete().eq('id', id)
   if (error) {
     console.error('[admin/kennisbank-chunks DELETE]', error.message)
     return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
   }
+
+  // Was dit de laatste chunk van deze url? Zonder deze markering ziet de wekelijkse
+  // RSS-ingest cron (app/api/cron/rss-ingest/route.ts) een lege url als "nog nooit
+  // verwerkt" en indexeert hij het artikel automatisch opnieuw, inclusief precies de
+  // content die hier bewust verwijderd werd.
+  if (chunk?.url) {
+    const { count } = await supabase
+      .from('blog_chunks')
+      .select('id', { count: 'exact', head: true })
+      .eq('url', chunk.url)
+    if (!count) {
+      const { error: excludeError } = await supabase
+        .from('arnobot_kb_excluded_urls')
+        .upsert({ url: chunk.url }, { onConflict: 'url' })
+      if (excludeError) {
+        console.error('[admin/kennisbank-chunks DELETE exclude]', excludeError.message)
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }

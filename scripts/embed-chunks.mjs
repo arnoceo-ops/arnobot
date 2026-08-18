@@ -224,9 +224,23 @@ async function main() {
   const rssDir = join(__dirname, '..', 'data', 'rss_articles')
   const rssArticles = parseRssArticles(rssDir, existingUrls)
 
-  console.log(`${blogs.length} blogs + ${videos.length} video's + ${rssArticles.length} RSS-artikelen gevonden`)
+  // Dit script wist en herbouwt de hele kennisbank vanuit de brontekstbestanden, dus zonder
+  // deze check komt elk artikel waarvan alle chunks handmatig verwijderd zijn (admin-kennisbankpagina)
+  // gewoon terug bij de eerstvolgende run. Zelfde uitsluitingstabel als de RSS-ingest cron.
+  const { data: excludedRows, error: excludedError } = await supabase
+    .from('arnobot_kb_excluded_urls')
+    .select('url')
+  if (excludedError) throw new Error(`Ophalen uitgesloten urls mislukt: ${excludedError.message}`)
+  const excludedUrls = new Set((excludedRows ?? []).map(r => r.url))
 
-  const allDocs = [...blogs, ...videos, ...rssArticles]
+  const allDocsBeforeExclusion = [...blogs, ...videos, ...rssArticles]
+  const allDocs = allDocsBeforeExclusion.filter(d => !d.url || !excludedUrls.has(d.url))
+  const skippedCount = allDocsBeforeExclusion.length - allDocs.length
+  if (skippedCount > 0) {
+    console.log(`${skippedCount} artikel(en) overgeslagen (uitgesloten via admin-kennisbankpagina)`)
+  }
+
+  console.log(`${blogs.length} blogs + ${videos.length} video's + ${rssArticles.length} RSS-artikelen gevonden`)
   const rawChunks = allDocs.flatMap(makeChunks)
   console.log(`${rawChunks.length} chunks aangemaakt. Context genereren via Claude Haiku...`)
 

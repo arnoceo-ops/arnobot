@@ -138,15 +138,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, new: 0, message: 'Geen items in RSS' })
     }
 
-    // 2. Welke URLs bestaan al in blog_chunks?
+    // 2. Welke URLs bestaan al in blog_chunks, of zijn bewust uitgesloten via de admin-kennisbankpagina?
+    // Een url zonder chunks is niet per se "nog nooit verwerkt": als een admin alle chunks van
+    // een artikel verwijderd heeft, moet die keuze standhouden, niet stilzwijgend ongedaan
+    // gemaakt worden door de eerstvolgende automatische run. Zie arnobot_kb_excluded_urls.
     const urls = items.map(i => i.url)
-    const { data: existing } = await supabase
-      .from('blog_chunks')
-      .select('url')
-      .in('url', urls)
+    const [{ data: existing }, { data: excluded }] = await Promise.all([
+      supabase.from('blog_chunks').select('url').in('url', urls),
+      supabase.from('arnobot_kb_excluded_urls').select('url').in('url', urls),
+    ])
     const existingUrls = new Set((existing ?? []).map(r => r.url))
+    const excludedUrls = new Set((excluded ?? []).map(r => r.url))
 
-    const newItems = items.filter(i => !existingUrls.has(i.url)).slice(0, MAX_NEW_PER_RUN)
+    const newItems = items
+      .filter(i => !existingUrls.has(i.url) && !excludedUrls.has(i.url))
+      .slice(0, MAX_NEW_PER_RUN)
     if (newItems.length === 0) {
       await markRssRun()
       return NextResponse.json({ ok: true, new: 0, message: 'Geen nieuwe artikelen' })
