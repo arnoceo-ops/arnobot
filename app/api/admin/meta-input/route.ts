@@ -7,6 +7,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// arnobot_meta_input is een generieke sleutel/waarde-tabel (key, value, updated_at),
+// geen log met een rij per opslag. Deze ene sleutel bevat Arno's meest recente
+// aantekeningen voor het jurypanel, een nieuwe opslag overschrijft de vorige.
+const META_INPUT_KEY = 'panel_input'
+
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -20,12 +25,12 @@ export async function GET() {
 
   const { data } = await supabase
     .from('arnobot_meta_input')
-    .select('id, created_at, content')
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .select('key, value, updated_at')
+    .eq('key', META_INPUT_KEY)
     .maybeSingle()
 
-  return NextResponse.json(data ?? null)
+  if (!data) return NextResponse.json(null)
+  return NextResponse.json({ id: data.key, created_at: data.updated_at, content: data.value })
 }
 
 export async function POST(req: NextRequest) {
@@ -38,15 +43,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geen inhoud' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  const now = new Date().toISOString()
+  const { data: existing } = await supabase
     .from('arnobot_meta_input')
-    .insert({ content: content.trim() })
-    .select('id, created_at')
-    .single()
+    .select('key')
+    .eq('key', META_INPUT_KEY)
+    .maybeSingle()
+
+  const { error } = existing
+    ? await supabase
+        .from('arnobot_meta_input')
+        .update({ value: content.trim(), updated_at: now })
+        .eq('key', META_INPUT_KEY)
+    : await supabase
+        .from('arnobot_meta_input')
+        .insert({ key: META_INPUT_KEY, value: content.trim(), updated_at: now })
 
   if (error) {
     console.error('[admin/meta-input]', error.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
-  return NextResponse.json({ ok: true, id: data.id, created_at: data.created_at })
+  return NextResponse.json({ ok: true, id: META_INPUT_KEY, created_at: now })
 }

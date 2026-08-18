@@ -77,16 +77,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ skipped: true, reden: 'geen gesprekken' })
     }
 
-    // Arno's eigen input ophalen (max 45 dagen oud)
+    // Arno's eigen input ophalen (max 45 dagen oud). arnobot_meta_input is een
+    // sleutel/waarde-tabel (key, value, updated_at), niet een log met een rij per opslag.
     const cutoff = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
     const { data: arnoInput } = await supabase
       .from('arnobot_meta_input')
-      .select('content, created_at')
-      .gte('created_at', cutoff)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .select('value, updated_at')
+      .eq('key', 'panel_input')
+      .gte('updated_at', cutoff)
       .maybeSingle()
-    const arnoInputTekst = arnoInput?.content ?? null
+    const arnoInputTekst = arnoInput?.value ?? null
 
     const sessionIds = sessies.map(s => s.session_id).filter(Boolean) as string[]
 
