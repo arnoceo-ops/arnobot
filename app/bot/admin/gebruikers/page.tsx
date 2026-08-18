@@ -10,6 +10,7 @@ import SearchLinkedIn from './SearchLinkedIn'
 import PlanToggle from './PlanToggle'
 import CommandManagerToggle from './CommandManagerToggle'
 import PaidButton from './PaidButton'
+import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 
 const ELITE_CAP = 50
@@ -106,7 +107,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out')
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
       .neq('email', E2E_TEST_USER_EMAIL)
       .neq('email', MANUAL_TEST_USER_EMAIL),
     supabase
@@ -241,6 +242,7 @@ export default async function GebruikersPage({
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'plan') { av = a.plan || ''; bv = b.plan || '' }
     if (sort === 'command_manager') { av = a.command_manager ? 1 : 0; bv = b.command_manager ? 1 : 0 }
+    if (sort === 'sd_agent') { av = (a as { sd_agent?: string | null }).sd_agent || ''; bv = (b as { sd_agent?: string | null }).sd_agent || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
     if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
     if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
@@ -263,7 +265,7 @@ export default async function GebruikersPage({
     sorted.unshift(bouwer)
   }
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 110px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -298,6 +300,7 @@ export default async function GebruikersPage({
           <SortHeader label="GEZONDHEID" field="gezondheid" sort={sort} dir={dir} vertical />
           <SortHeader label="PLAN" field="plan" sort={sort} dir={dir} vertical />
           <SortHeader label="COMMAND" field="command_manager" sort={sort} dir={dir} vertical />
+          <SortHeader label="SD AGENT" field="sd_agent" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
           <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
@@ -390,6 +393,14 @@ export default async function GebruikersPage({
                 {/* Command manager */}
                 <div style={{ textAlign: 'center' }}>
                   <CommandManagerToggle userId={u.user_id} initial={!!(u as { command_manager?: boolean }).command_manager} />
+                </div>
+                {/* Sales development attributie */}
+                <div style={{ textAlign: 'center' }}>
+                  <SdAgentSelect
+                    userId={u.user_id}
+                    initialAgent={(u as { sd_agent?: 'sales_agent_1' | 'sales_agent_2' | null }).sd_agent ?? null}
+                    initialMethod={(u as { sd_attribution_method?: 'link' | 'contact_match' | 'round_robin' | null }).sd_attribution_method ?? null}
+                  />
                 </div>
                 {/* Referral aanmeldingen */}
                 <div style={{ textAlign: 'center' }}>

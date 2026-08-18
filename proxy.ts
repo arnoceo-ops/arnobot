@@ -173,9 +173,13 @@ export default clerkMiddleware(async (auth, req) => {
             // in de link zelf. Zie docs/SALES_DEVELOPMENT.md.
             const sdToken = req.cookies.get('arnobot_sd')?.value
             let sdSource: string | undefined
+            let sdAgent: string | undefined
             if (sdToken) {
-              if (process.env.SD_TOKEN_STEFANIE && sdToken === process.env.SD_TOKEN_STEFANIE) sdSource = 'Stefanie'
-              else if (process.env.SD_TOKEN_ANNIEK && sdToken === process.env.SD_TOKEN_ANNIEK) sdSource = 'Anniek'
+              // sdSource blijft de mensleesbare naam voor de Telegram-melding hieronder.
+              // sdAgent is de generieke, kandidaat-onafhankelijke waarde die naar de
+              // database gaat, zie docs/SALES_DEVELOPMENT.md, sectie "Attributie".
+              if (process.env.SD_TOKEN_STEFANIE && sdToken === process.env.SD_TOKEN_STEFANIE) { sdSource = 'Stefanie'; sdAgent = 'sales_agent_1' }
+              else if (process.env.SD_TOKEN_ANNIEK && sdToken === process.env.SD_TOKEN_ANNIEK) { sdSource = 'Anniek'; sdAgent = 'sales_agent_2' }
             }
             const newRow = {
               user_id: userId,
@@ -191,6 +195,7 @@ export default clerkMiddleware(async (auth, req) => {
               // i.p.v. te leunen op de kolom-default, die stond hier eerder foutief op 'basis'.
               plan: 'premium',
               ...(sdSource ? { command_manager: true } : {}),
+              ...(sdAgent ? { sd_agent: sdAgent, sd_attribution_method: 'link' } : {}),
             }
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
             const suffix = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')

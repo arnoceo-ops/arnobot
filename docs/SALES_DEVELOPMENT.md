@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-17
-**Waar we staan:** Commissiestructuur volledig vastgesteld en bevestigd, inclusief deel 2, het good-leave/bad-leave-onderscheid, de herziene stilte-regel (relatief aan eigen record, niet meer een vaste ondergrens) en de leadroutering-regel voor leads buiten de links om (telt als Deel 1, tie-breaks bevestigd). Volledig geautomatiseerd voor leads die via een eigen link binnenkomen (`command_manager=true` direct bij aanmelding), handmatig voor leads buiten de links om. Twee dingen bewust nog open: de persistente attributie-koppeling (advies uitgewerkt, wacht op akkoord om te bouwen) en de daadwerkelijke omzetmeting/uitbetaling (wacht op de keuze van een payment provider, daarna ook een realtime dashboard per sales agent). Namen van de huidige kandidaten zijn uit dit document en de gerelateerde docs gehaald (besloten 2026-08-17), zie de naamgeving-notitie hieronder. De interactieve rekentool ("Agents Fee") is een echte, wachtwoordbeveiligde pagina op `arno.bot/agents`, zie de sectie hieronder. Voor de kickoff-pitch aan de sales agents zelf: zie `docs/AGENTS_PITCH.md`.
-**Eerstvolgende stap:** Beslissen of de attributie-kolommen (zie "Attributie: advies en status") nu al gebouwd worden of ook wachten op de payment provider. Los daarvan: Arno's eigen team aanmaken op `/bot/team` en de sales agents daarin uitnodigen als lid, de commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder), en het wachtwoord voor `arno.bot/agents` met hen delen. Daarna: de sd-links delen met prospects.
+**Waar we staan:** Commissiestructuur volledig vastgesteld en bevestigd, inclusief deel 2, het good-leave/bad-leave-onderscheid, de herziene stilte-regel (relatief aan eigen record, niet meer een vaste ondergrens) en de leadroutering-regel voor leads buiten de links om (telt als Deel 1, tie-breaks bevestigd). Volledig geautomatiseerd voor leads die via een eigen link binnenkomen (`command_manager=true` én `sd_agent`/`sd_attribution_method` direct bij aanmelding). Voor leads buiten de links om: handmatige toewijzing via een dropdown op `/bot/admin/gebruikers` (`SdAgentSelect.tsx`, kolom "SD AGENT"), attributie is dus voor beide routes nu persistent vastgelegd op `approved_users`. Enige nog bewust openstaande punt: de daadwerkelijke omzetmeting/uitbetaling wacht op de keuze van een payment provider, daarna ook een realtime dashboard per sales agent. Namen van de huidige kandidaten zijn uit dit document en de gerelateerde docs gehaald (besloten 2026-08-17), zie de naamgeving-notitie hieronder. De interactieve rekentool ("Agents Fee") is een echte, wachtwoordbeveiligde pagina op `arno.bot/agents`, zie de sectie hieronder. Voor de kickoff-pitch aan de sales agents zelf: zie `docs/AGENTS_PITCH.md`.
+**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` en de sales agents daarin uitnodigen als lid, de commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder), en het wachtwoord voor `arno.bot/agents` met hen delen. Daarna: de sd-links delen met prospects. Attributie staat inmiddels live (zie "Attributie: gebouwd" hieronder), alleen de daadwerkelijke omzetmeting/uitbetaling wacht nog op de payment provider.
 
 **Naamgeving in dit document (besloten 2026-08-17):** de twee rolbezetters worden hierin generiek "Sales Agent 1" en "Sales Agent 2" genoemd, niet bij hun echte naam, omdat de kandidaten kunnen wijzigen zonder dat de regeling zelf verandert. De echte, huidige namen staan uitsluitend in de operationele notitie bij "De links" hieronder, geïsoleerd van de rest van het document, zodat een kandidaatwissel alleen dat ene regeltje raakt.
 
@@ -137,16 +137,20 @@ Naast hun eigen klanten krijgen de sales agents ook een aandeel in alle overige 
 - **Een lead die bij beide sales agents bekend is:** geen automatische regel, Arno maakt hier per geval een besluit. Vervangt de eerder voorgestelde default (meelopen in de round robin), Arno gaf expliciet de voorkeur aan eigen beoordeling boven een vaste regel op dit punt.
 - **Volgorde van de round robin:** strikte afwisseling, geen systeem nodig bij dit volume, Arno houdt dit zelf bij.
 
-### Attributie: advies en status (bijgewerkt 2026-08-17)
+### Attributie: gebouwd (2026-08-17)
 
-**Het gat:** er bestaat op dit moment geen enkele persistente koppeling tussen een klant en de sales agent die hem aanbracht, geverifieerd in de code zelf (`proxy.ts`): de attributie via een eigen link (`sdSource`) wordt alleen gebruikt om `command_manager: true` te zetten en om in de Telegram-melding te vermelden, maar nooit weggeschreven naar `approved_users` of enige andere tabel. Voor de handmatige leadroutering (contactherkenning, round robin) bestaat er helemaal geen vastleggingsmoment, die beslissing leeft alleen in Arno's hoofd op het moment zelf.
+**Het gat:** er bestond geen enkele persistente koppeling tussen een klant en de sales agent die hem aanbracht, geverifieerd in de code zelf (`proxy.ts`): de attributie via een eigen link (`sdSource`) werd alleen gebruikt om `command_manager: true` te zetten en om in de Telegram-melding te vermelden, nooit weggeschreven naar `approved_users` of enige andere tabel. Voor de handmatige leadroutering (contactherkenning, round robin) bestond helemaal geen vastleggingsmoment.
 
-**Advies (nog te bouwen, niet in deze ronde):** twee dingen loskoppelen die nu ten onrechte aan elkaar vastzitten:
+**Oplossing, twee dingen losgekoppeld:**
 
-1. **Wie krijgt het krediet (attributie) kan en moet nu al vastgelegd worden**, los van wanneer er daadwerkelijk commissie op uitbetaald wordt. Voorstel: twee kolommen op `approved_users`, `sd_agent` (welke sales agent, of leeg) en `sd_attribution_method` (`link`, `contact_match`, of `round_robin`). Voor de linkroute is dit een triviale, vrijwel risicoloze toevoeging aan de bestaande insert in `proxy.ts` (`sdSource` wordt daar al berekend, alleen nog niet weggeschreven). Voor de handmatige routes: geen aparte UI nodig bij dit volume, een simpele Supabase-update op het moment dat Arno de beslissing neemt volstaat, volgens het bestaande "Supabase SQL — ALTIJD"-protocol uit `CLAUDE.md`. Reden om dit nu al te doen, ook al is er nog geen betaling: de attributiebeslissing zelf (welk contact, welke ronde) is een moment-gebonden feit dat verloren gaat als het niet meteen wordt vastgelegd, terwijl betaalbedragen later nog te reconstrueren zijn zodra er een payment provider is.
-2. **Hoeveel commissie dat oplevert (het reken- en uitbetaalgedeelte) blijft terecht wachten op een payment provider**, zie hieronder. Dat is een bewust aparte, latere stap, geen reden om ook punt 1 uit te stellen.
+1. **Wie krijgt het krediet (attributie) wordt nu vastgelegd**, los van wanneer er daadwerkelijk commissie op uitbetaald wordt. Reden: de attributiebeslissing zelf (welk contact, welke ronde) is een moment-gebonden feit dat verloren gaat als het niet meteen wordt vastgelegd, terwijl betaalbedragen later nog te reconstrueren zijn zodra er een payment provider is.
+2. **Hoeveel commissie dat oplevert (het reken- en uitbetaalgedeelte) blijft terecht wachten op een payment provider**, zie hieronder. Bewust aparte, latere stap.
 
-**Nog niet uitgevoerd, wacht op akkoord van Arno voordat dit gebouwd wordt** (nieuwe functionaliteit, eerst voorstellen conform de vaste werkwijze).
+**Implementatie:**
+- **Schema:** twee kolommen op `approved_users`, door Arno zelf toegevoegd via SQL (bevestigd 2026-08-17): `sd_agent` (`sales_agent_1` / `sales_agent_2` / leeg, met een CHECK-constraint) en `sd_attribution_method` (`link` / `contact_match` / `round_robin` / leeg, ook met een CHECK-constraint). Geverifieerd met een schrijf-lees-terugzet-test tegen het E2E-testaccount, werkt correct.
+- **Linkroute, automatisch:** `proxy.ts` zet `sd_agent`/`sd_attribution_method: 'link'` nu in dezelfde insert als `command_manager: true`, geen aparte stap nodig.
+- **Handmatige routes (contactherkenning, round robin):** `app/bot/admin/gebruikers/SdAgentSelect.tsx`, een dropdown per gebruikersrij op `/bot/admin/gebruikers` (kolom "SD AGENT"), zelfde patroon als de bestaande `CommandManagerToggle`/`PlanToggle` op diezelfde pagina. Vijf keuzes: geen, Agent 1/2 × contact match/round robin. Een via de linkroute automatisch gezette rij toont in plaats van de dropdown een statische badge ("AGENT 1 (LINK)" / "AGENT 2 (LINK)"), om te voorkomen dat een betrouwbare automatische toewijzing per ongeluk handmatig overschreven wordt.
+- **API-route:** `app/api/admin/sd-agent/route.ts`, zelfde auth-patroon (`arnobot_admin`-cookie) en validatie als de bestaande admin-routes, getest op zowel de 401 (geen cookie) als de 400 (ongeldige waarde) route.
 
 ### Deel-2-meting en uitbetaling: wacht op payment provider (toegevoegd 2026-08-17)
 
@@ -200,14 +204,14 @@ En als jullie op een gegeven moment weer regelmatig gaan werven, kijken we gewoo
 
 Bij het nalopen van de volledige regeling, inclusief de nieuwe leadroutering, gevonden en vervolgens met Arno doorgenomen:
 
-1. **Attributie leeft nog nergens persistent.** Bevestigd als het belangrijkste openstaande punt. Advies uitgewerkt in "Attributie: advies en status" hierboven, nog te bouwen, wacht op akkoord.
+1. **Attributie leeft nog nergens persistent.** Was het belangrijkste openstaande punt, inmiddels gebouwd, zie "Attributie: gebouwd" hierboven.
 2. **Deel-2-meetmethode nog niet ontworpen.** Bevestigd: bewust in de wacht tot er een payment provider gekozen is, zie "Deel-2-meting en uitbetaling" hierboven. Daarna ook een realtime dashboard per sales agent gepland.
 3. **Interpretatie leadroutering (Deel 1 versus Deel 2).** Bevestigd: telt als Deel 1.
 4. **Tie-break bij een lead die bij beide sales agents bekend is.** Bevestigd: geen automatische regel, Arno beslist per geval.
 5. **Volgorde van de round robin.** Bevestigd: strikte afwisseling, geen systeem nodig.
 6. **Geen gedefinieerd moment waarop de leadroutering-toewijzing zelf vastligt** (bijvoorbeeld een later gebleken foutieve toewijzing). Bevestigd: zelfde discretie als "Handmatige herbeoordeling", geen aparte regel.
 
-Alleen punt 1 en 2 hebben nog echte bouw-impact, beide bewust uitgesteld: punt 1 wacht op akkoord om de attributie-kolommen daadwerkelijk toe te voegen, punt 2 wacht op de keuze van een payment provider.
+Alleen punt 2 heeft nog echte bouw-impact, bewust uitgesteld tot de keuze van een payment provider. Punt 1 is gebouwd.
 
 ---
 
@@ -216,4 +220,3 @@ Alleen punt 1 en 2 hebben nog echte bouw-impact, beide bewust uitgesteld: punt 1
 - Een lijst van doelbedrijven/wie ze actief gaan benaderen
 - Beslissing of de sales agents eigen adminpagina-toegang krijgen
 - De kickoff-pitch uit `docs/AGENTS_PITCH.md` daadwerkelijk in NotebookLM invoeren, de gegenereerde presentatie beoordelen, en toetsen met de sales agents zelf
-- Beslissing of de attributie-kolommen (zie "Attributie: advies en status") nu al gebouwd worden
