@@ -139,10 +139,11 @@ export default function MetaAnalyseClient() {
       .finally(() => setInputLoading(false))
   }, [])
 
-  async function saveInput() {
-    if (!input.trim()) return
+  async function saveInput(): Promise<boolean> {
+    if (!input.trim()) return true
     setInputSaving(true)
     setInputSaved(false)
+    let ok = false
     try {
       const res = await fetch('/api/admin/meta-input', {
         method: 'POST',
@@ -154,9 +155,11 @@ export default function MetaAnalyseClient() {
         setSavedInput({ id: data.id, created_at: data.created_at, content: input })
         setInputSaved(true)
         setTimeout(() => setInputSaved(false), 3000)
+        ok = true
       }
-    } catch { /* stil falen */ }
+    } catch { /* opgevangen via de return-waarde */ }
     setInputSaving(false)
+    return ok
   }
 
   function toggleOpen(id: string) {
@@ -211,10 +214,11 @@ export default function MetaAnalyseClient() {
   async function generate() {
     const opgeslagenInput = (savedInput?.content ?? '').trim()
     if (input.trim() !== opgeslagenInput) {
-      const tochDoorgaan = window.confirm(
-        'Je hebt niet-opgeslagen wijzigingen in het invoervak "JOUW INPUT VOOR HET PANEL". Die worden NIET meegenomen in deze analyse tenzij je eerst op OPSLAAN klikt.\n\nKlik Annuleren om eerst op te slaan, of OK om door te gaan zonder deze wijzigingen.'
-      )
-      if (!tochDoorgaan) return
+      const opgeslagen = await saveInput()
+      if (!opgeslagen) {
+        setError('Opslaan van je input is mislukt. Probeer het opnieuw voordat je genereert.')
+        return
+      }
     }
     setLoading(true)
     setError(null)
