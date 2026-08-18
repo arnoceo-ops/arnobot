@@ -692,9 +692,13 @@ PROFIEL VAN DE GEBRUIKER:
     // bekend is (hint, daglimiet-teller) gaat in de headers, log_id (pas bekend na het
     // wegschrijven) komt als klein blokje ná het einde van de tekst-stream.
     const encoder = new TextEncoder()
+    // Kleine buffer boven de bedoelde lengte per tier, zodat een antwoord dat net over de
+    // grens dreigt te gaan niet midden in een woord afkapt. Dit verruimt de bedoelde
+    // beknoptheid niet structureel, het voorkomt alleen dat de rand de zin doorsnijdt.
+    const chatMaxTokens = isWidget ? 1800 : antwoordLengte === 'kort' ? 750 : antwoordLengte === 'uitgebreid' ? 2500 : 1450
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: isWidget ? 1500 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+      max_tokens: chatMaxTokens,
       system: systemPrompt,
       messages
     })
@@ -722,7 +726,7 @@ PROFIEL VAN DE GEBRUIKER:
             console.error('[chat] leeg antwoord na streaming, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)')
             const retryMessage = await client.messages.create({
               model: 'claude-sonnet-4-6',
-              max_tokens: isWidget ? 1500 : antwoordLengte === 'kort' ? 600 : antwoordLengte === 'uitgebreid' ? 2200 : 1200,
+              max_tokens: chatMaxTokens,
               system: systemPrompt,
               messages,
             })
@@ -732,6 +736,15 @@ PROFIEL VAN DE GEBRUIKER:
               answer = 'Sorry, kun je dat anders verwoorden? Ik kreeg geen goed antwoord terug.'
             }
             controller.enqueue(encoder.encode(answer))
+          } else if (finalMessage.stop_reason === 'max_tokens') {
+            // Antwoord is al (deels afgekapt) naar de gebruiker gestreamd voordat dit bekend
+            // werd, hier is niets meer aan te herstellen. Wel loggen zodat zichtbaar wordt
+            // hoe vaak dit nog voorkomt ondanks de bufferruimte hierboven.
+            console.error('[chat] antwoord afgekapt op max_tokens, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)', 'antwoordLengte:', antwoordLengte)
+            Sentry.captureMessage('[chat] antwoord afgekapt op max_tokens', {
+              level: 'warning',
+              extra: { sessionId, userId: userId ?? null, antwoordLengte, isWidget, chatMaxTokens },
+            })
           }
 
           let logId: string | null = null
