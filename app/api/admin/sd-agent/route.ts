@@ -8,7 +8,7 @@ const supabase = createClient(
 )
 
 const VALID_AGENTS = ['sales_agent_1', 'sales_agent_2']
-const VALID_METHODS = ['contact_match', 'round_robin']
+const VALID_METHODS = ['manual']
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()

@@ -3,14 +3,15 @@
 import { useState } from 'react'
 
 type Agent = 'sales_agent_1' | 'sales_agent_2' | null
-type Method = 'link' | 'contact_match' | 'round_robin' | null
+type Method = 'link' | 'manual' | null
 
+// Geen aparte opties voor "contact match" versus "round robin": dat onderscheid bleek in de
+// praktijk niet de moeite waard om vast te leggen (Arno weet zelf op het moment zelf waarom
+// hij toewijst), dus elke handmatige toewijzing krijgt gewoon method 'manual'.
 const OPTIONS: { value: string; agent: Agent; method: Method; label: string }[] = [
   { value: 'none', agent: null, method: null, label: 'Geen' },
-  { value: 'a1_contact', agent: 'sales_agent_1', method: 'contact_match', label: 'Agent 1, contact' },
-  { value: 'a1_round', agent: 'sales_agent_1', method: 'round_robin', label: 'Agent 1, round robin' },
-  { value: 'a2_contact', agent: 'sales_agent_2', method: 'contact_match', label: 'Agent 2, contact' },
-  { value: 'a2_round', agent: 'sales_agent_2', method: 'round_robin', label: 'Agent 2, round robin' },
+  { value: 'a1', agent: 'sales_agent_1', method: 'manual', label: 'Agent 1' },
+  { value: 'a2', agent: 'sales_agent_2', method: 'manual', label: 'Agent 2' },
 ]
 
 function toValue(agent: Agent, method: Method): string {
