@@ -51,6 +51,10 @@ Drie argumenten raken een salesbaas het diepst, omdat ze precies zijn koopbeslis
 
 **Enterprise-niveau beveiliging en compliance.** Toegangsbeveiliging op alle gebruikersdata, verwerkersovereenkomsten met elke leverancier, geen training op klantdata. Bij een teamklant komt bijna altijd een IT- of inkoopvraag hierover, en dit is dan al op orde.
 
+**Kostenvoordeel ten opzichte van een coachingstraject of trainingsbureau.** Eén abonnement in plaats van meerdere dure, tijdgebonden coachingsessies per medewerker. Sterk voor de business case die een salesbaas moet verantwoorden voor een heel team.
+
+**Altijd beschikbaar, geen agenda-gedoe.** 24/7, geen wachttijd, geen coach die pas volgende week tijd heeft. Sterkst vlak vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
+
 Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 **Geheugen dat niet verwatert.** Bij de meeste AI-tools verwatert wat je eerder deelde naarmate het gesprek langer wordt, en is het na een nieuwe sessie sowieso weg. Bij ArnoBot blijft het scherp, hoe lang je het ook al gebruikt. Zeg nooit dat een gewone AI-tool "niets onthoudt", dat is aantoonbaar onjuist en een technisch onderlegde prospect prikt daar zo doorheen: het verschil zit in verwatering en het verlies zodra een sessie stopt, niet in totale afwezigheid van geheugen.
