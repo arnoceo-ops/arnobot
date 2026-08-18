@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     .order('created_at', { ascending: false })
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
+    .neq('user_id', APP_REVIEWER_ID)
 
   if (ownerUserId) {
     query = query.neq('user_id', ownerUserId)

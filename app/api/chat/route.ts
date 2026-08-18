@@ -77,7 +77,7 @@ import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
 const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
@@ -157,6 +157,7 @@ const userRateLimit = new Ratelimit({
 // wel de IP-rate-limit kunnen raken.
 function isTestIdentifier(identifier: string): boolean {
   return identifier === E2E_TEST_USER_ID || identifier === MANUAL_TEST_USER_ID
+    || identifier === APP_REVIEWER_ID
     || identifier === '::1' || identifier === '127.0.0.1'
 }
 

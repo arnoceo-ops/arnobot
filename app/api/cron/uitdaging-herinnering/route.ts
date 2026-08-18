@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       if (!sessies?.length) continue
 
       for (const sessie of sessies) {
-        if (sessie.user_id === E2E_TEST_USER_ID || sessie.user_id === MANUAL_TEST_USER_ID) continue
+        if (sessie.user_id === E2E_TEST_USER_ID || sessie.user_id === MANUAL_TEST_USER_ID || sessie.user_id === APP_REVIEWER_ID) continue
 
         // Al gestuurd voor dit interval? Overslaan (UNIQUE(session_id, interval_dagen) is
         // het echte vangnet, deze check voorkomt alleen onnodige e-mailverzendpogingen).

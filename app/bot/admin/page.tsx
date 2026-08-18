@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
@@ -66,6 +66,7 @@ export default async function ArnoBotAdminPage({
     .select('user_id, voornaam, achternaam')
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
+    .neq('user_id', APP_REVIEWER_ID)
 
   const alleNamen: { userId: string; naam: string }[] = (alleGebruikers ?? [])
     .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
@@ -83,6 +84,7 @@ export default async function ArnoBotAdminPage({
     .lte('created_at', `${to}T23:59:59`)
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
+    .neq('user_id', APP_REVIEWER_ID)
     .order('created_at', { ascending: true })
     .limit(2000)
 

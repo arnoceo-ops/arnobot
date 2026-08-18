@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     const perUser = new Map<string, { naam: string; aantal: number }[]>()
     for (const e of entiteiten) {
-      if (e.user_id === E2E_TEST_USER_ID || e.user_id === MANUAL_TEST_USER_ID) continue
+      if (e.user_id === E2E_TEST_USER_ID || e.user_id === MANUAL_TEST_USER_ID || e.user_id === APP_REVIEWER_ID) continue
       const lijst = perUser.get(e.user_id) ?? []
       if (lijst.length < TOP_N) lijst.push({ naam: e.entity_name, aantal: e.mention_count })
       perUser.set(e.user_id, lijst)

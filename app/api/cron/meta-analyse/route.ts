@@ -7,7 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
       .limit(12)
       .neq('user_id', E2E_TEST_USER_ID)
       .neq('user_id', MANUAL_TEST_USER_ID)
+      .neq('user_id', APP_REVIEWER_ID)
     if (ownerUserId) sessieQuery = sessieQuery.neq('user_id', ownerUserId)
     const { data: sessies } = await sessieQuery
 

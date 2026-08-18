@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     .not('email', 'is', null)
     .neq('email', E2E_TEST_USER_EMAIL)
     .neq('email', MANUAL_TEST_USER_EMAIL)
+    .neq('email', APP_REVIEWER_EMAIL)
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
 

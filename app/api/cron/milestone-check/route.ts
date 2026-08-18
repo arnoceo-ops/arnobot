@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     .eq('is_active', true)
     .neq('email', E2E_TEST_USER_EMAIL)
     .neq('email', MANUAL_TEST_USER_EMAIL)
+    .neq('email', APP_REVIEWER_EMAIL)
 
   const total = count ?? 0
 
