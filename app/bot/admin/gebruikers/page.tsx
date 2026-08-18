@@ -265,7 +265,7 @@ export default async function GebruikersPage({
     sorted.unshift(bouwer)
   }
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 200px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 140px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -286,7 +286,7 @@ export default async function GebruikersPage({
         </p>
 
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: 'max-content' }}>
+        <div style={{ minWidth: 1610 }}>
         {/* Tabel header */}
         <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 8px', padding: '0 12px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
           <div />
