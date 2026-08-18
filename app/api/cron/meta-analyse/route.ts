@@ -133,6 +133,18 @@ export async function GET(req: NextRequest) {
       }],
     })
 
+    const callJouwAnalyseModel = () => anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde. ${ARNOBOT_MANDAAT} Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken.`,
+      messages: [{
+        role: 'user',
+        content: `Dit zijn Arno's eigen aantekeningen over ArnoBot:\n\n"${arnoInputTekst}"\n\nSplits dit op in losse, afzonderlijke punten, zoveel als hij daadwerkelijk noemt, geen vast aantal. Voor elk punt exact dit format:\n\nPUNT [n]: [korte titel, max 6 woorden]\n[zijn observatie, opgeschoond tot een heldere alinea, niet ingekort tot één zin als hij meer schreef]\nKritisch punt: [concrete, direct implementeerbare aanbeveling in de stijl "doe X wanneer Y"]\n\nBehandel elk punt apart, laat niets weg. Voeg twee opmerkingen alleen samen als ze overduidelijk hetzelfde onderwerp raken.`,
+      }],
+    })
+
+    const jouwAnalysePromise = arnoInputTekst ? callJouwAnalyseModel() : null
+
     const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
 
     let zelfbeoordeling = getText(zelfResponse.content)
@@ -151,9 +163,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
     }
 
+    let jouwAnalyse: string | null = null
+    if (jouwAnalysePromise) {
+      jouwAnalyse = getText((await jouwAnalysePromise).content)
+      if (!jouwAnalyse) {
+        console.error('[cron/meta-analyse] lege jouw-analyse, retry')
+        jouwAnalyse = getText(await callJouwAnalyseModel().then(r => r.content))
+      }
+      if (!jouwAnalyse) {
+        console.error('[cron/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')
+      }
+    }
+
     await supabase
       .from('arnobot_meta_analyses')
-      .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel })
+      .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel, jouw_analyse_text: jouwAnalyse })
 
     const date = new Date().toLocaleDateString('nl-NL', {
       day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam',
@@ -173,6 +197,13 @@ export async function GET(req: NextRequest) {
 
         <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin:0 0 16px;letter-spacing:2px;">EXPERTPANEL</h2>
         ${textToHtml(expertpanel)}
+
+        ${jouwAnalyse ? `
+        <div style="border-top:1px solid #374151;margin:32px 0;"></div>
+
+        <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin:0 0 16px;letter-spacing:2px;">JOUW ANALYSE</h2>
+        ${textToHtml(jouwAnalyse)}
+        ` : ''}
 
         <div style="border-top:1px solid #374151;margin:32px 0;"></div>
         <p style="color:#6b7280;font-size:13px;">Bekijk de volledige analyse op <a href="https://arno.bot/bot/admin/meta-analyse" style="color:#f59e0b;">arno.bot/bot/admin/meta-analyse</a></p>
