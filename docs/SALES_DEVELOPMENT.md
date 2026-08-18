@@ -1,8 +1,8 @@
 # ArnoBot Sales Development
 
 **Laatst bijgewerkt:** 2026-08-17
-**Waar we staan:** Volledig geautomatiseerd voor leads die via een eigen link binnenkomen. Een persoonlijke link per sales agent zet bij aanmelding automatisch `command_manager=true`, geen handmatige stap meer van Arno nodig, geen wachttijd voor de prospect. Inclusief automatische attributie via de bestaande Telegram-melding. Beschrijft de sales-development-functie: sales teams bij andere bedrijven binnenhalen als ArnoBot-klant via outbound en een gratis 30-dagen team-trial. Commissiestructuur volledig vastgesteld, inclusief deel 2 (gedeeld aandeel in de rest van het bedrijf, met plafond en dezelfde stilte-regel), het good-leave/bad-leave-onderscheid, en sinds 2026-08-17 een leadroutering-regel voor leads die niet via een link binnenkomen, zie de sectie hieronder. De stilte-regel zelf is op 2026-08-14 herzien: niet langer een vaste "minimaal 1 aanmelding per 3 maanden"-ondergrens, maar relatief aan iemands eigen persoonlijk record, zie "Wat 'actief' betekent" in de commissiesectie hieronder. De interactieve rekentool ("Agents Fee") is een echte, wachtwoordbeveiligde pagina op `arno.bot/agents`, zie de sectie hieronder. Voor de kickoff-pitch aan de sales agents zelf (los van de commissieregeling hieronder): zie `docs/AGENTS_PITCH.md`.
-**Eerstvolgende stap:** Arno's eigen team aanmaken op `/bot/team` en de sales agents daarin uitnodigen als lid. De commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder), en het wachtwoord voor `arno.bot/agents` met hen delen. Daarna: de sd-links delen met prospects.
+**Waar we staan:** Commissiestructuur volledig vastgesteld en bevestigd, inclusief deel 2, het good-leave/bad-leave-onderscheid, de herziene stilte-regel (relatief aan eigen record, niet meer een vaste ondergrens) en de leadroutering-regel voor leads buiten de links om (telt als Deel 1, tie-breaks bevestigd). Volledig geautomatiseerd voor leads die via een eigen link binnenkomen (`command_manager=true` direct bij aanmelding), handmatig voor leads buiten de links om. Twee dingen bewust nog open: de persistente attributie-koppeling (advies uitgewerkt, wacht op akkoord om te bouwen) en de daadwerkelijke omzetmeting/uitbetaling (wacht op de keuze van een payment provider, daarna ook een realtime dashboard per sales agent). Namen van de huidige kandidaten zijn uit dit document en de gerelateerde docs gehaald (besloten 2026-08-17), zie de naamgeving-notitie hieronder. De interactieve rekentool ("Agents Fee") is een echte, wachtwoordbeveiligde pagina op `arno.bot/agents`, zie de sectie hieronder. Voor de kickoff-pitch aan de sales agents zelf: zie `docs/AGENTS_PITCH.md`.
+**Eerstvolgende stap:** Beslissen of de attributie-kolommen (zie "Attributie: advies en status") nu al gebouwd worden of ook wachten op de payment provider. Los daarvan: Arno's eigen team aanmaken op `/bot/team` en de sales agents daarin uitnodigen als lid, de commissiestructuur met hen bespreken (zie "Hoe dit te communiceren" hieronder), en het wachtwoord voor `arno.bot/agents` met hen delen. Daarna: de sd-links delen met prospects.
 
 **Naamgeving in dit document (besloten 2026-08-17):** de twee rolbezetters worden hierin generiek "Sales Agent 1" en "Sales Agent 2" genoemd, niet bij hun echte naam, omdat de kandidaten kunnen wijzigen zonder dat de regeling zelf verandert. De echte, huidige namen staan uitsluitend in de operationele notitie bij "De links" hieronder, geïsoleerd van de rest van het document, zodat een kandidaatwissel alleen dat ene regeltje raakt.
 
@@ -129,17 +129,28 @@ Naast hun eigen klanten krijgen de sales agents ook een aandeel in alle overige 
 
 **De regel, in Arno's eigen woorden:** komt er een lead binnen bij ArnoBot en niet via een van de twee links, dan verifieert Arno eerst of die lead afkomstig is van een contact van een van de sales agents. Is dat zo, dan gaat de lead naar de betreffende sales agent. Kennen beide sales agents de lead niet, dan wordt de lead om en om aan hen doorgegeven.
 
-**Interpretatie voor de commissieberekening (aanname, nog te bevestigen door Arno):** een lead die via deze routering aan een sales agent wordt toegewezen, telt vanaf dat moment als haar eigen aangebrachte klant, dus Deel 1 (40% jaar 1, 20% daarna), niet als Deel 2. Reden: Deel 1 beloont wie de daadwerkelijke sales-inspanning levert om een trial naar een betaalde klant te converteren, en dat is bij een toegewezen lead evengoed de ontvangende sales agent, ook al kwam de eerste aanmelding niet via haar eigen link binnen. Zou dit in plaats daarvan als Deel 2 tellen, dan zou een toegewezen lead maar tegen 20% (geplafonneerd) meetellen in plaats van 40% eerste jaar, wat niet aansluit bij de rest van de regeling, waar Deel 1 juist bedoeld is voor "wie doet het werk", niet alleen "via wiens link kwam het eerste contact binnen". **Dit is de enige aanname in dit document die nog niet expliciet door Arno bevestigd is, de rest van deze sectie gaat uit van deze lezing.**
+**Interpretatie voor de commissieberekening (bevestigd door Arno, 2026-08-17):** een lead die via deze routering aan een sales agent wordt toegewezen, telt vanaf dat moment als haar eigen aangebrachte klant, dus Deel 1 (40% jaar 1, 20% daarna), niet als Deel 2. Reden: Deel 1 beloont wie de daadwerkelijke sales-inspanning levert om een trial naar een betaalde klant te converteren, en dat is bij een toegewezen lead evengoed de ontvangende sales agent, ook al kwam de eerste aanmelding niet via haar eigen link binnen.
 
 **Gevolg voor Deel 2:** de pool "team-omzet buiten de links om" wordt hierdoor structureel kleiner dan voorheen. Vrijwel elke teamlead wordt nu individueel aan een sales agent toegewezen (via contactherkenning of round robin), dus alleen leads die Arno bewust niet toewijst (indien dat ooit voorkomt) blijven in de Deel 2-pool vallen. Solo-omzet buiten de links om blijft ongewijzigd volledig in Deel 2 vallen, deze routeringsregel gaat over teamleads.
 
-**Twee openstaande deelvragen bij deze regel, met een voorlopige, eenvoudige default zodat het proces nu al te volgen is:**
-- **Een lead die bij beide sales agents bekend is:** de regel dekt "bekend bij één" en "bekend bij geen van beide", niet "bekend bij beide". Voorlopige default: valt in dezelfde round-robin-verdeling als een onbekende lead, geen voorrang voor wie de lead het "beste" kent, om discussie hierover te vermijden. Arno kan hier altijd van afwijken op eigen inzicht, net als bij de andere discretionaire momenten in dit document.
-- **Volgorde van de round robin:** geen systeem nodig bij dit volume, Arno houdt dit zelf bij. Voorlopige default: strikte afwisseling, niet gewogen naar wie recent meer of minder kreeg toegewezen.
+**Twee deelvragen bij deze regel, beide bevestigd door Arno (2026-08-17):**
+- **Een lead die bij beide sales agents bekend is:** geen automatische regel, Arno maakt hier per geval een besluit. Vervangt de eerder voorgestelde default (meelopen in de round robin), Arno gaf expliciet de voorkeur aan eigen beoordeling boven een vaste regel op dit punt.
+- **Volgorde van de round robin:** strikte afwisseling, geen systeem nodig bij dit volume, Arno houdt dit zelf bij.
 
-### Nog te bouwen voordat dit systeem daadwerkelijk toegepast kan worden
+### Attributie: advies en status (bijgewerkt 2026-08-17)
 
-Een blijvend opgeslagen koppeling tussen een klant en de sales agent die hem aanbracht. Staat nu alleen in een Telegram-melding (voor link-attributie) of nergens (voor handmatige leadroutering), niet opvraagbaar of automatisch te controleren. **Belangrijker geworden sinds de leadroutering hierboven:** er zijn nu drie manieren waarop een klant aan een sales agent wordt gekoppeld (eigen link, contactherkenning, round robin), zonder één plek die vastlegt welke koppeling voor welke klant geldt. Toevoegen zodra er een eerste deal is om op toe te passen, niet eerder, zie ook de eerdere afweging tegen een CRM-systeem hiervoor (te zwaar voor dit volume, een simpele kolom volstaat, nu met een extra kolom of veld voor "hoe toegewezen": eigen link, contactherkenning, of round robin). Voor deel 2 is bovendien een manier nodig om de totale nieuwe omzet buiten de sales agents om te meten, nog niet ontworpen.
+**Het gat:** er bestaat op dit moment geen enkele persistente koppeling tussen een klant en de sales agent die hem aanbracht, geverifieerd in de code zelf (`proxy.ts`): de attributie via een eigen link (`sdSource`) wordt alleen gebruikt om `command_manager: true` te zetten en om in de Telegram-melding te vermelden, maar nooit weggeschreven naar `approved_users` of enige andere tabel. Voor de handmatige leadroutering (contactherkenning, round robin) bestaat er helemaal geen vastleggingsmoment, die beslissing leeft alleen in Arno's hoofd op het moment zelf.
+
+**Advies (nog te bouwen, niet in deze ronde):** twee dingen loskoppelen die nu ten onrechte aan elkaar vastzitten:
+
+1. **Wie krijgt het krediet (attributie) kan en moet nu al vastgelegd worden**, los van wanneer er daadwerkelijk commissie op uitbetaald wordt. Voorstel: twee kolommen op `approved_users`, `sd_agent` (welke sales agent, of leeg) en `sd_attribution_method` (`link`, `contact_match`, of `round_robin`). Voor de linkroute is dit een triviale, vrijwel risicoloze toevoeging aan de bestaande insert in `proxy.ts` (`sdSource` wordt daar al berekend, alleen nog niet weggeschreven). Voor de handmatige routes: geen aparte UI nodig bij dit volume, een simpele Supabase-update op het moment dat Arno de beslissing neemt volstaat, volgens het bestaande "Supabase SQL — ALTIJD"-protocol uit `CLAUDE.md`. Reden om dit nu al te doen, ook al is er nog geen betaling: de attributiebeslissing zelf (welk contact, welke ronde) is een moment-gebonden feit dat verloren gaat als het niet meteen wordt vastgelegd, terwijl betaalbedragen later nog te reconstrueren zijn zodra er een payment provider is.
+2. **Hoeveel commissie dat oplevert (het reken- en uitbetaalgedeelte) blijft terecht wachten op een payment provider**, zie hieronder. Dat is een bewust aparte, latere stap, geen reden om ook punt 1 uit te stellen.
+
+**Nog niet uitgevoerd, wacht op akkoord van Arno voordat dit gebouwd wordt** (nieuwe functionaliteit, eerst voorstellen conform de vaste werkwijze).
+
+### Deel-2-meting en uitbetaling: wacht op payment provider (toegevoegd 2026-08-17)
+
+**Bevestigd door Arno:** de daadwerkelijke omzetmeting (nodig voor zowel Deel 1- als Deel 2-uitbetaling) kan pas zodra er een payment provider gekozen is. Bewust nog even in de wacht, geen actie nu. Zodra die keuze gemaakt is, komt er ook een dashboard voor realtime omzet per sales agent, zodat dit niet handmatig hoeft te worden nagerekend. De keuze van een payment provider is niet uniek voor sales development, ook de dunning-flow (betalingsherinneringen bij mislukte betaling) staat hierop te wachten.
 
 ---
 
@@ -185,17 +196,18 @@ En als jullie op een gegeven moment weer regelmatig gaan werven, kijken we gewoo
 
 ---
 
-## Zijn er nog gaten in de regeling? (analyse 2026-08-17)
+## Zijn er nog gaten in de regeling? (analyse 2026-08-17, bevestigingen zelfde dag verwerkt)
 
-Bij het nalopen van de volledige regeling, inclusief de nieuwe leadroutering hierboven, gevonden:
+Bij het nalopen van de volledige regeling, inclusief de nieuwe leadroutering, gevonden en vervolgens met Arno doorgenomen:
 
-1. **Attributie leeft nog nergens persistent.** Al langer een open punt (zie "Nog te bouwen" hierboven), maar met drie routeringswegen nu (eigen link, contactherkenning, round robin) in plaats van één, is dit het belangrijkste gat om als eerste te dichten zodra er een eerste deal is. Zonder dit is een geschil over "wiens klant was dit" niet objectief te beslechten.
-2. **Deel-2-meetmethode nog niet ontworpen.** Staat al langer open: er is geen gedefinieerde manier om "totale nieuwe omzet buiten de sales agents om" daadwerkelijk te meten/op te vragen. Door de leadroutering wordt deze pool kleiner (vooral nog solo-omzet), maar het ontwerp-gat blijft bestaan.
-3. **Interpretatie leadroutering (Deel 1 versus Deel 2) nog niet expliciet bevestigd.** Zie de aanname hierboven, dit raakt direct hoeveel een toegewezen lead waard is voor de ontvangende sales agent.
-4. **Tie-break bij een lead die bij beide sales agents bekend is**, en **de volgorde/staat van de round robin**: beide nu met een eenvoudige voorlopige default ingevuld, geen van beide is een blokkade, maar beide waren impliciet, niet expliciet vastgelegd vóór vandaag.
-5. **Geen gedefinieerd moment waarop de leadroutering-toewijzing zelf vastligt.** Als Arno een lead toewijst en dat later, na een gesprek, blijkt fout te zijn (bijvoorbeeld de lead bleek toch een contact van de andere sales agent), is er geen regel over herzien. Voorstel: hetzelfde principe als de "Handmatige herbeoordeling" hierboven, puur Arno's discretie, geen aparte regel nodig zolang het volume laag is.
+1. **Attributie leeft nog nergens persistent.** Bevestigd als het belangrijkste openstaande punt. Advies uitgewerkt in "Attributie: advies en status" hierboven, nog te bouwen, wacht op akkoord.
+2. **Deel-2-meetmethode nog niet ontworpen.** Bevestigd: bewust in de wacht tot er een payment provider gekozen is, zie "Deel-2-meting en uitbetaling" hierboven. Daarna ook een realtime dashboard per sales agent gepland.
+3. **Interpretatie leadroutering (Deel 1 versus Deel 2).** Bevestigd: telt als Deel 1.
+4. **Tie-break bij een lead die bij beide sales agents bekend is.** Bevestigd: geen automatische regel, Arno beslist per geval.
+5. **Volgorde van de round robin.** Bevestigd: strikte afwisseling, geen systeem nodig.
+6. **Geen gedefinieerd moment waarop de leadroutering-toewijzing zelf vastligt** (bijvoorbeeld een later gebleken foutieve toewijzing). Bevestigd: zelfde discretie als "Handmatige herbeoordeling", geen aparte regel.
 
-Geen van deze gaten blokkeert het gebruik van de regeling nu. Punt 1 en 2 zijn de enige met echte bouw-impact, en zijn beide al bewust uitgesteld tot het moment dat er daadwerkelijk een deal is om op toe te passen.
+Alleen punt 1 en 2 hebben nog echte bouw-impact, beide bewust uitgesteld: punt 1 wacht op akkoord om de attributie-kolommen daadwerkelijk toe te voegen, punt 2 wacht op de keuze van een payment provider.
 
 ---
 
@@ -204,4 +216,4 @@ Geen van deze gaten blokkeert het gebruik van de regeling nu. Punt 1 en 2 zijn d
 - Een lijst van doelbedrijven/wie ze actief gaan benaderen
 - Beslissing of de sales agents eigen adminpagina-toegang krijgen
 - De kickoff-pitch uit `docs/AGENTS_PITCH.md` daadwerkelijk in NotebookLM invoeren, de gegenereerde presentatie beoordelen, en toetsen met de sales agents zelf
-- Bevestiging van Arno op de Deel 1/Deel 2-interpretatie bij leadroutering (zie hierboven)
+- Beslissing of de attributie-kolommen (zie "Attributie: advies en status") nu al gebouwd worden
