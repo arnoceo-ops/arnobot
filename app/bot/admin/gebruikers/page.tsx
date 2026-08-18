@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 import { clerkClient } from '@clerk/nextjs/server'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { computeHealthScore, HEALTH_BUCKET_META, type HealthBucket } from '@/lib/healthScore'
 import SearchLinkedIn from './SearchLinkedIn'
 import PlanToggle from './PlanToggle'
@@ -109,7 +109,8 @@ export default async function GebruikersPage({
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
       .neq('email', E2E_TEST_USER_EMAIL)
-      .neq('email', MANUAL_TEST_USER_EMAIL),
+      .neq('email', MANUAL_TEST_USER_EMAIL)
+      .neq('email', APP_REVIEWER_EMAIL),
     supabase
       .from('arnobot_rds_logs')
       .select('user_id, session_id, created_at')

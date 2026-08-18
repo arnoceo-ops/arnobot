@@ -1,8 +1,9 @@
 // Accounts die bewust buiten alle gebruikersdata blijven: het geautomatiseerde Playwright
-// E2E-testaccount en Arno's eigen handmatige testaccount. Beide draaien in dezelfde
-// Supabase-tabellen als echte gebruikers (geen apart testproject), dus moeten expliciet
-// worden uitgesloten van e-mailcrons en van admin-weergaves (gesprekkenlog, gebruikerslijst,
-// statistieken) zodat testdata daar nooit tussen echte gebruikersdata staat.
+// E2E-testaccount, Arno's eigen handmatige testaccount, en het Google Play-reviewer-account.
+// Alle drie draaien in dezelfde Supabase-tabellen als echte gebruikers (geen apart
+// testproject), dus moeten expliciet worden uitgesloten van e-mailcrons en van
+// admin-weergaves (gesprekkenlog, gebruikerslijst, statistieken) zodat testdata daar nooit
+// tussen echte gebruikersdata staat.
 
 // Playwright E2E-testaccount (aangemaakt tegen de Clerk development-instance, zie
 // e2e/auth.setup.ts). Account is al eens eerder verdwenen en opnieuw aangemaakt
@@ -19,3 +20,9 @@ export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
 // LinkedIn.
 export const MANUAL_TEST_USER_EMAIL = 'test@arno.bot'
 export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
+
+// Google Play-reviewer-account, aangemaakt 2026-07-26 rechtstreeks in Clerk Dashboard voor
+// app-store-toegang (geen echte gebruiker). Zie docs/MOBILE_PLAN.md voor de volledige
+// toedracht.
+export const APP_REVIEWER_EMAIL = 'reviewer@arno.bot'
+export const APP_REVIEWER_ID = 'user_3H5QqLMsGDjwk1mFQYRCLuJbdBk'
