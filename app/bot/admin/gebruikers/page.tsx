@@ -265,7 +265,7 @@ export default async function GebruikersPage({
     sorted.unshift(bouwer)
   }
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 110px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 140px 60px 60px 90px 50px 80px'
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -399,7 +399,7 @@ export default async function GebruikersPage({
                   <SdAgentSelect
                     userId={u.user_id}
                     initialAgent={(u as { sd_agent?: 'sales_agent_1' | 'sales_agent_2' | null }).sd_agent ?? null}
-                    initialMethod={(u as { sd_attribution_method?: 'link' | 'contact_match' | 'round_robin' | null }).sd_attribution_method ?? null}
+                    initialMethod={(u as { sd_attribution_method?: 'link' | 'manual' | null }).sd_attribution_method ?? null}
                   />
                 </div>
                 {/* Referral aanmeldingen */}

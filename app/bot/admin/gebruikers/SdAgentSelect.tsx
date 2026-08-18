@@ -73,7 +73,7 @@ export default function SdAgentSelect({ userId, initialAgent, initialMethod }: {
         background: agent ? '#1e293b' : '#111827',
         color: agent ? '#f1f5f9' : '#6b7280',
         cursor: loading ? 'wait' : 'pointer',
-        maxWidth: 110,
+        maxWidth: 130,
       }}
     >
       {OPTIONS.map(o => (
