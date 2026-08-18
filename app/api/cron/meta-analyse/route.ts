@@ -1,9 +1,12 @@
-export const maxDuration = 60
+// Fable 5 draait individuele calls aantoonbaar trager dan Sonnet, dus meer ruimte dan de
+// oorspronkelijke 60s nodig sinds de modelwissel (2026-08-18).
+export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
@@ -15,6 +18,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+function extractText(response: Message, label: string): string {
+  if (response.stop_reason === 'refusal') {
+    console.error(`[cron/meta-analyse] ${label} refusal`)
+    return ''
+  }
+  return getText(response.content)
+}
 
 function textToHtml(text: string): string {
   const blocks = text.split(/\n{2,}/)
@@ -55,7 +66,7 @@ export async function GET(req: NextRequest) {
       .gte('created_at', since)
       .not('session_id', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(12)
+      .limit(25)
       .neq('user_id', E2E_TEST_USER_ID)
       .neq('user_id', MANUAL_TEST_USER_ID)
       .neq('user_id', APP_REVIEWER_ID)
@@ -112,8 +123,8 @@ export async function GET(req: NextRequest) {
     const sessieCount = rijkeSessies.length
 
     const callZelfModel = () => anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      model: 'claude-fable-5',
+      max_tokens: 6000,
       system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
@@ -121,8 +132,8 @@ export async function GET(req: NextRequest) {
       }],
     })
     const callPanelModel = () => anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 3000,
+      model: 'claude-fable-5',
+      max_tokens: 10000,
       system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
@@ -134,8 +145,8 @@ export async function GET(req: NextRequest) {
     })
 
     const callJouwAnalyseModel = () => anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      model: 'claude-fable-5',
+      max_tokens: 6000,
       system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde. ${ARNOBOT_MANDAAT} Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
@@ -147,16 +158,16 @@ export async function GET(req: NextRequest) {
 
     const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
 
-    let zelfbeoordeling = getText(zelfResponse.content)
-    let expertpanel = getText(panelResponse.content)
+    let zelfbeoordeling = extractText(zelfResponse, 'zelfbeoordeling')
+    let expertpanel = extractText(panelResponse, 'expertpanel')
 
     if (!zelfbeoordeling) {
-      console.error('[cron/meta-analyse] lege zelfbeoordeling, retry')
-      zelfbeoordeling = getText(await callZelfModel().then(r => r.content))
+      console.error('[cron/meta-analyse] lege/refusal zelfbeoordeling, retry')
+      zelfbeoordeling = extractText(await callZelfModel(), 'zelfbeoordeling retry')
     }
     if (!expertpanel) {
-      console.error('[cron/meta-analyse] leeg expertpanel, retry')
-      expertpanel = getText(await callPanelModel().then(r => r.content))
+      console.error('[cron/meta-analyse] leeg/refusal expertpanel, retry')
+      expertpanel = extractText(await callPanelModel(), 'expertpanel retry')
     }
     if (!zelfbeoordeling || !expertpanel) {
       await notifyCronFailure('meta-analyse', new Error('Leeg AI-antwoord na retry, analyse overgeslagen'))
@@ -165,10 +176,10 @@ export async function GET(req: NextRequest) {
 
     let jouwAnalyse: string | null = null
     if (jouwAnalysePromise) {
-      jouwAnalyse = getText((await jouwAnalysePromise).content)
+      jouwAnalyse = extractText(await jouwAnalysePromise, 'jouw-analyse')
       if (!jouwAnalyse) {
-        console.error('[cron/meta-analyse] lege jouw-analyse, retry')
-        jouwAnalyse = getText(await callJouwAnalyseModel().then(r => r.content))
+        console.error('[cron/meta-analyse] lege/refusal jouw-analyse, retry')
+        jouwAnalyse = extractText(await callJouwAnalyseModel(), 'jouw-analyse retry')
       }
       if (!jouwAnalyse) {
         console.error('[cron/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')

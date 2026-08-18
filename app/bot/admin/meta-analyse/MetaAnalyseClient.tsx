@@ -103,6 +103,7 @@ export default function MetaAnalyseClient() {
   const [customDays, setCustomDays] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [jouwAnalyseWarning, setJouwAnalyseWarning] = useState(false)
   const [analyses, setAnalyses] = useState<MetaAnalyse[]>([])
   const [archiveLoading, setArchiveLoading] = useState(true)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
@@ -208,8 +209,16 @@ export default function MetaAnalyseClient() {
   }
 
   async function generate() {
+    const opgeslagenInput = (savedInput?.content ?? '').trim()
+    if (input.trim() !== opgeslagenInput) {
+      const tochDoorgaan = window.confirm(
+        'Je hebt niet-opgeslagen wijzigingen in het invoervak "JOUW INPUT VOOR HET PANEL". Die worden NIET meegenomen in deze analyse tenzij je eerst op OPSLAAN klikt.\n\nKlik Annuleren om eerst op te slaan, of OK om door te gaan zonder deze wijzigingen.'
+      )
+      if (!tochDoorgaan) return
+    }
     setLoading(true)
     setError(null)
+    setJouwAnalyseWarning(false)
     try {
       const res = await fetch('/api/admin/meta-analyse', {
         method: 'POST',
@@ -231,6 +240,7 @@ export default function MetaAnalyseClient() {
         setAnalyses(prev => [newItem, ...prev])
         setOpenIds(prev => new Set(prev).add(data.id))
         setActiveTab(prev => ({ ...prev, [data.id]: 'zelf' }))
+        if (data.jouwAnalyseFailed) setJouwAnalyseWarning(true)
       } else {
         setError('Geen gesprekken gevonden in deze periode.')
       }
@@ -415,6 +425,12 @@ export default function MetaAnalyseClient() {
 
       {error && (
         <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginBottom: 32 }}>✗ {error}</p>
+      )}
+
+      {jouwAnalyseWarning && (
+        <p style={{ color: '#f59e0b', fontSize: 14, letterSpacing: 1, marginBottom: 32 }}>
+          ⚠ Je eigen input kon deze keer niet verwerkt worden tot JOUW ANALYSE. Zelfbeoordeling en expertpanel zijn wel gelukt. Probeer het opnieuw.
+        </p>
       )}
 
       {/* Thumbs-down analyse */}

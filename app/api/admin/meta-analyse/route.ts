@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
@@ -13,6 +14,23 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+function extractText(response: Message, label: string): string {
+  if (response.stop_reason === 'refusal') {
+    console.error(`[admin/meta-analyse] ${label} refusal`)
+    return ''
+  }
+  return getText(response.content)
+}
+
+// Hoeveel gesprekken meegenomen worden schaalt met de gekozen periode, i.p.v. altijd
+// hard op 12 (dat maakte "kwartaal" kiezen zinloos zodra de laatste week al 12+ gesprekken had).
+function conversationCap(days: number): number {
+  if (days <= 7) return 15
+  if (days <= 30) return 25
+  if (days <= 90) return 40
+  return Math.min(60, Math.round(days / 2))
+}
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -60,17 +78,18 @@ export async function POST(req: NextRequest) {
   }
 
   const { days = 30 } = await req.json().catch(() => ({}))
+  const cap = conversationCap(days)
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
   const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
 
-  // Stap 1: haal recente sessies op (ruimer dan 12 zodat we na filteren genoeg overhouden)
+  // Stap 1: haal recente sessies op (ruimer dan de cap zodat we na filteren genoeg overhouden)
   let sessieQuery = supabase
     .from('arnobot_blog_sessions')
     .select('session_id, title, summary, user_id')
     .gte('created_at', since)
     .not('session_id', 'is', null)
     .order('created_at', { ascending: false })
-    .limit(30)
+    .limit(cap * 3)
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
     .neq('user_id', APP_REVIEWER_ID)
@@ -95,7 +114,7 @@ export async function POST(req: NextRequest) {
     goedgekeurdeIds.add(u.user_id)
   }
 
-  const sessies = alleSessies.filter(s => s.user_id && goedgekeurdeIds.has(s.user_id)).slice(0, 12)
+  const sessies = alleSessies.filter(s => s.user_id && goedgekeurdeIds.has(s.user_id)).slice(0, cap)
 
   if (!sessies.length) {
     return NextResponse.json({ zelfbeoordeling: null, expertpanel: null, count: 0, id: null })
@@ -176,8 +195,8 @@ export async function POST(req: NextRequest) {
 
   // Stap 5: zelfbeoordeling en expertpanel parallel
   const callZelfModel = () => anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
+    model: 'claude-fable-5',
+    max_tokens: 6000,
     system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
 
 ${ARNOBOT_MANDAAT}
@@ -189,8 +208,8 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }],
   })
   const callPanelModel = () => anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
+    model: 'claude-fable-5',
+    max_tokens: 10000,
     system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
 
 ${ARNOBOT_MANDAAT}
@@ -205,8 +224,8 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }],
   })
   const callJouwAnalyseModel = () => anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
+    model: 'claude-fable-5',
+    max_tokens: 6000,
     system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde.
 
 ${ARNOBOT_MANDAAT}
@@ -223,16 +242,16 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 
   const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
 
-  let zelfbeoordeling = getText(zelfResponse.content)
-  let expertpanel = getText(panelResponse.content)
+  let zelfbeoordeling = extractText(zelfResponse, 'zelfbeoordeling')
+  let expertpanel = extractText(panelResponse, 'expertpanel')
 
   if (!zelfbeoordeling) {
-    console.error('[admin/meta-analyse] lege zelfbeoordeling, retry')
-    zelfbeoordeling = getText(await callZelfModel().then(r => r.content))
+    console.error('[admin/meta-analyse] lege/refusal zelfbeoordeling, retry')
+    zelfbeoordeling = extractText(await callZelfModel(), 'zelfbeoordeling retry')
   }
   if (!expertpanel) {
-    console.error('[admin/meta-analyse] leeg expertpanel, retry')
-    expertpanel = getText(await callPanelModel().then(r => r.content))
+    console.error('[admin/meta-analyse] leeg/refusal expertpanel, retry')
+    expertpanel = extractText(await callPanelModel(), 'expertpanel retry')
   }
   if (!zelfbeoordeling || !expertpanel) {
     console.error('[admin/meta-analyse] analyse na retry nog steeds (deels) leeg')
@@ -241,10 +260,10 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 
   let jouwAnalyse: string | null = null
   if (jouwAnalysePromise) {
-    jouwAnalyse = getText((await jouwAnalysePromise).content)
+    jouwAnalyse = extractText(await jouwAnalysePromise, 'jouw-analyse')
     if (!jouwAnalyse) {
-      console.error('[admin/meta-analyse] lege jouw-analyse, retry')
-      jouwAnalyse = getText(await callJouwAnalyseModel().then(r => r.content))
+      console.error('[admin/meta-analyse] lege/refusal jouw-analyse, retry')
+      jouwAnalyse = extractText(await callJouwAnalyseModel(), 'jouw-analyse retry')
     }
     if (!jouwAnalyse) {
       console.error('[admin/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')
@@ -257,5 +276,12 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     .select('id')
     .single()
 
-  return NextResponse.json({ zelfbeoordeling, expertpanel, jouwAnalyse, count: sessieCount, id: saved?.id ?? null })
+  return NextResponse.json({
+    zelfbeoordeling,
+    expertpanel,
+    jouwAnalyse,
+    jouwAnalyseFailed: !!(arnoInputTekst && !jouwAnalyse),
+    count: sessieCount,
+    id: saved?.id ?? null,
+  })
 }
