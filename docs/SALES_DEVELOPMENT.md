@@ -16,6 +16,8 @@ Sales development: actief, outbound sales teams bij andere bedrijven (typisch ge
 
 **Rolbezetting:** twee sales agents, hierin Sales Agent 1 en Sales Agent 2 genoemd.
 
+**Juridisch kader (toegevoegd 2026-08-18, werkaanname, nog niet juridisch getoetst):** de sales agents zijn zelfstandige freelancers, geen werknemers. Geen arbeidsovereenkomst, geen loondienst, geen gezagsverhouding. Dit sluit aan bij wat al impliciet in `docs/AGENTS_PITCH.md` stond (eigen tijdsindeling, eigen tempo bepalen, geen targets van bovenaf), maar was nog nergens expliciet als juridisch uitgangspunt vastgelegd. Relevant voor Nederlandse regelgeving (Wet DBA, schijnzelfstandigheid): geen verplichting tot persoonlijke arbeid, geen gezagsverhouding en een vergoeding die niet als regulier loon werkt, zijn drie van de belangrijkste toetsingscriteria, en de regeling hierboven scoort daar uit zichzelf al goed op (commissie i.p.v. salaris, volledige vrijheid in tempo en aanpak). Vervangt geen juridisch advies, alleen het uitgangspunt voor een eventueel contract.
+
 **Wat ze ook zelf doen:** naast het verkopen ervan gebruiken ze ArnoBot ook zelf, dat versterkt hun eigen verkoopgesprek, ze pitchen vanuit ervaring, niet vanuit een script. Zie "Waarom dit ook voor de sales agents zelf werkt" verderop.
 
 ---
