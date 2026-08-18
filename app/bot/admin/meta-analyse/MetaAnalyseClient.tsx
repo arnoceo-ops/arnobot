@@ -25,6 +25,7 @@ type MetaAnalyse = {
   session_count: number
   zelfbeoordeling_text: string
   expertpanel_text: string
+  jouw_analyse_text: string | null
 }
 
 const periods = [
@@ -105,7 +106,7 @@ export default function MetaAnalyseClient() {
   const [analyses, setAnalyses] = useState<MetaAnalyse[]>([])
   const [archiveLoading, setArchiveLoading] = useState(true)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
-  const [activeTab, setActiveTab] = useState<Record<string, 'zelf' | 'panel'>>({})
+  const [activeTab, setActiveTab] = useState<Record<string, 'zelf' | 'panel' | 'jouw'>>({})
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const [input, setInput] = useState('')
@@ -186,7 +187,7 @@ export default function MetaAnalyseClient() {
     }
   }
 
-  function setTab(id: string, tab: 'zelf' | 'panel') {
+  function setTab(id: string, tab: 'zelf' | 'panel' | 'jouw') {
     setActiveTab(prev => ({ ...prev, [id]: tab }))
   }
 
@@ -225,6 +226,7 @@ export default function MetaAnalyseClient() {
           session_count: data.count,
           zelfbeoordeling_text: data.zelfbeoordeling,
           expertpanel_text: data.expertpanel,
+          jouw_analyse_text: data.jouwAnalyse ?? null,
         }
         setAnalyses(prev => [newItem, ...prev])
         setOpenIds(prev => new Set(prev).add(data.id))
@@ -522,9 +524,14 @@ export default function MetaAnalyseClient() {
                         <button style={tabStyle(tab === 'panel')} onClick={() => setTab(a.id, 'panel')}>
                           EXPERTPANEL
                         </button>
+                        {a.jouw_analyse_text && (
+                          <button style={tabStyle(tab === 'jouw')} onClick={() => setTab(a.id, 'jouw')}>
+                            JOUW ANALYSE
+                          </button>
+                        )}
                       </div>
                       <div style={{ padding: '24px 24px 28px 24px' }}>
-                        <AnalyseText text={tab === 'zelf' ? a.zelfbeoordeling_text : a.expertpanel_text} />
+                        <AnalyseText text={tab === 'jouw' && a.jouw_analyse_text ? a.jouw_analyse_text : tab === 'zelf' ? a.zelfbeoordeling_text : a.expertpanel_text} />
                       </div>
                     </div>
                   )}

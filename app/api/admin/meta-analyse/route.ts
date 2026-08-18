@@ -27,7 +27,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('arnobot_meta_analyses')
-    .select('id, created_at, session_count, period_days, zelfbeoordeling_text, expertpanel_text')
+    .select('id, created_at, session_count, period_days, zelfbeoordeling_text, expertpanel_text, jouw_analyse_text')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -204,6 +204,22 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 }${gebruikersJurorSection}\n\nOVERALL SCORE: [gemiddelde van zeven scores, of zes als gebruikers n.v.t. is]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]`,
     }],
   })
+  const callJouwAnalyseModel = () => anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4000,
+    system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde.
+
+${ARNOBOT_MANDAAT}
+
+Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
+Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
+    messages: [{
+      role: 'user',
+      content: `Dit zijn Arno's eigen aantekeningen over ArnoBot:\n\n"${arnoInputTekst}"\n\nSplits dit op in losse, afzonderlijke punten, zoveel als hij daadwerkelijk noemt, geen vast aantal. Voor elk punt exact dit format:\n\nPUNT [n]: [korte titel, max 6 woorden]\n[zijn observatie, opgeschoond tot een heldere alinea, niet ingekort tot één zin als hij meer schreef]\nKritisch punt: [concrete, direct implementeerbare aanbeveling in de stijl "doe X wanneer Y"]\n\nBehandel elk punt apart, laat niets weg. Voeg twee opmerkingen alleen samen als ze overduidelijk hetzelfde onderwerp raken.`,
+    }],
+  })
+
+  const jouwAnalysePromise = arnoInputTekst ? callJouwAnalyseModel() : null
 
   const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
 
@@ -223,11 +239,23 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
 
+  let jouwAnalyse: string | null = null
+  if (jouwAnalysePromise) {
+    jouwAnalyse = getText((await jouwAnalysePromise).content)
+    if (!jouwAnalyse) {
+      console.error('[admin/meta-analyse] lege jouw-analyse, retry')
+      jouwAnalyse = getText(await callJouwAnalyseModel().then(r => r.content))
+    }
+    if (!jouwAnalyse) {
+      console.error('[admin/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')
+    }
+  }
+
   const { data: saved } = await supabase
     .from('arnobot_meta_analyses')
-    .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel })
+    .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel, jouw_analyse_text: jouwAnalyse })
     .select('id')
     .single()
 
-  return NextResponse.json({ zelfbeoordeling, expertpanel, count: sessieCount, id: saved?.id ?? null })
+  return NextResponse.json({ zelfbeoordeling, expertpanel, jouwAnalyse, count: sessieCount, id: saved?.id ?? null })
 }

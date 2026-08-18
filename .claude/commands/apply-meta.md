@@ -8,21 +8,23 @@ De gebruiker plakt de volledige meta-analyse tekst als argument (`$ARGUMENTS`). 
 
 Lees `app/api/chat/route.ts` volledig. Identificeer de `systemPrompt` string. Noteer welke gedragsregels er al in staan zodat je geen duplicaten toevoegt.
 
-### Stap 2 — Extraheer de top-3 regels
+### Stap 2 — Extraheer de regels
 
 Analyseer de meta-analyse op de volgende manier:
 - Lees alle "Kritisch punt:" secties van het expertpanel
 - Lees de "WAT IK ZOU VERBETEREN" sectie van Arno's zelfbeoordeling
 - Lees de PANEL CONSENSUS en PRIORITEIT 1
+- Lees de JOUW ANALYSE-sectie apart, als die aanwezig is. Dit zijn Arno's eigen, ongecomprimeerde observaties, geen reactie op een steekproef gesprekken. Elk PUNT-blok daarin is een eigen kandidaat-regel.
 - Filter eruit wat al impliciet of expliciet in de systeemprompt zit
-- Kies de **3 meest impactvolle, concrete en direct implementeerbare** verbeteringen
+- Kies uit het expertpanel en de zelfbeoordeling de **3 meest impactvolle, concrete en direct implementeerbare** verbeteringen
+- Neem daarnaast **alle** punten uit JOUW ANALYSE apart mee als kandidaat-regels, zonder ze te laten concurreren met die top 3: dit zijn Arno's eigen woorden en mogen niet sneuvelen omdat een fictief jurylid toevallig een sterker geformuleerd punt had
 - Vertaal elk kritisch punt naar een gedragsregel die ArnoBot direct kan volgen (geen abstracties, geen "probeer", maar "doe X wanneer Y")
 
-Schrijf de 3 regels op en leg per regel uit waarom je die kiest boven de andere.
+Schrijf de regels op: eerst de 3 uit het expertpanel/de zelfbeoordeling, daarna apart alle regels uit JOUW ANALYSE. Leg per regel uit waarom je die kiest.
 
 ### Stap 3 — Vraag goedkeuring
 
-Toon de 3 voorgestelde regels aan de gebruiker. Wacht op akkoord. De gebruiker kan een regel schrappen, aanpassen of toevoegen. Ga niet verder zonder goedkeuring.
+Toon de voorgestelde regels aan de gebruiker (de 3 uit het panel, plus alle regels uit JOUW ANALYSE indien aanwezig). Wacht op akkoord. De gebruiker kan een regel schrappen, aanpassen of toevoegen. Ga niet verder zonder goedkeuring.
 
 ### Stap 4 — Pas de systeemprompt aan
 
