@@ -65,6 +65,10 @@ Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 **Arno's eigen methodiek.** Geen generieke AI met een sales-prompt erop. De klant koopt Arno's expertise op schaal, niet "een AI".
 
+**Gestructureerde diagnose, geen los advies.** De coachingsdiagnose op drie dimensies (mindset, systeem, actie) geeft een meetbaar, herhaalbaar diagnosekader per gebruiker, met concrete ontwikkelpunten. Iets tastbaars om aan een salesbaas te laten zien, geen vaag "de AI helpt je groeien".
+
+**Teambrede patroonherkenning.** De manager krijgt zicht op patronen over het hele team, bijvoorbeeld terugkerende blinde vlekken, niet alleen los per medewerker. Dit is waar een salesbaas daadwerkelijk op stuurt, niet op één individueel gesprek.
+
 ---
 
 # Deel B: Sales Development (alleen voor de pitch aan de sales agents)
