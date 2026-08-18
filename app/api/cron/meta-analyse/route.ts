@@ -27,6 +27,12 @@ function extractText(response: Message, label: string): string {
   return getText(response.content)
 }
 
+// Basiswaarden voor max_tokens per call. Bij afkapping (stop_reason 'max_tokens') wordt
+// eenmalig geretryt met het dubbele budget, ver binnen Fable 5's 128K-outputplafond.
+const ZELF_MAX_TOKENS = 12000
+const PANEL_MAX_TOKENS = 16000
+const JOUW_ANALYSE_MAX_TOKENS = 10000
+
 function textToHtml(text: string): string {
   const blocks = text.split(/\n{2,}/)
   return blocks.map(block => {
@@ -122,18 +128,18 @@ export async function GET(req: NextRequest) {
 
     const sessieCount = rijkeSessies.length
 
-    const callZelfModel = () => anthropic.messages.create({
+    const callZelfModel = (maxTokens = ZELF_MAX_TOKENS) => anthropic.messages.create({
       model: 'claude-fable-5',
-      max_tokens: 6000,
+      max_tokens: maxTokens,
       system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
         content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]`,
       }],
     })
-    const callPanelModel = () => anthropic.messages.create({
+    const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
       model: 'claude-fable-5',
-      max_tokens: 10000,
+      max_tokens: maxTokens,
       system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
@@ -144,9 +150,9 @@ export async function GET(req: NextRequest) {
       }],
     })
 
-    const callJouwAnalyseModel = () => anthropic.messages.create({
+    const callJouwAnalyseModel = (maxTokens = JOUW_ANALYSE_MAX_TOKENS) => anthropic.messages.create({
       model: 'claude-fable-5',
-      max_tokens: 6000,
+      max_tokens: maxTokens,
       system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde. ${ARNOBOT_MANDAAT} Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
@@ -164,10 +170,18 @@ export async function GET(req: NextRequest) {
     if (!zelfbeoordeling) {
       console.error('[cron/meta-analyse] lege/refusal zelfbeoordeling, retry')
       zelfbeoordeling = extractText(await callZelfModel(), 'zelfbeoordeling retry')
+    } else if (zelfResponse.stop_reason === 'max_tokens') {
+      console.error('[cron/meta-analyse] zelfbeoordeling afgekapt op max_tokens, retry met meer ruimte')
+      const retryText = extractText(await callZelfModel(ZELF_MAX_TOKENS * 2), 'zelfbeoordeling retry (meer ruimte)')
+      if (retryText) zelfbeoordeling = retryText
     }
     if (!expertpanel) {
       console.error('[cron/meta-analyse] leeg/refusal expertpanel, retry')
       expertpanel = extractText(await callPanelModel(), 'expertpanel retry')
+    } else if (panelResponse.stop_reason === 'max_tokens') {
+      console.error('[cron/meta-analyse] expertpanel afgekapt op max_tokens, retry met meer ruimte')
+      const retryText = extractText(await callPanelModel(PANEL_MAX_TOKENS * 2), 'expertpanel retry (meer ruimte)')
+      if (retryText) expertpanel = retryText
     }
     if (!zelfbeoordeling || !expertpanel) {
       await notifyCronFailure('meta-analyse', new Error('Leeg AI-antwoord na retry, analyse overgeslagen'))
@@ -176,10 +190,15 @@ export async function GET(req: NextRequest) {
 
     let jouwAnalyse: string | null = null
     if (jouwAnalysePromise) {
-      jouwAnalyse = extractText(await jouwAnalysePromise, 'jouw-analyse')
+      const jouwResponse = await jouwAnalysePromise
+      jouwAnalyse = extractText(jouwResponse, 'jouw-analyse')
       if (!jouwAnalyse) {
         console.error('[cron/meta-analyse] lege/refusal jouw-analyse, retry')
         jouwAnalyse = extractText(await callJouwAnalyseModel(), 'jouw-analyse retry')
+      } else if (jouwResponse.stop_reason === 'max_tokens') {
+        console.error('[cron/meta-analyse] jouw-analyse afgekapt op max_tokens, retry met meer ruimte')
+        const retryText = extractText(await callJouwAnalyseModel(JOUW_ANALYSE_MAX_TOKENS * 2), 'jouw-analyse retry (meer ruimte)')
+        if (retryText) jouwAnalyse = retryText
       }
       if (!jouwAnalyse) {
         console.error('[cron/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')

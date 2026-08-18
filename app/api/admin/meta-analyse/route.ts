@@ -32,6 +32,12 @@ function conversationCap(days: number): number {
   return Math.min(60, Math.round(days / 2))
 }
 
+// Basiswaarden voor max_tokens per call. Bij afkapping (stop_reason 'max_tokens') wordt
+// eenmalig geretryt met het dubbele budget, ver binnen Fable 5's 128K-outputplafond.
+const ZELF_MAX_TOKENS = 12000
+const PANEL_MAX_TOKENS = 16000
+const JOUW_ANALYSE_MAX_TOKENS = 10000
+
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -194,9 +200,9 @@ export async function POST(req: NextRequest) {
   const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : days === 90 ? 'afgelopen kwartaal' : `afgelopen ${days} dagen`
 
   // Stap 5: zelfbeoordeling en expertpanel parallel
-  const callZelfModel = () => anthropic.messages.create({
+  const callZelfModel = (maxTokens = ZELF_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5',
-    max_tokens: 6000,
+    max_tokens: maxTokens,
     system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
 
 ${ARNOBOT_MANDAAT}
@@ -207,9 +213,9 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
       content: `Hieronder staan ${sessieCount} echte gesprekken van de ${periodeLabel}. Analyseer jezelf kritisch.\n\n${transcripts}\n\nGeef een zelfbeoordeling in vier blokken. Begin elk blok met de naam in hoofdletters op een aparte regel:\n\nWAAR IK STERK WAS\n[concreet, met verwijzing naar de gesprekken. Minimaal 3 observaties.]\n\nWAAR IK TEKORT SCHOOT\n[eerlijk, specifiek. Geen algemeenheden. Minimaal 3 observaties.]\n\nKENNISHIATEN\n[welke vragen kwamen op terrein waar je onvoldoende diepgang had? Wees specifiek.]\n\nWAT IK ZOU VERBETEREN\n[concrete aanbevelingen voor de systeemprompt of kennisbasis. Minimaal 3 punten.]`,
     }],
   })
-  const callPanelModel = () => anthropic.messages.create({
+  const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5',
-    max_tokens: 10000,
+    max_tokens: maxTokens,
     system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
 
 ${ARNOBOT_MANDAAT}
@@ -223,9 +229,9 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 }${gebruikersJurorSection}\n\nOVERALL SCORE: [gemiddelde van zeven scores, of zes als gebruikers n.v.t. is]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]`,
     }],
   })
-  const callJouwAnalyseModel = () => anthropic.messages.create({
+  const callJouwAnalyseModel = (maxTokens = JOUW_ANALYSE_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5',
-    max_tokens: 6000,
+    max_tokens: maxTokens,
     system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde.
 
 ${ARNOBOT_MANDAAT}
@@ -248,10 +254,18 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   if (!zelfbeoordeling) {
     console.error('[admin/meta-analyse] lege/refusal zelfbeoordeling, retry')
     zelfbeoordeling = extractText(await callZelfModel(), 'zelfbeoordeling retry')
+  } else if (zelfResponse.stop_reason === 'max_tokens') {
+    console.error('[admin/meta-analyse] zelfbeoordeling afgekapt op max_tokens, retry met meer ruimte')
+    const retryText = extractText(await callZelfModel(ZELF_MAX_TOKENS * 2), 'zelfbeoordeling retry (meer ruimte)')
+    if (retryText) zelfbeoordeling = retryText
   }
   if (!expertpanel) {
     console.error('[admin/meta-analyse] leeg/refusal expertpanel, retry')
     expertpanel = extractText(await callPanelModel(), 'expertpanel retry')
+  } else if (panelResponse.stop_reason === 'max_tokens') {
+    console.error('[admin/meta-analyse] expertpanel afgekapt op max_tokens, retry met meer ruimte')
+    const retryText = extractText(await callPanelModel(PANEL_MAX_TOKENS * 2), 'expertpanel retry (meer ruimte)')
+    if (retryText) expertpanel = retryText
   }
   if (!zelfbeoordeling || !expertpanel) {
     console.error('[admin/meta-analyse] analyse na retry nog steeds (deels) leeg')
@@ -260,10 +274,15 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 
   let jouwAnalyse: string | null = null
   if (jouwAnalysePromise) {
-    jouwAnalyse = extractText(await jouwAnalysePromise, 'jouw-analyse')
+    const jouwResponse = await jouwAnalysePromise
+    jouwAnalyse = extractText(jouwResponse, 'jouw-analyse')
     if (!jouwAnalyse) {
       console.error('[admin/meta-analyse] lege/refusal jouw-analyse, retry')
       jouwAnalyse = extractText(await callJouwAnalyseModel(), 'jouw-analyse retry')
+    } else if (jouwResponse.stop_reason === 'max_tokens') {
+      console.error('[admin/meta-analyse] jouw-analyse afgekapt op max_tokens, retry met meer ruimte')
+      const retryText = extractText(await callJouwAnalyseModel(JOUW_ANALYSE_MAX_TOKENS * 2), 'jouw-analyse retry (meer ruimte)')
+      if (retryText) jouwAnalyse = retryText
     }
     if (!jouwAnalyse) {
       console.error('[admin/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')
