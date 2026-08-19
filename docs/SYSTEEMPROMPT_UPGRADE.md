@@ -1,8 +1,8 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
 **Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd.
-**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en op basis daarvan beslissen over golf 2.
+**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Een vergeten snapshot-update na golf 1 liet de CI-kritieke-paden-check falen (`lib/systemPrompt.test.ts`), gefixt met `vitest -u` (commit f2a134d3), geen inhoudelijke wijziging. Kennisbankartikel geschreven met volledig generieke voorbeelden (geen Erik/Stefanie/Thijs, geverifieerd op de live opgeslagen tekst, niet alleen het brondocument) en live geëmbed in `blog_chunks` via een nieuw eenmalig script `scripts/embed-single-doc.mjs` (voegt toe zonder de kennisbank te wissen, in tegenstelling tot `embed-chunks.mjs`), 4 chunks, commits 9ce0b7b6 + b88d96be. Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd. Alle afvinkpunten van dit traject nu afgerond, alleen de geplande evaluatie staat nog open.
+**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en op basis daarvan beslissen over golf 2. Sessie hierna gaat verder met Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht), zie Bron 3 hieronder, dat is een los traject, geen onderdeel van deze golf 1/2-afvinklijst.
 
 ## Afvinklijst
 
@@ -13,12 +13,13 @@
 - [x] Concreet voorstel voor golf 1-regels geschreven, herzien op basis van feedback, definitief
 - [x] Golf 1 goedgekeurd door Arno
 - [x] `lib/systemPrompt.ts` aangepast (golf 1: regel 1 kwalificeren, regel 2 openstaande acties)
-- [ ] Smoke-test tegen echte API afgerond en beoordeeld
-- [ ] Gecommit en gepusht
+- [x] Smoke-test tegen echte API afgerond en beoordeeld
+- [x] Gecommit en gepusht
+- [x] Snapshot-tests (`lib/systemPrompt.test.ts`) bijgewerkt, CI weer groen (commit f2a134d3)
 - [x] Eenmalige Telegram-cron voor de golf 1-evaluatie-herinnering gebouwd (`app/api/cron/golf1-evaluatie-herinnering/route.ts`, vercel.json `0 8 16 9 *`, jaar-guard op 2026)
-- [ ] Claude.ai-routine als backup staat al (`trig_01QEbJchqq919DMXnuk9RJ6s`, vuurt 2026-09-16 16:00 UTC, checkt code-status en bereidt evaluatietekst voor, stuurt zelf niets naar Telegram)
-- [ ] Golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel): pas na evaluatie van golf 1 via een nieuwe meta-analyse
-- [ ] Kennisbankdocument schrijven (besloten, nog niet uitgevoerd): de volledige redenering van vandaag, geanonimiseerd waar nodig, ingevoerd via `scripts/embed-chunks.mjs`
+- [x] Claude.ai-routine als backup staat al (`trig_01QEbJchqq919DMXnuk9RJ6s`, vuurt 2026-09-16 16:00 UTC, checkt code-status en bereidt evaluatietekst voor, stuurt zelf niets naar Telegram)
+- [x] Kennisbankartikel geschreven (`docs/kennisbank/verifieer-eerst-ruimte-niet-obstakel.md`, generiek, streepje- en naamvrij geverifieerd) en live geëmbed in `blog_chunks` (4 chunks, via nieuw script `scripts/embed-single-doc.mjs`)
+- [ ] **Openstaand, gepland op 2026-09-16:** golf 1 evalueren via nieuwe meta-analyse, dan beslissen over golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel)
 
 ---
 
