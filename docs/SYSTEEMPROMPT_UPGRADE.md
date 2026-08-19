@@ -76,9 +76,24 @@ Secundair, datagedreven signaal (geen nieuwe plumbing nodig): opvolgpercentage (
 
 ## Bron 3 — Thijs' feedback
 
-Zie de aparte synthese hierboven in het gesprek. Samengevat: bevestigt dat manager-coaching (en daarmee "cultuur") een Team-aangelegenheid is, geen hoofdchat-aangelegenheid. Legt een nieuw, specifiek gat bloot: coaching-op-de-coach (terugkoppeling op Thijs' eigen functioneren als coach, los van zijn rol als verkoper). Plus een losstaande UI-klacht over de sticky footer.
+Bevestigt dat manager-coaching (en daarmee "cultuur") een Team-aangelegenheid is, geen hoofdchat-aangelegenheid. Legt een nieuw, specifiek gat bloot: coaching-op-de-coach (terugkoppeling op Thijs' eigen functioneren als coach, los van zijn rol als verkoper). Plus een losstaande UI-klacht over de sticky footer.
 
-**Voor de scope van de hoofdchat-systeemprompt-upgrade: voegt niets toe.** Beide punten (manager-zelfcoaching-gat, UI-klacht) zijn apart gelogd, niet verder uitgewerkt in dit document.
+**Voor de scope van de hoofdchat-systeemprompt-upgrade: voegt niets toe.** Beide punten (manager-zelfcoaching-gat, UI-klacht) zijn apart gelogd, niet verder uitgewerkt in dit document. Volledige detail (2026-08-19, doorgestuurde screenshot + Arno's eigen synthese):
+
+**Wat bevestigd wordt:** de 1-op-1-adviezen (leerpunten + toetsbare acties) zijn scherp en gewaardeerd, geen wijziging nodig.
+
+**Manager-zelfcoaching-gat, puntsgewijs:**
+1. Geen terugkoppeling van Thijs' eigen 1-op-1-gesprekken en de daar afgesproken acties, terug naar hemzelf.
+2. Geen vooraf instelbare, vaste "topics" per teamlid, voor meer structuur in de data-acquisitie.
+3. Geen instelling voor wat Thijs MOET delen met teamleden versus wat privé blijft tussen hem en ArnoBot.
+4. Mist actieve sturing/handvatten van ArnoBot om zelf een veilige, ambitieuze, lerende, resultaatgerichte omgeving te creëren (zijn eigen onervarenheid als leidinggevende hierin genoemd als reden waarom hij dit wil).
+5. De coachende rol die ArnoBot operationeel richting verkopers sterk toont, ontbreekt richting Thijs zelf als coach.
+6. Groeikans, expliciet genoemd: feedback op zijn eigen 1:1's moet een **apart onderdeel van de dataset** worden, zijn werk als verkoper mag zijn werk als coach niet beïnvloeden (mogelijk apart datasegment nodig, tenzij bewust wel gekoppeld op meta-niveau, nader te bepalen).
+7. PDF-export op zowel team- als teamlidniveau: knippen-plakken uit het scherm noemt hij expliciet "geen PRO-oplossing". **Deels al gedekt**: `OneOnOnePdfDocument`/`DownloadOneOnOneButton` bestaat al op teamlidniveau (per 1:1-agenda). Team-niveau (geaggregeerd) bestaat nog niet.
+
+**Conclusie van Thijs:** ArnoBot is onmisbaar voor elke salesbaas, mits de coaching plaatsvindt in een open, veilige, lerende omgeving.
+
+**UI-klacht (sticky footer), letterlijk:** "Je hebt het invoerveld van de vervolgvragen in een stationaire footer gebouwd. Persoonlijk vind ik dat storend. De tekst van de respons is voor mij het meest belangrijk, daar vraag ik om. Als ik ALLES gelezen heb, dus niet zomaar ergens tussendoor, pas DAN zou ik de gelegenheid moeten krijgen om een vervolgvraag te stellen of af te sluiten. Voor mij is de stationaire (vaste) footer storend, alsof ik opgejaagd word om de volgende vraag/reactie in te typen." Locatie geverifieerd: `app/bot/SparClient.tsx` regel ~1143-1158, class `.spar-input-area.active` (`position: fixed; bottom: 0`, geactiveerd zodra een gesprek loopt). Raakt de hoofdchat van de hele app, niet Team-specifiek, dus een apart, breed UX-besluit, geen quick fix zonder overleg.
 
 ---
 
