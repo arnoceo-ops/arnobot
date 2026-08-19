@@ -178,3 +178,19 @@ Evaluatiecriterium: nieuwe meta-analyse draaien op de gesprekken sinds golf 1 li
 Overige scenario's bevestigden het gewenste gedrag: een simpele feitelijke vraag (MEDDIC vs BANT) kreeg geen vraag meer achteraan geplakt, de klantsituatie-uitzondering uit golf 1 bleef intact (kwalificeren-eerst-vraag, geen volledig antwoord, zoals bedoeld), en een vage/brede vraag kreeg wel een vraag terug, maar een inhoudelijk onderbouwde.
 
 Snapshot-tests (`lib/systemPrompt.test.ts`) bijgewerkt met `vitest -u` op basis van de definitieve tekst.
+
+---
+
+## Vervolgbevinding (2026-08-19, zelfde dag, live gevonden bij verder testen)
+
+Ondanks de fix hierboven kwamen er via live screenshots twee vervolgproblemen naar boven, allebei met een andere oorzaak dan de eerste fix:
+
+**1. ArnoBot herhaalde een net beantwoorde vraag.** Gebruiker antwoordde "Ja, prima" op "wil je bespreken hoe je die introductie aanpakt?", waarna ArnoBot in plaats van door te leveren opnieuw vroeg: "Bedoel je: ga door, of is er iets specifieks waar je over twijfelt?" Zelf gecorrigeerd een beurt later ("Klopt, mijn fout"). Toevoeging aan "VRAAG EN LEVER TEGELIJK": "Als de gebruiker net een duidelijk bevestigend antwoord heeft gegeven (ja, prima, oké, ga door): behandel dat als een besliste keuze en lever direct door. Vraag niet opnieuw ter bevestiging, ook niet in een andere vorm."
+
+**2. Een compleet, uitvoerbaar antwoord eindigde alsnog met een generieke "wat ga je nu doen"-vraag.** Andere oorzaak dan de eerste fix: niet "VRAAG EN LEVER TEGELIJK", maar het losse, vroege mandaat in `staticIntro` (regel 67): "Niet alleen antwoorden: aanzetten tot actie." Arno's eigen onderscheid, scherp geformuleerd: een échte voortgangscheck op een lopend meerstappenproces ("ben je bij stap 3?") is relevant, een generieke motiverende afsluitvraag na een al compleet antwoord is betuttelend ("ik ben geen kleuter"). Toevoeging direct na het mandaat: "Dit gaat over de inhoud van je antwoord, niet over het automatisch toevoegen van een vraag naar de eerste stap. Een compleet, uitvoerbaar antwoord zet al aan tot actie. Vraag alleen expliciet naar een volgende stap als er nog geen concrete actie op tafel ligt, of als het een echte voortgangscheck is op iets dat al liep. Een vraag als 'wat ga je nu doen' na een antwoord dat de aanpak al volledig uitlegt, voegt niets toe en voelt betuttelend."
+
+**Smoke-test tegen de echte API (`claude-sonnet-4-6`, 3 scenario's, inclusief een expliciete controle-scenario voor een échte voortgangscheck):** alle drie leverden volledige, inhoudelijke antwoorden zonder afsluitend vraagteken, inclusief de controle-scenario (die in plaats van een vraag direct de logische volgende stap benoemde op basis van de context, "Goed. Dan zit je klaar voor stap 3: ..."). Geen regressie naar het kale-vraag-probleem van de vorige ronde.
+
+Snapshot-tests opnieuw bijgewerkt met `vitest -u`.
+
+**Les:** "eindigt niet met een vraag" bleek niet één instructie te zijn maar het resultaat van meerdere, verspreide instructies die onafhankelijk van elkaar naar vragen duwen (VRAAG EN LEVER TEGELIJK, KWALIFICEREN VOORDAT JE UITGEBREID LEVERT, en nu ook het aanzetten-tot-actie-mandaat). Bij een volgende melding van "toch nog een vraag waar die niet hoort" eerst zoeken naar wélke van de instructies in `staticIntro`/`restVanPersona` die specifieke vraag aanstuurt, niet aannemen dat het dezelfde oorzaak is als de vorige keer.
