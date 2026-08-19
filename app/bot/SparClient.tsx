@@ -184,7 +184,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sessionId, setSessionId] = useState('')
   const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
-  const [readyForInput, setReadyForInput] = useState(true)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
   const [verfijnen, setVerfijnen] = useState(false)
@@ -528,25 +527,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       scrollToRef(lastMessageRef)
     }
   }, [messages.length, loading, showSluiten, streamingStarted])
-
-  // Sticky invoerbalk (STUUR/SLUIT e.d.) blijft verborgen tijdens het genereren, en komt pas
-  // terug zodra de gebruiker daadwerkelijk richting het einde van het antwoord scrolt (Thijs'
-  // feedback: het vaste invoerveld voelde aan als opgejaagd worden om door te typen vóór hij
-  // het antwoord had uitgelezen). bottomRef markeert al het echte einde van het gesprek
-  // (gebruikt elders ook als scroll-target), dus geen aparte sentinel nodig.
-  useEffect(() => {
-    if (loading) setReadyForInput(false)
-  }, [loading])
-
-  useEffect(() => {
-    const el = bottomRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setReadyForInput(true)
-    }, { threshold: 0.01 })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
 
   // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
   // gebruiker zelf scrolt: dan stopt het automatisch volgen tot de volgende vraag. Zonder dit
@@ -1065,15 +1045,18 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   // stickyActive: de invoerbalk zou fixed onderin staan in deze modus (los van of hij nu
-  // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt (verborgen tijdens
-  // genereren, pas terug zodra je richting het einde scrolt). De paddingBottom op .spar-page
-  // (verderop) reserveert altijd ruimte voor de balk zolang started, ook als de balk zelf nu
-  // even niet zichtbaar is: dat voorkomt dat de balk bij het verschijnen over het laatste stuk
-  // tekst heen schuift. bottomRef heeft daarnaast een scroll-margin-bottom ter grootte van
-  // diezelfde ruimte, zodat het meescrollen tijdens streamen daar vanzelf al rekening mee houdt
-  // in plaats van dat er achteraf gecorrigeerd moet worden (dat bleek onbetrouwbaar).
+  // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt, puur op basis van
+  // loading, bewust GEEN scroll-positie meer (Thijs' oorspronkelijke wens was scroll-gebaseerd,
+  // maar dat mechanisme (readyForInput + IntersectionObserver) bleek na meerdere pogingen live
+  // onbetrouwbaar: soms bleef de balk voorgoed weg omdat "tot het einde gescrold" nooit
+  // gedetecteerd werd). Simpeler en robuust: tijdens genereren houdt het automatisch meescrollen
+  // (hieronder) je toch al bij de tekst, dus zodra het antwoord klaar is heb je het al gelezen.
+  // De paddingBottom op .spar-page (verderop) reserveert altijd ruimte voor de balk zolang
+  // started, ook als hij nu niet zichtbaar is, en bottomRef heeft een scroll-margin-bottom van
+  // diezelfde grootte, zodat het meescrollen daar vanzelf al rekening mee houdt en de balk bij
+  // het verschijnen nooit over de laatste regels heen kan schuiven.
   const stickyActive = started && sparModus !== 'sparren'
-  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(stickyActive && (loading || !readyForInput))
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(stickyActive && loading)
 
   return (
     <>
