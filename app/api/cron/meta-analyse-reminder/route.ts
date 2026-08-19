@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     await resend.emails.send({
       from: 'ArnoBot <arno@arno.bot>',
       to: 'arno@arno.bot',
-      subject: 'Meta-analyse over 4 dagen — vul je input in',
+      subject: 'Meta-analyse over 4 dagen, vul je input in',
       html,
     })
     return NextResponse.json({ ok: true })
