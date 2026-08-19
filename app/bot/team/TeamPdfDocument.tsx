@@ -40,7 +40,7 @@ const s = StyleSheet.create({
   scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '12 12', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
   scoreValue: { color: C.cream, fontSize: 20, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '36 44', fontFamily: 'Helvetica' },
+  body: { backgroundColor: C.white, padding: '36 44 60 44', fontFamily: 'Helvetica' },
   groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
   groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8 },
   paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, marginBottom: 4 },

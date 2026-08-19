@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
 import DownloadTeamPdfButton from './DownloadTeamPdfButton'
@@ -156,6 +156,17 @@ export default function TeamClient() {
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
+  const inviteBtnRef = useRef<HTMLButtonElement>(null)
+  const [inviteBtnWidth, setInviteBtnWidth] = useState<number | undefined>(undefined)
+
+  // TEAM-RAPPORT-knop moet exact even breed zijn als UITNODIGINGSLINK (Arno's stijleis). Geen
+  // vaste pixelwaarde gokken (lettertype-metrics zijn browserafhankelijk), maar de daadwerkelijk
+  // gerenderde breedte van de eerste knop meten en op de tweede toepassen. Gemeten vóór de
+  // gebruiker ooit op "kopieer" klikt, dus altijd de "UITNODIGINGSLINK"-breedte, niet de kortere
+  // "GEKOPIEERD!"-tekst.
+  useLayoutEffect(() => {
+    if (inviteBtnRef.current) setInviteBtnWidth(inviteBtnRef.current.offsetWidth)
+  }, [team])
 
   useEffect(() => {
     fetch('/api/bot/team/status')
@@ -377,11 +388,12 @@ export default function TeamClient() {
                   {team.name.toUpperCase()}
                 </h1>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-outline" onClick={copyInviteLink} style={{ ...btnOutline, color: copied ? '#f59e0b' : '#9ca3af', borderColor: copied ? '#f59e0b' : '#374151' }}>
+                  <button ref={inviteBtnRef} className="btn-outline" onClick={copyInviteLink} style={{ ...btnOutline, width: inviteBtnWidth, color: copied ? '#f59e0b' : '#9ca3af', borderColor: copied ? '#f59e0b' : '#374151' }}>
                     {copied ? 'GEKOPIEERD!' : 'UITNODIGINGSLINK'}
                   </button>
                   {members.length > 0 && (
                     <DownloadTeamPdfButton
+                      width={inviteBtnWidth}
                       teamNaam={team.name}
                       teamMsa={teamMsaValue}
                       mindsetScore={laatsteTeamScore?.mindset_score ?? null}
