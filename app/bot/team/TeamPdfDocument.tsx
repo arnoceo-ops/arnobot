@@ -44,8 +44,16 @@ const C = {
   white: '#ffffff', dark: '#3d3935', mid: '#8c8480', line: '#ddd8d0', gridDark: '#374151',
 }
 
+// react-pdf herhaalt de padding van <Page> zelf betrouwbaar op elke automatisch gegenereerde
+// vervolgpagina; de padding van een geneste <View> die over een paginagrens heen loopt NIET
+// (leidde live tot: geen ruimte bovenaan op pagina 2, en content die zonder gereserveerde
+// ruimte tegen de vaste footer aan botste). Daarom nu de marge op Page-niveau, met cover die
+// er via een negatieve marge aan ontsnapt om toch full-bleed te blijven.
+const PAGE_TOP = 28, PAGE_BOTTOM = 50
+
 const s = StyleSheet.create({
-  cover: { backgroundColor: C.bg, padding: '30 44', fontFamily: 'Helvetica' },
+  page: { fontFamily: 'Helvetica', paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM },
+  cover: { backgroundColor: C.bg, padding: '30 44', marginTop: -PAGE_TOP, fontFamily: 'Helvetica' },
   brandRow: { flexDirection: 'row', marginBottom: 22 },
   brandArno: { color: C.cream, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
   brandBot: { color: C.orange, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
@@ -57,7 +65,7 @@ const s = StyleSheet.create({
   scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '9 12', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
   scoreValue: { color: C.cream, fontSize: 20, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '28 44 8 44', fontFamily: 'Helvetica', minHeight: '100%' },
+  body: { backgroundColor: C.white, padding: '20 44 0 44', fontFamily: 'Helvetica' },
   groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7, marginTop: 14 },
   groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7 },
   paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.6, marginBottom: 3 },
@@ -73,7 +81,7 @@ const s = StyleSheet.create({
   chartCardHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 6 },
   chartCardLabel: { fontSize: 7, color: C.cream, letterSpacing: 2, fontFamily: 'Helvetica-Bold' },
   chartCardValue: { fontSize: 17, fontFamily: 'Helvetica-Bold' },
-  footer: { position: 'absolute', bottom: 24, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10, borderTopWidth: 0.5, borderTopColor: C.line },
+  footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })
 
@@ -202,7 +210,7 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
 
   return (
     <Document title={`Team-rapport - ${teamNaam}`} author="ArnoBot" subject="Team-rapport">
-      <Page size="A4">
+      <Page size="A4" style={s.page}>
         <View style={s.cover}>
           <View style={s.brandRow}>
             <Text style={s.brandArno}>ARNO</Text>
@@ -224,8 +232,10 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
           )}
         </View>
 
-        {/* Pagina 1: grafieken + teamledentabel. Eigen (fixed) footer, zodat pagina 1 altijd
-            netjes afsluit, ongeacht hoeveel ruimte de tabel inneemt. */}
+        {/* Zelfde aanpak als OneOnOnePdfDocument.tsx (bewezen, nooit problemen gehad): één
+            doorlopende body, geen geforceerde page-break. react-pdf breekt vanzelf netjes af
+            als de inhoud niet meer past, en de volgende pagina krijgt gewoon weer dezelfde
+            padding. Geen kunstmatige splitsing meer tussen grafieken/tabel en de analyse. */}
         <View style={s.body}>
           {geschiedenis.length >= 2 && (
             <View>
@@ -269,23 +279,21 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
               </View>
             ))}
           </View>
-        </View>
 
-        {/* Pagina 2 (bewust een nieuwe pagina, niet laten afhangen van of alles toevallig past):
-            de volledige analyse. break dwingt dit blok op een verse pagina af. */}
-        {spotlightText && (
-          <View style={s.body} break>
-            <Text style={s.groupLabelFirst}>TEAM SPOTLIGHT{spotlightDatum ? ` (${formatDatum(spotlightDatum)})` : ''}</Text>
-            {sections.map((sec, i) => (
-              <View key={i}>
-                {sec.heading ? <Text style={i === 0 ? s.groupLabelFirst : s.groupLabel}>{sec.heading}</Text> : null}
-                {sec.lines.map((line, j) => (
-                  <Text key={j} style={s.paragraph}>{line}</Text>
-                ))}
-              </View>
-            ))}
-          </View>
-        )}
+          {spotlightText && (
+            <>
+              <Text style={s.groupLabel}>TEAM SPOTLIGHT{spotlightDatum ? ` (${formatDatum(spotlightDatum)})` : ''}</Text>
+              {sections.map((sec, i) => (
+                <View key={i}>
+                  {sec.heading ? <Text style={s.groupLabel}>{sec.heading}</Text> : null}
+                  {sec.lines.map((line, j) => (
+                    <Text key={j} style={s.paragraph}>{line}</Text>
+                  ))}
+                </View>
+              ))}
+            </>
+          )}
+        </View>
 
         <View style={s.footer} fixed>
           <Text style={s.footerText}>ARNOBOT | TEAM-RAPPORT</Text>
