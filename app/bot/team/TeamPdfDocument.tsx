@@ -69,7 +69,7 @@ const s = StyleSheet.create({
   colNaam: { flex: 2 },
   colGetal: { flex: 1, textAlign: 'right' },
   chartRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  chartCard: { flex: 1, backgroundColor: C.subtle, borderRadius: 4, padding: '11 11 7 11' },
+  chartCard: { flex: 1, backgroundColor: C.subtle, borderRadius: 4, padding: '10 8 6 8' },
   chartCardHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 6 },
   chartCardLabel: { fontSize: 7, color: C.cream, letterSpacing: 2, fontFamily: 'Helvetica-Bold' },
   chartCardValue: { fontSize: 17, fontFamily: 'Helvetica-Bold' },
@@ -120,8 +120,12 @@ function curvePath(pts: { x: number; y: number }[]): string {
   return d
 }
 
-// Zelfde geometrie als MiniChart in ProgressieChart.tsx.
-const MC_W = 158, MC_H = 84, MC_PL = 18, MC_PR = 4, MC_PT = 6, MC_PB = 18
+// Zelfde geometrie-aanpak als MiniChart in ProgressieChart.tsx, maar op maat van de
+// daadwerkelijk beschikbare breedte in dit PDF-rapport: bodybreedte 507pt, drie kaarten met
+// 10pt gap ertussen en 8pt padding aan elke kant = (507-20)/3-16 ≈ 146pt beschikbaar. MC_W=158
+// (1-op-1 overgenomen van de webversie, die op een bredere kaart staat) paste daar niet in en
+// liet de grafiek over de kaartrand heen lopen. Nu met marge eronder.
+const MC_W = 144, MC_H = 84, MC_PL = 16, MC_PR = 4, MC_PT = 6, MC_PB = 18
 const MC_IW = MC_W - MC_PL - MC_PR, MC_IH = MC_H - MC_PT - MC_PB
 
 function mcX(i: number, n: number): number {
@@ -165,7 +169,18 @@ function MiniChart({ points, color, gradId }: { points: { month: string; value: 
           <Circle key={i} cx={p.x} cy={p.y} r={i === n - 1 ? 2.6 : 2} fill={C.subtle} stroke={color} strokeWidth={1.3} />
         ))}
         {points.map((p, i) => (
-          <Text key={i} x={mcX(i, n)} y={MC_H - 4} fill={C.mid} fontSize={6} textAnchor="middle">{p.month}</Text>
+          <Text
+            key={i}
+            x={mcX(i, n)}
+            y={MC_H - 4}
+            fill={C.mid}
+            fontSize={6}
+            // Rand-labels middenuitgelijnd laten overschrijden ze de viewBox (bijv. "JUN"
+            // op het laatste punt, dat vlak bij de rechterrand ligt). Eerste/laatste label
+            // groeit daarom naar binnen toe i.p.v. gecentreerd, middelste labels blijven
+            // gecentreerd.
+            textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
+          >{p.month}</Text>
         ))}
       </Svg>
     </View>
