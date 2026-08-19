@@ -31,7 +31,13 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // github.com/PostHog/posthog/issues/20461, live bevestigd 2026-08-01 via herhaalde CSP-
     // schendingen met retry_count-parameters), zonder dit werden die retry-events geblokkeerd
     // en stil verloren i.p.v. alsnog aankomen.
-    "connect-src 'self' https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com",
+    // data: staat hier expliciet toe vanwege @react-pdf/renderer (team-rapport en 1:1-PDF-
+    // downloadknoppen): die library laadt zijn yoga-layout WASM-binary via fetch() op een
+    // data:-URI, wat onder connect-src valt (niet img-src). wasm-unsafe-eval (script-src)
+    // stond alleen de compilatie toe, niet deze fetch, waardoor de knoppen stil faalden.
+    // Bevestigd via arnobot_csp_violations: herhaalde "connect-src blokkeert data"-meldingen,
+    // uitsluitend op /bot/team en /bot/team/lid/* (13, 14 en 19 augustus 2026).
+    "connect-src 'self' data: https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com",
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",
