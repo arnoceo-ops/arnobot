@@ -550,16 +550,24 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }, [])
 
   // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
-  // gebruiker zelf omhoog scrolt om iets terug te lezen: dan stopt het automatisch volgen tot
-  // de volgende vraag. Zonder dit moest je tijdens het genereren zelf blijven scrollen om de
-  // groeiende tekst bij te houden.
+  // gebruiker zelf scrolt: dan stopt het automatisch volgen tot de volgende vraag. Zonder dit
+  // moest je tijdens het genereren zelf blijven scrollen om de groeiende tekst bij te houden.
+  // Bewust wheel/touchmove i.p.v. het generieke 'scroll'-event: er lopen hier ook eigen
+  // programmatische smooth-scrolls (scrollToRef/bottomRef.scrollIntoView, elders in dit
+  // bestand), en die vuren tijdens hun animatie tussentijds ook 'scroll'-events af die dan
+  // (verkeerd) als "gebruiker scrolt weg" werden gelezen, waardoor meescrollen na de vorige
+  // wijziging soms helemaal niet meer werkte. wheel/touchmove komen alleen van echte
+  // gebruikersinput, nooit van een programmatische scroll.
   useEffect(() => {
-    function handleScroll() {
-      const afstandTotOnder = document.body.scrollHeight - (window.scrollY + window.innerHeight)
-      autoFollowRef.current = afstandTotOnder < 120
+    function handleUserScroll() {
+      autoFollowRef.current = false
     }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener('wheel', handleUserScroll, { passive: true })
+    window.addEventListener('touchmove', handleUserScroll, { passive: true })
+    return () => {
+      window.removeEventListener('wheel', handleUserScroll)
+      window.removeEventListener('touchmove', handleUserScroll)
+    }
   }, [])
 
   useEffect(() => {
