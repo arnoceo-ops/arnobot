@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useIsTouch } from '@/hooks/useBreakpoint'
 import { useAuth, useClerk, useUser } from '@clerk/nextjs'
@@ -324,7 +324,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
   const autoFollowRef = useRef(true)
-  const inputAreaRef = useRef<HTMLDivElement>(null)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
@@ -1066,26 +1065,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   // stickyActive: de invoerbalk zou fixed onderin staan in deze modus (los van of hij nu
-  // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt, inclusief de
-  // nieuwe verberg-tijdens-genereren/tot-scroll-naar-einde-logica. Eén plek voor beide, anders
-  // loopt de paddingBottom-reservering (die de fixed balk ruimte geeft) uit de pas met de
-  // render-conditie hieronder en blijft er een lege leegte staan zolang de balk verborgen is.
+  // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt (verborgen tijdens
+  // genereren, pas terug zodra je richting het einde scrolt). De paddingBottom op .spar-page
+  // (verderop) reserveert altijd ruimte voor de balk zolang started, ook als de balk zelf nu
+  // even niet zichtbaar is: dat voorkomt dat de balk bij het verschijnen over het laatste stuk
+  // tekst heen schuift. bottomRef heeft daarnaast een scroll-margin-bottom ter grootte van
+  // diezelfde ruimte, zodat het meescrollen tijdens streamen daar vanzelf al rekening mee houdt
+  // in plaats van dat er achteraf gecorrigeerd moet worden (dat bleek onbetrouwbaar).
   const stickyActive = started && sparModus !== 'sparren'
   const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(stickyActive && (loading || !readyForInput))
-
-  // De invoerbalk verschijnt pas als je al onderaan zat (dat is precies wat readyForInput
-  // triggert), maar omdat hij fixed over de content heen ligt, verbergt hij op dat moment het
-  // laatste stuk van het antwoord dat er tot dan toe nog gewoon stond. Zodra hij verschijnt
-  // daarom het beeld exact zijn eigen hoogte terugschuiven, zodat de laatste regels weer
-  // zichtbaar worden in plaats van achter de balk te verdwijnen (Thijs/Arno: "moest weer naar
-  // boven scrollen om het einde te zien"). useLayoutEffect i.p.v. useEffect om te voorkomen dat
-  // je eerst nog even de bedekte tekst ziet voordat de correctie plaatsvindt.
-  useLayoutEffect(() => {
-    if (stickyActive && showInputArea && inputAreaRef.current) {
-      const hoogte = inputAreaRef.current.getBoundingClientRect().height
-      window.scrollBy({ top: -hoogte })
-    }
-  }, [showInputArea, stickyActive])
 
   return (
     <>
@@ -1673,7 +1661,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )}
       <VersionBanner />
 
-      <div className="spar-page" style={started && (sparModus === 'sparren' || showInputArea) ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
+      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 
         {mode !== 'sparren' && (
           <div className="spar-hero">
@@ -1821,7 +1809,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {showInputArea && <div ref={inputAreaRef} className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
@@ -2462,7 +2450,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 280 : 240 }} />
         </div>
       </div>
 
