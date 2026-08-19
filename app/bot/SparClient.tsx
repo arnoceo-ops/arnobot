@@ -1040,6 +1040,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
+  // stickyActive: de invoerbalk zou fixed onderin staan in deze modus (los van of hij nu
+  // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt, inclusief de
+  // nieuwe verberg-tijdens-genereren/tot-scroll-naar-einde-logica. Eén plek voor beide, anders
+  // loopt de paddingBottom-reservering (die de fixed balk ruimte geeft) uit de pas met de
+  // render-conditie hieronder en blijft er een lege leegte staan zolang de balk verborgen is.
+  const stickyActive = started && sparModus !== 'sparren'
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(stickyActive && (loading || !readyForInput))
+
   return (
     <>
       <style>{`
@@ -1626,7 +1634,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )}
       <VersionBanner />
 
-      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
+      <div className="spar-page" style={started && (sparModus === 'sparren' || showInputArea) ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 
         {mode !== 'sparren' && (
           <div className="spar-hero">
@@ -1774,7 +1782,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(started && sparModus !== 'sparren' && (loading || !readyForInput)) && <div className={`spar-input-area${started && sparModus !== 'sparren' ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
