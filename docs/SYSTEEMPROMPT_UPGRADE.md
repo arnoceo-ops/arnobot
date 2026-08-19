@@ -18,6 +18,7 @@
 - [x] Eenmalige Telegram-cron voor de golf 1-evaluatie-herinnering gebouwd (`app/api/cron/golf1-evaluatie-herinnering/route.ts`, vercel.json `0 8 16 9 *`, jaar-guard op 2026)
 - [ ] Claude.ai-routine als backup staat al (`trig_01QEbJchqq919DMXnuk9RJ6s`, vuurt 2026-09-16 16:00 UTC, checkt code-status en bereidt evaluatietekst voor, stuurt zelf niets naar Telegram)
 - [ ] Golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel): pas na evaluatie van golf 1 via een nieuwe meta-analyse
+- [ ] Kennisbankdocument schrijven (besloten, nog niet uitgevoerd): de volledige redenering van vandaag, geanonimiseerd waar nodig, ingevoerd via `scripts/embed-chunks.mjs`
 
 ---
 
