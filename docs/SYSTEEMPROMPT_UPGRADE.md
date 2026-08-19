@@ -1,8 +1,8 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
 **Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** golf 1 is uitgewerkt tot definitieve regelteksten, goedgekeurd door Arno, en verwerkt in `lib/systemPrompt.ts` (`buildRdsSystemPrompt`). Smoke-test tegen de echte API loopt/moet nog bevestigd worden voordat commit+push. Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) is bewust nog niet doorgevoerd, evaluatiemoment over 4 weken.
-**Eerstvolgende stap:** smoke-test afronden, typecheck bevestigen, committen en pushen. Daarna: eenmalige Telegram-cron bouwen voor de 4-weken-herinnering (Arno wil dit soort herinneringen echt in Telegram, niet alleen als claude.ai-routine).
+**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd.
+**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en op basis daarvan beslissen over golf 2.
 
 ## Afvinklijst
 
