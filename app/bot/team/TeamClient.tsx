@@ -51,7 +51,10 @@ function formatAnalyseDate(iso: string) {
 }
 
 function getAnalyseTitle(text: string): string {
-  const clean = text
+  // Sla een leidende sectiekop (bijv. "PER PIJLER") over, anders begint het voorbeeld in de
+  // ingeklapte lijst met de kop zelf i.p.v. met de eerste inhoudelijke zin.
+  const zonderKop = text.replace(/^[A-Z][A-Z\s]{2,58}\n+/, '')
+  const clean = (zonderKop || text)
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/[—–]/g, '')
     .replace(/\n/g, ' ')
