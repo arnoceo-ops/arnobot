@@ -93,6 +93,12 @@ Bevestigt dat manager-coaching (en daarmee "cultuur") een Team-aangelegenheid is
 
 **Conclusie van Thijs:** ArnoBot is onmisbaar voor elke salesbaas, mits de coaching plaatsvindt in een open, veilige, lerende omgeving.
 
+**Manager-zelfcoaching-gat: nog openstaand.** Substantiële Team-feature (privacymodel-impact), apart projectplan nodig vóór bouwen. Nog niet gestart.
+
+**UI-klacht: opgelost (2026-08-19).** Twee wijzigingen in `SparClient.tsx`:
+1. De sticky invoerbalk verdwijnt nu volledig tijdens het genereren van een antwoord, en komt pas terug zodra de gebruiker richting het einde van dat antwoord scrolt (`readyForInput`-state + `IntersectionObserver` op de bestaande `bottomRef`).
+2. De blokkerende `beforeunload`-confirm ("weet je zeker dat je wilt verlaten") is verwijderd. Niet nodig voor databehoud: `navigator.sendBeacon` stuurde de sessie-data toch al door bij het sluiten van het tabblad, en `session-end/route.ts` upsert't de synthese altijd naar `arnobot_blog_sessions`, ongeacht of iemand expliciet op SLUIT klikt.
+
 **UI-klacht (sticky footer), letterlijk:** "Je hebt het invoerveld van de vervolgvragen in een stationaire footer gebouwd. Persoonlijk vind ik dat storend. De tekst van de respons is voor mij het meest belangrijk, daar vraag ik om. Als ik ALLES gelezen heb, dus niet zomaar ergens tussendoor, pas DAN zou ik de gelegenheid moeten krijgen om een vervolgvraag te stellen of af te sluiten. Voor mij is de stationaire (vaste) footer storend, alsof ik opgejaagd word om de volgende vraag/reactie in te typen." Locatie geverifieerd: `app/bot/SparClient.tsx` regel ~1143-1158, class `.spar-input-area.active` (`position: fixed; bottom: 0`, geactiveerd zodra een gesprek loopt). Raakt de hoofdchat van de hele app, niet Team-specifiek, dus een apart, breed UX-besluit, geen quick fix zonder overleg.
 
 ---

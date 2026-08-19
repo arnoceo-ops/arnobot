@@ -184,6 +184,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sessionId, setSessionId] = useState('')
   const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
+  const [readyForInput, setReadyForInput] = useState(true)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
   const [verfijnen, setVerfijnen] = useState(false)
@@ -527,6 +528,25 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [messages.length, loading, showSluiten, streamingStarted])
 
+  // Sticky invoerbalk (STUUR/SLUIT e.d.) blijft verborgen tijdens het genereren, en komt pas
+  // terug zodra de gebruiker daadwerkelijk richting het einde van het antwoord scrolt (Thijs'
+  // feedback: het vaste invoerveld voelde aan als opgejaagd worden om door te typen vóór hij
+  // het antwoord had uitgelezen). bottomRef markeert al het echte einde van het gesprek
+  // (gebruikt elders ook als scroll-target), dus geen aparte sentinel nodig.
+  useEffect(() => {
+    if (loading) setReadyForInput(false)
+  }, [loading])
+
+  useEffect(() => {
+    const el = bottomRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setReadyForInput(true)
+    }, { threshold: 0.01 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = '0px'
@@ -569,13 +589,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }, [sparModus, clerkSessionId])
 
   useEffect(() => {
-    function handleUnload(e: BeforeUnloadEvent) {
+    function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
-      if (started && !showSluiten) {
-        e.preventDefault()
-        e.returnValue = ''
-      }
+      // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
+      // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
+      // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
+      // gewoon wegnavigeert vindt 'm terug in zijn sessiehistorie/Bieb.
       const blob = new Blob(
         [JSON.stringify({ sessionId: sid, messages })],
         { type: 'application/json' }
@@ -584,7 +604,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
     window.addEventListener('beforeunload', handleUnload)
     return () => window.removeEventListener('beforeunload', handleUnload)
-  }, [messages, started, showSluiten])
+  }, [messages])
 
   useEffect(() => {
     if (resizeInput && inputRef.current) {
@@ -1754,7 +1774,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && <div className={`spar-input-area${started && sparModus !== 'sparren' ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {!blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(started && sparModus !== 'sparren' && (loading || !readyForInput)) && <div className={`spar-input-area${started && sparModus !== 'sparren' ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
