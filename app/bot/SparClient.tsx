@@ -323,6 +323,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
+  const autoFollowRef = useRef(true)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
@@ -545,6 +546,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }, { threshold: 0.01 })
     observer.observe(el)
     return () => observer.disconnect()
+  }, [])
+
+  // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
+  // gebruiker zelf omhoog scrolt om iets terug te lezen: dan stopt het automatisch volgen tot
+  // de volgende vraag. Zonder dit moest je tijdens het genereren zelf blijven scrollen om de
+  // groeiende tekst bij te houden.
+  useEffect(() => {
+    function handleScroll() {
+      const afstandTotOnder = document.body.scrollHeight - (window.scrollY + window.innerHeight)
+      autoFollowRef.current = afstandTotOnder < 120
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   useEffect(() => {
@@ -861,6 +875,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
     setLoading(true)
     setStreamingStarted(false)
+    autoFollowRef.current = true
 
     try {
       if (sparModus === 'sparren') {
@@ -1007,6 +1022,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText }
             return updated
           })
+          if (autoFollowRef.current) bottomRef.current?.scrollIntoView({ block: 'end' })
         }
 
         const metaIndex = rawBuffer.indexOf(META_MARKER)
