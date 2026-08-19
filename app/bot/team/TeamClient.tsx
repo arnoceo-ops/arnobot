@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BotNav from '@/app/bot/BotNav'
+import DownloadTeamPdfButton from './DownloadTeamPdfButton'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { computeMsaScore } from '@/lib/msa'
@@ -271,6 +272,11 @@ export default function TeamClient() {
     }
   }
 
+  const laatsteTeamScore = teamScores.length > 0 ? teamScores[teamScores.length - 1] : null
+  const teamMsaValue = laatsteTeamScore && laatsteTeamScore.mindset_score != null && laatsteTeamScore.systeem_score != null && laatsteTeamScore.actie_score != null
+    ? computeMsaScore(laatsteTeamScore.mindset_score, laatsteTeamScore.systeem_score, laatsteTeamScore.actie_score)
+    : null
+
   const sortedMembers = sortBy === null ? members : [...members].sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1
     if (sortBy === 'naam') return dir * a.name.localeCompare(b.name, 'nl')
@@ -300,6 +306,9 @@ export default function TeamClient() {
         .team-input:focus { border-color: #f59e0b; }
         .team-input::placeholder { color: #4b5563; }
         .btn-outline:hover { border-color: #f59e0b !important; color: #f59e0b !important; }
+        .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
+        .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
+        .pdf-btn:disabled { opacity:0.4; cursor:not-allowed; }
         .loading-dots { display:flex; gap:6px; }
         .loading-dot { width:7px; height:7px; border-radius:50%; background:#f59e0b; animation:dot-pulse 1.2s infinite; }
         .loading-dot:nth-child(2) { animation-delay:0.2s; }
@@ -367,10 +376,22 @@ export default function TeamClient() {
                 <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, margin: 0 }}>
                   {team.name.toUpperCase()}
                 </h1>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                   <button className="btn-outline" onClick={copyInviteLink} style={{ ...btnOutline, color: copied ? '#f59e0b' : '#9ca3af', borderColor: copied ? '#f59e0b' : '#374151' }}>
                     {copied ? 'GEKOPIEERD!' : 'UITNODIGINGSLINK'}
                   </button>
+                  {members.length > 0 && (
+                    <DownloadTeamPdfButton
+                      teamNaam={team.name}
+                      teamMsa={teamMsaValue}
+                      mindsetScore={laatsteTeamScore?.mindset_score ?? null}
+                      systeemScore={laatsteTeamScore?.systeem_score ?? null}
+                      actieScore={laatsteTeamScore?.actie_score ?? null}
+                      members={sortedMembers.map(m => ({ naam: m.name, msa: msaTotal(m), sessies: m.sessions, analyses: m.analyses, laatsteActiviteit: m.last_activity }))}
+                      spotlightText={teamAnalyses[0]?.analyse_text ?? null}
+                      spotlightDatum={teamAnalyses[0]?.created_at ?? null}
+                    />
+                  )}
                 </div>
               </div>
 
