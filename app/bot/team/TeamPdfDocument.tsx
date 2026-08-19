@@ -44,31 +44,31 @@ const C = {
 }
 
 const s = StyleSheet.create({
-  cover: { backgroundColor: C.bg, padding: '40 44', fontFamily: 'Helvetica' },
-  brandRow: { flexDirection: 'row', marginBottom: 32 },
+  cover: { backgroundColor: C.bg, padding: '30 44', fontFamily: 'Helvetica' },
+  brandRow: { flexDirection: 'row', marginBottom: 22 },
   brandArno: { color: C.cream, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
   brandBot: { color: C.orange, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
   label: { color: C.orange, fontSize: 8, letterSpacing: 3, marginBottom: 8 },
-  title: { fontSize: 30, color: C.cream, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
-  sub: { color: C.cream, fontSize: 9, opacity: 0.4, marginBottom: 24 },
-  divider: { height: 1, backgroundColor: C.subtle, marginBottom: 20 },
+  title: { fontSize: 26, color: C.cream, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  sub: { color: C.cream, fontSize: 9, opacity: 0.4, marginBottom: 16 },
+  divider: { height: 1, backgroundColor: C.subtle, marginBottom: 14 },
   scoresRow: { flexDirection: 'row', gap: 12 },
-  scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '12 12', borderRadius: 2 },
+  scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '9 12', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
   scoreValue: { color: C.cream, fontSize: 20, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '36 44', fontFamily: 'Helvetica' },
-  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
-  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8 },
-  paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, marginBottom: 4 },
-  table: { marginTop: 4 },
-  tableHeadRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.line, paddingBottom: 6, marginBottom: 6 },
-  tableRow: { flexDirection: 'row', paddingVertical: 5, borderBottomWidth: 0.5, borderBottomColor: C.line },
+  body: { backgroundColor: C.white, padding: '28 44', fontFamily: 'Helvetica' },
+  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7, marginTop: 14 },
+  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7 },
+  paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.6, marginBottom: 3 },
+  table: { marginTop: 2 },
+  tableHeadRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.line, paddingBottom: 5, marginBottom: 4 },
+  tableRow: { flexDirection: 'row', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: C.line },
   tableHeadCell: { fontSize: 7, color: C.mid, letterSpacing: 1.5, fontFamily: 'Helvetica-Bold' },
   tableCell: { fontSize: 9.5, color: C.dark },
   colNaam: { flex: 2 },
   colGetal: { flex: 1, textAlign: 'right' },
-  chartSection: { marginBottom: 24 },
-  chartLegendRow: { flexDirection: 'row', gap: 16, marginBottom: 10 },
+  chartSection: { marginBottom: 16 },
+  chartLegendRow: { flexDirection: 'row', gap: 16, marginBottom: 8 },
   chartLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   chartLegendDot: { width: 6, height: 6, borderRadius: 3 },
   chartLegendLabel: { fontSize: 7, color: C.mid, letterSpacing: 1.5, fontFamily: 'Helvetica-Bold' },
@@ -115,7 +115,7 @@ function maandNaam(iso: string): string {
 
 // Zelfde 1-5-schaal en lijnpad-logica als de on-screen ProgressieChart, maar met rechte
 // segmenten i.p.v. een bezier-curve: eenvoudiger en betrouwbaarder in react-pdf's Path-parsing.
-const CHART_W = 507, CHART_H = 120, CHART_PL = 22, CHART_PR = 4, CHART_PT = 6, CHART_PB = 6
+const CHART_W = 507, CHART_H = 95, CHART_PL = 22, CHART_PR = 4, CHART_PT = 6, CHART_PB = 6
 const CHART_IW = CHART_W - CHART_PL - CHART_PR
 const CHART_IH = CHART_H - CHART_PT - CHART_PB
 
