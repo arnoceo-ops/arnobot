@@ -40,7 +40,7 @@ const s = StyleSheet.create({
   scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '12 12', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
   scoreValue: { color: C.cream, fontSize: 20, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '36 44 60 44', fontFamily: 'Helvetica' },
+  body: { backgroundColor: C.white, padding: '36 44', fontFamily: 'Helvetica' },
   groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
   groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8 },
   paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, marginBottom: 4 },
@@ -51,7 +51,7 @@ const s = StyleSheet.create({
   tableCell: { fontSize: 9.5, color: C.dark },
   colNaam: { flex: 2 },
   colGetal: { flex: 1, textAlign: 'right' },
-  footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: C.line },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })
 
@@ -151,11 +151,11 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
               ))}
             </>
           )}
-        </View>
 
-        <View style={s.footer} fixed>
-          <Text style={s.footerText}>ARNOBOT | TEAM-RAPPORT</Text>
-          <Text style={s.footerText}>{teamNaam}</Text>
+          <View style={s.footer}>
+            <Text style={s.footerText}>ARNOBOT | TEAM-RAPPORT</Text>
+            <Text style={s.footerText}>{teamNaam}</Text>
+          </View>
         </View>
       </Page>
     </Document>
