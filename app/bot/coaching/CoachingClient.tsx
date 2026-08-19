@@ -596,7 +596,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt }: 
                         style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0', fontFamily: "'Space Mono', monospace" }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-                          <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120 }}>
+                          <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 165, flexShrink: 0 }}>
                             {formatHistoryDate(h.created_at)}
                           </span>
                           <div style={{ flex: 1, minWidth: 200 }}>

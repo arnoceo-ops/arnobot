@@ -553,7 +553,7 @@ export default function LidPage() {
                             </div>
                           ) : (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 195, flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>
                                 {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
                               </span>
                               <div style={{ flex: 1 }}>

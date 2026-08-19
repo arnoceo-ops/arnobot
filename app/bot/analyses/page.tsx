@@ -611,7 +611,7 @@ export default function GeschiedenisPage() {
                     onClick={() => toggleSession(session.session_id)}
                     style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 24, textAlign: 'left', padding: 0 }}
                   >
-                    <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                    <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 165, flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>
                       {formatDate(session.created_at)}
                     </span>
                     <div style={{ flex: 1 }}>
@@ -843,7 +843,7 @@ export default function GeschiedenisPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                      <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', minWidth: 120, fontFamily: "'Space Mono', monospace" }}>
+                      <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 165, flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>
                         {formatDate(a.created_at)}
                       </span>
                       <div style={{ flex: 1 }}>
