@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Svg, Path, Circle, Line } from '@react-pdf/renderer'
 
 interface TeamPdfMember {
   naam: string
@@ -10,6 +10,13 @@ interface TeamPdfMember {
   laatsteActiviteit: string | null
 }
 
+interface TeamScorePoint {
+  mindset_score: number | null
+  systeem_score: number | null
+  actie_score: number | null
+  created_at: string
+}
+
 interface TeamPdfProps {
   teamNaam: string
   datum: string
@@ -17,10 +24,19 @@ interface TeamPdfProps {
   mindsetScore: number | null
   systeemScore: number | null
   actieScore: number | null
+  scoreGeschiedenis: TeamScorePoint[]
   members: TeamPdfMember[]
   spotlightText: string | null
   spotlightDatum: string | null
 }
+
+// Zelfde kleuren/schaal als de on-screen TEAMSCORES-grafiek (ProgressieChart.tsx), zodat het
+// rapport aansluit bij wat de manager al op het scherm kent.
+const CHART_SERIES: { key: keyof Omit<TeamScorePoint, 'created_at'>; color: string; label: string }[] = [
+  { key: 'mindset_score', color: '#f59e0b', label: 'MINDSET' },
+  { key: 'systeem_score', color: '#60a5fa', label: 'SYSTEEM' },
+  { key: 'actie_score', color: '#34d399', label: 'ACTIE' },
+]
 
 const C = {
   bg: '#111827', cream: '#f1f5f9', orange: '#f59e0b', subtle: '#1f2937',
@@ -51,6 +67,15 @@ const s = StyleSheet.create({
   tableCell: { fontSize: 9.5, color: C.dark },
   colNaam: { flex: 2 },
   colGetal: { flex: 1, textAlign: 'right' },
+  chartSection: { marginBottom: 24 },
+  chartLegendRow: { flexDirection: 'row', gap: 16, marginBottom: 10 },
+  chartLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  chartLegendDot: { width: 6, height: 6, borderRadius: 3 },
+  chartLegendLabel: { fontSize: 7, color: C.mid, letterSpacing: 1.5, fontFamily: 'Helvetica-Bold' },
+  chartWrap: { position: 'relative' },
+  chartYLabel: { position: 'absolute', left: 0, fontSize: 6.5, color: C.mid },
+  chartMonthRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, paddingLeft: 22, paddingRight: 4 },
+  chartMonthLabel: { fontSize: 6.5, color: C.mid },
   footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: C.line },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })
@@ -84,7 +109,25 @@ function formatDatum(datum: string) {
   return new Date(datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systeemScore, actieScore, members, spotlightText, spotlightDatum }: TeamPdfProps) {
+function maandNaam(iso: string): string {
+  return new Date(iso).toLocaleDateString('nl-NL', { month: 'short' }).toUpperCase().replace('.', '')
+}
+
+// Zelfde 1-5-schaal en lijnpad-logica als de on-screen ProgressieChart, maar met rechte
+// segmenten i.p.v. een bezier-curve: eenvoudiger en betrouwbaarder in react-pdf's Path-parsing.
+const CHART_W = 507, CHART_H = 120, CHART_PL = 22, CHART_PR = 4, CHART_PT = 6, CHART_PB = 6
+const CHART_IW = CHART_W - CHART_PL - CHART_PR
+const CHART_IH = CHART_H - CHART_PT - CHART_PB
+
+function chartX(i: number, n: number): number {
+  return n <= 1 ? CHART_PL + CHART_IW / 2 : CHART_PL + (i / (n - 1)) * CHART_IW
+}
+
+function chartY(v: number): number {
+  return CHART_PT + (1 - (v - 1) / 4) * CHART_IH
+}
+
+export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systeemScore, actieScore, scoreGeschiedenis, members, spotlightText, spotlightDatum }: TeamPdfProps) {
   const scores = [
     { label: 'TEAM MSA', value: teamMsa },
     { label: 'MINDSET', value: mindsetScore },
@@ -92,6 +135,11 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
     { label: 'ACTIE', value: actieScore },
   ]
   const sections = spotlightText ? parseTekst(spotlightText) : []
+
+  const geschiedenis = (scoreGeschiedenis ?? []).filter(h =>
+    h.mindset_score != null || h.systeem_score != null || h.actie_score != null
+  )
+  const n = geschiedenis.length
 
   return (
     <Document title={`Team-rapport - ${teamNaam}`} author="ArnoBot" subject="Team-rapport">
@@ -118,7 +166,57 @@ export function TeamPdfDocument({ teamNaam, datum, teamMsa, mindsetScore, systee
         </View>
 
         <View style={s.body}>
-          <Text style={s.groupLabelFirst}>TEAMLEDEN ({members.length})</Text>
+          {n >= 2 && (
+            <View style={s.chartSection}>
+              <Text style={s.groupLabelFirst}>TEAMSCORES OVER TIJD</Text>
+              <View style={s.chartLegendRow}>
+                {CHART_SERIES.map(sr => (
+                  <View key={sr.key} style={s.chartLegendItem}>
+                    <View style={[s.chartLegendDot, { backgroundColor: sr.color }]} />
+                    <Text style={s.chartLegendLabel}>{sr.label}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={s.chartWrap}>
+                <Svg width={CHART_W} height={CHART_H} viewBox={`0 0 ${CHART_W} ${CHART_H}`}>
+                  {[1, 2, 3, 4, 5].map(v => (
+                    <Line
+                      key={v}
+                      x1={CHART_PL} y1={chartY(v)} x2={CHART_W - CHART_PR} y2={chartY(v)}
+                      stroke={C.line} strokeWidth={0.5}
+                      strokeDasharray={v === 1 || v === 5 ? undefined : '2 2'}
+                    />
+                  ))}
+                  {CHART_SERIES.map(sr => {
+                    const pts = geschiedenis
+                      .map((h, i) => ({ i, v: h[sr.key] }))
+                      .filter((p): p is { i: number; v: number } => p.v != null)
+                      .map(p => ({ x: chartX(p.i, n), y: chartY(p.v) }))
+                    if (pts.length === 0) return null
+                    const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+                    return (
+                      <React.Fragment key={sr.key}>
+                        {pts.length >= 2 && <Path d={d} stroke={sr.color} strokeWidth={1.5} fill="none" />}
+                        {pts.map((p, i) => (
+                          <Circle key={i} cx={p.x} cy={p.y} r={2} fill={C.white} stroke={sr.color} strokeWidth={1.2} />
+                        ))}
+                      </React.Fragment>
+                    )
+                  })}
+                </Svg>
+                {[1, 2, 3, 4, 5].map(v => (
+                  <Text key={v} style={[s.chartYLabel, { top: chartY(v) - 3 }]}>{v}</Text>
+                ))}
+              </View>
+              <View style={s.chartMonthRow}>
+                {geschiedenis.map((h, i) => (
+                  <Text key={i} style={s.chartMonthLabel}>{maandNaam(h.created_at)}</Text>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <Text style={n >= 2 ? s.groupLabel : s.groupLabelFirst}>TEAMLEDEN ({members.length})</Text>
           <View style={s.table}>
             <View style={s.tableHeadRow}>
               <Text style={[s.tableHeadCell, s.colNaam]}>NAAM</Text>

@@ -402,6 +402,7 @@ export default function TeamClient() {
                       mindsetScore={laatsteTeamScore?.mindset_score ?? null}
                       systeemScore={laatsteTeamScore?.systeem_score ?? null}
                       actieScore={laatsteTeamScore?.actie_score ?? null}
+                      scoreGeschiedenis={teamScores}
                       members={sortedMembers.map(m => ({ naam: m.name, msa: msaTotal(m), sessies: m.sessions, analyses: m.analyses, laatsteActiviteit: m.last_activity }))}
                       spotlightText={teamAnalyses[0]?.analyse_text ?? null}
                       spotlightDatum={teamAnalyses[0]?.created_at ?? null}
