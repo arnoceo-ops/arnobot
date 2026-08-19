@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-08-19
 **Waar we staan:** Fase 1 (drill-down, activiteitssignalen, 1:1-voorbereiding, teamritme) staat al live, zie de bouwvolgorde-tabel hieronder. Nieuw traject gestart naar aanleiding van Thijs' feedback (manager-zelfcoaching-gat, zie `docs/SYSTEEMPROMPT_UPGRADE.md` Bron 3 voor de volledige, letterlijke feedback). **Punt 7 (PDF-export teamniveau) volledig afgerond en bevestigd door Arno**, inclusief een lange reeks PDF-opmaakbugs die onderweg naar boven kwamen (zie eigen sectie hieronder, met de belangrijkste les: react-pdf herhaalt de padding van `Page` zelf betrouwbaar op elke pagina, die van een geneste `View` niet).
-**Eerstvolgende stap:** punt 6 (apart datasegment voor coaching-op-de-coach) — het fundament waar punt 1 en 5 op bouwen, nog niet gestart.
+**Eerstvolgende stap:** punt 6 (apart datasegment voor coaching-op-de-coach) — het fundament waar punt 1 en 5 op bouwen, nog niet gestart. Arno bevestigd: verder op 2026-08-20.
 
 ## Bouwvolgorde manager-zelfcoaching-gat (besloten 2026-08-19)
 
