@@ -421,7 +421,7 @@ export async function POST(req: NextRequest) {
                     : recentActieStatus === 'nee'
                     ? 'De gebruiker heeft aangegeven dit nog niet gedaan te hebben.'
                     : 'De gebruiker heeft hier nog geen antwoord op gegeven.'
-                  geheugentekst += `\n\nActie uit vorig gesprek (gebruik dit alleen als het gesprek er aanleiding toe geeft):\n${recentUitdaging}\n${statusTekst}`
+                  geheugentekst += `\n\nActie uit vorig gesprek (zie de instructie OPENSTAANDE ACTIES EERST voor hoe je dit gebruikt):\n${recentUitdaging}\n${statusTekst}`
                 }
               }
             }
