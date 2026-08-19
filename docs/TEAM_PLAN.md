@@ -1,14 +1,14 @@
 # Team-module — projectplan
 
 **Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** Fase 1 (drill-down, activiteitssignalen, 1:1-voorbereiding, teamritme) staat al live, zie de bouwvolgorde-tabel hieronder. Nieuw traject gestart naar aanleiding van Thijs' feedback (manager-zelfcoaching-gat, zie `docs/SYSTEEMPROMPT_UPGRADE.md` Bron 3 voor de volledige, letterlijke feedback). Punt 7 (PDF-export teamniveau) is als eerste gebouwd en live (commit 2c0936af).
+**Waar we staan:** Fase 1 (drill-down, activiteitssignalen, 1:1-voorbereiding, teamritme) staat al live, zie de bouwvolgorde-tabel hieronder. Nieuw traject gestart naar aanleiding van Thijs' feedback (manager-zelfcoaching-gat, zie `docs/SYSTEEMPROMPT_UPGRADE.md` Bron 3 voor de volledige, letterlijke feedback). **Punt 7 (PDF-export teamniveau) volledig afgerond en bevestigd door Arno**, inclusief een lange reeks PDF-opmaakbugs die onderweg naar boven kwamen (zie eigen sectie hieronder, met de belangrijkste les: react-pdf herhaalt de padding van `Page` zelf betrouwbaar op elke pagina, die van een geneste `View` niet).
 **Eerstvolgende stap:** punt 6 (apart datasegment voor coaching-op-de-coach) — het fundament waar punt 1 en 5 op bouwen, nog niet gestart.
 
 ## Bouwvolgorde manager-zelfcoaching-gat (besloten 2026-08-19)
 
 | # | Wat | Status |
 |---|---|---|
-| 7 | PDF-export teamniveau | **Live** (commit 2c0936af) |
+| 7 | PDF-export teamniveau | **Live, bevestigd** (commits 2c0936af t/m 8655444d) |
 | 6 | Apart datasegment (coach-rol vs. verkoper-rol) | Volgt |
 | 1 | Terugkoppeling op eigen 1:1's + acties | Volgt, bouwt op 6 |
 | 5 | Coachende rol richting Thijs zelf als coach | Volgt, bouwt op 1 + 6 |
@@ -37,6 +37,16 @@ Arno's expliciete besluit: **optie A**, geen wijziging aan de bestaande belofte.
 **Ontbreekt structureel (bevestigd, geen aanname):** geen kolom/mechanisme dat onderscheidt "dit gesprek was Thijs-als-verkoper" vs. "dit was Thijs-als-manager-die-over-coaching-praat". `arnobot_coaching`, `arnobot_coaching_scores`, `arnobot_coaching_history`, `arnobot_blog_sessions`, `arnobot_analyses` zijn allemaal puur op `user_id` gesleuteld, ongeacht context. Dit is precies wat punt 6 oplost.
 
 **PDF-exportpatroon (nu tweemaal toegepast, teamlid- en teamniveau):** `@react-pdf/renderer`, dynamisch geïmporteerd in een losse download-knop-component (`DownloadOneOnOneButton.tsx` / `DownloadTeamPdfButton.tsx`), los PDF-documentcomponent met `@ts-nocheck` (react-pdf's typing-eigenaardigheden, bestaand, geaccepteerd patroon, ESLint staat op continue-on-error in dit repo), client-side blob-download. Bij een volgende PDF-export dit patroon hergebruiken, niet opnieuw uitvinden.
+
+### Les uit punt 7: react-pdf-paginering (belangrijk voor elke volgende PDF met variabele lengte)
+
+Het team-rapport (`TeamPdfDocument.tsx`) kostte een lange reeks iteraties omdat meerdere aannames over react-pdf niet klopten en pas bij daadwerkelijk lokaal renderen + visueel inspecteren aan het licht kwamen (nooit vertrouwen op "de code ziet er goed uit"):
+1. Een SVG-breedte die 1-op-1 van de webversie was overgenomen (`MiniChart`) paste niet in de daadwerkelijk beschikbare kolombreedte van een 3-koloms PDF-layout, met overlopende grafieken tot gevolg. Altijd de echte beschikbare breedte narekenen, niet de webwaarde kopiëren.
+2. Middenuitgelijnde tekstlabels op het eerste/laatste datapunt van een grafiek kunnen de rand van hun eigen SVG-viewBox overschrijden. Rand-labels lijnen naar binnen uit (start/end), niet gecentreerd.
+3. **De belangrijkste:** react-pdf herhaalt de padding van `<Page>` zelf betrouwbaar op elke automatisch gegenereerde vervolgpagina. De padding van een geneste `<View>` die over een paginagrens heen loopt NIET. Dit verklaarde zowel "geen ruimte bovenaan op pagina 2" als "content botst met de vaste footer" (de footer, `position:absolute`+`fixed`, telt niet mee in de flow-hoogteberekening, dus zonder een op Page-niveau gereserveerde `paddingBottom` kan tekst er zo tegenaan lopen). Oplossing: marge op Page-niveau zetten (`paddingTop`/`paddingBottom`), een full-bleed cover-sectie ontsnapt daaraan met een negatieve `marginTop`.
+4. Een geforceerde `break` vóór een sectie (in plaats van natuurlijke doorloop) lost het "content past niet"-probleem oppervlakkig op maar creëert een nieuw probleem: een halflege eerste pagina, in plaats van dat de content het beschikbare papier gewoon vult en netjes doorbreekt. Bij twijfel: natuurlijke flow, geen kunstmatige splitsing (tenzij inhoudelijk een harde nieuwe sectie hoort te beginnen, zoals `ArnoBotPdfDocument.tsx` doet tussen sessies).
+
+**Werkwijze die hierbij hoort, ook voor toekomstig PDF-werk:** bij een react-pdf-wijziging altijd eerst kijken hoe de bestaande documenten (`OneOnOnePdfDocument.tsx`, `CanvasPdfDocument.tsx`, `ArnoBotPdfDocument.tsx`) iets oplossen vóórdat je zelf iets verzint, en na elke wijziging lokaal renderen (`renderToStream` naar een tijdelijk bestand, nooit gecommit) en met de Read-tool visueel inspecteren, ook met bewust lange testtekst die een pagina-overloop forceert. Code die er "logisch" uitziet bleek in deze ronde meermaals niet te kloppen met wat er daadwerkelijk gerenderd werd.
 
 ## Fase 1/2 (ouder, uit projectgeheugen, hier overgenomen voor volledigheid)
 
