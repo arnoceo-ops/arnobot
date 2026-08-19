@@ -1,8 +1,8 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
 **Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Een vergeten snapshot-update na golf 1 liet de CI-kritieke-paden-check falen (`lib/systemPrompt.test.ts`), gefixt met `vitest -u` (commit f2a134d3), geen inhoudelijke wijziging. Kennisbankartikel geschreven met volledig generieke voorbeelden (geen Erik/Stefanie/Thijs, geverifieerd op de live opgeslagen tekst, niet alleen het brondocument) en live geëmbed in `blog_chunks` via een nieuw eenmalig script `scripts/embed-single-doc.mjs` (voegt toe zonder de kennisbank te wissen, in tegenstelling tot `embed-chunks.mjs`), 4 chunks, commits 9ce0b7b6 + b88d96be. Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd. Alle afvinkpunten van dit traject nu afgerond, alleen de geplande evaluatie staat nog open.
-**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en op basis daarvan beslissen over golf 2. Sessie hierna gaat verder met Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht), zie Bron 3 hieronder, dat is een los traject, geen onderdeel van deze golf 1/2-afvinklijst.
+**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Een vergeten snapshot-update na golf 1 liet de CI-kritieke-paden-check falen (`lib/systemPrompt.test.ts`), gefixt met `vitest -u` (commit f2a134d3), geen inhoudelijke wijziging. Kennisbankartikel geschreven met volledig generieke voorbeelden (geen Erik/Stefanie/Thijs, geverifieerd op de live opgeslagen tekst, niet alleen het brondocument) en live geëmbed in `blog_chunks` via een nieuw eenmalig script `scripts/embed-single-doc.mjs` (voegt toe zonder de kennisbank te wissen, in tegenstelling tot `embed-chunks.mjs`), 4 chunks, commits 9ce0b7b6 + b88d96be. Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd. Daarnaast, los van golf 1/2: Arno's eigen livetest bracht een derde bevinding aan het licht ("bijna elk antwoord eindigt met een vraag, ook als die niet relevant is"), inmiddels gefixt, zie "Bevinding: vraag-aan-het-eind" onderaan dit document.
+**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en of de vraag-aan-het-eind-fix ook in de meta-analyse-cijfers zichtbaar is, en op basis daarvan beslissen over golf 2. Sessie hierna gaat verder met Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht), zie Bron 3 hieronder, dat is een los traject, geen onderdeel van deze golf 1/2-afvinklijst.
 
 ## Afvinklijst
 
@@ -149,3 +149,21 @@ Twee herinneringsmechanismen, bewust allebei:
 2. Eenmalige Telegram-cron in het project zelf (nog te bouwen), die op dezelfde datum een echt bericht naar Arno's Telegram stuurt via het bestaande `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`-mechanisme uit `lib/cron-notify.ts`. Dit is het daadwerkelijke meldkanaal, de claude.ai-routine is aanvullend.
 
 Evaluatiecriterium: nieuwe meta-analyse draaien op de gesprekken sinds golf 1 live ging, en checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren dan in de analyse van 18 augustus 2026.
+
+---
+
+## Bevinding: vraag-aan-het-eind (2026-08-19, live gevonden door Arno tijdens het testen)
+
+**Klacht, letterlijk:** "elke vraag wordt gevolgd door een antwoord die afsluit met weer een vraag van Arnobot aan de user... het irriteert soms dat de vragen gesteld worden die voor mij totaal niet relevant zijn."
+
+**Oorzaak:** twee instructies in `buildRdsSystemPrompt` (`lib/systemPrompt.ts`) werkten tegen elkaar in. "VRAAG EN LEVER TEGELIJK" ("als je meer context nodig hebt: lever + stel een vraag") is voor een coach-bot bijna altijd waar, dus werd in de praktijk een permanente instructie om te vragen. Golf 1's "KWALIFICEREN VOORDAT JE UITGEBREID LEVERT" voegt daar nog twee specifieke situaties bovenop. De enige tegenkracht ("Eindig niet altijd met een vraag... Varieer") was vaag en verloor het van de veel concretere "vraag en lever tegelijk"-regel.
+
+**Fix, twee stukken tekst herzien:**
+1. "VRAAG EN LEVER TEGELIJK": trigger aangescherpt naar "alleen vragen als het antwoord zonder die informatie aantoonbaar onvolledig of te generiek zou blijven."
+2. De "eindig niet altijd met een vraag"-regel herschreven tot een harde drempel in plaats van een vage "varieer"-oproep: "een vraag aan het eind is de uitzondering, niet de gewoonte."
+
+**Smoke-test tegen de echte API (`claude-sonnet-4-6`, 4 scenario's) ving onderweg een echte regressie:** de eerste versie van de herziene "VRAAG EN LEVER TEGELIJK"-tekst liet de expliciete garantie vallen dat een vraag nooit alleen mag staan. Scenario "geef me een openingszin voor een cold call" leverde daardoor een kaal antwoord op dat **alleen** een tegenvraag was ("Wat verkoop je, en aan welke sector?"), zonder enige poging tot een concreet antwoord op basis van de meest logische aanname. Dat is precies wat "vraag en lever tegelijk" moet voorkomen. Hersteld door de zin "Nooit alleen een vraag zonder ook iets inhoudelijks te geven" expliciet terug te zetten. Na de fix leverde hetzelfde scenario een volledig antwoord (concrete openingszin-structuur) plús een gerichte vervolgvraag.
+
+Overige scenario's bevestigden het gewenste gedrag: een simpele feitelijke vraag (MEDDIC vs BANT) kreeg geen vraag meer achteraan geplakt, de klantsituatie-uitzondering uit golf 1 bleef intact (kwalificeren-eerst-vraag, geen volledig antwoord, zoals bedoeld), en een vage/brede vraag kreeg wel een vraag terug, maar een inhoudelijk onderbouwde.
+
+Snapshot-tests (`lib/systemPrompt.test.ts`) bijgewerkt met `vitest -u` op basis van de definitieve tekst.
