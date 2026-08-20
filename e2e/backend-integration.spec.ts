@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test'
 test('echte backend-keten verwerkt een chatbericht met gemockte Anthropic/Voyage-aanroepen', async ({ page }) => {
   await page.goto('/bot')
   await page.getByLabel('Je bericht').fill('Hoe ga ik om met een klant die de prijs te hoog vindt?')
-  await page.getByRole('button', { name: /stuur/i }).click()
+  await page.locator('.spar-send').click()
 
   // Het antwoord komt van de lokale mock-Anthropic-server, niet van page.route: bewijst dat
   // auth, rate limiting, moderatie-check en RAG-pipeline de aanvraag succesvol hebben
@@ -29,7 +29,7 @@ test('echte backend-keten verwerkt een chatbericht met gemockte Anthropic/Voyage
 test('dubbele-sessie-blokkade: "dit ben ik"-knop herstelt het gesprek meteen', async ({ page }) => {
   await page.goto('/bot')
   await page.getByLabel('Je bericht').fill('Hoe bouw ik vertrouwen op in een eerste gesprek?')
-  await page.getByRole('button', { name: /stuur/i }).click()
+  await page.locator('.spar-send').click()
   await expect(page.locator('.msg-arno-text').last()).toContainText(
     'Dit is een voorspelbaar mock-antwoord van de lokale Anthropic-mock-server.',
     { timeout: 20000 }
@@ -41,7 +41,7 @@ test('dubbele-sessie-blokkade: "dit ben ik"-knop herstelt het gesprek meteen', a
   await page.reload()
 
   await page.getByLabel('Je bericht').fill('Nog een vraag, vanaf de "nieuwe" sessie')
-  await page.getByRole('button', { name: /stuur/i }).click()
+  await page.locator('.spar-send').click()
 
   await expect(page.getByText('Je hebt al een actief gesprek open')).toBeVisible({ timeout: 10000 })
   await page.getByRole('button', { name: /dit ben ik, ga hier verder/i }).click()

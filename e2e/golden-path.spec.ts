@@ -33,7 +33,7 @@ test('golden path: inloggen, bericht sturen, streaming zien, sluiten, samenvatti
   const input = page.getByLabel('Je bericht')
   await expect(input).toBeVisible({ timeout: 15000 })
   await input.fill('Hoe ga ik om met een klant die de prijs te hoog vindt?')
-  await page.getByRole('button', { name: /stuur/i }).click()
+  await page.locator('.spar-send').click()
 
   // Antwoord moet verschijnen (via de gemockte stream).
   await expect(page.locator('.msg-arno-text').last()).toContainText(MOCK_ANSWER, { timeout: 15000 })

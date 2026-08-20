@@ -37,7 +37,7 @@ test('chatgesprek (met bericht en antwoord) heeft geen ernstige toegankelijkheid
   await mockChatNormal(page, 'Dit is een testantwoord voor de toegankelijkheidscheck.')
   await page.goto('/bot')
   await page.getByLabel('Je bericht').fill('Testvraag voor a11y-check')
-  await page.getByRole('button', { name: /stuur/i }).click()
+  await page.locator('.spar-send').click()
   await expect(page.locator('.msg-arno-text').last()).toContainText('Dit is een testantwoord', { timeout: 15000 })
 
   const results = await new AxeBuilder({ page }).analyze()

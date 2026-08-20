@@ -37,22 +37,23 @@ setup('authenticeren als testgebruiker', async ({ page }) => {
   // de eerste keer.
   await page.goto('/bot')
 
+  // Profiel altijd opnieuw upserten met de actuele TEST_PROFILE, niet alleen bij de
+  // allereerste run. Op elke run ná de eerste stond hier voorheen alleen de onboarding-check
+  // (welkom/profiel-redirect), waardoor een stale profiel uit een oudere testrun (bv. een
+  // inmiddels hernoemde rolwaarde) nooit werd bijgewerkt en de app op een verouderde waarde
+  // bleef matchen. Idempotent (upsert), dus veilig om altijd uit te voeren.
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  const { data: userData } = await supabase
+    .from('approved_users')
+    .select('user_id')
+    .eq('email', TEST_USER_EMAIL)
+    .single()
+  if (!userData) throw new Error(`approved_users-rij voor ${TEST_USER_EMAIL} niet gevonden na eerste /bot-bezoek`)
+
+  await supabase.from('approved_users').update({ welcome_seen: true, onboarding_done: true }).eq('user_id', userData.user_id)
+  await supabase.from('arnobot_blog_profiles').upsert({ user_id: userData.user_id, profiel: TEST_PROFILE }, { onConflict: 'user_id' })
+
   if (page.url().includes('/bot/welkom') || page.url().includes('/bot/profiel')) {
-    // Onboarding (welkomstscherm + profielformulier) overslaan door de vlaggen en het
-    // profiel direct te seeden via de service-role key, in plaats van het formulier elke
-    // testrun opnieuw in te vullen. Onboarding zelf is een apart testscenario, geen
-    // onderdeel van de golden path.
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-    const { data: userData } = await supabase
-      .from('approved_users')
-      .select('user_id')
-      .eq('email', TEST_USER_EMAIL)
-      .single()
-    if (!userData) throw new Error(`approved_users-rij voor ${TEST_USER_EMAIL} niet gevonden na eerste /bot-bezoek`)
-
-    await supabase.from('approved_users').update({ welcome_seen: true, onboarding_done: true }).eq('user_id', userData.user_id)
-    await supabase.from('arnobot_blog_profiles').upsert({ user_id: userData.user_id, profiel: TEST_PROFILE }, { onConflict: 'user_id' })
-
     await page.goto('/bot')
   }
 
