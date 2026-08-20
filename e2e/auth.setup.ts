@@ -8,7 +8,7 @@ const AUTH_FILE = 'e2e/.auth/user.json'
 // Representatief testprofiel, zodat de systeemprompt (buildRdsSystemPrompt) een compleet
 // profiel heeft om mee te werken, net als bij een echte gebruiker.
 const TEST_PROFILE = {
-  rol: 'Sales Manager/Director',
+  rol: 'Sales Director',
   jaren_functie: 5,
   markt: ['B2B SaaS'],
   wat_verkoop_je: 'Software voor projectplanning',
