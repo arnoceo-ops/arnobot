@@ -86,11 +86,11 @@ function formatSparHistoryDate(iso: string): string {
 }
 
 const STRATEGISCH_ROLLEN = ['VP of Sales', 'CEO/DGA']
-const ORGANISATORISCH_ROLLEN = ['Sales Manager/Director']
+const ORGANISATORISCH_ROLLEN = ['Sales Director']
 const SALES_ONLY_ROLLEN = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
 
 const VERKOPER_ROLLEN_SPAR = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
-const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales', 'Sales Manager/Director']
+const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales']
 const EINDBAAS_ROLLEN_SPAR = ['CEO/DGA']
 const SOLOPRENEUR_ROLLEN_SPAR = ['Solopreneur']
 
@@ -2195,15 +2195,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 <span className="spar-discipline-label">of kies een discipline</span>
                 {isMobile ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 180, margin: '0 auto' }}>
-                    <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
-                    <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
-                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>SALES</button>
+                    <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGY</button>
+                    <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>PEOPLE</button>
+                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>EXECUTION</button>
                   </div>
                 ) : (
                   <div className="opener-toggle">
-                    <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGIE</button>
-                    <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>ORGANISATIE</button>
-                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>SALES</button>
+                    <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGY</button>
+                    <button className={`toggle-btn${openerModus === 'organisatorisch' ? ' active' : ''}`} onClick={() => setOpenerModus('organisatorisch')}>PEOPLE</button>
+                    <button className={`toggle-btn${openerModus === 'sales' ? ' active' : ''}`} onClick={() => setOpenerModus('sales')}>EXECUTION</button>
                   </div>
                 )}
               </>

@@ -58,7 +58,7 @@ Geef de output als JSON in dit exacte formaat:
 
 Categorie-uitleg:
 - strategisch: voor CEO/DGA en VP of Sales. Strategie, groei, marktpositie, commercieel model.
-- organisatorisch: voor Sales Manager/Director. Team, recruitment, coaching, performance.
+- organisatorisch: voor Sales Director. Team, recruitment, coaching, performance.
 - operationeel: voor AE/AM/Inside Sales. Deals, pipeline, bezwaren, afsluiten, klantgesprekken.
 
 GESPREKKEN (${(sessions ?? []).length} stuks):
