@@ -501,7 +501,7 @@ export default function LidPage() {
                 <div style={section}>
                   <span style={label}>1:1 GESCHIEDENIS</span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {data.history.map((h, i) => {
+                    {data.history.map(h => {
                       const scores = [h.mindset_score, h.systeem_score, h.actie_score]
                       const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '?').join(' / ')
                       const isNoteOpen = noteOpenId === h.id
@@ -522,24 +522,15 @@ export default function LidPage() {
                             <p style={{ ...body, marginBottom: 12 }}>{h.aandachtspunt}</p>
                           )}
                           {h.actie && (
-                            <div style={{ marginBottom: 12 }}>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>ACTIE:</span>
-                                <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
-                                <span style={{
-                                  fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
-                                  color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : h.actie_status === 'skip' ? '#6b7280' : '#f59e0b',
-                                }}>
-                                  {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : h.actie_status === 'skip' ? '— OVERGESLAGEN' : '• OPENSTAAND'}
-                                </span>
-                              </div>
-                              {!h.actie_status && (
-                                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                                  {i === 0
-                                    ? 'Wordt gevraagd zodra je de volgende 1:1 met ' + data.name.split(' ')[0] + ' voorbereidt.'
-                                    : 'Niet meer opgevolgd, er kwam een nieuwere actie voor in de plaats.'}
-                                </p>
-                              )}
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>ACTIE:</span>
+                              <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
+                              <span style={{
+                                fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
+                                color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : h.actie_status === 'skip' ? '#6b7280' : '#f59e0b',
+                              }}>
+                                {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : h.actie_status === 'skip' ? '— OVERGESLAGEN' : '• OPENSTAAND'}
+                              </span>
                             </div>
                           )}
                           {h.agenda && (
