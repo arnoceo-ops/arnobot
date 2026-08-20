@@ -525,12 +525,14 @@ export default function LidPage() {
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                               <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>ACTIE:</span>
                               <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
-                              <span style={{
-                                fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
-                                color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : h.actie_status === 'skip' ? '#6b7280' : '#f59e0b',
-                              }}>
-                                {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : h.actie_status === 'skip' ? '— OVERGESLAGEN' : '• OPENSTAAND'}
-                              </span>
+                              {h.actie_status && (
+                                <span style={{
+                                  fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
+                                  color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : '#6b7280',
+                                }}>
+                                  {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : '— OVERGESLAGEN'}
+                                </span>
+                              )}
                             </div>
                           )}
                           {h.agenda && (
