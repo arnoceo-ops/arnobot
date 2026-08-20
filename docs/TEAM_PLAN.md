@@ -1,22 +1,43 @@
 # Team-module — projectplan
 
-**Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** Fase 1 (drill-down, activiteitssignalen, 1:1-voorbereiding, teamritme) staat al live, zie de bouwvolgorde-tabel hieronder. Nieuw traject gestart naar aanleiding van Thijs' feedback (manager-zelfcoaching-gat, zie `docs/SYSTEEMPROMPT_UPGRADE.md` Bron 3 voor de volledige, letterlijke feedback). **Punt 7 (PDF-export teamniveau) volledig afgerond en bevestigd door Arno**, inclusief een lange reeks PDF-opmaakbugs die onderweg naar boven kwamen (zie eigen sectie hieronder, met de belangrijkste les: react-pdf herhaalt de padding van `Page` zelf betrouwbaar op elke pagina, die van een geneste `View` niet).
-**Eerstvolgende stap:** punt 6 (apart datasegment voor coaching-op-de-coach) — het fundament waar punt 1 en 5 op bouwen, nog niet gestart. Arno bevestigd: verder op 2026-08-20.
+**Laatst bijgewerkt:** 2026-08-20
+**Waar we staan:** Fase 1 (drill-down, activiteitssignalen, 1:1-voorbereiding, teamritme) staat al live, zie de bouwvolgorde-tabel hieronder. Nieuw traject gestart naar aanleiding van Thijs' feedback (manager-zelfcoaching-gat, zie `docs/SYSTEEMPROMPT_UPGRADE.md` Bron 3 voor de volledige, letterlijke feedback). **Punt 7 (PDF-export teamniveau) volledig afgerond en bevestigd door Arno**, inclusief een lange reeks PDF-opmaakbugs die onderweg naar boven kwamen (zie eigen sectie hieronder, met de belangrijkste les: react-pdf herhaalt de padding van `Page` zelf betrouwbaar op elke pagina, die van een geneste `View` niet). **2026-08-20:** het ontwerp van punt 6 is herzien na een gesprek met Arno over het onderliggende rollen/disciplines-raamwerk van ArnoBot, zie de nieuwe sectie hieronder. De eerdere aanname ("apart datasegment coach-rol vs. verkoper-rol", een persoon zou dus twee aparte identiteiten krijgen) klopte niet: het juiste onderscheid is welk pijler-raamwerk van toepassing is op een stuk data (Mindset/Systeem/Actie voor verkoopwerk, Strategie/Mensen/Actie voor sales-baas/manager-werk), gekoppeld aan de echte teambaas-status, niet aan het zelf-gekozen rolchipje uit onboarding (bewezen onbetrouwbaar: Thijs' eigen testprofiel staat op "verkoper", niet op sales baas, puur omdat hij zo aan het testen is).
+**Eerstvolgende stap:** punt 6 (koppeling van teamcoaching-data aan het Strategie/Mensen/Actie-raamwerk, gegated op echte teambaas-status) — het fundament waar punt 1 en 5 op bouwen, nog niet gestart. Arno bevestigd: verder op 2026-08-20.
 
 ## Bouwvolgorde manager-zelfcoaching-gat (besloten 2026-08-19)
 
 | # | Wat | Status |
 |---|---|---|
 | 7 | PDF-export teamniveau | **Live, bevestigd** (commits 2c0936af t/m 8655444d) |
-| 6 | Apart datasegment (coach-rol vs. verkoper-rol) | Volgt |
+| 6 | Teamcoaching-data koppelen aan Strategie/Mensen/Actie, gegated op echte teambaas-status | Volgt, ontwerp herzien 2026-08-20 |
 | 1 | Terugkoppeling op eigen 1:1's + acties | Volgt, bouwt op 6 |
-| 5 | Coachende rol richting Thijs zelf als coach | Volgt, bouwt op 1 + 6 |
+| 5 | Coachende rol richting Thijs zelf als coach (via Strategie/Mensen/Actie) | Volgt, bouwt op 1 + 6 |
 | 4 | Actieve sturing/handvatten (cultuur-pijler) | Volgt, contentlaag bovenop 5 |
 | 2 | Instelbare vaste topics per teamlid | Volgt, zelfstandig |
 | 3 | Instelling "wat MOET gedeeld worden" | **Besloten: niet bouwen**, zie hieronder |
 
-**Waarom deze volgorde:** 7 is een losstaande, laag-risico quick win. 6 is geen zichtbare feature maar de architecturale voorwaarde voor 1/4/5: zonder scheiding zou Thijs' eigen coaching-als-verkoper vervuild raken met coaching-als-coach-data. 4 is inhoudelijk een contentlaag bovenop 5's synthese, geen aparte plek in de UI. 2 staat los en kan op elk moment.
+**Waarom deze volgorde:** 7 is een losstaande, laag-risico quick win. 6 is geen zichtbare feature maar de architecturale voorwaarde voor 1/4/5: zonder een expliciete koppeling aan het juiste pijler-raamwerk zou Thijs' eigen coaching-als-verkoper (Mindset/Systeem/Actie) vervuild raken met zijn coaching-als-sales-baas (Strategie/Mensen/Actie), zie de nieuwe sectie hieronder voor de volledige toedracht. 4 is inhoudelijk een contentlaag bovenop 5's synthese, geen aparte plek in de UI. 2 staat los en kan op elk moment.
+
+## Raamwerk: rollen × disciplines (verduidelijkt 2026-08-20, Arno's eigen productmodel)
+
+Dit gaat verder dan alleen de teammodule, het is het onderliggende model achter heel ArnoBot. Vastgelegd omdat het punt 6 en 5 herontwerpt en om te voorkomen dat een volgende sessie de eerdere, foute aanname ("verkoper-persona vs. coach-persona") weer oppakt.
+
+**Vier rollen die ArnoBot aanspreekt:** verkoper, solopreneur, CEO, sales baas. Elke rol krijgt te maken met drie disciplines.
+
+**Strategie / Mensen / Actie (bedrijfsniveau, geldt voor alle vier de rollen):**
+- **Strategie**: in hoeverre ben je onderscheidend ten opzichte van andere aanbieders.
+- **Mensen**: de mensen die nodig zijn om die strategie om te zetten in een plan.
+- **Actie**: het plan omzetten in executie en resultaat.
+
+Dit zijn de drie disciplines die een bedrijf (in welke rol dan ook) af te leggen heeft.
+
+**Mindset / Systeem / Actie (bestaand raamwerk, specifiek voor de verkoopfunctie):** de drie pijlers die nodig zijn om succesvol te zijn in sales zelf, gebruikt in `arnobot_coaching` (`mindset_score`/`systeem_score`/`actie_score`) en de teamspotlight. Toegevoegd omdat ArnoBot primair een sales-coachingsapp is. Dit raamwerk verandert niet en blijft de basis voor ieders individuele verkoopcoaching, inclusief die van een sales baas die ook zelf nog verkoopt.
+
+**Waarom ArnoBot ook voor een CEO werkt (bewust niet extern zo gepositioneerd, wel bespreekbaar in een persoonlijk gesprek):** de strategie- en mensenfunctie zitten er al in, vooral de strategiefunctie. De scaling-up- en methode-content staat al in de kennisbank (RAG-bibliotheek). **Niet meenemen in publieke marketingcopy** (`/prijzen`, `ABONNEMENTEN.md`, `SALES_BIJBEL.md`) zonder expliciete opdracht van Arno, dit is bewust interne/1-op-1-positionering, geen aangekondigde feature.
+
+**Consequentie voor punt 6:** het onderscheid dat nodig is, is niet "welke identiteit heeft deze persoon" maar "welk pijler-raamwerk is van toepassing op dit stuk data". Verkoopwerk (van iedereen, ook een sales baas die zelf ook verkoopt) blijft Mindset/Systeem/Actie in het bestaande `arnobot_coaching`-profiel. Werk als sales baas (teamcoaching, 1:1's, punt 1 en 5) krijgt een eigen synthese op basis van Strategie/Mensen/Actie.
+
+**Besluit (2026-08-20): gate op echte teambaas-status, niet op `profiel.rol`.** De drie bestaande gates (lidmaatschap `arnobot_team_members` + `command_manager` + `profiel.gebruik`, zie `app/api/bot/team/status/route.ts`) bepalen wanneer Strategie/Mensen/Actie van toepassing is. **Verworpen alternatief:** `profiel.rol` (het onboarding-chipje: Sales Director/VP of Sales/CEO/DGA) gebruiken om te bepalen wanneer iemand als sales baas wordt aangesproken. Reden verwerping: bewezen onbetrouwbaar, Thijs' eigen testprofiel staat op "verkoper", niet op sales baas, terwijl hij feitelijk manager is. Iemand kan bovendien beide petten tegelijk dragen (verkoper voor zichzelf, sales baas voor zijn team), dus het is sowieso geen exclusieve keuze.
 
 ## Punt 3 — besloten, niet bouwen (2026-08-19)
 
@@ -34,7 +55,7 @@ Arno's expliciete besluit: **optie A**, geen wijziging aan de bestaande belofte.
 
 **Privacy-/gate-mechanisme (bestaand, moet intact blijven bij elke volgende stap):** service-role key overal, autorisatie volledig in route-logica (geen RLS zichtbaar in de code). Manager-facing routes halen uitsluitend samenvattende velden op (`arnobot_coaching`, `arnobot_shared_analyses`, `arnobot_1on1_log`), nooit ruwe `arnobot_blog_sessions`-inhoud voor weergave. `arnobot_shared_analyses` is het enige bestaande "lid deelt zelf iets extra met manager"-mechanisme (opt-in, intrekbaar). `profiel.gebruik === 'individueel'` houdt iemand volledig buiten de team-UI, ook als hij lid is.
 
-**Ontbreekt structureel (bevestigd, geen aanname):** geen kolom/mechanisme dat onderscheidt "dit gesprek was Thijs-als-verkoper" vs. "dit was Thijs-als-manager-die-over-coaching-praat". `arnobot_coaching`, `arnobot_coaching_scores`, `arnobot_coaching_history`, `arnobot_blog_sessions`, `arnobot_analyses` zijn allemaal puur op `user_id` gesleuteld, ongeacht context. Dit is precies wat punt 6 oplost.
+**Ontbreekt structureel (bevestigd, geen aanname):** geen mechanisme dat bepaalt welk pijler-raamwerk (Mindset/Systeem/Actie of Strategie/Mensen/Actie, zie de sectie hierboven) van toepassing is op een stuk data. `arnobot_coaching`, `arnobot_coaching_scores`, `arnobot_coaching_history`, `arnobot_blog_sessions`, `arnobot_analyses` zijn allemaal puur op `user_id` gesleuteld, ongeacht welke rol/discipline er speelt. Dit is precies wat punt 6 oplost. Belangrijk: dit is geen "verkoper vs. manager"-identiteitsvraag (ArnoBot spreekt iedereen al rolbewust aan vanaf het eerste bericht, zie `lib/systemPrompt.ts` regel 102, een CEO wordt nooit als verkoper aangesproken), maar een vraag welk raamwerk een specifiek stuk coachingdata moet gebruiken.
 
 **PDF-exportpatroon (nu tweemaal toegepast, teamlid- en teamniveau):** `@react-pdf/renderer`, dynamisch geïmporteerd in een losse download-knop-component (`DownloadOneOnOneButton.tsx` / `DownloadTeamPdfButton.tsx`), los PDF-documentcomponent met `@ts-nocheck` (react-pdf's typing-eigenaardigheden, bestaand, geaccepteerd patroon, ESLint staat op continue-on-error in dit repo), client-side blob-download. Bij een volgende PDF-export dit patroon hergebruiken, niet opnieuw uitvinden.
 
