@@ -112,3 +112,17 @@ Privacymodel (fundament van alles): Verkoper ziet eigen gesprekken + eigen coach
 
 **Why:** Teamversie is een belangrijke uitbreiding van ArnoBot. Vertrouwen is de USP, zie punt 3 hierboven, breek dat en het hele product valt.
 **How to apply:** nooit manager-toegang tot ruwe gesprekken geven, ook niet indirect. Altijd via de synthese-laag.
+
+### Fase 2A/2B/2C — volledige beschrijving (overgenomen uit projectgeheugen, 2026-08-20, was nog niet in dit document opgenomen)
+
+**2A — De Spiegel**, "Wat je team je niet vertelt." Vereist thema-extractie bij het opslaan van coachingsessies (labels: kwalificatie, bezwaar, afsluiting, zelfvertrouwen). Bouwt op 1.1 (drill-down) + Spotlight.
+
+**2B — De Tijdlijn**, "Zo was je team 3 maanden geleden. Zo nu." Vereist maandelijkse thema-snapshots per lid en team. Bouwt op 2A (gelabelde data nodig).
+
+**2C — De Manager als Variabele**, "Dit is geen individu-probleem." Wanneer 3+ leden hetzelfde patroon tonen, richt ArnoBot de spiegel op het systeem (de manager/de aansturing), niet op de individuen. Bouwt op 2A + 2B.
+
+**Belangrijke productinzicht voor 2B, vastgelegd op Arno's expliciete verzoek (2026-08-20, "kom er GEGARANDEERD op terug, dit is superbelangrijk"):** De Tijdlijn bouwt niet alleen een groeiverhaal, het bouwt een **dossier**, en dat dossier heeft ook waarde in het slechte geval: een teamlid dat niet groeit, ondanks structurele 1:1's en opvolging. De manager kan daarmee aantonen dat hij er alles aan heeft gedaan om die persoon te ondersteunen, zowel via de app als via de 1:1-gesprekken zelf. Dit is, hoe ongemakkelijk ook, een reële waarde van het product naast de primaire ontwikkelingsdoelstelling.
+
+**Consequentie voor het ontwerp van 2B, zodra het wordt opgepakt:** De Tijdlijn moet nadrukkelijk niet alleen groei tonen. Stagnatie ondanks consistente coaching-inspanning is zelf een geldig, waardevol resultaat om eerlijk en neutraal weer te geven, niet iets om te verbloemen richting een positiever verhaal. Dit raakt geen nieuw privacyprobleem (de manager ziet nu al uitsluitend het gesynthetiseerde coachingprofiel, nooit ruwe gesprekken, zie het privacymodel hierboven), maar wel een expliciete toon-/ontwerpkeuze: neutrale documentatie van inspanning en resultaat, niet alleen positieve framing.
+
+**Prioriteit:** bewust NIET nu opgepakt. Het lopende traject (coaching-op-de-coach, punt 5 is de eerstvolgende stap) wordt eerst afgemaakt. Fase 2A/2B/2C is een apart, later traject. Arno heeft dit bevestigd na een directe vergelijking van beide opties.
