@@ -319,9 +319,6 @@ export default function LidPage() {
 
           {data && (
             <>
-              <p style={{ ...label, marginBottom: 8 }}>
-                {data.profiel_rol?.toUpperCase() ?? (data.role === 'manager' ? 'MANAGER' : 'TEAMLID')}
-              </p>
               <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, margin: '0 0 48px 0', borderBottom: '2px solid #f59e0b', paddingBottom: 32 }}>
                 {data.name.toUpperCase()}
               </h1>
