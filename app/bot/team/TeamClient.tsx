@@ -156,6 +156,7 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; followThroughPct: number | null; openstaandOuderDan14Dagen: number; totaalActies: number } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -198,6 +199,7 @@ export default function TeamClient() {
           setMinIntervalDagen(data.team.min_interval_dagen ?? null)
         }
         setMembers(data.members ?? [])
+        setOneOnOneRitme(data.oneOnOneRitme ?? null)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -433,6 +435,36 @@ export default function TeamClient() {
                       </div>
                     )
                   })()}
+                </div>
+              )}
+
+              {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.totaalActies > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
+                <div style={section}>
+                  <span style={label}>JOUW 1:1-RITME</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24 }}>
+                    <div>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>LAATSTE 30 DAGEN</span>
+                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
+                        {oneOnOneRitme.laatste30Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>1:1{oneOnOneRitme.laatste30Dagen === 1 ? '' : "'S"}</span>
+                      </p>
+                    </div>
+                    {oneOnOneRitme.followThroughPct !== null && (
+                      <div>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>FOLLOW-THROUGH</span>
+                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.followThroughPct >= 70 ? '#44cc88' : oneOnOneRitme.followThroughPct >= 40 ? '#f59e0b' : '#cc4444', lineHeight: 1, marginTop: 8 }}>
+                          {oneOnOneRitme.followThroughPct}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 4 }}>%</span>
+                        </p>
+                      </div>
+                    )}
+                    {oneOnOneRitme.openstaandOuderDan14Dagen > 0 && (
+                      <div>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
+                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1, marginTop: 8 }}>
+                          {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

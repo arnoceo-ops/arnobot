@@ -1,8 +1,8 @@
 # Team-module — projectplan
 
 **Laatst bijgewerkt:** 2026-08-20
-**Waar we staan:** Fase 1 staat al live. **Punt 7 (PDF-export teamniveau) afgerond en bevestigd.** Het ontwerp van punt 6 is herzien na een gesprek met Arno over het onderliggende rollen/disciplines-raamwerk van ArnoBot (zie de sectie "Raamwerk: rollen × disciplines" hieronder): niet "apart datasegment coach-rol vs. verkoper-rol" (twee identiteiten), maar welk pijler-raamwerk van toepassing is op een stuk data (Mindset/Systeem/Actie voor verkoopwerk, Strategy People Execution voor sales-baas-werk), gekoppeld aan de echte teambaas-status, niet aan `profiel.rol`. **Punt 6 gebouwd en afgerond (2026-08-20):** tabel `arnobot_salesbaas_coaching` aangemaakt (Arno bevestigd uitgevoerd in Supabase) en de gedeelde `isConfirmedTeambaas(userId)`-helper (`lib/teamAccess.ts`) toegevoegd, de drie gates in één functie. RLS op de nieuwe tabel staat nog open, zie openstaand actiepunt onderaan deze sectie.
-**Eerstvolgende stap:** punt 1 (terugkoppeling op eigen 1:1's + acties), bouwt op punt 6. Nog niet gestart.
+**Waar we staan:** Fase 1 staat al live. **Punt 7 (PDF-export teamniveau) afgerond.** **Punt 6 gebouwd**: tabel `arnobot_salesbaas_coaching` + gedeelde `isConfirmedTeambaas(userId)`-helper (`lib/teamAccess.ts`), zie de sectie "Raamwerk: rollen × disciplines" hieronder voor de volledige herziening. RLS-incident onderweg gevonden en volledig gefixt (zie CLAUDE.md sectie 1). **Punt 1 gebouwd (2026-08-20):** `arnobot_1on1_log` uitgebreid met `actie`/`actie_status` (kolommen, waarden 'ja'/'nee'/'skip', zelfde vocabulaire als `arnobot_blog_sessions.actie_status`). Bij een nieuwe 1:1-agenda toont `app/bot/team/lid/[userId]/page.tsx` nu eerst een expliciete GEDAAN/NIET GEDAAN/OVERSLAAN-vraag als de vorige actie nog onbeantwoord is, en een "NIEUWE ACTIE"-invoerveld bij het opslaan. `TeamClient.tsx` toont een nieuw, bewust feitelijk (geen AI-tekst) blok "JOUW 1:1-RITME": 1:1's laatste 30 dagen, follow-through-percentage, aantal openstaande acties ouder dan 2 weken, gevoed door een nieuwe berekening in `app/api/bot/team/dashboard/route.ts`. Typecheck schoon, dev-server getest zonder crash. **Niet visueel geverifieerd in de browser** (vereist een echt ingelogd manager-account met teamleden en 1:1-historie, niet beschikbaar in deze sessie), zie het openstaand actiepunt hieronder.
+**Eerstvolgende stap:** punt 5 (coachende rol richting Thijs zelf als coach), bouwt op 1 + 6. Nog niet gestart. **Eerst:** Arno visueel controleren dat punt 1 goed rendert (zie hierboven), en de PDF-export (`DownloadOneOnOneButton`/`OneOnOnePdfDocument.tsx`) toont `actie`/`actie_status` nog niet, bewust nog niet meegenomen, apart oppakken indien gewenst.
 
 ## Bouwvolgorde manager-zelfcoaching-gat (besloten 2026-08-19)
 
@@ -10,7 +10,7 @@
 |---|---|---|
 | 7 | PDF-export teamniveau | **Live, bevestigd** (commits 2c0936af t/m 8655444d) |
 | 6 | Teamcoaching-data koppelen aan Strategy People Execution, gegated op echte teambaas-status | **Gebouwd, 2026-08-20** (`arnobot_salesbaas_coaching` + `lib/teamAccess.ts`) |
-| 1 | Terugkoppeling op eigen 1:1's + acties | Volgt, bouwt op 6 |
+| 1 | Terugkoppeling op eigen 1:1's + acties | **Gebouwd, 2026-08-20**, nog niet visueel gecontroleerd door Arno |
 | 5 | Coachende rol richting Thijs zelf als coach (via Strategy People Execution) | Volgt, bouwt op 1 + 6 |
 | 4 | Actieve sturing/handvatten (cultuur-pijler) | Volgt, contentlaag bovenop 5 |
 | 2 | Instelbare vaste topics per teamlid | Volgt, zelfstandig |

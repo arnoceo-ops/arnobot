@@ -35,7 +35,7 @@ export async function GET() {
   const memberIds = members.map(m => m.user_id)
 
   // Fetch stats for all members in parallel
-  const [sessionsRes, logsRes, analysesRes, profilesRes, coachingRes] = await Promise.all([
+  const [sessionsRes, logsRes, analysesRes, profilesRes, coachingRes, oneOnOneRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('user_id, created_at')
@@ -57,6 +57,10 @@ export async function GET() {
       .from('arnobot_coaching')
       .select('user_id, mindset_score, systeem_score, actie_score')
       .in('user_id', memberIds),
+    supabase
+      .from('arnobot_1on1_log')
+      .select('actie, actie_status, created_at')
+      .eq('manager_id', userId),
   ])
 
   // Get Clerk user names
@@ -117,5 +121,23 @@ export async function GET() {
     return b.last_activity.localeCompare(a.last_activity)
   })
 
-  return NextResponse.json({ team, members: enriched })
+  // Feitelijke terugkoppeling op de eigen 1:1's van de manager, bewust geen AI-tekst (dat is
+  // punt 5, dat op deze data bouwt): frequentie + follow-through + openstaande acties.
+  const oneOnOnes = oneOnOneRes.data ?? []
+  const dertigDagenGeleden = Date.now() - 30 * 86400000
+  const veertienDagenGeleden = Date.now() - 14 * 86400000
+  const laatste30Dagen = oneOnOnes.filter(l => new Date(l.created_at).getTime() >= dertigDagenGeleden).length
+  const beantwoord = oneOnOnes.filter(l => l.actie_status === 'ja' || l.actie_status === 'nee')
+  const followThroughPct = beantwoord.length > 0
+    ? Math.round((beantwoord.filter(l => l.actie_status === 'ja').length / beantwoord.length) * 100)
+    : null
+  const openstaandOuderDan14Dagen = oneOnOnes.filter(l =>
+    l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
+  ).length
+
+  return NextResponse.json({
+    team,
+    members: enriched,
+    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length },
+  })
 }

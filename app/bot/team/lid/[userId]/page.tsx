@@ -32,10 +32,17 @@ interface OneononeLog {
   aandachtspunt: string | null
   agenda: string | null
   notitie: string | null
+  actie: string | null
+  actie_status: 'ja' | 'nee' | 'skip' | null
   mindset_score: number | null
   systeem_score: number | null
   actie_score: number | null
   created_at: string
+}
+
+interface PendingActie {
+  id: string
+  actie: string
 }
 
 interface LidData {
@@ -128,6 +135,11 @@ export default function LidPage() {
   const [agenda, setAgenda] = useState('')
   const [aandachtspunt, setAandachtspunt] = useState('')
   const [agendaError, setAgendaError] = useState('')
+  const [actieInput, setActieInput] = useState('')
+
+  const [pendingActie, setPendingActie] = useState<PendingActie | null>(null)
+  const [pendingActieAnswering, setPendingActieAnswering] = useState(false)
+  const [pendingActieAnswered, setPendingActieAnswered] = useState<'ja' | 'nee' | 'skip' | null>(null)
 
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -167,6 +179,9 @@ export default function LidPage() {
     setAgendaError('')
     setAgenda('')
     setAandachtspunt('')
+    setActieInput('')
+    setPendingActie(null)
+    setPendingActieAnswered(null)
     setSaved(false)
     try {
       const res = await fetch('/api/bot/team/1on1', {
@@ -176,12 +191,26 @@ export default function LidPage() {
       })
       const d = await res.json()
       if (!res.ok) setAgendaError(d.error || 'Er ging iets mis')
-      else { setAgenda(d.agenda); setAandachtspunt(d.aandachtspunt || '') }
+      else { setAgenda(d.agenda); setAandachtspunt(d.aandachtspunt || ''); setPendingActie(d.pendingActie || null) }
     } catch {
       setAgendaError('Er ging iets mis')
     } finally {
       setAgendaLoading(false)
     }
+  }
+
+  async function beantwoordActie(status: 'ja' | 'nee' | 'skip') {
+    if (!pendingActie) return
+    setPendingActieAnswering(true)
+    try {
+      const res = await fetch('/api/bot/team/1on1/note', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId: pendingActie.id, actie_status: status }),
+      })
+      if (res.ok) setPendingActieAnswered(status)
+    } catch {}
+    setPendingActieAnswering(false)
   }
 
   async function verwijderLid() {
@@ -210,7 +239,7 @@ export default function LidPage() {
       const res = await fetch('/api/bot/team/1on1/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '' }),
+        body: JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '', actie: actieInput.trim() }),
       })
       const d = await res.json()
       if (!res.ok) setAgendaError(d.error || 'Opslaan mislukt')
@@ -378,11 +407,57 @@ export default function LidPage() {
                       </p>
                     )}
 
+                    {pendingActie && (
+                      <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 32, marginBottom: 24 }}>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ACTIE VORIGE KEER</p>
+                        <p style={{ ...body, marginBottom: pendingActieAnswered ? 0 : 20 }}>{pendingActie.actie}</p>
+                        {pendingActieAnswered ? (
+                          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>✓ VERWERKT</p>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 8, maxWidth: 480, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                            {([
+                              { label: 'GEDAAN', status: 'ja' as const, primary: true },
+                              { label: 'NIET GEDAAN', status: 'nee' as const, primary: false },
+                              { label: 'OVERSLAAN', status: 'skip' as const, primary: false },
+                            ] as const).map(({ label, status, primary }) => (
+                              <button
+                                key={status}
+                                onClick={() => beantwoordActie(status)}
+                                disabled={pendingActieAnswering}
+                                style={{
+                                  flex: 1,
+                                  fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
+                                  padding: '10px 4px', borderRadius: 999, cursor: pendingActieAnswering ? 'not-allowed' : 'pointer',
+                                  background: primary ? '#f59e0b' : 'none',
+                                  color: primary ? '#111827' : '#9ca3af',
+                                  border: primary ? 'none' : '1px solid #374151',
+                                  opacity: pendingActieAnswering ? 0.6 : 1,
+                                  transition: 'all 0.15s',
+                                }}
+                              >{label}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {agenda && (
-                      <div style={{ marginTop: 32 }}>
+                      <div style={{ marginTop: pendingActie ? 0 : 32 }}>
                         <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 24 }}>
                           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
                           <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
+                        </div>
+
+                        <div style={{ marginBottom: 24 }}>
+                          <span style={{ ...label, marginBottom: 8 }}>NIEUWE ACTIE (OPTIONEEL)</span>
+                          <input
+                            type="text"
+                            className="notitie-input"
+                            placeholder="Concrete afspraak uit dit gesprek..."
+                            value={actieInput}
+                            onChange={e => setActieInput(e.target.value)}
+                            disabled={saved}
+                          />
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -396,7 +471,7 @@ export default function LidPage() {
                                 ✓ OPGESLAGEN
                               </p>
                               <button
-                                onClick={() => { setAgenda(''); setSaved(false) }}
+                                onClick={() => { setAgenda(''); setSaved(false); setPendingActie(null); setActieInput('') }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
                               >
                                 SLUITEN
@@ -445,6 +520,18 @@ export default function LidPage() {
                           </div>
                           {h.aandachtspunt && (
                             <p style={{ ...body, marginBottom: 12 }}>{h.aandachtspunt}</p>
+                          )}
+                          {h.actie && (
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>ACTIE:</span>
+                              <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
+                              <span style={{
+                                fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
+                                color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : h.actie_status === 'skip' ? '#6b7280' : '#f59e0b',
+                              }}>
+                                {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : h.actie_status === 'skip' ? '— OVERGESLAGEN' : '• OPENSTAAND'}
+                              </span>
+                            </div>
                           )}
                           {h.agenda && (
                             <div style={{ marginBottom: 12 }}>
