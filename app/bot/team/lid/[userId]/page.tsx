@@ -478,7 +478,9 @@ export default function LidPage() {
                           )}
                           {h.actie && (
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>ACTIE:</span>
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>
+                                {h.actie_status ? 'Actie:' : 'Openstaande actie(s):'}
+                              </span>
                               <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
                               {h.actie_status && (
                                 <span style={{
