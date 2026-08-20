@@ -216,6 +216,21 @@ export default function LidPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actieInput])
 
+  // Laatste vangnet: als de pagina verlaten wordt binnen de 800ms-debounce (bv. razendsnel
+  // typen en meteen wegnavigeren), kan een lopende fetch worden afgebroken. sendBeacon is
+  // het browser-mechanisme dat specifiek gegarandeerd verstuurt tijdens het verlaten van een
+  // pagina, in tegenstelling tot een gewone fetch. pagehide i.p.v. beforeunload: blokkeert de
+  // terug/vooruit-cache van de browser niet.
+  useEffect(() => {
+    if (!agenda) return
+    const handler = () => {
+      const payload = JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '', actie: actieInput.trim() })
+      navigator.sendBeacon('/api/bot/team/1on1/save', new Blob([payload], { type: 'application/json' }))
+    }
+    window.addEventListener('pagehide', handler)
+    return () => window.removeEventListener('pagehide', handler)
+  }, [agenda, aandachtspunt, actieInput, userId])
+
   async function beantwoordActie(logId: string, status: 'ja' | 'nee' | 'skip') {
     setActieAnswering(true)
     try {
