@@ -407,8 +407,7 @@ export default function LidPage() {
 
                         <div style={{ marginBottom: 24 }}>
                           <span style={{ ...label, marginBottom: 8 }}>NIEUWE ACTIE (OPTIONEEL)</span>
-                          <input
-                            type="text"
+                          <textarea
                             className="notitie-input"
                             placeholder="Concrete afspraak uit dit gesprek..."
                             value={actieInput}
