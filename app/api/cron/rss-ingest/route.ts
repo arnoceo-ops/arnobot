@@ -117,7 +117,8 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
 // anders lijkt een lange periode zonder nieuwe blogposts alsnog op een niet-draaiende cron.
 async function markRssRun(): Promise<void> {
   const now = new Date().toISOString()
-  await supabase.from('arnobot_meta').upsert([{ key: 'last_rss_run', value: now, updated_at: now }])
+  const { error } = await supabase.from('arnobot_meta').upsert([{ key: 'last_rss_run', value: now, updated_at: now }])
+  if (error) await notifyCronFailure('rss-ingest: markRssRun mislukt', error.message)
 }
 
 // ── Cron handler ──────────────────────────────────────────────────────────────
