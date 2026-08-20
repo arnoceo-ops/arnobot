@@ -441,6 +441,8 @@ export default function LidPage() {
                             aandachtspunt={aandachtspunt || null}
                             agenda={agenda}
                             notitie={null}
+                            actie={actieInput.trim() || null}
+                            actieStatus={null}
                             mindsetScore={data.coaching?.mindset_score ?? null}
                             systeemScore={data.coaching?.systeem_score ?? null}
                             actieScore={data.coaching?.actie_score ?? null}
@@ -553,6 +555,8 @@ export default function LidPage() {
                                   aandachtspunt={h.aandachtspunt}
                                   agenda={h.agenda}
                                   notitie={h.notitie}
+                                  actie={h.actie}
+                                  actieStatus={h.actie_status}
                                   mindsetScore={h.mindset_score}
                                   systeemScore={h.systeem_score}
                                   actieScore={h.actie_score}

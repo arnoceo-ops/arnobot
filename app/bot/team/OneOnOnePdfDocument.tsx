@@ -8,6 +8,8 @@ interface OneOnOnePdfProps {
   aandachtspunt: string | null
   agenda: string
   notitie: string | null
+  actie: string | null
+  actieStatus: 'ja' | 'nee' | 'skip' | null
   mindsetScore: number | null
   systeemScore: number | null
   actieScore: number | null
@@ -38,6 +40,7 @@ const s = StyleSheet.create({
   notitieBox: { marginTop: 24, borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 16 },
   notitieLabel: { fontSize: 8, color: C.mid, letterSpacing: 2, marginBottom: 6 },
   notitieText: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, fontFamily: 'Helvetica-Oblique' },
+  actieStatus: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', marginTop: 4, marginBottom: 4 },
   footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })
@@ -68,7 +71,10 @@ function formatDatum(datum: string) {
   return new Date(datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export function OneOnOnePdfDocument({ naam, datum, aandachtspunt, agenda, notitie, mindsetScore, systeemScore, actieScore }: OneOnOnePdfProps) {
+const ACTIE_STATUS_LABEL: Record<string, string> = { ja: 'GEDAAN', nee: 'NIET GEDAAN', skip: 'OVERGESLAGEN' }
+const ACTIE_STATUS_COLOR: Record<string, string> = { ja: '#2e7d5b', nee: '#b3401f', skip: C.mid }
+
+export function OneOnOnePdfDocument({ naam, datum, aandachtspunt, agenda, notitie, actie, actieStatus, mindsetScore, systeemScore, actieScore }: OneOnOnePdfProps) {
   const sections = parseAgenda(agenda)
   const scores = [
     { label: 'MINDSET', value: mindsetScore },
@@ -108,9 +114,19 @@ export function OneOnOnePdfDocument({ naam, datum, aandachtspunt, agenda, notiti
             </View>
           )}
 
+          {actie && (
+            <View>
+              <Text style={!aandachtspunt ? s.groupLabelFirst : s.groupLabel}>ACTIE</Text>
+              <Text style={s.paragraph}>{actie}</Text>
+              {actieStatus && (
+                <Text style={[s.actieStatus, { color: ACTIE_STATUS_COLOR[actieStatus] }]}>{ACTIE_STATUS_LABEL[actieStatus]}</Text>
+              )}
+            </View>
+          )}
+
           {sections.map((sec, i) => (
             <View key={i}>
-              {sec.heading ? <Text style={i === 0 && !aandachtspunt ? s.groupLabelFirst : s.groupLabel}>{sec.heading}</Text> : null}
+              {sec.heading ? <Text style={i === 0 && !aandachtspunt && !actie ? s.groupLabelFirst : s.groupLabel}>{sec.heading}</Text> : null}
               {sec.lines.map((line, j) => (
                 <Text key={j} style={s.paragraph}>{line}</Text>
               ))}

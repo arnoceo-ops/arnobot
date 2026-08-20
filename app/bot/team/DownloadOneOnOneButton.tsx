@@ -8,6 +8,8 @@ interface DownloadOneOnOneButtonProps {
   aandachtspunt: string | null
   agenda: string
   notitie: string | null
+  actie: string | null
+  actieStatus: 'ja' | 'nee' | 'skip' | null
   mindsetScore: number | null
   systeemScore: number | null
   actieScore: number | null
