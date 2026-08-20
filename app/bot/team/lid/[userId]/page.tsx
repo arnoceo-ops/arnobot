@@ -40,11 +40,6 @@ interface OneononeLog {
   created_at: string
 }
 
-interface PendingActie {
-  id: string
-  actie: string
-}
-
 interface LidData {
   name: string
   role: string
@@ -137,9 +132,7 @@ export default function LidPage() {
   const [agendaError, setAgendaError] = useState('')
   const [actieInput, setActieInput] = useState('')
 
-  const [pendingActie, setPendingActie] = useState<PendingActie | null>(null)
-  const [pendingActieAnswering, setPendingActieAnswering] = useState(false)
-  const [pendingActieAnswered, setPendingActieAnswered] = useState<'ja' | 'nee' | 'skip' | null>(null)
+  const [actieAnswering, setActieAnswering] = useState(false)
 
   const [saveLoading, setSaveLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -180,8 +173,6 @@ export default function LidPage() {
     setAgenda('')
     setAandachtspunt('')
     setActieInput('')
-    setPendingActie(null)
-    setPendingActieAnswered(null)
     setSaved(false)
     try {
       const res = await fetch('/api/bot/team/1on1', {
@@ -191,7 +182,7 @@ export default function LidPage() {
       })
       const d = await res.json()
       if (!res.ok) setAgendaError(d.error || 'Er ging iets mis')
-      else { setAgenda(d.agenda); setAandachtspunt(d.aandachtspunt || ''); setPendingActie(d.pendingActie || null) }
+      else { setAgenda(d.agenda); setAandachtspunt(d.aandachtspunt || '') }
     } catch {
       setAgendaError('Er ging iets mis')
     } finally {
@@ -199,18 +190,17 @@ export default function LidPage() {
     }
   }
 
-  async function beantwoordActie(status: 'ja' | 'nee' | 'skip') {
-    if (!pendingActie) return
-    setPendingActieAnswering(true)
+  async function beantwoordActie(logId: string, status: 'ja' | 'nee' | 'skip') {
+    setActieAnswering(true)
     try {
       const res = await fetch('/api/bot/team/1on1/note', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logId: pendingActie.id, actie_status: status }),
+        body: JSON.stringify({ logId, actie_status: status }),
       })
-      if (res.ok) setPendingActieAnswered(status)
+      if (res.ok) await loadData()
     } catch {}
-    setPendingActieAnswering(false)
+    setActieAnswering(false)
   }
 
   async function verwijderLid() {
@@ -407,42 +397,8 @@ export default function LidPage() {
                       </p>
                     )}
 
-                    {pendingActie && (
-                      <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 32, marginBottom: 24 }}>
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ACTIE VORIGE KEER</p>
-                        <p style={{ ...body, marginBottom: pendingActieAnswered ? 0 : 20 }}>{pendingActie.actie}</p>
-                        {pendingActieAnswered ? (
-                          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>✓ VERWERKT</p>
-                        ) : (
-                          <div style={{ display: 'flex', gap: 8, maxWidth: 480, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-                            {([
-                              { label: 'GEDAAN', status: 'ja' as const, primary: true },
-                              { label: 'NIET GEDAAN', status: 'nee' as const, primary: false },
-                              { label: 'OVERSLAAN', status: 'skip' as const, primary: false },
-                            ] as const).map(({ label, status, primary }) => (
-                              <button
-                                key={status}
-                                onClick={() => beantwoordActie(status)}
-                                disabled={pendingActieAnswering}
-                                style={{
-                                  flex: 1,
-                                  fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
-                                  padding: '10px 4px', borderRadius: 999, cursor: pendingActieAnswering ? 'not-allowed' : 'pointer',
-                                  background: primary ? '#f59e0b' : 'none',
-                                  color: primary ? '#111827' : '#9ca3af',
-                                  border: primary ? 'none' : '1px solid #374151',
-                                  opacity: pendingActieAnswering ? 0.6 : 1,
-                                  transition: 'all 0.15s',
-                                }}
-                              >{label}</button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
                     {agenda && (
-                      <div style={{ marginTop: pendingActie ? 0 : 32 }}>
+                      <div style={{ marginTop: 32 }}>
                         <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginBottom: 24 }}>
                           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 24 }}>1:1 AGENDA</p>
                           <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(agenda) }} />
@@ -471,7 +427,7 @@ export default function LidPage() {
                                 ✓ OPGESLAGEN
                               </p>
                               <button
-                                onClick={() => { setAgenda(''); setSaved(false); setPendingActie(null); setActieInput('') }}
+                                onClick={() => { setAgenda(''); setSaved(false); setActieInput('') }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
                               >
                                 SLUITEN
@@ -611,6 +567,40 @@ export default function LidPage() {
                       )
                     })}
                   </div>
+
+                  {(() => {
+                    const laatste = data.history[0]
+                    if (!laatste?.actie || laatste.actie_status) return null
+                    return (
+                      <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 12 }}>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>OPENSTAANDE ACTIE</p>
+                        <p style={{ ...body, marginBottom: 20 }}>{laatste.actie}</p>
+                        <div style={{ display: 'flex', gap: 8, maxWidth: 480, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                          {([
+                            { label: 'GEDAAN', status: 'ja' as const, primary: true },
+                            { label: 'NIET GEDAAN', status: 'nee' as const, primary: false },
+                            { label: 'OVERSLAAN', status: 'skip' as const, primary: false },
+                          ] as const).map(({ label, status, primary }) => (
+                            <button
+                              key={status}
+                              onClick={() => beantwoordActie(laatste.id, status)}
+                              disabled={actieAnswering}
+                              style={{
+                                flex: 1,
+                                fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
+                                padding: '10px 4px', borderRadius: 999, cursor: actieAnswering ? 'not-allowed' : 'pointer',
+                                background: primary ? '#f59e0b' : 'none',
+                                color: primary ? '#111827' : '#9ca3af',
+                                border: primary ? 'none' : '1px solid #374151',
+                                opacity: actieAnswering ? 0.6 : 1,
+                                transition: 'all 0.15s',
+                              }}
+                            >{label}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
 

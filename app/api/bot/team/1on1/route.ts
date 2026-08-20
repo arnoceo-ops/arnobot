@@ -173,12 +173,5 @@ ${RULE_NO_INVENTED_DETAILS}`
   const agenda = getText(response.content)
   const aandachtspunt = extractAandachtspunt(agenda)
 
-  // Meest recente 1:1 had een concrete actie die nog niet is opgevolgd: vraag dat eerst
-  // expliciet uit (structureel, niet alleen via de AI-tekst), zodat het ook meetbaar is.
-  const laatste = history[0]
-  const pendingActie = laatste && laatste.actie && !laatste.actie_status
-    ? { id: laatste.id, actie: laatste.actie }
-    : null
-
-  return NextResponse.json({ agenda, aandachtspunt, pendingActie })
+  return NextResponse.json({ agenda, aandachtspunt })
 }
