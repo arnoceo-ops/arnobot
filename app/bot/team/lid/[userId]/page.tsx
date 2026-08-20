@@ -134,9 +134,6 @@ export default function LidPage() {
 
   const [actieAnswering, setActieAnswering] = useState(false)
 
-  const [saveLoading, setSaveLoading] = useState(false)
-  const [saved, setSaved] = useState(false)
-
   const isMobile = useIsMobile()
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
@@ -166,6 +163,20 @@ export default function LidPage() {
       .finally(() => setLoading(false))
   }, [userId])
 
+  // Automatisch opslaan, geen aparte BEWAAR-knop en geen bevestiging: een gegenereerde agenda
+  // mag nooit verloren gaan doordat iemand vergeet op een knop te klikken. Werkt altijd op de
+  // rij van vandaag (save-route upsert't per dag), dus dit overschrijft steeds dezelfde rij.
+  async function slaOp(overrideActie?: string) {
+    try {
+      await fetch('/api/bot/team/1on1/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '', actie: (overrideActie ?? actieInput).trim() }),
+      })
+      await loadData()
+    } catch {}
+  }
+
   async function genereerAgenda() {
     if (!data) return
     setAgendaLoading(true)
@@ -173,7 +184,6 @@ export default function LidPage() {
     setAgenda('')
     setAandachtspunt('')
     setActieInput('')
-    setSaved(false)
     try {
       const res = await fetch('/api/bot/team/1on1', {
         method: 'POST',
@@ -181,14 +191,30 @@ export default function LidPage() {
         body: JSON.stringify({ targetUserId: userId, name: data.name }),
       })
       const d = await res.json()
-      if (!res.ok) setAgendaError(d.error || 'Er ging iets mis')
-      else { setAgenda(d.agenda); setAandachtspunt(d.aandachtspunt || '') }
+      if (!res.ok) { setAgendaError(d.error || 'Er ging iets mis'); return }
+      setAgenda(d.agenda)
+      setAandachtspunt(d.aandachtspunt || '')
+      await fetch('/api/bot/team/1on1/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: userId, aandachtspunt: d.aandachtspunt || '', agenda: d.agenda, notitie: '', actie: '' }),
+      })
+      await loadData()
     } catch {
       setAgendaError('Er ging iets mis')
     } finally {
       setAgendaLoading(false)
     }
   }
+
+  // Debounced auto-save zodra de manager een actie typt, zodat ook dat nooit verloren gaat
+  // als hij wegnavigeert zonder iets aan te klikken.
+  useEffect(() => {
+    if (!agenda) return
+    const timer = setTimeout(() => { slaOp() }, 800)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actieInput])
 
   async function beantwoordActie(logId: string, status: 'ja' | 'nee' | 'skip') {
     setActieAnswering(true)
@@ -219,28 +245,6 @@ export default function LidPage() {
       setVerwijderBevestig(false)
     } finally {
       setVerwijderLoading(false)
-    }
-  }
-
-  async function bewaar1on1() {
-    if (!agenda) return
-    setSaveLoading(true)
-    try {
-      const res = await fetch('/api/bot/team/1on1/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: userId, aandachtspunt, agenda, notitie: '', actie: actieInput.trim() }),
-      })
-      const d = await res.json()
-      if (!res.ok) setAgendaError(d.error || 'Opslaan mislukt')
-      else {
-        setSaved(true)
-        loadData()
-      }
-    } catch {
-      setAgendaError('Opslaan mislukt')
-    } finally {
-      setSaveLoading(false)
     }
   }
 
@@ -409,28 +413,17 @@ export default function LidPage() {
                             placeholder="Concrete afspraak uit dit gesprek..."
                             value={actieInput}
                             onChange={e => setActieInput(e.target.value)}
-                            disabled={saved}
+                            onBlur={() => slaOp()}
                           />
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                          {!saved ? (
-                            <button className="btn-save" onClick={bewaar1on1} disabled={saveLoading}>
-                              {saveLoading ? 'OPSLAAN...' : 'BEWAAR DEZE 1:1'}
-                            </button>
-                          ) : (
-                            <>
-                              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#44cc88' }}>
-                                ✓ OPGESLAGEN
-                              </p>
-                              <button
-                                onClick={() => { setAgenda(''); setSaved(false); setActieInput('') }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
-                              >
-                                SLUITEN
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={() => { slaOp(); setAgenda(''); setActieInput('') }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', padding: 0 }}
+                          >
+                            SLUITEN
+                          </button>
                           <DownloadOneOnOneButton
                             size="large"
                             naam={data.name}
