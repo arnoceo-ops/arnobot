@@ -286,7 +286,7 @@ export default function LidPage() {
         .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
         .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
         .pdf-btn:disabled { opacity:0.4; cursor:not-allowed; }
-        .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:15px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:vertical; min-height:80px; line-height:1.7; transition:border-color 0.15s; }
+        .notitie-input { background:#1f2937; color:#f1f5f9; border:1.5px solid #374151; border-radius:4px; font-family:'Space Mono',monospace; font-size:15px; font-weight:400; padding:12px 16px; width:100%; outline:none; resize:none; overflow:hidden; min-height:80px; line-height:1.7; transition:border-color 0.15s; field-sizing: content; }
         .notitie-input:focus { border-color:#f59e0b; }
         .notitie-input::placeholder { color:#4b5563; }
         .btn-note { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:6px 16px; background:none; border:1px solid #374151; color:#6b7280; border-radius:999px; cursor:pointer; transition:all 0.15s; }
@@ -411,7 +411,12 @@ export default function LidPage() {
                             className="notitie-input"
                             placeholder="Concrete afspraak uit dit gesprek..."
                             value={actieInput}
-                            onChange={e => setActieInput(e.target.value)}
+                            rows={1}
+                            onChange={e => {
+                              setActieInput(e.target.value)
+                              e.target.style.height = '0px'
+                              e.target.style.height = e.target.scrollHeight + 'px'
+                            }}
                             onBlur={() => slaOp()}
                           />
                         </div>
@@ -508,7 +513,12 @@ export default function LidPage() {
                                 className="notitie-input"
                                 placeholder="Notitie over het gesprek..."
                                 value={noteInput}
-                                onChange={e => setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))}
+                                rows={1}
+                                onChange={e => {
+                                  setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))
+                                  e.target.style.height = '0px'
+                                  e.target.style.height = e.target.scrollHeight + 'px'
+                                }}
                               />
                               <div style={{ display: 'flex', gap: 8 }}>
                                 <button
