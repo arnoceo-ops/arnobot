@@ -544,6 +544,8 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 
 **Admin-authenticatie:** Aparte cookie (`arnobot_admin`). Login via `/bot/admin/login` met het `ARNOBOT_ADMIN_KEY` environment variable als wachtwoord. Niet via Clerk.
 
+**Bewuste keuze, geen wijziging gepland:** drie interne oppervlaktes (`arnobot_admin`, `arnobot_kosten`, `arnobot_sd_verdien`) draaien elk op een eigen wachtwoord-cookie in plaats van gecentraliseerde RBAC binnen Clerk. Dit is geen openstaand gebrek: bij het huidige aantal beheerders (Arno + een paar sales agents) voegt centrale RBAC alleen coördinatie-overhead toe zonder reëel veiligheidsvoordeel. Pas heroverwegen als het aantal beheerders/rollen wezenlijk groeit.
+
 **API-route beveiliging:** Alle `/api/bot/*` routes roepen `auth()` aan (Clerk server-side). Crons controleren `Authorization: Bearer {CRON_SECRET}`.
 
 **Openstaand:** `proxy.ts` gebruikt nog `createRouteMatcher()` (Clerk) voor `isProtectedBot`/`isAdminRoute`. Sinds `@clerk/nextjs` 7.5.14 is dit gedeprecate ten gunste van `auth.protect()` per route. Geen breaking change, geen aangekondigde verwijderdatum, maar wel migreren zodra opgepakt.
@@ -798,7 +800,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Doel:** Ops-notificaties (nieuwe gebruikers, cron-failures, CSP-schendingen, feedback).
 **Setup:** Een Telegram-bot (`TELEGRAM_BOT_TOKEN`) stuurt berichten naar een chat (`TELEGRAM_CHAT_ID`). Beheren via @BotFather.
 
-**Geen payment-provider geïntegreerd:** `/api/admin/payment` zet alleen `approved_users.paid_at`/`is_active`, betaling zelf loopt buiten deze codebase (handmatig/extern).
+**Geen payment-provider geïntegreerd:** bewust pending, zie "Bekende beperkingen" punt 11 voor het triggercriterium.
 
 ---
 
@@ -846,8 +848,8 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 ## Bekende beperkingen en openstaande punten
 
 1. **Sonnet 5 hoofdchat:** Teruggedraaid naar Sonnet 4.6 wegens thinking-mode truncatie. Sonnet 5's prijs is inmiddels permanent verlaagd, wat een hercheck aantrekkelijker maakt — check eerst de actuele livegang-datum bij Arno, test op staging.
-2. **RLS Supabase:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend). Een echte multi-tenant RLS-implementatie met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is een apart, groter traject, bewust nog niet opgepakt.
-3. **Embedding-modellen verouderd:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated. Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel, bewust apart gepland, niet en passant meenemen.
+2. **RLS Supabase — bewust pending:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend, geen database-afgedwongen garantie). **Triggercriterium om alsnog op te pakken:** een tweede developer die routinematig gebruikersdata-routes wijzigt (het huidige risico is grotendeels beheersbaar zolang Arno alle wijzigingen zelf overziet), een compliance-eis van een enterprise-klant, of een keer dat de CI-check daadwerkelijk iets vindt dat pas laat wordt opgemerkt. Echte multi-tenant RLS met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is dan een apart traject van meerdere dagen, raakt ~40 routes.
+3. **Embedding-modellen verouderd — bewust pending:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated (nog geen aangekondigde einddatum). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel zonder dat de live zoekfunctie breekt (dual-write of versiegescheiden migratie). **Triggercriterium:** Voyage kondigt een harde uitfaseerdatum aan voor een van beide modellen, of de kwaliteitswinst van voyage-4 wordt de moeite waard bevonden bij een gerichte test.
 4. **Share intrekken:** Gebouwd maar bewust uitgesteld. Kleine kans op probleem bij huidige doelgroep.
 5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (100 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.
 6. **Clerk `createRouteMatcher()`:** gedeprecate sinds 7.5.14 t.g.v. `auth.protect()` per route, nog niet gemigreerd in `proxy.ts`. Geen harde deadline.
@@ -855,3 +857,4 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 8. **Anthropic API-key-rotatie:** harde deadline 6 januari 2027 voor zowel arnobot als salescanvas-app.
 9. **`/api/admin/export` vs `/api/admin/export-csv`:** opgelost (2026-08-21). Beide routes blijven bestaan (verschillend gebruik: JSON voor client-side PDF-opbouw vs. directe CSV-download), maar de gedupliceerde auth/fetch-logica is samengevoegd in `lib/adminExport.ts`.
 10. **`/api/test/email-preview`:** geen actie nodig. Heeft wel een auth-check en is een bewust behouden, admin-only diagnosetool (2026-08-12).
+11. **Geen betalingsprovider-koppeling — bewust pending:** `/api/admin/payment` zet alleen `paid_at`/`is_active`, facturatie zelf loopt volledig handmatig buiten deze codebase. Geen technisch gebrek maar een bewuste procesconditie bij de huidige schaal. **Triggercriterium:** zelfde 50-actieve-gebruikers-drempel als de overige Pro-upgrade-triggers hierboven (punt 5) — vanaf dat punt weegt geautomatiseerde facturatie (Stripe-webhooks) waarschijnlijk op tegen de bouwkosten. Geen handmatige toggle, gewoon heroverwegen zodra die drempel in zicht komt.
