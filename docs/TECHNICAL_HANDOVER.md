@@ -552,7 +552,8 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 
 ## Beveiliging
 
-- **Row Level Security (RLS):** aan op alle ~41 tabellen (sinds 2026-08-20, geen policies). Veilig zolang de app uitsluitend de service-role-key gebruikt (die RLS altijd omzeilt) — dat is vandaag de dag overal het geval, elke route gebruikt de service-role-key rechtstreeks, niet de Clerk-JWT-Supabase-client die wel in `lib/supabase.ts` klaarstaat maar nergens geïmporteerd wordt.
+- **Row Level Security (RLS):** aan op alle ~41 tabellen (sinds 2026-08-20, geen policies). Veilig als achtervang tegen de publieke anon-key, maar géén echte multi-tenant isolatie: de app gebruikt overal de service-role-key (die RLS altijd omzeilt), niet de Clerk-JWT-Supabase-client die wel in `lib/supabase.ts` klaarstaat maar nergens geïmporteerd wordt. Isolatie tussen gebruikers hangt daardoor volledig af van een `.eq('user_id', userId)`-filter per route, zonder database-afgedwongen vangnet — precies het risico dat de check hieronder afdekt.
+- **Ontbrekende-eigenaarschapsfilter-check:** `scripts/check-missing-user-filter.mjs` (sinds 2026-08-21, niet-blokkerende CI-stap). Scant `app/api/**`, `app/bot/**` en `lib/**` op `.from()`-aanroepen op gebruikersdata-tabellen zonder `.eq()`/`.in()` op `user_id`/`manager_id`/`member_id` binnen dezelfde functie (admin/cron/login-routes zijn bewust uitgesloten, die queryen terecht gebruikersoverstijgend). Statische tekstanalyse, geen dataflow-check — bevestigde legitieme uitzonderingen staan in `KNOWN_SAFE_QUERIES` in het script zelf.
 - **CSP (Content Security Policy):** Gegenereerd per request met nonce in `proxy.ts`. Blokkeert inline scripts zonder nonce. PostHog- en Sentry-verkeer lopen via same-origin proxy's (`/site-relay`, `/monitoring`), dus geen externe host-uitzonderingen nodig in de CSP.
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`.
 - **Rate limiting:** Upstash Redis via `@upstash/ratelimit`. Actief op AI-routes en losse voice-routes.
@@ -561,6 +562,25 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 - **Disposable e-mails:** `disposable-email-domains` package filtert wegwerpmail bij aanmelding.
 - **CSP-rapportage:** Schendingen worden gelogd via `/api/csp-report` en `arnobot_csp_violations`.
 - **Webhook-verificatie:** Calendly-webhook verifieert `Calendly-Webhook-Signature` (HMAC-SHA256, 5 minuten replay-venster).
+
+---
+
+## Testen en CI
+
+Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet: iedere job blokkeert de merge, zie hieronder). Wekelijks (maandag 08:00 UTC) draait een uitgebreidere variant.
+
+| Job | Wanneer | Blokkeert? | Doel |
+|---|---|---|---|
+| npm audit | elke push/PR + wekelijks | nee (alleen `--audit-level=critical`) | Kritieke runtime-kwetsbaarheden |
+| TypeScript typecheck | elke push/PR | ja (impliciet: Vercel build faalt anders ook) | `npx tsc --noEmit` |
+| Vitest | elke push/PR | ja | Regressietests kritieke paden (streepjes-sanitizer, systeemprompt-opbouw, RAG-dedupe). Geen externe aanroepen, Supabase/Voyage gemockt |
+| Playwright E2E (UI, gemockte AI) | elke push/PR | ja | Golden path + scenario's + a11y, `/api/chat` volledig gemockt op browserniveau |
+| Playwright E2E (echte backend) + contracttests | alleen wekelijks | n.v.t. | Niveau-3 met echte Supabase/Upstash-keten, plus contracttests met echte Anthropic/Voyage-aanroepen (`RUN_CONTRACT_TESTS=true`) |
+| ESLint | elke push/PR | nee | 66 bestaande lint-fouten in oudere code (gemeten 2026-07-10), opruimen is een apart project |
+| Wees-routes-check | elke push/PR | nee | `scripts/check-orphan-routes.mjs`, zie CLAUDE.md sectie 1 |
+| Ontbrekende-eigenaarschapsfilter-check | elke push/PR | nee | `scripts/check-missing-user-filter.mjs`, zie sectie Beveiliging hierboven |
+
+**Lokaal draaien:** `npx tsc --noEmit`, `npm test` (Vitest), `npx playwright test` (vereist E2E_CLERK_PUBLISHABLE_KEY/E2E_CLERK_SECRET_KEY van een Clerk development-instance, zie `e2e/auth.setup.ts`).
 
 ---
 
@@ -826,7 +846,7 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 ## Bekende beperkingen en openstaande punten
 
 1. **Sonnet 5 hoofdchat:** Teruggedraaid naar Sonnet 4.6 wegens thinking-mode truncatie. Sonnet 5's prijs is inmiddels permanent verlaagd, wat een hercheck aantrekkelijker maakt — check eerst de actuele livegang-datum bij Arno, test op staging.
-2. **RLS Supabase:** Ingeschakeld op alle ~41 tabellen (2026-08-20). Geen policies nodig zolang alle routes de service-role-key blijven gebruiken.
+2. **RLS Supabase:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend). Een echte multi-tenant RLS-implementatie met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is een apart, groter traject, bewust nog niet opgepakt.
 3. **Embedding-modellen verouderd:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated. Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel, bewust apart gepland, niet en passant meenemen.
 4. **Share intrekken:** Gebouwd maar bewust uitgesteld. Kleine kans op probleem bij huidige doelgroep.
 5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (100 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.

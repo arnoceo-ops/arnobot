@@ -222,3 +222,26 @@ jobs:
         # sinds juni 2026 ongebruikt bleek en pas bij toeval werd gevonden. Output blijft
         # zichtbaar in de Actions-log; bevestigde false positives toevoegen aan
         # KNOWN_MANUAL_ROUTES in het script zelf, niet hier onderdrukken.
+
+  missing-user-filter:
+    name: Ontbrekende eigenaarschapsfilters (informatief, blokkeert niet)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Controleer Supabase-queries op gebruikersdata zonder .eq('user_id', ...)
+        run: node scripts/check-missing-user-filter.mjs
+        continue-on-error: true
+        # Blokkeert bewust niet: statische tekstanalyse op functieniveau, geen echte
+        # dataflow-check, dus false positives zijn mogelijk. Toegevoegd 2026-08-21 als
+        # geautomatiseerde achtervang voor de RLS-zonder-policies-architectuur (RLS staat
+        # aan maar wordt overal omzeild door de service-role-key, dus isolatie tussen
+        # gebruikers hangt nu volledig af van code-review-discipline op .eq('user_id', ...)
+        # per route). Bevestigde false positives toevoegen aan KNOWN_SAFE_QUERIES in het
+        # script zelf, niet hier onderdrukken.
