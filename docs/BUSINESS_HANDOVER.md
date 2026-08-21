@@ -5,7 +5,7 @@ Dit document is bedoeld voor iemand die ArnoBot moet overnemen of draaiende moet
 Secties gemarkeerd met `[ARNO: ...]` zijn door Arno nog in te vullen.
 
 <!-- AUTO:UPDATED -->
-Laatste automatische update: 2026-08-11
+Laatste automatische update: 2026-08-21
 <!-- /AUTO:UPDATED -->
 
 ---
@@ -61,8 +61,9 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 - Credit werkt als korting op de volgende verlengingsbetaling, niet als cashback
 
 **Betalingsverwerking:**
-- [ARNO: welke betaalprovider gebruik je? Stripe? Handmatige factuur? Vul in inclusief hoe je een betaling registreert in het systeem]
+- **Bevestigd via codebase-onderzoek:** geen enkele betaalprovider is geïntegreerd (geen Stripe/Mollie-SDK, geen betaal-webhook). Betaling verloopt dus volledig extern aan de app. [ARNO: vul aan welk kanaal je zelf gebruikt om te innen, bijv. handmatige overschrijving, een los factuurprogramma]
 - Betaling registreren in het systeem: ga naar `/bot/admin/gebruikers` en gebruik de "Betaling registreren" functie, of roep `/api/admin/payment` aan
+- **Bewust pending:** geautomatiseerde betalingsverwerking bouwen binnen 30 dagen na de commerciële livegang (Arno's eigen toezegging 2026-08-21). Zie `docs/TECHNICAL_HANDOVER.md`, "Bekende beperkingen" punt 11.
 
 ---
 
@@ -84,8 +85,9 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | Sentry | Foutmonitoring | [ARNO: vul in] | sentry.io |
 | PostHog | Bezoekersanalyse (marketingpagina's) | [ARNO: vul in] | posthog.com |
 | Calendly | Boeking gesprek met Arno | [ARNO: vul in] | calendly.com |
+| Instatus | Publieke statuspagina (uptime/incidenten) | [ARNO: vul in, waarschijnlijk gratis tier] | instatus.com |
 | VisualPing | Monitoring leverancierspagina's (bijv. DPA-wijzigingen) | [ARNO: vul in] | visualping.io |
-| Cloudflare/DNS | Domeinnaam arno.bot | [ARNO: vul in + registrar] | [ARNO: vul in] |
+| Porkbun | Domeinregistratie arno.bot | ~$52/jaar (bron: Abacus-kostencalculator, `lib/kostenTarieven.ts`) | porkbun.com |
 | GitHub | Code-opslag | [ARNO: vul in of gratis] | github.com |
 | Telegram | Admin-notificaties | Gratis | — |
 
@@ -113,9 +115,10 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | Sentry | [ARNO: vul in] | sentry.io |
 | PostHog | [ARNO: vul in] | posthog.com |
 | Calendly | [ARNO: vul in] | calendly.com |
+| Instatus | [ARNO: vul in] | instatus.com |
 | VisualPing | [ARNO: vul in] | visualping.io |
 | GitHub | [ARNO: vul in] | github.com |
-| Cloudflare/DNS | [ARNO: vul in] | cloudflare.com of andere registrar |
+| Porkbun (domeinregistrar) | [ARNO: vul in] | porkbun.com |
 | Telegram | [ARNO: vul in] | t.me |
 | Admin paneel ArnoBot | [ARNO: vul in — het wachtwoord staat als ARNOBOT_ADMIN_KEY in Vercel] | arno.bot/bot/admin |
 
@@ -163,7 +166,7 @@ Downloadbaar op https://arno.bot/api/beveiliging-pdf. Beschrijft de technische b
 ### AVG / GDPR
 - Gebruikers kunnen hun data opvragen en laten verwijderen via het account-instellingenscherm (`/bot/account`)
 - Verwijderverzoeken worden verwerkt via de "Account verwijderen" functie — dit wist alle gesprekken, analyses en het gebruikersrecord
-- [ARNO: is er een verwerkersovereenkomst met Anthropic, Supabase en Clerk? Vul in als dit geregeld is]
+- [ARNO: is er een verwerkersovereenkomst (DPA) met alle sub-verwerkers? Volledige huidige lijst (zie ook `app/privacy/page.tsx` en `public/arnobot-beveiliging.pdf`): Anthropic, Supabase, Clerk, Voyage AI, OpenAI (spraak), ElevenLabs (Voice), Resend, Upstash, Sentry, PostHog, Vercel. Vul in per leverancier of dit geregeld is]
 
 ### Vestiging en belastingen
 - [ARNO: vul in: welk rechtsgebied, welk btw-nummer, hoe worden abonnementen gefactureerd]
@@ -188,7 +191,7 @@ Downloadbaar op https://arno.bot/api/beveiliging-pdf. Beschrijft de technische b
 
 ### Stap 1: Bepaal wat er uitvalt
 
-- **Hele site onbereikbaar:** Controleer Vercel status (https://www.vercel-status.com) en Cloudflare/DNS
+- **Hele site onbereikbaar:** Controleer Vercel status (https://www.vercel-status.com) en DNS bij Porkbun (domeinregistrar, geen Cloudflare in gebruik voor arno.bot)
 - **Inloggen werkt niet:** Controleer Clerk status (https://clerk.statuspage.io)
 - **Database-errors:** Controleer Supabase status (https://status.supabase.com)
 - **AI-antwoorden komen niet:** Controleer Anthropic status (https://status.anthropic.com)
@@ -244,4 +247,9 @@ Noteer hier grote wijzigingen die niet uit de code blijken: prijsverhogingen, ni
 | 2026-07 | Teammodule (fase 1) live: 1:1-agenda, spotlight, scores |
 | 2026-07 | WhatsApp-support toegevoegd aan alle fout-states |
 | 2026-07 | 1:1-agenda overgeschakeld van Sonnet 5 naar Haiku wegens timeout-probleem |
+| 2026-07 | Prijzen hernoemd naar Basic/Pro/Team (was Premium/Command), live op `/prijzen` |
+| 2026-07 | ArnoBot Voice gelanceerd (ElevenLabs tekst-naar-spraak, premium-feature voor Pro/Team) |
+| 2026-08 | Sales Development-programma gestart: twee agents benaderen sales teams outbound via persoonlijke links, gratis 30-dagen teamtrial |
+| 2026-08 | De Spiegel + zelfcoaching-module toegevoegd aan Team (teambrede thema-herkenning + zelfcoaching voor de teambaas) |
+| 2026-08-20 | **Beveiligingsincident gevonden en gefixt:** Row Level Security stond op vrijwel alle databasetabellen nog uit ondanks een eerdere notitie dat dit al geregeld was. Geen aanwijzing gevonden dat dit ooit misbruikt is. Direct gefixt. Zie `docs/TECHNICAL_HANDOVER.md` voor de volledige technische toedracht |
 | [ARNO: voeg toe] | Livegang arno.bot (oorspronkelijk gepland ~1 augustus 2026, uitgesteld met 1-2 maanden, check bij Arno de actuele datum vóór je hierop bouwt) |
