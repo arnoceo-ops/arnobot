@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
-
-type LogRow = {
-  id: string
-  created_at: string
-  question: string
-  answer: string
-  ip: string
-  session_id: string
-  user_id?: string
-}
+import { isAdminAuthorized, fetchLogsInRange, type AdminLogRow } from '@/lib/adminExport'
 
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!(await isAdminAuthorized())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -25,31 +12,9 @@ export async function GET(request: NextRequest) {
   const userFilter = searchParams.get('user') || ''
   const sort = searchParams.get('sort') || 'date_desc'
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const { rows, naamMap } = await fetchLogsInRange(from, to, 2000)
 
-  const [{ data }, { data: alleGebruikers }] = await Promise.all([
-    supabase
-      .from('arnobot_rds_logs')
-      .select('*')
-      .gte('created_at', `${from}T00:00:00`)
-      .lte('created_at', `${to}T23:59:59`)
-      .order('created_at', { ascending: true })
-      .limit(2000),
-    supabase
-      .from('approved_users')
-      .select('user_id, voornaam, achternaam'),
-  ])
-
-  const naamMap: Record<string, string> = {}
-  for (const u of alleGebruikers ?? []) {
-    naamMap[u.user_id] = [u.voornaam, u.achternaam].filter(Boolean).join(' ')
-  }
-
-  const rows: LogRow[] = data || []
-  const sessions: Record<string, LogRow[]> = {}
+  const sessions: Record<string, AdminLogRow[]> = {}
   for (const row of rows) {
     const key = row.session_id || row.ip || 'onbekend'
     if (!sessions[key]) sessions[key] = []

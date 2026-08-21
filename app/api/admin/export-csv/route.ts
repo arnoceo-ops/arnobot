@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
+import { NextRequest } from 'next/server'
+import { isAdminAuthorized, fetchLogsInRange } from '@/lib/adminExport'
 
 function escapeCSV(val: string | null | undefined): string {
   if (!val) return ''
@@ -9,9 +8,7 @@ function escapeCSV(val: string | null | undefined): string {
 }
 
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!(await isAdminAuthorized())) {
     return new Response('Unauthorized', { status: 401 })
   }
 
@@ -20,31 +17,8 @@ export async function GET(request: NextRequest) {
   const to = searchParams.get('to') || ''
   const userFilter = searchParams.get('user') || ''
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  const [{ data }, { data: alleGebruikers }] = await Promise.all([
-    supabase
-      .from('arnobot_rds_logs')
-      .select('id, created_at, session_id, user_id, ip, question, answer')
-      .gte('created_at', `${from}T00:00:00`)
-      .lte('created_at', `${to}T23:59:59`)
-      .order('created_at', { ascending: true })
-      .limit(100000),
-    supabase
-      .from('approved_users')
-      .select('user_id, voornaam, achternaam'),
-  ])
-
-  const naamMap: Record<string, string> = {}
-  for (const u of alleGebruikers ?? []) {
-    naamMap[u.user_id] = [u.voornaam, u.achternaam].filter(Boolean).join(' ')
-  }
-
-  const rows = data || []
-  const filtered = userFilter ? rows.filter((r: { user_id?: string }) => r.user_id === userFilter) : rows
+  const { rows, naamMap } = await fetchLogsInRange(from, to, 100000)
+  const filtered = userFilter ? rows.filter(r => r.user_id === userFilter) : rows
 
   const lines: string[] = [
     ['datum', 'tijd', 'sessie_id', 'gebruiker', 'vraag', 'antwoord'].join(','),

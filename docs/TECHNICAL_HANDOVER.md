@@ -294,8 +294,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
 | `/api/admin/sd-agent` | Sales-development-agent + attributiemethode koppelen |
-| `/api/admin/export` | Logs exporteren als JSON (limiet 2000, sorteerbaar) |
-| `/api/admin/export-csv` | Logs exporteren als CSV (limiet 100.000) — overlapt functioneel met `/api/admin/export`, kandidaat om samen te voegen |
+| `/api/admin/export` | Logs exporteren als JSON (limiet 2000, sorteerbaar, gebruikt door `DownloadPdfButton.tsx`) |
+| `/api/admin/export-csv` | Logs exporteren als CSV (limiet 100.000, directe downloadlink). Gedeelde auth/fetch-logica met `/api/admin/export` zit sinds 2026-08-21 in `lib/adminExport.ts`; blijven twee routes omdat het gedrag verschilt (JSON voor client-side PDF-opbouw vs. directe CSV-file-download) |
 | `/api/admin/test-email` | E-mailtemplates + cron-mails handmatig testen/versturen |
 | `/api/admin/test-telegram` | Telegram-bot testbericht sturen |
 | `/api/admin/analyse-evaluaties` | AI-analyse over ingevulde evaluatieformulieren |
@@ -310,7 +310,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/voice-test/chat` | Voice-antwoord-tekst genereren voor handmatige stemtest |
 | `/api/admin/voice-test/tts` | ElevenLabs TTS-streaming voor handmatige stemtest |
 | `/api/bot/set-linkedin` | LinkedIn-url van gebruiker zetten (admin-cookie-auth ondanks `/bot`-pad) |
-| `/api/test/email-preview` | **Let op:** dev/test-only tool, stuurt alle templates naar Arno's eigen adres, heeft geen enkele auth-check |
+| `/api/test/email-preview` | Dev/test-only tool, stuurt alle templates naar Arno's eigen adres. Heeft wel een auth-check (`Bearer {CRON_SECRET}`), bewust op 2026-08-12 goedgekeurd als herbruikbare, admin-only diagnosetool (handmatig via curl/Postman, geen UI-knop, zie `scripts/check-orphan-routes.mjs`) |
 
 ### Sales-development
 
@@ -833,5 +833,5 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 6. **Clerk `createRouteMatcher()`:** gedeprecate sinds 7.5.14 t.g.v. `auth.protect()` per route, nog niet gemigreerd in `proxy.ts`. Geen harde deadline.
 7. **Clerk TLS-cipher-deadline:** 18 januari 2027, vermoedelijk geen actie nodig, vlak vóór de deadline nog een keer bevestigen.
 8. **Anthropic API-key-rotatie:** harde deadline 6 januari 2027 voor zowel arnobot als salescanvas-app.
-9. **`/api/admin/export` vs `/api/admin/export-csv`:** overlappende functionaliteit (zelfde databronnen, ander uitvoerformaat/limiet). Kandidaat om samen te voegen tot één parametriseerbare route.
-10. **`/api/test/email-preview`:** dev/test-only tool zonder enige auth-check. Overweeg te verwijderen of achter admin-auth te zetten.
+9. **`/api/admin/export` vs `/api/admin/export-csv`:** opgelost (2026-08-21). Beide routes blijven bestaan (verschillend gebruik: JSON voor client-side PDF-opbouw vs. directe CSV-download), maar de gedupliceerde auth/fetch-logica is samengevoegd in `lib/adminExport.ts`.
+10. **`/api/test/email-preview`:** geen actie nodig. Heeft wel een auth-check en is een bewust behouden, admin-only diagnosetool (2026-08-12).
