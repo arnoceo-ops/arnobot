@@ -8,6 +8,7 @@ import { getText } from '@/lib/ai'
 import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { THEMA_LABELS, parseThemas } from '@/lib/themas'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
 const supabase = createClient(
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
   let summary = ''
   let feiten = ''
   let uitdaging = ''
+  let themas: string[] = []
 
   const callSummaryModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -102,6 +104,15 @@ ${RULE_NEVER_BREAK_CHARACTER}`,
       content: `Extraheer de feiten uit dit gesprek:\n\n${conversationText}`
     }]
   })
+  const callThemasModel = () => anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 40,
+    system: `Classificeer dit salesgesprek naar maximaal twee thema's uit deze vaste lijst, niets anders: ${THEMA_LABELS.join(', ')}. Kies alleen thema's die daadwerkelijk prominent aan bod kwamen, niet oppervlakkig genoemd. Geef alleen een JSON-array van exact deze labels terug, bijvoorbeeld ["CLOSING","MINDSET"], of een lege array als niets duidelijk past. Geen andere tekst, geen uitleg.`,
+    messages: [{
+      role: 'user',
+      content: conversationText.slice(0, 8000)
+    }]
+  })
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 150,
@@ -121,12 +132,17 @@ ${RULE_NO_INVENTED_DETAILS}`,
   })
 
   try {
-    const [summaryRes, feitenRes, uitdagingRes] = await Promise.all([
-      callSummaryModel(), callFeitenModel(), callUitdagingModel(),
+    // Themas zijn een supplementair signaal (De Spiegel, punt 2A), geen kritiek pad zoals
+    // summary/feiten/uitdaging: .catch(() => null) voorkomt dat een falende classificatie de
+    // hele Promise.all laat rejecten en de rest van de sessie-opslag blokkeert.
+    const themasPromise = callThemasModel().catch(() => null)
+    const [summaryRes, feitenRes, uitdagingRes, themasRes] = await Promise.all([
+      callSummaryModel(), callFeitenModel(), callUitdagingModel(), themasPromise,
     ])
     summary = getText(summaryRes.content)
     feiten = getText(feitenRes.content)
     uitdaging = (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '')
+    if (themasRes) themas = parseThemas(getText(themasRes.content, '[]'))
 
     if (!summary) {
       console.error(`[session-end] lege summary, retry (sessie ${sessionId})`)
@@ -209,6 +225,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
       uitdaging: uitdaging || null,
       message_count: messageCount,
       blog_suggestions: blogSuggestions,
+      themas: themas.length ? themas : null,
     }, { onConflict: 'session_id' })
 
   if (upsertError) {
