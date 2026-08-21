@@ -95,3 +95,41 @@ export async function computeSpiegelSignaal(memberIds: string[]): Promise<Spiege
     ranked: ranked.slice(0, 5).map(r => ({ thema: r.thema, leden: r.leden })),
   }
 }
+
+const MAANDNAMEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+
+// Punt 2B "De Tijdlijn", herzien ontwerp (2026-08-21, zie docs/TEAM_PLAN.md): geen eigen
+// weergaveblok, alleen extra context voor bestaande AI-syntheses (Team Spotlight) die het
+// patroon kunnen duiden, in plaats van het rauw te tonen. Live berekend uit dezelfde
+// arnobot_blog_sessions.themas-data als computeSpiegelSignaal, gegroepeerd op kalendermaand
+// i.p.v. een lopend venster.
+export async function computeThemaMaandTrend(memberIds: string[]): Promise<string> {
+  if (memberIds.length === 0) return ''
+
+  const { data: sessions } = await supabase
+    .from('arnobot_blog_sessions')
+    .select('created_at, themas')
+    .in('user_id', memberIds)
+    .not('themas', 'is', null)
+    .order('created_at', { ascending: true })
+
+  const byMonth = new Map<string, Map<string, number>>()
+  for (const s of sessions ?? []) {
+    if (!s.themas || s.themas.length === 0) continue
+    const month = s.created_at.slice(0, 7)
+    if (!byMonth.has(month)) byMonth.set(month, new Map())
+    const counts = byMonth.get(month)!
+    for (const thema of s.themas) counts.set(thema, (counts.get(thema) ?? 0) + 1)
+  }
+
+  const regels = Array.from(byMonth.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([month, counts]) => {
+      const dominant = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0]
+      const label = `${MAANDNAMEN[parseInt(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`
+      return `${label}: dominant thema ${dominant ?? 'onbekend'}`
+    })
+
+  return regels.length >= 2 ? regels.join('\n') : ''
+}

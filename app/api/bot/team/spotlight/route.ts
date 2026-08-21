@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
+import { computeThemaMaandTrend } from '@/lib/spiegel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -125,6 +126,11 @@ export async function POST() {
 
   const trendContext = trendRegels ? `\n\nTEAMSCORES OVER TIJD (gemiddeld per maand):\n${trendRegels}` : ''
 
+  // Punt 2B "De Tijdlijn": maandelijkse thema-geschiedenis als extra duidingscontext, geen
+  // los weergaveblok. Zie docs/TEAM_PLAN.md voor de volledige afweging.
+  const themaTrend = await computeThemaMaandTrend(memberIds)
+  const themaTrendContext = themaTrend ? `\n\nDOMINANT GESPREKSTHEMA PER MAAND:\n${themaTrend}` : ''
+
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 700,
@@ -144,6 +150,8 @@ Wat doet dit team collectief goed? Waar zit echte potentie? Wees specifiek.
 
 GROEIKANS
 Één patroon dat het team collectief terughoudt. Benoem het helder, zonder te veroordelen.
+
+Als er een DOMINANT GESPREKSTHEMA PER MAAND-lijst is meegegeven: duid die beweging expliciet ergens in KRACHT VAN HET TEAM of GROEIKANS. Blijft hetzelfde thema meerdere maanden dominant, benoem dan of dat wijst op verdieping (positief) of op vastzitten (aandachtspunt), op basis van de rest van de data. Verschuift het thema van maand tot maand, benoem dan of dat een natuurlijke voortgang is (bijv. van prospecting naar bezwaarhantering naar closing past bij een groep die door de pijplijn beweegt) of een teken van afleiding. Nooit alleen de thema's opsommen zonder duiding, dat heeft de manager al gezien.
 
 ARNO'S ADVIES
 Één concrete actie die de manager kan inzetten. Praktisch, uitvoerbaar, direct.
@@ -166,7 +174,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
       content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van de gesprekssamenvatingen en scoreontwikkeling van zijn teamleden.
 
 GESPREKKEN:
-${teamData}${trendContext}`
+${teamData}${trendContext}${themaTrendContext}`
     }]
   })
 
