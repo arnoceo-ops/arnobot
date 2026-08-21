@@ -353,6 +353,17 @@ Schrijf NOOIT tijdgebonden aanwijzingen in AI-gegenereerde output: geen "doe dit
 
 Elke fetch naar een AI-route moet een zichtbare loading-indicator hebben in het gesprek of in het relevante UI-blok — niet alleen een `...` op een knop. Gebruik de bestaande `.msg-loading` + `.loading-dots` + `.loading-text` structuur, of een equivalent in context. Dit geldt ook voor nieuwe routes die buiten het hoofdgesprek vallen (synthese, doorvraag, analyse).
 
+## Beste resultaat vóór makkelijkste pad — ALTIJD
+
+Bij het ontwerpen van een nieuwe feature of synthese: leid de scope niet af van wat er toevallig al gebouwd is of welke data al bestaat. Dat is de makkelijkste weg, niet automatisch de beste.
+
+**Werkwijze, verplicht vóór elk voorstel voor nieuwe functionaliteit:**
+1. Vraag eerst: wat zou dit daadwerkelijk goed maken, los van wat er nu al ligt?
+2. Doorzoek actief relevante projectdocumenten in hun geheel (niet alleen de sectie waaraan gewerkt wordt) en het geheugen op gerelateerde, nog niet gebouwde plannen die het resultaat aantoonbaar sterker zouden maken.
+3. Noem die vondsten expliciet in het voorstel, ook als het besluit is om ze nu niet mee te bouwen: "X zou dit sterk verbeteren, hier is waarom, hier is de afweging om het nu wel of niet mee te nemen." Nooit stilzwijgend de kortste weg presenteren alsof het de enige optie is.
+
+**Reden:** bij het ontwerpen van punt 5 (teamcoaching-synthese, `docs/TEAM_PLAN.md`) is het voorstel gebouwd op de data die toevallig al bestond (1:1-logboek, teamscores), terwijl Fase 2A (thema-extractie over teamgesprekken, zelfde document) het resultaat fundamenteel sterker zou maken en die informatie al bekend was vóórdat het voorstel werd gedaan. Dat verband had proactief gelegd moeten worden, niet pas nadat Arno er zelf mee kwam met eigen notities.
+
 ## Nieuwe content of functionaliteit — altijd eerst voorstellen
 
 Bij nieuwe tekst (Q&A, copy, labels) of nieuwe functionaliteit: eerst een voorstel tonen aan de gebruiker, wachten op akkoord, dan pas bouwen. Geen uitzondering.
