@@ -10,6 +10,21 @@ Laatste automatische update: 2026-08-21
 
 ---
 
+## Openstaande invulpunten (checklist)
+
+Alles hieronder is iets dat alleen Arno kan invullen (eigen facturen, wachtwoorden, boekhoudkeuzes, juridische status) — niet iets dat vanuit de code af te leiden is. Gegroepeerd per beslissing, niet per losse tabelrij:
+
+- [ ] **Wachtwoordkluis:** welke tool (1Password, Bitwarden, iets anders), en wie heeft er in een noodsituatie toegang toe? Dekt in één keer alle rijen in "Accounttoegang en wachtwoorden".
+- [ ] **Vaste kosten per dienst:** Vercel, Supabase, Clerk, Resend, Upstash, Sentry, PostHog, Calendly, Instatus, VisualPing, GitHub, Porkbun, Telegram (tabel "Maandelijkse kosten (extern)"), plus het maandtotaal.
+- [ ] **Facturatiekanaal:** hoe int je nu daadwerkelijk (handmatige overschrijving, Moneybird, e-Boekhouden, iets anders)?
+- [ ] **DPA-status per sub-verwerker:** Anthropic, Supabase, Clerk, Voyage AI, OpenAI, ElevenLabs, Resend, Upstash, Sentry, PostHog, Vercel — welke zijn getekend/geregeld?
+- [ ] **Bedrijfs- en btw-gegevens:** rechtsvorm, btw-nummer, vestigingsdetails.
+- [ ] **Noodcontact:** een externe developer/freelancer als back-up naast Arno zelf, plus een vertrouwd persoon die weet waar de kluis staat (en eventueel een notarieel document).
+- [ ] **Statuscommunicatie:** is er een kanaal richting gebruikers bij een storing langer dan 30 minuten, naast losse e-mails via Resend?
+- [ ] **Livegangdatum:** invullen in de changelog zodra bekend, was oorspronkelijk 1 augustus 2026, uitgesteld.
+
+---
+
 ## Wat is ArnoBot
 
 ArnoBot is een AI-coach voor salesprofessionals. Gebruikers voeren gesprekken over hun werk: klantgesprekken, deals, pipeline, eigen gedrag. ArnoBot stelt vragen, reflecteert terug, en bouwt na verloop van tijd een profiel op van de gebruiker. Na meerdere gesprekken geeft de app een coachingrapport met scores op drie dimensies: mindset, systeem en actie.
