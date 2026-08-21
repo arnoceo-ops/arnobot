@@ -5,7 +5,7 @@
 **Besluit (2026-08-20): 2A/2B/2C en de resterende punten worden één traject, in herziene volgorde.** 2A → 5 → 4 → 2B → 2C, met punt 2 (instelbare topics) los ertussen op elk gewenst moment. Reden: 2A heeft geen enkele afhankelijkheid van punt 5/6/1 (bouwt alleen op de al-live drill-down + Spotlight), en zou punt 5 dubbel werk kosten als 5 eerst dun gebouwd wordt en daarna alsnog verrijkt moet worden zodra 2A er is. Zie de Fase 2A/2B/2C-sectie voor het risico dat 2B/2C pas na weken tot maanden echte data hun waarde tonen, dat is geen reden om de bouw uit te stellen, wel iets om in de UI netjes op te vangen ("nog te weinig data").
 **Besluit (2026-08-21), dubbel-profiel-vraagstuk afgesloten:** ArnoBot ondersteunt bewust niet iemand die zowel zelf verkoopt als zijn team coacht, het is het een of het ander (Arno's expliciete besluit). Zie de sectie "Raamwerk: rollen × disciplines" voor het volledige besluit en het verworpen alternatief (twee gescheiden profielen).
 **2A-ontwerp (2026-08-21, na afweging bij het bouwen):** vaste thema-taxonomie (10 labels, `lib/themas.ts`) i.p.v. hergebruik van `arnobot_memory_entities`' vrije thema-naamgeving, gekozen omdat vrije tekst een fuzzy-matching-stap zou vereisen om teambreed te tellen én omdat thema's daar concurreren met personen/bedrijven om een gedeeld extractiebudget van 5 slots per sessie. Extractie als 4e, niet-kritieke Haiku-call in `session-end/route.ts` (eigen kolom `themas` op `arnobot_blog_sessions`). Aggregatie (`app/api/bot/team/spiegel/route.ts`) is bewust **pure code, geen LLM-call**: dominant thema + trend (nieuw/opkomend/afnemend/aanhoudend) wordt deterministisch berekend uit tellingen, om hallucinatierisico op cijfers (zie `RULE_NO_INVENTED_DETAILS` elders in de app) volledig uit te sluiten. Drempel: 30+ sessies teambreed met een herkenbaar thema, anders toont de UI "nog te weinig data".
-**Eerstvolgende stap:** 2A verifiëren zodra er echte teamdata is (drempel 30 sessies teambreed nog niet gehaald bij Thijs' team, dus visueel nog niet te testen), daarna door naar **punt 5** (coachende rol richting de teambaas zelf).
+**Eerstvolgende stap:** de Strategy/People/Execution-pijlerdefinities uitwerken (zie sectie "Punt 5 — ontwerp" hieronder), dat blokkeert de bouw van punt 5's synthese-prompt. 2A verder los daarvan verifiëren zodra er echte teamdata is (drempel 30 sessies teambreed nog niet gehaald bij Thijs' team, dus visueel nog niet te testen).
 
 **Belangrijke correctie tijdens het punt-5-gesprek (2026-08-20):** niet elke sales baas is ook verkoper. Thijs test toevallig met een verkoper-rolchipje, maar de gemiddelde teambaas verkoopt zelf nooit. Strategy People Execution is voor hem dus geen aanvullend profiel naast een verkoperprofiel, het is zijn enige, primaire coachingprofiel. De databronnen voor punt 5 (1:1-log, teamresultaten) hingen al niet af van een eigen verkoperprofiel, dus dit raakt de bouw van punt 5 zelf niet, maar wel de framing in de UI (geen "óók je ontwikkeling als manager", gewoon "je ontwikkeling als leidinggevende").
 
@@ -21,7 +21,7 @@
 | 6 | Teamcoaching-data koppelen aan Strategy People Execution, gegated op echte teambaas-status | **Gebouwd, 2026-08-20** (`arnobot_salesbaas_coaching` + `lib/teamAccess.ts`) |
 | 1 | Terugkoppeling op eigen 1:1's + acties | **Gebouwd en getest, 2026-08-20** |
 | 2A | De Spiegel (thema-labels per sessie, teambrede patroonherkenning) | **Gebouwd, 2026-08-21** (`lib/themas.ts`, `app/api/bot/team/spiegel/route.ts`, kaart in `TeamClient.tsx`). Nog niet visueel geverifieerd, drempel van 30 sessies teambreed nog niet gehaald |
-| 5 | Coachende rol richting Thijs zelf als coach (via Strategy People Execution) | Volgt, bouwt op 1 + 6 + 2A (2A eerst zodat 5 in één keer goed gebouwd wordt) |
+| 5 | Coachende rol richting de teambaas zelf (via Strategy People Execution) | Ontwerp klaar (databronnen, gate, trigger, UI, zie hieronder), **bouw van de synthese-prompt geblokkeerd tot de pijler-definities zijn doorgelopen** (zie hieronder) |
 | 4 | Actieve sturing/handvatten (cultuur-pijler) | Volgt, contentlaag bovenop 5 |
 | 2B | De Tijdlijn (maandelijkse teamsnapshots) | Volgt, bouwt op 2A |
 | 2C | Manager als Variabele (patroon bij 3+ leden = mogelijk systemisch) | Volgt, bouwt op 2A + 2B, gevoeligste van de drie |
@@ -29,6 +29,27 @@
 | 3 | Instelling "wat MOET gedeeld worden" | **Besloten: niet bouwen**, zie hieronder |
 
 **Waarom deze volgorde:** 7 is een losstaande, laag-risico quick win. 6 is geen zichtbare feature maar de architecturale voorwaarde voor 1/4/5: zonder een expliciete koppeling aan het juiste pijler-raamwerk zou Thijs' eigen coaching-als-verkoper (Mindset/Systeem/Actie) vervuild raken met zijn coaching-als-sales-baas (Strategy People Execution), zie de sectie hieronder voor de volledige toedracht. **2A vóór 5 (herzien 2026-08-20):** 2A heeft geen afhankelijkheid van 5/6/1 en maakt 5's synthese inhoudelijk sterker (teambrede thema's i.p.v. alleen 1:1-administratie), dus eerst 2A bouwen voorkomt dat 5 later herbouwd moet worden. 4 is inhoudelijk een contentlaag bovenop 5's synthese, geen aparte plek in de UI. 2B/2C volgen op 2A, in die volgorde omdat 2C zelf weer op 2A + 2B bouwt en door Arno zelf als "de meeste rijping vereisend" is aangemerkt. Punt 2 staat los en kan op elk moment.
+
+## Punt 5 — ontwerp (2026-08-21)
+
+**Belangrijke correctie tijdens dit gesprek:** Thijs is zelf verkoper en test de Team-module met fake teamleden, hij is geen echte sales baas. Het ontwerp van punt 5 moet daarom redeneren vanuit een generieke sales baas die verantwoordelijkheid draagt over een team accountmanagers/inside sales, niet vanuit Thijs' eigen situatie. Geverifieerd dat het ontwerp hier al rolneutraal was (gate op `isConfirmedTeambaas`, niet op `profiel.rol`, precies om deze reden al zo gekozen bij punt 6), dus geen wijziging nodig, alleen scherper geformuleerd. Thijs' account blijft bruikbaar om de UI/mechaniek te testen, de inhoudelijke synthese zal voor hem persoonlijk minder kloppen, dat is een testbeperking, geen ontwerpfout.
+
+**Databronnen:**
+1. Eigen 1:1-log (`arnobot_1on1_log`): agenda, aandachtspunten, acties, `actie_status` (follow-through)
+2. Teambrede scoretrend (`arnobot_coaching_scores` van alle leden)
+3. Per lid het laatste coachingprofiel (mindset/systeem/actie-diagnose), al bestaande manager-zichtbare data, nog niet eerder gebundeld ingezet
+4. De Spiegel (2A): dominant teambreed thema + trend
+5. Bestaande Team Spotlight-teksten (`arnobot_team_analyses`), hergebruikt als context
+
+**Gate:** `isConfirmedTeambaas(userId)`, eerste echte gebruiker van deze helper (was tot nu toe ongebruikt sinds punt 6).
+
+**Trigger (besloten):** tweewekelijkse cooldown + minimaal 3 nieuwe 1:1's sinds de vorige synthese, analoog aan de precheck/minimum-eis van de individuele coaching. Verworpen alternatief: wekelijks zoals Team Spotlight, verworpen omdat 1:1-materiaal trager opstapelt dan gesprekken.
+
+**Output** (`arnobot_salesbaas_coaching`): `strategy_score/diagnose`, `people_score/diagnose`, `execution_score/diagnose` (schaal 1-5), `voortgang`, `used_1on1_ids`. Nieuw: `computeSpeScore()` in `lib/msa.ts`, analoog aan `computeMsaScore` maar met de 40/30/30-weging (People 40 · Strategy 30 · Execution 30, zie "Raamwerk: rollen × disciplines" hieronder).
+
+**UI:** nieuwe sectie in `TeamClient.tsx`, naast "JOUW 1:1-RITME" (beide gaan over de teambaas zelf, niet over het team). Visuele preview gebouwd en gedeeld (Artifact, 2026-08-21) met 4 titelopties live vergelijkbaar in context. Aanbevolen titel: **"JOUW LEIDERSCHAP"** (16 tekens, parallel aan "JOUW 1:1-RITME"), Arno's definitieve keuze nog niet bevestigd.
+
+**Openstaand, blokkeert de synthese-prompt (besloten 2026-08-21, Arno's expliciete verzoek):** de Strategy/People/Execution-pijlers hebben nu alleen de algemene, bedrijfsniveau-definities uit "Raamwerk: rollen × disciplines" hieronder (Strategy = onderscheidend vermogen, People = mensen nodig voor de strategie, Execution = plan naar resultaat). Dat is te abstract om een AI betrouwbaar op 1-5 te laten scoren, in tegenstelling tot Mindset/Systeem/Actie die in `coaching/route.ts` wel concrete, geoperationaliseerde definities hebben (bijv. "SYSTEEM = heeft iemand een verkoopproces? Volgt die dat consequent?"). Vóór de synthese-prompt gebouwd wordt: samen met Arno concrete, geoperationaliseerde definities per pijler uitwerken, specifiek voor het dagelijkse werk van een sales baas (wat is bijvoorbeeld goede "People"-uitvoering in 1:1's, wat is goede "Execution" op teamniveau), zodat de AI niet hoeft te raden zoals bij Mindset/Systeem/Actie al niet het geval is.
 
 ## Raamwerk: rollen × disciplines (verduidelijkt 2026-08-20, Arno's eigen productmodel)
 
