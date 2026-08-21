@@ -66,7 +66,7 @@ function buildVersionsTable(pkgJson: string): string {
 
   const KEY_PACKAGES = [
     'next', 'react', '@anthropic-ai/sdk', '@clerk/nextjs', '@supabase/supabase-js',
-    'resend', '@upstash/ratelimit', '@upstash/redis', 'sanity', 'voyageai',
+    'resend', '@upstash/ratelimit', '@upstash/redis', '@sentry/nextjs', 'posthog-js',
     '@react-pdf/renderer', 'jspdf', 'typescript',
   ]
   const all = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) }
