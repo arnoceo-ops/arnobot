@@ -261,7 +261,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/team/share-analyse` | Teamlid deelt analyse met manager |
 | `/api/bot/team/spotlight` | Maandelijkse teamanalyse (Spotlight) |
 | `/api/bot/team/dismiss-prompt` | Team-uitnodigingsprompt wegklikken |
-| `/api/bot/team/spiegel` | Team-"spiegel"-signaal berekenen uit ledendata |
 | `/api/bot/team/zelfcoaching` | Zelfcoaching voor de teambaas zelf (met cooldown) |
 
 ### Gebruikersbeheer

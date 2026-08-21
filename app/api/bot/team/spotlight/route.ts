@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
-import { computeThemaMaandTrend } from '@/lib/spiegel'
+import { computeThemaMaandTrend, computeSpiegelSignaal } from '@/lib/spiegel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -131,6 +131,14 @@ export async function POST() {
   const themaTrend = await computeThemaMaandTrend(memberIds)
   const themaTrendContext = themaTrend ? `\n\nDOMINANT GESPREKSTHEMA PER MAAND:\n${themaTrend}` : ''
 
+  // Punt 2A "De Spiegel": had eerst een eigen UI-kaart, weggehaald na feedback ("ik zie maar
+  // één woord, wat moet ik daarmee") — precies hetzelfde probleem als 2B. Signaal blijft
+  // bestaan, alleen nu als context voor deze synthese, niet als los rauw weergaveblok.
+  const spiegel = await computeSpiegelSignaal(memberIds)
+  const spiegelContext = !spiegel.onvoldoende && spiegel.dominant
+    ? `\n\nHUIDIG SIGNAAL (laatste ${spiegel.periodeDagen} dagen): dominant thema "${spiegel.dominant.thema}" bij ${spiegel.dominant.leden} van ${spiegel.totaalLeden} teamleden${spiegel.dominant.trend ? `, trend: ${spiegel.dominant.trend}` : ''}.`
+    : ''
+
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 700,
@@ -174,7 +182,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
       content: `Schrijf een teamanalyse voor de manager van team "${team.name}" op basis van de gesprekssamenvatingen en scoreontwikkeling van zijn teamleden.
 
 GESPREKKEN:
-${teamData}${trendContext}${themaTrendContext}`
+${teamData}${trendContext}${themaTrendContext}${spiegelContext}`
     }]
   })
 

@@ -72,16 +72,6 @@ interface Team {
   min_interval_dagen: number | null
 }
 
-interface SpiegelData {
-  onvoldoende: boolean
-  huidigAantal?: number
-  benodigd?: number
-  periodeDagen?: number
-  totaalLeden?: number
-  dominant?: { thema: string; leden: number; trend: 'nieuw' | 'opkomend' | 'afnemend' | 'aanhoudend' | null }
-  ranked?: { thema: string; leden: number }[]
-}
-
 interface ZelfcoachingData {
   voortgang: string
   strategy_score: number
@@ -91,19 +81,6 @@ interface ZelfcoachingData {
   execution_score: number
   execution_diagnose: string
   updated_at: string
-}
-
-const TREND_LABEL: Record<string, string> = {
-  nieuw: 'NIEUW',
-  opkomend: 'OPKOMEND',
-  afnemend: 'AFNEMEND',
-  aanhoudend: 'AANHOUDEND',
-}
-const TREND_COLOR: Record<string, string> = {
-  nieuw: '#f59e0b',
-  opkomend: '#f59e0b',
-  afnemend: '#6b7280',
-  aanhoudend: '#6b7280',
 }
 
 function renderAnalyse(text: string): string {
@@ -190,7 +167,6 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [spiegel, setSpiegel] = useState<SpiegelData | null>(null)
   const [zelfcoaching, setZelfcoaching] = useState<ZelfcoachingData | null>(null)
   const [zelfcoachingLoading, setZelfcoachingLoading] = useState(false)
   const [zelfcoachingError, setZelfcoachingError] = useState('')
@@ -248,10 +224,6 @@ export default function TeamClient() {
     fetch('/api/bot/team/scores')
       .then(r => r.json())
       .then(data => setTeamScores(data.scores ?? []))
-      .catch(() => {})
-    fetch('/api/bot/team/spiegel')
-      .then(r => r.json())
-      .then(data => setSpiegel(data))
       .catch(() => {})
     fetch('/api/bot/team/zelfcoaching')
       .then(r => r.json())
@@ -544,7 +516,7 @@ export default function TeamClient() {
                 <span style={label}>ZELFCOACHING</span>
                 <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, margin: '0 0 16px 0' }}>JOUW LEIDERSCHAP</h2>
                 <p style={{ ...body, marginBottom: 32 }}>
-                  ArnoBot legt je eigen 1:1&apos;s, de ontwikkeling van je team en de patronen uit De Spiegel naast elkaar, en spiegelt dat naar jouw functioneren als leidinggevende. Langs drie lijnen: strategy, people, execution.
+                  ArnoBot legt je eigen 1:1&apos;s en de ontwikkeling van je team naast elkaar, en spiegelt dat naar jouw functioneren als leidinggevende. Langs drie lijnen: strategy, people, execution.
                 </p>
                 {zelfcoaching && (
                   <>
@@ -710,56 +682,6 @@ export default function TeamClient() {
                   </div>
                 )}
               </div>
-
-              {spiegel && (
-                <div style={section}>
-                  <span style={label}>PATROONHERKENNING</span>
-                  <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, margin: '0 0 16px 0' }}>DE SPIEGEL</h2>
-                  <p style={{ ...body, marginBottom: 32 }}>
-                    Wat je team je niet vertelt: thema&apos;s die in één gesprek klein lijken, maar teambreed terugkeren.
-                  </p>
-                  {spiegel.onvoldoende ? (
-                    <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 0 }}>
-                      Nog te weinig data ({spiegel.huidigAantal ?? 0} van de {spiegel.benodigd ?? 30} gesprekken met een herkenbaar thema). Groeit vanzelf mee.
-                    </p>
-                  ) : spiegel.dominant && (
-                    <>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                        <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1 }}>
-                          {spiegel.dominant.thema}
-                        </span>
-                        {spiegel.dominant.trend && (
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: TREND_COLOR[spiegel.dominant.trend] }}>
-                            {TREND_LABEL[spiegel.dominant.trend]}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ ...body, marginBottom: 32 }}>
-                        Dominant thema van de afgelopen {spiegel.periodeDagen} dagen, bij {spiegel.dominant.leden} van je {spiegel.totaalLeden} teamleden.
-                      </p>
-                      {spiegel.ranked && spiegel.ranked.length > 1 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                          {spiegel.ranked.map(r => {
-                            const max = spiegel.ranked![0].leden || 1
-                            const pct = Math.round((r.leden / max) * 100)
-                            return (
-                              <div key={r.thema}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#9ca3af' }}>{r.thema}</span>
-                                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>{r.leden} {r.leden === 1 ? 'LID' : 'LEDEN'}</span>
-                                </div>
-                                <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
-                                  <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: 999, transition: 'width 0.6s ease' }} />
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
 
               <div style={section}>
                 <span style={label}>COLLECTIEVE ANALYSE</span>
