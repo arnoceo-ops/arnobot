@@ -83,6 +83,18 @@ interface ZelfcoachingData {
   updated_at: string
 }
 
+interface ZelfcoachingHistoryEntry {
+  strategy_score: number
+  people_score: number
+  execution_score: number
+  voortgang: string
+  created_at: string
+}
+
+function formatMijlpaalDatum(iso: string) {
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function renderAnalyse(text: string): string {
   const safe = text
     .replace(/&/g, '&amp;')
@@ -168,6 +180,7 @@ export default function TeamClient() {
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
   const [zelfcoaching, setZelfcoaching] = useState<ZelfcoachingData | null>(null)
+  const [zelfcoachingHistory, setZelfcoachingHistory] = useState<ZelfcoachingHistoryEntry[]>([])
   const [zelfcoachingExpanded, setZelfcoachingExpanded] = useState(false)
   const [zelfcoachingLoading, setZelfcoachingLoading] = useState(false)
   const [zelfcoachingError, setZelfcoachingError] = useState('')
@@ -228,7 +241,10 @@ export default function TeamClient() {
       .catch(() => {})
     fetch('/api/bot/team/zelfcoaching')
       .then(r => r.json())
-      .then(data => setZelfcoaching(data.coaching ?? null))
+      .then(data => {
+        setZelfcoaching(data.coaching ?? null)
+        setZelfcoachingHistory(data.history ?? [])
+      })
       .catch(() => {})
   }
 
@@ -251,6 +267,10 @@ export default function TeamClient() {
       } else {
         setZelfcoaching(data.coaching)
         setZelfcoachingExpanded(true)
+        fetch('/api/bot/team/zelfcoaching')
+          .then(r => r.json())
+          .then(d => setZelfcoachingHistory(d.history ?? []))
+          .catch(() => {})
       }
     } catch {
       setZelfcoachingError('Er ging iets mis, probeer het later opnieuw.')
@@ -575,6 +595,30 @@ export default function TeamClient() {
                         <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
                           <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 10 }}>VOORTGANG</span>
                           <p style={body}>{zelfcoaching.voortgang}</p>
+                        </div>
+                        <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 16 }}>JOUW LEIDERSCHAPSREIS</span>
+                          {zelfcoachingHistory.length < 2 ? (
+                            <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 0 }}>
+                              Nog te vroeg voor een reis, die verschijnt vanaf je tweede analyse.
+                            </p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                              {[...zelfcoachingHistory].reverse().map((h, i) => (
+                                <div key={h.created_at} style={{ display: 'flex', gap: 16, alignItems: 'baseline' }}>
+                                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 1, color: '#f59e0b', flexShrink: 0, minWidth: 44 }}>
+                                    {computeSpeScore(h.strategy_score, h.people_score, h.execution_score)}
+                                  </span>
+                                  <div>
+                                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                                      {formatMijlpaalDatum(h.created_at)}{i === 0 ? ' · NU' : ''}
+                                    </span>
+                                    <p style={{ ...body, marginBottom: 0 }}>{h.voortgang}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </>
                     )}

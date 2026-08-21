@@ -24,14 +24,22 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const { data, error } = await supabase
-    .from('arnobot_salesbaas_coaching')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle()
+  const [{ data, error }, { data: history, error: historyError }] = await Promise.all([
+    supabase
+      .from('arnobot_salesbaas_coaching')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('arnobot_salesbaas_coaching_history')
+      .select('strategy_score, people_score, execution_score, voortgang, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true }),
+  ])
 
   if (error) console.error('[zelfcoaching GET]', error.message)
-  return NextResponse.json({ coaching: data ?? null })
+  if (historyError) console.error('[zelfcoaching GET history]', historyError.message)
+  return NextResponse.json({ coaching: data ?? null, history: history ?? [] })
 }
 
 export async function POST() {
@@ -309,6 +317,21 @@ RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${trendC
     console.error('[zelfcoaching save]', saveResult.error.message)
     return NextResponse.json({ error: 'opslaan_mislukt' }, { status: 500 })
   }
+
+  // Geschiedenis van eerdere synthesen, analoog aan arnobot_coaching_history: insert-only,
+  // zodat "Jouw leiderschapsreis" een tijdlijn van mijlpalen kan tonen i.p.v. alleen de laatste
+  // stand. Nooit blokkerend voor de hoofdrespons als dit faalt, de actuele synthese is al opgeslagen.
+  const { error: historyErr } = await supabase.from('arnobot_salesbaas_coaching_history').insert({
+    user_id: userId,
+    strategy_score: parsed.strategy_score,
+    strategy_diagnose: parsed.strategy_diagnose,
+    people_score: parsed.people_score,
+    people_diagnose: parsed.people_diagnose,
+    execution_score: parsed.execution_score,
+    execution_diagnose: parsed.execution_diagnose,
+    voortgang: parsed.voortgang,
+  })
+  if (historyErr) console.error('[zelfcoaching history insert]', historyErr.message)
 
   const speScore = computeSpeScore(parsed.strategy_score, parsed.people_score, parsed.execution_score)
   return NextResponse.json({ coaching: { ...payload, spe_score: speScore } })

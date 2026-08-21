@@ -464,7 +464,10 @@ Notificatie-inbox voor managers (bijv. "analyse gedeeld", "coaching gegenereerd"
 Bijhouden welke analyses een teamlid met de manager/het team gedeeld heeft.
 
 ### `arnobot_salesbaas_coaching`
-Data voor de zelfcoaching-module van de teambaas zelf (`/api/bot/team/zelfcoaching`).
+Meest recente Strategy People Execution-synthese van de teambaas zelf (upsert, 1 rij per gebruiker), voor de zelfcoaching-module (`/api/bot/team/zelfcoaching`).
+
+### `arnobot_salesbaas_coaching_history`
+Insert-only geschiedenis van eerdere zelfcoaching-synthesen (naast `arnobot_salesbaas_coaching`), voedt "Jouw leiderschapsreis" (mijlpalen met score + voortgangszin).
 
 ### `arnobot_team_waitlist`
 Wachtlijst-aanmeldingen voor het Team-abonnement, via `/bot/profiel`.
