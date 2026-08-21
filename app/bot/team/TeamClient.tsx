@@ -168,9 +168,10 @@ export default function TeamClient() {
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
   const [zelfcoaching, setZelfcoaching] = useState<ZelfcoachingData | null>(null)
+  const [zelfcoachingExpanded, setZelfcoachingExpanded] = useState(false)
   const [zelfcoachingLoading, setZelfcoachingLoading] = useState(false)
   const [zelfcoachingError, setZelfcoachingError] = useState('')
-  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; followThroughPct: number | null; openstaandOuderDan14Dagen: number; totaalActies: number } | null>(null)
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; followThroughPct: number | null; openstaandOuderDan14Dagen: number; totaalActies: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -249,6 +250,7 @@ export default function TeamClient() {
         }
       } else {
         setZelfcoaching(data.coaching)
+        setZelfcoachingExpanded(true)
       }
     } catch {
       setZelfcoachingError('Er ging iets mis, probeer het later opnieuw.')
@@ -509,6 +511,18 @@ export default function TeamClient() {
                       </div>
                     )}
                   </div>
+                  {oneOnOneRitme.perLid.length > 0 && (
+                    <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {oneOnOneRitme.perLid.map(p => (
+                        <div key={p.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9' }}>{p.naam}</span>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: p.laatste30Dagen === 0 ? '#6b7280' : '#9ca3af', whiteSpace: 'nowrap' }}>
+                            {p.laatste30Dagen} {p.laatste30Dagen === 1 ? '1:1' : "1:1'S"} / 30 DAGEN <span style={{ color: '#6b7280' }}>&middot;</span> {p.perWeek.toString().replace('.', ',')}/WEEK
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -527,31 +541,44 @@ export default function TeamClient() {
                         <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 6 }}>/ 100</span>
                       </span>
                     </div>
-                    <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden', marginBottom: 32 }}>
+                    <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
                       <div style={{ width: `${computeSpeScore(zelfcoaching.strategy_score, zelfcoaching.people_score, zelfcoaching.execution_score)}%`, height: '100%', background: '#f59e0b', borderRadius: 999, transition: 'width 0.6s ease' }} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-                      {[
-                        { naam: 'STRATEGY', gewicht: '30%', score: zelfcoaching.strategy_score, tekst: zelfcoaching.strategy_diagnose },
-                        { naam: 'PEOPLE', gewicht: '40%', score: zelfcoaching.people_score, tekst: zelfcoaching.people_diagnose },
-                        { naam: 'EXECUTION', gewicht: '30%', score: zelfcoaching.execution_score, tekst: zelfcoaching.execution_diagnose },
-                      ].map(p => (
-                        <div key={p.naam}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, gap: 12, flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>{p.naam} <span style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{p.gewicht}</span></span>
-                            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, color: '#f1f5f9' }}>{p.score}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 0 }}>/5</span></span>
-                          </div>
-                          <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden', marginBottom: 10 }}>
-                            <div style={{ width: `${p.score * 20}%`, height: '100%', background: '#f59e0b', borderRadius: 999 }} />
-                          </div>
-                          <p style={body}>{p.tekst}</p>
+                    <button
+                      onClick={() => setZelfcoachingExpanded(e => !e)}
+                      style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0 0' }}
+                    >
+                      <span style={{ color: zelfcoachingExpanded ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
+                        {zelfcoachingExpanded ? '↑ SLUITEN' : '↓ BEKIJK DE DRIE PIJLERS'}
+                      </span>
+                    </button>
+                    {zelfcoachingExpanded && (
+                      <>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginTop: 24 }}>
+                          {[
+                            { naam: 'STRATEGY', gewicht: '30%', score: zelfcoaching.strategy_score, tekst: zelfcoaching.strategy_diagnose },
+                            { naam: 'PEOPLE', gewicht: '40%', score: zelfcoaching.people_score, tekst: zelfcoaching.people_diagnose },
+                            { naam: 'EXECUTION', gewicht: '30%', score: zelfcoaching.execution_score, tekst: zelfcoaching.execution_diagnose },
+                          ].map(p => (
+                            <div key={p.naam}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, gap: 12, flexWrap: 'wrap' }}>
+                                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>{p.naam} <span style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{p.gewicht}</span></span>
+                                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, color: '#f1f5f9' }}>{p.score}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 0 }}>/5</span></span>
+                              </div>
+                              <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden', marginBottom: 10 }}>
+                                <div style={{ width: `${p.score * 20}%`, height: '100%', background: '#f59e0b', borderRadius: 999 }} />
+                              </div>
+                              <p style={body}>{p.tekst}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 10 }}>VOORTGANG</span>
-                      <p style={body}>{zelfcoaching.voortgang}</p>
-                    </div>
+                        <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
+                          <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 10 }}>VOORTGANG</span>
+                          <p style={body}>{zelfcoaching.voortgang}</p>
+                        </div>
+                      </>
+                    )}
+                    <div style={{ marginTop: 32 }} />
                   </>
                 )}
                 <button

@@ -59,7 +59,7 @@ export async function GET() {
       .in('user_id', memberIds),
     supabase
       .from('arnobot_1on1_log')
-      .select('actie, actie_status, created_at')
+      .select('member_id, actie, actie_status, created_at')
       .eq('manager_id', userId),
   ])
 
@@ -135,9 +135,28 @@ export async function GET() {
     l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
   ).length
 
+  // Per lid: hoeveel 1:1's in de laatste 30 dagen, en omgerekend naar een weekgemiddelde.
+  // Los van het teambrede totaal hierboven, dat zegt niets over spreiding (2 in 30 dagen kan
+  // "1 lid 2x" of "2 leden 1x" zijn, een teambaas wil dat onderscheid zien).
+  const perLid30Dagen: Record<string, number> = {}
+  for (const l of oneOnOnes) {
+    if (new Date(l.created_at).getTime() < dertigDagenGeleden) continue
+    if (!l.member_id) continue
+    perLid30Dagen[l.member_id] = (perLid30Dagen[l.member_id] ?? 0) + 1
+  }
+  const perLid = members.map(m => {
+    const aantal = perLid30Dagen[m.user_id] ?? 0
+    return {
+      user_id: m.user_id,
+      naam: nameMap[m.user_id] || (m as any).display_name || 'Onbekend',
+      laatste30Dagen: aantal,
+      perWeek: Math.round((aantal / 30 * 7) * 10) / 10,
+    }
+  })
+
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length },
+    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length, perLid },
   })
 }
