@@ -32,7 +32,7 @@ export async function GET() {
       .maybeSingle(),
     supabase
       .from('arnobot_salesbaas_coaching_history')
-      .select('strategy_score, people_score, execution_score, voortgang, created_at')
+      .select('id, strategy_score, strategy_diagnose, people_score, people_diagnose, execution_score, execution_diagnose, voortgang, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: true }),
   ])
@@ -103,7 +103,7 @@ export async function POST() {
     }
   }
 
-  const [sessionsRes, scoresRes, coachingRes, spotlightRes, spiegel] = await Promise.all([
+  const [sessionsRes, scoresRes, coachingRes, spotlightRes, spiegel, eigenSessiesRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('user_id, summary, feiten')
@@ -128,6 +128,16 @@ export async function POST() {
       .limit(1)
       .maybeSingle(),
     computeSpiegelSignaal(memberIds),
+    // Zijn eigen gesprekken op ArnoBot (bijv. via de STRATEGY/PEOPLE/EXECUTION-discipline-picker
+    // op de hoofdchat), naast 1:1's en teamdata. Bij een verkoper voedt elk gesprek al zijn
+    // coachingprofiel, dit haalt de teambaas op gelijke voet: zijn eigen reflectie telt nu ook
+    // mee, niet alleen wat hij over zijn team registreert.
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('summary, feiten')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(15),
   ])
 
   // Teamresultaten-trend (maandgemiddelden), zelfde berekening als team/spotlight/route.ts
@@ -162,6 +172,15 @@ export async function POST() {
     .map(s => `- ${s.summary}${s.feiten ? '\n  Feiten: ' + s.feiten.slice(0, 200) : ''}`)
     .join('\n')
     .slice(0, 5000)
+
+  const eigenSessiesText = (eigenSessiesRes.data ?? [])
+    .filter(s => s.summary)
+    .map(s => `- ${s.summary}${s.feiten ? '\n  Feiten: ' + s.feiten.slice(0, 200) : ''}`)
+    .join('\n')
+    .slice(0, 4000)
+  const eigenSessiesContext = eigenSessiesText
+    ? `\n\nZIJN EIGEN GESPREKKEN OP ARNOBOT (over zijn eigen leiderschap, niet over zijn team):\n${eigenSessiesText}`
+    : ''
 
   const eenOpEensText = logs
     .slice(0, 20)
@@ -243,7 +262,7 @@ ZIJN 1:1'S MET TEAMLEDEN (meest recent eerst):\n${eenOpEensText}
 
 LAATSTE COACHINGPROFIEL PER TEAMLID:\n${ledenProfielText || '(nog geen coachingprofielen)'}
 
-RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${trendContext}${spiegelContext}${spotlightContext}${deltaContext}${bronContext}`
+RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${spotlightContext}${deltaContext}${bronContext}`
     }]
   })
 
@@ -296,8 +315,15 @@ RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${trendC
     return NextResponse.json({ error: 'parse_error' }, { status: 500 })
   }
 
+  // Richting berekenen op basis van de vorige score, niet LLM-gissing, zelfde patroon als
+  // Mindset/Systeem/Actie in coaching/route.ts.
+  const richting = (curr: number, p: number | undefined) => p == null ? 'stabiel' : curr > p ? 'stijgend' : curr < p ? 'dalend' : 'stabiel'
+
   const payload = {
     ...parsed,
+    strategy_richting: richting(parsed.strategy_score, prev?.strategy_score),
+    people_richting: richting(parsed.people_score, prev?.people_score),
+    execution_richting: richting(parsed.execution_score, prev?.execution_score),
     used_1on1_ids: logs.map(l => l.id),
     updated_at: new Date().toISOString(),
   }

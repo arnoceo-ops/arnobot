@@ -4,13 +4,23 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { logEvent } from '@/lib/events'
 import CoachingClient from './CoachingClient'
+import SpeCoachingClient from './SpeCoachingClient'
 import BotNav from '../BotNav'
+import { isConfirmedTeambaas } from '@/lib/teamAccess'
 
 export default async function CoachingPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
   logEvent(userId, 'coaching_page_view')
+
+  // Rolbewust, vóór de plan-gate hieronder: een bevestigde teambaas verkoopt zelf niet (zie
+  // docs/TEAM_PLAN.md, "either/or"-besluit), krijgt dus nooit de Mindset/Systeem/Actie-versie,
+  // maar zijn eigen Strategy People Execution-coaching. CEO/solopreneur vallen hier bewust nog
+  // niet onder, zie TEAM_PLAN.md "TO DO, apart traject".
+  if (await isConfirmedTeambaas(userId)) {
+    return <SpeCoachingClient />
+  }
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
