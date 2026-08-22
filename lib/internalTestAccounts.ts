@@ -26,3 +26,11 @@ export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
 // toedracht.
 export const APP_REVIEWER_EMAIL = 'reviewer@arno.bot'
 export const APP_REVIEWER_ID = 'user_3H5QqLMsGDjwk1mFQYRCLuJbdBk'
+
+// Team Hippios: persistent testteam voor demo's/livetesten, twee echte managers
+// (test@arno.bot, thijs@tenshare.nl) + drie fake teamleden. Nieuw gegenereerde content
+// (1:1's, team-analyses) mag tijdens een demo/test wel getoond worden, maar wordt bewust NIET
+// opgeslagen (Arno's expliciete verzoek, 2026-08-22): anders drift de zorgvuldig samengestelde
+// testdata bij elke demo verder weg van de gecureerde uitgangssituatie. Alleen al opgeslagen
+// content blijft staan. Zie de guard in team/1on1/save/route.ts en team/spotlight/route.ts.
+export const TEST_TEAM_ID = '5b29bd9b-762b-4834-a532-d40efa87a43f'

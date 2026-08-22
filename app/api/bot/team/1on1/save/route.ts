@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -58,6 +59,14 @@ export async function POST(req: NextRequest) {
     actie: actie || null,
   }
 
+  // Testteam: nieuwe 1:1's mogen tijdens een demo/test wel doorlopen, maar worden bewust niet
+  // opgeslagen, zodat de gecureerde testdata niet bij elke demo verder wegdrift. Alleen al
+  // bestaande entries (van vandaag, hierboven opgezocht) blijven overschrijfbaar, dat is
+  // bijwerken van iets dat al stond, geen nieuwe permanente aanwas.
+  if (managerMember.team_id === TEST_TEAM_ID && !existing) {
+    return NextResponse.json({ ok: true, saved: false })
+  }
+
   const { error } = existing
     ? await supabase.from('arnobot_1on1_log').update(payload).eq('id', existing.id)
     : await supabase.from('arnobot_1on1_log').insert({ ...payload, manager_id: managerId, member_id: targetUserId, team_id: managerMember.team_id })
@@ -66,5 +75,5 @@ export async function POST(req: NextRequest) {
     console.error('1on1 save error:', error.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, saved: true })
 }

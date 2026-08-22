@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 import { computeThemaMaandTrend, computeSpiegelSignaal } from '@/lib/spiegel'
+import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -195,20 +196,26 @@ ${teamData}${trendContext}${themaTrendContext}${spiegelContext}`
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
 
-  await supabase
-    .from('arnobot_team_analyses')
-    .insert({ team_id: managerMember.team_id, analyse_text: analyse })
+  // Testteam: nieuwe analyses mogen tijdens een demo/test wel gegenereerd en getoond worden,
+  // maar worden bewust niet opgeslagen (Arno's expliciete verzoek, 2026-08-22), zodat de
+  // gecureerde testdata niet bij elke demo verder wegdrift. Alleen al bestaande, eerder
+  // opgeslagen analyses blijven staan.
+  if (managerMember.team_id !== TEST_TEAM_ID) {
+    await supabase
+      .from('arnobot_team_analyses')
+      .insert({ team_id: managerMember.team_id, analyse_text: analyse })
 
-  // Houd maximaal 5 analyses per team — verwijder de oudste
-  const { data: all } = await supabase
-    .from('arnobot_team_analyses')
-    .select('id')
-    .eq('team_id', managerMember.team_id)
-    .order('created_at', { ascending: false })
+    // Houd maximaal 5 analyses per team — verwijder de oudste
+    const { data: all } = await supabase
+      .from('arnobot_team_analyses')
+      .select('id')
+      .eq('team_id', managerMember.team_id)
+      .order('created_at', { ascending: false })
 
-  if (all && all.length > 5) {
-    const toDelete = all.slice(5).map(r => r.id)
-    await supabase.from('arnobot_team_analyses').delete().in('id', toDelete)
+    if (all && all.length > 5) {
+      const toDelete = all.slice(5).map(r => r.id)
+      await supabase.from('arnobot_team_analyses').delete().in('id', toDelete)
+    }
   }
 
   return NextResponse.json({ analyse })

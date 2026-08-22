@@ -57,10 +57,14 @@ export async function GET() {
       .from('arnobot_coaching')
       .select('user_id, mindset_score, systeem_score, actie_score')
       .in('user_id', memberIds),
+    // Team-breed, niet gefilterd op de ingelogde manager (Arno's expliciete verzoek,
+    // 2026-08-22): een team met meerdere managers moet dezelfde teampagina-cijfers zien, niet
+    // ieder zijn eigen deel. Persoonlijke follow-through blijft wel manager-specifiek, dat
+    // staat op de leiderschapspagina (zelfcoaching/route.ts), niet hier.
     supabase
       .from('arnobot_1on1_log')
       .select('member_id, actie, actie_status, created_at')
-      .eq('manager_id', userId),
+      .eq('team_id', team.id),
   ])
 
   // Get Clerk user names
