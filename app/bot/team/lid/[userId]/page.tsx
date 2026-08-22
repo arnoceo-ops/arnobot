@@ -473,114 +473,129 @@ export default function LidPage() {
                       const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '?').join(' / ')
                       const isNoteOpen = noteOpenId === h.id
                       const noteInput = noteInputs[h.id] ?? h.notitie ?? ''
+                      const isOpen = expandedHistory === h.id
+                      const heeftOpenstaandeActie = !!h.actie && !h.actie_status
                       return (
-                        <div key={h.id} style={{ background: '#1f2937', padding: '20px 24px', borderLeft: '3px solid #374151' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: h.aandachtspunt ? 8 : 0, flexWrap: 'wrap', gap: 8 }}>
-                            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>
-                              {wekenGeleden(h.created_at)}
-                            </span>
-                            {scoreStr && (
-                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>
-                                M {h.mindset_score ?? 0} · S {h.systeem_score ?? 0} · A {h.actie_score ?? 0}
-                              </span>
-                            )}
-                          </div>
-                          {h.aandachtspunt && (
-                            <p style={{ ...body, marginBottom: 12 }}>{h.aandachtspunt}</p>
-                          )}
-                          {h.actie && (
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                        <div key={h.id} style={{ background: '#1f2937', borderLeft: '3px solid #374151' }}>
+                          <button
+                            onClick={() => setExpandedHistory(isOpen ? null : h.id)}
+                            style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 24px' }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: h.aandachtspunt ? 8 : 0 }}>
                               <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>
-                                {h.actie_status ? 'Actie:' : 'Openstaande actie(s):'}
+                                {wekenGeleden(h.created_at)}
                               </span>
-                              <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
-                              {h.actie_status && (
-                                <span style={{
-                                  fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
-                                  color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : '#6b7280',
-                                }}>
-                                  {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : '— OVERGESLAGEN'}
-                                </span>
-                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                {heeftOpenstaandeActie && (
+                                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#f59e0b' }}>OPENSTAANDE ACTIE</span>
+                                )}
+                                {scoreStr && (
+                                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280' }}>
+                                    M {h.mindset_score ?? 0} · S {h.systeem_score ?? 0} · A {h.actie_score ?? 0}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          )}
-                          {h.agenda && (
-                            <div style={{ marginBottom: 12 }}>
-                              <button
-                                onClick={() => setExpandedHistory(expandedHistory === h.id ? null : h.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 3, color: expandedHistory === h.id ? '#f59e0b' : '#6b7280', padding: 0 }}
-                              >
-                                {expandedHistory === h.id ? '↑ VERBERG TOELICHTING' : '↓ TOON VOLLEDIGE TOELICHTING'}
-                              </button>
-                              {expandedHistory === h.id && (
-                                <div style={{ marginTop: 12, borderLeft: '3px solid #374151', paddingLeft: 16 }}>
+                            {h.aandachtspunt && (
+                              <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, lineHeight: 1.4, marginBottom: 8 }}>
+                                {getAnalyseTitle(h.aandachtspunt)}
+                              </p>
+                            )}
+                            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: isOpen ? '#f59e0b' : '#6b7280' }}>
+                              {isOpen ? '↑ SLUITEN' : '↓ OPEN'}
+                            </span>
+                          </button>
+                          {isOpen && (
+                            <div style={{ padding: '0 24px 20px' }}>
+                              {h.actie && (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>
+                                    {h.actie_status ? 'Actie:' : 'Openstaande actie(s):'}
+                                  </span>
+                                  <span style={{ ...body, marginBottom: 0 }}>{h.actie}</span>
+                                  {h.actie_status && (
+                                    <span style={{
+                                      fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2,
+                                      color: h.actie_status === 'ja' ? '#44cc88' : h.actie_status === 'nee' ? '#cc4444' : '#6b7280',
+                                    }}>
+                                      {h.actie_status === 'ja' ? '✓ GEDAAN' : h.actie_status === 'nee' ? '✗ NIET GEDAAN' : '— OVERGESLAGEN'}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {/* h.aandachtspunt hierboven in de kop is al een AI-extract uit h.agenda
+                                  (zie extractAandachtspunt() in de 1on1-route), dus hieronder alleen
+                                  de volledige agenda tonen, niet het aandachtspunt nogmaals los
+                                  eronder herhalen. Zelfde duplicatie als eerder in de 1:1-PDF gefixt. */}
+                              {h.agenda && (
+                                <div style={{ marginBottom: 12, borderLeft: '3px solid #374151', paddingLeft: 16 }}>
                                   <div style={{ ...body }} dangerouslySetInnerHTML={{ __html: renderAnalyse(h.agenda) }} />
                                 </div>
                               )}
-                            </div>
-                          )}
-                          {h.notitie && !isNoteOpen && (
-                            <p style={{ ...body, fontSize: 13, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
-                          )}
-                          {isNoteOpen ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                              <textarea
-                                className="notitie-input"
-                                placeholder="Notitie over het gesprek..."
-                                value={noteInput}
-                                rows={1}
-                                onChange={e => {
-                                  setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))
-                                  e.target.style.height = '0px'
-                                  e.target.style.height = e.target.scrollHeight + 'px'
-                                }}
-                              />
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                  className="btn-note"
-                                  onClick={() => slaNotitieOp(h.id)}
-                                  disabled={noteSavingId === h.id}
-                                  style={{ color: '#f59e0b', borderColor: '#f59e0b' }}
-                                >
-                                  {noteSavingId === h.id ? 'OPSLAAN...' : 'OPSLAAN'}
-                                </button>
-                                <button
-                                  className="btn-note"
-                                  onClick={() => { setNoteOpenId(null); setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' })) }}
-                                >
-                                  ANNULEER
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              <button
-                                className="btn-note"
-                                onClick={() => {
-                                  setNoteOpenId(h.id)
-                                  setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' }))
-                                  setNoteSavedId(null)
-                                }}
-                              >
-                                {h.notitie ? 'BEWERK NOTITIE' : 'VOEG NOTITIE TOE'}
-                              </button>
-                              {h.agenda && data && (
-                                <DownloadOneOnOneButton
-                                  naam={data.name}
-                                  datum={h.created_at}
-                                  agenda={h.agenda}
-                                  notitie={h.notitie}
-                                  actie={h.actie}
-                                  actieStatus={h.actie_status}
-                                  mindsetScore={h.mindset_score}
-                                  systeemScore={h.systeem_score}
-                                  actieScore={h.actie_score}
-                                />
+                              {h.notitie && !isNoteOpen && (
+                                <p style={{ ...body, fontSize: 13, color: '#6b7280', fontStyle: 'italic', marginBottom: 12 }}>{h.notitie}</p>
+                              )}
+                              {isNoteOpen ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                                  <textarea
+                                    className="notitie-input"
+                                    placeholder="Notitie over het gesprek..."
+                                    value={noteInput}
+                                    rows={1}
+                                    onChange={e => {
+                                      setNoteInputs(prev => ({ ...prev, [h.id]: e.target.value }))
+                                      e.target.style.height = '0px'
+                                      e.target.style.height = e.target.scrollHeight + 'px'
+                                    }}
+                                  />
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                      className="btn-note"
+                                      onClick={() => slaNotitieOp(h.id)}
+                                      disabled={noteSavingId === h.id}
+                                      style={{ color: '#f59e0b', borderColor: '#f59e0b' }}
+                                    >
+                                      {noteSavingId === h.id ? 'OPSLAAN...' : 'OPSLAAN'}
+                                    </button>
+                                    <button
+                                      className="btn-note"
+                                      onClick={() => { setNoteOpenId(null); setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' })) }}
+                                    >
+                                      ANNULEER
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                  <button
+                                    className="btn-note"
+                                    onClick={() => {
+                                      setNoteOpenId(h.id)
+                                      setNoteInputs(prev => ({ ...prev, [h.id]: h.notitie ?? '' }))
+                                      setNoteSavedId(null)
+                                    }}
+                                  >
+                                    {h.notitie ? 'BEWERK NOTITIE' : 'VOEG NOTITIE TOE'}
+                                  </button>
+                                  {h.agenda && data && (
+                                    <DownloadOneOnOneButton
+                                      naam={data.name}
+                                      datum={h.created_at}
+                                      agenda={h.agenda}
+                                      notitie={h.notitie}
+                                      actie={h.actie}
+                                      actieStatus={h.actie_status}
+                                      mindsetScore={h.mindset_score}
+                                      systeemScore={h.systeem_score}
+                                      actieScore={h.actie_score}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                              {noteSavedId === h.id && !isNoteOpen && (
+                                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88', marginLeft: 8 }}>✓</span>
                               )}
                             </div>
-                          )}
-                          {noteSavedId === h.id && !isNoteOpen && (
-                            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#44cc88', marginLeft: 8 }}>✓</span>
                           )}
                         </div>
                       )
@@ -639,7 +654,7 @@ export default function LidPage() {
               {/* Gedeeld door lid */}
               {data.sharedAnalyses && data.sharedAnalyses.length > 0 && (
                 <div style={section}>
-                  <span style={label}>GEDEELD DOOR LID</span>
+                  <span style={label}>GEDEELD DOOR TEAMLID</span>
                   <p style={{ ...body, color: '#6b7280', marginBottom: 24 }}>
                     {data.name.split(' ')[0]} heeft onderstaande {data.sharedAnalyses.length === 1 ? 'analyse' : 'analyses'} zelf gedeeld.
                   </p>
@@ -653,7 +668,7 @@ export default function LidPage() {
                           {isMobile ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                               <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }}>
-                                {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
+                                {formatDate(a.analyse_created_at)}
                               </span>
                               <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, margin: 0 }}>
                                 {getAnalyseTitle(a.analyse_text)}
@@ -664,16 +679,9 @@ export default function LidPage() {
                             </div>
                           ) : (
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 195, flexShrink: 0, paddingTop: 2 }}>
-                                <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', fontFamily: "'Space Mono', monospace" }}>
-                                  {formatDate(a.analyse_created_at)}
-                                </span>
-                                {a.session_count ? (
-                                  <span style={{ color: '#6b7280', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', fontFamily: "'Space Mono', monospace" }}>
-                                    {a.session_count} gespr.
-                                  </span>
-                                ) : null}
-                              </div>
+                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 195, flexShrink: 0, paddingTop: 2, fontFamily: "'Space Mono', monospace" }}>
+                                {formatDate(a.analyse_created_at)}
+                              </span>
                               <div style={{ flex: 1 }}>
                                 <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
                                   {getAnalyseTitle(a.analyse_text)}
