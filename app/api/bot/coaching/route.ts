@@ -276,10 +276,14 @@ export async function POST() {
         .join('\n\n')
     : ''
 
-  const callModel = () => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
-    model: 'claude-fable-5',
-    max_tokens: 4000,
-    system: `Je bent Arno Diepeveen. Salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
+  // Systeemprompt als array van blokken (i.p.v. één string) zodat het volledig statische deel
+  // (identiek voor elke gebruiker en elk coachingsdocument, alle gebruikersdata zit in de
+  // messages-array hieronder) met cache_control gemarkeerd kan worden. Gemeten op ~1100+ tokens,
+  // ruim boven Anthropic's minimum van 1024 tokens voor caching op dit modeltype. Het zeldzame
+  // dynamische staartje (actieOpvolgingContext/voortgangErkenningContext/stagnatie) staat in een
+  // los, ongecached blok erna, zodat een enkele actieve gebruiker met zo'n signaal de cache-hit
+  // voor iedereen niet breekt.
+  const staticSystemPrompt = `Je bent Arno Diepeveen. Salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
 
 MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verkoper, positief of negatief taalgebruik, excuses maken of verantwoordelijkheid nemen.
 SYSTEEM = heeft iemand een verkoopproces? Volgt die dat consequent? Pipeline-denken, opvolging, structuur, terugkomen op dingen. Sales is een proces, geen vak.
@@ -321,8 +325,19 @@ ${RULE_NO_CRUDE_LANGUAGE}
 
 ${RULE_NEVER_BREAK_CHARACTER}
 
-${RULE_NO_INVENTED_DETAILS}
-${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`,
+${RULE_NO_INVENTED_DETAILS}`
+
+  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
+
+  const callModel = () => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
+    model: 'claude-fable-5',
+    max_tokens: 4000,
+    system: dynamicTail
+      ? [
+          { type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } },
+          { type: 'text' as const, text: dynamicTail },
+        ]
+      : [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }],
     messages: [{
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
