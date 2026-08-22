@@ -27,7 +27,7 @@ const C = {
 // (leidde live tot: content zonder gereserveerde ruimte tegen de vaste footer aan botste,
 // zie commit 8655444d die dit al eerder oploste in TeamPdfDocument.tsx). Daarom marge op
 // Page-niveau, met cover die er via een negatieve marge aan ontsnapt om full-bleed te blijven.
-const PAGE_TOP = 28, PAGE_BOTTOM = 50
+const PAGE_TOP = 44, PAGE_BOTTOM = 50
 
 const s = StyleSheet.create({
   page: { fontFamily: 'Space Mono', paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM },
