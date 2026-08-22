@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const today = new Date().toISOString().slice(0, 10)
   const { data: existing } = await supabase
     .from('arnobot_1on1_log')
-    .select('id')
+    .select('id, agenda, aandachtspunt')
     .eq('manager_id', managerId)
     .eq('member_id', targetUserId)
     .gte('created_at', `${today}T00:00:00`)
@@ -67,8 +67,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
+  // Deze route wordt ook aangeroepen om alleen actie/notitie bij te werken op een rij die
+  // vandaag al een agenda heeft (debounced auto-save tijdens typen, onBlur, pagehide-beacon).
+  // Als zo'n aanroep toevallig met een lege/verse React-state uitgevoerd wordt (bv. na een
+  // page-reload, of terwijl een mislukte regeneratie de lokale state net gewist had), mag een
+  // leeg agenda/aandachtspunt-veld de al opgeslagen inhoud van een BESTAANDE rij nooit
+  // overschrijven met null. Alleen bij een echte nieuwe rij (insert) is null legitiem, er is
+  // dan niets te verliezen.
+  const updatePayload = existing
+    ? {
+        ...payload,
+        agenda: agenda || existing.agenda,
+        aandachtspunt: aandachtspunt || existing.aandachtspunt,
+      }
+    : payload
+
   const { error } = existing
-    ? await supabase.from('arnobot_1on1_log').update(payload).eq('id', existing.id)
+    ? await supabase.from('arnobot_1on1_log').update(updatePayload).eq('id', existing.id)
     : await supabase.from('arnobot_1on1_log').insert({ ...payload, manager_id: managerId, member_id: targetUserId, team_id: managerMember.team_id })
 
   if (error) {
