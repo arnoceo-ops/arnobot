@@ -87,6 +87,7 @@ interface Props {
   plan: string
   paid: boolean
   gesprekBookedAt: string | null
+  showSparren: boolean
 }
 
 const PIJLAR_COLOR = '#f1f5f9'
@@ -97,7 +98,7 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
   dalend:   { arrow: '↓', color: '#cc2200' },
 }
 
-export default function CoachingClient({ userId, plan, paid, gesprekBookedAt }: Props) {
+export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, showSparren }: Props) {
   const { user } = useUser()
   const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
@@ -391,7 +392,9 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt }: 
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
+            {showSparren && (
+              <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
+            )}
             <button className="generate-btn" onClick={generate} disabled={generating || loading} title="Genereer je coachingsadvies op basis van mindset, systeem en actie">
               {generating ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>

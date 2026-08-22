@@ -81,5 +81,18 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
     )
   }
 
-  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} paid={!!data?.paid_at} gesprekBookedAt={data?.arno_call_booked_at ?? null} />
+  // Sparren-knop alleen tonen als er de laatste 14 dagen geen sparring-sessie was, zodat wie
+  // net geoefend heeft niet steeds opnieuw wordt uitgenodigd. Arno's expliciete keuze
+  // (2026-08-22): tijdgebonden, niet een percentage van totale gesprekken (dat geeft ruis bij
+  // weinig data).
+  const veertienDagenGeleden = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: recenteSparSessie } = await supabase
+    .from('arnobot_sparring_sessions')
+    .select('created_at')
+    .eq('user_id', userId)
+    .gte('created_at', veertienDagenGeleden)
+    .limit(1)
+    .maybeSingle()
+
+  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} paid={!!data?.paid_at} gesprekBookedAt={data?.arno_call_booked_at ?? null} showSparren={!recenteSparSessie} />
 }
