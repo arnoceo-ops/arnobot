@@ -554,15 +554,15 @@ export default function TeamClient() {
               {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandAantal > 0) && (
                 <div style={section}>
                   <span style={label}>1:1 MEETINGS</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
-                    <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+                    <div style={{ flex: '1 1 160px' }}>
                       <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>30 DAGEN</span>
                       <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
                         {oneOnOneRitme.laatste30Dagen}
                       </p>
                     </div>
                     {oneOnOneRitme.dekkingTotaal > 0 && (
-                      <div>
+                      <div style={{ flex: '1 1 160px' }}>
                         <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DEZE WEEK</span>
                         <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.dekkingAantal === oneOnOneRitme.dekkingTotaal ? '#44cc88' : oneOnOneRitme.dekkingAantal === 0 ? '#cc4444' : '#f59e0b', lineHeight: 1, marginTop: 8 }}>
                           {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal}</span>
@@ -570,14 +570,14 @@ export default function TeamClient() {
                       </div>
                     )}
                     {oneOnOneRitme.actieRatioPct !== null && (
-                      <div>
+                      <div style={{ flex: '1 1 160px' }}>
                         <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>ACTIES</span>
                         <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.actieRatioPct >= 70 ? '#44cc88' : oneOnOneRitme.actieRatioPct >= 40 ? '#f59e0b' : '#cc4444', lineHeight: 1, marginTop: 8 }}>
                           {oneOnOneRitme.actieRatioPct}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 4 }}>%</span>
                         </p>
                       </div>
                     )}
-                    <div>
+                    <div style={{ flex: '1 1 160px' }}>
                       <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAAND</span>
                       <p style={{
                         fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, lineHeight: 1, marginTop: 8,
