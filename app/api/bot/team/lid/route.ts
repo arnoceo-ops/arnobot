@@ -83,13 +83,18 @@ export async function GET(req: NextRequest) {
       .select('profiel')
       .eq('user_id', targetUserId)
       .single(),
+    // Limiet op 20 i.p.v. 5, zelfde conventie als coaching-analyses/route.ts en de sessies-lijst:
+    // server-side een ruime batch ophalen, client-side standaard de laatste 5 tonen met een
+    // "TOON ALLE X" toggle. Een lid met meer dan 5 1:1's zag oudere agenda's anders nooit meer
+    // terug (bevestigd: 15 1:1-logs voor een testlid, agenda's ouder dan de 5 recentste vielen
+    // stelselmatig buiten de opgehaalde data, niet alleen buiten beeld).
     supabase
       .from('arnobot_1on1_log')
       .select('id, aandachtspunt, agenda, notitie, actie, actie_status, mindset_score, systeem_score, actie_score, created_at')
       .eq('manager_id', managerId)
       .eq('member_id', targetUserId)
       .order('created_at', { ascending: false })
-      .limit(5),
+      .limit(20),
   ])
 
   // Fetch the actual analyse texts for shared analyses

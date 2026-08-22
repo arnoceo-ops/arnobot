@@ -137,6 +137,7 @@ export default function LidPage() {
   const isMobile = useIsMobile()
   const [expandedAnalyse, setExpandedAnalyse] = useState<string | null>(null)
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
+  const [showAllHistory, setShowAllHistory] = useState(false)
   const [verwijderBevestig, setVerwijderBevestig] = useState(false)
   const [verwijderLoading, setVerwijderLoading] = useState(false)
 
@@ -467,7 +468,7 @@ export default function LidPage() {
                 <div style={section}>
                   <span style={label}>1:1 GESCHIEDENIS</span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {data.history.map(h => {
+                    {data.history.slice(0, showAllHistory ? undefined : 5).map(h => {
                       const scores = [h.mindset_score, h.systeem_score, h.actie_score]
                       const scoreStr = scores.every(s => s === null) ? null : scores.map(s => s ?? '?').join(' / ')
                       const isNoteOpen = noteOpenId === h.id
@@ -585,6 +586,19 @@ export default function LidPage() {
                       )
                     })}
                   </div>
+
+                  {data.history.length > 5 && (
+                    <div style={{ borderTop: '1px solid #374151', padding: '20px 0 0', textAlign: 'center' }}>
+                      <button
+                        onClick={() => setShowAllHistory(v => !v)}
+                        style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '10px 28px', borderRadius: 999, transition: 'all 0.15s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
+                      >
+                        {showAllHistory ? 'TOON MINDER ↑' : `TOON ALLE ${data.history.length} 1:1'S ↓`}
+                      </button>
+                    </div>
+                  )}
 
                   {(() => {
                     const laatste = data.history[0]
