@@ -7,18 +7,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Start van de lopende kalenderweek (maandag 00:00, Europe/Amsterdam), niet een rollend
-// 7-dagen-venster: "deze week" moet ook echt de lopende werkweek betekenen. Zelfde
-// tijdzone-aanpak als getDayOfWeek() in app/api/bot/uitdaging/route.ts.
-function startOfThisWeek(): number {
-  const nowInAmsterdam = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }))
-  const dayOfWeek = nowInAmsterdam.getDay() // 0 = zondag
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-  nowInAmsterdam.setDate(nowInAmsterdam.getDate() - daysFromMonday)
-  nowInAmsterdam.setHours(0, 0, 0, 0)
-  return nowInAmsterdam.getTime()
-}
-
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
@@ -138,7 +126,7 @@ export async function GET() {
   // (opvolgdiscipline op eigen 1:1-acties) is verplaatst naar de leiderschapspagina
   // (zelfcoaching/route.ts), hoort inhoudelijk bij Execution, niet bij dit teamoverzicht.
   const oneOnOnes = oneOnOneRes.data ?? []
-  const startDezeWeek = startOfThisWeek()
+  const zevenDagenGeleden = Date.now() - 7 * 86400000
   const dertigDagenGeleden = Date.now() - 30 * 86400000
   const veertienDagenGeleden = Date.now() - 14 * 86400000
   const laatste30Dagen = oneOnOnes.filter(l => new Date(l.created_at).getTime() >= dertigDagenGeleden).length
@@ -154,15 +142,16 @@ export async function GET() {
     ? Math.round((oneOnOnes.filter(l => !!l.actie).length / oneOnOnes.length) * 100)
     : null
 
-  // Dekking: hoeveel teamleden hadden deze kalenderweek (sinds maandag) al minstens één 1:1.
-  // Bewust de lopende week, niet de 30-dagen-window van laatste30Dagen hierboven (Arno's
-  // expliciete norm: een 1:1 hoort wekelijks te zijn), en bewust een apart concept van
+  // Dekking: hoeveel teamleden hadden in de afgelopen 7 dagen minstens één 1:1. Bewust een
+  // rollend venster, niet de kalenderweek (Arno's expliciete keuze, 2026-08-22: rollend geeft
+  // een eerlijker beeld op elk moment van de week, i.p.v. dat het cijfer elke maandag terugvalt
+  // naar 0 ongeacht wat er net nog gebeurd is). Bewust ook een apart concept van
   // MINIMUMFREQUENTIE in TeamClient.tsx (dat meet de eigen ArnoBot-activiteit van het teamlid,
   // niet het 1:1-ritme met de manager).
-  const leden1on1DezeWeek = new Set(
-    oneOnOnes.filter(l => l.member_id && new Date(l.created_at).getTime() >= startDezeWeek).map(l => l.member_id)
+  const leden1on1LaatsteWeek = new Set(
+    oneOnOnes.filter(l => l.member_id && new Date(l.created_at).getTime() >= zevenDagenGeleden).map(l => l.member_id)
   )
-  const dekkingAantal = members.filter(m => leden1on1DezeWeek.has(m.user_id)).length
+  const dekkingAantal = members.filter(m => leden1on1LaatsteWeek.has(m.user_id)).length
 
   // Per lid: hoeveel 1:1's in de laatste 30 dagen, en omgerekend naar een weekgemiddelde.
   // Los van het teambrede totaal hierboven, dat zegt niets over spreiding (2 in 30 dagen kan
