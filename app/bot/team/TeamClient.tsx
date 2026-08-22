@@ -156,7 +156,7 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandOuderDan14Dagen: number; dekkingAantal: number; dekkingTotaal: number; actieRatioPct: number | null; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandAantal: number; dekkingAantal: number; dekkingTotaal: number; actieRatioPct: number | null; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -551,7 +551,7 @@ export default function TeamClient() {
 
               </div>
 
-              {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
+              {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandAantal > 0) && (
                 <div style={section}>
                   <span style={label}>1:1 MEETINGS</span>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
@@ -578,9 +578,9 @@ export default function TeamClient() {
                       </div>
                     )}
                     <div>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAAND &gt;2W</span>
-                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.openstaandOuderDan14Dagen > 0 ? '#f59e0b' : '#44cc88', lineHeight: 1, marginTop: 8 }}>
-                        {oneOnOneRitme.openstaandOuderDan14Dagen}
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAAND</span>
+                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
+                        {oneOnOneRitme.openstaandAantal}
                       </p>
                     </div>
                   </div>

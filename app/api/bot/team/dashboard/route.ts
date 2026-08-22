@@ -128,11 +128,12 @@ export async function GET() {
   const oneOnOnes = oneOnOneRes.data ?? []
   const zevenDagenGeleden = Date.now() - 7 * 86400000
   const dertigDagenGeleden = Date.now() - 30 * 86400000
-  const veertienDagenGeleden = Date.now() - 14 * 86400000
   const laatste30Dagen = oneOnOnes.filter(l => new Date(l.created_at).getTime() >= dertigDagenGeleden).length
-  const openstaandOuderDan14Dagen = oneOnOnes.filter(l =>
-    l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
-  ).length
+  // Openstaand: alle acties die nog geen terugkoppeling (ja/nee/skip) hebben, ongeacht leeftijd.
+  // Bewust geen "ouder dan X dagen"-filter meer (Arno's herformulering, 2026-08-22): dit is geen
+  // probleemteller, het geeft gewoon weer wat er nog moet gebeuren, een actie van gisteren hoort
+  // daar net zo goed bij als een oudere.
+  const openstaandAantal = oneOnOnes.filter(l => l.actie && !l.actie_status).length
 
   // Actie-ratio: van alle ooit gelogde 1:1's, welk deel leverde een concrete actie op (los van
   // of die actie later ook is opgevolgd, dat meet follow-through op de leiderschapspagina). Meet
@@ -175,6 +176,6 @@ export async function GET() {
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, openstaandOuderDan14Dagen, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
+    oneOnOneRitme: { laatste30Dagen, openstaandAantal, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
   })
 }
