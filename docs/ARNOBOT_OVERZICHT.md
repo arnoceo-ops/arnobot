@@ -1,6 +1,6 @@
 # ArnoBot — volledig productoverzicht
 
-**Laatst bijgewerkt:** 2026-08-12
+**Laatst bijgewerkt:** 2026-08-22
 **Doel van dit document:** een volledig, actueel beeld van ArnoBot als product en bedrijf, voor gebruik buiten de dagelijkse ontwikkelwerkzaamheden (bijv. upload naar NotebookLM voor een presentatie, briefing van nieuwe teamleden, gesprekken met investeerders of partners). Vult `docs/SALES_BIJBEL.md` aan: dat document behandelt waaróm een klant koopt (USP's, unique buying reasons), dit document behandelt wát ArnoBot precies is, in volle breedte.
 
 **Belangrijk voor gebruik in een presentatie:** dit document bevat alleen wat daadwerkelijk gebouwd en geverifieerd is tegen de code, op de datum hierboven. Waar iets gepland maar niet live is, staat dat er expliciet bij. Neem geen enkel cijfer of kenmerk over zonder dat onderscheid, dat voorkomt dat een presentatie iets belooft wat nog niet bestaat.
@@ -57,12 +57,14 @@ Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyse
 Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI Whisper) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
 
 ### 3.7 Teammodule
-Voor Team-abonnees. De manager krijgt:
-- **Teamoverzicht:** individuele scores van elk teamlid
-- **Teamvoortgang als trend over tijd**, inclusief vroegsignalering bij stagnatie
+Voor Team-abonnees. De manager krijgt op zijn teampagina:
+- **Teamoverzicht:** individuele scores van elk teamlid, doorklikbaar naar een volledig lidprofiel
+- **Teamvoortgang als trend over tijd** (mindset/systeem/actie, teambreed gemiddeld)
 - **AI-voorbereide agenda voor elk 1:1-gesprek**, gebaseerd op de recente activiteit van dat teamlid
-- **Team Spotlight:** een collectieve analyse van het hele team, patronen die alleen zichtbaar worden op teamniveau
-- **Een eigen leiderschapsaccount**, nadrukkelijk geen coachingaccount zoals teamleden krijgen, maar een eigen ruimte om te sparren over sales, organisatie en teamexecutie
+- **Eigen 1:1-ritme, per teamlid uitgesplitst:** hoeveel 1:1's per teamlid in de laatste 30 dagen en omgerekend per week, zodat direct zichtbaar is wie achterblijft, niet alleen een teambreed totaal
+- **Team Spotlight:** een collectieve AI-analyse van het hele team (kracht, groeikans, concreet advies), die sinds 21 augustus 2026 ook teambrede thema-patronen duidt: welk gespreksonderwerp domineert, of dat wijst op verdieping of op vastzitten, en of een verschuiving tussen thema's een natuurlijke voortgang is of een teken van afleiding. Bewust geen los cijferblokje ernaast, een patroon zonder duiding bleek geen bruikbare informatie voor een manager.
+
+**Coaching voor de manager zelf (herzien, 22 augustus 2026):** een teambaas verkoopt zelf niet en wordt dus nooit op mindset/systeem/actie gescoord (zie 3.3). Op dezelfde coachingpagina die een verkoper ziet, krijgt een bevestigde teambaas in plaats daarvan zijn eigen volwaardige coachingservaring langs drie andere lijnen, afkomstig uit Verne Harnish' Scaling Up-methode: **Strategy** (vertaalt hij de bedrijfsstrategie naar een helder plan voor zijn team), **People** (heeft hij de juiste mensen op de juiste plek en ontwikkelt hij ze), **Execution** (brengt zijn team plannen daadwerkelijk tot resultaat). Score, drie pijlerdiagnoses, een voortgangstekst, een progressiegrafiek, een doorbladerbaar archief van eerdere metingen en een PDF-download, gebaseerd op zijn eigen 1:1's met zijn team, teamresultaten én zijn eigen gesprekken met ArnoBot. Dezelfde pagina, andere inhoud, afhankelijk van wie er kijkt.
 
 **Privacygarantie, fundamenteel voor dit onderdeel:** de manager ziet nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen. Dit lost een reëel vertrouwensprobleem op: mensen zijn niet eerlijk tegen een AI-coach als hun leidinggevende alles kan teruglezen.
 
@@ -143,4 +145,4 @@ Niet uitputtend, de belangrijkste bekende vervolgstappen:
 
 ## 9. Bronnen binnen dit project
 
-Voor wie dieper wil: `docs/SALES_BIJBEL.md` (verkoopargumenten), `docs/PRICING_DECISIONS.md` (volledige onderbouwing van elk prijsbesluit), `docs/ABONNEMENTEN.md` (actuele status van de abonnementsstructuur), `docs/TECHNICAL_HANDOVER.md` (volledige technische documentatie), `docs/BUSINESS_HANDOVER.md` (bedrijfsoverdracht-documentatie).
+Voor wie dieper wil: `docs/SALES_BIJBEL.md` (verkoopargumenten), `docs/PRICING_DECISIONS.md` (volledige onderbouwing van elk prijsbesluit), `docs/ABONNEMENTEN.md` (actuele status van de abonnementsstructuur), `docs/TECHNICAL_HANDOVER.md` (volledige technische documentatie), `docs/BUSINESS_HANDOVER.md` (bedrijfsoverdracht-documentatie), `docs/TEAM_PLAN.md` (volledige bouwgeschiedenis en openstaande besluiten van de teammodule, met de reden achter elke keuze).
