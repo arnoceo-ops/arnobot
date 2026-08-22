@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { ProgressieChart, SPE_SERIES } from '@/app/bot/components/ProgressieChart'
@@ -53,6 +54,8 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
 }
 
 export default function SpeCoachingClient() {
+  const { user } = useUser()
+  const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -185,6 +188,9 @@ export default function SpeCoachingClient() {
           ARNO<span style={{ color: '#f59e0b' }}>BOT</span>
         </p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, letterSpacing: 3, lineHeight: 1, color: '#111827', marginBottom: 12 }}>MIJN LEIDERSCHAP</h1>
+        {firstName && (
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 3, color: '#f59e0b', marginBottom: 4 }}>{firstName.toUpperCase()}</p>
+        )}
         <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 1, color: '#6b7280', paddingBottom: 24, borderBottom: '2px solid #f59e0b' }}>
           {new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>

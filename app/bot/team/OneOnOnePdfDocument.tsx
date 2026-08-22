@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { registerBrandFonts } from '@/lib/pdfFonts'
+
+registerBrandFonts()
 
 interface OneOnOnePdfProps {
   naam: string
@@ -21,26 +24,26 @@ const C = {
 }
 
 const s = StyleSheet.create({
-  cover: { backgroundColor: C.bg, padding: '40 44', fontFamily: 'Helvetica' },
+  cover: { backgroundColor: C.bg, padding: '40 44', fontFamily: 'Space Mono' },
   brandRow: { flexDirection: 'row', marginBottom: 32 },
-  brandArno: { color: C.cream, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
-  brandBot: { color: C.orange, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
+  brandArno: { color: C.cream, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
+  brandBot: { color: C.orange, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
   label: { color: C.orange, fontSize: 8, letterSpacing: 3, marginBottom: 8 },
-  title: { fontSize: 30, color: C.cream, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  title: { fontSize: 34, color: C.cream, fontFamily: 'Bebas Neue', marginBottom: 4 },
   sub: { color: C.cream, fontSize: 9, opacity: 0.4, marginBottom: 24 },
   divider: { height: 1, backgroundColor: C.subtle, marginBottom: 20 },
   scoresRow: { flexDirection: 'row', gap: 16 },
   scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '12 14', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
-  scoreValue: { color: C.cream, fontSize: 22, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '36 44', fontFamily: 'Helvetica' },
-  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
-  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 8 },
+  scoreValue: { color: C.cream, fontSize: 26, fontFamily: 'Bebas Neue' },
+  body: { backgroundColor: C.white, padding: '36 44', fontFamily: 'Space Mono' },
+  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
+  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 8 },
   paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, marginBottom: 4 },
   notitieBox: { marginTop: 24, borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 16 },
   notitieLabel: { fontSize: 8, color: C.mid, letterSpacing: 2, marginBottom: 6 },
-  notitieText: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, fontFamily: 'Helvetica-Oblique' },
-  actieStatus: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', marginTop: 4, marginBottom: 4 },
+  notitieText: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, fontFamily: 'Space Mono' },
+  actieStatus: { fontSize: 8.5, fontFamily: 'Space Mono', letterSpacing: 1, marginTop: 4, marginBottom: 4 },
   footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })

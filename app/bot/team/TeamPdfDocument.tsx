@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Svg, Path, Circle, Line, Defs, LinearGradient, Stop } from '@react-pdf/renderer'
+import { registerBrandFonts } from '@/lib/pdfFonts'
+
+registerBrandFonts()
 
 interface TeamPdfMember {
   naam: string
@@ -52,35 +55,35 @@ const C = {
 const PAGE_TOP = 28, PAGE_BOTTOM = 50
 
 const s = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM },
-  cover: { backgroundColor: C.bg, padding: '30 44', marginTop: -PAGE_TOP, fontFamily: 'Helvetica' },
+  page: { fontFamily: 'Space Mono', paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM },
+  cover: { backgroundColor: C.bg, padding: '30 44', marginTop: -PAGE_TOP, fontFamily: 'Space Mono' },
   brandRow: { flexDirection: 'row', marginBottom: 22 },
-  brandArno: { color: C.cream, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
-  brandBot: { color: C.orange, fontSize: 14, fontFamily: 'Helvetica-Bold', letterSpacing: 3 },
+  brandArno: { color: C.cream, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
+  brandBot: { color: C.orange, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
   label: { color: C.orange, fontSize: 8, letterSpacing: 3, marginBottom: 8 },
-  title: { fontSize: 26, color: C.cream, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  title: { fontSize: 30, color: C.cream, fontFamily: 'Bebas Neue', marginBottom: 4 },
   sub: { color: C.cream, fontSize: 9, opacity: 0.4, marginBottom: 16 },
   divider: { height: 1, backgroundColor: C.subtle, marginBottom: 14 },
   scoresRow: { flexDirection: 'row', gap: 12 },
   scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '9 12', borderRadius: 2 },
   scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
-  scoreValue: { color: C.cream, fontSize: 20, fontFamily: 'Helvetica-Bold' },
-  body: { backgroundColor: C.white, padding: '20 44 0 44', fontFamily: 'Helvetica' },
-  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7, marginTop: 14 },
-  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Helvetica-Bold', letterSpacing: 2, marginBottom: 7 },
+  scoreValue: { color: C.cream, fontSize: 24, fontFamily: 'Bebas Neue' },
+  body: { backgroundColor: C.white, padding: '20 44 0 44', fontFamily: 'Space Mono' },
+  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 7, marginTop: 14 },
+  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 7 },
   paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.6, marginBottom: 3 },
   table: { marginTop: 2 },
   tableHeadRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.line, paddingBottom: 5, marginBottom: 4 },
   tableRow: { flexDirection: 'row', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: C.line },
-  tableHeadCell: { fontSize: 7, color: C.mid, letterSpacing: 1.5, fontFamily: 'Helvetica-Bold' },
+  tableHeadCell: { fontSize: 7, color: C.mid, letterSpacing: 1.5, fontFamily: 'Space Mono' },
   tableCell: { fontSize: 9.5, color: C.dark },
   colNaam: { flex: 2 },
   colGetal: { flex: 1, textAlign: 'right' },
   chartRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   chartCard: { flex: 1, backgroundColor: C.subtle, borderRadius: 4, padding: '10 8 6 8' },
   chartCardHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 6 },
-  chartCardLabel: { fontSize: 7, color: C.cream, letterSpacing: 2, fontFamily: 'Helvetica-Bold' },
-  chartCardValue: { fontSize: 17, fontFamily: 'Helvetica-Bold' },
+  chartCardLabel: { fontSize: 7, color: C.cream, letterSpacing: 2, fontFamily: 'Space Mono' },
+  chartCardValue: { fontSize: 19, fontFamily: 'Bebas Neue' },
   footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
 })
