@@ -329,6 +329,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, sh
           .msa-score-number { font-size: clamp(36px, 10vw, 64px); }
         }
         .print-only { display: none; }
+        @page { size: portrait; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           body { background: #ffffff !important; color: #111827 !important; }
