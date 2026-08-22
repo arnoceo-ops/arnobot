@@ -1,18 +1,33 @@
 'use client'
 
 export interface ScorePoint {
-  mindset_score: number | null
-  systeem_score: number | null
-  actie_score: number | null
+  mindset_score?: number | null
+  systeem_score?: number | null
+  actie_score?: number | null
+  strategy_score?: number | null
+  people_score?: number | null
+  execution_score?: number | null
   created_at: string
 }
 
-type ScoreKey = 'mindset_score' | 'systeem_score' | 'actie_score'
+export interface ChartSeries {
+  key: keyof ScorePoint
+  color: string
+  label: string
+}
 
-const SERIES: { key: ScoreKey; color: string; label: string }[] = [
+export const MSA_SERIES: ChartSeries[] = [
   { key: 'mindset_score', color: '#f59e0b', label: 'MINDSET' },
   { key: 'systeem_score', color: '#60a5fa', label: 'SYSTEEM' },
   { key: 'actie_score',   color: '#34d399', label: 'ACTIE'   },
+]
+
+// Zelfde kleurhiërarchie als de SPE-pijlerbalken elders in de app: amber voor het gewogen
+// zwaarste onderdeel (People), neutrale tinten voor de andere twee.
+export const SPE_SERIES: ChartSeries[] = [
+  { key: 'strategy_score',  color: '#60a5fa', label: 'STRATEGY'  },
+  { key: 'people_score',    color: '#f59e0b', label: 'PEOPLE'    },
+  { key: 'execution_score', color: '#34d399', label: 'EXECUTION' },
 ]
 
 function curvePath(pts: { x: number; y: number }[]): string {
@@ -101,18 +116,20 @@ function MiniChart({ points, label, color }: { points: MiniPoint[]; label: strin
   )
 }
 
-function avgScore(values: (number | null)[]): number | null {
-  const valid = values.filter((v): v is number => v !== null)
+function avgScore(values: (number | null | undefined)[]): number | null {
+  const valid = values.filter((v): v is number => v != null)
   if (valid.length === 0) return null
   return Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10
 }
 
-export function ProgressieChart({ history }: { history: ScorePoint[] }) {
+// series bewust optioneel met MSA als default: bestaande callsites (Teamscores, individuele
+// coaching) blijven ongewijzigd werken, nieuwe callsites (SPE) geven series={SPE_SERIES} mee.
+export function ProgressieChart({ history, series = MSA_SERIES }: { history: ScorePoint[]; series?: ChartSeries[] }) {
   const fourMonthsAgo = new Date()
   fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4)
 
   const filtered = history.filter(h =>
-    (h.mindset_score != null || h.systeem_score != null || h.actie_score != null)
+    series.some(s => h[s.key] != null)
     && new Date(h.created_at) >= fourMonthsAgo
   )
 
@@ -128,12 +145,11 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
 
   const monthly = Array.from(byMonth.entries())
     .sort(([a], [b]) => a.localeCompare(b)) // ASC op jaar-maand
-    .map(([key, pts]) => ({
-      yearMonth: key,
-      mindset_score: avgScore(pts.map(p => p.mindset_score)),
-      systeem_score: avgScore(pts.map(p => p.systeem_score)),
-      actie_score: avgScore(pts.map(p => p.actie_score)),
-    }))
+    .map(([key, pts]) => {
+      const row: Record<string, number | null | string> = { yearMonth: key }
+      for (const s of series) row[s.key as string] = avgScore(pts.map(p => p[s.key] as number | null | undefined))
+      return row
+    })
 
   return (
     <>
@@ -142,14 +158,14 @@ export function ProgressieChart({ history }: { history: ScorePoint[] }) {
         @media (min-width: 560px) { .pg-grid { grid-template-columns: repeat(3, 1fr); } }
       `}</style>
       <div className="pg-grid">
-        {SERIES.map(s => {
+        {series.map(s => {
           const points: MiniPoint[] = monthly
-            .filter(m => m[s.key] != null)
+            .filter(m => m[s.key as string] != null)
             .map(m => ({
-              month: maandNaam(m.yearMonth),
-              value: m[s.key] as number,
+              month: maandNaam(m.yearMonth as string),
+              value: m[s.key as string] as number,
             }))
-          return <MiniChart key={s.key} points={points} label={s.label} color={s.color} />
+          return <MiniChart key={s.key as string} points={points} label={s.label} color={s.color} />
         })}
       </div>
     </>

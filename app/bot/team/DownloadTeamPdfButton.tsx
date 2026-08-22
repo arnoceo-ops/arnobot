@@ -8,7 +8,7 @@ interface DownloadTeamPdfButtonProps {
   mindsetScore: number | null
   systeemScore: number | null
   actieScore: number | null
-  scoreGeschiedenis: { mindset_score: number | null; systeem_score: number | null; actie_score: number | null; created_at: string }[]
+  scoreGeschiedenis: { mindset_score?: number | null; systeem_score?: number | null; actie_score?: number | null; created_at: string }[]
   members: { naam: string; msa: number | null; sessies: number; analyses: number; laatsteActiviteit: string | null }[]
   spotlightText: string | null
   spotlightDatum: string | null

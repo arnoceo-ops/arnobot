@@ -11,9 +11,9 @@ interface TeamPdfMember {
 }
 
 interface TeamScorePoint {
-  mindset_score: number | null
-  systeem_score: number | null
-  actie_score: number | null
+  mindset_score?: number | null
+  systeem_score?: number | null
+  actie_score?: number | null
   created_at: string
 }
 
