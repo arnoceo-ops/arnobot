@@ -124,6 +124,7 @@ export async function GET() {
   // Feitelijke terugkoppeling op de eigen 1:1's van de manager, bewust geen AI-tekst (dat is
   // punt 5, dat op deze data bouwt): frequentie + follow-through + openstaande acties.
   const oneOnOnes = oneOnOneRes.data ?? []
+  const zevenDagenGeleden = Date.now() - 7 * 86400000
   const dertigDagenGeleden = Date.now() - 30 * 86400000
   const veertienDagenGeleden = Date.now() - 14 * 86400000
   const laatste30Dagen = oneOnOnes.filter(l => new Date(l.created_at).getTime() >= dertigDagenGeleden).length
@@ -134,6 +135,15 @@ export async function GET() {
   const openstaandOuderDan14Dagen = oneOnOnes.filter(l =>
     l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
   ).length
+
+  // Dekking: hoeveel teamleden hadden in de afgelopen 7 dagen minstens één 1:1. Bewust wekelijks
+  // i.p.v. de 30-dagen-window van laatste30Dagen hierboven (Arno's expliciete norm: een 1:1 hoort
+  // wekelijks te zijn), en bewust een apart concept van MINIMUMFREQUENTIE in TeamClient.tsx (dat
+  // meet de eigen ArnoBot-activiteit van het teamlid, niet het 1:1-ritme met de manager).
+  const leden1on1LaatsteWeek = new Set(
+    oneOnOnes.filter(l => l.member_id && new Date(l.created_at).getTime() >= zevenDagenGeleden).map(l => l.member_id)
+  )
+  const dekkingAantal = members.filter(m => leden1on1LaatsteWeek.has(m.user_id)).length
 
   // Per lid: hoeveel 1:1's in de laatste 30 dagen, en omgerekend naar een weekgemiddelde.
   // Los van het teambrede totaal hierboven, dat zegt niets over spreiding (2 in 30 dagen kan
@@ -157,6 +167,6 @@ export async function GET() {
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length, perLid },
+    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length, dekkingAantal, dekkingTotaal: members.length, perLid },
   })
 }
