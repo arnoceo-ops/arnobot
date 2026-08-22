@@ -139,9 +139,15 @@ export async function GET() {
   // of die actie later ook is opgevolgd, dat meet follow-through op de leiderschapspagina). Meet
   // of de 1:1's zelf productief zijn, niet alleen of ze plaatsvinden (dekking) of afgerond worden
   // (follow-through).
-  const actieRatioPct = oneOnOnes.length > 0
-    ? Math.round((oneOnOnes.filter(l => !!l.actie).length / oneOnOnes.length) * 100)
-    : null
+  const totaalMetActie = oneOnOnes.filter(l => !!l.actie).length
+  const actieRatioPct = oneOnOnes.length > 0 ? Math.round((totaalMetActie / oneOnOnes.length) * 100) : null
+
+  // Openstaand-ratio: hoe groot is de stapel onbeantwoorde acties relatief t.o.v. alle ooit
+  // gezette acties. Puur absoluut tellen zegt weinig (5 openstaand is heel wat anders bij een
+  // team met 8 acties totaal dan bij een team met 80), Arno's expliciete verzoek om de kleur op
+  // deze verhouding te baseren i.p.v. een vast getal. Alleen relevant voor kleur, het getal zelf
+  // (openstaandAantal) blijft gewoon het absolute aantal.
+  const openstaandRatioPct = totaalMetActie > 0 ? Math.round((openstaandAantal / totaalMetActie) * 100) : null
 
   // Dekking: hoeveel teamleden hadden in de afgelopen 7 dagen minstens één 1:1. Bewust een
   // rollend venster, niet de kalenderweek (Arno's expliciete keuze, 2026-08-22: rollend geeft
@@ -176,6 +182,6 @@ export async function GET() {
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, openstaandAantal, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
+    oneOnOneRitme: { laatste30Dagen, openstaandAantal, openstaandRatioPct, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
   })
 }

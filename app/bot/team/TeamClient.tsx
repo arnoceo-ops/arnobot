@@ -156,7 +156,7 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandAantal: number; dekkingAantal: number; dekkingTotaal: number; actieRatioPct: number | null; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandAantal: number; openstaandRatioPct: number | null; dekkingAantal: number; dekkingTotaal: number; actieRatioPct: number | null; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -469,7 +469,7 @@ export default function TeamClient() {
                       <div
                         key={m.user_id}
                         onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
-                        style={{ borderTop: '1px solid #374151', padding: '16px 0', cursor: 'pointer' }}
+                        style={{ borderTop: '1px solid #1f2937', padding: '16px 0', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f1f5f9', fontWeight: 400 }}>
@@ -504,7 +504,7 @@ export default function TeamClient() {
                         <col style={{ width: 100 }} />
                       </colgroup>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid #374151' }}>
+                        <tr style={{ borderBottom: '1px solid #1f2937' }}>
                           <th style={{ padding: '8px 16px 12px 0' }} />
                           {([
                             { label: 'NAAM', col: 'naam', align: 'left' },
@@ -527,7 +527,7 @@ export default function TeamClient() {
                             <tr
                               key={m.user_id}
                               onClick={() => router.push(`/bot/team/lid/${m.user_id}`)}
-                              style={{ borderBottom: '1px solid #374151', cursor: 'pointer', transition: 'background 0.15s' }}
+                              style={{ borderBottom: '1px solid #1f2937', cursor: 'pointer', transition: 'background 0.15s' }}
                               onMouseEnter={e => (e.currentTarget.style.background = '#1e293b')}
                               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
@@ -579,7 +579,13 @@ export default function TeamClient() {
                     )}
                     <div>
                       <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAAND</span>
-                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
+                      <p style={{
+                        fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, lineHeight: 1, marginTop: 8,
+                        color: oneOnOneRitme.openstaandRatioPct === null ? '#f1f5f9'
+                          : oneOnOneRitme.openstaandRatioPct > 40 ? '#cc4444'
+                          : oneOnOneRitme.openstaandRatioPct > 20 ? '#f59e0b'
+                          : '#44cc88',
+                      }}>
                         {oneOnOneRitme.openstaandAantal}
                       </p>
                     </div>
