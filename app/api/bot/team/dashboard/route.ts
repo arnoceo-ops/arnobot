@@ -1,6 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -139,12 +140,12 @@ export async function GET() {
   // daar net zo goed bij als een oudere.
   const openstaandAantal = oneOnOnes.filter(l => l.actie && !l.actie_status).length
 
-  // Actie-ratio: van alle ooit gelogde 1:1's, welk deel leverde een concrete actie op (los van
-  // of die actie later ook is opgevolgd, dat meet follow-through op de leiderschapspagina). Meet
-  // of de 1:1's zelf productief zijn, niet alleen of ze plaatsvinden (dekking) of afgerond worden
-  // (follow-through).
+  // Alleen nog de teller (nodig als noemer voor openstaandRatioPct hieronder), het percentage
+  // zelf (actieRatioPct) is verwijderd (2026-08-22): een levenslang teambreed gemiddelde zonder
+  // trend, benchmark of onderscheid tussen leden bleek geen bruikbaar signaal, Arno's eigen
+  // constatering ("dat zegt mij eigenlijk niets"). DEZE WEEK en OPENSTAAND dekken samen al het
+  // echt bruikbare signaal (wie mist, wat ligt er nog open).
   const totaalMetActie = oneOnOnes.filter(l => !!l.actie).length
-  const actieRatioPct = oneOnOnes.length > 0 ? Math.round((totaalMetActie / oneOnOnes.length) * 100) : null
 
   // Openstaand-ratio: hoe groot is de stapel onbeantwoorde acties relatief t.o.v. alle ooit
   // gezette acties. Puur absoluut tellen zegt weinig (5 openstaand is heel wat anders bij een
@@ -183,9 +184,16 @@ export async function GET() {
     }
   })
 
+  // Punt 2C, Manager als Variabele: bewust hergebruik van computeSpiegelSignaal (2A), geen
+  // nieuwe query of drempel-logica. Vaste, voorgeschreven tekst (formatSystemischSignaal), null
+  // zolang het niet van toepassing is.
+  const spiegel = await computeSpiegelSignaal(memberIds)
+  const systemischSignaal = formatSystemischSignaal(spiegel)
+
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, openstaandAantal, openstaandRatioPct, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
+    oneOnOneRitme: { laatste30Dagen, openstaandAantal, openstaandRatioPct, dekkingAantal, dekkingTotaal: members.length, perLid },
+    systemischSignaal,
   })
 }
