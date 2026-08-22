@@ -24,7 +24,7 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const [{ data, error }, { data: history, error: historyError }] = await Promise.all([
+  const [{ data, error }, { data: history, error: historyError }, { data: acties, error: actiesError }] = await Promise.all([
     supabase
       .from('arnobot_salesbaas_coaching')
       .select('*')
@@ -35,11 +35,26 @@ export async function GET() {
       .select('id, strategy_score, strategy_diagnose, people_score, people_diagnose, execution_score, execution_diagnose, voortgang, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: true }),
+    // Follow-through: gaat over de eigen opvolgdiscipline van de teambaas op zijn 1:1-acties,
+    // hoort inhoudelijk bij Execution op deze pagina, niet bij het teamoverzicht op /bot/team
+    // (verplaatst na Arno's feedback, 2026-08-22).
+    supabase
+      .from('arnobot_1on1_log')
+      .select('actie_status')
+      .eq('manager_id', userId)
+      .in('actie_status', ['ja', 'nee']),
   ])
 
   if (error) console.error('[zelfcoaching GET]', error.message)
   if (historyError) console.error('[zelfcoaching GET history]', historyError.message)
-  return NextResponse.json({ coaching: data ?? null, history: history ?? [] })
+  if (actiesError) console.error('[zelfcoaching GET acties]', actiesError.message)
+
+  const beantwoord = acties ?? []
+  const followThroughPct = beantwoord.length > 0
+    ? Math.round((beantwoord.filter(a => a.actie_status === 'ja').length / beantwoord.length) * 100)
+    : null
+
+  return NextResponse.json({ coaching: data ?? null, history: history ?? [], followThroughPct })
 }
 
 export async function POST() {

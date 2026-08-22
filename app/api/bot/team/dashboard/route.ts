@@ -122,16 +122,14 @@ export async function GET() {
   })
 
   // Feitelijke terugkoppeling op de eigen 1:1's van de manager, bewust geen AI-tekst (dat is
-  // punt 5, dat op deze data bouwt): frequentie + follow-through + openstaande acties.
+  // punt 5, dat op deze data bouwt): frequentie + dekking + openstaande acties. Follow-through
+  // (opvolgdiscipline op eigen 1:1-acties) is verplaatst naar de leiderschapspagina
+  // (zelfcoaching/route.ts), hoort inhoudelijk bij Execution, niet bij dit teamoverzicht.
   const oneOnOnes = oneOnOneRes.data ?? []
   const zevenDagenGeleden = Date.now() - 7 * 86400000
   const dertigDagenGeleden = Date.now() - 30 * 86400000
   const veertienDagenGeleden = Date.now() - 14 * 86400000
   const laatste30Dagen = oneOnOnes.filter(l => new Date(l.created_at).getTime() >= dertigDagenGeleden).length
-  const beantwoord = oneOnOnes.filter(l => l.actie_status === 'ja' || l.actie_status === 'nee')
-  const followThroughPct = beantwoord.length > 0
-    ? Math.round((beantwoord.filter(l => l.actie_status === 'ja').length / beantwoord.length) * 100)
-    : null
   const openstaandOuderDan14Dagen = oneOnOnes.filter(l =>
     l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
   ).length
@@ -167,6 +165,6 @@ export async function GET() {
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, followThroughPct, openstaandOuderDan14Dagen, totaalActies: beantwoord.length, dekkingAantal, dekkingTotaal: members.length, perLid },
+    oneOnOneRitme: { laatste30Dagen, openstaandOuderDan14Dagen, dekkingAantal, dekkingTotaal: members.length, perLid },
   })
 }

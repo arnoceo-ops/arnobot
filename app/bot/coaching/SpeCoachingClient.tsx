@@ -62,6 +62,7 @@ export default function SpeCoachingClient() {
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
+  const [followThroughPct, setFollowThroughPct] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/bot/team/zelfcoaching')
@@ -69,6 +70,7 @@ export default function SpeCoachingClient() {
       .then(data => {
         setDoc(data.coaching ?? null)
         setHistory(data.history ?? [])
+        setFollowThroughPct(data.followThroughPct ?? null)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -273,6 +275,12 @@ export default function SpeCoachingClient() {
               <div key={p.key} className="coaching-section" style={i === 0 ? { borderTop: 'none', paddingTop: 0 } : undefined}>
                 <span className="coaching-label" style={{ color: '#f1f5f9' }}>{p.label}</span>
                 <p className="coaching-body">{p.diagnose}</p>
+                {p.key === 'execution' && followThroughPct !== null && (
+                  <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginTop: 16 }}>
+                    FOLLOW-THROUGH OP JE EIGEN 1:1-ACTIES:{' '}
+                    <span style={{ color: followThroughPct >= 70 ? '#44cc88' : followThroughPct >= 40 ? '#f59e0b' : '#cc4444', fontWeight: 400 }}>{followThroughPct}%</span>
+                  </p>
+                )}
               </div>
             ))}
 

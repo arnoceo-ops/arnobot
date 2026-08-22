@@ -156,8 +156,8 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; followThroughPct: number | null; openstaandOuderDan14Dagen: number; totaalActies: number; dekkingAantal: number; dekkingTotaal: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
-  const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | 'eenopeen' | null>(null)
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandOuderDan14Dagen: number; dekkingAantal: number; dekkingTotaal: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
+  const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
   const inviteBtnRef = useRef<HTMLButtonElement>(null)
@@ -279,7 +279,7 @@ export default function TeamClient() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function toggleSort(col: 'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | 'eenopeen') {
+  function toggleSort(col: 'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen') {
     if (sortBy === col) {
       if (sortDir === 'asc') setSortDir('desc')
       else { setSortBy(null); setSortDir('asc') }
@@ -301,7 +301,6 @@ export default function TeamClient() {
     if (sortBy === 'naam') return dir * a.name.localeCompare(b.name, 'nl')
     if (sortBy === 'msa') return dir * ((msaTotal(a) ?? -1) - (msaTotal(b) ?? -1))
     if (sortBy === 'sessies') return dir * (a.sessions - b.sessions)
-    if (sortBy === 'analyses') return dir * (a.analyses - b.analyses)
     if (sortBy === 'eenopeen') return dir * ((eenOpEenMap[a.user_id] ?? 0) - (eenOpEenMap[b.user_id] ?? 0))
     if (sortBy === 'datum') {
       const da = a.last_activity ? new Date(a.last_activity).getTime() : 0
@@ -461,40 +460,6 @@ export default function TeamClient() {
                   </div>
                 </div>
 
-                {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.totaalActies > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #374151' }}>
-                    <div>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>LAATSTE 30 DAGEN</span>
-                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
-                        {oneOnOneRitme.laatste30Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>1:1{oneOnOneRitme.laatste30Dagen === 1 ? '' : "'S"}</span>
-                      </p>
-                    </div>
-                    {oneOnOneRitme.followThroughPct !== null && (
-                      <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>FOLLOW-THROUGH</span>
-                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.followThroughPct >= 70 ? '#44cc88' : oneOnOneRitme.followThroughPct >= 40 ? '#f59e0b' : '#cc4444', lineHeight: 1, marginTop: 8 }}>
-                          {oneOnOneRitme.followThroughPct}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 4 }}>%</span>
-                        </p>
-                      </div>
-                    )}
-                    {oneOnOneRitme.dekkingTotaal > 0 && (
-                      <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DEKKING DEZE WEEK</span>
-                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.dekkingAantal === oneOnOneRitme.dekkingTotaal ? '#44cc88' : oneOnOneRitme.dekkingAantal === 0 ? '#cc4444' : '#f59e0b', lineHeight: 1, marginTop: 8 }}>
-                          {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal} TEAMLEDEN</span>
-                        </p>
-                      </div>
-                    )}
-                    {oneOnOneRitme.openstaandOuderDan14Dagen > 0 && (
-                      <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
-                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1, marginTop: 8 }}>
-                          {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
                 {members.length === 0 ? (
                   <p style={body}>Nog geen teamleden. Stuur de uitnodigingslink naar je team.</p>
                 ) : isMobile ? (
@@ -517,7 +482,6 @@ export default function TeamClient() {
                         </div>
                         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{m.sessions} GESPR.</span>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{m.analyses} ANAL.</span>
                           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{eenOpEenMap[m.user_id] ?? 0} 1:1&apos;S</span>
                           {m.last_activity && (
                             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: isOnderRitme(m.last_activity) ? '#f59e0b' : '#6b7280' }}>
@@ -538,7 +502,6 @@ export default function TeamClient() {
                         <col style={{ width: 100 }} />
                         <col style={{ width: 100 }} />
                         <col style={{ width: 100 }} />
-                        <col style={{ width: 100 }} />
                       </colgroup>
                       <thead>
                         <tr style={{ borderBottom: '1px solid #374151' }}>
@@ -547,7 +510,6 @@ export default function TeamClient() {
                             { label: 'NAAM', col: 'naam', align: 'left' },
                             { label: 'MSA', col: 'msa', align: 'center' },
                             { label: 'GESPR.', col: 'sessies', align: 'center' },
-                            { label: 'ANALYSES', col: 'analyses', align: 'center' },
                             { label: "1:1'S", col: 'eenopeen', align: 'center' },
                             { label: 'DATUM', col: 'datum', align: 'right' },
                           ] as const).map(({ label, col, align }) => (
@@ -577,7 +539,6 @@ export default function TeamClient() {
                                 {msaTotal(m) ?? '·'}
                               </td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.sessions > 0 ? '#f1f5f9' : '#6b7280', textAlign: 'center' }}>{m.sessions}</td>
-                              <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: m.analyses > 0 ? '#f1f5f9' : '#6b7280', textAlign: 'center' }}>{m.analyses}</td>
                               <td style={{ padding: '16px 16px 16px 0', fontWeight: 400, fontSize: 15, color: (eenOpEenMap[m.user_id] ?? 0) > 0 ? '#f1f5f9' : '#6b7280', textAlign: 'center' }}>{eenOpEenMap[m.user_id] ?? 0}</td>
                               <td style={{ padding: '16px 0 16px 16px', fontWeight: 400, fontSize: 15, color: onderRitme ? '#f59e0b' : '#9ca3af', textAlign: 'right' }}>{formatLast(m.last_activity)}</td>
                             </tr>
@@ -585,6 +546,33 @@ export default function TeamClient() {
                         })}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, marginTop: 32, paddingTop: 32, borderTop: '1px solid #374151' }}>
+                    <div>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>LAATSTE 30 DAGEN</span>
+                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
+                        {oneOnOneRitme.laatste30Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>1:1{oneOnOneRitme.laatste30Dagen === 1 ? '' : "'S"}</span>
+                      </p>
+                    </div>
+                    {oneOnOneRitme.dekkingTotaal > 0 && (
+                      <div>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DEKKING DEZE WEEK</span>
+                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.dekkingAantal === oneOnOneRitme.dekkingTotaal ? '#44cc88' : oneOnOneRitme.dekkingAantal === 0 ? '#cc4444' : '#f59e0b', lineHeight: 1, marginTop: 8 }}>
+                          {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal} TEAMLEDEN</span>
+                        </p>
+                      </div>
+                    )}
+                    {oneOnOneRitme.openstaandOuderDan14Dagen > 0 && (
+                      <div>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
+                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1, marginTop: 8 }}>
+                          {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
