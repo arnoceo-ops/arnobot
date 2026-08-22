@@ -5,7 +5,6 @@ import { useState } from 'react'
 interface DownloadOneOnOneButtonProps {
   naam: string
   datum: string
-  aandachtspunt: string | null
   agenda: string
   notitie: string | null
   actie: string | null

@@ -447,7 +447,6 @@ export default function LidPage() {
                             size="large"
                             naam={data.name}
                             datum={new Date().toISOString()}
-                            aandachtspunt={aandachtspunt || null}
                             agenda={agenda}
                             notitie={null}
                             actie={actieInput.trim() || null}
@@ -568,7 +567,6 @@ export default function LidPage() {
                                 <DownloadOneOnOneButton
                                   naam={data.name}
                                   datum={h.created_at}
-                                  aandachtspunt={h.aandachtspunt}
                                   agenda={h.agenda}
                                   notitie={h.notitie}
                                   actie={h.actie}
