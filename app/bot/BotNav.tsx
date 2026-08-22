@@ -148,7 +148,7 @@ export default function BotNav({ active }: Props) {
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-flow">ARNOBOT</Link>}
             {active === 'archief'  ? <span className="mob-active">ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow">ANALYSES</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-flow">COACHING</Link>}
-            {isBouwer && (active === 'team' ? <span className="mob-active">TEAM</span> : <Link href="/bot/team">TEAM</Link>)}
+            {isBouwer && <Link href="/bot/team" className={active === 'team' ? 'mob-active' : 'mob-flow'}>TEAM</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
             <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
@@ -174,9 +174,9 @@ export default function BotNav({ active }: Props) {
           {active === 'coaching'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
             : <Link href="/bot/coaching" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>COACHING</Link>}
-          {isBouwer && (active === 'team'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>TEAM</span>
-            : <Link href="/bot/team" style={linkBase}>TEAM</Link>)}
+          {isBouwer && (
+            <Link href="/bot/team" style={active === 'team' ? { ...linkBase, color: '#f59e0b' } : linkBase}>TEAM</Link>
+          )}
           {active === 'qa'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>Q&A</span>
             : <Link href="/bot/qa" style={linkBase}>Q&A</Link>}
