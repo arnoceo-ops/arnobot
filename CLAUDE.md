@@ -333,6 +333,10 @@ Besloten 2026-07-23: pagina's die inhoudelijk bij de marketing-/conversieflow ho
 - **`BotNav` blijft ongewijzigd**: dat is een gedeeld component, sitebreed gebruikt op elke `/bot`-pagina. Bebas Neue in de navigatielinks botst niet met deze stijl, de homepage-nav gebruikt zelf ook Bebas Neue voor `nav-login`.
 - **Bij twijfel of een nieuwe `/bot`-pagina onder deze uitzondering valt**: alleen als de pagina zelf een keuze/conversiemoment is (abonnement kiezen, betalen, upgraden), niet voor gewone functionaliteit binnen de app. Bij twijfel: vragen aan Arno, niet zelf beslissen.
 
+### PDF-documenten — merklettertypen ook in react-pdf verplicht (2026-08-22)
+
+Twee technieken voor PDF-export in de app, met een reëel risico dat ze uit de pas lopen: `window.print()` op een gewone pagina (coaching, leiderschap) leest gewoon de CSS/Google Fonts-import van de pagina zelf, dus Bebas Neue/Space Mono werken daar vanzelf. `@react-pdf/renderer` (team-rapport, 1:1-agenda) kan geen CSS @font-face lezen en valt zonder registratie stil terug op het ingebouwde Helvetica, wat een tijd lang onopgemerkt is gebeurd (gevonden bij een PDF-inventarisatie op Arno's verzoek). Echte TTF-bestanden staan in `public/fonts/` (gedownload van Google Fonts' eigen CDN, geen live afhankelijkheid tijdens genereren), geregistreerd via de gedeelde `lib/pdfFonts.ts` (`registerBrandFonts()`, idempotent). Grote titels/getallen → Bebas Neue, labels/body → Space Mono, zelfde rolverdeling als de Vaste Normen hierboven. **Bij elk nieuw react-pdf-document**: importeer en roep `registerBrandFonts()` aan, gebruik nooit Helvetica/Helvetica-Bold. Uitzondering: `app/bot/admin/ArnoBotPdfDocument.tsx` (admin-only logexport) volgt bewust de sans-serif admin-stijlnorm, geen merklettertype nodig.
+
 ## Streepjes — ABSOLUUT VERBOD — for ever and ever
 
 De tekens —, – en een losstaand koppelteken als leesteken (bijv. "hij deed het - maar") worden NOOIT gebruikt in arno.bot. Nergens. Nooit.
