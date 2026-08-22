@@ -17,6 +17,7 @@ interface CoachingDoc {
   execution_score: number
   execution_diagnose: string
   execution_richting: 'stijgend' | 'stabiel' | 'dalend'
+  ontwikkelpunten: { tekst: string; pijlar: string }[]
   updated_at?: string
 }
 
@@ -123,6 +124,12 @@ export default function SpeCoachingClient() {
         .coaching-label { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 400; letter-spacing: 4px; color: #f59e0b; display: block; margin-bottom: 16px; }
         .coaching-body { color: #9ca3af; font-size: 15px; line-height: 1.9; font-weight: 400; font-family: 'Space Mono', monospace; white-space: pre-wrap; }
 
+        .ontwikkelpunt { display: flex; gap: 20px; align-items: flex-start; padding: 20px 0; border-bottom: 1px solid #374151; }
+        .ontwikkelpunt:last-child { border-bottom: none; }
+        .ontwikkelpunt-nr { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #f59e0b; line-height: 1; min-width: 32px; padding-top: 2px; }
+        .ontwikkelpunt-text { font-size: 15px; line-height: 1.9; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
+        .pijlar-tag { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
         .msa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin: 32px 0 48px; }
         .msa-card { background: #1f2937; padding: clamp(16px,4vw,32px) clamp(8px,3vw,28px); text-align: center; }
         .pijler-weight { font-size: 11px; letter-spacing: 2px; color: #6b7280; }
@@ -160,6 +167,9 @@ export default function SpeCoachingClient() {
           .coaching-label { color: #f59e0b !important; }
           .coaching-body { color: #374151 !important; }
           .coaching-section { border-top-color: #e5e7eb !important; page-break-inside: avoid; }
+          .pijlar-tag { color: #6b7280 !important; }
+          .ontwikkelpunt-text { color: #111827 !important; }
+          .ontwikkelpunt { border-bottom-color: #e5e7eb !important; page-break-inside: avoid; }
           .msa-grid { page-break-inside: avoid; }
           .pg-grid > div { background: #f1f5f9 !important; }
           .mc-label { color: #374151 !important; }
@@ -258,6 +268,21 @@ export default function SpeCoachingClient() {
                 <p className="coaching-body">{p.diagnose}</p>
               </div>
             ))}
+
+            <div className="coaching-section">
+              <span className="coaching-label">JOUW ONTWIKKELPUNTEN</span>
+              <div style={{ marginTop: 8 }}>
+                {(doc.ontwikkelpunten ?? []).map((p, i) => (
+                  <div key={i} className="ontwikkelpunt">
+                    <span className="ontwikkelpunt-nr">{i + 1}</span>
+                    <div>
+                      <span className="pijlar-tag" style={{ color: '#f1f5f9' }}>[{p.pijlar?.toUpperCase() ?? ''}]</span>
+                      <span className="ontwikkelpunt-text">{p.tekst}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="coaching-section">
               <span className="coaching-label">VOORTGANG</span>
