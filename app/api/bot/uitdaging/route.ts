@@ -90,9 +90,11 @@ export async function GET() {
 
   const hasContext = contextParts.length > 0
 
+  const lengteInstructie = `Regel voor lengte en opbouw: precies één kort inzicht (één zin), gevolgd door precies één vraag (één zin). Niet meerdere deelvragen of bijzinnen samenpersen in die ene vraagzin. Kernachtig, niets overbodigs.`
+
   const prompt = hasContext
-    ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\n${voortgangInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.\n\n${taalInstructie}`
-    : `Je bent Arno Diepeveen. ${weekendInstructie}\n\nRegel: alleen de vraag zelf. Max 2 zinnen. Spreek aan met "je". Geen inleiding, geen uitleg.\n\n${taalInstructie}`
+    ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\n${voortgangInstructie}\n\n${lengteInstructie} Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.\n\n${taalInstructie}`
+    : `Je bent Arno Diepeveen. ${weekendInstructie}\n\n${lengteInstructie} Spreek aan met "je". Geen inleiding, geen uitleg.\n\n${taalInstructie}`
 
   const callModel = () => anthropic.messages.create({
     model: 'claude-fable-5',

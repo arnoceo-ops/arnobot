@@ -400,7 +400,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt }: 
                   <span className="loading-dot" />
                   <span>ARNO GENEREERT</span>
                 </span>
-              ) : doc ? 'ADVISEER →' : 'GENEREER COACHING →'}
+              ) : doc ? 'ADVISEER →' : 'COACH ME →'}
             </button>
             {doc && (
               <button className="pdf-btn no-print" onClick={() => window.print()} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
@@ -418,7 +418,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt }: 
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, marginTop: 10 }} />
               <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                Je hebt {teWeinigCount} {teWeinigCount === 1 ? 'gesprek' : 'gesprekken'}. Minimaal 5 nodig voor een coachingsadvies.
+                Je hebt {teWeinigCount} {teWeinigCount === 1 ? 'gesprek' : 'gesprekken'} gevoerd. Voor een coachingsadvies heb je er minimaal 5 nodig.
               </p>
             </div>
           )}
