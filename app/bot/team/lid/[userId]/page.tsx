@@ -649,16 +649,23 @@ export default function LidPage() {
                               </span>
                             </div>
                           ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                              <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: 195, flexShrink: 0, fontFamily: "'Space Mono', monospace" }}>
-                                {formatDate(a.analyse_created_at)}{a.session_count ? ` · ${a.session_count} gespr.` : ''}
-                              </span>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 195, flexShrink: 0, paddingTop: 2 }}>
+                                <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', fontFamily: "'Space Mono', monospace" }}>
+                                  {formatDate(a.analyse_created_at)}
+                                </span>
+                                {a.session_count ? (
+                                  <span style={{ color: '#6b7280', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', fontFamily: "'Space Mono', monospace" }}>
+                                    {a.session_count} gespr.
+                                  </span>
+                                ) : null}
+                              </div>
                               <div style={{ flex: 1 }}>
                                 <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>
                                   {getAnalyseTitle(a.analyse_text)}
                                 </p>
                               </div>
-                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>
+                              <span style={{ color: expandedAnalyse === a.id ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0, paddingTop: 2 }}>
                                 {expandedAnalyse === a.id ? '↑ SLUITEN' : '↓ OPEN'}
                               </span>
                             </div>
