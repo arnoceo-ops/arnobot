@@ -9,6 +9,12 @@ import BotNav from '../BotNav'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
+// Wie de ?bekijkAls=-testswitch hieronder mag gebruiken: Arno's eigen testaccount, plus Thijs
+// (thijs@tenshare.nl), tweede manager van het testteam Team Hippios. Thijs is in de praktijk
+// geen teambaas, Arno's expliciete verzoek (2026-08-22) om ook voor hem tussen de MSA- en
+// SPE-weergave te kunnen wisselen.
+const BEKIJK_ALS_TOEGESTAAN = [MANUAL_TEST_USER_ID, 'user_3EiyfRK85W4Vx4ebqbxbTys79LC']
+
 export default async function CoachingPage({ searchParams }: { searchParams: Promise<{ bekijkAls?: string }> }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
@@ -21,11 +27,11 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
   // niet onder, zie TEAM_PLAN.md "TO DO, apart traject".
   let teambaas = await isConfirmedTeambaas(userId)
 
-  // Testoverride, alleen op Arno's eigen handmatige testaccount (lib/internalTestAccounts.ts):
-  // ?bekijkAls=verkoper of ?bekijkAls=teambaas forceert de weergave voor testdoeleinden, zonder
-  // de echte team-signalen (arnobot_team_members, command_manager, profiel.gebruik) aan te
-  // raken. Werkt nergens anders, ook niet voor andere admins.
-  if (userId === MANUAL_TEST_USER_ID) {
+  // Testoverride, alleen voor BEKIJK_ALS_TOEGESTAAN hierboven: ?bekijkAls=verkoper of
+  // ?bekijkAls=teambaas forceert de weergave voor testdoeleinden, zonder de echte team-signalen
+  // (arnobot_team_members, command_manager, profiel.gebruik) aan te raken. Werkt nergens anders,
+  // ook niet voor andere admins.
+  if (BEKIJK_ALS_TOEGESTAAN.includes(userId)) {
     const { bekijkAls } = await searchParams
     if (bekijkAls === 'verkoper') teambaas = false
     else if (bekijkAls === 'teambaas') teambaas = true
