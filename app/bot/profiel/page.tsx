@@ -75,7 +75,7 @@ const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 // is per definitie Sales Director of VP of Sales: nooit verkoper, nooit CEO/DGA, nooit
 // solopreneur. Striktere restrictie dan MANAGEMENT_ROLLEN hierboven, die juist die twee als
 // enige overlaat.
-const TEAM_MANAGER_ROLLEN = ['Sales Director', 'VP of Sales']
+const TEAM_MANAGER_ROLLEN = ['Sales Director', 'VP of Sales', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
 
