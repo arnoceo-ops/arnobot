@@ -549,42 +549,46 @@ export default function TeamClient() {
                   </div>
                 )}
 
-                {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, marginTop: 32 }}>
+              </div>
+
+              {oneOnOneRitme && (oneOnOneRitme.laatste30Dagen > 0 || oneOnOneRitme.dekkingTotaal > 0 || oneOnOneRitme.openstaandOuderDan14Dagen > 0) && (
+                <div style={section}>
+                  <span style={label}>1:1 MEETINGS</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
                     <div>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>LAATSTE 30 DAGEN</span>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>30 DAGEN</span>
                       <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, marginTop: 8 }}>
-                        {oneOnOneRitme.laatste30Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>1:1{oneOnOneRitme.laatste30Dagen === 1 ? '' : "'S"}</span>
+                        {oneOnOneRitme.laatste30Dagen}
                       </p>
                     </div>
                     {oneOnOneRitme.dekkingTotaal > 0 && (
                       <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>1:1&apos;S DEZE WEEK</span>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DEZE WEEK</span>
                         <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.dekkingAantal === oneOnOneRitme.dekkingTotaal ? '#44cc88' : oneOnOneRitme.dekkingAantal === 0 ? '#cc4444' : '#f59e0b', lineHeight: 1, marginTop: 8 }}>
-                          {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal} TEAMLEDEN</span>
+                          {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal}</span>
                         </p>
                       </div>
                     )}
                     {oneOnOneRitme.actieRatioPct !== null && (
                       <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>1:1&apos;S MET EEN ACTIE</span>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>ACTIES</span>
                         <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.actieRatioPct >= 70 ? '#44cc88' : oneOnOneRitme.actieRatioPct >= 40 ? '#f59e0b' : '#cc4444', lineHeight: 1, marginTop: 8 }}>
                           {oneOnOneRitme.actieRatioPct}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 4 }}>%</span>
                         </p>
                       </div>
                     )}
                     <div>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAAND &gt;2W</span>
                       <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.openstaandOuderDan14Dagen > 0 ? '#f59e0b' : '#44cc88', lineHeight: 1, marginTop: 8 }}>
-                        {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
+                        {oneOnOneRitme.openstaandOuderDan14Dagen}
                       </p>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               <div style={section}>
-                <span style={label}>COLLECTIEVE ANALYSE</span>
+                <span style={label}>TEAMANALYSE</span>
                 <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, margin: '0 0 16px 0' }}>TEAM SPOTLIGHT</h2>
                 <p style={{ ...body, marginBottom: 32 }}>
                   ArnoBot analyseert de collectieve gesprekken van je team: gemeenschappelijke patronen, sterktes en groeikansen.
