@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured } from '@/lib/voice'
+import { isConfirmedTeambaas } from '@/lib/teamAccess'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,11 @@ const serviceDb = createClient(
 export default async function SparrenPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
+
+  // Een bevestigde teambaas verkoopt zelf niet (zie docs/TEAM_PLAN.md, "either/or"-besluit),
+  // sparren is oefenen voor verkoopgesprekken, dus niet relevant. Zelfde afweging als de
+  // rolbewuste coachingspagina.
+  if (await isConfirmedTeambaas(userId)) redirect('/bot/coaching')
 
   const [profileRes, planRes] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),

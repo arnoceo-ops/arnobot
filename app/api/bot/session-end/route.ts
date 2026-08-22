@@ -10,12 +10,17 @@ import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemas } from '@/lib/themas'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
+import { Redis } from '@upstash/redis'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
 
 export async function POST(req: NextRequest) {
   const { sessionId, messages } = await req.json()
@@ -47,6 +52,19 @@ export async function POST(req: NextRequest) {
   }
 
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Ruimt de "actief gesprek elders"-lock op (app/api/chat/route.ts, arnobot:active:{userId})
+  // zodra deze exacte sessie 'm zelf gezet had. Zonder dit blijft de lock tot de TTL (120s)
+  // verlopen staan na wegnavigeren zonder expliciet af te sluiten: een nieuw gesprek binnen die
+  // 120s krijgt dan ten onrechte "je hebt al een actief gesprek open op een ander venster",
+  // ook al is het oude gesprek allang beëindigd. Alleen verwijderen als de lock nog exact op
+  // deze sessie staat, niet blind, anders zou een laat binnenkomende beacon een intussen echt
+  // actieve andere sessie kunnen wegvegen.
+  try {
+    const lockKey = `arnobot:active:${userId}`
+    const activeSid = await redis.get<string>(lockKey)
+    if (activeSid === sessionId) await redis.del(lockKey)
+  } catch {}
 
   const title = (messages.find((m: { role: string }) => m.role === 'user')?.content as string)?.slice(0, 100) || 'Gesprek'
 
