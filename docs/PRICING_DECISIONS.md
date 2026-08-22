@@ -121,7 +121,7 @@ Elke nieuwe gebruiker krijgt bij aanmelden nog steeds `plan='premium'` als trial
 - **Koppeling aan `lib/kostenTarieven.ts`**: ✅ opgelost, `/prijzen` importeert nu `SCENARIO_PRIJZEN`/`SCENARIO_TEAM_PRIJS` direct.
 - **`lib/email-templates.ts` + `QAClient.tsx`** (referral-FAQ): ✅ opgelost, samen met de bredere referral-trigger/plafondregel (zie `docs/ABONNEMENTEN.md`, "Referralprogramma").
 - **`/command`**: ✅ opgelost, verplaatst naar `/team` (geen redirect, geen dubbele pagina meer).
-- **Wekelijkse Team Spotlight-bullet**: nog open. De functie zelf bestaat en werkt (`app/api/bot/team/spotlight`), staat alleen niet als bullet op de nieuwe Team-kaart. Besluit nodig: terugbrengen of niet.
+- **Wekelijkse Team Spotlight-bullet**: ✅ opgelost. Stond hier nog als open, maar is per de sectie "Exclusief voor de manager" hierboven op 2026-08-11 al als 2e bullet toegevoegd, live geverifieerd in `app/prijzen/PrijzenClient.tsx` ("Team Spotlight: collectieve analyse").
 - **Voice-cap fase 2:** nog steeds niet van toepassing, geen maandelijkse limiet gebouwd, geen wijziging nodig totdat dat verandert.
 - **Upgrade-flow individuele Pro-trial → Team**: geverifieerd (2026-08-10): bestaat als `/bot/upgrade`, maar is een handmatige mailto-aanvraag (Arno regelt de rest persoonlijk), geen geautomatiseerde facturatie-overgang of teamleden-uitnodiging. Consistent met de rest van Team's facturatieproces (ook handmatig), dus geen gat t.o.v. wat er al was, maar ook geen zelfstandige/geautomatiseerde flow.
 - Referentie implementatie (visueel/structureel prototype): conceptartefact "ArnoBot: Prijzen (concept)".
