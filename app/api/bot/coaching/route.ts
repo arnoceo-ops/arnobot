@@ -10,6 +10,7 @@ import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 import { berekenActiePatroon } from '@/lib/actiePatroon'
+import { notifyTelegram } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -386,6 +387,13 @@ ${RULE_NO_INVENTED_DETAILS}`
       const retryResponse = await callModel(COACHING_MAX_TOKENS * 2)
       const retryRaw = getText(retryResponse.content)
       if (retryRaw) raw = retryRaw
+      // Notify alleen als de dubbele ruimte het probleem niet oploste: nog steeds afgekapt,
+      // of zelfs geen tekst. De eerste afkapping die zichzelf herstelt is een console.error,
+      // geen Telegram-melding, anders raakt het kanaal doorlopend gevuld met signalen die
+      // geen actie vereisen.
+      if (!retryRaw || retryResponse.stop_reason === 'max_tokens') {
+        await notifyTelegram(`ArnoBot coaching-hoofdsynthese blijft afgekapt op max_tokens, ook na retry met dubbele ruimte (${COACHING_MAX_TOKENS * 2}).\n\nuserId: ${userId}`)
+      }
     } catch (err: any) {
       console.error('[coaching generate error - max_tokens retry]', err?.status, err?.message ?? err)
     }
