@@ -603,10 +603,10 @@ export default function LidPage() {
                   </div>
 
                   {data.history.length > 5 && (
-                    <div style={{ borderTop: '1px solid #374151', padding: '20px 0 0', textAlign: 'center' }}>
+                    <div style={{ borderTop: '1px solid #374151', padding: '28px 0', textAlign: 'center' }}>
                       <button
                         onClick={() => setShowAllHistory(v => !v)}
-                        style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#9ca3af', padding: '10px 28px', borderRadius: 999, transition: 'all 0.15s' }}
+                        style={{ background: 'none', border: '1px solid #374151', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', padding: '12px 32px', borderRadius: 999, transition: 'all 0.15s' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#f59e0b'; (e.currentTarget as HTMLButtonElement).style.color = '#f59e0b' }}
                         onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#374151'; (e.currentTarget as HTMLButtonElement).style.color = '#9ca3af' }}
                       >
