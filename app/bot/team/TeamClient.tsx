@@ -6,7 +6,7 @@ import BotNav from '@/app/bot/BotNav'
 import DownloadTeamPdfButton from './DownloadTeamPdfButton'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
-import { computeMsaScore, computeSpeScore } from '@/lib/msa'
+import { computeMsaScore } from '@/lib/msa'
 
 function formatLast(iso: string | null) {
   if (!iso) return ''
@@ -70,29 +70,6 @@ interface Team {
   name: string
   invite_code: string
   min_interval_dagen: number | null
-}
-
-interface ZelfcoachingData {
-  voortgang: string
-  strategy_score: number
-  strategy_diagnose: string
-  people_score: number
-  people_diagnose: string
-  execution_score: number
-  execution_diagnose: string
-  updated_at: string
-}
-
-interface ZelfcoachingHistoryEntry {
-  strategy_score: number
-  people_score: number
-  execution_score: number
-  voortgang: string
-  created_at: string
-}
-
-function formatMijlpaalDatum(iso: string) {
-  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function renderAnalyse(text: string): string {
@@ -179,11 +156,6 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [zelfcoaching, setZelfcoaching] = useState<ZelfcoachingData | null>(null)
-  const [zelfcoachingHistory, setZelfcoachingHistory] = useState<ZelfcoachingHistoryEntry[]>([])
-  const [zelfcoachingExpanded, setZelfcoachingExpanded] = useState(false)
-  const [zelfcoachingLoading, setZelfcoachingLoading] = useState(false)
-  const [zelfcoachingError, setZelfcoachingError] = useState('')
   const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; followThroughPct: number | null; openstaandOuderDan14Dagen: number; totaalActies: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'analyses' | 'datum' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -239,44 +211,6 @@ export default function TeamClient() {
       .then(r => r.json())
       .then(data => setTeamScores(data.scores ?? []))
       .catch(() => {})
-    fetch('/api/bot/team/zelfcoaching')
-      .then(r => r.json())
-      .then(data => {
-        setZelfcoaching(data.coaching ?? null)
-        setZelfcoachingHistory(data.history ?? [])
-      })
-      .catch(() => {})
-  }
-
-  async function generateZelfcoaching() {
-    setZelfcoachingLoading(true)
-    setZelfcoachingError('')
-    try {
-      const res = await fetch('/api/bot/team/zelfcoaching', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) {
-        if (data.error === 'te_weinig') {
-          setZelfcoachingError(`Nog te weinig 1:1's (${data.count} van de ${data.benodigd} nodig).`)
-        } else if (data.error === 'te_vroeg') {
-          setZelfcoachingError(`Volgende analyse mogelijk over ${data.dagenResterend} ${data.dagenResterend === 1 ? 'dag' : 'dagen'}, of zodra er ${data.benodigd} nieuwe 1:1's zijn (nu ${data.nieuweEenOpEens}).`)
-        } else if (data.error === 'geen_teamleden') {
-          setZelfcoachingError('Nog geen teamleden om een analyse op te baseren.')
-        } else {
-          setZelfcoachingError('Er ging iets mis, probeer het later opnieuw.')
-        }
-      } else {
-        setZelfcoaching(data.coaching)
-        setZelfcoachingExpanded(true)
-        fetch('/api/bot/team/zelfcoaching')
-          .then(r => r.json())
-          .then(d => setZelfcoachingHistory(d.history ?? []))
-          .catch(() => {})
-      }
-    } catch {
-      setZelfcoachingError('Er ging iets mis, probeer het later opnieuw.')
-    } finally {
-      setZelfcoachingLoading(false)
-    }
   }
 
   async function createTeam() {
@@ -545,106 +479,6 @@ export default function TeamClient() {
                   )}
                 </div>
               )}
-
-              <div style={section}>
-                <span style={label}>ZELFCOACHING</span>
-                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', lineHeight: 1, margin: '0 0 16px 0' }}>JOUW LEIDERSCHAP</h2>
-                <p style={{ ...body, marginBottom: 32 }}>
-                  ArnoBot legt je eigen 1:1&apos;s en de ontwikkeling van je team naast elkaar, en spiegelt dat naar jouw functioneren als leidinggevende. Langs drie lijnen: strategy, people, execution.
-                </p>
-                {zelfcoaching && (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>SPE-SCORE</span>
-                      <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1 }}>
-                        {computeSpeScore(zelfcoaching.strategy_score, zelfcoaching.people_score, zelfcoaching.execution_score)}
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 6 }}>/ 100</span>
-                      </span>
-                    </div>
-                    <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ width: `${computeSpeScore(zelfcoaching.strategy_score, zelfcoaching.people_score, zelfcoaching.execution_score)}%`, height: '100%', background: '#f59e0b', borderRadius: 999, transition: 'width 0.6s ease' }} />
-                    </div>
-                    <button
-                      onClick={() => setZelfcoachingExpanded(e => !e)}
-                      style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '20px 0 0' }}
-                    >
-                      <span style={{ color: zelfcoachingExpanded ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
-                        {zelfcoachingExpanded ? '↑ SLUITEN' : '↓ BEKIJK DE DRIE PIJLERS'}
-                      </span>
-                    </button>
-                    {zelfcoachingExpanded && (
-                      <>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginTop: 24 }}>
-                          {[
-                            { naam: 'STRATEGY', gewicht: '30%', score: zelfcoaching.strategy_score, tekst: zelfcoaching.strategy_diagnose },
-                            { naam: 'PEOPLE', gewicht: '40%', score: zelfcoaching.people_score, tekst: zelfcoaching.people_diagnose },
-                            { naam: 'EXECUTION', gewicht: '30%', score: zelfcoaching.execution_score, tekst: zelfcoaching.execution_diagnose },
-                          ].map(p => (
-                            <div key={p.naam}>
-                              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, gap: 12, flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9' }}>{p.naam} <span style={{ fontSize: 11, letterSpacing: 2, color: '#6b7280' }}>{p.gewicht}</span></span>
-                                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, color: '#f1f5f9' }}>{p.score}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 0 }}>/5</span></span>
-                              </div>
-                              <div style={{ width: '100%', height: 4, background: '#374151', borderRadius: 999, overflow: 'hidden', marginBottom: 10 }}>
-                                <div style={{ width: `${p.score * 20}%`, height: '100%', background: '#f59e0b', borderRadius: 999 }} />
-                              </div>
-                              <p style={body}>{p.tekst}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 10 }}>VOORTGANG</span>
-                          <p style={body}>{zelfcoaching.voortgang}</p>
-                        </div>
-                        <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #374151' }}>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', display: 'block', marginBottom: 16 }}>JOUW LEIDERSCHAPSREIS</span>
-                          {zelfcoachingHistory.length < 2 ? (
-                            <p style={{ ...body, fontSize: 13, color: '#6b7280', marginBottom: 0 }}>
-                              Nog te vroeg voor een reis, die verschijnt vanaf je tweede analyse.
-                            </p>
-                          ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                              {[...zelfcoachingHistory].reverse().map((h, i) => (
-                                <div key={h.created_at} style={{ display: 'flex', gap: 16, alignItems: 'baseline' }}>
-                                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 1, color: '#f59e0b', flexShrink: 0, minWidth: 44 }}>
-                                    {computeSpeScore(h.strategy_score, h.people_score, h.execution_score)}
-                                  </span>
-                                  <div>
-                                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: '#6b7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
-                                      {formatMijlpaalDatum(h.created_at)}{i === 0 ? ' · NU' : ''}
-                                    </span>
-                                    <p style={{ ...body, marginBottom: 0 }}>{h.voortgang}</p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                    <div style={{ marginTop: 32 }} />
-                  </>
-                )}
-                <button
-                  onClick={generateZelfcoaching}
-                  disabled={zelfcoachingLoading}
-                  style={{ ...btnPrimary(zelfcoachingLoading), marginTop: zelfcoaching ? 8 : 0, opacity: zelfcoachingLoading ? 0.6 : 1 }}
-                >
-                  {zelfcoachingLoading ? 'ARNO ANALYSEERT...' : zelfcoaching ? 'NIEUWE ANALYSE' : 'GENEREER ANALYSE'}
-                </button>
-                {zelfcoachingLoading && (
-                  <div className="loading-dots" style={{ marginTop: 16 }}>
-                    <div className="loading-dot" />
-                    <div className="loading-dot" />
-                    <div className="loading-dot" />
-                  </div>
-                )}
-                {zelfcoachingError && (
-                  <p style={{ ...body, fontSize: 13, color: zelfcoachingError.startsWith('Er ging') ? '#cc4444' : '#6b7280', marginTop: 12, marginBottom: 0 }}>
-                    {zelfcoachingError}
-                  </p>
-                )}
-              </div>
 
 <div style={section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
