@@ -99,5 +99,18 @@ export async function GET() {
     .eq('user_id', userId)
     .maybeSingle()
 
-  return NextResponse.json({ profiel: data?.profiel || null, isTeamMember: teamMember?.role === 'member' })
+  // command_manager wordt al bij trial-aanmaak gezet (proxy.ts, via sales development), dus
+  // staat meestal al vóór de eerste profiel-invulling vast. Deze persoon is per definitie het
+  // Team-segment (Sales Director/VP of Sales), nooit verkoper, CEO/DGA of solopreneur.
+  const { data: approved } = await serviceDb
+    .from('approved_users')
+    .select('command_manager')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return NextResponse.json({
+    profiel: data?.profiel || null,
+    isTeamMember: teamMember?.role === 'member',
+    isCommandManager: approved?.command_manager === true,
+  })
 }

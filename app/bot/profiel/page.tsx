@@ -71,6 +71,11 @@ const HEEFT_TEAM = ['Sales Director', 'VP of Sales', 'CEO/DGA']
 // Rollen die alleen zinnig zijn voor wie zélf een team aanmaakt of leidt, niet voor wie er via
 // een uitnodigingslink lid van wordt. Solopreneur hoort hier ook bij: geen teamverband.
 const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
+// Wie al als command_manager staat geregistreerd (het Team-segment, gezet bij trial-aanmaak)
+// is per definitie Sales Director of VP of Sales: nooit verkoper, nooit CEO/DGA, nooit
+// solopreneur. Striktere restrictie dan MANAGEMENT_ROLLEN hierboven, die juist die twee als
+// enige overlaat.
+const TEAM_MANAGER_ROLLEN = ['Sales Director', 'VP of Sales']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
 
@@ -130,6 +135,7 @@ export default function BotProfielPage() {
   const [submitted, setSubmitted] = useState(false)
   const [teamWaitlist, setTeamWaitlist] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [isCommandManager, setIsCommandManager] = useState(false)
   const firstName = user?.firstName || 'daar'
 
   useEffect(() => {
@@ -137,6 +143,7 @@ export default function BotProfielPage() {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         setIsTeamMember(data?.isTeamMember ?? false)
+        setIsCommandManager(data?.isCommandManager ?? false)
         if (data?.profiel) {
           setAnswers(prev => ({ ...prev, ...data.profiel }))
           setTeamWaitlist(data.profiel.team_waitlist ?? false)
@@ -148,7 +155,11 @@ export default function BotProfielPage() {
       .catch(() => {})
   }, [])
 
-  const rolOpties = isTeamMember ? ROL_OPTIONS.filter(o => !MANAGEMENT_ROLLEN.includes(o)) : ROL_OPTIONS
+  const rolOpties = isCommandManager
+    ? ROL_OPTIONS.filter(o => TEAM_MANAGER_ROLLEN.includes(o))
+    : isTeamMember
+      ? ROL_OPTIONS.filter(o => !MANAGEMENT_ROLLEN.includes(o))
+      : ROL_OPTIONS
 
   function set(key: keyof Answers, val: string) {
     setAnswers(prev => ({ ...prev, [key]: val }))
