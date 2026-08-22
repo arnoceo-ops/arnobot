@@ -156,7 +156,7 @@ export default function TeamClient() {
   const [minIntervalDagen, setMinIntervalDagen] = useState<number | null>(null)
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
-  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandOuderDan14Dagen: number; dekkingAantal: number; dekkingTotaal: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
+  const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandOuderDan14Dagen: number; dekkingAantal: number; dekkingTotaal: number; actieRatioPct: number | null; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -565,14 +565,20 @@ export default function TeamClient() {
                         </p>
                       </div>
                     )}
-                    {oneOnOneRitme.openstaandOuderDan14Dagen > 0 && (
+                    {oneOnOneRitme.actieRatioPct !== null && (
                       <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
-                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f59e0b', lineHeight: 1, marginTop: 8 }}>
-                          {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>1:1&apos;S MET EEN ACTIE</span>
+                        <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.actieRatioPct >= 70 ? '#44cc88' : oneOnOneRitme.actieRatioPct >= 40 ? '#f59e0b' : '#cc4444', lineHeight: 1, marginTop: 8 }}>
+                          {oneOnOneRitme.actieRatioPct}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginLeft: 4 }}>%</span>
                         </p>
                       </div>
                     )}
+                    <div>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>OPENSTAANDE ACTIES</span>
+                      <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.openstaandOuderDan14Dagen > 0 ? '#f59e0b' : '#44cc88', lineHeight: 1, marginTop: 8 }}>
+                        {oneOnOneRitme.openstaandOuderDan14Dagen} <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>OUDER DAN 2 WEKEN</span>
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

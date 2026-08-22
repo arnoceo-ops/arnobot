@@ -134,6 +134,14 @@ export async function GET() {
     l.actie && !l.actie_status && new Date(l.created_at).getTime() < veertienDagenGeleden
   ).length
 
+  // Actie-ratio: van alle ooit gelogde 1:1's, welk deel leverde een concrete actie op (los van
+  // of die actie later ook is opgevolgd, dat meet follow-through op de leiderschapspagina). Meet
+  // of de 1:1's zelf productief zijn, niet alleen of ze plaatsvinden (dekking) of afgerond worden
+  // (follow-through).
+  const actieRatioPct = oneOnOnes.length > 0
+    ? Math.round((oneOnOnes.filter(l => !!l.actie).length / oneOnOnes.length) * 100)
+    : null
+
   // Dekking: hoeveel teamleden hadden in de afgelopen 7 dagen minstens één 1:1. Bewust wekelijks
   // i.p.v. de 30-dagen-window van laatste30Dagen hierboven (Arno's expliciete norm: een 1:1 hoort
   // wekelijks te zijn), en bewust een apart concept van MINIMUMFREQUENTIE in TeamClient.tsx (dat
@@ -165,6 +173,6 @@ export async function GET() {
   return NextResponse.json({
     team,
     members: enriched,
-    oneOnOneRitme: { laatste30Dagen, openstaandOuderDan14Dagen, dekkingAantal, dekkingTotaal: members.length, perLid },
+    oneOnOneRitme: { laatste30Dagen, openstaandOuderDan14Dagen, dekkingAantal, dekkingTotaal: members.length, actieRatioPct, perLid },
   })
 }
