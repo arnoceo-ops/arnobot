@@ -403,7 +403,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, sh
                   <span className="loading-dot" />
                   <span>ARNO GENEREERT</span>
                 </span>
-              ) : doc ? 'ADVISEER →' : 'COACH ME →'}
+              ) : 'COACH ME →'}
             </button>
             {doc && (
               <button className="pdf-btn no-print" onClick={() => window.print()} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
