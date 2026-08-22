@@ -329,9 +329,11 @@ ${RULE_NO_INVENTED_DETAILS}`
 
   const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
 
-  const callModel = () => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
+  const COACHING_MAX_TOKENS = 4000
+
+  const callModel = (maxTokens: number = COACHING_MAX_TOKENS) => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
     model: 'claude-fable-5',
-    max_tokens: 4000,
+    max_tokens: maxTokens,
     system: dynamicTail
       ? [
           { type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } },
@@ -376,6 +378,17 @@ ${RULE_NO_INVENTED_DETAILS}`
   if (!raw) {
     console.error('[coaching] lege hoofdsynthese na retry')
     return NextResponse.json({ error: 'generate_error', detail: 'empty_after_retry' }, { status: 500 })
+  }
+
+  if (response.stop_reason === 'max_tokens') {
+    console.error('[coaching] hoofdsynthese afgekapt op max_tokens, retry met meer ruimte')
+    try {
+      const retryResponse = await callModel(COACHING_MAX_TOKENS * 2)
+      const retryRaw = getText(retryResponse.content)
+      if (retryRaw) raw = retryRaw
+    } catch (err: any) {
+      console.error('[coaching generate error - max_tokens retry]', err?.status, err?.message ?? err)
+    }
   }
 
   let parsed: {
