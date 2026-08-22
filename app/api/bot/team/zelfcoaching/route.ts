@@ -8,7 +8,7 @@ import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeSpeScore } from '@/lib/msa'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
-import { computeSpiegelSignaal } from '@/lib/spiegel'
+import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
 const supabase = createClient(
@@ -206,6 +206,15 @@ export async function POST() {
     ? ''
     : `\n\nDE SPIEGEL (teambreed thema-patroon, laatste ${spiegel.periodeDagen} dagen): dominant thema "${spiegel.dominant?.thema}" bij ${spiegel.dominant?.leden} van ${spiegel.totaalLeden} teamleden${spiegel.dominant?.trend ? `, trend: ${spiegel.dominant.trend}` : ''}.`
 
+  // Punt 2C, Manager als Variabele: als 3+ leden hetzelfde thema delen, expliciet benoemen dat
+  // dit systemisch kan zijn, niet alleen de cijfers laten staan en hopen dat de synthese het zelf
+  // oppikt. Vaste, voorgeschreven formulering (formatSystemischSignaal), niet aan de synthese
+  // overgelaten om zelf te bedenken hoe confronterend dit gebracht wordt.
+  const systemischSignaal = formatSystemischSignaal(spiegel)
+  const systemischContext = systemischSignaal
+    ? `\n\nSIGNAAL: ${systemischSignaal} Verwerk dit als hypothese, nooit als beschuldiging, in de STRATEGY- of PEOPLE-diagnose, wat het meest van toepassing is.`
+    : ''
+
   const spotlightContext = spotlightRes.data?.analyse_text
     ? `\n\nMEEST RECENTE TEAM SPOTLIGHT-ANALYSE:\n${spotlightRes.data.analyse_text.slice(0, 1500)}`
     : ''
@@ -286,7 +295,7 @@ ZIJN 1:1'S MET TEAMLEDEN (meest recent eerst):\n${eenOpEensText}
 
 LAATSTE COACHINGPROFIEL PER TEAMLID:\n${ledenProfielText || '(nog geen coachingprofielen)'}
 
-RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${spotlightContext}${deltaContext}${bronContext}`
+RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${spotlightContext}${deltaContext}${bronContext}`
     }]
   })
 

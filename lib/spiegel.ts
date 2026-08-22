@@ -96,6 +96,21 @@ export async function computeSpiegelSignaal(memberIds: string[]): Promise<Spiege
   }
 }
 
+// Punt 2C "Manager als Variabele": als 3 of meer teamleden onafhankelijk van elkaar hetzelfde
+// thema laten domineren, is de kans groot dat niet de teamleden het probleem zijn, maar iets
+// systemisch in hoe de manager het team aanstuurt. Bewust GEEN losse detectiefunctie: leunt
+// volledig op wat computeSpiegelSignaal (2A) al berekent (dominant.leden), geen nieuwe query,
+// geen nieuwe drempel-logica. Bewust een VASTE, letterlijke tekst i.p.v. AI-gegenereerd: dit is
+// het gevoeligste signaal van de drie, de formulering moet exact gecontroleerd zijn (geen
+// beschuldiging, wel een hypothese), niet elke keer opnieuw door een LLM geschreven worden.
+const MANAGER_ALS_VARIABELE_DREMPEL = 3
+
+export function formatSystemischSignaal(spiegel: SpiegelSignaal): string | null {
+  if (spiegel.onvoldoende || !spiegel.dominant) return null
+  if (spiegel.dominant.leden < MANAGER_ALS_VARIABELE_DREMPEL) return null
+  return `Er is een patroon dat bij ${spiegel.dominant.leden} van je teamleden terugkomt: ${spiegel.dominant.thema.toLowerCase()}. Dat kan toeval zijn, maar het kan ook betekenen dat er iets systemisch speelt in hoe het team werkt. Wil je dit bespreken?`
+}
+
 const MAANDNAMEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 // Punt 2B "De Tijdlijn", herzien ontwerp (2026-08-21, zie docs/TEAM_PLAN.md): geen eigen
