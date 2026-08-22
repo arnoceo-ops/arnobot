@@ -559,7 +559,7 @@ export default function TeamClient() {
                     </div>
                     {oneOnOneRitme.dekkingTotaal > 0 && (
                       <div>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DEKKING DEZE WEEK</span>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>1:1&apos;S DEZE WEEK</span>
                         <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: oneOnOneRitme.dekkingAantal === oneOnOneRitme.dekkingTotaal ? '#44cc88' : oneOnOneRitme.dekkingAantal === 0 ? '#cc4444' : '#f59e0b', lineHeight: 1, marginTop: 8 }}>
                           {oneOnOneRitme.dekkingAantal}<span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280' }}>/{oneOnOneRitme.dekkingTotaal} TEAMLEDEN</span>
                         </p>
