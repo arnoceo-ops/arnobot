@@ -537,7 +537,7 @@ export default function TeamClient() {
                         <col style={{ width: 75 }} />
                         <col style={{ width: 100 }} />
                         <col style={{ width: 100 }} />
-                        <col style={{ width: 75 }} />
+                        <col style={{ width: 100 }} />
                         <col style={{ width: 100 }} />
                       </colgroup>
                       <thead>
