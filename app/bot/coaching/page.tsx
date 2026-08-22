@@ -7,8 +7,9 @@ import CoachingClient from './CoachingClient'
 import SpeCoachingClient from './SpeCoachingClient'
 import BotNav from '../BotNav'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
+import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
-export default async function CoachingPage() {
+export default async function CoachingPage({ searchParams }: { searchParams: Promise<{ bekijkAls?: string }> }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
@@ -18,7 +19,19 @@ export default async function CoachingPage() {
   // docs/TEAM_PLAN.md, "either/or"-besluit), krijgt dus nooit de Mindset/Systeem/Actie-versie,
   // maar zijn eigen Strategy People Execution-coaching. CEO/solopreneur vallen hier bewust nog
   // niet onder, zie TEAM_PLAN.md "TO DO, apart traject".
-  if (await isConfirmedTeambaas(userId)) {
+  let teambaas = await isConfirmedTeambaas(userId)
+
+  // Testoverride, alleen op Arno's eigen handmatige testaccount (lib/internalTestAccounts.ts):
+  // ?bekijkAls=verkoper of ?bekijkAls=teambaas forceert de weergave voor testdoeleinden, zonder
+  // de echte team-signalen (arnobot_team_members, command_manager, profiel.gebruik) aan te
+  // raken. Werkt nergens anders, ook niet voor andere admins.
+  if (userId === MANUAL_TEST_USER_ID) {
+    const { bekijkAls } = await searchParams
+    if (bekijkAls === 'verkoper') teambaas = false
+    else if (bekijkAls === 'teambaas') teambaas = true
+  }
+
+  if (teambaas) {
     return <SpeCoachingClient />
   }
 

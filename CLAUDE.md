@@ -16,6 +16,16 @@ Meerdaagse plandocumenten (bv. `docs/VOICE_PLAN.md`, `docs/MOBILE_PLAN.md`) hebb
 
 **Periodieke verse controle:** aan het eind van een fase een nieuwe sessie of subagent, zonder de aannames van de bouwsessie, laten verifiëren dat de statusblokken kloppen met de werkelijke code (bv. "het document zegt fase 1 af, maar staat de tekenteller nog als TODO in de code"). Geen extra hooks of automatisering hiervoor optuigen, dit is bewust lichtgewicht: statusblokken, deze werkafspraak, en discipline in kleine commits volstaan voor een traject van deze omvang.
 
+## Documentatie actueel houden — ALTIJD
+
+Drie documenten hebben elk een eigen doel en een eigen actualiteitsrisico, naast de meerdaagse plandocumenten hierboven:
+
+- **`docs/ARNOBOT_OVERZICHT.md`**: product-uitleg voor buiten de bouwsessie om (presentatie, briefing, investeerdersgesprek). Volledig handmatig, geen enkele automatisering.
+- **`docs/TECHNICAL_HANDOVER.md`**: developer-overdracht. De AI-modelinventaris en package-versietabel worden al automatisch bijgewerkt op de 1e van elke maand door `app/api/cron/update-handover/route.ts` (leest de modeltabel rechtstreeks uit dit CLAUDE.md-bestand, dus die twee kunnen niet uit de pas lopen). De rest van het document (routes, features, tabellen) is NIET automatisch.
+- **`docs/BUSINESS_HANDOVER.md`**: business/ops-overdracht. Alleen de "laatst bijgewerkt"-datum wordt automatisch aangeraakt door dezelfde cron; de inhoud zelf (kosten, accounttoegang, `[ARNO]`-secties) is en blijft Arno's eigen verantwoordelijkheid, niet iets om automatisch te vullen.
+
+**Regel, zelfde patroon als de UI-stijlnormen en de e-mailtypes hierboven:** wanneer een sessie iets shipt dat de kernfunctionaliteit van het product wijzigt (nieuwe module, nieuwe rol-flow, prijswijziging, nieuwe AI-capability), wordt `docs/ARNOBOT_OVERZICHT.md` in dezelfde commit bijgewerkt. Geen aparte herinnering hiervoor nodig, geen wekelijks ritueel: het is een schrijfregel die bij elke relevante sessie opnieuw wordt toegepast, net zoals de UI-stijlregel en de e-mailtyperegel dat al zijn. Zelfde soort backstop als bij RLS/orphan-routes/embedding-consistentie: de doorlopende regel vangt de meeste gevallen, de maandcheck (sectie 5 hieronder) is het vangnet voor wat er toch doorheen glipt.
+
 ## Maandelijkse check — roep aan met "doe de maandcheck"
 
 Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
@@ -164,6 +174,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt, de volgende betaalde upgrades doorv
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
 - Zijn er onverwachte 500-fouten of time-outs in de logs?
 - UI-stijlconsistentie-sweep hoort bij de kwartaalcheck, zie verderop in dit bestand. Niet bij de maandcheck, stijldrift stapelt langzaam genoeg dat een maandelijkse sweep overkill is. Geldt los van de doorlopende regel om afwijkingen direct te signaleren zodra je ze tegenkomt bij ander werk.
+- **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met de commits/sessies van de afgelopen maand (git log, `docs/TEAM_PLAN.md` en vergelijkbare statusblokken). Dit is het vangnet voor de doorlopende "Documentatie actueel houden"-regel hierboven, niet een vervanging ervan.
 
 ### 6. AVG & beveiliging gebruikers
 - Is het beveiligingsdocument voor gebruikers (`public/arnobot-beveiliging.pdf`, gegenereerd via `scripts/generate-security-pdf.mjs`, dat script opnieuw draaien na elke wijziging) nog actueel? Check niet alleen of het bestand recent is, maar of specifieke claims er nog kloppen: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI), genoemde cijfers (bijv. aantal npm audit-meldingen, rate-limit-drempels) en rechten/termijnen.

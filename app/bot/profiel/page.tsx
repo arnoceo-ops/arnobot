@@ -68,6 +68,9 @@ const TARGET_3_JAAR_OPTIONS = ['Ja', 'Nee']
 const TEAMGROOTTE_OPTIONS = ['1-3', '4-10', '11-25', '>25']
 const ROL_OPTIONS = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales', 'Sales Director', 'VP of Sales', 'CEO/DGA', 'Solopreneur', 'Anders']
 const HEEFT_TEAM = ['Sales Director', 'VP of Sales', 'CEO/DGA']
+// Rollen die alleen zinnig zijn voor wie zélf een team aanmaakt of leidt, niet voor wie er via
+// een uitnodigingslink lid van wordt. Solopreneur hoort hier ook bij: geen teamverband.
+const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
 
@@ -126,12 +129,14 @@ export default function BotProfielPage() {
   const [isDirty, setIsDirty] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [teamWaitlist, setTeamWaitlist] = useState(false)
+  const [isTeamMember, setIsTeamMember] = useState(false)
   const firstName = user?.firstName || 'daar'
 
   useEffect(() => {
     fetch('/api/bot/profiel')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
+        setIsTeamMember(data?.isTeamMember ?? false)
         if (data?.profiel) {
           setAnswers(prev => ({ ...prev, ...data.profiel }))
           setTeamWaitlist(data.profiel.team_waitlist ?? false)
@@ -142,6 +147,8 @@ export default function BotProfielPage() {
       })
       .catch(() => {})
   }, [])
+
+  const rolOpties = isTeamMember ? ROL_OPTIONS.filter(o => !MANAGEMENT_ROLLEN.includes(o)) : ROL_OPTIONS
 
   function set(key: keyof Answers, val: string) {
     setAnswers(prev => ({ ...prev, [key]: val }))
@@ -260,7 +267,7 @@ export default function BotProfielPage() {
           <Block nr="01" title="Wie ben je?">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je rol?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {ROL_OPTIONS.map(o => (
+              {rolOpties.map(o => (
                 <Chip key={o} label={o} selected={answers.rol === o} onClick={() => { set('rol', o); if (!HEEFT_TEAM.includes(o)) { set('teamgrootte', ''); set('gebruik', '') } }} />
               ))}
             </div>

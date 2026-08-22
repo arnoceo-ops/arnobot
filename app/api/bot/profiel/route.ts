@@ -90,5 +90,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 
-  return NextResponse.json({ profiel: data?.profiel || null })
+  // Een uitgenodigd teamlid ('member', in tegenstelling tot de manager zelf, die als
+  // 'manager' geregistreerd staat) hoort geen managementrollen te kunnen kiezen: die horen
+  // bij wie een team aanmaakt, niet bij wie er één binnenkomt via een uitnodigingslink.
+  const { data: teamMember } = await serviceDb
+    .from('arnobot_team_members')
+    .select('role')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return NextResponse.json({ profiel: data?.profiel || null, isTeamMember: teamMember?.role === 'member' })
 }
