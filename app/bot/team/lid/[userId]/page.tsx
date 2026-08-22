@@ -616,35 +616,45 @@ export default function LidPage() {
                   )}
 
                   {(() => {
-                    const laatste = data.history[0]
-                    if (!laatste?.actie || laatste.actie_status) return null
+                    // Alle openstaande acties, niet alleen de meest recente: zonder dit gat had
+                    // een actie die niet de allerlaatste 1:1 was nergens meer een knop om 'm op
+                    // GEDAAN/NIET GEDAAN/OVERSLAAN te zetten, en bleef die voor altijd hangen.
+                    const openstaand = data.history.filter(h => h.actie && !h.actie_status)
+                    if (openstaand.length === 0) return null
                     return (
-                      <div style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px', marginTop: 12 }}>
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>OPENSTAANDE ACTIE</p>
-                        <p style={{ ...body, marginBottom: 20 }}>{laatste.actie}</p>
-                        <div style={{ display: 'flex', gap: 8, maxWidth: 480, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-                          {([
-                            { label: 'GEDAAN', status: 'ja' as const, primary: true },
-                            { label: 'NIET GEDAAN', status: 'nee' as const, primary: false },
-                            { label: 'OVERSLAAN', status: 'skip' as const, primary: false },
-                          ] as const).map(({ label, status, primary }) => (
-                            <button
-                              key={status}
-                              onClick={() => beantwoordActie(laatste.id, status)}
-                              disabled={actieAnswering}
-                              style={{
-                                flex: 1,
-                                fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
-                                padding: '10px 4px', borderRadius: 999, cursor: actieAnswering ? 'not-allowed' : 'pointer',
-                                background: primary ? '#f59e0b' : 'none',
-                                color: primary ? '#111827' : '#9ca3af',
-                                border: primary ? 'none' : '1px solid #374151',
-                                opacity: actieAnswering ? 0.6 : 1,
-                                transition: 'all 0.15s',
-                              }}
-                            >{label}</button>
-                          ))}
-                        </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                        {openstaand.map(h => (
+                          <div key={h.id} style={{ background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b' }}>OPENSTAANDE ACTIE</p>
+                              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 3, color: '#6b7280' }}>{wekenGeleden(h.created_at)}</span>
+                            </div>
+                            <p style={{ ...body, marginBottom: 20 }}>{h.actie}</p>
+                            <div style={{ display: 'flex', gap: 8, maxWidth: 480, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                              {([
+                                { label: 'GEDAAN', status: 'ja' as const, primary: true },
+                                { label: 'NIET GEDAAN', status: 'nee' as const, primary: false },
+                                { label: 'OVERSLAAN', status: 'skip' as const, primary: false },
+                              ] as const).map(({ label, status, primary }) => (
+                                <button
+                                  key={status}
+                                  onClick={() => beantwoordActie(h.id, status)}
+                                  disabled={actieAnswering}
+                                  style={{
+                                    flex: 1,
+                                    fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 2,
+                                    padding: '10px 4px', borderRadius: 999, cursor: actieAnswering ? 'not-allowed' : 'pointer',
+                                    background: primary ? '#f59e0b' : 'none',
+                                    color: primary ? '#111827' : '#9ca3af',
+                                    border: primary ? 'none' : '1px solid #374151',
+                                    opacity: actieAnswering ? 0.6 : 1,
+                                    transition: 'all 0.15s',
+                                  }}
+                                >{label}</button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )
                   })()}
