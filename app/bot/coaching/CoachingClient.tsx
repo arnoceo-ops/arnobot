@@ -383,7 +383,7 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, sh
         </div>
       )}
 
-      <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
+      <div style={{ maxWidth: 812, margin: '0 auto', padding: `${uitdaging ? '48px' : 'clamp(80px,12vw,120px)'} clamp(16px,4vw,20px) 80px` }}>
 
         <div className="no-print">
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
