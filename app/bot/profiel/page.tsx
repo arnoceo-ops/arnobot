@@ -154,7 +154,7 @@ export default function BotProfielPage() {
           setIsFirstTime(true)
         }
       })
-      .catch(() => {})
+      .catch(() => setIsFirstTime(true))
   }, [])
 
   const rolOpties = isCommandManager
@@ -261,6 +261,9 @@ export default function BotProfielPage() {
         </nav>
       )}
 
+      {isFirstTime === null ? (
+        <div style={{ minHeight: '100vh' }} />
+      ) : (
       <div style={{ minHeight: '100vh', paddingTop: 80, paddingBottom: 80 }}>
         <div style={{ maxWidth: 812, margin: '0 auto', padding: '60px clamp(16px,4vw,20px) 0' }}>
 
@@ -546,6 +549,7 @@ export default function BotProfielPage() {
 
 </div>
       </div>
+      )}
     </>
   )
 }
