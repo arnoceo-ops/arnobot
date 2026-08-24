@@ -159,7 +159,7 @@ De kwartaalfocus is dus, anders dan het eerdere ontwerp hierboven suggereerde (t
 
 **Besluit: volledig verwijderd, niet alleen verborgen.** Uit `app/bot/SparClient.tsx`: de trigger-logica (`heeftManagerRol`/`gebruik`/de `arnobot_is_manager`-localStorage-check/de `fetch('/api/bot/team/status')` die 'm aanstuurde), de `teamPrompt`/`isManager`-state (die laatste bleek sowieso nergens anders gebruikt, dode state), en de banner-JSX zelf. `app/api/bot/team/dismiss-prompt/route.ts` volledig verwijderd (orphan zonder de knop die 'm aanriep). `app/api/bot/team/status/route.ts` ontdaan van het nu ongebruikte `promptDismissed`-veld (blijft wel bestaan, andere consumers zoals `account/page.tsx`, `QAClient.tsx`, `NotificationBell.tsx` gebruiken nog steeds `hasTeam`/`isManager`/`team` uit dezelfde route).
 
-**Bewust niet gedaan:** de DB-kolom `arnobot_blog_profiles.team_prompt_dismissed` niet verwijderd, dat vereist een aparte, door Arno bevestigde SQL-migratie (zie CLAUDE.md's SQL-regel), een ongebruikte kolom is op zichzelf onschadelijk. Optionele opruim-SQL, alleen op Arno's verzoek uit te voeren: `ALTER TABLE arnobot_blog_profiles DROP COLUMN team_prompt_dismissed;`.
+**DB-kolom opgeruimd (2026-08-24, door Arno bevestigd uitgevoerd):** `ALTER TABLE arnobot_blog_profiles DROP COLUMN team_prompt_dismissed;`. Daarmee is deze prompt ook op databaseniveau volledig weg, niet alleen uit de code.
 
 **Geverifieerd:** `npx tsc --noEmit`, `scripts/check-orphan-routes.mjs`, `scripts/check-missing-user-filter.mjs` en `scripts/check-missing-loaded-gate.mjs` allemaal schoon na de verwijdering.
 
