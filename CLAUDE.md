@@ -387,6 +387,14 @@ Schrijf NOOIT tijdgebonden aanwijzingen in AI-gegenereerde output: geen "doe dit
 
 Elke fetch naar een AI-route moet een zichtbare loading-indicator hebben in het gesprek of in het relevante UI-blok — niet alleen een `...` op een knop. Gebruik de bestaande `.msg-loading` + `.loading-dots` + `.loading-text` structuur, of een equivalent in context. Dit geldt ook voor nieuwe routes die buiten het hoofdgesprek vallen (synthese, doorvraag, analyse).
 
+## Client-side status-fetches — altijd een loaded-gate — ALTIJD
+
+**Het patroon dat dit voorkomt:** een `useState` met een default/onbekende waarde (meestal `false` of `null`, bv. `isTeamMember`, `isCommandManager`, `heeftTeamPlan`) die pas ná een async `fetch()` binnen een `useEffect` de echte waarde krijgt, terwijl de JSX daar al vanaf de allereerste render conditioneel op rendert. Resultaat: de gebruiker ziet kort de verkeerde versie (bv. het individuele profiel in plaats van het teamprofiel, of een sectie die eigenlijk verborgen hoort te zijn) voordat de fetch klaar is en de juiste versie verschijnt. Gevonden op 2026-08-24 op zeven plekken tegelijk (`app/bot/profiel/page.tsx`, `app/bot/SparClient.tsx` (twee keer, eigen nav-implementatie), `app/bot/account/page.tsx`, `app/bot/qa/QAClient.tsx`, `app/bot/BotNav.tsx`, `app/bot/coaching/CoachingClient.tsx`, `app/bot/analyses/page.tsx`), stuk voor stuk apart ontdekt in plaats van als herkend patroon.
+
+**De fix, altijd hetzelfde patroon:** voeg een aparte `*Loaded`/`*Ready`-boolean toe (default `false`), gezet op `true` in **zowel** het succes- als het faalpad van de fetch (`.finally(() => setXLoaded(true))`, of expliciet in zowel `.then()` als `.catch()`), en gebruik die vlag om de betreffende JSX pas te renderen zodra ze `true` is — niet de losse status-state zelf. Zonder de faalpad-afhandeling blijft de pagina bij een mislukte fetch voor altijd "laden" tonen, dus nooit alleen het succespad afvangen.
+
+**Bij elke nieuwe client-component die accountstatus/rol/plan ophaalt via een fetch in `useEffect`:** deze gate direct meebouwen, niet achteraf toevoegen. **Automatisch vangnet:** `scripts/check-missing-loaded-gate.mjs`, draait als informatieve (niet-blokkerende) CI-stap bij elke push/PR. Bevestigde false positives (bv. state die niets conditioneel in de JSX beïnvloedt, of een component dat al op een andere correcte manier gate't zoals `NotificationBell.tsx` met `if (!isManager) return null`) toevoegen aan `KNOWN_SAFE_FETCHES` in het script zelf.
+
 ## Beste resultaat vóór makkelijkste pad — ALTIJD
 
 Bij het ontwerpen van een nieuwe feature of synthese: leid de scope niet af van wat er toevallig al gebouwd is of welke data al bestaat. Dat is de makkelijkste weg, niet automatisch de beste.

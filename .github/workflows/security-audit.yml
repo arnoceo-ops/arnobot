@@ -245,3 +245,28 @@ jobs:
         # gebruikers hangt nu volledig af van code-review-discipline op .eq('user_id', ...)
         # per route). Bevestigde false positives toevoegen aan KNOWN_SAFE_QUERIES in het
         # script zelf, niet hier onderdrukken.
+
+  missing-loaded-gate:
+    name: Client-fetch zonder loaded-gate (informatief, blokkeert niet)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Controleer client-componenten op een fetch-in-useEffect zonder loaded-gate
+        run: node scripts/check-missing-loaded-gate.mjs
+        continue-on-error: true
+        # Blokkeert bewust niet: statische tekstanalyse, geen echte JSX-/dataflow-check,
+        # dus false positives zijn mogelijk. Toegevoegd 2026-08-24 nadat zes plekken
+        # (app/bot/profiel/page.tsx, app/bot/SparClient.tsx, app/bot/account/page.tsx,
+        # app/bot/qa/QAClient.tsx, app/bot/BotNav.tsx, app/bot/coaching/CoachingClient.tsx,
+        # app/bot/analyses/page.tsx) dezelfde FOUC-bug bleken te hebben: een useState met
+        # een default/onbekende waarde die pas na een async fetch bekend wordt, terwijl de
+        # JSX daar al vanaf de eerste render op rendert, zichtbaar als een korte flits van
+        # de verkeerde versie. Bevestigde false positives toevoegen aan KNOWN_SAFE_FETCHES
+        # in het script zelf, niet hier onderdrukken.
