@@ -2218,7 +2218,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
               </>
             )}
-            <span className="spar-questions-label">{isSalesOnlyProfiel ? 'of selecteer een van de onderstaande vragen' : 'en selecteer een van de onderstaande vragen'}</span>
+            <span className="spar-questions-label">of selecteer een van de onderstaande vragen</span>
             <span className="spar-questions-sub">
               {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
                 ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'
