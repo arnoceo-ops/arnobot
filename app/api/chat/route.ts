@@ -294,8 +294,10 @@ export async function POST(req: NextRequest) {
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
 
-    // Per-IP rate limit via Upstash (atomisch, geen race conditions)
-    if (ip) {
+    // Per-IP rate limit via Upstash (atomisch, geen race conditions). Test-IP's overgeslagen:
+    // dezelfde reden als isTestIdentifier hieronder, localhost draait bij lokale E2E-runs
+    // meerdere testbestanden kort na elkaar tegen dezelfde production-Redis-instantie.
+    if (ip && !isTestIdentifier(ip)) {
       const { success: ipOk } = await ipRateLimit.limit(ip)
       if (!ipOk) {
         await notifyRateLimit(ip, 'IP-limiet (5/min)', `arnobot:notify:ip:${ip}`)
@@ -324,11 +326,18 @@ export async function POST(req: NextRequest) {
         documentText = result.extractedText
       }
 
-      // Per-user rate limit: max 30 berichten per uur
-      const { success: userOk } = await userRateLimit.limit(userId)
-      if (!userOk) {
-        await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
-        return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+      // Per-user rate limit: max 30 berichten per uur. Test-accounts overgeslagen (besloten
+      // 2026-08-24): de dubbele-sessie-E2E-test verstuurt binnen één run al meerdere berichten
+      // op hetzelfde test-account tegen de echte production-Redis-instantie, en liep daardoor
+      // vast op ditzelfde quotum dat voor echte klanten bedoeld is, ook al testte die test iets
+      // heel anders (sessie-lock-herstel). isTestIdentifier bestond al om Telegram-ruis te
+      // onderdrukken (2026-08-12), maar de blokkade zelf bleef toen onbedoeld staan.
+      if (!isTestIdentifier(userId)) {
+        const { success: userOk } = await userRateLimit.limit(userId)
+        if (!userOk) {
+          await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
+          return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+        }
       }
 
       // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd).
