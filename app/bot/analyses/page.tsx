@@ -100,6 +100,9 @@ export default function GeschiedenisPage() {
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [sharedAnalyseIds, setSharedAnalyseIds] = useState<Set<string>>(new Set())
   const [teamShareLoadingId, setTeamShareLoadingId] = useState<string | null>(null)
+  const [sharedSessionIds, setSharedSessionIds] = useState<Set<string>>(new Set())
+  const [shareSessionId, setShareSessionId] = useState<string | null>(null)
+  const [unshareLoading, setUnshareLoading] = useState(false)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
 
@@ -127,6 +130,10 @@ export default function GeschiedenisPage() {
     fetch('/api/bot/team/share-analyse')
       .then(r => r.json())
       .then(d => setSharedAnalyseIds(new Set(d.sharedIds ?? [])))
+      .catch(() => {})
+    fetch('/api/bot/share-session')
+      .then(r => r.json())
+      .then(d => setSharedSessionIds(new Set(d.sharedIds ?? [])))
       .catch(() => {})
   }, [])
 
@@ -241,6 +248,8 @@ export default function GeschiedenisPage() {
       })
       const data = await res.json()
       if (data.url) {
+        setSharedSessionIds(prev => new Set([...prev, sessionId]))
+        setShareSessionId(sessionId)
         setShareUrl(data.url)
         try { await navigator.clipboard.writeText(data.url) } catch {
           try {
@@ -258,6 +267,19 @@ export default function GeschiedenisPage() {
       }
     } finally {
       setShareLoading(null)
+    }
+  }
+
+  async function handleUnshareSession() {
+    if (!shareSessionId || unshareLoading) return
+    setUnshareLoading(true)
+    try {
+      await fetch(`/api/bot/share-session?sessionId=${shareSessionId}`, { method: 'DELETE' })
+      setSharedSessionIds(prev => { const next = new Set(prev); next.delete(shareSessionId); return next })
+      setShareUrl(null)
+      setShareSessionId(null)
+    } finally {
+      setUnshareLoading(false)
     }
   }
 
@@ -685,11 +707,16 @@ export default function GeschiedenisPage() {
                     <button
                       onClick={e => handleShareSession(session.session_id, e)}
                       disabled={shareLoading === session.session_id}
-                      style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                      onMouseOver={e => (e.currentTarget.style.color = '#f1f5f9')}
-                      onMouseOut={e => (e.currentTarget.style.color = '#9ca3af')}
+                      title={sharedSessionIds.has(session.session_id) ? 'Al gedeeld, klik om de link te bekijken of in te trekken' : undefined}
+                      style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: sharedSessionIds.has(session.session_id) ? '#44cc88' : '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      onMouseOver={e => (e.currentTarget.style.color = sharedSessionIds.has(session.session_id) ? '#44cc88' : '#f1f5f9')}
+                      onMouseOut={e => (e.currentTarget.style.color = sharedSessionIds.has(session.session_id) ? '#44cc88' : '#9ca3af')}
                     >
-                      {shareLoading === session.session_id ? '...' : <>DEEL DIT GESPREK <span style={{ color: '#f59e0b' }}>→</span></>}
+                      {shareLoading === session.session_id
+                        ? '...'
+                        : sharedSessionIds.has(session.session_id)
+                        ? '✓ GEDEELD'
+                        : <>DEEL DIT GESPREK <span style={{ color: '#f59e0b' }}>→</span></>}
                     </button>
                   </div>
 
@@ -978,12 +1005,21 @@ export default function GeschiedenisPage() {
                 {shareCopied ? 'GEKOPIEERD' : 'KOPIEER'}
               </button>
             </div>
-            <button
-              onClick={() => setShareUrl(null)}
-              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              SLUITEN
-            </button>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              <button
+                onClick={() => { setShareUrl(null); setShareSessionId(null) }}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                SLUITEN
+              </button>
+              <button
+                onClick={handleUnshareSession}
+                disabled={unshareLoading}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#cc2200', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                {unshareLoading ? 'BEZIG...' : 'LINK INTREKKEN'}
+              </button>
+            </div>
           </div>
         </div>
       )}
