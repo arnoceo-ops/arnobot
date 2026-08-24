@@ -393,8 +393,14 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, sh
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            {showSparren && (
+            {showSparren ? (
               <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
+            ) : (
+              // /bot/sparren heeft geen ander toegangspunt in de app: zonder deze link zou de
+              // 14-dagen-onderdrukking hierboven (showSparren) sparren voor iedereen die
+              // regelmatig spart onbereikbaar maken in plaats van alleen minder opdringerig
+              // (gevonden 24 aug 2026, niet gesignaleerd toen de onderdrukking werd toegevoegd).
+              <Link href="/bot/sparren" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>SPARREN →</Link>
             )}
             <button className="generate-btn" onClick={generate} disabled={generating || loading} title="Genereer je coachingsadvies op basis van mindset, systeem en actie">
               {generating ? (
