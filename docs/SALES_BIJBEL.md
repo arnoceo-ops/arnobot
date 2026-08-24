@@ -1,6 +1,6 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-24 (punt 12 toegevoegd: proactieve 1:1-cadans-bewaking)
+**Laatst bijgewerkt:** 2026-08-24 (nieuwe sectie: de twee aanlooproutes naar ArnoBot, homepage/LinkedIn vs. Sales Agent-link)
 **Waar we staan:** 12 van de 13 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 13, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
 **Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
@@ -133,6 +133,18 @@ Anders dan de "Gepland"-sectie hierboven: dit bestaat al en werkt, maar is bewus
 Als 3 of meer teamleden onafhankelijk van elkaar hetzelfde onderwerp laten terugkomen in hun gesprekken (bijv. bezwaarhantering, closing), signaleert ArnoBot dat dit mogelijk niet aan de individuele teamleden ligt, maar aan iets systemisch in hoe het team wordt aangestuurd. De manager ziet dit als een voorzichtige hypothese, nooit als beschuldiging, op zijn eigen leiderschapspagina en teamoverzicht. Arno krijgt zelf een privé-melding zodra dit bij een klant optreedt, en beslist zelf of en hoe hij persoonlijk contact opneemt.
 
 **Waarom dit nooit gepitcht wordt:** het expliciet aankondigen als productkenmerk ("wij checken of het aan jou als manager ligt") zou het gevoelig, afschrikwekkend kader waar het net zorgvuldig omheen gebouwd is, juist doorbreken. Een manager die dit vooraf als marketingpunt hoort, ervaart het heel anders dan een manager die het rustig, met context, van Arno zelf hoort op het moment dat het er daadwerkelijk toe doet.
+
+---
+
+## Aanlooproutes naar ArnoBot: twee paden (toegevoegd 2026-08-24)
+
+Belangrijk voor sales agents om te begrijpen: er zijn twee volledig verschillende manieren waarop iemand bij ArnoBot terechtkomt, en die bepalen wat een prospect al wel of niet heeft.
+
+**Route 1 — homepage, inloggen/aanmelden met LinkedIn.** Een gewone trial-aanmelding via arno.bot zelf. Tijdens de profiel-intake kiest iemand zelf zijn rol, ook Sales Director of VP of Sales is hier gewoon te kiezen. Geeft hij aan dat hij ArnoBot voor zijn team wil gebruiken, dan ziet hij een blok "Team komt in september 2026, meld je aan voor de wachtlijst": hij heeft op dit moment nog geen Team-abonnement, alleen interesse. Dat vinkje is feitelijk een lead: er gaat automatisch een mailtje naar `waitlist@arno.bot` (naam, e-mail, rol) en de aanmelding wordt bewaard. Die mail in de inbox is op dit moment voldoende als lead-signaal, geen apart CRM-proces nodig (Arno's expliciete besluit, 2026-08-24).
+
+**Route 2 — een link van een Sales Agent.** Hier komt iemand binnen via een persoonlijke sd-link (zie `docs/SALES_DEVELOPMENT.md`), en krijgt al bij de trial-aanmaak een écht Team-account. Deze persoon ziet geen wachtlijst-blok: hij hoeft zich nergens voor aan te melden, hij heeft het al. Zijn profiel-intake ziet er ook bewust anders uit dan bij route 1 (andere rollen: Sales Manager, Sales Director, VP of Sales, CCO; teamgerichte formulering; een vraag naar het actuele kwartaalthema in plaats van het wachtlijst-blok), zie `docs/TEAM_PLAN.md` voor de volledige toedracht.
+
+**Waarom dit ertoe doet in een verkoopgesprek:** iemand die via route 1 binnenkomt en het wachtlijst-vinkje aanzet, is een warme lead die nog omgezet moet worden naar een echt Team-account. Iemand die al via een sd-link binnenkomt (route 2), is dat al. Spreek deze twee niet door elkaar: iemand die al via een sd-link toegang heeft, hoeft nooit meer aangespoord te worden om zich "aan te melden voor de wachtlijst", dat is verwarrend en overbodig, hij heeft al toegang.
 
 ---
 
