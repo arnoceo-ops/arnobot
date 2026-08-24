@@ -1,7 +1,7 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** 11 van de 12 USP-punten LIVE, plus sinds vandaag een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (punt 12) blijft GEPLAND.
+**Laatst bijgewerkt:** 2026-08-22
+**Waar we staan:** 11 van de 12 USP-punten LIVE, plus sinds vandaag een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (punt 12) blijft GEPLAND. **Toegevoegd (2026-08-22):** een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
 **Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
@@ -113,6 +113,17 @@ Wetenschappelijk fundament: Hermann Ebbinghaus toonde aan dat mensen zonder herh
 
 ### 12. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
 Puur toekomstplan. Geen certificeringsprogramma, geen aangestelde coaches, geen publieke aankondiging. Niet noemen in een klantgesprek, zelfs niet als richting.
+
+---
+
+## Verborgen functies — bestaand, maar nooit pitchen (toegevoegd 2026-08-22)
+
+Anders dan de "Gepland"-sectie hierboven: dit bestaat al en werkt, maar is bewust nooit een marketing- of salespunt, ook niet later. Weet dat het bestaat, voor het geval een prospect er zelf naar vraagt of Arno het zelf ter sprake brengt in een gesprek, maar breng het zelf nooit actief op, ook niet als "geavanceerde functie" of "extra waarde".
+
+### "Manager als Variabele" — patroonherkenning op teamniveau
+Als 3 of meer teamleden onafhankelijk van elkaar hetzelfde onderwerp laten terugkomen in hun gesprekken (bijv. bezwaarhantering, closing), signaleert ArnoBot dat dit mogelijk niet aan de individuele teamleden ligt, maar aan iets systemisch in hoe het team wordt aangestuurd. De manager ziet dit als een voorzichtige hypothese, nooit als beschuldiging, op zijn eigen leiderschapspagina en teamoverzicht. Arno krijgt zelf een privé-melding zodra dit bij een klant optreedt, en beslist zelf of en hoe hij persoonlijk contact opneemt.
+
+**Waarom dit nooit gepitcht wordt:** het expliciet aankondigen als productkenmerk ("wij checken of het aan jou als manager ligt") zou het gevoelig, afschrikwekkend kader waar het net zorgvuldig omheen gebouwd is, juist doorbreken. Een manager die dit vooraf als marketingpunt hoort, ervaart het heel anders dan een manager die het rustig, met context, van Arno zelf hoort op het moment dat het er daadwerkelijk toe doet.
 
 ---
 
