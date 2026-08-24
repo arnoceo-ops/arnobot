@@ -391,17 +391,15 @@ export default function CoachingClient({ userId, plan, paid, gesprekBookedAt, sh
         </div>
 
 
-        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: doc ? 48 : 0, borderBottom: doc ? '1px solid #374151' : 'none', gap: 12 }}>
+        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: doc ? 48 : 0, borderBottom: doc ? '1px solid #374151' : 'none', gap: 24 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            {showSparren ? (
-              <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
-            ) : (
-              // /bot/sparren heeft geen ander toegangspunt in de app: zonder deze link zou de
-              // 14-dagen-onderdrukking hierboven (showSparren) sparren voor iedereen die
-              // regelmatig spart onbereikbaar maken in plaats van alleen minder opdringerig
-              // (gevonden 24 aug 2026, niet gesignaleerd toen de onderdrukking werd toegevoegd).
-              <Link href="/bot/sparren" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>SPARREN →</Link>
-            )}
+            {/* /bot/sparren heeft geen ander toegangspunt in de app: zonder deze link zou de
+                14-dagen-onderdrukking (showSparren) sparren voor iedereen die regelmatig spart
+                onbereikbaar maken (gevonden 24 aug 2026). Altijd dezelfde knopvorm (herzien, zelfde
+                dag): een losse, kleinere tekstversie voor de onderdrukte staat oogde ongebalanceerd
+                naast COACH ME. Onderscheid blijft wel bestaan, alleen via tekstkleur (gedempter
+                #6b7280 i.p.v. #9ca3af), niet via het compleet laten vallen van de knopvorm. */}
+            <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: showSparren ? undefined : '#6b7280' }}>SPARREN →</Link>
             <button className="generate-btn" onClick={generate} disabled={generating || loading} title="Genereer je coachingsadvies op basis van mindset, systeem en actie">
               {generating ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
