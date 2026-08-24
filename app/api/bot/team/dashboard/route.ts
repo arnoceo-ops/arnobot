@@ -1,12 +1,40 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Redis } from '@upstash/redis'
 import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
+// Punt 2C, Manager als Variabele: Arno wordt zelf privé gewaarschuwd zodra het signaal voor een
+// team afgaat, in plaats van de manager automatisch een "boek een gesprek"-knop te tonen.
+// Bewust: diagnose + verkoop in één adem voelt uitbuitend, en Arno kan zelf beoordelen of en hoe
+// hij een specifieke manager benadert, dat weet de app niet. Dedup via Redis (30 dagen), niet
+// bij elk teampagina-bezoek opnieuw melden zolang hetzelfde thema actief blijft.
+async function notifySystemischSignaal(teamNaam: string, thema: string, leden: number) {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+
+  const dedupKey = `arnobot:systemisch-gemeld:${teamNaam}:${thema}`
+  const alGemeld = await redis.get(dedupKey)
+  if (alGemeld) return
+  await redis.set(dedupKey, '1', { ex: 30 * 86400 })
+
+  const text = `Manager als Variabele-signaal (2C)\n\nTeam: ${teamNaam}\nThema: ${thema}\nBij ${leden} teamleden\n\nDe manager ziet dit als hypothese in zijn eigen leiderschapspagina en teamoverzicht. Overweeg zelf contact op te nemen.`
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  }).catch(() => {})
+}
 
 export async function GET() {
   const { userId } = await auth()
@@ -189,6 +217,9 @@ export async function GET() {
   // zolang het niet van toepassing is.
   const spiegel = await computeSpiegelSignaal(memberIds)
   const systemischSignaal = formatSystemischSignaal(spiegel)
+  if (systemischSignaal && spiegel.dominant) {
+    notifySystemischSignaal(team.name, spiegel.dominant.thema, spiegel.dominant.leden).catch(() => {})
+  }
 
   return NextResponse.json({
     team,

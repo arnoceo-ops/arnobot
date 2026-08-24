@@ -157,6 +157,7 @@ export default function TeamClient() {
   const [ritmeSaved, setRitmeSaved] = useState(false)
   const [teamScores, setTeamScores] = useState<ScorePoint[]>([])
   const [oneOnOneRitme, setOneOnOneRitme] = useState<{ laatste30Dagen: number; openstaandAantal: number; openstaandRatioPct: number | null; dekkingAantal: number; dekkingTotaal: number; perLid: { user_id: string; naam: string; laatste30Dagen: number; perWeek: number }[] } | null>(null)
+  const [systemischSignaal, setSystemischSignaal] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'naam' | 'msa' | 'sessies' | 'datum' | 'eenopeen' | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const isMobile = useIsMobile()
@@ -200,6 +201,7 @@ export default function TeamClient() {
         }
         setMembers(data.members ?? [])
         setOneOnOneRitme(data.oneOnOneRitme ?? null)
+        setSystemischSignaal(data.systemischSignaal ?? null)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -582,6 +584,13 @@ export default function TeamClient() {
                       </p>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {systemischSignaal && (
+                <div style={section}>
+                  <span style={label}>SIGNAAL</span>
+                  <p style={{ ...body, marginBottom: 0 }}>{systemischSignaal}</p>
                 </div>
               )}
 
