@@ -98,6 +98,7 @@ export default function GeschiedenisPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  const [teamStatusLoaded, setTeamStatusLoaded] = useState(false)
   const [sharedAnalyseIds, setSharedAnalyseIds] = useState<Set<string>>(new Set())
   const [teamShareLoadingId, setTeamShareLoadingId] = useState<string | null>(null)
   const [sharedSessionIds, setSharedSessionIds] = useState<Set<string>>(new Set())
@@ -121,11 +122,13 @@ export default function GeschiedenisPage() {
       .catch(() => {})
     if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
       setIsTeamMember(true)
+      setTeamStatusLoaded(true)
     } else {
       fetch('/api/bot/team/status')
         .then(r => r.json())
         .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
         .catch(() => {})
+        .finally(() => setTeamStatusLoaded(true))
     }
     fetch('/api/bot/team/share-analyse')
       .then(r => r.json())
@@ -892,7 +895,7 @@ export default function GeschiedenisPage() {
                 {expandedAnalyse === a.id && (
                   <div style={{ paddingBottom: 40, animation: 'fadein 0.3s ease' }}>
                     <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.analyse_text) }} />
-                    {isTeamMember && (
+                    {teamStatusLoaded && isTeamMember && (
                       <button
                         onClick={() => toggleTeamShare(a.id)}
                         disabled={teamShareLoadingId === a.id}

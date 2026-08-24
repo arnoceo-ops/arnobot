@@ -43,6 +43,11 @@ export default function BotNav({ active }: Props) {
   const router = useRouter()
   const [bouwer, setBouwer] = useState(false)
   const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
+  // Voorkomt dat de TEAM-link op elke pagina zichtbaar "pop-in" doet ná het laden: heeftTeamPlan
+  // start op false, dus zonder deze gate verscheen de link altijd met een merkbare vertraging.
+  // planLoaded voorkomt niet de vertraging zelf (die zit 'm in de netwerk-fetch), maar zorgt
+  // ervoor dat isBouwer nooit ten onrechte "nee" concludeert vóór het antwoord binnen is.
+  const [planLoaded, setPlanLoaded] = useState(false)
 
   useEffect(() => {
     if (isLoaded) setBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
@@ -53,9 +58,10 @@ export default function BotNav({ active }: Props) {
       .then(r => r.json())
       .then(d => setHeeftTeamPlan(!!d.commandManager))
       .catch(() => {})
+      .finally(() => setPlanLoaded(true))
   }, [])
 
-  const isBouwer = bouwer || heeftTeamPlan
+  const isBouwer = bouwer || (planLoaded && heeftTeamPlan)
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return

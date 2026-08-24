@@ -26,6 +26,11 @@ export default function AccountPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
+  // Voorkomt een FOUC: isTeamMember start op false, dus zonder deze gate zag een teamlid heel
+  // even de REFERRAL- en ABONNEMENT OPZEGGEN-secties (die voor hen verborgen moeten zijn)
+  // flitsen totdat de /api/bot/team/status-fetch klaar was. Zelfde patroon als de
+  // isFirstTime-gate in app/bot/profiel/page.tsx.
+  const [teamStatusLoaded, setTeamStatusLoaded] = useState(false)
   const [plan, setPlan] = useState<string | null>(null)
   const [appPassword, setAppPassword] = useState('')
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
@@ -53,6 +58,7 @@ export default function AccountPage() {
       .then(r => r.json())
       .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
       .catch(() => {})
+      .finally(() => setTeamStatusLoaded(true))
     fetch('/api/bot/plan')
       .then(r => r.json())
       .then(d => setPlan(d.plan ?? null))
@@ -265,7 +271,7 @@ export default function AccountPage() {
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
-        {!isTeamMember && (
+        {teamStatusLoaded && !isTeamMember && (
           <>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
@@ -387,7 +393,7 @@ export default function AccountPage() {
         {/* Abonnement opzeggen — verborgen voor teamleden, dat is de manager's abonnement, niet
             het hunne. ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een
             AVG-recht op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
-        {!isTeamMember && (
+        {teamStatusLoaded && !isTeamMember && (
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
           {cancelledAt ? (
