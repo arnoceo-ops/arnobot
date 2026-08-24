@@ -384,7 +384,10 @@ export default function AccountPage() {
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 40px 0', color: '#f1f5f9', lineHeight: 1 }}>GENOEG GEWEEST?</h1>
         </div>
 
-        {/* Abonnement opzeggen */}
+        {/* Abonnement opzeggen — verborgen voor teamleden, dat is de manager's abonnement, niet
+            het hunne. ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een
+            AVG-recht op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
+        {!isTeamMember && (
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
           {cancelledAt ? (
@@ -426,6 +429,7 @@ export default function AccountPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Account verwijderen */}
         <div style={{ ...section, marginBottom: 0 }}>

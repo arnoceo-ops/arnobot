@@ -20,6 +20,7 @@ type Answers = {
   jaren_sales: string
   jaren_functie: string
   jaardoel: string
+  kwartaalthema: string
 }
 
 const empty: Answers = {
@@ -37,6 +38,7 @@ const empty: Answers = {
   jaren_sales: '',
   jaren_functie: '',
   jaardoel: '',
+  kwartaalthema: '',
 }
 
 function getUitdagingPlaceholder(rol: string): string {
@@ -71,11 +73,11 @@ const HEEFT_TEAM = ['Sales Director', 'VP of Sales', 'CEO/DGA']
 // Rollen die alleen zinnig zijn voor wie zélf een team aanmaakt of leidt, niet voor wie er via
 // een uitnodigingslink lid van wordt. Solopreneur hoort hier ook bij: geen teamverband.
 const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
-// Wie al als command_manager staat geregistreerd (het Team-segment, gezet bij trial-aanmaak)
-// is per definitie Sales Director of VP of Sales: nooit verkoper, nooit CEO/DGA, nooit
-// solopreneur. Striktere restrictie dan MANAGEMENT_ROLLEN hierboven, die juist die twee als
-// enige overlaat.
-const TEAM_MANAGER_ROLLEN = ['Sales Director', 'VP of Sales', 'Anders']
+// Rollen voor wie al als command_manager staat geregistreerd (het Team-segment, gezet bij
+// trial-aanmaak via een Sales Agent-link, zie proxy.ts): een eigen, vaste lijst i.p.v. een
+// filter op ROL_OPTIONS, want Sales Manager en CCO staan niet in die algemene lijst
+// (2026-08-24, teamprofiel-herziening, zie docs/TEAM_PLAN.md).
+const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CCO', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
 
@@ -156,7 +158,7 @@ export default function BotProfielPage() {
   }, [])
 
   const rolOpties = isCommandManager
-    ? ROL_OPTIONS.filter(o => TEAM_MANAGER_ROLLEN.includes(o))
+    ? TEAM_VERSIE_ROL_OPTIONS
     : isTeamMember
       ? ROL_OPTIONS.filter(o => !MANAGEMENT_ROLLEN.includes(o))
       : ROL_OPTIONS
@@ -188,7 +190,7 @@ export default function BotProfielPage() {
     answers.target_3_jaar !== '' &&
     answers.jaren_sales !== '' &&
     answers.jaren_functie !== '' &&
-    (!HEEFT_TEAM.includes(answers.rol) || (answers.gebruik !== '' && answers.teamgrootte !== ''))
+    (!HEEFT_TEAM.includes(answers.rol) || isCommandManager || (answers.gebruik !== '' && answers.teamgrootte !== ''))
 
   async function handleSubmit() {
     if (!allFilled) {
@@ -293,7 +295,7 @@ export default function BotProfielPage() {
             {submitted && !rolIngevuld && (
               <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Selecteer je rol.</p>
             )}
-            {HEEFT_TEAM.includes(answers.rol) && (
+            {HEEFT_TEAM.includes(answers.rol) && !isCommandManager && (
               <>
                 <div style={{ marginTop: 24 }}>
                   <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Gebruik je ArnoBot individueel of voor jouw team?</p>
@@ -339,8 +341,10 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="02" title="Jouw markt">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>In welke markt ben je actief? <span style={{ color: '#6b7280' }}>(meerdere antwoorden mogelijk)</span></p>
+          <Block nr="02" title={isCommandManager ? 'Jullie markt' : 'Jouw markt'}>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+              {isCommandManager ? 'In welke markt(en) zijn jullie actief?' : 'In welke markt ben je actief?'} <span style={{ color: '#6b7280' }}>(meerdere antwoorden mogelijk)</span>
+            </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {MARKT_OPTIONS.map(o => (
                 <Chip key={o} label={o} selected={answers.markt.includes(o)} onClick={() => toggleMarkt(o)} />
@@ -351,8 +355,8 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="03" title="Wat verkoop je?">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Omschrijf kort wat je verkoopt</p>
+          <Block nr="03" title={isCommandManager ? 'Jullie dienstverlening' : 'Wat verkoop je?'}>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>{isCommandManager ? 'Omschrijf kort wat jullie verkopen' : 'Omschrijf kort wat je verkoopt'}</p>
             <textarea
               value={answers.wat_verkoop_je}
               onChange={e => set('wat_verkoop_je', e.target.value)}
@@ -364,8 +368,8 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="04" title="Jouw ideale klant">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wie is jouw ideale klant?</p>
+          <Block nr="04" title={isCommandManager ? 'Jullie ideale klant' : 'Jouw ideale klant'}>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>{isCommandManager ? 'Wat is het profiel van een topklant?' : 'Wie is jouw ideale klant?'}</p>
             <textarea
               value={answers.ideale_klant}
               onChange={e => set('ideale_klant', e.target.value)}
@@ -403,7 +407,9 @@ export default function BotProfielPage() {
 
           <Block nr="07" title="Target">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-              Verwacht je dit jaar je {getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?
+              {isCommandManager
+                ? 'Verwacht je dit jaar het team of company target te halen?'
+                : `Verwacht je dit jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?`}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
               {TARGET_DIT_JAAR_OPTIONS.map(o => (
@@ -414,7 +420,9 @@ export default function BotProfielPage() {
               <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
             )}
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-              Heb je de afgelopen 3 jaar je {getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target gehaald?
+              {isCommandManager
+                ? 'Zijn de team of company targets de afgelopen 3 jaar behaald?'
+                : `Heb je de afgelopen 3 jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target gehaald?`}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {TARGET_3_JAAR_OPTIONS.map(o => (
@@ -426,7 +434,20 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="08" title="Jouw ervaring">
+          {isCommandManager && (
+            <Block nr="08" title="Thema">
+              <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 4 }}>Wat is het actuele kwartaalthema?</p>
+              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Anders dan een target</p>
+              <textarea
+                value={answers.kwartaalthema}
+                onChange={e => set('kwartaalthema', e.target.value)}
+                placeholder="Bijv: Meer focus op upsell bij bestaande klanten"
+                rows={3}
+              />
+            </Block>
+          )}
+
+          <Block nr={isCommandManager ? '09' : '08'} title="Jouw ervaring">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
               {JAREN_SALES_OPTIONS.map(o => (
@@ -447,30 +468,59 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="09" title="Je grootste uitdaging">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
-            <textarea
-              value={answers.uitdaging}
-              onChange={e => set('uitdaging', e.target.value)}
-              placeholder={getUitdagingPlaceholder(answers.rol)}
-              rows={3}
-            />
-            {submitted && answers.uitdaging.trim().length <= 2 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
-            )}
-          </Block>
+          {isCommandManager ? (
+            <>
+              <Block nr="10" title="Je grootste doel">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je grootste persoonlijke doel?</p>
+                <textarea
+                  value={answers.jaardoel}
+                  onChange={e => set('jaardoel', e.target.value)}
+                  placeholder={getJaardoelPlaceholder(answers.rol)}
+                  rows={3}
+                />
+              </Block>
 
-          <Block nr="10" title="Je doel">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-              Wat is je doel?
-            </p>
-            <textarea
-              value={answers.jaardoel}
-              onChange={e => set('jaardoel', e.target.value)}
-              placeholder={getJaardoelPlaceholder(answers.rol)}
-              rows={3}
-            />
-          </Block>
+              <Block nr="11" title="Je grootste uitdaging">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je grootste persoonlijke uitdaging?</p>
+                <textarea
+                  value={answers.uitdaging}
+                  onChange={e => set('uitdaging', e.target.value)}
+                  placeholder={getUitdagingPlaceholder(answers.rol)}
+                  rows={3}
+                />
+                {submitted && answers.uitdaging.trim().length <= 2 && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
+                )}
+              </Block>
+            </>
+          ) : (
+            <>
+              <Block nr="09" title="Je grootste uitdaging">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
+                <textarea
+                  value={answers.uitdaging}
+                  onChange={e => set('uitdaging', e.target.value)}
+                  placeholder={getUitdagingPlaceholder(answers.rol)}
+                  rows={3}
+                />
+                {submitted && answers.uitdaging.trim().length <= 2 && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
+                )}
+              </Block>
+
+              <Block nr="10" title="Je doel">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                  Wat is je doel?
+                </p>
+                <textarea
+                  value={answers.jaardoel}
+                  onChange={e => set('jaardoel', e.target.value)}
+                  placeholder={getJaardoelPlaceholder(answers.rol)}
+                  rows={3}
+                />
+              </Block>
+            </>
+          )}
 
           {error && <p style={{ color: '#cc2200', fontSize: 15, fontWeight: 400, lineHeight: 1.9, marginBottom: 16 }}>{error}</p>}
 
