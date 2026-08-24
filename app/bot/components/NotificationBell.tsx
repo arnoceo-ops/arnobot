@@ -28,6 +28,7 @@ function tijdGeleden(iso: string) {
 function notifLabel(type: string, memberName: string) {
   if (type === 'analyse_gedeeld') return `${memberName} heeft een analyse gedeeld`
   if (type === 'coaching_gegenereerd') return `${memberName} heeft coaching gegenereerd`
+  if (type === 'lage_1on1_cadans') return `${memberName} heeft al 2+ weken geen 1:1 gehad`
   return memberName
 }
 

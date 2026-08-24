@@ -73,6 +73,10 @@
       "schedule": "0 0 * * 6"
     },
     {
+      "path": "/api/cron/team-1on1-ritme",
+      "schedule": "20 3 * * *"
+    },
+    {
       "path": "/api/cron/golf1-evaluatie-herinnering",
       "schedule": "0 8 16 9 *"
     }

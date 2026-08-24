@@ -68,6 +68,8 @@ export type EmailType =
   | 'uitdaging_herinnering'
   | 'patroon_samenvatting'
   | 'referral_aanmelding'
+  | 'team_1on1_ritme_nudge'
+  | 'team_1on1_ritme_herinnering'
   | 'admin_derde_trial'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
@@ -93,6 +95,8 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   uitdaging_herinnering: { label: 'Uitdaging herinnering',  description: 'Recurring:dag 1/3/7 na een sessie, actie nog niet beantwoord',      category: 'user' },
   patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring:maandelijks, terugkerende namen/thema\'s uit gesprekken', category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
+  team_1on1_ritme_nudge:       { label: '1:1-ritme nudge',       description: 'Event:teamlid 2+ weken geen 1:1, belletje 48u ongelezen',         category: 'user' },
+  team_1on1_ritme_herinnering: { label: '1:1-ritme herinnering', description: 'Event:5 dagen na eerste leessignaal, nog steeds geen 1:1',        category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
 }
 
@@ -100,7 +104,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[] }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[] }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -110,6 +114,18 @@ export function getEmailTemplate(
 
   const mail = (body: string, ctaText: string, ctaUrl: string, footerNote?: string) =>
     emailHtml(body, ctaText, ctaUrl, isTest, footerNote, naam)
+
+  // "Sanne heeft" / "Sanne en Rik hebben" / "Sanne, Rik en Julia hebben" — werkwoordsvorm mee
+  // laten gaan met het aantal namen, gebruikt door de 1:1-ritme-mails hieronder.
+  const namenMetWerkwoord = (namen: string[]): string => {
+    if (namen.length === 0) return 'Een teamlid heeft'
+    const lijst = namen.length === 1
+      ? namen[0]
+      : namen.length === 2
+        ? `${namen[0]} en ${namen[1]}`
+        : `${namen.slice(0, -1).join(', ')} en ${namen[namen.length - 1]}`
+    return `${lijst} ${namen.length === 1 ? 'heeft' : 'hebben'}`
+  }
 
   switch (type) {
     case 'dag1':
@@ -224,6 +240,26 @@ export function getEmailTemplate(
         html: mail(
           `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich zojuist aangemeld via jouw referral link.<br><br>Kiest ${newUser} voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, maximaal je eigen maandprijs. Bij Basic ontvang je geen tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account'
+        ),
+      }
+    }
+    case 'team_1on1_ritme_nudge': {
+      const zin = namenMetWerkwoord(options?.laggingNames ?? [])
+      return {
+        subject: `${prefix}People First!`,
+        html: mail(
+          `Er staat een melding voor je klaar op je teampagina. ${zin} al meer dan twee weken geen 1:1 gehad. Check het even, en plan in wat nodig is.`,
+          'BEKIJK JE TEAM →', 'https://arno.bot/bot/team'
+        ),
+      }
+    }
+    case 'team_1on1_ritme_herinnering': {
+      const zin = namenMetWerkwoord(options?.laggingNames ?? [])
+      return {
+        subject: `${prefix}People First!`,
+        html: mail(
+          `Ben je druk? Druk? Druk? Of wat dan ook. Haal hem er ergens op.<br><br>Je mensen zijn het middel waarmee strategie executie wordt. Strategie, executie, en daartussenin sta jij, met je mensen. Dat is eigenlijk het enige waar je van afhankelijk bent. Hoe kan het dan dat je daar niet actief mee bezig bent?<br><br>${zin} nog steeds geen 1:1 gehad.`,
+          'PLAN EEN 1:1 →', 'https://arno.bot/bot/team'
         ),
       }
     }
