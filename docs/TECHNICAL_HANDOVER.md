@@ -260,7 +260,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/team/notifications/read` | Notificaties als gelezen markeren |
 | `/api/bot/team/share-analyse` | Teamlid deelt analyse met manager |
 | `/api/bot/team/spotlight` | Maandelijkse teamanalyse (Spotlight) |
-| `/api/bot/team/dismiss-prompt` | Team-uitnodigingsprompt wegklikken |
 | `/api/bot/team/zelfcoaching` | Zelfcoaching voor de teambaas zelf (met cooldown) |
 
 ### Gebruikersbeheer

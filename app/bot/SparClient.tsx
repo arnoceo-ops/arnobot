@@ -292,8 +292,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       sessionStorage.setItem('arnobot_analyses_nudge_gezien', '1')
     }
   }, [showSluiten, showAnalysesHint])
-  const [teamPrompt, setTeamPrompt] = useState(false)
-  const [isManager, setIsManager] = useState(false)
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string; vraagVervolg: boolean } | null>(null)
   const [actieGetoondOp, setActieGetoondOp] = useState<number | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
@@ -496,22 +494,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           }
         })
         .catch(() => {})
-
-      const HEEFT_TEAM_ROLLEN = ['Sales Director', 'VP of Sales', 'CEO/DGA']
-      const heeftManagerRol = HEEFT_TEAM_ROLLEN.includes((profiel?.rol as string) ?? '')
-      const gebruik = (profiel?.gebruik as string) ?? ''
-      // Toon prompt als: manager-rol + (wil team OF nog geen keuze gemaakt), maar niet als expliciet individueel
-      if (heeftManagerRol && gebruik !== 'individueel') {
-        const cached = localStorage.getItem('arnobot_is_manager') === '1'
-        if (cached) setIsManager(true)
-        fetch('/api/bot/team/status')
-          .then(r => r.json())
-          .then(d => {
-            if (d.isManager) setIsManager(true)
-            if (!d.hasTeam && !d.promptDismissed) setTeamPrompt(true)
-          })
-          .catch(() => {})
-      }
 
       // Pre-fill vanuit coaching pagina
       const prefill = localStorage.getItem('arnobot_prefill')
@@ -1680,27 +1662,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
             </div>
             <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
-          </div>
-        )}
-
-        {teamPrompt && !started && (
-          <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', margin: 0 }}>
-              Je coacht een team. Wil je ArnoBot ook voor je hele team inzetten?
-            </p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => { window.location.href = '/bot/team' }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 24px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer' }}
-              >TEAM STARTEN</button>
-              <button
-                onClick={() => {
-                  setTeamPrompt(false)
-                  fetch('/api/bot/team/dismiss-prompt', { method: 'POST' }).catch(() => {})
-                }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, padding: '10px 24px', background: 'none', color: '#6b7280', border: 'none', cursor: 'pointer' }}
-              >LATER</button>
-            </div>
           </div>
         )}
 

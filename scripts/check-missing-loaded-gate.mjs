@@ -44,18 +44,11 @@ const KNOWN_SAFE_FETCHES = new Set([
   // dus er is nooit een moment waarop verkeerde inhoud zichtbaar is, alleen een korte
   // vertraging voordat de bel verschijnt. Geen FOUC, geen loaded-vlag nodig.
   'app/bot/components/NotificationBell.tsx:47',
-  // Fire-and-forget referral-registratie na OAuth, zet geen enkele state die de JSX
-  // beïnvloedt. Gevlagd door het brede tekstvenster van dit script, geen echte race.
-  'app/bot/SparClient.tsx:482',
-  // setIsManager(true) hier wordt nergens in de JSX gebruikt (dode state), en teamPrompt
-  // start op false en verschijnt pas als de server "ja" zegt: nooit eerst verkeerde
-  // inhoud, alleen een banner die verschijnt als hij van toepassing is.
-  'app/bot/SparClient.tsx:507',
   // Beide binnen closeSparring(), een door de gebruiker getriggerde afronding van een
   // sparringsessie, geen mount-time render-race: de fetch/setter loopt pas nadat de
   // gebruiker al een actie heeft afgerond, niet vóór de eerste render.
-  'app/bot/SparClient.tsx:752',
-  'app/bot/SparClient.tsx:773',
+  'app/bot/SparClient.tsx:734',
+  'app/bot/SparClient.tsx:755',
   // dashboard/spotlight/scores-fetches vullen lijsten/tellingen (setTeamAnalyses,
   // setTeamScores), geen rol/status-vlag die de JSX-structuur laat omslaan; loading al
   // correct afgehandeld via de aparte loading-state op regel 205/207.

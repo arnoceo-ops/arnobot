@@ -9,7 +9,7 @@ const supabase = createClient(
 
 export async function GET() {
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ hasTeam: false, isManager: false, promptDismissed: false })
+  if (!userId) return NextResponse.json({ hasTeam: false, isManager: false })
 
   const [memberRes, profileRes] = await Promise.all([
     supabase
@@ -19,23 +19,21 @@ export async function GET() {
       .single(),
     supabase
       .from('arnobot_blog_profiles')
-      .select('team_prompt_dismissed, profiel')
+      .select('profiel')
       .eq('user_id', userId)
       .single(),
   ])
 
   const member = memberRes.data
-  const promptDismissed = profileRes.data?.team_prompt_dismissed ?? false
   const gebruik = profileRes.data?.profiel?.gebruik ?? null
 
   if (!member || gebruik === 'individueel') {
-    return NextResponse.json({ hasTeam: false, isManager: false, promptDismissed })
+    return NextResponse.json({ hasTeam: false, isManager: false })
   }
 
   return NextResponse.json({
     hasTeam: true,
     isManager: member.role === 'manager',
     team: member.arnobot_teams,
-    promptDismissed,
   })
 }
