@@ -769,7 +769,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       const res = await fetch('/api/bot/session-end', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, messages })
+        body: JSON.stringify({ sessionId, messages, explicitClose: true })
       })
       const data = await res.json()
       if (data.summary) {

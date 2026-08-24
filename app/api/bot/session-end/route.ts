@@ -23,7 +23,7 @@ const redis = new Redis({
 })
 
 export async function POST(req: NextRequest) {
-  const { sessionId, messages } = await req.json()
+  const { sessionId, messages, explicitClose } = await req.json()
   if (!sessionId || !messages?.length) return NextResponse.json({ ok: true })
 
   // Auth via Clerk cookie, of fallback via bestaande log-rij (voor sendBeacon die geen cookies meestuurt)
@@ -54,17 +54,25 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   // Ruimt de "actief gesprek elders"-lock op (app/api/chat/route.ts, arnobot:active:{userId})
-  // zodra deze exacte sessie 'm zelf gezet had. Zonder dit blijft de lock tot de TTL (120s)
-  // verlopen staan na wegnavigeren zonder expliciet af te sluiten: een nieuw gesprek binnen die
-  // 120s krijgt dan ten onrechte "je hebt al een actief gesprek open op een ander venster",
-  // ook al is het oude gesprek allang beëindigd. Alleen verwijderen als de lock nog exact op
-  // deze sessie staat, niet blind, anders zou een laat binnenkomende beacon een intussen echt
-  // actieve andere sessie kunnen wegvegen.
-  try {
-    const lockKey = `arnobot:active:${userId}`
-    const activeSid = await redis.get<string>(lockKey)
-    if (activeSid === sessionId) await redis.del(lockKey)
-  } catch {}
+  // zodra deze exacte sessie 'm zelf gezet had, maar ALLEEN bij een expliciete SLUIT-actie
+  // (explicitClose, de bewuste fetch() in SparClient.tsx), niet bij de sendBeacon op
+  // beforeunload. Bewust zo ingeperkt (24 aug 2026): de eerdere, bredere versie ruimde de lock
+  // ook op bij een kale page.reload(), en een reload triggert dezelfde beforeunload-beacon als
+  // een echte tabsluiting. Daardoor werd de dubbele-sessie-bescherming zelf omzeild in precies
+  // het scenario waarvoor hij bestaat (cache leeg/ander apparaat, nieuw lokaal sessie-ID): de
+  // oude lock werd al weggegooid vóórdat de "dit ben ik"-check ooit kon afgaan (gevonden via
+  // e2e/backend-integration.spec.ts). Bij een expliciete SLUIT-klik is er geen enkele twijfel
+  // dat dit de accounteigenaar zelf is die het gesprek afrondt, dus dat pad blijft de lock wel
+  // opruimen (lost de oorspronkelijke klacht van 22 aug nog steeds op). Alleen verwijderen als
+  // de lock nog exact op deze sessie staat, niet blind, anders zou een laat binnenkomende
+  // aanroep een intussen echt actieve andere sessie kunnen wegvegen.
+  if (explicitClose) {
+    try {
+      const lockKey = `arnobot:active:${userId}`
+      const activeSid = await redis.get<string>(lockKey)
+      if (activeSid === sessionId) await redis.del(lockKey)
+    } catch {}
+  }
 
   const title = (messages.find((m: { role: string }) => m.role === 'user')?.content as string)?.slice(0, 100) || 'Gesprek'
 
