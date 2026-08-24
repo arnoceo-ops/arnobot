@@ -2219,7 +2219,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </>
             )}
             <span className="spar-questions-label">{isSalesOnlyProfiel ? 'of selecteer een van de onderstaande vragen' : 'en selecteer een van de onderstaande vragen'}</span>
-            <span className="spar-questions-sub">als het je bezighoudt, dan hè? waarom zou je er anders antwoord op willen hebben?</span>
+            <span className="spar-questions-sub">
+              {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
+                ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'
+                : 'als het je bezighoudt, dan hè? waarom zou je er anders antwoord op willen hebben?'}
+            </span>
             <div className="openers-grid-line" />
             <div className="openers-grid">
               {(openerModus === 'strategisch'
@@ -2227,7 +2231,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 : openerModus === 'organisatorisch'
                   ? (dynamicOpeners?.organisatorisch?.length ? dynamicOpeners.organisatorisch : VRAGEN_ORGANISATORISCH)
                   : (dynamicOpeners?.operationeel?.length ? dynamicOpeners.operationeel : VRAGEN_OPERATIONEEL)
-              ).map((q, i) => (
+              ).slice(0, 10).map((q, i) => (
                 <button key={i} className="opener-btn" onClick={() => ask(q)}>{q}</button>
               ))}
             </div>

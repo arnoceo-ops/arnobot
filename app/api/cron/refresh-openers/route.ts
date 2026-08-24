@@ -43,17 +43,19 @@ export async function GET(req: NextRequest) {
 
   const prompt = `Je bent Arno Diepeveen. Analyseer de onderstaande gesprekken en analyses van ArnoBot-gebruikers en identificeer de meest voorkomende patronen, struggles en thema's.
 
-Genereer op basis hiervan 12 nieuwe voorgeformuleerde vragen per categorie. De vragen moeten:
+Genereer op basis hiervan 10 nieuwe voorgeformuleerde vragen per categorie. De vragen moeten:
 - Concreet zijn, direct, in Arno's stem. Geen vage open deuren.
 - Gebaseerd op echte patronen uit de data
 - In het Nederlands, eerste persoon of directe aanspraakvorm
 - Geen accenten op woorden voor nadruk
 
+Zet de 10 vragen per categorie in aflopende volgorde van belangrijkheid: de vraag die het meest voorkomende of meest urgente patroon raakt eerst, de minst urgente als laatste.
+
 Geef de output als JSON in dit exacte formaat:
 {
-  "strategisch": ["vraag1", "vraag2", ..., "vraag12"],
-  "organisatorisch": ["vraag1", "vraag2", ..., "vraag12"],
-  "operationeel": ["vraag1", "vraag2", ..., "vraag12"]
+  "strategisch": ["vraag1", "vraag2", ..., "vraag10"],
+  "organisatorisch": ["vraag1", "vraag2", ..., "vraag10"],
+  "operationeel": ["vraag1", "vraag2", ..., "vraag10"]
 }
 
 Categorie-uitleg:
