@@ -258,6 +258,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
   const [shareCopied, setShareCopied] = useState(false)
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
+  // Voorkomt een FOUC: de openers-sectie rendert pas zodra de fetch geweest is (succes óf
+  // mislukking), zodat er nooit eerst de statische fallback-vragen te zien zijn die meteen
+  // daarna vervangen worden door de community-gegenereerde set. Zelfde patroon als de
+  // isFirstTime-gate in app/bot/profiel/page.tsx.
+  const [openersLoaded, setOpenersLoaded] = useState(false)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
   const [voiceMode, setVoiceMode] = useState(false)
 
@@ -462,6 +467,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       .then(r => r.json())
       .then(data => { if (data.openers) setDynamicOpeners(data.openers) })
       .catch(() => {})
+      .finally(() => setOpenersLoaded(true))
 
 
     // Verwerk referral code uit localStorage na OAuth
@@ -2198,7 +2204,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && !loading && sparModus !== 'sparren' && (
+        {!started && !loading && sparModus !== 'sparren' && openersLoaded && (
           <div className="spar-openers" style={isSalesOnlyProfiel ? { paddingTop: 20 } : undefined}>
             {!isSalesOnlyProfiel && (
               <>
@@ -2218,7 +2224,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
               </>
             )}
-            <span className="spar-questions-label">of selecteer een van de onderstaande vragen</span>
+            <span className="spar-questions-label">en selecteer een van de onderstaande vragen</span>
             <span className="spar-questions-sub">
               {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
                 ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'
