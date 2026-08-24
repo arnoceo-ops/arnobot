@@ -58,7 +58,7 @@ export function useProgressHints() {
     !!s && s.convsSinceLastAnalysis >= 3 && !isDismissedRecently('analyses', THROTTLE_ANALYSES_DAYS)
 
   const showCoachingHintA =
-    !!s && s.analysesSinceLastCoaching >= 1 && !isDismissedRecently('coaching', THROTTLE_COACHING_DAYS)
+    !!s && s.analysesSinceLastCoaching >= 3 && !isDismissedRecently('coaching', THROTTLE_COACHING_DAYS)
 
   const showCoachingHintB =
     !!s &&
