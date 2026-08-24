@@ -8,7 +8,62 @@
 **Besluit (2026-08-20): 2A/2B/2C en de resterende punten worden één traject, in herziene volgorde.** 2A → 5 → 4 → 2B → 2C, met punt 2 (instelbare topics) los ertussen op elk gewenst moment. Reden: 2A heeft geen enkele afhankelijkheid van punt 5/6/1 (bouwt alleen op de al-live drill-down + Spotlight), en zou punt 5 dubbel werk kosten als 5 eerst dun gebouwd wordt en daarna alsnog verrijkt moet worden zodra 2A er is. Zie de Fase 2A/2B/2C-sectie voor het risico dat 2B/2C pas na weken tot maanden echte data hun waarde tonen, dat is geen reden om de bouw uit te stellen, wel iets om in de UI netjes op te vangen ("nog te weinig data").
 **Besluit (2026-08-21), dubbel-profiel-vraagstuk afgesloten:** ArnoBot ondersteunt bewust niet iemand die zowel zelf verkoopt als zijn team coacht, het is het een of het ander (Arno's expliciete besluit). Zie de sectie "Raamwerk: rollen × disciplines" voor het volledige besluit en het verworpen alternatief (twee gescheiden profielen). **Uitvloeisel (2026-08-22):** sparren (oefenen van verkoopgesprekken, `/bot/sparren`) is om dezelfde reden nu ook geblokkeerd voor een bevestigde teambaas, zowel de knop op de coachingspagina (verviel vanzelf toen die rolbewust werd, zie hieronder) als de route zelf (`isConfirmedTeambaas`-redirect naar `/bot/coaching`).
 **2A-ontwerp (2026-08-21, na afweging bij het bouwen):** vaste thema-taxonomie (10 labels, `lib/themas.ts`) i.p.v. hergebruik van `arnobot_memory_entities`' vrije thema-naamgeving, gekozen omdat vrije tekst een fuzzy-matching-stap zou vereisen om teambreed te tellen én omdat thema's daar concurreren met personen/bedrijven om een gedeeld extractiebudget van 5 slots per sessie. Extractie als 4e, niet-kritieke Haiku-call in `session-end/route.ts` (eigen kolom `themas` op `arnobot_blog_sessions`). Aggregatie (`app/api/bot/team/spiegel/route.ts`) is bewust **pure code, geen LLM-call**: dominant thema + trend (nieuw/opkomend/afnemend/aanhoudend) wordt deterministisch berekend uit tellingen, om hallucinatierisico op cijfers (zie `RULE_NO_INVENTED_DETAILS` elders in de app) volledig uit te sluiten. Drempel: 30+ sessies teambreed met een herkenbaar thema, anders toont de UI "nog te weinig data".
-**Eerstvolgende stap:** de hele oorspronkelijke bouwvolgorde (7/6/1/5/2A/4/2B/2C) plus de Karakter-laag/excuustaal-uitbreiding zijn nu af. Wat rest: **punt 2** (instelbare vaste topics, los), verder geen openstaande stap in dit traject. **Team Hippios is verrijkt (2026-08-21):** 34 sessies met thema (22 bestaande geretrofit + 12 nieuwe, zie project-geheugen `project_fake_team_members`), 2A's drempel van 30 is nu gehaald, dus De Spiegel toont bij het eerstvolgende bezoek een echt signaal i.p.v. "nog te weinig data".
+**Eerstvolgende stap:** de hele oorspronkelijke bouwvolgorde (7/6/1/5/2A/4/2B/2C) plus de Karakter-laag/excuustaal-uitbreiding zijn nu af. Wat rest: **punt 2** (instelbare vaste topics, los), **en** de nog niet gebouwde 1:1-cadans-notificatie/escalatieflow (volledig ontworpen, zie de sectie hieronder), verder geen openstaande stap in dit traject. **Team Hippios is verrijkt (2026-08-21):** 34 sessies met thema (22 bestaande geretrofit + 12 nieuwe, zie project-geheugen `project_fake_team_members`), 2A's drempel van 30 is nu gehaald, dus De Spiegel toont bij het eerstvolgende bezoek een echt signaal i.p.v. "nog te weinig data".
+
+## 1:1-PDF- en teamdashboard-opschoning (2026-08-22, parallelle sessie naast Karakter-laag)
+
+Reeks losse bugfixes op de 1:1-agenda-PDF en de teampagina, gevonden tijdens het testen van punt 2C/de teamdashboard-tegels. Elk commit heeft een uitgebreid, op zichzelf staand bericht; hier alleen de opsomming zodat een latere sessie weet dat dit is gebeurd zonder alle commit-berichten opnieuw te hoeven doorzoeken:
+
+- 1:1-PDF: AANDACHTSPUNT stond dubbel (los + binnen de volledige agenda), en tekst botste met de vaste footer bij een paginabreuk (zelfde onderliggende oorzaak als een eerdere fix in `TeamPdfDocument.tsx`, hier nooit doorgevoerd in `OneOnOnePdfDocument.tsx`). Marge tussen pagina's rechtgetrokken.
+- `/api/bot/team/1on1/save`: een lege agenda/aandachtspunt in de request overschreef voorheen een al opgeslagen waarde met `null`. Bestaande waarde blijft nu behouden als de request zelf leeg binnenkomt.
+- Overlap tussen datum en titel in GEDEELD DOOR TEAMLID (was: GEDEELD DOOR LID) opgelost (`alignItems: flex-start` i.p.v. `center`).
+- 1:1-historie op de teamlid-pagina: structureel maar de 5 recentste opgehaald (`.limit(5)` in `team/lid/route.ts`), oudere agenda's waren dus niet alleen verborgen maar nooit bereikbaar. Nu limiet 20 + client-side "TOON ALLE X 1:1'S"-toggle, zelfde patroon als de analyses-lijst. Kaarten staan nu ook standaard ingeklapt (waren altijd half opengeklapt, oogde rommelig bij 3+ kaarten).
+- OPENSTAANDE ACTIE-blok toonde alleen de allerlaatste openstaande actie; een actie die niet uit de meest recente 1:1 kwam had daardoor nergens meer een knop om 'm te beantwoorden. Toont nu alle openstaande acties, gestapeld, elk met eigen knoppen.
+- ACTIES-tegel (percentage van alle 1:1's ooit met een actie) verwijderd uit de 1:1 MEETINGS-sectie: een levenslang teambreed gemiddelde zonder trend/benchmark/per-lid-onderscheid bleek geen bruikbaar signaal (Arno: "dat zegt mij eigenlijk niets"). DEZE WEEK en OPENSTAAND dekken het bruikbare signaal al.
+- TEAM-navigatielink in `BotNav.tsx` werkte niet meer op een teamlid-detailpagina (de actieve tab rendert overal als platte tekst i.p.v. link, geen probleem zonder subpagina's, maar TEAM heeft er wel een). Altijd klikbaar gemaakt.
+- Build-breuk gevonden en gefixt: zie de incident-notitie bovenaan dit document (`formatSystemischSignaal` nooit gecommit).
+- Testdata Team Hippios opgeschoond op Arno's verzoek: duplicaatrijen verwijderd (9 stuks, alle drie de leden), korte niet-AI-gegenereerde "agenda"-velden (konden nooit uit de echte generatieflow komen, altijd `WAT GAAT GOED` als eerste regel) volledig verwijderd i.p.v. alleen leeggemaakt, en realistische acties + volledige agenda's toegevoegd zodat de testdata een eerlijk beeld geeft van een langlopend team.
+
+**Besluit, MSA/SPE versus harde resultaten (2026-08-22):** vastgelegd als projectgeheugen (`project_msa_vs_resultaten_indicator`, niet hier herhaald), samengevat: nooit omzet/targets als los, vergelijkbaar datapunt naast MSA/SPE tonen (risico op een welles-nietes-gesprek tussen coach en cijfers), een eventueel resultaatsignaal hoort alleen als gespreksvraag in de 1:1-agenda. Bewust niets van gebouwd.
+
+## 1:1-cadans-notificatie/escalatieflow (ontworpen 2026-08-22, NOG NIET GEBOUWD)
+
+Arno's vraag die dit triggerde: "wanneer krijgt een teambaas een seintje dat het aantal 1:1's onder de maat is, bijvoorbeeld minder dan 1 per 2 weken?" Antwoord op dat moment: nergens, er bestond geen enkele proactieve melding voor lage 1:1-cadans (de bestaande `isOnderRitme()` in `TeamClient.tsx` meet iets anders: de eigen ArnoBot-activiteit van het teamlid, niet het 1:1-ritme met de manager, en is puur een kleurtje in een tabel, geen melding).
+
+**Drempel (bevestigd):** vast, langer dan 2 weken geen 1:1 met een teamlid = "onder de maat". Geen per-teamlid-instelling, dat kan later als blijkt dat één vaste drempel niet volstaat.
+
+**Drie stappen, in volgorde:**
+1. **In-app belletje** (bestaand kanaal, `arnobot_team_notifications`, tot nu toe alleen gevuld door "teamlid rondt coaching af" en "teamlid deelt analyse"). Nieuwe trigger: een teamlid zonder 1:1 langer dan 2 weken.
+2. **E-mail #1**, als het belletje niet binnen 48 uur geopend is. Nieuw `EmailType`: `team_1on1_ritme_nudge`, transactioneel (geen opt-out), zelfde categorie als `first_coaching`.
+3. **E-mail #2**, als er 5 dagen na het eerste leessignaal (belletje geopend, of e-mail #1 geopend, welke van de twee het eerst gebeurt) nog steeds geen nieuwe 1:1 gelogd is voor het achterblijvende teamlid. Nieuw `EmailType`: `team_1on1_ritme_herinnering`, ook transactioneel.
+
+**Copy, akkoord in principe, subjectregels nog door Arno te bevestigen:**
+
+E-mail #1:
+> Onderwerp: {voornaam}, twee van je mensen wachten op een 1:1
+>
+> Er staat een melding voor je klaar op je teampagina. {namen} hebben al meer dan twee weken geen 1:1 gehad. Check het even, en plan in wat nodig is.
+>
+> [BEKIJK JE TEAM →]
+
+E-mail #2 (Arno's letterlijke openingszin, niet herschrijven):
+> Onderwerp: {voornaam}, nog steeds niets ingepland?
+>
+> Ben je druk? Druk? Druk? Of wat dan ook. Haal hem er ergens op.
+>
+> Je mensen zijn het middel waarmee strategie executie wordt. Strategie, executie, en daartussenin sta jij, met je mensen. Dat is eigenlijk het enige waar je van afhankelijk bent. Hoe kan het dan dat je daar niet actief mee bezig bent?
+>
+> {namen} hebben nog steeds geen 1:1 gehad.
+>
+> [PLAN EEN 1:1 →]
+
+**Nog te bouwen, in deze volgorde:**
+1. Nieuwe kolommen (of een aparte trackingtabel) om per bel-notificatie bij te houden: geopend-op-tijdstip, e-mail-1-verzonden, e-mail-2-verzonden. `arnobot_team_notifications.read_at` bestaat al voor het belletje zelf.
+2. Cron die periodiek (dagelijks lijkt genoeg, geen sub-daagse precisie nodig voor een 48-uurs/5-dagen-venster) alle teams scant op de 2-weken-drempel en het belletje aanmaakt.
+3. Cron-uitbreiding (of nieuwe cron) die de 48-uur- en 5-dagen-escalatie checkt en de juiste e-mail verstuurt via `getEmailTemplate()`.
+4. De twee `EmailType`-toevoegingen in `lib/email-templates.ts` (verplichte route, verschijnen dan automatisch op `/bot/admin/emails`).
+
+Niets hiervan is gebouwd. Bij oppakken: eerst de subjectregels en transactioneel-vs-marketing-classificatie met Arno bevestigen (nu een aanname, geen expliciete goedkeuring), dan pas bouwen.
 
 ## Karakter-laag (Accountability, Consistentie, Cultuur) + 2C-vroegsignaal (2026-08-22)
 
