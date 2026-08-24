@@ -1,7 +1,7 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-24 (nieuwe sectie: de twee aanlooproutes naar ArnoBot, homepage/LinkedIn vs. Sales Agent-link)
-**Waar we staan:** 12 van de 13 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 13, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
+**Laatst bijgewerkt:** 2026-08-24 (punt 13 toegevoegd: community-gebaseerde gespreksopeners)
+**Waar we staan:** 13 van de 14 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 14, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
 **Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
@@ -116,11 +116,20 @@ Blijft een teamlid langer dan twee weken zonder 1:1 met zijn manager, dan grijpt
 
 **Sterk omdat:** dit versterkt hetzelfde accountability-argument als punt 2 in de prioriteitentraining hieronder, maar dan gericht op de manager zelf, niet alleen op zijn verkopers: ArnoBot spreekt hem ook aan op zijn eigen discipline.
 
+### 13. Community-gebaseerde gespreksopeners — LIVE (2026-08-24)
+Elke maand analyseert Claude alle gesprekken en analyses van alle ArnoBot-gebruikers samen, en genereert daaruit per discipline (Strategy, People, Execution) 10 nieuwe, actuele vragen, gerangschikt op belangrijkheid. Een gebruiker die op de startpagina een voorgeformuleerde vraag aanklikt, kiest daarmee impliciet uit wat er op dit moment daadwerkelijk speelt bij honderden andere sales professionals, volledig geanonimiseerd: geen enkele individuele bijdrage is herleidbaar, alleen het herkende patroon komt terug als nieuwe vraag.
+
+**Lost op:** een leeg scherm is de grootste drempel om een gesprek te beginnen. Een generiek lijstje voorbeeldvragen, zoals elke concurrent heeft, voelt willekeurig. Deze vragen voelen actueel en relevant, omdat ze dat ook daadwerkelijk zijn.
+
+**Sterk omdat:** dit is een netwerkeffect zonder dat een gebruiker ooit met iemand anders in contact komt of iets van een ander ziet. Het wordt sterker naarmate ArnoBot meer gebruikers krijgt, en is niet zomaar na te bouwen door een concurrent zonder een vergelijkbare schaal aan echte gesprekken.
+
+**Pitch-zin:** "de vragen die je hier ziet komen niet uit een lijstje. Ze komen uit wat honderden andere sales professionals deze maand ook al bezighield, volledig anoniem."
+
 ---
 
 ## Gepland — nog NIET pitchen als bestaand kenmerk
 
-### 13. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
+### 14. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
 Puur toekomstplan. Geen certificeringsprogramma, geen aangestelde coaches, geen publieke aankondiging. Niet noemen in een klantgesprek, zelfs niet als richting.
 
 ---
@@ -150,7 +159,7 @@ Belangrijk voor sales agents om te begrijpen: er zijn twee volledig verschillend
 
 ## Prioriteit voor de eerste trainingsronde
 
-Niet alle 12 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10, 11, 12) zijn goede ondersteunende argumenten die daarna aangevuld worden.
+Niet alle 13 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10, 11, 12, 13) zijn goede ondersteunende argumenten die daarna aangevuld worden.
 
 ---
 
