@@ -8,7 +8,7 @@ import { getText } from '@/lib/ai'
 import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
-import { THEMA_LABELS, parseThemas } from '@/lib/themas'
+import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { Redis } from '@upstash/redis'
 
@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
   let feiten = ''
   let uitdaging = ''
   let themas: string[] = []
+  let excuustaal = false
 
   const callSummaryModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -124,8 +125,13 @@ ${RULE_NEVER_BREAK_CHARACTER}`,
   })
   const callThemasModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 40,
-    system: `Classificeer dit salesgesprek naar maximaal twee thema's uit deze vaste lijst, niets anders: ${THEMA_LABELS.join(', ')}. Kies alleen thema's die daadwerkelijk prominent aan bod kwamen, niet oppervlakkig genoemd. Geef alleen een JSON-array van exact deze labels terug, bijvoorbeeld ["CLOSING","MINDSET"], of een lege array als niets duidelijk past. Geen andere tekst, geen uitleg.`,
+    max_tokens: 60,
+    system: `Classificeer dit salesgesprek op twee dingen tegelijk.
+
+1. Thema's: maximaal twee uit deze vaste lijst, niets anders: ${THEMA_LABELS.join(', ')}. Kies alleen thema's die daadwerkelijk prominent aan bod kwamen, niet oppervlakkig genoemd.
+2. Excuustaal: schrijft de gebruiker een uitkomst herhaaldelijk toe aan iets buiten zichzelf (de markt, de concurrent, de conjunctuur, "domme" leads, prijs) in plaats van eigenaarschap te nemen over zijn eigen aandeel? Eén terloopse opmerking telt niet, een terugkerend patroon in dit gesprek wel.
+
+Geef ALLEEN een JSON-object terug, geen andere tekst, geen uitleg: {"themas": ["CLOSING","MINDSET"], "excuustaal": true} of {"themas": [], "excuustaal": false}.`,
     messages: [{
       role: 'user',
       content: conversationText.slice(0, 8000)
@@ -160,7 +166,11 @@ ${RULE_NO_INVENTED_DETAILS}`,
     summary = getText(summaryRes.content)
     feiten = getText(feitenRes.content)
     uitdaging = (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '')
-    if (themasRes) themas = parseThemas(getText(themasRes.content, '[]'))
+    if (themasRes) {
+      const classificatie = parseThemaClassificatie(getText(themasRes.content, '{}'))
+      themas = classificatie.themas
+      excuustaal = classificatie.excuustaal
+    }
 
     if (!summary) {
       console.error(`[session-end] lege summary, retry (sessie ${sessionId})`)
@@ -244,6 +254,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
       message_count: messageCount,
       blog_suggestions: blogSuggestions,
       themas: themas.length ? themas : null,
+      excuustaal,
     }, { onConflict: 'session_id' })
 
   if (upsertError) {

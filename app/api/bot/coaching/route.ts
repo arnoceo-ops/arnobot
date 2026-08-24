@@ -52,7 +52,7 @@ export async function POST() {
   const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes, scoreHistoryRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
-      .select('session_id, title, summary, feiten, message_count, created_at')
+      .select('session_id, title, summary, feiten, message_count, created_at, excuustaal')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
@@ -133,6 +133,17 @@ export async function POST() {
     const gemiddeldeStap = stappen.reduce((a, b) => a + b, 0) / stappen.length
     const patroon = gemiddeldeStap >= 1.5 ? 'grillig, wisselt sterk tussen metingen (pieken-en-dalen-patroon)' : gemiddeldeStap >= 0.75 ? 'wisselend' : 'gestaag, stabiele lijn'
     consistentieContext = `\n\nCONSISTENTIE (actie-scoregeschiedenis, laatste ${actieHistorie.length} metingen: ${actieHistorie.map(h => h.actie_score).join(', ')}): ${patroon}. Weeg dit mee in de actie_diagnose.`
+  }
+
+  // Accountability (Karakter-laag): per gesprek al geclassificeerd op excuustaal in
+  // session-end/route.ts (dezelfde Haiku-call als de thema's van De Spiegel), puur signaal uit
+  // de data, geen nieuwe AI-inschatting hier. Pas meewegen bij een echt patroon (2+ van de
+  // laatste 10 gesprekken met een bekende waarde), niet bij één op zichzelf staand moment.
+  const excuustaalRecent = sessions.slice(0, 10).filter(s => (s as { excuustaal: boolean | null }).excuustaal != null)
+  const excuustaalCount = excuustaalRecent.filter(s => (s as { excuustaal: boolean | null }).excuustaal === true).length
+  let accountabilityContext = ''
+  if (excuustaalRecent.length >= 3 && excuustaalCount >= 2) {
+    accountabilityContext = `\n\nACCOUNTABILITY (excuustaal-detectie, ${excuustaalCount} van de laatste ${excuustaalRecent.length} gesprekken): meerdere recente gesprekken bevatten taal die de uitkomst toeschrijft aan iets buiten de gebruiker zelf, in plaats van eigenaarschap. Weeg dit expliciet mee in de mindset_diagnose.`
   }
 
   const analyses = analysesRes.data ?? []
@@ -351,7 +362,7 @@ ${RULE_NEVER_BREAK_CHARACTER}
 
 ${RULE_NO_INVENTED_DETAILS}`
 
-  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${consistentieContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
+  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${consistentieContext}${accountabilityContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
 
   const COACHING_MAX_TOKENS = 4000
 

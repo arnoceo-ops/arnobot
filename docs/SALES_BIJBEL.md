@@ -1,6 +1,6 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-22
+**Laatst bijgewerkt:** 2026-08-22 (Karakter-laag toegevoegd aan punt 4/7)
 **Waar we staan:** 11 van de 12 USP-punten LIVE, plus sinds vandaag een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (punt 12) blijft GEPLAND. **Toegevoegd (2026-08-22):** een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
 **Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
@@ -68,6 +68,8 @@ De MSA-score (Mindset/Systeem/Actie) geeft een meetbaar, herhaalbaar diagnosekad
 
 **Sterk omdat:** het iets tastbaars is om aan een salesbaas te laten zien, geen vaag "de AI helpt je groeien".
 
+**Verdieping (2026-08-22):** onder de drie MSA-pijlers ligt een tweede, karaktergerichte laag uit Arno's eigen "De Zes Succesfactoren": accountability (eigenaarschap versus excuustaal, verweven in de mindset-diagnose, inclusief herkenning van excuustaal per gesprek), consistentie (stabiel presteren versus een pieken-en-dalen-patroon, berekend uit de eigen scoregeschiedenis, geen AI-gok) en cultuur (op managersniveau: wat een teambaas tolereert, niet wat hij predikt, verweven in de teamsynthese). Geen aparte score of los dashboard, gewoon een scherpere, beter onderbouwde diagnose binnen het bestaande MSA/SPE-kader.
+
 ### 5. Privacy-model voor teams dat vertrouwen niet breekt — LIVE
 De manager ziet een synthese van patronen binnen zijn team, nooit de ruwe gesprekken van individuele medewerkers.
 
@@ -79,7 +81,7 @@ De manager ziet een synthese van patronen binnen zijn team, nooit de ruwe gespre
 **Sterkst vlak:** vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
 
 ### 7. Arno's eigen methodiek, niet generieke AI-adviezen — LIVE
-Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, geen bullshit, geen corporate taal).
+Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, geen bullshit, geen corporate taal). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
 
 **Pitch-zin:** de klant koopt Arno's expertise op schaal, niet "een AI".
 

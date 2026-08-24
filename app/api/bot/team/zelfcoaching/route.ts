@@ -121,7 +121,7 @@ export async function POST() {
   const [sessionsRes, scoresRes, coachingRes, spotlightRes, spiegel, eigenSessiesRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
-      .select('user_id, summary, feiten')
+      .select('user_id, summary, feiten, excuustaal')
       .in('user_id', memberIds)
       .order('created_at', { ascending: false })
       .limit(40),
@@ -201,6 +201,16 @@ export async function POST() {
     .slice(0, 20)
     .map(l => `- ${new Date(l.created_at).toLocaleDateString('nl-NL')}: agenda "${l.agenda ?? '-'}", aandachtspunt "${l.aandachtspunt ?? '-'}", actie "${l.actie ?? '-'}" (status: ${l.actie_status ?? 'onbekend'})`)
     .join('\n')
+
+  // Accountability op teamniveau (Karakter-laag): distinct teamleden die recent excuustaal
+  // vertonen, zelfde per-lid-tel-principe als De Spiegel (aantal mensen, geen sessies). Pas
+  // meewegen vanaf 2 leden, geen conclusie trekken op 1 losstaand geval.
+  const excuustaalLeden = new Set(
+    (sessionsRes.data ?? []).filter(s => s.excuustaal === true).map(s => s.user_id)
+  ).size
+  const accountabilityTeamContext = excuustaalLeden >= 2
+    ? `\n\nACCOUNTABILITY-SIGNAAL (team): bij ${excuustaalLeden} teamleden komt in recente gesprekken excuustaal terug (de uitkomst toeschrijven aan iets buiten zichzelf, in plaats van eigenaarschap). Weeg dit mee in de PEOPLE-diagnose als mogelijk cultuursignaal: tolereert de sales baas dit patroon, of acteert hij erop?`
+    : ''
 
   const spiegelContext = spiegel.onvoldoende
     ? ''
@@ -302,7 +312,7 @@ ZIJN 1:1'S MET TEAMLEDEN (meest recent eerst):\n${eenOpEensText}
 
 LAATSTE COACHINGPROFIEL PER TEAMLID:\n${ledenProfielText || '(nog geen coachingprofielen)'}
 
-RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${vroegSignaalContext}${spotlightContext}${deltaContext}${bronContext}`
+RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${vroegSignaalContext}${accountabilityTeamContext}${spotlightContext}${deltaContext}${bronContext}`
     }]
   })
 
