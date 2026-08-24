@@ -1,7 +1,7 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-22 (Karakter-laag toegevoegd aan punt 4/7)
-**Waar we staan:** 11 van de 12 USP-punten LIVE, plus sinds vandaag een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (punt 12) blijft GEPLAND. **Toegevoegd (2026-08-22):** een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
+**Laatst bijgewerkt:** 2026-08-24 (punt 12 toegevoegd: proactieve 1:1-cadans-bewaking)
+**Waar we staan:** 12 van de 13 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 13, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een nieuwe sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
 **Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
@@ -109,11 +109,18 @@ Wetenschappelijk fundament: Hermann Ebbinghaus toonde aan dat mensen zonder herh
 
 **Oorspronkelijke onderbouwing (waarom dit meer is dan een leuk feitje):** het is falsifieerbaar en citeerbaar wetenschappelijk feit, geen marketingclaim. Het geeft een naam aan een probleem dat iedereen voelt maar niet kan benoemen ("goed gesprek gehad, twee weken later weet je niet meer wat je zou doen"). Het verplaatst het gesprek van "vertrouw ons" naar "dit is aantoonbaar hoe geheugen werkt, en hier is wat we eraan doen".
 
+### 12. Proactieve 1:1-cadans-bewaking — LIVE (2026-08-24)
+Blijft een teamlid langer dan twee weken zonder 1:1 met zijn manager, dan grijpt ArnoBot zelf in: eerst een belletje op de teampagina, en bij aanhoudende inactiviteit twee opvolgende e-mails naar de manager.
+
+**Lost op:** het 1:1-ritme is de kern van goed teammanagement, maar zakt in de praktijk stilletjes weg zodra een manager het druk heeft, zonder dat iemand het opmerkt. ArnoBot bewaakt dat ritme actief, in plaats van te vertrouwen op het geheugen van de manager zelf.
+
+**Sterk omdat:** dit versterkt hetzelfde accountability-argument als punt 2 in de prioriteitentraining hieronder, maar dan gericht op de manager zelf, niet alleen op zijn verkopers: ArnoBot spreekt hem ook aan op zijn eigen discipline.
+
 ---
 
 ## Gepland — nog NIET pitchen als bestaand kenmerk
 
-### 12. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
+### 13. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
 Puur toekomstplan. Geen certificeringsprogramma, geen aangestelde coaches, geen publieke aankondiging. Niet noemen in een klantgesprek, zelfs niet als richting.
 
 ---
@@ -131,7 +138,7 @@ Als 3 of meer teamleden onafhankelijk van elkaar hetzelfde onderwerp laten terug
 
 ## Prioriteit voor de eerste trainingsronde
 
-Niet alle 10 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10) zijn goede ondersteunende argumenten die daarna aangevuld worden.
+Niet alle 12 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10, 11, 12) zijn goede ondersteunende argumenten die daarna aangevuld worden.
 
 ---
 

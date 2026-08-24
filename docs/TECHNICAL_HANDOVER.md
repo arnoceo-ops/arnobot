@@ -370,6 +370,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor BIEB-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
 | `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
+| `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
 
@@ -458,7 +459,7 @@ Koppeling gebruiker aan team (`user_id`, `team_id`, `role`: manager/member).
 Team-level Spotlight-analyses (max 5 meest recente per team).
 
 ### `arnobot_team_notifications`
-Notificatie-inbox voor managers (bijv. "analyse gedeeld", "coaching gegenereerd").
+Notificatie-inbox voor managers (bijv. "analyse gedeeld", "coaching gegenereerd", "teamlid 2+ weken geen 1:1" via `lage_1on1_cadans`, zie `app/api/cron/team-1on1-ritme/route.ts`). Geen aparte trackingtabel voor de bijbehorende escalatiemails: mail-1/mail-2-dedup en -tijdstippen staan in Redis, niet in Supabase.
 
 ### `arnobot_shared_analyses`
 Bijhouden welke analyses een teamlid met de manager/het team gedeeld heeft.
