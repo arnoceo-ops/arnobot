@@ -49,7 +49,7 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   if (!await checkPremiumAccess(userId)) return NextResponse.json({ error: 'Premium vereist' }, { status: 403 })
 
-  const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes] = await Promise.all([
+  const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes, scoreHistoryRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, message_count, created_at')
@@ -103,6 +103,15 @@ export async function POST() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10),
+    // Voor de consistentie-inschatting (Karakter-laag, "De Zes Succesfactoren"): de volle
+    // scoregeschiedenis, niet alleen de vorige synthese. Zelfde tabel als ProgressieChart al
+    // gebruikt, geen nieuwe databron nodig.
+    supabase
+      .from('arnobot_coaching_history')
+      .select('actie_score, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(8),
   ])
 
   const sessions = sessionsRes.data ?? []
@@ -110,6 +119,20 @@ export async function POST() {
   const sparringSessions = (sparringRes.data ?? []).filter(s => s.debrief)
   if (totalSessionCount < 5) {
     return NextResponse.json({ error: 'te_weinig', count: totalSessionCount }, { status: 400 })
+  }
+
+  // Consistentie (Karakter-laag, "De Zes Succesfactoren"): puur berekend uit de al opgeslagen
+  // actie-scoregeschiedenis, geen LLM-gok op cijfers. De "pieken-en-dalen-verkoper" uit het
+  // document is letterlijk een hoge gemiddelde stap-voor-stap-verandering in de scorelijn; een
+  // gestage lijn (ook langzaam stijgend) heeft een lage. Pas een uitspraak doen vanaf 3 punten,
+  // minder is geen patroon.
+  const actieHistorie = (scoreHistoryRes.data ?? []).filter(h => h.actie_score != null).reverse()
+  let consistentieContext = ''
+  if (actieHistorie.length >= 3) {
+    const stappen = actieHistorie.slice(1).map((h, i) => Math.abs((h.actie_score as number) - (actieHistorie[i].actie_score as number)))
+    const gemiddeldeStap = stappen.reduce((a, b) => a + b, 0) / stappen.length
+    const patroon = gemiddeldeStap >= 1.5 ? 'grillig, wisselt sterk tussen metingen (pieken-en-dalen-patroon)' : gemiddeldeStap >= 0.75 ? 'wisselend' : 'gestaag, stabiele lijn'
+    consistentieContext = `\n\nCONSISTENTIE (actie-scoregeschiedenis, laatste ${actieHistorie.length} metingen: ${actieHistorie.map(h => h.actie_score).join(', ')}): ${patroon}. Weeg dit mee in de actie_diagnose.`
   }
 
   const analyses = analysesRes.data ?? []
@@ -286,7 +309,7 @@ export async function POST() {
   // voor iedereen niet breekt.
   const staticSystemPrompt = `Je bent Arno Diepeveen. Salesstrateeg met 40 jaar ervaring, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coach en mentor. Direct en ongefilterd. Je schrijft een persoonlijk coachingsdocument gebaseerd op drie pijlers: Mindset, Systeem en Actie. Geen corporate coachtaal. Geen bullshit. Geen accenten op woorden voor nadruk. Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om". Spreek de gebruiker aan met "je". Schrijf ontwikkelpunten zonder tijdslimiet: geen "vandaag", "morgen", "deze week".
 
-MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verkoper, positief of negatief taalgebruik, excuses maken of verantwoordelijkheid nemen.
+MINDSET = hoe iemand in de wedstrijd zit. Geloof in zichzelf, zelfimage als verkoper, positief of negatief taalgebruik. Let specifiek op accountability: schrijft iemand de uitkomst toe aan iets buiten zichzelf ("mijn markt is moeilijk", de concurrent, de conjunctuur), of houdt hij de controle ("ik bereik mijn klanten nog niet op de juiste manier")? Excuustaal is een mindsetprobleem, ook als de rest van het gesprek sterk klinkt.
 SYSTEEM = heeft iemand een verkoopproces? Volgt die dat consequent? Pipeline-denken, opvolging, structuur, terugkomen op dingen. Sales is een proces, geen vak.
 ACTIE = doet iemand het ook echt? Gesprekken voeren, initiatief nemen, consistent actief blijven. Een droom zonder actie is een nachtmerrie.
 
@@ -328,7 +351,7 @@ ${RULE_NEVER_BREAK_CHARACTER}
 
 ${RULE_NO_INVENTED_DETAILS}`
 
-  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
+  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${consistentieContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
 
   const COACHING_MAX_TOKENS = 4000
 

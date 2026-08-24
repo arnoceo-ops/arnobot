@@ -8,7 +8,7 @@ import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeSpeScore } from '@/lib/msa'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
-import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
+import { computeSpiegelSignaal, formatSystemischSignaal, formatVroegSignaal } from '@/lib/spiegel'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 
 const supabase = createClient(
@@ -215,6 +215,13 @@ export async function POST() {
     ? `\n\nSIGNAAL: ${systemischSignaal} Verwerk dit als hypothese, nooit als beschuldiging, in de STRATEGY- of PEOPLE-diagnose, wat het meest van toepassing is.`
     : ''
 
+  // Lagere trede vóór 2C (Arno's expliciete verzoek): bij 2 leden al een milde, vroege melding
+  // in de diagnose, zodat de sales baas niet voor het eerst bij 3+ hoort dat er iets speelt.
+  const vroegSignaal = formatVroegSignaal(spiegel)
+  const vroegSignaalContext = vroegSignaal
+    ? `\n\nVROEG SIGNAAL: ${vroegSignaal} Noem dit kort, als milde constatering, in de STRATEGY- of PEOPLE-diagnose, geen aparte alarmerende toon.`
+    : ''
+
   const spotlightContext = spotlightRes.data?.analyse_text
     ? `\n\nMEEST RECENTE TEAM SPOTLIGHT-ANALYSE:\n${spotlightRes.data.analyse_text.slice(0, 1500)}`
     : ''
@@ -253,7 +260,7 @@ Je scoort drie pijlers, afkomstig uit Scaling Up/Rockefeller Habits (Verne Harni
 
 STRATEGY: vertaalt de sales baas de bedrijfsstrategie naar een helder, onderscheidend plan voor zijn team? Niet: bedenkt hij de strategie zelf, dat is een CEO-taak. Let op of teamleden hun toegevoegde waarde ten opzichte van de concurrentie kunnen verwoorden, en op signalen van veel verloren deals in de gesprekken en feiten: beide wijzen op een slecht doorvertaalde strategie.
 
-PEOPLE: heeft de sales baas de juiste mensen op de juiste plek, en ontwikkelt hij ze structureel? Heeft hij A-players aangenomen? Zo niet, upgradet hij actief zijn B-players, ziet hij hun blinde vlekken én bouwt hij hun sterke punten uit (sterke kanten verder versterken werkt beter dan alleen zwaktes repareren)? Neemt hij tijdig afscheid van C-players? Een teamlid waarbij één van de drie MSA-pijlers (mindset/systeem/actie) over meerdere metingen structureel niet groeit is een indicatie van een C-player, let op of de sales baas daar wel of niet op acteert.
+PEOPLE: heeft de sales baas de juiste mensen op de juiste plek, en ontwikkelt hij ze structureel? Heeft hij A-players aangenomen? Zo niet, upgradet hij actief zijn B-players, ziet hij hun blinde vlekken én bouwt hij hun sterke punten uit (sterke kanten verder versterken werkt beter dan alleen zwaktes repareren)? Neemt hij tijdig afscheid van C-players? Een teamlid waarbij één van de drie MSA-pijlers (mindset/systeem/actie) over meerdere metingen structureel niet groeit is een indicatie van een C-player, let op of de sales baas daar wel of niet op acteert. Let ook op cultuur: cultuur is wat een leidinggevende tolereert, niet wat hij predikt, teams kijken naar wat er gebeurt als een norm overtreden wordt, niet naar wat er op papier staat. Als uit de 1:1's of teamdata blijkt dat bepaald gedrag (excuses, uitstel, gebrek aan opvolging) structureel getolereerd wordt zonder dat de sales baas erop acteert, is dat een People-signaal, ongeacht welke waarden hij zelf zegt belangrijk te vinden.
 
 EXECUTION: doen teamleden ook echt de dingen die ertoe doen, worden plannen tot resultaat gebracht? Strategie komt pas tot uiting als goede mensen ook daadwerkelijk actief zijn, primair gericht op klanten en op het marktdeel waar het team maximale bereikbaarheid en waarde kan laten zien. Niet activiteit in het algemeen, activiteit op de juiste plek.
 
@@ -295,7 +302,7 @@ ZIJN 1:1'S MET TEAMLEDEN (meest recent eerst):\n${eenOpEensText}
 
 LAATSTE COACHINGPROFIEL PER TEAMLID:\n${ledenProfielText || '(nog geen coachingprofielen)'}
 
-RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${spotlightContext}${deltaContext}${bronContext}`
+RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${vroegSignaalContext}${spotlightContext}${deltaContext}${bronContext}`
     }]
   })
 

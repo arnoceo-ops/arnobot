@@ -111,6 +111,18 @@ export function formatSystemischSignaal(spiegel: SpiegelSignaal): string | null 
   return `Er is een patroon dat bij ${spiegel.dominant.leden} van je teamleden terugkomt: ${spiegel.dominant.thema.toLowerCase()}. Dat kan toeval zijn, maar het kan ook betekenen dat er iets systemisch speelt in hoe het team werkt. Wil je dit bespreken?`
 }
 
+// Lagere, zachtere trede vóór het systemische signaal hierboven (Arno's expliciete verzoek,
+// 2026-08-22): bij 2 leden op hetzelfde dominante thema, geef dan al een vroege, milde melding
+// in de leiderschapspagina, in plaats van dat de eerste keer dat de sales baas hiervan hoort
+// meteen de zwaardere "systemisch"-hypothese bij 3+ is. Bewust GEEN kaart op de teampagina en
+// GEEN Telegram-melding aan Arno op dit niveau, dat blijft voorbehouden aan de drempel van 3.
+// Vaste tekst, zelfde reden als hierboven: niet aan een LLM overlaten.
+export function formatVroegSignaal(spiegel: SpiegelSignaal): string | null {
+  if (spiegel.onvoldoende || !spiegel.dominant) return null
+  if (spiegel.dominant.leden !== 2) return null
+  return `Twee van je teamleden laten onafhankelijk van elkaar hetzelfde thema terugkomen: ${spiegel.dominant.thema.toLowerCase()}. Nog geen duidelijk patroon, maar de moeite waard om in de gaten te houden.`
+}
+
 const MAANDNAMEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 // Punt 2B "De Tijdlijn", herzien ontwerp (2026-08-21, zie docs/TEAM_PLAN.md): geen eigen
