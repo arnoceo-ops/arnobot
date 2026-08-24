@@ -198,10 +198,20 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const isStrategischProfiel = STRATEGISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isOrganisatorischProfiel = ORGANISATORISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isSalesOnlyProfiel = SALES_ONLY_ROLLEN.includes((profiel?.rol as string) ?? '')
+  // Fallback op 'salesbaas' i.p.v. null (gevonden 24 aug 2026): profiel.rol is vrije tekst
+  // zodra iemand 'Anders' koos bij het invullen van zijn profiel (ROL_OPTIONS in
+  // app/bot/profiel/page.tsx bevat 'Anders' expliciet, ook voor teammanagers), en matcht dan
+  // per definitie geen van de vier vaste rollijsten hieronder. Met rolCategorie === null
+  // rendert het hele sparren-scherm niets (config-paneel én invoerveld staan beide achter een
+  // `rolCategorie &&`-guard, zie lager in dit bestand), dus /bot/sparren bleef dan volledig
+  // leeg/zwart, geen foutmelding, geen enkele weg vooruit. 'salesbaas' is de breedst
+  // toepasbare categorie (Underperformer/Marketing/CEO/Grote Klant), en elke categorie heeft
+  // sowieso een eigen "Anders"-persona-optie waarmee de gebruiker zelf zijn situatie kan
+  // omschrijven, dus een net niet perfect passende default is nooit een dead end meer.
   const rolCategorie = VERKOPER_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'verkoper' :
     SALESBAAS_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'salesbaas' :
     EINDBAAS_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'eindbaas' :
-    SOLOPRENEUR_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'solopreneur' : null
+    SOLOPRENEUR_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'solopreneur' : 'salesbaas'
   const [openerModus, setOpenerModus] = useState<'strategisch' | 'organisatorisch' | 'sales'>(
     isStrategischProfiel ? 'strategisch' : isOrganisatorischProfiel ? 'organisatorisch' : 'sales'
   )
