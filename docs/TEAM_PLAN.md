@@ -2,7 +2,31 @@
 
 **Incident, build-breuk door onvolledige commit (gevonden en gefixt 2026-08-22):** punt 2C (Manager als Variabele) bleek al volledig gebouwd te zijn (`formatSystemischSignaal` in `lib/spiegel.ts`, verwerkt in zowel `dashboard/route.ts` als `zelfcoaching/route.ts`), maar de definitie in `lib/spiegel.ts` was nooit gecommit, alleen de twee routes die 'm gebruiken. Lokaal bouwde alles altijd goed (de working tree had de functie al), maar elke push sindsdien liet de Vercel-build stuklopen op een ontbrekende export, onopgemerkt tot Arno het rode deploy-statuslabel meldde. **Les:** een groene lokale `tsc`/`next build` bewijst niet dat de commit-geschiedenis zelf consistent is als er ongecommitte bestanden in de working tree liggen; `git status` had dit meteen laten zien. Voortaan bij een onverwachte build-breuk eerst `git status` checken op ongecommitte bestanden die een net-gepushte wijziging mogelijk nodig had, vóór dieper te zoeken.
 
-**Laatst bijgewerkt:** 2026-08-24 (verouderde "start zelf een team"-prompt volledig verwijderd, achterhaald door het Sales-Agent-only teammodel)
+**Kritiek incident, gevonden en gefixt (2026-08-24): teamleden/-managers verloren automatisch toegang na 30 dagen.** `proxy.ts` (de toegangspoort voor heel `/bot`) en de `trial-emails`-cron gingen voor iedereen uit van een individuele trial_start/paid_at/expires_at-levenscyclus. Een teamlid of teammanager betaalt nooit zelf, heeft dus nooit `paid_at`/`expires_at`, en kreeg daardoor exact 30 dagen na zijn **eigen** aanmelddatum automatisch `is_active = false` plus een "trial_afgelopen"-mail, ongeacht of de manager nog een volledig betaald team-abonnement had. Dit trof gegarandeerd elk teamlid ouder dan 30 dagen, niet een edge case. Ontdekt doordat Arno op zijn eigen echte LinkedIn-account een verouderde "start zelf een team"-banner tegenkwam (zie de sectie verderop), wat leidde tot de vraag "wat moet er nog meer anders voor een teamlid door de hele app heen", en een gerichte sweep die deze bug blootlegde. **Fix:** `arnobot_team_members`-lidmaatschap of `command_manager = true` is nu een onafhankelijke, live gecheckte toegangsvoorwaarde in `proxy.ts` (bewust geen eenmalig gezette vlag, want toegang moet meteen stoppen zodra de manager iemand met "VERWIJDER UIT TEAM" verwijdert), en `trial-emails`/`inactivity-nudge` sluiten deze groep uit van de trial-vervalketen resp. de valse "abonnement wordt opgezegd"-dreiging. Toegang eindigt hierdoor alleen nog via de twee bedoelde paden: zelf ACCOUNT VERWIJDEREN, of de manager die VERWIJDER UIT TEAM gebruikt. Geverifieerd: tsc, alle drie de statische CI-checks, volledige vitest-suite.
+
+**Openstaand, operationeel (niet code):** het is aannemelijk dat er nu al echte teamleden/-managers zijn die door deze bug ten onrechte op `is_active = false` staan, van vóór de fix. Arno moet dit zelf controleren en zo nodig herstellen in Supabase, bijvoorbeeld met:
+```sql
+SELECT user_id, email, voornaam, is_active, trial_start, command_manager
+FROM approved_users
+WHERE is_active = false
+  AND (
+    command_manager = true
+    OR user_id IN (SELECT user_id FROM arnobot_team_members)
+  );
+```
+En, na controle dat dit inderdaad de onterecht geblokkeerde accounts zijn:
+```sql
+UPDATE approved_users
+SET is_active = true
+WHERE is_active = false
+  AND (
+    command_manager = true
+    OR user_id IN (SELECT user_id FROM arnobot_team_members)
+  );
+```
+Nog niet uitgevoerd, wacht op Arno's bevestiging.
+
+**Laatst bijgewerkt:** 2026-08-24 (kritieke toegangsbug teamleden/-managers gevonden en gefixt, zie hierboven)
 **Tussendoor gefixt (2026-08-22), geen roadmapstap maar een gevonden gat:** een uitgenodigd teamlid kon bij het invullen van zijn profiel (`/bot/profiel`) nog managementrollen kiezen (Sales Director, VP of Sales, CEO/DGA, Solopreneur), rollen die alleen logisch zijn voor wie zelf een team aanmaakt. Gefixt: `GET /api/bot/profiel` geeft nu ook `isTeamMember` terug (`arnobot_team_members.role === 'member'`), de profielpagina filtert die vier rollen dan uit `ROL_OPTIONS`. **Correctie, zelfde dag:** de manager zelf niet ongefilterd laten, zoals eerst gedacht. Wie al als `command_manager` staat geregistreerd (het Team-segment, gezet bij trial-aanmaak) is per definitie Sales Director of VP of Sales, nooit verkoper, CEO/DGA of solopreneur. `ROL_OPTIONS` wordt voor hem dus beperkt tot precies die twee. **Tegelijk gebouwd:** een testoverride op `/bot/coaching` (`?bekijkAls=verkoper` / `?bekijkAls=teambaas`), alleen actief op Arno's eigen handmatige testaccount (`MANUAL_TEST_USER_ID`, `lib/internalTestAccounts.ts`), om zonder Supabase-geschuif tussen de MSA- en SPE-weergave te kunnen wisselen.
 **Waar we staan:** Fase 1 staat live. Van de bouwvolgorde manager-zelfcoaching-gat zijn **punt 7, 6, 1, 5, 2A, 2B en 2C afgerond en getest** (punt 5 en 2B live end-to-end met een echte Anthropic-call geverifieerd, 2A/2C rechtstreeks tegen Team Hippios' productiedata, zie de sectie "Punt 2C" verderop, **correctie 2026-08-24: deze regel liep hier lang achter**, riep 2A eerder ten onrechte nog "niet met productiedata geverifieerd" terwijl dat sinds 2026-08-22 al wel gebeurd was), **punt 4 is geschrapt** (zie hieronder). Zie de tabel hieronder voor wat elk punt concreet toevoegde, en de sectie "Raamwerk: rollen × disciplines" voor de volledige Strategy People Execution-herziening die daarbij hoorde. Onderweg een RLS-beveiligingsincident gevonden en volledig gefixt (zie CLAUDE.md sectie 1, los van dit traject maar wel dezelfde dag ontdekt). Bij het voorbereiden van punt 5 bleek Fase 2A/2B/2C (zie die sectie hieronder, nu volledig uitgewerkt) geen los, later traject te zijn zoals eerder aangenomen, maar een directe versterking van punt 5 zelf.
 **Besluit (2026-08-20): 2A/2B/2C en de resterende punten worden één traject, in herziene volgorde.** 2A → 5 → 4 → 2B → 2C, met punt 2 (instelbare topics) los ertussen op elk gewenst moment. Reden: 2A heeft geen enkele afhankelijkheid van punt 5/6/1 (bouwt alleen op de al-live drill-down + Spotlight), en zou punt 5 dubbel werk kosten als 5 eerst dun gebouwd wordt en daarna alsnog verrijkt moet worden zodra 2A er is. Zie de Fase 2A/2B/2C-sectie voor het risico dat 2B/2C pas na weken tot maanden echte data hun waarde tonen, dat is geen reden om de bouw uit te stellen, wel iets om in de UI netjes op te vangen ("nog te weinig data").
