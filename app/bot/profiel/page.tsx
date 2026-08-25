@@ -556,8 +556,20 @@ export default function BotProfielPage() {
             </>
           ) : (
             <>
-              <Block nr="09" title="Je grootste uitdaging">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je uitdaging?</p>
+              <Block nr="09" title="Je doel">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                  Wat is je persoonlijke doel, anders dan je target halen?
+                </p>
+                <textarea
+                  value={answers.jaardoel}
+                  onChange={e => set('jaardoel', e.target.value)}
+                  placeholder={getJaardoelPlaceholder(answers.rol)}
+                  rows={3}
+                />
+              </Block>
+
+              <Block nr="10" title="Je grootste uitdaging">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke uitdaging?</p>
                 <textarea
                   value={answers.uitdaging}
                   onChange={e => set('uitdaging', e.target.value)}
@@ -567,18 +579,6 @@ export default function BotProfielPage() {
                 {submitted && answers.uitdaging.trim().length <= 2 && (
                   <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
                 )}
-              </Block>
-
-              <Block nr="10" title="Je doel">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                  Wat is je doel?
-                </p>
-                <textarea
-                  value={answers.jaardoel}
-                  onChange={e => set('jaardoel', e.target.value)}
-                  placeholder={getJaardoelPlaceholder(answers.rol)}
-                  rows={3}
-                />
               </Block>
             </>
           )}
