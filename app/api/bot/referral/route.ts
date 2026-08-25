@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { isValidEmail, emailHtml } from '@/lib/email-templates'
+import { isTeamCovered } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,12 @@ function generateCode(firstName: string): string {
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Server-side vangnet naast de client-side verborgen ReferralSection (verborgen voor
+  // teamleden): het referralprogramma is niet bedoeld voor teamgedekte accounts.
+  if (await isTeamCovered(userId)) {
+    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamgedekte accounts' }, { status: 400 })
+  }
 
   const { data: user } = await supabase
     .from('approved_users')
@@ -67,6 +74,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Zelfde vangnet als de GET hierboven: een teamgedekt account hoort niet als referral
+  // geregistreerd te worden, dat programma is voor individuele Basic/Pro-signups.
+  if (await isTeamCovered(userId)) {
+    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamgedekte accounts' }, { status: 400 })
+  }
 
   const { code } = await req.json()
   if (!code) return NextResponse.json({ error: 'Geen code' }, { status: 400 })

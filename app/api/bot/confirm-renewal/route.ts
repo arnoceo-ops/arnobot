@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
+import { isTeamCovered } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,14 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Server-side vangnet: deze pagina is bedoeld voor individuele Basic/Pro-trialgebruikers,
+  // niet voor een teamgedekt account (lid of manager). Een teamlid heeft geen eigen
+  // plankeuze om te bevestigen, en een klik zou anders zijn plan-veld overschrijven en een
+  // "stuur een factuur"-mail naar Arno triggeren die voor een teamlid niet klopt.
+  if (await isTeamCovered(userId)) {
+    return NextResponse.json({ error: 'Teamgedekte accounts hebben geen eigen plankeuze om te bevestigen' }, { status: 400 })
+  }
 
   const body = await req.json().catch(() => ({}))
   const gekozenPlan = body?.plan
