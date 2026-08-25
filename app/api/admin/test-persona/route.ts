@@ -63,10 +63,16 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   const huidigProfiel = (existing?.profiel as Record<string, unknown>) ?? {}
+  // 'individueel' zet /api/bot/team/status expliciet op hasTeam: false, ongeacht een
+  // eventuele echte arnobot_team_members-rij (zie CLAUDE.md/docs/TEAM_PLAN.md). Een echt
+  // uitgenodigd teamlid doorloopt de individueel/team-vraag nooit (die geldt alleen voor
+  // managementrollen), dus 'gebruik' blijft voor 'teamlid' onbeslist (null), niet
+  // 'individueel' — anders denkt de rest van de app ten onrechte dat er geen team is.
+  const gebruik = persona === 'teammanager' ? 'team' : persona === 'teamlid' ? null : 'individueel'
   const nieuwProfiel = {
     ...huidigProfiel,
     rol: ROL_PER_PERSONA[persona as TestPersona],
-    gebruik: persona === 'teammanager' ? 'team' : 'individueel',
+    gebruik,
   }
 
   const { error } = await supabase
