@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { clearIndividueelGebruik } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,6 +54,12 @@ export async function POST(req: Request) {
       .update({ plan: team.niveau })
       .eq('user_id', userId)
   }
+
+  // Een al ingelogde bestaande gebruiker (was al individuele Basic/Pro-klant) kan hier
+  // rechtstreeks joinen zonder opnieuw aan te melden, zie app/bot/team/join/page.tsx. Zijn
+  // profiel kan dan nog een 'individueel'-antwoord bevatten van vóór het joinen, dat anders
+  // isConfirmedTeambaas/team/status voor altijd zou blijven saboteren.
+  await clearIndividueelGebruik(userId)
 
   return NextResponse.json({ team })
 }

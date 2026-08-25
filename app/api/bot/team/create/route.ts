@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { clearIndividueelGebruik } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,6 +47,10 @@ export async function POST(req: Request) {
   await supabase
     .from('arnobot_team_members')
     .insert({ team_id: team.id, user_id: userId, role: 'manager' })
+
+  // Zelfde reden als in team/join/route.ts: een 'individueel'-antwoord van vóór het
+  // command_manager-worden mag isConfirmedTeambaas niet blijven saboteren.
+  await clearIndividueelGebruik(userId)
 
   return NextResponse.json({ team })
 }
