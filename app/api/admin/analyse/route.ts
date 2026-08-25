@@ -83,8 +83,12 @@ export async function POST(req: NextRequest) {
   const { userId } = await req.json().catch(() => ({}))
   if (!userId) return NextResponse.json({ error: 'userId ontbreekt' }, { status: 400 })
 
-  const context = await gatherAdminAnalyseContext(userId)
+  const [context, bestaandeRes] = await Promise.all([
+    gatherAdminAnalyseContext(userId),
+    supabase.from('arnobot_admin_analyses').select('generated_count').eq('target_user_id', userId).maybeSingle(),
+  ])
   if (!context) return NextResponse.json({ error: 'Gebruiker niet gevonden' }, { status: 404 })
+  const nieuweCount = (bestaandeRes.data?.generated_count ?? 0) + 1
 
   const callModel = (maxTokens = ANALYSE_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5',
@@ -111,8 +115,8 @@ export async function POST(req: NextRequest) {
 
   const { data: saved, error } = await supabase
     .from('arnobot_admin_analyses')
-    .upsert({ target_user_id: userId, analyse_text: analyse, updated_at: new Date().toISOString() }, { onConflict: 'target_user_id' })
-    .select('updated_at')
+    .upsert({ target_user_id: userId, analyse_text: analyse, generated_count: nieuweCount, updated_at: new Date().toISOString() }, { onConflict: 'target_user_id' })
+    .select('updated_at, generated_count')
     .single()
 
   if (error) {
@@ -122,6 +126,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     user: { naam: context.naam, email: context.email, plan: context.plan, isTeamManager: context.isTeamManager, isTeamLid: context.isTeamLid, teamNaam: context.teamNaam },
-    analyse: { text: analyse, updatedAt: saved?.updated_at ?? new Date().toISOString() },
+    analyse: { text: analyse, updatedAt: saved?.updated_at ?? new Date().toISOString(), count: saved?.generated_count ?? nieuweCount },
   })
 }

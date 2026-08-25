@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-type UserRow = { userId: string; naam: string; email: string | null }
+type UserRow = { userId: string; naam: string; email: string | null; analyseCount: number }
 type UserInfo = { naam: string; email: string | null; plan: string; isTeamManager: boolean; isTeamLid: boolean; teamNaam: string | null }
-type Analyse = { text: string; updatedAt: string }
+type Analyse = { text: string; updatedAt: string; count?: number }
 type ChatMessage = { role: 'admin' | 'arnobot'; content: string }
 
 function formatBijgewerkt(iso: string): string {
@@ -92,6 +92,9 @@ export default function AnalyseClient({ initialUserId }: { initialUserId: string
       setUserInfo(data.user)
       setAnalyse(data.analyse)
       setChatMessages([])
+      if (typeof data.analyse?.count === 'number') {
+        setUsers(prev => prev.map(u => u.userId === userId ? { ...u, analyseCount: data.analyse.count } : u))
+      }
     } catch {
       setLoadError(true)
     } finally {
@@ -177,12 +180,17 @@ export default function AnalyseClient({ initialUserId }: { initialUserId: string
               key={u.userId}
               onClick={() => loadUser(u.userId)}
               style={{
-                display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none',
-                borderBottom: '1px solid #111827', padding: '14px 20px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left',
+                background: 'none', border: 'none', borderBottom: '1px solid #111827', padding: '14px 20px', cursor: 'pointer',
               }}
             >
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{u.naam}</p>
-              <p style={{ fontSize: 12, color: '#6b7280', margin: '2px 0 0 0' }}>{u.email ?? 'geen e-mail'}</p>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{u.naam}</p>
+                <p style={{ fontSize: 12, color: '#6b7280', margin: '2px 0 0 0' }}>{u.email ?? 'geen e-mail'}</p>
+              </div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: u.analyseCount > 0 ? '#f59e0b' : '#6b7280', margin: 0, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                {u.analyseCount} {u.analyseCount === 1 ? 'ANALYSE' : 'ANALYSES'}
+              </p>
             </button>
           ))}
         </div>
