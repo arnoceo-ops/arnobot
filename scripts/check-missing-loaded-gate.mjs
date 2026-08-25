@@ -47,8 +47,8 @@ const KNOWN_SAFE_FETCHES = new Set([
   // Beide binnen closeSparring(), een door de gebruiker getriggerde afronding van een
   // sparringsessie, geen mount-time render-race: de fetch/setter loopt pas nadat de
   // gebruiker al een actie heeft afgerond, niet vóór de eerste render.
-  'app/bot/SparClient.tsx:734',
-  'app/bot/SparClient.tsx:755',
+  'app/bot/SparClient.tsx:731',
+  'app/bot/SparClient.tsx:752',
   // dashboard/spotlight/scores-fetches vullen lijsten/tellingen (setTeamAnalyses,
   // setTeamScores), geen rol/status-vlag die de JSX-structuur laat omslaan; loading al
   // correct afgehandeld via de aparte loading-state op regel 205/207.

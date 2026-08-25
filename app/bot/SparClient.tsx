@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useIsTouch } from '@/hooks/useBreakpoint'
-import { useAuth, useClerk, useUser } from '@clerk/nextjs'
+import { useAuth, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
@@ -268,18 +268,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
-  const { user, isLoaded } = useUser()
   const { sessionId: clerkSessionId } = useAuth()
   const { showAnalysesHint, convsSinceLastAnalysis, dismissAnalysesHint, refreshHints } = useProgressHints()
-  const [isBouwer, setIsBouwer] = useState(false)
   const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
   // Voorkomt dat de TEAM-link hieronder pas ná het laden "in-popt": heeftTeamPlan start op
   // false, dus zonder deze vlag verscheen de link altijd met een merkbare vertraging.
   // Zelfde bug en fix als BotNav.tsx (SparClient heeft een eigen, aparte nav-implementatie).
+  // Bewust géén hardgecodeerde bouwer-uitzondering meer (Arno's eigen LinkedIn-account zag
+  // TEAM altijd, ongeacht command_manager, verwijderd 2026-08-24 op zijn verzoek).
   const [planLoaded, setPlanLoaded] = useState(false)
-  useEffect(() => {
-    if (isLoaded) setIsBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
-  }, [isLoaded, user])
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
@@ -1608,7 +1605,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 : <span className="active">ARNOBOT</span>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }} onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
-              {(isBouwer || (planLoaded && heeftTeamPlan)) && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
+              {(planLoaded && heeftTeamPlan) && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
               <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
@@ -1624,7 +1621,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               : <span style={{ color: '#f59e0b', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3 }}>ARNOBOT</span>}
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/analyses')}>ANALYSES</button>
             <button className="nav-flow" onClick={() => handleNavAttempt('/bot/coaching')}>COACHING</button>
-            {(isBouwer || (planLoaded && heeftTeamPlan)) && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
+            {(planLoaded && heeftTeamPlan) && <button onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
             <button onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
             <button onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
           </div>

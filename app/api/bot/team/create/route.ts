@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -7,14 +7,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const BOUWER_EMAIL = 'linkedin@royaldutchsales.com'
-
+// Bewust géén hardgecodeerde bouwer-uitzondering meer (Arno's eigen LinkedIn-account kon
+// altijd een team aanmaken, ongeacht command_manager, verwijderd 2026-08-24 op zijn
+// verzoek): zijn account gedraagt zich nu identiek aan elk ander account.
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
-
-  const user = await currentUser()
-  const email = user?.primaryEmailAddress?.emailAddress ?? ''
 
   const { data: approved } = await supabase
     .from('approved_users')
@@ -22,7 +20,7 @@ export async function POST(req: Request) {
     .eq('user_id', userId)
     .single()
 
-  if (email !== BOUWER_EMAIL && !approved?.command_manager) {
+  if (!approved?.command_manager) {
     return NextResponse.json({ error: 'Niet beschikbaar' }, { status: 403 })
   }
 

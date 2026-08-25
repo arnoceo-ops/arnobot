@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useClerk, useUser } from '@clerk/nextjs'
+import { useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import NotificationBell from '@/app/bot/components/NotificationBell'
@@ -39,19 +39,13 @@ export default function BotNav({ active }: Props) {
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const { signOut } = useClerk()
-  const { user, isLoaded } = useUser()
   const router = useRouter()
-  const [bouwer, setBouwer] = useState(false)
   const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
   // Voorkomt dat de TEAM-link op elke pagina zichtbaar "pop-in" doet ná het laden: heeftTeamPlan
   // start op false, dus zonder deze gate verscheen de link altijd met een merkbare vertraging.
   // planLoaded voorkomt niet de vertraging zelf (die zit 'm in de netwerk-fetch), maar zorgt
   // ervoor dat isBouwer nooit ten onrechte "nee" concludeert vóór het antwoord binnen is.
   const [planLoaded, setPlanLoaded] = useState(false)
-
-  useEffect(() => {
-    if (isLoaded) setBouwer(user?.primaryEmailAddress?.emailAddress === 'linkedin@royaldutchsales.com')
-  }, [isLoaded, user])
 
   useEffect(() => {
     fetch('/api/bot/plan')
@@ -61,7 +55,10 @@ export default function BotNav({ active }: Props) {
       .finally(() => setPlanLoaded(true))
   }, [])
 
-  const isBouwer = bouwer || (planLoaded && heeftTeamPlan)
+  // Bewust géén hardgecodeerde bouwer-uitzondering meer (Arno's eigen LinkedIn-account zag
+  // TEAM altijd, ongeacht command_manager, verwijderd 2026-08-24 op zijn verzoek): zijn
+  // account gedraagt zich nu identiek aan elk ander account, precies zoals bedoeld.
+  const isBouwer = planLoaded && heeftTeamPlan
 
   async function sendFeedback() {
     if (!feedbackText.trim()) return
