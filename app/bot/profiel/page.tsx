@@ -502,7 +502,7 @@ export default function BotProfielPage() {
                 <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
                   {`Verwacht je dit jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?`}
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : (targetHistorieOverslaan ? 0 : 28) }}>
                   {TARGET_DIT_JAAR_OPTIONS.map(o => (
                     <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
                   ))}
