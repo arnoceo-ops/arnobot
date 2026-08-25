@@ -47,7 +47,7 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
   )
   const { data } = await supabase
     .from('approved_users')
-    .select('plan, arno_call_booked_at, paid_at')
+    .select('plan, arno_call_booked_at')
     .eq('user_id', userId)
     .single()
 
@@ -100,5 +100,5 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
     .limit(1)
     .maybeSingle()
 
-  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} paid={!!data?.paid_at} gesprekBookedAt={data?.arno_call_booked_at ?? null} showSparren={!recenteSparSessie} />
+  return <CoachingClient userId={userId} plan={data?.plan ?? 'basis'} gesprekBookedAt={data?.arno_call_booked_at ?? null} showSparren={!recenteSparSessie} />
 }

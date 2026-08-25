@@ -15,7 +15,7 @@ export default async function GesprekPage() {
   const [userRes, coachingRes, memberRes, profileRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('email, voornaam, achternaam, arno_call_booked_at, plan, paid_at')
+      .select('email, voornaam, achternaam, arno_call_booked_at, plan')
       .eq('user_id', userId)
       .single(),
     supabase
@@ -41,7 +41,7 @@ export default async function GesprekPage() {
     && coachingRes.data?.actie_score != null
   const gebruik = (profileRes.data?.profiel as { gebruik?: string } | null)?.gebruik ?? null
   const isTeamMember = !!memberRes.data && memberRes.data.role !== 'manager' && gebruik !== 'individueel'
-  const magBoeken = data?.plan === 'premium' && !!data?.paid_at && heeftCoachingDocument && !isTeamMember
+  const magBoeken = data?.plan === 'premium' && heeftCoachingDocument && !isTeamMember
 
   if (!magBoeken && !data?.arno_call_booked_at) {
     return (
@@ -58,7 +58,7 @@ export default async function GesprekPage() {
             GESPREK MET ARNO
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-            Dit gesprek is voor betalende Pro-gebruikers, zodra er een coachingdocument is. Ga naar je coachingpagina om te zien waar je staat.
+            Dit gesprek is voor Pro-gebruikers, zodra er een coachingdocument is. Ga naar je coachingpagina om te zien waar je staat.
           </p>
         </div>
       </>
