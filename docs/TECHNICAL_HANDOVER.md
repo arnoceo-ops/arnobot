@@ -153,6 +153,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/emails` | E-mail templates + crons testen |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar) |
 | `/bot/admin/evaluaties` | Gebruikersevaluaties + negatieve feedback bekijken |
+| `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
@@ -297,6 +298,9 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/test-email` | E-mailtemplates + cron-mails handmatig testen/versturen |
 | `/api/admin/test-telegram` | Telegram-bot testbericht sturen |
 | `/api/admin/analyse-evaluaties` | AI-analyse over ingevulde evaluatieformulieren |
+| `/api/admin/analyse` | GET: opgeslagen briefing per gebruiker ophalen. POST: briefing (opnieuw) genereren, opgeslagen in `arnobot_admin_analyses` |
+| `/api/admin/analyse/users` | Lichte gebruikerslijst voor het zoekveld op `/bot/admin/analyse`, alleen gebruikers met minstens één gesprek, testaccounts uitgesloten |
+| `/api/admin/analyse-chat` | Doorvragen op een briefing, niet-opgeslagen gesprek, zelfde databundel als de briefing zelf |
 | `/api/admin/blogs-analyse` | AI-analyse voor blogideeën uit gesprekken |
 | `/api/admin/feedback-analyse` | AI-analyse van negatief beoordeelde antwoorden |
 | `/api/admin/offtopic-flags` | Offtopic-vlag als beoordeeld markeren |
@@ -432,6 +436,9 @@ Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`sessi
 
 ### `arnobot_analyses`
 BIEB-analyses. Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`).
+
+### `arnobot_admin_analyses`
+Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot/admin/analyse`. Nooit zichtbaar voor de gebruiker zelf, alleen voor Arno. `generated_count` telt hoe vaak de briefing (opnieuw) gegenereerd is.
 
 ### `arnobot_coaching`
 Meest recente coachingprofiel per gebruiker (upsert, niet append): scores + diagnoses op mindset, systeem, actie, plus voortgangstekst.
