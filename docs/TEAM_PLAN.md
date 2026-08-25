@@ -4,27 +4,7 @@
 
 **Kritiek incident, gevonden en gefixt (2026-08-24): teamleden/-managers verloren automatisch toegang na 30 dagen.** `proxy.ts` (de toegangspoort voor heel `/bot`) en de `trial-emails`-cron gingen voor iedereen uit van een individuele trial_start/paid_at/expires_at-levenscyclus. Een teamlid of teammanager betaalt nooit zelf, heeft dus nooit `paid_at`/`expires_at`, en kreeg daardoor exact 30 dagen na zijn **eigen** aanmelddatum automatisch `is_active = false` plus een "trial_afgelopen"-mail, ongeacht of de manager nog een volledig betaald team-abonnement had. Dit trof gegarandeerd elk teamlid ouder dan 30 dagen, niet een edge case. Ontdekt doordat Arno op zijn eigen echte LinkedIn-account een verouderde "start zelf een team"-banner tegenkwam (zie de sectie verderop), wat leidde tot de vraag "wat moet er nog meer anders voor een teamlid door de hele app heen", en een gerichte sweep die deze bug blootlegde. **Fix:** `arnobot_team_members`-lidmaatschap of `command_manager = true` is nu een onafhankelijke, live gecheckte toegangsvoorwaarde in `proxy.ts` (bewust geen eenmalig gezette vlag, want toegang moet meteen stoppen zodra de manager iemand met "VERWIJDER UIT TEAM" verwijdert), en `trial-emails`/`inactivity-nudge` sluiten deze groep uit van de trial-vervalketen resp. de valse "abonnement wordt opgezegd"-dreiging. Toegang eindigt hierdoor alleen nog via de twee bedoelde paden: zelf ACCOUNT VERWIJDEREN, of de manager die VERWIJDER UIT TEAM gebruikt. Geverifieerd: tsc, alle drie de statische CI-checks, volledige vitest-suite.
 
-**Openstaand, operationeel (niet code):** het is aannemelijk dat er nu al echte teamleden/-managers zijn die door deze bug ten onrechte op `is_active = false` staan, van vóór de fix. Arno moet dit zelf controleren en zo nodig herstellen in Supabase, bijvoorbeeld met:
-```sql
-SELECT user_id, email, voornaam, is_active, trial_start, command_manager
-FROM approved_users
-WHERE is_active = false
-  AND (
-    command_manager = true
-    OR user_id IN (SELECT user_id FROM arnobot_team_members)
-  );
-```
-En, na controle dat dit inderdaad de onterecht geblokkeerde accounts zijn:
-```sql
-UPDATE approved_users
-SET is_active = true
-WHERE is_active = false
-  AND (
-    command_manager = true
-    OR user_id IN (SELECT user_id FROM arnobot_team_members)
-  );
-```
-Nog niet uitgevoerd, wacht op Arno's bevestiging.
+**Operationele controle, afgerond (2026-08-24): geen historische schade.** Arno draaide de SELECT-controle in Supabase (welke teamleden/-managers al ten onrechte op `is_active = false` stonden): 0 rijen. Niemand is dus daadwerkelijk al door deze bug geraakt, vermoedelijk simpelweg omdat het productgebruik nog klein genoeg is dat geen teamlid al 30+ dagen actief was sinds deze bug ontstond. Geen UPDATE nodig geweest.
 
 **Laatst bijgewerkt:** 2026-08-24 (kritieke toegangsbug teamleden/-managers gevonden en gefixt, zie hierboven)
 **Tussendoor gefixt (2026-08-22), geen roadmapstap maar een gevonden gat:** een uitgenodigd teamlid kon bij het invullen van zijn profiel (`/bot/profiel`) nog managementrollen kiezen (Sales Director, VP of Sales, CEO/DGA, Solopreneur), rollen die alleen logisch zijn voor wie zelf een team aanmaakt. Gefixt: `GET /api/bot/profiel` geeft nu ook `isTeamMember` terug (`arnobot_team_members.role === 'member'`), de profielpagina filtert die vier rollen dan uit `ROL_OPTIONS`. **Correctie, zelfde dag:** de manager zelf niet ongefilterd laten, zoals eerst gedacht. Wie al als `command_manager` staat geregistreerd (het Team-segment, gezet bij trial-aanmaak) is per definitie Sales Director of VP of Sales, nooit verkoper, CEO/DGA of solopreneur. `ROL_OPTIONS` wordt voor hem dus beperkt tot precies die twee. **Tegelijk gebouwd:** een testoverride op `/bot/coaching` (`?bekijkAls=verkoper` / `?bekijkAls=teambaas`), alleen actief op Arno's eigen handmatige testaccount (`MANUAL_TEST_USER_ID`, `lib/internalTestAccounts.ts`), om zonder Supabase-geschuif tussen de MSA- en SPE-weergave te kunnen wisselen.
