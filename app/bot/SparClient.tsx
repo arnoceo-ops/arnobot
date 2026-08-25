@@ -776,12 +776,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       })
       const data = await res.json()
       if (data.summary) {
-        const newCount = messages.length + 1
-        setMessages(prev => [...prev, {
-          role: 'arno',
-          content: `**Samenvatting**\n\n${data.summary}`,
-          hint: null
-        }])
+        const newCount = messages.length + (data.uitdaging ? 2 : 1)
+        setMessages(prev => [
+          ...prev,
+          { role: 'arno', content: `**Samenvatting**\n\n${data.summary}`, hint: null },
+          ...(data.uitdaging ? [{ role: 'arno' as const, content: `**Jouw actie**\n\n${data.uitdaging}`, hint: null }] : []),
+        ])
         if (data.blogs?.length) setSuggestedBlogs(data.blogs)
         setSynthesisMessageCount(newCount)
         setSavedSessionId(sessionId)

@@ -163,17 +163,25 @@ ${RULE_NO_INVENTED_DETAILS}`,
     }]
   })
 
+  // Een uitdaging/actie wordt alleen nog gegenereerd bij een gesprek met minimaal 2 beurten.
+  // Bij 1 beurt (preformatted vraag, los éénmalig vraagje) is er geen inhoudelijke basis voor
+  // een actie waar iemand zich later aan zou moeten "herinneren", zie de ACTIE-REMINDER-klacht
+  // van 25 aug 2026: een niet-gecommitteerde actie uit een triviaal gesprek dook dagen later
+  // onherkenbaar op als verplichte reminder.
+  const genereerUitdaging = messageCount >= 2
+
   try {
     // Themas zijn een supplementair signaal (De Spiegel, punt 2A), geen kritiek pad zoals
     // summary/feiten/uitdaging: .catch(() => null) voorkomt dat een falende classificatie de
     // hele Promise.all laat rejecten en de rest van de sessie-opslag blokkeert.
     const themasPromise = callThemasModel().catch(() => null)
+    const uitdagingPromise = genereerUitdaging ? callUitdagingModel() : Promise.resolve(null)
     const [summaryRes, feitenRes, uitdagingRes, themasRes] = await Promise.all([
-      callSummaryModel(), callFeitenModel(), callUitdagingModel(), themasPromise,
+      callSummaryModel(), callFeitenModel(), uitdagingPromise, themasPromise,
     ])
     summary = getText(summaryRes.content)
     feiten = getText(feitenRes.content)
-    uitdaging = (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '')
+    uitdaging = uitdagingRes ? (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '') : ''
     if (themasRes) {
       const classificatie = parseThemaClassificatie(getText(themasRes.content, '{}'))
       themas = classificatie.themas
@@ -188,7 +196,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
       console.error(`[session-end] lege feiten, retry (sessie ${sessionId})`)
       feiten = getText(await callFeitenModel().then(r => r.content))
     }
-    if (!uitdaging) {
+    if (!uitdaging && genereerUitdaging) {
       console.error(`[session-end] lege uitdaging, retry (sessie ${sessionId})`)
       uitdaging = (getText(await callUitdagingModel().then(r => r.content)).trim()).replace(/\*\*/g, '')
     }
@@ -259,6 +267,11 @@ ${RULE_NO_INVENTED_DETAILS}`,
       summary,
       feiten,
       uitdaging: uitdaging || null,
+      // Alleen 'true' bij een expliciete SLUIT-klik, waar de actie hieronder ook echt inline
+      // getoond wordt. De sendBeacon-route (tab dicht, geen klik) genereert/bewaart de actie nog
+      // wel, maar kan niets meer terugtonen aan een pagina die al weg is: die actie blijft dus
+      // 'niet erkend' en komt daardoor nooit als ACTIE-REMINDER terug bij de volgende login.
+      actie_erkend: explicitClose === true,
       message_count: messageCount,
       blog_suggestions: blogSuggestions,
       themas: themas.length ? themas : null,
@@ -285,5 +298,5 @@ ${RULE_NO_INVENTED_DETAILS}`,
     console.error('[session-end] Entiteiten-extractie error:', e)
   }
 
-  return NextResponse.json({ ok: true, summary, blogs: blogSuggestions })
+  return NextResponse.json({ ok: true, summary, blogs: blogSuggestions, uitdaging: explicitClose ? (uitdaging || null) : null })
 }

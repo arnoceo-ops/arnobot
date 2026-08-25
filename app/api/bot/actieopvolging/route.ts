@@ -17,6 +17,7 @@ export async function GET() {
     .select('session_id, uitdaging')
     .eq('user_id', userId)
     .not('uitdaging', 'is', null)
+    .eq('actie_erkend', true)
     .is('actie_status', null)
     .order('created_at', { ascending: false })
     .limit(1)
