@@ -6,6 +6,8 @@ export type TeamStatus = {
   // worden om iets te tonen/verbergen als loaded true is EN failed false is.
   isTeamMember: boolean
   isManager: boolean
+  // Alleen gevuld als isManager true is (zie /api/bot/team/status), anders null.
+  memberCount: number | null
   loaded: boolean
   failed: boolean
 }
@@ -18,7 +20,7 @@ export type TeamStatus = {
 // bedoeld was. Consumers moeten daarom altijd `loaded && !failed` checken vóór ze op
 // isTeamMember/isManager afgaan, nooit alleen op de boolean zelf.
 export function useTeamStatus(): TeamStatus {
-  const [state, setState] = useState<TeamStatus>({ isTeamMember: false, isManager: false, loaded: false, failed: false })
+  const [state, setState] = useState<TeamStatus>({ isTeamMember: false, isManager: false, memberCount: null, loaded: false, failed: false })
 
   useEffect(() => {
     let cancelled = false
@@ -29,7 +31,13 @@ export function useTeamStatus(): TeamStatus {
       })
       .then(d => {
         if (cancelled) return
-        setState({ isTeamMember: !!d.hasTeam && !d.isManager, isManager: !!d.isManager, loaded: true, failed: false })
+        setState({
+          isTeamMember: !!d.hasTeam && !d.isManager,
+          isManager: !!d.isManager,
+          memberCount: typeof d.memberCount === 'number' ? d.memberCount : null,
+          loaded: true,
+          failed: false,
+        })
       })
       .catch(() => {
         if (cancelled) return

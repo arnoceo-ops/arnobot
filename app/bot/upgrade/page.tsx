@@ -30,6 +30,13 @@ export default async function UpgradePage() {
 
   const plan = (data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
 
+  // Deze pagina is bedoeld voor individuele Basic/Pro-gebruikers die willen upgraden. Een
+  // teamgedekt account (lid of manager) heeft hier niets te zoeken: Team geeft al volledige
+  // Pro-functionaliteit, en het teamabonnement zelf regel je via de accountpagina (manager)
+  // of via de manager (lid), niet hier. Voorheen toonde deze pagina soms tegelijk "vraag een
+  // upgrade aan" én "je bent al onderdeel van een team" op hetzelfde scherm.
+  if (teamCovered) redirect('/bot/account')
+
   return (
     <>
       <style>{`
@@ -60,7 +67,7 @@ export default async function UpgradePage() {
           </div>
         )}
 
-        {plan !== 'team' && !teamCovered && (
+        {plan !== 'team' && (
           <div style={section}>
             <p style={label}>TEAM</p>
             <p style={body}>
@@ -74,10 +81,7 @@ export default async function UpgradePage() {
           </div>
         )}
 
-        {teamCovered && (
-          <p style={body}>Je bent al onderdeel van een Team-abonnement.</p>
-        )}
-        {!teamCovered && plan === 'team' && (
+        {plan === 'team' && (
           <p style={body}>Je zit al op het hoogste plan.</p>
         )}
       </div>

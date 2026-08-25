@@ -29,7 +29,7 @@ export default function AccountPage() {
   // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
-  const { isTeamMember, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
+  const { isTeamMember, isManager, memberCount, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
   const [appPassword, setAppPassword] = useState('')
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
@@ -366,9 +366,11 @@ export default function AccountPage() {
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 40px 0', color: '#f1f5f9', lineHeight: 1 }}>GENOEG GEWEEST?</h1>
         </div>
 
-        {/* Abonnement opzeggen — verborgen voor teamleden, dat is de manager's abonnement, niet
-            het hunne. ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een
-            AVG-recht op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
+        {/* Abonnement opzeggen — verborgen voor gewone teamleden, dat is de manager's
+            abonnement, niet het hunne. Voor de manager zelf wél zichtbaar (hij betaalt het
+            teamabonnement), met aangepaste tekst die het teambrede effect benoemt.
+            ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een AVG-recht
+            op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
         {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
@@ -380,18 +382,24 @@ export default function AccountPage() {
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
           ) : !cancelConfirm ? (
             <>
-              <p style={body}>Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.</p>
+              <p style={body}>
+                {isManager
+                  ? `Dit beëindigt het teamabonnement voor je hele team van ${memberCount ?? 'meerdere'} leden, niet alleen jouw eigen toegang. De toegang blijft actief tot het einde van de lopende betaalperiode.`
+                  : 'Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.'}
+              </p>
               <button
                 onClick={() => setCancelConfirm(true)}
                 style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
               >
-                ABONNEMENT OPZEGGEN
+                {isManager ? 'TEAMABONNEMENT OPZEGGEN' : 'ABONNEMENT OPZEGGEN'}
               </button>
             </>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
               <p style={{ color: '#f1f5f9', opacity: 0.7, fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
-                Weet je het zeker? Je toegang loopt door tot einde van de periode.
+                {isManager
+                  ? `Weet je het zeker? Dit beëindigt de toegang voor jou én je hele team van ${memberCount ?? 'meerdere'} leden aan het einde van de periode.`
+                  : 'Weet je het zeker? Je toegang loopt door tot einde van de periode.'}
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button

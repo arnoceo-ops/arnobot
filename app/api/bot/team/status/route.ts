@@ -31,9 +31,27 @@ export async function GET() {
     return NextResponse.json({ hasTeam: false, isManager: false })
   }
 
+  const isManager = member.role === 'manager'
+  // memberCount alleen voor de manager opgehaald (extra query, niet nodig voor een gewoon
+  // teamlid): gebruikt door de accountpagina om te laten zien hoeveel mensen een opzegging
+  // door de manager zou raken.
+  let memberCount: number | null = null
+  if (isManager) {
+    const teams = member.arnobot_teams as unknown as { id: string }[] | { id: string } | null
+    const teamId = Array.isArray(teams) ? teams[0]?.id : teams?.id
+    if (teamId) {
+      const { count } = await supabase
+        .from('arnobot_team_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('team_id', teamId)
+      memberCount = count ?? null
+    }
+  }
+
   return NextResponse.json({
     hasTeam: true,
-    isManager: member.role === 'manager',
+    isManager,
+    memberCount,
     team: member.arnobot_teams,
   })
 }
