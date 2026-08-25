@@ -97,7 +97,6 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
           action: 'afsluiten',
           prijsBasis: DEFAULT_PRIJZEN.basis,
           prijsPremium: DEFAULT_PRIJZEN.premium,
-          prijsElite: DEFAULT_PRIJZEN.elite,
           schrijfWachtwoord,
         }),
       })

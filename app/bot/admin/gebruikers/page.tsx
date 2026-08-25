@@ -13,8 +13,6 @@ import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 
-const ELITE_CAP = 50
-
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
 // wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
 // force-dynamic en dus toch al per request opnieuw gerenderd.
@@ -236,8 +234,6 @@ export default async function GebruikersPage({
     })
   )
 
-  const eliteCount = enriched.filter(u => u.plan === 'elite' && u.is_active !== false).length
-
   const sorted = [...enriched].sort((a, b) => {
     let av: number | string = 0
     let bv: number | string = 0
@@ -277,14 +273,8 @@ export default async function GebruikersPage({
 
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Gebruikers</h1>
-        <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>
+        <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '48px' }}>
           {sorted.length} gebruiker{sorted.length !== 1 ? 's' : ''}
-        </p>
-        <p style={{
-          color: eliteCount >= ELITE_CAP ? '#cc4444' : eliteCount >= ELITE_CAP - 5 ? '#f59e0b' : '#6b7280',
-          fontSize: '14px', fontWeight: eliteCount >= ELITE_CAP - 5 ? 700 : 400, marginBottom: '48px',
-        }}>
-          Elite: {eliteCount} / {ELITE_CAP}{eliteCount >= ELITE_CAP ? ' (cap bereikt)' : ''}
         </p>
 
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
@@ -390,7 +380,7 @@ export default async function GebruikersPage({
                 </div>
                 {/* Plan */}
                 <div style={{ textAlign: 'center' }}>
-                  <PlanToggle userId={u.user_id} currentPlan={(u.plan as 'basis' | 'premium' | 'elite' | 'team') ?? 'basis'} />
+                  <PlanToggle userId={u.user_id} currentPlan={(u.plan as 'basis' | 'premium' | 'team') ?? 'basis'} />
                 </div>
                 {/* Team-status: command_manager blijft togglebaar (Team-tier-entitlement,
                     vóór teamaanmaak); een gewoon teamlid (geen eigen entitlement, wél in

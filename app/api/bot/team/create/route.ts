@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const { data: approved } = await supabase
     .from('approved_users')
-    .select('command_manager, plan')
+    .select('command_manager')
     .eq('user_id', userId)
     .single()
 
@@ -35,13 +35,9 @@ export async function POST(req: Request) {
 
   if (existing) return NextResponse.json({ error: 'Je bent al lid van een team' }, { status: 400 })
 
-  // Het niveau van het team volgt het eigen plan van de manager (die is bij het
-  // onboarden al op het juiste niveau gezet), 'elite' expliciet, anders 'premium'.
-  const niveau = approved?.plan === 'elite' ? 'elite' : 'premium'
-
   const { data: team, error } = await supabase
     .from('arnobot_teams')
-    .insert({ name: name.trim(), manager_id: userId, niveau })
+    .insert({ name: name.trim(), manager_id: userId, niveau: 'premium' })
     .select()
     .single()
 

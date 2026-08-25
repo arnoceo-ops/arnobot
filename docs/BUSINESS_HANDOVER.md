@@ -65,9 +65,7 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 - Jaarlijks: €924/jaar platform + €468/gebruiker/jaar (= €77 + €39/maand-equivalent, korting ~20%)
 - Geen aparte trial: de manager start zelf als individuele Pro-gebruiker en upgradet later. Aanvraag via https://arno.bot/team (formulier, geen automatische betaling)
 
-**Elite (niet publiek, alleen handmatig toe te kennen):**
-- €397/maand, individueel, hoog-contact, maximaal 50 actieve klanten
-- Staat niet meer op de prijzenpagina, alleen toekenbaar via het admin-paneel
+**Elite:** de losse, individuele Elite-plan (€397/maand) is op 25 augustus 2026 volledig uit het systeem verwijderd, na een bevestigde 0-gebruikerstelling. Een Elite-optie binnen een Team-offerte (€338/maand surplus per teamlid) bestaat nog wel, zie "Team" hierboven.
 
 **Referral:**
 - Elke gebruiker heeft een referralcode

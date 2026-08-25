@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const { userId, plan } = body
-  if (!userId || !['basis', 'premium', 'elite', 'team'].includes(plan)) {
+  if (!userId || !['basis', 'premium', 'team'].includes(plan)) {
     return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
   }
 

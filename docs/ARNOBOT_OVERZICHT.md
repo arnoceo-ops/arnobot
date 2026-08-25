@@ -76,20 +76,20 @@ Elke gebruiker heeft een eigen referralcode. Tegoed ontstaat alleen als de nieuw
 
 ## 4. Abonnementsstructuur, volledig en actueel (2026-08-11)
 
-| | **Basic** | **Pro** | **Team** | **Elite** (niet publiek) |
-|---|---|---|---|---|
-| Prijs | €19/mnd jaarlijks (€228/jr), €29/mnd maandelijks | €39/mnd jaarlijks (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77 + €39/gebruiker/mnd-equivalent jaarlijks (~20% korting), vanaf 3 gebruikers | €397/maand, individueel, alleen maandelijks |
-| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial, manager start zelf als Pro | Niet van toepassing, alleen handmatig toegekend |
-| Coaching (MSA-score) | Nee | Ja | Ja (elk teamlid) | Ja |
-| Gesproken antwoorden | Nee | Ja | Ja | Ja |
-| Teammanagerdashboard | Nee | Nee | Ja | Nee |
-| Chatberichten/dag | 25 | 100 | 100 (per lid) | 100 |
-| Sessiegeheugen (vorige gesprekken) | Laatste 10 | Laatste 25 | Laatste 25 | Laatste 25 |
-| Extra | — | Volledig archief, uitgebreider geheugen, Android-app | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager | 1x/maand gesprek met Arno zelf, directe Telegram-toegang |
+| | **Basic** | **Pro** | **Team** |
+|---|---|---|---|
+| Prijs | €19/mnd jaarlijks (€228/jr), €29/mnd maandelijks | €39/mnd jaarlijks (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77 + €39/gebruiker/mnd-equivalent jaarlijks (~20% korting), vanaf 3 gebruikers |
+| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial, manager start zelf als Pro |
+| Coaching (MSA-score) | Nee | Ja | Ja (elk teamlid) |
+| Gesproken antwoorden | Nee | Ja | Ja |
+| Teammanagerdashboard | Nee | Nee | Ja |
+| Chatberichten/dag | 25 | 100 | 100 (per lid) |
+| Sessiegeheugen (vorige gesprekken) | Laatste 10 | Laatste 25 | Laatste 25 |
+| Extra | — | Volledig archief, uitgebreider geheugen, Android-app | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
 
 **Basic vs. Pro, conceptueel:** Basic is gericht op het gesprek en oefenen zelf ("boven water"), Pro voegt persoonlijke groei en diepgang toe ("onder water"). Bij Basic zijn coaching en voice geen afgeslankte versie maar een principiële nul, dat onderscheid is bewust zo gepositioneerd.
 
-**Elite:** blijft volledig functioneel maar is sinds 10 augustus 2026 nergens meer publiek kiesbaar, alleen handmatig toe te kennen via het adminpaneel, met een capaciteitscap van 50 actieve klanten (bewust schaars gehouden vanwege Arno's eigen beschikbare tijd). Wel beschikbaar als optie binnen een Team-offerte-aanvraag: een individueel teamlid kan Elite-niveau krijgen voor een vast surplus van €338/maand bovenop het gewone Team-tarief.
+**Elite (individueel, €397/maand):** verwijderd uit het systeem op 25 augustus 2026, bevestigd 0 actieve klanten. Binnen een Team-offerte-aanvraag kan een individueel teamlid nog wel Elite-niveau krijgen voor een vast surplus van €338/maand bovenop het gewone Team-tarief, dat is een losstaande, nog levende optie, geen relatie meer met een bestaand individueel Elite-abonnement.
 
 **Alle betalingen lopen momenteel volledig handmatig**, voor elke tier. Er is nog geen betaalprovider (bijv. Stripe) aangesloten, dat is een bewuste, latere stap in de bouwvolgorde.
 
@@ -121,7 +121,7 @@ Voor een eerlijke, geloofwaardige presentatie, geen enkele van deze als bestaand
 
 - **Nog geen geautomatiseerde betaalverwerking.** Alles loopt via handmatige facturatie/registratie door Arno zelf.
 - **Nog geen iOS-app.** Een Android-app (Capacitor) is in aanbouw en al aangekondigd op de prijzenpagina, iPhone nog niet.
-- **Nog geen herhaalbare maandelijkse boeking voor Elite-klanten** (momenteel technisch maar één boeking ooit mogelijk).
+- **Nog geen herhaalbare maandelijkse boeking voor Team-Elite-teamleden** (momenteel technisch maar één boeking ooit mogelijk).
 - **Elite Member Community** (later mogelijk via Circle): nog niet gebouwd, bewust achteraan gepland.
 - **"Man & Machine"-positionering** (gecertificeerde menselijke coaches naast de AI): puur een toekomstplan, geen bestaand aanbod, geen publieke vermelding.
 
@@ -139,7 +139,7 @@ Niet uitputtend, de belangrijkste bekende vervolgstappen:
 - Verdere uitbouw van het patroongeheugen en de vergeetcurve-herinnering (sectie 3.2) naarmate er meer gebruiksdata is om op te bouwen: de mechanismen zijn live, het effect wordt pas goed zichtbaar bij meer gebruiksgeschiedenis
 - Android-app afronden, iOS op termijn
 - Betaalprovider aansluiten voor geautomatiseerde facturatie op alle tiers
-- Herhaalbare Elite-boekingen, Elite Member Community
+- Herhaalbare Team-Elite-boekingen, Elite Member Community
 - Mogelijk: gecertificeerde menselijke coaches naast de AI ("Man & Machine")
 
 ---

@@ -28,14 +28,7 @@ export default async function UpgradePage() {
     isTeamCovered(userId),
   ])
 
-  // 'elite' bewust niet apart afgehandeld: valt in dezelfde "niet-basis,
-  // niet-team"-tak als 'premium' en ziet dus al hetzelfde als Pro (besloten
-  // 2026-08-11: Elite-relaties beheert Arno zelf buiten de app om via losse
-  // afspraken, geen aparte upgrade-flow hier nodig). Type hier alsnog
-  // uitgebreid met 'elite' voor type-correctheid, puur cosmetisch risico
-  // eerder (geen functioneel verschil, maar wel een gat als deze pagina
-  // later een switch/exhaustiveness-check op plan zou krijgen).
-  const plan = (data?.plan as 'basis' | 'premium' | 'elite' | 'team') ?? 'basis'
+  const plan = (data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
 
   return (
     <>

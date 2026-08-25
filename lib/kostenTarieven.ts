@@ -84,7 +84,6 @@ export const TARIEVEN = {
   // SCENARIO_PRIJZEN.basicMaandelijks/proMaandelijks hieronder.
   prijsBasisEur: 29,
   prijsPremiumEur: 59,
-  prijsEliteEur: 397,
 }
 
 // Boven de Business-tier: volle Business-tiers kopen voor het grootste deel,
@@ -301,16 +300,16 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 // Scenario-blok op Business case (tab 3), zodat beide exact dezelfde omzet-
 // en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
 //
-// Prijzen (basis/premium/elite) is losstaand: dat blijft de échte, huidige
+// Prijzen (basis/premium) is losstaand: dat blijft de échte, huidige
 // live prijs zoals die nu op arno.bot staat, gebruikt door Trackrecord bij
-// het afsluiten van een maand met écht gemeten Basis/Premium/Elite-klanten
+// het afsluiten van een maand met écht gemeten Basis/Premium-klanten
 // uit approved_users. Wordt hier bewust niet aangeraakt.
 //
 // ScenarioPrijzen/TierVerdeling/ScenarioBillingSplit zijn het losse,
 // hypothetische model voor het Scenario-blok en de Doelwinst-solver: geen
 // freemium meer (besloten, definitief geschrapt), twee tiers, Basic en Pro
 // (interne Abacus-namen, nog niet per se de namen op arno.bot/prijzen).
-export type Prijzen = { basis: number; premium: number; elite: number }
+export type Prijzen = { basis: number; premium: number }
 // basicJaarlijksTotaal/proJaarlijksTotaal zijn de jaarprijs zelf (het bedrag
 // dat je één keer per jaar betaalt), niet een per-maand-equivalent: die
 // omrekening (/12) gebeurt in gemiddeldePrijsPerMaand hieronder.
@@ -330,7 +329,7 @@ export type TeamScenario = { aantalKlanten: number; gemiddeldeLeden: number }
 // van de Team-jaaroptie).
 export type TeamBillingSplit = { pctJaarlijks: number }
 
-export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur, elite: TARIEVEN.prijsEliteEur }
+export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium: TARIEVEN.prijsPremiumEur }
 // Definitieve, vaste Abacus-tarieven (besloten en bevestigd 2026-08-01,
 // vervangt het eerdere 38/347/77/707 van 2026-07-31): niet meer instelbaar
 // in de UI, de enige keuzeopties zijn de %-verdeling (TierVerdeling) en de

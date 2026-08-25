@@ -23,7 +23,7 @@ export default function KostenPageClient() {
   // %-verdeling per tier (Basic/Pro) en %-betaalcyclus per tier: gedeeld,
   // zodat tab 1 (Calculator) de betaalprovider-kosten als onderdeel van de
   // totale kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is.
-  // Zowel de échte live Basis/Premium/Elite-prijs (Trackrecord, DEFAULT_PRIJZEN)
+  // Zowel de échte live Basis/Premium-prijs (Trackrecord, DEFAULT_PRIJZEN)
   // als de Basic/Pro-scenariotarieven (SCENARIO_PRIJZEN) zijn definitief vast
   // (besloten 2026-07-31), geen state meer, direct uit lib/kostenTarieven.ts
   // geïmporteerd waar nodig.

@@ -59,6 +59,8 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 - Reden dat Arno voor het niet-verwaterde bedrag kon kiezen zonder de capaciteitscap direct te laten knellen: de uitvoering (het maandelijkse gesprek) hoeft niet altijd door Arno zelf, kan ook door een door hem aangewezen coach gebeuren. Geen publieke vermelding hiervan nu, puur Arno's eigen leveringsflexibiliteit.
 - Implementatie: `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, checkbox + aantal-veld op `/team`, opgeslagen in nieuwe kolom `elite_aantal` op `arnobot_command_requests` (SQL-migratie, zie `docs/ABONNEMENTEN.md` voor de exacte statement en of Arno die al bevestigd heeft uitgevoerd vóór je hierop verder bouwt).
 
+**Addendum (2026-08-25):** de solo Elite-plan waar de €338-berekening hierboven op gebaseerd was, is inmiddels verwijderd (0 gebruikers, zie `docs/ABONNEMENTEN.md`, "Elite (individueel)"). Deze Team-Elite-surplusoptie blijft ongewijzigd bestaan als losstaand, vast bedrag, de historische herleiding naar solo-Elite is alleen nog documentatie, geen actief vergelijkingstarief meer.
+
 ## Waarom deze bedragen zo zijn gekozen
 
 - **Team-seat (€49) vs. solo Pro maandelijks (€59):** lichte volumekorting bij gelijk commitment niveau (beide maandelijks opzegbaar, geen jaarverplichting). Bewust géén korting t.o.v. de jaarlijkse solo-prijs (€39), want dat zou minder commitment (Team, maandelijks) belonen met een lagere prijs dan meer commitment (solo, jaarlijks), omgekeerde SaaS-logica.
@@ -87,13 +89,13 @@ Kwalificatieve, relatieve taal in plaats van kale getallen (Grok/ChatGPT-stijl),
 Onderliggende thema's per tier: Basic is gesprek/rollenspel gericht ("boven water" in de ijsberg metafoor), Pro is persoonlijke groei gericht ("onder water"). Het coachingdocument was aanvankelijk bewust de eerste bullet bij Pro als sterkste onderscheid met Basic; op 2026-08-02 heeft Arno de volgorde losgekoppeld van die redenering en expliciet een andere volgorde gekozen (zie de bullet-lijst hierboven), coaching staat nu op de vierde plek.
 
 Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgelegd zodat copy waarachtig blijft):
-- Chatberichten: Basic 25/dag, Premium/Elite/Team 100/dag (4x)
+- Chatberichten: Basic 25/dag, Premium/Team 100/dag (4x)
 - Sessiegeheugen: Basic 10 vorige gesprekken, Premium 25 (2,5x)
 - Voice: geen maandelijkse cap voor betalende gebruikers op dit moment (alleen 30 voice-berichten/uur rate-limit tegen misbruik). Trial-gebruikers: 50.000 tekens cap.
 - Coaching synthese (`/coaching`, mindset/systeem/actie-scores): exclusief Premium+, Basic krijgt 403.
 - Team: erft alle Pro-functionaliteit (bevestigd), inclusief coachingdocument.
 
-(De plan-waarden `premium`/`elite` hierboven zijn de huidige interne/database-namen vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder.)
+(De plan-waarde `premium` hierboven is de huidige interne/database-naam vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder. `elite` bestond hier ooit ook, verwijderd 2026-08-25.)
 
 **Bewust gekozen woord "onbeperkt" bij Pro (besloten 2026-08-02):** de Pro-bullet "Onbeperkt chatten en oefenen" is strikt genomen niet letterlijk waar, er zit een dagelijkse cap van 100 berichten achter (zie hierboven). Bewust geaccepteerd door Arno omdat (1) het functioneel als onbeperkt aanvoelt voor normaal gebruik, en (2) een preciezere formulering niet op één regel paste, wat een harde eis was voor de kaartlay-out (zie "Eén regel per bullet" hieronder).
 
@@ -111,7 +113,7 @@ Oorspronkelijke, nu ingehaalde overweging (bewaard als context): de eerdere rege
 
 ## Trial-standaard: bestaande aanpak blijft (bevestigd 2026-08-02)
 
-Elke nieuwe gebruiker krijgt bij aanmelden nog steeds `plan='premium'` als trial, ongeacht welke kaart (Basic/Pro/Team) hij aanklikt op `/prijzen` (alle "Start nu"-knoppen linken nu al naar dezelfde generieke `/sign-up`, geen tier-specifieke registratie). Iedereen proeft dus de volledige Pro-ervaring tijdens de 30 dagen, en kiest pas definitief bij `/bot/doorgaan`. Geen wijziging nodig, dit is al hoe het werkt voor Premium/Elite en blijft zo voor Basic/Pro/Team.
+Elke nieuwe gebruiker krijgt bij aanmelden nog steeds `plan='premium'` als trial, ongeacht welke kaart (Basic/Pro/Team) hij aanklikt op `/prijzen` (alle "Start nu"-knoppen linken nu al naar dezelfde generieke `/sign-up`, geen tier-specifieke registratie). Iedereen proeft dus de volledige Pro-ervaring tijdens de 30 dagen, en kiest pas definitief bij `/bot/doorgaan`. Geen wijziging nodig, dit is al hoe het werkt voor Premium en blijft zo voor Basic/Pro/Team.
 
 ## `/prijzen` live gezet (2026-08-02)
 

@@ -20,17 +20,19 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 ## De tiers (marketingnaam / databasewaarde)
 
-| | **Basic** (`basis`) | **Pro** (`premium`) | **Team** (`team`) | **Elite** (`elite`) |
-|---|---|---|---|---|
-| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77/mnd-equiv. + €39/gebruiker/mnd-equiv. bij jaarbetaling (~20% korting), vanaf 3 gebruikers | €397/maand, alleen maandelijks, individueel |
-| Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel | **Nee**, sinds de 2026-08-02 redesign niet meer als kaart getoond |
-| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial: manager start zelf als Pro (zie hieronder) | N.v.t., alleen handmatig toegekend |
-| Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) | Ja |
-| Gesproken antwoorden | Nee | Ja | Ja | Ja |
-| Command/Team-managerdashboard | Nee | Nee | Ja | Nee |
-| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android), 1x gesprek met Arno (alleen betaald, na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager | 1x/maand gesprek met Arno (nog niet herhaalbaar), Telegram-toegang (live), Elite Member Community (nog niet gebouwd) |
+| | **Basic** (`basis`) | **Pro** (`premium`) | **Team** (`team`) |
+|---|---|---|---|
+| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77/mnd-equiv. + €39/gebruiker/mnd-equiv. bij jaarbetaling (~20% korting), vanaf 3 gebruikers |
+| Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel |
+| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial: manager start zelf als Pro (zie hieronder) |
+| Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) |
+| Gesproken antwoorden | Nee | Ja | Ja |
+| Command/Team-managerdashboard | Nee | Nee | Ja |
+| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android), 1x gesprek met Arno (na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
 
-**Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro, of Elite via een aparte route) volgt pas bij `/bot/doorgaan`.
+**Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro) volgt pas bij `/bot/doorgaan`.
+
+**Elite verwijderd (2026-08-25):** de losse, individuele Elite-plan (`plan='elite'`, €397/maand, alleen handmatig toe te kennen) is volledig uit het systeem gehaald na een bevestigde 0-gebruikerstelling. Verwijderd: de Telegram-toegangssectie op de accountpagina, de admin-capaciteitsteller (was 50), de toggle-optie, en de Elite-prijs/telling in Abacus (`lib/kostenTarieven.ts`, `kosten-tracking`). **Blijft ongewijzigd, expliciet buiten scope:** de Team-Elite-surplusoptie (`arnobot_teams.niveau='elite'`, `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, zichtbaar op de `/team`-offerteaanvraag), dat is een losstaande, nog levende verkoopoptie binnen Team-deals, geen relatie meer met een bestaand solo-Elite-tarief om zich aan te spiegelen (zie de aanpassing hieronder). Zie geheugen `project-elite-plan-removal`.
 
 Volledige onderbouwing van deze bedragen (waarom €97 platformtarief, waarom geen staffel meer, waarom Team een kleinere jaarkorting krijgt dan Basic/Pro, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
 
@@ -56,16 +58,13 @@ De marketingcopy op `/prijzen` gebruikt bewust kwalificatieve taal ("onbeperkt",
 
 ---
 
-## Elite: nog actief, maar nergens meer publiek kiesbaar
+## Elite (individueel): verwijderd 2026-08-25
 
-Elite (`plan='elite'`) is niet verwijderd, maar sinds 2026-08-10 ook niet meer publiek kiesbaar: `/prijzen` toont de tier al sinds 2026-08-02 niet meer, en `/bot/doorgaan` bood tot 2026-08-10 nog een Premium/Elite-keuze bij trial-einde, die is bij het synchroniseren met Basic/Pro vervangen (Elite is uit die keuze verdwenen, niet bewust een besluit om Elite af te bouwen, gewoon een gevolg van 1:1 overnemen van de nieuwe `/prijzen`-structuur). De tier bestaat verder nog volledig:
-- Nog toekenbaar via de admin `PlanToggle.tsx` (`/bot/admin/gebruikers`)
-- Capaciteitscap van 50 actieve Elite-klanten blijft gelden, zichtbaar als teller in de admin-gebruikerslijst
-- Telegram-toegang (`t.me/arnodiepeveen`) blijft live voor Elite-klanten via `/bot/account`
+De losse, individuele Elite-plan (`plan='elite'`, €397/maand, sinds 2 augustus 2026 al niet meer publiek kiesbaar, alleen handmatig toe te kennen) had bij controle 0 actieve gebruikers en is volledig uit het systeem gehaald, in plaats van langer als ongebruikte, potentieel verwarrende optie te blijven bestaan. Verwijderd: de Telegram-toegangssectie (`/bot/account`), de admin-toggle-optie en capaciteitsteller (`PlanToggle.tsx`, `/bot/admin/gebruikers`), de Elite-prijs/telling in Abacus (`lib/kostenTarieven.ts`, `kosten-tracking`), en de dode conditie in `team/create` die een nieuw team het niveau van de manager's (niet meer bestaande) elite-plan liet erven. Supabase-migratie vereist om `elite` ook uit de CHECK-constraint van `approved_users.plan` te halen, zie onderaan dit document voor de exacte statement.
 
-**Besloten (2026-08-11):** Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar, zoals de oude verborgen Basis-retentietier, geen publieke kaart op `/prijzen`. Wel weer zichtbaar als optie binnen de `/team`-offerte-aanvraag (zie "Team-aanvraagflow" hieronder), niet als zelfstandige publieke keuze.
+**Uitdrukkelijk blijft bestaan, niet hetzelfde ding:** de Team-Elite-surplusoptie (`arnobot_teams.niveau='elite'`, `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`), een losstaande, nog levende +€338/maand-per-teamlid-optie binnen de `/team`-offerteaanvraag (zie "Team-aanvraagflow" hieronder). Dat bedrag was ooit afgeleid van het verschil tussen solo-Elite (€397) en solo-Pro (€59), maar is sindsdien een vast getal, niet meer gekoppeld aan een bestaand vergelijkingstarief nu solo-Elite weg is.
 
-**1 uur/maand gesprek met Arno:** nog niet gebouwd, bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit. Uitbreiding naar herhaalbare boekingen wacht op een betaald Calendly-account.
+**1 uur/maand gesprek met Arno (Team-Elite):** nog niet gebouwd, bestaande boekingsinfrastructuur (`/bot/gesprek`, `arno_call_booked_at`) ondersteunt maar één boeking ooit. Uitbreiding naar herhaalbare boekingen wacht op een betaald Calendly-account.
 
 **Elite Member Community:** nog niet gebouwd, wordt later Circle, bewust achteraan gepland.
 
@@ -173,11 +172,18 @@ Volledige onderbouwing en de discussie die tot deze regel leidde staat in het ge
 
 ## Technische implementatie
 
-- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','elite','team'))`) op Supabase-tabel `approved_users`. **Blijft intern `basis`/`premium`/`elite`/`team`, geen migratie naar `basic`/`pro`** (besloten 2026-08-02): alleen de naar buiten getoonde tekst op `/prijzen` is Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Command/Team.
-- Admin-beheer: `/bot/admin/gebruikers`, toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`, waarden basis/premium/elite, `team` niet meer actief toekenbaar via deze toggle), plus de Elite-capaciteitsteller. Command-managerschap apart via `CommandManagerToggle`.
+- Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. `elite` verwijderd uit de CHECK-constraint (2026-08-25, migratie hieronder). **Blijft intern `basis`/`premium`/`team`, geen migratie naar `basic`/`pro`** (besloten 2026-08-02): alleen de naar buiten getoonde tekst op `/prijzen` is Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Command/Team.
+- Admin-beheer: `/bot/admin/gebruikers`, toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`, waarden basis/premium, `team` niet meer actief toekenbaar via deze toggle).
 - Route `/api/bot/plan` (GET): geeft `plan` én `commandManager` van de ingelogde gebruiker terug, gebruikt door client-side navigatie (`BotNav`, `SparClient`).
-- Gating-logica: `app/api/chat/route.ts`, `app/api/bot/coaching*`, `lib/voice.ts` (`hasVoiceAccess`) — allemaal "alles behalve basis", geen aparte code nodig per nieuw plan (dus `elite` viel hier al automatisch onder toen de waarde bestond).
+- Gating-logica: `app/api/chat/route.ts`, `app/api/bot/coaching*`, `lib/voice.ts` (`hasVoiceAccess`) — allemaal "alles behalve basis", geen aparte code nodig per plan.
 - Alle betalingen blijven handmatig geregistreerd, voor elke tier, geen payment provider aangesloten.
+
+**Vereiste Supabase-migratie (elite uit `approved_users.plan` verwijderen, nog te bevestigen door Arno):**
+```sql
+alter table approved_users drop constraint approved_users_plan_check;
+alter table approved_users add constraint approved_users_plan_check check (plan in ('basis','premium','team'));
+```
+Veilig: 0 rijen hadden `plan='elite'` op het moment van verwijderen (geverifieerd 2026-08-25). Voer uit in de Supabase SQL-editor en bevestig hier.
 
 ---
 

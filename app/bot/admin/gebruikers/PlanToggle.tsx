@@ -2,22 +2,22 @@
 
 import { useState } from 'react'
 
-const PLANS = ['basis', 'premium', 'elite'] as const
+const PLANS = ['basis', 'premium'] as const
 type Plan = typeof PLANS[number] | 'team'
 
 const COLORS: Record<Plan, { bg: string; color: string }> = {
   basis: { bg: '#374151', color: '#9ca3af' },
   premium: { bg: '#f59e0b', color: '#111827' },
-  elite: { bg: '#a855f7', color: '#111827' },
   // 'team' is niet meer actief toekenbaar (functieniveau en Command-managerschap zijn
   // losgekoppeld, zie command_manager), maar oudere rijen kunnen deze waarde nog hebben.
   team: { bg: '#22c55e', color: '#111827' },
 }
 
-// Databasewaarde blijft basis/premium/elite/team (geen migratie, zie
-// docs/PRICING_DECISIONS.md), alleen het getoonde label volgt de huidige
-// marketingnaam (Basic/Pro/Elite/Team) i.p.v. de rauwe kolomwaarde.
-const LABELS: Record<Plan, string> = { basis: 'BASIC', premium: 'PRO', elite: 'ELITE', team: 'TEAM' }
+// Databasewaarde blijft basis/premium/team (geen migratie, zie docs/PRICING_DECISIONS.md),
+// alleen het getoonde label volgt de huidige marketingnaam (Basic/Pro/Team) i.p.v. de rauwe
+// kolomwaarde. 'elite' verwijderd (2026-08-25): de losse €397/mnd Elite-plan had 0 gebruikers
+// en is uit het systeem gehaald, zie geheugen project-elite-plan-removal.
+const LABELS: Record<Plan, string> = { basis: 'BASIC', premium: 'PRO', team: 'TEAM' }
 
 export default function PlanToggle({ userId, currentPlan }: { userId: string; currentPlan: Plan }) {
   const [plan, setPlan] = useState(currentPlan)

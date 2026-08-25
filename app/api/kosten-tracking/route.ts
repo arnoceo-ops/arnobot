@@ -48,7 +48,6 @@ type Meting = {
 type Omzet = {
   basis_gebruikers: number
   premium_gebruikers: number
-  elite_gebruikers: number
   team_gebruikers: number
   prognose_omzet_eur: number
 }
@@ -84,7 +83,7 @@ async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
 // telling van nieuwe aanmeldingen die specifieke maand. Prijzen per plan zijn
 // optioneel overschrijfbaar vanuit de client (los instelbaar op het Business
 // case-tabblad), zodat "sluit maand af" precies vastlegt wat daar te zien was.
-async function meetOmzet(prijzen?: { basis?: number; premium?: number; elite?: number }): Promise<Omzet> {
+async function meetOmzet(prijzen?: { basis?: number; premium?: number }): Promise<Omzet> {
   const { data } = await supabase
     .from('approved_users')
     .select('plan')
@@ -96,21 +95,18 @@ async function meetOmzet(prijzen?: { basis?: number; premium?: number; elite?: n
 
   const basis = tel('basis')
   const premium = tel('premium')
-  const elite = tel('elite')
   const team = tel('team')
 
   const prijsBasis = prijzen?.basis ?? TARIEVEN.prijsBasisEur
   const prijsPremium = prijzen?.premium ?? TARIEVEN.prijsPremiumEur
-  const prijsElite = prijzen?.elite ?? TARIEVEN.prijsEliteEur
 
-  const prognoseOmzetEur = basis * prijsBasis + premium * prijsPremium + elite * prijsElite
+  const prognoseOmzetEur = basis * prijsBasis + premium * prijsPremium
   // Command/team heeft geen vlak tarief (staffel per seat), telt niet mee in
   // de omzetprognose, alleen het aantal wordt getoond.
 
   return {
     basis_gebruikers: basis,
     premium_gebruikers: premium,
-    elite_gebruikers: elite,
     team_gebruikers: team,
     prognose_omzet_eur: prognoseOmzetEur,
   }
@@ -175,9 +171,9 @@ export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium, prijsElite, schrijfWachtwoord } = body as {
+  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium, schrijfWachtwoord } = body as {
     action?: string; maand?: string; werkelijkeKosten?: number; werkelijkeOmzet?: number
-    prijsBasis?: number; prijsPremium?: number; prijsElite?: number; schrijfWachtwoord?: string
+    prijsBasis?: number; prijsPremium?: number; schrijfWachtwoord?: string
   }
 
   if (action === 'afsluiten' || action === 'werkelijk' || action === 'werkelijkOmzet') {
@@ -190,7 +186,7 @@ export async function POST(req: NextRequest) {
     const doelMaand = typeof maand === 'string' && maand ? maand : huidigeMaandIso()
     const [meting, omzet] = await Promise.all([
       meetGebruikVoorMaand(doelMaand),
-      meetOmzet({ basis: prijsBasis, premium: prijsPremium, elite: prijsElite }),
+      meetOmzet({ basis: prijsBasis, premium: prijsPremium }),
     ])
     const prognose = berekenPrognoseKostenUsd(meting)
 
