@@ -58,6 +58,12 @@ const KNOWN_SAFE_FETCHES = new Set([
   'app/bot/team/TeamClient.tsx:223',
   'app/bot/team/TeamClient.tsx:241',
   'app/bot/team/TeamClient.tsx:246',
+  // stats/analyses vullen tellingen (setStats, setAnalyses), geen rol/status-vlag die de
+  // JSX-structuur laat omslaan; de hele sectie wordt al gegated door de losse `loading`-
+  // state (zie de fetch naar /api/bot/coaching op regel 469 hierboven, .finally(() =>
+  // setLoading(false))), dus geen aparte *Loaded-vlag per fetch nodig.
+  'app/bot/coaching/CoachingClient.tsx:181',
+  'app/bot/coaching/CoachingClient.tsx:192',
 ])
 
 function walk(dir, matcher, results = []) {

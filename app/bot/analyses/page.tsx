@@ -5,6 +5,7 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useProgressHints } from '@/hooks/useProgressHints'
+import { useTeamStatus } from '@/hooks/useTeamStatus'
 
 interface Session {
   id: string
@@ -97,8 +98,14 @@ export default function GeschiedenisPage() {
   const [shareLoading, setShareLoading] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
-  const [isTeamMember, setIsTeamMember] = useState(false)
-  const [teamStatusLoaded, setTeamStatusLoaded] = useState(false)
+  const [isPreviewMember, setIsPreviewMember] = useState(false)
+  const liveTeamStatus = useTeamStatus()
+  // isTeamMember mag hier alleen gebruikt worden als teamStatusLoaded && !teamStatusFailed:
+  // bij een mislukte fetch tonen we DEEL MET MANAGER niet automatisch aan wie mogelijk toch
+  // teamlid is.
+  const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
+  const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
+  const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
   const [sharedAnalyseIds, setSharedAnalyseIds] = useState<Set<string>>(new Set())
   const [teamShareLoadingId, setTeamShareLoadingId] = useState<string | null>(null)
   const [sharedSessionIds, setSharedSessionIds] = useState<Set<string>>(new Set())
@@ -121,14 +128,7 @@ export default function GeschiedenisPage() {
       .then(data => setSavedAnalyses(data.analyses ?? []))
       .catch(() => {})
     if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
-      setIsTeamMember(true)
-      setTeamStatusLoaded(true)
-    } else {
-      fetch('/api/bot/team/status')
-        .then(r => r.json())
-        .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-        .catch(() => {})
-        .finally(() => setTeamStatusLoaded(true))
+      setIsPreviewMember(true)
     }
     fetch('/api/bot/team/share-analyse')
       .then(r => r.json())
@@ -895,7 +895,7 @@ export default function GeschiedenisPage() {
                 {expandedAnalyse === a.id && (
                   <div style={{ paddingBottom: 40, animation: 'fadein 0.3s ease' }}>
                     <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.analyse_text) }} />
-                    {teamStatusLoaded && isTeamMember && (
+                    {teamStatusLoaded && !teamStatusFailed && isTeamMember && (
                       <button
                         onClick={() => toggleTeamShare(a.id)}
                         disabled={teamShareLoadingId === a.id}

@@ -6,6 +6,7 @@ import BotNav from '../BotNav'
 import { useUser } from '@clerk/nextjs'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { computeMsaScore } from '@/lib/msa'
+import { useTeamStatus } from '@/hooks/useTeamStatus'
 
 function renderMd(text: string): string {
   return text
@@ -110,11 +111,14 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
-  const [isTeamMember, setIsTeamMember] = useState(false)
-  // Voorkomt een FOUC op de PLAN GESPREK-CTA hieronder (verborgen voor teamleden): zonder deze
-  // gate zou die CTA kortstondig kunnen tonen als de coaching-doc-fetch toevallig eerder klaar
-  // is dan de team/status-fetch. Zelfde patroon als elders (o.a. app/bot/account/page.tsx).
-  const [teamStatusLoaded, setTeamStatusLoaded] = useState(false)
+  const [isPreviewMember, setIsPreviewMember] = useState(false)
+  const liveTeamStatus = useTeamStatus()
+  // isTeamMember mag hier alleen gebruikt worden als teamStatusLoaded && !teamStatusFailed:
+  // bij een mislukte fetch tonen we PLAN GESPREK niet automatisch aan wie mogelijk toch
+  // teamlid is.
+  const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
+  const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
+  const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
   const [progressSignal, setProgressSignal] = useState<boolean | null>(null)
   const [history, setHistory] = useState<CoachingHistoryEntry[]>([])
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
@@ -195,14 +199,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
       .catch(() => {})
 
     if (new URLSearchParams(window.location.search).get('previewMember') === '1') {
-      setIsTeamMember(true)
-      setTeamStatusLoaded(true)
-    } else {
-      fetch('/api/bot/team/status')
-        .then(r => r.json())
-        .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-        .catch(() => {})
-        .finally(() => setTeamStatusLoaded(true))
+      setIsPreviewMember(true)
     }
 
     if (SCORE_HISTORY_ENABLED) {
@@ -672,7 +669,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
           </div>
         )}
 
-        {doc && plan === 'premium' && teamStatusLoaded && !isTeamMember && !gesprekBookedAt && (
+        {doc && plan === 'premium' && teamStatusLoaded && !teamStatusFailed && !isTeamMember && !gesprekBookedAt && (
           <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Wil je dit doorspreken met Arno zelf?<br />

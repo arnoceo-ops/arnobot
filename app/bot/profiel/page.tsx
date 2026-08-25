@@ -138,6 +138,10 @@ export default function BotProfielPage() {
   const [teamWaitlist, setTeamWaitlist] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [isCommandManager, setIsCommandManager] = useState(false)
+  // Bij een mislukte /api/bot/profiel-fetch weten we niet of dit account een teamlid is,
+  // dus mag rolOpties hieronder niet stil terugvallen op de volledige, ongefilterde lijst
+  // inclusief managementrollen. Restrictie bij twijfel, niet de ruimste optie.
+  const [profielFetchFailed, setProfielFetchFailed] = useState(false)
   const firstName = user?.firstName || 'daar'
 
   useEffect(() => {
@@ -154,12 +158,15 @@ export default function BotProfielPage() {
           setIsFirstTime(true)
         }
       })
-      .catch(() => setIsFirstTime(true))
+      .catch(() => {
+        setProfielFetchFailed(true)
+        setIsFirstTime(true)
+      })
   }, [])
 
   const rolOpties = isCommandManager
     ? TEAM_VERSIE_ROL_OPTIONS
-    : isTeamMember
+    : (isTeamMember || profielFetchFailed)
       ? ROL_OPTIONS.filter(o => !MANAGEMENT_ROLLEN.includes(o))
       : ROL_OPTIONS
 

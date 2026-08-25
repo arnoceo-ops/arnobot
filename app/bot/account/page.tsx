@@ -7,6 +7,7 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { useTeamStatus } from '@/hooks/useTeamStatus'
 
 export default function AccountPage() {
   const { user, isLoaded } = useUser()
@@ -25,12 +26,10 @@ export default function AccountPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
-  const [isTeamMember, setIsTeamMember] = useState(false)
-  // Voorkomt een FOUC: isTeamMember start op false, dus zonder deze gate zag een teamlid heel
-  // even de REFERRAL- en ABONNEMENT OPZEGGEN-secties (die voor hen verborgen moeten zijn)
-  // flitsen totdat de /api/bot/team/status-fetch klaar was. Zelfde patroon als de
-  // isFirstTime-gate in app/bot/profiel/page.tsx.
-  const [teamStatusLoaded, setTeamStatusLoaded] = useState(false)
+  // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
+  // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
+  // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
+  const { isTeamMember, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
   const [appPassword, setAppPassword] = useState('')
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
@@ -53,11 +52,6 @@ export default function AccountPage() {
       .then(r => r.json())
       .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
       .catch(() => {})
-    fetch('/api/bot/team/status')
-      .then(r => r.json())
-      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-      .catch(() => {})
-      .finally(() => setTeamStatusLoaded(true))
     fetch('/api/bot/instatus')
       .then(r => r.json())
       .then(d => {
@@ -266,7 +260,7 @@ export default function AccountPage() {
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
-        {teamStatusLoaded && !isTeamMember && (
+        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
           <>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
@@ -375,7 +369,7 @@ export default function AccountPage() {
         {/* Abonnement opzeggen — verborgen voor teamleden, dat is de manager's abonnement, niet
             het hunne. ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een
             AVG-recht op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
-        {teamStatusLoaded && !isTeamMember && (
+        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
           {cancelledAt ? (

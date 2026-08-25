@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
+import { useTeamStatus } from '@/hooks/useTeamStatus'
 
 function renderAnswer(text: React.ReactNode) {
   if (typeof text !== 'string') return text
@@ -173,25 +174,13 @@ const FAQ_GROUPS = [
 
 export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
   const [openKey, setOpenKey] = useState<string | null>(null)
-  const [isTeamMember, setIsTeamMember] = useState(() =>
+  const [isPreviewMember] = useState(() =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
   )
-  // Voorkomt een FOUC: zonder deze gate zag een teamlid heel even de REFERRAL/ABONNEMENT-
-  // FAQ-groepen (en miste hij JOUW TEAM) totdat de team/status-fetch klaar was. Al true als
-  // de previewMember-shortcut hierboven van toepassing is, want dan is er niets om op te
-  // wachten. Zelfde patroon als de isFirstTime-gate in app/bot/profiel/page.tsx.
-  const [teamStatusLoaded, setTeamStatusLoaded] = useState(() =>
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
-  )
-
-  useEffect(() => {
-    if (isTeamMember) return
-    fetch('/api/bot/team/status')
-      .then(r => r.json())
-      .then(d => { if (d.hasTeam && !d.isManager) setIsTeamMember(true) })
-      .catch(() => {})
-      .finally(() => setTeamStatusLoaded(true))
-  }, [isTeamMember])
+  const liveTeamStatus = useTeamStatus()
+  const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
+  const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
+  const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
 
   return (
     <>
@@ -279,6 +268,9 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
             </h2>
 
             {teamStatusLoaded && FAQ_GROUPS.filter(g => {
+              // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,
+              // dus verbergen we alle rolafhankelijke groepen in plaats van te gokken.
+              if (teamStatusFailed) return !['REFERRAL', 'ABONNEMENT', 'JOUW TEAM'].includes(g.label)
               if (isTeamMember && g.label === 'REFERRAL') return false
               if (isTeamMember && g.label === 'ABONNEMENT') return false
               if (!isTeamMember && g.label === 'JOUW TEAM') return false
