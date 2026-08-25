@@ -178,6 +178,14 @@ export default function BotProfielPage() {
 
   const rolIngevuld = answers.rol && (answers.rol !== 'Anders' || rolAnders.trim().length > 1)
 
+  // Bij minder dan 3 jaar in de huidige functie is "heb je de afgelopen 3 jaar je target
+  // gehaald" niet goed te beantwoorden (die periode valt dan deels vóór de huidige functie).
+  // Alleen voor de individuele versie: de teamversie vraagt naar het team-/company-target,
+  // dat bestond al vóór iemand in zijn huidige functie zat, dus die vraag blijft daar altijd
+  // relevant. Bewust ook voor teamleden en solo-accountmanagers (geen isCommandManager-
+  // specifieke rol nodig): zij lopen door dezelfde, niet-teammanager-blokken heen.
+  const targetHistorieOverslaan = !isCommandManager && ['< 1 jaar', '1-3 jaar'].includes(answers.jaren_functie)
+
   const allFilled =
     rolIngevuld &&
     answers.markt.length > 0 &&
@@ -187,7 +195,7 @@ export default function BotProfielPage() {
     answers.dealgrootte.trim().length > 0 &&
     answers.salescyclus.trim().length > 0 &&
     answers.target_dit_jaar !== '' &&
-    answers.target_3_jaar !== '' &&
+    (targetHistorieOverslaan || answers.target_3_jaar !== '') &&
     answers.jaren_sales !== '' &&
     answers.jaren_functie !== '' &&
     (!HEEFT_TEAM.includes(answers.rol) || isCommandManager || (answers.gebruik !== '' && answers.teamgrootte !== ''))
@@ -408,68 +416,118 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="07" title="Target">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-              {isCommandManager
-                ? 'Verwacht je dit jaar het team of company target te halen?'
-                : `Verwacht je dit jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?`}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
-              {TARGET_DIT_JAAR_OPTIONS.map(o => (
-                <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
-              ))}
-            </div>
-            {submitted && answers.target_dit_jaar === '' && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-            )}
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-              {isCommandManager
-                ? 'Zijn de team of company targets de afgelopen 3 jaar behaald?'
-                : `Heb je de afgelopen 3 jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target gehaald?`}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {TARGET_3_JAAR_OPTIONS.map(o => (
-                <Chip key={o} label={o} selected={answers.target_3_jaar === o} onClick={() => set('target_3_jaar', o)} />
-              ))}
-            </div>
-            {submitted && answers.target_3_jaar === '' && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-            )}
-          </Block>
+          {isCommandManager ? (
+            <>
+              <Block nr="07" title="Target">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                  Verwacht je dit jaar het team of company target te halen?
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
+                  {TARGET_DIT_JAAR_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
+                  ))}
+                </div>
+                {submitted && answers.target_dit_jaar === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+                )}
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                  Zijn de team of company targets de afgelopen 3 jaar behaald?
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {TARGET_3_JAAR_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.target_3_jaar === o} onClick={() => set('target_3_jaar', o)} />
+                  ))}
+                </div>
+                {submitted && answers.target_3_jaar === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+                )}
+              </Block>
 
-          {isCommandManager && (
-            <Block nr="08" title="Thema">
-              <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 4 }}>Wat is het actuele kwartaalthema?</p>
-              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Anders dan een target</p>
-              <textarea
-                value={answers.kwartaalthema}
-                onChange={e => set('kwartaalthema', e.target.value)}
-                placeholder="Bijv: Meer focus op upsell bij bestaande klanten"
-                rows={3}
-              />
-            </Block>
+              <Block nr="08" title="Thema">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 4 }}>Wat is het actuele kwartaalthema?</p>
+                <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Anders dan een target</p>
+                <textarea
+                  value={answers.kwartaalthema}
+                  onChange={e => set('kwartaalthema', e.target.value)}
+                  placeholder="Bijv: Meer focus op upsell bij bestaande klanten"
+                  rows={3}
+                />
+              </Block>
+
+              <Block nr="09" title="Jouw ervaring">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
+                  {JAREN_SALES_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
+                  ))}
+                </div>
+                {submitted && answers.jaren_sales === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+                )}
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {JAREN_FUNCTIE_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
+                  ))}
+                </div>
+                {submitted && answers.jaren_functie === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+                )}
+              </Block>
+            </>
+          ) : (
+            <>
+              <Block nr="07" title="Jouw ervaring">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
+                  {JAREN_SALES_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
+                  ))}
+                </div>
+                {submitted && answers.jaren_sales === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+                )}
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {JAREN_FUNCTIE_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
+                  ))}
+                </div>
+                {submitted && answers.jaren_functie === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+                )}
+              </Block>
+
+              <Block nr="08" title="Target">
+                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                  {`Verwacht je dit jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?`}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
+                  {TARGET_DIT_JAAR_OPTIONS.map(o => (
+                    <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
+                  ))}
+                </div>
+                {submitted && answers.target_dit_jaar === '' && (
+                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+                )}
+                {!targetHistorieOverslaan && (
+                  <>
+                    <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
+                      {`Heb je de afgelopen 3 jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target gehaald?`}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {TARGET_3_JAAR_OPTIONS.map(o => (
+                        <Chip key={o} label={o} selected={answers.target_3_jaar === o} onClick={() => set('target_3_jaar', o)} />
+                      ))}
+                    </div>
+                    {submitted && answers.target_3_jaar === '' && (
+                      <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+                    )}
+                  </>
+                )}
+              </Block>
+            </>
           )}
-
-          <Block nr={isCommandManager ? '09' : '08'} title="Jouw ervaring">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
-              {JAREN_SALES_OPTIONS.map(o => (
-                <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
-              ))}
-            </div>
-            {submitted && answers.jaren_sales === '' && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-            )}
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {JAREN_FUNCTIE_OPTIONS.map(o => (
-                <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
-              ))}
-            </div>
-            {submitted && answers.jaren_functie === '' && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-            )}
-          </Block>
 
           {isCommandManager ? (
             <>
