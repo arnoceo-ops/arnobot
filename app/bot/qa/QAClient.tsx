@@ -165,7 +165,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een gedeelde link weer intrekken?',
-        a: 'Dat is op dit moment nog niet mogelijk. Deze functie wordt meegenomen in de volgende release. Wil je een gedeeld gesprek laten verwijderen, stuur dan een e-mail naar [hq@arno.bot](mailto:hq@arno.bot). We regelen het dan handmatig.',
+        a: 'Ja. Ga naar de Archief, open het gesprek dat je hebt gedeeld (herkenbaar aan "✓ GEDEELD"), en kies LINK INTREKKEN in de popup die dan verschijnt. De link werkt daarna niet meer.',
       },
     ],
   },
