@@ -105,6 +105,23 @@ export async function POST(req: NextRequest) {
     status: 'signed_up',
   })
 
+  // Telegram-melding naar Arno, zelfde bot/groep als de nieuwe-gebruiker-melding in proxy.ts.
+  // Ontbrak hier: een referral-code die pas na het inloggen wordt verwerkt (via SparClient.tsx,
+  // niet de aanmeld-cookie in proxy.ts) gaf tot nu toe alleen een mail aan de referrer, Arno
+  // zag deze aanmeldingen dus nergens (bevestigd 2026-08-25).
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN
+  const tgChat = process.env.TELEGRAM_CHAT_ID
+  if (tgToken && tgChat) {
+    const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
+    const referrerLabel = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || referrer.email || 'onbekend'
+    const tgText = `Nieuwe referral-aanmelding\n\nNaam: ${tgSafe(newUserName)}\nReferral: ${tgSafe(code.toUpperCase())}\nReferrer: ${tgSafe(referrerLabel)}`
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: tgChat, text: tgText }),
+    }).catch(() => {})
+  }
+
   // Email naar referrer
   const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
   if (isValidEmail(referrer.email)) {
