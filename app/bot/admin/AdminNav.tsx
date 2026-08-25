@@ -6,7 +6,7 @@ const CENTER_LINKS = [
   { href: '/bot/admin/analyse', label: 'ANALYSE' },
   { href: '/bot/admin/status', label: 'STATUS' },
   { href: '/bot/admin/meta-analyse', label: 'META' },
-  { href: '/bot/admin/voice-test', label: 'VOICE' },
+  { href: '/bot/admin/voice-test', label: 'TEMP' },
   { href: '/bot/admin/emails', label: 'CRONS' },
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
   { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
