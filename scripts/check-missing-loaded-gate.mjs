@@ -43,7 +43,7 @@ const KNOWN_SAFE_FETCHES = new Set([
   // isManager start op false en de component rendert al `if (!isManager) return null`,
   // dus er is nooit een moment waarop verkeerde inhoud zichtbaar is, alleen een korte
   // vertraging voordat de bel verschijnt. Geen FOUC, geen loaded-vlag nodig.
-  'app/bot/components/NotificationBell.tsx:47',
+  'app/bot/components/NotificationBell.tsx:42',
   // Beide binnen closeSparring(), een door de gebruiker getriggerde afronding van een
   // sparringsessie, geen mount-time render-race: de fetch/setter loopt pas nadat de
   // gebruiker al een actie heeft afgerond, niet vóór de eerste render.

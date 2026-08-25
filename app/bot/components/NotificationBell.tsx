@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
 
 interface Notification {
   id: string
@@ -32,12 +31,8 @@ function notifLabel(type: string, memberName: string) {
   return memberName
 }
 
-const DEMO_EMAIL = 'linkedin@royaldutchsales.com'
-
 export default function NotificationBell({ onNavigate }: Props) {
   const router = useRouter()
-  const { user } = useUser()
-  const isDemo = user?.primaryEmailAddress?.emailAddress === DEMO_EMAIL
   const [isManager, setIsManager] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unread, setUnread] = useState(0)
@@ -67,7 +62,7 @@ export default function NotificationBell({ onNavigate }: Props) {
 
   function toggle() {
     setOpen(o => !o)
-    if (unread > 0 && !isDemo) {
+    if (unread > 0) {
       fetch('/api/bot/team/notifications/read', { method: 'PATCH' })
         .then(() => setUnread(0))
         .catch(() => {})
@@ -121,9 +116,9 @@ export default function NotificationBell({ onNavigate }: Props) {
                   <div
                     key={n.id}
                     onClick={() => navigateTo(`/bot/team/lid/${n.member_id}`)}
-                    style={{ padding: '14px 20px', borderBottom: '1px solid #1a2332', cursor: 'pointer', background: (!n.read_at || isDemo) ? 'rgba(245,158,11,0.04)' : 'transparent', transition: 'background 0.15s' }}
+                    style={{ padding: '14px 20px', borderBottom: '1px solid #1a2332', cursor: 'pointer', background: !n.read_at ? 'rgba(245,158,11,0.04)' : 'transparent', transition: 'background 0.15s' }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#111827')}
-                    onMouseLeave={e => (e.currentTarget.style.background = (!n.read_at || isDemo) ? 'rgba(245,158,11,0.04)' : 'transparent')}
+                    onMouseLeave={e => (e.currentTarget.style.background = !n.read_at ? 'rgba(245,158,11,0.04)' : 'transparent')}
                   >
                     <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 12, color: '#f1f5f9', lineHeight: 1.6, margin: '0 0 4px' }}>
                       {notifLabel(n.type, n.member_name)}
