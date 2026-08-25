@@ -104,7 +104,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
@@ -130,7 +130,16 @@ export default async function GebruikersPage({
     supabase
       .from('arnobot_sparring_sessions')
       .select('user_id, created_at'),
+    supabase
+      .from('arnobot_team_members')
+      .select('user_id, role'),
   ])
+
+  // TEAM-kolom (2026-08-24): tot nu toe toonde COMMAND alleen command_manager (de Team-
+  // tier-entitlement, handmatig te togglen), een gewoon teamlid was hier onzichtbaar en
+  // zag er identiek uit aan een individuele Pro/Elite-gebruiker. 'LID' vult dat gat aan,
+  // puur informatief (geen toggle, lidmaatschap loopt via join/verwijder-uit-team elders).
+  const teamRoleMap = new Map((teamMembersRes.data ?? []).map(t => [t.user_id, t.role as string]))
 
   const logs = logsRes.data ?? []
   const coachingRows = coachingRes.data ?? []
@@ -300,7 +309,7 @@ export default async function GebruikersPage({
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} vertical />
           <SortHeader label="GEZONDHEID" field="gezondheid" sort={sort} dir={dir} vertical />
           <SortHeader label="PLAN" field="plan" sort={sort} dir={dir} vertical />
-          <SortHeader label="COMMAND" field="command_manager" sort={sort} dir={dir} vertical />
+          <SortHeader label="TEAM" field="command_manager" sort={sort} dir={dir} vertical />
           <SortHeader label="SD AGENT" field="sd_agent" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
@@ -391,9 +400,15 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'center' }}>
                   <PlanToggle userId={u.user_id} currentPlan={(u.plan as 'basis' | 'premium' | 'elite' | 'team') ?? 'basis'} />
                 </div>
-                {/* Command manager */}
+                {/* Team-status: command_manager blijft togglebaar (Team-tier-entitlement,
+                    vóór teamaanmaak); een gewoon teamlid (geen eigen entitlement, wél in
+                    arnobot_team_members) toont puur informatief 'LID', geen toggle. */}
                 <div style={{ textAlign: 'center' }}>
-                  <CommandManagerToggle userId={u.user_id} initial={!!(u as { command_manager?: boolean }).command_manager} />
+                  {!(u as { command_manager?: boolean }).command_manager && teamRoleMap.get(u.user_id) === 'member' ? (
+                    <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: '#374151', color: '#9ca3af', minWidth: 68, display: 'inline-block' }}>LID</span>
+                  ) : (
+                    <CommandManagerToggle userId={u.user_id} initial={!!(u as { command_manager?: boolean }).command_manager} />
+                  )}
                 </div>
                 {/* Sales development attributie */}
                 <div style={{ textAlign: 'center' }}>
