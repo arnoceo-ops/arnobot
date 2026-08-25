@@ -337,7 +337,7 @@ export default async function GebruikersPage({
                 {/* Naam + email */}
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <p style={{ fontWeight: 700, fontSize: '14px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{name}</p>
+                    <a href={`/bot/admin/analyse?userId=${u.user_id}`} style={{ fontWeight: 700, fontSize: '14px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, textDecoration: 'none' }}>{name}</a>
                     {(() => {
                       const tr = (u as { trial_reactivated_at?: string | null }).trial_reactivated_at
                       const ts = u.trial_start
