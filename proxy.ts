@@ -111,7 +111,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     let { data: user } = await supabase
       .from('approved_users')
-      .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done')
+      .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done, command_manager')
       .eq('user_id', userId)
       .single()
 
@@ -124,7 +124,7 @@ export default clerkMiddleware(async (auth, req) => {
         if (email) {
           const { data: pending } = await supabase
             .from('approved_users')
-            .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done')
+            .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done, command_manager')
             .eq('email', email)
             .like('user_id', 'pending_%')
             .single()
@@ -216,7 +216,7 @@ export default clerkMiddleware(async (auth, req) => {
               console.error('New user insert failed:', insertErr.message)
               return NextResponse.redirect(new URL('/sign-in', req.url))
             }
-            user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false }
+            user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false, command_manager: sdSource ? true : false }
             // Referral cookie verwerken
             const refCode = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
             if (refCode && /^[A-Z0-9-]{4,20}$/.test(refCode)) {
@@ -280,6 +280,24 @@ export default clerkMiddleware(async (auth, req) => {
       const trialStart = new Date(user.trial_start)
       const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
       if (new Date() < trialEnd) toegestaan = true
+    }
+
+    // Team-toegang is nooit tijdgebonden aan de eigen trial_start: een teamlid/-manager
+    // betaalt niet zelf, dus mag nooit automatisch verlopen na 30 dagen (2026-08-24-fix,
+    // zie docs/TEAM_PLAN.md). Toegang eindigt alleen via zelf-verwijdering (ACCOUNT
+    // VERWIJDEREN) of doordat de manager 'm uit het team haalt (VERWIJDER UIT TEAM,
+    // verwijdert de arnobot_team_members-rij), dus altijd live gecheckt, nooit een
+    // eenmalig gezette vlag die na verwijdering zou blijven hangen.
+    if (!toegestaan && user.command_manager === true) {
+      toegestaan = true
+    }
+    if (!toegestaan) {
+      const { data: teamMember } = await supabase
+        .from('arnobot_team_members')
+        .select('team_id')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (teamMember) toegestaan = true
     }
 
     if (!toegestaan) {

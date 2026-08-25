@@ -27,15 +27,28 @@ export async function GET(req: NextRequest) {
   const fortyFiveDaysAgo = new Date(now - 45 * 24 * 60 * 60 * 1000).toISOString()
   const sixtyDaysAgo     = new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: users } = await supabase
+  const { data: usersRaw } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start')
+    .select('user_id, email, voornaam, trial_start, command_manager')
     .eq('is_active', true)
     .eq('nudge_opt_out', false)
     .not('email', 'is', null)
     .neq('email', E2E_TEST_USER_EMAIL)
     .neq('email', MANUAL_TEST_USER_EMAIL)
     .neq('email', APP_REVIEWER_EMAIL)
+
+  // inactivity_dag45/dag60 dreigen expliciet met "abonnement wordt opgezegd", feitelijk
+  // onjuist voor een teamlid/-manager die niet zelf betaalt (2026-08-24-fix, zie
+  // docs/TEAM_PLAN.md). Alleen die twee typen worden overgeslagen hieronder, de gewone
+  // activiteits-nudges (weekly_nudge/geen_gesprek_nudge/dag21) blijven wel gewoon gelden:
+  // een teamlid mag best aangespoord worden om ArnoBot te gebruiken, alleen niet met een
+  // valse opzeg-dreiging.
+  const { data: teamMemberRows } = await supabase
+    .from('arnobot_team_members')
+    .select('user_id')
+  const teamMemberIds = new Set((teamMemberRows ?? []).map(r => r.user_id))
+
+  const users = usersRaw ?? []
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
 
@@ -109,9 +122,11 @@ export async function GET(req: NextRequest) {
         .eq('user_id', user.user_id)
         .gte('created_at', twentyOneDaysAgo)
 
-      if (!sent60 && (activeSince60 ?? 0) === 0) {
+      const isTeamAccount = !!user.command_manager || teamMemberIds.has(user.user_id)
+
+      if (!isTeamAccount && !sent60 && (activeSince60 ?? 0) === 0) {
         type = 'inactivity_dag60'
-      } else if (!sent45 && (activeSince45 ?? 0) === 0) {
+      } else if (!isTeamAccount && !sent45 && (activeSince45 ?? 0) === 0) {
         type = 'inactivity_dag45'
       } else if (!sent21 && (activeSince21 ?? 0) === 0) {
         type = 'inactivity_dag21'

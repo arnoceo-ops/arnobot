@@ -20,9 +20,9 @@ export async function GET(req: NextRequest) {
 
   const now = new Date()
 
-  const { data: users } = await supabase
+  const { data: usersRaw } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at, arno_call_booked_at')
+    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at, arno_call_booked_at, command_manager')
     .not('trial_start', 'is', null)
     .is('paid_at', null)
     .eq('is_active', true)
@@ -30,6 +30,16 @@ export async function GET(req: NextRequest) {
     .neq('email', E2E_TEST_USER_EMAIL)
     .neq('email', MANUAL_TEST_USER_EMAIL)
     .neq('email', APP_REVIEWER_EMAIL)
+
+  // Team-toegang is niet tijdgebonden aan de eigen trial_start: een teamlid/-manager
+  // betaalt niet zelf, dus mag nooit door deze cron als "trial verlopen" behandeld
+  // worden (2026-08-24-fix, zie docs/TEAM_PLAN.md). Zelfde uitzondering als in proxy.ts.
+  const { data: teamMemberRows } = await supabase
+    .from('arnobot_team_members')
+    .select('user_id')
+  const teamMemberIds = new Set((teamMemberRows ?? []).map(r => r.user_id))
+
+  const users = (usersRaw ?? []).filter(u => !u.command_manager && !teamMemberIds.has(u.user_id))
 
   if (!users?.length) return NextResponse.json({ ok: true, sent: 0 })
 
