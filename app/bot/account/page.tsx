@@ -328,9 +328,9 @@ export default function AccountPage() {
 
         {/* App-wachtwoord */}
         <div style={section}>
-          <p style={label}>WACHTWOORD VOOR DE APP</p>
+          <p style={label}>ANDROID APP</p>
           <p style={body}>
-            Je meldt je aan met LinkedIn. Voor de mobiele app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met hetzelfde e-mailadres als je LinkedIn-account om in te loggen in de app.
+            Je meldt je aan met LinkedIn. Voor de Android-app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met hetzelfde e-mailadres als je LinkedIn-account om in te loggen in de Android-app.
           </p>
           {passwordDone && !showPasswordForm ? (
             <p style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
