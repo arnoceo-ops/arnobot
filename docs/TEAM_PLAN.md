@@ -8,7 +8,7 @@
 
 **Vervolgaudit "wat is nog meer anders voor een teamlid door de hele app heen" (2026-08-24), twee vervolgvondsten:**
 - **Bevestigde bug, gefixt:** `/bot/upgrade` toonde een Team-upsell aan iedereen wiens `plan` niet letterlijk `'team'` was — maar die waarde wordt nergens in de codebase ooit gezet (een teamlid/-manager krijgt `'premium'`/`'elite'`, het niveau van het team), dus elk teamlid/manager zag voor altijd de uitnodiging om een team aan te vragen dat hij al heeft. Nieuwe gedeelde helper `isTeamCovered()` in `lib/teamAccess.ts` (losser dan `isConfirmedTeambaas`, die ook `profiel.gebruik` checkt) lost dit op, en hardt tegelijk `/api/bot/cancel-subscription` server-side (was al client-side verborgen voor teamleden, maar had geen eigen check).
-- **Bewust niet gedaan, lage prioriteit:** `/bot/admin/gebruikers` toont geen teamlid-indicatie en de plan-toggle staat los van het teamniveau. Puur interne tooling, Arno kent het model nu zelf, geen restrictie op de toggle gewenst (kan bewust een teamlid tijdelijk op Elite willen zetten). Optioneel later: een klein "TEAM"-label naast de naam, geen functionele wijziging.
+- **Alsnog gebouwd (2026-08-24), op Arno's verzoek:** `/bot/admin/gebruikers` toonde geen teamlid-indicatie, alleen managers via de COMMAND-kolom. Die kolom is hernoemd naar TEAM en toont nu ook "LID" (puur informatief, geen toggle) voor gewone teamleden, via een nieuwe join met `arnobot_team_members`. PLAN blijft bewust ongewijzigd (Basic/Pro/Elite), aparte as (functietoegang) dan teamrol (organisatorische relatie), geen restrictie op de plan-toggle toegevoegd.
 
 Geverifieerd: tsc, alle drie de statische CI-checks, volledige vitest-suite.
 
