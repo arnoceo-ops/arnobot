@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
+import { isTeamCovered } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +23,13 @@ export async function POST() {
 
   if (!user) return NextResponse.json({ error: 'Gebruiker niet gevonden' }, { status: 404 })
   if (user.cancelled_at) return NextResponse.json({ error: 'Al opgezegd' }, { status: 400 })
+
+  // Server-side vangnet naast de client-side verborgen knop (app/bot/account/page.tsx):
+  // een teamlid/-manager heeft geen eigen abonnement om op te zeggen, dat loopt via het
+  // team. Nooit alleen op UI vertrouwen om deze actie te voorkomen.
+  if (await isTeamCovered(userId)) {
+    return NextResponse.json({ error: 'Teamleden hebben geen eigen abonnement om op te zeggen' }, { status: 400 })
+  }
 
   const now = new Date().toISOString()
 

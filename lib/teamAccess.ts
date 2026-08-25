@@ -34,3 +34,29 @@ export async function isConfirmedTeambaas(userId: string): Promise<boolean> {
 
   return isManagerLid && gebruik !== 'individueel' && heeftCommandManager
 }
+
+// Bepaalt of iemands toegang al gedekt wordt door een team-abonnement (lid óf manager),
+// los van de striktere isConfirmedTeambaas hierboven (die ook profiel.gebruik en de
+// exacte manager-rol checkt, bedoeld om te bepalen welk coaching-raamwerk van
+// toepassing is). Deze simpelere check is voor plekken die alleen willen weten "wordt
+// deze persoon al door een team gedekt", zoals een upgrade-pagina die geen Team-upsell
+// hoort te tonen aan wie al in een team zit. Gebruikt door /bot/upgrade en
+// cancel-subscription; proxy.ts/trial-emails/inactivity-nudge hebben een eigen inline
+// kopie van dezelfde logica (bewust niet hierheen gerefactored, dat zijn al geteste,
+// kritieke toegangspaden, zie docs/TEAM_PLAN.md).
+export async function isTeamCovered(userId: string): Promise<boolean> {
+  const [memberRes, approvedRes] = await Promise.all([
+    supabase
+      .from('arnobot_team_members')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('approved_users')
+      .select('command_manager')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ])
+
+  return !!memberRes.data || approvedRes.data?.command_manager === true
+}

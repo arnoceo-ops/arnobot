@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import BotNav from '../BotNav'
 import UpgradeButton from './UpgradeButton'
 import { SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
+import { isTeamCovered } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,11 +19,14 @@ export default async function UpgradePage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const { data } = await supabase
-    .from('approved_users')
-    .select('plan')
-    .eq('user_id', userId)
-    .single()
+  const [{ data }, teamCovered] = await Promise.all([
+    supabase
+      .from('approved_users')
+      .select('plan')
+      .eq('user_id', userId)
+      .single(),
+    isTeamCovered(userId),
+  ])
 
   // 'elite' bewust niet apart afgehandeld: valt in dezelfde "niet-basis,
   // niet-team"-tak als 'premium' en ziet dus al hetzelfde als Pro (besloten
@@ -63,7 +67,7 @@ export default async function UpgradePage() {
           </div>
         )}
 
-        {plan !== 'team' && (
+        {plan !== 'team' && !teamCovered && (
           <div style={section}>
             <p style={label}>TEAM</p>
             <p style={body}>
@@ -77,7 +81,10 @@ export default async function UpgradePage() {
           </div>
         )}
 
-        {plan === 'team' && (
+        {teamCovered && (
+          <p style={body}>Je bent al onderdeel van een Team-abonnement.</p>
+        )}
+        {!teamCovered && plan === 'team' && (
           <p style={body}>Je zit al op het hoogste plan.</p>
         )}
       </div>
