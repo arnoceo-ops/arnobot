@@ -63,9 +63,6 @@ export default function TestPersonaButtons({ initial }: { initial: string }) {
         ))}
       </div>
       {error && <p style={{ fontSize: '12px', color: '#cc2200', marginTop: 16 }}>{error}</p>}
-      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 24 }}>
-        Huidig actief: <span style={{ color: '#f1f5f9', fontWeight: 700 }}>{PERSONAS.find(p => p.value === active)?.label ?? active}</span>. Log opnieuw in op het testaccount (of herlaad /bot) om de wijziging te zien.
-      </p>
     </div>
   )
 }

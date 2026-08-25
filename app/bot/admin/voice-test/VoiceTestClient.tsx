@@ -115,7 +115,7 @@ export default function VoiceTestClient() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '48px 40px' }}>
       <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT VOICE</p>
-      <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 12px 0', letterSpacing: '-1px', color: '#f1f5f9' }}>Testpagina</h1>
+      <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 12px 0', letterSpacing: '-1px', color: '#f1f5f9' }}>Test 11Labs</h1>
       <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '32px' }}>
         Alleen zichtbaar voor admin. Elke aanroep is los, geen gesprekshistorie. ElevenLabs Flash v2.5, streaming.
       </p>

@@ -45,13 +45,10 @@ export default async function VoiceTestPage() {
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/voice-test" />
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px 0' }}>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-1px' }}>Test-persona</h1>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px 80px' }}>
+        <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>TEST TEAM</p>
         <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 24px 0' }}>
           Zet het handmatige testaccount (test@arno.bot) in één klik om naar een andere rol, door de echte onderliggende data te wijzigen (teamlidmaatschap, command_manager, profiel.rol). Geen bypass, elke pagina gedraagt zich exact zoals bij een echte gebruiker met die gegevens.
-        </p>
-        <p style={{ fontSize: '12px', color: '#f59e0b', lineHeight: 1.6, margin: '0 0 24px 0' }}>
-          Let op: een account kan maar één rol tegelijk hebben. Overschakelen naar een andere persona vervangt de huidige.
         </p>
         <TestPersonaButtons initial={persona} />
       </div>
