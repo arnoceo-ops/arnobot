@@ -1132,7 +1132,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
            bewezen werkt, in plaats van een nieuwe desktop-indeling te verzinnen. */
         .spar-hero {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: auto;
           row-gap: clamp(48px, 6vw, 64px);
           justify-content: center;
           align-items: center;
