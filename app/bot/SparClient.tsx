@@ -1161,7 +1161,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex;
           flex-direction: column;
           align-items: center;
-          row-gap: clamp(48px, 6vw, 64px);
+          row-gap: 20px;
           padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
           overflow: hidden;
         }
