@@ -114,7 +114,7 @@ ElevenLabs API rechtstreeks (geen reseller), model Flash v2.5, streaming audio. 
 Stem: Professional Voice Clone van Arno. Tot die klaar is, een Nederlandse stem uit de ElevenLabs-bibliotheek, stem-ID als env-variabele (bijvoorbeeld `ELEVENLABS_VOICE_ID`) zodat wisselen naar de clone geen codewijziging vereist.
 
 ### 3. Eigen systeeminstructie voor voice-antwoorden
-Voice-antwoorden krijgen een aparte systeeminstructie: gespreksachtige toon, doellengte 400 tot 600 tekens. De bestaande lange tekstantwoorden in de hoofdchat blijven ongewijzigd. Stijlvoorbeeld: de BIEB-samenvattingen.
+Voice-antwoorden krijgen een aparte systeeminstructie: gespreksachtige toon, doellengte 400 tot 600 tekens. De bestaande lange tekstantwoorden in de hoofdchat blijven ongewijzigd. Stijlvoorbeeld: de Analyses-samenvattingen.
 
 Dit wordt geïmplementeerd in een nieuwe, losse route (zie ontwerpvraag 1 hieronder), niet als flag binnen de bestaande `app/api/chat/route.ts`. De bestaande streepjes-regel en jij/jou-regel uit CLAUDE.md gelden onverkort voor deze nieuwe systeeminstructie.
 

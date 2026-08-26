@@ -38,7 +38,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt ArnoBot stap voor stap?',
-        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in de Archief, en vraag daarna een coachingsadvies aan. De respectievelijke pagina\'s staan in het menu: ArnoBot, Archief, Coaching. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
+        a: 'Voer eerst gesprekken, maak dan een patroonanalyse in Analyses, en vraag daarna een coachingsadvies aan. De respectievelijke pagina\'s staan in het menu: ArnoBot, Analyses, Coaching. Elke stap bouwt voort op de vorige. Hoe meer je erin stopt, hoe meer je eruit haalt.',
       },
       {
         q: 'Hoe gebruik ik de gesprekken optimaal?',
@@ -46,7 +46,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Wat is een patroonanalyse en hoe maak ik er een?',
-        a: 'Ga naar de Archief, selecteer de gesprekken waar je een duiding op wilt (maximaal 20) en klik op Analyseer. ArnoBot geeft je de rode draad: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon waar je iets mee kunt.',
+        a: 'Ga naar Analyses, selecteer de gesprekken waar je een duiding op wilt (maximaal 20) en klik op Analyseer. ArnoBot geeft je de rode draad: wat komt steeds terug, wat valt op, wat vraagt aandacht. Maak er geregeld een. Hoe meer je analyseert, hoe scherper het patroon waar je iets mee kunt.',
       },
       {
         q: 'Wanneer kan ik een coachingsadvies opvragen?',
@@ -58,7 +58,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een eerder gesprek voortzetten?',
-        a: 'Ja. Al je gesprekken staan in de Archief. Open een gesprek, scroll naar beneden en klik op "Zet dit gesprek voort bij ArnoBot?" ArnoBot pakt de draad op waar je gebleven was.',
+        a: 'Ja. Al je gesprekken staan in Analyses. Open een gesprek, scroll naar beneden en klik op "Zet dit gesprek voort bij ArnoBot?" ArnoBot pakt de draad op waar je gebleven was.',
       },
     ],
   },
@@ -166,7 +166,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een gedeelde link weer intrekken?',
-        a: 'Ja. Ga naar de Archief, open het gesprek dat je hebt gedeeld (herkenbaar aan "✓ GEDEELD"), en kies LINK INTREKKEN in de popup die dan verschijnt. De link werkt daarna niet meer.',
+        a: 'Ja. Ga naar Analyses, open het gesprek dat je hebt gedeeld (herkenbaar aan "✓ GEDEELD"), en kies LINK INTREKKEN in de popup die dan verschijnt. De link werkt daarna niet meer.',
       },
     ],
   },

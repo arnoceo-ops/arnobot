@@ -42,7 +42,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
 | Mobiele wrapper (in ontwikkeling) | Capacitor (Android) | ^8 |
 
-**Verwijderd (2026-08-01):** Sanity, next-sanity en @portabletext/react zijn volledig verwijderd. De BIEB-kennisbank draait sindsdien uitsluitend op de eigen `blog_chunks`-tabel (RAG via VoyageAI), niet meer op een CMS.
+**Verwijderd (2026-08-01):** Sanity, next-sanity en @portabletext/react zijn volledig verwijderd. De kennisbank draait sindsdien uitsluitend op de eigen `blog_chunks`-tabel (RAG via VoyageAI), niet meer op een CMS.
 
 ---
 
@@ -84,7 +84,7 @@ Eerste inlog → /bot/welkom (welkomspagina, welcome_seen gezet)
     ↓
 Elke sessie → /api/bot/session-end (synthese: title + summary + feiten + uitdaging + entiteiten-extractie)
     ↓
-Na 5+ gesprekken → /api/cron/auto-analyse (BIEB-analyse aangemaakt in arnobot_analyses)
+Na 5+ gesprekken → /api/cron/auto-analyse (analyse aangemaakt in arnobot_analyses, zichtbaar op /bot/analyses)
     ↓
 /bot/coaching → /api/bot/coaching (coachingrapport in arnobot_coaching + arnobot_coaching_history)
     ↓
@@ -219,8 +219,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/sessions/search` | AI-filter op eigen gesprekken |
 | `/api/bot/session` | Eén sessie ophalen/verwijderen |
 | `/api/bot/coaching` | Coachingrapport genereren (hoofdsynthese) |
-| `/api/bot/coaching-analyse` | Nieuwe BIEB-analyse genereren |
-| `/api/bot/coaching-analyses` | Eerdere BIEB-analyses ophalen (lijst) |
+| `/api/bot/coaching-analyse` | Nieuwe analyse genereren voor `/bot/analyses` |
+| `/api/bot/coaching-analyses` | Eerdere analyses ophalen (lijst) |
 | `/api/bot/coaching-precheck` | Check of er genoeg materiaal is voor coaching |
 | `/api/bot/coaching-history` | Coaching-geschiedenis (scores/diagnoses per keer) |
 | `/api/bot/coaching-scores` | Losse scoreverloop (mindset/systeem/actie/MSA) |
@@ -359,7 +359,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/daily-activity` | Dagelijks 03:00 | Dagelijks activiteitsrapport |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
 | `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
-| `/api/cron/auto-analyse` | Dagelijks 04:05 | BIEB-analyse aanmaken bij 5+ nieuwe gesprekken |
+| `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 5+ nieuwe gesprekken |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
 | `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output |
 | `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met CLAUDE.md-inventaris |
@@ -370,7 +370,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachtsdocumenten bijwerken (dit bestand) |
 | `/api/cron/meta-analyse` | 1e vd maand 04:15 | Geautomatiseerde zelfbeoordeling + expertpanel + JOUW ANALYSE |
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's uit `arnobot_memory_entities` als e-mail |
-| `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor BIEB-contentverrijking |
+| `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
 | `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
@@ -435,7 +435,7 @@ Sales-sparringsessie-log: persona, weerstand, debrief, message_count, favoriet, 
 Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`session_id` + `interval_dagen`, `UNIQUE`).
 
 ### `arnobot_analyses`
-BIEB-analyses. Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`).
+Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`).
 
 ### `arnobot_admin_analyses`
 Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot/admin/analyse`. Nooit zichtbaar voor de gebruiker zelf, alleen voor Arno. `generated_count` telt hoe vaak de briefing (opnieuw) gegenereerd is.
@@ -608,7 +608,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/bot/team/zelfcoaching/route.ts` | `claude-fable-5` | Zelfde afweging als hoofdsynthese: belangrijkste synthese van het traject, kosten geen factor. Refusal-check + retry-bij-leeg-antwoord vanaf de eerste versie. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. Getest tegen `claude-opus-5` (2026-07-26): Fable 5 gehandhaafd, Opus 5 liet in die testrun verplichte JSON-velden weg. | 2026-07, aangevuld 2026-08-01 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog, Haiku volstaat | 2026-07 |
-| `app/api/bot/coaching-analyse/route.ts` (BIEB-analyse) | `claude-sonnet-4-6` | Sonnet 5 kon stil leeg antwoord geven bij langere prompts. Retry-bij-leeg-antwoord aanwezig. | 2026-07 |
+| `app/api/bot/coaching-analyse/route.ts` (Analyses-pagina) | `claude-sonnet-4-6` | Sonnet 5 kon stil leeg antwoord geven bij langere prompts. Retry-bij-leeg-antwoord aanwezig. | 2026-07 |
 | `app/api/bot/team/spotlight/route.ts` | `claude-sonnet-4-6` | Zelfde migratie/reden als coaching-analyse. Cruciale boodschap voor manager. | 2026-07 |
 | `app/api/bot/team/1on1/route.ts` | `claude-haiku-4-5-20251001` | Sonnet 5 teruggedraaid: thinking-mode kapt output af. Haiku doet geen thinking, sneller, volstaat. | 2026-07 |
 | `app/api/sparring/debrief/route.ts` | `claude-sonnet-4-6` | Bevestigde bug: Sonnet 5 gaf bij lange transcripten stil een lege debrief. Retry + fallbacktekst. | 2026-07 |

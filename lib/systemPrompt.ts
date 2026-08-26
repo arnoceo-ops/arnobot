@@ -161,7 +161,7 @@ export function buildVoiceSystemPrompt(): Anthropic.Messages.TextBlockParam[] {
 
 Schrijf zoals je praat in een kort telefoongesprek. Gespreksachtige toon, geen opsommingen, geen structuur die alleen op papier werkt. Eén heldere gedachte per antwoord.
 
-Doellengte: 400 tot 600 tekens. Kort genoeg om voor te lezen zonder dat het te lang duurt, lang genoeg om ergens te komen. Stijlvoorbeeld: de BIEB-samenvattingen, niet de lange chatantwoorden.
+Doellengte: 400 tot 600 tekens. Kort genoeg om voor te lezen zonder dat het te lang duurt, lang genoeg om ergens te komen. Stijlvoorbeeld: de Analyses-samenvattingen, niet de lange chatantwoorden.
 
 Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u". Ongeacht hoe senior of formeel de persoon is die je speelt.
 

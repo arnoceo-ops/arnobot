@@ -50,7 +50,7 @@ Een gestructureerd diagnosedocument op drie dimensies: **mindset, systeem, actie
 ### 3.4 Sparring (rollenspel-oefenmodus)
 Een live oefengesprek tegen een AI-tegenstander: een lastige prospect, een sceptische CFO, of een aangepaste rol. Geen adviezen lezen, maar daadwerkelijk oefenen onder druk. Na afloop volgt een debrief met analyse van het gesprek. Beschikbaar op alle betaalde tiers, ook Basic.
 
-### 3.5 Archief en analyses ("BIEB")
+### 3.5 Analyses
 Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyses over patronen in meerdere gesprekken. Sessies kunnen gedeeld worden via een link (bijv. met een coach), en individuele gesprekken of analyses kunnen verwijderd worden.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)

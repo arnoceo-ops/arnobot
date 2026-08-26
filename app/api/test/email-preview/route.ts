@@ -99,12 +99,12 @@ const emails = [
     ),
   },
   {
-    subject: `Je archief is bijgewerkt, ${NAAM}.`,
+    subject: `Je analyses zijn bijgewerkt, ${NAAM}.`,
     html: wrap(
-      'Archief notificatie',
+      'Analyses notificatie',
       `Morning, ${NAAM}. Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste 12 gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.`,
-      'OPEN MIJN ARCHIEF →',
-      'https://arno.bot/bot/archief'
+      'OPEN MIJN ANALYSES →',
+      'https://arno.bot/bot/analyses'
     ),
   },
 ]
