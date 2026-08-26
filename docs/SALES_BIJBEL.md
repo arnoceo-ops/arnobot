@@ -1,8 +1,8 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-24 (punt 13 toegevoegd: community-gebaseerde gespreksopeners)
-**Waar we staan:** 13 van de 14 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 14, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen.
-**Eerstvolgende stap:** De kernbelofte-sectie is een eerste versie, met Arno toetsen of de toon en de zes punten kloppen voordat het salesteam ermee gaat oefenen. Daarna pas bezwaarafhandeling, prijsargumentatie en pitch-scripts (concurrentievergelijking en case studies wachten op input van Arno).
+**Laatst bijgewerkt:** 2026-08-26 (concurrentievergelijking toegevoegd: ArnoBot tegenover LLM's, managers, coachingsbureaus en sales-enablement-tools, plus een nieuwe sectie over het vraag-en-antwoordpatroon als grootste onzichtbare conversierisico)
+**Waar we staan:** 13 van de 14 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 14, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen. Nieuw (2026-08-26): de "Concurrentievergelijking"-sectie uit de openstaande takenlijst is nu ingevuld, gecategoriseerd tegenover LLM's/chatbots, menselijke managers, coachingsbureaus en sales-enablement-tools, plus een apart "onder de motorkap"-blokje. Direct daaraan gekoppeld: een sectie die het grootste, meest onzichtbare conversierisico benoemt, gebruikers die ArnoBot als snelle vraagbaak gebruiken en daardoor nooit de kernwaarde ervaren. Het achterliggende productmechanisme daarvoor (een gate die dit gedrag herkent en afremt) is nog niet gebouwd, alleen als GEPLAND gemarkeerd, expliciet gekoppeld aan golf 1/2 in `docs/SYSTEEMPROMPT_UPGRADE.md`.
+**Eerstvolgende stap:** bezwaarafhandeling, prijsargumentatie en pitch-scripts (case studies wachten nog op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
 
@@ -127,6 +127,58 @@ Elke maand analyseert Claude alle gesprekken en analyses van alle ArnoBot-gebrui
 
 ---
 
+## Concurrentievergelijking: ArnoBot tegenover alles (toegevoegd 2026-08-26)
+
+De losse USP's hierboven bewijzen de kernbelofte. Deze sectie zet ze naast elkaar per type alternatief, zodat je bij elk bezwaar ("waarom niet gewoon ChatGPT", "we hebben al een sales trainer", "we gebruiken al Gong") meteen het juiste antwoord grijpt in plaats van een losse USP te moeten vertalen naar dat specifieke alternatief.
+
+### Tegenover een gratis AI/chatbot (ChatGPT, een eigen bedrijfs-GPT) — LIVE
+- Geheugen dat niet verwatert: gestructureerde opslag en gerichte terugkoppeling over honderden gesprekken, niet een steeds langer wordend gesprek dat aan kwaliteit inlevert (zie punt 1)
+- Directe accountability: checkt actief of een afspraak is nagekomen, inclusief herkenning van reflexief "ja" klikken (zie punt 2)
+- Een herhaalbare, meetbare diagnose (MSA-score) in plaats van los advies per vraag (zie punt 4)
+- Gebouwd op Arno's eigen methodiek en stem, geen generieke sales-prompt op een standaardmodel (zie punt 7)
+
+### Tegenover een menselijke manager of coach — LIVE
+- Overal tegelijk, voor elk teamlid, op het moment dat het nodig is, niet één coachingsgesprek per keer
+- Nooit een slechte dag: dezelfde kwaliteit voor verkoper twintig als voor verkoper één
+- Perfect geheugen over een heel team tegelijk, geen mens onthoudt dat feilloos naast elkaar
+- Geen politiek, favoritisme of ego in de feedback
+- Eerlijkheid die een medewerker tegen zijn eigen baas nooit zou geven, dankzij het privacymodel (manager ziet synthese, nooit ruwe gesprekken, zie punt 5)
+- Kwaliteit verwatert niet als het team groeit, een mens heeft letterlijk beperkte uren (zie de volledige onderbouwing in "De kernbelofte" hierboven)
+
+### Tegenover een coachingsbureau of trainingsprogramma — LIVE
+- Continu in plaats van periodiek: geen dure, tijdgebonden sessies per medewerker (zie punt 8)
+- Vergeetcurve-bestrijding (Ebbinghaus): in-app herinnering, getimede e-mails, oude onopgeloste uitdagingen komen terug als sparring-oefening, maandelijkse patroonherkenning (zie punt 11). Een training zonder herhaling verdampt binnen een dag, dit is het enige dat daar structureel iets tegen doet
+- Live oefenen tegen een weerbarstige AI-tegenstander, geen lijstje tips lezen (zie punt 3)
+
+### Tegenover sales-enablement/call-analyse-tools (Gong, Chorus e.d.) — LIVE
+- Geen belopname-infrastructuur of integratietraject nodig, werkt op iemands eigen reflectie, direct bruikbaar
+- Proactief tussen gesprekken door (coaching, accountability), niet alleen achteraf analyseren wat er in een al gevoerd gesprek gebeurde
+
+### Onder de motorkap — niet zichtbaar voor een prospect, wel het fundament — LIVE
+Niet als losse pitch-zin gebruiken, wel paraat hebben als een technisch onderlegde prospect (IT, inkoop) doorvraagt naar hoe dit werkt:
+- Drielaags geheugen: feiten, samenvattingen, en semantische retrieval over alle oude sessies plus herkenning van terugkerende namen/thema's
+- Kwaliteit-eerst modelkeuze per taak, met retry/fallback-engineering zodat een leeg of afgekapt AI-antwoord nooit stilzwijgend wordt opgeslagen
+- Community-gedreven gespreksopeners: een netwerkeffect dat sterker wordt naarmate ArnoBot groeit, niet na te bouwen door een concurrent zonder diezelfde schaal (zie punt 13)
+- Enterprise-beveiliging en compliance al op orde: RLS, DPA's met elke leverancier, geen training op klantdata (zie punt 9)
+
+---
+
+## Het onzichtbare lek: het vraag-en-antwoordpatroon (toegevoegd 2026-08-26)
+
+Belangrijk voor het salesteam zelf, niet alleen voor wat je tegen een prospect zegt: de grootste bedreiging voor conversie naar betaald is geen concurrerend platform, het is een gewoonte. Een deel van de gebruikers, vaak jongere verkopers, gebruikt ArnoBot als een standaard chatbot: snel een vraag stellen, antwoord krijgen, doorgaan naar de volgende vraag. Ze negeren de meegegeven actie, doen nooit een analyse, starten nooit een coachingstraject. Daarmee halen ze een fractie uit wat ArnoBot kan opleveren, en dat voelt voor hen niet duidelijk anders dan een gratis chatbot. Dat is precies waarom ze niet doorgaan naar een betaald abonnement: ze hebben de kernwaarde nooit ervaren.
+
+**Herken dit patroon in een salesgesprek:** een prospect die vraagt "wat is het verschil met gewoon ChatGPT" heeft dit patroon vaak zelf al onbewust verwacht van het product. Antwoord daar niet op met een functielijst, antwoord met het onderscheid zelf, en gebruik de concurrentievergelijking hierboven om het concreet te maken.
+
+**Pitch-zin:** "Een gratis chatbot geeft je een antwoord en blijft daarna altijd aardig, wat je er ook mee doet. ArnoBot checkt of je het ook echt hebt toegepast, en spreekt je daarop aan als dat niet zo is. Dat verschil is precies waarom iemand die ArnoBot alleen als vraagbaak gebruikt er maar een fractie uithaalt, en waarom wie de acties en coaching wel oppakt blijft."
+
+**Sterk omdat:** dit normaliseert al bij de intake dat losse vragen stellen niet de bedoeling is, waardoor het risico op deze val bij een nieuwe gebruiker vooraf kleiner wordt.
+
+**Voor sales agents zelf:** gebruik ArnoBot in je eigen voorbereiding zoals je het aan een prospect verkoopt, dus mét acties, analyses en coaching, niet als snelle vraagbaak. Je eigen gebruikspatroon is het meest geloofwaardige bewijsstuk dat je in een gesprek hebt.
+
+**Nog niet gebouwd, dus niet pitchen als bestaand kenmerk (GEPLAND):** een herkenning van dit gedrag die ArnoBot zelf gebruikt om een gesprek te onderbreken voordat een nieuwe losse vraag wordt beantwoord ("je kreeg vorige keer deze actie mee, wat heb je ermee gedaan?"). Hangt samen met golf 1/golf 2 van `docs/SYSTEEMPROMPT_UPGRADE.md`: golf 1 (live, 19 augustus) checkt al eenmalig de meest recente openstaande actie voordat een nieuw onderwerp begint, golf 2 (nog niet gebouwd, evaluatie gepland 16 september 2026) voegt de eigenlijke confrontatie toe bij herhaald genegeerd gedrag.
+
+---
+
 ## Gepland — nog NIET pitchen als bestaand kenmerk
 
 ### 14. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
@@ -166,7 +218,6 @@ Niet alle 13 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **
 ## Nog toe te voegen (toekomstige secties)
 
 - Bezwaarafhandeling: veelgestelde tegenwerpingen en hoe erop te reageren
-- Concurrentievergelijking: ArnoBot tegenover generieke AI-tools, tegenover traditionele coachingsbureaus, tegenover interne trainingsprogramma's
 - Pitch-scripts per doelgroep (individuele gebruiker vs. salesbaas/team-inkoper)
 - Case studies / voorbeelden zodra die er zijn
 - Prijsargumentatie, gekoppeld aan `docs/PRICING_DECISIONS.md`
