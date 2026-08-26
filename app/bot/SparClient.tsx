@@ -813,7 +813,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         body: JSON.stringify({ rolCategorie, persona: sparPersona, weerstand: sparWeerstand, context: sparContext, profiel })
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.answer) {
+      if (res.status === 429 && data.error === 'dagelijks_limiet') {
+        setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt vandaag al een sparsessie gebruikt. Basic geeft één sparsessie per dag, Pro onbeperkt. Kom morgen terug of upgrade naar Pro.', hint: null, log_id: null, feedback: null }])
+      } else if (!res.ok || !data.answer) {
         setMessages(prev => [...prev, { role: 'arno', content: 'Dit gesprek kon niet gestart worden. Pas je rolomschrijving aan en probeer opnieuw.', hint: null, log_id: null, feedback: null }])
       } else {
         const answer = data.answer

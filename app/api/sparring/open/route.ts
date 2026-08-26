@@ -4,14 +4,40 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE, WEERSTAND_OPENING_TOON } from '@/lib/sparringPersonas'
+import { logEvent } from '@/lib/events'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Basic krijgt 1 sparsessie per dag (zie /prijzen: "Dagelijks sparren" vs Pro's "Onbeperkt
+  // chatten en oefenen"), Pro/Team onbeperkt. Vóór 2026-08-26 had deze route geen enkele
+  // plan-check, zie lib/kostenTarieven.ts regel 228 waar dit al in juli was gesignaleerd maar
+  // nooit opgevolgd. Geteld via arnobot_events (sparring_open), niet via
+  // arnobot_sparring_sessions: die tabel krijgt pas een rij bij het debriefen aan het eind,
+  // en alleen als de gebruiker ook echt heeft gereageerd (zie sparring/debrief), dus een
+  // geopende maar nooit afgesloten sessie zou anders niet meetellen.
+  const [planRes, todayRes] = await Promise.all([
+    supabase.from('approved_users').select('plan').eq('user_id', userId).single(),
+    supabase.from('arnobot_events').select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('event_name', 'sparring_open')
+      .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
+  ])
+  const plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
+  const todayCount = todayRes.count ?? 0
+  if (plan === 'basis' && todayCount >= 1) {
+    return NextResponse.json({ error: 'dagelijks_limiet', plan: 'basis' }, { status: 429 })
+  }
 
   const body = await req.json()
   const { rolCategorie, persona, weerstand, context, profiel } = body
@@ -76,5 +102,6 @@ REGELS:
     console.error('[sparring/open] lege opening na retry, userId:', userId)
     return NextResponse.json({ error: 'Kon geen opening genereren' }, { status: 502 })
   }
+  await logEvent(userId, 'sparring_open')
   return NextResponse.json({ answer })
 }

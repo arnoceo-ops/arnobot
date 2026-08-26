@@ -38,6 +38,10 @@ export default function AccountPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
+  // De Android-app is Pro/Team-only (zie /prijzen), Basic mist 'm. Zonder deze gate zag elke
+  // gebruiker de sectie ongeacht plan, ook een teruggevallen trial-gebruiker na 30 dagen.
+  const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
+  const [planLoaded, setPlanLoaded] = useState(false)
 
   useEffect(() => {
     // Clerk weet al of dit account een wachtwoord heeft (LinkedIn-only-accounts hebben er
@@ -61,6 +65,11 @@ export default function AccountPage() {
         }
       })
       .catch(() => {})
+    fetch('/api/bot/plan')
+      .then(r => r.json())
+      .then(d => setPlan(d.plan ?? 'basis'))
+      .catch(() => {})
+      .finally(() => setPlanLoaded(true))
   }, [])
 
   if (!isLoaded) return (
@@ -302,7 +311,8 @@ export default function AccountPage() {
           </Link>
         </div>
 
-        {/* App-wachtwoord */}
+        {/* App-wachtwoord — Pro/Team-only, zie /prijzen */}
+        {planLoaded && plan !== 'basis' && (
         <div style={section}>
           <p style={label}>ANDROID APP</p>
           <p style={body}>
@@ -344,6 +354,7 @@ export default function AccountPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Data export */}
         <div style={section}>
