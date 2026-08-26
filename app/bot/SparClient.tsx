@@ -1126,29 +1126,27 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex; flex-direction: column;
         }
 
-        /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
+        /* HERO — geen foto meer (2026-08-26, bewust: merk moet los van Arno's persoon
+           kunnen bestaan, zie geheugen project_arnobot_brand_independence). Eén gecentreerde
+           kolom, hergebruikt exact de opmaak die op touch-devices al langer live stond en
+           bewezen werkt, in plaats van een nieuwe desktop-indeling te verzinnen. */
         .spar-hero {
           display: grid;
-          grid-template-columns: auto auto;
-          column-gap: clamp(24px, 4vw, 80px);
+          grid-template-columns: 1fr;
           row-gap: clamp(48px, 6vw, 64px);
           justify-content: center;
-          align-items: flex-end;
-          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
+          align-items: center;
+          text-align: center;
+          padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
           overflow: hidden;
         }
-        .hero-photo img {
-          height: clamp(200px, 24vw, 340px);
-          width: auto;
-          display: block;
-        }
         .hero-text {
-          display: flex; flex-direction: column; justify-content: flex-end;
+          display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
           gap: clamp(10px, 1.5vw, 20px);
         }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(64px, 10vw, 120px);
+          font-size: clamp(72px, 14vw, 140px);
           line-height: 0.9; letter-spacing: -2px;
         }
         .spar-title span { color: #f59e0b; }
@@ -1156,17 +1154,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(20px, 2.5vw, 40px);
           letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
-        }
-        /* Touch (telefoon / tablet): één kolom, gecentreerd — geen pixel-grens */
-        @media (pointer: coarse) {
-          .spar-hero {
-            grid-template-columns: 1fr;
-            text-align: center; align-items: center;
-            padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
-          }
-          .hero-photo { display: none; }
-          .hero-text { align-items: center; }
-          .spar-title { font-size: clamp(72px, 14vw, 140px); }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1650,12 +1637,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode !== 'sparren' && (
           <div className="spar-hero">
-            <div className="hero-photo">
-              {(() => {
-                const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
-                return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
-              })()}
-            </div>
             <div className="hero-text">
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
