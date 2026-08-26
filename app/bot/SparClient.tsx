@@ -1141,19 +1141,24 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           overflow: hidden;
         }
         .hero-text {
-          display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+          display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
+          width: fit-content;
           gap: clamp(10px, 1.5vw, 20px);
         }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(72px, 14vw, 140px);
           line-height: 0.9; letter-spacing: -2px;
+          text-align: center;
         }
         .spar-title span { color: #f59e0b; }
         .hero-subtitle {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(20px, 2.5vw, 40px);
           letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
+          width: 100%;
+          text-align: justify;
+          text-align-last: justify;
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1639,7 +1644,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           <div className="spar-hero">
             <div className="hero-text">
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
+              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES SALES COACH</p>
             </div>
             <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
           </div>
