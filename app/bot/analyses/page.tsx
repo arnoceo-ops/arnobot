@@ -113,9 +113,20 @@ export default function GeschiedenisPage() {
   const [unshareLoading, setUnshareLoading] = useState(false)
   const analysesSectionRef = useRef<HTMLDivElement>(null)
   const expandedRef = useRef<string | null>(null)
+  // Bepaalt of de coaching-hint/link hieronder "naar coaching" of "upgrade naar Pro" zegt.
+  const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
+  const [planLoaded, setPlanLoaded] = useState(false)
 
   useEffect(() => {
     setAnalysesNudgeGezien(!!sessionStorage.getItem('arnobot_analyses_nudge_gezien'))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/bot/plan')
+      .then(r => r.json())
+      .then(d => setPlan(d.plan ?? 'basis'))
+      .catch(() => {})
+      .finally(() => setPlanLoaded(true))
   }, [])
 
   useEffect(() => {
@@ -803,11 +814,11 @@ export default function GeschiedenisPage() {
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                   <Link
-                    href="/bot/coaching"
+                    href={planLoaded && plan === 'basis' ? '/bot/upgrade' : '/bot/coaching'}
                     className="coaching-hint-btn"
                     style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
                   >
-                    NAAR COACHING →
+                    {planLoaded && plan === 'basis' ? 'UPGRADE NAAR PRO →' : 'NAAR COACHING →'}
                   </Link>
                   <button
                     onClick={dismissCoachingHint}
@@ -940,8 +951,8 @@ export default function GeschiedenisPage() {
               ← TERUG NAAR ARNOBOT
             </Link>
             {!showCoachingHint && (
-              <Link href="/bot/coaching" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
-                VERDER NAAR COACHING →
+              <Link href={planLoaded && plan === 'basis' ? '/bot/upgrade' : '/bot/coaching'} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
+                {planLoaded && plan === 'basis' ? 'UPGRADE NAAR PRO →' : 'VERDER NAAR COACHING →'}
               </Link>
             )}
           </div>
