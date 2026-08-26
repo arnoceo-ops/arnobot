@@ -231,32 +231,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Subtitel exact zo breed als de ARNOBOT.-titel maken, ongeacht welke van de twee van
-  // nature breder uitvalt op een gegeven scherm (dat verschilt per breedte, zie 2026-08-26).
-  // Uitvullen (text-align-last: justify) kan alleen breder maken, nooit smaller, dus dat werkt
-  // niet als de subtitel toevallig al breder is dan de titel. Een gemeten scaleX-transform werkt
-  // in beide richtingen en is geen aanname over welke tekst breder is, maar een berekening.
-  const heroTitleRef = useRef<HTMLHeadingElement>(null)
-  const heroSubtitleRef = useRef<HTMLParagraphElement>(null)
-  const [subtitleScaleX, setSubtitleScaleX] = useState(1)
-
-  useEffect(() => {
-    function matchSubtitleWidth() {
-      const title = heroTitleRef.current
-      const subtitle = heroSubtitleRef.current
-      if (!title || !subtitle) return
-      subtitle.style.transform = 'scaleX(1)'
-      const titleWidth = title.offsetWidth
-      const subtitleWidth = subtitle.offsetWidth
-      if (titleWidth > 0 && subtitleWidth > 0) setSubtitleScaleX(titleWidth / subtitleWidth)
-    }
-    // document.fonts.ready voorkomt een meting op de fallback-font vóórdat Bebas Neue geladen is,
-    // wat een verkeerde (te brede of te smalle) verhouding zou vastleggen.
-    document.fonts?.ready.then(matchSubtitleWidth).catch(() => matchSubtitleWidth())
-    window.addEventListener('resize', matchSubtitleWidth)
-    return () => window.removeEventListener('resize', matchSubtitleWidth)
-  }, [])
-
   const MAX_FILE_BYTES = 10 * 1024 * 1024
   const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
@@ -1152,36 +1126,47 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex; flex-direction: column;
         }
 
-        /* HERO — geen foto meer (2026-08-26, bewust: merk moet los van Arno's persoon
-           kunnen bestaan, zie geheugen project_arnobot_brand_independence). Eén gecentreerde
-           kolom. De amber lijn heeft een eigen, vaste breedte (1218px, gelijk aan
-           .openers-grid-line hieronder), losstaand van de titel/subtitel-kolom, dus geen
-           grid-kolomtruc meer nodig zoals bij de foto-versie. */
+        /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
         .spar-hero {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          row-gap: 20px;
-          padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
+          display: grid;
+          grid-template-columns: auto auto;
+          column-gap: clamp(24px, 4vw, 80px);
+          row-gap: clamp(48px, 6vw, 64px);
+          justify-content: center;
+          align-items: flex-end;
+          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
           overflow: hidden;
         }
+        .hero-photo img {
+          height: clamp(200px, 24vw, 340px);
+          width: auto;
+          display: block;
+        }
         .hero-text {
-          display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+          display: flex; flex-direction: column; justify-content: flex-end;
           gap: clamp(10px, 1.5vw, 20px);
         }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(72px, 14vw, 140px);
+          font-size: clamp(64px, 10vw, 120px);
           line-height: 0.9; letter-spacing: -2px;
-          text-align: center;
         }
         .spar-title span { color: #f59e0b; }
         .hero-subtitle {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(20px, 2.5vw, 40px);
           letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
-          white-space: nowrap;
-          transform-origin: center;
+        }
+        /* Touch (telefoon / tablet): één kolom, gecentreerd — geen pixel-grens */
+        @media (pointer: coarse) {
+          .spar-hero {
+            grid-template-columns: 1fr;
+            text-align: center; align-items: center;
+            padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
+          }
+          .hero-photo { display: none; }
+          .hero-text { align-items: center; }
+          .spar-title { font-size: clamp(72px, 14vw, 140px); }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1665,11 +1650,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode !== 'sparren' && (
           <div className="spar-hero">
-            <div className="hero-text">
-              <h1 className="spar-title" ref={heroTitleRef}>ARNO<span>BOT.</span></h1>
-              <p className="hero-subtitle" ref={heroSubtitleRef} style={{ transform: `scaleX(${subtitleScaleX})` }}>JOUW 24/7 NO EXCUSES SALES COACH</p>
+            <div className="hero-photo">
+              {(() => {
+                const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
+                return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
+              })()}
             </div>
-            <div style={{ width: '100%', maxWidth: 1218, borderBottom: '2px solid #f59e0b' }} />
+            <div className="hero-text">
+              <h1 className="spar-title">ARNO<span>BOT.</span></h1>
+              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
+            </div>
+            <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
           </div>
         )}
 
