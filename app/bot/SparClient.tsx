@@ -231,6 +231,32 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Subtitel exact zo breed als de ARNOBOT.-titel maken, ongeacht welke van de twee van
+  // nature breder uitvalt op een gegeven scherm (dat verschilt per breedte, zie 2026-08-26).
+  // Uitvullen (text-align-last: justify) kan alleen breder maken, nooit smaller, dus dat werkt
+  // niet als de subtitel toevallig al breder is dan de titel. Een gemeten scaleX-transform werkt
+  // in beide richtingen en is geen aanname over welke tekst breder is, maar een berekening.
+  const heroTitleRef = useRef<HTMLHeadingElement>(null)
+  const heroSubtitleRef = useRef<HTMLParagraphElement>(null)
+  const [subtitleScaleX, setSubtitleScaleX] = useState(1)
+
+  useEffect(() => {
+    function matchSubtitleWidth() {
+      const title = heroTitleRef.current
+      const subtitle = heroSubtitleRef.current
+      if (!title || !subtitle) return
+      subtitle.style.transform = 'scaleX(1)'
+      const titleWidth = title.offsetWidth
+      const subtitleWidth = subtitle.offsetWidth
+      if (titleWidth > 0 && subtitleWidth > 0) setSubtitleScaleX(titleWidth / subtitleWidth)
+    }
+    // document.fonts.ready voorkomt een meting op de fallback-font vóórdat Bebas Neue geladen is,
+    // wat een verkeerde (te brede of te smalle) verhouding zou vastleggen.
+    document.fonts?.ready.then(matchSubtitleWidth).catch(() => matchSubtitleWidth())
+    window.addEventListener('resize', matchSubtitleWidth)
+    return () => window.removeEventListener('resize', matchSubtitleWidth)
+  }, [])
+
   const MAX_FILE_BYTES = 10 * 1024 * 1024
   const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 
@@ -1128,21 +1154,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         /* HERO — geen foto meer (2026-08-26, bewust: merk moet los van Arno's persoon
            kunnen bestaan, zie geheugen project_arnobot_brand_independence). Eén gecentreerde
-           kolom, hergebruikt exact de opmaak die op touch-devices al langer live stond en
-           bewezen werkt, in plaats van een nieuwe desktop-indeling te verzinnen. */
+           kolom. De amber lijn heeft een eigen, vaste breedte (1218px, gelijk aan
+           .openers-grid-line hieronder), losstaand van de titel/subtitel-kolom, dus geen
+           grid-kolomtruc meer nodig zoals bij de foto-versie. */
         .spar-hero {
-          display: grid;
-          grid-template-columns: auto;
-          row-gap: clamp(48px, 6vw, 64px);
-          justify-content: center;
+          display: flex;
+          flex-direction: column;
           align-items: center;
-          text-align: center;
+          row-gap: clamp(48px, 6vw, 64px);
           padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
           overflow: hidden;
         }
         .hero-text {
-          display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
-          width: fit-content;
+          display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
           gap: clamp(10px, 1.5vw, 20px);
         }
         .spar-title {
@@ -1156,9 +1180,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(20px, 2.5vw, 40px);
           letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
-          width: 100%;
-          text-align: justify;
-          text-align-last: justify;
+          white-space: nowrap;
+          transform-origin: center;
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1643,10 +1666,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {mode !== 'sparren' && (
           <div className="spar-hero">
             <div className="hero-text">
-              <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES SALES COACH</p>
+              <h1 className="spar-title" ref={heroTitleRef}>ARNO<span>BOT.</span></h1>
+              <p className="hero-subtitle" ref={heroSubtitleRef} style={{ transform: `scaleX(${subtitleScaleX})` }}>JOUW 24/7 NO EXCUSES SALES COACH</p>
             </div>
-            <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
+            <div style={{ width: '100%', maxWidth: 1218, borderBottom: '2px solid #f59e0b' }} />
           </div>
         )}
 
