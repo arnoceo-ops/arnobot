@@ -47,7 +47,7 @@ export default async function VoiceTestPage() {
       <AdminNav active="/bot/admin/voice-test" />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 40px 80px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT TEAM</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 12px 0', letterSpacing: '-1px', color: '#f1f5f9' }}>Test Persona</h1>
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 12px 0', letterSpacing: '-1px', color: '#f1f5f9' }}>Test Personas</h1>
         <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 24px 0' }}>
           Zet het handmatige testaccount (test@arno.bot) in één klik om naar een andere rol, door de echte onderliggende data te wijzigen (teamlidmaatschap, command_manager, profiel.rol).
         </p>
