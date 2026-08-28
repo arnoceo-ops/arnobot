@@ -9,6 +9,7 @@ import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
+import { parseGroeibalansClassificatie } from '@/lib/groeibalans'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { Redis } from '@upstash/redis'
 
@@ -99,6 +100,24 @@ export async function POST(req: NextRequest) {
   let themas: string[] = []
   let excuustaal = false
 
+  // Profiel + huidige tellers voor de Gebruiksbalans-classificatie (lib/groeibalans.ts).
+  // Bewust vóór de upsert van dit gesprek geteld: het gaat om een globale inschatting van het
+  // gebruikspatroon, een verschil van één gesprek maakt daar niets voor uit.
+  const [profielRes, gesprekkenCountRes, sparCountRes, analysesCountRes, coachingCountRes] = await Promise.all([
+    supabase.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
+    supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('arnobot_analyses').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('arnobot_coaching').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+  ])
+  const profiel = (profielRes.data?.profiel ?? {}) as Record<string, unknown>
+  const tellers = {
+    gesprekken: gesprekkenCountRes.count ?? 0,
+    sparsessies: sparCountRes.count ?? 0,
+    analyses: analysesCountRes.count ?? 0,
+    coaching: coachingCountRes.count ?? 0,
+  }
+
   const callSummaryModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 300,
@@ -163,6 +182,37 @@ ${RULE_NO_INVENTED_DETAILS}`,
     }]
   })
 
+  // Gebruiksbalans-classificatie ("Gebruiksbalans"-kader op /bot, desktop-only, lib/groeibalans.ts):
+  // rolbewust, kijkt naar profiel + dit gesprek + de huidige tellers, bepaalt of het kader
+  // getoond moet worden en zo ja met welke toon (state) en welke bouwsteen als aanbeveling.
+  const callGroeibalansModel = () => anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 150,
+    system: `Je beoordeelt of deze gebruiker op dit moment een concrete aanbeveling nodig heeft om meer uit ArnoBot te halen, gegeven zijn rol en huidige gebruik.
+
+ArnoBot heeft vier bouwstenen: gesprekken (vragen stellen), sparsessies (een lastig gesprek oefenen), analyses (patronen laten zien in eigen gesprekken), coaching (een synthese en groeiplan over meerdere gesprekken heen).
+
+Beoordeel of het huidige gebruikspatroon bij de rol van de gebruiker past. Belangrijk: een leidinggevende rol (bijvoorbeeld sales manager, sales director, teamleider) heeft structureel veel minder aan sparsessies dan een verkoper die zelf klantgesprekken voert, dat is geen tekortkoming en geen reden om sparsessies aan te bevelen.
+
+Geef ALLEEN een JSON-object terug, geen andere tekst, geen uitleg:
+{"tonen": true, "state": "groeikans", "bouwsteen": "sparsessies"}
+of
+{"tonen": false}
+
+"tonen": false als het gebruikspatroon, gegeven de rol, al goed en volledig is en er niets zinvols aan te bevelen valt.
+"state": "groeikans" bij een duidelijke, nog onbenutte bouwsteen. "neutraal" bij pril gebruik zonder duidelijk patroon. "gezond" bij overwegend goed gebruik met één relatief zwakkere bouwsteen.
+"bouwsteen": alleen sparsessies, analyses of coaching, nooit gesprekken.`,
+    messages: [{
+      role: 'user',
+      content: `Rol: ${profiel.rol ?? 'onbekend'}. Functiejaren: ${profiel.jaren_functie ?? 'onbekend'}. Teamgrootte: ${profiel.teamgrootte ?? 'onbekend'}.
+
+Huidig gebruik in totaal: ${tellers.gesprekken} gesprekken, ${tellers.sparsessies} sparsessies, ${tellers.analyses} analyses, ${tellers.coaching} coachings.
+
+Het gesprek van vandaag:
+${conversationText.slice(0, 4000)}`
+    }]
+  })
+
   // Een uitdaging/actie wordt alleen nog gegenereerd bij een gesprek met minimaal 2 beurten.
   // Bij 1 beurt (preformatted vraag, los éénmalig vraagje) is er geen inhoudelijke basis voor
   // een actie waar iemand zich later aan zou moeten "herinneren", zie de ACTIE-REMINDER-klacht
@@ -171,13 +221,15 @@ ${RULE_NO_INVENTED_DETAILS}`,
   const genereerUitdaging = messageCount >= 2
 
   try {
-    // Themas zijn een supplementair signaal (De Spiegel, punt 2A), geen kritiek pad zoals
-    // summary/feiten/uitdaging: .catch(() => null) voorkomt dat een falende classificatie de
-    // hele Promise.all laat rejecten en de rest van de sessie-opslag blokkeert.
+    // Themas en groeibalans zijn supplementaire signalen (De Spiegel resp. het
+    // Gebruiksbalans-kader), geen kritiek pad zoals summary/feiten/uitdaging: .catch(() => null)
+    // voorkomt dat een falende classificatie de hele Promise.all laat rejecten en de rest van de
+    // sessie-opslag blokkeert.
     const themasPromise = callThemasModel().catch(() => null)
+    const groeibalansPromise = callGroeibalansModel().catch(() => null)
     const uitdagingPromise = genereerUitdaging ? callUitdagingModel() : Promise.resolve(null)
-    const [summaryRes, feitenRes, uitdagingRes, themasRes] = await Promise.all([
-      callSummaryModel(), callFeitenModel(), uitdagingPromise, themasPromise,
+    const [summaryRes, feitenRes, uitdagingRes, themasRes, groeibalansRes] = await Promise.all([
+      callSummaryModel(), callFeitenModel(), uitdagingPromise, themasPromise, groeibalansPromise,
     ])
     summary = getText(summaryRes.content)
     feiten = getText(feitenRes.content)
@@ -186,6 +238,15 @@ ${RULE_NO_INVENTED_DETAILS}`,
       const classificatie = parseThemaClassificatie(getText(themasRes.content, '{}'))
       themas = classificatie.themas
       excuustaal = classificatie.excuustaal
+    }
+    if (groeibalansRes) {
+      const classificatie = parseGroeibalansClassificatie(getText(groeibalansRes.content, '{}'))
+      if (classificatie) {
+        const update = classificatie.tonen
+          ? { groeibalans_tonen: true, groeibalans_state: classificatie.state, groeibalans_bouwsteen: classificatie.bouwsteen, groeibalans_bijgewerkt_op: new Date().toISOString() }
+          : { groeibalans_tonen: false, groeibalans_state: null, groeibalans_bouwsteen: null, groeibalans_bijgewerkt_op: new Date().toISOString() }
+        await supabase.from('approved_users').update(update).eq('user_id', userId)
+      }
     }
 
     if (!summary) {

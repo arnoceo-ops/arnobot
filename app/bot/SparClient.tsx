@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
+import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN } from '@/lib/groeibalans'
 
 function formatLastDate(iso: string | null): string {
   if (!iso) return ''
@@ -58,6 +59,15 @@ interface Props {
   resumeSessionId?: string
   mode?: 'gesprek' | 'sparren'
   plan?: 'basis' | 'premium' | 'team'
+  groeibalans?: {
+    state: GroeibalansState
+    bouwsteen: GroeibalansBouwsteen
+    tekst: string
+    knop: string
+    href: string
+    kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]
+    tellers: { gesprekken: number; sparsessies: number; analyses: number; coaching: number }
+  } | null
 }
 
 interface SparHistoryEntry {
@@ -170,7 +180,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, mode = 'gesprek', plan = 'premium' }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -1165,6 +1175,69 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .spar-title { font-size: clamp(72px, 14vw, 140px); }
           .hero-subtitle { font-size: clamp(21px, 2.65vw, 42px); letter-spacing: 2.1px; line-height: 1.2; margin-bottom: 0; }
         }
+
+        /* GEBRUIKSBALANS — desktop-only kader onder de hero, zie lib/groeibalans.ts */
+        .groeibalans-wrap {
+          display: flex;
+          justify-content: center;
+          padding: 0 clamp(20px,5vw,60px) 32px;
+        }
+        .groeibalans-kader {
+          width: 650px;
+          max-width: 100%;
+          border: 1px solid;
+          border-radius: 4px;
+          padding: 20px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .groeibalans-tellers {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 0.5px;
+          color: #9ca3af;
+        }
+        .groeibalans-tellers b {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 18px;
+          letter-spacing: 1px;
+          color: #f1f5f9;
+          font-weight: 400;
+        }
+        .groeibalans-tellers .sep {
+          color: #6b7280;
+          margin: 0 6px;
+        }
+        .groeibalans-onder {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+        .groeibalans-tekst {
+          font-family: 'Space Mono', monospace;
+          font-size: 14px;
+          line-height: 1.6;
+          margin: 0;
+          max-width: 440px;
+        }
+        .groeibalans-knop {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 15px;
+          letter-spacing: 2px;
+          padding: 10px 22px;
+          border-radius: 999px;
+          background: #f59e0b;
+          color: #111827;
+          text-decoration: none;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        @media (pointer: coarse) {
+          .groeibalans-wrap { display: none; }
+        }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
           .spar-voice-toggle { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1652,6 +1725,29 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
+          </div>
+        )}
+
+        {mode !== 'sparren' && groeibalans && (
+          <div className="groeibalans-wrap">
+            <div
+              className="groeibalans-kader"
+              style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
+            >
+              <p className="groeibalans-tellers">
+                <b>{groeibalans.tellers.gesprekken}</b> gesprekken
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'sparsessies' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.sparsessies}</b> sparsessies
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'analyses' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.analyses}</b> analyses
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> coachings
+              </p>
+              <div className="groeibalans-onder">
+                <p className="groeibalans-tekst" style={{ color: groeibalans.kleur.tekst }}>{groeibalans.tekst}</p>
+                <Link href={groeibalans.href} className="groeibalans-knop">{groeibalans.knop}</Link>
+              </div>
+            </div>
           </div>
         )}
 
