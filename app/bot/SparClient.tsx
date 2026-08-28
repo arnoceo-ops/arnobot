@@ -1126,24 +1126,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex; flex-direction: column;
         }
 
-        /* HERO — 2 kolommen, schaalt van nature mee, geen harde grenzen */
+        /* HERO — geen foto meer, gecentreerd blok, lijn op vaste 650px */
         .spar-hero {
-          display: grid;
-          grid-template-columns: auto auto;
-          column-gap: clamp(24px, 4vw, 80px);
-          row-gap: clamp(48px, 6vw, 64px);
-          justify-content: center;
-          align-items: flex-end;
-          padding: clamp(20px,3vw,36px) clamp(20px,5vw,60px) clamp(28px,4vw,48px);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+          padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
           overflow: hidden;
         }
-        .hero-photo img {
-          height: clamp(200px, 24vw, 340px);
-          width: auto;
-          display: block;
-        }
         .hero-text {
-          display: flex; flex-direction: column; justify-content: flex-end;
+          display: flex; flex-direction: column; align-items: flex-start;
           gap: clamp(10px, 1.5vw, 20px);
         }
         .spar-title {
@@ -1157,16 +1150,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-size: clamp(20px, 2.5vw, 40px);
           letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
         }
-        /* Touch (telefoon / tablet): één kolom, gecentreerd — geen pixel-grens */
+        .hero-divider {
+          width: 650px;
+          max-width: 100%;
+          border-bottom: 2px solid #f59e0b;
+        }
         @media (pointer: coarse) {
-          .spar-hero {
-            grid-template-columns: 1fr;
-            text-align: center; align-items: center;
-            padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) clamp(40px,6vw,64px);
-          }
-          .hero-photo { display: none; }
           .hero-text { align-items: center; }
-          .spar-title { font-size: clamp(72px, 14vw, 140px); }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
@@ -1650,17 +1640,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode !== 'sparren' && (
           <div className="spar-hero">
-            <div className="hero-photo">
-              {(() => {
-                const idx = Math.floor(Date.now() / (48 * 60 * 60 * 1000)) % 17 + 1
-                return <img src={`/header-fotos/foto-${idx}.jpg`} alt="" />
-              })()}
-            </div>
             <div className="hero-text">
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
             </div>
-            <div style={{ gridColumn: '1 / -1', borderBottom: '2px solid #f59e0b' }} />
+            <div className="hero-divider" />
           </div>
         )}
 
