@@ -1153,6 +1153,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           letter-spacing: 1.4px; color: #9ca3af; line-height: 1.15;
           margin-bottom: 6px;
         }
+        .hero-subtitle-line2 { display: inline-block; margin-top: 1px; }
         .hero-divider {
           width: 650px;
           max-width: 100%;
@@ -1648,7 +1649,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           <div className="spar-hero">
             <div className="hero-text">
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
-              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br />SALES COACH</p>
+              <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
           </div>
