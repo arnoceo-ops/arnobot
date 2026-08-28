@@ -1151,7 +1151,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Bebas Neue', sans-serif;
           font-size: 41px;
           letter-spacing: 1.4px; color: #9ca3af; line-height: 1.15;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
         }
         .hero-subtitle-line2 { display: inline-block; margin-top: 1px; }
         .hero-divider {
