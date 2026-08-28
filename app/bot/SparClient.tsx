@@ -1203,10 +1203,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Space Mono', monospace;
           font-size: 13px;
           letter-spacing: 2px;
-          color: #6b7280;
+          color: #f59e0b;
           text-decoration: none;
         }
-        .voorbeeldvragen-link:hover { color: #f59e0b; }
+        .voorbeeldvragen-link:hover { color: #d97706; }
         @media (pointer: coarse) {
           .voorbeeldvragen-link-wrap { display: none; }
         }
@@ -2300,7 +2300,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && openersLoaded && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/voorbeeldvragen" className="voorbeeldvragen-link">OF KIES EEN VOORBEELDVRAAG →</Link>
+            <Link href="/bot/voorbeeldvragen" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
           </div>
         )}
 
