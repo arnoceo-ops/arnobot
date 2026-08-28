@@ -57,7 +57,7 @@ interface Props {
   taglineTitle: string
   taglineSub: string
   resumeSessionId?: string
-  mode?: 'gesprek' | 'sparren'
+  mode?: 'gesprek' | 'sparren' | 'voorbeeldvragen'
   plan?: 'basis' | 'premium' | 'team'
   groeibalans?: {
     state: GroeibalansState
@@ -307,7 +307,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [actieElaboratieInput, setActieElaboratieInput] = useState('')
   const [sparSuggestie, setSparSuggestie] = useState<{ uitdaging: string; created_at: string } | null>(null)
   const [sparSuggestieAfgewezen, setSparSuggestieAfgewezen] = useState(false)
-  const [sparModus] = useState<'gesprek' | 'sparren'>(mode)
+  // 'voorbeeldvragen' gedraagt zich voor sessie/chat-logica identiek aan 'gesprek', alleen de
+  // JSX vóór het eerste bericht (verderop, op de kale `mode`-prop) ziet er anders uit.
+  const [sparModus] = useState<'gesprek' | 'sparren'>(mode === 'sparren' ? 'sparren' : 'gesprek')
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
@@ -1176,6 +1178,39 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .hero-subtitle { font-size: clamp(21px, 2.65vw, 42px); letter-spacing: 2.1px; line-height: 1.2; margin-bottom: 0; }
         }
 
+        /* VOORBEELDVRAGEN — eigen, kleinere hero op /bot/voorbeeldvragen, en het kleine linkje
+           dat op /bot zelf naar die pagina verwijst (28 augustus 2026, zie lib/groeibalans.ts-
+           commit-buurman hierboven voor de reden: weinig gebruikt, maakte /bot te druk). */
+        .vraag-hero {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+          padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) 0;
+        }
+        .vraag-titel {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(36px, 6vw, 56px);
+          letter-spacing: 1px;
+          color: #f1f5f9;
+        }
+        .voorbeeldvragen-link-wrap {
+          display: flex;
+          justify-content: center;
+          padding: 0 clamp(20px,5vw,60px) 40px;
+        }
+        .voorbeeldvragen-link {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 2px;
+          color: #6b7280;
+          text-decoration: none;
+        }
+        .voorbeeldvragen-link:hover { color: #f59e0b; }
+        @media (pointer: coarse) {
+          .voorbeeldvragen-link-wrap { display: none; }
+        }
+
         /* GEBRUIKSBALANS — desktop-only kader onder de hero, zie lib/groeibalans.ts */
         .groeibalans-wrap {
           display: flex;
@@ -1718,7 +1753,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
 
-        {mode !== 'sparren' && (
+        {mode === 'gesprek' && (
           <div className="spar-hero">
             <div className="hero-text">
               <h1 className="spar-title">ARNO<span>BOT.</span></h1>
@@ -1728,7 +1763,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {mode !== 'sparren' && groeibalans && (
+        {mode === 'voorbeeldvragen' && !started && (
+          <div className="vraag-hero">
+            <h1 className="vraag-titel">VOORBEELDVRAGEN</h1>
+            <div className="hero-divider" />
+          </div>
+        )}
+
+        {mode === 'gesprek' && groeibalans && (
           <div className="groeibalans-wrap">
             <div
               className="groeibalans-kader"
@@ -2256,7 +2298,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && !loading && sparModus !== 'sparren' && openersLoaded && (
+        {!started && !loading && mode === 'gesprek' && openersLoaded && (
+          <div className="voorbeeldvragen-link-wrap">
+            <Link href="/bot/voorbeeldvragen" className="voorbeeldvragen-link">OF KIES EEN VOORBEELDVRAAG →</Link>
+          </div>
+        )}
+
+        {!started && !loading && mode === 'voorbeeldvragen' && openersLoaded && (
           <div className="spar-openers" style={isSalesOnlyProfiel ? { paddingTop: 20 } : undefined}>
             {!isSalesOnlyProfiel && (
               <>
