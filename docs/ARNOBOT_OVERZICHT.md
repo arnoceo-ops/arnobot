@@ -72,6 +72,9 @@ Voor Team-abonnees. De manager krijgt op zijn teampagina:
 ### 3.8 Referralprogramma
 Elke gebruiker heeft een eigen referralcode. Tegoed ontstaat alleen als de nieuw geworven gebruiker zelf voor Pro of Team kiest (niet bij Basic), en is nooit hoger dan wat de referrer zelf per maand betaalt. Werkt als korting op de volgende verlengingsbetaling, geen cashback. Toekenning gebeurt volledig handmatig door Arno.
 
+### 3.9 Gebruiksbalans (nieuw, 28 augustus 2026)
+Een statuskader onder de hero op de hoofdpagina (alleen desktop/laptop, niet in de mobiele app), zichtbaar vanaf 5 gesprekken totaal. Toont de vier tellers (gesprekken, sparsessies, analyses, coachings) en wijst naar de bouwsteen die op dit moment het meest waardevol zou zijn om te proberen: sparren, analyseren of coachen. De aanbeveling is rolbewust: een leidinggevende rol krijgt structureel minder snel een sparadvies dan een verkoper die zelf klantgesprekken voert. Bepaald door een AI-classificatie die bij elk afgesloten gesprek meekijkt (profiel, gespreksinhoud, huidige tellers), niet door een simpele "laagste getal wint"-rekensom. Bij een al goede, rolpassende balans blijft het kader gewoon weg. Bij coaching als aanbeveling krijgen Basic-gebruikers een upgradeknop naar Pro in plaats van een directe link, coaching zelf is Basic niet beschikbaar (zie 3.3).
+
 ---
 
 ## 4. Abonnementsstructuur, volledig en actueel (2026-08-11)
