@@ -1126,7 +1126,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex; flex-direction: column;
         }
 
-        /* HERO — geen foto meer, gecentreerd blok, lijn op vaste 650px */
+        /* HERO — geen foto meer. Desktop/laptop: titel + subtekst naast elkaar, subtekst even
+           hoog als de titelletters. Mobiele app (pointer:coarse): gestapeld, ongewijzigd. */
         .spar-hero {
           display: flex;
           flex-direction: column;
@@ -1136,8 +1137,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           overflow: hidden;
         }
         .hero-text {
-          display: flex; flex-direction: column; align-items: flex-start;
-          gap: clamp(10px, 1.5vw, 20px);
+          display: flex; flex-direction: row; align-items: flex-end;
+          gap: clamp(20px, 3vw, 40px);
         }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
@@ -1147,8 +1148,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .spar-title span { color: #f59e0b; }
         .hero-subtitle {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(20px, 2.5vw, 40px);
-          letter-spacing: 2px; color: #9ca3af; line-height: 1.2;
+          font-size: clamp(26px, 3.9vw, 45px);
+          letter-spacing: 1.5px; color: #9ca3af; line-height: 1.15;
         }
         .hero-divider {
           width: 650px;
@@ -1156,7 +1157,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           border-bottom: 2px solid #f59e0b;
         }
         @media (pointer: coarse) {
-          .hero-text { align-items: center; }
+          .hero-text { flex-direction: column; align-items: center; gap: clamp(10px, 1.5vw, 20px); }
+          .hero-subtitle { font-size: clamp(19px, 2.5vw, 40px); letter-spacing: 1.8px; line-height: 1.2; }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
