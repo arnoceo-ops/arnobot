@@ -1138,18 +1138,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
         .hero-text {
           display: flex; flex-direction: row; align-items: flex-end;
-          gap: clamp(20px, 3vw, 40px);
+          gap: 32px;
+          max-width: 100%;
         }
         .spar-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(64px, 10vw, 120px);
+          font-size: 109px;
           line-height: 0.9; letter-spacing: -2px;
         }
         .spar-title span { color: #f59e0b; }
         .hero-subtitle {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(26px, 3.9vw, 45px);
-          letter-spacing: 1.5px; color: #9ca3af; line-height: 1.15;
+          font-size: 41px;
+          letter-spacing: 1.4px; color: #9ca3af; line-height: 1.15;
           margin-bottom: 6px;
         }
         .hero-divider {
@@ -1158,6 +1159,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           border-bottom: 2px solid #f59e0b;
         }
         @media (pointer: coarse) {
+          .spar-hero { text-align: center; }
           .hero-text { flex-direction: column; align-items: center; gap: clamp(10px, 1.5vw, 20px); }
           .spar-title { font-size: clamp(72px, 14vw, 140px); }
           .hero-subtitle { font-size: clamp(20px, 2.5vw, 40px); letter-spacing: 2px; line-height: 1.2; margin-bottom: 0; }
