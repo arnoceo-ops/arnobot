@@ -1150,6 +1150,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(26px, 3.9vw, 45px);
           letter-spacing: 1.5px; color: #9ca3af; line-height: 1.15;
+          margin-bottom: 6px;
         }
         .hero-divider {
           width: 650px;
@@ -1158,7 +1159,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
         @media (pointer: coarse) {
           .hero-text { flex-direction: column; align-items: center; gap: clamp(10px, 1.5vw, 20px); }
-          .hero-subtitle { font-size: clamp(19px, 2.5vw, 40px); letter-spacing: 1.8px; line-height: 1.2; }
+          .spar-title { font-size: clamp(72px, 14vw, 140px); }
+          .hero-subtitle { font-size: clamp(20px, 2.5vw, 40px); letter-spacing: 2px; line-height: 1.2; margin-bottom: 0; }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
