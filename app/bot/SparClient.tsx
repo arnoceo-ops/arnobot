@@ -1163,7 +1163,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .spar-hero { text-align: center; }
           .hero-text { flex-direction: column; align-items: center; gap: clamp(10px, 1.5vw, 20px); }
           .spar-title { font-size: clamp(72px, 14vw, 140px); }
-          .hero-subtitle { font-size: clamp(20px, 2.5vw, 40px); letter-spacing: 2px; line-height: 1.2; margin-bottom: 0; }
+          .hero-subtitle { font-size: clamp(21px, 2.65vw, 42px); letter-spacing: 2.1px; line-height: 1.2; margin-bottom: 0; }
         }
         @media (max-width: 700px) {
           .spar-mic { height: 48px; width: 52px; flex-shrink: 0; }
