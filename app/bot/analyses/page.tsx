@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
 import BotNav from '../BotNav'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
+import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
 
 interface Session {
   id: string
@@ -72,6 +74,7 @@ type Sort = 'newest' | 'oldest' | 'most' | 'least'
 
 export default function GeschiedenisPage() {
   const isMobile = useIsMobile()
+  const { sessionId: clerkSessionId } = useAuth()
   const { showCoachingHint, activeCoachingHint, analysesSinceLastCoaching, daysSinceLastCoaching, convsSinceLastCoaching, dismissCoachingHint } = useProgressHints()
   const [analysesNudgeGezien, setAnalysesNudgeGezien] = useState(false)
   const [sessions, setSessions] = useState<Session[]>([])
@@ -343,6 +346,7 @@ export default function GeschiedenisPage() {
       } else if (data.analyse) {
         if (data.delta) setIsDeltaAnalyse(true)
         setActiveAnalyse(data.analyse)
+        markGroeiNudgeGezien(clerkSessionId)
         if (data.id) {
           setSavedAnalyses(prev => [{
             id: data.id,

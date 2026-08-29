@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import BotNav from '../BotNav'
-import { useUser } from '@clerk/nextjs'
+import { useUser, useAuth } from '@clerk/nextjs'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { computeMsaScore } from '@/lib/msa'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
+import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
 
 function renderMd(text: string): string {
   return text
@@ -100,6 +101,7 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
 
 export default function CoachingClient({ userId, plan, gesprekBookedAt, showSparren }: Props) {
   const { user } = useUser()
+  const { sessionId: clerkSessionId } = useAuth()
   const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -245,6 +247,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         setBlockReason('hoge_scores')
       } else if (data.coaching) {
         setDoc(data.coaching)
+        markGroeiNudgeGezien(clerkSessionId)
         localStorage.setItem(`arnobot_coaching_doc_${userId}`, JSON.stringify(data.coaching))
         const precheckKey = `arnobot_coaching_precheck_${userId}_${new Date().toISOString().slice(0, 10)}`
         localStorage.removeItem(precheckKey)

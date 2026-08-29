@@ -9,6 +9,7 @@ import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
+import { groeiNudgeGezien, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 
 function renderContent(text: string) {
   const escaped = text
@@ -415,7 +416,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   function handleNavAttempt(dest: string) {
-    markGroeibalansGezien()
     if (started && messages.length > 0 && !showSluiten) {
       setPendingNavDest(dest)
       setNavGuardOpen(true)
@@ -504,26 +504,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [])
 
-  // Groei-nudge: zichtbaar bij het eerste /bot-bezoek na een inlog, en pas weg zodra de gebruiker
-  // echt iets doet (gesprek starten, wegnavigeren, een community-vraag kiezen). Een kale refresh
-  // raakt de vlag niet, dus dan blijft de nudge staan. De vlag hangt aan de Clerk-sessie-ID: na
-  // uitloggen + opnieuw inloggen is dat een nieuwe ID, dus verschijnt de kaart weer.
-  const groeibalansGezienKey = clerkSessionId ? `arnobot_groeibalans_getoond_${clerkSessionId}` : null
+  // Groei-nudge (zie lib/groeiNudge.ts voor de volledige regel): één keer per Clerk-login
+  // zichtbaar, gaat pas weg bij een echte activiteit. Hier dekken we "gesprek" en "sparsessie"
+  // af (beide zetten `started`); analyse en coaching markeren zelf vanaf hun eigen pagina.
   useEffect(() => {
-    if (!groeibalansGezienKey) return
-    try {
-      if (!sessionStorage.getItem(groeibalansGezienKey)) setToonGroeibalans(true)
-    } catch { /* storage geblokkeerd: dan gewoon niet tonen */ }
-  }, [groeibalansGezienKey])
-
-  function markGroeibalansGezien() {
-    if (!groeibalansGezienKey) return
-    try { sessionStorage.setItem(groeibalansGezienKey, '1') } catch { /* storage geblokkeerd */ }
-  }
+    if (!clerkSessionId) return
+    if (!groeiNudgeGezien(clerkSessionId)) setToonGroeibalans(true)
+  }, [clerkSessionId])
 
   useEffect(() => {
-    if (started) markGroeibalansGezien()
-  }, [started])
+    if (started) markGroeiNudgeGezien(clerkSessionId)
+  }, [started, clerkSessionId])
 
   function scrollToRef(ref: React.RefObject<HTMLDivElement | null>) {
     const el = ref.current
@@ -2434,7 +2425,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/cgq" className="voorbeeldvragen-link" onClick={markGroeibalansGezien}>OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
           </div>
         )}
 
