@@ -2,17 +2,20 @@
 // Vervangt de handmatige "Markdown PDF"-VS-Code-extensie-stap.
 //
 // Gebruik:
-//   node scripts/render-docs-pdf.mjs                  alle docs/*.md die al een .pdf-buur hebben
-//   node scripts/render-docs-pdf.mjs --all            hetzelfde, expliciet
-//   node scripts/render-docs-pdf.mjs docs/SALES_BIJBEL.md [meer paden...]   alleen die bestanden
+//   node scripts/render-docs-pdf.mjs                  alleen verouderde PDF's (md nieuwer dan pdf)
+//   node scripts/render-docs-pdf.mjs --force          alles opnieuw, ongeacht datum
+//   node scripts/render-docs-pdf.mjs docs/SALES_BIJBEL.md [meer paden...]   alleen die, altijd
 //
-// Of via npm:  npm run docs:pdf  [-- docs/X.md]
+// Of via npm:  npm run docs:pdf  [-- docs/X.md]  of  npm run docs:pdf -- --force
+//
+// De standaardmodus (geen argumenten) raakt niks aan wat niet echt gewijzigd is, dus veilig
+// voor git: geen 18 binaire wijzigingen bij een edit aan één doc.
 //
 // Stijl volgt de merknormen uit CLAUDE.md: Bebas Neue voor titels, Space Mono voor body en
 // labels, amber (#f59e0b) accent, op een witte achtergrond (leesbaar/printbaar, net als
 // scripts/generate-security-pdf.mjs). Fonts komen uit public/fonts/, geen live afhankelijkheid.
 
-import { readFileSync, existsSync, readdirSync } from 'fs'
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
 import { join, dirname, basename, resolve } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { marked } from 'marked'
@@ -25,9 +28,19 @@ const FONTS_DIR = join(ROOT, 'public', 'fonts')
 const bebasUrl = pathToFileURL(join(FONTS_DIR, 'BebasNeue-Regular.ttf')).href
 const monoUrl = pathToFileURL(join(FONTS_DIR, 'SpaceMono-Regular.ttf')).href
 
+// Is de PDF verouderd t.o.v. de bron? Waar (geen PDF, of de .md is later gewijzigd).
+function isStale(mdPath) {
+  const pdfPath = mdPath.replace(/\.md$/, '.pdf')
+  if (!existsSync(pdfPath)) return true
+  return statSync(mdPath).mtimeMs > statSync(pdfPath).mtimeMs
+}
+
 function targetsFromArgs() {
-  const args = process.argv.slice(2).filter(a => a !== '--all')
+  const flags = new Set(process.argv.slice(2).filter(a => a.startsWith('--')))
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+
   if (args.length > 0) {
+    // Expliciete paden: altijd renderen, de gebruiker vraagt er zelf om.
     return args.map(a => resolve(ROOT, a)).filter(p => {
       if (!p.endsWith('.md') || !existsSync(p)) {
         console.warn(`overgeslagen (geen bestaand .md-bestand): ${p}`)
@@ -36,12 +49,16 @@ function targetsFromArgs() {
       return true
     })
   }
-  // Geen argumenten: elke docs/*.md die al een .pdf-buur heeft (dus geen nieuwe PDF's
-  // aanmaken voor puur-interne docs zoals CLAUDE_HISTORY.md of AUDIT_FINDINGS.md).
-  return readdirSync(DOCS_DIR)
+
+  // Geen paden: elke docs/*.md die al een .pdf-buur heeft (dus geen nieuwe PDF's aanmaken
+  // voor puur-interne docs zoals CLAUDE_HISTORY.md of AUDIT_FINDINGS.md). Standaard alleen
+  // de verouderde; met --force alles, zodat één commando altijd veilig is voor git (raakt
+  // niks aan wat niet echt gewijzigd is).
+  const all = readdirSync(DOCS_DIR)
     .filter(f => f.endsWith('.md'))
     .map(f => join(DOCS_DIR, f))
     .filter(p => existsSync(p.replace(/\.md$/, '.pdf')))
+  return flags.has('--force') ? all : all.filter(isStale)
 }
 
 const CSS = `
@@ -120,7 +137,7 @@ export function htmlFor(mdPath) {
 async function main() {
   const targets = targetsFromArgs()
   if (targets.length === 0) {
-    console.log('Niets te doen. Geef een .md-pad op, of zorg dat er een .pdf-buur bestaat.')
+    console.log('Alle PDF\'s zijn actueel. (Forceer met --force, of geef een .md-pad op.)')
     return
   }
 
