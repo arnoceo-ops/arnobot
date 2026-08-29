@@ -130,7 +130,7 @@ const FAQ_GROUPS = [
             <br /><br />
             Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties.
             <br /><br />
-            Wil je zelf iets delen? Dat kan. In de ARCHIEF kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
+            Wil je zelf iets delen? Dat kan. In Analyses kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
           </>
         ),
       },
