@@ -2,63 +2,63 @@
 // Vervangt de handmatige "Markdown PDF"-VS-Code-extensie-stap.
 //
 // Gebruik:
-//   node scripts/render-docs-pdf.mjs                  alleen verouderde PDF's (md nieuwer dan pdf)
-//   node scripts/render-docs-pdf.mjs --force          alles opnieuw, ongeacht datum
+//   node scripts/render-docs-pdf.mjs                  alleen docs waarvan de inhoud is gewijzigd
+//   node scripts/render-docs-pdf.mjs --force          alles opnieuw
 //   node scripts/render-docs-pdf.mjs docs/SALES_BIJBEL.md [meer paden...]   alleen die, altijd
 //
 // Of via npm:  npm run docs:pdf  [-- docs/X.md]  of  npm run docs:pdf -- --force
 //
-// De standaardmodus (geen argumenten) raakt niks aan wat niet echt gewijzigd is, dus veilig
-// voor git: geen 18 binaire wijzigingen bij een edit aan één doc.
+// "Gewijzigd" wordt bepaald op de INHOUD van het .md-bestand (sha256), niet op de
+// bestandsdatum: git bewaart mtimes niet, dus na elke pull/checkout zou dat alles als
+// "gewijzigd" zien. De hashes staan in docs/.pdf-render-state.json (mee te committen).
+// RENDER_VERSION ophogen bij een stijl-/templatewijziging hieronder forceert alles opnieuw.
 //
 // Stijl volgt de merknormen uit CLAUDE.md: Bebas Neue voor titels, Space Mono voor body en
-// labels, amber (#f59e0b) accent, op een witte achtergrond (leesbaar/printbaar, net als
-// scripts/generate-security-pdf.mjs). Fonts komen uit public/fonts/, geen live afhankelijkheid.
+// labels, amber (#f59e0b) accent, op een witte achtergrond. Fonts uit public/fonts/.
 
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
-import { join, dirname, basename, resolve } from 'path'
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs'
+import { join, dirname, basename, resolve, relative } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
+import { createHash } from 'crypto'
 import { marked } from 'marked'
 import puppeteer from 'puppeteer'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DOCS_DIR = join(ROOT, 'docs')
 const FONTS_DIR = join(ROOT, 'public', 'fonts')
+const STATE_FILE = join(DOCS_DIR, '.pdf-render-state.json')
+const RENDER_VERSION = '1'
 
 const bebasUrl = pathToFileURL(join(FONTS_DIR, 'BebasNeue-Regular.ttf')).href
 const monoUrl = pathToFileURL(join(FONTS_DIR, 'SpaceMono-Regular.ttf')).href
 
-// Is de PDF verouderd t.o.v. de bron? Waar (geen PDF, of de .md is later gewijzigd).
-function isStale(mdPath) {
-  const pdfPath = mdPath.replace(/\.md$/, '.pdf')
-  if (!existsSync(pdfPath)) return true
-  return statSync(mdPath).mtimeMs > statSync(pdfPath).mtimeMs
+function sourceHash(mdPath) {
+  return createHash('sha256').update(RENDER_VERSION + '\0').update(readFileSync(mdPath)).digest('hex')
 }
 
-function targetsFromArgs() {
-  const flags = new Set(process.argv.slice(2).filter(a => a.startsWith('--')))
-  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+function parseArgs() {
+  const raw = process.argv.slice(2)
+  const force = raw.includes('--force')
+  const paths = raw.filter(a => !a.startsWith('--'))
 
-  if (args.length > 0) {
-    // Expliciete paden: altijd renderen, de gebruiker vraagt er zelf om.
-    return args.map(a => resolve(ROOT, a)).filter(p => {
+  if (paths.length > 0) {
+    const explicit = paths.map(a => resolve(ROOT, a)).filter(p => {
       if (!p.endsWith('.md') || !existsSync(p)) {
         console.warn(`overgeslagen (geen bestaand .md-bestand): ${p}`)
         return false
       }
       return true
     })
+    return { targets: explicit, force: true } // expliciet pad = altijd renderen
   }
 
   // Geen paden: elke docs/*.md die al een .pdf-buur heeft (dus geen nieuwe PDF's aanmaken
-  // voor puur-interne docs zoals CLAUDE_HISTORY.md of AUDIT_FINDINGS.md). Standaard alleen
-  // de verouderde; met --force alles, zodat één commando altijd veilig is voor git (raakt
-  // niks aan wat niet echt gewijzigd is).
+  // voor puur-interne docs zoals CLAUDE_HISTORY.md of AUDIT_FINDINGS.md).
   const all = readdirSync(DOCS_DIR)
     .filter(f => f.endsWith('.md'))
     .map(f => join(DOCS_DIR, f))
     .filter(p => existsSync(p.replace(/\.md$/, '.pdf')))
-  return flags.has('--force') ? all : all.filter(isStale)
+  return { targets: all, force }
 }
 
 const CSS = `
@@ -135,16 +135,30 @@ export function htmlFor(mdPath) {
 }
 
 async function main() {
-  const targets = targetsFromArgs()
+  const { targets, force } = parseArgs()
   if (targets.length === 0) {
-    console.log('Alle PDF\'s zijn actueel. (Forceer met --force, of geef een .md-pad op.)')
+    console.log('Geen doelen.')
+    return
+  }
+
+  const state = existsSync(STATE_FILE) ? JSON.parse(readFileSync(STATE_FILE, 'utf8')) : {}
+  const todo = []
+  for (const mdPath of targets) {
+    const key = relative(DOCS_DIR, mdPath).replace(/\\/g, '/')
+    const hash = sourceHash(mdPath)
+    const pdfPath = mdPath.replace(/\.md$/, '.pdf')
+    if (!force && state[key] === hash && existsSync(pdfPath)) continue
+    todo.push({ mdPath, pdfPath, key, hash })
+  }
+
+  if (todo.length === 0) {
+    console.log('Alle PDF\'s zijn actueel.')
     return
   }
 
   const browser = await puppeteer.launch()
   try {
-    for (const mdPath of targets) {
-      const pdfPath = mdPath.replace(/\.md$/, '.pdf')
+    for (const { mdPath, pdfPath, key, hash } of todo) {
       const name = basename(mdPath)
       const page = await browser.newPage()
       await page.setContent(htmlFor(mdPath), { waitUntil: 'load', timeout: 60000 })
@@ -159,13 +173,16 @@ async function main() {
           <span>${name}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
       })
       await page.close()
+      state[key] = hash
       console.log(`ok  ${basename(pdfPath)}`)
     }
   } finally {
     await browser.close()
   }
+
+  writeFileSync(STATE_FILE, JSON.stringify(state, Object.keys(state).sort(), 2) + '\n')
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(e => { console.error(e); process.exit(1) })
 }
