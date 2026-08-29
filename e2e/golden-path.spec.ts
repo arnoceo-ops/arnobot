@@ -41,9 +41,11 @@ test('golden path: inloggen, bericht sturen, streaming zien, sluiten, samenvatti
   // Invoerveld moet weer bruikbaar zijn na afloop van het antwoord (niet blijvend geblokkeerd).
   await expect(input).toBeEnabled()
 
-  // Gesprek sluiten: knop toont draaiende bolletjes tijdens het samenvatten, dan de samenvatting.
+  // Gesprek sluiten: de "Arno denkt na"-indicator verschijnt in de thread tijdens het
+  // samenvatten (de invoerbalk met de SLUIT-knop verdwijnt dan, zie SparClient showInputArea),
+  // daarna de samenvatting.
   const closeButton = page.getByRole('button', { name: /sluit/i })
   await closeButton.click()
-  await expect(page.locator('.btn-loading-dots')).toBeVisible()
+  await expect(page.locator('.msg-loading .loading-text').first()).toContainText('Arno denkt na')
   await expect(page.locator('.msg-arno-text').last()).toContainText('Mock-samenvatting van het testgesprek.', { timeout: 15000 })
 })
