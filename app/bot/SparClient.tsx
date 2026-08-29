@@ -504,17 +504,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [])
 
-  // Groei-nudge: zichtbaar bij het eerste /bot-bezoek van een inlog-sessie, en pas weg zodra de
-  // gebruiker echt iets doet (gesprek starten, wegnavigeren, een community-vraag kiezen). Een
-  // kale refresh raakt de vlag niet, dus dan blijft de nudge staan. Terug bij een nieuwe sessie.
+  // Groei-nudge: zichtbaar bij het eerste /bot-bezoek na een inlog, en pas weg zodra de gebruiker
+  // echt iets doet (gesprek starten, wegnavigeren, een community-vraag kiezen). Een kale refresh
+  // raakt de vlag niet, dus dan blijft de nudge staan. De vlag hangt aan de Clerk-sessie-ID: na
+  // uitloggen + opnieuw inloggen is dat een nieuwe ID, dus verschijnt de kaart weer.
+  const groeibalansGezienKey = clerkSessionId ? `arnobot_groeibalans_getoond_${clerkSessionId}` : null
   useEffect(() => {
+    if (!groeibalansGezienKey) return
     try {
-      if (!sessionStorage.getItem('arnobot_groeibalans_getoond')) setToonGroeibalans(true)
+      if (!sessionStorage.getItem(groeibalansGezienKey)) setToonGroeibalans(true)
     } catch { /* storage geblokkeerd: dan gewoon niet tonen */ }
-  }, [])
+  }, [groeibalansGezienKey])
 
   function markGroeibalansGezien() {
-    try { sessionStorage.setItem('arnobot_groeibalans_getoond', '1') } catch { /* storage geblokkeerd */ }
+    if (!groeibalansGezienKey) return
+    try { sessionStorage.setItem(groeibalansGezienKey, '1') } catch { /* storage geblokkeerd */ }
   }
 
   useEffect(() => {
