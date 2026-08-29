@@ -10,13 +10,23 @@ const serviceDb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// Voornaam voor de persoonlijke begroeting in de hero. Eerst het losse voornaam-veld, anders
+// het eerste woord van full_name. Geen van beide, dan null: de begroeting valt dan terug op
+// een naamloze variant in plaats van "Hey, .".
+function firstNameOf(voornaam: string | null | undefined, fullName: string | null | undefined): string | null {
+  const vn = voornaam?.trim()
+  if (vn) return vn
+  const first = fullName?.trim().split(/\s+/)[0]
+  return first || null
+}
+
 export default async function BotPage({ searchParams }: { searchParams: Promise<{ resume?: string }> }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
   const [profileRes, userRes, gesprekkenCountRes, sparCountRes, analysesCountRes, coachingCountRes] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
-    serviceDb.from('approved_users').select('plan, voornaam, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
+    serviceDb.from('approved_users').select('plan, voornaam, full_name, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
     serviceDb.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     serviceDb.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     serviceDb.from('arnobot_analyses').select('*', { count: 'exact', head: true }).eq('user_id', userId),
@@ -65,7 +75,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       taglineTitle="Ik ben ARNOBOT: Jouw 24/7 salescoach."
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       resumeSessionId={resume}
-      voornaam={(userRes.data?.voornaam as string | null) ?? null}
+      voornaam={firstNameOf(userRes.data?.voornaam as string | null | undefined, userRes.data?.full_name as string | null | undefined)}
       groeibalans={groeibalans}
     />
   )

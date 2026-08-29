@@ -1855,11 +1855,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
-            {voornaam && !started && (
-              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 16, color: '#f1f5f9', textAlign: 'center' }}>
-                Hey, {voornaam}.
-              </p>
-            )}
           </div>
         )}
 
@@ -2026,7 +2021,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
-              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
+              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : (voornaam ? `Hey, ${voornaam}. What's on your sales mind?` : "What's on your sales mind?")}</span>
               {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 44 }}>hoe concreter jouw info, hoe beter mijn output</span>}
             </>
           )}
