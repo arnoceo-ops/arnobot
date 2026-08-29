@@ -1228,12 +1228,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           line-height: 1.9;
           color: #9ca3af;
         }
-        .vraag-disclaimer {
-          font-family: 'Space Mono', monospace;
-          font-weight: 400;
-          font-size: 13px;
-          color: #6b7280;
-        }
         .vraag-terug {
           font-family: 'Bebas Neue', sans-serif;
           font-size: 18px;
@@ -1847,7 +1841,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <div className="vraag-tekst">
               <h1 className="vraag-titel">COMMUNITY THEMA'S</h1>
               <p className="vraag-subtitel">wat er leeft onder alle arnobot gebruikers</p>
-              <p className="vraag-disclaimer">Deze gesprekken tellen niet mee in je coachingsdiagnose of analyses.</p>
             </div>
             <div className="hero-divider" />
             <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
