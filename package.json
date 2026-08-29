@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "docs:pdf": "node scripts/render-docs-pdf.mjs",
     "cap:sync": "cap sync android",
     "cap:open": "cap open android"
   },
@@ -44,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "marked": "^18.0.11",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^25.4.0",
     "tailwindcss": "^4",
