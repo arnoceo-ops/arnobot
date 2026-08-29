@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
+import { recomputeGroeibalans } from '@/lib/groeibalansServer'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const supabase = createClient(
@@ -103,6 +104,16 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
       transcript: messages,
     }, { onConflict: 'session_id' })
     if (logError) console.error('[sparring/debrief] loggen mislukt:', logError.message)
+
+    // Gebruiksbalans-kader op /bot herberekenen (lib/groeibalansServer.ts). Zonder deze aanroep
+    // erkent dat kader een net afgeronde sparsessie pas bij het volgende gewone gesprek, wat
+    // niet motiveert ("ga sparren" blijft staan terwijl je net gesparred hebt). Alleen binnen
+    // dit blok: buiten Basis, en alleen als de sessie ook echt is gelogd (de teller verandert).
+    // .catch: een falende classificatie mag de debrief-response nooit blokkeren.
+    await recomputeGroeibalans(
+      supabase, anthropic, userId,
+      `De gebruiker heeft zojuist een sparsessie afgerond (persona: ${personaLabel}, weerstand: ${weerstand ?? 'onbekend'}). Debrief van die sessie:\n${debrief}`,
+    ).catch(() => {})
   }
 
   return NextResponse.json({ debrief })
