@@ -1856,7 +1856,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </div>
             <div className="hero-divider" />
             {voornaam && !started && (
-              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(34px, 7vw, 52px)', letterSpacing: 1, lineHeight: 1, color: '#f1f5f9', textAlign: 'center' }}>
+              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(34px, 7vw, 52px)', letterSpacing: 1, lineHeight: 1, color: '#f1f5f9', textAlign: 'center', marginTop: -12 }}>
                 Hey, {voornaam}.
               </p>
             )}
