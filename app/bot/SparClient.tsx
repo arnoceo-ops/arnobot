@@ -27,6 +27,10 @@ function renderContent(text: string) {
     .replace(/_([^_\n]+)_/g, '<em>$1</em>')
 }
 
+// Instant support tot de eerste 50 betalende gebruikers: één klik naar WhatsApp in plaats van
+// dat iemand moet zoeken naar een mailadres. Zelfde nummer als de error-fallbacks door de app.
+const SUPPORT_WHATSAPP = 'https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20heb%20een%20vraag%20over%20ArnoBot.'
+
 interface Message {
   role: 'user' | 'arno'
   content: string
@@ -230,10 +234,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [transcribing, setTranscribing] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
-  const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [feedbackText, setFeedbackText] = useState('')
-  const [feedbackSent, setFeedbackSent] = useState(false)
-  const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
   const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
@@ -428,29 +428,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       }, 1800)
     }
   }, [showSluiten])
-
-  async function sendFeedback() {
-    if (!feedbackText.trim()) return
-    setFeedbackLoading(true)
-    try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedback: feedbackText }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setFeedbackText(feedbackText)
-        alert(data.error || 'Er ging iets mis. Probeer opnieuw.')
-        return
-      }
-      setFeedbackSent(true)
-      setFeedbackText('')
-      setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false) }, 2000)
-    } catch {
-      alert('Er ging iets mis. Probeer opnieuw.')
-    } finally { setFeedbackLoading(false) }
-  }
 
   useEffect(() => {
     if (resumeSessionId) {
@@ -1830,7 +1807,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {(planLoaded && heeftTeamPlan) && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
-              <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
+              <a href={SUPPORT_WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
             </div>
           )}
         </>
@@ -1849,12 +1826,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
           <div className="nav-spacer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
             <NotificationBell onNavigate={handleNavAttempt} />
-            <button
-              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
-              onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
-              onMouseLeave={e => { (e.target as HTMLButtonElement).style.color = '#9ca3af' }}
-              onClick={() => setFeedbackOpen(true)}
-            >FEEDBACK</button>
+            <a
+              href={SUPPORT_WHATSAPP}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }}
+              onMouseEnter={e => { (e.target as HTMLAnchorElement).style.color = '#f1f5f9' }}
+              onMouseLeave={e => { (e.target as HTMLAnchorElement).style.color = '#9ca3af' }}
+            >SUPPORT</a>
             <button
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
               onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
@@ -2749,43 +2728,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         </div>
       )}
 
-      {feedbackOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setFeedbackOpen(false)}
-        >
-          <div
-            style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 480, width: '100%', padding: 32 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: 1, color: '#f1f5f9', marginBottom: 20 }}>FEEDBACK</h2>
-            {feedbackSent ? (
-              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', letterSpacing: 1 }}>Bedankt. Je feedback is verzonden.</p>
-            ) : (
-              <>
-                <textarea
-                  value={feedbackText}
-                  onChange={e => setFeedbackText(e.target.value)}
-                  placeholder="Wat kan er beter? Wat werkt goed? Alles is welkom."
-                  style={{ width: '100%', minHeight: 120, background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', resize: 'vertical', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
-                />
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button
-                    onClick={sendFeedback}
-                    disabled={feedbackLoading || !feedbackText.trim()}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', borderRadius: 999, opacity: feedbackLoading || !feedbackText.trim() ? 0.5 : 1 }}
-                  >{feedbackLoading ? '...' : 'VERSTUUR'}</button>
-                  <button
-                    onClick={() => setFeedbackOpen(false)}
-                    style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
-                  >ANNULEER</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </>
   )
 }

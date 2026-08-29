@@ -42,7 +42,6 @@ const EXCLUDED_PATH_PREFIXES = [
   'app/api/evaluatie',
   'app/api/team-aanvraag',
   'app/api/csp-report',
-  'app/api/feedback',
   'app/api/optout',
   'app/api/version',
   'app/api/auth-mode',

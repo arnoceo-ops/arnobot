@@ -282,7 +282,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/events` | Whitelisted clientevents loggen |
 | `/api/bot/response-feedback` | Duim omhoog/omlaag op een antwoord |
 | `/api/optout` | Marketingmail-opt-out verwerken (HMAC-signature-check) |
-| `/api/feedback` | Feedbackformulier → Telegram |
 
 ### Admin
 
@@ -808,7 +807,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** Code bekijken, branches beheren, commits terugdraaien
 
 ### Telegram
-**Doel:** Ops-notificaties (nieuwe gebruikers, cron-failures, CSP-schendingen, feedback).
+**Doel:** Ops-notificaties (nieuwe gebruikers, cron-failures, CSP-schendingen).
 **Setup:** Een Telegram-bot (`TELEGRAM_BOT_TOKEN`) stuurt berichten naar een chat (`TELEGRAM_CHAT_ID`). Beheren via @BotFather.
 
 **Geen payment-provider geïntegreerd:** bewust pending, zie "Bekende beperkingen" punt 11 voor het triggercriterium.

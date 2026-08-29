@@ -31,13 +31,13 @@ const linkBase: React.CSSProperties = {
   fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3,
 }
 
+// Instant support tot de eerste 50 betalende gebruikers: één klik naar WhatsApp in plaats van
+// dat iemand moet zoeken naar een mailadres. Zelfde nummer als de error-fallbacks door de app.
+const SUPPORT_WHATSAPP = 'https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20heb%20een%20vraag%20over%20ArnoBot.'
+
 export default function BotNav({ active }: Props) {
   const isMobile = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [feedbackText, setFeedbackText] = useState('')
-  const [feedbackSent, setFeedbackSent] = useState(false)
-  const [feedbackLoading, setFeedbackLoading] = useState(false)
   const { signOut } = useClerk()
   const router = useRouter()
   const [heeftTeamPlan, setHeeftTeamPlan] = useState(false)
@@ -59,67 +59,6 @@ export default function BotNav({ active }: Props) {
   // TEAM altijd, ongeacht command_manager, verwijderd 2026-08-24 op zijn verzoek): zijn
   // account gedraagt zich nu identiek aan elk ander account, precies zoals bedoeld.
   const isBouwer = planLoaded && heeftTeamPlan
-
-  async function sendFeedback() {
-    if (!feedbackText.trim()) return
-    setFeedbackLoading(true)
-    try {
-      const res = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedback: feedbackText }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        alert(data.error || 'Er ging iets mis. Probeer opnieuw.')
-        return
-      }
-      setFeedbackSent(true)
-      setFeedbackText('')
-      setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false) }, 2000)
-    } catch {
-      alert('Er ging iets mis. Probeer opnieuw.')
-    } finally { setFeedbackLoading(false) }
-  }
-
-
-  const feedbackModal = feedbackOpen && (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-      onClick={() => setFeedbackOpen(false)}
-    >
-      <div
-        style={{ background: '#1f2937', border: '1px solid #374151', maxWidth: 480, width: '100%', padding: 32 }}
-        onClick={e => e.stopPropagation()}
-      >
-        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
-        <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: 1, color: '#f1f5f9', marginBottom: 20 }}>FEEDBACK</h2>
-        {feedbackSent ? (
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#f59e0b', letterSpacing: 1 }}>Bedankt. Je feedback is verzonden.</p>
-        ) : (
-          <>
-            <textarea
-              value={feedbackText}
-              onChange={e => setFeedbackText(e.target.value)}
-              placeholder="Wat kan er beter? Wat werkt goed? Alles is welkom."
-              style={{ width: '100%', minHeight: 120, background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', resize: 'vertical', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
-            />
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={sendFeedback}
-                disabled={feedbackLoading || !feedbackText.trim()}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', borderRadius: 999, opacity: feedbackLoading || !feedbackText.trim() ? 0.5 : 1 }}
-              >{feedbackLoading ? '...' : 'VERSTUUR'}</button>
-              <button
-                onClick={() => setFeedbackOpen(false)}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', background: 'none', color: '#9ca3af', border: '1px solid #374151', cursor: 'pointer', borderRadius: 999 }}
-              >ANNULEER</button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
 
   if (isMobile) {
     return (
@@ -154,10 +93,9 @@ export default function BotNav({ active }: Props) {
             {isBouwer && <Link href="/bot/team" className={active === 'team' ? 'mob-active' : 'mob-flow'}>TEAM</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
-            <span style={{ color: '#9ca3af', cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setMenuOpen(false); setFeedbackOpen(true) }}>FEEDBACK</span>
+            <a href={SUPPORT_WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
           </div>
         )}
-        {feedbackModal}
         <VersionBanner />
       </>
     )
@@ -189,12 +127,14 @@ export default function BotNav({ active }: Props) {
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
           <NotificationBell />
-          <button
-            style={logoutBtnStyle}
-            onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
-            onMouseLeave={e => { (e.target as HTMLButtonElement).style.color = '#9ca3af' }}
-            onClick={() => setFeedbackOpen(true)}
-          >FEEDBACK</button>
+          <a
+            href={SUPPORT_WHATSAPP}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...logoutBtnStyle, textDecoration: 'none' }}
+            onMouseEnter={e => { (e.target as HTMLAnchorElement).style.color = '#f1f5f9' }}
+            onMouseLeave={e => { (e.target as HTMLAnchorElement).style.color = '#9ca3af' }}
+          >SUPPORT</a>
           <button
             style={logoutBtnStyle}
             onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = '#f1f5f9' }}
@@ -203,7 +143,6 @@ export default function BotNav({ active }: Props) {
           >UITLOGGEN</button>
         </div>
       </nav>
-      {feedbackModal}
       <VersionBanner />
     </>
   )
