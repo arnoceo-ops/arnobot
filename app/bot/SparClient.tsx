@@ -10,19 +10,6 @@ import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN } from '@/lib/groeibalans'
 
-function formatLastDate(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const now = new Date()
-  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const diffDays = Math.round((nowDay.getTime() - dDay.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return 'vandaag'
-  if (diffDays === 1) return 'gisteren'
-  if (diffDays < 7) return `${diffDays} dagen geleden`
-  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
-}
-
 function renderContent(text: string) {
   const escaped = text
     .replace(/&/g, '&amp;')
@@ -204,7 +191,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [resizeInput, setResizeInput] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
   const [suggestedBlogs, setSuggestedBlogs] = useState<{title: string, url: string}[]>([])
-  const [voortgang, setVoortgang] = useState<{count: number, lastDate: string | null} | null>(null)
   const isStrategischProfiel = STRATEGISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isOrganisatorischProfiel = ORGANISATORISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isSalesOnlyProfiel = SALES_ONLY_ROLLEN.includes((profiel?.rol as string) ?? '')
@@ -503,16 +489,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
 
     if (userId) {
-      fetch('/api/bot/sessions')
-        .then(r => r.json())
-        .then(data => {
-          const sessions = data.sessions ?? []
-          if (sessions.length > 0) {
-            setVoortgang({ count: sessions.length, lastDate: sessions[0]?.created_at ?? null })
-          }
-        })
-        .catch(() => {})
-
       // Pre-fill vanuit coaching pagina
       const prefill = localStorage.getItem('arnobot_prefill')
       if (prefill) {
@@ -808,12 +784,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         setSessionId(newId)
         setShowSluiten(true)
         refreshHints()
-        if (userId) {
-          setVoortgang(prev => prev
-            ? { count: prev.count + 1, lastDate: new Date().toISOString() }
-            : { count: 1, lastDate: new Date().toISOString() }
-          )
-        }
       } else {
         reset()
       }
@@ -1214,9 +1184,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           color: #f1f5f9;
         }
         .vraag-subtitel {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(16px, 2.2vw, 24px);
-          letter-spacing: 1px;
+          font-family: 'Space Mono', monospace;
+          font-weight: 400;
+          font-size: 15px;
+          line-height: 1.9;
           color: #9ca3af;
         }
         .vraag-terug {
@@ -1709,12 +1680,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           background: #1f2937;
         }
 
-        /* VOORTGANG BAR */
-        .voortgang-bar {
-          text-align: center; padding: 48px 0 16px;
-          color: #f1f5f9; font-family: 'Bebas Neue', sans-serif;
-          font-size: 15px; letter-spacing: 3px;
-        }
         .archief-btn {
           background: none; border: 1px solid #374151; color: #9ca3af;
           font-family: 'Bebas Neue', sans-serif;
@@ -1799,8 +1764,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
             <div className="vraag-tekst">
-              <h1 className="vraag-titel">COMMUNITYVRAGEN</h1>
-              <p className="vraag-subtitel">gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.</p>
+              <h1 className="vraag-titel">WAT ER LEEFT</h1>
+              <p className="vraag-subtitel">Thema's die de ArnoBot community bezighouden.</p>
             </div>
             <div className="hero-divider" />
             <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
@@ -2373,14 +2338,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 <button key={i} className="opener-btn" onClick={() => ask(q)}>{q}</button>
               ))}
             </div>
-            {voortgang && (
-              <>
-                <div className="voortgang-bar">
-                  {voortgang.count} {voortgang.count === 1 ? 'GESPREK' : 'GESPREKKEN'}
-                  {voortgang.lastDate ? ` · LAATSTE: ${formatLastDate(voortgang.lastDate).toUpperCase()}` : ''}
-                </div>
-              </>
-            )}
           </div>
         )}
 

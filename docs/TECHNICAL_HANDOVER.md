@@ -363,7 +363,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 5+ nieuwe gesprekken |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
-| `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output |
+| `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output. Analyseert de 300 meest recente gesprekken + 50 meest recente analyses (over alle gebruikers samen, aantal-gebaseerd, geen datumvenster) |
 | `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met CLAUDE.md-inventaris |
 | `/api/cron/competitie` | 1e vd maand 04:05 | Competitierapport (meest actieve gebruikers) |
 | `/api/cron/data-cleanup` | 1e vd maand 04:05 | Verwijderde gesprekken opschonen, inactieve users flaggen |
