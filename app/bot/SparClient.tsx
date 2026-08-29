@@ -2332,7 +2332,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           <div className="spar-openers" style={isSalesOnlyProfiel ? { paddingTop: 20 } : undefined}>
             {!isSalesOnlyProfiel && (
               <>
-                <span className="spar-discipline-label">of kies een discipline</span>
+                <span className="spar-discipline-label">kies een discipline</span>
                 {isMobile ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 180, margin: '0 auto' }}>
                     <button className={`toggle-btn${openerModus === 'strategisch' ? ' active' : ''}`} onClick={() => setOpenerModus('strategisch')}>STRATEGY</button>
@@ -2348,7 +2348,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
               </>
             )}
-            <span className="spar-questions-label">of selecteer een van de onderstaande vragen</span>
+            <span className="spar-questions-label">selecteer een van de onderstaande vragen</span>
             <span className="spar-questions-sub">
               {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
                 ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'
