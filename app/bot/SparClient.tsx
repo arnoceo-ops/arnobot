@@ -1443,9 +1443,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           width: 100%;
           max-width: 1218px;
           margin: 0 auto;
-          padding: clamp(56px,8vw,96px) 20px 0;
+          padding: clamp(56px,8vw,96px) 20px clamp(56px,8vw,96px);
           background: #111827;
-          border-bottom: 1px solid #374151;
           display: flex; flex-direction: column; align-items: center;
         }
         .opener-toggle {
