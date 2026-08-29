@@ -1022,7 +1022,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           return
         }
 
-        setMessages(prev => [...prev, { role: 'arno', content: '', hint: hintHeader ?? null, log_id: null, feedback: null }])
+        // Een eventuele eerdere 'dubbel actief gesprek'-melding is hierbij opgelost: zodra er
+        // een nieuw antwoord binnenkomt (via de knop óf gewoon door verder te typen), heeft die
+        // banner geen functie meer en verdwijnt hij, in plaats van voor altijd te blijven staan.
+        setMessages(prev => [
+          ...prev.map(m => m.hint === 'dual_session' ? { ...m, hint: null } : m),
+          { role: 'arno', content: '', hint: hintHeader ?? null, log_id: null, feedback: null }
+        ])
         setStreamingStarted(true)
 
         const reader = res.body.getReader()
