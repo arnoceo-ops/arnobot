@@ -53,7 +53,7 @@ padding:      0 40px
 <main> background: #111827, min-height: 100vh, font-family: sans-serif
   <nav> (zie Navigatie)
   <div> maxWidth: 800px, margin: 0 auto, padding: 48px 40px
-    eyebrow label (amber, 13px, letter-spacing 4)
+    eyebrow label (amber, 12px, letter-spacing 4)
     <h1> (48px, font-weight 700, letter-spacing -1px)
     content
 ```
@@ -64,13 +64,15 @@ padding:      0 40px
 
 ## Typografie
 
+**Vaste regel:** alleen 12px of 14px in de admin-sectie, geen 10px/11px/13px/16px. Gedempte tekst krijgt een eigen kleur (`#6b7280`), nooit `opacity`. Zie ook de admin-UI-stijlnorm in CLAUDE.md, die dit al als algemene regel vastlegt.
+
 | Element | Spec |
 |---|---|
-| Bodytekst | sans-serif, 15-16px, kleur `#9ca3af`, line-height 1.7-1.8 |
-| Eyebrow / label | sans-serif of monospace, 13px, letter-spacing 4, kleur `#f59e0b` |
+| Bodytekst | sans-serif, 14px, kleur `#9ca3af`, line-height 1.7-1.8 |
+| Eyebrow / label | sans-serif of monospace, 12px, letter-spacing 4, kleur `#f59e0b` |
 | H1 | sans-serif, 48px, font-weight 700, letter-spacing -1px, kleur `#f1f5f9` |
-| Sessionlabel | 16px, letter-spacing 2, kleur `#f59e0b`, opacity 0.7 |
-| Metadata (tijd, IP) | 11-16px, opacity 0.25-0.3 |
+| Sessionlabel | 12px, letter-spacing 2, kleur `#f59e0b` |
+| Metadata (tijd, IP) | 12-14px, kleur `#6b7280` |
 
 ---
 
@@ -96,10 +98,10 @@ padding:      0 40px
 - background: `#1f2937`
 - border: **1.5px solid `#374151`** (let op: 1.5px, niet 1px)
 - color: `#f1f5f9`
-- padding: 10px 14px, font-size: 16px
+- padding: 10px 14px, font-size: 14px
 
 **Label boven input:**
-- font-size: 16px, letter-spacing: 2px, kleur: `#f59e0b`, opacity: 0.7
+- font-size: 12px, letter-spacing: 2px, kleur: `#f59e0b`
 
 **Focus:**
 - border-color: `#f59e0b`
@@ -125,13 +127,13 @@ padding:      0 40px
 - margin-bottom: 56px
 
 **Vraag (gebruiker):**
-- font-weight: 700, font-size: 16px, kleur: `#f1f5f9`
+- font-weight: 700, font-size: 14px, kleur: `#f1f5f9`
 
 **Antwoord (ArnoBot):**
-- font-size: 16px, line-height: 1.8, kleur: `#9ca3af`
+- font-size: 14px, line-height: 1.8, kleur: `#9ca3af`
 
 **Tijdstempel:**
-- font-size: 11px, opacity: 0.25, margin-top: 6px
+- font-size: 12px, kleur: `#6b7280`, margin-top: 6px
 
 ---
 
