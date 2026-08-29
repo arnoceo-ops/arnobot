@@ -235,6 +235,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [transcribing, setTranscribing] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
+  // De GROEIKANS/WARMING-UP/GOED BEZIG-nudge is één keer per inlog-sessie zichtbaar: bij de eerste
+  // /bot-load, en daarna weg zodra de gebruiker iets doet (gesprek starten of naar een andere
+  // pagina navigeren, waardoor deze component unmount). Terug bij een nieuwe sessie. Bewust
+  // sessionStorage, geen backend: het is een lichte terzijde, geen continue confrontatie.
+  const [toonGroeibalans, setToonGroeibalans] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
   const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
@@ -496,6 +501,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         localStorage.removeItem('arnobot_prefill')
       }
     }
+
+    // Groei-nudge: alleen bij de eerste /bot-load van deze inlog-sessie. Vlag meteen zetten,
+    // zodat een latere terugkeer naar /bot binnen dezelfde sessie 'm niet opnieuw toont.
+    try {
+      if (!sessionStorage.getItem('arnobot_groeibalans_getoond')) {
+        setToonGroeibalans(true)
+        sessionStorage.setItem('arnobot_groeibalans_getoond', '1')
+      }
+    } catch { /* private mode / storage geblokkeerd: dan gewoon niet tonen */ }
   }, [])
 
   function scrollToRef(ref: React.RefObject<HTMLDivElement | null>) {
@@ -2408,7 +2422,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && mode === 'gesprek' && groeibalans && (
+        {!started && toonGroeibalans && mode === 'gesprek' && groeibalans && (
           <div className="groeibalans-wrap">
             <div
               className="groeibalans-kader"
