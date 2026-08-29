@@ -207,6 +207,10 @@ export default function SpeCoachingClient() {
 
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 48, borderBottom: '1px solid #374151', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* /bot/sparren heeft geen ander toegangspunt in de app (zie CoachingClient.tsx voor
+                de individuele variant, en geheugen feedback_check_sole_access_point). Sinds de
+                blokkade voor managers weg is (2026-08-29) hoort die link ook hier te staan. */}
+            <Link href="/bot/sparren" className="pdf-btn" title="Oefen een lastig gesprek met ArnoBot als tegenspeler" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>SPARREN →</Link>
             <button className="generate-btn" onClick={generate} disabled={generating || loading}>
               {generating ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>

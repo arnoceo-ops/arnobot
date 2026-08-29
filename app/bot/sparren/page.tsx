@@ -3,7 +3,6 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured } from '@/lib/voice'
-import { isConfirmedTeambaas } from '@/lib/teamAccess'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,10 +13,11 @@ export default async function SparrenPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Een bevestigde teambaas verkoopt zelf niet (zie docs/TEAM_PLAN.md, "either/or"-besluit),
-  // sparren is oefenen voor verkoopgesprekken, dus niet relevant. Zelfde afweging als de
-  // rolbewuste coachingspagina.
-  if (await isConfirmedTeambaas(userId)) redirect('/bot/coaching')
+  // Een bevestigde teambaas kan ook sparren (blokkade weggehaald 2026-08-29): een sales
+  // manager voert wel degelijk lastige gesprekken, met een underperformer, zijn eigen CEO of
+  // een boze grote klant, en de sparring-personacategorie "salesbaas" is daar precies voor
+  // gebouwd. rolCategorie valt in SparClient.tsx vanzelf terug op "salesbaas" bij een
+  // manager-profiel dat geen van de vaste rollijsten matcht.
 
   const [profileRes, planRes] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
