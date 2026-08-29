@@ -1855,6 +1855,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
+            {voornaam && !started && (
+              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(34px, 7vw, 52px)', letterSpacing: 1, lineHeight: 1, color: '#f1f5f9', textAlign: 'center' }}>
+                Hey, {voornaam}.
+              </p>
+            )}
           </div>
         )}
 
@@ -2024,16 +2029,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {sparModus === 'sparren' ? (
                 <span className="spar-input-intro">Begin het gesprek.</span>
               ) : (
-                <div style={{ width: '100%', maxWidth: 812, textAlign: 'center', marginBottom: 44 }}>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: 1, color: '#f1f5f9', display: 'block' }}>
-                    {voornaam ? `Hey, ${voornaam}.` : "What's on your sales mind?"}
-                  </span>
-                  {voornaam && (
-                    <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', display: 'block', marginTop: 6 }}>
-                      What&apos;s on your sales mind?
-                    </span>
-                  )}
-                </div>
+                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 32 }}>
+                  What&apos;s on your sales mind?
+                </span>
               )}
             </>
           )}
