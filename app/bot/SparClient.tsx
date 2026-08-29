@@ -267,12 +267,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     reader.readAsDataURL(file)
   }
   const [shareCopied, setShareCopied] = useState(false)
+  // Bewust GEEN "wacht tot de fetch klaar is"-gate meer (29 augustus 2026, eerder had dit een
+  // openersLoaded-state om een FOUC te voorkomen): de statische fallback-vragen hieronder zijn
+  // zelf al van goede kwaliteit, en Arno's klacht dat de vragen merkbaar traag verschenen woog
+  // zwaarder dan het risico op een korte, onopvallende wissel zodra de community-set binnenkomt.
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
-  // Voorkomt een FOUC: de openers-sectie rendert pas zodra de fetch geweest is (succes óf
-  // mislukking), zodat er nooit eerst de statische fallback-vragen te zien zijn die meteen
-  // daarna vervangen worden door de community-gegenereerde set. Zelfde patroon als de
-  // isFirstTime-gate in app/bot/profiel/page.tsx.
-  const [openersLoaded, setOpenersLoaded] = useState(false)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
   const [voiceMode, setVoiceMode] = useState(false)
 
@@ -490,7 +489,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       .then(r => r.json())
       .then(data => { if (data.openers) setDynamicOpeners(data.openers) })
       .catch(() => {})
-      .finally(() => setOpenersLoaded(true))
 
 
     // Verwerk referral code uit localStorage na OAuth
@@ -1203,11 +1201,23 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           gap: 32px;
           padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) 0;
         }
+        .vraag-tekst {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: clamp(8px, 1.5vw, 16px);
+        }
         .vraag-titel {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(36px, 6vw, 56px);
           letter-spacing: 1px;
           color: #f1f5f9;
+        }
+        .vraag-subtitel {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(16px, 2.2vw, 24px);
+          letter-spacing: 1px;
+          color: #9ca3af;
         }
         .vraag-terug {
           font-family: 'Bebas Neue', sans-serif;
@@ -1788,7 +1798,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
-            <h1 className="vraag-titel">VOORBEELDVRAGEN</h1>
+            <div className="vraag-tekst">
+              <h1 className="vraag-titel">COMMUNITYVRAGEN</h1>
+              <p className="vraag-subtitel">gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.</p>
+            </div>
             <div className="hero-divider" />
             <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
           </div>
@@ -2322,13 +2335,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {!started && !loading && mode === 'gesprek' && openersLoaded && (
+        {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
             <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
           </div>
         )}
 
-        {!started && !loading && mode === 'voorbeeldvragen' && openersLoaded && (
+        {!started && !loading && mode === 'voorbeeldvragen' && (
           <div className="spar-openers" style={isSalesOnlyProfiel ? { paddingTop: 20 } : undefined}>
             {!isSalesOnlyProfiel && (
               <>
@@ -2349,11 +2362,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </>
             )}
             <span className="spar-questions-label">selecteer een van de onderstaande vragen</span>
-            <span className="spar-questions-sub">
-              {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
-                ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'
-                : 'als het je bezighoudt, dan hè? waarom zou je er anders antwoord op willen hebben?'}
-            </span>
             <div className="openers-grid-line" />
             <div className="openers-grid">
               {(openerModus === 'strategisch'
