@@ -50,7 +50,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Wanneer kan ik een coachingsadvies opvragen?',
-        a: 'Dat kan als je minimaal 5 gesprekken hebt gevoerd. Ga dan naar Coaching en klik op de knop Adviseer. Arno combineert je gesprekken, profiel en eerdere analyses op drie pijlers: Mindset, Systeem en Actie. Het resultaat wordt elke keer scherper naarmate je meer hebt opgebouwd.',
+        a: 'Dat kan als je minimaal 5 gesprekken hebt gevoerd en op Pro of Team zit. Ga dan naar Coaching en klik op de knop Adviseer. Arno combineert je gesprekken, profiel en eerdere analyses op drie pijlers: Mindset, Systeem en Actie. Het resultaat wordt elke keer scherper naarmate je meer hebt opgebouwd. Zit je op Basic, dan kun je upgraden via je accountpagina.',
       },
       {
         q: 'Waarom kan ik maximaal 20 gesprekken selecteren voor een analyse?',
@@ -71,7 +71,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Voor wie is Sparren beschikbaar?',
-        a: 'Sparren is beschikbaar voor alle rollen: verkopers, solopreneurs, salesmanagers en CEO\'s. Elke rol heeft zijn eigen set uitdagers, afgestemd op de gesprekken die jij in de praktijk voert.',
+        a: 'Sparren is beschikbaar voor alle rollen: verkopers, solopreneurs, salesmanagers en CEO\'s. Elke rol heeft zijn eigen set uitdagers, afgestemd op de gesprekken die jij in de praktijk voert. Op Basic krijg je één sparsessie per dag, Pro en Team zijn onbeperkt.',
       },
       {
         q: 'Wat betekent de weerstandsinstelling?',
@@ -100,7 +100,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Hoe zeg ik op?',
-        a: 'Via de accountpagina, met één klik. Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.',
+        a: 'Via de accountpagina, met één klik. Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen. Ben je teammanager, dan beëindigt dit het abonnement voor je hele team, niet alleen jouw eigen toegang.',
       },
     ],
   },
@@ -109,7 +109,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt het referralprogramma?',
-        a: 'Deel je persoonlijke referral-link vanuit je profiel. Kiest de nieuwe gebruiker voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, verrekend op je factuur. Kiest de nieuwe gebruiker voor Basic, dan ontstaat er geen tegoed. Bij een maandabonnement ontvang je het tegoed na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.',
+        a: 'Deel je persoonlijke referral-link vanuit je profiel. Kiest de nieuwe gebruiker voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, verrekend op je factuur. Kiest de nieuwe gebruiker voor Basic, dan ontstaat er geen tegoed. Bij een maandabonnement ontvang je het tegoed na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling. Ben je teammanager, dan is het referralprogramma niet voor jou beschikbaar, dat geldt alleen voor individuele Basic- en Pro-accounts.',
       },
       {
         q: 'Hoe hoog is het tegoed?',
@@ -130,7 +130,7 @@ const FAQ_GROUPS = [
             <br /><br />
             Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties.
             <br /><br />
-            Wil je zelf iets delen? Dat kan. In de ARCHIEF kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
+            Wil je zelf iets delen? Dat kan. Bij ANALYSES kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
           </>
         ),
       },

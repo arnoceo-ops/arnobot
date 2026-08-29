@@ -125,8 +125,8 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 
 | Pagina | Pad | Functie |
 |---|---|---|
-| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar het voorbeeldvragenraster |
-| Voorbeeldvragen | `/bot/voorbeeldvragen` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden. Zelfde component/chatlogica, alleen desktop bereikbaar |
+| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar de community-vragenkeuze |
+| Community-vragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar deze route. Zelfde component/chatlogica, alleen desktop bereikbaar |
 | Welkom | `/bot/welkom` | Eenmalige welkomspagina met onboardingvideo |
 | Intake | `/bot/qa` | Onboarding-intakeformulier (rol, markt, uitdaging, targets) |
 | Profiel | `/bot/profiel` | Salescontext bekijken/aanpassen (zelfde vragenset als intake) |
@@ -407,6 +407,10 @@ Centrale gebruikerstabel. Elk account staat hier.
 | `linkedin` | text | LinkedIn-profiellink |
 | `tier` / `plan` | text | `free`, `trial`, `paid`, `team` / Basic, Pro, Team |
 | `command_manager` | bool | Recht om een team aan te maken |
+| `groeibalans_tonen` | bool | Of het Gebruiksbalans-kader op `/bot` getoond moet worden (5e parallelle call in `session-end`, `lib/groeibalans.ts`) |
+| `groeibalans_state` | text | Gebruiksbalans-classificatie: `groeikans`, `neutraal` of `gezond` |
+| `groeibalans_bouwsteen` | text | Welke bouwsteen het Gebruiksbalans-kader aanbeveelt: `sparsessies`, `analyses` of `coaching` |
+| `groeibalans_bijgewerkt_op` | timestamptz | Wanneer de Gebruiksbalans-classificatie voor het laatst is bijgewerkt |
 
 ### `arnobot_rds_logs`
 Alle ruwe gespreksberichten. Elke regel = één berichtblokje (`user_id`, `role`, `content`, `session_id`, `created_at`).
@@ -605,7 +609,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 teruggedraaid: bij lange/complexe vragen geen text block in response (thinking mode zonder output). Deze call gebruikt `.messages.stream(`, niet `.messages.create(`. Retry-bij-leeg-antwoord ná het einde van de stream (`finalMessage()`) plus een zichtbare fallbackzin. `max_tokens` per lengte-tier verhoogd met een kleine buffer (kort 600→750, normaal 1200→1450, uitgebreid 2200→2500, widget 1500→1800) om afkapping midden in een woord te voorkomen; afkapping die tóch optreedt wordt gelogd naar Sentry. | 2026-07, aangevuld 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen binnen de hoofdchat, met expliciete fallbacks. | 2026-07 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | "Thought of the day" op de coachingpagina. Grammaticale kwaliteit vereist Fable. Getest tegen `claude-opus-5` (2026-07-26): Fable 5 gehandhaafd. Toon herzien (2026-08-29): inspirerend, mag schuren maar niet irriteren, geen verhoor; vrij format (gedachte of observatie plus open vraag). Weekend altijd generiek, doordeweeks personaliseren vanaf 3 gesprekken. | 2026-07, herzien 2026-08-29 |
-| `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging) | `claude-haiku-4-5-20251001` | Drie parallelle batch-calls per sessie, retry-bij-leeg-antwoord per call. 4e parallelle call classificeert de sessie naar thema's (`lib/themas.ts`) voor De Spiegel, bewust zonder retry (supplementair signaal). | 2026-07, aangevuld 2026-08-21 |
+| `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging) | `claude-haiku-4-5-20251001` | Drie parallelle batch-calls per sessie, retry-bij-leeg-antwoord per call. 4e parallelle call classificeert de sessie naar thema's (`lib/themas.ts`) voor De Spiegel, bewust zonder retry (supplementair signaal). 5e parallelle call (sinds 28 augustus 2026) classificeert de sessie voor het Gebruiksbalans-kader op `/bot` (`lib/groeibalans.ts`), schrijft weg naar `approved_users` (`groeibalans_tonen`/`groeibalans_state`/`groeibalans_bouwsteen`/`groeibalans_bijgewerkt_op`), eveneens bewust zonder retry. | 2026-07, aangevuld 2026-08-21 en 2026-08-28 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
 | `app/api/bot/team/zelfcoaching/route.ts` | `claude-fable-5` | Zelfde afweging als hoofdsynthese: belangrijkste synthese van het traject, kosten geen factor. Refusal-check + retry-bij-leeg-antwoord vanaf de eerste versie. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. Getest tegen `claude-opus-5` (2026-07-26): Fable 5 gehandhaafd, Opus 5 liet in die testrun verplichte JSON-velden weg. | 2026-07, aangevuld 2026-08-01 |
