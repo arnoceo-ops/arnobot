@@ -48,6 +48,7 @@ interface Props {
   taglineTitle: string
   taglineSub: string
   resumeSessionId?: string
+  voornaam?: string | null
   mode?: 'gesprek' | 'sparren' | 'voorbeeldvragen'
   plan?: 'basis' | 'premium' | 'team'
   groeibalans?: {
@@ -171,7 +172,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -1854,6 +1855,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
+            {voornaam && !started && (
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 16, color: '#f1f5f9', textAlign: 'center' }}>
+                Hey, {voornaam}.
+              </p>
+            )}
           </div>
         )}
 

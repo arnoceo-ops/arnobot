@@ -16,7 +16,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
 
   const [profileRes, userRes, gesprekkenCountRes, sparCountRes, analysesCountRes, coachingCountRes] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
-    serviceDb.from('approved_users').select('plan, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
+    serviceDb.from('approved_users').select('plan, voornaam, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
     serviceDb.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     serviceDb.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     serviceDb.from('arnobot_analyses').select('*', { count: 'exact', head: true }).eq('user_id', userId),
@@ -65,6 +65,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       taglineTitle="Ik ben ARNOBOT: Jouw 24/7 salescoach."
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       resumeSessionId={resume}
+      voornaam={(userRes.data?.voornaam as string | null) ?? null}
       groeibalans={groeibalans}
     />
   )
