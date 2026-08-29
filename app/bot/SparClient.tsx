@@ -1869,30 +1869,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {mode === 'gesprek' && groeibalans && (
-          <div className="groeibalans-wrap">
-            <div
-              className="groeibalans-kader"
-              style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
-            >
-              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{GROEIBALANS_LABELS[groeibalans.state]}</p>
-              <p className="groeibalans-tellers">
-                <b>{groeibalans.tellers.gesprekken}</b> gesprekken
-                <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'sparsessies' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.sparsessies}</b> sparsessies
-                <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'analyses' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.analyses}</b> analyses
-                <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> coachings
-              </p>
-              <div className="groeibalans-onder">
-                <p className="groeibalans-tekst" style={{ color: groeibalans.kleur.tekst }}>{groeibalans.tekst}</p>
-                <Link href={groeibalans.href} className="groeibalans-knop">{groeibalans.knop}</Link>
-              </div>
-            </div>
-          </div>
-        )}
-
         {!started && sparModus === 'sparren' && sparSuggestie && !sparSuggestieAfgewezen && (
           <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', margin: 0 }}>
@@ -2429,6 +2405,30 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
             <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+          </div>
+        )}
+
+        {!started && mode === 'gesprek' && groeibalans && (
+          <div className="groeibalans-wrap">
+            <div
+              className="groeibalans-kader"
+              style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
+            >
+              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{GROEIBALANS_LABELS[groeibalans.state]}</p>
+              <p className="groeibalans-tellers">
+                <b>{groeibalans.tellers.gesprekken}</b> gesprekken
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'sparsessies' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.sparsessies}</b> sparsessies
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'analyses' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.analyses}</b> analyses
+                <span className="sep">·</span>
+                <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> coachings
+              </p>
+              <div className="groeibalans-onder">
+                <p className="groeibalans-tekst" style={{ color: groeibalans.kleur.tekst }}>{groeibalans.tekst}</p>
+                <Link href={groeibalans.href} className="groeibalans-knop">{groeibalans.knop}</Link>
+              </div>
+            </div>
           </div>
         )}
 
