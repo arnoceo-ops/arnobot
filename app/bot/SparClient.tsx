@@ -181,6 +181,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sessionId, setSessionId] = useState('')
   const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
+  // Community-vraag-toestemming (29 augustus 2026, zie project_gebruiksbalans_concept.md):
+  // gesprekken die starten vanuit een aangeklikte /bot/cgq-vraag worden alleen bewaard (en dus
+  // meegenomen in coachingsdiagnose/analyses) als de gebruiker dat bij het afsluiten expliciet
+  // aanvinkt. Standaard, zonder vinkje, wordt zo'n gesprek helemaal niet opgeslagen: geen
+  // arnobot_blog_sessions-rij, dus nergens zichtbaar of gebruikt.
+  const [startedFromCommunity, setStartedFromCommunity] = useState(false)
+  const [communityConsentChecked, setCommunityConsentChecked] = useState(false)
+  const [showCommunityConsent, setShowCommunityConsent] = useState(false)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
   const [verfijnen, setVerfijnen] = useState(false)
@@ -591,6 +599,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
+      // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT): nooit opslaan, ook
+      // niet via deze wegnavigeer-vangnet. Zie de startedFromCommunity-toelichting hierboven.
+      if (startedFromCommunity && !communityConsentChecked) return
       // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
       // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
       // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
@@ -603,7 +614,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
     window.addEventListener('beforeunload', handleUnload)
     return () => window.removeEventListener('beforeunload', handleUnload)
-  }, [messages])
+  }, [messages, startedFromCommunity, communityConsentChecked])
 
   useEffect(() => {
     if (resizeInput && inputRef.current) {
@@ -646,6 +657,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setShareUrl(null)
     setShareLoading(false)
     setShareCopied(false)
+    setStartedFromCommunity(false)
+    setCommunityConsentChecked(false)
+    setShowCommunityConsent(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => inputRef.current?.focus(), 150)
   }
@@ -718,6 +732,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       reset()
       return
     }
+    // Gesprek gestart vanuit een community-vraag: eerst expliciete toestemming vragen (checkbox)
+    // vóór er iets wordt opgeslagen. Pauzeert hier de eerste keer, bevestigCommunityKeuze()
+    // handelt daarna de daadwerkelijke afronding af.
+    if (startedFromCommunity && !showCommunityConsent) {
+      setShowCommunityConsent(true)
+      return
+    }
+    await afsluitenGesprek()
+  }
+
+  // Losgetrokken van handleNieuw() (29 augustus 2026) zodat de community-toestemmingsknop deze
+  // daadwerkelijke afronding rechtstreeks kan aanroepen, zonder opnieuw door de gate hierboven
+  // te lopen (die zou, door React's asynchrone state-updates, showCommunityConsent nog als
+  // 'true' kunnen lezen en zichzelf opnieuw pauzeren).
+  async function afsluitenGesprek() {
     if (showSluiten) setShowSluiten(false)
     setInput('')
     if (inputRef.current) inputRef.current.style.height = '55px'
@@ -792,6 +821,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     } finally {
       setSynthesisLoading(false)
     }
+  }
+
+  async function bevestigCommunityKeuze() {
+    setShowCommunityConsent(false)
+    if (!communityConsentChecked) {
+      reset()
+      return
+    }
+    await afsluitenGesprek()
   }
 
   async function startSparring() {
@@ -1053,7 +1091,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // invoerveld nodig zolang er nog geen gesprek loopt (29 augustus 2026, Arno's punt: het
   // dubbelde met de vragenkeuze eronder). Zodra started=true gedraagt de pagina zich weer als
   // een normaal gesprek en hoort de balk er gewoon te staan, vandaar de `&& !started`.
-  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && loading)
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && loading) && !showCommunityConsent
 
   return (
     <>
@@ -1190,6 +1228,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           line-height: 1.9;
           color: #9ca3af;
         }
+        .vraag-disclaimer {
+          font-family: 'Space Mono', monospace;
+          font-weight: 400;
+          font-size: 13px;
+          color: #6b7280;
+        }
         .vraag-terug {
           font-family: 'Bebas Neue', sans-serif;
           font-size: 18px;
@@ -1297,6 +1341,41 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           flex-direction: column;
           align-items: center;
         }
+        .community-consent {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+          width: 100%;
+          max-width: 650px;
+        }
+        .community-consent-label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-family: 'Space Mono', monospace;
+          font-weight: 400;
+          font-size: 15px;
+          color: #9ca3af;
+          cursor: pointer;
+        }
+        .community-consent-label input {
+          accent-color: #f59e0b;
+          width: 16px; height: 16px;
+          cursor: pointer;
+        }
+        .community-consent-btn {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 18px;
+          letter-spacing: 3px;
+          padding: 12px 36px;
+          border-radius: 999px;
+          background: #f59e0b;
+          color: #111827;
+          border: none;
+          cursor: pointer;
+        }
+        .community-consent-btn:hover { background: #d97706; }
         .spar-input-area.active {
           position: fixed;
           bottom: 0; left: 0; right: 0;
@@ -1768,6 +1847,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             <div className="vraag-tekst">
               <h1 className="vraag-titel">COMMUNITY THEMA'S</h1>
               <p className="vraag-subtitel">wat er leeft onder alle arnobot gebruikers</p>
+              <p className="vraag-disclaimer">Deze gesprekken tellen niet mee in je coachingsdiagnose of analyses.</p>
             </div>
             <div className="hero-divider" />
             <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
@@ -1902,6 +1982,22 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {showCommunityConsent && (
+          <div className="spar-input-area">
+            <div className="community-consent">
+              <label className="community-consent-label">
+                <input
+                  type="checkbox"
+                  checked={communityConsentChecked}
+                  onChange={e => setCommunityConsentChecked(e.target.checked)}
+                />
+                Neem dit gesprek mee in mijn analyses en coaching.
+              </label>
+              <button className="community-consent-btn" onClick={bevestigCommunityKeuze}>BEVESTIG →</button>
             </div>
           </div>
         )}
@@ -2337,7 +2433,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   ? (dynamicOpeners?.organisatorisch?.length ? dynamicOpeners.organisatorisch : VRAGEN_ORGANISATORISCH)
                   : (dynamicOpeners?.operationeel?.length ? dynamicOpeners.operationeel : VRAGEN_OPERATIONEEL)
               ).slice(0, 10).map((q, i) => (
-                <button key={i} className="opener-btn" onClick={() => ask(q)}>{q}</button>
+                <button key={i} className="opener-btn" onClick={() => { setStartedFromCommunity(true); ask(q) }}>{q}</button>
               ))}
             </div>
           </div>
