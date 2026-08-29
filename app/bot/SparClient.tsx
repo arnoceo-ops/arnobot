@@ -2021,8 +2021,20 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
-              <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : (voornaam ? `Hey, ${voornaam}. What's on your sales mind?` : "What's on your sales mind?")}</span>
-              {sparModus === 'gesprek' && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 44 }}>hoe concreter jouw info, hoe beter mijn output</span>}
+              {sparModus === 'sparren' ? (
+                <span className="spar-input-intro">Begin het gesprek.</span>
+              ) : (
+                <div style={{ width: '100%', maxWidth: 812, textAlign: 'center', marginBottom: 44 }}>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, letterSpacing: 1, color: '#f1f5f9', display: 'block' }}>
+                    {voornaam ? `Hey, ${voornaam}.` : "What's on your sales mind?"}
+                  </span>
+                  {voornaam && (
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', display: 'block', marginTop: 6 }}>
+                      What&apos;s on your sales mind?
+                    </span>
+                  )}
+                </div>
+              )}
             </>
           )}
           {sparModus === 'gesprek' && (
