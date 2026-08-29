@@ -1081,7 +1081,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // diezelfde grootte, zodat het meescrollen daar vanzelf al rekening mee houdt en de balk bij
   // het verschijnen nooit over de laatste regels heen kan schuiven.
   const stickyActive = started && sparModus !== 'sparren'
-  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(stickyActive && loading)
+  // /bot/cgq (mode==='voorbeeldvragen') is puur om een community-vraag te kiezen, geen vrij
+  // invoerveld nodig zolang er nog geen gesprek loopt (29 augustus 2026, Arno's punt: het
+  // dubbelde met de vragenkeuze eronder). Zodra started=true gedraagt de pagina zich weer als
+  // een normaal gesprek en hoort de balk er gewoon te staan, vandaar de `&& !started`.
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && loading)
 
   return (
     <>
@@ -1193,11 +1197,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
            zelf naar die pagina verwijst (28 augustus 2026, zie lib/groeibalans.ts-commit-buurman
            hierboven voor de reden: weinig gebruikt, maakte /bot te druk). */
         .vraag-hero {
-          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
+          gap: 32px;
           padding: clamp(48px,8vw,80px) clamp(20px,5vw,60px) 0;
         }
         .vraag-titel {
@@ -1206,17 +1209,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           letter-spacing: 1px;
           color: #f1f5f9;
         }
-        .vraag-sluiten {
-          position: absolute;
-          top: clamp(48px,8vw,80px);
-          right: clamp(20px,5vw,60px);
-          font-family: 'Space Mono', monospace;
-          font-size: 13px;
-          letter-spacing: 2px;
-          color: #6b7280;
+        .vraag-terug {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 18px;
+          letter-spacing: 3px;
+          color: #f59e0b;
           text-decoration: none;
         }
-        .vraag-sluiten:hover { color: #f1f5f9; }
+        .vraag-terug:hover { color: #d97706; }
         .voorbeeldvragen-link-wrap {
           display: flex;
           justify-content: center;
@@ -1788,9 +1788,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
-            <Link href="/bot" className="vraag-sluiten">✕ SLUITEN</Link>
             <h1 className="vraag-titel">VOORBEELDVRAGEN</h1>
             <div className="hero-divider" />
+            <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
           </div>
         )}
 
