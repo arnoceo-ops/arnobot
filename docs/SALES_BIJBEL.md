@@ -117,7 +117,7 @@ Blijft een teamlid langer dan twee weken zonder 1:1 met zijn manager, dan grijpt
 **Sterk omdat:** dit versterkt hetzelfde accountability-argument als punt 2 in de prioriteitentraining hieronder, maar dan gericht op de manager zelf, niet alleen op zijn verkopers: ArnoBot spreekt hem ook aan op zijn eigen discipline.
 
 ### 13. Community-gebaseerde gespreksopeners — LIVE (2026-08-24)
-Elke maand analyseert Claude alle gesprekken en analyses van alle ArnoBot-gebruikers samen, en genereert daaruit per discipline (Strategy, People, Execution) 10 nieuwe, actuele vragen, gerangschikt op belangrijkheid. Een gebruiker die op de startpagina een voorgeformuleerde vraag aanklikt, kiest daarmee impliciet uit wat er op dit moment daadwerkelijk speelt bij honderden andere sales professionals, volledig geanonimiseerd: geen enkele individuele bijdrage is herleidbaar, alleen het herkende patroon komt terug als nieuwe vraag.
+Elke maand analyseert Claude alle gesprekken en analyses van alle ArnoBot-gebruikers samen, en genereert daaruit per discipline (Strategy, People, Execution) 10 nieuwe, actuele vragen, gerangschikt op belangrijkheid. Een gebruiker die via het linkje op de startpagina naar de communityvragen gaat en daar een voorgeformuleerde vraag aanklikt, kiest daarmee impliciet uit wat er op dit moment daadwerkelijk speelt bij honderden andere sales professionals, volledig geanonimiseerd: geen enkele individuele bijdrage is herleidbaar, alleen het herkende patroon komt terug als nieuwe vraag.
 
 **Lost op:** een leeg scherm is de grootste drempel om een gesprek te beginnen. Een generiek lijstje voorbeeldvragen, zoals elke concurrent heeft, voelt willekeurig. Deze vragen voelen actueel en relevant, omdat ze dat ook daadwerkelijk zijn.
 
