@@ -456,6 +456,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (resumeSessionId) {
       localStorage.setItem('arnobot_session', resumeSessionId)
       setSessionId(resumeSessionId)
+      // ?resume=<id> is nu verwerkt: haal 'm uit de adresbalk. Anders liegt de URL zodra je
+      // dit gesprek sluit en verdergaat, en (belangrijker) een reload zou de resume-effect
+      // opnieuw draaien en het net in localStorage gezette verse sessie-id weer overschrijven
+      // met het oude, waardoor je terugkijkt naar het afgesloten gesprek. Bewust
+      // history.replaceState, geen router.replace: dat zou SparClient laten hermonteren en de
+      // net geladen messages/state wegvegen (zelfde reden als bij /bot/cgq hierboven).
+      window.history.replaceState(null, '', '/bot')
       fetch(`/api/bot/session?sessionId=${resumeSessionId}`)
         .then(r => r.json())
         .then(data => {
