@@ -1987,7 +1987,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         )}
 
         {showCommunityConsent && (
-          <div className="spar-input-area">
+          <div className={`spar-input-area${stickyActive ? ' active' : ''}`}>
             <div className="community-consent">
               <label className="community-consent-label">
                 <input
