@@ -535,6 +535,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [messages.length, loading, showSluiten, streamingStarted])
 
+  // Bij het sluiten van een gesprek verschijnt de "Arno denkt na"-indicator onderaan de thread
+  // terwijl de synthese draait. Zonder deze scroll bleef hij onder de vouw hangen (of achter de
+  // net verdwenen invoerbalk), waardoor je dacht dat je weg kon klikken terwijl de samenvatting
+  // nog moest komen.
+  useEffect(() => {
+    if (synthesisLoading) {
+      autoFollowRef.current = true
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
+    }
+  }, [synthesisLoading])
+
   // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
   // gebruiker zelf scrolt: dan stopt het automatisch volgen tot de volgende vraag. Zonder dit
   // moest je tijdens het genereren zelf blijven scrollen om de groeiende tekst bij te houden.
@@ -1098,7 +1109,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // invoerveld nodig zolang er nog geen gesprek loopt (29 augustus 2026, Arno's punt: het
   // dubbelde met de vragenkeuze eronder). Zodra started=true gedraagt de pagina zich weer als
   // een normaal gesprek en hoort de balk er gewoon te staan, vandaar de `&& !started`.
-  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && loading) && !showCommunityConsent
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && (loading || synthesisLoading)) && !showCommunityConsent
 
   return (
     <>
@@ -1220,7 +1231,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: clamp(8px, 1.5vw, 16px);
+          gap: clamp(0px, 1vw, 2px);
         }
         .vraag-titel {
           font-family: 'Bebas Neue', sans-serif;
