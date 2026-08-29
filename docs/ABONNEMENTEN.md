@@ -1,4 +1,4 @@
-# ArnoBot abonnementsstructuur — basic/pro/team (elite intern)
+# ArnoBot abonnementsstructuur — basic/pro/team
 
 Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet telkens opnieuw uit git-geschiedenis of losse sessies opgezocht hoeven te worden. **Bij elke wijziging aan de abonnementsstructuur dit document in dezelfde commit bijwerken.**
 
@@ -49,12 +49,14 @@ De marketingcopy op `/prijzen` gebruikt bewust kwalificatieve taal ("onbeperkt",
 | Sessiegeheugen (vorige gesprekken als context) | 10 | 25 | 25 |
 | Coachingdocument (mindset/systeem/actie-scores) | **Nee, harde blokkade (403)** | Ja | Ja |
 | Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap, **tijdelijk uitgezet voor iedereen buiten Arno's eigen accounts, zie `docs/VOICE_PLAN.md`** | Ja, zelfde tijdelijke uitzetting |
-| Rollenspel/sparring | Ja | Ja | Ja |
+| Rollenspel/sparring | Ja, max. 1 sessie per dag | Ja, onbeperkt | Ja, onbeperkt |
 | Teamoverzicht, 1:1-voorbereiding, leiderschapsaccount | Nee | Nee | Ja, exclusief manager-laag |
 
 **Belangrijk onderscheid:** bij Basic is coachingdocument en voice niet een afgeslankte versie, het is een harde nul (expliciete blokkade/geen toegang). Dit is een principieel verschil, geen gradueel verschil, en hoort dus ook zo in copy terug te komen (niet als "minder", maar als "niet inbegrepen").
 
 **Kanttekening:** deze cijfers zijn de huidige code-realiteit onder de bestaande `basis`/`premium`-plan-waarden, nog niet herbouwd onder de naam Basic/Pro zelf (zie "Bekende inconsistenties" hieronder voor waar de naamgeving nog niet is doorgevoerd). Ze zijn wel de beste beschikbare basis om nu mee te werken, bron: directe code-inspectie plus `docs/PRICING_DECISIONS.md`, sectie "Onderliggende technische realiteit".
+
+**Bijgewerkt (2026-08-26):** `/api/sparring/open` had tot deze datum geen enkele plan-check (stond al sinds 2026-07-31 als gesignaleerd gat in `lib/kostenTarieven.ts`, nooit opgevolgd). Basic krijgt nu een daglimiet van 1 sparsessie, geteld via `arnobot_events` (`sparring_open`), Pro/Team blijven onbeperkt.
 
 ---
 
