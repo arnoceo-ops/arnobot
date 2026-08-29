@@ -334,6 +334,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | Route | Doel |
 |---|---|
 | `/api/webhooks/calendly` | Ontvangt boekingsevents (HMAC-signature + timestamp-verificatie) |
+| `/api/webhooks/github-pr` | Stuurt een Telegram-melding bij een nieuw geopende PR op de repo (X-Hub-Signature-256-verificatie). PR's van de documentatie-versheidsroutine (titel begint met "Documentatie-versheidscheck") worden bewust overgeslagen, die worden in een Claude Code-sessie afgehandeld |
 
 ### Infrastructuur
 

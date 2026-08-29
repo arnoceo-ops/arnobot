@@ -58,6 +58,18 @@ export async function POST(req: NextRequest) {
   const title = pr?.title ?? 'onbekende titel'
   const url = pr?.html_url ?? ''
   const author = pr?.user?.login ?? 'onbekend'
+  const branch = pr?.head?.ref ?? ''
+
+  // De documentatie-versheidsroutine (CLAUDE.md, "Documentatie actueel houden") opent bij
+  // elke push een PR met tekstcorrecties zodra docs en code uit de pas lopen. Die worden in
+  // een gewone Claude Code-sessie nagekeken en gemerged, dus een Telegram-ping erover is
+  // puur ruis voor Arno (zijn expliciete keuze, 2026-08-29). Andere PR's (Dependabot,
+  // maandelijkse architectuur-audit, handmatig) blijven gewoon een melding geven.
+  const isDocsFreshnessPr =
+    title.startsWith('Documentatie-versheidscheck') || branch.startsWith('docs/versheidscheck-')
+  if (isDocsFreshnessPr) {
+    return NextResponse.json({ ok: true, skipped: 'docs-freshness-pr' })
+  }
 
   await sendTelegram(`Nieuwe pull request op arnobot\n\n${title}\nDoor: ${author}\n${url}`)
 
