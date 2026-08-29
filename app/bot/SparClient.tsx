@@ -181,6 +181,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sessionId, setSessionId] = useState('')
   const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
+  // De sparring-persona kan het gesprek zelf beeindigen (zie AFRONDEN in
+  // app/api/sparring/chat/route.ts). Bij `ended: true` uit die route: invoer op slot, en een
+  // knop die rechtstreeks naar de debrief gaat i.p.v. dat de gebruiker doorpraat tegen iemand
+  // die al weg is.
+  const [sparEnded, setSparEnded] = useState(false)
   // Community-vraag-toestemming (29 augustus 2026, zie project_gebruiksbalans_concept.md):
   // gesprekken die starten vanuit een aangeklikte /bot/cgq-vraag worden altijd bewaard (nodig
   // voor ArnoBot's eigen big-data-analyse over de hele community, refresh-openers/route.ts),
@@ -661,6 +666,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setLoading(false)
     setBlocked(false)
     setShowSluiten(false)
+    setSparEnded(false)
     setSynthesisLoading(false)
     setSynthesisMessageCount(0)
     setSuggestedBlogs([])
@@ -846,6 +852,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   async function startSparring() {
     if ((sparPersona === 'anders' && !sparContext.trim()) || startingSparring) return
+    setSparEnded(false)
     setStartingSparring(true)
     try {
       const res = await fetch('/api/sparring/open', {
@@ -927,6 +934,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             { role: 'user', content: question },
             { role: 'assistant', content: answer }
           ])
+          // De persona heeft het gesprek zelf afgerond (zie AFRONDEN in sparring/chat/route.ts):
+          // invoer op slot, de gebruiker gaat via de knop hieronder rechtstreeks naar de debrief.
+          if (data.ended) setSparEnded(true)
         }
       } else if (voiceMode) {
         const res = await fetch('/api/chat-voice', {
@@ -1109,7 +1119,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // invoerveld nodig zolang er nog geen gesprek loopt (29 augustus 2026, Arno's punt: het
   // dubbelde met de vragenkeuze eronder). Zodra started=true gedraagt de pagina zich weer als
   // een normaal gesprek en hoort de balk er gewoon te staan, vandaar de `&& !started`.
-  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && (loading || synthesisLoading)) && !showCommunityConsent
+  const showInputArea = !blocked && !(showSluiten && messages.length <= synthesisMessageCount) && !(sparModus === 'sparren' && !started) && !(mode === 'voorbeeldvragen' && !started) && !(stickyActive && (loading || synthesisLoading)) && !showCommunityConsent && !sparEnded
 
   return (
     <>
@@ -2567,6 +2577,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             )
           ))}
+          {sparEnded && !showSluiten && !loading && !synthesisLoading && (
+            <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,60px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, background: '#111827' }}>
+              <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280' }}>DE GESPREKSPARTNER HEEFT HET GESPREK AFGEROND</p>
+              <button
+                onClick={afsluitenGesprek}
+                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#d97706')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#f59e0b')}
+              >
+                BEKIJK DE DEBRIEF →
+              </button>
+            </div>
+          )}
           {showSluiten && sparModus === 'sparren' && !loading && (
             <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,60px)', display: 'flex', justifyContent: 'center', background: '#111827' }}>
               <button

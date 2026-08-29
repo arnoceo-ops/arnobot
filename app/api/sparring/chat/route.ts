@@ -28,11 +28,25 @@ export async function POST(req: NextRequest) {
   const personaBeschrijving = getPersonaBeschrijving(rolCategorie, persona, context)
   const weerstandInstructie = WEERSTAND_INSTRUCTIE[weerstand] ?? WEERSTAND_INSTRUCTIE.stevig
 
+  // Aantal beurten tot nu toe (user + assistant samen). Na een stuk of acht uitwisselingen
+  // leunt de persona zelf richting afronden, zoals een echte koper een gesprek op een gegeven
+  // moment beeindigt (akkoord, hard nee, of het loopt dood).
+  const beurten = Array.isArray(history) ? history.length : 0
+  const afrondNudge = beurten >= 16
+    ? '\n\nDit gesprek loopt al even. Als er geen echte voortgang meer is, of als jouw positie duidelijk is, rond het dan nu zelf af zoals hierboven beschreven.'
+    : ''
+
   const systemPrompt = `${personaBeschrijving}
 
 ${weerstandInstructie}
 
 ${context ? `Context van de gebruiker: "${context}"` : ''}
+
+AFRONDEN:
+- Jij mag dit gesprek zelf beeindigen wanneer de situatie erom vraagt: je bent tot een akkoord gekomen, je hebt een duidelijk nee, of de gebruiker draait al een paar beurten in kringetjes zonder iets nieuws te brengen.
+- Doe dat in karakter, met een korte, natuurlijke afsluitzin. Geen aankondiging dat "het gesprek nu stopt", gewoon zoals je een echte afspraak zou afronden.
+- Zet dan, en alleen dan, op de allerlaatste regel van je bericht precies dit token, op een eigen regel, zonder verdere tekst erachter: [EINDE]
+- Zolang je nog niet afrondt: nooit [EINDE] gebruiken.${afrondNudge}
 
 REGELS:
 - Blijf altijd volledig in karakter. Nooit coachen of hints geven. Je bent de tegenstander.
@@ -73,5 +87,12 @@ REGELS:
     console.error('[sparring/chat] leeg antwoord na retry, userId:', userId)
     return NextResponse.json({ error: 'Kon geen antwoord genereren' }, { status: 502 })
   }
-  return NextResponse.json({ answer })
+
+  // De persona sluit het gesprek af met een [EINDE]-token op de laatste regel (zie AFRONDEN
+  // in de systeemprompt). Token eruit strippen vóór het naar de client gaat, zodat het nooit
+  // zichtbaar wordt of in de history terechtkomt; `ended` stuurt de client naar de debrief.
+  const ended = /\[EINDE\]\s*$/i.test(answer.trim())
+  if (ended) answer = answer.replace(/\s*\[EINDE\]\s*$/i, '').trim()
+
+  return NextResponse.json({ answer, ended })
 }
