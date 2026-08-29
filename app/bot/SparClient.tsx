@@ -415,6 +415,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   function handleNavAttempt(dest: string) {
+    markGroeibalansGezien()
     if (started && messages.length > 0 && !showSluiten) {
       setPendingNavDest(dest)
       setNavGuardOpen(true)
@@ -501,16 +502,24 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         localStorage.removeItem('arnobot_prefill')
       }
     }
-
-    // Groei-nudge: alleen bij de eerste /bot-load van deze inlog-sessie. Vlag meteen zetten,
-    // zodat een latere terugkeer naar /bot binnen dezelfde sessie 'm niet opnieuw toont.
-    try {
-      if (!sessionStorage.getItem('arnobot_groeibalans_getoond')) {
-        setToonGroeibalans(true)
-        sessionStorage.setItem('arnobot_groeibalans_getoond', '1')
-      }
-    } catch { /* private mode / storage geblokkeerd: dan gewoon niet tonen */ }
   }, [])
+
+  // Groei-nudge: zichtbaar bij het eerste /bot-bezoek van een inlog-sessie, en pas weg zodra de
+  // gebruiker echt iets doet (gesprek starten, wegnavigeren, een community-vraag kiezen). Een
+  // kale refresh raakt de vlag niet, dus dan blijft de nudge staan. Terug bij een nieuwe sessie.
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem('arnobot_groeibalans_getoond')) setToonGroeibalans(true)
+    } catch { /* storage geblokkeerd: dan gewoon niet tonen */ }
+  }, [])
+
+  function markGroeibalansGezien() {
+    try { sessionStorage.setItem('arnobot_groeibalans_getoond', '1') } catch { /* storage geblokkeerd */ }
+  }
+
+  useEffect(() => {
+    if (started) markGroeibalansGezien()
+  }, [started])
 
   function scrollToRef(ref: React.RefObject<HTMLDivElement | null>) {
     const el = ref.current
@@ -1284,7 +1293,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .groeibalans-wrap {
           display: flex;
           justify-content: center;
-          padding: 0 clamp(20px,5vw,60px) 32px;
+          /* padding-top 14px: trekt de ruimte boven de kaart gelijk met de ruimte boven
+             "OF KIES EEN VRAAG" (62px i.p.v. 48px). Alleen hier, niet op .voorbeeldvragen-
+             link-wrap, want die bepaalt ook de witruimte als de kaart niet getoond wordt. */
+          padding: 16px clamp(20px,5vw,60px) 32px;
         }
         .groeibalans-kader {
           width: 650px;
@@ -2418,7 +2430,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link" onClick={markGroeibalansGezien}>OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
           </div>
         )}
 
