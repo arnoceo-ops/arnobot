@@ -82,7 +82,7 @@ Eerste inlog → /bot/welkom (welkomspagina, welcome_seen gezet)
     ↓
 /bot (hoofdchat — gesprekken via arnobot_rds_logs + arnobot_blog_sessions)
     ↓
-Elke sessie → /api/bot/session-end (synthese: title + summary + feiten + uitdaging + entiteiten-extractie)
+Elke sessie → /api/bot/session-end (synthese: title + summary + feiten + uitdaging + entiteiten-extractie + groeibalans-classificatie)
     ↓
 Na 5+ gesprekken → /api/cron/auto-analyse (analyse aangemaakt in arnobot_analyses, zichtbaar op /bot/analyses)
     ↓
@@ -125,7 +125,7 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 
 | Pagina | Pad | Functie |
 |---|---|---|
-| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar het voorbeeldvragenraster |
+| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar het voorbeeldvragenraster. Toont vanaf 5 gesprekken ook het Gebruiksbalans-kader (desktop-only, `lib/groeibalans.ts`): rolbewuste aanbeveling richting sparren/analyseren/coachen, bepaald door de AI-classificatie in `/api/bot/session-end` |
 | Voorbeeldvragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, route op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar `/bot/cgq` ("community generated questions"). Zelfde component/chatlogica, alleen desktop bereikbaar. Zodra een gesprek start wisselt de adresbalk stil terug naar `/bot` (`window.history.replaceState`, geen router-navigatie) |
 | Welkom | `/bot/welkom` | Eenmalige welkomspagina met onboardingvideo |
 | Intake | `/bot/qa` | Onboarding-intakeformulier (rol, markt, uitdaging, targets) |
@@ -215,7 +215,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/chat` | Hoofdgesprek met ArnoBot (streaming) |
 | `/api/chat-voice` | Voice-variant van het hoofdgesprek (eigen rate limit + plancheck) |
-| `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten) |
+| `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten/groeibalans-classificatie) |
 | `/api/bot/sessions` | Ruwe logs groeperen tot sessies, embedding + entiteiten-extractie |
 | `/api/bot/sessions/search` | AI-filter op eigen gesprekken |
 | `/api/bot/session` | Eén sessie ophalen/verwijderen |
