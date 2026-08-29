@@ -420,6 +420,18 @@ Bij elke nieuwe pagina of component: lees eerst een bestaande pagina door en leg
 - **/bot-pagina's** (achter login): referentie is `app/bot/account/page.tsx`
 - **Publieke pagina's** (geen login vereist): referentie is `app/privacy/page.tsx` — nooit de voorwaardenpagina als referentie gebruiken
 
+### Ná het bouwen: controleer het resultaat tegen het goedgekeurde ontwerp — ALTIJD
+
+"Eerst voorstellen, wachten op akkoord" hierboven regelt het moment vóór het bouwen. Dat is niet genoeg: het moment ná het bouwen heeft een eigen, aparte controle nodig, met name bij **hergebruik van een bestaande component** voor een nieuw scherm. Een hergebruikte component brengt al zijn bestaande gedrag en elementen mee, ook wat het goedgekeurde ontwerp (mockup, artifact, screenshot) nooit toonde. Dat gedrag verdwijnt niet vanzelf omdat het ontwerp het wegliet, het moet er expliciet uitgehaald worden.
+
+**Verplichte stap direct na het bouwen, vóór je het als "klaar" rapporteert:** leg het daadwerkelijke resultaat naast het laatst goedgekeurde ontwerp, element voor element. Twee dingen om expliciet te checken:
+1. Staat er iets in het resultaat dat niet in het ontwerp stond? (bijv. een meegekomen invoerveld, knop, of sectie van de hergebruikte component)
+2. Ontbreekt er iets dat het ontwerp wél toonde?
+
+Bij een verschil: dat is geen "kleine afwijking die later wel opvalt", dat is een fout die vóór opleveren gecorrigeerd wordt, niet erna wanneer de gebruiker het zelf tegenkomt.
+
+**Waarom deze regel er is (29 augustus 2026):** bij het bouwen van `/bot/cgq` (community-vragen-pagina) is een eerder goedgekeurde mockup exact gevolgd voor het ontwerp, maar bij de daadwerkelijke bouw is de bestaande `SparClient`-component hergebruikt zonder het standaard invoerblok expliciet uit te sluiten. De mockup had dat blok nooit getoond, de gebouwde pagina wél, een verschil dat pas opviel toen Arno het zelf tegenkwam. Dit patroon (op eigen houtje afwijken van een overeengekomen ontwerp door hergebruik van bestaande code) had zich vaker voorgedaan; de bestaande "eerst voorstellen"-regel ving dit niet omdat die alleen het vóór-moment dekt.
+
 ### Vaste normen
 - **Body tekst**: Space Mono, fontWeight 400, fontSize 15px, lineHeight 1.9, kleur #9ca3af
 - **Labels (amber)**: Space Mono, fontWeight 400, fontSize 13px, letterSpacing 4, kleur #f59e0b — geldt voor ALLE amber labels zonder uitzondering: inline, sectiekoppen, synthesetitels (SYNTHESE, TERUGBLIK, 1:1 AGENDA), configurator-labels, "BEGIN HET GESPREK", etc.
