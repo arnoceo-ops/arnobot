@@ -33,6 +33,7 @@ export async function computeSpiegelSignaal(memberIds: string[]): Promise<Spiege
     .select('user_id, created_at, themas')
     .in('user_id', memberIds)
     .not('themas', 'is', null)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: false })
     .limit(500)
 
@@ -138,6 +139,7 @@ export async function computeThemaMaandTrend(memberIds: string[]): Promise<strin
     .select('created_at, themas')
     .in('user_id', memberIds)
     .not('themas', 'is', null)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: true })
 
   const byMonth = new Map<string, Map<string, number>>()

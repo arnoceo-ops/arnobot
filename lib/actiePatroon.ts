@@ -29,6 +29,7 @@ export async function berekenActiePatroon(userId: string): Promise<ActiePatroon>
     .from('arnobot_blog_sessions')
     .select('actie_status, actie_klik_ms')
     .eq('user_id', userId)
+    .eq('community_excluded', false)
     .not('actie_status', 'is', null)
     .order('created_at', { ascending: false })
     .limit(RECENT_WINDOW)

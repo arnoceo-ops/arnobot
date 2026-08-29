@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     .select('title, summary, message_count, created_at, session_id')
     .eq('user_id', userId)
     .is('deleted_at', null)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: false })
     .limit(100)
 

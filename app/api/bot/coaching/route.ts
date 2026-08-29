@@ -55,6 +55,7 @@ export async function POST() {
       .select('session_id, title, summary, feiten, message_count, created_at, excuustaal')
       .eq('user_id', userId)
       .is('deleted_at', null)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
       .limit(50),
     // Los van de 50-limiet hierboven (die de AI-analyse behapbaar houdt): het werkelijke totaal
@@ -93,6 +94,7 @@ export async function POST() {
       .select('actie_status')
       .eq('user_id', userId)
       .is('deleted_at', null)
+      .eq('community_excluded', false)
       .not('actie_status', 'is', null)
       .not('actie_status', 'eq', 'skip')
       .order('created_at', { ascending: false })

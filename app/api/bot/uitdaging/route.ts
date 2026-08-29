@@ -37,13 +37,15 @@ export async function GET() {
       .select('title, summary, created_at')
       .eq('user_id', userId)
       .is('deleted_at', null)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('arnobot_blog_sessions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .is('deleted_at', null),
+      .is('deleted_at', null)
+      .eq('community_excluded', false),
     supabase
       .from('arnobot_analyses')
       .select('analyse_text')

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
-import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN } from '@/lib/groeibalans'
+import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 
 function renderContent(text: string) {
   const escaped = text
@@ -182,10 +182,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [savedSessionId, setSavedSessionId] = useState('')
   const [showSluiten, setShowSluiten] = useState(false)
   // Community-vraag-toestemming (29 augustus 2026, zie project_gebruiksbalans_concept.md):
-  // gesprekken die starten vanuit een aangeklikte /bot/cgq-vraag worden alleen bewaard (en dus
-  // meegenomen in coachingsdiagnose/analyses) als de gebruiker dat bij het afsluiten expliciet
-  // aanvinkt. Standaard, zonder vinkje, wordt zo'n gesprek helemaal niet opgeslagen: geen
-  // arnobot_blog_sessions-rij, dus nergens zichtbaar of gebruikt.
+  // gesprekken die starten vanuit een aangeklikte /bot/cgq-vraag worden altijd bewaard (nodig
+  // voor ArnoBot's eigen big-data-analyse over de hele community, refresh-openers/route.ts),
+  // maar tellen alleen mee voor de gebruiker zelf (Analyses-pagina, coaching, personalisatie)
+  // als die dat bij het afsluiten expliciet aanvinkt. Zonder vinkje: wel een arnobot_blog_
+  // sessions-rij (community_excluded=true), maar onzichtbaar/ongebruikt in alles wat op de
+  // gebruiker zelf terugslaat.
   const [startedFromCommunity, setStartedFromCommunity] = useState(false)
   const [communityConsentChecked, setCommunityConsentChecked] = useState(false)
   const [showCommunityConsent, setShowCommunityConsent] = useState(false)
@@ -599,15 +601,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
-      // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT): nooit opslaan, ook
-      // niet via deze wegnavigeer-vangnet. Zie de startedFromCommunity-toelichting hierboven.
-      if (startedFromCommunity && !communityConsentChecked) return
       // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
       // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
       // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
       // gewoon wegnavigeert vindt 'm terug in zijn sessiehistorie/Bieb.
+      // Community-vraag zonder (nog) bevestigde toestemming: wordt hier altijd opgeslagen (voor
+      // ArnoBot's eigen big-data-analyse), session-end/route.ts sluit 'm zelf uit van alles wat
+      // op de gebruiker zelf terugslaat zolang communityConsent niet true is.
       const blob = new Blob(
-        [JSON.stringify({ sessionId: sid, messages })],
+        [JSON.stringify({ sessionId: sid, messages, startedFromCommunity, communityConsent: communityConsentChecked })],
         { type: 'application/json' }
       )
       navigator.sendBeacon('/api/bot/session-end', blob)
@@ -795,7 +797,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       const res = await fetch('/api/bot/session-end', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, messages, explicitClose: true })
+        body: JSON.stringify({ sessionId, messages, explicitClose: true, startedFromCommunity, communityConsent: communityConsentChecked })
       })
       const data = await res.json()
       if (data.summary) {
@@ -825,10 +827,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   async function bevestigCommunityKeuze() {
     setShowCommunityConsent(false)
-    if (!communityConsentChecked) {
-      reset()
-      return
-    }
+    // Altijd afsluiten en opslaan, ongeacht de checkbox: session-end/route.ts bepaalt aan de
+    // hand van communityConsent of dit gesprek meetelt voor de gebruiker zelf (Analyses-
+    // pagina, coaching) of alleen voor ArnoBot's eigen big-data-analyse over de community.
     await afsluitenGesprek()
   }
 
@@ -1274,6 +1275,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           display: flex;
           flex-direction: column;
           gap: 14px;
+        }
+        .groeibalans-label {
+          font-family: 'Space Mono', monospace;
+          font-weight: 400;
+          font-size: 13px;
+          letter-spacing: 4px;
+          margin: 0;
         }
         .groeibalans-tellers {
           font-family: 'Space Mono', monospace;
@@ -1859,6 +1867,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               className="groeibalans-kader"
               style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
             >
+              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{GROEIBALANS_LABELS[groeibalans.state]}</p>
               <p className="groeibalans-tellers">
                 <b>{groeibalans.tellers.gesprekken}</b> gesprekken
                 <span className="sep">·</span>

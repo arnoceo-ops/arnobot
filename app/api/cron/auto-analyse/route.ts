@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, message_count, created_at')
       .eq('user_id', userId)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
 
     if (lastAnalyse?.created_at) {

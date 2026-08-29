@@ -31,6 +31,7 @@ export async function GET() {
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary')
       .eq('user_id', userId)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
       .limit(20),
     supabase

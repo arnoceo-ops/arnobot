@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
       .select('title, summary, feiten, created_at')
       .eq('user_id', targetUserId)
       .is('deleted_at', null)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
       .limit(3),
   ])

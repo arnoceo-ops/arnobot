@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     .from('arnobot_blog_sessions')
     .select('session_id, title, summary')
     .eq('user_id', userId)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -56,6 +57,7 @@ export async function GET(req: NextRequest) {
     .select('session_id, title, summary, message_count, created_at, blog_suggestions')
     .eq('user_id', userId)
     .in('session_id', matchedIds)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: false })
 
   return NextResponse.json({ sessions: sessions ?? [] })

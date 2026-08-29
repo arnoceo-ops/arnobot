@@ -230,6 +230,7 @@ async function findSemanticallyRelevantOlderSessions(
       .select('session_id, summary, feiten, created_at')
       .in('session_id', candidateIds)
       .is('deleted_at', null)
+      .eq('community_excluded', false)
     if (!validRows?.length) return []
 
     const similarityOrder = new Map(candidateIds.map((id, i) => [id, i]))
@@ -392,6 +393,7 @@ export async function POST(req: NextRequest) {
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
             .is('deleted_at', null)
+            .eq('community_excluded', false)
             .order('created_at', { ascending: false })
             .limit(plan !== 'basis' ? 25 : 10),
           detectSparringReference(question)

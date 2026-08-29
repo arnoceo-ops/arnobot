@@ -24,7 +24,14 @@ const redis = new Redis({
 })
 
 export async function POST(req: NextRequest) {
-  const { sessionId, messages, explicitClose } = await req.json()
+  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent } = await req.json()
+  // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT, SparClient.tsx): het
+  // gesprek wordt ALTIJD opgeslagen (nodig voor ArnoBot's eigen big-data-analyse over de hele
+  // community, refresh-openers/route.ts), maar community_excluded=true sluit 'm uit van alles
+  // wat op de gebruiker zelf terugslaat: de conversatielijst op de Analyses-pagina, coaching,
+  // coaching-analyse, thought-of-the-day-personalisatie, actiepatronen en De Spiegel. Zie
+  // geheugen project_gebruiksbalans_concept.md voor de volledige toestemmingsdiscussie.
+  const communityExcluded = startedFromCommunity === true && communityConsent !== true
   if (!sessionId || !messages?.length) return NextResponse.json({ ok: true })
 
   // Auth via Clerk cookie, of fallback via bestaande log-rij (voor sendBeacon die geen cookies meestuurt)
@@ -194,6 +201,8 @@ ArnoBot heeft vier bouwstenen: gesprekken (vragen stellen), sparsessies (een las
 
 Beoordeel of het huidige gebruikspatroon bij de rol van de gebruiker past. Belangrijk: een leidinggevende rol (bijvoorbeeld sales manager, sales director, teamleider) heeft structureel veel minder aan sparsessies dan een verkoper die zelf klantgesprekken voert, dat is geen tekortkoming en geen reden om sparsessies aan te bevelen.
 
+Hoe zwaar sparsessies meetelt in je beoordeling van "state" hangt van diezelfde rol af, als zwaartepunt, niet als rekenformule: bij een verkoper of solopreneur die zelf klantgesprekken voert, weegt sparsessies behoorlijk mee in het totaalbeeld naast gesprekken, analyses en coaching (ruwweg een kwart van het gewicht). Bij een leidinggevende rol weegt sparsessies nauwelijks mee (ruwweg een tiende), coaching en analyses zijn voor hen de belangrijkste signalen. Dit zwaartepunt is een richting, geen harde grens: gebruik je eigen oordeel over het hele gesprek en profiel, en laat bij twijfel dit zwaartepunt de doorslag geven.
+
 Geef ALLEEN een JSON-object terug, geen andere tekst, geen uitleg:
 {"tonen": true, "state": "groeikans", "bouwsteen": "sparsessies"}
 of
@@ -337,6 +346,7 @@ ${conversationText.slice(0, 4000)}`
       blog_suggestions: blogSuggestions,
       themas: themas.length ? themas : null,
       excuustaal,
+      community_excluded: communityExcluded,
     }, { onConflict: 'session_id' })
 
   if (upsertError) {

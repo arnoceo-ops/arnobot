@@ -112,3 +112,13 @@ export const GROEIBALANS_KLEUREN: Record<GroeibalansState, { bg: string; border:
   neutraal: { bg: 'rgba(107,114,128,0.12)', border: '#374151', tekst: '#9ca3af' },
   gezond: { bg: 'rgba(68,204,136,0.1)', border: '#44cc88', tekst: '#a8e8c8' },
 }
+
+// Zichtbaar label boven de tellers in het kader (SparClient.tsx). "neutraal" heet in de UI
+// "WARMING-UP" (niet "OP GANG" of "OPWARMEN", zie geheugen project_gebruiksbalans_concept.md
+// voor de naamgevingsdiscussie), gekozen omdat het beter de spanning van "bijna, nog niet"
+// vasthoudt dan een letterlijk "opwarmen".
+export const GROEIBALANS_LABELS: Record<GroeibalansState, string> = {
+  groeikans: 'GROEIKANS',
+  neutraal: 'WARMING-UP',
+  gezond: 'GOED BEZIG',
+}

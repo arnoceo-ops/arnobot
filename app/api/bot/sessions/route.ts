@@ -149,6 +149,7 @@ export async function GET() {
     .select('session_id, title, summary, message_count, blog_suggestions, created_at')
     .eq('user_id', userId)
     .is('deleted_at', null)
+    .eq('community_excluded', false)
     .order('created_at', { ascending: false })
     .limit(100)
 

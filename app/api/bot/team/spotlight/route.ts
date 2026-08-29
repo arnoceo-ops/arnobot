@@ -87,6 +87,7 @@ export async function POST() {
       .from('arnobot_blog_sessions')
       .select('user_id, summary, feiten')
       .in('user_id', memberIds)
+      .eq('community_excluded', false)
       .order('created_at', { ascending: false })
       .limit(40),
     supabase
