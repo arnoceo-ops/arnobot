@@ -1881,7 +1881,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
             <div className="vraag-tekst">
-              <h1 className="vraag-titel">COMMUNITY THEMA'S</h1>
+              <h1 className="vraag-titel">COMMUNITY THEMA&apos;S</h1>
               <p className="vraag-subtitel">wat er leeft onder alle arnobot gebruikers</p>
             </div>
             <div className="hero-divider" />
@@ -1916,7 +1916,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {!started && sparModus === 'sparren' && sparSuggestie && !sparSuggestieAfgewezen && (
           <div style={{ background: '#1f2937', borderTop: '1px solid #374151', borderBottom: '1px solid #374151', padding: '16px clamp(20px,5vw,60px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', margin: 0 }}>
-              Nog een openstaande uitdaging van eerder: &quot;{sparSuggestie.uitdaging}&quot;. Oefen 'm hier.
+              Nog een openstaande uitdaging van eerder: &quot;{sparSuggestie.uitdaging}&quot;. Oefen &apos;m hier.
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <button
