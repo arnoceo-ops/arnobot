@@ -125,8 +125,8 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 
 | Pagina | Pad | Functie |
 |---|---|---|
-| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar het voorbeeldvragenraster |
-| Voorbeeldvragen | `/bot/voorbeeldvragen` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden. Zelfde component/chatlogica, alleen desktop bereikbaar |
+| Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje ("OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY") verwijst naar `/bot/cgq` |
+| Wat er leeft | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, sinds 29 augustus 2026 op dit pad (voorheen `/bot/voorbeeldvragen`; "cgq" = community generated questions). Zelfde component/chatlogica, alleen desktop bereikbaar. Zodra een gesprek start wisselt de adresbalk stil terug naar `/bot` |
 | Welkom | `/bot/welkom` | Eenmalige welkomspagina met onboardingvideo |
 | Intake | `/bot/qa` | Onboarding-intakeformulier (rol, markt, uitdaging, targets) |
 | Profiel | `/bot/profiel` | Salescontext bekijken/aanpassen (zelfde vragenset als intake) |
