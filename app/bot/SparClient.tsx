@@ -2361,7 +2361,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
               </>
             )}
-            <span className="spar-questions-label">selecteer een van de onderstaande vragen</span>
+            <span className="spar-questions-label">en selecteer een van de onderstaande vragen</span>
             <div className="openers-grid-line" />
             <div className="openers-grid">
               {(openerModus === 'strategisch'
