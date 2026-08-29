@@ -1204,9 +1204,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           padding: 0 clamp(20px,5vw,60px) 40px;
         }
         .voorbeeldvragen-link {
-          font-family: 'Space Mono', monospace;
-          font-size: 13px;
-          letter-spacing: 2px;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 18px;
+          letter-spacing: 3px;
           color: #f59e0b;
           text-decoration: none;
         }
@@ -1764,8 +1764,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
             <div className="vraag-tekst">
-              <h1 className="vraag-titel">WAT ER LEEFT</h1>
-              <p className="vraag-subtitel">Thema's die de ArnoBot community bezighouden.</p>
+              <h1 className="vraag-titel">COMMUNITY THEMA'S</h1>
+              <p className="vraag-subtitel">wat er leeft onder alle arnobot gebruikers</p>
             </div>
             <div className="hero-divider" />
             <Link href="/bot" className="vraag-terug">← TERUG NAAR ARNOBOT</Link>
