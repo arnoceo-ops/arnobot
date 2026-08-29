@@ -84,7 +84,12 @@ jobs:
   e2e-ui:
     name: Playwright E2E (UI, gemockte AI)
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
+    # Draait op pull requests en wekelijks (maandag 08:00 UTC), NIET bij elke push naar master.
+    # Reden (2026-08-29): Arno pusht direct en vaak naar master; de ~2,5 min browsertest op
+    # elke commit was te zwaar en elke breuk (bijv. een test die het oude sluit-gedrag nog
+    # verwachtte) stuurde een "Run failed"-mail per push. De snelle jobs (typecheck, vitest,
+    # npm audit) blijven wel bij elke push draaien; de wekelijkse run vangt regressies alsnog.
+    if: github.event_name != 'push'
     steps:
       - uses: actions/checkout@v4
 
