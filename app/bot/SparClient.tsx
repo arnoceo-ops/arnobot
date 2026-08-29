@@ -48,7 +48,6 @@ interface Props {
   taglineTitle: string
   taglineSub: string
   resumeSessionId?: string
-  voornaam?: string | null
   mode?: 'gesprek' | 'sparren' | 'voorbeeldvragen'
   plan?: 'basis' | 'premium' | 'team'
   groeibalans?: {
@@ -172,7 +171,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -1855,11 +1854,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               <p className="hero-subtitle">JOUW 24/7 NO EXCUSES<br /><span className="hero-subtitle-line2">SALES COACH</span></p>
             </div>
             <div className="hero-divider" />
-            {voornaam && !started && (
-              <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(34px, 7vw, 52px)', letterSpacing: 1, lineHeight: 1, color: '#f1f5f9', textAlign: 'center', marginTop: -12 }}>
-                Hey, {voornaam}.
-              </p>
-            )}
           </div>
         )}
 
@@ -2025,15 +2019,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
-            <>
-              {sparModus === 'sparren' ? (
-                <span className="spar-input-intro">Begin het gesprek.</span>
-              ) : (
-                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', display: 'block', textAlign: 'center', width: '100%', maxWidth: 812, marginBottom: 32 }}>
-                  What&apos;s on your sales mind?
-                </span>
-              )}
-            </>
+            <span className="spar-input-intro">{sparModus === 'sparren' ? 'Begin het gesprek.' : 'Begin een gesprek.'}</span>
           )}
           {sparModus === 'gesprek' && (
             <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 650, alignItems: 'center', margin: '0 auto 8px' }}>

@@ -190,10 +190,7 @@ export default clerkMiddleware(async (auth, req) => {
             const newRow = {
               user_id: userId,
               email: email || null,
-              // Voornaam is nodig voor de persoonlijke begroeting in de /bot-hero. Clerk's
-              // firstName is er bijna altijd (LinkedIn OAuth vult het), maar val terug op het
-              // eerste woord van fullName voor het geval een aanmeldmethode alleen dat zet.
-              voornaam: clerkUser.firstName || clerkUser.fullName?.trim().split(/\s+/)[0] || null,
+              voornaam: clerkUser.firstName || null,
               achternaam: clerkUser.lastName || null,
               linkedin: linkedinUrl,
               trial_start: new Date().toISOString(),
