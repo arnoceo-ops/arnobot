@@ -1440,6 +1440,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         /* OPENERS */
         .spar-openers {
+          width: 100%;
+          max-width: 1218px;
+          margin: 0 auto;
           padding: clamp(56px,8vw,96px) 20px 0;
           background: #111827;
           border-bottom: 1px solid #374151;
