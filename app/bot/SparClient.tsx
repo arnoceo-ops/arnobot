@@ -310,6 +310,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // 'voorbeeldvragen' gedraagt zich voor sessie/chat-logica identiek aan 'gesprek', alleen de
   // JSX vóór het eerste bericht (verderop, op de kale `mode`-prop) ziet er anders uit.
   const [sparModus] = useState<'gesprek' | 'sparren'>(mode === 'sparren' ? 'sparren' : 'gesprek')
+  // Zodra het gesprek start op /bot/cgq, wisselt de adresbalk stil terug naar /bot (29 augustus
+  // 2026, Arno's punt: het voelde inconsequent dat de URL op /bot/cgq bleef staan tijdens een
+  // gewoon gesprek). Bewust window.history.replaceState, geen router.replace/router.push: die
+  // zouden een echte Next.js-navigatie triggeren en dus SparClient laten hermonteren met
+  // mode="gesprek", wat het net gestarte gesprek (messages/sessionId, alleen in React-state)
+  // zou wegvegen. Dit verandert alleen wat er in de adresbalk staat, niet de gemounte pagina.
+  useEffect(() => {
+    if (mode === 'voorbeeldvragen' && started) {
+      window.history.replaceState(null, '', '/bot')
+    }
+  }, [mode, started])
   const [sparPersona, setSparPersona] = useState('')
   const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
   const [sparContext, setSparContext] = useState('')
@@ -1178,10 +1189,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .hero-subtitle { font-size: clamp(21px, 2.65vw, 42px); letter-spacing: 2.1px; line-height: 1.2; margin-bottom: 0; }
         }
 
-        /* VOORBEELDVRAGEN — eigen, kleinere hero op /bot/voorbeeldvragen, en het kleine linkje
-           dat op /bot zelf naar die pagina verwijst (28 augustus 2026, zie lib/groeibalans.ts-
-           commit-buurman hierboven voor de reden: weinig gebruikt, maakte /bot te druk). */
+        /* VOORBEELDVRAGEN — eigen, kleinere hero op /bot/cgq, en het kleine linkje dat op /bot
+           zelf naar die pagina verwijst (28 augustus 2026, zie lib/groeibalans.ts-commit-buurman
+           hierboven voor de reden: weinig gebruikt, maakte /bot te druk). */
         .vraag-hero {
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -1194,6 +1206,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           letter-spacing: 1px;
           color: #f1f5f9;
         }
+        .vraag-sluiten {
+          position: absolute;
+          top: clamp(48px,8vw,80px);
+          right: clamp(20px,5vw,60px);
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 2px;
+          color: #6b7280;
+          text-decoration: none;
+        }
+        .vraag-sluiten:hover { color: #f1f5f9; }
         .voorbeeldvragen-link-wrap {
           display: flex;
           justify-content: center;
@@ -1765,6 +1788,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {mode === 'voorbeeldvragen' && !started && (
           <div className="vraag-hero">
+            <Link href="/bot" className="vraag-sluiten">✕ SLUITEN</Link>
             <h1 className="vraag-titel">VOORBEELDVRAGEN</h1>
             <div className="hero-divider" />
           </div>
@@ -2300,7 +2324,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && openersLoaded && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/voorbeeldvragen" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
           </div>
         )}
 
@@ -2324,7 +2348,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 )}
               </>
             )}
-            <span className="spar-questions-label">en selecteer een van de onderstaande vragen</span>
+            <span className="spar-questions-label">of selecteer een van de onderstaande vragen</span>
             <span className="spar-questions-sub">
               {(openerModus === 'strategisch' ? dynamicOpeners?.strategisch?.length : openerModus === 'organisatorisch' ? dynamicOpeners?.organisatorisch?.length : dynamicOpeners?.operationeel?.length)
                 ? 'gebaseerd op wat er leeft in de community van alle ArnoBot-gebruikers.'

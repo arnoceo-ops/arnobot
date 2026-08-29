@@ -12,10 +12,12 @@ const serviceDb = createClient(
 // Losgetrokken van /bot (28 augustus 2026): het vragenraster stond eerst standaard op de
 // hoofdpagina, maar bleek weinig gebruikt (circa 11% van de gesprekken start ermee, gemeten op
 // gesprekstitels sinds de huidige vragenset live ging) en maakte de hoofdpagina onnodig druk.
-// Zelfde SparClient-component, alleen met mode="voorbeeldvragen": toont vóór het eerste bericht
-// het vragenraster in plaats van de hero, en gedraagt zich daarna precies als /bot zelf (ask()
-// start het gesprek in dezelfde component, geen redirect nodig).
-export default async function VoorbeeldVragenPage() {
+// Route hernoemd naar /bot/cgq (29 augustus 2026, "community generated questions", korter dan
+// /bot/voorbeeldvragen). Zelfde SparClient-component, alleen met mode="voorbeeldvragen" (interne
+// naam, niet zichtbaar in de URL): toont vóór het eerste bericht het vragenraster in plaats van
+// de hero, en gedraagt zich daarna precies als /bot zelf (ask() start het gesprek in dezelfde
+// component; de adresbalk wisselt daarna stil terug naar /bot, zie SparClient.tsx).
+export default async function CgqPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
