@@ -1,6 +1,6 @@
 # ArnoBot — volledig productoverzicht
 
-**Laatst bijgewerkt:** 2026-08-22
+**Laatst bijgewerkt:** 2026-08-29
 **Doel van dit document:** een volledig, actueel beeld van ArnoBot als product en bedrijf, voor gebruik buiten de dagelijkse ontwikkelwerkzaamheden (bijv. upload naar NotebookLM voor een presentatie, briefing van nieuwe teamleden, gesprekken met investeerders of partners). Vult `docs/SALES_BIJBEL.md` aan: dat document behandelt waaróm een klant koopt (USP's, unique buying reasons), dit document behandelt wát ArnoBot precies is, in volle breedte.
 
 **Belangrijk voor gebruik in een presentatie:** dit document bevat alleen wat daadwerkelijk gebouwd en geverifieerd is tegen de code, op de datum hierboven. Waar iets gepland maar niet live is, staat dat er expliciet bij. Neem geen enkel cijfer of kenmerk over zonder dat onderscheid, dat voorkomt dat een presentatie iets belooft wat nog niet bestaat.
@@ -46,6 +46,8 @@ Dit hele geheugensysteem is wetenschappelijk onderbouwd vanuit de **vergeetcurve
 
 ### 3.3 Coachingsdiagnose (MSA-score)
 Een gestructureerd diagnosedocument op drie dimensies: **mindset, systeem, actie**. Elke dimensie krijgt een score, een diagnosetekst en concrete ontwikkelpunten. Wordt bijgewerkt naarmate er meer gesprekken plaatsvinden. Exclusief voor Pro en Team, niet beschikbaar bij Basic (harde blokkade, geen afgeslankte versie).
+
+Bovenaan de coachingpagina staat een **"thought of the day"**: één korte, inspirerende mindsetgedachte per dag, bedoeld om even bij stil te staan, niet als taak. In het weekend altijd algemeen (over het vak en het bestaan van een salesprofessional, geen techniek). Doordeweeks sluit de gedachte aan op de eigen gesprekspatronen, maar pas vanaf drie gevoerde gesprekken. Daaronder is de gedachte bewust algemeen, omdat er te weinig basis is om iets persoonlijks te zeggen dat ook klopt.
 
 ### 3.4 Sparring (rollenspel-oefenmodus)
 Een live oefengesprek tegen een AI-tegenstander: een lastige prospect, een sceptische CFO, of een aangepaste rol. Geen adviezen lezen, maar daadwerkelijk oefenen onder druk. Na afloop volgt een debrief met analyse van het gesprek. Beschikbaar op alle betaalde tiers, ook Basic.

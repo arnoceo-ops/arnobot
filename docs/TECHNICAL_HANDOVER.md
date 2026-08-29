@@ -224,7 +224,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/coaching-precheck` | Check of er genoeg materiaal is voor coaching |
 | `/api/bot/coaching-history` | Coaching-geschiedenis (scores/diagnoses per keer) |
 | `/api/bot/coaching-scores` | Losse scoreverloop (mindset/systeem/actie/MSA) |
-| `/api/bot/uitdaging` | Dagelijkse uitdaging/actie na gesprek |
+| `/api/bot/uitdaging` | "Thought of the day" op de coachingpagina: één korte inspirerende mindsetgedachte per dag. Weekend altijd generiek, doordeweeks gepersonaliseerd op patronen vanaf 3 gesprekken |
 | `/api/bot/verfijn` | Vraag/antwoord scherper herformuleren via AI |
 | `/api/bot/actieopvolging` | Open actie ophalen + reflexief-klik-detectie |
 | `/api/bot/hint-status` | Telt gesprekken/dagen sinds laatste analyse/coaching |
@@ -602,7 +602,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 teruggedraaid: bij lange/complexe vragen geen text block in response (thinking mode zonder output). Deze call gebruikt `.messages.stream(`, niet `.messages.create(`. Retry-bij-leeg-antwoord ná het einde van de stream (`finalMessage()`) plus een zichtbare fallbackzin. `max_tokens` per lengte-tier verhoogd met een kleine buffer (kort 600→750, normaal 1200→1450, uitgebreid 2200→2500, widget 1500→1800) om afkapping midden in een woord te voorkomen; afkapping die tóch optreedt wordt gelogd naar Sentry. | 2026-07, aangevuld 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen binnen de hoofdchat, met expliciete fallbacks. | 2026-07 |
-| `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | Grammaticale kwaliteit en voortgangsherkenning vereisen Fable. Getest tegen `claude-opus-5` (2026-07-26): Fable 5 gehandhaafd, kortere/directere vraag. | 2026-07 |
+| `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | "Thought of the day" op de coachingpagina. Grammaticale kwaliteit vereist Fable. Getest tegen `claude-opus-5` (2026-07-26): Fable 5 gehandhaafd. Toon herzien (2026-08-29): inspirerend, mag schuren maar niet irriteren, geen verhoor; vrij format (gedachte of observatie plus open vraag). Weekend altijd generiek, doordeweeks personaliseren vanaf 3 gesprekken. | 2026-07, herzien 2026-08-29 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging) | `claude-haiku-4-5-20251001` | Drie parallelle batch-calls per sessie, retry-bij-leeg-antwoord per call. 4e parallelle call classificeert de sessie naar thema's (`lib/themas.ts`) voor De Spiegel, bewust zonder retry (supplementair signaal). | 2026-07, aangevuld 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable 5 overkill | 2026-07 |
 | `app/api/bot/team/zelfcoaching/route.ts` | `claude-fable-5` | Zelfde afweging als hoofdsynthese: belangrijkste synthese van het traject, kosten geen factor. Refusal-check + retry-bij-leeg-antwoord vanaf de eerste versie. | 2026-08-21 |

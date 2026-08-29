@@ -1,4 +1,4 @@
-﻿export const maxDuration = 15
+export const maxDuration = 15
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
@@ -26,7 +26,7 @@ export async function GET() {
   const day = getDayOfWeek()
   const isWeekend = day === 0 || day === 6
 
-  const [coachingRes, sessionsRes, analysesRes, profielRes] = await Promise.all([
+  const [coachingRes, sessionsRes, sessionCountRes, analysesRes, profielRes] = await Promise.all([
     supabase
       .from('arnobot_coaching')
       .select('focus, blinde_vlekken, ontwikkelpunten, opdracht')
@@ -36,8 +36,14 @@ export async function GET() {
       .from('arnobot_blog_sessions')
       .select('title, summary, created_at')
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('deleted_at', null),
     supabase
       .from('arnobot_analyses')
       .select('analyse_text')
@@ -55,46 +61,60 @@ export async function GET() {
   const sessions = sessionsRes.data ?? []
   const analyse = analysesRes.data?.[0]?.analyse_text ?? ''
   const profiel = profielRes.data?.profiel
+  const totalSessionCount = sessionCountRes.count ?? 0
+
+  // Weekend: altijd een generieke, inspirerende gedachte, geen gesprekscontext.
+  // Doordeweeks: pas personaliseren op patronen/coachingdoc vanaf 3 gesprekken.
+  // Daaronder is er te weinig basis en voelt de gedachte willekeurig (gevonden 29 aug 2026:
+  // gebruiker met 1 gesprek kreeg een gedachte over een onderwerp dat hij niet herkende).
+  const usePersonalContext = !isWeekend && totalSessionCount >= 3
 
   const contextParts: string[] = []
 
   if (profiel) {
-    contextParts.push(`PROFIEL: ${profiel.rol || ''}${profiel.markt ? `, ${Array.isArray(profiel.markt) ? profiel.markt.join('/') : profiel.markt}` : ''}. Verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}. Uitdaging: ${profiel.uitdaging || 'onbekend'}.`)
+    contextParts.push(`PROFIEL: ${profiel.rol || ''}${profiel.markt ? `, ${Array.isArray(profiel.markt) ? profiel.markt.join('/') : profiel.markt}` : ''}. Verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}.`)
   }
 
-  if (coaching?.focus || coaching?.blinde_vlekken) {
-    const punten = coaching.ontwikkelpunten ? (coaching.ontwikkelpunten as string[]).join(' / ') : ''
-    contextParts.push(`COACHING: Focus op ${coaching.focus || 'onbekend'}. Blinde vlekken: ${coaching.blinde_vlekken || 'onbekend'}. Ontwikkelpunten: ${punten}. Opdracht: ${coaching.opdracht || 'onbekend'}.`)
-  }
-
-  if (sessions.length > 0) {
-    const sessiesSummary = sessions
-      .map(s => s.summary ? `"${s.title}": ${s.summary}` : `"${s.title}"`)
-      .join(' | ')
-    contextParts.push(`LAATSTE ${sessions.length} GESPREKKEN: ${sessiesSummary}`)
-  }
-
-  if (analyse) {
-    contextParts.push(`PATROONANALYSE: ${analyse.slice(0, 400)}`)
+  if (usePersonalContext) {
+    if (coaching?.focus || coaching?.blinde_vlekken) {
+      const punten = coaching.ontwikkelpunten ? (coaching.ontwikkelpunten as string[]).join(' / ') : ''
+      contextParts.push(`COACHINGSPROFIEL: Focus op ${coaching.focus || 'onbekend'}. Ontwikkelpunten: ${punten}.`)
+    }
+    if (sessions.length > 0) {
+      const sessiesSummary = sessions
+        .map(s => s.summary ? `"${s.title}": ${s.summary}` : `"${s.title}"`)
+        .join(' | ')
+      contextParts.push(`LAATSTE ${sessions.length} GESPREKKEN: ${sessiesSummary}`)
+    }
+    if (analyse) {
+      contextParts.push(`PATROONANALYSE: ${analyse.slice(0, 400)}`)
+    }
   }
 
   const context = contextParts.join('\n\n')
 
-  const weekendInstructie = isWeekend
-    ? `Het is weekend. Stel een reflectieve mindsetvraag die iemand met zichzelf laat nadenken over wie hij is als salesprofessional. Geen acties, geen bellen, geen afspraken. Filosofisch, confronterend op het niveau van overtuigingen en identiteit.`
-    : `Stel een mindsetvraag die rechtstreeks aansluit op de patronen en blinde vlekken uit het coachingsprofiel hierboven. Geen acties als "bel nu een klant" of "maak een lijst". Die staan al in het coachingsdocument. Richt je op overtuigingen, zelfbeeld, en de manier van denken die bepaalt of iemand groeit of stilstaat.`
+  const weekendInstructie = `Het is weekend. Maak er een gedachte van over het vak en het bestaan van een salesprofessional, iets om even bij stil te staan met een kop koffie. Niet over techniek, niet over targets, niet over acties. Iets dat perspectief geeft of inspireert, met een eerlijke ondertoon.`
 
-  const voortgangInstructie = `Als uit de recente gesprekken blijkt dat de gebruiker progressie boekt op een coaching-punt, stel dan een vraag die die ontwikkeling verdiept. Niet een vraag die het probleem herhaalt alsof het onopgelost is.`
+  const doordeweeksInstructie = usePersonalContext
+    ? `Sluit aan op de rol en de patronen hierboven, maar richt je op de manier van denken erachter, niet op een concrete verkooptechniek. Maak het herkenbaar en vooruitkijkend. Als uit de gesprekken blijkt dat iemand ergens groeit, verdiep die richting in plaats van een oud probleem te herhalen alsof het nog openstaat.`
+    : `Maak een gedachte over de mindset van goede verkopers die breed herkenbaar is. Vooruitkijkend en inspirerend, met een eerlijk randje.`
 
-  const taalInstructie = `Schrijf de vraag in verzorgd Nederlands. Lees de zin terug voordat je antwoordt: als een bijzin grammaticaal onhandig loopt, herschrijf hem. Gebruik reflexieve constructies correct (bijvoorbeeld "waarbij je je" in plaats van "die je"). Geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik nooit een em dash (—): gebruik een komma, dubbele punt of nieuwe zin.`
+  const toonInstructie = `Toon: je bent Arno Diepeveen, een scherpe mentor die in de lezer gelooft. De gedachte mag prikkelen en een randje hebben, maar iemand moet het graag lezen en er energie van krijgen. Geen verhoor, geen opsomming van wat er misgaat, geen woorden als "blinde vlek", "zwakte" of "waarom lukt het je niet". Geen vleierij of loze complimenten. Reik een idee aan dat een deur opent, niet een spiegel die een fout aanwijst.`
 
-  const hasContext = contextParts.length > 0
+  const vormInstructie = `Vorm: kort. Ofwel een enkele rake gedachte van een of twee zinnen, ofwel een korte observatie gevolgd door een open vraag die uitnodigt om vooruit te denken, niet om jezelf te verdedigen. Kies zelf wat het sterkst is. Nooit meer dan drie zinnen. Geen inleiding, geen uitleg, geen opdrachten of acties.`
 
-  const lengteInstructie = `Regel voor lengte en opbouw: precies één kort inzicht (één zin), gevolgd door precies één vraag (één zin). Niet meerdere deelvragen of bijzinnen samenpersen in die ene vraagzin. Kernachtig, niets overbodigs.`
+  const taalInstructie = `Schrijf in verzorgd Nederlands. Lees de zin terug voordat je antwoordt: als een bijzin grammaticaal onhandig loopt, herschrijf hem. Gebruik reflexieve constructies correct (bijvoorbeeld "waarbij je je" in plaats van "die je"). Geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
-  const prompt = hasContext
-    ? `Je bent Arno Diepeveen. Genereer één dagelijkse mindsetvraag op basis van dit coachingsprofiel.\n\n${context}\n\n${weekendInstructie}\n\n${voortgangInstructie}\n\n${lengteInstructie} Spreek aan met "je". Geen inleiding, geen uitleg. Geen acties of opdrachten, alleen een vraag die raakt aan mindset, overtuiging of identiteit. Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.\n\n${taalInstructie}`
-    : `Je bent Arno Diepeveen. ${weekendInstructie}\n\n${lengteInstructie} Spreek aan met "je". Geen inleiding, geen uitleg.\n\n${taalInstructie}`
+  const prompt = [
+    `Je bent Arno Diepeveen. Genereer de "thought of the day" voor een salesprofessional: iets korts om vandaag over na te denken.`,
+    context,
+    isWeekend ? weekendInstructie : doordeweeksInstructie,
+    toonInstructie,
+    vormInstructie,
+    `Spreek de lezer ALTIJD aan met "je" en "jij". Nooit "u". Ongeacht hoe senior of formeel de persoon is.`,
+    usePersonalContext ? `Gebruik alleen wat je weet uit het bovenstaande profiel; verzin geen details.` : '',
+    taalInstructie,
+  ].filter(Boolean).join('\n\n')
 
   const callModel = () => anthropic.messages.create({
     model: 'claude-fable-5',
