@@ -377,6 +377,16 @@ Bij het ontwerpen van een nieuwe feature of synthese: leid de scope niet af van 
 2. Doorzoek relevante projectdocumenten in hun geheel (niet alleen de sectie waaraan gewerkt wordt) en het geheugen op gerelateerde, nog niet gebouwde plannen die het resultaat aantoonbaar sterker zouden maken.
 3. Noem die vondsten expliciet in het voorstel, ook als het besluit is om ze nu niet mee te bouwen: "X zou dit sterk verbeteren, hier is waarom, hier is de afweging." Nooit stilzwijgend de kortste weg presenteren alsof het de enige optie is.
 
+### Verplichte capability-sweep — zichtbaar, vóór enige scoping of privacy-afweging
+
+Bij elk verzoek om nieuwe functionaliteit of een nieuwe tool/integratie: schrijf eerst, zichtbaar in de response en vóór je begint met scopen of een privacy-/risico-afweging, een capability-sweep met deze drie punten:
+
+1. **Wat kan deze tool/aanpak volledig?** Alle relevante features, niet alleen wat het verzoek noemt. Voor een externe tool: check de actuele docs, niet je geheugen.
+2. **Wat is de meest ambitieuze waardevolle versie**, los van wat er al gebouwd is of welke data al bestaat?
+3. **Welke verworpen of nog niet gebouwde plannen** in docs/geheugen maken dit sterker?
+
+Pas daarna scopen. De aanbeveling mag alsnog "niet alles bouwen" zijn, maar de maximale versie moet expliciet op tafel hebben gelegen. Reden: de "eerst voorstellen, wachten op akkoord"-poort gaat er stilzwijgend van uit dat het voorstel dat voor Arno ligt het beste is. Als de ambitieuze versie nooit getoond is, keurt hij een middelmatig plan goed zonder het te weten. (Aanleiding: de PostHog-uitbreiding van 2026-08-30, waar feature flags, surveys, groups en session recording pas na doorvragen boven tafel kwamen.)
+
 ## Nieuwe content of functionaliteit — altijd eerst voorstellen
 
 Bij nieuwe tekst (Q&A, copy, labels) of nieuwe functionaliteit: eerst een voorstel tonen aan de gebruiker, wachten op akkoord, dan pas bouwen. Geen uitzondering.
