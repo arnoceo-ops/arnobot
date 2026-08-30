@@ -147,7 +147,8 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Publiek:** anonieme `posthog.capture()` op publieke componenten (`PostHogTracker.tsx`).
 - **Ingelogd (`/bot`, sinds 2026-08-30):** pseudonieme productanalyse. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts` (plan, rol, trial-status, team, tellingen, `is_testaccount`), genormaliseerde `$pageview` (geen query, geen echte IDs), event-whitelist in `lib/posthog.ts` (`track()`). `/bot/admin` volledig uitgesloten. Geen gespreks-/coaching-/analyse-inhoud, nooit. `team_id` als super-property i.p.v. de betaalde group-analytics-add-on.
 - **Session replay:** staat uit achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = alleen shell-pagina's (allowlist), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads. `PostHogSessionReplay.tsx` start/stopt per route.
-- **Openstaand:** DPA opvragen (incl. sub-verwerkersketen), bewaartermijn instellen, session-replay-vlag omzetten na verificatie, ePrivacy-vraag over de anonieme tracking. Data Warehouse Stripe-koppeling geblokkeerd tot betaalprovider; Supabase bewust niet als directe connector. Zie `docs/OPENSTAANDE_PUNTEN.md`.
+- **ePrivacy (besloten 2026-08-30, keuze B):** geen toestemmingsbanner. `persistence: 'localStorage'` (geen tracking-cookie), IP niet bewaard (PostHog-projectinstelling "Discard client IP data"), first-party via `/site-relay`, EU. Grondslag gerechtvaardigd belang, met bezwaarrecht. Vastgelegd in `app/privacy/page.tsx` artikel 9.
+- **Openstaand:** DPA opvragen (incl. sub-verwerkersketen). Data Warehouse Stripe-koppeling geblokkeerd tot betaalprovider; Supabase bewust niet als directe connector. Zie `docs/OPENSTAANDE_PUNTEN.md`.
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
 
 #### Kostencalculator (Abacus, `/abacus`)

@@ -55,6 +55,10 @@ export default function PostHogTracker() {
         api_host: '/site-relay',
         ui_host: 'https://eu.posthog.com',
         person_profiles: 'always',
+        // Geen tracking-cookie: alleen lokale opslag voor de pseudonieme bezoeker-ID.
+        // Onderdeel van de ePrivacy-afweging (2026-08-30, keuze B): analyse met beperkte
+        // privacy-impact zonder toestemmingsbanner. Zie app/privacy/page.tsx artikel 9.
+        persistence: 'localStorage',
         // Session replay start NOOIT automatisch: PostHogSessionReplay.tsx roept per
         // toegestane route expliciet startSessionRecording() aan, en alleen als de vlag
         // SESSION_REPLAY_ENABLED aan staat. De config hieronder bepaalt hoe een opname

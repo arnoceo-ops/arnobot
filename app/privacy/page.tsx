@@ -242,6 +242,31 @@ export default function PrivacyPage() {
             </p>
           </div>
 
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 9</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Analytics en cookies</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 20 }}>
+              We gebruiken PostHog om te analyseren hoe de dienst wordt gebruikt en waar mensen vastlopen, zodat we ArnoBot kunnen verbeteren. Deze analyse:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              {[
+                'loopt via ons eigen domein, met opslag en verwerking binnen de EU (Frankfurt)',
+                'plaatst geen advertentiecookies, volgt je niet over andere websites en verkoopt niets door',
+                'gebruikt lokale opslag in je browser voor een pseudonieme bezoeker-ID, geen tracking-cookie',
+                'bewaart je IP-adres niet: het wordt alleen kort gebruikt om je land te bepalen en daarna weggegooid',
+                'is op de publieke pagina&apos;s anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ color: '#f59e0b', flexShrink: 0 }}>·</span>
+                  <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>{item}</p>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+              Grondslag: gerechtvaardigd belang (artikel 6 lid 1 sub f AVG). Gezien de beperkte privacy-impact vragen we hiervoor geen aparte toestemming. Wil je hier bezwaar tegen maken, mail dan <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>.
+            </p>
+          </div>
+
         </div>
       </div>
     </>
