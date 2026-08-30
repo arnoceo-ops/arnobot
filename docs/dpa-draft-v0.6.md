@@ -76,7 +76,7 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | Sentry | Foutmonitoring en performance-tracing | — |
 | Upstash | Rate limiting | — |
 | ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees | — |
-| PostHog | Anonieme bezoekersanalyse op de publieke marketingpagina's | EU (Frankfurt) |
+| PostHog | Bezoekers- en productgebruiksanalyse (anoniem publiek, pseudoniem ingelogd; geen gespreks-/coachinginhoud) | EU (Frankfurt) |
 | Calendly | Boeken van een kennismakingsgesprek met Arno | — |
 
 ArnoBot informeert de Klant schriftelijk (e-mail volstaat) over voorgenomen wijzigingen in deze lijst. De Klant kan binnen 30 dagen na kennisgeving schriftelijk bezwaar maken op redelijke, gedocumenteerde gronden. Partijen overleggen te goeder trouw over een oplossing; bij het uitblijven daarvan kan de Klant de overeenkomst beëindigen conform Artikel 13.

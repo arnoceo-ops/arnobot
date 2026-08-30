@@ -30,7 +30,12 @@
 
 ## Productfeatures, nog niet gebouwd
 
-- **PostHog uitbreiden naar ingelogde `/bot`-gebruikers, plus een Data Warehouse-koppeling met Stripe/Supabase.** Arno noemt dit "essentieel". Vereist een eigen scope- en privacybeoordeling vooraf.
+- **PostHog in de ingelogde `/bot`-omgeving: gebouwd 2026-08-30.** Pseudonieme productanalyse (identify met Clerk-ID, veilige person-properties, event-whitelist, genormaliseerde pageviews), feature flags en surveys operationeel, `team_id` als super-property i.p.v. de betaalde group-analytics-add-on. Nog te doen door Arno:
+  - **Session replay staat uit** achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aanzetten na verificatie van de maskeerconfig (alle tekst + alle invoer gemaskeerd, alleen shell-pagina's). In de PostHog-projectinstellingen ook masking op "mask all" zetten als extra laag.
+  - **PostHog DPA opvragen** via de PostHog-app, inclusief bevestiging sub-verwerkersketen. Vóór ondertekening met een corporate klant.
+  - **Bewaartermijn** in PostHog instellen en dan pas een termijn in de privacyverklaring noemen (niet andersom).
+  - Openstaand ePrivacy/Telecomwet-punt: de bestaande anonieme marketing-tracking draait met `person_profiles: 'always'` zonder cookiebanner; wordt relevanter nu ingelogde sessies via `identify()` aan de marketing-sessie gekoppeld kunnen worden. Apart beoordelen.
+- **PostHog Data Warehouse-koppeling.** Stripe: geblokkeerd tot er een betaalprovider is (samen met dunning). Supabase: bewust niet als directe connector (nieuw dataoppervlak), de veilige productvelden gaan al als person-properties mee; eventueel later een read-only curated view.
 - **Manager-zelfcoaching-gat.** Thijs' punten over een open, veilige, ambitieuze, lerende omgeving en actieve handvatten van ArnoBot richting de manager zelf als coach (niet als verkoper). Substantiële Team-feature met privacymodel-impact, apart projectplan nodig vóór bouwen. Los van de al gebouwde SPE-zelfcoaching (punt 5).
 - **TEAM_PLAN stap 3: Solopreneur-profiel** (nog niet ontworpen), plus de open vraag welke rol/profiel een uitgenodigd teamlid (niet de manager) krijgt, nooit in de profielherziening meegenomen.
 - **TEAM_PLAN 2B (De Tijdlijn) en 2C (Manager als Variabele).** Het statusblok in `TEAM_PLAN.md` spreekt zichzelf tegen (noemt 2B/2C zowel "af" als "eerstvolgend"). Verse controle nodig, zie onderaan.
@@ -65,5 +70,5 @@
 ## Voorgestelde eerste drie
 
 1. **Verse TEAM_PLAN-statuscontrole** (subagent tegen de code). Cheap, en pas daarna weet je zeker wat er van dat traject echt nog open is.
-2. **PostHog naar `/bot`-gebruikers.** Arno noemt het essentieel, geen externe blokker.
+2. **PostHog `/bot`: afronden** (session replay-vlag omzetten na verificatie, DPA opvragen, bewaartermijn). Kern is gebouwd 2026-08-30.
 3. **Voyage her-embedding plannen.** Het deprecation-risico groeit en het is de grootste losse klus.

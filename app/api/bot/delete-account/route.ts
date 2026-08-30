@@ -27,7 +27,7 @@ export async function DELETE() {
       from: 'ArnoBot <noreply@arno.bot>',
       to: 'delete@arno.bot',
       subject: `Verwijderverzoek: ${naam}`,
-      html: `<p>Gebruiker <strong>${naam}</strong> (${email}) heeft verzocht het account en alle persoonsgegevens te verwijderen.</p><p>Clerk ID: <code>${userId}</code></p><p>Te verwijderen: approved_users (anonimiseren), arnobot_rds_logs (optioneel), arnobot_blog_profiles, Clerk-gebruiker.</p>`,
+      html: `<p>Gebruiker <strong>${naam}</strong> (${email}) heeft verzocht het account en alle persoonsgegevens te verwijderen.</p><p>Clerk ID: <code>${userId}</code></p><p>Te verwijderen: approved_users (anonimiseren), arnobot_rds_logs (optioneel), arnobot_blog_profiles, Clerk-gebruiker, PostHog-persoon + eventuele session recordings (PostHog: Persons zoeken op distinct ID = Clerk ID, dan Delete; of via de API).</p>`,
     })
 
     return NextResponse.json({ success: true })

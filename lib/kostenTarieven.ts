@@ -66,6 +66,11 @@ export const TARIEVEN = {
   clerkProUsd: 100,
   clerkProActief: false,
   sentryEur: 26,
+  // PostHog staat bewust NIET in deze berekening: gratis tier (1M events, 5k session
+  // recordings, 1M flag-requests per maand), verbruik stopt bij de limiet zonder
+  // betaalmethode, dus geen verrassingskosten. Opnemen zodra een van die limieten
+  // structureel wordt overschreden of er een betaald plan wordt genomen. Bij de
+  // kwartaalcheck controleren tegen het werkelijke PostHog-verbruik.
   fxRateEurUsd: 1.08,
   domeinPerJaarUsd: 52,
   upstashFreeLimit: 500000,

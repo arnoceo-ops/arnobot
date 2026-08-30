@@ -51,7 +51,7 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | Sentry | Foutmonitoring en performance-tracing | — | sentry.io/legal/dpa |
 | Upstash | Rate limiting (verwerkt IP-adressen) | — | Geen publieke DPA, op aanvraag |
 | ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees (geen training op klantdata) | — | elevenlabs.io/dpa |
-| PostHog | Anonieme bezoekersanalyse op de publieke marketingpagina's | EU (Frankfurt) | Op aanvraag |
+| PostHog | Bezoekers- en productgebruiksanalyse. Anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving. Geen gespreks-, coaching- of analyse-inhoud. Session replay staat uit. | EU (Frankfurt) | Op aanvraag |
 | Calendly | Boeken van een kennismakingsgesprek met Arno | — | calendly.com/legal/data-processing-addendum |
 
 **Let op**: voor Voyage AI, Upstash en PostHog is er geen publiek self-service DPA-document gevonden. Vóór ondertekening met een corporate klant moet actief bij deze partijen een DPA worden opgevraagd, of moet worden bevestigd dat een DPA niet noodzakelijk is gezien de aard van de verwerking.
@@ -89,5 +89,5 @@ Inzage, rectificatie, verwijdering en overdraagbaarheid. Gebruikers kunnen dit d
 
 ## Openstaand vóór ondertekening
 
-- DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom niet nodig
+- DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom niet nodig. Voor PostHog is dit urgenter geworden sinds de uitbreiding naar pseudonieme productanalyse van ingelogde gebruikers (2026-08-30): bij aanvraag ook de sub-verwerkersketen bevestigen (o.a. AWS eu-central-1).
 - SOC 2 Type II / ISO 27001-status van Royal Dutch Sales zelf: nog niet aanwezig, indien de klant dit als harde eis stelt is dit een apart traject

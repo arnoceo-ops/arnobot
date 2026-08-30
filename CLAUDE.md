@@ -142,9 +142,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - De "Improve the models for everyone"-instelling staat uit (moest handmatig, stond standaard AAN).
 - [elevenlabs.io/docs](https://elevenlabs.io/docs) op API-wijzigingen.
 
-#### PostHog (anonieme bezoekersanalyse marketingpagina's)
-- Draait naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`-tracking. Bewust géén autocapture, alleen expliciete `posthog.capture()`-calls op publieke componenten. Scope: publieke marketingpagina's (zelfde `UITGESLOTEN_PREFIXES` als `PageviewTracker.tsx`). Env var: alleen `NEXT_PUBLIC_POSTHOG_KEY`. Reverse proxy via `/site-relay`. `person_profiles: 'always'`.
-- **Openstaand (Arno noemt dit "essentieel"):** uitbreiden naar ingelogde `/bot`-gebruikers, en een Data Warehouse-koppeling met Stripe/Supabase. Beide vereisen een eigen scope/privacy-beoordeling.
+#### PostHog (bezoekers- en productgebruiksanalyse)
+- Draait naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`/`arnobot_events`-tracking (bewust dubbel: die blijft de PostHog-onafhankelijke bron van waarheid voor `/bot/admin/stats`). Bewust géén autocapture. Env var: alleen `NEXT_PUBLIC_POSTHOG_KEY`. Reverse proxy via `/site-relay`. `person_profiles: 'always'`.
+- **Publiek:** anonieme `posthog.capture()` op publieke componenten (`PostHogTracker.tsx`).
+- **Ingelogd (`/bot`, sinds 2026-08-30):** pseudonieme productanalyse. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts` (plan, rol, trial-status, team, tellingen, `is_testaccount`), genormaliseerde `$pageview` (geen query, geen echte IDs), event-whitelist in `lib/posthog.ts` (`track()`). `/bot/admin` volledig uitgesloten. Geen gespreks-/coaching-/analyse-inhoud, nooit. `team_id` als super-property i.p.v. de betaalde group-analytics-add-on.
+- **Session replay:** staat uit achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = alleen shell-pagina's (allowlist), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads. `PostHogSessionReplay.tsx` start/stopt per route.
+- **Openstaand:** DPA opvragen (incl. sub-verwerkersketen), bewaartermijn instellen, session-replay-vlag omzetten na verificatie, ePrivacy-vraag over de anonieme tracking. Data Warehouse Stripe-koppeling geblokkeerd tot betaalprovider; Supabase bewust niet als directe connector. Zie `docs/OPENSTAANDE_PUNTEN.md`.
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
 
 #### Kostencalculator (Abacus, `/abacus`)

@@ -61,6 +61,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>AI-coachingsgesprekken die jij voert met ArnoBot</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die worden gedeeld via een publieke link. Deze zijn toegankelijk voor iedereen met de link en kunnen door zoekmachines worden geïndexeerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt en welke stappen je zet in de app, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken, coaching of analyses.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek, bijvoorbeeld om een salesplan te laten checken</td></tr>
               </tbody>
             </table>
@@ -79,6 +80,7 @@ export default function PrivacyPage() {
                 'Het genereren van persoonlijke AI-coaching via Anthropic',
                 'Het versturen van transactionele e-mails (welkom, trial)',
                 'Het beveiligen van de dienst en het opsporen van fouten',
+                'Het verbeteren van de dienst door te analyseren welke functies worden gebruikt en waar mensen vastlopen (pseudoniem, op grondslag van gerechtvaardigd belang)',
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <span style={{ color: '#f59e0b', flexShrink: 0 }}>·</span>
@@ -177,7 +179,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>PostHog</td>
-                  <td>Anonieme bezoekersanalyse en klik-tracking op de publieke marketingpagina&apos;s, EU-hosting (Frankfurt)</td>
+                  <td>Bezoekers- en productgebruiksanalyse. Op de publieke pagina&apos;s anoniem. In de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID) om te zien welke functies worden gebruikt en waar mensen vastlopen. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)</td>
                   <td>DPA op aanvraag</td>
                 </tr>
                 <tr>

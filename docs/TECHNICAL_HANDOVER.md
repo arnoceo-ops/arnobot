@@ -36,7 +36,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |
 | Foutmonitoring | Sentry (`@sentry/nextjs`) | ^10 |
-| Productanalyse (marketingpagina's) | PostHog (`posthog-js`) | ^1 |
+| Productanalyse (publiek + ingelogd) | PostHog (`posthog-js`) | ^1 |
 | Admin/ops-notificaties | Telegram Bot API | directe fetch |
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
@@ -788,9 +788,13 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** Errors/spans bekijken, quota controleren.
 
 ### PostHog
-**Doel:** Anonieme bezoekersanalyse op marketingpagina's (naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`-tracking).
-**Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture, géén session recordings.
-**Scope:** uitsluitend publieke marketingpagina's, niet `/bot`.
+**Doel:** Bezoekers- en productgebruiksanalyse (naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`/`arnobot_events`-tracking, die de bron blijft voor `/bot/admin/stats`).
+**Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture.
+**Scope publiek:** anonieme `capture()` op publieke componenten (`PostHogTracker.tsx`).
+**Scope ingelogd (`/bot`, sinds 2026-08-30):** pseudoniem. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts`, genormaliseerde `$pageview` (geen query/IDs), event-whitelist als getypte union in `lib/posthog.ts` (`track()`). `/bot/admin` uitgesloten. Nooit gespreks-/coaching-/analyse-inhoud. `team_id` als super-property (geen betaalde group-analytics).
+**Session replay:** `PostHogSessionReplay.tsx`, UIT achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
+**Feature flags / surveys:** operationeel met de SDK-integratie, per feature in te richten.
+**Openstaand:** DPA opvragen, bewaartermijn instellen, replay-vlag omzetten na verificatie. Data Warehouse Stripe geblokkeerd tot betaalprovider.
 
 ### Calendly
 **Doel:** Boeking van het 1-op-1-gesprek met Arno.

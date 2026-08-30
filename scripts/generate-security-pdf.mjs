@@ -113,7 +113,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
         TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
         TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
         TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
-        TR('Bezoekersanalyse', 'PostHog: anonieme klik- en paginabezoek-analyse op de publieke marketingpagina\'s, EU-hosting (Frankfurt)'),
+        TR('Gebruiksanalyse', 'PostHog: klik- en gebruiksanalyse. Anoniem op de publieke pagina\'s, pseudoniem (gekoppeld aan account-ID) in de ingelogde omgeving om functiegebruik en knelpunten te zien. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)'),
         TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
       ),
     ),
