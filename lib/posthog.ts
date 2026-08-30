@@ -48,7 +48,7 @@ export type BotEventProps = Record<string, PropValue>
 // Ook met de vlag AAN neemt replay alleen op de shell-pagina's hieronder op
 // (nooit chat, coaching, sparren, synthese, admin), en met alle tekst en alle
 // invoer gemaskeerd: je ziet layout en klikgedrag, geen woorden.
-export const SESSION_REPLAY_ENABLED = false
+export const SESSION_REPLAY_ENABLED = true
 
 // Replay start alleen op deze paden. Bewust een allowlist, geen blocklist: een
 // nieuwe route met gespreks- of coachinginhoud wordt zo niet per ongeluk opgenomen.
