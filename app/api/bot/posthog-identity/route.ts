@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { isExcludedFromProductAnalytics } from '@/lib/internalTestAccounts'
 
 // Levert de veilige, categorische person-properties voor PostHog. Wordt één keer per
 // sessie door PostHogTracker.tsx opgehaald en via posthog.identify() gezet.
@@ -58,7 +58,10 @@ export async function GET() {
     aangemeld_op: u?.created_at ?? u?.trial_start ?? null,
     aantal_gesprekken: gesprekkenRes.count ?? 0,
     aantal_coachingsessies: coachingRes.count ?? 0,
-    is_testaccount: isInternalTestUser(userId),
+    // True voor de interne testaccounts en de oprichter. In PostHog filter je hierop via
+    // Settings -> Project -> "Internal and test users" (person property is_intern = true),
+    // zodat dit verkeer uit alle insights valt, ongeacht IP of apparaat.
+    is_intern: isExcludedFromProductAnalytics(userId),
   }
 
   return NextResponse.json({ distinctId: userId, props })

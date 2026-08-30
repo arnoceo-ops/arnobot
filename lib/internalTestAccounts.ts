@@ -60,6 +60,20 @@ export function isInternalTestUser(userId: string | null | undefined): boolean {
   return userId != null && INTERNAL_TEST_USER_IDS.includes(userId)
 }
 
+// Arno's echte LinkedIn-account (linkedin@royaldutchsales.com, elders BOUWER_EMAIL). Dit is
+// een echt account met echte gesprekken (o.a. gebruikt voor modelvergelijkingen), dus het
+// hoort NIET in INTERNAL_TEST_USER_IDS: dan zou zijn data ook uit de gebruikersaggregaties
+// vallen. Alleen apart bij productanalyse (PostHog) willen we hem eruit filteren.
+export const FOUNDER_USER_ID = 'user_3Eg9FPzi0PlJEPI3togJKyoyXE6'
+
+// True voor iedereen die uit de PRODUCTANALYSE (PostHog) moet blijven: de interne
+// testaccounts plus de oprichter. Gebruikt in app/api/bot/posthog-identity/route.ts om
+// de person-property `is_intern` te zetten; in PostHog filter je daar dan op via
+// Settings -> Project -> "Internal and test users".
+export function isExcludedFromProductAnalytics(userId: string | null | undefined): boolean {
+  return userId != null && (INTERNAL_TEST_USER_IDS.includes(userId) || userId === FOUNDER_USER_ID)
+}
+
 // PostgREST-filter voor een Supabase-query: sluit de interne testaccounts uit op `column`
 // (default user_id). Equivalent aan drie losse .neq()-calls, maar in één greppbare vorm.
 export function excludeInternalTestUsers<T extends { not(column: string, operator: 'in', value: string): T }>(
