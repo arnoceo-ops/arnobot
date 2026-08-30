@@ -205,6 +205,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Persoonsgegevens en profiel</td><td>Zolang het account actief is. Na beëindiging verwijderd na 30 dagen. Op verzoek binnen 10 werkdagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Worden 30 dagen na beëindiging van het account geanonimiseerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven, indien ingeschakeld, maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>Niet opgeslagen. Alleen gebruikt om die ene vraag te beantwoorden, daarna direct weggegooid.</td></tr>
               </tbody>
             </table>
