@@ -27,6 +27,39 @@ export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
 export const APP_REVIEWER_EMAIL = 'reviewer@arno.bot'
 export const APP_REVIEWER_ID = 'user_3H5QqLMsGDjwk1mFQYRCLuJbdBk'
 
+// Alle drie de interne test-user-ID's als lijst, plus een helper. Gebruik dit op ELKE
+// gebruikersoverstijgende aggregatie of analyse over gebruikersdata (admin-overzichten,
+// cron-analyses, ranglijsten, opener-generatie): de geautomatiseerde E2E draait tegen een
+// apart Supabase-project, maar test@arno.bot (handmatig via /sign-in/intern) en
+// reviewer@arno.bot loggen in op de productie-Clerk en schrijven dus naar dezelfde
+// productie-tabellen als echte gebruikers. Zonder deze filter belandt hun testverkeer in
+// weekcijfers, competitie-ranglijsten en de gegenereerde gespreksopeners.
+// scripts/check-testaccount-filter.mjs is de CI-achtervang.
+export const INTERNAL_TEST_USER_IDS: readonly string[] = [
+  E2E_TEST_USER_ID,
+  MANUAL_TEST_USER_ID,
+  APP_REVIEWER_ID,
+]
+
+export const INTERNAL_TEST_USER_EMAILS: readonly string[] = [
+  E2E_TEST_USER_EMAIL,
+  MANUAL_TEST_USER_EMAIL,
+  APP_REVIEWER_EMAIL,
+]
+
+export function isInternalTestUser(userId: string | null | undefined): boolean {
+  return userId != null && INTERNAL_TEST_USER_IDS.includes(userId)
+}
+
+// PostgREST-filter voor een Supabase-query: sluit de interne testaccounts uit op `column`
+// (default user_id). Equivalent aan drie losse .neq()-calls, maar in één greppbare vorm.
+export function excludeInternalTestUsers<T extends { not(column: string, operator: 'in', value: string): T }>(
+  query: T,
+  column = 'user_id',
+): T {
+  return query.not(column, 'in', `(${INTERNAL_TEST_USER_IDS.join(',')})`)
+}
+
 // Team Hippios: persistent testteam voor demo's/livetesten, twee echte managers
 // (test@arno.bot, thijs@tenshare.nl) + drie fake teamleden. Nieuw gegenereerde content
 // (1:1's, team-analyses) mag tijdens een demo/test wel getoond worden, maar wordt bewust NIET

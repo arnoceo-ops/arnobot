@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,10 +18,12 @@ export async function POST(_req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: logs } = await supabase
-    .from('arnobot_rds_logs')
-    .select('question, answer, created_at')
-    .eq('feedback', 'neg')
+  const { data: logs } = await excludeInternalTestUsers(
+    supabase
+      .from('arnobot_rds_logs')
+      .select('question, answer, created_at')
+      .eq('feedback', 'neg')
+  )
     .order('created_at', { ascending: false })
     .limit(20)
 

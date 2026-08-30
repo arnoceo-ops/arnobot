@@ -251,6 +251,27 @@ jobs:
         # per route). Bevestigde false positives toevoegen aan KNOWN_SAFE_QUERIES in het
         # script zelf, niet hier onderdrukken.
 
+  testaccount-filter:
+    name: Testaccount-filter op gebruikersoverstijgende queries (informatief, blokkeert niet)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Controleer admin-/cron-queries op ontbrekend testaccount-filter
+        run: node scripts/check-testaccount-filter.mjs
+        continue-on-error: true
+        # Blokkeert bewust niet: statische tekstanalyse op functieniveau. Toegevoegd
+        # 2026-08-30 nadat bleek dat test@arno.bot en reviewer@arno.bot (prod-Clerk,
+        # buiten de geautomatiseerde E2E om) ongefilterd meetelden in daily-activity,
+        # weekly-top-users, competitie, refresh-openers en auto-analyse. Bevestigde
+        # false positives toevoegen aan KNOWN_SAFE in het script zelf.
+
   missing-loaded-gate:
     name: Client-fetch zonder loaded-gate (informatief, blokkeert niet)
     runs-on: ubuntu-latest

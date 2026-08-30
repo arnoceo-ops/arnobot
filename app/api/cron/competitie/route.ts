@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -141,7 +142,7 @@ export async function GET(req: NextRequest) {
     .from('arnobot_blog_profiles')
     .select('user_id, profiel')
 
-  const geldig = (profielen ?? []).filter(p => ROL_MAP[p.profiel?.rol] !== undefined)
+  const geldig = (profielen ?? []).filter(p => ROL_MAP[p.profiel?.rol] !== undefined && !isInternalTestUser(p.user_id))
   if (!geldig.length) return NextResponse.json({ ok: true, skipped: true, kandidaten: 0 })
 
   const userIds = geldig.map(p => p.user_id)

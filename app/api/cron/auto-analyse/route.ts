@@ -5,6 +5,7 @@ import { getText } from '@/lib/ai'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
     .select('user_id')
 
   const userIds = [...new Set((userRows ?? []).map((r: { user_id: string }) => r.user_id))]
+    .filter(id => !isInternalTestUser(id))
 
   let analysed = 0
 

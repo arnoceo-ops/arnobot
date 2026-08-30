@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,17 +18,18 @@ export async function GET(req: NextRequest) {
   }
   try {
 
-  // Haal alle sessies op van alle gebruikers (max 300 voor context)
-  const { data: sessions } = await supabase
-    .from('arnobot_blog_sessions')
-    .select('title, summary')
+  // Haal alle sessies op van alle gebruikers (max 300 voor context). Testaccounts
+  // uitsluiten vóór de limiet, anders verdringen testsessies echte data uit de set.
+  const { data: sessions } = await excludeInternalTestUsers(
+    supabase.from('arnobot_blog_sessions').select('title, summary')
+  )
     .order('created_at', { ascending: false })
     .limit(300)
 
   // Haal recente analyses op (max 50)
-  const { data: analyses } = await supabase
-    .from('arnobot_analyses')
-    .select('analyse_text')
+  const { data: analyses } = await excludeInternalTestUsers(
+    supabase.from('arnobot_analyses').select('analyse_text')
+  )
     .order('created_at', { ascending: false })
     .limit(50)
 

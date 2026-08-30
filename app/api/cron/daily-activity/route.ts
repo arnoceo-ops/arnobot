@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
 
   const userMap: Record<string, { count: number; lastActive: string }> = {}
   for (const log of logs ?? []) {
+    if (isInternalTestUser(log.user_id)) continue
     if (!userMap[log.user_id]) {
       userMap[log.user_id] = { count: 0, lastActive: log.created_at }
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,9 +29,9 @@ export async function GET(req: NextRequest) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   const [logsRes, analysesRes, coachingRes] = await Promise.all([
-    supabase.from('arnobot_rds_logs').select('user_id, session_id').gte('created_at', sevenDaysAgo),
-    supabase.from('arnobot_analyses').select('user_id').gte('created_at', sevenDaysAgo),
-    supabase.from('arnobot_coaching_scores').select('user_id').gte('created_at', sevenDaysAgo),
+    excludeInternalTestUsers(supabase.from('arnobot_rds_logs').select('user_id, session_id').gte('created_at', sevenDaysAgo)),
+    excludeInternalTestUsers(supabase.from('arnobot_analyses').select('user_id').gte('created_at', sevenDaysAgo)),
+    excludeInternalTestUsers(supabase.from('arnobot_coaching_scores').select('user_id').gte('created_at', sevenDaysAgo)),
   ])
 
   const logs = logsRes.data || []
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
     const sess = gesprekken[userId]?.size || 0
     const anal = analysesTel[userId] || 0
     const coach = coachingTel[userId] || 0
-    return `${i + 1}. ${naam} — ${vragenCount}v · ${sess}g · ${anal}a · ${coach}c`
+    return `${i + 1}. ${naam} · ${vragenCount}v · ${sess}g · ${anal}a · ${coach}c`
   })
 
   const text = `📈 ARNOBOT WEEK · ${weekOf}\n\n${lines.join('\n')}\n\nv=vragen  g=gesprekken  a=analyses  c=coaching`
