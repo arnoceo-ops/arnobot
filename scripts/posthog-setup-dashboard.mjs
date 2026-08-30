@@ -64,8 +64,8 @@ const funnel = (series, dateFrom = '-90d') =>
 const INSIGHTS = [
   {
     name: 'Activatie-funnel',
-    description: 'Pageview -> eerste gesprek afgerond -> sessiesynthese -> coachingsynthese',
-    query: funnel([node('$pageview'), node('gesprek_afgerond'), node('sessie_synthese_getoond'), node('coaching_synthese_getoond')]),
+    description: 'Eerste /bot-pageview -> eerste gesprek afgerond -> sessiesynthese -> coachingsynthese',
+    query: funnel([node('$pageview', { properties: [BOT_PATH] }), node('gesprek_afgerond'), node('sessie_synthese_getoond'), node('coaching_synthese_getoond')]),
   },
   {
     name: 'Gesprekken afgerond per dag',
