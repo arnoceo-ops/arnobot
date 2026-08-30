@@ -38,6 +38,37 @@ export type BotEvent =
 type PropValue = string | number | boolean | null
 export type BotEventProps = Record<string, PropValue>
 
+// ---------------------------------------------------------------------------
+// Session replay
+//
+// STAAT UIT. Zet op true nadat je de maskeerconfig in PostHogTracker.tsx hebt
+// gezien en akkoord bent dat gemaskeerde sessies van betalende klanten worden
+// opgenomen. Eén regel, verder niks aanpassen.
+//
+// Ook met de vlag AAN neemt replay alleen op de shell-pagina's hieronder op
+// (nooit chat, coaching, sparren, synthese, admin), en met alle tekst en alle
+// invoer gemaskeerd: je ziet layout en klikgedrag, geen woorden.
+export const SESSION_REPLAY_ENABLED = false
+
+// Replay start alleen op deze paden. Bewust een allowlist, geen blocklist: een
+// nieuwe route met gespreks- of coachinginhoud wordt zo niet per ongeluk opgenomen.
+// Conservatief gestart: alleen pagina's zonder AI-gegenereerde tekst op het scherm.
+// /bot (home, kan een gesprekssnippet tonen), /bot/analyses en /bot/coaching staan
+// er bewust NIET in.
+export const REPLAY_ALLOWED_PREFIXES: readonly string[] = [
+  '/bot/welkom',
+  '/bot/profiel',
+  '/bot/account',
+  '/bot/doorgaan',
+  '/bot/upgrade',
+  '/bot/cgq',
+  '/bot/team/join',
+]
+
+export function isReplayAllowedPath(pathname: string): boolean {
+  return REPLAY_ALLOWED_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
+}
+
 function posthogEnabled(): boolean {
   return typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_POSTHOG_KEY
 }

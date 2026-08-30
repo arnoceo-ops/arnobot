@@ -5,6 +5,7 @@ import ClerkAppProvider from "./ClerkAppProvider";
 import SentryUserIdentifier from "./components/SentryUserIdentifier";
 import PageviewTracker from "./components/PageviewTracker";
 import PostHogTracker from "./components/PostHogTracker";
+import PostHogSessionReplay from "./components/PostHogSessionReplay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -62,6 +63,7 @@ export default async function RootLayout({
           <SentryUserIdentifier />
           <PageviewTracker />
           <PostHogTracker />
+          <PostHogSessionReplay />
           {children}
         </body>
       </html>

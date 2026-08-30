@@ -55,9 +55,20 @@ export default function PostHogTracker() {
         api_host: '/site-relay',
         ui_host: 'https://eu.posthog.com',
         person_profiles: 'always',
-        // Session replay staat hier globaal uit. Aanzetten gebeurt bewust en per route
-        // in PostHogSessionReplay.tsx, nooit als default.
+        // Session replay start NOOIT automatisch: PostHogSessionReplay.tsx roept per
+        // toegestane route expliciet startSessionRecording() aan, en alleen als de vlag
+        // SESSION_REPLAY_ENABLED aan staat. De config hieronder bepaalt hoe een opname
+        // eruitziet als hij wel loopt: alle tekst en alle invoer gemaskeerd (je ziet
+        // layout en klikgedrag, geen woorden), geen netwerk-payloads.
         disable_session_recording: true,
+        session_recording: {
+          maskAllInputs: true,
+          maskTextSelector: '*',
+          maskInputOptions: { password: true, email: true, text: true, search: true, tel: true, url: true },
+          recordHeaders: false,
+          recordBody: false,
+          recordCrossOriginIframes: false,
+        },
         capture_pageview: false,
         // Zou op /bot knoplabels en zichtbare coaching-tekst meepakken. Uit.
         autocapture: false,
