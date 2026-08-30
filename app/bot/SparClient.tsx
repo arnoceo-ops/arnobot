@@ -10,6 +10,7 @@ import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 import { groeiNudgeGezien, markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import { track } from '@/lib/posthog'
 
 function renderContent(text: string) {
   const escaped = text
@@ -698,6 +699,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       })
       const data = await res.json()
       if (data.url) {
+        track('deel_link_aangemaakt')
         setShareUrl(data.url)
         try { await navigator.clipboard.writeText(data.url) } catch {}
         setShareCopied(true)
@@ -783,6 +785,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         })
         const data = await res.json()
         if (data.debrief) {
+          track('sparren_debrief_getoond', { aantal_berichten: messages.length })
           const newCount = messages.length + 1
           setMessages(prev => [...prev, {
             role: 'arno',
@@ -821,6 +824,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       })
       const data = await res.json()
       if (data.summary) {
+        track('gesprek_afgerond', { aantal_berichten: messages.length })
+        track('sessie_synthese_getoond')
         const newCount = messages.length + (data.uitdaging ? 2 : 1)
         setMessages(prev => [
           ...prev,
@@ -872,6 +877,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const answer = data.answer
         setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null }])
         setHistory(prev => [...prev, { role: 'assistant', content: answer }])
+        track('sparren_gestart', { rol: rolCategorie })
       }
       setStarted(true)
     } catch {
@@ -2165,7 +2171,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   className={`spar-voice-toggle${voiceMode ? ' active' : ''}`}
                   onClick={() => {
                     setVoiceMode(v => {
-                      if (!v) { setAttachedFile(null); setFileError(null) }
+                      if (!v) { setAttachedFile(null); setFileError(null); track('voice_sessie_gestart') }
                       return !v
                     })
                   }}

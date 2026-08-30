@@ -7,6 +7,7 @@ import DownloadTeamPdfButton from './DownloadTeamPdfButton'
 import { ProgressieChart, type ScorePoint } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { computeMsaScore } from '@/lib/msa'
+import { track } from '@/lib/posthog'
 
 function formatLast(iso: string | null) {
   if (!iso) return ''
@@ -243,6 +244,7 @@ export default function TeamClient() {
       if (!res.ok) {
         setSpotlightError(data.error || 'Niet genoeg data beschikbaar.')
       } else {
+        track('team_spotlight_bekeken')
         const updated = await fetch('/api/bot/team/spotlight').then(r => r.json())
         setTeamAnalyses(updated.analyses ?? [])
       }
@@ -277,6 +279,7 @@ export default function TeamClient() {
   function copyInviteLink() {
     if (!team) return
     navigator.clipboard.writeText(`${window.location.origin}/bot/team/join?code=${team.invite_code}`)
+    track('teamlid_uitgenodigd')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

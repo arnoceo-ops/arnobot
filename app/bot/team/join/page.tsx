@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { colors, text, btn, layout, globalCss } from '@/lib/styles'
+import { track } from '@/lib/posthog'
 
 function JoinContent() {
   const searchParams = useSearchParams()
@@ -37,6 +38,7 @@ function JoinContent() {
       })
       const data = await res.json()
       if (!res.ok) { setErrorMsg(data.error || 'Mislukt'); setStatus('error'); return }
+      track('teamlid_geactiveerd')
       setStatus('done')
       setTimeout(() => router.push('/bot'), 2000)
     } catch {

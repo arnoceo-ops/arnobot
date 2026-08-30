@@ -8,6 +8,7 @@ import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
+import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
   const { user, isLoaded } = useUser()
@@ -93,6 +94,7 @@ export default function AccountPage() {
       setCancelledAt(data.cancelled_at)
       setCancelConfirm(false)
       setCancelDone(true)
+      track('opzegging_gestart', { is_teambaas: !!isManager })
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Opzegging mislukt')
     } finally {

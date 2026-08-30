@@ -1,5 +1,7 @@
 'use client'
 
+import { track } from '@/lib/posthog'
+
 export default function UpgradeButton({ href, label, eventName }: { href: string; label: string; eventName: string }) {
   return (
     <a
@@ -10,6 +12,7 @@ export default function UpgradeButton({ href, label, eventName }: { href: string
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ eventName }),
         }).catch(() => {})
+        track('upgrade_cta_geklikt', { plan: eventName === 'upgrade_team_click' ? 'team' : 'pro' })
       }}
       style={{
         display: 'inline-block', padding: '12px 36px',

@@ -10,9 +10,12 @@
 
 import posthog from 'posthog-js'
 
+// Feature-adoptie en het betreden van een feature-pagina worden gedekt door de
+// genormaliseerde $pageview (PostHogTracker.tsx): een pageview op /bot/sparren IS het
+// "sparren geopend"-signaal. De events hieronder zijn de momenten die geen pageview
+// hebben (een actie voltooid, een CTA geklikt).
 export type BotEvent =
   // Activatie-funnel
-  | 'gesprek_gestart'
   | 'gesprek_afgerond'
   | 'sessie_synthese_getoond'
   | 'coaching_gestart'
@@ -20,13 +23,11 @@ export type BotEvent =
   | 'sparren_gestart'
   | 'sparren_debrief_getoond'
   // Feature-adoptie
-  | 'feature_geopend'
   | 'voice_sessie_gestart'
   | 'deel_link_aangemaakt'
   // Conversie
-  | 'upgrade_pagina_bekeken'
   | 'upgrade_cta_geklikt'
-  | 'abonnement_gestart'
+  | 'abonnement_gestart' // nog niet gevuurd: geen betaalprovider (zie OPENSTAANDE_PUNTEN.md)
   | 'opzegging_gestart'
   // Team
   | 'teamlid_uitgenodigd'
@@ -40,17 +41,6 @@ export type BotEventProps = Record<string, PropValue>
 function posthogEnabled(): boolean {
   return typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_POSTHOG_KEY
 }
-
-// Alleen niet-gevoelige feature-namen. Uitgebreide lijst = uitgebreide union, geen losse strings.
-export type BotFeature =
-  | 'bieb'
-  | 'analyses'
-  | 'team'
-  | 'voice'
-  | 'cgq'
-  | 'qa'
-  | 'account'
-  | 'profiel'
 
 /**
  * Stuur een product-event naar PostHog. No-op als PostHog uit staat of server-side.

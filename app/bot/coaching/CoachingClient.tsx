@@ -8,6 +8,7 @@ import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { computeMsaScore } from '@/lib/msa'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import { track } from '@/lib/posthog'
 
 function renderMd(text: string): string {
   return text
@@ -233,6 +234,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
     setGenerating(true)
     setError(null)
     setBlockReason(null)
+    track('coaching_gestart')
     try {
       const res = await fetch('/api/bot/coaching', { method: 'POST' })
       const data = await res.json()
@@ -246,6 +248,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
       } else if (data.error === 'hoge_scores') {
         setBlockReason('hoge_scores')
       } else if (data.coaching) {
+        track('coaching_synthese_getoond')
         setDoc(data.coaching)
         markGroeiNudgeGezien(clerkSessionId)
         localStorage.setItem(`arnobot_coaching_doc_${userId}`, JSON.stringify(data.coaching))

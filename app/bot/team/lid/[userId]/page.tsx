@@ -6,6 +6,7 @@ import BotNav from '@/app/bot/BotNav'
 import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import DownloadOneOnOneButton from '@/app/bot/team/DownloadOneOnOneButton'
+import { track } from '@/lib/posthog'
 
 interface Coaching {
   mindset_score: number | null
@@ -193,6 +194,7 @@ export default function LidPage() {
       })
       const d = await res.json()
       if (!res.ok) { setAgendaError(d.error || 'Er ging iets mis'); return }
+      track('team_1on1_gegenereerd')
       setAgenda(d.agenda)
       setAandachtspunt(d.aandachtspunt || '')
       await fetch('/api/bot/team/1on1/save', {
