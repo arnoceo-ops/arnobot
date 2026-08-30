@@ -387,6 +387,14 @@ Bij elk verzoek om nieuwe functionaliteit of een nieuwe tool/integratie: schrijf
 
 Pas daarna scopen. De aanbeveling mag alsnog "niet alles bouwen" zijn, maar de maximale versie moet expliciet op tafel hebben gelegen. Reden: de "eerst voorstellen, wachten op akkoord"-poort gaat er stilzwijgend van uit dat het voorstel dat voor Arno ligt het beste is. Als de ambitieuze versie nooit getoond is, keurt hij een middelmatig plan goed zonder het te weten. (Aanleiding: de PostHog-uitbreiding van 2026-08-30, waar feature flags, surveys, groups en session recording pas na doorvragen boven tafel kwamen.)
 
+**Verantwoorde uitsluiting bij het scopen:** na de sweep is de ambitieuze versie de basis van het voorstel. Elk onderdeel zit in de aanbeveling, tenzij het op een expliciete uitsluitingslijst staat met een reden van precies één van deze drie soorten:
+
+1. harde externe blokker (bestaat nog niet, wacht op een ander besluit of systeem)
+2. echt losstaande bouw met een eigen beslissing, niet "meer van hetzelfde" bovenop wat je toch al bouwt
+3. echt nieuw privacy- of kostenoppervlak dat een eigen goedkeuring vereist
+
+"Later", "lage marginale waarde", "geen kosten dus later", "voor nu overslaan" en soortgelijke zijn verboden als uitsluitingsgrond. Bij een zwakke of ontbrekende reden gaat het onderdeel mee. (Aanleiding: op 2026-08-30 werd `experiments` alsnog uit de PostHog-scope geknipt met "geen infra-kost, dus later", terwijl het op dezelfde flag-integratie zit die toch al gebouwd werd.)
+
 ## Nieuwe content of functionaliteit — altijd eerst voorstellen
 
 Bij nieuwe tekst (Q&A, copy, labels) of nieuwe functionaliteit: eerst een voorstel tonen aan de gebruiker, wachten op akkoord, dan pas bouwen. Geen uitzondering.
