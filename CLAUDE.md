@@ -50,6 +50,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - **RLS-status:** Supabase-dashboard → Database → Tables, scan de kolom RLS op "Disabled". Alle ~41 tabellen horen RLS aan te hebben (zonder policies, veilig zolang de app uitsluitend de service-role-key gebruikt). Achtergrond: het RLS-incident van 2026-08-20 in `docs/CLAUDE_HISTORY.md`. Een "Gedaan"-notitie is alleen betrouwbaar zolang iemand 'm opnieuw verifieert.
 - **Wezen-routes:** bekijk de laatste CI-run van `scripts/check-orphan-routes.mjs` i.p.v. handmatig te grep'en. Bevestigde legitieme gevallen → `KNOWN_MANUAL_ROUTES`/`KNOWN_EXTERNAL_PREFIXES` in het script.
 - **Ontbrekende-eigenaarschapsfilter:** bekijk de laatste CI-run van `scripts/check-missing-user-filter.mjs`. Bevestigde legitieme gevallen → `KNOWN_SAFE_QUERIES` in het script.
+- **Testaccount-filter:** bekijk de laatste CI-run van `scripts/check-testaccount-filter.mjs` (admin-/cron-queries over gebruikersdata die de interne testaccounts niet uitsluiten). Bevestigde legitieme gevallen → `KNOWN_SAFE` in het script. Achtergrond: de testdata-in-analyses-vondst van 2026-08-30 in `docs/CLAUDE_HISTORY.md`.
 
 ### 2. Dependencies & tooling
 - Major versie-updates beschikbaar voor Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK?

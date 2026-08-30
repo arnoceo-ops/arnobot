@@ -47,6 +47,9 @@ export default defineConfig({
   // (echte backend, geen page.route-mock) er meteen bij kunnen. Niveau-2-tests (page.route)
   // raken deze servers nooit: die onderscheppen de aanvraag al in de browser.
   globalSetup: './e2e/global-setup.ts',
+  // Ruimt na afloop de prod-Supabase-rijen van het geautomatiseerde testaccount op, zodat
+  // E2E-verkeer zich niet ophoopt in de productie-dataset (zie e2e/global-teardown.ts).
+  globalTeardown: './e2e/global-teardown.ts',
   use: {
     baseURL,
     trace: 'on-first-retry',
