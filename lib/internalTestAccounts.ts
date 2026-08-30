@@ -18,6 +18,15 @@ export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
 // Arno's eigen handmatige testaccount, voor interactief rondklikken buiten zijn echte
 // gebruiksaccount om. Ingelogd via de verborgen route app/sign-in/intern/page.tsx, niet via
 // LinkedIn.
+//
+// LET OP: deze accounts hebben geen betaling, dus hun 30-daagse trial verloopt gewoon,
+// waarna proxy.ts ze bij /bot terugstuurt naar /sign-in (ziet eruit als "login kapot").
+// Op 2026-08-30 gebeurde dat met test@arno.bot. Opgelost door in approved_users een
+// verre expires_at te zetten:
+//   UPDATE approved_users SET expires_at = '2035-01-01T00:00:00Z'
+//   WHERE user_id IN (E2E, MANUAL, APP_REVIEWER van hierboven);
+// Wordt een test-Clerk-account opnieuw aangemaakt (nieuw user_id), zet die expires_at dan
+// opnieuw, of geef het account command_manager.
 export const MANUAL_TEST_USER_EMAIL = 'test@arno.bot'
 export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
 
