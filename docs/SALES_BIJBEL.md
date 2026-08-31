@@ -83,7 +83,7 @@ De manager ziet een synthese van patronen binnen zijn team, nooit de ruwe gespre
 **Sterkst vlak:** vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
 
 ### 7. Arno's eigen methodiek, niet generieke AI-adviezen — LIVE
-Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, geen bullshit, geen corporate taal). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
+Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, zonder omwegen, eerlijk, bewust niet corporate). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
 
 **Pitch-zin:** de klant koopt Arno's expertise op schaal, niet "een AI".
 
