@@ -1,7 +1,7 @@
 # ArnoBot: Marketing & Sales Overzicht (NotebookLM-brondocument)
 
-**Laatst bijgewerkt:** 2026-08-18
-**Doel van dit document:** één geconsolideerd, technisch-vrij brondocument om te uploaden naar NotebookLM, bruikbaar voor meerdere toekomstige presentaties: de kickoff-pitch aan de sales agents nu, en later een presentatie richting Team Accounts (sales leaders) als prospects. Combineert de inhoud van `docs/SALES_BIJBEL.md` en de marketing-relevante delen van `docs/SALES_DEVELOPMENT.md`, zonder implementatiedetails (geen code, geen databaseverwijzingen, geen interne beslisdata). Voor die technische achtergrond: de bronbestanden zelf.
+**Laatst bijgewerkt:** 2026-08-18 (grondig opnieuw gesynchroniseerd tegen `SALES_BIJBEL.md`: bleek 11 naar 13 LIVE USP's te zijn gegroeid door een andere sessie, plus hele nieuwe secties (concurrentievergelijking, aanlooproutes, 1:1-cadans-bewaking, community-gespreksopeners) die nog ontbraken. Ook de kostenframing gecorrigeerd, zie hieronder)
+**Doel van dit document:** één geconsolideerd, technisch-vrij brondocument om te uploaden naar NotebookLM, bruikbaar voor meerdere toekomstige presentaties: de kickoff-pitch aan de sales agents nu, en later een presentatie richting Team Accounts (sales leaders) als prospects. Combineert de inhoud van `docs/SALES_BIJBEL.md` en de marketing-relevante delen van `docs/SALES_DEVELOPMENT.md`, zonder implementatiedetails (geen code, geen databaseverwijzingen, geen interne beslisdata). Voor die technische achtergrond: de bronbestanden zelf. **Belangrijk om bij te houden:** `SALES_BIJBEL.md` groeit door met eigen sessies die er los van deze sync aan werken, controleer bij een sync-check altijd de volledige inhoud van dat bestand, niet alleen of het "recent gewijzigd" is sinds de laatste keer, dat leidde deze sessie tot een fout-positieve "ja, bijgewerkt".
 
 Twee delen: Deel A is het kernverhaal van ArnoBot zelf, bruikbaar voor elke doelgroep. Deel B gaat specifiek over de sales-development-rol en is alleen relevant voor de pitch aan de sales agents, niet voor een prospect-presentatie.
 
@@ -31,7 +31,7 @@ Hij krijgt nooit de eerlijkheid die een AI wel krijgt. Een verkoper geeft tegeno
 
 En zijn kwaliteit verwatert als het team groeit. Bij een groeiend team krijgt elke verkoper vanzelf minder aandacht, dat is geen kwestie van inzet maar van beschikbare uren. Verkoper twintig krijgt bij ArnoBot exact dezelfde kwaliteit als verkoper één, hoe groter het team, hoe groter het gat dat een manager alleen nooit had kunnen dichten.
 
-**Waarom dit een hogere prijs rechtvaardigt, niet alleen een redelijke:** reken dit niet voor met verzonnen ROI-cijfers, maar met de logica zelf. Eén extra gesloten deal per verkoper, één keer per kwartaal, dekt voor de meeste teams het hele abonnement ruimschoots.
+**Dit gesprek gaat nooit over kosten, ook niet impliciet.** Zodra het over "wat kost dit abonnement" of "wanneer heb ik dit terugverdiend" gaat, is het referentiepunt al verkeerd, ook als het antwoord gunstig uitpakt. Het juiste gesprek gaat over wat een sterker presterend team oplevert. Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Een team dat wél op die manier gecoacht wordt, sluit structureel meer deals, en dat effect stapelt zich op over elke verkoper, elke maand. Zodra een prospect het gesprek zelf naar kosten trekt, heeft hij de kern gemist: leg dan niet uit waarom het "de kosten waard is", leg opnieuw uit wat het oplevert.
 
 ## Wat ArnoBot concreet doet
 
@@ -40,6 +40,10 @@ Het hoofdgesprek is een doorlopend chatgesprek over sales-onderwerpen, waarin Ar
 Gebruikers kunnen sparren: een live oefengesprek tegen een AI-tegenstander (een lastige prospect, een sceptische CFO), gevolgd door een debrief. Een gestructureerde coachingsdiagnose op drie dimensies (mindset, systeem, actie) geeft een meetbaar, herhaalbaar beeld met concrete ontwikkelpunten.
 
 Voor teams komt daar een managerlaag bovenop: een teamoverzicht met individuele scores, teamvoortgang als trend over tijd met vroegsignalering bij stagnatie, een AI-voorbereide agenda voor elk 1:1-gesprek gebaseerd op de recente activiteit van dat teamlid, en een collectieve teamanalyse die patronen zichtbaar maakt die alleen op teamniveau te zien zijn. Fundamenteel hierbij: de manager ziet nooit de inhoud van individuele gesprekken, alleen geaggregeerde signalen. Dat is niet alleen een privacyfeature, het is wat eerlijkheid van teamleden tegenover ArnoBot überhaupt mogelijk maakt.
+
+ArnoBot bewaakt ook actief het 1:1-ritme tussen een manager en zijn teamleden: blijft een teamlid langer dan twee weken zonder 1:1, dan grijpt ArnoBot zelf in, eerst met een signaal op de teampagina, daarna met e-mailherinneringen aan de manager. Het 1:1-ritme is de kern van goed teammanagement, maar zakt in de praktijk stilletjes weg zodra een manager het druk heeft. Dit spreekt de manager zelf ook aan op zijn eigen discipline, niet alleen zijn verkopers.
+
+Elke maand analyseert ArnoBot alle gesprekken van alle gebruikers samen, volledig geanonimiseerd, en genereert daaruit actuele, relevante gespreksopeners per onderwerp. Wie een gesprek start via zo'n voorgeformuleerde vraag, kiest daarmee impliciet uit wat er op dat moment daadwerkelijk speelt bij honderden andere sales professionals, geen generiek lijstje voorbeeldvragen.
 
 ## De sterkste bewijzen
 
@@ -55,6 +59,10 @@ Drie argumenten raken een salesbaas het diepst, omdat ze precies zijn koopbeslis
 
 **Altijd beschikbaar, geen agenda-gedoe.** 24/7, geen wachttijd, geen coach die pas volgende week tijd heeft. Sterkst vlak vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
 
+**Proactieve bewaking van het 1:1-ritme.** ArnoBot vertrouwt niet op het geheugen van de manager zelf om het 1:1-ritme met teamleden vast te houden, maar signaleert en herinnert actief zodra dat wegzakt.
+
+**Community-gedreven gespreksopeners.** Een netwerkeffect dat sterker wordt naarmate ArnoBot meer gebruikers krijgt, en niet na te bouwen door een concurrent zonder diezelfde schaal aan echte gesprekken.
+
 Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 **Geheugen dat niet verwatert.** Bij de meeste AI-tools verwatert wat je eerder deelde naarmate het gesprek langer wordt, en is het na een nieuwe sessie sowieso weg. Bij ArnoBot blijft het scherp, hoe lang je het ook al gebruikt. Zeg nooit dat een gewone AI-tool "niets onthoudt", dat is aantoonbaar onjuist en een technisch onderlegde prospect prikt daar zo doorheen: het verschil zit in verwatering en het verlies zodra een sessie stopt, niet in totale afwezigheid van geheugen.
@@ -69,6 +77,16 @@ Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 **Teambrede patroonherkenning.** De manager krijgt zicht op patronen over het hele team, bijvoorbeeld terugkerende blinde vlekken, niet alleen los per medewerker. Dit is waar een salesbaas daadwerkelijk op stuurt, niet op één individueel gesprek.
 
+## Concurrentievergelijking: het juiste antwoord per bezwaar
+
+**Tegenover een gratis AI/chatbot (ChatGPT, een eigen bedrijfs-GPT):** geheugen dat niet verwatert over honderden gesprekken, in plaats van een steeds langer wordend gesprek dat aan kwaliteit inlevert. Directe accountability in plaats van alleen antwoord geven. Een herhaalbare, meetbare diagnose in plaats van los advies per vraag. Gebouwd op Arno's eigen methodiek en stem, geen generieke sales-prompt op een standaardmodel.
+
+**Tegenover een menselijke manager of coach:** overal tegelijk, voor elk teamlid, op het moment dat het nodig is. Nooit een slechte dag. Perfect geheugen over een heel team tegelijk. Geen politiek, favoritisme of ego in de feedback. Eerlijkheid die een medewerker tegen zijn eigen baas nooit zou geven. Kwaliteit die niet verwatert als het team groeit.
+
+**Tegenover een coachingsbureau of trainingsprogramma:** continu in plaats van periodiek, geen dure, tijdgebonden sessies per medewerker. Actieve vergeetcurve-bestrijding: een training zonder herhaling verdampt binnen een dag, dit is het enige dat daar structureel iets tegen doet. Live oefenen tegen een weerbarstige AI-tegenstander, geen lijstje tips lezen.
+
+**Tegenover sales-enablement/call-analyse-tools (Gong, Chorus e.d.):** geen belopname-infrastructuur of integratietraject nodig, werkt op iemands eigen reflectie, direct bruikbaar. Proactief tussen gesprekken door, niet alleen achteraf analyseren wat er in een al gevoerd gesprek gebeurde.
+
 ---
 
 # Deel B: Sales Development (alleen voor de pitch aan de sales agents)
@@ -77,7 +95,9 @@ Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 Sales agents benaderen actief sales teams bij andere bedrijven, typisch geleid door een salesbaas of commercieel directeur, met een gratis proefmaand van ArnoBot Team. Geen koude prijspitch, een uitnodiging om het zelf te ervaren. Blijft een team na die maand, dan volgt het gesprek over een echt abonnement.
 
-Sales agents gebruiken ArnoBot ook zelf, wat hun eigen verkoopgesprek versterkt: ze pitchen vanuit ervaring, niet vanuit een script.
+Sales agents gebruiken ArnoBot ook zelf, wat hun eigen verkoopgesprek versterkt: ze pitchen vanuit ervaring, niet vanuit een script. Gebruik het daarom ook in je eigen voorbereiding zoals je het aan een prospect verkoopt, dus met acties, analyses en coaching, niet als snelle vraagbaak: je eigen gebruikspatroon is het meest geloofwaardige bewijsstuk dat je in een gesprek hebt.
+
+**Wat jouw eigen link uniek maakt.** Er zijn twee manieren waarop iemand bij ArnoBot terechtkomt. Via de gewone website meldt iemand zich aan en komt, als hij interesse toont in een teamversie, op een wachtlijst terecht: hij heeft dan nog geen Team-account, alleen interesse. Komt iemand binnen via jouw eigen link, dan is dat anders: hij krijgt meteen een écht, volledig werkend Team-account, geen wachtlijst, geen tussenstap. Dat is een sterk punt in je eigen gesprek: wie via jou binnenkomt, hoeft nergens op te wachten.
 
 ## Wat dit persoonlijk, zakelijk en financieel oplevert
 
