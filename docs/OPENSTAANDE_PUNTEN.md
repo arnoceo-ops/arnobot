@@ -39,7 +39,7 @@
 - **PostHog Data Warehouse-koppeling.** Stripe: geblokkeerd tot er een betaalprovider is (samen met dunning). Supabase: bewust niet als directe connector (nieuw dataoppervlak), de veilige productvelden gaan al als person-properties mee; eventueel later een read-only curated view.
 - **Manager-zelfcoaching-gat.** Thijs' punten over een open, veilige, ambitieuze, lerende omgeving en actieve handvatten van ArnoBot richting de manager zelf als coach (niet als verkoper). Substantiële Team-feature met privacymodel-impact, apart projectplan nodig vóór bouwen. Los van de al gebouwde SPE-zelfcoaching (punt 5).
 - **TEAM_PLAN stap 3: Solopreneur-profiel** (nog niet ontworpen), plus de open vraag welke rol/profiel een uitgenodigd teamlid (niet de manager) krijgt, nooit in de profielherziening meegenomen.
-- **TEAM_PLAN 2B (De Tijdlijn) en 2C (Manager als Variabele).** Het statusblok in `TEAM_PLAN.md` spreekt zichzelf tegen (noemt 2B/2C zowel "af" als "eerstvolgend"). Verse controle nodig, zie onderaan.
+- ~~**TEAM_PLAN 2B (De Tijdlijn) en 2C (Manager als Variabele).**~~ **Afgehandeld 2026-08-31.** Verse controle uitgevoerd: beide zijn echt gebouwd (`computeThemaMaandTrend`, `formatSystemischSignaal`, `formatVroegSignaal` in `lib/spiegel.ts`, aangeroepen door `team/spotlight`, `team/dashboard` en `team/zelfcoaching`). De tegenstrijdigheid zat alleen in achterhaalde planningstaal in oudere secties van `TEAM_PLAN.md` ("Niet gestart" in de Fase 1/2-tabel, "fase 3, niet fase 2"), die is rechtgezet. Geen codewerk open.
 - **Sparring preformatted-scenario-kaarten.** Bouwen zodra er 5 scenario's liggen, nu 1/5.
 - **Referral-tegoed-automatisering.** `status='converted'` wordt nergens gezet, de hele flow is handmatig.
 - **SYSTEEMPROMPT-upgrade golf 1 evalueren**, gepland 2026-09-16 (cron-herinnering `golf1-evaluatie-herinnering` staat). Daarna beslissen over golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel).
@@ -64,12 +64,14 @@
 
 ## Verificaties die CLAUDE.md vraagt
 
-- **Verse controle van het `TEAM_PLAN.md`-statusblok tegen de code** (subagent zonder de aannames van de bouwsessie). Het blok is intern tegenstrijdig over 2B/2C.
+- ~~**Verse controle van het `TEAM_PLAN.md`-statusblok tegen de code**~~ **Gedaan 2026-08-31.** 2B/2C zijn echt gebouwd en aangeroepen; tegenstrijdigheid was achterhaalde planningstaal, rechtgezet in `TEAM_PLAN.md`.
 - **Voice:** een echte proefboeking om de Calendly-webhook-matching end-to-end te bevestigen (bewust overgeslagen, Arno vertrouwt de logica; kan alsnog als losse verificatie).
 - **Embedding-consistentiecheck** (maandcheck-item): steekproefsgewijs verifiëren dat alle `arnobot_blog_sessions.embedding`-rijen uit hetzelfde model komen.
 
 ## Voorgestelde eerste drie
 
-1. **Verse TEAM_PLAN-statuscontrole** (subagent tegen de code). Cheap, en pas daarna weet je zeker wat er van dat traject echt nog open is.
-2. **PostHog `/bot`: afronden** (session replay-vlag omzetten na verificatie, DPA opvragen, bewaartermijn). Kern is gebouwd 2026-08-30.
-3. **Voyage her-embedding plannen.** Het deprecation-risico groeit en het is de grootste losse klus.
+1. **PostHog `/bot`: afronden** (session replay-vlag omzetten na verificatie, DPA opvragen, bewaartermijn). Kern is gebouwd 2026-08-30.
+2. **Voyage her-embedding plannen.** Het deprecation-risico groeit en het is de grootste losse klus.
+3. **Manager-zelfcoaching-gat: projectplan schrijven** (niet bouwen). De ambitie uit de Thijs-sessie die punt 5 en 2C niet dekken, met de privacygrens als eerste ontwerpvraag.
+
+*(Verse TEAM_PLAN-statuscontrole afgerond 2026-08-31, zie hierboven.)*
