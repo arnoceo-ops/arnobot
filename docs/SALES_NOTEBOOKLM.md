@@ -1,6 +1,6 @@
 # ArnoBot: Marketing & Sales Overzicht (NotebookLM-brondocument)
 
-**Laatst bijgewerkt:** 2026-08-18 (grondig opnieuw gesynchroniseerd tegen `SALES_BIJBEL.md` én `docs/ARNOBOT_OVERZICHT.md`: naast de kostenframing-fix zijn de Team-prijs, de coachingservaring voor de manager zelf (Scaling Up), en de expliciete "wat nog niet bestaat"-grenzen toegevoegd, die eerder ontbraken)
+**Laatst bijgewerkt:** 2026-08-18 (grondig opnieuw gesynchroniseerd tegen `SALES_BIJBEL.md` én `docs/ARNOBOT_OVERZICHT.md`: Team-prijs, de coachingservaring voor de manager zelf (Scaling Up), en de expliciete "wat nog niet bestaat"-grenzen toegevoegd. De eerste kostenframing-fix bleef zelf nog over kosten praten om uit te leggen waarom je daar niet over moet praten, dat werkt averechts ("je mind kent niet niet"). Tweede ronde: het woord kosten/prijs komt nergens meer voor als het over de eigen prijsvorming gaat, puur positieve opbrengst-taal. USP 8 hernoemd van "Kostenvoordeel" naar "Schaalbaar voor het hele team")
 **Doel van dit document:** één geconsolideerd, technisch-vrij brondocument om te uploaden naar NotebookLM, bruikbaar voor meerdere toekomstige presentaties: de kickoff-pitch aan de sales agents nu, en later een presentatie richting Team Accounts (sales leaders) als prospects. Combineert de inhoud van `docs/SALES_BIJBEL.md`, `docs/ARNOBOT_OVERZICHT.md` en de marketing-relevante delen van `docs/SALES_DEVELOPMENT.md`, zonder implementatiedetails (geen code, geen databaseverwijzingen, geen interne beslisdata). Voor die technische achtergrond: de bronbestanden zelf. **Belangrijk om bij te houden:** de bronbestanden groeien door met eigen sessies die er los van deze sync aan werken, controleer bij een sync-check altijd de volledige inhoud van elk bronbestand, niet alleen of het "recent gewijzigd" is sinds de laatste keer.
 
 Twee delen: Deel A is het kernverhaal van ArnoBot zelf, bruikbaar voor elke doelgroep. Deel B gaat specifiek over de sales-development-rol en is alleen relevant voor de pitch aan de sales agents, niet voor een prospect-presentatie.
@@ -17,7 +17,7 @@ ArnoBot is een AI-coachingsplatform voor sales professionals en salesteams, gebo
 
 ## De kernbelofte
 
-Je verkoopt geen chatbot-abonnement. Je verkoopt structureel wat de beste salesbaas, met alle inzet, ervaring en goede wil van de wereld, nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Dat is een ander gesprek dan "is dit de kosten waard": als het waardeverhaal groot genoeg is, verdwijnt het prijsbezwaar vanzelf.
+Je verkoopt geen chatbot-abonnement. Je verkoopt structureel wat de beste salesbaas, met alle inzet, ervaring en goede wil van de wereld, nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Praat over wat een team hiermee wint: meer deals, sterkere verkopers, een teambaas die zelf ook groeit. Een waardeverhaal dat groot genoeg is, spreekt voor zich.
 
 **Zes dingen die geen manager kan, ongeacht hoe goed hij is:**
 
@@ -33,7 +33,7 @@ Hij krijgt nooit de eerlijkheid die een AI wel krijgt. Een verkoper geeft tegeno
 
 En zijn kwaliteit verwatert als het team groeit. Bij een groeiend team krijgt elke verkoper vanzelf minder aandacht, dat is geen kwestie van inzet maar van beschikbare uren. Verkoper twintig krijgt bij ArnoBot exact dezelfde kwaliteit als verkoper één, hoe groter het team, hoe groter het gat dat een manager alleen nooit had kunnen dichten.
 
-**Dit gesprek gaat nooit over kosten, ook niet impliciet.** Zodra het over "wat kost dit abonnement" of "wanneer heb ik dit terugverdiend" gaat, is het referentiepunt al verkeerd, ook als het antwoord gunstig uitpakt. Het juiste gesprek gaat over wat een sterker presterend team oplevert. Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Een team dat wél op die manier gecoacht wordt, sluit structureel meer deals, en dat effect stapelt zich op over elke verkoper, elke maand. Zodra een prospect het gesprek zelf naar kosten trekt, heeft hij de kern gemist: leg dan niet uit waarom het "de kosten waard is", leg opnieuw uit wat het oplevert.
+Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Een team dat wél op die manier gecoacht wordt, sluit structureel meer deals, en dat effect stapelt zich op over elke verkoper, elke maand: meer omzet, sterkere verkopers, een teambaas die zelf ook groeit.
 
 ## Wat ArnoBot concreet doet
 
@@ -59,7 +59,7 @@ Drie argumenten raken een salesbaas het diepst, omdat ze precies zijn koopbeslis
 
 **Enterprise-niveau beveiliging en compliance.** Toegangsbeveiliging op alle gebruikersdata, verwerkersovereenkomsten met elke leverancier, geen training op klantdata. Bij een teamklant komt bijna altijd een IT- of inkoopvraag hierover, en dit is dan al op orde.
 
-**Kostenvoordeel ten opzichte van een coachingstraject of trainingsbureau.** Eén abonnement in plaats van meerdere dure, tijdgebonden coachingsessies per medewerker. Sterk voor de business case die een salesbaas moet verantwoorden voor een heel team.
+**Schaalbaar voor het hele team.** Eén abonnement geeft elke verkoper dezelfde coaching, in plaats van losse, tijdgebonden sessies die van oudsher maar een select deel van het team ooit bereiken. Sterk voor de business case die een salesbaas moet verantwoorden voor een heel team.
 
 **Altijd beschikbaar, geen agenda-gedoe.** 24/7, geen wachttijd, geen coach die pas volgende week tijd heeft. Sterkst vlak vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
 
