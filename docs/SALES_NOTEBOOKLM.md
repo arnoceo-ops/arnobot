@@ -13,6 +13,8 @@ Twee delen: Deel A is het kernverhaal van ArnoBot zelf, bruikbaar voor elke doel
 
 ArnoBot is een AI-coachingsplatform voor sales professionals en salesteams, gebouwd op de eigen methodiek en toon van Arno: direct, geen bullshit, geen corporate taal. Gebruikers voeren doorlopende gesprekken met ArnoBot over hun salespraktijk, oefenen in een live sparringmodus tegen een AI-tegenstander, en krijgen een gestructureerde coachingsdiagnose op basis van hun eigen patronen. Voor teams komt daar een managerlaag bovenop: teambrede patronen, voortgang over tijd, en voorbereiding voor 1:1-gesprekken, zonder dat de manager ooit de losse gesprekken van een teamlid ziet.
 
+**Voor wie:** Nederlandstalige salesprofessionals en salesmanagers, voornamelijk in B2B. Het meest typische profiel: een zelfstandige verkoper of accountmanager bij een mkb-bedrijf, die wil verbeteren maar geen tijd of budget heeft voor een persoonlijke salescoach. Voor een teamleider die een heel salesteam aanstuurt is de teammodule het aangrijpingspunt: zicht op elk teamlid, zonder ooit hun losse gesprekken te lezen.
+
 ## De kernbelofte
 
 Je verkoopt geen chatbot-abonnement. Je verkoopt structureel wat de beste salesbaas, met alle inzet, ervaring en goede wil van de wereld, nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Dat is een ander gesprek dan "is dit de kosten waard": als het waardeverhaal groot genoeg is, verdwijnt het prijsbezwaar vanzelf.
