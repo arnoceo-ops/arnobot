@@ -37,7 +37,7 @@
   - **ePrivacy:** besloten (keuze B, 2026-08-30). Geen toestemmingsbanner: `persistence: 'localStorage'` (geen cookie), IP niet bewaard, grondslag gerechtvaardigd belang met bezwaarrecht, artikel 9 van de privacyverklaring. Actie voor Arno: in PostHog "Discard client IP data" aanzetten.
   - **Session replay:** `SESSION_REPLAY_ENABLED` op true gezet 2026-08-30, dubbel gemaskeerd (PostHog-projectinstelling "mask all" + code `maskTextSelector: '*'`). Visuele verificatie op 2026-08-30 niet gelukt: Arno's browsers hebben te veel blockers (Ghostery/Privacy Badger/uBlock) en hij is bovendien via `is_intern` uit de views gefilterd. **Openstaand: rond 2026-09-06 één echte gebruikersopname openen en bevestigen dat alle tekst gemaskeerd is.** Niet gemaskeerd -> `SESSION_REPLAY_ENABLED` terug op false.
 - **PostHog Data Warehouse-koppeling.** Stripe: geblokkeerd tot er een betaalprovider is (samen met dunning). Supabase: bewust niet als directe connector (nieuw dataoppervlak), de veilige productvelden gaan al als person-properties mee; eventueel later een read-only curated view.
-- **Manager-zelfcoaching-gat.** Thijs' punten over een open, veilige, ambitieuze, lerende omgeving en actieve handvatten van ArnoBot richting de manager zelf als coach (niet als verkoper). Substantiële Team-feature met privacymodel-impact, apart projectplan nodig vóór bouwen. Los van de al gebouwde SPE-zelfcoaching (punt 5).
+- **Manager-zelfcoaching-gat.** Uitgewerkt tot "de actie-helft van 2C" in `TEAM_PLAN.md` (sectie onderaan, 2026-08-31). Stuk A (toon aanscherpen: hypothesetaal, circle of influence, niet-schuldig-wel-verantwoordelijk) is **gebouwd**. Stuk B (signaalgedreven handvatten + terugkoppellus) is een **projectplan met vijf beslispunten** dat op Arno's akkoord wacht (B1 vaste set vs. B2 LLM, en een SQL-migratie op `arnobot_salesbaas_coaching`). Stuk C (team-onboarding vertrouwenslagen) geparkeerd.
 - **TEAM_PLAN stap 3: Solopreneur-profiel** (nog niet ontworpen), plus de open vraag welke rol/profiel een uitgenodigd teamlid (niet de manager) krijgt, nooit in de profielherziening meegenomen.
 - ~~**TEAM_PLAN 2B (De Tijdlijn) en 2C (Manager als Variabele).**~~ **Afgehandeld 2026-08-31.** Verse controle uitgevoerd: beide zijn echt gebouwd (`computeThemaMaandTrend`, `formatSystemischSignaal`, `formatVroegSignaal` in `lib/spiegel.ts`, aangeroepen door `team/spotlight`, `team/dashboard` en `team/zelfcoaching`). De tegenstrijdigheid zat alleen in achterhaalde planningstaal in oudere secties van `TEAM_PLAN.md` ("Niet gestart" in de Fase 1/2-tabel, "fase 3, niet fase 2"), die is rechtgezet. Geen codewerk open.
 - **Sparring preformatted-scenario-kaarten.** Bouwen zodra er 5 scenario's liggen, nu 1/5.
@@ -72,6 +72,6 @@
 
 1. **PostHog `/bot`: afronden** (session replay-vlag omzetten na verificatie, DPA opvragen, bewaartermijn). Kern is gebouwd 2026-08-30.
 2. **Voyage her-embedding plannen.** Het deprecation-risico groeit en het is de grootste losse klus.
-3. **Manager-zelfcoaching-gat: projectplan schrijven** (niet bouwen). De ambitie uit de Thijs-sessie die punt 5 en 2C niet dekken, met de privacygrens als eerste ontwerpvraag.
+3. **Manager-zelfcoaching-gat Stuk B**: akkoord geven op de vijf beslispunten in het projectplan (`TEAM_PLAN.md`), dan bouwen. Stuk A is al gebouwd.
 
-*(Verse TEAM_PLAN-statuscontrole afgerond 2026-08-31, zie hierboven.)*
+*(Verse TEAM_PLAN-statuscontrole en het Stuk-B-projectplan afgerond 2026-08-31, zie hierboven.)*

@@ -276,6 +276,8 @@ PEOPLE: heeft de sales baas de juiste mensen op de juiste plek, en ontwikkelt hi
 
 EXECUTION: doen teamleden ook echt de dingen die ertoe doen, worden plannen tot resultaat gebracht? Strategie komt pas tot uiting als goede mensen ook daadwerkelijk actief zijn, primair gericht op klanten en op het marktdeel waar het team maximale bereikbaarheid en waarde kan laten zien. Niet activiteit in het algemeen, activiteit op de juiste plek.
 
+Over hoe je hem aanspreekt op wat er misgaat in zijn team: leg het altijd als hypothese neer, niet als oordeel. "Dit kan toeval zijn, maar het kan ook betekenen dat...". Maak daarbij steeds het onderscheid tussen niet schuldig en wel verantwoordelijk: hij hoeft een probleem niet veroorzaakt te hebben om er wel iets aan te kunnen doen. Vraag expliciet wat er binnen zijn invloed ligt: "wat van dit patroon kun jij zelf beïnvloeden?". Als hetzelfde probleem over meerdere synthesen buiten zijn invloed blijkt te liggen en hij er niets mee kan, benoem dan eerlijk de vraag of hij op de juiste plek zit, zonder omhaal.
+
 Score elke pijlar op een schaal van 1 (zwak) tot 5 (sterk).
 
 Return ALLEEN een JSON-object, geen uitleg, geen markdown eromheen:

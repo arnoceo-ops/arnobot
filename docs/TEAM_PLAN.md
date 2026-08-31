@@ -395,3 +395,48 @@ Oorspronkelijke beschrijving, blijft inhoudelijk staan: "Zo was je team 3 maande
 **Live geverifieerd (rechtstreeks tegen productiedata, niet alleen tsc):** `computeSpiegelSignaal`/`formatSystemischSignaal` aangeroepen tegen Team Hippios' echte data leverde `BEZWAARHANTERING` bij 3 van de 3 leden op, met de correcte, verwachte tekst. Ook een volledige `next build` gedraaid (niet alleen `tsc --noEmit`) vóór de laatste commit, vanwege het incident hieronder.
 
 **Incident onderweg: build-breuk door onvolledige commit.** Zie de notitie bovenaan dit document. Kort: `formatSystemischSignaal` werd tijdens deze sessie geschreven en gebruikt door twee routes, maar door een onderbreking in het gesprek (Arno vroeg terecht een ontwerp-pauze voor verdere bespreking) bleef de definitie zelf een tijd ongecommit in de working tree terwijl een parallelle sessie andere, ongerelateerde wijzigingen wél committe en pushte, deels in dezelfde bestanden. Resultaat: de routes die de functie importeerden stonden wel in git, de functie zelf niet, wat elke Vercel-build sindsdien liet stuklopen. **Les, ook voor toekomstige sessies:** bij een langere pauze in het gesprek (ontwerpdiscussie, wachten op akkoord) tijdens een half-afgemaakte wijziging, expliciet markeren dat er ongecommitte bestanden openstaan, of een WIP-commit maken, in plaats van stilzwijgend te pauzeren met een inconsistente working tree.
+
+---
+
+## De actie-helft van 2C, oftewel het manager-zelfcoaching-gat (2026-08-31)
+
+**Herkomst:** Thijs' sessie (juli 2026, zie project-geheugen `project-roadmap-juli2026`) noemde drie dingen die tot nu toe niet in het product zaten: (1) de toon waarmee ArnoBot de manager op zichzelf aanspreekt, (2) actieve handvatten van ArnoBot richting de manager om een veilige, ambitieuze leeromgeving te bouwen, (3) een team-onboarding die vertrouwen laag voor laag opbouwt. Dit stond als los "manager-zelfcoaching-gat" op `docs/OPENSTAANDE_PUNTEN.md`. Bij het uitpluizen bleek het geen losse feature maar de ontbrekende **actie-helft van punt 2C**: 2C stelt vast dat er iets systemisch speelt en vraagt "wil je dit bespreken?", maar geeft de manager daarna niets concreets om te doen.
+
+**Opgeknipt in drie stukken, apart te beoordelen:**
+
+### Stuk A — toon aanscherpen (GEBOUWD 2026-08-31)
+
+Kleine tekstaanpassing, geen privacygevolg. Toegevoegd blok aan de systeemprompt van `app/api/bot/team/zelfcoaching/route.ts` (na de EXECUTION-alinea), letterlijk goedgekeurd door Arno:
+
+> Over hoe je hem aanspreekt op wat er misgaat in zijn team: leg het altijd als hypothese neer, niet als oordeel. "Dit kan toeval zijn, maar het kan ook betekenen dat...". Maak daarbij steeds het onderscheid tussen niet schuldig en wel verantwoordelijk: hij hoeft een probleem niet veroorzaakt te hebben om er wel iets aan te kunnen doen. Vraag expliciet wat er binnen zijn invloed ligt: "wat van dit patroon kun jij zelf beïnvloeden?". Als hetzelfde probleem over meerdere synthesen buiten zijn invloed blijkt te liggen en hij er niets mee kan, benoem dan eerlijk de vraag of hij op de juiste plek zit, zonder omhaal.
+
+Geen cron-variant: de leiderschapssynthese draait alleen via deze route (knop op de teampagina), niet vanuit een cron. `tsc --noEmit` clean.
+
+### Stuk B — signaalgedreven handvatten + terugkoppellus (PROJECTPLAN, NOG NIET GEBOUWD)
+
+**Doel:** de manager krijgt bij elk teamsignaal niet alleen een diagnose maar een concreet leiderschapshandvat, gericht op de vraag of zijn team durft te falen en of de lat hoog genoeg ligt. De keer erna checkt ArnoBot of het handvat is opgepakt en of het thema verschoven is.
+
+**Wat het plan moet beslissen, vóór er code komt:**
+
+1. **Bron van de handvatten.** Twee opties:
+   - **B1:** vaste, door Arno geschreven set handvatten, één per thema-label uit `lib/themas.ts` (10 stuks) plus een paar voor de excuustaal-/scoretrend-signalen. Volledig gecontroleerd, geen hallucinatierisico, past bij hoe 2A/2C bewust vaste tekst gebruiken.
+   - **B2:** de synthese-LLM (Fable 5) genereert het handvat, onderbouwd met fragmenten uit de Rockefeller Habits-kennisbank die de route al ophaalt (`bronContext`).
+   - **Voorkeur, ter bevestiging:** B1 voor de eerste versie. Zelfde redenering als bij 2C: dit is gevoelig materiaal richting de manager, een vaste set is controleerbaar en Arno's stem. B2 kan later als de vaste set te grofmazig blijkt.
+
+2. **De terugkoppellus.** De route slaat de synthese al op in `arnobot_salesbaas_coaching` + `_history`. Voorstel: één kolom erbij (`vorig_handvat text`), gevuld bij het genereren, en als context meegegeven aan de volgende synthese met de instructie "check of dit is opgepakt en of het genoemde thema nog dominant is". Geen aparte tabel, geen cron. **Vereist een SQL-migratie**, dus een aparte bevestigingsronde met Arno (`ALTER TABLE arnobot_salesbaas_coaching ADD COLUMN ...`, plus dezelfde kolom op `_history`).
+
+3. **Waar het landt in de UI.** Voorstel: als vierde veld in de bestaande synthese ("HANDVAT"), onder de drie ontwikkelpunten, niet als los blok. De ontwikkelpunten blijven wat ze zijn (algemene leiderschapsrichting); het handvat is de ene concrete zet voor nu, gekoppeld aan het sterkste actuele signaal.
+
+4. **Privacygrens, expliciet te bevestigen in het plan.** Verwachting: geen nieuw dataoppervlak. Stuk B leest alleen de al-geëxtraheerde signalen (thema's, excuustaal, scoretrend, 1:1-data) die de route nu al als promptcontext gebruikt. De manager krijgt geen zin extra te zien over wat een individueel teamlid heeft gezegd; het handvat hangt aan het geaggregeerde teamsignaal. Als het plan hier toch granulairder materiaal nodig blijkt te hebben, stopt het en gaat het terug naar Arno.
+
+5. **Aanhaken op de bestaande escalatie.** 2C stuurt bij een 3+-signaal al een Telegram-melding naar Arno (`notifySystemischSignaal`). Als een handvat over de relatie tussen mensen gaat (het "man-machine"-gebied uit de roadmap), moet het naar diezelfde melding verwijzen ("dit is er een om met Arno te bespreken"), geen tweede escalatiepad bouwen.
+
+**Bewust buiten Stuk B:**
+- Een aparte "leerklimaat-score" naast SPE. Zou concurreren met de bestaande People-pijler, die cultuur/psychologische veiligheid al dekt (zie de Karakter-laag-sectie). Geen losstaande dimensie.
+- Handvatten die input van de manager vragen (zoals zelf kernwaarden invoeren). Dat is precies de reden dat punt 4 geschrapt is ("nodeloos complex").
+
+### Stuk C — team-onboarding met vertrouwenslagen (GEPARKEERD)
+
+Thijs' getrapte model: eerst 30 dagen individueel, dan evaluatie "wil je een team toevoegen?", dan optioneel een videocall met het hele team. Dit is een onboarding-UX-ontwerp, geen coachinglogica, en hoort bij het bredere team-onboarding-werk (zie `project-roadmap-juli2026`, "Onboarding flow voor teams ontwerpen"). Blijft geparkeerd tot dat aan de beurt is.
+
+**Status:** Stuk A gebouwd. Stuk B wacht op Arno's akkoord op de vijf beslispunten hierboven (met name B1 vs. B2 en de SQL-migratie). Stuk C geparkeerd.
