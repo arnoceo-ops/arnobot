@@ -1,8 +1,9 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
 **Laatst bijgewerkt:** 2026-09-01
-**Waar we staan:** golf 1 live sinds 19 augustus (commit f23e5239). Meta-analyse van 1 september besproken (13 gesprekken, panelscore 5,8/10, tegen 6,8/10 op 40 gesprekken in augustus). **Besluit 2026-09-01: golf 2 wordt niet los gepusht.** In plaats daarvan komt er een eenmalige consolidatie-herschrijving van de persona-prompt, waarin golf 2's echt nieuwe gedrag wordt ingevouwen binnen een vast woordplafond en de bestaande dubbelingen worden weggesneden. Reden en volledige uitwerking: zie "Besluit 2026-09-01" hieronder. Golf 1 blijft ongewijzigd, ook regel 1 (kwalificeren alleen bij een ingebrachte klantsituatie, bewust smal, niet verbreden).
-**Eerstvolgende stap:** eigen sessie voor de consolidatie-herschrijving (scope onder "Besluit 2026-09-01"). Daarnaast, vóór de volgende maandelijkse meta-analyse (rond 1 oktober): trendvraag toevoegen aan `cron/meta-analyse` (en `admin/meta-analyse` meenemen, die twee zijn uit elkaar gelopen). Sessie voor Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht) blijft een los traject, zie Bron 3.
+**Waar we staan:** consolidatie-herschrijving van de persona-prompt gedaan en gepusht (1 september). Golf 1 + golf 2 zitten er nu samen in, in één opgeschoonde versie zonder de dubbelingen die er stonden, 12% korter dan ervoor. Smoke-test tegen de echte API bevestigde: golf 1 (kwalificeren bij klantsituatie) intact, golf 2 (ruimte in plaats van obstakel, zonder harde confrontatie) werkt, geen terugval naar de vraag-aan-het-eind-regressie van augustus, rekenregel werkt. Woordplafond staat nu op dit niveau (rond 1520 woorden voor `staticIntro` + `restVanPersona`): vanaf nu geldt herzien-niet-stapelen.
+**Eerstvolgende stap:** vóór de volgende maandelijkse meta-analyse (rond 1 oktober): trendvraag toevoegen aan `cron/meta-analyse` en `admin/meta-analyse` (die twee zijn uit elkaar gelopen, samen converge). Apart: follow-up loop uitzoeken (wortel 3, alleen de meest recente actie wordt nu doorgegeven, geen manier om een actie af te sluiten). Sessie voor Thijs' feedback blijft een los traject, zie Bron 3.
+**Evaluatie:** de volgende meta-analyse (rond 1 oktober) checkt of de twee wortels (te snel leveren zonder verifiëren, te aardig bij excuses) en de herhaalde-vraag-bevinding zakken. Cijfer is geen KPI, terugkerendheid van de bevindingen wel.
 
 ## Afvinklijst
 
@@ -20,8 +21,9 @@
 - [x] Claude.ai-routine als backup staat al (`trig_01QEbJchqq919DMXnuk9RJ6s`, vuurt 2026-09-16 16:00 UTC, checkt code-status en bereidt evaluatietekst voor, stuurt zelf niets naar Telegram)
 - [x] Kennisbankartikel geschreven (`docs/kennisbank/verifieer-eerst-ruimte-niet-obstakel.md`, generiek, streepje- en naamvrij geverifieerd) en live geëmbed in `blog_chunks` (4 chunks, via nieuw script `scripts/embed-single-doc.mjs`)
 - [x] Meta-analyse 1 september besproken (13 gesprekken, panel 5,8/10). Zelfde twee wortels als augustus: te snel/te veel leveren zonder verifiëren, en te aardig bij externe excuses.
-- [ ] **Consolidatie-herschrijving persona-prompt** (eigen sessie, zie "Besluit 2026-09-01")
+- [x] **Consolidatie-herschrijving persona-prompt** (1 september). `buildRdsSystemPrompt` in `lib/systemPrompt.ts`: dubbelingen samengevoegd (drie "je kent deze persoon"-blokken naar één `JE KENT DEZE PERSOON`, drie "beperk de slotvraag"-passages naar één drempel, "confronteer pas als verdiend" één keer met "geldt overal"). Golf 2 ingevouwen: `RUIMTE, NIET HET OBSTAKEL` (zonder confrontatie-escalatie, Arno's keuze) en de terugkerende-vraag-zet in `ALS EEN PATROON ZICHTBAAR IS`. Rekenregel toegevoegd (stap voor stap tonen, punt D). Streepje in "KORTE ANTWOORDEN — PAUZEER" gefixt naar komma. Netto 1521 woorden tegen 1724 (12% korter). Smoke-test tegen echte API (5 scenario's) alle goed, snapshots bijgewerkt.
 - [ ] **Trendvraag in `cron/meta-analyse`** vóór de volgende maandelijkse run (rond 1 oktober), `admin/meta-analyse` mee-converge
+- [ ] Kennisbankdoc `verifieer-eerst-ruimte-niet-obstakel.md`: laatste alinea bevat nog de confrontatie-formulering ("wat ga je hier zelf aan veranderen"). Achtergrondtekst, geen gedragsinstructie, dus laag geprioriteerd. Bij de volgende her-embed-ronde meenemen.
 
 ---
 
