@@ -11,6 +11,7 @@ import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { fetchVorigeAnalyse, vorigPanelBlok, vorigZelfBlok, TREND_PANEL_INSTRUCTIE, TREND_ZELF_INSTRUCTIE } from '@/lib/metaAnalyseTrend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -94,6 +95,8 @@ export async function GET(req: NextRequest) {
       .maybeSingle()
     const arnoInputTekst = arnoInput?.value ?? null
 
+    const vorigeAnalyse = await fetchVorigeAnalyse(supabase)
+
     const sessionIds = sessies.map(s => s.session_id).filter(Boolean) as string[]
 
     let logsQuery = supabase
@@ -134,7 +137,7 @@ export async function GET(req: NextRequest) {
       system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
-        content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]`,
+        content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}${vorigZelfBlok(vorigeAnalyse)}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]${vorigeAnalyse ? TREND_ZELF_INSTRUCTIE : ''}`,
       }],
     })
     const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
@@ -143,10 +146,10 @@ export async function GET(req: NextRequest) {
       system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
       messages: [{
         role: 'user',
-        content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
+        content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}${vorigPanelBlok(vorigeAnalyse)}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
   ? `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft zijn eigen observaties aangeleverd over wat ArnoBot zei in zijn antwoorden. Verwerk zijn input als een juryoordeel.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
   : `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: is dit zijn stem, zijn directheid, zijn timing?)\nScore: [X]/10\n[Oordeel: toon, authenticiteit, aanpak]\nKritisch punt: [één aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
-}\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
+}${vorigeAnalyse ? TREND_PANEL_INSTRUCTIE : ''}\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
       }],
     })
 
