@@ -1,8 +1,8 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
-**Laatst bijgewerkt:** 2026-08-19
-**Waar we staan:** golf 1 volledig live (commit f23e5239, gepusht). Smoke-test tegen de echte API bevestigde beide regels werkend, en ving onderweg een echte bug (tegenstrijdige instructie in chat/route.ts, apart gefixt). Telegram-herinnering voor de evaluatie over 4 weken staat ook live (commit c62c03f4). Een vergeten snapshot-update na golf 1 liet de CI-kritieke-paden-check falen (`lib/systemPrompt.test.ts`), gefixt met `vitest -u` (commit f2a134d3), geen inhoudelijke wijziging. Kennisbankartikel geschreven met volledig generieke voorbeelden (geen Erik/Stefanie/Thijs, geverifieerd op de live opgeslagen tekst, niet alleen het brondocument) en live geëmbed in `blog_chunks` via een nieuw eenmalig script `scripts/embed-single-doc.mjs` (voegt toe zonder de kennisbank te wissen, in tegenstelling tot `embed-chunks.mjs`), 4 chunks, commits 9ce0b7b6 + b88d96be. Golf 2 (patroonherkenning-als-leermoment + de samengevoegde "ruimte in plaats van obstakel"-regel) bewust nog niet doorgevoerd. Daarnaast, los van golf 1/2: Arno's eigen livetest bracht een derde bevinding aan het licht ("bijna elk antwoord eindigt met een vraag, ook als die niet relevant is"), inmiddels gefixt, zie "Bevinding: vraag-aan-het-eind" onderaan dit document.
-**Eerstvolgende stap:** niets tot 16 september 2026. Dan: nieuwe meta-analyse draaien op de gesprekken sinds golf 1, checken of "verifieert voor adviseren" en "houdt rekening met openstaande acties" beter scoren, en of de vraag-aan-het-eind-fix ook in de meta-analyse-cijfers zichtbaar is, en op basis daarvan beslissen over golf 2. Sessie hierna gaat verder met Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht), zie Bron 3 hieronder, dat is een los traject, geen onderdeel van deze golf 1/2-afvinklijst.
+**Laatst bijgewerkt:** 2026-09-01
+**Waar we staan:** golf 1 live sinds 19 augustus (commit f23e5239). Meta-analyse van 1 september besproken (13 gesprekken, panelscore 5,8/10, tegen 6,8/10 op 40 gesprekken in augustus). **Besluit 2026-09-01: golf 2 wordt niet los gepusht.** In plaats daarvan komt er een eenmalige consolidatie-herschrijving van de persona-prompt, waarin golf 2's echt nieuwe gedrag wordt ingevouwen binnen een vast woordplafond en de bestaande dubbelingen worden weggesneden. Reden en volledige uitwerking: zie "Besluit 2026-09-01" hieronder. Golf 1 blijft ongewijzigd, ook regel 1 (kwalificeren alleen bij een ingebrachte klantsituatie, bewust smal, niet verbreden).
+**Eerstvolgende stap:** eigen sessie voor de consolidatie-herschrijving (scope onder "Besluit 2026-09-01"). Daarnaast, vóór de volgende maandelijkse meta-analyse (rond 1 oktober): trendvraag toevoegen aan `cron/meta-analyse` (en `admin/meta-analyse` meenemen, die twee zijn uit elkaar gelopen). Sessie voor Thijs' feedback (manager-zelfcoaching-gat + sticky-footer-UI-klacht) blijft een los traject, zie Bron 3.
 
 ## Afvinklijst
 
@@ -19,7 +19,41 @@
 - [x] Eenmalige Telegram-cron voor de golf 1-evaluatie-herinnering gebouwd (`app/api/cron/golf1-evaluatie-herinnering/route.ts`, vercel.json `0 8 16 9 *`, jaar-guard op 2026)
 - [x] Claude.ai-routine als backup staat al (`trig_01QEbJchqq919DMXnuk9RJ6s`, vuurt 2026-09-16 16:00 UTC, checkt code-status en bereidt evaluatietekst voor, stuurt zelf niets naar Telegram)
 - [x] Kennisbankartikel geschreven (`docs/kennisbank/verifieer-eerst-ruimte-niet-obstakel.md`, generiek, streepje- en naamvrij geverifieerd) en live geëmbed in `blog_chunks` (4 chunks, via nieuw script `scripts/embed-single-doc.mjs`)
-- [ ] **Openstaand, gepland op 2026-09-16:** golf 1 evalueren via nieuwe meta-analyse, dan beslissen over golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel)
+- [x] Meta-analyse 1 september besproken (13 gesprekken, panel 5,8/10). Zelfde twee wortels als augustus: te snel/te veel leveren zonder verifiëren, en te aardig bij externe excuses.
+- [ ] **Consolidatie-herschrijving persona-prompt** (eigen sessie, zie "Besluit 2026-09-01")
+- [ ] **Trendvraag in `cron/meta-analyse`** vóór de volgende maandelijkse run (rond 1 oktober), `admin/meta-analyse` mee-converge
+
+---
+
+## Besluit 2026-09-01 — consolidatie in plaats van stapelen
+
+**Context.** De meta-analyse van 1 september (13 gesprekken, panelscore 5,8/10) wees op vrijwel dezelfde punten als die van 18 augustus (40 gesprekken, 6,8/10). Golf 2 lag klaar. Arno's vraag: voegen we golf 2 toe, en verwatert de systeemprompt dan niet?
+
+**Analyse van het cijfer (besproken, vastgelegd zodat het niet opnieuw wordt uitgevochten).**
+- De panelscore is bijna ruis: zes fictieve critici met de instructie "wees kritisch", geen ijkpunt tegen gebruikerstevredenheid of resultaat, kleine steekproef met hoge variantie (13 tegen 40 gesprekken). Het absolute getal is geen KPI.
+- Het echte signaal is de terugkerendheid van de bevindingen over twee analyses heen, plus Arno's eigen steekproef van gesprekken.
+
+**De drie wortels (stabiel over twee analyses).**
+1. Levert te snel en te veel zonder de situatie te kennen. Prioriteit 1, beide maanden.
+2. Te aardig, laat externe excuses lopen, organiseert geen accountability (Erik-gesprek).
+3. Geen keten inzicht naar actie naar terugkoppeling (mail zonder opvolgplan, geen follow-up loop).
+Plus kleiner: slordig met cijfers, accepteert correcties zonder te leren waarom hij fout zat.
+
+**Welke wortel is een promptprobleem.**
+- Wortel 2 (te aardig): ja, grotendeels prompt. Sluit aan op de al bestaande lijn "ArnoBot structureel confronterender". Echte knop om aan te draaien.
+- Wortel 3 (follow-up loop): architectuur. `OPENSTAANDE ACTIES EERST` staat al in de prompt. Vraag is of de vorige afspraak betrouwbaar in de volgende sessie terechtkomt via `arnobot_coaching`. Geen prompttekst lost dat op. **Apart gelogd als product/architectuurwerk.**
+- Slordig met cijfers: modelgedrag. Echte fix is het model geen meerstaps-rekenwerk inline laten doen, of de berekening zichtbaar laten tonen. **Apart gelogd.**
+- Wortel 1 (te snel leveren): prompt, maar begrensd door de vraag-aan-het-eind-balans van augustus. Voorzichtig.
+
+**Besluit over de aanpak.**
+1. **Eenmalig nu: consolidatie-herschrijving van de persona-prompt** (`buildRdsSystemPrompt` in `lib/systemPrompt.ts`). De prompt is maandenlang aangegroeid, heeft aantoonbare interne tegenstrijdigheden (de vraag-aan-het-eind-saga) en zegt dingen op meerdere plekken (mindset-materiaal staat in `DRIE PIJLERS ALS LENS`, `ALS PATRONEN ZICHTBAAR ZIJN` en `JE GELOOFT IN DEZE PERSOON`). Doel: elke *onderscheiden* instructie behouden maar één keer zeggen, in de scherpste vorm. Dat maakt ruimte voor golf 2's echt nieuwe gedrag binnen hetzelfde woordaantal en verkleint de verwatering die er nu al zit. Eigen sessie, met dezelfde echte-API-smoke-tests als golf 1, en `vitest -u` voor de snapshots.
+2. **Golf 2 wordt hierin ingevouwen, niet los toegevoegd.** Het echt nieuwe deel van "RUIMTE IN PLAATS VAN OBSTAKEL" is één zet: verleg de aandacht naar wat wél openstaat in plaats van nog een ronde over wat tegenzit, via een suggestie of vraag, **geen confrontatie-escalatie** (Arno: die hoort er niet in, dan verdwijnt ook de spanning met "confronteer pas als het recht is verdiend"). De filosofie-laag ("barrières zijn een mentale constructie") gaat naar het kennisbankdocument dat op 18 augustus al hiervoor is aangemaakt, niet in de prompt. Regel 3 (patroonherkenning) wordt ingevouwen in het bestaande `ALS PATRONEN ZICHTBAAR ZIJN`.
+3. **Daarna maandelijks: herzien, niet stapelen.** Woordplafond vast op wat de consolidatieronde oplevert. Elke meta-analyse: wijst een bevinding op *nieuw* gedrag dat nog nergens staat, dan gaat het erin door een bestaande regel aan te scherpen of te vervangen, nooit door toe te voegen. Is de bevinding "het model volgt een regel niet die er al staat", dan is het geen promptedit maar een model- of architectuurvraag.
+4. **Verbeter de meta-analyse zelf.** Nu scoort het panel elke maand vanaf nul, zonder de vorige uitslag. Voeg toe: de vorige bevindingen meegeven en per punt laten scoren "beter, gelijk, slechter". Levert een trendbeeld in plaats van een schommelend absoluut cijfer. Kleine wijziging in `cron/meta-analyse/route.ts`, `admin/meta-analyse/route.ts` mee (die twee zijn al uit elkaar gelopen, meteen convergeren).
+
+**Niet-prompt-bevindingen, apart te behandelen (geen prompttekst):**
+- Wortel 3: betrouwbare follow-up loop. Komt de vorige afgesproken actie echt in de volgende sessie terug via `arnobot_coaching` ontwikkelpunten / `actie_status`? Onderzoeken, dan pas beslissen.
+- Cijfer-slordigheid: model geen meerstaps-rekenwerk inline laten doen, of de berekening zichtbaar tonen zodat de fout eruit springt.
 
 ---
 
