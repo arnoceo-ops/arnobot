@@ -191,7 +191,7 @@ select proname from pg_proc where proname in ('match_blog_chunks_v4','match_sess
 -- verwacht: 2 rijen
 ```
 
-### Terugdraai-SQL (uitgevoerd bij het parkeren, 2026-09-02)
+### Terugdraai-SQL (uitgevoerd + geverifieerd door Arno, 2026-09-02: beide checks 0 rijen)
 
 Draait de shadowobjecten terug zodat er geen halve migratie in productie blijft. Raakt niets wat de app gebruikt.
 
