@@ -410,9 +410,10 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
-                {/* Betaling / gratis toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG + */}
+                {/* Betaling / toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG +,
+                    en het paneel erachter regelt comp, betaling en aan/uit */}
                 <div style={{ textAlign: 'center' }}>
-                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
+                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} isActive={u.is_active ?? false} />
                 </div>
                 {/* Mail opt-out */}
                 <div style={{ textAlign: 'center' }}>
