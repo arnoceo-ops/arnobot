@@ -63,10 +63,11 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 
 **ivfflat-detail:** een ivfflat-index clustert op de data die er bij het bouwen is. De `embedding_v4`-index dus pas aanmaken *nadat* de kolom gevuld is, niet in migratie 1.
 
+**Aanpak-besluit kennisbank vullen:** géén volledige rebuild via `embed-chunks.mjs` tijdens het venster. In plaats daarvan een niet-destructief `scripts/backfill-chunks-v4.mjs` dat per bestaande rij `context + content` opnieuw embedt met `voyage-4-large` en alleen `embedding_v4` bijwerkt (`where embedding_v4 is null`, hervatbaar). Verworpen: `embed-chunks.mjs` dual-write laten draaien. Dat script wist en herbouwt de hele live tabel; dat is een veel groter risico op de productie-kennisbank dan een kolom-update. `embed-chunks.mjs` wordt pas bij de cutover aangeraakt (één regel: model → `voyage-4-large`, schrijft dan naar de hernoemde `embedding`-kolom).
+
 - [x] **SQL-migratie 1** aangeleverd (shadow-kolommen op beide tabellen + `match_blog_chunks_v4` + `match_sessions_v4`, geen indexen). Wacht op uitvoering + bevestiging door Arno.
-- [ ] `embed-chunks.mjs`, `rss-ingest/route.ts`, `embed-single-doc.mjs` schrijven **beide** kolommen (oud model + `voyage-4-large`)
-- [ ] Deploy van de dual-write (leest nog oud)
-- [ ] `node scripts/embed-chunks.mjs` draaien → volledige rebuild, elke rij krijgt beide vectoren
+- [ ] `rss-ingest/route.ts` en `embed-single-doc.mjs` schrijven tijdens het venster **beide** kolommen (dit zijn de enige incrementele schrijvers). Deploy.
+- [ ] `scripts/backfill-chunks-v4.mjs` draaien → elke bestaande rij krijgt `embedding_v4`
 - [ ] **SQL-migratie 1b** (Arno): `create index blog_chunks_embedding_v4_idx ... ivfflat (embedding_v4 vector_cosine_ops) with (lists = 100)`
 - [ ] Verifiëren: 10 echte vragen door beide RPC's, resultaten vergelijken; cosine-similarity-steekproef op identieke brontekst (nieuw geëmbede query vs opgeslagen `embedding_v4` ≈ 1,0)
 - [ ] **Cutover-deploy:** `getVoyageEmbedding()` → `voyage-4-large`, `searchCandidates()` → `match_blog_chunks_v4`
