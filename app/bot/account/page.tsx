@@ -266,8 +266,8 @@ export default function AccountPage() {
           <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b', textDecoration: 'none' }}>admin@arno.bot</a>
         </p>
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', marginBottom: 56 }}>
-          Voor alle andere vragen: ga naar{' '}
-          <a href="https://arno.bot/qa" style={{ color: '#f59e0b', textDecoration: 'none' }}>arno.bot/qa</a>
+          Voor alle andere vragen: ga naar de{' '}
+          <a href="/bot/qa" style={{ color: '#f59e0b', textDecoration: 'none' }}>Q&amp;A</a>
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
