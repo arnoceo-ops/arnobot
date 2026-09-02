@@ -78,7 +78,7 @@ export default function PaidButton({
   }
 
   const label: { top: string; sub: string | null; color: string } = !active
-    ? { top: 'TOEGANG UIT', sub: null, color: '#6b7280' }
+    ? { top: 'UIT', sub: null, color: '#6b7280' }
     : paid
     ? { top: 'BETAALD', sub: shownExpiry ? `t/m ${fmtDate(shownExpiry)}` : null, color: '#22c55e' }
     : comped && shownExpiry
