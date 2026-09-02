@@ -9,6 +9,7 @@ export type BevindingTrend = 'nieuw' | 'verbeterd' | 'gelijk' | 'verslechterd'
 
 export interface Bevinding {
   slug: string
+  label: string
   ernst: BevindingErnst
   trend: BevindingTrend
   toelichting: string
@@ -40,12 +41,19 @@ export function parseBevindingen(expertpanelText: string): Bevinding[] {
     .filter(Boolean)
     .map(regel => {
       const delen = regel.split('|').map(d => d.trim())
-      if (delen.length < 3) return null
+      if (delen.length < 4) return null
+      // Nieuw formaat: slug | label | ernst | trend | toelichting.
+      // Oud formaat (backfill vóór 2026-09-02): slug | ernst | trend | toelichting.
+      const heeftLabel = delen.length >= 5 && !geldigeErnst.includes(delen[1] as BevindingErnst)
       const slug = delen[0].toLowerCase().replace(/[^a-z0-9_]/g, '')
-      const ernst = geldigeErnst.includes(delen[1] as BevindingErnst) ? delen[1] as BevindingErnst : 'midden'
-      const trend = geldigeTrend.includes(delen[2] as BevindingTrend) ? delen[2] as BevindingTrend : 'gelijk'
+      const label = heeftLabel && delen[1] ? delen[1] : slug.replace(/_/g, ' ')
+      const ernstRaw = heeftLabel ? delen[2] : delen[1]
+      const trendRaw = heeftLabel ? delen[3] : delen[2]
+      const toelichting = heeftLabel ? (delen[4] ?? '') : (delen[3] ?? '')
+      const ernst = geldigeErnst.includes(ernstRaw as BevindingErnst) ? ernstRaw as BevindingErnst : 'midden'
+      const trend = geldigeTrend.includes(trendRaw as BevindingTrend) ? trendRaw as BevindingTrend : 'gelijk'
       if (!slug) return null
-      return { slug, ernst, trend, toelichting: delen[3] ?? '' }
+      return { slug, label, ernst, trend, toelichting }
     })
     .filter((b): b is Bevinding => b !== null)
     .slice(0, 6)
@@ -79,7 +87,7 @@ export async function fetchVorigeAnalyse(supabase: SupabaseClient): Promise<Vori
 export function vorigPanelBlok(v: VorigeAnalyse | null): string {
   if (!v) return ''
   const slugs = v.bevindingen.length > 0
-    ? `\n\nDe slugs uit de vorige analyse (hergebruik exact dezelfde slug voor hetzelfde punt):\n${v.bevindingen.map(b => `${b.slug} | ${b.ernst} | ${b.toelichting}`).join('\n')}`
+    ? `\n\nDe bevindingen uit de vorige analyse (hergebruik exact dezelfde slug en hetzelfde label voor hetzelfde punt):\n${v.bevindingen.map(b => `${b.slug} | ${b.label} | ${b.ernst} | ${b.toelichting}`).join('\n')}`
     : ''
   return `\n\nVORIGE ANALYSE (${v.datumLabel}, ${v.sessionCount} gesprekken). Gebruik dit uitsluitend om de trend te bepalen, laat het je oordeel over de gesprekken van nu er niet door kleuren.\n\n${stripBevindingenBlok(v.expertpanelText)}${slugs}`
 }
@@ -96,4 +104,4 @@ export const TREND_ZELF_INSTRUCTIE = `\n\nBij WAT IK ZOU VERBETEREN: leg de aanb
 // Machineleesbaar blok helemaal aan het eind van het panel-antwoord, voor de trend-tabel
 // in de admin-UI. Slugs met underscores (geen streepjes) zodat de streepjesregel niet in
 // het geding komt en parsing eenduidig blijft.
-export const BEVINDINGEN_INSTRUCTIE = `\n\nSluit je HELE antwoord af met exact dit machineleesbare blok, niets erna:\n<<BEVINDINGEN>>\nslug | ernst | trend | toelichting van één zin\n<<EINDE>>\nEén regel per structureel verbeterpunt uit je oordeel, maximaal zes, belangrijkste eerst. Regels:\nslug: kort, kleine letters, alleen letters/cijfers/underscores, bijvoorbeeld verifieren_voor_advies. Hergebruik EXACT de slug uit de vorige analyse als het over hetzelfde punt gaat. Alleen een echt nieuw punt krijgt een nieuwe slug.\nernst: hoog, midden of laag.\ntrend: nieuw, verbeterd, gelijk of verslechterd ten opzichte van de vorige analyse (nieuw als er geen vorige is of het punt niet eerder voorkwam).\ntoelichting: één korte zin, geen streepjes als leesteken.`
+export const BEVINDINGEN_INSTRUCTIE = `\n\nSluit je HELE antwoord af met exact dit machineleesbare blok, niets erna:\n<<BEVINDINGEN>>\nslug | label | ernst | trend | toelichting van één zin\n<<EINDE>>\nEén regel per structureel verbeterpunt uit je oordeel, maximaal zes, belangrijkste eerst. Precies vijf velden per regel, gescheiden door " | ". Regels:\nslug: kort, kleine letters, alleen letters/cijfers/underscores, bijvoorbeeld verifieren_voor_advies. Hergebruik EXACT de slug uit de vorige analyse als het over hetzelfde punt gaat. Alleen een echt nieuw punt krijgt een nieuwe slug.\nlabel: 2 tot 5 woorden, leesbare titel voor het punt, geen underscores. Hergebruik het label van de vorige analyse als de slug hetzelfde is.\nernst: hoog, midden of laag.\ntrend: nieuw, verbeterd, gelijk of verslechterd ten opzichte van de vorige analyse (nieuw als er geen vorige is of het punt niet eerder voorkwam).\ntoelichting: één korte zin, geen streepjes als leesteken, geen verticale streep.`

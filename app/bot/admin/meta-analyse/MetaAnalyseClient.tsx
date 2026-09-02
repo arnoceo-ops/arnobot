@@ -103,12 +103,21 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 }
 
-const ERNST_KLEUR: Record<Bevinding['ernst'], string> = { hoog: '#cc4444', midden: '#f59e0b', laag: '#6b7280' }
-const TREND_GLYPH: Record<Bevinding['trend'], string> = { nieuw: '○', verbeterd: '↑', gelijk: '=', verslechterd: '↓' }
+const ERNST_TAG: Record<Bevinding['ernst'], { kleur: string; bg: string; label: string }> = {
+  hoog: { kleur: '#f87171', bg: 'rgba(248,113,113,0.12)', label: 'HOOG' },
+  midden: { kleur: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'MIDDEN' },
+  laag: { kleur: '#9ca3af', bg: 'rgba(156,163,175,0.12)', label: 'LAAG' },
+}
+const TREND_MARK: Record<Bevinding['trend'], { glyph: string; kleur: string; titel: string }> = {
+  nieuw: { glyph: '○', kleur: '#f59e0b', titel: 'nieuw' },
+  verbeterd: { glyph: '↑', kleur: '#4ade80', titel: 'verbeterd' },
+  gelijk: { glyph: '=', kleur: '#6b7280', titel: 'gelijk' },
+  verslechterd: { glyph: '↓', kleur: '#f87171', titel: 'verslechterd' },
+}
 
 // Bouwt de trend-tabel uit de bevindingen-blokken van de opgeslagen analyses.
 // Kolommen = analyses (nieuwste eerst, max 6), rijen = unieke slugs in volgorde van
-// eerste voorkomen. Cel = de bevinding voor die analyse, of null.
+// eerste voorkomen. De meest recente bevinding per slug levert label, ernst en toelichting.
 function buildTrendMatrix(analyses: MetaAnalyse[]) {
   const cols = analyses
     .map(a => ({ a, bev: parseBevindingen(a.expertpanel_text) }))
@@ -116,53 +125,64 @@ function buildTrendMatrix(analyses: MetaAnalyse[]) {
     .slice(0, 6)
   const slugs: string[] = []
   for (const { bev } of cols) for (const b of bev) if (!slugs.includes(b.slug)) slugs.push(b.slug)
-  return { cols, slugs }
+  const meest = (slug: string) => cols.map(c => c.bev.find(b => b.slug === slug)).find(Boolean)
+  return { cols, rijen: slugs.map(slug => ({ slug, huidig: meest(slug)! })) }
 }
 
 function TrendTabel({ analyses }: { analyses: MetaAnalyse[] }) {
-  const { cols, slugs } = buildTrendMatrix(analyses)
+  const { cols, rijen } = buildTrendMatrix(analyses)
   if (cols.length === 0) return null
-
-  const cel: React.CSSProperties = { padding: '8px 10px', fontSize: 12, textAlign: 'center', borderBottom: '1px solid #1f2937' }
-  const labelCel: React.CSSProperties = { padding: '8px 12px', fontSize: 13, color: '#9ca3af', borderBottom: '1px solid #1f2937', whiteSpace: 'nowrap' }
+  const meerdereKolommen = cols.length > 1
 
   return (
     <div style={{ borderTop: '1px solid #1f2937', paddingTop: 40, marginBottom: 48 }}>
       <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>TREND</p>
       <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
-        Structurele verbeterpunten per analyse. Kleur is ernst (rood hoog, amber midden, grijs laag),
-        teken is de beweging: ○ nieuw, ↑ verbeterd, = gelijk, ↓ verslechterd.
+        Structurele verbeterpunten uit het expertpanel, belangrijkste eerst.
+        {meerdereKolommen
+          ? ' Rechts per analyse de beweging: ○ nieuw, ↑ verbeterd, = gelijk, ↓ verslechterd.'
+          : ' Zodra er een tweede analyse is, verschijnt hier de beweging per maand.'}
       </p>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', minWidth: 360 }}>
-          <thead>
-            <tr>
-              <th style={{ ...labelCel, color: '#6b7280', fontWeight: 400 }}></th>
-              {cols.map(({ a }) => (
-                <th key={a.id} style={{ ...cel, color: '#6b7280', fontWeight: 400, letterSpacing: 1 }}>
-                  {shortDate(a.created_at)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {slugs.map(slug => (
-              <tr key={slug}>
-                <td style={labelCel}>{slug.replace(/_/g, ' ')}</td>
-                {cols.map(({ a, bev }) => {
-                  const b = bev.find(x => x.slug === slug)
-                  return (
-                    <td key={a.id} style={cel} title={b?.toelichting ?? ''}>
-                      {b
-                        ? <span style={{ color: ERNST_KLEUR[b.ernst], fontWeight: 700 }}>{TREND_GLYPH[b.trend]}</span>
-                        : <span style={{ color: '#374151' }}>·</span>}
-                    </td>
-                  )
-                })}
-              </tr>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {meerdereKolommen && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px 6px', color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
+            <span style={{ flexGrow: 1, minWidth: 0 }} />
+            {cols.map(({ a }) => (
+              <span key={a.id} style={{ width: 40, textAlign: 'center', flexShrink: 0 }}>{shortDate(a.created_at)}</span>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
+        {rijen.map(({ slug, huidig }) => {
+          const tag = ERNST_TAG[huidig.ernst]
+          return (
+            <div key={slug} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#1f2937', border: '1px solid #374151', padding: '14px 16px' }}>
+              <div style={{ flexGrow: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, color: '#f1f5f9', fontWeight: 700 }}>{huidig.label}</span>
+                  <span style={{ fontSize: 12, letterSpacing: 1, color: tag.kleur, background: tag.bg, padding: '2px 8px', borderRadius: 4, flexShrink: 0 }}>
+                    {tag.label}
+                  </span>
+                </div>
+                {huidig.toelichting && (
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.6 }}>{huidig.toelichting}</p>
+                )}
+              </div>
+              {meerdereKolommen && cols.map(({ a, bev }) => {
+                const b = bev.find(x => x.slug === slug)
+                const mark = b ? TREND_MARK[b.trend] : null
+                return (
+                  <span
+                    key={a.id}
+                    title={b ? `${mark!.titel}: ${b.toelichting}` : 'niet genoemd in deze analyse'}
+                    style={{ width: 40, textAlign: 'center', flexShrink: 0, fontSize: 15, fontWeight: 700, color: mark ? mark.kleur : '#374151', paddingTop: 1 }}
+                  >
+                    {mark ? mark.glyph : '·'}
+                  </span>
+                )
+              })}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
