@@ -273,12 +273,18 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 
+    // Een gezette expires_at is altijd bindend, ook voor betalende gebruikers: dat is
+    // hoe de admin een betaalde periode of een handmatige einddatum begrenst. Alleen
+    // paid_at zonder expires_at = onbeperkte toegang.
+    const expiresOk = (raw: string) => {
+      const exp = new Date(raw)
+      return !isNaN(exp.getTime()) && exp > new Date()
+    }
     let toegestaan = false
-    if (user.paid_at) {
+    if (user.expires_at) {
+      if (expiresOk(user.expires_at)) toegestaan = true
+    } else if (user.paid_at) {
       toegestaan = true
-    } else if (user.expires_at) {
-      const exp = new Date(user.expires_at)
-      if (!isNaN(exp.getTime()) && exp > new Date()) toegestaan = true
     } else if (user.trial_start) {
       const trialStart = new Date(user.trial_start)
       const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
