@@ -15,7 +15,7 @@
 
 ## Technische schuld en deprecaties
 
-- **Voyage embedding-modellen zijn deprecated.** `voyage-3-large` (kennisbank-RAG) en `voyage-multilingual-2` (sessie-geheugen). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van respectievelijk de kennisbank en alle bestaande sessies. Apart gepland, nog niet gestart. Grootste losse klus.
+- **Voyage embedding-modellen zijn deprecated.** `voyage-3-large` (kennisbank-RAG) en `voyage-multilingual-2` (sessie-geheugen). Her-embedding naar `voyage-4-large` is onderzocht en **geparkeerd** (2026-09-02, `docs/VOYAGE_REEMBED_PLAN.md`): geen aantoonbare retrieval-verbetering. Hervatten zodra Voyage een echte EOL-datum aankondigt; de maandcheck (sectie 4, Voyage) checkt daarop.
 - **`proxy.ts` gebruikt nog `createRouteMatcher()`** (Clerk), sinds `@clerk/nextjs` 7.5.14 gedeprecate ten gunste van `auth.protect()` per route. Geen verwijderdatum, wel migreren zodra opgepakt.
 - **Hoofdchat draait op `claude-sonnet-4-6` i.p.v. Sonnet 5.** Sonnet 5 gaf bij lange vragen een leeg antwoord (thinking mode zonder text block), maar is inmiddels structureel goedkoper. Hercheck of Anthropic dit heeft aangepast, of schakel extended thinking bewust in met `budget_tokens`. Eerst op staging testen, minimaal een week na de commerciële livegang.
 - **Multi-tenant RLS.** RLS staat aan op alle ~41 tabellen maar zonder policies; de isolatie tussen gebruikers hangt volledig af van een `.eq('user_id', userId)`-filter per route plus de CI-check `check-missing-user-filter.mjs`. Een echte Clerk-JWT-policy-implementatie per tabel is een groot apart traject, bewust nog niet opgepakt.
