@@ -3,8 +3,8 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-09-02
-- **Waar we staan:** Fase 0 klaar. Branch `voyage-4-reembed`. Model `voyage-4-large` goedgekeurd. SQL-migratie 1 (shadow-kolommen + `match_blog_chunks_v4` + `match_sessions_v4`) is door Arno uitgevoerd en bevestigd. Geen productiecode gewijzigd tot de cutover: de incrementele schrijvers blijven op het oude model, het vullen gebeurt via het niet-destructieve `backfill-chunks-v4.mjs`.
-- **Eerstvolgende stap:** `node scripts/backfill-chunks-v4.mjs` draaien om `blog_chunks.embedding_v4` te vullen, daarna SQL-migratie 1b (ivfflat-index op `embedding_v4`).
+- **Waar we staan:** Fase 1 tot en met de kwaliteitscheck gedaan. `blog_chunks.embedding_v4` is voor alle 1527 rijen gevuld met `voyage-4-large` (consistentiecheck: cosine 1,00000 op alle steekproeven, de vectoren kloppen). **De retrieval-vergelijking is de blokker: `voyage-4-large` is geen aantoonbare verbetering, eerder een wisselresultaat met echte regressies.** Zie "Fase 1 verificatie-uitslag" hieronder.
+- **Eerstvolgende stap:** besluit van Arno. Voorstel: cutover **niet** doen. Shadow-kolom + RPC's blijven staan (kosten niets), revisit bij een echte Voyage-EOL-datum of na gerichte tuning. Los daarvan: de meta-doc "Kennisbank: Verifieer eerst, dan pas adviseer" uit de RAG-kennisbank halen (rankt hoog op onzin, bij beide modellen).
 
 ## Waarom nu
 
@@ -104,6 +104,29 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 6. SQL-migraties 2, 3 en 4 uitvoeren + bevestigen
 
 Tussen de checkpoints door kan de bouw autonoom.
+
+## Fase 1 verificatie-uitslag (2026-09-02)
+
+Scripts: `scripts/verify-chunks-v4.mjs` (consistentie + pijplijn-vergelijking), `scripts/dump-v4-content.mjs` (inhoud van de top-5 naast elkaar, output `scripts/v4-content-vergelijking.md`), `scripts/verify-v4-inputtype.mjs` (input_type-test).
+
+- **Consistentie: OK.** Verse `voyage-4-large`-embeddings van bestaande chunk-tekst matchen de opgeslagen `embedding_v4` op cosine 1,00000. De backfill klopt.
+- **`input_type` (query/document): geen effect.** Voyage raadt het aan, maar met en zonder gaf identieke rerank-top. Niet de knop.
+- **Retrieval na rerank: gemiddeld 28% bron-overlap oud vs nieuw.** Op inhoud beoordeeld (niet op titel):
+  - "prijs te hoog": oud beter (VALUE BASED SELLING, HOE HOU JE DE PRIJZEN HOOG direct; nieuw dwaalt naar RETENTION / EOY STRATEGIES).
+  - "vragen in een discovery call": nieuw beter (SHOOT FOR THE STARS = letterlijke vragenlijst; oud herhaalt 3x hetzelfde artikel + een dating-anekdote).
+  - "vervolgafspraak zonder pusherig": oud duidelijk beter (AANBEVELENSWAARDIG J/N, KOUWE KERMIS; nieuw pakt HIRE FIRE en een zomerblog).
+  - "erover nadenken": licht in het voordeel van nieuw op inhoud, maar met de meta-doc als ruis.
+- **Regressie bij `voyage-4-large`: de interne doc "Kennisbank: Verifieer eerst, dan pas adviseer" rankt hoog voor 3 van de 4 vragen.** Dat is geen salescontent. Het staat ook in de oude index maar `voyage-4-large` haalt het veel agressiever naar boven. Deze doc hoort sowieso niet in de RAG-kennisbank.
+
+**Conclusie:** `voyage-4-large` haalt de "kwaliteit eerst"-lat niet. Het is niet slechter-over-de-hele-linie, maar ook niet aantoonbaar gelijkwaardig, en het introduceert een zichtbare regressie. Kosten zijn voor beide modellen effectief nul, dus er is geen kostenargument dat een gelijkspel-op-kwaliteit zou rechtvaardigen.
+
+**Openstaande tuning-opties als we dit later oppakken:**
+1. De meta-doc uit `blog_chunks` halen (of `arnobot_kb_excluded_urls`-achtig mechanisme), los van deze migratie nuttig.
+2. De verificatie herhalen met de vólledige hybride pijplijn: nu miste de test de 30 fulltext-kandidaten die `searchCandidates()` normaal meeneemt. Die vangen juist de idioom-titels (KOUWE KERMIS) die `voyage-4-large` laat vallen.
+3. `voyage-4` (niet -large) en een hogere/lagere `match_threshold` testen.
+4. `rerank-2.5` topN en `diversifyChunks` opnieuw ijken op de nieuwe kandidaatverdeling (`voyage-4-large` levert een bredere spreiding over bronnen).
+
+**Wat blijft staan (kost niets, geen opruiming nodig):** `embedding_v4`-kolommen, `match_blog_chunks_v4` + `match_sessions_v4`, de scripts. Bij hervatten hoeft alleen de kennisbank opnieuw gebackfild als er intussen veel nieuwe chunks bij zijn (`backfill-chunks-v4.mjs` pakt de null-rijen).
 
 ## Bijlage: SQL
 
