@@ -16,13 +16,6 @@ const CHUNK_SIZE = 300
 const OVERLAP = 75
 const MAX_NEW_PER_RUN = 5
 
-// Transitioneel: dual-write tijdens de voyage-4 her-embedding (docs/VOYAGE_REEMBED_PLAN.md).
-// Zolang de live zoekfunctie nog op de oude embedding-kolom leest, moeten nieuwe RSS-chunks
-// in BEIDE kolommen komen, anders zijn ze na de cutover onvindbaar tot de volgende rebuild.
-// Na SQL-migratie 2 (kolom hernoemd): OLD_EMBED_MODEL + de dubbele call hier weer weghalen.
-const OLD_EMBED_MODEL = 'voyage-3-large'
-const NEW_EMBED_MODEL = 'voyage-4-large'
-
 // ── RSS parsing ───────────────────────────────────────────────────────────────
 function extractTag(xml: string, tag: string): string {
   const cdataMatch = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`, 'i').exec(xml)
@@ -107,22 +100,15 @@ async function addContext(chunk: { content: string; source: string; url: string;
 }
 
 // ── Voyage embeddings ─────────────────────────────────────────────────────────
-async function embedBatchModel(texts: string[], model: string): Promise<number[][]> {
+async function embedBatch(texts: string[]): Promise<number[][]> {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}` },
-    body: JSON.stringify({ input: texts, model }),
+    body: JSON.stringify({ input: texts, model: 'voyage-3-large' }),
   })
-  if (!res.ok) throw new Error(`Voyage API error (${model}): ${await res.text()}`)
+  if (!res.ok) throw new Error(`Voyage API error: ${await res.text()}`)
   const json = await res.json()
   return json.data.map((d: { embedding: number[] }) => d.embedding)
-}
-
-// Dual-write venster: embed dezelfde teksten met het oude en het nieuwe model.
-async function embedBatch(texts: string[]): Promise<{ old: number[][]; v4: number[][] }> {
-  const old = await embedBatchModel(texts, OLD_EMBED_MODEL)
-  const v4 = await embedBatchModel(texts, NEW_EMBED_MODEL)
-  return { old, v4 }
 }
 
 // Laat de admin-kennisbankpagina (app/bot/admin/kennisbank/page.tsx) tonen wanneer deze cron
@@ -197,15 +183,14 @@ export async function GET(req: NextRequest) {
       for (let i = 0; i < contextedChunks.length; i += BATCH_SIZE) {
         const batch = contextedChunks.slice(i, i + BATCH_SIZE)
         const texts = batch.map(c => c.context ? `${c.context}\n\n${c.content}` : c.content)
-        const { old, v4 } = await embedBatch(texts)
+        const embeddings = await embedBatch(texts)
 
         const rows = batch.map((chunk, j) => ({
           content: chunk.content,
           context: chunk.context,
           source: chunk.source,
           url: chunk.url,
-          embedding: old[j],
-          embedding_v4: v4[j],
+          embedding: embeddings[j],
         }))
         const { error } = await supabase.from('blog_chunks').insert(rows)
         if (error) throw new Error(`Insert error: ${error.message}`)

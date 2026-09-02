@@ -3,8 +3,8 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-09-02
-- **Waar we staan:** Fase 0 loopt. Branch `voyage-4-reembed` aangemaakt. Modelkeuze `voyage-4-large` goedgekeurd door Arno (2026-09-02). Geverifieerd tegen de actuele Voyage-docs: `voyage-3-large` is "previous generation", `voyage-3.5` is "legacy", `voyage-multilingual-2` is deprecated. De `voyage-4`-serie is de huidige generatie en dekt ook multilingual. Prijs `voyage-4-large` $0,12/M tokens, eerste 200M gratis; corpus is < 0,5M tokens totaal, dus effectief gratis.
-- **Eerstvolgende stap:** Arno voert de Fase 0-SQL uit in Supabase (kolomtype-check + huidige definities van `match_blog_chunks` en `match_sessions` dumpen) en plakt de output terug, zodat de v4-RPC's exact gekloond kunnen worden.
+- **Waar we staan:** Fase 0 klaar. Branch `voyage-4-reembed`. Model `voyage-4-large` goedgekeurd. SQL-migratie 1 (shadow-kolommen + `match_blog_chunks_v4` + `match_sessions_v4`) is door Arno uitgevoerd en bevestigd. Geen productiecode gewijzigd tot de cutover: de incrementele schrijvers blijven op het oude model, het vullen gebeurt via het niet-destructieve `backfill-chunks-v4.mjs`.
+- **Eerstvolgende stap:** `node scripts/backfill-chunks-v4.mjs` draaien om `blog_chunks.embedding_v4` te vullen, daarna SQL-migratie 1b (ivfflat-index op `embedding_v4`).
 
 ## Waarom nu
 
@@ -63,14 +63,17 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 
 **ivfflat-detail:** een ivfflat-index clustert op de data die er bij het bouwen is. De `embedding_v4`-index dus pas aanmaken *nadat* de kolom gevuld is, niet in migratie 1.
 
-**Aanpak-besluit kennisbank vullen:** géén volledige rebuild via `embed-chunks.mjs` tijdens het venster. In plaats daarvan een niet-destructief `scripts/backfill-chunks-v4.mjs` dat per bestaande rij `context + content` opnieuw embedt met `voyage-4-large` en alleen `embedding_v4` bijwerkt (`where embedding_v4 is null`, hervatbaar). Verworpen: `embed-chunks.mjs` dual-write laten draaien. Dat script wist en herbouwt de hele live tabel; dat is een veel groter risico op de productie-kennisbank dan een kolom-update. `embed-chunks.mjs` wordt pas bij de cutover aangeraakt (één regel: model → `voyage-4-large`, schrijft dan naar de hernoemde `embedding`-kolom).
+**Aanpak-besluit kennisbank vullen:** géén volledige rebuild via `embed-chunks.mjs` tijdens het venster. In plaats daarvan een niet-destructief `scripts/backfill-chunks-v4.mjs` dat per bestaande rij `context + content` opnieuw embedt met `voyage-4-large` en alleen `embedding_v4` bijwerkt (`where embedding_v4 is null`, hervatbaar). Verworpen: `embed-chunks.mjs` dual-write laten draaien (wist en herbouwt de hele live tabel, te grof risico).
 
-- [x] **SQL-migratie 1** aangeleverd (shadow-kolommen op beide tabellen + `match_blog_chunks_v4` + `match_sessions_v4`, geen indexen). Wacht op uitvoering + bevestiging door Arno.
-- [ ] `rss-ingest/route.ts` en `embed-single-doc.mjs` schrijven tijdens het venster **beide** kolommen (dit zijn de enige incrementele schrijvers). Deploy.
+**Besluit incrementele schrijvers (herzien):** géén dual-write in `rss-ingest` en `embed-single-doc` tijdens het venster. Verworpen omdat het transitionele code + een tweede Voyage-call per batch is met rate-limit- en timeout-risico op de cron. In plaats daarvan: `backfill-chunks-v4.mjs` is hervatbaar (`where embedding_v4 is null`) en wordt **vlak vóór de cutover nog een keer gedraaid** om alles op te pikken wat de RSS-cron in het venster heeft toegevoegd. Restrace (cron vuurt tussen laatste backfill en deploy): één artikel maximaal een dag onvindbaar, opgelost door een backfill-run ná de cutover. Acceptabel voor een vaste kennisbank. `rss-ingest` + `embed-single-doc` gaan pas bij de cutover om naar `voyage-4-large` (dan één model).
+
+- [x] **SQL-migratie 1** uitgevoerd + bevestigd door Arno (2026-09-02): `match_blog_chunks_v4` en `match_sessions_v4` bestaan, shadow-kolommen aangemaakt (function-body-validatie bevestigt dat `embedding_v4` bestaat).
 - [ ] `scripts/backfill-chunks-v4.mjs` draaien → elke bestaande rij krijgt `embedding_v4`
 - [ ] **SQL-migratie 1b** (Arno): `create index blog_chunks_embedding_v4_idx ... ivfflat (embedding_v4 vector_cosine_ops) with (lists = 100)`
 - [ ] Verifiëren: 10 echte vragen door beide RPC's, resultaten vergelijken; cosine-similarity-steekproef op identieke brontekst (nieuw geëmbede query vs opgeslagen `embedding_v4` ≈ 1,0)
-- [ ] **Cutover-deploy:** `getVoyageEmbedding()` → `voyage-4-large`, `searchCandidates()` → `match_blog_chunks_v4`
+- [ ] `backfill-chunks-v4.mjs` nog één keer draaien (venster-restjes van de RSS-cron)
+- [ ] **Cutover-deploy:** `getVoyageEmbedding()` → `voyage-4-large` + `searchCandidates()` → `match_blog_chunks_v4`; in dezelfde deploy `rss-ingest` + `embed-single-doc` + `embed-chunks.mjs` → `voyage-4-large`
+- [ ] `backfill-chunks-v4.mjs` nog één keer ná de cutover (laatste restrace)
 - [ ] 48 uur meekijken op Sentry en op de retrieval-kwaliteit
 - [ ] **SQL-migratie 2** (Arno): oude `embedding` + index droppen, `embedding_v4` → `embedding` hernoemen, index hernoemen, `match_blog_chunks` vervangen door de v4-body, `match_blog_chunks_v4` droppen. Code terug naar de kale RPC-naam.
 

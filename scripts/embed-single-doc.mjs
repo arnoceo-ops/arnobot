@@ -89,27 +89,18 @@ Geef in 1-2 zinnen de context van dit fragment: uit welk artikel het komt en wat
   }
 }
 
-// Transitioneel: dual-write tijdens de voyage-4 her-embedding (docs/VOYAGE_REEMBED_PLAN.md).
-// Nieuwe chunks moeten in beide embedding-kolommen tot de cutover achter de rug is.
-// Na SQL-migratie 2: terug naar één model (voyage-4-large) en de kale embedBatch.
-async function embedBatchModel(texts, model) {
+async function embedBatch(texts) {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${VOYAGE_API_KEY}` },
-    body: JSON.stringify({ input: texts, model }),
+    body: JSON.stringify({ input: texts, model: 'voyage-3-large' }),
   })
   if (!res.ok) {
     const err = await res.text()
-    throw new Error(`Voyage API error (${model}): ${err}`)
+    throw new Error(`Voyage API error: ${err}`)
   }
   const json = await res.json()
   return json.data.map(d => d.embedding)
-}
-
-async function embedBatch(texts) {
-  const old = await embedBatchModel(texts, 'voyage-3-large')
-  const v4 = await embedBatchModel(texts, 'voyage-4-large')
-  return { old, v4 }
 }
 
 async function main() {
@@ -130,15 +121,14 @@ async function main() {
   for (let i = 0; i < contextedChunks.length; i += BATCH_SIZE) {
     const batch = contextedChunks.slice(i, i + BATCH_SIZE)
     const textsToEmbed = batch.map(c => c.context ? `${c.context}\n\n${c.content}` : c.content)
-    const { old, v4 } = await embedBatch(textsToEmbed)
+    const embeddings = await embedBatch(textsToEmbed)
 
     const rows = batch.map((chunk, j) => ({
       content: chunk.content,
       context: chunk.context ?? null,
       source: chunk.source,
       url: null,
-      embedding: old[j],
-      embedding_v4: v4[j],
+      embedding: embeddings[j],
     }))
     const { error } = await supabase.from('blog_chunks').insert(rows)
     if (error) throw new Error(`Insert error: ${error.message}`)
