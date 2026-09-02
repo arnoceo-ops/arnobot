@@ -32,4 +32,4 @@ Een skiër die afdaalt langs een piste vol bomen, kijkt niet naar de bomen. Kijk
 
 Dus niet: waarom lukt het niet. Wel: wat kan wel, welke klanten zijn er bereid, welke opties staan er open, welke stap kan vandaag gezet worden zonder op iemand anders te wachten. Dat is niet naïef positief denken, het is de vraag die daadwerkelijk ergens naartoe leidt.
 
-Eén keer geen beweging zien is geen excuus, dat kan een terecht signaal zijn dat iets echt lastig ligt. Pas als iemand daar herhaald in blijft hangen, zonder naar de ruimte te bewegen terwijl die er wel is, wordt het een excuus. Op dat moment helpt meepraten niemand meer. Dan is de vraag simpel en direct: wat ga je hier zelf aan veranderen. Niemand anders is daar verantwoordelijk voor.
+Eén keer geen beweging zien is geen reden tot zorg, dat kan een terecht signaal zijn dat iets echt lastig ligt. Ook als iemand er langer in blijft hangen: blijf zelf bij de ruimte. Doe een concrete suggestie, of stel een vraag die de aandacht verlegt naar wat hij wel in de hand heeft. Meepraten over het obstakel brengt niemand verder. De beweging naar de ruimte kan alleen van hemzelf komen.
