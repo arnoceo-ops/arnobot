@@ -3,8 +3,9 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-09-02
-- **Waar we staan:** Fase 1 tot en met de kwaliteitscheck gedaan. `blog_chunks.embedding_v4` is voor alle 1527 rijen gevuld met `voyage-4-large` (consistentiecheck: cosine 1,00000 op alle steekproeven, de vectoren kloppen). **De retrieval-vergelijking is de blokker: `voyage-4-large` is geen aantoonbare verbetering, eerder een wisselresultaat met echte regressies.** Zie "Fase 1 verificatie-uitslag" hieronder.
-- **Eerstvolgende stap:** besluit van Arno. Voorstel: cutover **niet** doen. Shadow-kolom + RPC's blijven staan (kosten niets), revisit bij een echte Voyage-EOL-datum of na gerichte tuning. Los daarvan: de meta-doc "Kennisbank: Verifieer eerst, dan pas adviseer" uit de RAG-kennisbank halen (rankt hoog op onzin, bij beide modellen).
+- **Waar we staan:** GEPARKEERD. Onderzoek afgerond, cutover gaat niet door. `voyage-4-large` haalde de "kwaliteit eerst"-lat niet t.o.v. `voyage-3-large` / `voyage-multilingual-2` (wisselresultaat op retrieval, zie "Fase 1 verificatie-uitslag"). Geen productiecode ooit gewijzigd. Plandocument + verificatiescripts staan op master. De Supabase-shadowobjecten worden teruggedraaid (zie "Terugdraai-SQL" onderaan) zodat er geen halve migratie in productie blijft hangen.
+- **Om te hervatten:** SQL-migratie 1 opnieuw draaien (bijlage), dan `backfill-chunks-v4.mjs`. Eerst de tuning-opties hieronder afwerken vóór een nieuwe kwaliteitsvergelijking.
+- **Trigger om te hervatten:** Voyage kondigt een echte EOL-datum aan voor `voyage-3-large` of `voyage-multilingual-2`.
 
 ## Waarom nu
 
@@ -47,6 +48,8 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 - `docs/OPENSTAANDE_PUNTEN.md` (regel 18)
 
 ## Fasering
+
+> **De fasering hieronder is het plan zoals het lag toen we begonnen. Het traject is geparkeerd na de Fase 1 verificatie-uitslag. Bewaard als startpunt voor een eventuele hervatting; de afvinkstatus is bevroren op 2026-09-02.**
 
 ### Fase 0 — voorbereiding
 - [x] Modelkeuze bevestigd door Arno (`voyage-4-large`, 2026-09-02)
@@ -116,17 +119,16 @@ Scripts: `scripts/verify-chunks-v4.mjs` (consistentie + pijplijn-vergelijking), 
   - "vragen in een discovery call": nieuw beter (SHOOT FOR THE STARS = letterlijke vragenlijst; oud herhaalt 3x hetzelfde artikel + een dating-anekdote).
   - "vervolgafspraak zonder pusherig": oud duidelijk beter (AANBEVELENSWAARDIG J/N, KOUWE KERMIS; nieuw pakt HIRE FIRE en een zomerblog).
   - "erover nadenken": licht in het voordeel van nieuw op inhoud, maar met de meta-doc als ruis.
-- **Regressie bij `voyage-4-large`: de interne doc "Kennisbank: Verifieer eerst, dan pas adviseer" rankt hoog voor 3 van de 4 vragen.** Dat is geen salescontent. Het staat ook in de oude index maar `voyage-4-large` haalt het veel agressiever naar boven. Deze doc hoort sowieso niet in de RAG-kennisbank.
+- **`voyage-4-large` haalt de kennisbankdoc "Kennisbank: Verifieer eerst, dan pas adviseer" hoog naar boven voor 3 van de 4 vragen.** Correctie op een eerdere aanname: dit is **geen stray meta-doc**, Arno heeft 'm bewust toegevoegd (`docs/kennisbank/verifieer-eerst-ruimte-niet-obstakel.md`, commit 9ce0b7b6, 19-8, opnieuw ge-embed 25-8) om het coachgedrag te sturen. Bij het huidige `voyage-3-large` rankt hij niet storend hoog; `voyage-4-large` trekt hem agressiever naar voren bij tactische vragen waar je liever tactische content ziet. Geen bug, wel een gedragsverschil dat meeweegt in het oordeel.
 
-**Conclusie:** `voyage-4-large` haalt de "kwaliteit eerst"-lat niet. Het is niet slechter-over-de-hele-linie, maar ook niet aantoonbaar gelijkwaardig, en het introduceert een zichtbare regressie. Kosten zijn voor beide modellen effectief nul, dus er is geen kostenargument dat een gelijkspel-op-kwaliteit zou rechtvaardigen.
+**Conclusie:** `voyage-4-large` haalt de "kwaliteit eerst"-lat niet. Niet slechter over de hele linie, maar ook niet aantoonbaar gelijkwaardig. Kosten zijn voor beide modellen effectief nul, dus er is geen kostenargument dat een gelijkspel-op-kwaliteit zou rechtvaardigen.
 
-**Openstaande tuning-opties als we dit later oppakken:**
-1. De meta-doc uit `blog_chunks` halen (of `arnobot_kb_excluded_urls`-achtig mechanisme), los van deze migratie nuttig.
-2. De verificatie herhalen met de vólledige hybride pijplijn: nu miste de test de 30 fulltext-kandidaten die `searchCandidates()` normaal meeneemt. Die vangen juist de idioom-titels (KOUWE KERMIS) die `voyage-4-large` laat vallen.
-3. `voyage-4` (niet -large) en een hogere/lagere `match_threshold` testen.
-4. `rerank-2.5` topN en `diversifyChunks` opnieuw ijken op de nieuwe kandidaatverdeling (`voyage-4-large` levert een bredere spreiding over bronnen).
+**Tuning-opties vóór een nieuwe poging:**
+1. De verificatie herhalen met de vólledige hybride pijplijn: de test miste de 30 fulltext-kandidaten die `searchCandidates()` normaal meeneemt. Die vangen juist de idioom-titels (KOUWE KERMIS) die `voyage-4-large` laat vallen. Dit is de belangrijkste, de test was oneerlijk streng.
+2. `voyage-4` (niet -large) en een hogere/lagere `match_threshold` testen.
+3. `rerank-2.5` topN en `diversifyChunks` opnieuw ijken op de bredere bronspreiding die `voyage-4-large` geeft.
 
-**Wat blijft staan (kost niets, geen opruiming nodig):** `embedding_v4`-kolommen, `match_blog_chunks_v4` + `match_sessions_v4`, de scripts. Bij hervatten hoeft alleen de kennisbank opnieuw gebackfild als er intussen veel nieuwe chunks bij zijn (`backfill-chunks-v4.mjs` pakt de null-rijen).
+**Wat teruggedraaid wordt:** de `embedding_v4`-kolommen en `match_blog_chunks_v4` / `match_sessions_v4`. Reden: een halve migratie in productie laten staan is precies wat de professionaliteitscheck als anti-patroon noemt, en opnieuw opzetten is 30 seconden. De scripts en dit document blijven op master als startpunt.
 
 ## Bijlage: SQL
 
@@ -187,5 +189,26 @@ where table_name in ('blog_chunks','arnobot_blog_sessions') and column_name = 'e
 
 select proname from pg_proc where proname in ('match_blog_chunks_v4','match_sessions_v4');
 -- verwacht: 2 rijen
+```
+
+### Terugdraai-SQL (uitgevoerd bij het parkeren, 2026-09-02)
+
+Draait de shadowobjecten terug zodat er geen halve migratie in productie blijft. Raakt niets wat de app gebruikt.
+
+```sql
+drop function if exists public.match_blog_chunks_v4(vector, integer, double precision);
+drop function if exists public.match_sessions_v4(vector, text, integer);
+alter table blog_chunks           drop column if exists embedding_v4;
+alter table arnobot_blog_sessions drop column if exists embedding_v4;
+```
+
+Verificatie:
+
+```sql
+select proname from pg_proc where proname in ('match_blog_chunks_v4','match_sessions_v4');
+-- verwacht: 0 rijen
+select column_name from information_schema.columns
+where table_name in ('blog_chunks','arnobot_blog_sessions') and column_name = 'embedding_v4';
+-- verwacht: 0 rijen
 ```
 
