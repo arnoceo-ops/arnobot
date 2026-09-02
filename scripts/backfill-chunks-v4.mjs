@@ -25,8 +25,9 @@ for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
 const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL ?? 'https://api.voyageai.com'
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY
 const MODEL = 'voyage-4-large'
-const BATCH_SIZE = 8         // Voyage embeddings per request
-const DELAY_MS = 21000       // ruime marge onder de rate limit, zelfde als embed-chunks.mjs
+const EMBED_BATCH = 64       // Voyage staat tot 1000 inputs/request toe
+const DB_CONCURRENCY = 6     // parallelle Supabase-updates; hoger gaf "fetch failed"
+const PAGE = 1000            // PostgREST geeft standaard max 1000 rijen per select terug
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -41,40 +42,63 @@ async function embedBatch(texts) {
   return json.data.map(d => d.embedding)
 }
 
-const { data: rows, error } = await supabase
-  .from('blog_chunks')
-  .select('id, content, context')
-  .is('embedding_v4', null)
+// Update met begrensde parallelliteit en per rij één retry bij een netwerkfout.
+async function updateRows(items) {
+  let ok = 0, failed = 0
+  for (let i = 0; i < items.length; i += DB_CONCURRENCY) {
+    const slice = items.slice(i, i + DB_CONCURRENCY)
+    const results = await Promise.allSettled(slice.map(async ({ id, embedding_v4 }) => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const { error } = await supabase.from('blog_chunks').update({ embedding_v4 }).eq('id', id)
+        if (!error) return
+        if (attempt === 1) throw new Error(error.message)
+        await new Promise(r => setTimeout(r, 500))
+      }
+    }))
+    for (const r of results) {
+      if (r.status === 'fulfilled') ok++
+      else { failed++; console.error('Update mislukt:', r.reason?.message ?? r.reason) }
+    }
+  }
+  return { ok, failed }
+}
 
-if (error) { console.error('Ophalen mislukt:', error.message); process.exit(1) }
+// Alle null-rijen ophalen met paginatie (select kapt af op PAGE).
+async function fetchAllNullRows() {
+  const rows = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('blog_chunks')
+      .select('id, content, context')
+      .is('embedding_v4', null)
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) throw new Error(`Ophalen mislukt: ${error.message}`)
+    rows.push(...data)
+    if (data.length < PAGE) break
+  }
+  return rows
+}
+
+const rows = await fetchAllNullRows()
 if (!rows.length) { console.log('Niets te doen: alle rijen hebben al een embedding_v4.'); process.exit(0) }
-
 console.log(`${rows.length} rijen zonder embedding_v4. Embedden met ${MODEL}...`)
 
-let ok = 0
-let failed = 0
-for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-  const batch = rows.slice(i, i + BATCH_SIZE)
+let totalOk = 0, totalFailed = 0
+for (let i = 0; i < rows.length; i += EMBED_BATCH) {
+  const batch = rows.slice(i, i + EMBED_BATCH)
   const texts = batch.map(r => (r.context ? `${r.context}\n\n${r.content}` : r.content))
   try {
     const embeddings = await embedBatch(texts)
-    const updates = await Promise.allSettled(
-      batch.map((r, j) =>
-        supabase.from('blog_chunks').update({ embedding_v4: embeddings[j] }).eq('id', r.id)
-          .then(({ error: e }) => { if (e) throw new Error(e.message) })
-      )
-    )
-    for (const u of updates) {
-      if (u.status === 'fulfilled') ok++
-      else { failed++; console.error('Update mislukt:', u.reason?.message ?? u.reason) }
-    }
+    const { ok, failed } = await updateRows(batch.map((r, j) => ({ id: r.id, embedding_v4: embeddings[j] })))
+    totalOk += ok
+    totalFailed += failed
   } catch (e) {
-    failed += batch.length
-    console.error(`Batch ${i}-${i + batch.length} mislukt:`, e.message)
+    totalFailed += batch.length
+    console.error(`Embed-batch ${i}-${i + batch.length} mislukt:`, e.message)
   }
-  console.log(`${Math.min(i + BATCH_SIZE, rows.length)}/${rows.length} verwerkt (${ok} ok, ${failed} mislukt)`)
-  if (i + BATCH_SIZE < rows.length) await new Promise(r => setTimeout(r, DELAY_MS))
+  console.log(`${Math.min(i + EMBED_BATCH, rows.length)}/${rows.length} verwerkt (${totalOk} ok, ${totalFailed} mislukt)`)
 }
 
-console.log(`\nKlaar. ${ok} ok, ${failed} mislukt van ${rows.length} totaal.`)
-if (failed > 0) { console.log('Draai het script opnieuw om de mislukte rijen alsnog te doen.'); process.exit(1) }
+console.log(`\nKlaar. ${totalOk} ok, ${totalFailed} mislukt van ${rows.length} totaal.`)
+if (totalFailed > 0) { console.log('Draai het script opnieuw om de mislukte rijen alsnog te doen.'); process.exit(1) }
