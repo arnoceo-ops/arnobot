@@ -40,6 +40,17 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   return { label: 'ONBEKEND', color: '#6b7280' }
 }
 
+// Sorteersleutel voor de BETALING-kolom die de zichtbare volgorde volgt:
+// UIT < TOEGANG + < GRATIS (op einddatum) < BETAALD met einddatum < BETAALD onbeperkt.
+// Rang als prefix, datum als tiebreaker, alles als string zodat één vergelijking volstaat.
+function betalingSortKey(row: { is_active?: boolean; paid_at?: string | null; expires_at?: string | null; created_at?: string | null }): string {
+  if (!row.is_active) return '0'
+  if (row.paid_at && !row.expires_at) return '4'
+  if (row.paid_at) return `3_${row.expires_at ?? ''}`
+  if (row.expires_at) return `2_${row.expires_at}`
+  return `1_${row.created_at ?? ''}`
+}
+
 function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = false }: {
   label: string; field: string; sort: string; dir: string; vertical?: boolean; leftAlign?: boolean
 }) {
@@ -239,7 +250,10 @@ export default async function GebruikersPage({
   const sorted = [...enriched].sort((a, b) => {
     let av: number | string = 0
     let bv: number | string = 0
-    if (sort === 'naam') { av = (a.clerkName || a.full_name || '').toLowerCase(); bv = (b.clerkName || b.full_name || '').toLowerCase() }
+    if (sort === 'naam') {
+      av = (a.clerkName || a.full_name || [a.voornaam, a.achternaam].filter(Boolean).join(' ')).toLowerCase()
+      bv = (b.clerkName || b.full_name || [b.voornaam, b.achternaam].filter(Boolean).join(' ')).toLowerCase()
+    }
     if (sort === 'aangemeld') { av = a.created_at; bv = b.created_at }
     if (sort === 'gesprekken') { av = a.count; bv = b.count }
     if (sort === 'vragen') { av = a.questions; bv = b.questions }
@@ -248,10 +262,13 @@ export default async function GebruikersPage({
     if (sort === 'analyses') { av = a.analysesCount; bv = b.analysesCount }
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'plan') { av = a.plan || ''; bv = b.plan || '' }
-    if (sort === 'command_manager') { av = a.command_manager ? 1 : 0; bv = b.command_manager ? 1 : 0 }
+    if (sort === 'command_manager') {
+      const teamRank = (u: typeof a) => u.command_manager ? 2 : (teamRoleMap.get(u.user_id) === 'member' ? 1 : 0)
+      av = teamRank(a); bv = teamRank(b)
+    }
     if (sort === 'sd_agent') { av = (a as { sd_agent?: string | null }).sd_agent || ''; bv = (b as { sd_agent?: string | null }).sd_agent || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
-    if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
+    if (sort === 'betaling') { av = betalingSortKey(a); bv = betalingSortKey(b) }
     if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
     if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
     if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
@@ -297,7 +314,7 @@ export default async function GebruikersPage({
           <SortHeader label="SD AGENT" field="sd_agent" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
-          <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
+          <SortHeader label="BETALING" field="betaling" sort={sort} dir={dir} vertical />
           <SortHeader label="MAIL" field="nudge_opt_out" sort={sort} dir={dir} vertical />
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
