@@ -26,8 +26,10 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   if (row.expires_at) {
     const exp = new Date(row.expires_at)
     const left = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    if (left <= 0) return { label: 'VERLOPEN', color: '#cc4444' }
-    return { label: `TRIAL ${left}d`, color: '#f59e0b' }
+    // expires_at zonder trial_start = een handmatig gezette comp (GRATIS +), geen echte trial
+    const isComp = !row.trial_start
+    if (left <= 0) return { label: isComp ? 'GRATIS VERLOPEN' : 'VERLOPEN', color: '#cc4444' }
+    return { label: isComp ? `GRATIS ${left}d` : `TRIAL ${left}d`, color: '#f59e0b' }
   }
   if (row.trial_start) {
     const end = new Date(new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
@@ -104,7 +106,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
       .neq('email', E2E_TEST_USER_EMAIL)
       .neq('email', MANUAL_TEST_USER_EMAIL)
       .neq('email', APP_REVIEWER_EMAIL),
@@ -408,14 +410,9 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
-                {/* Betaling */}
+                {/* Betaling / gratis toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG + */}
                 <div style={{ textAlign: 'center' }}>
-                  {(u as { renewal_requested_at?: string | null }).renewal_requested_at && !u.paid_at
-                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : u.paid_at
-                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : <span style={{ fontSize: '12px', color: '#374151' }}>.</span>
-                  }
+                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
                 </div>
                 {/* Mail opt-out */}
                 <div style={{ textAlign: 'center' }}>
