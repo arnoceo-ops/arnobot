@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Fragment } from 'react'
+import { parseBevindingen, stripBevindingenBlok, type Bevinding } from '@/lib/metaAnalyseTrend'
 
 const loadingStyle = `
   .meta-loading { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
@@ -96,6 +97,75 @@ function periodLabel(days: number) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+}
+
+const ERNST_KLEUR: Record<Bevinding['ernst'], string> = { hoog: '#cc4444', midden: '#f59e0b', laag: '#6b7280' }
+const TREND_GLYPH: Record<Bevinding['trend'], string> = { nieuw: '○', verbeterd: '↑', gelijk: '=', verslechterd: '↓' }
+
+// Bouwt de trend-tabel uit de bevindingen-blokken van de opgeslagen analyses.
+// Kolommen = analyses (nieuwste eerst, max 6), rijen = unieke slugs in volgorde van
+// eerste voorkomen. Cel = de bevinding voor die analyse, of null.
+function buildTrendMatrix(analyses: MetaAnalyse[]) {
+  const cols = analyses
+    .map(a => ({ a, bev: parseBevindingen(a.expertpanel_text) }))
+    .filter(x => x.bev.length > 0)
+    .slice(0, 6)
+  const slugs: string[] = []
+  for (const { bev } of cols) for (const b of bev) if (!slugs.includes(b.slug)) slugs.push(b.slug)
+  return { cols, slugs }
+}
+
+function TrendTabel({ analyses }: { analyses: MetaAnalyse[] }) {
+  const { cols, slugs } = buildTrendMatrix(analyses)
+  if (cols.length === 0) return null
+
+  const cel: React.CSSProperties = { padding: '8px 10px', fontSize: 12, textAlign: 'center', borderBottom: '1px solid #1f2937' }
+  const labelCel: React.CSSProperties = { padding: '8px 12px', fontSize: 13, color: '#9ca3af', borderBottom: '1px solid #1f2937', whiteSpace: 'nowrap' }
+
+  return (
+    <div style={{ borderTop: '1px solid #1f2937', paddingTop: 40, marginBottom: 48 }}>
+      <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>TREND</p>
+      <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+        Structurele verbeterpunten per analyse. Kleur is ernst (rood hoog, amber midden, grijs laag),
+        teken is de beweging: ○ nieuw, ↑ verbeterd, = gelijk, ↓ verslechterd.
+      </p>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ borderCollapse: 'collapse', minWidth: 360 }}>
+          <thead>
+            <tr>
+              <th style={{ ...labelCel, color: '#6b7280', fontWeight: 400 }}></th>
+              {cols.map(({ a }) => (
+                <th key={a.id} style={{ ...cel, color: '#6b7280', fontWeight: 400, letterSpacing: 1 }}>
+                  {shortDate(a.created_at)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {slugs.map(slug => (
+              <tr key={slug}>
+                <td style={labelCel}>{slug.replace(/_/g, ' ')}</td>
+                {cols.map(({ a, bev }) => {
+                  const b = bev.find(x => x.slug === slug)
+                  return (
+                    <td key={a.id} style={cel} title={b?.toelichting ?? ''}>
+                      {b
+                        ? <span style={{ color: ERNST_KLEUR[b.ernst], fontWeight: 700 }}>{TREND_GLYPH[b.trend]}</span>
+                        : <span style={{ color: '#374151' }}>·</span>}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 export default function MetaAnalyseClient() {
@@ -472,6 +542,8 @@ export default function MetaAnalyseClient() {
         )}
       </div>
 
+      {!archiveLoading && <TrendTabel analyses={analyses} />}
+
       {archiveLoading ? (
         <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
@@ -551,7 +623,7 @@ export default function MetaAnalyseClient() {
                         )}
                       </div>
                       <div style={{ padding: '24px 24px 28px 24px' }}>
-                        <AnalyseText text={tab === 'jouw' && a.jouw_analyse_text ? a.jouw_analyse_text : tab === 'zelf' ? a.zelfbeoordeling_text : a.expertpanel_text} />
+                        <AnalyseText text={tab === 'jouw' && a.jouw_analyse_text ? a.jouw_analyse_text : tab === 'zelf' ? a.zelfbeoordeling_text : stripBevindingenBlok(a.expertpanel_text)} />
                       </div>
                     </div>
                   )}

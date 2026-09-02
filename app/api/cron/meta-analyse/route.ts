@@ -7,6 +7,7 @@ import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { runMetaAnalyse } from '@/lib/metaAnalyse'
+import { stripBevindingenBlok } from '@/lib/metaAnalyseTrend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
         <div style="border-top:1px solid #374151;margin:32px 0;"></div>
 
         <h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin:0 0 16px;letter-spacing:2px;">EXPERTPANEL</h2>
-        ${textToHtml(expertpanel)}
+        ${textToHtml(stripBevindingenBlok(expertpanel))}
 
         ${jouwAnalyse ? `
         <div style="border-top:1px solid #374151;margin:32px 0;"></div>
