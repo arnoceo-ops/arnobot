@@ -10,8 +10,9 @@ const supabase = createClient(
 // Gratis toegang tot een datum (comp), los van de betaalstroom. Zet expires_at en
 // wist trial_start: anders pikt de trial-emails-cron de gebruiker op (filter
 // trial_start gezet + paid_at leeg) en blokkeert 'm zodra de oorspronkelijke
-// 30-dagen-trial voorbij is. paid_at en de referral-status blijven ongemoeid;
-// een comp is geen betaling.
+// 30-dagen-trial voorbij is. paid_at, de referral-status en is_active blijven
+// ongemoeid; een comp is geen betaling, en een uitgeschakelde gebruiker moet
+// bewust via de aan/uit-knop weer aangezet worden (zie /api/admin/active).
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -37,7 +38,6 @@ export async function POST(req: NextRequest) {
       expires_at: exp.toISOString(),
       trial_start: null,
       paid_at: null,
-      is_active: true,
     })
     .eq('user_id', userId)
 
