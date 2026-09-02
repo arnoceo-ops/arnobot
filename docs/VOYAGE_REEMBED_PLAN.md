@@ -52,28 +52,35 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 - [x] Modelkeuze bevestigd door Arno (`voyage-4-large`, 2026-09-02)
 - [x] Prijs/toelage gecheckt: $0,12/M, eerste 200M gratis, corpus < 0,5M tokens
 - [x] Voyage-account gecheckt via `scripts/check-voyage-4.mjs`: `voyage-4-large` werkt op de huidige key, geeft **1024 dimensies** terug (bestaande `vector(1024)`-kolommen passen, geen kolomtype-migratie), cosine(v3, v4) op dezelfde zin ≈ 0 (bevestigt: echt andere vectorruimte, volledige her-embedding verplicht)
-- [ ] **Fase 0-SQL** (Arno voert uit, plakt output terug): kolomtype-check + `pg_get_functiondef` van `match_blog_chunks`, `match_blog_chunks_fulltext` en `match_sessions`
+- [x] **Fase 0-SQL** uitgevoerd (2026-09-02). Bevindingen:
+  - Indexen: `blog_chunks_embedding_idx` = ivfflat, `vector_cosine_ops`, `lists=100`. `idx_sessions_embedding` = ivfflat, `vector_cosine_ops`, `lists=50`.
+  - `match_blog_chunks(query_embedding vector, match_count int default 30, match_threshold float default 0.3)` → `content, context, source, url, similarity`. Cosine-distance (`<=>`), `similarity = 1 - distance`, filter `similarity > match_threshold`. App roept aan met alleen `query_embedding` + `match_count: 100` (threshold blijft 0.3).
+  - `match_blog_chunks_fulltext` raakt embeddings niet, geen v4-versie nodig.
+  - `match_sessions(query_embedding vector, match_user_id text, match_count int default 30)` → `session_id, title, summary, message_count, created_at, blog_suggestions, similarity`. Filtert `user_id = match_user_id AND embedding is not null AND deleted_at is null`.
+  - **Zijvondst:** `match_sessions` filtert dus wél op `deleted_at`, terwijl de comment in `app/api/chat/route.ts` (rond regel 225) beweert van niet en er daarom nog een keer overheen filtert. De app-filter is nu redundant maar onschadelijk. Buiten scope van deze migratie; los noteren voor Arno.
 
-### Fase 1 — kennisbank (vaste corpus, eerst)
-- [ ] **SQL-migratie 1** (Arno voert uit in Supabase, bevestigt met screenshot):
-  - `ALTER TABLE blog_chunks ADD COLUMN embedding_v4 vector(1024);`
-  - `match_blog_chunks_v4` aanmaken: kopie van `match_blog_chunks` die tegen `embedding_v4` matcht
+**Combi-aanpak besluit:** beide vectorstores in één shadow-migratie (`embedding_v4` op beide tabellen, `match_blog_chunks_v4` + `match_sessions_v4` in één keer). De schrijvers en de cutover blijven wél per store gescheiden, zodat elke omschakeling los te verifiëren en terug te draaien is. Reden: de SQL is bijna identiek, dat scheelt Arno twee losse Supabase-sessies.
+
+**ivfflat-detail:** een ivfflat-index clustert op de data die er bij het bouwen is. De `embedding_v4`-index dus pas aanmaken *nadat* de kolom gevuld is, niet in migratie 1.
+
+- [x] **SQL-migratie 1** aangeleverd (shadow-kolommen op beide tabellen + `match_blog_chunks_v4` + `match_sessions_v4`, geen indexen). Wacht op uitvoering + bevestiging door Arno.
 - [ ] `embed-chunks.mjs`, `rss-ingest/route.ts`, `embed-single-doc.mjs` schrijven **beide** kolommen (oud model + `voyage-4-large`)
 - [ ] Deploy van de dual-write (leest nog oud)
 - [ ] `node scripts/embed-chunks.mjs` draaien → volledige rebuild, elke rij krijgt beide vectoren
+- [ ] **SQL-migratie 1b** (Arno): `create index blog_chunks_embedding_v4_idx ... ivfflat (embedding_v4 vector_cosine_ops) with (lists = 100)`
 - [ ] Verifiëren: 10 echte vragen door beide RPC's, resultaten vergelijken; cosine-similarity-steekproef op identieke brontekst (nieuw geëmbede query vs opgeslagen `embedding_v4` ≈ 1,0)
 - [ ] **Cutover-deploy:** `getVoyageEmbedding()` → `voyage-4-large`, `searchCandidates()` → `match_blog_chunks_v4`
 - [ ] 48 uur meekijken op Sentry en op de retrieval-kwaliteit
-- [ ] **SQL-migratie 2** (Arno): `embedding` droppen, `embedding_v4` → `embedding` hernoemen, `match_blog_chunks` vervangen door de v4-versie, `match_blog_chunks_v4` droppen. Code terug naar de kale RPC-naam.
+- [ ] **SQL-migratie 2** (Arno): oude `embedding` + index droppen, `embedding_v4` → `embedding` hernoemen, index hernoemen, `match_blog_chunks` vervangen door de v4-body, `match_blog_chunks_v4` droppen. Code terug naar de kale RPC-naam.
 
 ### Fase 2 — sessie-geheugen (groeiende corpus)
-- [ ] **SQL-migratie 3** (Arno): `ALTER TABLE arnobot_blog_sessions ADD COLUMN embedding_v4 vector(1024);` + `match_sessions_v4` (kopie met `deleted_at`-filter intact)
-- [ ] `embedSessionText()` schrijft beide kolommen; deploy dual-write
+- [ ] `embedSessionText()` schrijft beide kolommen (oud model + `voyage-4-large`); deploy dual-write
 - [ ] Backfill-script: `embedding_v4` vullen voor alle niet-verwijderde sessies (patroon van `scripts/reembed-sessions.mjs`)
+- [ ] **SQL-migratie 3b** (Arno): `create index idx_sessions_embedding_v4 ... ivfflat (embedding_v4 vector_cosine_ops) with (lists = 50)`
 - [ ] Verifiëren: cosine-similarity-steekproef + `match_sessions_v4` handmatig testen op een paar bekende sessies
 - [ ] **Cutover-deploy:** `embedSessionQuery()` → `voyage-4-large`, lezer → `match_sessions_v4`
 - [ ] 48 uur meekijken
-- [ ] **SQL-migratie 4** (Arno): oude kolom droppen, hernoemen, `match_sessions` vervangen, `match_sessions_v4` droppen
+- [ ] **SQL-migratie 4** (Arno): oude kolom + index droppen, hernoemen, `match_sessions` vervangen, `match_sessions_v4` droppen
 
 ### Fase 3 — consolidatie en opruimen
 - [ ] `getVoyageEmbedding()` en `getMultilingualEmbedding()` samenvoegen tot één functie; het dual-model-commentaar in `lib/rag.ts` verwijderen
@@ -93,3 +100,65 @@ Geen harde blokker meer. Belangrijkste vondst: `voyage-3-large` en de hele `voya
 6. SQL-migraties 2, 3 en 4 uitvoeren + bevestigen
 
 Tussen de checkpoints door kan de bouw autonoom.
+
+## Bijlage: SQL
+
+### SQL-migratie 1 (alleen-toevoegend, geen indexen)
+
+```sql
+-- Shadow-kolommen op beide vectorstores. Zelfde type als bestaand: vector(1024).
+alter table blog_chunks           add column if not exists embedding_v4 vector(1024);
+alter table arnobot_blog_sessions add column if not exists embedding_v4 vector(1024);
+
+-- v4-variant van match_blog_chunks: identiek aan het origineel, leest embedding_v4.
+create or replace function public.match_blog_chunks_v4(
+  query_embedding vector,
+  match_count integer default 30,
+  match_threshold double precision default 0.3
+)
+returns table(content text, context text, source text, url text, similarity double precision)
+language sql stable as $$
+  select
+    content, context, source, url,
+    1 - (embedding_v4 <=> query_embedding) as similarity
+  from blog_chunks
+  where embedding_v4 is not null
+    and 1 - (embedding_v4 <=> query_embedding) > match_threshold
+  order by embedding_v4 <=> query_embedding
+  limit match_count;
+$$;
+
+-- v4-variant van match_sessions: identiek aan het origineel, leest embedding_v4.
+create or replace function public.match_sessions_v4(
+  query_embedding vector,
+  match_user_id text,
+  match_count integer default 30
+)
+returns table(session_id text, title text, summary text, message_count integer,
+              created_at timestamptz, blog_suggestions jsonb, similarity double precision)
+language sql stable as $$
+  select
+    session_id, title, summary, message_count, created_at, blog_suggestions,
+    1 - (embedding_v4 <=> query_embedding) as similarity
+  from arnobot_blog_sessions
+  where user_id = match_user_id
+    and embedding_v4 is not null
+    and deleted_at is null
+  order by embedding_v4 <=> query_embedding
+  limit match_count;
+$$;
+```
+
+Verschil met de originelen: alleen de kolomnaam (`embedding_v4`) en een expliciete `embedding_v4 is not null` in `match_blog_chunks_v4` (het origineel mist die; tijdens de shadow-fase staat een groot deel van de kolom op null, de check maakt dat goedkoop expliciet). Verder byte-voor-byte gelijk gedrag.
+
+Verificatie na uitvoeren:
+
+```sql
+select column_name, data_type from information_schema.columns
+where table_name in ('blog_chunks','arnobot_blog_sessions') and column_name = 'embedding_v4';
+-- verwacht: 2 rijen, USER-DEFINED (vector)
+
+select proname from pg_proc where proname in ('match_blog_chunks_v4','match_sessions_v4');
+-- verwacht: 2 rijen
+```
+
