@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured, isVoiceLaunchAllowed } from '@/lib/voice'
 import { computeFallbackGroeibalans, getGroeibalansCopy, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
+import { telGebruik } from '@/lib/gebruikTellers'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,13 +25,10 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const [profileRes, userRes, gesprekkenCountRes, sparCountRes, analysesCountRes, coachingCountRes] = await Promise.all([
+  const [profileRes, userRes, tellers] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
     serviceDb.from('approved_users').select('plan, voornaam, full_name, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
-    serviceDb.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    serviceDb.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    serviceDb.from('arnobot_analyses').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    serviceDb.from('arnobot_coaching').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    telGebruik(serviceDb, userId),
   ])
 
   if (!profileRes.data) redirect('/bot/qa')
@@ -47,13 +45,8 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   // dan de AI-classificatie leidend (approved_users.groeibalans_*), en zolang die nog niet is
   // ingevuld (gebruiker nog geen sessie gehad ná het bouwen van deze functie) de tellings-
   // fallback uit lib/groeibalans.ts. Zie project_gebruiksbalans_concept.md voor de volledige
-  // ontwerpgeschiedenis.
-  const tellers = {
-    gesprekken: gesprekkenCountRes.count ?? 0,
-    sparsessies: sparCountRes.count ?? 0,
-    analyses: analysesCountRes.count ?? 0,
-    coaching: coachingCountRes.count ?? 0,
-  }
+  // ontwerpgeschiedenis. `tellers` komt uit lib/gebruikTellers.ts, dat verwijderde en
+  // community-uitgesloten gesprekken al wegfiltert (zelfde filters als de Bieb).
   let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers } | null = null
   if (tellers.gesprekken >= 5) {
     const classificatie = userRes.data?.groeibalans_tonen === null || userRes.data?.groeibalans_tonen === undefined
