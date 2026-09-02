@@ -54,6 +54,7 @@ export type EmailType =
   | 'first_coaching'
   | 'dag21_gesprek'
   | 'dag25'
+  | 'testtoegang_afloop'
   | 'betaalwaarschuwing'
   | 'geblokkeerd'
   | 'trial_afgelopen'
@@ -81,6 +82,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   first_coaching:        { label: 'Eerste coaching',        description: 'Dag 5-30:na 5+ sessies, nog geen rapport aangevraagd',               category: 'user' },
   dag21_gesprek:         { label: 'Dag 21 - gesprek Arno',  description: 'Dag 21:nog geen gesprek met Arno ingepland',                        category: 'user' },
   dag25:                 { label: 'Dag 25',                 description: 'Dag 25:trial bijna afgelopen, opt-in CTA',                          category: 'user' },
+  testtoegang_afloop:    { label: 'Testtoegang loopt af',   description: 'Eenmalig:heads-up voor vroege testgebruikers, comp eindigt 1 nov', category: 'user' },
   betaalwaarschuwing:    { label: 'Betaalwaarschuwing',     description: 'Dag 25+:7 dagen na opt-in zonder betaling',                         category: 'user' },
   geblokkeerd:           { label: 'Geblokkeerd',            description: 'Dag 26+:24u na waarschuwing, nog steeds geen betaling',             category: 'user' },
   trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30:trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
@@ -182,6 +184,14 @@ export function getEmailTemplate(
         html: mail(
           `Over vijf dagen stopt je gratis toegang automatisch, tenzij je aangeeft door te willen gaan.<br><br>Kies hieronder je abonnement. Je ontvangt dan een factuur van ArnoBot. Je toegang blijft actief totdat de factuur is voldaan.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
+        ),
+      }
+    case 'testtoegang_afloop':
+      return {
+        subject: `${prefix}Je gratis toegang tot ArnoBot loopt af op 1 november`,
+        html: mail(
+          `Je gebruikt ArnoBot nu een paar maanden als testgebruiker. Die periode loopt tot en met 1 november.<br><br>Daarna stopt je toegang automatisch. Wil je doorgaan, dan kies je een abonnement via je account. Wil je stoppen, dan hoef je niks te doen, je data blijft daarna nog 30 dagen bewaard.<br><br>Wil je eerst even sparren over wat het je tot nu toe heeft opgeleverd? Antwoord op deze mail, dan plannen we iets.`,
+          'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
         ),
       }
     case 'betaalwaarschuwing':
