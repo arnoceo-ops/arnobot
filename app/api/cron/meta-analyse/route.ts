@@ -5,34 +5,14 @@ export const maxDuration = 300
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
-import type { Message } from '@anthropic-ai/sdk/resources'
-import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
-import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
-import { fetchVorigeAnalyse, vorigPanelBlok, vorigZelfBlok, TREND_PANEL_INSTRUCTIE, TREND_ZELF_INSTRUCTIE } from '@/lib/metaAnalyseTrend'
+import { runMetaAnalyse } from '@/lib/metaAnalyse'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-
-function extractText(response: Message, label: string): string {
-  if (response.stop_reason === 'refusal') {
-    console.error(`[cron/meta-analyse] ${label} refusal`)
-    return ''
-  }
-  return getText(response.content)
-}
-
-// Basiswaarden voor max_tokens per call. Bij afkapping (stop_reason 'max_tokens') wordt
-// eenmalig geretryt met het dubbele budget, ver binnen Fable 5's 128K-outputplafond.
-const ZELF_MAX_TOKENS = 12000
-const PANEL_MAX_TOKENS = 16000
-const JOUW_ANALYSE_MAX_TOKENS = 10000
 
 function textToHtml(text: string): string {
   const blocks = text.split(/\n{2,}/)
@@ -61,157 +41,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const days = 30
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-  const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
-
   try {
-    // Sessies ophalen
-    let sessieQuery = supabase
-      .from('arnobot_blog_sessions')
-      .select('session_id, title, summary')
-      .gte('created_at', since)
-      .not('session_id', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(25)
-      .neq('user_id', E2E_TEST_USER_ID)
-      .neq('user_id', MANUAL_TEST_USER_ID)
-      .neq('user_id', APP_REVIEWER_ID)
-    if (ownerUserId) sessieQuery = sessieQuery.neq('user_id', ownerUserId)
-    const { data: sessies } = await sessieQuery
+    const resultaat = await runMetaAnalyse(supabase, { days: 30 })
 
-    if (!sessies?.length) {
+    if (resultaat.status === 'geen_gesprekken') {
       return NextResponse.json({ skipped: true, reden: 'geen gesprekken' })
     }
-
-    // Arno's eigen input ophalen (max 45 dagen oud). arnobot_meta_input is een
-    // sleutel/waarde-tabel (key, value, updated_at), niet een log met een rij per opslag.
-    const cutoff = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: arnoInput } = await supabase
-      .from('arnobot_meta_input')
-      .select('value, updated_at')
-      .eq('key', 'panel_input')
-      .gte('updated_at', cutoff)
-      .maybeSingle()
-    const arnoInputTekst = arnoInput?.value ?? null
-
-    const vorigeAnalyse = await fetchVorigeAnalyse(supabase)
-
-    const sessionIds = sessies.map(s => s.session_id).filter(Boolean) as string[]
-
-    let logsQuery = supabase
-      .from('arnobot_rds_logs')
-      .select('session_id, question, answer, created_at')
-      .in('session_id', sessionIds)
-      .order('created_at', { ascending: true })
-    if (ownerUserId) logsQuery = logsQuery.neq('user_id', ownerUserId)
-    const { data: logs } = await logsQuery
-
-    const bySession: Record<string, { question: string; answer: string }[]> = {}
-    for (const log of logs ?? []) {
-      if (!bySession[log.session_id]) bySession[log.session_id] = []
-      if (bySession[log.session_id].length < 5) {
-        bySession[log.session_id].push({ question: log.question, answer: log.answer })
-      }
-    }
-
-    const rijkeSessies = sessies.filter(s => (bySession[s.session_id]?.length ?? 0) > 0)
-    if (!rijkeSessies.length) {
-      return NextResponse.json({ skipped: true, reden: 'geen gesprekken met inhoud' })
-    }
-
-    const transcripts = rijkeSessies
-      .map((s, i) => {
-        const exchanges = bySession[s.session_id]
-          .map(e => `GEBRUIKER: ${e.question}\n\nARNO: ${e.answer}`)
-          .join('\n\n---\n\n')
-        return `GESPREK ${i + 1}${s.title ? ` (${s.title})` : ''}:\n\n${exchanges}`
-      })
-      .join('\n\n====\n\n')
-
-    const sessieCount = rijkeSessies.length
-
-    const callZelfModel = (maxTokens = ZELF_MAX_TOKENS) => anthropic.messages.create({
-      model: 'claude-fable-5',
-      max_tokens: maxTokens,
-      system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Schrijf vanuit het perspectief van ArnoBot zelf. Wees eerlijk en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
-      messages: [{
-        role: 'user',
-        content: `${sessieCount} gesprekken van de afgelopen maand:\n\n${transcripts}${vorigZelfBlok(vorigeAnalyse)}\n\nZelfbeoordeling in vier blokken:\n\nWAAR IK STERK WAS\n[minimaal 3 concrete observaties]\n\nWAAR IK TEKORT SCHOOT\n[minimaal 3 specifieke punten]\n\nKENNISHIATEN\n[specifieke terreinen waar diepgang ontbrak]\n\nWAT IK ZOU VERBETEREN\n[minimaal 3 concrete aanbevelingen]${vorigeAnalyse ? TREND_ZELF_INSTRUCTIE : ''}`,
-      }],
-    })
-    const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
-      model: 'claude-fable-5',
-      max_tokens: maxTokens,
-      system: `Je coördineert een expertpanel dat ArnoBot beoordeelt als salescoach. Elk jurylid spreekt in de ik-vorm vanuit zijn eigen filosofie. Wees kritisch en specifiek. ${ARNOBOT_MANDAAT} Gebruik NOOIT een streepje als leesteken.`,
-      messages: [{
-        role: 'user',
-        content: `${sessieCount} echte gesprekken van de afgelopen maand:\n\n${transcripts}${vorigPanelBlok(vorigeAnalyse)}\n\nMARSHALL GOLDSMITH\nScore: [X]/10\n[Oordeel: gedragsverandering, accountability, vraag achter de vraag]\nKritisch punt: [één aanbeveling]\n\nTONY ROBBINS\nScore: [X]/10\n[Oordeel: state, grotere visie, threats naar opportunities]\nKritisch punt: [één aanbeveling]\n\nELON MUSK\nScore: [X]/10\n[Oordeel: first principles, direct toepasbaar, geen omhaal]\nKritisch punt: [één aanbeveling]\n\nDANIEL KAHNEMAN\nScore: [X]/10\n[Oordeel: System 1 vs 2, emotionele drijfveren, gedragspsychologie]\nKritisch punt: [één aanbeveling]\n\nJORDAN BELFORT\nScore: [X]/10\n[Oordeel: commerciële scherpte, veldklaar advies, deals sluiten]\nKritisch punt: [één aanbeveling]\n\n${arnoInputTekst
-  ? `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Arno heeft zijn eigen observaties aangeleverd over wat ArnoBot zei in zijn antwoorden. Verwerk zijn input als een juryoordeel.)\nArno\'s eigen aantekeningen: "${arnoInputTekst}"\nScore: [X]/10\n[Verwerk Arno\'s observaties in een concreet oordeel op de gesprekken]\nKritisch punt: [één concrete aanbeveling die voortbouwt op zijn aantekeningen]`
-  : `ARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: is dit zijn stem, zijn directheid, zijn timing?)\nScore: [X]/10\n[Oordeel: toon, authenticiteit, aanpak]\nKritisch punt: [één aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
-}${vorigeAnalyse ? TREND_PANEL_INSTRUCTIE : ''}\n\nOVERALL SCORE: [gemiddelde van zes scores]/10\nPANEL CONSENSUS: [één zin]\nPRIORITEIT 1: [meest impactvolle verbeterpunt]`,
-      }],
-    })
-
-    const callJouwAnalyseModel = (maxTokens = JOUW_ANALYSE_MAX_TOKENS) => anthropic.messages.create({
-      model: 'claude-fable-5',
-      max_tokens: maxTokens,
-      system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde. ${ARNOBOT_MANDAAT} Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken.`,
-      messages: [{
-        role: 'user',
-        content: `Dit zijn Arno's eigen aantekeningen over ArnoBot:\n\n"${arnoInputTekst}"\n\nSplits dit op in losse, afzonderlijke punten, zoveel als hij daadwerkelijk noemt, geen vast aantal. Voor elk punt exact dit format:\n\nPUNT [n]: [korte titel, max 6 woorden]\n[zijn observatie, opgeschoond tot een heldere alinea, niet ingekort tot één zin als hij meer schreef]\nKritisch punt: [concrete, direct implementeerbare aanbeveling in de stijl "doe X wanneer Y"]\n\nBehandel elk punt apart, laat niets weg. Voeg twee opmerkingen alleen samen als ze overduidelijk hetzelfde onderwerp raken.`,
-      }],
-    })
-
-    const jouwAnalysePromise = arnoInputTekst ? callJouwAnalyseModel() : null
-
-    const [zelfResponse, panelResponse] = await Promise.all([callZelfModel(), callPanelModel()])
-
-    let zelfbeoordeling = extractText(zelfResponse, 'zelfbeoordeling')
-    let expertpanel = extractText(panelResponse, 'expertpanel')
-
-    if (!zelfbeoordeling) {
-      console.error('[cron/meta-analyse] lege/refusal zelfbeoordeling, retry')
-      zelfbeoordeling = extractText(await callZelfModel(), 'zelfbeoordeling retry')
-    } else if (zelfResponse.stop_reason === 'max_tokens') {
-      console.error('[cron/meta-analyse] zelfbeoordeling afgekapt op max_tokens, retry met meer ruimte')
-      const retryText = extractText(await callZelfModel(ZELF_MAX_TOKENS * 2), 'zelfbeoordeling retry (meer ruimte)')
-      if (retryText) zelfbeoordeling = retryText
-    }
-    if (!expertpanel) {
-      console.error('[cron/meta-analyse] leeg/refusal expertpanel, retry')
-      expertpanel = extractText(await callPanelModel(), 'expertpanel retry')
-    } else if (panelResponse.stop_reason === 'max_tokens') {
-      console.error('[cron/meta-analyse] expertpanel afgekapt op max_tokens, retry met meer ruimte')
-      const retryText = extractText(await callPanelModel(PANEL_MAX_TOKENS * 2), 'expertpanel retry (meer ruimte)')
-      if (retryText) expertpanel = retryText
-    }
-    if (!zelfbeoordeling || !expertpanel) {
+    if (resultaat.status === 'genereren_mislukt') {
       await notifyCronFailure('meta-analyse', new Error('Leeg AI-antwoord na retry, analyse overgeslagen'))
       return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
     }
 
-    let jouwAnalyse: string | null = null
-    if (jouwAnalysePromise) {
-      const jouwResponse = await jouwAnalysePromise
-      jouwAnalyse = extractText(jouwResponse, 'jouw-analyse')
-      if (!jouwAnalyse) {
-        console.error('[cron/meta-analyse] lege/refusal jouw-analyse, retry')
-        jouwAnalyse = extractText(await callJouwAnalyseModel(), 'jouw-analyse retry')
-      } else if (jouwResponse.stop_reason === 'max_tokens') {
-        console.error('[cron/meta-analyse] jouw-analyse afgekapt op max_tokens, retry met meer ruimte')
-        const retryText = extractText(await callJouwAnalyseModel(JOUW_ANALYSE_MAX_TOKENS * 2), 'jouw-analyse retry (meer ruimte)')
-        if (retryText) jouwAnalyse = retryText
-      }
-      if (!jouwAnalyse) {
-        console.error('[cron/meta-analyse] jouw-analyse na retry nog steeds leeg, sectie overgeslagen')
-      }
-    }
-
-    await supabase
-      .from('arnobot_meta_analyses')
-      .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel, jouw_analyse_text: jouwAnalyse })
-
+    const { zelfbeoordeling, expertpanel, jouwAnalyse, sessieCount } = resultaat
     const date = new Date().toLocaleDateString('nl-NL', {
       day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam',
     })
