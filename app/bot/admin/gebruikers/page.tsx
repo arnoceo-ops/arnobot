@@ -40,6 +40,20 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   return { label: 'ONBEKEND', color: '#6b7280' }
 }
 
+// Sorteersleutel voor de STATUS-badge, spiegelt trialStatus() hierboven:
+// INACTIEF < VERLOPEN < loopt af (op resterende dagen, minst eerst) < BETAALD < onbekend.
+function statusSortKey(row: { is_active?: boolean; paid_at?: string | null; expires_at?: string | null; trial_start?: string | null }): string {
+  if (!row.is_active) return '0'
+  if (row.paid_at) return '3'
+  let end: number | null = null
+  if (row.expires_at) end = new Date(row.expires_at).getTime()
+  else if (row.trial_start) end = new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000
+  if (end === null) return '4'
+  const daysLeft = Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 0) return '1'
+  return `2_${String(daysLeft).padStart(6, '0')}`
+}
+
 // Sorteersleutel voor de BETALING-kolom die de zichtbare volgorde volgt:
 // UIT < TOEGANG + < GRATIS (op einddatum) < BETAALD met einddatum < BETAALD onbeperkt.
 // Rang als prefix, datum als tiebreaker, alles als string zodat één vergelijking volstaat.
@@ -255,6 +269,7 @@ export default async function GebruikersPage({
       bv = (b.clerkName || b.full_name || [b.voornaam, b.achternaam].filter(Boolean).join(' ')).toLowerCase()
     }
     if (sort === 'aangemeld') { av = a.created_at; bv = b.created_at }
+    if (sort === 'status') { av = statusSortKey(a); bv = statusSortKey(b) }
     if (sort === 'gesprekken') { av = a.count; bv = b.count }
     if (sort === 'vragen') { av = a.questions; bv = b.questions }
     if (sort === 'laatste') { av = a.lastSession || ''; bv = b.lastSession || '' }
@@ -302,7 +317,10 @@ export default async function GebruikersPage({
         <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 8px', padding: '0 12px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
-          <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+            <SortHeader label="STATUS" field="status" sort={sort} dir={dir} />
+            <SortHeader label="AANGEMELD" field="aangemeld" sort={sort} dir={dir} />
+          </div>
           <SortHeader label="GESPREKKEN" field="gesprekken" sort={sort} dir={dir} vertical />
           <SortHeader label="VRAGEN" field="vragen" sort={sort} dir={dir} vertical />
           <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} vertical />
