@@ -3,7 +3,7 @@
 **Gemaakt:** 2026-08-30
 **Aard:** geconsolideerde momentopname uit `CLAUDE.md`, alle plandocumenten en het sessiegeheugen, op verzoek als sessie-overstijgende reminder. **Dit is geen live tracker.** De bron van waarheid blijft per onderwerp het betreffende plandocument en de "Openstaand"-markeringen in `CLAUDE.md`. Bij de eerstvolgende kwartaalcheck (punt 11) tegen de werkelijkheid houden en daarna verwijderen of verversen, niet eindeloos laten meelopen.
 
-**Bewust weggelaten:** de Android-app en de keuze van een betaalprovider (Arno houdt die zelf bij), plus alles wat puur daarop wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking.
+**Bewust weggelaten:** de Android-app, plus alles wat puur op de betaalprovider-integratie wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking. **De betaalprovider-keuze zelf is genomen (2026-09-02): Stripe voor NL, Paddle voor de rest van de wereld, sequentieel gebouwd. Zie `docs/PAYMENTS_PLAN.md`.**
 
 ---
 
