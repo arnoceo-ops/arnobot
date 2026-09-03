@@ -441,7 +441,7 @@ export default function GeschiedenisPage() {
           width: 180px; text-align: center; border-radius: 999px;
         }
         .delete-bar-destructive:hover { box-shadow: inset 0 0 0 1px #ff3300; color: #ff3300; }
-        .delete-bar-destructive:disabled { box-shadow: inset 0 0 0 1px #374151; color: #4b5563; cursor: not-allowed; }
+        .delete-bar-destructive:disabled { box-shadow: inset 0 0 0 1px #374151; color: #6b7280; cursor: not-allowed; }
 
         .session-checkbox {
           flex-shrink: 0; width: 22px; height: 22px;
@@ -826,7 +826,7 @@ export default function GeschiedenisPage() {
                   </Link>
                   <button
                     onClick={dismissCoachingHint}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
                     aria-label="Sluiten"
                   >×</button>
                 </div>

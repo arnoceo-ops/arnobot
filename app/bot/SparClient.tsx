@@ -1428,7 +1428,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .spar-input-label {
           font-family: 'Bebas Neue', sans-serif;
           font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
-          color: #4b5563; margin-bottom: 10px; display: block; line-height: 1;
+          color: #6b7280; margin-bottom: 10px; display: block; line-height: 1;
           width: 100%; max-width: 812px;
         }
         .spar-input-row {
@@ -1582,7 +1582,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .toggle-btn.active { background: #f59e0b; color: #111827; }
         .openers-label {
           font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
-          color: #4b5563; padding: 32px 0 20px; display: block;
+          color: #6b7280; padding: 32px 0 20px; display: block;
         }
         .openers-grid {
           display: grid;
@@ -2701,7 +2701,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   </button>
                   <button
                     onClick={dismissAnalysesHint}
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
                     aria-label="Sluiten"
                   >×</button>
                 </div>

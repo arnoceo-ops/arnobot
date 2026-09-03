@@ -348,7 +348,7 @@ export default function AccountPage() {
                 onClick={handleSetPassword}
                 disabled={settingPassword}
                 className="primary-btn"
-                style={{ ...btn, alignSelf: 'flex-start', background: settingPassword ? '#374151' : '#f59e0b', color: settingPassword ? '#4b5563' : '#111827', cursor: settingPassword ? 'not-allowed' : 'pointer' }}
+                style={{ ...btn, alignSelf: 'flex-start', background: settingPassword ? '#374151' : '#f59e0b', color: settingPassword ? '#6b7280' : '#111827', cursor: settingPassword ? 'not-allowed' : 'pointer' }}
               >
                 {settingPassword ? 'BEZIG...' : 'VERZEND'}
               </button>
@@ -366,7 +366,7 @@ export default function AccountPage() {
             onClick={handleExport}
             disabled={exporting}
             className="primary-btn"
-            style={{ ...btn, background: exporting ? '#374151' : '#f59e0b', color: exporting ? '#4b5563' : '#111827', cursor: exporting ? 'not-allowed' : 'pointer' }}
+            style={{ ...btn, background: exporting ? '#374151' : '#f59e0b', color: exporting ? '#6b7280' : '#111827', cursor: exporting ? 'not-allowed' : 'pointer' }}
           >
             {exporting ? 'EXPORTEREN...' : 'DOWNLOAD MIJN DATA'}
           </button>
@@ -418,7 +418,7 @@ export default function AccountPage() {
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  style={{ ...btn, background: !cancelling ? '#cc2200' : '#374151', color: !cancelling ? '#fff' : '#4b5563', cursor: cancelling ? 'not-allowed' : 'pointer' }}
+                  style={{ ...btn, background: !cancelling ? '#cc2200' : '#374151', color: !cancelling ? '#fff' : '#6b7280', cursor: cancelling ? 'not-allowed' : 'pointer' }}
                 >
                   {cancelling ? 'VERWERKEN...' : 'JA, OPZEGGEN'}
                 </button>
@@ -465,7 +465,7 @@ export default function AccountPage() {
                 <button
                   onClick={handleDelete}
                   disabled={deleteInput !== 'VERWIJDER' || deleting}
-                  style={{ ...btn, background: deleteInput === 'VERWIJDER' && !deleting ? '#cc2200' : '#374151', color: deleteInput === 'VERWIJDER' && !deleting ? '#fff' : '#4b5563', cursor: deleteInput === 'VERWIJDER' && !deleting ? 'pointer' : 'not-allowed' }}
+                  style={{ ...btn, background: deleteInput === 'VERWIJDER' && !deleting ? '#cc2200' : '#374151', color: deleteInput === 'VERWIJDER' && !deleting ? '#fff' : '#6b7280', cursor: deleteInput === 'VERWIJDER' && !deleting ? 'pointer' : 'not-allowed' }}
                 >
                   {deleting ? 'BEZIG...' : 'VERWIJDER'}
                 </button>
