@@ -5,6 +5,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { getText } from '@/lib/ai'
+import { RULE_NO_DASH, RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -154,14 +156,10 @@ export async function GET(req: NextRequest) {
             max_tokens: 100,
             messages: [{
               role: 'user',
-              content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`,
+              content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag.\n\n${RULE_JIJ_JOU}\n${RULE_NO_TIME_PRESSURE}\n${RULE_NO_DASH}`,
             }],
           })
-          nudgeQuestion = msg.content
-            .filter(b => b.type === 'text')
-            .map(b => b.text)
-            .join('')
-            .trim()
+          nudgeQuestion = getText(msg.content).trim()
         } catch {
           // val terug op generieke template
         }

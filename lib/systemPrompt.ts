@@ -34,6 +34,8 @@ export const RULE_NO_INVENTED_EXAMPLES = `Verzin geen concrete voorbeelden met s
 
 export const RULE_NO_TIME_PRESSURE = `Geef NOOIT tijdgebonden aanwijzingen zoals "doe dit vandaag", "bel morgen", "verzamel voor het weekend", "pak dit deze week op". Schrijf acties zonder tijdslimiet: gewoon de actie zelf.`
 
+export const RULE_JIJ_JOU = `Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u". Ongeacht hoe senior of formeel de persoon is die je speelt.`
+
 const SHARED_RULES = `
 ${RULE_NO_DASH}
 

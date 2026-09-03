@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_NO_DASH, RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -68,7 +69,11 @@ export async function GET(req: NextRequest) {
     const callModel = () => anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Je analyseert de gesprekken van iemand die jouw bot gebruikt en geeft een patroonanalyse. Spreek de gebruiker direct aan met "je". Geen bullet points. Geen inleiding. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's. Geen accenten op woorden voor nadruk.`,
+      system: `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Je analyseert de gesprekken van iemand die jouw bot gebruikt en geeft een patroonanalyse. Geen bullet points. Geen inleiding. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's. Geen accenten op woorden voor nadruk.
+
+${RULE_JIJ_JOU}
+${RULE_NO_TIME_PRESSURE}
+${RULE_NO_DASH}`,
       messages: [{
         role: 'user',
         content: `Analyseer deze ${batch.length} gesprekken en geef een patroonanalyse:\n\nGESPREKKEN:\n${sessiesText}`

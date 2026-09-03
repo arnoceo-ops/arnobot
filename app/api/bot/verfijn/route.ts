@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_NO_DASH, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -37,7 +38,10 @@ Als er een vorig antwoord van ArnoBot aanwezig is, is de input een vervolg op da
 
 Beoordeel eerst of de input herkenbare inhoud bevat. Als de input onzin, wartaal, willekeurige tekens of volledig onbegrijpelijk is zonder enige context: reageer dan uitsluitend met het woord: ONBEGRIJPELIJK
 
-Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar behoud de kern. Gebruik het profiel en de gesprekscontext om de reactie relevanter te maken. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde versie. Geen uitleg, geen inleiding, geen aanhalingstekens. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
+Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar behoud de kern. Gebruik het profiel en de gesprekscontext om de reactie relevanter te maken. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde versie. Geen uitleg, geen inleiding, geen aanhalingstekens.
+
+${RULE_JIJ_JOU}
+${RULE_NO_DASH}`,
       messages: [{ role: 'user', content: vraag }]
     })
 

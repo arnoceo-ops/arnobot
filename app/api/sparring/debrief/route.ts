@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { createClient } from '@supabase/supabase-js'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
 
@@ -54,10 +55,10 @@ ${transcript}
 
 ${coachingContext}
 
-Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kopje. Begin direct met het eerste punt. Gebruik geen horizontale lijnen (---). Gebruik een lege regel als scheiding tussen punten. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Herschrijf zinnen zonder streepjes.
+Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kopje. Begin direct met het eerste punt. Gebruik geen horizontale lijnen (---). Gebruik een lege regel als scheiding tussen punten. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Herschrijf zinnen zonder streepjes. ${RULE_JIJ_JOU}
 
 1. Wat ging goed (1-2 zinnen)
-2. Het kritieke moment: wanneer verloor de gebruiker de controle of het momentum? Citeer de exacte woorden.
+2. Het kritieke moment: wanneer verloor je de controle of het momentum? Citeer de exacte woorden.
 3. Eén herkenbaar patroon (gebruik coaching-context als beschikbaar, anders observeer vanuit het gesprek)
 4. Één concrete tip voor het volgende gesprek`
 
