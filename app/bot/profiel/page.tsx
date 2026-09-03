@@ -92,6 +92,19 @@ const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
 
+// Welke profielvelden bij welke formuliervariant horen. Bij het opslaan wordt het profiel
+// hiermee opnieuw opgebouwd, niet met de volledige answers-state: zo verdwijnen velden van
+// een eerder gekozen rol (bv. een target dat als verkoper is ingevuld en daarna naar
+// Solopreneur is geswitcht) uit het opgeslagen profiel in plaats van als spookcontext in de
+// systeemprompt te blijven hangen. Overwrite, geen merge (de route doet .upsert op de hele
+// profiel-JSON).
+const PROFIEL_GEDEELD: (keyof Answers)[] = ['rol', 'gebruik', 'markt', 'wat_verkoop_je', 'ideale_klant', 'dealgrootte', 'salescyclus', 'jaren_sales', 'jaren_functie', 'jaardoel', 'uitdaging']
+const PROFIEL_VELDEN: Record<'team' | 'individueel' | 'solo', (keyof Answers)[]> = {
+  team: [...PROFIEL_GEDEELD, 'target_dit_jaar', 'target_3_jaar', 'kwartaalthema'],
+  individueel: [...PROFIEL_GEDEELD, 'target_dit_jaar', 'target_3_jaar', 'teamgrootte'],
+  solo: [...PROFIEL_GEDEELD, 'positionering', 'klantenbron', 'kanaal_afhankelijkheid', 'acquisitie_tijd', 'inkomensdoel'],
+}
+
 // Solopreneur-versie (rol === 'Solopreneur', geen team, geen command_manager): een eigen
 // intake omdat een zelfstandige geen formeel sales-target, geen gestructureerde salescyclus
 // en geen team heeft, maar wel een positionering, een acquisitiekanaal en een spanning
@@ -267,10 +280,15 @@ export default function BotProfielPage() {
     setSaving(true)
     setError('')
     try {
+      const variant = isCommandManager ? 'team' : isSolo ? 'solo' : 'individueel'
+      const schoonProfiel: Record<string, unknown> = { team_waitlist: teamWaitlist }
+      for (const key of PROFIEL_VELDEN[variant]) schoonProfiel[key] = answers[key]
+      schoonProfiel.rol = answers.rol === 'Anders' ? rolAnders.trim() : answers.rol
+
       const res = await fetch('/api/bot/profiel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profiel: { ...answers, rol: answers.rol === 'Anders' ? rolAnders.trim() : answers.rol, team_waitlist: teamWaitlist } }),
+        body: JSON.stringify({ profiel: schoonProfiel }),
       })
       if (!res.ok) throw new Error('Opslaan mislukt')
       setIsDirty(false)
