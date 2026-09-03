@@ -280,6 +280,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
 | `/api/bot/events` | Whitelisted clientevents loggen |
+| `/api/bot/posthog-identity` | Veilige PostHog person-properties ophalen (plan, rol, trial-status, team, tellingen) |
 | `/api/bot/response-feedback` | Duim omhoog/omlaag op een antwoord |
 | `/api/optout` | Marketingmail-opt-out verwerken (HMAC-signature-check) |
 
@@ -794,9 +795,9 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture.
 **Scope publiek:** anonieme `capture()` op publieke componenten (`PostHogTracker.tsx`).
 **Scope ingelogd (`/bot`, sinds 2026-08-30):** pseudoniem. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts`, genormaliseerde `$pageview` (geen query/IDs), event-whitelist als getypte union in `lib/posthog.ts` (`track()`). `/bot/admin` uitgesloten. Nooit gespreks-/coaching-/analyse-inhoud. `team_id` als super-property (geen betaalde group-analytics).
-**Session replay:** `PostHogSessionReplay.tsx`, UIT achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
+**Session replay:** `PostHogSessionReplay.tsx`, AAN sinds 2026-08-30 achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
 **Feature flags / surveys:** operationeel met de SDK-integratie, per feature in te richten.
-**Openstaand:** DPA opvragen, bewaartermijn instellen, replay-vlag omzetten na verificatie. Data Warehouse Stripe geblokkeerd tot betaalprovider.
+**Openstaand:** DPA opvragen, bewaartermijn instellen, verificatie op een echte opname dat de maskering werkt zoals bedoeld. Data Warehouse Stripe geblokkeerd tot betaalprovider.
 
 ### Calendly
 **Doel:** Boeking van het 1-op-1-gesprek met Arno.
