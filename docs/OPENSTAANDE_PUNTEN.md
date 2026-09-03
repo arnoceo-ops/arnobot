@@ -3,7 +3,12 @@
 **Gemaakt:** 2026-08-30
 **Aard:** geconsolideerde momentopname uit `CLAUDE.md`, alle plandocumenten en het sessiegeheugen, op verzoek als sessie-overstijgende reminder. **Dit is geen live tracker.** De bron van waarheid blijft per onderwerp het betreffende plandocument en de "Openstaand"-markeringen in `CLAUDE.md`. Bij de eerstvolgende kwartaalcheck (punt 11) tegen de werkelijkheid houden en daarna verwijderen of verversen, niet eindeloos laten meelopen.
 
-**Bewust weggelaten:** de Android-app, plus alles wat puur op de betaalprovider-integratie wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking. **De betaalprovider-keuze zelf is genomen (2026-09-02): Stripe voor NL, Paddle voor de rest van de wereld, sequentieel gebouwd. Zie `docs/PAYMENTS_PLAN.md`.**
+**Bewust weggelaten:** de Android-app, plus alles wat puur op de betaalprovider-integratie wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking. **De betaalprovider-keuze zelf is genomen (2026-09-02): Stripe voor de hele EU (B2C + B2B), Paddle voor de rest van de wereld, sequentieel. Zie `docs/PAYMENTS_PLAN.md`.**
+
+## Vóór de commerciële livegang
+
+- **Abonnementsvoorwaarden juridisch laten nakijken (NL SaaS + consumentenrecht).** `app/voorwaarden/page.tsx` artikel 7 klopt niet voor B2C: de jaarclausule (2 maanden opzegtermijn, anders een jaar erbij) is vermoedelijk nietig onder de Wet Van Dam, en de maandclausule botst met "Maandelijks opzegbaar" op `/prijzen`. Plus: auto-verleng-disclosure in de checkout, 14-dagen-herroepingsrecht-opt-in voor digitale content. Details en richting in `docs/PAYMENTS_PLAN.md` → "Opzegging, verlenging en consumentenrecht".
+- **`/prijzen` claimt "Maandelijks opzegbaar"** terwijl artikel 7(b) een maand opzegtermijn mét doorbetaling oplegt. Intern tegenstrijdig, meenemen in de voorwaarden-herziening.
 
 ---
 
