@@ -3,8 +3,11 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-09-02
-- **Waar we staan:** besluit genomen, nog niks gebouwd. Betaalverwerking staat bewust achteraan in de bouwvolgorde (`ABONNEMENTEN.md`). Alle betalingen lopen nu handmatig via `/bot/admin/gebruikers` → `POST /api/admin/payment`.
-- **Eerstvolgende stap:** twee dingen kunnen nu al parallel starten: (1) Stripe-accountverificatie opstarten (lange lijn, dagen tot weken), (2) juridische review van de abonnementsvoorwaarden. De bouw zelf pas wanneer de NL-livegang dichtbij is.
+- **Waar we staan:** besluit genomen (Stripe voor de EU, Paddle later voor de rest), verder **geparkeerd, wordt later opgepakt**. Nog niks gebouwd. Alle betalingen lopen nu handmatig via `/bot/admin/gebruikers` → `POST /api/admin/payment`.
+- **Blokkerend, en van Arno (nog niet gestart, 2026-09-02):**
+  1. **Rechtspersoon-keuze + Stripe-accountverificatie.** Eerst vastleggen welke entiteit met Stripe contracteert (Royal Dutch Sales of een aparte ArnoBot-entiteit, zie `BUSINESS_HANDOVER.md`). Dan het Stripe-account aanmaken en de KYC-verificatie doorlopen (KvK, btw-nummer, bestuurder/UBO-ID, zakelijke IBAN). Lange lijn: review kan dagen duren, uitbetalingen zijn geblokkeerd tot 't rond is.
+  2. **Juridische review van de abonnementsvoorwaarden** (NL SaaS + consumentenrecht). Zie de sectie "Opzegging, verlenging en consumentenrecht" hieronder.
+- **Eerstvolgende stap:** niks aan de codekant tot 1 en 2 lopen. De bouw (fasering hieronder) start pas wanneer de NL-livegang dichtbij is.
 
 ## Besluit (2026-09-02)
 
