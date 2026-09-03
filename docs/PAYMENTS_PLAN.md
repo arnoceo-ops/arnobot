@@ -63,6 +63,14 @@
 
 **Stripe doet de mechanica** (auto-renew, `cancel_at_period_end`, `cancel_at` op een specifieke datum). De *regel* (opzegtermijn) staat in de voorwaarden; "te laat, dus nog een periode" is logica die de app bovenop Stripe zet door `cancel_at` op het eind van de volgende periode te zetten. Voor consumenten vervalt dat grotendeels omdat de gedwongen verlenging niet mag.
 
+### Btw-weergave (besloten 2026-09-03)
+
+- **`/prijzen` toont kale bedragen, zonder btw-vermelding.** Een blote prijs geldt voor een consument automatisch als het eindbedrag inclusief btw. Dit is compliant en het is wat B2B-leunende SaaS breed doet. Bewust géén "incl. btw"-regel eronder (eerst overwogen, verworpen: niet nodig, en niemand in dit marktsegment doet het).
+- **Consument:** het bedrag op `/prijzen` is wat hij all-in betaalt. Netto voor ArnoBot is dat bedrag / 1,21 (bij Pro-jaar: €39 → €32,23 netto). Harde eis: het checkout-totaal voor een consument moet exact gelijk zijn aan de getoonde prijs, geen btw-regel eroverheen.
+- **Zakelijk:** voert bij de checkout een geldig btw-nummer in en rekent af exclusief btw (het getoonde bedrag + 21%, bij Pro-jaar €47,19; bedrijf vordert terug, echte kosten €39). Netto voor ArnoBot is het volle bedrag. Vereist de juiste Stripe-instelling (prijs btw-inclusief voor consumenten, btw-exclusief zodra een btw-nummer is ingevoerd) plus btw-nummer-validatie in de checkout. Bevestigen met de boekhouder.
+- **Team** is B2B-only en toont al "excl. btw" op `/team`, dat blijft.
+- **Abacus (`/abacus`) modelleert de B2C-btw-haircut bewust niet.** Het volume B2C is naar verwachting een uiterst klein percentage van de omzet, dus de calculator rekent met het volle bedrag als netto. Als de B2C-mix in de praktijk substantieel blijkt, alsnog een correctiefactor toevoegen.
+
 ### Checkpoint: juridische review vóór de commerciële livegang
 
 Harde poort. Laat een jurist (NL SaaS + consumentenrecht) nakijken:
@@ -70,6 +78,8 @@ Harde poort. Laat een jurist (NL SaaS + consumentenrecht) nakijken:
 - de auto-verleng-disclosure in de checkout
 - de herroepingsrecht-opt-in voor digitale content
 - de `/prijzen`-claims vs de voorwaarden
+
+En laat de boekhouder de btw-opzet bevestigen: prijs btw-inclusief voor consumenten, btw-exclusief bij een geldig btw-nummer, OSS-drempel voor EU-consumenten, factuurvereisten.
 
 ## Fasering en tijdsindicatie (Stripe, EU)
 

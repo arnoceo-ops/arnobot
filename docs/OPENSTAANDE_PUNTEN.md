@@ -9,6 +9,7 @@
 
 - **Abonnementsvoorwaarden juridisch laten nakijken (NL SaaS + consumentenrecht).** `app/voorwaarden/page.tsx` artikel 7 klopt niet voor B2C: de jaarclausule (2 maanden opzegtermijn, anders een jaar erbij) is vermoedelijk nietig onder de Wet Van Dam, en de maandclausule botst met "Maandelijks opzegbaar" op `/prijzen`. Plus: auto-verleng-disclosure in de checkout, 14-dagen-herroepingsrecht-opt-in voor digitale content. Details en richting in `docs/PAYMENTS_PLAN.md` → "Opzegging, verlenging en consumentenrecht".
 - **`/prijzen` claimt "Maandelijks opzegbaar"** terwijl artikel 7(b) een maand opzegtermijn mét doorbetaling oplegt. Intern tegenstrijdig, meenemen in de voorwaarden-herziening.
+- **Btw-opzet door de boekhouder laten bevestigen** (prijs btw-inclusief voor consumenten, btw-exclusief bij een btw-nummer, OSS-drempel EU-consumenten). Weergave-besluit staat vast (kale prijzen op `/prijzen`, 2026-09-03), zie `docs/PAYMENTS_PLAN.md` → "Btw-weergave". Abacus modelleert de B2C-btw-haircut bewust niet.
 
 ---
 

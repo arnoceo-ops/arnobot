@@ -72,6 +72,16 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 
 **"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle).
 
+## Btw-weergave (besloten 2026-09-03)
+
+Volledige onderbouwing en de Stripe-/checkout-consequenties in `docs/PAYMENTS_PLAN.md`, sectie "Btw-weergave". Kort:
+
+- `/prijzen` toont kale bedragen, geen btw-vermelding. Voor een consument geldt dat als het eindbedrag inclusief btw.
+- Consument betaalt het getoonde bedrag all-in; netto voor ArnoBot = bedrag / 1,21 (Pro-jaar €39 → €32,23 netto). Checkout-totaal voor een consument moet exact het getoonde bedrag zijn.
+- Zakelijke klant voert een btw-nummer in bij de checkout en rekent af exclusief btw; netto voor ArnoBot = het volle bedrag.
+- Team blijft "excl. btw" tonen (B2B-only).
+- Abacus modelleert de B2C-btw-haircut bewust niet: B2C-volume naar verwachting een verwaarloosbaar deel van de omzet.
+
 ## UI-gedrag
 
 - **Eén gedeelde jaar/maand-toggle** boven Basic en Pro. Niet twee losse toggles per kaart, dat zou oneerlijke kruisvergelijkingen mogelijk maken (bijv. Basic maandelijks naast Pro jaarlijks).
