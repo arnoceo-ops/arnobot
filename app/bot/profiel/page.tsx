@@ -21,6 +21,12 @@ type Answers = {
   jaren_functie: string
   jaardoel: string
   kwartaalthema: string
+  // Alleen de solopreneur-versie (rol === 'Solopreneur', geen team)
+  positionering: string
+  klantenbron: string[]
+  kanaal_afhankelijkheid: string
+  acquisitie_tijd: string
+  inkomensdoel: string
 }
 
 const empty: Answers = {
@@ -39,6 +45,11 @@ const empty: Answers = {
   jaren_functie: '',
   jaardoel: '',
   kwartaalthema: '',
+  positionering: '',
+  klantenbron: [],
+  kanaal_afhankelijkheid: '',
+  acquisitie_tijd: '',
+  inkomensdoel: '',
 }
 
 function getUitdagingPlaceholder(rol: string): string {
@@ -80,6 +91,14 @@ const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CCO', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
+
+// Solopreneur-versie (rol === 'Solopreneur', geen team, geen command_manager): een eigen
+// intake omdat een zelfstandige geen formeel sales-target, geen gestructureerde salescyclus
+// en geen team heeft, maar wel een positionering, een acquisitiekanaal en een spanning
+// tussen acquireren en leveren. Zie docs/TEAM_PLAN.md, "Punt 2 vervangen", stap 3.
+const KLANTENBRON_OPTIONS = ['Aanbeveling', 'Netwerk', 'Outbound', 'Content/inbound', 'Terugkerende klanten', 'Toeval']
+const KANAAL_AFHANKELIJKHEID_OPTIONS = ['Sterk van één kanaal', 'Deels gespreid', 'Goed gespreid']
+const ACQUISITIE_TIJD_OPTIONS = ['< 10%', '10-25%', '25-50%', '> 50%']
 
 function getTargetLabel(rol: string) {
   if (['Sales Director', 'VP of Sales'].includes(rol)) return 'team'
@@ -183,7 +202,19 @@ export default function BotProfielPage() {
     setIsDirty(true)
   }
 
+  function toggleKlantenbron(val: string) {
+    setAnswers(prev => ({
+      ...prev,
+      klantenbron: prev.klantenbron.includes(val) ? prev.klantenbron.filter(v => v !== val) : [...prev.klantenbron, val]
+    }))
+    setIsDirty(true)
+  }
+
   const rolIngevuld = answers.rol && (answers.rol !== 'Anders' || rolAnders.trim().length > 1)
+
+  // Een zelfstandige zonder team krijgt de solopreneur-intake. isCommandManager (Team-segment)
+  // sluit dit uit: die lijst bevat 'Solopreneur' sowieso niet.
+  const isSolo = !isCommandManager && answers.rol === 'Solopreneur'
 
   // Bij minder dan 3 jaar in de huidige functie is "heb je de afgelopen 3 jaar je target
   // gehaald" niet goed te beantwoorden (die periode valt dan deels vóór de huidige functie).
@@ -193,19 +224,36 @@ export default function BotProfielPage() {
   // specifieke rol nodig): zij lopen door dezelfde, niet-teammanager-blokken heen.
   const targetHistorieOverslaan = !isCommandManager && ['< 1 jaar', '1-3 jaar'].includes(answers.jaren_functie)
 
-  const allFilled =
-    rolIngevuld &&
-    answers.markt.length > 0 &&
-    answers.wat_verkoop_je.trim().length > 2 &&
-    answers.ideale_klant.trim().length > 2 &&
-    answers.uitdaging.trim().length > 2 &&
-    answers.dealgrootte.trim().length > 0 &&
-    answers.salescyclus.trim().length > 0 &&
-    answers.target_dit_jaar !== '' &&
-    (targetHistorieOverslaan || answers.target_3_jaar !== '') &&
-    answers.jaren_sales !== '' &&
-    answers.jaren_functie !== '' &&
-    (!HEEFT_TEAM.includes(answers.rol) || isCommandManager || (answers.gebruik !== '' && answers.teamgrootte !== ''))
+  const allFilled = isSolo
+    ? (
+      rolIngevuld &&
+      answers.markt.length > 0 &&
+      answers.wat_verkoop_je.trim().length > 2 &&
+      answers.ideale_klant.trim().length > 2 &&
+      answers.positionering.trim().length > 2 &&
+      answers.dealgrootte.trim().length > 0 &&
+      answers.salescyclus.trim().length > 0 &&
+      answers.klantenbron.length > 0 &&
+      answers.kanaal_afhankelijkheid !== '' &&
+      answers.acquisitie_tijd !== '' &&
+      answers.jaren_sales !== '' &&
+      answers.jaren_functie !== '' &&
+      answers.uitdaging.trim().length > 2
+    )
+    : (
+      rolIngevuld &&
+      answers.markt.length > 0 &&
+      answers.wat_verkoop_je.trim().length > 2 &&
+      answers.ideale_klant.trim().length > 2 &&
+      answers.uitdaging.trim().length > 2 &&
+      answers.dealgrootte.trim().length > 0 &&
+      answers.salescyclus.trim().length > 0 &&
+      answers.target_dit_jaar !== '' &&
+      (targetHistorieOverslaan || answers.target_3_jaar !== '') &&
+      answers.jaren_sales !== '' &&
+      answers.jaren_functie !== '' &&
+      (!HEEFT_TEAM.includes(answers.rol) || isCommandManager || (answers.gebruik !== '' && answers.teamgrootte !== ''))
+    )
 
   async function handleSubmit() {
     if (!allFilled) {
@@ -399,6 +447,135 @@ export default function BotProfielPage() {
             )}
           </Block>
 
+          {isSolo ? (
+          <>
+          <Block nr="05" title="Positionering">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Waarin ben je aantoonbaar anders dan de alternatieven voor jouw klant?</p>
+            <textarea
+              value={answers.positionering}
+              onChange={e => set('positionering', e.target.value)}
+              placeholder="Bijv: Ik ben de enige in mijn vakgebied die ook de implementatie zelf doet, niet alleen het advies."
+              rows={3}
+            />
+            {submitted && answers.positionering.trim().length <= 2 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf waarin je anders bent.</p>
+            )}
+          </Block>
+
+          <Block nr="06" title="Opdrachtwaarde">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat levert een gemiddelde opdracht op? <span style={{ color: '#6b7280' }}>(mag sterk variëren)</span></p>
+            <input
+              value={answers.dealgrootte}
+              onChange={e => set('dealgrootte', e.target.value)}
+              placeholder="Bijv: €3.000 voor een advies, €20.000 voor een heel traject"
+            />
+            {submitted && answers.dealgrootte.trim().length === 0 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je gemiddelde opdrachtwaarde in.</p>
+            )}
+          </Block>
+
+          <Block nr="07" title="Doorlooptijd">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang duurt het van eerste contact tot een getekende opdracht?</p>
+            <input
+              value={answers.salescyclus}
+              onChange={e => set('salescyclus', e.target.value)}
+              placeholder="Bijv: 1 tot 4 weken"
+            />
+            {submitted && answers.salescyclus.trim().length === 0 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je doorlooptijd in.</p>
+            )}
+          </Block>
+
+          <Block nr="08" title="Acquisitie">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Waar komen je klanten vandaan? <span style={{ color: '#6b7280' }}>(meerdere antwoorden mogelijk)</span></p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {KLANTENBRON_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.klantenbron.includes(o)} onClick={() => toggleKlantenbron(o)} />
+              ))}
+            </div>
+            {submitted && answers.klantenbron.length === 0 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Selecteer minimaal één kanaal.</p>
+            )}
+            <div style={{ marginTop: 24 }}>
+              <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe afhankelijk ben je van één kanaal?</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {KANAAL_AFHANKELIJKHEID_OPTIONS.map(o => (
+                  <Chip key={o} label={o} selected={answers.kanaal_afhankelijkheid === o} onClick={() => set('kanaal_afhankelijkheid', o)} />
+                ))}
+              </div>
+              {submitted && answers.kanaal_afhankelijkheid === '' && (
+                <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+              )}
+            </div>
+            <div style={{ marginTop: 24 }}>
+              <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoeveel van je tijd gaat naar nieuwe klanten binnenhalen?</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {ACQUISITIE_TIJD_OPTIONS.map(o => (
+                  <Chip key={o} label={o} selected={answers.acquisitie_tijd === o} onClick={() => set('acquisitie_tijd', o)} />
+                ))}
+              </div>
+              {submitted && answers.acquisitie_tijd === '' && (
+                <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+              )}
+            </div>
+          </Block>
+
+          <Block nr="09" title="Jouw ervaring">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
+              {JAREN_SALES_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
+              ))}
+            </div>
+            {submitted && answers.jaren_sales === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+            )}
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang werk je al als zelfstandige?</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {JAREN_FUNCTIE_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
+              ))}
+            </div>
+            {submitted && answers.jaren_functie === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+            )}
+          </Block>
+
+          <Block nr="10" title="Inkomensdoel">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat moet er dit jaar binnenkomen om het een goed jaar te noemen?</p>
+            <textarea
+              value={answers.inkomensdoel}
+              onChange={e => set('inkomensdoel', e.target.value)}
+              placeholder="Bijv: €120.000 omzet, waarvan de helft uit vaste klanten."
+              rows={3}
+            />
+          </Block>
+
+          <Block nr="11" title="Je doel">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke doel, anders dan een bedrag?</p>
+            <textarea
+              value={answers.jaardoel}
+              onChange={e => set('jaardoel', e.target.value)}
+              placeholder={getJaardoelPlaceholder(answers.rol)}
+              rows={3}
+            />
+          </Block>
+
+          <Block nr="12" title="Je grootste uitdaging">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke uitdaging?</p>
+            <textarea
+              value={answers.uitdaging}
+              onChange={e => set('uitdaging', e.target.value)}
+              placeholder={getUitdagingPlaceholder(answers.rol)}
+              rows={3}
+            />
+            {submitted && answers.uitdaging.trim().length <= 2 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
+            )}
+          </Block>
+          </>
+          ) : (
+          <>
           <Block nr="05" title="Gemiddelde dealgrootte">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is de gemiddelde waarde van een deal?</p>
             <input
@@ -588,6 +765,8 @@ export default function BotProfielPage() {
                 )}
               </Block>
             </>
+          )}
+          </>
           )}
 
           {error && <p style={{ color: '#cc2200', fontSize: 15, fontWeight: 400, lineHeight: 1.9, marginBottom: 16 }}>{error}</p>}
