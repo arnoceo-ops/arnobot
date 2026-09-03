@@ -330,7 +330,7 @@ export default function BotProfielPage() {
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 48, height: 3, background: '#4b5563', borderRadius: 2 }} />
+              <div style={{ width: 48, height: 3, background: '#374151', borderRadius: 2 }} />
               <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#6b7280' }}>VIDEO</span>
             </div>
             <div style={{ width: 16, height: 1, background: '#374151', marginBottom: 13 }} />
