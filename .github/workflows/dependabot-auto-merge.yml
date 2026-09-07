@@ -1,0 +1,101 @@
+name: Dependabot auto-merge
+
+# Merget automatisch de groene Dependabot-PR's die alleen de manifests raken en
+# geen major-bump zijn, zodra de betekenisvolle checks van "Security Audit" slagen.
+# Major-bumps, PR's die meer dan package.json/package-lock.json aanraken en PR's met
+# een rode betekenisvolle check blijven staan voor handmatige beoordeling.
+#
+# Waarom via workflow_run en niet `gh pr merge --auto`: master heeft bewust geen
+# branch protection (Arno pusht direct en vaak), en zonder verplichte checks zou
+# --auto meteen mergen zonder op de checks te wachten. Deze workflow draait ná
+# "Security Audit" en controleert de check-conclusies expliciet.
+#
+# De Playwright E2E-check wordt bewust genegeerd: die faalt bij elke Dependabot-PR
+# omdat Dependabot-workflows geen secrets krijgen (bekend, zie CLAUDE.md sectie 2).
+
+on:
+  workflow_run:
+    workflows: ["Security Audit"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Beoordeel en merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          # 1. Vind de open PR bij deze branch
+          pr=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
+            --json number,title,author,headRefOid --jq '.[0] // empty')
+          if [ -z "$pr" ]; then echo "Geen open PR voor $HEAD_BRANCH"; exit 0; fi
+
+          number=$(jq -r '.number'      <<<"$pr")
+          author=$(jq -r '.author.login' <<<"$pr")
+          title=$(jq -r '.title'         <<<"$pr")
+          head_oid=$(jq -r '.headRefOid' <<<"$pr")
+
+          echo "PR #$number: $title"
+
+          # 2. Alleen Dependabot
+          if [ "$author" != "dependabot[bot]" ]; then
+            echo "Auteur is $author, geen Dependabot. Overslaan."; exit 0
+          fi
+
+          # 3. Head-commit moet nog matchen met de run die net klaar is
+          if [ "$head_oid" != "$HEAD_SHA" ]; then
+            echo "PR is verder gecommit sinds deze run ($head_oid != $HEAD_SHA). Overslaan."; exit 0
+          fi
+
+          # 4. Alleen manifest-/lockfile-wijzigingen
+          bad_files=$(gh pr view "$number" --repo "$REPO" --json files \
+            --jq '.files[].path' | grep -vE '^(package\.json|package-lock\.json)$' || true)
+          if [ -n "$bad_files" ]; then
+            echo "PR raakt meer dan de manifests:"; echo "$bad_files"; echo "Handmatig beoordelen."; exit 0
+          fi
+
+          # 5. Geen major-bump. Groep-PR's ("...-updates group") zijn per dependabot.yml
+          #    patch-only en hebben geen enkele "from X to Y" in de titel.
+          if grep -qE 'from [0-9]+\.[0-9]+\.[0-9]+.* to [0-9]+\.[0-9]+\.[0-9]+' <<<"$title"; then
+            from_major=$(sed -E 's/.*from ([0-9]+)\..*/\1/' <<<"$title")
+            to_major=$(sed -E 's/.* to ([0-9]+)\..*/\1/'   <<<"$title")
+            if [ "$from_major" != "$to_major" ]; then
+              echo "Major-bump ($from_major -> $to_major). Handmatig beoordelen."; exit 0
+            fi
+          fi
+
+          # 6. Betekenisvolle checks moeten groen zijn op deze commit
+          runs=$(gh api --paginate --slurp "repos/$REPO/commits/$HEAD_SHA/check-runs" \
+            --jq '[.[].check_runs[]]')
+          for name in "npm audit" "TypeScript typecheck" "Vitest (kritieke paden)"; do
+            ok=$(jq -r --arg n "$name" \
+              '[.[] | select(.name==$n)] | (length > 0) and all(.[]; .conclusion == "success")' <<<"$runs")
+            if [ "$ok" != "true" ]; then
+              echo "Check '$name' is niet groen op $HEAD_SHA. Niet mergen."; exit 0
+            fi
+          done
+
+          # 7. Vercel-preview-build (combined status, geen check-run) moet slagen als hij bestaat
+          vercel=$(gh api "repos/$REPO/commits/$HEAD_SHA/status" \
+            --jq '[.statuses[] | select(.context=="Vercel")] | (.[0].state // "")')
+          if [ -n "$vercel" ] && [ "$vercel" != "success" ]; then
+            echo "Vercel-status is '$vercel'. Niet mergen."; exit 0
+          fi
+
+          echo "Alle betekenisvolle checks groen. PR #$number wordt gemerged."
+          gh pr merge "$number" --repo "$REPO" --squash --delete-branch

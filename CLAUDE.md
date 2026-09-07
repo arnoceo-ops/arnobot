@@ -55,8 +55,9 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 ### 2. Dependencies & tooling
 - Major versie-updates beschikbaar voor Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
-- Check open Dependabot-PRs via een agent (`gh api`) die per PR het breaking-change-risico samenvat
-- Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets). TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
+- **Auto-merge:** `.github/workflows/dependabot-auto-merge.yml` merget zelf de Dependabot-PR's die (a) alleen `package.json`/`package-lock.json` raken, (b) geen major-bump zijn en (c) waar npm audit, TypeScript, Vitest én de Vercel-build groen zijn. Bij de maandcheck blijven dus alleen de major-bumps en de PR's met een rode betekenisvolle check over. Riskante minors staan al op de ignore-lijst in `.github/dependabot.yml`.
+- Check de resterende open Dependabot-PRs via een agent (`gh api`) die per PR het breaking-change-risico samenvat
+- Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets), de auto-merge negeert die bewust. TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
 
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), en OpenAI spraak (transcriptie).
