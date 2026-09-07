@@ -115,6 +115,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
         TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
         TR('Gebruiksanalyse', 'PostHog: klik- en gebruiksanalyse. Anoniem op de publieke pagina\'s, pseudoniem (gekoppeld aan account-ID) in de ingelogde omgeving om functiegebruik en knelpunten te zien. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)'),
         TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
+        TR('Support (optioneel)', 'Meta Platforms (WhatsApp): als je de WhatsApp-knop in de app gebruikt, verwerkt Meta je telefoonnummer en je supportbericht. Je kunt in plaats daarvan mailen naar arno@arno.bot'),
       ),
     ),
     Footer('1')

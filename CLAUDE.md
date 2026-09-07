@@ -74,6 +74,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Vercel Firewall** aanzetten
 - **Supabase PITR** aanzetten ($100/maand extra bovenop Supabase Pro). Drempel bewust op 100 gebruikers (Arno's keuze), automatisch verwerkt in Abacus (`TARIEVEN.supabasePitrDrempel`). **Direct bij het aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, tabellen/rijen/encoding checken, tijdelijk project verwijderen).
 - **Clerk:** inactivity timeout inschakelen (zie hieronder) en session limits aanscherpen
+- **WhatsApp:** support-nummer overzetten van de WhatsApp Business-app naar het WhatsApp Business Platform (API) met een helpdesktool en een echte DPA met Meta (zie hieronder)
 
 #### Vercel
 - Deprecated features in gebruik? Vercel dashboard → Settings → General op waarschuwingen
@@ -110,6 +111,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 
 #### Calendly (boeking van het gesprek met Arno)
 - Bij een leverancierswissel: checkt het nieuwe tool ook e-mailadres in het webhook-payload mee (nu de matchsleutel)? Callback-URL moet mét `www` (zie `docs/CLAUDE_HISTORY.md`).
+
+#### WhatsApp Business (support)
+- De SUPPORT-knop in `BotNav.tsx` en `SparClient.tsx` en de error-fallbacks door de app zijn `wa.me`-links naar het zakelijke supportnummer. Nummer staat centraal in `lib/support.ts`.
+- Draait op de gratis WhatsApp Business-app op een apart nummer (geen API, geen SDK, Arno beantwoordt handmatig). Meta verwerkt telefoonnummer en gespreksinhoud; geen aparte DPA, valt onder de WhatsApp Business-voorwaarden. Vermeld als sub-verwerker in `app/privacy/page.tsx` en `public/arnobot-beveiliging.pdf`.
+- Prepaid-SIM (Odido): Arno waardeert maandelijks 2 euro op, wat als actief gebruik telt, dus het nummer kan niet vervallen. Omzetten naar SIM-only staat los gepland.
+- **Milestone (50 actieve gebruikers):** overzetten naar het WhatsApp Business Platform (API) met helpdesktool en echte DPA. Nummer moet dan een verificatie-SMS kunnen ontvangen en wordt uit de Business-app gemigreerd.
 
 #### Anthropic
 - DPA gewijzigd? [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Zo ja, privacypagina bijwerken.
@@ -164,7 +171,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met git log en statusblokken. Vangnet voor de doorlopende schrijfregel, geen vervanging.
 
 ### 6. AVG & beveiliging gebruikers
-- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
+- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
 - Nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Openstaande verwijderverzoeken of datavragen van gebruikers?
 

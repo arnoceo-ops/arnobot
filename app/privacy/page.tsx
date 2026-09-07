@@ -187,6 +187,11 @@ export default function PrivacyPage() {
                   <td>Boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres</td>
                   <td><a href="https://calendly.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">calendly.com/legal/dpa</a></td>
                 </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Meta Platforms (WhatsApp)</td>
+                  <td>Support. Als je de WhatsApp-knop in de app gebruikt, start je zelf een gesprek met ArnoBot en verwerkt Meta je telefoonnummer en de inhoud van dat supportbericht. Gebruik van deze knop is optioneel; je kunt ook mailen naar arno@arno.bot</td>
+                  <td>WhatsApp Business-voorwaarden, Meta Platforms Ireland (EER), doorgifte VS</td>
+                </tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
