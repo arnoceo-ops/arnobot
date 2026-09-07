@@ -191,7 +191,7 @@ export default async function TeamPage() {
 
       <figure className="tm-heroshot">
         <div className="tm-heroshot-frame">
-          <img src="/team/overzicht.jpg" width="1500" height="985" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
+          <img src="/team/overzicht.jpg" width="1600" height="996" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
         </div>
         <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
       </figure>
