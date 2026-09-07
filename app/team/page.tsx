@@ -92,7 +92,7 @@ export default async function TeamPage() {
         .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
 
         /* Feature-secties: korte tekst naast een herbouwd productfragment (Stripe/Attio-patroon) */
-        .tm-feat { display: grid; grid-template-columns: 2fr 3fr; gap: 48px; align-items: start; padding: 52px 0; border-top: 1px solid #1f2937; }
+        .tm-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding: 52px 0; border-top: 1px solid #1f2937; }
         .tm-feat-flip .tm-feat-frag { order: -1; }
         .tm-feat-text h3 {
           font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
@@ -221,8 +221,13 @@ export default async function TeamPage() {
           <div className="tm-feat-text">
             <h3>Profiel per verkoper</h3>
             <p>
-              Een diagnose op mindset, systeem en actie, met de ontwikkeling over tijd.
-              Onderbouwd met wat er in de gesprekken gebeurt, niet met een vragenlijst.
+              Je ziet welke verkoper achterloopt op systeem en welke op mindset, en of het
+              beter wordt of niet. Niet uit een vragenlijst die iedereen invult zoals hij
+              denkt dat het hoort, maar uit wat er in de gesprekken zelf gebeurt.
+            </p>
+            <p style={{ marginTop: 14 }}>
+              De diagnose waar je normaal maanden meelopen voor nodig hebt, ligt er na de
+              eerste week.
             </p>
           </div>
           <div className="tm-feat-frag">
@@ -263,8 +268,13 @@ export default async function TeamPage() {
           <div className="tm-feat-text">
             <h3>1:1-voorbereiding</h3>
             <p>
-              Voor elke verkoper een concept-agenda: wat gaat goed, wat is het aandachtspunt,
-              wat adviseert Arno. Jij past aan en voert het gesprek.
+              Je opent je 1:1 niet meer met "en, hoe gaat het". Voor elke verkoper ligt er een
+              agenda klaar: wat er goed gaat, het ene punt dat er nu toe doet, en de vragen die
+              Arno zou stellen.
+            </p>
+            <p style={{ marginTop: 14 }}>
+              Jij leest het door, past aan waar je iets beter weet, en voert een gesprek dat
+              ergens over gaat.
             </p>
           </div>
           <div className="tm-feat-frag">
@@ -293,7 +303,7 @@ export default async function TeamPage() {
 
         <section className="tm-section">
           <p className="tm-label">Hoe het werkt</p>
-          <h2 className="tm-h2">Opgezet in een middag, geen extra werk voor je verkopers</h2>
+          <h2 className="tm-h2">Meteen aan de gang. Opgezet binnen een uur.</h2>
           <div className="tm-steps">
             <div className="tm-step">
               <div className="tm-step-num">Stap 1</div>
@@ -316,7 +326,7 @@ export default async function TeamPage() {
           <p className="tm-lead" style={{ marginTop: 18 }}>
             Elke verkoper in je team krijgt de volledige Pro-versie van ArnoBot: 24/7 sparren,
             oefengesprekken tegen lastige types, een analyse van elk verkoopgesprek, en coaching
-            op mindset, systeem en actie. Het dashboard is jouw laag daarbovenop.
+            op mindset, systeem en actie. Het management dashboard is jouw laag daarbovenop.
           </p>
         </section>
 
@@ -332,7 +342,6 @@ export default async function TeamPage() {
 
         <section className="tm-section">
           <p className="tm-label">Prijs</p>
-          <h2 className="tm-h2">Eén platformtarief, plus per verkoper</h2>
           <div className="tm-prijs">
             <div className="tm-prijs-num">&euro; {TEAM_BASIS} / maand + &euro; {TEAM_PERGEBRUIKER} per verkoper</div>
             <p className="tm-prijs-sub">Vanaf 3 verkopers. Jaarlijks vooruitbetaald is er ongeveer 20% korting. Exclusief btw.</p>
