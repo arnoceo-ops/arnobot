@@ -40,7 +40,7 @@ export default async function TeamPage() {
         .nav-login { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
         .nav-login:hover { color: #f1f5f9; }
 
-        .tm-wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+        .tm-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
         .tm-label {
           font-size: 13px; font-weight: 600; letter-spacing: 0.3em;
@@ -76,9 +76,9 @@ export default async function TeamPage() {
         .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; }
         .tm-section-narrow { max-width: 62ch; }
 
-        /* Feature blocks: tekst + screenshot */
-        .tm-feature { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; padding: 44px 0; border-top: 1px solid #1f2937; }
-        .tm-feature:nth-child(even) .tm-feature-visual { order: -1; }
+        /* Feature blocks: korte intro, dan de screenshot op volle breedte */
+        .tm-feature { padding: 48px 0; border-top: 1px solid #1f2937; }
+        .tm-feature-text { max-width: 62ch; margin-bottom: 24px; }
         .tm-feature-text h3 {
           font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
           color: #f8fafc; margin-bottom: 10px;
@@ -121,8 +121,7 @@ export default async function TeamPage() {
         .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
 
         @media (max-width: 820px) {
-          .tm-feature { grid-template-columns: 1fr; gap: 24px; }
-          .tm-feature:nth-child(even) .tm-feature-visual { order: 0; }
+          .tm-feature { padding: 36px 0; }
           .tm-steps { grid-template-columns: 1fr; }
           .tm-hero { padding: 120px 24px 56px; }
         }
