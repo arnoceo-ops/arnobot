@@ -8,6 +8,7 @@ import { ProgressieChart, type ScorePoint } from '@/app/bot/components/Progressi
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { computeMsaScore } from '@/lib/msa'
 import { track } from '@/lib/posthog'
+import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 
 function formatLast(iso: string | null) {
   if (!iso) return ''
@@ -636,7 +637,7 @@ export default function TeamClient() {
                       )}
                       {spotlightError && (
                         <p style={{ ...body, color: '#cc4444', marginBottom: 32 }}>
-                          {spotlightError} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+                          {spotlightError} Lukt het niet? <a href={SUPPORT_WHATSAPP_VASTGELOPEN} style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
                         </p>
                       )}
                       {members.length < 2 && (

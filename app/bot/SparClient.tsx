@@ -11,6 +11,7 @@ import { useProgressHints } from '@/hooks/useProgressHints'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 import { groeiNudgeGezien, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { track } from '@/lib/posthog'
+import { SUPPORT_WHATSAPP_VRAAG, SUPPORT_WHATSAPP_SPARRING } from '@/lib/support'
 
 function renderContent(text: string) {
   const escaped = text
@@ -28,10 +29,6 @@ function renderContent(text: string) {
     .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
     .replace(/_([^_\n]+)_/g, '<em>$1</em>')
 }
-
-// Instant support tot de eerste 50 betalende gebruikers: één klik naar WhatsApp in plaats van
-// dat iemand moet zoeken naar een mailadres. Zelfde nummer als de error-fallbacks door de app.
-const SUPPORT_WHATSAPP = 'https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20heb%20een%20vraag%20over%20ArnoBot.'
 
 interface Message {
   role: 'user' | 'arno'
@@ -1105,7 +1102,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         ])
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'arno', content: 'Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot%20sparring).', hint: null }])
+      setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: null }])
     } finally {
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 100)
@@ -1835,7 +1832,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {(planLoaded && heeftTeamPlan) && <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/team')}>TEAM</button>}
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/qa')}>Q&A</button>
               <button style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => handleNavAttempt('/bot/account')}>ACCOUNT</button>
-              <a href={SUPPORT_WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
+              <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
             </div>
           )}
         </>
@@ -1855,7 +1852,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           <div className="nav-spacer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
             <NotificationBell onNavigate={handleNavAttempt} />
             <a
-              href={SUPPORT_WHATSAPP}
+              href={SUPPORT_WHATSAPP_VRAAG}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none' }}

@@ -7,6 +7,7 @@ import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import DownloadOneOnOneButton from '@/app/bot/team/DownloadOneOnOneButton'
 import { track } from '@/lib/posthog'
+import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 
 interface Coaching {
   mindset_score: number | null
@@ -335,7 +336,7 @@ export default function LidPage() {
           )}
           {error && (
             <p style={{ ...body, color: '#cc4444' }}>
-              {error} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+              {error} Lukt het niet? <a href={SUPPORT_WHATSAPP_VASTGELOPEN} style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
             </p>
           )}
 
@@ -412,7 +413,7 @@ export default function LidPage() {
 
                     {agendaError && (
                       <p style={{ ...body, color: '#cc4444', marginTop: 16 }}>
-                        {agendaError} Lukt het niet? <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
+                        {agendaError} Lukt het niet? <a href={SUPPORT_WHATSAPP_VASTGELOPEN} style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">Stuur een WhatsApp</a>.
                       </p>
                     )}
 

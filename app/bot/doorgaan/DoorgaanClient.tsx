@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
+import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 type PlanKeuze = 'basis' | 'premium'
@@ -233,7 +234,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
 
         {status === 'error' && (
           <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginTop: 16 }}>
-            Er ging iets mis. Probeer het opnieuw of <a href="https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20loop%20vast%20in%20ArnoBot." style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">stuur een WhatsApp</a>.
+            Er ging iets mis. Probeer het opnieuw of <a href={SUPPORT_WHATSAPP_VASTGELOPEN} style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">stuur een WhatsApp</a>.
           </p>
         )}
 

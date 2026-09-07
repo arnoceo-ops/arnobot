@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
+import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
 
 interface Props {
   active: 'bot' | 'archief' | 'coaching' | 'team' | 'account' | 'profiel' | 'qa'
@@ -30,10 +31,6 @@ const linkBase: React.CSSProperties = {
   color: '#9ca3af', textDecoration: 'none',
   fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3,
 }
-
-// Instant support tot de eerste 50 betalende gebruikers: één klik naar WhatsApp in plaats van
-// dat iemand moet zoeken naar een mailadres. Zelfde nummer als de error-fallbacks door de app.
-const SUPPORT_WHATSAPP = 'https://wa.me/31650695999?text=Hoi%20Arno%2C%20ik%20heb%20een%20vraag%20over%20ArnoBot.'
 
 export default function BotNav({ active }: Props) {
   const isMobile = useIsMobile()
@@ -93,7 +90,7 @@ export default function BotNav({ active }: Props) {
             {isBouwer && <Link href="/bot/team" className={active === 'team' ? 'mob-active' : 'mob-flow'}>TEAM</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
-            <a href={SUPPORT_WHATSAPP} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
+            <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
           </div>
         )}
         <VersionBanner />
@@ -128,7 +125,7 @@ export default function BotNav({ active }: Props) {
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'center' }}>
           <NotificationBell />
           <a
-            href={SUPPORT_WHATSAPP}
+            href={SUPPORT_WHATSAPP_VRAAG}
             target="_blank"
             rel="noopener noreferrer"
             style={{ ...logoutBtnStyle, textDecoration: 'none' }}
