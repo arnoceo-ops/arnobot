@@ -73,8 +73,9 @@ export default async function TeamPage() {
         .tm-btn-ghost:hover { background: rgba(245,158,11,0.08); }
 
         /* Sections */
-        .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; }
-        .tm-section-narrow { max-width: 62ch; }
+        .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; text-align: center; }
+        .tm-section-narrow { max-width: 62ch; margin-left: auto; margin-right: auto; }
+        .tm-section .tm-lead { margin-left: auto; margin-right: auto; }
 
         /* Held-productshot onder de hero (Linear/Vercel-patroon: koptekst, dan het product) */
         .tm-heroshot { max-width: 1040px; margin: 8px auto 0; padding: 0 24px; }
@@ -91,8 +92,8 @@ export default async function TeamPage() {
         .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
 
         /* Feature-secties: korte tekst naast een herbouwd productfragment (Stripe/Attio-patroon) */
-        .tm-feat { display: grid; grid-template-columns: 2fr 3fr; gap: 48px; align-items: center; padding: 52px 0; border-top: 1px solid #1f2937; }
-        .tm-feat:nth-of-type(even) .tm-feat-frag { order: -1; }
+        .tm-feat { display: grid; grid-template-columns: 2fr 3fr; gap: 48px; align-items: start; padding: 52px 0; border-top: 1px solid #1f2937; }
+        .tm-feat-flip .tm-feat-frag { order: -1; }
         .tm-feat-text h3 {
           font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
           color: #f8fafc; margin-bottom: 12px;
@@ -142,7 +143,7 @@ export default async function TeamPage() {
         .tm-faq-item { border-top: 1px solid #1f2937; padding: 20px 0; }
         .tm-faq-item:last-child { border-bottom: 1px solid #1f2937; }
         .tm-faq-q { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; text-transform: uppercase; color: #f8fafc; }
-        .tm-faq-a { font-size: 14px; line-height: 1.7; color: #94a3b8; margin-top: 8px; max-width: 60ch; }
+        .tm-faq-a { font-size: 14px; line-height: 1.7; color: #94a3b8; margin: 8px auto 0; max-width: 60ch; }
 
         .tm-final { text-align: center; padding: 64px 0 8px; }
         .tm-final .tm-h2 { margin-bottom: 14px; }
@@ -150,7 +151,7 @@ export default async function TeamPage() {
 
         @media (max-width: 820px) {
           .tm-feat { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
-          .tm-feat:nth-of-type(even) .tm-feat-frag { order: 0; }
+          .tm-feat-flip .tm-feat-frag { order: 0; }
           .tm-steps { grid-template-columns: 1fr; }
           .tm-hero { padding: 120px 24px 48px; }
           .tm-heroshot { margin-top: 4px; }
@@ -190,7 +191,7 @@ export default async function TeamPage() {
 
       <figure className="tm-heroshot">
         <div className="tm-heroshot-frame">
-          <img src="/team/overzicht.jpg" width="1600" height="996" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
+          <img src="/team/overzicht.jpg" width="1500" height="985" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
         </div>
         <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
       </figure>
@@ -211,12 +212,12 @@ export default async function TeamPage() {
           <p className="tm-label">Wat je als manager krijgt</p>
           <h2 className="tm-h2">Van overzicht naar het volgende gesprek</h2>
           <p className="tm-lead" style={{ marginTop: 18 }}>
-            Het teamoverzicht laat zien waar iedereen staat. Deze drie schermen vertellen je
+            Het teamoverzicht laat zien waar iedereen staat. Deze twee schermen vertellen je
             wat je ermee doet.
           </p>
         </section>
 
-        <div className="tm-feat">
+        <div className="tm-feat tm-feat-flip">
           <div className="tm-feat-text">
             <h3>Profiel per verkoper</h3>
             <p>
@@ -253,33 +254,6 @@ export default async function TeamPage() {
               <p className="tm-frag-p">
                 Proactief en resultaatgericht. Nog steeds de neiging om te duwen als een traject
                 stilligt, waar afwachten soms sterker is.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="tm-feat">
-          <div className="tm-feat-text">
-            <h3>Spotlight</h3>
-            <p>
-              ArnoBot leest alle gesprekken van je team en vertelt je waar de collectieve winst
-              zit. Eén heldere prioriteit in plaats van tien losse signalen.
-            </p>
-          </div>
-          <div className="tm-feat-frag">
-            <div className="tm-frag">
-              <p className="tm-frag-label">TEAM SPOTLIGHT</p>
-              <p className="tm-frag-h">PER PIJLER</p>
-              <p className="tm-frag-p">
-                Mindset: sterke opwaartse lijn, van 3.2 naar 4.7. Systeem: groei naar 4.0, maar
-                opvolging en stakeholderbeheer blijven de zwakste schakel. Actie: solide naar
-                4.3, al blijven concrete closing-momenten onbenut.
-              </p>
-              <p className="tm-frag-h">KRACHT VAN HET TEAM</p>
-              <p className="tm-frag-p">
-                Dit team is aan het leren nadenken in plaats van reageren. Een verkoper die
-                bewust doorvraagt voordat er een tegenargument komt, een ander die de
-                inkoopdirecteur al in het tweede gesprek aan tafel krijgt.
               </p>
             </div>
           </div>
