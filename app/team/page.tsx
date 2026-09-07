@@ -2,16 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import SiteFooter from '../SiteFooter'
-import { SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
 
 export const metadata: Metadata = {
   title: 'ArnoBot Team',
   description: 'Geef elke verkoper een eigen AI-salescoach en jou als leidinggevende het overzicht: mindset, systeem en actie per persoon, waar iemand vastloopt, en een 1:1 die al klaarligt.',
   robots: { index: true, follow: true },
 }
-
-const TEAM_BASIS = SCENARIO_TEAM_PRIJS.basisMaandelijks
-const TEAM_PERGEBRUIKER = SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks
 
 export default async function TeamPage() {
   const { userId } = await auth()
@@ -133,10 +129,6 @@ export default async function TeamPage() {
         .tm-step p { font-size: 14px; line-height: 1.65; color: #94a3b8; margin-top: 10px; }
 
         /* Prijs */
-        .tm-prijs { background: #1e293b; border: 1px solid rgba(245,158,11,0.35); border-radius: 12px; padding: 28px; margin-top: 24px; text-align: center; }
-        .tm-prijs-num { font-family: 'Oswald', sans-serif; font-size: clamp(28px, 4vw, 40px); font-weight: 600; color: #f8fafc; }
-        .tm-prijs-sub { font-size: 14px; color: #6b7280; margin-top: 6px; }
-        .tm-prijs-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
 
         /* FAQ */
         .tm-faq { display: flex; flex-direction: column; gap: 4px; margin-top: 24px; }
@@ -185,7 +177,6 @@ export default async function TeamPage() {
           >
             Plan een demo
           </a>
-          <Link className="tm-btn tm-btn-ghost" href="/prijzen">Bekijk de prijzen</Link>
         </div>
       </section>
 
@@ -341,18 +332,6 @@ export default async function TeamPage() {
         </section>
 
         <section className="tm-section">
-          <p className="tm-label">Prijs</p>
-          <div className="tm-prijs">
-            <div className="tm-prijs-num">&euro; {TEAM_BASIS} / maand + &euro; {TEAM_PERGEBRUIKER} per verkoper</div>
-            <p className="tm-prijs-sub">Vanaf 3 verkopers. Jaarlijks vooruitbetaald is er ongeveer 20% korting. Exclusief btw.</p>
-            <div className="tm-prijs-links">
-              <Link className="tm-btn tm-btn-ghost" href="/prijzen">Volledige prijzen</Link>
-              <Link className="tm-btn tm-btn-primary" href="/team/aanvragen">Direct aanvragen</Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="tm-section">
           <p className="tm-label">Vragen</p>
           <h2 className="tm-h2">Kort antwoord</h2>
           <div className="tm-faq">
@@ -377,7 +356,10 @@ export default async function TeamPage() {
 
         <section className="tm-final">
           <h2 className="tm-h2">Zie het op je eigen scherm</h2>
-          <p>Twintig minuten, jouw vragen, een ingericht voorbeeldteam. Daarna weet je of het bij je team past.</p>
+          <p>
+            Twintig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
+            vraag direct aan, daar zie je meteen de prijs voor jouw teamgrootte.
+          </p>
           <div className="tm-cta-row">
             <a
               className="tm-btn tm-btn-primary"
@@ -386,6 +368,7 @@ export default async function TeamPage() {
             >
               Plan een demo
             </a>
+            <Link className="tm-btn tm-btn-ghost" href="/team/aanvragen">Direct aanvragen</Link>
           </div>
         </section>
 
