@@ -66,7 +66,7 @@ ${RULE_NEVER_BREAK_CHARACTER}`
   const userContent = `VOLLEDIGE DATA OVER DEZE GEBRUIKER:\n${context.contextText}\n\nEERDER GEGEVEN ANALYSE:\n${typeof analyse === 'string' && analyse ? analyse : '(geen)'}\n\n${historyText}VERVOLGVRAAG VAN ARNO: ${question.trim()}`
 
   const callModel = () => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: CHAT_MAX_TOKENS,
     system: systeem,
     messages: [{ role: 'user', content: userContent }],

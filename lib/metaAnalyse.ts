@@ -166,7 +166,7 @@ export async function runMetaAnalyse(
   const periodeLabel = days === 7 ? 'afgelopen week' : days === 30 ? 'afgelopen maand' : days === 90 ? 'afgelopen kwartaal' : `afgelopen ${days} dagen`
 
   const callZelfModel = (maxTokens = ZELF_MAX_TOKENS) => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: maxTokens,
     system: `Je analyseert gesprekken van ArnoBot als kritische zelfreflectie. Je schrijft vanuit het perspectief van ArnoBot zelf: wat deed ik goed, waar schoot ik tekort, wat mis ik in mijn kennisbasis? Wees eerlijk en specifiek. Geen ijdelheid. Verwijs naar concrete gesprekken.
 
@@ -180,7 +180,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   })
 
   const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: maxTokens,
     system: `Je coördineert een expertpanel van zes figuren die ArnoBot beoordelen als salescoach. Elk jurylid spreekt in de ik-vorm, vanuit zijn eigen filosofie en vocabulaire. Wees kritisch en specifiek. Verwijs naar de daadwerkelijke gesprekken. Geen vage complimenten.
 
@@ -197,7 +197,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   })
 
   const callJouwAnalyseModel = (maxTokens = JOUW_ANALYSE_MAX_TOKENS) => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: maxTokens,
     system: `Je verwerkt Arno's eigen geschreven analyse van ArnoBot tot een gestructureerd overzicht. Dit zijn zijn eigen observaties, geen reactie op een steekproef gesprekken. Jouw taak is puur ordenen en concreet maken, niet samenvatten of comprimeren. Elk afzonderlijk punt dat hij noemt krijgt een eigen blok, hoeveel dat er ook zijn. Verzin niets en voeg geen onderwerpen toe die hij niet noemde.
 

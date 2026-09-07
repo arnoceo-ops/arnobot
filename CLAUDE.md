@@ -161,7 +161,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
 
 #### Kostencalculator (Abacus, `/abacus`)
-- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Anthropic/Fable 5 per aanroep, Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
+- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Anthropic/Fable 5.1 per aanroep (zelfde tarief als Fable 5: $10/$50 per 1M), Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
 - Wordt bij de **kwartaalcheck** gecontroleerd tegen de live pricing-pagina's, niet bij de maandcheck (prijswijzigingen komen niet vaak genoeg voor).
 - Sentry en Upstash staan hier bewust niet als hardcoded bedrag in (al instelbare velden in de calculator).
 
@@ -470,11 +470,11 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 gaf leeg antwoord bij lange vragen. Retry-bij-leeg + max_tokens-buffer + Sentry-log bij afkapping. | 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
-| `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | "Thought of the day", grammaticale kwaliteit vereist Fable. Getest tegen Opus 5, Fable gehandhaafd. Toon/drempel herzien 2026-08-29. | 2026-08-29 |
+| `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |
-| `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. | 2026-08-22 |
-| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. max_tokens 4000. Getest tegen Opus 5, Fable gehandhaafd. | 2026-08-01 |
+| `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5-1` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |
+| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5-1` | Hoogste kwaliteit voor de belangrijkste synthese. max_tokens 4000. Naar Fable 5.1 (2026-09-07): blinde A/B op echte gebruikersdata, JSON-schema intact, geen regressie. | 2026-09-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog. | 2026-07 |
 | `app/api/bot/coaching-analyse/route.ts` (Analyses-pagina) | `claude-sonnet-4-6` | Gemigreerd van Sonnet 5 (stil leeg antwoord). Retry + zichtbare foutmelding. | 2026-07 |
 | `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-4-6` | Cruciale boodschap voor manager. Krijgt thema-geschiedenis + 21-dagen-signaal als context. | 2026-08-21 |
@@ -502,11 +502,11 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `scripts/embed-chunks.mjs` (contextgeneratie per chunk) | `claude-haiku-4-5-20251001` | Offline script dat de kennisbank vult. try/catch-fallback. | 2026-07 |
 | `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Enige Opus-gebruik. `tool_choice` forceert tool_use. Opus 5 kost gelijk aan 4.8, presteert beter. | 2026-07 |
 | `app/api/admin/blogs-analyse/route.ts` | `claude-sonnet-4-6` | Redactionele briefing. Retry-bij-leeg + expliciete foutrespons. | 2026-07 |
-| `lib/metaAnalyse.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. Sinds 2026-09-02 één gedeelde implementatie voor `cron/meta-analyse` (days=30, e-mail) én `admin/meta-analyse` (periodekeuze, JSON). | 2026-09-02 |
-| `lib/metaAnalyse.ts` (jouw analyse) | `claude-fable-5` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. Zelfde gedeelde module. | 2026-09-02 |
+| `lib/metaAnalyse.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5-1` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. Sinds 2026-09-02 één gedeelde implementatie voor `cron/meta-analyse` (days=30, e-mail) én `admin/meta-analyse` (periodekeuze, JSON). Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |
+| `lib/metaAnalyse.ts` (jouw analyse) | `claude-fable-5-1` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. Zelfde gedeelde module. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. | 2026-07 |
-| `app/api/admin/analyse/route.ts` (briefing per gebruiker) | `claude-fable-5` | ANALYSE-tab in admin, vervangt Arno's handmatige uitzoekwerk. Refusal-check + retry + max_tokens-verdubbeling vanaf v1. | 2026-08-25 |
-| `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5` | Zelfde databundel. Bewust niet opgeslagen. | 2026-08-25 |
+| `app/api/admin/analyse/route.ts` (briefing per gebruiker) | `claude-fable-5-1` | ANALYSE-tab in admin, vervangt Arno's handmatige uitzoekwerk. Refusal-check + retry + max_tokens-verdubbeling vanaf v1. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
+| `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5-1` | Zelfde databundel. Bewust niet opgeslagen. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
 | `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch) | Spraak-naar-tekst voor voice-input. | 2026-07 |
 | `app/api/chat-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `claude-sonnet-4-6` | Korte voice-systeeminstructie (`buildVoiceSystemPrompt`), niet-streamend. Eigen rate-limiter (30/uur). | 2026-07 |
 | `app/api/tts-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch) | Streaming TTS via `lib/voice.ts`. Verbruik gelogd. Eigen rate-limiter (60/uur). | 2026-07 |

@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   const nieuweCount = (bestaandeRes.data?.generated_count ?? 0) + 1
 
   const callModel = (maxTokens = ANALYSE_MAX_TOKENS) => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: maxTokens,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: `Analyseer deze gebruiker:\n\n${context.contextText}` }],
