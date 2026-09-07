@@ -259,9 +259,9 @@ export default async function TeamPage() {
           <div className="tm-feat-text">
             <h3>1:1-voorbereiding</h3>
             <p>
-              Je opent je 1:1 niet meer met "en, hoe gaat het". Voor elke verkoper ligt er een
-              agenda klaar: wat er goed gaat, het ene punt dat er nu toe doet, en de vragen die
-              Arno zou stellen.
+              Je opent je 1:1 niet meer met de vraag hoe het gaat. Voor elke verkoper ligt er
+              een agenda klaar: wat er goed gaat, het ene punt dat er nu toe doet, en de vragen
+              die Arno zou stellen.
             </p>
             <p style={{ marginTop: 14 }}>
               Jij leest het door, past aan waar je iets beter weet, en voert een gesprek dat
