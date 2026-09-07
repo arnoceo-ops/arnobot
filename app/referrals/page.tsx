@@ -141,7 +141,7 @@ export default function ReferralSpelregelsPage() {
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32 }}>
-            <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.9 }}>
+            <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.9 }}>
               Vragen? Mail naar <a href="mailto:referrals@arno.bot">referrals@arno.bot</a>
             </p>
           </div>

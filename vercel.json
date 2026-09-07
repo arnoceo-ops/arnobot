@@ -79,6 +79,10 @@
     {
       "path": "/api/cron/golf1-evaluatie-herinnering",
       "schedule": "0 8 16 9 *"
+    },
+    {
+      "path": "/api/cron/comp-heads-up-okt",
+      "schedule": "0 8 16 10 *"
     }
   ],
   "redirects": [

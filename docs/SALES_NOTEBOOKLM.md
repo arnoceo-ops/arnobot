@@ -1,7 +1,7 @@
 # ArnoBot: Marketing & Sales Overzicht (NotebookLM-brondocument)
 
-**Laatst bijgewerkt:** 2026-08-18
-**Doel van dit document:** één geconsolideerd, technisch-vrij brondocument om te uploaden naar NotebookLM, bruikbaar voor meerdere toekomstige presentaties: de kickoff-pitch aan de sales agents nu, en later een presentatie richting Team Accounts (sales leaders) als prospects. Combineert de inhoud van `docs/SALES_BIJBEL.md` en de marketing-relevante delen van `docs/SALES_DEVELOPMENT.md`, zonder implementatiedetails (geen code, geen databaseverwijzingen, geen interne beslisdata). Voor die technische achtergrond: de bronbestanden zelf.
+**Laatst bijgewerkt:** 2026-08-18 (grondig opnieuw gesynchroniseerd tegen `SALES_BIJBEL.md` én `docs/ARNOBOT_OVERZICHT.md`: Team-prijs, de coachingservaring voor de manager zelf (Scaling Up), en de expliciete "wat nog niet bestaat"-grenzen toegevoegd. Kostentaal volledig verwijderd i.p.v. alleen weggewuifd ("je mind kent niet niet"), USP 8 hernoemd van "Kostenvoordeel" naar "Schaalbaar voor het hele team". Daarnaast: gegenereerde presentaties gebruikten woorden als "keihard"/"snoeihard", terug te leiden tot de openingszin die ArnoBot's eigen merkstem als "direct, geen bullshit" omschreef, dat las een generatiemodel kennelijk als toonvoorbeeld. Herschreven naar "direct, zonder omwegen, eerlijk, bewust niet corporate", consistent met de bestaande formulering in `ARNOBOT_OVERZICHT.md`.)
+**Doel van dit document:** één geconsolideerd, technisch-vrij brondocument om te uploaden naar NotebookLM, bruikbaar voor meerdere toekomstige presentaties: de kickoff-pitch aan de sales agents nu, en later een presentatie richting Team Accounts (sales leaders) als prospects. Combineert de inhoud van `docs/SALES_BIJBEL.md`, `docs/ARNOBOT_OVERZICHT.md` en de marketing-relevante delen van `docs/SALES_DEVELOPMENT.md`, zonder implementatiedetails (geen code, geen databaseverwijzingen, geen interne beslisdata). Voor die technische achtergrond: de bronbestanden zelf. **Belangrijk om bij te houden:** de bronbestanden groeien door met eigen sessies die er los van deze sync aan werken, controleer bij een sync-check altijd de volledige inhoud van elk bronbestand, niet alleen of het "recent gewijzigd" is sinds de laatste keer.
 
 Twee delen: Deel A is het kernverhaal van ArnoBot zelf, bruikbaar voor elke doelgroep. Deel B gaat specifiek over de sales-development-rol en is alleen relevant voor de pitch aan de sales agents, niet voor een prospect-presentatie.
 
@@ -11,11 +11,13 @@ Twee delen: Deel A is het kernverhaal van ArnoBot zelf, bruikbaar voor elke doel
 
 ## Wat ArnoBot is
 
-ArnoBot is een AI-coachingsplatform voor sales professionals en salesteams, gebouwd op de eigen methodiek en toon van Arno: direct, geen bullshit, geen corporate taal. Gebruikers voeren doorlopende gesprekken met ArnoBot over hun salespraktijk, oefenen in een live sparringmodus tegen een AI-tegenstander, en krijgen een gestructureerde coachingsdiagnose op basis van hun eigen patronen. Voor teams komt daar een managerlaag bovenop: teambrede patronen, voortgang over tijd, en voorbereiding voor 1:1-gesprekken, zonder dat de manager ooit de losse gesprekken van een teamlid ziet.
+ArnoBot is een AI-coachingsplatform voor sales professionals en salesteams, gebouwd op de eigen methodiek en toon van Arno: direct, zonder omwegen, eerlijk, bewust niet corporate. Gebruikers voeren doorlopende gesprekken met ArnoBot over hun salespraktijk, oefenen in een live sparringmodus tegen een AI-tegenstander, en krijgen een gestructureerde coachingsdiagnose op basis van hun eigen patronen. Voor teams komt daar een managerlaag bovenop: teambrede patronen, voortgang over tijd, en voorbereiding voor 1:1-gesprekken, zonder dat de manager ooit de losse gesprekken van een teamlid ziet.
+
+**Voor wie:** Nederlandstalige salesprofessionals en salesmanagers, voornamelijk in B2B. Het meest typische profiel: een zelfstandige verkoper of accountmanager bij een mkb-bedrijf, die wil verbeteren maar geen tijd of budget heeft voor een persoonlijke salescoach. Voor een teamleider die een heel salesteam aanstuurt is de teammodule het aangrijpingspunt: zicht op elk teamlid, zonder ooit hun losse gesprekken te lezen.
 
 ## De kernbelofte
 
-Je verkoopt geen chatbot-abonnement. Je verkoopt structureel wat de beste salesbaas, met alle inzet, ervaring en goede wil van de wereld, nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Dat is een ander gesprek dan "is dit de kosten waard": als het waardeverhaal groot genoeg is, verdwijnt het prijsbezwaar vanzelf.
+Je verkoopt geen chatbot-abonnement. Je verkoopt structureel wat de beste salesbaas, met alle inzet, ervaring en goede wil van de wereld, nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Praat over wat een team hiermee wint: meer deals, sterkere verkopers, een teambaas die zelf ook groeit. Een waardeverhaal dat groot genoeg is, spreekt voor zich.
 
 **Zes dingen die geen manager kan, ongeacht hoe goed hij is:**
 
@@ -31,7 +33,7 @@ Hij krijgt nooit de eerlijkheid die een AI wel krijgt. Een verkoper geeft tegeno
 
 En zijn kwaliteit verwatert als het team groeit. Bij een groeiend team krijgt elke verkoper vanzelf minder aandacht, dat is geen kwestie van inzet maar van beschikbare uren. Verkoper twintig krijgt bij ArnoBot exact dezelfde kwaliteit als verkoper één, hoe groter het team, hoe groter het gat dat een manager alleen nooit had kunnen dichten.
 
-**Waarom dit een hogere prijs rechtvaardigt, niet alleen een redelijke:** reken dit niet voor met verzonnen ROI-cijfers, maar met de logica zelf. Eén extra gesloten deal per verkoper, één keer per kwartaal, dekt voor de meeste teams het hele abonnement ruimschoots.
+Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Een team dat wél op die manier gecoacht wordt, sluit structureel meer deals, en dat effect stapelt zich op over elke verkoper, elke maand: meer omzet, sterkere verkopers, een teambaas die zelf ook groeit.
 
 ## Wat ArnoBot concreet doet
 
@@ -39,7 +41,13 @@ Het hoofdgesprek is een doorlopend chatgesprek over sales-onderwerpen, waarin Ar
 
 Gebruikers kunnen sparren: een live oefengesprek tegen een AI-tegenstander (een lastige prospect, een sceptische CFO), gevolgd door een debrief. Een gestructureerde coachingsdiagnose op drie dimensies (mindset, systeem, actie) geeft een meetbaar, herhaalbaar beeld met concrete ontwikkelpunten.
 
-Voor teams komt daar een managerlaag bovenop: een teamoverzicht met individuele scores, teamvoortgang als trend over tijd met vroegsignalering bij stagnatie, een AI-voorbereide agenda voor elk 1:1-gesprek gebaseerd op de recente activiteit van dat teamlid, en een collectieve teamanalyse die patronen zichtbaar maakt die alleen op teamniveau te zien zijn. Fundamenteel hierbij: de manager ziet nooit de inhoud van individuele gesprekken, alleen geaggregeerde signalen. Dat is niet alleen een privacyfeature, het is wat eerlijkheid van teamleden tegenover ArnoBot überhaupt mogelijk maakt.
+Voor teams komt daar een managerlaag bovenop: een teamoverzicht met individuele scores, teamvoortgang als trend over tijd met vroegsignalering bij stagnatie, een AI-voorbereide agenda voor elk 1:1-gesprek gebaseerd op de recente activiteit van dat teamlid, en per teamlid uitgesplitst hoe vaak er daadwerkelijk 1:1's plaatsvinden, zodat direct zichtbaar is wie achterblijft. Een collectieve teamanalyse (Team Spotlight) duidt daarnaast welk gespreksonderwerp binnen het team domineert, en of dat wijst op verdieping of op vastzitten. Fundamenteel hierbij: de manager ziet nooit de inhoud van individuele gesprekken, alleen geaggregeerde signalen. Dat is niet alleen een privacyfeature, het is wat eerlijkheid van teamleden tegenover ArnoBot überhaupt mogelijk maakt.
+
+**En de manager zelf wordt ook gecoacht, niet alleen zijn team.** Een teambaas verkoopt zelf niet en wordt dus niet op dezelfde manier gescoord als zijn verkopers. In plaats daarvan krijgt hij zijn eigen coachingservaring langs drie andere lijnen, gebaseerd op Verne Harnish' Scaling Up-methode: Strategy (vertaalt hij de bedrijfsstrategie naar een helder plan voor zijn team), People (heeft hij de juiste mensen op de juiste plek), Execution (brengt zijn team plannen daadwerkelijk tot resultaat). Dit is precies waarom een teamabonnement niet alleen zijn verkopers beter maakt, maar ook hemzelf als leidinggevende, gebaseerd op zijn eigen 1:1's, teamresultaten en eigen gesprekken.
+
+ArnoBot bewaakt ook actief het 1:1-ritme tussen een manager en zijn teamleden: blijft een teamlid langer dan twee weken zonder 1:1, dan grijpt ArnoBot zelf in, eerst met een signaal op de teampagina, daarna met e-mailherinneringen aan de manager. Het 1:1-ritme is de kern van goed teammanagement, maar zakt in de praktijk stilletjes weg zodra een manager het druk heeft. Dit spreekt de manager zelf ook aan op zijn eigen discipline, niet alleen zijn verkopers.
+
+Elke maand analyseert ArnoBot alle gesprekken van alle gebruikers samen, volledig geanonimiseerd, en genereert daaruit actuele, relevante gespreksopeners per onderwerp. Wie een gesprek start via zo'n voorgeformuleerde vraag, kiest daarmee impliciet uit wat er op dat moment daadwerkelijk speelt bij honderden andere sales professionals, geen generiek lijstje voorbeeldvragen.
 
 ## De sterkste bewijzen
 
@@ -51,9 +59,13 @@ Drie argumenten raken een salesbaas het diepst, omdat ze precies zijn koopbeslis
 
 **Enterprise-niveau beveiliging en compliance.** Toegangsbeveiliging op alle gebruikersdata, verwerkersovereenkomsten met elke leverancier, geen training op klantdata. Bij een teamklant komt bijna altijd een IT- of inkoopvraag hierover, en dit is dan al op orde.
 
-**Kostenvoordeel ten opzichte van een coachingstraject of trainingsbureau.** Eén abonnement in plaats van meerdere dure, tijdgebonden coachingsessies per medewerker. Sterk voor de business case die een salesbaas moet verantwoorden voor een heel team.
+**Schaalbaar voor het hele team.** Eén abonnement geeft elke verkoper dezelfde coaching, in plaats van losse, tijdgebonden sessies die van oudsher maar een select deel van het team ooit bereiken. Sterk voor de business case die een salesbaas moet verantwoorden voor een heel team.
 
 **Altijd beschikbaar, geen agenda-gedoe.** 24/7, geen wachttijd, geen coach die pas volgende week tijd heeft. Sterkst vlak vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
+
+**Proactieve bewaking van het 1:1-ritme.** ArnoBot vertrouwt niet op het geheugen van de manager zelf om het 1:1-ritme met teamleden vast te houden, maar signaleert en herinnert actief zodra dat wegzakt.
+
+**Community-gedreven gespreksopeners.** Een netwerkeffect dat sterker wordt naarmate ArnoBot meer gebruikers krijgt, en niet na te bouwen door een concurrent zonder diezelfde schaal aan echte gesprekken.
 
 Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
@@ -69,6 +81,24 @@ Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 **Teambrede patroonherkenning.** De manager krijgt zicht op patronen over het hele team, bijvoorbeeld terugkerende blinde vlekken, niet alleen los per medewerker. Dit is waar een salesbaas daadwerkelijk op stuurt, niet op één individueel gesprek.
 
+## Concurrentievergelijking: het juiste antwoord per bezwaar
+
+**Tegenover een gratis AI/chatbot (ChatGPT, een eigen bedrijfs-GPT):** geheugen dat niet verwatert over honderden gesprekken, in plaats van een steeds langer wordend gesprek dat aan kwaliteit inlevert. Directe accountability in plaats van alleen antwoord geven. Een herhaalbare, meetbare diagnose in plaats van los advies per vraag. Gebouwd op Arno's eigen methodiek en stem, geen generieke sales-prompt op een standaardmodel.
+
+**Tegenover een menselijke manager of coach:** overal tegelijk, voor elk teamlid, op het moment dat het nodig is. Nooit een slechte dag. Perfect geheugen over een heel team tegelijk. Geen politiek, favoritisme of ego in de feedback. Eerlijkheid die een medewerker tegen zijn eigen baas nooit zou geven. Kwaliteit die niet verwatert als het team groeit.
+
+**Tegenover een coachingsbureau of trainingsprogramma:** continu in plaats van periodiek, geen dure, tijdgebonden sessies per medewerker. Actieve vergeetcurve-bestrijding: een training zonder herhaling verdampt binnen een dag, dit is het enige dat daar structureel iets tegen doet. Live oefenen tegen een weerbarstige AI-tegenstander, geen lijstje tips lezen.
+
+**Tegenover sales-enablement/call-analyse-tools (Gong, Chorus e.d.):** geen belopname-infrastructuur of integratietraject nodig, werkt op iemands eigen reflectie, direct bruikbaar. Proactief tussen gesprekken door, niet alleen achteraf analyseren wat er in een al gevoerd gesprek gebeurde.
+
+## Wat een Team-abonnement kost
+
+Vanaf 3 gebruikers: €97 per maand plus €49 per gebruiker per maand, of €77 plus €39 per gebruiker per maand bij jaarlijkse facturatie (ongeveer 20 procent korting). Elk teamlid krijgt daarmee volledige coaching, sparring en teamfunctionaliteit.
+
+## Wat nog niet bestaat, dus nooit als bestaand kenmerk noemen
+
+Geen geautomatiseerde betaalverwerking, alle facturatie loopt nog handmatig. Geen iOS-app (een Android-app is in aanbouw). Geen herhaalbare maandelijkse boeking voor een individueel Elite-teamlid binnen een teamabonnement, dat is nu een eenmalige mogelijkheid. Geen "Man en Machine"-uitbreiding (gecertificeerde menselijke coaches naast de AI), puur een toekomstplan, niet noemen, zelfs niet als richting.
+
 ---
 
 # Deel B: Sales Development (alleen voor de pitch aan de sales agents)
@@ -77,7 +107,9 @@ Daarnaast, sterk voor wie vanuit eigen ervaring pitcht:
 
 Sales agents benaderen actief sales teams bij andere bedrijven, typisch geleid door een salesbaas of commercieel directeur, met een gratis proefmaand van ArnoBot Team. Geen koude prijspitch, een uitnodiging om het zelf te ervaren. Blijft een team na die maand, dan volgt het gesprek over een echt abonnement.
 
-Sales agents gebruiken ArnoBot ook zelf, wat hun eigen verkoopgesprek versterkt: ze pitchen vanuit ervaring, niet vanuit een script.
+Sales agents gebruiken ArnoBot ook zelf, wat hun eigen verkoopgesprek versterkt: ze pitchen vanuit ervaring, niet vanuit een script. Gebruik het daarom ook in je eigen voorbereiding zoals je het aan een prospect verkoopt, dus met acties, analyses en coaching, niet als snelle vraagbaak: je eigen gebruikspatroon is het meest geloofwaardige bewijsstuk dat je in een gesprek hebt.
+
+**Wat jouw eigen link uniek maakt.** Er zijn twee manieren waarop iemand bij ArnoBot terechtkomt. Via de gewone website meldt iemand zich aan en komt, als hij interesse toont in een teamversie, op een wachtlijst terecht: hij heeft dan nog geen Team-account, alleen interesse. Komt iemand binnen via jouw eigen link, dan is dat anders: hij krijgt meteen een écht, volledig werkend Team-account, geen wachtlijst, geen tussenstap. Dat is een sterk punt in je eigen gesprek: wie via jou binnenkomt, hoeft nergens op te wachten.
 
 ## Wat dit persoonlijk, zakelijk en financieel oplevert
 

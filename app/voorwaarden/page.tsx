@@ -24,7 +24,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.0 · Juni 2026 · Royal Dutch Sales, Amsterdam, Nederland.
+            Versie 2.1 · September 2026 · Royal Dutch Sales, Amsterdam, Nederland.
           </p>
 
           {[
@@ -100,7 +100,25 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 10', title: 'Toepasselijk recht',
+              num: 'ARTIKEL 10', title: 'Aard van de dienst en eigen verantwoordelijkheid',
+              content: [
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot is een AI-gedreven coachingsplatform. De uitkomsten, suggesties en analyses die ArnoBot genereert zijn bedoeld als reflectie en gespreksstof, niet als professioneel, juridisch, fiscaal, financieel of bedrijfskundig advies.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De door ArnoBot gegenereerde inhoud kan onjuist, onvolledig of niet toepasbaar zijn op de situatie van de Gebruiker. De Gebruiker beoordeelt zelf of en hoe hij de inhoud gebruikt en blijft volledig verantwoordelijk voor zijn eigen beslissingen en de gevolgen daarvan.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Royal Dutch Sales garandeert niet dat het gebruik van ArnoBot leidt tot een bepaald resultaat, zoals meer omzet, behoud van klanten of commercieel succes.</p>,
+              ],
+            },
+            {
+              num: 'ARTIKEL 11', title: 'Aansprakelijkheid',
+              content: [
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales is niet aansprakelijk voor schade die voortvloeit uit het gebruik van ArnoBot of uit beslissingen die de Gebruiker neemt op basis van de door ArnoBot gegenereerde inhoud, behoudens opzet of bewuste roekeloosheid aan de zijde van Royal Dutch Sales.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Iedere aansprakelijkheid van Royal Dutch Sales is beperkt tot directe schade en tot maximaal het bedrag dat de Gebruiker in de twaalf maanden voorafgaand aan de schadeveroorzakende gebeurtenis aan Royal Dutch Sales heeft betaald voor het gebruik van ArnoBot.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Royal Dutch Sales is nooit aansprakelijk voor indirecte schade, waaronder gederfde omzet of winst, gemiste besparingen, verlies van klanten of contracten, reputatieschade en verlies van gegevens.</p>,
+                <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker vrijwaart Royal Dutch Sales tegen aanspraken van derden die verband houden met het gebruik van ArnoBot door de Gebruiker.</p>,
+                <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De in dit artikel opgenomen beperkingen gelden niet voor zover de schade het gevolg is van opzet of bewuste roekeloosheid van Royal Dutch Sales, of voor zover dwingend recht een beperking van aansprakelijkheid niet toestaat.</p>,
+              ],
+            },
+            {
+              num: 'ARTIKEL 12', title: 'Toepasselijk recht',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Op deze voorwaarden is Nederlands recht van toepassing. Geschillen worden voorgelegd aan de bevoegde rechter in Nederland.</p>,
               ],

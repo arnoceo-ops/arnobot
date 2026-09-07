@@ -417,9 +417,17 @@ export async function POST(req: NextRequest) {
                 const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
                 return `- ${datum}: ${s.summary}`
               }).join('\n')
-              const recentSessieMetUitdaging = prevSessions.find(s => s.uitdaging) ?? null
+              const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
+              const recentSessieMetUitdaging = uitdagingSessies[0] ?? null
               const recentUitdaging = recentSessieMetUitdaging?.uitdaging ?? null
               const recentActieStatus = recentSessieMetUitdaging?.actie_status ?? null
+              // Openstaande acties: alles met een uitdaging waar de gebruiker niet "ja, gedaan"
+              // of "skip" op heeft geantwoord. Max 3, meest recent eerst. Vroeger werd alleen de
+              // allerlaatste uitdaging doorgegeven, waardoor oudere niet-afgehandelde acties
+              // stilzwijgend verdwenen zodra er een nieuwere bijkwam (meta-analyse wortel 3).
+              const openActies = uitdagingSessies
+                .filter(s => s.actie_status !== 'ja' && s.actie_status !== 'skip')
+                .slice(0, 3)
               if (feitenBlokken || samenvattingen || recentUitdaging) {
                 geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
                 if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
@@ -433,6 +441,15 @@ export async function POST(req: NextRequest) {
                     ? 'De gebruiker heeft aangegeven dit nog niet gedaan te hebben.'
                     : 'De gebruiker heeft hier nog geen antwoord op gegeven.'
                   geheugentekst += `\n\nActie uit vorig gesprek (zie de instructie OPENSTAANDE ACTIES EERST voor hoe je dit gebruikt):\n${recentUitdaging}\n${statusTekst}`
+                }
+                const extraOpen = openActies.filter(s => s.session_id !== recentSessieMetUitdaging?.session_id)
+                if (extraOpen.length > 0) {
+                  const lijst = extraOpen.map(s => {
+                    const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                    const st = s.actie_status === 'deels' ? 'deels gedaan' : s.actie_status === 'nee' ? 'nog niet gedaan' : 'geen antwoord gegeven'
+                    return `- ${datum}: ${s.uitdaging} (${st})`
+                  }).join('\n')
+                  geheugentekst += `\n\nEr staan nog meer acties open uit eerdere gesprekken. Pak alleen op wat bij de huidige vraag past, noem de rest hooguit kort:\n${lijst}`
                 }
               }
             }
@@ -683,7 +700,7 @@ PROFIEL VAN DE GEBRUIKER:
 - Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}
 - Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
 - Ideale klant: ${profiel.ideale_klant || 'onbekend'}
-- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}${profiel.jaardoel ? `\n- Doel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.jaardoel}` : ''}
+- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}${profiel.positionering ? `\n- Onderscheidend vermogen: ${profiel.positionering}` : ''}${Array.isArray(profiel.klantenbron) && profiel.klantenbron.length ? `\n- Klanten komen via: ${profiel.klantenbron.join(', ')}${profiel.kanaal_afhankelijkheid ? ` (${profiel.kanaal_afhankelijkheid})` : ''}` : ''}${profiel.acquisitie_tijd ? `\n- Tijd naar acquisitie: ${profiel.acquisitie_tijd}` : ''}${profiel.jaardoel ? `\n- Doel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.jaardoel}` : ''}${profiel.inkomensdoel ? `\n- Inkomensdoel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.inkomensdoel}` : ''}
 ` : ''
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,

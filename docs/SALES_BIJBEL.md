@@ -1,6 +1,6 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-26 (concurrentievergelijking toegevoegd: ArnoBot tegenover LLM's, managers, coachingsbureaus en sales-enablement-tools, plus een nieuwe sectie over het vraag-en-antwoordpatroon als grootste onzichtbare conversierisico)
+**Laatst bijgewerkt:** 2026-08-26 (concurrentievergelijking toegevoegd: ArnoBot tegenover LLM's, managers, coachingsbureaus en sales-enablement-tools, plus een nieuwe sectie over het vraag-en-antwoordpatroon als grootste onzichtbare conversierisico). **Los daarvan, in twee ronden gecorrigeerd (2026-08-18):** eerste ronde verving de ongefundeerde "dekt het abonnement"-claim door een lange uitleg waarom het gesprek niet over kosten moet gaan, wat zelf het woord kosten bleef herhalen. Tweede ronde (op Arno's signaal, "je mind kent niet niet") haalde ook die uitleg weg: nu puur positieve opbrengst-taal, het woord kosten of prijs komt nergens meer voor als het over de eigen prijsvorming gaat. USP 8 ("Kostenvoordeel") hernoemd naar "Schaalbaar voor het hele team" om dezelfde reden. Zie ook `docs/SALES_NOTEBOOKLM.md`, dat na deze fix opnieuw is gesynchroniseerd.
 **Waar we staan:** 13 van de 14 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 14, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen. Nieuw (2026-08-26): de "Concurrentievergelijking"-sectie uit de openstaande takenlijst is nu ingevuld, gecategoriseerd tegenover LLM's/chatbots, menselijke managers, coachingsbureaus en sales-enablement-tools, plus een apart "onder de motorkap"-blokje. Direct daaraan gekoppeld: een sectie die het grootste, meest onzichtbare conversierisico benoemt, gebruikers die ArnoBot als snelle vraagbaak gebruiken en daardoor nooit de kernwaarde ervaren. Het achterliggende productmechanisme daarvoor (een gate die dit gedrag herkent en afremt) is nog niet gebouwd, alleen als GEPLAND gemarkeerd, expliciet gekoppeld aan golf 1/2 in `docs/SYSTEEMPROMPT_UPGRADE.md`.
 **Eerstvolgende stap:** bezwaarafhandeling, prijsargumentatie en pitch-scripts (case studies wachten nog op input van Arno).
 
@@ -18,7 +18,7 @@ Bij twijfel of iets nog live is: niet aannemen, navragen bij Arno of een technis
 
 ## De kernbelofte: wat een manager, hoe goed ook, nooit alleen kan
 
-Dit is het verhaal dat vóór alle losse USP's komt, niet ertussen. De USP's hieronder zijn het bewijs, dit is de kern. Verkoop niet een chatbot-abonnement. Verkoop wat een salesbaas, met alle inzet, ervaring en goede wil van de wereld, structureel nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Dat is een ander gesprek dan "is dit de kosten waard", en het is het gesprek waar je wil zijn: als het waardeverhaal groot genoeg is, verdwijnt het prijsbezwaar vanzelf, in plaats van dat je het achteraf moet pareren.
+Dit is het verhaal dat vóór alle losse USP's komt, niet ertussen. De USP's hieronder zijn het bewijs, dit is de kern. Verkoop niet een chatbot-abonnement. Verkoop wat een salesbaas, met alle inzet, ervaring en goede wil van de wereld, structureel nooit alleen had kunnen leveren aan zijn team, tegen geen enkele prijs. Praat over wat een team hiermee wint: meer deals, sterkere verkopers, een teambaas die zelf ook groeit. Een waardeverhaal dat groot genoeg is, spreekt voor zich.
 
 **Opening om te testen:** *"Je koopt geen chatbot-abonnement. Je koopt structureel wat je beste manager, hoe goed hij ook is, nooit alleen had kunnen leveren, tegen elke prijs."*
 
@@ -36,9 +36,11 @@ Dit is het verhaal dat vóór alle losse USP's komt, niet ertussen. De USP's hie
 
 **6. Kwaliteit die niet verwatert als het team groeit.** Bij een groeiend team krijgt elke individuele verkoper vanzelf minder aandacht van de manager, dat is geen kwestie van inzet maar van beschikbare uren. Verkoper twintig krijgt bij ArnoBot exact dezelfde kwaliteit coaching als verkoper één. Dit is het argument dat het sterkst meegroeit met de dealgrootte: hoe groter het team, hoe groter het gat dat een manager alleen nooit had kunnen dichten, en hoe groter de rechtvaardiging voor een prijs die daarbij past.
 
-### Waarom dit een hogere prijs rechtvaardigt, niet alleen een redelijke
+### Wat een sterker presterend team oplevert
 
-Zodra het gesprek gaat over "wat had dit gekost om zelf te organiseren" in plaats van "wat kost dit abonnement", verschuift het referentiepunt. Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Reken dit niet voor met verzonnen ROI-cijfers (die heeft dit document nog niet, zie de "case studies"-sectie hieronder), maar met de logica zelf: één extra gesloten deal per verkoper, één keer per kwartaal, dekt voor de meeste teams het hele abonnement voor het hele team ruimschoots. Dat is een conservatieve, verdedigbare claim, geen verzonnen percentage.
+**Herzien (2026-08-18, tweede correctieronde):** de eerste correctie van dit stuk verving een ongefundeerde claim door een lange uitleg over waarom het gesprek niet over kosten moet gaan, en bleef daarmee zelf de hele tijd over kosten praten, precies het effect dat vermeden moest worden: de aandacht van een lezer of luisteraar gaat naar wat er wél benoemd wordt, ook als het benoemd wordt om het weg te wuiven. Nu simpelweg alleen nog de positieve kant: wat er gewonnen wordt, zonder het woord kosten of prijs er nog bij te noemen.
+
+Een manager die zelf zou proberen elk teamlid dagelijks, op het juiste moment, met perfect geheugen en zonder favoritisme te coachen, zou daar een veelvoud van zijn eigen tijd aan kwijt zijn, en zou het alsnog niet volhouden bij een groeiend team. Een team dat wél op die manier gecoacht wordt, sluit structureel meer deals, en dat effect stapelt zich op over elke verkoper, elke maand: meer omzet, sterkere verkopers, een teambaas die zelf ook groeit. Dat is het hele verhaal. Concrete, verdedigbare cijfers hierover volgen zodra er echte case studies zijn, zie "Nog toe te voegen" onderaan, tot die tijd geen verzonnen percentages of claims.
 
 ---
 
@@ -81,12 +83,12 @@ De manager ziet een synthese van patronen binnen zijn team, nooit de ruwe gespre
 **Sterkst vlak:** vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
 
 ### 7. Arno's eigen methodiek, niet generieke AI-adviezen — LIVE
-Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, geen bullshit, geen corporate taal). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
+Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, zonder omwegen, eerlijk, bewust niet corporate). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
 
 **Pitch-zin:** de klant koopt Arno's expertise op schaal, niet "een AI".
 
-### 8. Kostenvoordeel t.o.v. een coachingstraject of trainingsbureau — LIVE
-Eén abonnement versus meerdere dure, tijdgebonden coachingsessies per medewerker.
+### 8. Schaalbaar voor het hele team — LIVE
+Eén abonnement geeft elke verkoper dezelfde coaching, in plaats van losse, tijdgebonden sessies die van oudsher maar een select deel van het team ooit bereiken.
 
 **Sterk voor:** de business case die een salesbaas moet verantwoorden voor een heel team.
 

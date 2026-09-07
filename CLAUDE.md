@@ -122,6 +122,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [docs.voyageai.com/docs/pricing](https://docs.voyageai.com/docs/pricing) op nieuwere modelgeneraties en gratis tokentoelagen
 - Zijn de huidige model-IDs nog de nieuwste generatie of inmiddels "legacy"?
 - **Openstaand:** embedding-model (`voyage-3-large`) NIET losstaand upgraden. Breekt de kennisbank-zoekfunctie volledig (0 treffers, live geverifieerd): de hele kennisbank is met dit model vooraf ge-embed. Vereist eerst volledige her-embedding. Zelfde geldt voor `voyage-multilingual-2` (sessie-geheugen, inmiddels deprecated). Zie `docs/CLAUDE_HISTORY.md`.
+- **Her-embedding-traject naar voyage-4 is onderzocht en GEPARKEERD (2026-09-02, `docs/VOYAGE_REEMBED_PLAN.md`):** `voyage-4-large` gaf geen aantoonbare retrieval-verbetering. **Bij deze maandcheck expliciet checken:** heeft Voyage inmiddels een échte EOL-/retirement-datum aangekondigd voor `voyage-3-large` of `voyage-multilingual-2` (changelog / e-mail / dashboardbanner)? Zo ja → traject hervatten volgens dat plandocument (eerst de tuning-opties, dan opnieuw de kwaliteitsvergelijking). Zo nee → niets doen, alleen deze regel bevestigen.
 
 #### Sentry (foutmonitoring + performance tracing)
 - [Sentry release notes](https://docs.sentry.io/product/relay/release-notes/) of het `@sentry/nextjs`-changelog op breaking changes
@@ -476,9 +477,9 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
 | `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse. Tijdgebonden instructie gecorrigeerd. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
-| `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). Vereist volledige her-embedding. | 2026-07 |
+| `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). voyage-4-large onderzocht 2026-09-02, geen kwaliteitswinst, traject geparkeerd (`docs/VOYAGE_REEMBED_PLAN.md`). | 2026-09-02 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |
-| `lib/rag.ts` (`embedSessionText`, sessie-geheugen) | `voyage-multilingual-2` | Model-mix-bug gefixt 2026-08-12, alle schrijvers geconsolideerd. Deprecated, NIET losstaand upgraden. | 2026-08-12 |
+| `lib/rag.ts` (`embedSessionText`, sessie-geheugen) | `voyage-multilingual-2` | Model-mix-bug gefixt 2026-08-12, alle schrijvers geconsolideerd. Deprecated, NIET losstaand upgraden. voyage-4-migratie geparkeerd, zie kennisbank-rij hierboven. | 2026-09-02 |
 | `app/api/bot/coaching-precheck/route.ts` | `claude-sonnet-4-6` | Losse ja/nee-check, expliciete fallback (`'nee'`). | 2026-07 |
 | `app/api/bot/verfijn/route.ts` | `claude-sonnet-4-6` | Herschrijft een gebruikersvraag, fallback = originele vraag, max 2000 tekens. | 2026-07 |
 | `app/api/bot/search-linkedin-profile/route.ts` | `claude-sonnet-4-6` (+ web_search) | Opzoektaak met expliciete "niet gevonden"-afhandeling. | 2026-07 |
@@ -493,10 +494,8 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `scripts/embed-chunks.mjs` (contextgeneratie per chunk) | `claude-haiku-4-5-20251001` | Offline script dat de kennisbank vult. try/catch-fallback. | 2026-07 |
 | `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Enige Opus-gebruik. `tool_choice` forceert tool_use. Opus 5 kost gelijk aan 4.8, presteert beter. | 2026-07 |
 | `app/api/admin/blogs-analyse/route.ts` | `claude-sonnet-4-6` | Redactionele briefing. Retry-bij-leeg + expliciete foutrespons. | 2026-07 |
-| `app/api/admin/meta-analyse/route.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. | 2026-08-18 |
-| `app/api/admin/meta-analyse/route.ts` (jouw analyse) | `claude-fable-5` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. | 2026-08-18 |
-| `app/api/cron/meta-analyse/route.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5` | Zelfde upgrade/reden. maxDuration 300s, gesprekken 12→25. | 2026-08-18 |
-| `app/api/cron/meta-analyse/route.ts` (jouw analyse) | `claude-fable-5` | Zelfde derde sectie, nu ook in de maandelijkse mail. Refusal-check. | 2026-08-18 |
+| `lib/metaAnalyse.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. Sinds 2026-09-02 één gedeelde implementatie voor `cron/meta-analyse` (days=30, e-mail) én `admin/meta-analyse` (periodekeuze, JSON). | 2026-09-02 |
+| `lib/metaAnalyse.ts` (jouw analyse) | `claude-fable-5` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. Zelfde gedeelde module. | 2026-09-02 |
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. | 2026-07 |
 | `app/api/admin/analyse/route.ts` (briefing per gebruiker) | `claude-fable-5` | ANALYSE-tab in admin, vervangt Arno's handmatige uitzoekwerk. Refusal-check + retry + max_tokens-verdubbeling vanaf v1. | 2026-08-25 |
 | `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5` | Zelfde databundel. Bewust niet opgeslagen. | 2026-08-25 |

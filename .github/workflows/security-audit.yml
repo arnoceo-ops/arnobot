@@ -296,3 +296,27 @@ jobs:
         # JSX daar al vanaf de eerste render op rendert, zichtbaar als een korte flits van
         # de verkeerde versie. Bevestigde false positives toevoegen aan KNOWN_SAFE_FETCHES
         # in het script zelf, niet hier onderdrukken.
+
+  prompt-rules:
+    name: AI-promptregels (informatief, blokkeert niet)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Controleer AI-routes op sanitizer-bedrading en de vaste promptregels
+        run: node scripts/check-prompt-rules.mjs
+        continue-on-error: true
+        # Blokkeert bewust niet: statische tekstanalyse, prompts worden soms uit variabelen
+        # of helpers opgebouwd die het script niet volledig volgt. Toegevoegd 2026-09-03.
+        # Drie checks: (1) elke SDK-route leidt output via lib/ai.ts (getText/
+        # StreamingDashSanitizer), het runtime-vangnet voor de streepjesregel; (2) de
+        # jij/jou- en geen-tijdslimiet-regel (geen runtime-vangnet) staan in de prompt of
+        # via een RULE_*/SHARED_RULES uit lib/systemPrompt.ts; (3) geen letterlijk em/en
+        # dash in de promptteksten zelf. Bevestigde legitieme gevallen toevoegen aan de
+        # KNOWN_*-lijsten in het script zelf, niet hier onderdrukken.

@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { parseGroeibalansClassificatie } from '@/lib/groeibalans'
+import { telGebruik } from '@/lib/gebruikTellers'
 
 // Herberekening van de "Gebruiksbalans"-classificatie (het kader op /bot, desktop-only, zie
 // lib/groeibalans.ts en geheugen project_gebruiksbalans_concept.md). Rolbewust: kijkt naar
@@ -47,20 +48,11 @@ export async function recomputeGroeibalans(
   userId: string,
   activiteit: string,
 ): Promise<void> {
-  const [profielRes, gesprekkenCountRes, sparCountRes, analysesCountRes, coachingCountRes] = await Promise.all([
+  const [profielRes, tellers] = await Promise.all([
     supabase.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
-    supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('arnobot_sparring_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('arnobot_analyses').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('arnobot_coaching').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    telGebruik(supabase, userId),
   ])
   const profiel = (profielRes.data?.profiel ?? {}) as Record<string, unknown>
-  const tellers = {
-    gesprekken: gesprekkenCountRes.count ?? 0,
-    sparsessies: sparCountRes.count ?? 0,
-    analyses: analysesCountRes.count ?? 0,
-    coaching: coachingCountRes.count ?? 0,
-  }
 
   const res = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',

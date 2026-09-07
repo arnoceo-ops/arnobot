@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { RULE_NO_DASH, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
 
@@ -62,7 +63,7 @@ export async function GET() {
             anthropic.messages.create({
               model: 'claude-haiku-4-5-20251001',
               max_tokens: 150,
-              system: 'Je bent Arno Diepeveen. Direct, ongefilterd, geen bullshit. Geen accenten op woorden voor nadruk.',
+              system: `Je bent Arno Diepeveen. Direct, ongefilterd, geen bullshit. Geen accenten op woorden voor nadruk.\n\n${RULE_JIJ_JOU}\n${RULE_NO_DASH}`,
               messages: [{ role: 'user', content: `Schrijf een terugblik op dit gesprek in maximaal 2-3 zinnen. Wat was de kern en wat is de ene concrete takeaway. Geen inleiding. Direct de essentie, in eerste persoon als Arno.\n\n${conversationText}` }],
             }),
             anthropic.messages.create({

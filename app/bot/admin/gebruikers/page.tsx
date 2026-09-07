@@ -26,8 +26,10 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   if (row.expires_at) {
     const exp = new Date(row.expires_at)
     const left = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    if (left <= 0) return { label: 'VERLOPEN', color: '#cc4444' }
-    return { label: `TRIAL ${left}d`, color: '#f59e0b' }
+    // expires_at zonder trial_start = een handmatig gezette comp (GRATIS +), geen echte trial
+    const isComp = !row.trial_start
+    if (left <= 0) return { label: isComp ? 'GRATIS VERLOPEN' : 'VERLOPEN', color: '#cc4444' }
+    return { label: isComp ? `GRATIS ${left}d` : `TRIAL ${left}d`, color: '#f59e0b' }
   }
   if (row.trial_start) {
     const end = new Date(new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
@@ -36,6 +38,31 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
     return { label: `TRIAL ${left}d`, color: '#f59e0b' }
   }
   return { label: 'ONBEKEND', color: '#6b7280' }
+}
+
+// Sorteersleutel voor de STATUS-badge, spiegelt trialStatus() hierboven:
+// INACTIEF < VERLOPEN < loopt af (op resterende dagen, minst eerst) < BETAALD < onbekend.
+function statusSortKey(row: { is_active?: boolean; paid_at?: string | null; expires_at?: string | null; trial_start?: string | null }): string {
+  if (!row.is_active) return '0'
+  if (row.paid_at) return '3'
+  let end: number | null = null
+  if (row.expires_at) end = new Date(row.expires_at).getTime()
+  else if (row.trial_start) end = new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000
+  if (end === null) return '4'
+  const daysLeft = Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 0) return '1'
+  return `2_${String(daysLeft).padStart(6, '0')}`
+}
+
+// Sorteersleutel voor de BETALING-kolom die de zichtbare volgorde volgt:
+// UIT < TOEGANG + < GRATIS (op einddatum) < BETAALD met einddatum < BETAALD onbeperkt.
+// Rang als prefix, datum als tiebreaker, alles als string zodat één vergelijking volstaat.
+function betalingSortKey(row: { is_active?: boolean; paid_at?: string | null; expires_at?: string | null; created_at?: string | null }): string {
+  if (!row.is_active) return '0'
+  if (row.paid_at && !row.expires_at) return '4'
+  if (row.paid_at) return `3_${row.expires_at ?? ''}`
+  if (row.expires_at) return `2_${row.expires_at}`
+  return `1_${row.created_at ?? ''}`
 }
 
 function SortHeader({ label, field, sort, dir, vertical = false, leftAlign = false }: {
@@ -104,7 +131,7 @@ export default async function GebruikersPage({
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, renewal_requested_at, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
+      .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
       .neq('email', E2E_TEST_USER_EMAIL)
       .neq('email', MANUAL_TEST_USER_EMAIL)
       .neq('email', APP_REVIEWER_EMAIL),
@@ -237,8 +264,12 @@ export default async function GebruikersPage({
   const sorted = [...enriched].sort((a, b) => {
     let av: number | string = 0
     let bv: number | string = 0
-    if (sort === 'naam') { av = (a.clerkName || a.full_name || '').toLowerCase(); bv = (b.clerkName || b.full_name || '').toLowerCase() }
+    if (sort === 'naam') {
+      av = (a.clerkName || a.full_name || [a.voornaam, a.achternaam].filter(Boolean).join(' ')).toLowerCase()
+      bv = (b.clerkName || b.full_name || [b.voornaam, b.achternaam].filter(Boolean).join(' ')).toLowerCase()
+    }
     if (sort === 'aangemeld') { av = a.created_at; bv = b.created_at }
+    if (sort === 'status') { av = statusSortKey(a); bv = statusSortKey(b) }
     if (sort === 'gesprekken') { av = a.count; bv = b.count }
     if (sort === 'vragen') { av = a.questions; bv = b.questions }
     if (sort === 'laatste') { av = a.lastSession || ''; bv = b.lastSession || '' }
@@ -246,10 +277,13 @@ export default async function GebruikersPage({
     if (sort === 'analyses') { av = a.analysesCount; bv = b.analysesCount }
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'plan') { av = a.plan || ''; bv = b.plan || '' }
-    if (sort === 'command_manager') { av = a.command_manager ? 1 : 0; bv = b.command_manager ? 1 : 0 }
+    if (sort === 'command_manager') {
+      const teamRank = (u: typeof a) => u.command_manager ? 2 : (teamRoleMap.get(u.user_id) === 'member' ? 1 : 0)
+      av = teamRank(a); bv = teamRank(b)
+    }
     if (sort === 'sd_agent') { av = (a as { sd_agent?: string | null }).sd_agent || ''; bv = (b as { sd_agent?: string | null }).sd_agent || '' }
     if (sort === 'linkedin') { av = a.linkedin ? 1 : 0; bv = b.linkedin ? 1 : 0 }
-    if (sort === 'paid_at') { av = a.paid_at || ''; bv = b.paid_at || '' }
+    if (sort === 'betaling') { av = betalingSortKey(a); bv = betalingSortKey(b) }
     if (sort === 'nudge_opt_out') { av = (a as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0; bv = (b as { nudge_opt_out?: boolean }).nudge_opt_out ? 1 : 0 }
     if (sort === 'refsignups') { av = a.refSignups; bv = b.refSignups }
     if (sort === 'refconverted') { av = a.refConverted; bv = b.refConverted }
@@ -283,7 +317,10 @@ export default async function GebruikersPage({
         <div className="admin-user-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: '0 8px', padding: '0 12px 12px', borderBottom: '1px solid #222', alignItems: 'end', borderLeft: '3px solid transparent' }}>
           <div />
           <SortHeader label="NAAM" field="naam" sort={sort} dir={dir} leftAlign />
-          <SortHeader label="STATUS" field="aangemeld" sort={sort} dir={dir} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+            <SortHeader label="STATUS" field="status" sort={sort} dir={dir} />
+            <SortHeader label="AANGEMELD" field="aangemeld" sort={sort} dir={dir} />
+          </div>
           <SortHeader label="GESPREKKEN" field="gesprekken" sort={sort} dir={dir} vertical />
           <SortHeader label="VRAGEN" field="vragen" sort={sort} dir={dir} vertical />
           <SortHeader label="LAATSTE GESPREK" field="laatste" sort={sort} dir={dir} vertical />
@@ -295,7 +332,7 @@ export default async function GebruikersPage({
           <SortHeader label="SD AGENT" field="sd_agent" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
           <SortHeader label="REF €" field="refconverted" sort={sort} dir={dir} vertical />
-          <SortHeader label="BETALING" field="paid_at" sort={sort} dir={dir} vertical />
+          <SortHeader label="BETALING" field="betaling" sort={sort} dir={dir} vertical />
           <SortHeader label="MAIL" field="nudge_opt_out" sort={sort} dir={dir} vertical />
           <SortHeader label="LINKEDIN" field="linkedin" sort={sort} dir={dir} vertical />
         </div>
@@ -408,14 +445,10 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
                 </div>
-                {/* Betaling */}
+                {/* Betaling / toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG +,
+                    en het paneel erachter regelt comp, betaling en aan/uit */}
                 <div style={{ textAlign: 'center' }}>
-                  {(u as { renewal_requested_at?: string | null }).renewal_requested_at && !u.paid_at
-                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : u.paid_at
-                    ? <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} />
-                    : <span style={{ fontSize: '12px', color: '#374151' }}>.</span>
-                  }
+                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} isActive={u.is_active ?? false} />
                 </div>
                 {/* Mail opt-out */}
                 <div style={{ textAlign: 'center' }}>

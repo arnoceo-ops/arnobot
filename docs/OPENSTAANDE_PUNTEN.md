@@ -3,7 +3,13 @@
 **Gemaakt:** 2026-08-30
 **Aard:** geconsolideerde momentopname uit `CLAUDE.md`, alle plandocumenten en het sessiegeheugen, op verzoek als sessie-overstijgende reminder. **Dit is geen live tracker.** De bron van waarheid blijft per onderwerp het betreffende plandocument en de "Openstaand"-markeringen in `CLAUDE.md`. Bij de eerstvolgende kwartaalcheck (punt 11) tegen de werkelijkheid houden en daarna verwijderen of verversen, niet eindeloos laten meelopen.
 
-**Bewust weggelaten:** de Android-app en de keuze van een betaalprovider (Arno houdt die zelf bij), plus alles wat puur daarop wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking.
+**Bewust weggelaten:** de Android-app, plus alles wat puur op de betaalprovider-integratie wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking. **De betaalprovider-keuze zelf is genomen (2026-09-02): Stripe voor de hele EU (B2C + B2B), Paddle voor de rest van de wereld, sequentieel. Zie `docs/PAYMENTS_PLAN.md`.**
+
+## Vóór de commerciële livegang
+
+- **Abonnementsvoorwaarden juridisch laten nakijken (NL SaaS + consumentenrecht).** `app/voorwaarden/page.tsx` artikel 7 klopt niet voor B2C: de jaarclausule (2 maanden opzegtermijn, anders een jaar erbij) is vermoedelijk nietig onder de Wet Van Dam, en de maandclausule botst met "Maandelijks opzegbaar" op `/prijzen`. Plus: auto-verleng-disclosure in de checkout, 14-dagen-herroepingsrecht-opt-in voor digitale content. Details en richting in `docs/PAYMENTS_PLAN.md` → "Opzegging, verlenging en consumentenrecht".
+- **`/prijzen` claimt "Maandelijks opzegbaar"** terwijl artikel 7(b) een maand opzegtermijn mét doorbetaling oplegt. Intern tegenstrijdig, meenemen in de voorwaarden-herziening.
+- **Btw-opzet door de boekhouder laten bevestigen** (prijs btw-inclusief voor consumenten, btw-exclusief bij een btw-nummer, OSS-drempel EU-consumenten). Weergave-besluit staat vast (kale prijzen op `/prijzen`, 2026-09-03), zie `docs/PAYMENTS_PLAN.md` → "Btw-weergave". Abacus modelleert de B2C-btw-haircut bewust niet.
 
 ---
 
@@ -15,7 +21,7 @@
 
 ## Technische schuld en deprecaties
 
-- **Voyage embedding-modellen zijn deprecated.** `voyage-3-large` (kennisbank-RAG) en `voyage-multilingual-2` (sessie-geheugen). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van respectievelijk de kennisbank en alle bestaande sessies. Apart gepland, nog niet gestart. Grootste losse klus.
+- **Voyage embedding-modellen zijn deprecated.** `voyage-3-large` (kennisbank-RAG) en `voyage-multilingual-2` (sessie-geheugen). Her-embedding naar `voyage-4-large` is onderzocht en **geparkeerd** (2026-09-02, `docs/VOYAGE_REEMBED_PLAN.md`): geen aantoonbare retrieval-verbetering. Hervatten zodra Voyage een echte EOL-datum aankondigt; de maandcheck (sectie 4, Voyage) checkt daarop.
 - **`proxy.ts` gebruikt nog `createRouteMatcher()`** (Clerk), sinds `@clerk/nextjs` 7.5.14 gedeprecate ten gunste van `auth.protect()` per route. Geen verwijderdatum, wel migreren zodra opgepakt.
 - **Hoofdchat draait op `claude-sonnet-4-6` i.p.v. Sonnet 5.** Sonnet 5 gaf bij lange vragen een leeg antwoord (thinking mode zonder text block), maar is inmiddels structureel goedkoper. Hercheck of Anthropic dit heeft aangepast, of schakel extended thinking bewust in met `budget_tokens`. Eerst op staging testen, minimaal een week na de commerciële livegang.
 - **Multi-tenant RLS.** RLS staat aan op alle ~41 tabellen maar zonder policies; de isolatie tussen gebruikers hangt volledig af van een `.eq('user_id', userId)`-filter per route plus de CI-check `check-missing-user-filter.mjs`. Een echte Clerk-JWT-policy-implementatie per tabel is een groot apart traject, bewust nog niet opgepakt.
@@ -38,7 +44,7 @@
   - **Session replay:** `SESSION_REPLAY_ENABLED` op true gezet 2026-08-30, dubbel gemaskeerd (PostHog-projectinstelling "mask all" + code `maskTextSelector: '*'`). Visuele verificatie op 2026-08-30 niet gelukt: Arno's browsers hebben te veel blockers (Ghostery/Privacy Badger/uBlock) en hij is bovendien via `is_intern` uit de views gefilterd. **Openstaand: rond 2026-09-06 één echte gebruikersopname openen en bevestigen dat alle tekst gemaskeerd is.** Niet gemaskeerd -> `SESSION_REPLAY_ENABLED` terug op false.
 - **PostHog Data Warehouse-koppeling.** Stripe: geblokkeerd tot er een betaalprovider is (samen met dunning). Supabase: bewust niet als directe connector (nieuw dataoppervlak), de veilige productvelden gaan al als person-properties mee; eventueel later een read-only curated view.
 - **Manager-zelfcoaching-gat.** Uitgewerkt tot "de actie-helft van 2C" in `TEAM_PLAN.md` (sectie onderaan, 2026-08-31). Stuk A (toon aanscherpen: hypothesetaal, circle of influence, niet-schuldig-wel-verantwoordelijk) is **gebouwd**. Stuk B (signaalgedreven handvatten + terugkoppellus) is een **projectplan met vijf beslispunten** dat op Arno's akkoord wacht (B1 vaste set vs. B2 LLM, en een SQL-migratie op `arnobot_salesbaas_coaching`). Stuk C (team-onboarding vertrouwenslagen) geparkeerd.
-- **TEAM_PLAN stap 3: Solopreneur-profiel** (nog niet ontworpen), plus de open vraag welke rol/profiel een uitgenodigd teamlid (niet de manager) krijgt, nooit in de profielherziening meegenomen.
+- ~~**TEAM_PLAN stap 3: Solopreneur-profiel + teamlid-rol.**~~ **Afgehandeld 2026-09-03.** Solopreneur-profiel gebouwd (`app/bot/profiel/page.tsx`, eigen tak met positionering / acquisitie / inkomensdoel, 12 blokken). Teamlid-profiel: besloten geen eigen tak (= verkoperprofiel). Profielherziening per rol is af. Nog apart genoteerd: eigen SPE-coaching voor de solopreneur (ziet nu nog de MSA-pagina), en het kwartaalthema doorgeven aan de ArnoBot van een teamlid.
 - ~~**TEAM_PLAN 2B (De Tijdlijn) en 2C (Manager als Variabele).**~~ **Afgehandeld 2026-08-31.** Verse controle uitgevoerd: beide zijn echt gebouwd (`computeThemaMaandTrend`, `formatSystemischSignaal`, `formatVroegSignaal` in `lib/spiegel.ts`, aangeroepen door `team/spotlight`, `team/dashboard` en `team/zelfcoaching`). De tegenstrijdigheid zat alleen in achterhaalde planningstaal in oudere secties van `TEAM_PLAN.md` ("Niet gestart" in de Fase 1/2-tabel, "fase 3, niet fase 2"), die is rechtgezet. Geen codewerk open.
 - **Sparring preformatted-scenario-kaarten.** Bouwen zodra er 5 scenario's liggen, nu 1/5.
 - **Referral-tegoed-automatisering.** `status='converted'` wordt nergens gezet, de hele flow is handmatig.

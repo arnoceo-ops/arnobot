@@ -61,7 +61,7 @@ export default function AppSignIn() {
           letter-spacing: 3px; cursor: pointer; transition: background 0.2s;
         }
         .app-signin-btn:hover { background: #d97706; }
-        .app-signin-btn:disabled { background: #374151; color: #4b5563; cursor: not-allowed; }
+        .app-signin-btn:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
       `}</style>
       <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111827', padding: '40px 20px' }}>
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 24 }}>

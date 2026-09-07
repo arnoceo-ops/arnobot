@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Fragment } from 'react'
+import { parseBevindingen, stripBevindingenBlok, type Bevinding } from '@/lib/metaAnalyseTrend'
 
 const loadingStyle = `
   .meta-loading { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
@@ -96,6 +97,95 @@ function periodLabel(days: number) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+}
+
+const ERNST_TAG: Record<Bevinding['ernst'], { kleur: string; bg: string; label: string }> = {
+  hoog: { kleur: '#f87171', bg: 'rgba(248,113,113,0.12)', label: 'HOOG' },
+  midden: { kleur: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'MIDDEN' },
+  laag: { kleur: '#9ca3af', bg: 'rgba(156,163,175,0.12)', label: 'LAAG' },
+}
+const TREND_MARK: Record<Bevinding['trend'], { glyph: string; kleur: string; titel: string }> = {
+  nieuw: { glyph: '○', kleur: '#f59e0b', titel: 'nieuw' },
+  verbeterd: { glyph: '↑', kleur: '#4ade80', titel: 'verbeterd' },
+  gelijk: { glyph: '=', kleur: '#6b7280', titel: 'gelijk' },
+  verslechterd: { glyph: '↓', kleur: '#f87171', titel: 'verslechterd' },
+}
+
+// Bouwt de trend-tabel uit de bevindingen-blokken van de opgeslagen analyses.
+// Kolommen = analyses (nieuwste eerst, max 6), rijen = unieke slugs in volgorde van
+// eerste voorkomen. De meest recente bevinding per slug levert label, ernst en toelichting.
+function buildTrendMatrix(analyses: MetaAnalyse[]) {
+  const cols = analyses
+    .map(a => ({ a, bev: parseBevindingen(a.expertpanel_text) }))
+    .filter(x => x.bev.length > 0)
+    .slice(0, 6)
+  const slugs: string[] = []
+  for (const { bev } of cols) for (const b of bev) if (!slugs.includes(b.slug)) slugs.push(b.slug)
+  const meest = (slug: string) => cols.map(c => c.bev.find(b => b.slug === slug)).find(Boolean)
+  return { cols, rijen: slugs.map(slug => ({ slug, huidig: meest(slug)! })) }
+}
+
+function TrendTabel({ analyses }: { analyses: MetaAnalyse[] }) {
+  const { cols, rijen } = buildTrendMatrix(analyses)
+  if (cols.length === 0) return null
+  const meerdereKolommen = cols.length > 1
+
+  return (
+    <div style={{ borderTop: '1px solid #1f2937', paddingTop: 40, marginBottom: 48 }}>
+      <p style={{ fontSize: 12, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>TREND</p>
+      <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, marginBottom: 20 }}>
+        Structurele verbeterpunten uit het expertpanel, belangrijkste eerst.
+        {meerdereKolommen
+          ? ' Rechts per analyse de beweging: ○ nieuw, ↑ verbeterd, = gelijk, ↓ verslechterd.'
+          : ' Zodra er een tweede analyse is, verschijnt hier de beweging per maand.'}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {meerdereKolommen && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px 6px', color: '#6b7280', fontSize: 12, letterSpacing: 1 }}>
+            <span style={{ flexGrow: 1, minWidth: 0 }} />
+            {cols.map(({ a }) => (
+              <span key={a.id} style={{ width: 40, textAlign: 'center', flexShrink: 0 }}>{shortDate(a.created_at)}</span>
+            ))}
+          </div>
+        )}
+        {rijen.map(({ slug, huidig }) => {
+          const tag = ERNST_TAG[huidig.ernst]
+          return (
+            <div key={slug} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#1f2937', border: '1px solid #374151', padding: '14px 16px' }}>
+              <div style={{ flexGrow: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, color: '#f1f5f9', fontWeight: 700 }}>{huidig.label}</span>
+                  <span style={{ fontSize: 12, letterSpacing: 1, color: tag.kleur, background: tag.bg, padding: '2px 8px', borderRadius: 4, flexShrink: 0 }}>
+                    {tag.label}
+                  </span>
+                </div>
+                {huidig.toelichting && (
+                  <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.6 }}>{huidig.toelichting}</p>
+                )}
+              </div>
+              {meerdereKolommen && cols.map(({ a, bev }) => {
+                const b = bev.find(x => x.slug === slug)
+                const mark = b ? TREND_MARK[b.trend] : null
+                return (
+                  <span
+                    key={a.id}
+                    title={b ? `${mark!.titel}: ${b.toelichting}` : 'niet genoemd in deze analyse'}
+                    style={{ width: 40, textAlign: 'center', flexShrink: 0, fontSize: 15, fontWeight: 700, color: mark ? mark.kleur : '#374151', paddingTop: 1 }}
+                  >
+                    {mark ? mark.glyph : '·'}
+                  </span>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function MetaAnalyseClient() {
@@ -472,6 +562,8 @@ export default function MetaAnalyseClient() {
         )}
       </div>
 
+      {!archiveLoading && <TrendTabel analyses={analyses} />}
+
       {archiveLoading ? (
         <p style={{ color: '#374151', fontSize: 12, letterSpacing: 2 }}>Laden...</p>
       ) : analyses.length === 0 ? (
@@ -551,7 +643,7 @@ export default function MetaAnalyseClient() {
                         )}
                       </div>
                       <div style={{ padding: '24px 24px 28px 24px' }}>
-                        <AnalyseText text={tab === 'jouw' && a.jouw_analyse_text ? a.jouw_analyse_text : tab === 'zelf' ? a.zelfbeoordeling_text : a.expertpanel_text} />
+                        <AnalyseText text={tab === 'jouw' && a.jouw_analyse_text ? a.jouw_analyse_text : tab === 'zelf' ? a.zelfbeoordeling_text : stripBevindingenBlok(a.expertpanel_text)} />
                       </div>
                     </div>
                   )}

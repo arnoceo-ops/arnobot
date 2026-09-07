@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isExcludedFromProductAnalytics } from '@/lib/internalTestAccounts'
+import { telGebruik } from '@/lib/gebruikTellers'
 
 // Levert de veilige, categorische person-properties voor PostHog. Wordt één keer per
 // sessie door PostHogTracker.tsx opgehaald en via posthog.identify() gezet.
@@ -24,7 +25,7 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const [approvedRes, profielRes, teamRes, gesprekkenRes, coachingRes] = await Promise.all([
+  const [approvedRes, profielRes, teamRes, tellers] = await Promise.all([
     supabase
       .from('approved_users')
       .select('plan, command_manager, created_at, trial_start, expires_at, paid_at')
@@ -32,8 +33,7 @@ export async function GET() {
       .maybeSingle(),
     supabase.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).maybeSingle(),
     supabase.from('arnobot_team_members').select('team_id, role').eq('user_id', userId).maybeSingle(),
-    supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('arnobot_coaching').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    telGebruik(supabase, userId),
   ])
 
   const u = approvedRes.data
@@ -56,8 +56,8 @@ export async function GET() {
     team_rol: teamRes.data?.role ?? null,
     is_teambaas: u?.command_manager === true,
     aangemeld_op: u?.created_at ?? u?.trial_start ?? null,
-    aantal_gesprekken: gesprekkenRes.count ?? 0,
-    aantal_coachingsessies: coachingRes.count ?? 0,
+    aantal_gesprekken: tellers.gesprekken,
+    aantal_coachingsessies: tellers.coaching,
     // True voor de interne testaccounts en de oprichter. In PostHog filter je hierop via
     // Settings -> Project -> "Internal and test users" (person property is_intern = true),
     // zodat dit verkeer uit alle insights valt, ongeacht IP of apparaat.
