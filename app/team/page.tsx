@@ -22,7 +22,7 @@ export default async function TeamPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&family=Space+Mono:wght@400;700&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
@@ -76,26 +76,54 @@ export default async function TeamPage() {
         .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; }
         .tm-section-narrow { max-width: 62ch; }
 
-        /* Feature blocks: korte intro, dan de screenshot op volle breedte */
-        .tm-feature { padding: 48px 0; border-top: 1px solid #1f2937; }
-        .tm-feature-text { max-width: 62ch; margin-bottom: 24px; }
-        .tm-feature-text h3 {
-          font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
-          color: #f8fafc; margin-bottom: 10px;
+        /* Held-productshot onder de hero (Linear/Vercel-patroon: koptekst, dan het product) */
+        .tm-heroshot { max-width: 1040px; margin: 8px auto 0; padding: 0 24px; }
+        .tm-heroshot-frame { position: relative; border-radius: 14px; }
+        .tm-heroshot-frame::before {
+          content: ''; position: absolute; left: 50%; top: -6%; width: 78%; height: 60%;
+          transform: translateX(-50%); background: #f59e0b; filter: blur(120px); opacity: 0.14; z-index: 0;
         }
-        .tm-feature-text p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
+        .tm-heroshot img {
+          position: relative; z-index: 1; display: block; width: 100%; height: auto;
+          border-radius: 14px; border: 1px solid #374151;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+        }
+        .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
 
-        /* Screenshot in browservenster-kader */
-        .tm-shot {
-          border: 1px solid #374151; border-radius: 10px; overflow: hidden;
-          background: #1e293b; box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+        /* Feature-secties: korte tekst naast een herbouwd productfragment (Stripe/Attio-patroon) */
+        .tm-feat { display: grid; grid-template-columns: 2fr 3fr; gap: 48px; align-items: center; padding: 52px 0; border-top: 1px solid #1f2937; }
+        .tm-feat:nth-of-type(even) .tm-feat-frag { order: -1; }
+        .tm-feat-text h3 {
+          font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; margin-bottom: 12px;
         }
-        .tm-shot-bar {
-          display: flex; align-items: center; gap: 6px;
-          padding: 9px 12px; background: #111827; border-bottom: 1px solid #374151;
+        .tm-feat-text p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
+
+        /* Productfragment in de dashboard-stijl (Space Mono, amber accent, elevated card) */
+        .tm-frag {
+          position: relative; overflow: hidden;
+          background: #1f2937; border: 1px solid #374151; border-left: 3px solid #f59e0b;
+          border-radius: 6px; padding: 24px 26px 40px;
+          font-family: 'Space Mono', monospace;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.35);
         }
-        .tm-shot-bar span { width: 9px; height: 9px; border-radius: 50%; background: #374151; }
-        .tm-shot img { display: block; width: 100%; height: auto; }
+        .tm-frag::after {
+          content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
+          background: linear-gradient(to bottom, rgba(31,41,55,0), #1f2937);
+        }
+        .tm-frag-label { font-size: 12px; letter-spacing: 0.25em; color: #f59e0b; }
+        .tm-frag-h { font-size: 12px; letter-spacing: 0.22em; color: #f1f5f9; margin: 20px 0 7px; }
+        .tm-frag-p { font-size: 13px; line-height: 1.85; color: #9ca3af; }
+        .tm-frag-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 16px; }
+        .tm-frag-score-name { font-size: 10px; letter-spacing: 0.18em; color: #94a3b8; }
+        .tm-frag-score-bar { height: 5px; border-radius: 999px; background: #111827; margin: 7px 0; overflow: hidden; }
+        .tm-frag-score-bar i { display: block; height: 100%; }
+        .tm-frag-score-num { font-size: 20px; font-weight: 700; line-height: 1; }
+        .tm-frag-pill {
+          position: relative; z-index: 2; display: inline-block; margin-top: 22px;
+          background: #f59e0b; color: #111827; font-size: 11px; font-weight: 700;
+          letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px; border-radius: 999px;
+        }
 
         /* Steps */
         .tm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; counter-reset: step; }
@@ -121,9 +149,11 @@ export default async function TeamPage() {
         .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
 
         @media (max-width: 820px) {
-          .tm-feature { padding: 36px 0; }
+          .tm-feat { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
+          .tm-feat:nth-of-type(even) .tm-feat-frag { order: 0; }
           .tm-steps { grid-template-columns: 1fr; }
-          .tm-hero { padding: 120px 24px 56px; }
+          .tm-hero { padding: 120px 24px 48px; }
+          .tm-heroshot { margin-top: 4px; }
         }
       `}</style>
 
@@ -158,6 +188,13 @@ export default async function TeamPage() {
         </div>
       </section>
 
+      <figure className="tm-heroshot">
+        <div className="tm-heroshot-frame">
+          <img src="/team/overzicht.jpg" width="1600" height="996" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
+        </div>
+        <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
+      </figure>
+
       <div className="tm-wrap">
 
         <section className="tm-section tm-section-narrow">
@@ -170,72 +207,113 @@ export default async function TeamPage() {
           </p>
         </section>
 
-        <section className="tm-section" style={{ paddingBottom: 8 }}>
+        <section className="tm-section" style={{ paddingBottom: 0, borderBottom: 'none' }}>
           <p className="tm-label">Wat je als manager krijgt</p>
-          <h2 className="tm-h2">Vier schermen, één beeld van je team</h2>
+          <h2 className="tm-h2">Van overzicht naar het volgende gesprek</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Het teamoverzicht laat zien waar iedereen staat. Deze drie schermen vertellen je
+            wat je ermee doet.
+          </p>
         </section>
 
-        <div className="tm-feature">
-          <div className="tm-feature-text">
-            <h3>Teamoverzicht</h3>
-            <p>
-              De score van elke verkoper naast elkaar, plus de teamtrend over de maanden.
-              Je ziet in vijf seconden wie aandacht nodig heeft.
-            </p>
-          </div>
-          <div className="tm-feature-visual">
-            <figure className="tm-shot">
-              <div className="tm-shot-bar"><span /><span /><span /></div>
-              <img src="/team/overzicht.jpg" width="1600" height="996" alt="Teamoverzicht met de score per verkoper en de teamtrend" />
-            </figure>
-          </div>
-        </div>
-
-        <div className="tm-feature">
-          <div className="tm-feature-text">
+        <div className="tm-feat">
+          <div className="tm-feat-text">
             <h3>Profiel per verkoper</h3>
             <p>
-              Per persoon een diagnose op mindset, systeem en actie, met de ontwikkeling over
-              tijd. Onderbouwd met wat er in de gesprekken gebeurt, niet met een vragenlijst.
+              Een diagnose op mindset, systeem en actie, met de ontwikkeling over tijd.
+              Onderbouwd met wat er in de gesprekken gebeurt, niet met een vragenlijst.
             </p>
           </div>
-          <div className="tm-feature-visual">
-            <figure className="tm-shot">
-              <div className="tm-shot-bar"><span /><span /><span /></div>
-              <img src="/team/profiel.jpg" width="1600" height="996" alt="Coachingprofiel van een verkoper met de scores en de ontwikkeling over tijd" />
-            </figure>
+          <div className="tm-feat-frag">
+            <div className="tm-frag">
+              <p className="tm-frag-label">BENNY VERWAAIJEN</p>
+              <div className="tm-frag-scores">
+                <div>
+                  <p className="tm-frag-score-name">MINDSET</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#f59e0b' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#f59e0b' }}>5</span>
+                </div>
+                <div>
+                  <p className="tm-frag-score-name">SYSTEEM</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#60a5fa' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#60a5fa' }}>5</span>
+                </div>
+                <div>
+                  <p className="tm-frag-score-name">ACTIE</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '80%', background: '#4ade80' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#4ade80' }}>4</span>
+                </div>
+              </div>
+              <p className="tm-frag-h">SYSTEEM</p>
+              <p className="tm-frag-p">
+                Pipeline-opvolging is scherper geworden. Beslissers worden nu vroeg in kaart
+                gebracht in plaats van halverwege ontdekt.
+              </p>
+              <p className="tm-frag-h">ACTIE</p>
+              <p className="tm-frag-p">
+                Proactief en resultaatgericht. Nog steeds de neiging om te duwen als een traject
+                stilligt, waar afwachten soms sterker is.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="tm-feature">
-          <div className="tm-feature-text">
+        <div className="tm-feat">
+          <div className="tm-feat-text">
             <h3>Spotlight</h3>
             <p>
               ArnoBot leest alle gesprekken van je team en vertelt je waar de collectieve winst
               zit. Eén heldere prioriteit in plaats van tien losse signalen.
             </p>
           </div>
-          <div className="tm-feature-visual">
-            <figure className="tm-shot">
-              <div className="tm-shot-bar"><span /><span /><span /></div>
-              <img src="/team/spotlight.jpg" width="1600" height="1195" alt="Team Spotlight met de analyse per pijler en de collectieve kracht van het team" />
-            </figure>
+          <div className="tm-feat-frag">
+            <div className="tm-frag">
+              <p className="tm-frag-label">TEAM SPOTLIGHT</p>
+              <p className="tm-frag-h">PER PIJLER</p>
+              <p className="tm-frag-p">
+                Mindset: sterke opwaartse lijn, van 3.2 naar 4.7. Systeem: groei naar 4.0, maar
+                opvolging en stakeholderbeheer blijven de zwakste schakel. Actie: solide naar
+                4.3, al blijven concrete closing-momenten onbenut.
+              </p>
+              <p className="tm-frag-h">KRACHT VAN HET TEAM</p>
+              <p className="tm-frag-p">
+                Dit team is aan het leren nadenken in plaats van reageren. Een verkoper die
+                bewust doorvraagt voordat er een tegenargument komt, een ander die de
+                inkoopdirecteur al in het tweede gesprek aan tafel krijgt.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="tm-feature">
-          <div className="tm-feature-text">
+        <div className="tm-feat">
+          <div className="tm-feat-text">
             <h3>1:1-voorbereiding</h3>
             <p>
               Voor elke verkoper een concept-agenda: wat gaat goed, wat is het aandachtspunt,
               wat adviseert Arno. Jij past aan en voert het gesprek.
             </p>
           </div>
-          <div className="tm-feature-visual">
-            <figure className="tm-shot">
-              <div className="tm-shot-bar"><span /><span /><span /></div>
-              <img src="/team/een-op-een.jpg" width="1600" height="1195" alt="Gegenereerde 1:1-agenda met wat goed gaat, het aandachtspunt en het advies van Arno" />
-            </figure>
+          <div className="tm-feat-frag">
+            <div className="tm-frag">
+              <p className="tm-frag-label">1:1 AGENDA</p>
+              <p className="tm-frag-h">WAT GAAT GOED</p>
+              <p className="tm-frag-p">
+                Je hebt recent een duidelijke stap gemaakt in het stellen van directe
+                afsluitvragen. De deal die drie maanden vastzat sloot je af door scherper door
+                te vragen.
+              </p>
+              <p className="tm-frag-h">AANDACHTSPUNT</p>
+              <p className="tm-frag-p">
+                Je pipeline-opvolging mist nog vaste structuur, en dat kost je klanten die je
+                goed hebt bereikt.
+              </p>
+              <p className="tm-frag-h">ARNO ADVISEERT</p>
+              <p className="tm-frag-p">
+                Vraag Alira in dit gesprek wat ze zelf zag voordat ze die afsluitvraag stelde,
+                en wat er anders was aan die twee gesprekken.
+              </p>
+              <span className="tm-frag-pill">Bereid 1:1 voor</span>
+            </div>
           </div>
         </div>
 
