@@ -76,8 +76,8 @@ export default async function TeamPage() {
         .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; }
         .tm-section-narrow { max-width: 62ch; }
 
-        /* Feature blocks: text + mockup */
-        .tm-feature { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 44px 0; border-top: 1px solid #1f2937; }
+        /* Feature blocks: tekst + screenshot */
+        .tm-feature { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; padding: 44px 0; border-top: 1px solid #1f2937; }
         .tm-feature:nth-child(even) .tm-feature-visual { order: -1; }
         .tm-feature-text h3 {
           font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
@@ -85,32 +85,17 @@ export default async function TeamPage() {
         }
         .tm-feature-text p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
 
-        /* Mockup card */
-        .tm-mock { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-        .tm-mock-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; color: #f59e0b; margin-bottom: 14px; }
-        .tm-mem-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .tm-mem { background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 12px; }
-        .tm-mem-name { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #f8fafc; letter-spacing: 0.04em; }
-        .tm-mem-msa { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 600; color: #f59e0b; line-height: 1.1; margin-top: 4px; }
-        .tm-dots { display: flex; gap: 4px; margin-top: 8px; }
-        .tm-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .tm-bar { margin-top: 16px; }
-        .tm-bar-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b7280; margin-bottom: 6px; }
-        .tm-bar-track { height: 8px; background: #111827; border-radius: 999px; overflow: hidden; }
-        .tm-bar-fill { height: 100%; background: #f59e0b; }
-
-        .tm-pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-        .tm-pillar-name { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; }
-        .tm-pillar-score { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; color: #f8fafc; margin-top: 2px; }
-        .tm-spark { margin-top: 14px; }
-
-        .tm-quote { border-left: 3px solid #f59e0b; padding: 4px 0 4px 16px; }
-        .tm-quote p { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
-
-        .tm-agenda-head { font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #f59e0b; margin-top: 12px; }
-        .tm-agenda-head:first-child { margin-top: 0; }
-        .tm-agenda-line { font-size: 13px; line-height: 1.6; color: #94a3b8; margin-top: 4px; }
-        .tm-agenda-btn { margin-top: 16px; display: inline-block; background: #f59e0b; color: #111827; font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; border-radius: 999px; }
+        /* Screenshot in browservenster-kader */
+        .tm-shot {
+          border: 1px solid #374151; border-radius: 10px; overflow: hidden;
+          background: #1e293b; box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+        }
+        .tm-shot-bar {
+          display: flex; align-items: center; gap: 6px;
+          padding: 9px 12px; background: #111827; border-bottom: 1px solid #374151;
+        }
+        .tm-shot-bar span { width: 9px; height: 9px; border-radius: 50%; background: #374151; }
+        .tm-shot img { display: block; width: 100%; height: auto; }
 
         /* Steps */
         .tm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; counter-reset: step; }
@@ -200,30 +185,10 @@ export default async function TeamPage() {
             </p>
           </div>
           <div className="tm-feature-visual">
-            <div className="tm-mock">
-              <p className="tm-mock-eyebrow">Team Hippios</p>
-              <div className="tm-mem-row">
-                <div className="tm-mem">
-                  <div className="tm-mem-name">Lisa</div>
-                  <div className="tm-mem-msa">87</div>
-                  <div className="tm-dots"><span className="tm-dot" style={{ background: '#f59e0b' }} /><span className="tm-dot" style={{ background: '#60a5fa' }} /><span className="tm-dot" style={{ background: '#4ade80' }} /></div>
-                </div>
-                <div className="tm-mem">
-                  <div className="tm-mem-name">Alira</div>
-                  <div className="tm-mem-msa">73</div>
-                  <div className="tm-dots"><span className="tm-dot" style={{ background: '#f59e0b' }} /><span className="tm-dot" style={{ background: '#334155' }} /><span className="tm-dot" style={{ background: '#4ade80' }} /></div>
-                </div>
-                <div className="tm-mem">
-                  <div className="tm-mem-name">Benny</div>
-                  <div className="tm-mem-msa">93</div>
-                  <div className="tm-dots"><span className="tm-dot" style={{ background: '#f59e0b' }} /><span className="tm-dot" style={{ background: '#60a5fa' }} /><span className="tm-dot" style={{ background: '#4ade80' }} /></div>
-                </div>
-              </div>
-              <div className="tm-bar">
-                <div className="tm-bar-label">Team MSA · 86 / 100</div>
-                <div className="tm-bar-track"><div className="tm-bar-fill" style={{ width: '86%' }} /></div>
-              </div>
-            </div>
+            <figure className="tm-shot">
+              <div className="tm-shot-bar"><span /><span /><span /></div>
+              <img src="/team/overzicht.jpg" width="1600" height="996" alt="Teamoverzicht met de score per verkoper en de teamtrend" />
+            </figure>
           </div>
         </div>
 
@@ -236,19 +201,10 @@ export default async function TeamPage() {
             </p>
           </div>
           <div className="tm-feature-visual">
-            <div className="tm-mock">
-              <p className="tm-mock-eyebrow">Benny Verwaaijen</p>
-              <div className="tm-pillars">
-                <div><div className="tm-pillar-name">Mindset</div><div className="tm-pillar-score" style={{ color: '#f59e0b' }}>5</div></div>
-                <div><div className="tm-pillar-name">Systeem</div><div className="tm-pillar-score" style={{ color: '#60a5fa' }}>5</div></div>
-                <div><div className="tm-pillar-name">Actie</div><div className="tm-pillar-score" style={{ color: '#4ade80' }}>4</div></div>
-              </div>
-              <svg className="tm-spark" viewBox="0 0 240 56" width="100%" height="56" role="img" aria-label="Progressie over tijd">
-                <polyline points="4,44 52,40 100,34 148,24 196,20 236,16" fill="none" stroke="#f59e0b" strokeWidth="2" />
-                <polyline points="4,48 52,46 100,40 148,32 196,26 236,20" fill="none" stroke="#60a5fa" strokeWidth="2" />
-                <polyline points="4,40 52,38 100,36 148,30 196,28 236,24" fill="none" stroke="#4ade80" strokeWidth="2" />
-              </svg>
-            </div>
+            <figure className="tm-shot">
+              <div className="tm-shot-bar"><span /><span /><span /></div>
+              <img src="/team/profiel.jpg" width="1600" height="996" alt="Coachingprofiel van een verkoper met de scores en de ontwikkeling over tijd" />
+            </figure>
           </div>
         </div>
 
@@ -261,16 +217,10 @@ export default async function TeamPage() {
             </p>
           </div>
           <div className="tm-feature-visual">
-            <div className="tm-mock">
-              <p className="tm-mock-eyebrow">Spotlight</p>
-              <div className="tm-quote">
-                <p>
-                  Je team leunt sterk op mindset maar blijft achter op systeem. Bij drie van je
-                  vier verkopers zie je dezelfde ruis in de pipeline-opvolging. Daar zit deze
-                  periode je grootste collectieve winst.
-                </p>
-              </div>
-            </div>
+            <figure className="tm-shot">
+              <div className="tm-shot-bar"><span /><span /><span /></div>
+              <img src="/team/spotlight.jpg" width="1600" height="1195" alt="Team Spotlight met de analyse per pijler en de collectieve kracht van het team" />
+            </figure>
           </div>
         </div>
 
@@ -283,16 +233,10 @@ export default async function TeamPage() {
             </p>
           </div>
           <div className="tm-feature-visual">
-            <div className="tm-mock">
-              <p className="tm-mock-eyebrow">1:1 met Benny</p>
-              <p className="tm-agenda-head">Wat gaat goed</p>
-              <p className="tm-agenda-line">Je hebt de beslisser dit keer al in het tweede gesprek in kaart gebracht.</p>
-              <p className="tm-agenda-head">Aandachtspunt</p>
-              <p className="tm-agenda-line">De vraag is of dat standhoudt als een traject stroef loopt.</p>
-              <p className="tm-agenda-head">Arno adviseert</p>
-              <p className="tm-agenda-line">Pak een recent moeilijk traject en zoek het moment waarop je eerder had kunnen escaleren.</p>
-              <span className="tm-agenda-btn">Bereid 1:1 voor</span>
-            </div>
+            <figure className="tm-shot">
+              <div className="tm-shot-bar"><span /><span /><span /></div>
+              <img src="/team/een-op-een.jpg" width="1600" height="1195" alt="Gegenereerde 1:1-agenda met wat goed gaat, het aandachtspunt en het advies van Arno" />
+            </figure>
           </div>
         </div>
 
