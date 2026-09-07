@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function PrijzenPage() {
   const { userId } = await auth()
-  const demoLink = process.env.ARNO_BOOKING_URL ?? null
   return (
     <>
       <style>{`
@@ -84,7 +83,7 @@ export default async function PrijzenPage() {
       </section>
 
       <section className="prijzen-section">
-        <PrijzenClient demoLink={demoLink} />
+        <PrijzenClient />
 
         <div className="prijzen-trust-row">
           <span className="prijzen-trust-item">Privé & versleuteld opgeslagen</span>

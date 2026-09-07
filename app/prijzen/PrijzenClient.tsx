@@ -18,7 +18,7 @@ const TEAM_BASIS_JAARLIJKS = SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12
 const TEAM_PERGEBRUIKER_MAANDELIJKS = SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks
 const TEAM_PERGEBRUIKER_JAARLIJKS = SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12
 
-export default function PrijzenClient({ demoLink }: { demoLink: string | null }) {
+export default function PrijzenClient() {
   const [cyclus, setCyclus] = useState<Cyclus>('jaarlijks')
 
   return (
@@ -198,10 +198,7 @@ export default function PrijzenClient({ demoLink }: { demoLink: string | null })
             <li>Volledig 1:1 archief met eigen notities</li>
           </ul>
 
-          {demoLink
-            ? <a href={demoLink} target="_blank" rel="noopener noreferrer" className="prijzen-tier-cta secundair">Bekijk Team</a>
-            : <a href="mailto:arno@arno.bot?subject=Team%20ArnoBot" className="prijzen-tier-cta secundair">Bekijk Team</a>
-          }
+          <a href="/team" className="prijzen-tier-cta secundair">Bekijk Team</a>
         </div>
       </div>
     </>
