@@ -1,66 +1,25 @@
-'use client'
-
-import { useState, useMemo } from 'react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { useUser } from '@clerk/nextjs'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
+import { auth } from '@clerk/nextjs/server'
+import SiteFooter from '../SiteFooter'
 
-export default function TeamAanvraagPage() {
-  const { isSignedIn, isLoaded } = useUser()
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+export const metadata: Metadata = {
+  title: 'ArnoBot Team',
+  description: 'Geef elke verkoper een eigen AI-salescoach en jou als leidinggevende het overzicht: mindset, systeem en actie per persoon, waar iemand vastloopt, en een 1:1 die al klaarligt.',
+  robots: { index: true, follow: true },
+}
 
-  const [bedrijfsnaam, setBedrijfsnaam] = useState('')
-  const [kvkNummer, setKvkNummer] = useState('')
-  const [btwNummer, setBtwNummer] = useState('')
-  const [factuuradres, setFactuuradres] = useState('')
-  const [postcode, setPostcode] = useState('')
-  const [plaats, setPlaats] = useState('')
-  const [aanvragerNaam, setAanvragerNaam] = useState('')
-  const [functie, setFunctie] = useState('')
-  const [email, setEmail] = useState('')
-  const [telefoon, setTelefoon] = useState('')
-  const [bestelnummer, setBestelnummer] = useState('')
-  const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_GEBRUIKERS)
-  const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
-  const [eliteInteresse, setEliteInteresse] = useState(false)
-  const [eliteAantal, setEliteAantal] = useState(1)
-
-  const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats, cyclus), [aantalSeats, cyclus])
-  // Elite-surplus meteen in de getoonde prijs verwerkt (besloten 2026-08-11,
-  // op Arno's verzoek): geen aparte jaarkorting op dit bedrag, dus telt bij
-  // jaarlijks gewoon voor het volle bedrag mee in de x12-jaarprijs, net als
-  // het platformtarief/gebruikerstarief dat al doen.
-  const eliteSurplusTotaal = eliteInteresse ? eliteAantal * TEAM_ELITE_SURPLUS_PER_MAAND : 0
-  const prijsMetElite = prijs === null ? null : prijs + eliteSurplusTotaal
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setStatus('submitting')
-    setErrorMsg('')
-    try {
-      const res = await fetch('/api/team-aanvraag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bedrijfsnaam, kvkNummer, btwNummer, factuuradres, postcode, plaats,
-          aanvragerNaam, functie, email, telefoon, bestelnummer, aantalSeats, cyclus,
-          eliteAantal: eliteInteresse ? eliteAantal : 0,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) { setErrorMsg(data.error || 'Aanvraag mislukt'); setStatus('error'); return }
-      setStatus('done')
-    } catch {
-      setErrorMsg('Er ging iets mis')
-      setStatus('error')
-    }
-  }
+export default async function TeamPage() {
+  const { userId } = await auth()
+  const demoLink = process.env.ARNO_BOOKING_URL ?? null
+  const demoHref = demoLink ?? 'mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team'
+  const demoExtern = Boolean(demoLink)
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&family=Space+Mono:wght@400;700&display=swap');
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
 
@@ -77,219 +36,345 @@ export default function TeamAanvraagPage() {
         .nav-login { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #9ca3af; text-decoration: none; transition: color 0.2s; }
         .nav-login:hover { color: #f1f5f9; }
 
-        .ca-wrap { max-width: 640px; margin: 0 auto; padding: 140px 24px 80px; }
-        .ca-label { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; }
-        .ca-title { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 5vw, 56px); font-weight: 600; text-transform: uppercase; line-height: 1.1; color: #f8fafc; margin-bottom: 16px; }
-        .ca-sub { font-size: 18px; line-height: 1.625; color: #94a3b8; margin-bottom: 40px; }
+        .tm-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-        .ca-fieldset { border: none; margin-bottom: 32px; }
-        .ca-fieldset legend { font-size: 14px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: #f59e0b; margin-bottom: 16px; padding: 0; }
-        .ca-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-        .ca-field { display: flex; flex-direction: column; gap: 6px; }
-        .ca-field label { font-size: 14px; color: #94a3b8; }
-        .ca-field input {
-          background: #1e293b; border: 1px solid #374151; border-radius: 6px; padding: 10px 14px;
-          color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; outline: none; transition: border-color 0.15s;
+        .tm-label {
+          font-size: 13px; font-weight: 600; letter-spacing: 0.3em;
+          text-transform: uppercase; color: #f59e0b; margin-bottom: 14px;
         }
-        .ca-field input:focus { border-color: #f59e0b; }
-
-        .ca-toggle { display: inline-flex; background: #111827; border: 1px solid #374151; border-radius: 999px; padding: 3px; margin-bottom: 20px; }
-        .ca-toggle button {
-          font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em;
-          text-transform: uppercase; padding: 6px 16px; border-radius: 999px; border: none; cursor: pointer;
-          background: transparent; color: #94a3b8; transition: all 0.2s;
+        .tm-h2 {
+          font-family: 'Oswald', sans-serif; font-size: clamp(26px, 3.4vw, 36px); font-weight: 600;
+          text-transform: uppercase; line-height: 1.15; color: #f8fafc; text-wrap: balance;
         }
-        .ca-toggle button.actief { background: #f59e0b; color: #111827; }
-        .ca-toggle button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .tm-lead { font-size: 17px; line-height: 1.7; color: #94a3b8; max-width: 60ch; }
 
-        .ca-prijs-box { background: #1e293b; border: 1px solid #374151; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; }
-        .ca-prijs-num { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 600; color: #f8fafc; }
-        .ca-prijs-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
-
-        .ca-submit {
-          display: inline-flex; align-items: center; border-radius: 6px; background: #f59e0b;
-          padding: 14px 32px; font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600;
-          letter-spacing: 0.1em; color: #111827; text-transform: uppercase; border: none; cursor: pointer;
-          box-shadow: 0 12px 24px rgba(245,158,11,0.25); transition: transform 0.2s;
+        /* Hero */
+        .tm-hero { padding: 150px 24px 72px; text-align: center; }
+        .tm-hero h1 {
+          font-family: 'Oswald', sans-serif; font-size: clamp(38px, 6vw, 60px); font-weight: 600;
+          text-transform: uppercase; line-height: 1.05; color: #f8fafc; margin: 0 auto 20px;
+          max-width: 16ch; text-wrap: balance;
         }
-        .ca-submit:hover { transform: scale(1.03); }
-        .ca-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .tm-hero p { font-size: 18px; line-height: 1.7; color: #94a3b8; max-width: 58ch; margin: 0 auto 32px; }
 
-        @media (max-width: 600px) { .ca-row { grid-template-columns: 1fr; } }
+        .tm-cta-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .tm-btn {
+          display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+          border-radius: 6px; padding: 13px 28px; font-family: 'Oswald', sans-serif; font-size: 15px;
+          font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; transition: transform 0.2s;
+        }
+        .tm-btn-primary { background: #f59e0b; color: #111827; box-shadow: 0 12px 24px rgba(245,158,11,0.25); }
+        .tm-btn-primary:hover { transform: scale(1.04); }
+        .tm-btn-ghost { background: transparent; color: #f59e0b; border: 1.5px solid #f59e0b; }
+        .tm-btn-ghost:hover { background: rgba(245,158,11,0.08); }
+
+        /* Sections */
+        .tm-section { padding: 56px 0; border-top: 1px solid #1f2937; text-align: center; }
+        .tm-section-narrow { max-width: 62ch; margin-left: auto; margin-right: auto; }
+        .tm-section .tm-lead { margin-left: auto; margin-right: auto; }
+
+        /* Held-productshot onder de hero (Linear/Vercel-patroon: koptekst, dan het product) */
+        .tm-heroshot { max-width: 1040px; margin: 8px auto 0; padding: 0 24px; }
+        .tm-heroshot-frame { position: relative; border-radius: 14px; }
+        .tm-heroshot-frame::before {
+          content: ''; position: absolute; left: 50%; top: -6%; width: 78%; height: 60%;
+          transform: translateX(-50%); background: #f59e0b; filter: blur(120px); opacity: 0.14; z-index: 0;
+        }
+        .tm-heroshot img {
+          position: relative; z-index: 1; display: block; width: 100%; height: auto;
+          border-radius: 14px; border: 1px solid #374151;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+        }
+        .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
+
+        /* Feature-secties: korte tekst naast een herbouwd productfragment (Stripe/Attio-patroon) */
+        .tm-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding: 52px 0; border-top: 1px solid #1f2937; }
+        .tm-feat-flip .tm-feat-frag { order: -1; }
+        .tm-feat-text h3 {
+          font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; margin-bottom: 12px;
+        }
+        .tm-feat-text p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
+
+        /* Productfragment in de dashboard-stijl (Space Mono, amber accent, elevated card) */
+        .tm-frag {
+          position: relative; overflow: hidden;
+          background: #1f2937; border: 1px solid #374151; border-left: 3px solid #f59e0b;
+          border-radius: 6px; padding: 24px 26px 40px;
+          font-family: 'Space Mono', monospace;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+        }
+        .tm-frag::after {
+          content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
+          background: linear-gradient(to bottom, rgba(31,41,55,0), #1f2937);
+        }
+        .tm-frag-label { font-size: 12px; letter-spacing: 0.25em; color: #f59e0b; }
+        .tm-frag-h { font-size: 12px; letter-spacing: 0.22em; color: #f1f5f9; margin: 20px 0 7px; }
+        .tm-frag-p { font-size: 13px; line-height: 1.85; color: #9ca3af; }
+        .tm-frag-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 16px; }
+        .tm-frag-score-name { font-size: 10px; letter-spacing: 0.18em; color: #94a3b8; }
+        .tm-frag-score-bar { height: 5px; border-radius: 999px; background: #111827; margin: 7px 0; overflow: hidden; }
+        .tm-frag-score-bar i { display: block; height: 100%; }
+        .tm-frag-score-num { font-size: 20px; font-weight: 700; line-height: 1; }
+        .tm-frag-pill {
+          position: relative; z-index: 2; display: inline-block; margin-top: 22px;
+          background: #f59e0b; color: #111827; font-size: 11px; font-weight: 700;
+          letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px; border-radius: 999px;
+        }
+
+        /* Steps */
+        .tm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; counter-reset: step; }
+        .tm-step { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 22px; }
+        .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
+        .tm-step p { font-size: 14px; line-height: 1.65; color: #94a3b8; margin-top: 10px; }
+
+        /* Prijs */
+
+        /* FAQ */
+        .tm-faq { display: flex; flex-direction: column; gap: 4px; margin-top: 24px; }
+        .tm-faq-item { border-top: 1px solid #1f2937; padding: 20px 0; }
+        .tm-faq-item:last-child { border-bottom: 1px solid #1f2937; }
+        .tm-faq-q { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; text-transform: uppercase; color: #f8fafc; }
+        .tm-faq-a { font-size: 14px; line-height: 1.7; color: #94a3b8; margin: 8px auto 0; max-width: 60ch; }
+
+        .tm-final { text-align: center; padding: 64px 0 8px; }
+        .tm-final .tm-h2 { margin-bottom: 14px; }
+        .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
+
+        @media (max-width: 820px) {
+          .tm-feat { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
+          .tm-feat-flip .tm-feat-frag { order: 0; }
+          .tm-steps { grid-template-columns: 1fr; }
+          .tm-hero { padding: 120px 24px 48px; }
+          .tm-heroshot { margin-top: 4px; }
+        }
       `}</style>
 
       <nav className="site-nav">
         <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
         <div className="nav-spacer" />
         <div className="nav-auth">
-          {isSignedIn
+          {userId
             ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
             : <Link href="/sign-in" className="nav-login">LOGIN</Link>
           }
         </div>
       </nav>
 
-      <div className="ca-wrap">
-        <p className="ca-label">Team</p>
-        <h1 className="ca-title">Vraag een Team-abonnement aan.</h1>
+      <section className="tm-hero">
+        <p className="tm-label">ArnoBot Team</p>
+        <h1>Je hele salesteam, scherp in beeld</h1>
+        <p>
+          Elke verkoper krijgt een eigen AI-salescoach. Jij krijgt het overzicht: waar staat
+          iedereen op mindset, systeem en actie, wie loopt vast, en waar gaat je eerstvolgende
+          1:1 over.
+        </p>
+        <div className="tm-cta-row">
+          <a
+            className="tm-btn tm-btn-primary"
+            href={demoHref}
+            {...(demoExtern ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          >
+            Plan een demo
+          </a>
+        </div>
+      </section>
 
-        {status === 'done' ? (
-          <div style={{ background: '#1e293b', border: '1px solid #374151', borderRadius: 8, padding: '24px 28px' }}>
-            <p style={{ color: '#44cc88', fontSize: 15, marginBottom: 8, fontWeight: 500 }}>Dank voor je aanvraag.</p>
-            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.7 }}>Je krijgt van ons binnen 24 uur een offerte toegestuurd.</p>
-          </div>
-        ) : (
-          <>
-            <p className="ca-sub">
-              Vul je gegevens in en je krijgt een offerte per e-mail toegestuurd.
-              {isLoaded && !isSignedIn && <><br />Al een ArnoBot-account? Log eerst in, dan koppelen we deze aanvraag automatisch aan je account.</>}
+      <figure className="tm-heroshot">
+        <div className="tm-heroshot-frame">
+          <img src="/team/overzicht.jpg" width="1566" height="873" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" />
+        </div>
+        <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
+      </figure>
+
+      <div className="tm-wrap">
+
+        <section className="tm-section tm-section-narrow">
+          <p className="tm-label">Het probleem</p>
+          <h2 className="tm-h2">Je stuurt je team op onderbuikgevoel</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Je voert 1:1&apos;s, maar je weet pas dat een verkoper vastzit als de cijfers
+            tegenvallen. En je ziet geen patroon over je team heen: waar zit de gedeelde
+            zwakte, wie groeit er echt, en waar levert coachen deze periode het meeste op.
+          </p>
+        </section>
+
+        <section className="tm-section" style={{ paddingBottom: 0, borderBottom: 'none' }}>
+          <p className="tm-label">Wat je als manager krijgt</p>
+          <h2 className="tm-h2">Van overzicht naar het volgende gesprek</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Het teamoverzicht laat zien waar iedereen staat. Deze twee schermen vertellen je
+            wat je ermee doet.
+          </p>
+        </section>
+
+        <div className="tm-feat tm-feat-flip">
+          <div className="tm-feat-text">
+            <h3>Profiel per verkoper</h3>
+            <p>
+              Je ziet welke verkoper achterloopt op systeem en welke op mindset, en of het
+              beter wordt of niet. Niet uit een vragenlijst die iedereen invult zoals hij
+              denkt dat het hoort, maar uit wat er in de gesprekken zelf gebeurt.
             </p>
-
-            <form onSubmit={submit}>
-              <fieldset className="ca-fieldset">
-                <legend>Bedrijfsgegevens</legend>
-                <div className="ca-field" style={{ marginBottom: 16 }}>
-                  <label>Bedrijfsnaam *</label>
-                  <input required value={bedrijfsnaam} onChange={e => setBedrijfsnaam(e.target.value)} />
+            <p style={{ marginTop: 14 }}>
+              De diagnose waar je normaal maanden meelopen voor nodig hebt, ligt er na de
+              eerste week.
+            </p>
+          </div>
+          <div className="tm-feat-frag">
+            <div className="tm-frag">
+              <p className="tm-frag-label">BENNY VERWAAIJEN</p>
+              <div className="tm-frag-scores">
+                <div>
+                  <p className="tm-frag-score-name">MINDSET</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#f59e0b' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#f59e0b' }}>5</span>
                 </div>
-                <div className="ca-row">
-                  <div className="ca-field">
-                    <label>KvK-nummer *</label>
-                    <input required value={kvkNummer} onChange={e => setKvkNummer(e.target.value)} />
-                  </div>
-                  <div className="ca-field">
-                    <label>Btw-nummer *</label>
-                    <input required value={btwNummer} onChange={e => setBtwNummer(e.target.value)} />
-                  </div>
+                <div>
+                  <p className="tm-frag-score-name">SYSTEEM</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#60a5fa' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#60a5fa' }}>5</span>
                 </div>
-                <div className="ca-field" style={{ marginBottom: 16 }}>
-                  <label>Factuuradres *</label>
-                  <input required value={factuuradres} onChange={e => setFactuuradres(e.target.value)} placeholder="Straat en huisnummer" />
+                <div>
+                  <p className="tm-frag-score-name">ACTIE</p>
+                  <div className="tm-frag-score-bar"><i style={{ width: '80%', background: '#4ade80' }} /></div>
+                  <span className="tm-frag-score-num" style={{ color: '#4ade80' }}>4</span>
                 </div>
-                <div className="ca-row" style={{ marginBottom: 0 }}>
-                  <div className="ca-field">
-                    <label>Postcode *</label>
-                    <input required value={postcode} onChange={e => setPostcode(e.target.value)} />
-                  </div>
-                  <div className="ca-field">
-                    <label>Plaats *</label>
-                    <input required value={plaats} onChange={e => setPlaats(e.target.value)} />
-                  </div>
-                </div>
-              </fieldset>
+              </div>
+              <p className="tm-frag-h">SYSTEEM</p>
+              <p className="tm-frag-p">
+                Pipeline-opvolging is scherper geworden. Beslissers worden nu vroeg in kaart
+                gebracht in plaats van halverwege ontdekt.
+              </p>
+              <p className="tm-frag-h">ACTIE</p>
+              <p className="tm-frag-p">
+                Proactief en resultaatgericht. Nog steeds de neiging om te duwen als een traject
+                stilligt, waar afwachten soms sterker is.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              <fieldset className="ca-fieldset">
-                <legend>Aanvrager</legend>
-                <div className="ca-row">
-                  <div className="ca-field">
-                    <label>Naam *</label>
-                    <input required value={aanvragerNaam} onChange={e => setAanvragerNaam(e.target.value)} />
-                  </div>
-                  <div className="ca-field">
-                    <label>Functie *</label>
-                    <input required value={functie} onChange={e => setFunctie(e.target.value)} />
-                  </div>
-                </div>
-                <div className="ca-row" style={{ marginBottom: 0 }}>
-                  <div className="ca-field">
-                    <label>E-mail *</label>
-                    <input required type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                  </div>
-                  <div className="ca-field">
-                    <label>Telefoon *</label>
-                    <input required value={telefoon} onChange={e => setTelefoon(e.target.value)} />
-                  </div>
-                </div>
-              </fieldset>
+        <div className="tm-feat">
+          <div className="tm-feat-text">
+            <h3>1:1-voorbereiding</h3>
+            <p>
+              Je opent je 1:1 niet meer met de vraag hoe het gaat. Voor elke verkoper ligt er
+              een agenda klaar: wat er goed gaat, het ene punt dat er nu toe doet, en de vragen
+              die Arno zou stellen.
+            </p>
+            <p style={{ marginTop: 14 }}>
+              Jij leest het door, past aan waar je iets beter weet, en voert een gesprek dat
+              ergens over gaat.
+            </p>
+          </div>
+          <div className="tm-feat-frag">
+            <div className="tm-frag">
+              <p className="tm-frag-label">1:1 AGENDA</p>
+              <p className="tm-frag-h">WAT GAAT GOED</p>
+              <p className="tm-frag-p">
+                Je hebt recent een duidelijke stap gemaakt in het stellen van directe
+                afsluitvragen. De deal die drie maanden vastzat sloot je af door scherper door
+                te vragen.
+              </p>
+              <p className="tm-frag-h">AANDACHTSPUNT</p>
+              <p className="tm-frag-p">
+                Je pipeline-opvolging mist nog vaste structuur, en dat kost je klanten die je
+                goed hebt bereikt.
+              </p>
+              <p className="tm-frag-h">ARNO ADVISEERT</p>
+              <p className="tm-frag-p">
+                Vraag Alira in dit gesprek wat ze zelf zag voordat ze die afsluitvraag stelde,
+                en wat er anders was aan die twee gesprekken.
+              </p>
+              <span className="tm-frag-pill">Bereid 1:1 voor</span>
+            </div>
+          </div>
+        </div>
 
-              <fieldset className="ca-fieldset">
-                <legend>Team</legend>
+        <section className="tm-section">
+          <p className="tm-label">Hoe het werkt</p>
+          <h2 className="tm-h2">Meteen aan de gang. Opgezet binnen een uur.</h2>
+          <div className="tm-steps">
+            <div className="tm-step">
+              <div className="tm-step-num">Stap 1</div>
+              <p>Je maakt een team aan en nodigt je verkopers uit met een link.</p>
+            </div>
+            <div className="tm-step">
+              <div className="tm-step-num">Stap 2</div>
+              <p>Elke verkoper krijgt zijn eigen volledige ArnoBot: sparren, coaching, gespreksanalyses.</p>
+            </div>
+            <div className="tm-step">
+              <div className="tm-step-num">Stap 3</div>
+              <p>Jij ziet het dashboard. Geen invulformulieren, geen extra taken voor je team.</p>
+            </div>
+          </div>
+        </section>
 
-                <div className="ca-row">
-                  <div className="ca-field">
-                    <label>Aantal gebruikers (inclusief jijzelf) *</label>
-                    <input
-                      required type="number" min={TEAM_MIN_GEBRUIKERS} value={aantalSeats}
-                      onChange={e => {
-                        const val = Number(e.target.value)
-                        setAantalSeats(val)
-                        setEliteAantal(prev => Math.min(prev, Math.max(1, val)))
-                      }}
-                    />
-                  </div>
-                  <div className="ca-field">
-                    <label>Bestelnummer (optioneel)</label>
-                    <input value={bestelnummer} onChange={e => setBestelnummer(e.target.value)} />
-                  </div>
-                </div>
+        <section className="tm-section tm-section-narrow">
+          <p className="tm-label">Voor je verkopers</p>
+          <h2 className="tm-h2">Geen kaal dashboard, het hele product</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Elke verkoper in je team krijgt de volledige Pro-versie van ArnoBot: 24/7 sparren,
+            oefengesprekken tegen lastige types, een analyse van elk verkoopgesprek, en coaching
+            op mindset, systeem en actie. Het management dashboard is jouw laag daarbovenop.
+          </p>
+        </section>
 
-                <div className="ca-toggle">
-                  <button type="button" className={cyclus === 'maandelijks' ? 'actief' : ''} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-                  <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
-                </div>
-                <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
-                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Maandelijks opzegbaar.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
-                </p>
+        <section className="tm-section tm-section-narrow">
+          <p className="tm-label">Wat je wel en niet ziet</p>
+          <h2 className="tm-h2">De synthese, nooit de ruwe gesprekken</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Je ziet de coaching-diagnose en de scores van je verkopers, plus de 1:1&apos;s die
+            je zelf voert. Je ziet nooit de gesprekken die een verkoper met ArnoBot voert.
+            Verkopers zien elkaars data niet.
+          </p>
+        </section>
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={eliteInteresse}
-                    onChange={e => setEliteInteresse(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: '#f59e0b' }}
-                  />
-                  <span style={{ fontSize: 14, color: '#94a3b8' }}>Ook Elite-niveau voor een deel van je team</span>
-                </label>
+        <section className="tm-section">
+          <p className="tm-label">Vragen</p>
+          <h2 className="tm-h2">Kort antwoord</h2>
+          <div className="tm-faq">
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Wat is het minimum?</p>
+              <p className="tm-faq-a">Drie verkopers, inclusief jezelf.</p>
+            </div>
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Kan ik het eerst zien zonder mijn team erbij?</p>
+              <p className="tm-faq-a">Ja. In de demo lopen we samen door een ingericht voorbeeldteam. Je hoeft niets voor te bereiden.</p>
+            </div>
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Zien mijn verkopers elkaars scores?</p>
+              <p className="tm-faq-a">Nee. Een verkoper ziet alleen zijn eigen ArnoBot. Jij ziet het teamoverzicht.</p>
+            </div>
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Kan ik maandelijks opzeggen?</p>
+              <p className="tm-faq-a">Ja, bij de maandelijkse variant. De jaarlijkse variant loopt per jaar.</p>
+            </div>
+          </div>
+        </section>
 
-                {eliteInteresse && (
-                  <div className="ca-field" style={{ marginBottom: 12, maxWidth: 220 }}>
-                    <label>Aantal Elite-teamleden</label>
-                    <input
-                      type="number" min={1} max={aantalSeats} value={eliteAantal}
-                      onChange={e => setEliteAantal(Math.min(aantalSeats, Math.max(1, Number(e.target.value))))}
-                    />
-                  </div>
-                )}
+        <section className="tm-final">
+          <h2 className="tm-h2">Zie het op je eigen scherm</h2>
+          <p>
+            Twintig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
+            vraag direct aan, daar zie je meteen de prijs voor jouw teamgrootte.
+          </p>
+          <div className="tm-cta-row">
+            <a
+              className="tm-btn tm-btn-primary"
+              href={demoHref}
+              {...(demoExtern ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              Plan een demo
+            </a>
+            <Link className="tm-btn tm-btn-ghost" href="/team/aanvragen">Direct aanvragen</Link>
+          </div>
+        </section>
 
-                <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-                  Elite-teamleden krijgen naast alle Team-functies ook maandelijks een gesprek met Arno (of een door Arno aangewezen coach) en Telegram-toegang, voor € {TEAM_ELITE_SURPLUS_PER_MAAND} per maand extra per teamlid.
-                </p>
-
-                <div className="ca-prijs-box">
-                  {prijsMetElite === null ? (
-                    <>
-                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers</p>
-                      <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
-                    </>
-                  ) : cyclus === 'jaarlijks' ? (
-                    <>
-                      <p className="ca-prijs-num">€ {(prijsMetElite * 12).toLocaleString('nl-NL')} / jaar</p>
-                      <p className="ca-prijs-sub">
-                        € 77 platformtarief + € 39 per gebruiker, maand-equivalent
-                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief btw
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="ca-prijs-num">€ {prijsMetElite.toLocaleString('nl-NL')} / maand</p>
-                      <p className="ca-prijs-sub">
-                        € 97 platformtarief + € 49 per gebruiker
-                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief btw
-                      </p>
-                    </>
-                  )}
-                </div>
-              </fieldset>
-
-              {status === 'error' && <p style={{ color: '#cc2200', fontSize: 14, marginBottom: 16 }}>{errorMsg}</p>}
-
-              <button type="submit" className="ca-submit" disabled={status === 'submitting'}>
-                {status === 'submitting' ? 'Bezig...' : 'Aanvraag versturen'}
-              </button>
-            </form>
-          </>
-        )}
       </div>
+
+      <SiteFooter />
     </>
   )
 }

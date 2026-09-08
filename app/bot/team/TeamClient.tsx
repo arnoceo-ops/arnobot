@@ -247,7 +247,15 @@ export default function TeamClient() {
       } else {
         track('team_spotlight_bekeken')
         const updated = await fetch('/api/bot/team/spotlight').then(r => r.json())
-        setTeamAnalyses(updated.analyses ?? [])
+        const list: TeamAnalyse[] = updated.analyses ?? []
+        // Op het testteam wordt een nieuwe analyse bewust niet opgeslagen (zie
+        // team/spotlight/route.ts). De POST geeft de tekst wel terug: toon die dan
+        // transient bovenaan, anders lijkt "genereren" niks te doen.
+        if (data.analyse && list[0]?.analyse_text !== data.analyse) {
+          list.unshift({ id: `transient-${Date.now()}`, analyse_text: data.analyse, created_at: new Date().toISOString() })
+        }
+        setTeamAnalyses(list)
+        if (list[0]) setExpandedAnalyse(list[0].id)
       }
     } catch {
       setSpotlightError('Er ging iets mis.')

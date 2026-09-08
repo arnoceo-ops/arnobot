@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { computeThemaMaandTrend, computeSpiegelSignaal } from '@/lib/spiegel'
 import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 
@@ -171,6 +171,10 @@ Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én).
 Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".
+
+${RULE_JIJ_JOU}
+
+${RULE_NO_TIME_PRESSURE}
 
 ${RULE_ENGLISH_TERMS}
 

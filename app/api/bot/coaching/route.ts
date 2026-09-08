@@ -369,7 +369,7 @@ ${RULE_NO_INVENTED_DETAILS}`
   const COACHING_MAX_TOKENS = 4000
 
   const callModel = (maxTokens: number = COACHING_MAX_TOKENS) => Sentry.startSpan({ name: 'coaching.main-synthesis', op: 'ai.claude' }, () => anthropic.messages.create({
-    model: 'claude-fable-5',
+    model: 'claude-fable-5-1',
     max_tokens: maxTokens,
     system: dynamicTail
       ? [

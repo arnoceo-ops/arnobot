@@ -71,6 +71,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: 'docs-freshness-pr' })
   }
 
+  // Dependabot-PR's die alleen een patch/minor-bump zijn, handelt
+  // .github/workflows/dependabot-auto-merge.yml zelf af zodra de checks groen zijn. Een ping
+  // erover is dus ruis. Een major-bump vraagt wel een mens (blijft in de PR-lijst staan tot
+  // de maandcheck), dus die geeft nog steeds een melding. Groep-PR's ("bump the patch-updates
+  // group ...") zijn per .github/dependabot.yml patch-only en hebben geen "from X to Y".
+  if (author === 'dependabot[bot]') {
+    const semver = title.match(/from (\d+)\.\d+\.\d+.* to (\d+)\.\d+\.\d+/)
+    const isMajorBump = semver !== null && semver[1] !== semver[2]
+    if (!isMajorBump) {
+      return NextResponse.json({ ok: true, skipped: 'dependabot-non-major' })
+    }
+  }
+
   await sendTelegram(`Nieuwe pull request op arnobot\n\n${title}\nDoor: ${author}\n${url}`)
 
   return NextResponse.json({ ok: true })

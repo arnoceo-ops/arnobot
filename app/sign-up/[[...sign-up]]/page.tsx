@@ -61,7 +61,10 @@ function AuthPage({ onLinkedIn, error }: { onLinkedIn: () => void; error: string
           </div>
           {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
-            Door aan te melden ga je akkoord met onze voorwaarden.
+            We respecteren je privacy. Door aan te melden ga je akkoord met de{' '}
+            <a href="/voorwaarden" style={{ color: '#9ca3af', textDecoration: 'underline' }}>voorwaarden</a>{' '}
+            en de{' '}
+            <a href="/privacy" style={{ color: '#9ca3af', textDecoration: 'underline' }}>privacyverklaring</a>.
           </p>
         </div>
       </div>

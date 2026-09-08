@@ -52,11 +52,15 @@ const KNOWN_NO_SANITIZER = new Set([
 ])
 
 // ── Check 2: regelmarkers in de prompt ───────────────────────────────────────
-const MARKER_NO_DASH = /streepje als leesteken|RULE_NO_DASH|SHARED_RULES/
+// De drie prompt-builders uit lib/systemPrompt.ts passen alle SHARED_RULES toe (bevat
+// RULE_NO_DASH + RULE_NO_TIME_PRESSURE) plus de jij/jou-regel: een route die er een
+// aanroept, heeft alle drie de markers gedekt.
+const BUILDERS = /buildRdsSystemPrompt|buildWidgetSystemPrompt|buildVoiceSystemPrompt/
+const MARKER_NO_DASH = new RegExp(`streepje als leesteken|RULE_NO_DASH|SHARED_RULES|${BUILDERS.source}`)
 // De informele-aanspreekvorm-regel: elke variant die "je"/"jij" voorschrijft en "u"
 // uitsluit telt, niet alleen de letterlijke CLAUDE.md-zin.
-const MARKER_JIJ_JOU = /aan met ["'](?:jij|je)["']|["']jij["'] en ["']jou["']|Spreek de (?:gebruiker|lezer)[^\n]{0,40}aan met|RULE_JIJ_JOU|buildRdsSystemPrompt|buildWidgetSystemPrompt|buildVoiceSystemPrompt/
-const MARKER_NO_TIME = /tijdgebonden aanwijzingen|zonder tijdslimiet|geen ["']vandaag["']|RULE_NO_TIME_PRESSURE|SHARED_RULES/
+const MARKER_JIJ_JOU = new RegExp(`aan met ["'](?:jij|je)["']|["']jij["'] en ["']jou["']|Spreek de (?:gebruiker|lezer)[^\\n]{0,40}aan met|RULE_JIJ_JOU|${BUILDERS.source}`)
+const MARKER_NO_TIME = new RegExp(`tijdgebonden aanwijzingen|zonder tijdslimiet|geen ["']vandaag["']|RULE_NO_TIME_PRESSURE|SHARED_RULES|${BUILDERS.source}`)
 
 // Routes die geen gebruikersgerichte proza genereren en dus buiten check 2 vallen.
 // Superset van KNOWN_NO_SANITIZER plus routes met wél sanitizer maar zonder vrije tekst.
@@ -69,6 +73,9 @@ const KNOWN_NOT_USER_FACING = new Set([
   'app/api/admin/feedback-analyse/route.ts',         // interne analyse voor Arno
   'app/api/admin/analyse-evaluaties/route.ts',       // interne analyse voor Arno
   'app/api/admin/blogs-analyse/route.ts',            // redactionele briefing voor Arno
+  'app/api/admin/analyse/route.ts',                  // ANALYSE-tab briefing voor Arno in /bot/admin
+  'app/api/admin/analyse-chat/route.ts',             // doorvraag-chat op die briefing, alleen Arno
+  'lib/metaAnalyse.ts',                              // meta-analyse voor Arno (admin/meta-analyse + cron-mail)
 ])
 
 // Routes waar de "geen tijdgebonden aanwijzingen"-regel niet van toepassing is omdat de
@@ -85,9 +92,29 @@ const KNOWN_NO_ACTION_OUTPUT = new Set([
 // ── Check 3: letterlijk streepje in de prompt ────────────────────────────────
 const EN_EM_DASH = /[–—]/
 
-// Lokale helpers die zelf RULE_*/SHARED_RULES/promptteksten bevatten en waarvan de
-// inhoud meegenomen wordt zodra een bestand ervan importeert.
-const RESOLVABLE_HELPERS = ['lib/systemPrompt.ts', 'lib/voice.ts', 'lib/metaAnalyse.ts', 'lib/groeibalansServer.ts']
+// Prompt-builder-helpers waarvan de HELE inhoud meetelt zodra een route ervan importeert
+// (ze bouwen zelf complete systeemprompts op). lib/systemPrompt.ts staat hier bewust NIET
+// bij: dat bestand is een verzameling losse RULE_*-constanten, en de hele tekst meenemen
+// zou elke importerende route automatisch op elke marker laten "slagen" (dan mist de check
+// precies de routes die één regel wél en een andere niet importeren). Voor systemPrompt.ts
+// tellen alleen de daadwerkelijk geïmporteerde constanten mee, zie hieronder.
+const RESOLVABLE_HELPERS = ['lib/voice.ts', 'lib/metaAnalyse.ts', 'lib/groeibalansServer.ts']
+
+// Losse `export const NAME = <literal>` uit lib/systemPrompt.ts, per naam opzoekbaar.
+function extractExportedConsts(src) {
+  const map = {}
+  const re = /export const (\w+)\s*=\s*(`(?:\\[\s\S]|[^`\\])*`|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")/g
+  let m
+  while ((m = re.exec(src))) map[m[1]] = m[2]
+  return map
+}
+
+// Namen uit een `import { A, B, C } from '<module>'`-statement.
+function importedNames(text, moduleBase) {
+  const re = new RegExp(`import\\s*(?:type\\s*)?\\{([^}]*)\\}\\s*from\\s*['"](?:@/lib/${moduleBase}|\\.{1,2}/(?:\\.\\./)*lib/${moduleBase}|\\./${moduleBase})['"]`)
+  const m = text.match(re)
+  return m ? m[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim()).filter(Boolean) : []
+}
 
 function walk(dir, results = []) {
   if (!existsSync(dir)) return results
@@ -116,6 +143,9 @@ const allFiles = SCAN_DIRS.flatMap(d => walk(join(ROOT, d)))
 const helperText = Object.fromEntries(
   RESOLVABLE_HELPERS.map(h => [h, existsSync(join(ROOT, h)) ? readFileSync(join(ROOT, h), 'utf-8') : ''])
 )
+const systemPromptSrc = existsSync(join(ROOT, 'lib/systemPrompt.ts'))
+  ? readFileSync(join(ROOT, 'lib/systemPrompt.ts'), 'utf-8') : ''
+const systemPromptConsts = extractExportedConsts(systemPromptSrc)
 
 const findings = { sanitizer: [], marker: [], dash: [] }
 
@@ -125,8 +155,12 @@ for (const file of allFiles) {
   const text = readFileSync(file, 'utf-8')
   if (!SDK_CALL.test(text)) continue
 
-  // Gecombineerde tekst: het bestand plus elke geïmporteerde lokale helper.
+  // Gecombineerde tekst: het bestand, plus de daadwerkelijk geïmporteerde RULE-constanten
+  // uit lib/systemPrompt.ts, plus de hele inhoud van elke geïmporteerde prompt-builder.
   let combined = text
+  for (const name of importedNames(text, 'systemPrompt')) {
+    if (systemPromptConsts[name]) combined += '\n' + systemPromptConsts[name]
+  }
   for (const h of RESOLVABLE_HELPERS) {
     const base = h.replace(/^lib\//, '').replace(/\.ts$/, '')
     if (new RegExp(`from ['"](?:@/lib/${base}|\\.{1,2}/(?:\\.\\./)*lib/${base}|\\./${base})['"]`).test(text)) {

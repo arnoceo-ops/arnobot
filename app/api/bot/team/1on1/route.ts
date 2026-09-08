@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -149,12 +149,16 @@ AANDACHTSPUNT
 Het voornaamste groeithema dit gesprek. Koppel het aan de laagste score of het patroon in de analyse. Één aandachtspunt, niet meerdere.
 
 ARNO ADVISEERT
-Geef concrete instructies voor de manager: welke vragen stelt hij letterlijk, en welk gedrag observeert hij actief in dit gesprek of de komende week. Schrijf dit als directe coaching aan de manager. Niet als twee aparte blokken, maar als één samenhangende aanbeveling van maximaal vijf zinnen.
+Geef concrete instructies voor de manager: welke vragen stelt hij letterlijk, en welk gedrag observeert hij actief in dit gesprek. Schrijf dit als directe coaching aan de manager. Niet als twee aparte blokken, maar als één samenhangende aanbeveling van maximaal vijf zinnen.
 
 Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop. Zorg dat alle drie de secties altijd volledig aanwezig zijn.
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".
 Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."
+
+${RULE_JIJ_JOU}
+
+${RULE_NO_TIME_PRESSURE}
 
 ${RULE_ENGLISH_TERMS}
 

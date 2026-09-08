@@ -76,9 +76,7 @@ Aanmelding (arno.bot/aanmelden of LinkedIn OAuth)
     ↓
 approved_users record aangemaakt (pending_ prefix bij e-mailaanmelding, direct bij LinkedIn)
     ↓
-Eerste inlog → /bot/welkom (welkomspagina, welcome_seen gezet)
-    ↓
-/bot/qa (intake/onboarding, onboarding_done gezet)
+Eerste inlog → /bot/profiel (intake/onboarding, onboarding_done gezet)
     ↓
 /bot (hoofdchat — gesprekken via arnobot_rds_logs + arnobot_blog_sessions)
     ↓
@@ -127,9 +125,7 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 |---|---|---|
 | Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar de community-vragenpagina |
 | Community vragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar `/bot/cgq` ("community generated questions"). Zelfde component/chatlogica als `/bot`, alleen desktop bereikbaar. Gesprekken die hier starten tellen standaard niet mee in coachingsdiagnose/analyses, tenzij de gebruiker dat via een expliciete opt-in-toestemming aanvinkt |
-| Welkom | `/bot/welkom` | Eenmalige welkomspagina met onboardingvideo |
-| Intake | `/bot/qa` | Onboarding-intakeformulier (rol, markt, uitdaging, targets) |
-| Profiel | `/bot/profiel` | Salescontext bekijken/aanpassen (zelfde vragenset als intake) |
+| Profiel / intake | `/bot/profiel` | Onboarding-intakeformulier bij eerste inlog (rol, markt, uitdaging, targets), daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
 | Coaching | `/bot/coaching` | Coachingrapport aanvragen en bekijken (Pro-only, upsell voor Basic) |
 | Analyses | `/bot/analyses` | Archief van gesprekken + AI-analyses + blogsuggesties |
 | Sparren | `/bot/sparren` | Live rollenspel/oefenmodus tegen een AI-tegenstander |
@@ -403,7 +399,7 @@ Centrale gebruikerstabel. Elk account staat hier.
 | `trial_start` | timestamptz | Startdatum trial (30 dagen gratis) |
 | `paid_at` | timestamptz | Datum van betaling (maandelijks abonnement) |
 | `expires_at` | timestamptz | Verloopdatum abonnement |
-| `welcome_seen` | bool | Welkomspagina gezien? |
+| `welcome_seen` | bool | Legacy, niet meer gebruikt (welkomspagina verwijderd) |
 | `onboarding_done` | bool | Intake ingevuld? |
 | `nudge_opt_out` | bool | Afgemeld voor marketingmails? |
 | `referral_code` | text | Eigen referralcode |
@@ -549,8 +545,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 2. Admin-routes (`/bot/admin/*`) → cookie-gebaseerd (`arnobot_admin`)
 3. Bot-routes (`/bot/*`) → Clerk auth vereist + `approved_users` check
 4. Toegangsstatus op basis van: `expires_at` gezet → bindend, verlopen = geen toegang (ook voor betalers, sinds 2026-09-02); anders `paid_at` aanwezig → onbeperkte toegang; anders `trial_start` + 30 dagen niet verstreken
-5. `welcome_seen` niet waar → redirect `/bot/welkom`
-6. `onboarding_done` niet waar → redirect `/bot/qa`
+5. `onboarding_done` niet waar → redirect `/bot/profiel`
 
 **Losse cookie-gates buiten `/bot`:** `/abacus/*` via `arnobot_kosten` (`ARNOBOT_KOSTEN_KEY`), `/agents/*` via `arnobot_sd_verdien` (`SD_VERDIEN_PASSWORD`, admin-key werkt ook). Geen Clerk-auth, zelfde patroon als de admin-cookie.
 

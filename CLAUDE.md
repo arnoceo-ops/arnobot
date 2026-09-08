@@ -55,8 +55,9 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 ### 2. Dependencies & tooling
 - Major versie-updates beschikbaar voor Next.js, Clerk, Supabase client, Anthropic SDK, Voyage AI SDK?
 - Analyseer breaking changes vóór je iets aanbeveelt — nooit blind updaten
-- Check open Dependabot-PRs via een agent (`gh api`) die per PR het breaking-change-risico samenvat
-- Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets). TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
+- **Auto-merge:** `.github/workflows/dependabot-auto-merge.yml` merget zelf de Dependabot-PR's die (a) alleen `package.json`/`package-lock.json` raken, (b) geen major-bump zijn en (c) waar npm audit, TypeScript, Vitest én de Vercel-build groen zijn. Bij de maandcheck blijven dus alleen de major-bumps en de PR's met een rode betekenisvolle check over. Riskante minors staan al op de ignore-lijst in `.github/dependabot.yml`.
+- Check de resterende open Dependabot-PRs via een agent (`gh api`) die per PR het breaking-change-risico samenvat
+- Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets), de auto-merge negeert die bewust. TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
 
 ### 3. AI-modelinventaris
 - Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), en OpenAI spraak (transcriptie).
@@ -74,6 +75,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Vercel Firewall** aanzetten
 - **Supabase PITR** aanzetten ($100/maand extra bovenop Supabase Pro). Drempel bewust op 100 gebruikers (Arno's keuze), automatisch verwerkt in Abacus (`TARIEVEN.supabasePitrDrempel`). **Direct bij het aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, tabellen/rijen/encoding checken, tijdelijk project verwijderen).
 - **Clerk:** inactivity timeout inschakelen (zie hieronder) en session limits aanscherpen
+- **WhatsApp:** support-nummer overzetten van de WhatsApp Business-app naar het WhatsApp Business Platform (API) met een helpdesktool en een echte DPA met Meta (zie hieronder)
 
 #### Vercel
 - Deprecated features in gebruik? Vercel dashboard → Settings → General op waarschuwingen
@@ -110,6 +112,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 
 #### Calendly (boeking van het gesprek met Arno)
 - Bij een leverancierswissel: checkt het nieuwe tool ook e-mailadres in het webhook-payload mee (nu de matchsleutel)? Callback-URL moet mét `www` (zie `docs/CLAUDE_HISTORY.md`).
+
+#### WhatsApp Business (support)
+- De SUPPORT-knop in `BotNav.tsx` en `SparClient.tsx` en de error-fallbacks door de app zijn `wa.me`-links naar het zakelijke supportnummer. Nummer staat centraal in `lib/support.ts`.
+- Draait op de gratis WhatsApp Business-app op een apart nummer (geen API, geen SDK, Arno beantwoordt handmatig). Meta verwerkt telefoonnummer en gespreksinhoud; geen aparte DPA, valt onder de WhatsApp Business-voorwaarden. Vermeld als sub-verwerker in `app/privacy/page.tsx` en `public/arnobot-beveiliging.pdf`.
+- Prepaid-SIM (Odido): Arno waardeert maandelijks 2 euro op, wat als actief gebruik telt, dus het nummer kan niet vervallen. Omzetten naar SIM-only staat los gepland.
+- **Milestone (50 actieve gebruikers):** overzetten naar het WhatsApp Business Platform (API) met helpdesktool en echte DPA. Nummer moet dan een verificatie-SMS kunnen ontvangen en wordt uit de Business-app gemigreerd.
 
 #### Anthropic
 - DPA gewijzigd? [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Zo ja, privacypagina bijwerken.
@@ -153,7 +161,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
 
 #### Kostencalculator (Abacus, `/abacus`)
-- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Anthropic/Fable 5 per aanroep, Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
+- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Anthropic/Fable 5.1 per aanroep (zelfde tarief als Fable 5: $10/$50 per 1M), Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
 - Wordt bij de **kwartaalcheck** gecontroleerd tegen de live pricing-pagina's, niet bij de maandcheck (prijswijzigingen komen niet vaak genoeg voor).
 - Sentry en Upstash staan hier bewust niet als hardcoded bedrag in (al instelbare velden in de calculator).
 
@@ -164,7 +172,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met git log en statusblokken. Vangnet voor de doorlopende schrijfregel, geen vervanging.
 
 ### 6. AVG & beveiliging gebruikers
-- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
+- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
 - Nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Openstaande verwijderverzoeken of datavragen van gebruikers?
 
@@ -462,11 +470,11 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 gaf leeg antwoord bij lange vragen. Retry-bij-leeg + max_tokens-buffer + Sentry-log bij afkapping. | 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
-| `app/api/bot/uitdaging/route.ts` | `claude-fable-5` | "Thought of the day", grammaticale kwaliteit vereist Fable. Getest tegen Opus 5, Fable gehandhaafd. Toon/drempel herzien 2026-08-29. | 2026-08-29 |
+| `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |
-| `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. | 2026-08-22 |
-| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5` | Hoogste kwaliteit voor de belangrijkste synthese. max_tokens 4000. Getest tegen Opus 5, Fable gehandhaafd. | 2026-08-01 |
+| `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5-1` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |
+| `app/api/bot/coaching/route.ts` (hoofdsynthese) | `claude-fable-5-1` | Hoogste kwaliteit voor de belangrijkste synthese. max_tokens 4000. Naar Fable 5.1 (2026-09-07): blinde A/B op echte gebruikersdata, JSON-schema intact, geen regressie. | 2026-09-07 |
 | `app/api/bot/coaching/route.ts` (blog-synthese) | `claude-haiku-4-5-20251001` | Korte label per blog. | 2026-07 |
 | `app/api/bot/coaching-analyse/route.ts` (Analyses-pagina) | `claude-sonnet-4-6` | Gemigreerd van Sonnet 5 (stil leeg antwoord). Retry + zichtbare foutmelding. | 2026-07 |
 | `app/api/bot/team/spotlight/route.ts` (team spotlight) | `claude-sonnet-4-6` | Cruciale boodschap voor manager. Krijgt thema-geschiedenis + 21-dagen-signaal als context. | 2026-08-21 |
@@ -494,11 +502,11 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `scripts/embed-chunks.mjs` (contextgeneratie per chunk) | `claude-haiku-4-5-20251001` | Offline script dat de kennisbank vult. try/catch-fallback. | 2026-07 |
 | `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Enige Opus-gebruik. `tool_choice` forceert tool_use. Opus 5 kost gelijk aan 4.8, presteert beter. | 2026-07 |
 | `app/api/admin/blogs-analyse/route.ts` | `claude-sonnet-4-6` | Redactionele briefing. Retry-bij-leeg + expliciete foutrespons. | 2026-07 |
-| `lib/metaAnalyse.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. Sinds 2026-09-02 één gedeelde implementatie voor `cron/meta-analyse` (days=30, e-mail) én `admin/meta-analyse` (periodekeuze, JSON). | 2026-09-02 |
-| `lib/metaAnalyse.ts` (jouw analyse) | `claude-fable-5` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. Zelfde gedeelde module. | 2026-09-02 |
+| `lib/metaAnalyse.ts` (zelfbeoordeling + expertpanel) | `claude-fable-5-1` | Geüpgraded van Sonnet 4.6 (2026-08-18), essentieel onderdeel, kosten geen factor. Refusal-check, hogere max_tokens, gesprekken schalen met periode. Sinds 2026-09-02 één gedeelde implementatie voor `cron/meta-analyse` (days=30, e-mail) én `admin/meta-analyse` (periodekeuze, JSON). Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |
+| `lib/metaAnalyse.ts` (jouw analyse) | `claude-fable-5-1` | Verwerkt Arno's eigen input puntsgewijs. Refusal-check + `jouwAnalyseFailed` na stille-faal-bug. Zelfde gedeelde module. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
 | `app/api/admin/test-email/route.ts` | `claude-haiku-4-5-20251001` | Admin-testtool, geen gebruikersgerichte output. | 2026-07 |
-| `app/api/admin/analyse/route.ts` (briefing per gebruiker) | `claude-fable-5` | ANALYSE-tab in admin, vervangt Arno's handmatige uitzoekwerk. Refusal-check + retry + max_tokens-verdubbeling vanaf v1. | 2026-08-25 |
-| `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5` | Zelfde databundel. Bewust niet opgeslagen. | 2026-08-25 |
+| `app/api/admin/analyse/route.ts` (briefing per gebruiker) | `claude-fable-5-1` | ANALYSE-tab in admin, vervangt Arno's handmatige uitzoekwerk. Refusal-check + retry + max_tokens-verdubbeling vanaf v1. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
+| `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5-1` | Zelfde databundel. Bewust niet opgeslagen. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
 | `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch) | Spraak-naar-tekst voor voice-input. | 2026-07 |
 | `app/api/chat-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `claude-sonnet-4-6` | Korte voice-systeeminstructie (`buildVoiceSystemPrompt`), niet-streamend. Eigen rate-limiter (30/uur). | 2026-07 |
 | `app/api/tts-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch) | Streaming TTS via `lib/voice.ts`. Verbruik gelogd. Eigen rate-limiter (60/uur). | 2026-07 |
