@@ -473,9 +473,6 @@ Meest recente Strategy People Execution-synthese van de teambaas zelf (upsert, 1
 ### `arnobot_salesbaas_coaching_history`
 Insert-only geschiedenis van eerdere zelfcoaching-synthesen (naast `arnobot_salesbaas_coaching`), voedt "Jouw leiderschapsreis" (mijlpalen met score + voortgangszin).
 
-### `arnobot_team_waitlist`
-Legacy. Wachtlijst-aanmeldingen voor het Team-abonnement uit de periode dat Team nog niet live was. De profielpagina schrijft er niet meer naartoe (elke profielopslag stuurt `team_waitlist: false`, wat bestaande rijen opruimt). Tabel + route-afhandeling kunnen weg zodra bevestigd is dat er niks meer aan hangt.
-
 ### `arnobot_command_requests`
 Team-tier-aanvragen via het publieke `/team`-leadformulier (bedrijfsnaam, KVK-nummer, user_id).
 

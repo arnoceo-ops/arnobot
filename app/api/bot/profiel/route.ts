@@ -54,37 +54,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 
-  if (profiel.team_waitlist === true) {
+  // Lead-signaal: iemand die via een gewone trial binnenkomt en bij de intake aangeeft
+  // ArnoBot voor zijn team te willen (geen bestaand Team-account, want dan is command_manager
+  // gezet en verschijnt deze vraag niet). Eenmalig bij het afronden van de onboarding, één
+  // mail naar de inbox, geen tabel of CRM. Zie docs/SALES_BIJBEL.md "Aanlooproutes".
+  if (!huidig?.onboarding_done && profiel.gebruik === 'team') {
     try {
       const clerk = await clerkClient()
       const user = await clerk.users.getUser(userId)
-      const email = user.emailAddresses[0]?.emailAddress ?? null
-      const naam = [user.firstName, user.lastName].filter(Boolean).join(' ') || null
-
-      const { data: existing } = await serviceDb
-        .from('arnobot_team_waitlist')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle()
-
-      await serviceDb
-        .from('arnobot_team_waitlist')
-        .upsert({ user_id: userId, email, naam, rol: profiel.rol ?? null }, { onConflict: 'user_id' })
-
-      if (!existing) {
-        await resend.emails.send({
-          from: 'ArnoBot <info@arno.bot>',
-          to: 'waitlist@arno.bot',
-          subject: 'Nieuwe aanmelding ArnoBot Team waitlist',
-          text: `Nieuwe aanmelding:\n\nNaam: ${naam ?? 'onbekend'}\nE-mail: ${email ?? 'onbekend'}\nRol: ${profiel.rol ?? 'onbekend'}`,
-        })
-      }
+      const email = user.emailAddresses[0]?.emailAddress ?? 'onbekend'
+      const naam = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'onbekend'
+      await resend.emails.send({
+        from: 'ArnoBot <info@arno.bot>',
+        to: 'waitlist@arno.bot',
+        subject: 'Team-lead vanuit de trial-onboarding',
+        text: `Iemand gaf bij de profiel-intake aan ArnoBot voor zijn team te willen:\n\nNaam: ${naam}\nE-mail: ${email}\nRol: ${profiel.rol ?? 'onbekend'}\nTeamgrootte: ${profiel.teamgrootte ?? 'onbekend'}`,
+      })
     } catch (e) {
-      console.error('team_waitlist upsert:', e)
+      console.error('team-lead mail:', e)
     }
-  } else if (profiel.team_waitlist === false) {
-    const { error: deleteErr } = await serviceDb.from('arnobot_team_waitlist').delete().eq('user_id', userId)
-    if (deleteErr) console.error('team_waitlist delete:', deleteErr)
   }
 
   return NextResponse.json({ ok: true })

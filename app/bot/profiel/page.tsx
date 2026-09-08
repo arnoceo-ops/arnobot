@@ -239,7 +239,7 @@ export default function BotProfielPage() {
     setError('')
     try {
       const variant = isCommandManager ? 'team' : isSolo ? 'solo' : 'individueel'
-      const schoonProfiel: Record<string, unknown> = { team_waitlist: false }
+      const schoonProfiel: Record<string, unknown> = {}
       for (const key of PROFIEL_VELDEN[variant]) schoonProfiel[key] = answers[key]
       schoonProfiel.rol = answers.rol === 'Anders' ? rolAnders.trim() : answers.rol
 
