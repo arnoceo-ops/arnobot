@@ -31,8 +31,8 @@ setup('authenticeren als testgebruiker', async ({ page }) => {
   await clerk.signIn({ page, emailAddress: TEST_USER_EMAIL })
 
   // Eerste bezoek aan /bot triggert proxy.ts om automatisch een approved_users-rij aan
-  // te maken (trial-start). Op de allereerste run ooit stuurt dat door naar /bot/welkom
-  // (welcome_seen nog niet gezet); op elke volgende run is het account al geseed door een
+  // te maken (trial-start). Op de allereerste run ooit stuurt dat door naar /bot/profiel
+  // (onboarding_done nog niet gezet); op elke volgende run is het account al geseed door een
   // vorige testrun en komt de test meteen op /bot. Beide gevallen moeten werken, niet alleen
   // de eerste keer.
   await page.goto('/bot')
@@ -50,10 +50,10 @@ setup('authenticeren als testgebruiker', async ({ page }) => {
     .single()
   if (!userData) throw new Error(`approved_users-rij voor ${TEST_USER_EMAIL} niet gevonden na eerste /bot-bezoek`)
 
-  await supabase.from('approved_users').update({ welcome_seen: true, onboarding_done: true }).eq('user_id', userData.user_id)
+  await supabase.from('approved_users').update({ onboarding_done: true }).eq('user_id', userData.user_id)
   await supabase.from('arnobot_blog_profiles').upsert({ user_id: userData.user_id, profiel: TEST_PROFILE }, { onConflict: 'user_id' })
 
-  if (page.url().includes('/bot/welkom') || page.url().includes('/bot/profiel')) {
+  if (page.url().includes('/bot/profiel')) {
     await page.goto('/bot')
   }
 

@@ -111,7 +111,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     let { data: user } = await supabase
       .from('approved_users')
-      .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done, command_manager')
+      .select('is_active, paid_at, expires_at, trial_start, onboarding_done, command_manager')
       .eq('user_id', userId)
       .single()
 
@@ -124,7 +124,7 @@ export default clerkMiddleware(async (auth, req) => {
         if (email) {
           const { data: pending } = await supabase
             .from('approved_users')
-            .select('is_active, paid_at, expires_at, trial_start, welcome_seen, onboarding_done, command_manager')
+            .select('is_active, paid_at, expires_at, trial_start, onboarding_done, command_manager')
             .eq('email', email)
             .like('user_id', 'pending_%')
             .single()
@@ -219,7 +219,7 @@ export default clerkMiddleware(async (auth, req) => {
               console.error('New user insert failed:', insertErr.message)
               return NextResponse.redirect(new URL('/sign-in', req.url))
             }
-            user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, welcome_seen: false, onboarding_done: false, command_manager: sdSource ? true : false }
+            user = { is_active: true, paid_at: null, expires_at: null, trial_start: newRow.trial_start, onboarding_done: false, command_manager: sdSource ? true : false }
             // Referral cookie verwerken
             const refCode = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
             if (refCode && /^[A-Z0-9-]{4,20}$/.test(refCode)) {
@@ -313,12 +313,9 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 
-    const welcome_seen = (user as any).welcome_seen as boolean | null
     const onboarding_done = (user as any).onboarding_done as boolean | null
 
-    if (!welcome_seen) {
-      if (path !== '/bot/welkom') return NextResponse.redirect(new URL('/bot/welkom', req.url))
-    } else if (!onboarding_done) {
+    if (!onboarding_done) {
       if (path !== '/bot/profiel') return NextResponse.redirect(new URL('/bot/profiel', req.url))
     }
   }

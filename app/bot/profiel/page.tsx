@@ -328,16 +328,9 @@ export default function BotProfielPage() {
           <a href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
             ARNO<span style={{ color: '#f59e0b' }}>BOT.</span>
           </a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 48, height: 3, background: '#374151', borderRadius: 2 }} />
-              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#6b7280' }}>VIDEO</span>
-            </div>
-            <div style={{ width: 16, height: 1, background: '#374151', marginBottom: 13 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 48, height: 3, background: '#f59e0b', borderRadius: 2 }} />
-              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#f59e0b' }}>PROFIEL</span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 48, height: 3, background: '#f59e0b', borderRadius: 2 }} />
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#f59e0b' }}>PROFIEL</span>
           </div>
         </nav>
       )}

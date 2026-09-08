@@ -56,7 +56,6 @@ export const SESSION_REPLAY_ENABLED = true
 // /bot (home, kan een gesprekssnippet tonen), /bot/analyses en /bot/coaching staan
 // er bewust NIET in.
 export const REPLAY_ALLOWED_PREFIXES: readonly string[] = [
-  '/bot/welkom',
   '/bot/profiel',
   '/bot/account',
   '/bot/doorgaan',
