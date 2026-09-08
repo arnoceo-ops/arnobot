@@ -41,12 +41,6 @@ const FEATURES = [
   },
 ]
 
-const STATS = [
-  { value: '+38%', label: 'gemiddeld hogere conversie' },
-  { value: '12.000+', label: 'gecoachte salesgesprekken' },
-  { value: '4,8/5', label: 'beoordeling door gebruikers' },
-]
-
 export const metadata: Metadata = {
   title: 'ArnoBot: Jouw AI Sales Coach',
   description: 'ArnoBot is de AI sales coach die salesprofessionals en teams elke dag scherper maakt. Meer omzet, betere gesprekken, hogere conversie. Probeer 30 dagen gratis.',
@@ -162,17 +156,6 @@ export default async function ArnoBotLandingPage() {
           letter-spacing: 0.02em; color: #f8fafc;
         }
         .feature-desc { line-height: 1.6; color: #94a3b8; }
-
-        /* STATS BAND */
-        .stats-band { max-width: 1152px; margin: 96px auto; padding: 0 40px; }
-        .stats-card {
-          background: #faf6ef; border-radius: 24px; padding: 64px 48px;
-          display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;
-        }
-        .stats-card > div { padding: 0 24px; }
-        .stats-card > div:not(:first-child) { border-left: 1px solid #e5ddd0; }
-        .stat-num { font-family: 'Oswald', sans-serif; font-size: clamp(36px, 4vw, 48px); font-weight: 600; color: #d98b0f; }
-        .stat-label { font-size: 15px; font-weight: 500; color: #6b6456; margin-top: 8px; }
 
         /* WAAROM ARNOBOT */
         .waarom-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
@@ -302,9 +285,6 @@ export default async function ArnoBotLandingPage() {
 
           .features-section { padding: 56px 20px; }
           .features-grid { grid-template-columns: 1fr; }
-          .stats-band { margin: 56px auto; padding: 0 16px; }
-          .stats-card { grid-template-columns: 1fr; padding: 40px 24px; gap: 32px; }
-          .stats-card > div:not(:first-child) { border-left: none; padding-top: 0; }
           .waarom-section { padding: 56px 20px; }
           .testimonial-section { padding: 56px 20px; }
           .htc-grid { grid-template-columns: 1fr; }
@@ -364,18 +344,6 @@ export default async function ArnoBotLandingPage() {
               </div>
             )
           })}
-        </div>
-      </section>
-
-      {/* STATS BAND */}
-      <section className="stats-band">
-        <div className="stats-card">
-          {STATS.map(stat => (
-            <div key={stat.label}>
-              <p className="stat-num">{stat.value}</p>
-              <p className="stat-label">{stat.label}</p>
-            </div>
-          ))}
         </div>
       </section>
 
