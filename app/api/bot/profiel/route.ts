@@ -29,9 +29,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 
+  // De 30-dagen trial-klok wordt heraankerd op het moment dat de onboarding echt af is,
+  // niet op het moment van accountaanmaak. Zo kost aarzelen over de intake geen trialdagen.
+  // Alleen bij de allereerste keer (onboarding_done nog niet gezet) en alleen voor een
+  // echte trial (nog niet betaald); een latere profielaanpassing raakt trial_start nooit.
+  const { data: huidig } = await serviceDb
+    .from('approved_users')
+    .select('onboarding_done, paid_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  const onboardingUpdate: Record<string, unknown> = { onboarding_done: true }
+  if (!huidig?.onboarding_done && !huidig?.paid_at) {
+    onboardingUpdate.trial_start = new Date().toISOString()
+  }
+
   const { error: onboardingError } = await serviceDb
     .from('approved_users')
-    .update({ onboarding_done: true })
+    .update(onboardingUpdate)
     .eq('user_id', userId)
 
   if (onboardingError) {

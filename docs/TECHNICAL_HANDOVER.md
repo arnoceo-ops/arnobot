@@ -125,7 +125,7 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 |---|---|---|
 | Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar de community-vragenpagina |
 | Community vragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar `/bot/cgq` ("community generated questions"). Zelfde component/chatlogica als `/bot`, alleen desktop bereikbaar. Gesprekken die hier starten tellen standaard niet mee in coachingsdiagnose/analyses, tenzij de gebruiker dat via een expliciete opt-in-toestemming aanvinkt |
-| Profiel / intake | `/bot/profiel` | Onboarding-intakeformulier bij eerste inlog (rol, markt, uitdaging, targets), daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
+| Profiel / intake | `/bot/profiel` | Korte onboarding-intake bij eerste inlog (rol, markt, wat verkoop je, ideale klant, dealgrootte, salescyclus, ervaring, uitdaging; solo- en teamvariant iets afwijkend). Bij afronden wordt `trial_start` heraankerd op dat moment. Daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
 | Coaching | `/bot/coaching` | Coachingrapport aanvragen en bekijken (Pro-only, upsell voor Basic) |
 | Analyses | `/bot/analyses` | Archief van gesprekken + AI-analyses + blogsuggesties |
 | Sparren | `/bot/sparren` | Live rollenspel/oefenmodus tegen een AI-tegenstander |
@@ -264,7 +264,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 
 | Route | Doel |
 |---|---|
-| `/api/bot/profiel` | Profiel opslaan + onboarding_done zetten |
+| `/api/bot/profiel` | Profiel opslaan + onboarding_done zetten (en bij de eerste keer `trial_start` heraankeren) |
 | `/api/bot/plan` | Eigen plan + command_manager-vlag ophalen |
 | `/api/bot/export` | Alle eigen data exporteren (AVG) |
 | `/api/bot/delete-account` | Verwijderverzoek account |
@@ -474,7 +474,7 @@ Meest recente Strategy People Execution-synthese van de teambaas zelf (upsert, 1
 Insert-only geschiedenis van eerdere zelfcoaching-synthesen (naast `arnobot_salesbaas_coaching`), voedt "Jouw leiderschapsreis" (mijlpalen met score + voortgangszin).
 
 ### `arnobot_team_waitlist`
-Wachtlijst-aanmeldingen voor het Team-abonnement, via `/bot/profiel`.
+Legacy. Wachtlijst-aanmeldingen voor het Team-abonnement uit de periode dat Team nog niet live was. De profielpagina schrijft er niet meer naartoe (elke profielopslag stuurt `team_waitlist: false`, wat bestaande rijen opruimt). Tabel + route-afhandeling kunnen weg zodra bevestigd is dat er niks meer aan hangt.
 
 ### `arnobot_command_requests`
 Team-tier-aanvragen via het publieke `/team`-leadformulier (bedrijfsnaam, KVK-nummer, user_id).

@@ -1,7 +1,7 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import BotNav from '@/app/bot/BotNav'
 
@@ -14,19 +14,14 @@ type Answers = {
   uitdaging: string
   dealgrootte: string
   salescyclus: string
-  target_dit_jaar: string
-  target_3_jaar: string
   teamgrootte: string
   jaren_sales: string
   jaren_functie: string
-  jaardoel: string
-  kwartaalthema: string
   // Alleen de solopreneur-versie (rol === 'Solopreneur', geen team)
   positionering: string
   klantenbron: string[]
   kanaal_afhankelijkheid: string
   acquisitie_tijd: string
-  inkomensdoel: string
 }
 
 const empty: Answers = {
@@ -38,18 +33,13 @@ const empty: Answers = {
   uitdaging: '',
   dealgrootte: '',
   salescyclus: '',
-  target_dit_jaar: '',
-  target_3_jaar: '',
   teamgrootte: '',
   jaren_sales: '',
   jaren_functie: '',
-  jaardoel: '',
-  kwartaalthema: '',
   positionering: '',
   klantenbron: [],
   kanaal_afhankelijkheid: '',
   acquisitie_tijd: '',
-  inkomensdoel: '',
 }
 
 function getUitdagingPlaceholder(rol: string): string {
@@ -64,20 +54,6 @@ function getUitdagingPlaceholder(rol: string): string {
   return 'Bijv: Mijn conversie in het tweede gesprek is te laag, ik verlies deals op prijs...'
 }
 
-function getJaardoelPlaceholder(rol: string): string {
-  if (rol === 'AE Hunter') return 'Bijv: Ik wil mijn eigen pipeline vullen zonder te wachten op leads.'
-  if (rol === 'AM Farmer') return 'Bijv: Ik wil onmisbaar worden voor mijn drie grootste klanten.'
-  if (rol === 'Key AM') return 'Bijv: Ik wil als trusted advisor gezien worden, niet als accountbeheerder.'
-  if (rol === 'Inside Sales') return 'Bijv: Ik wil deals sluiten op waarde, niet verliezen op prijs.'
-  if (rol === 'Sales Director') return 'Bijv: Ik wil een team dat zelf verantwoordelijkheid neemt voor het resultaat.'
-  if (rol === 'VP of Sales') return 'Bijv: Ik wil strategisch bouwen in plaats van operationeel brandjes blussen.'
-  if (rol === 'CEO/DGA') return 'Bijv: Ik wil mezelf overbodig maken in het verkoopproces.'
-  if (rol === 'Solopreneur') return 'Bijv: Ik wil klanten krijgen via aanbevelingen, zonder zelf te hoeven jagen.'
-  return 'Bijv: Waar wil jij naartoe?'
-}
-
-const TARGET_DIT_JAAR_OPTIONS = ['Ja', 'Nee']
-const TARGET_3_JAAR_OPTIONS = ['Ja', 'Nee']
 const TEAMGROOTTE_OPTIONS = ['1-3', '4-10', '11-25', '>25']
 const ROL_OPTIONS = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales', 'Sales Director', 'VP of Sales', 'CEO/DGA', 'Solopreneur', 'Anders']
 const HEEFT_TEAM = ['Sales Director', 'VP of Sales', 'CEO/DGA']
@@ -91,34 +67,33 @@ const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CCO', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
+// Bandbreedtes i.p.v. vrije tekst: sneller ingevuld en de marge is precies wat de
+// systeemprompt nodig heeft. Bestaande profielen met een oude vrije-tekstwaarde matchen geen
+// knop; die gebruiker herkiest bij de eerstvolgende profielaanpassing.
+const DEALGROOTTE_OPTIONS = ['< €1k', '€1-10k', '€10-50k', '€50-250k', '> €250k']
+const SALESCYCLUS_OPTIONS = ['< 1 week', '1-4 weken', '1-3 maanden', '3-6 maanden', '6-12 maanden', '> 12 maanden']
 
 // Welke profielvelden bij welke formuliervariant horen. Bij het opslaan wordt het profiel
 // hiermee opnieuw opgebouwd, niet met de volledige answers-state: zo verdwijnen velden van
-// een eerder gekozen rol (bv. een target dat als verkoper is ingevuld en daarna naar
-// Solopreneur is geswitcht) uit het opgeslagen profiel in plaats van als spookcontext in de
+// een eerder gekozen rol (bv. een positionering die als solo is ingevuld en daarna naar
+// een teamrol is geswitcht) uit het opgeslagen profiel in plaats van als spookcontext in de
 // systeemprompt te blijven hangen. Overwrite, geen merge (de route doet .upsert op de hele
 // profiel-JSON).
-const PROFIEL_GEDEELD: (keyof Answers)[] = ['rol', 'gebruik', 'markt', 'wat_verkoop_je', 'ideale_klant', 'dealgrootte', 'salescyclus', 'jaren_sales', 'jaren_functie', 'jaardoel', 'uitdaging']
+const PROFIEL_GEDEELD: (keyof Answers)[] = ['rol', 'gebruik', 'markt', 'wat_verkoop_je', 'ideale_klant', 'dealgrootte', 'salescyclus', 'jaren_sales', 'jaren_functie', 'uitdaging']
 const PROFIEL_VELDEN: Record<'team' | 'individueel' | 'solo', (keyof Answers)[]> = {
-  team: [...PROFIEL_GEDEELD, 'target_dit_jaar', 'target_3_jaar', 'kwartaalthema'],
-  individueel: [...PROFIEL_GEDEELD, 'target_dit_jaar', 'target_3_jaar', 'teamgrootte'],
-  solo: [...PROFIEL_GEDEELD, 'positionering', 'klantenbron', 'kanaal_afhankelijkheid', 'acquisitie_tijd', 'inkomensdoel'],
+  team: [...PROFIEL_GEDEELD],
+  individueel: [...PROFIEL_GEDEELD, 'teamgrootte'],
+  solo: [...PROFIEL_GEDEELD, 'positionering', 'klantenbron', 'kanaal_afhankelijkheid', 'acquisitie_tijd'],
 }
 
 // Solopreneur-versie (rol === 'Solopreneur', geen team, geen command_manager): een eigen
-// intake omdat een zelfstandige geen formeel sales-target, geen gestructureerde salescyclus
-// en geen team heeft, maar wel een positionering, een acquisitiekanaal en een spanning
-// tussen acquireren en leveren. Zie docs/TEAM_PLAN.md, "Punt 2 vervangen", stap 3.
+// intake omdat een zelfstandige geen team heeft, maar wel een positionering, een
+// acquisitiekanaal en een spanning tussen acquireren en leveren. Zie docs/TEAM_PLAN.md,
+// "Punt 2 vervangen", stap 3.
 const KLANTENBRON_OPTIONS = ['Aanbeveling', 'Netwerk', 'Outbound', 'Content/inbound', 'Terugkerende klanten', 'Toeval']
 const KANAAL_AFHANKELIJKHEID_OPTIONS = ['Sterk van één kanaal', 'Deels gespreid', 'Goed gespreid']
 const ACQUISITIE_TIJD_OPTIONS = ['< 10%', '10-25%', '25-50%', '> 50%']
 
-function getTargetLabel(rol: string) {
-  if (['Sales Director', 'VP of Sales'].includes(rol)) return 'team'
-  if (rol === 'CEO/DGA') return 'company'
-  if (rol === 'Solopreneur') return ''
-  return 'individuele'
-}
 const MARKT_OPTIONS = ['B2B MKB', 'B2B Enterprise', 'B2C', 'Overheid', 'Investeerders']
 
 function Chip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
@@ -158,16 +133,13 @@ function Block({ nr, title, children }: { nr: string; title: string; children: R
 
 export default function BotProfielPage() {
   const { user } = useUser()
-  const router = useRouter()
   const [answers, setAnswers] = useState<Answers>(empty)
   const [rolAnders, setRolAnders] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null)
 
-  const [isDirty, setIsDirty] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [teamWaitlist, setTeamWaitlist] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [isCommandManager, setIsCommandManager] = useState(false)
   // Bij een mislukte /api/bot/profiel-fetch weten we niet of dit account een teamlid is,
@@ -184,7 +156,6 @@ export default function BotProfielPage() {
         setIsCommandManager(data?.isCommandManager ?? false)
         if (data?.profiel) {
           setAnswers(prev => ({ ...prev, ...data.profiel }))
-          setTeamWaitlist(data.profiel.team_waitlist ?? false)
           setIsFirstTime(false)
         } else {
           setIsFirstTime(true)
@@ -204,7 +175,6 @@ export default function BotProfielPage() {
 
   function set(key: keyof Answers, val: string) {
     setAnswers(prev => ({ ...prev, [key]: val }))
-    setIsDirty(true)
   }
 
   function toggleMarkt(val: string) {
@@ -212,7 +182,6 @@ export default function BotProfielPage() {
       ...prev,
       markt: prev.markt.includes(val) ? prev.markt.filter(v => v !== val) : [...prev.markt, val]
     }))
-    setIsDirty(true)
   }
 
   function toggleKlantenbron(val: string) {
@@ -220,7 +189,6 @@ export default function BotProfielPage() {
       ...prev,
       klantenbron: prev.klantenbron.includes(val) ? prev.klantenbron.filter(v => v !== val) : [...prev.klantenbron, val]
     }))
-    setIsDirty(true)
   }
 
   const rolIngevuld = answers.rol && (answers.rol !== 'Anders' || rolAnders.trim().length > 1)
@@ -229,14 +197,6 @@ export default function BotProfielPage() {
   // sluit dit uit: die lijst bevat 'Solopreneur' sowieso niet.
   const isSolo = !isCommandManager && answers.rol === 'Solopreneur'
 
-  // Bij minder dan 3 jaar in de huidige functie is "heb je de afgelopen 3 jaar je target
-  // gehaald" niet goed te beantwoorden (die periode valt dan deels vóór de huidige functie).
-  // Alleen voor de individuele versie: de teamversie vraagt naar het team-/company-target,
-  // dat bestond al vóór iemand in zijn huidige functie zat, dus die vraag blijft daar altijd
-  // relevant. Bewust ook voor teamleden en solo-accountmanagers (geen isCommandManager-
-  // specifieke rol nodig): zij lopen door dezelfde, niet-teammanager-blokken heen.
-  const targetHistorieOverslaan = !isCommandManager && ['< 1 jaar', '1-3 jaar'].includes(answers.jaren_functie)
-
   const allFilled = isSolo
     ? (
       rolIngevuld &&
@@ -244,8 +204,8 @@ export default function BotProfielPage() {
       answers.wat_verkoop_je.trim().length > 2 &&
       answers.ideale_klant.trim().length > 2 &&
       answers.positionering.trim().length > 2 &&
-      answers.dealgrootte.trim().length > 0 &&
-      answers.salescyclus.trim().length > 0 &&
+      answers.dealgrootte !== '' &&
+      answers.salescyclus !== '' &&
       answers.klantenbron.length > 0 &&
       answers.kanaal_afhankelijkheid !== '' &&
       answers.acquisitie_tijd !== '' &&
@@ -259,10 +219,8 @@ export default function BotProfielPage() {
       answers.wat_verkoop_je.trim().length > 2 &&
       answers.ideale_klant.trim().length > 2 &&
       answers.uitdaging.trim().length > 2 &&
-      answers.dealgrootte.trim().length > 0 &&
-      answers.salescyclus.trim().length > 0 &&
-      answers.target_dit_jaar !== '' &&
-      (targetHistorieOverslaan || answers.target_3_jaar !== '') &&
+      answers.dealgrootte !== '' &&
+      answers.salescyclus !== '' &&
       answers.jaren_sales !== '' &&
       answers.jaren_functie !== '' &&
       (!HEEFT_TEAM.includes(answers.rol) || isCommandManager || (answers.gebruik !== '' && answers.teamgrootte !== ''))
@@ -281,7 +239,7 @@ export default function BotProfielPage() {
     setError('')
     try {
       const variant = isCommandManager ? 'team' : isSolo ? 'solo' : 'individueel'
-      const schoonProfiel: Record<string, unknown> = { team_waitlist: teamWaitlist }
+      const schoonProfiel: Record<string, unknown> = { team_waitlist: false }
       for (const key of PROFIEL_VELDEN[variant]) schoonProfiel[key] = answers[key]
       schoonProfiel.rol = answers.rol === 'Anders' ? rolAnders.trim() : answers.rol
 
@@ -291,7 +249,6 @@ export default function BotProfielPage() {
         body: JSON.stringify({ profiel: schoonProfiel }),
       })
       if (!res.ok) throw new Error('Opslaan mislukt')
-      setIsDirty(false)
       window.location.href = '/bot'
     } catch {
       setError('Er ging iets mis. Probeer het opnieuw.')
@@ -325,9 +282,9 @@ export default function BotProfielPage() {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           background: 'rgba(17,24,39,0.95)', backdropFilter: 'blur(12px)',
         }}>
-          <a href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
+          <Link href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
             ARNO<span style={{ color: '#f59e0b' }}>BOT.</span>
-          </a>
+          </Link>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 48, height: 3, background: '#f59e0b', borderRadius: 2 }} />
             <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#f59e0b' }}>PROFIEL</span>
@@ -350,7 +307,7 @@ export default function BotProfielPage() {
             </h1>
             <div style={{ borderLeft: '4px solid #f59e0b', paddingLeft: 20, color: '#9ca3af', fontSize: 15, lineHeight: 1.9 }}>
               <p style={{ color: '#f1f5f9', fontWeight: 400, marginBottom: 8 }}>ArnoBot stemt zijn coaching af op jouw situatie.</p>
-              <p>Hoe meer hij weet over wie jij bent, wat je verkoopt en wat je uitdagingen zijn, hoe gerichter het advies. Wees bloedeerlijk; dit is jouw persoonlijke omgeving. Er kijkt niemand mee.</p>
+              <p>{isFirstTime ? 'Een paar korte vragen, dan kun je aan de slag. ' : ''}Hoe meer ArnoBot weet over wie jij bent en wat je verkoopt, hoe gerichter het advies. Wees bloedeerlijk; dit is jouw persoonlijke omgeving. Er kijkt niemand mee.</p>
             </div>
           </div>
 
@@ -385,21 +342,10 @@ export default function BotProfielPage() {
                   )}
                   {answers.gebruik === 'team' && (
                     <div style={{ marginTop: 20, background: '#1f2937', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
-                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>COMING SEPTEMBER 2026</p>
-                      <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>
-                        ArnoBot Team is in ontwikkeling. Je kunt je nu alvast aanmelden. Zodra het live gaat, ben jij de eerste die het weet.
+                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>ARNOBOT TEAM</p>
+                      <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                        Elke verkoper een eigen coach, jij het overzicht over je team. Bekijk wat het inhoudt op <Link href="/team" style={{ color: '#f59e0b', textDecoration: 'underline' }}>de teampagina</Link>. Vul hieronder verder je eigen profiel in.
                       </p>
-                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={teamWaitlist}
-                          onChange={e => setTeamWaitlist(e.target.checked)}
-                          style={{ width: 18, height: 18, marginTop: 3, accentColor: '#f59e0b', flexShrink: 0, cursor: 'pointer' }}
-                        />
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#f1f5f9', lineHeight: 1.7 }}>
-                          Ja, hou me op de hoogte zodra ArnoBot Team beschikbaar is.
-                        </span>
-                      </label>
                     </div>
                   )}
                 </div>
@@ -474,26 +420,26 @@ export default function BotProfielPage() {
           </Block>
 
           <Block nr="06" title="Opdrachtwaarde">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat levert een gemiddelde opdracht op? <span style={{ color: '#6b7280' }}>(mag sterk variëren)</span></p>
-            <input
-              value={answers.dealgrootte}
-              onChange={e => set('dealgrootte', e.target.value)}
-              placeholder="Bijv: €3.000 voor een advies, €20.000 voor een heel traject"
-            />
-            {submitted && answers.dealgrootte.trim().length === 0 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je gemiddelde opdrachtwaarde in.</p>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat levert een gemiddelde opdracht op?</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {DEALGROOTTE_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.dealgrootte === o} onClick={() => set('dealgrootte', o)} />
+              ))}
+            </div>
+            {submitted && answers.dealgrootte === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
             )}
           </Block>
 
           <Block nr="07" title="Doorlooptijd">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang duurt het van eerste contact tot een getekende opdracht?</p>
-            <input
-              value={answers.salescyclus}
-              onChange={e => set('salescyclus', e.target.value)}
-              placeholder="Bijv: 1 tot 4 weken"
-            />
-            {submitted && answers.salescyclus.trim().length === 0 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je doorlooptijd in.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {SALESCYCLUS_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.salescyclus === o} onClick={() => set('salescyclus', o)} />
+              ))}
+            </div>
+            {submitted && answers.salescyclus === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
             )}
           </Block>
 
@@ -552,27 +498,7 @@ export default function BotProfielPage() {
             )}
           </Block>
 
-          <Block nr="10" title="Inkomensdoel">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat moet er dit jaar binnenkomen om het een goed jaar te noemen?</p>
-            <textarea
-              value={answers.inkomensdoel}
-              onChange={e => set('inkomensdoel', e.target.value)}
-              placeholder="Bijv: €120.000 omzet, waarvan de helft uit vaste klanten."
-              rows={3}
-            />
-          </Block>
-
-          <Block nr="11" title="Je doel">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke doel, anders dan een bedrag?</p>
-            <textarea
-              value={answers.jaardoel}
-              onChange={e => set('jaardoel', e.target.value)}
-              placeholder={getJaardoelPlaceholder(answers.rol)}
-              rows={3}
-            />
-          </Block>
-
-          <Block nr="12" title="Je grootste uitdaging">
+          <Block nr="10" title="Je grootste uitdaging">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke uitdaging?</p>
             <textarea
               value={answers.uitdaging}
@@ -589,194 +515,61 @@ export default function BotProfielPage() {
           <>
           <Block nr="05" title="Gemiddelde dealgrootte">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is de gemiddelde waarde van een deal?</p>
-            <input
-              value={answers.dealgrootte}
-              onChange={e => set('dealgrootte', e.target.value)}
-              placeholder="Bijv: €15.000 tot €40.000"
-            />
-            {submitted && answers.dealgrootte.trim().length === 0 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je gemiddelde dealgrootte in.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {DEALGROOTTE_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.dealgrootte === o} onClick={() => set('dealgrootte', o)} />
+              ))}
+            </div>
+            {submitted && answers.dealgrootte === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
             )}
           </Block>
 
           <Block nr="06" title="Salescyclus">
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang duurt een gemiddeld salestraject?</p>
-            <input
-              value={answers.salescyclus}
-              onChange={e => set('salescyclus', e.target.value)}
-              placeholder="Bijv: 2 tot 6 weken"
-            />
-            {submitted && answers.salescyclus.trim().length === 0 && (
-              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Vul je salescyclus in.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {SALESCYCLUS_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.salescyclus === o} onClick={() => set('salescyclus', o)} />
+              ))}
+            </div>
+            {submitted && answers.salescyclus === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
             )}
           </Block>
 
-          {isCommandManager ? (
-            <>
-              <Block nr="07" title="Target">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                  Verwacht je dit jaar het team of company target te halen?
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : 28 }}>
-                  {TARGET_DIT_JAAR_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
-                  ))}
-                </div>
-                {submitted && answers.target_dit_jaar === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-                )}
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                  Zijn de team of company targets de afgelopen 3 jaar behaald?
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {TARGET_3_JAAR_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.target_3_jaar === o} onClick={() => set('target_3_jaar', o)} />
-                  ))}
-                </div>
-                {submitted && answers.target_3_jaar === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-                )}
-              </Block>
+          <Block nr="07" title="Jouw ervaring">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
+              {JAREN_SALES_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
+              ))}
+            </div>
+            {submitted && answers.jaren_sales === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
+            )}
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {JAREN_FUNCTIE_OPTIONS.map(o => (
+                <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
+              ))}
+            </div>
+            {submitted && answers.jaren_functie === '' && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
+            )}
+          </Block>
 
-              <Block nr="08" title="Thema">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 4 }}>Wat is het actuele kwartaalthema?</p>
-                <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>Anders dan een target</p>
-                <textarea
-                  value={answers.kwartaalthema}
-                  onChange={e => set('kwartaalthema', e.target.value)}
-                  placeholder="Bijv: Meer focus op upsell bij bestaande klanten"
-                  rows={3}
-                />
-              </Block>
-
-              <Block nr="09" title="Jouw ervaring">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
-                  {JAREN_SALES_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
-                  ))}
-                </div>
-                {submitted && answers.jaren_sales === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-                )}
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {JAREN_FUNCTIE_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
-                  ))}
-                </div>
-                {submitted && answers.jaren_functie === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-                )}
-              </Block>
-            </>
-          ) : (
-            <>
-              <Block nr="07" title="Jouw ervaring">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang zit je al in sales?</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.jaren_sales === '' ? 8 : 28 }}>
-                  {JAREN_SALES_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.jaren_sales === o} onClick={() => set('jaren_sales', o)} />
-                  ))}
-                </div>
-                {submitted && answers.jaren_sales === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-                )}
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe lang doe je al de functie die je hierboven hebt aangegeven?</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {JAREN_FUNCTIE_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.jaren_functie === o} onClick={() => set('jaren_functie', o)} />
-                  ))}
-                </div>
-                {submitted && answers.jaren_functie === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-                )}
-              </Block>
-
-              <Block nr="08" title="Target">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                  {`Verwacht je dit jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target te halen?`}
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: submitted && answers.target_dit_jaar === '' ? 8 : (targetHistorieOverslaan ? 0 : 28) }}>
-                  {TARGET_DIT_JAAR_OPTIONS.map(o => (
-                    <Chip key={o} label={o} selected={answers.target_dit_jaar === o} onClick={() => set('target_dit_jaar', o)} />
-                  ))}
-                </div>
-                {submitted && answers.target_dit_jaar === '' && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8, marginBottom: 20 }}>Maak een keuze.</p>
-                )}
-                {!targetHistorieOverslaan && (
-                  <>
-                    <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                      {`Heb je de afgelopen 3 jaar je ${getTargetLabel(answers.rol) ? `${getTargetLabel(answers.rol)} ` : ''}target gehaald?`}
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {TARGET_3_JAAR_OPTIONS.map(o => (
-                        <Chip key={o} label={o} selected={answers.target_3_jaar === o} onClick={() => set('target_3_jaar', o)} />
-                      ))}
-                    </div>
-                    {submitted && answers.target_3_jaar === '' && (
-                      <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Maak een keuze.</p>
-                    )}
-                  </>
-                )}
-              </Block>
-            </>
-          )}
-
-          {isCommandManager ? (
-            <>
-              <Block nr="10" title="Je grootste doel">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je grootste persoonlijke doel?</p>
-                <textarea
-                  value={answers.jaardoel}
-                  onChange={e => set('jaardoel', e.target.value)}
-                  placeholder={getJaardoelPlaceholder(answers.rol)}
-                  rows={3}
-                />
-              </Block>
-
-              <Block nr="11" title="Je grootste uitdaging">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je grootste persoonlijke uitdaging?</p>
-                <textarea
-                  value={answers.uitdaging}
-                  onChange={e => set('uitdaging', e.target.value)}
-                  placeholder={getUitdagingPlaceholder(answers.rol)}
-                  rows={3}
-                />
-                {submitted && answers.uitdaging.trim().length <= 2 && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
-                )}
-              </Block>
-            </>
-          ) : (
-            <>
-              <Block nr="09" title="Je doel">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>
-                  Wat is je persoonlijke doel, anders dan je target halen?
-                </p>
-                <textarea
-                  value={answers.jaardoel}
-                  onChange={e => set('jaardoel', e.target.value)}
-                  placeholder={getJaardoelPlaceholder(answers.rol)}
-                  rows={3}
-                />
-              </Block>
-
-              <Block nr="10" title="Je grootste uitdaging">
-                <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je persoonlijke uitdaging?</p>
-                <textarea
-                  value={answers.uitdaging}
-                  onChange={e => set('uitdaging', e.target.value)}
-                  placeholder={getUitdagingPlaceholder(answers.rol)}
-                  rows={3}
-                />
-                {submitted && answers.uitdaging.trim().length <= 2 && (
-                  <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
-                )}
-              </Block>
-            </>
-          )}
+          <Block nr="08" title="Je grootste uitdaging">
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>{isCommandManager ? 'Wat is je grootste persoonlijke uitdaging?' : 'Wat is je persoonlijke uitdaging?'}</p>
+            <textarea
+              value={answers.uitdaging}
+              onChange={e => set('uitdaging', e.target.value)}
+              placeholder={getUitdagingPlaceholder(answers.rol)}
+              rows={3}
+            />
+            {submitted && answers.uitdaging.trim().length <= 2 && (
+              <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Omschrijf je grootste uitdaging.</p>
+            )}
+          </Block>
           </>
           )}
 
@@ -799,7 +592,7 @@ export default function BotProfielPage() {
               opacity: saving ? 0.6 : 1,
             }}
           >
-            {saving ? 'Bezig...' : isFirstTime ? 'IK GA AKKOORD EN START →' : 'PROFIEL OPSLAAN →'}
+            {saving ? 'Bezig...' : isFirstTime ? 'START →' : 'PROFIEL OPSLAAN →'}
           </button>
 
 </div>
