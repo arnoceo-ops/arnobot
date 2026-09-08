@@ -420,7 +420,7 @@ export default function BotProfielPage() {
           </Block>
 
           <Block nr="06" title="Opdrachtwaarde">
-            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat levert een gemiddelde opdracht op?</p>
+            <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat levert een gemiddelde klant op?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {DEALGROOTTE_OPTIONS.map(o => (
                 <Chip key={o} label={o} selected={answers.dealgrootte === o} onClick={() => set('dealgrootte', o)} />
