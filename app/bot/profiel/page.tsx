@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import BotNav from '@/app/bot/BotNav'
@@ -180,6 +180,28 @@ export default function BotProfielPage() {
         setIsFirstTime(true)
       })
   }, [])
+
+  // Vroege lead-trigger: zodra iemand tijdens zijn EERSTE intake "voor mijn team" én een
+  // teamgrootte heeft aangeklikt, meteen een team-lead-signaal sturen i.p.v. te wachten tot het
+  // hele (lange) intakeformulier is afgerond. Wie daarna afhaakt werd voorheen niet als lead
+  // gezien. Alleen bij isFirstTime === true: bij een latere profielbewerking staat gebruik/
+  // teamgrootte al opgeslagen en zou dit steeds opnieuw vuren; server-side voorkomt
+  // team_lead_notified dat sowieso al, maar zo blijft het ook client-side een bewuste, eenmalige
+  // actie. teamSignaalVerstuurd is een ref (niet een state) zodat een re-render de guard niet
+  // resetten kan.
+  const teamSignaalVerstuurd = useRef(false)
+  useEffect(() => {
+    if (isFirstTime !== true) return
+    if (teamSignaalVerstuurd.current) return
+    if (answers.gebruik === 'team' && answers.teamgrootte !== '') {
+      teamSignaalVerstuurd.current = true
+      fetch('/api/bot/team-lead-signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rol: answers.rol, teamgrootte: answers.teamgrootte }),
+      }).catch(() => {})
+    }
+  }, [isFirstTime, answers.gebruik, answers.teamgrootte, answers.rol])
 
   const rolOpties = isCommandManager
     ? TEAM_VERSIE_ROL_OPTIONS
