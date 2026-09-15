@@ -15,25 +15,29 @@ const white = '#ffffff'
 const line  = '#e5e7eb'
 const M = 52
 
-const s = StyleSheet.create({
-  // Eén doorlopende Page: geen paddingTop (de coverstripe vult de bovenkant van de eerste
-  // fysieke pagina; overloop-pagina's krijgen hun ruimte via body1's marginTop hieronder).
-  // Alle secties zitten als losse, individueel breekbare blokken in dezelfde flow, zodat
-  // react-pdf zelf bepaalt waar een nieuwe fysieke pagina begint i.p.v. vaste page-breaks
-  // per thema. Vaste breaks per sectie ("PAGINA 1/2/3/4") gaven telkens een groot leeg gat
-  // zodra de vorige sectie niet precies de pagina vulde (ontdekt en gefixt 15-9-2026, zie
-  // scripts/render-docs-pdf.mjs voor hetzelfde patroon bij de docs/*.md-PDF's).
-  page1: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingBottom: 48 },
+// Zelfde bewezen aanpak als app/bot/team/OneOnOnePdfDocument.tsx en TeamPdfDocument.tsx
+// (zie commit 8655444d, 19-8-2026): GEEN enkele wrap:false of geforceerde page-break. Gewoon
+// platte Views laten doorlopen; react-pdf breekt vanzelf netjes af waar de inhoud niet meer
+// past. react-pdf herhaalt de padding van <Page> zelf betrouwbaar op elke automatisch
+// gegenereerde vervolgpagina, maar de padding van een geneste View die over een paginagrens
+// loopt NIET — daarom marge op Page-niveau (paddingTop/paddingBottom), met de coverstripe die
+// daaraan ontsnapt via een negatieve marginTop om toch full-bleed te blijven.
+// Eerdere pogingen op 15-9-2026 (wrap:false per sectie, of alleen kop+eerste-kind vastgelijmd)
+// gaven om beurten grote lege pagina-staarten of een kapotte midden-in-de-lijst-breuk. Dit
+// bestand deed het zelf al eens beter (dezelfde route als render-docs-pdf.mjs voor docs/*.md):
+// gewoon laten breken waar het breekt, precies zoals elk ander react-pdf-document hier.
+const PAGE_TOP = 56, PAGE_BOTTOM = 50
 
-  coverStripe: { backgroundColor: dark, paddingTop: 56, paddingBottom: 44, paddingLeft: M, paddingRight: M },
+const s = StyleSheet.create({
+  page: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM, paddingLeft: M, paddingRight: M },
+
+  coverStripe: { backgroundColor: dark, marginTop: -PAGE_TOP, marginLeft: -M, marginRight: -M, paddingTop: 56, paddingBottom: 44, paddingLeft: M, paddingRight: M, marginBottom: 32 },
   coverLabel:  { fontSize: 8, letterSpacing: 3, color: amber, marginBottom: 10 },
   coverTitle:  { fontSize: 28, fontFamily: 'Helvetica-Bold', color: white, lineHeight: 1.25, marginBottom: 14 },
   coverSub:    { fontSize: 10.5, color: light, lineHeight: 1.7 },
   coverMeta:   { marginTop: 28, fontSize: 8.5, color: muted },
 
-  body1: { paddingLeft: M, paddingRight: M },
-
-  intro:     { paddingTop: 32, paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 26 },
+  intro:     { paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 26 },
   introText: { fontSize: 10.5, lineHeight: 1.8, color: mid },
 
   sec:   { marginBottom: 22 },
@@ -67,14 +71,10 @@ const DATE = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'lo
 function el(t, p, ...c) { return React.createElement(t, p, ...c) }
 
 // De HELE sectie blijft bij elkaar (wrap: false). Voor de korte, vaste opsommingen (Items) is
-// dit de juiste keuze: ze zijn klein genoeg om altijd op de resterende ruimte van een pagina te
-// passen of anders in hun geheel naar de volgende pagina te gaan, wat op z'n ergst wat normale
-// pagina-staartruimte kost, nooit een kapotte middenin-de-lijst-breuk (kop + 1 bullet op de ene
-// pagina, de rest op de volgende — geprobeerd op 15-9-2026, oogt duidelijk stuk).
-// Alleen de twee secties die een groeiende tabel bevatten (sub-verwerkers, aanvalstypen) hebben
-// wél SecTable() nodig, hieronder: die kunnen legitiem langer worden dan één pagina, dus daar
-// moeten de rijen zelf breekbaar zijn. Sec() is voor alles wat kort genoeg is om atomisch te
-// blijven; SecTable() is de uitzondering voor content die kan uitgroeien voorbij één pagina.
+// dit de juiste keuze: klein genoeg om altijd als geheel te passen, of anders in zijn geheel
+// naar de volgende pagina te gaan (normale pagina-staartruimte, nooit een afbreking middenin de
+// lijst). Voor de twee secties met een groeiende tabel is dit NIET de juiste keuze, gebruik
+// daarvoor SecTable() hieronder.
 function Sec(label, title, ...kids) {
   return el(View, { style: s.sec, wrap: false },
     el(Text, { style: s.label }, label),
@@ -82,12 +82,10 @@ function Sec(label, title, ...kids) {
     ...kids
   )
 }
-// Voor secties met een tabel die kan uitgroeien voorbij één pagina (bv. de sub-verwerkerslijst).
-// Kop + intro + tabelkop blijven als één blok bij elkaar (wrap: false, altijd klein genoeg om te
-// passen), maar de databaselregels zitten in een aparte, wél breekbare View eromheen. Zonder deze
-// splitsing dwingt wrap: false op de hele sectie react-pdf om het geheel (incl. alle rijen) naar de
-// volgende pagina te verplaatsen zodra het niet meer past, wat een groot leeg gat aan het einde van
-// de vorige pagina oplevert. Ontdekt 15-9-2026 toen de sub-verwerkerslijst te lang werd voor pagina 1.
+// Voor de twee secties met een tabel die kan uitgroeien voorbij één pagina (sub-verwerkers,
+// aanvalstypen). Kop + intro + tabelkop blijven samen (wrap: false, altijd klein genoeg om te
+// passen), maar de rijen zelf zitten in een aparte, wél breekbare sibling-View, zodat de tabel
+// netjes over de paginagrens doorloopt i.p.v. in zijn geheel te verhuizen.
 function SecTable(label, title, intro, tableHead, ...rows) {
   return el(View, { style: s.sec },
     el(View, { wrap: false },
@@ -97,6 +95,23 @@ function SecTable(label, title, intro, tableHead, ...rows) {
       tableHead,
     ),
     ...rows
+  )
+}
+// Zelfde als Sec() (hele blok atomisch), maar forceert bovendien een verse pagina i.p.v.
+// verdergaan op de pagina waar de vorige (lange, groeiende) tabel toevallig ophield. Reden: een
+// pagina die begint als voortzetting van een gesplitst element (bv. de sub-verwerkerstabel die
+// over de paginagrens loopt) laat de DAAROPVOLGENDE sectie(s) fout berekenen — de eerste sectie
+// na zo'n splitsing rendert nog gewoon, maar de sectie daarna springt naar een nieuwe pagina met
+// een groot leeg gat erboven, ook als er duidelijk nog ruimte was. Empirisch geïsoleerd op
+// 15-9-2026 (los testbestand, react-pdf 4.3.3): zodra de sectie na zo'n tabel expliciet op een
+// nieuwe pagina begint (break: true) i.p.v. de continuation-pagina te delen, verdwijnt het
+// probleem voor de rest van het document volledig. Gebruik dit alleen voor de sectie direct na
+// SecTable() (WAAR JOUW GEGEVENS STAAN, AANVALLEN VOORKOMEN).
+function SecNewPage(label, title, ...kids) {
+  return el(View, { style: s.sec, wrap: false, break: true },
+    el(Text, { style: s.label }, label),
+    el(Text, { style: s.h2 }, title),
+    ...kids
   )
 }
 function Item(bold, desc) {
@@ -109,9 +124,8 @@ function HR() { return el(View, { style: s.div }) }
 function TH(a, b) { return el(View, { style: s.th }, el(Text, { style: s.c1h }, a), el(Text, { style: s.c2h }, b)) }
 function TR(a, b) { return el(View, { style: s.tr }, el(Text, { style: s.c1 }, a), el(Text, { style: s.c2 }, b)) }
 // Doorlopende paginanummering: pageNumber/totalPages worden door react-pdf zelf berekend
-// (render-prop), i.p.v. een handmatig "Footer('1')..Footer('4')" per zelfgekozen paginabreak
-// met een los hardcoded totaal. Blijft kloppen ongeacht hoeveel fysieke pagina's de inhoud
-// straks nodig heeft.
+// (render-prop) i.p.v. een hardcoded totaal. Blijft kloppen ongeacht hoeveel fysieke pagina's
+// de inhoud straks nodig heeft.
 function Footer() {
   return el(View, { style: s.footer, fixed: true },
     el(Text, { style: s.ft }, 'ArnoBot: Hoe wij jouw gegevens beschermen'),
@@ -121,110 +135,110 @@ function Footer() {
 
 const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', author: 'ArnoBot' },
 
-  el(Page, { size: 'A4', style: s.page1 },
+  el(Page, { size: 'A4', style: s.page },
     el(View, { style: s.coverStripe },
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
       el(Text, { style: s.coverMeta }, `Versie 1.5  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
-    el(View, { style: s.body1 },
-      el(View, { style: s.intro },
-        el(Text, { style: s.introText }, 'Vertrouwen is de basis van alles wat ArnoBot doet. Jij deelt persoonlijke inzichten, zakelijke uitdagingen en coachingsgesprekken met ons platform. Het is onze verantwoordelijkheid om die informatie te behandelen met de grootst mogelijke zorg. Dit document legt uit hoe wij dat technisch hebben ingericht.')
-      ),
 
-      SecTable('WAAR JOUW GEGEVENS STAAN', 'Infrastructuur en hosting',
-        el(Text, { style: s.p }, 'ArnoBot maakt gebruik van gevestigde, gecertificeerde partijen voor alle infrastructurele onderdelen. Wij beheren zelf geen servers.'),
-        TH('Onderdeel', 'Partij en garantie'),
-        TR('Hosting', 'Vercel: serverless, wereldwijd CDN, HTTPS verplicht op alle verbindingen'),
-        TR('Database', 'Supabase: PostgreSQL in de EU, versleuteld in rust (AES-256) en tijdens transport (TLS 1.2+)'),
-        TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
-        TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
-        TR('Spraakverwerking', 'OpenAI: spraakherkenning (Whisper), verwerkt audio van voice-invoer, geen training op jouw data'),
-        TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
-        TR('E-mail', 'Resend: transactionele e-mail via DKIM-geverifieerd domein'),
-        TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
-        TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
-        TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
-        TR('Gebruiksanalyse', 'PostHog: bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)'),
-        TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
-        TR('Support (optioneel)', 'Meta Platforms (WhatsApp): support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud'),
-      ),
-      HR(),
+    el(View, { style: s.intro },
+      el(Text, { style: s.introText }, 'Vertrouwen is de basis van alles wat ArnoBot doet. Jij deelt persoonlijke inzichten, zakelijke uitdagingen en coachingsgesprekken met ons platform. Het is onze verantwoordelijkheid om die informatie te behandelen met de grootst mogelijke zorg. Dit document legt uit hoe wij dat technisch hebben ingericht.')
+    ),
 
-      Sec('WIE ER BIJ KAN', 'Authenticatie en toegangsbeheer',
-        el(Text, { style: s.p }, 'Toegang tot jouw data is strikt beperkt tot jou. Wij hebben het volgende ingericht:'),
-        Item('Inloggen via LinkedIn OAuth', 'Wij slaan nooit een wachtwoord op. Authenticatie verloopt via Clerk met kortlevende JWT-tokens.'),
-        Item('Sessiecontrole op elke route', 'Elke API-aanroep verifieert eerst de actieve sessie. Routes zonder geldig token geven een 401-fout en stoppen direct.'),
-        Item('Databasetoegang afgeschermd', 'De sleutel met volledige databaserechten is uitsluitend beschikbaar op de server en nooit zichtbaar in de browser.'),
-        Item('Strikt gescheiden admintoegang', 'Beheerdersfuncties zijn beveiligd met een aparte sleutel die niet via de normale inlogflow bereikbaar is.'),
-      ),
-      HR(),
-      Sec('JOUW DATA IS VAN JOU', 'Gegevensisolatie',
-        el(Text, { style: s.p }, 'Een veelvoorkomende kwetsbaarheid is dat een gebruiker toegang krijgt tot andermans data door een parameter in de URL aan te passen. Dit heet IDOR (Insecure Direct Object Reference). ArnoBot beschermt hier actief tegen.'),
-        el(View, { style: s.box },
-          el(Text, { style: s.boxT }, 'Elke API-route haalt jouw identiteit op uit de geverifieerde sessie. Een gebruikers-ID in een URL of requestbody wordt nooit vertrouwd. Alleen de actieve sessie bepaalt welke data wordt teruggegeven.')
-        ),
-        Item('Exportfunctie', 'Het downloaden van jouw gegevens werkt op basis van jouw ingelogde sessie, nooit op basis van een ID in de URL.'),
-        Item('Teamdata', 'Een manager ziet uitsluitend data van leden die aantoonbaar tot hetzelfde team behoren.'),
-      ),
-      HR(),
-      Sec('INVOERBEVEILIGING', 'Wat er met jouw tekst gebeurt',
-        Item('Lengtelimieten', 'Chatberichten max 4.000 tekens, oefengesprekken max 2.000 tekens, vrije invoervelden max 500 tekens.'),
-        Item('Sanitatie', 'Tekst die wordt doorgestuurd naar externe diensten wordt eerst ontdaan van tekens die tot injectie kunnen leiden.'),
-        Item('E-mailvalidatie', 'E-mailadressen worden gecontroleerd op geldigheid voordat ze worden verwerkt of opgeslagen.'),
-      ),
-      HR(),
+    SecTable('WAAR JOUW GEGEVENS STAAN', 'Infrastructuur en hosting',
+      el(Text, { style: s.p }, 'ArnoBot maakt gebruik van gevestigde, gecertificeerde partijen voor alle infrastructurele onderdelen. Wij beheren zelf geen servers.'),
+      TH('Onderdeel', 'Partij en garantie'),
+      TR('Hosting', 'Vercel: serverless, wereldwijd CDN, HTTPS verplicht op alle verbindingen'),
+      TR('Database', 'Supabase: PostgreSQL in de EU, versleuteld in rust (AES-256) en tijdens transport (TLS 1.2+)'),
+      TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
+      TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
+      TR('Spraakverwerking', 'OpenAI: spraakherkenning (Whisper), verwerkt audio van voice-invoer, geen training op jouw data'),
+      TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
+      TR('E-mail', 'Resend: transactionele e-mail via DKIM-geverifieerd domein'),
+      TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
+      TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
+      TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
+      TR('Gebruiksanalyse', 'PostHog: bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)'),
+      TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
+      TR('Support (optioneel)', 'Meta Platforms (WhatsApp): support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud'),
+    ),
+    HR(),
 
-      SecTable('AANVALLEN VOORKOMEN', 'Wat er op ons afkomt en hoe wij het stoppen',
-        el(Text, { style: s.p }, 'Onderstaand overzicht laat zien welke aanvalstypen wij tegenkomen en welke maatregel precies wat afdekt.'),
-        TH('Aanval', 'Hoe ArnoBot dit afdekt'),
-        TR('Volumetrische aanvallen', 'Vercel Edge Network absorbeert grote hoeveelheden verkeer automatisch op netwerkniveau'),
-        TR('API-misbruik', 'Maximaal 5 chatverzoeken per IP per minuut; admin-login geblokkeerd na 10 mislukte pogingen per 15 minuten'),
-        TR('Prompt injection', '14 detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
-        TR('Bots en scanners', 'Middleware blokkeert automatisch bekende scannerpaden: .env, .git, wp-admin, phpMyAdmin en vergelijkbare paden'),
-        TR('SQL-injectie', 'Supabase gebruikt geparametriseerde queries; Row Level Security begrenst bovendien wat elke gebruiker mag opvragen'),
-        TR('Cross-site scripting', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
-        TR('Credential stuffing', 'Inloggen zonder wachtwoord via LinkedIn OAuth. Er valt niets te raden of te stelen.'),
-        TR('Informatielekken', 'Technische foutdetails worden nooit aan de gebruiker getoond, alleen server-side gelogd'),
-        TR('IDOR', 'Gebruikers-ID altijd uit de geverifieerde sessie, nooit uit URL of requestbody'),
+    SecNewPage('WIE ER BIJ KAN', 'Authenticatie en toegangsbeheer',
+      el(Text, { style: s.p }, 'Toegang tot jouw data is strikt beperkt tot jou. Wij hebben het volgende ingericht:'),
+      Item('Inloggen via LinkedIn OAuth', 'Wij slaan nooit een wachtwoord op. Authenticatie verloopt via Clerk met kortlevende JWT-tokens.'),
+      Item('Sessiecontrole op elke route', 'Elke API-aanroep verifieert eerst de actieve sessie. Routes zonder geldig token geven een 401-fout en stoppen direct.'),
+      Item('Databasetoegang afgeschermd', 'De sleutel met volledige databaserechten is uitsluitend beschikbaar op de server en nooit zichtbaar in de browser.'),
+      Item('Strikt gescheiden admintoegang', 'Beheerdersfuncties zijn beveiligd met een aparte sleutel die niet via de normale inlogflow bereikbaar is.'),
+    ),
+    HR(),
+    Sec('JOUW DATA IS VAN JOU', 'Gegevensisolatie',
+      el(Text, { style: s.p }, 'Een veelvoorkomende kwetsbaarheid is dat een gebruiker toegang krijgt tot andermans data door een parameter in de URL aan te passen. Dit heet IDOR (Insecure Direct Object Reference). ArnoBot beschermt hier actief tegen.'),
+      el(View, { style: s.box },
+        el(Text, { style: s.boxT }, 'Elke API-route haalt jouw identiteit op uit de geverifieerde sessie. Een gebruikers-ID in een URL of requestbody wordt nooit vertrouwd. Alleen de actieve sessie bepaalt welke data wordt teruggegeven.')
       ),
-      HR(),
-      Sec('BEVEILIGING IN DE BROWSER', 'HTTP-beveiligingsheaders',
-        el(Text, { style: s.p }, 'Elke pagina van ArnoBot wordt geserveerd met beveiligingsheaders die de browser instrueert hoe hij de inhoud moet behandelen.'),
-        Item('X-Frame-Options: DENY', 'Voorkomt dat ArnoBot in een verborgen iframe op een andere site kan worden geladen (clickjacking).'),
-        Item('X-Content-Type-Options: nosniff', 'Voorkomt dat de browser bestanden als een ander type interpreteert dan bedoeld.'),
-        Item('Strict-Transport-Security', 'Dwingt de browser om altijd HTTPS te gebruiken, ook als je per ongeluk http:// typt.'),
-        Item('Content-Security-Policy', 'Beperkt welke externe bronnen de browser mag laden.'),
-        Item('Permissions-Policy', 'Schakelt camera, microfoon en locatietoegang uit. ArnoBot gebruikt deze features niet.'),
-        Item('X-Powered-By verborgen', 'De technologie achter ArnoBot wordt niet bekendgemaakt aan derden.'),
-      ),
-      HR(),
+      Item('Exportfunctie', 'Het downloaden van jouw gegevens werkt op basis van jouw ingelogde sessie, nooit op basis van een ID in de URL.'),
+      Item('Teamdata', 'Een manager ziet uitsluitend data van leden die aantoonbaar tot hetzelfde team behoren.'),
+    ),
+    HR(),
+    Sec('INVOERBEVEILIGING', 'Wat er met jouw tekst gebeurt',
+      Item('Lengtelimieten', 'Chatberichten max 4.000 tekens, oefengesprekken max 2.000 tekens, vrije invoervelden max 500 tekens.'),
+      Item('Sanitatie', 'Tekst die wordt doorgestuurd naar externe diensten wordt eerst ontdaan van tekens die tot injectie kunnen leiden.'),
+      Item('E-mailvalidatie', 'E-mailadressen worden gecontroleerd op geldigheid voordat ze worden verwerkt of opgeslagen.'),
+    ),
+    HR(),
 
-      Sec('SOFTWAREKWALITEIT', 'Afhankelijkheden en updates',
-        el(Text, { style: s.p }, 'Moderne webapplicaties zijn opgebouwd uit externe softwarepakketten. Kwetsbaarheden daarin kunnen ook jouw data raken. ArnoBot houdt dit actief bij.'),
-        Item('Regelmatige audit', 'Alle pakketten worden gecontroleerd op bekende kwetsbaarheden. Kwetsbaarheden in runtime-code worden direct verholpen.'),
-        Item('Nul bekende runtime-kwetsbaarheden', 'Na de laatste securitysessie zijn alle kwetsbaarheden in code die in productie draait verholpen.'),
-        Item('Tijdslimiet op AI-aanroepen', 'Alle verbindingen met het AI-model hebben een maximale looptijd om ongecontroleerd resourcegebruik te voorkomen.'),
-        Item('Automatische monitoring', 'Dependabot controleert wekelijks alle pakketten op nieuwe kwetsbaarheden en meldt dit direct.'),
-      ),
-      HR(),
-      Sec('JOUW RECHTEN', 'Inzage, export en verwijdering',
-        el(Text, { style: s.p }, 'Op grond van de AVG heb je de volgende rechten, direct uitoefenbaar vanuit jouw account:'),
-        Item('Recht op inzage (art. 15)', 'Download al jouw opgeslagen gegevens via Accountinstellingen, sectie Jouw data.'),
-        Item('Recht op verwijdering (art. 17)', 'Verzoek tot verwijdering via Accountinstellingen, sectie Account verwijderen. Handmatig verwerkt binnen de wettelijke termijn.'),
-        Item('Recht op rectificatie (art. 16)', 'Pas je profiel aan via de profielpagina.'),
-        Item('Datalekken', 'In geval van een datalek word je binnen 72 uur geïnformeerd via het e-mailadres dat aan jouw account is gekoppeld.'),
-      ),
-      HR(),
-      Sec('CONTACT', 'Vragen over jouw data',
-        el(Text, { style: s.p }, 'Heb je vragen over hoe ArnoBot met jouw gegevens omgaat, of wil je een van jouw AVG-rechten uitoefenen?'),
-        el(View, { style: s.box },
-          el(Text, { style: s.boxB }, 'privacy@arno.bot'),
-          el(Text, { style: s.boxT }, 'Verzoeken worden binnen 10 werkdagen beantwoord.'),
-        ),
+    SecTable('AANVALLEN VOORKOMEN', 'Wat er op ons afkomt en hoe wij het stoppen',
+      el(Text, { style: s.p }, 'Onderstaand overzicht laat zien welke aanvalstypen wij tegenkomen en welke maatregel precies wat afdekt.'),
+      TH('Aanval', 'Hoe ArnoBot dit afdekt'),
+      TR('Volumetrische aanvallen', 'Vercel Edge Network absorbeert grote hoeveelheden verkeer automatisch op netwerkniveau'),
+      TR('API-misbruik', 'Maximaal 5 chatverzoeken per IP per minuut; admin-login geblokkeerd na 10 mislukte pogingen per 15 minuten'),
+      TR('Prompt injection', '14 detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
+      TR('Bots en scanners', 'Middleware blokkeert automatisch bekende scannerpaden: .env, .git, wp-admin, phpMyAdmin en vergelijkbare paden'),
+      TR('SQL-injectie', 'Supabase gebruikt geparametriseerde queries; Row Level Security begrenst bovendien wat elke gebruiker mag opvragen'),
+      TR('Cross-site scripting', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
+      TR('Credential stuffing', 'Inloggen zonder wachtwoord via LinkedIn OAuth. Er valt niets te raden of te stelen.'),
+      TR('Informatielekken', 'Technische foutdetails worden nooit aan de gebruiker getoond, alleen server-side gelogd'),
+      TR('IDOR', 'Gebruikers-ID altijd uit de geverifieerde sessie, nooit uit URL of requestbody'),
+    ),
+    HR(),
+    SecNewPage('BEVEILIGING IN DE BROWSER', 'HTTP-beveiligingsheaders',
+      el(Text, { style: s.p }, 'Elke pagina van ArnoBot wordt geserveerd met beveiligingsheaders die de browser instrueert hoe hij de inhoud moet behandelen.'),
+      Item('X-Frame-Options: DENY', 'Voorkomt dat ArnoBot in een verborgen iframe op een andere site kan worden geladen (clickjacking).'),
+      Item('X-Content-Type-Options: nosniff', 'Voorkomt dat de browser bestanden als een ander type interpreteert dan bedoeld.'),
+      Item('Strict-Transport-Security', 'Dwingt de browser om altijd HTTPS te gebruiken, ook als je per ongeluk http:// typt.'),
+      Item('Content-Security-Policy', 'Beperkt welke externe bronnen de browser mag laden.'),
+      Item('Permissions-Policy', 'Schakelt camera, microfoon en locatietoegang uit. ArnoBot gebruikt deze features niet.'),
+      Item('X-Powered-By verborgen', 'De technologie achter ArnoBot wordt niet bekendgemaakt aan derden.'),
+    ),
+    HR(),
+
+    Sec('SOFTWAREKWALITEIT', 'Afhankelijkheden en updates',
+      el(Text, { style: s.p }, 'Moderne webapplicaties zijn opgebouwd uit externe softwarepakketten. Kwetsbaarheden daarin kunnen ook jouw data raken. ArnoBot houdt dit actief bij.'),
+      Item('Regelmatige audit', 'Alle pakketten worden gecontroleerd op bekende kwetsbaarheden. Kwetsbaarheden in runtime-code worden direct verholpen.'),
+      Item('Nul bekende runtime-kwetsbaarheden', 'Na de laatste securitysessie zijn alle kwetsbaarheden in code die in productie draait verholpen.'),
+      Item('Tijdslimiet op AI-aanroepen', 'Alle verbindingen met het AI-model hebben een maximale looptijd om ongecontroleerd resourcegebruik te voorkomen.'),
+      Item('Automatische monitoring', 'Dependabot controleert wekelijks alle pakketten op nieuwe kwetsbaarheden en meldt dit direct.'),
+    ),
+    HR(),
+    Sec('JOUW RECHTEN', 'Inzage, export en verwijdering',
+      el(Text, { style: s.p }, 'Op grond van de AVG heb je de volgende rechten, direct uitoefenbaar vanuit jouw account:'),
+      Item('Recht op inzage (art. 15)', 'Download al jouw opgeslagen gegevens via Accountinstellingen, sectie Jouw data.'),
+      Item('Recht op verwijdering (art. 17)', 'Verzoek tot verwijdering via Accountinstellingen, sectie Account verwijderen. Handmatig verwerkt binnen de wettelijke termijn.'),
+      Item('Recht op rectificatie (art. 16)', 'Pas je profiel aan via de profielpagina.'),
+      Item('Datalekken', 'In geval van een datalek word je binnen 72 uur geïnformeerd via het e-mailadres dat aan jouw account is gekoppeld.'),
+    ),
+    HR(),
+    Sec('CONTACT', 'Vragen over jouw data',
+      el(Text, { style: s.p }, 'Heb je vragen over hoe ArnoBot met jouw gegevens omgaat, of wil je een van jouw AVG-rechten uitoefenen?'),
+      el(View, { style: s.box },
+        el(Text, { style: s.boxB }, 'privacy@arno.bot'),
+        el(Text, { style: s.boxT }, 'Verzoeken worden binnen 10 werkdagen beantwoord.'),
       ),
     ),
+
     Footer()
   )
 )
