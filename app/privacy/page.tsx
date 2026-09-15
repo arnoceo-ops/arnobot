@@ -190,7 +190,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Meta Platforms (WhatsApp)</td>
                   <td>Support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud</td>
-                  <td>WhatsApp Business-voorwaarden, Meta Platforms Ireland (EER), doorgifte VS</td>
+                  <td><a href="https://www.whatsapp.com/legal/business-data-processing-terms/" target="_blank" rel="noopener noreferrer">whatsapp.com/legal/dpa</a></td>
                 </tr>
               </tbody>
             </table>
