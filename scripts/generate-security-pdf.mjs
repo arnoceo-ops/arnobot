@@ -113,9 +113,9 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
         TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
         TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
         TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
-        TR('Gebruiksanalyse', 'PostHog: klik- en gebruiksanalyse. Anoniem op de publieke pagina\'s, pseudoniem (gekoppeld aan account-ID) in de ingelogde omgeving om functiegebruik en knelpunten te zien. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)'),
+        TR('Gebruiksanalyse', 'PostHog: bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)'),
         TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
-        TR('Support (optioneel)', 'Meta Platforms (WhatsApp): als je de WhatsApp-knop in de app gebruikt, verwerkt Meta je telefoonnummer en je supportbericht. Je kunt in plaats daarvan mailen naar support@arno.bot'),
+        TR('Support (optioneel)', 'Meta Platforms (WhatsApp): support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud'),
       ),
     ),
     Footer('1')
