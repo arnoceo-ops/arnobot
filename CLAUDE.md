@@ -483,7 +483,6 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/sparring/chat/route.ts` (live sparring) | `claude-sonnet-4-6` | try/catch + Sentry, expliciete 502 i.p.v. nepantwoord. | 2026-07 |
 | `app/api/sparring/open/route.ts` (opening sparring) | `claude-sonnet-4-6` | Zelfde bug/fix als sparring/chat. | 2026-07 |
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
-| `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse. Tijdgebonden instructie gecorrigeerd. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). voyage-4-large onderzocht 2026-09-02, geen kwaliteitswinst, traject geparkeerd (`docs/VOYAGE_REEMBED_PLAN.md`). | 2026-09-02 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |

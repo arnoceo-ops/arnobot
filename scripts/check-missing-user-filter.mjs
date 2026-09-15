@@ -39,7 +39,6 @@ const EXCLUDED_PATH_PREFIXES = [
   'app/api/kosten-tracking',
   'app/api/track-pageview',
   'app/api/track-cta-click',
-  'app/api/evaluatie',
   'app/api/team-aanvraag',
   'app/api/csp-report',
   'app/api/optout',

@@ -149,7 +149,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling |
 | `/bot/admin/emails` | E-mail templates + crons testen |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar) |
-| `/bot/admin/evaluaties` | Gebruikersevaluaties + negatieve feedback bekijken |
+| `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
 | `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
@@ -191,7 +191,6 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Voorwaarden | `/voorwaarden` | Gebruiksvoorwaarden |
 | Referral-spelregels | `/referrals` | Spelregels referralprogramma |
 | Teamaanvraag | `/team` | Publiek leadformulier + prijscalculator voor teamlicenties (los van `/bot/team`) |
-| Evaluatie | `/evaluatie` | Publiek tevredenheidsformulier |
 | ArnoLive | `/arnolive` | Marketingpagina "ARNOLIVE"/"ARNOPRIME"-lidmaatschap, eigen (crème/oranje) huisstijl |
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
@@ -293,7 +292,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/export-csv` | Logs exporteren als CSV (limiet 100.000, directe downloadlink). Gedeelde auth/fetch-logica met `/api/admin/export` zit sinds 2026-08-21 in `lib/adminExport.ts`; blijven twee routes omdat het gedrag verschilt (JSON voor client-side PDF-opbouw vs. directe CSV-file-download) |
 | `/api/admin/test-email` | E-mailtemplates + cron-mails handmatig testen/versturen |
 | `/api/admin/test-telegram` | Telegram-bot testbericht sturen |
-| `/api/admin/analyse-evaluaties` | AI-analyse over ingevulde evaluatieformulieren |
 | `/api/admin/analyse` | GET: opgeslagen briefing per gebruiker ophalen. POST: briefing (opnieuw) genereren, opgeslagen in `arnobot_admin_analyses` |
 | `/api/admin/analyse/users` | Lichte gebruikerslijst voor het zoekveld op `/bot/admin/analyse`, alleen gebruikers met minstens één gesprek, testaccounts uitgesloten |
 | `/api/admin/analyse-chat` | Doorvragen op een briefing, niet-opgeslagen gesprek, zelfde databundel als de briefing zelf |
@@ -339,7 +337,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/auth-mode` | Leest of LinkedIn-loginfallback aan staat |
 | `/api/bot/instatus` | Proxy naar Instatus-API voor de statuspagina |
 | `/api/csp-report` | Ontvangt CSP-schendingen, meldt via Telegram |
-| `/api/evaluatie` | Publiek evaluatieformulier → opslag + mail |
 | `/api/track-pageview` | Anonieme pageview-tracking marketingpagina's |
 | `/api/track-cta-click` | Anonieme CTA-klik-tracking vóór accountaanmaak |
 
@@ -482,9 +479,6 @@ Referraltracking: wie heeft wie uitgenodigd.
 ### `arnobot_shared_sessions`
 Publieke share-tokens voor individuele gesprekken (`/gesprek/[token]`).
 
-### `arnobot_evaluaties`
-Ingevulde tevredenheidsformulieren (`/evaluatie`).
-
 ### `arnobot_offtopic_flags`
 Vlaggen off-topic/ongepaste berichten per gebruiker; bij herhaling geforceerde uitlog.
 
@@ -608,7 +602,6 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/sparring/chat/route.ts` (live sparring) | `claude-sonnet-4-6` | try/catch + Sentry, expliciete 502 i.p.v. nepantwoord. | 2026-07 |
 | `app/api/sparring/open/route.ts` (opening sparring) | `claude-sonnet-4-6` | Zelfde bug/fix als sparring/chat. | 2026-07 |
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
-| `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse. Tijdgebonden instructie gecorrigeerd. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). Vereist volledige her-embedding. | 2026-07 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |
