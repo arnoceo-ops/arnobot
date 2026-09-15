@@ -259,7 +259,7 @@ export default function PrivacyPage() {
                 'plaatst geen advertentiecookies, volgt je niet over andere websites en verkoopt niets door',
                 'gebruikt lokale opslag in je browser voor een pseudonieme bezoeker-ID, geen tracking-cookie',
                 'bewaart je IP-adres niet: het wordt alleen kort gebruikt om je land te bepalen en daarna weggegooid',
-                'is op de publieke pagina&apos;s anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses',
+                "is op de publieke pagina's anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses",
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <span style={{ color: '#f59e0b', flexShrink: 0 }}>·</span>
