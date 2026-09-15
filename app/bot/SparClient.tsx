@@ -333,6 +333,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
   const [toonUitgebreidUpsell, setToonUitgebreidUpsell] = useState(false)
   useEffect(() => {
+    if (!toonUitgebreidUpsell) return
+    const timer = setTimeout(() => setToonUitgebreidUpsell(false), 5000)
+    return () => clearTimeout(timer)
+  }, [toonUitgebreidUpsell])
+  useEffect(() => {
     if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
       setSparPersona(PERSONAS[rolCategorie][0].key)
     }
