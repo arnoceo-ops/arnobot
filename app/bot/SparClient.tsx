@@ -87,11 +87,11 @@ function formatSparHistoryDate(iso: string): string {
 }
 
 const STRATEGISCH_ROLLEN = ['VP of Sales', 'CEO/DGA']
-const ORGANISATORISCH_ROLLEN = ['Sales Director']
+const ORGANISATORISCH_ROLLEN = ['Sales Manager', 'Sales Director']
 const SALES_ONLY_ROLLEN = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
 
 const VERKOPER_ROLLEN_SPAR = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
-const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales']
+const SALESBAAS_ROLLEN_SPAR = ['Sales Manager', 'Sales Director', 'VP of Sales']
 const EINDBAAS_ROLLEN_SPAR = ['CEO/DGA']
 const SOLOPRENEUR_ROLLEN_SPAR = ['Solopreneur']
 

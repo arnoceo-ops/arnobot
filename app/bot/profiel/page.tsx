@@ -49,6 +49,7 @@ function getUitdagingPlaceholder(rol: string): string {
   if (rol === 'AM Farmer') return 'Bijv: Mijn klanten waarderen me maar kopen ook bij de concurrent.'
   if (rol === 'Key AM') return 'Bijv: Ik word gezien als leverancier, niet als strategisch partner.'
   if (rol === 'Inside Sales') return 'Bijv: Mijn gesprekken lopen goed maar stranden op prijs.'
+  if (rol === 'Sales Manager') return 'Bijv: Mijn team haalt de cijfers niet en ik weet niet precies waarom.'
   if (rol === 'Sales Director') return 'Bijv: Mijn team haalt de cijfers niet en ik weet niet precies waarom.'
   if (rol === 'VP of Sales') return 'Bijv: Ik ben te veel bezig met operationele zaken en te weinig met strategie.'
   if (rol === 'CEO/DGA') return 'Bijv: De omzet groeit maar ik ben er zelf nog te veel voor nodig.'
@@ -58,14 +59,24 @@ function getUitdagingPlaceholder(rol: string): string {
 
 const TEAMGROOTTE_OPTIONS = ['1-3', '4-10', '11-25', '>25']
 const TARGET_DIT_JAAR_OPTIONS = ['Ja', 'Nee']
-const ROL_OPTIONS = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales', 'Sales Director', 'VP of Sales', 'CEO/DGA', 'Solopreneur', 'Anders']
-const HEEFT_TEAM = ['Sales Director', 'VP of Sales', 'CEO/DGA']
+const ROL_OPTIONS = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales', 'Sales Manager', 'Sales Director', 'VP of Sales', 'CEO/DGA', 'Solopreneur', 'Anders']
+// 'Sales Manager' toegevoegd 15-9-2026: zonder deze optie koos een zelfstandig aangemelde
+// "salesbaas" die zich niet in Director/VP/CEO herkent al snel 'Anders', waardoor de
+// team-vraag hieronder nooit verscheen en er dus ook geen team-lead-mail ging (zie
+// app/api/bot/profiel/route.ts). 'Anders' triggert de team-vraag daarom nu ook, zie onder.
+const HEEFT_TEAM = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CEO/DGA']
+// Ook 'Anders' laat de team-vraag zien: uit vrije tekst is niet betrouwbaar af te leiden of
+// iemand een team leidt, en een gemiste team-lead weegt zwaarder dan één extra vraag voor de
+// (kleine) groep die 'Anders' kiest zonder team.
+function toontTeamVraag(rol: string): boolean {
+  return HEEFT_TEAM.includes(rol) || rol === 'Anders'
+}
 // Rollen die alleen zinnig zijn voor wie zélf een team aanmaakt of leidt, niet voor wie er via
 // een uitnodigingslink lid van wordt. Solopreneur hoort hier ook bij: geen teamverband.
 const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 // Rollen voor wie al als command_manager staat geregistreerd (het Team-segment, gezet bij
 // trial-aanmaak via een Sales Agent-link, zie proxy.ts): een eigen, vaste lijst i.p.v. een
-// filter op ROL_OPTIONS, want Sales Manager en CCO staan niet in die algemene lijst
+// filter op ROL_OPTIONS, want CCO staat niet in die algemene lijst
 // (2026-08-24, teamprofiel-herziening, zie docs/TEAM_PLAN.md).
 const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CCO', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
@@ -228,7 +239,7 @@ export default function BotProfielPage() {
       answers.jaren_functie !== '' &&
       (isCommandManager
         ? (answers.teamgrootte !== '' && answers.target_dit_jaar !== '')
-        : (!HEEFT_TEAM.includes(answers.rol) || (answers.gebruik !== '' && answers.teamgrootte !== '')))
+        : (!toontTeamVraag(answers.rol) || (answers.gebruik !== '' && answers.teamgrootte !== '')))
     )
 
   async function handleSubmit() {
@@ -320,7 +331,7 @@ export default function BotProfielPage() {
             <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Wat is je rol?</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {rolOpties.map(o => (
-                <Chip key={o} label={o} selected={answers.rol === o} onClick={() => { set('rol', o); if (!HEEFT_TEAM.includes(o)) { set('teamgrootte', ''); set('gebruik', '') } }} />
+                <Chip key={o} label={o} selected={answers.rol === o} onClick={() => { set('rol', o); if (!toontTeamVraag(o)) { set('teamgrootte', ''); set('gebruik', '') } }} />
               ))}
             </div>
             {answers.rol === 'Anders' && (
@@ -334,7 +345,7 @@ export default function BotProfielPage() {
             {submitted && !rolIngevuld && (
               <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Selecteer je rol.</p>
             )}
-            {HEEFT_TEAM.includes(answers.rol) && !isCommandManager && (
+            {toontTeamVraag(answers.rol) && !isCommandManager && (
               <>
                 <div style={{ marginTop: 24 }}>
                   <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Gebruik je ArnoBot individueel of voor jouw team?</p>
