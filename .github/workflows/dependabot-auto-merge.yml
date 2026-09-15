@@ -45,16 +45,20 @@ jobs:
             --json number,title,author,headRefOid --jq '.[0] // empty')
           if [ -z "$pr" ]; then echo "Geen open PR voor $HEAD_BRANCH"; exit 0; fi
 
-          number=$(jq -r '.number'      <<<"$pr")
-          author=$(jq -r '.author.login' <<<"$pr")
-          title=$(jq -r '.title'         <<<"$pr")
-          head_oid=$(jq -r '.headRefOid' <<<"$pr")
+          number=$(jq -r '.number'         <<<"$pr")
+          author=$(jq -r '.author.login'    <<<"$pr")
+          author_bot=$(jq -r '.author.is_bot // false' <<<"$pr")
+          title=$(jq -r '.title'            <<<"$pr")
+          head_oid=$(jq -r '.headRefOid'    <<<"$pr")
 
           echo "PR #$number: $title"
 
-          # 2. Alleen Dependabot
-          if [ "$author" != "dependabot[bot]" ]; then
-            echo "Auteur is $author, geen Dependabot. Overslaan."; exit 0
+          # 2. Alleen Dependabot. De GitHub API/CLI heeft de login-notatie voor bot-auteurs
+          #    al eens gewisseld (dependabot[bot] -> app/dependabot, ontdekt 15-9-2026 toen
+          #    dit precies zo'n stille silent-skip veroorzaakte). Daarom op is_bot + een
+          #    losse "dependabot"-match i.p.v. één hardcoded string.
+          if [ "$author_bot" != "true" ] || [[ "$author" != *dependabot* ]]; then
+            echo "Auteur is $author (bot: $author_bot), geen Dependabot. Overslaan."; exit 0
           fi
 
           # 3. Head-commit moet nog matchen met de run die net klaar is
