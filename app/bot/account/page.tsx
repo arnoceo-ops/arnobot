@@ -302,6 +302,9 @@ export default function AccountPage() {
           <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             PRIVACY
           </Link>
+          <a href="/arnobot-beveiliging.pdf" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
+            BEVEILIGING
+          </a>
         </div>
 
         {/* Profiel */}
