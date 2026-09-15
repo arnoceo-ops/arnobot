@@ -179,7 +179,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>PostHog</td>
-                  <td>Bezoekers- en productgebruiksanalyse. Op de publieke pagina&apos;s anoniem. In de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID) om te zien welke functies worden gebruikt en waar mensen vastlopen. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)</td>
+                  <td>Bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)</td>
                   <td>DPA op aanvraag</td>
                 </tr>
                 <tr>
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Meta Platforms (WhatsApp)</td>
-                  <td>Support. Als je de WhatsApp-knop in de app gebruikt, start je zelf een gesprek met ArnoBot en verwerkt Meta je telefoonnummer en de inhoud van dat supportbericht. Gebruik van deze knop is optioneel; je kunt ook mailen naar support@arno.bot</td>
+                  <td>Support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud</td>
                   <td>WhatsApp Business-voorwaarden, Meta Platforms Ireland (EER), doorgifte VS</td>
                 </tr>
               </tbody>
