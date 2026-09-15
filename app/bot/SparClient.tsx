@@ -331,6 +331,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sparContext, setSparContext] = useState('')
   const [startingSparring, setStartingSparring] = useState(false)
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
+  const [toonUitgebreidUpsell, setToonUitgebreidUpsell] = useState(false)
   useEffect(() => {
     if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
       setSparPersona(PERSONAS[rolCategorie][0].key)
@@ -2038,32 +2039,62 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </>
           )}
           {sparModus === 'gesprek' && (
-            <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 650, alignItems: 'center', margin: '0 auto 8px' }}>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginRight: 4 }}>OUTPUT:</span>
-              {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
-                <button
-                  key={optie}
-                  onClick={() => {
-                    setAntwoordLengte(optie)
-                    // Voice-mode geeft altijd een kort antwoord (eigen systeeminstructie in
-                    // /api/chat-voice), dat botst met een expliciete keuze voor UITGEBREID.
-                    // Automatisch uitzetten voorkomt een voice-toggle die aan blijft staan
-                    // terwijl de knop er zelf niet meer is (zie hieronder).
-                    if (optie === 'uitgebreid' && voiceMode) setVoiceMode(false)
-                  }}
-                  style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: 13, letterSpacing: 2,
-                    padding: '4px 0', borderRadius: 999, width: 96, textAlign: 'center' as const,
-                    background: antwoordLengte === optie ? '#374151' : 'none',
-                    color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
-                    border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {optie.toUpperCase()}
-                </button>
-              ))}
+            <div style={{ width: '100%', maxWidth: 650, margin: '0 auto 8px' }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginRight: 4 }}>OUTPUT:</span>
+                {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => {
+                  const isProBlocked = optie === 'uitgebreid' && plan === 'basis'
+                  return (
+                  <button
+                    key={optie}
+                    onClick={() => {
+                      // Uitgebreide antwoorden zijn Pro-only. Basic mag de knop wel zien en
+                      // erop klikken (bewuste keuze: laat zien wat er te upgraden valt i.p.v.
+                      // de knop te verbergen), maar de modus schakelt niet echt om — in plaats
+                      // daarvan tonen we de upsell-regel eronder. Server-side wordt dit los nog
+                      // een keer afgedwongen (app/api/chat/route.ts), dit is puur UI-gedrag.
+                      if (isProBlocked) {
+                        setToonUitgebreidUpsell(true)
+                        return
+                      }
+                      setAntwoordLengte(optie)
+                      setToonUitgebreidUpsell(false)
+                      // Voice-mode geeft altijd een kort antwoord (eigen systeeminstructie in
+                      // /api/chat-voice), dat botst met een expliciete keuze voor UITGEBREID.
+                      // Automatisch uitzetten voorkomt een voice-toggle die aan blijft staan
+                      // terwijl de knop er zelf niet meer is (zie hieronder).
+                      if (optie === 'uitgebreid' && voiceMode) setVoiceMode(false)
+                    }}
+                    style={{
+                      position: 'relative',
+                      fontFamily: "'Bebas Neue', sans-serif",
+                      fontSize: 13, letterSpacing: 2,
+                      padding: '4px 0', borderRadius: 999, width: 96, textAlign: 'center' as const,
+                      background: antwoordLengte === optie ? '#374151' : 'none',
+                      color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
+                      border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {optie.toUpperCase()}
+                    {isProBlocked && (
+                      <span style={{
+                        position: 'absolute', top: -7, right: -6,
+                        fontFamily: "'Bebas Neue', sans-serif", fontSize: 8, letterSpacing: 1,
+                        padding: '1px 5px', borderRadius: 999,
+                        background: '#f59e0b', color: '#111827', lineHeight: 1.4,
+                      }}>PRO</span>
+                    )}
+                  </button>
+                  )
+                })}
+              </div>
+              {toonUitgebreidUpsell && plan === 'basis' && (
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
+                  Uitgebreide antwoorden zijn onderdeel van Pro.{' '}
+                  <a href="/bot/doorgaan" style={{ color: '#f59e0b', textDecoration: 'underline' }}>Upgrade naar Pro</a>
+                </p>
+              )}
             </div>
           )}
 

@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
-    const antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
+    let antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
 
@@ -377,6 +377,13 @@ export async function POST(req: NextRequest) {
       if (todayUsage >= dagelijksMax) {
         return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
       }
+    }
+
+    // Uitgebreide antwoorden zijn Pro-only. Client-side is dit al zo (PRO-label + upsell-tekst
+    // in SparClient.tsx), maar dat is te omzeilen door de request body aan te passen — dit is
+    // de eigenlijke afdwinging, niet te omzeilen vanuit de browser.
+    if (antwoordLengte === 'uitgebreid' && plan === 'basis') {
+      antwoordLengte = 'normaal'
     }
 
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')
