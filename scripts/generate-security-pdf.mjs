@@ -16,8 +16,12 @@ const line  = '#e5e7eb'
 const M = 52
 
 const s = StyleSheet.create({
-  // Pagina 1: geen paddingTop want cover stripe vult de bovenkant
-  page1: { backgroundColor: white, fontFamily: 'Helvetica', color: mid },
+  // Pagina 1: geen paddingTop want cover stripe vult de bovenkant. paddingBottom moet hier
+  // (op de Page zelf, niet alleen op body1 hieronder) staan: react-pdf berekent paginabreuken
+  // op basis van de padding van de Page-component, niet van een geneste View. Zonder deze
+  // regel liep de sub-verwerkerstabel door tot de fysieke paginarand en overlapte de vaste
+  // voettekst (ontdekt 15-9-2026, samen met de wrap:false-fix hierboven).
+  page1: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingBottom: 48 },
   // Pagina's 2-4: paddingTop direct op Page zodat ook overflowpagina's marge krijgen
   page: { backgroundColor: white, fontFamily: 'Helvetica', color: mid, paddingTop: M, paddingLeft: M, paddingRight: M, paddingBottom: 48 },
 
@@ -27,7 +31,7 @@ const s = StyleSheet.create({
   coverSub:    { fontSize: 10.5, color: light, lineHeight: 1.7 },
   coverMeta:   { marginTop: 28, fontSize: 8.5, color: muted },
 
-  body1: { paddingLeft: M, paddingRight: M, paddingBottom: 48 },
+  body1: { paddingLeft: M, paddingRight: M },
 
   intro:     { paddingTop: 32, paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: line, marginBottom: 26 },
   introText: { fontSize: 10.5, lineHeight: 1.8, color: mid },
@@ -70,6 +74,23 @@ function Sec(label, title, ...kids) {
     ...kids
   )
 }
+// Voor secties met een tabel die kan uitgroeien voorbij één pagina (bv. de sub-verwerkerslijst).
+// Kop + intro + tabelkop blijven als één blok bij elkaar (wrap: false, altijd klein genoeg om te
+// passen), maar de databaselregels zitten in een aparte, wél breekbare View eromheen. Zonder deze
+// splitsing dwingt wrap: false op de hele sectie react-pdf om het geheel (incl. alle rijen) naar de
+// volgende pagina te verplaatsen zodra het niet meer past, wat een groot leeg gat aan het einde van
+// de vorige pagina oplevert. Ontdekt 15-9-2026 toen de sub-verwerkerslijst te lang werd voor pagina 1.
+function SecTable(label, title, intro, tableHead, ...rows) {
+  return el(View, { style: s.sec },
+    el(View, { wrap: false },
+      el(Text, { style: s.label }, label),
+      el(Text, { style: s.h2 }, title),
+      intro,
+      tableHead,
+    ),
+    ...rows
+  )
+}
 function Item(bold, desc) {
   return el(View, { style: s.row },
     el(Text, { style: s.dot }, '·'),
@@ -100,7 +121,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(View, { style: s.intro },
         el(Text, { style: s.introText }, 'Vertrouwen is de basis van alles wat ArnoBot doet. Jij deelt persoonlijke inzichten, zakelijke uitdagingen en coachingsgesprekken met ons platform. Het is onze verantwoordelijkheid om die informatie te behandelen met de grootst mogelijke zorg. Dit document legt uit hoe wij dat technisch hebben ingericht.')
       ),
-      Sec('WAAR JOUW GEGEVENS STAAN', 'Infrastructuur en hosting',
+      SecTable('WAAR JOUW GEGEVENS STAAN', 'Infrastructuur en hosting',
         el(Text, { style: s.p }, 'ArnoBot maakt gebruik van gevestigde, gecertificeerde partijen voor alle infrastructurele onderdelen. Wij beheren zelf geen servers.'),
         TH('Onderdeel', 'Partij en garantie'),
         TR('Hosting', 'Vercel: serverless, wereldwijd CDN, HTTPS verplicht op alle verbindingen'),
