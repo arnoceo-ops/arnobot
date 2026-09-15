@@ -66,20 +66,20 @@ const s = StyleSheet.create({
 const DATE = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 function el(t, p, ...c) { return React.createElement(t, p, ...c) }
 
-// label+title+het eerste kind zitten vast aan elkaar (wrap: false, altijd klein) zodat een kop
-// nooit alleen onderaan een pagina kan blijven staan zonder de bijbehorende tekst erbij. De
-// overige kids (verdere Items) mogen vrij over een paginagrens breken. Twee eerdere pogingen op
-// 15-9-2026: eerst de hele sectie wrap:false (gaf een leeg gat zodra de sectie niet meer paste),
-// daarna alleen label+title (gaf een wees-kop zonder inhoud vlak boven de paginabreuk). Dit is
-// de balans: nooit een lege pagina-staart, nooit een kop zonder eerste regel content.
-function Sec(label, title, first, ...rest) {
-  return el(View, { style: s.sec },
-    el(View, { wrap: false },
-      el(Text, { style: s.label }, label),
-      el(Text, { style: s.h2 }, title),
-      first,
-    ),
-    ...rest
+// De HELE sectie blijft bij elkaar (wrap: false). Voor de korte, vaste opsommingen (Items) is
+// dit de juiste keuze: ze zijn klein genoeg om altijd op de resterende ruimte van een pagina te
+// passen of anders in hun geheel naar de volgende pagina te gaan, wat op z'n ergst wat normale
+// pagina-staartruimte kost, nooit een kapotte middenin-de-lijst-breuk (kop + 1 bullet op de ene
+// pagina, de rest op de volgende — geprobeerd op 15-9-2026, oogt duidelijk stuk).
+// Alleen de twee secties die een groeiende tabel bevatten (sub-verwerkers, aanvalstypen) hebben
+// wél SecTable() nodig, hieronder: die kunnen legitiem langer worden dan één pagina, dus daar
+// moeten de rijen zelf breekbaar zijn. Sec() is voor alles wat kort genoeg is om atomisch te
+// blijven; SecTable() is de uitzondering voor content die kan uitgroeien voorbij één pagina.
+function Sec(label, title, ...kids) {
+  return el(View, { style: s.sec, wrap: false },
+    el(Text, { style: s.label }, label),
+    el(Text, { style: s.h2 }, title),
+    ...kids
   )
 }
 // Voor secties met een tabel die kan uitgroeien voorbij één pagina (bv. de sub-verwerkerslijst).
