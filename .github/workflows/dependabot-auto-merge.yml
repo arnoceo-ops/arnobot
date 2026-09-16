@@ -5,101 +5,116 @@ name: Dependabot auto-merge
 # Major-bumps, PR's die meer dan package.json/package-lock.json aanraken en PR's met
 # een rode betekenisvolle check blijven staan voor handmatige beoordeling.
 #
-# Waarom via workflow_run en niet `gh pr merge --auto`: master heeft bewust geen
-# branch protection (Arno pusht direct en vaak), en zonder verplichte checks zou
-# --auto meteen mergen zonder op de checks te wachten. Deze workflow draait ná
-# "Security Audit" en controleert de check-conclusies expliciet.
+# pull_request_target i.p.v. workflow_run (herzien 2026-09-16, gevonden bij de eerste
+# kwartaalcheck): de oorspronkelijke workflow_run-listener op "Security Audit" bleek
+# structureel nooit te vuren voor een Security Audit-run die door een Dependabot
+# pull_request getriggerd was. Verificatie: 62/62 historische runs van deze workflow
+# hadden head_branch=master, nooit een dependabot/*-branch, terwijl Security Audit zelf
+# wél zichtbaar draaide en slaagde op elke Dependabot-PR (de checks stonden groen op de
+# PR's). Vier veilige PR's (#46-#49) bleven hierdoor 5+ weken onnodig liggen. Root cause:
+# een bekende GitHub-beperking op workflow_run in combinatie met het read-only PR-token
+# dat Dependabot-getriggerde pull_request-runs krijgen. pull_request_target is GitHub's
+# eigen gedocumenteerde patroon voor precies dit scenario: het draait met het volledige
+# repo-token, ook op een Dependabot-PR.
+#
+# Veiligheid: deze workflow checkt de PR-code NOOIT uit (geen actions/checkout van de
+# PR-head, dus geen uitvoering van PR-inhoud met een geprivilegieerd token), doet alleen
+# gh api/gh pr-aanroepen op metadata (titel, bestandenlijst, check-status, auteur), en
+# gaat alleen door als de auteur letterlijk dependabot[bot] is uit hetzelfde repo (geen
+# fork). Omdat pull_request_target meteen vuurt (niet pas als Security Audit klaar is,
+# in tegenstelling tot het oude workflow_run-patroon), wacht deze workflow zelf actief
+# op de betekenisvolle checks via de GitHub API, met een timeout van 10 minuten.
 #
 # De Playwright E2E-check wordt bewust genegeerd: die faalt bij elke Dependabot-PR
 # omdat Dependabot-workflows geen secrets krijgen (bekend, zie CLAUDE.md sectie 2).
 
 on:
-  workflow_run:
-    workflows: ["Security Audit"]
-    types: [completed]
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.workflow_run.head_branch }}
-  cancel-in-progress: false
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'pull_request'
+    if: >
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Beoordeel en merge
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
 
-          # 1. Vind de open PR bij deze branch
-          pr=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
-            --json number,title,author,headRefOid --jq '.[0] // empty')
-          if [ -z "$pr" ]; then echo "Geen open PR voor $HEAD_BRANCH"; exit 0; fi
+          echo "PR #$PR_NUMBER: $TITLE"
 
-          number=$(jq -r '.number'         <<<"$pr")
-          author=$(jq -r '.author.login'    <<<"$pr")
-          author_bot=$(jq -r '.author.is_bot // false' <<<"$pr")
-          title=$(jq -r '.title'            <<<"$pr")
-          head_oid=$(jq -r '.headRefOid'    <<<"$pr")
-
-          echo "PR #$number: $title"
-
-          # 2. Alleen Dependabot. De GitHub API/CLI heeft de login-notatie voor bot-auteurs
-          #    al eens gewisseld (dependabot[bot] -> app/dependabot, ontdekt 15-9-2026 toen
-          #    dit precies zo'n stille silent-skip veroorzaakte). Daarom op is_bot + een
-          #    losse "dependabot"-match i.p.v. één hardcoded string.
-          if [ "$author_bot" != "true" ] || [[ "$author" != *dependabot* ]]; then
-            echo "Auteur is $author (bot: $author_bot), geen Dependabot. Overslaan."; exit 0
-          fi
-
-          # 3. Head-commit moet nog matchen met de run die net klaar is
-          if [ "$head_oid" != "$HEAD_SHA" ]; then
-            echo "PR is verder gecommit sinds deze run ($head_oid != $HEAD_SHA). Overslaan."; exit 0
-          fi
-
-          # 4. Alleen manifest-/lockfile-wijzigingen
-          bad_files=$(gh pr view "$number" --repo "$REPO" --json files \
+          # 1. Alleen manifest-/lockfile-wijzigingen
+          bad_files=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json files \
             --jq '.files[].path' | grep -vE '^(package\.json|package-lock\.json)$' || true)
           if [ -n "$bad_files" ]; then
             echo "PR raakt meer dan de manifests:"; echo "$bad_files"; echo "Handmatig beoordelen."; exit 0
           fi
 
-          # 5. Geen major-bump. Groep-PR's ("...-updates group") zijn per dependabot.yml
+          # 2. Geen major-bump. Groep-PR's ("...-updates group") zijn per dependabot.yml
           #    patch-only en hebben geen enkele "from X to Y" in de titel.
-          if grep -qE 'from [0-9]+\.[0-9]+\.[0-9]+.* to [0-9]+\.[0-9]+\.[0-9]+' <<<"$title"; then
-            from_major=$(sed -E 's/.*from ([0-9]+)\..*/\1/' <<<"$title")
-            to_major=$(sed -E 's/.* to ([0-9]+)\..*/\1/'   <<<"$title")
+          if grep -qE 'from [0-9]+\.[0-9]+\.[0-9]+.* to [0-9]+\.[0-9]+\.[0-9]+' <<<"$TITLE"; then
+            from_major=$(sed -E 's/.*from ([0-9]+)\..*/\1/' <<<"$TITLE")
+            to_major=$(sed -E 's/.* to ([0-9]+)\..*/\1/'   <<<"$TITLE")
             if [ "$from_major" != "$to_major" ]; then
               echo "Major-bump ($from_major -> $to_major). Handmatig beoordelen."; exit 0
             fi
           fi
 
-          # 6. Betekenisvolle checks moeten groen zijn op deze commit
-          runs=$(gh api --paginate --slurp "repos/$REPO/commits/$HEAD_SHA/check-runs" \
-            --jq '[.[].check_runs[]]')
-          for name in "npm audit" "TypeScript typecheck" "Vitest (kritieke paden)"; do
-            ok=$(jq -r --arg n "$name" \
-              '[.[] | select(.name==$n)] | (length > 0) and all(.[]; .conclusion == "success")' <<<"$runs")
-            if [ "$ok" != "true" ]; then
-              echo "Check '$name' is niet groen op $HEAD_SHA. Niet mergen."; exit 0
-            fi
+          # 3. Wacht tot Security Audit's betekenisvolle checks klaar zijn op deze commit.
+          #    pull_request_target vuurt meteen bij het openen/updaten van de PR, dus
+          #    Security Audit is op dat moment meestal nog niet eens gestart.
+          names=("npm audit" "TypeScript typecheck" "Vitest (kritieke paden)")
+          max_attempts=40
+          all_done=false
+          all_ok=false
+          for attempt in $(seq 1 $max_attempts); do
+            runs=$(gh api --paginate --slurp "repos/$REPO/commits/$HEAD_SHA/check-runs" \
+              --jq '[.[].check_runs[]]')
+            all_done=true
+            all_ok=true
+            for name in "${names[@]}"; do
+              status=$(jq -r --arg n "$name" '[.[] | select(.name==$n)] | (.[0].status // "missing")' <<<"$runs")
+              conclusion=$(jq -r --arg n "$name" '[.[] | select(.name==$n)] | (.[0].conclusion // "")' <<<"$runs")
+              if [ "$status" != "completed" ]; then all_done=false; fi
+              if [ "$status" == "completed" ] && [ "$conclusion" != "success" ]; then all_ok=false; fi
+            done
+            if [ "$all_done" == "true" ]; then break; fi
+            echo "Wacht op checks (poging $attempt/$max_attempts)..."
+            sleep 15
           done
 
-          # 7. Vercel-preview-build (combined status, geen check-run) moet slagen als hij bestaat
+          if [ "$all_done" != "true" ]; then
+            echo "Checks nog niet klaar na $max_attempts pogingen (10 min). Niet mergen; de volgende synchronize-run probeert opnieuw."
+            exit 0
+          fi
+          if [ "$all_ok" != "true" ]; then
+            echo "Niet alle betekenisvolle checks zijn groen. Niet mergen."
+            exit 0
+          fi
+
+          # 4. Vercel-preview-build (combined status, geen check-run) moet slagen als hij bestaat
           vercel=$(gh api "repos/$REPO/commits/$HEAD_SHA/status" \
             --jq '[.statuses[] | select(.context=="Vercel")] | (.[0].state // "")')
           if [ -n "$vercel" ] && [ "$vercel" != "success" ]; then
             echo "Vercel-status is '$vercel'. Niet mergen."; exit 0
           fi
 
-          echo "Alle betekenisvolle checks groen. PR #$number wordt gemerged."
-          gh pr merge "$number" --repo "$REPO" --squash --delete-branch
+          echo "Alle betekenisvolle checks groen. PR #$PR_NUMBER wordt gemerged."
+          gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --delete-branch
