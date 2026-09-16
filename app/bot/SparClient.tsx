@@ -1282,13 +1282,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           padding: 0 clamp(20px,5vw,60px) 40px;
         }
         .voorbeeldvragen-link {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: 18px;
-          letter-spacing: 3px;
-          color: #f59e0b;
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 4px;
+          color: #6b7280;
           text-decoration: none;
         }
-        .voorbeeldvragen-link:hover { color: #d97706; }
+        .voorbeeldvragen-link:hover { color: #9ca3af; }
         @media (pointer: coarse) {
           .voorbeeldvragen-link-wrap { display: none; }
         }
@@ -2464,7 +2464,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link">meest gestelde vragen in de arnobot-community</Link>
           </div>
         )}
 
