@@ -2464,7 +2464,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/cgq" className="voorbeeldvragen-link">meest gestelde vragen in de arnobot-community</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link">meest gestelde vragen in de arnobot-community →</Link>
           </div>
         )}
 
