@@ -514,7 +514,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
-**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block. Hercheck of Anthropic dit heeft aangepast, of schakel extended thinking bewust in met `budget_tokens`. Test eerst op staging. **Niet rond de commerciële livegang, wacht minimaal een week na go-live** (livegang uitgesteld, check de actuele datum bij Arno). Sonnet 5 is inmiddels structureel goedkoper dan Sonnet 4.6. Details in `docs/CLAUDE_HISTORY.md`.
+**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block. Hercheck of Anthropic dit heeft aangepast, of stem `thinking: {type: "adaptive"}` + `output_config.effort` af (`budget_tokens` bestaat niet meer op Sonnet 5, geeft een 400-fout). Test eerst op staging. **Niet rond de commerciële livegang, wacht minimaal een week na go-live** (livegang uitgesteld, check de actuele datum bij Arno). Sonnet 5 is inmiddels structureel goedkoper dan Sonnet 4.6. Details in `docs/CLAUDE_HISTORY.md`.
 
 ## E-mail crons — ALTIJD via email-templates.ts
 
