@@ -63,7 +63,7 @@ export const TARIEVEN = {
   // Arno's eigen keuze (2026-08-11), losse drempel, geen gekoppelde mijlpaal.
   supabasePitrUsd: 100,
   supabasePitrDrempel: 100,
-  clerkProUsd: 100,
+  clerkProUsd: 25,
   clerkProActief: false,
   sentryEur: 26,
   // PostHog staat bewust NIET in deze berekening: gratis tier (1M events, 5k session

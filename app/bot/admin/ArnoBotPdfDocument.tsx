@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   sessionMeta: { fontSize: 8, color: '#6b7280' },
   message: { marginBottom: 20 },
   question: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#111827', marginBottom: 8 },
-  answer: { fontSize: 10, color: '#4b5563', lineHeight: 1.7 },
+  answer: { fontSize: 10, color: '#6b7280', lineHeight: 1.7 },
   timestamp: { fontSize: 8, color: '#6b7280', marginTop: 6 },
 })
 

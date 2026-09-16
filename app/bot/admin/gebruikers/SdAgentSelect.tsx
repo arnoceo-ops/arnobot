@@ -34,7 +34,7 @@ export default function SdAgentSelect({ userId, initialAgent, initialMethod }: {
 
   if (initialMethod === 'link') {
     return (
-      <span style={{ fontSize: '11px', letterSpacing: '1px', fontWeight: 700, color: '#6b7280' }}>
+      <span style={{ fontSize: '12px', letterSpacing: '1px', fontWeight: 700, color: '#6b7280' }}>
         {initialAgent === 'sales_agent_1' ? 'AGENT 1' : 'AGENT 2'} (LINK)
       </span>
     )
@@ -65,7 +65,7 @@ export default function SdAgentSelect({ userId, initialAgent, initialMethod }: {
       disabled={loading}
       onChange={e => handleChange(e.target.value)}
       style={{
-        fontSize: '11px',
+        fontSize: '12px',
         fontWeight: 700,
         padding: '3px 4px',
         borderRadius: 6,
