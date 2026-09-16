@@ -1285,10 +1285,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           font-family: 'Space Mono', monospace;
           font-size: 13px;
           letter-spacing: 4px;
-          color: #6b7280;
-          text-decoration: none;
+          color: #9ca3af;
+          text-decoration: underline;
         }
-        .voorbeeldvragen-link:hover { color: #9ca3af; }
+        .voorbeeldvragen-link:hover { color: #f1f5f9; }
         @media (pointer: coarse) {
           .voorbeeldvragen-link-wrap { display: none; }
         }
