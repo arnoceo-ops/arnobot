@@ -145,6 +145,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 #### OpenAI (spraak: transcriptie, `app/api/transcribe/route.ts`)
 - `whisper-1` voor spraak-naar-tekst, rauwe `fetch()`, geen SDK. OpenAI's rol is uitsluitend spraakherkenning (TTS is verwijderd).
 - [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1`.
+- **Harde deadline (gevonden 2026-09-16):** `whisper-1` is per 26 augustus 2026 deprecated, harde shutdown 26 februari 2027. Migratiepad: `gpt-transcribe` (bestandstranscriptie, vergelijkbaar met huidig gebruik) of `gpt-live-transcribe` (streaming). Nog niet gemigreerd.
 
 #### ElevenLabs (tekst-naar-spraak voor ArnoBot Voice)
 - Publieke premium-gated feature (`voice_enabled=true` op `approved_users`). Model Flash v2.5 (`eleven_flash_v2_5`), streaming, rauwe `fetch()`, geen SDK. Gedeelde logica in `lib/voice.ts`. Verbruik gelogd in `arnobot_elevenlabs_usage`.
@@ -155,7 +156,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Draait naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`/`arnobot_events`-tracking (bewust dubbel: die blijft de PostHog-onafhankelijke bron van waarheid voor `/bot/admin/stats`). Bewust géén autocapture. Env var: alleen `NEXT_PUBLIC_POSTHOG_KEY`. Reverse proxy via `/site-relay`. `person_profiles: 'always'`.
 - **Publiek:** anonieme `posthog.capture()` op publieke componenten (`PostHogTracker.tsx`).
 - **Ingelogd (`/bot`, sinds 2026-08-30):** pseudonieme productanalyse. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts` (plan, rol, trial-status, team, tellingen, `is_intern` voor testaccounts + oprichter, gefilterd via PostHog "Internal and test users"), genormaliseerde `$pageview` (geen query, geen echte IDs), event-whitelist in `lib/posthog.ts` (`track()`). `/bot/admin` volledig uitgesloten. Geen gespreks-/coaching-/analyse-inhoud, nooit. `team_id` als super-property i.p.v. de betaalde group-analytics-add-on.
-- **Session replay:** staat uit achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = alleen shell-pagina's (allowlist), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads. `PostHogSessionReplay.tsx` start/stopt per route.
+- **Session replay:** staat AAN sinds 2026-08-30 (`SESSION_REPLAY_ENABLED` in `lib/posthog.ts`), beperkt tot 6 shell-pagina's (allowlist: `/bot/profiel`, `/bot/account`, `/bot/doorgaan`, `/bot/upgrade`, `/bot/cgq`, `/bot/team/join`), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads, bewaartermijn 30 dagen. `PostHogSessionReplay.tsx` start/stopt per route. Live maskeer-verificatie op één echte opname nog niet bevestigd, zie `docs/OPENSTAANDE_PUNTEN.md`.
 - **ePrivacy (besloten 2026-08-30, keuze B):** geen toestemmingsbanner. `persistence: 'localStorage'` (geen tracking-cookie), IP niet bewaard (PostHog-projectinstelling "Discard client IP data"), first-party via `/site-relay`, EU. Grondslag gerechtvaardigd belang, met bezwaarrecht. Vastgelegd in `app/privacy/page.tsx` artikel 9.
 - **Openstaand:** DPA opvragen (incl. sub-verwerkersketen). Data Warehouse Stripe-koppeling geblokkeerd tot betaalprovider; Supabase bewust niet als directe connector. Zie `docs/OPENSTAANDE_PUNTEN.md`.
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
@@ -493,6 +494,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout. | 2026-07 |
 | `lib/memoryEntities.ts` (`extractAndStoreEntities`) | `claude-haiku-4-5-20251001` | Extraheert namen/bedrijven/thema's per sessie. JSON-fallback, faalt stil (laag risico). | 2026-08-12 |
+| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie) | `claude-haiku-4-5-20251001` | Korte classificatietaak, fail-open gedrag. Aangeroepen vanuit session-end en sparring/debrief. | 2026-09-16 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur. | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst. | 2026-07 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |

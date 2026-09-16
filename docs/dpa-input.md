@@ -51,7 +51,7 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | Sentry | Foutmonitoring en performance-tracing | — | sentry.io/legal/dpa |
 | Upstash | Rate limiting (verwerkt IP-adressen) | — | Geen publieke DPA, op aanvraag |
 | ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees (geen training op klantdata) | — | elevenlabs.io/dpa |
-| PostHog | Bezoekers- en productgebruiksanalyse. Anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving. Geen gespreks-, coaching- of analyse-inhoud. Session replay staat uit. | EU (Frankfurt) | Op aanvraag |
+| PostHog | Bezoekers- en productgebruiksanalyse. Anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving. Geen gespreks-, coaching- of analyse-inhoud. Session replay staat aan, beperkt tot 6 shell-pagina's, alle tekst en invoer gemaskeerd, bewaartermijn 30 dagen. | EU (Frankfurt) | Op aanvraag |
 | Calendly | Boeken van een kennismakingsgesprek met Arno | — | calendly.com/legal/data-processing-addendum |
 
 **Let op**: voor Voyage AI, Upstash en PostHog is er geen publiek self-service DPA-document gevonden. Vóór ondertekening met een corporate klant moet actief bij deze partijen een DPA worden opgevraagd, of moet worden bevestigd dat een DPA niet noodzakelijk is gezien de aard van de verwerking.
