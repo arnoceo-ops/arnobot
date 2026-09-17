@@ -73,7 +73,12 @@ export const TARIEVEN = {
   supabasePitrDrempel: 100,
   clerkProUsd: 25,
   clerkProActief: false,
-  sentryEur: 26,
+  // Bevestigd door Arno (2026-09-17): nog op Sentry's gratis tier, geen
+  // betaald plan. Het eerdere bedrag (26) was een currency-mismatch, Sentry's
+  // eigen prijzen zijn in USD ($26/mo jaarlijks, $29/mo maandelijks), niet
+  // EUR, en waren sowieso niet van toepassing zolang er geen betaald plan is.
+  // Bijwerken naar het echte bedrag zodra Sentry's gratis tier niet meer volstaat.
+  sentryEur: 0,
   // PostHog staat bewust NIET in deze berekening: gratis tier (1M events, 5k session
   // recordings, 1M flag-requests per maand), verbruik stopt bij de limiet zonder
   // betaalmethode, dus geen verrassingskosten. Opnemen zodra een van die limieten

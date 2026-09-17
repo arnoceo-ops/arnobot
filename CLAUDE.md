@@ -135,7 +135,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 #### Sentry (foutmonitoring + performance tracing)
 - [Sentry release notes](https://docs.sentry.io/product/relay/release-notes/) of het `@sentry/nextjs`-changelog op breaking changes
 - Komen er nog spans/errors binnen in het dashboard? (stille instrumentatiestoring is anders onzichtbaar)
-- Quota/limiet binnen het plan?
+- **Gratis tier, geen betaald plan** (bevestigd 2026-09-17, `TARIEVEN.sentryEur` in Abacus staat op 0). Check of het gratis quotum (events/spans per maand) nog volstaat, bij overschrijding stopt Sentry met nieuwe data i.p.v. door te factureren.
 
 #### Upstash (rate limiting)
 - [upstash.com/blog](https://upstash.com/blog) of changelog op breaking changes
