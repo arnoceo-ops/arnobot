@@ -1,6 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 60
+// 60 volstond voor tekst/documenten, maar een audiobijlage transcriberen (lib/assemblyai.ts,
+// polling tot 240s) kan langer duren dan de rest van deze route ooit nodig had.
+export const maxDuration = 300
 
 const INJECTION_PATTERNS = [
   /negeer\s+(alle?\s+)?(vorige|eerdere|bovenstaande)\s+instructies/i,
@@ -78,6 +80,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
 const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
@@ -384,6 +387,30 @@ export async function POST(req: NextRequest) {
     // de eigenlijke afdwinging, niet te omzeilen vanuit de browser.
     if (antwoordLengte === 'uitgebreid' && plan === 'basis') {
       antwoordLengte = 'normaal'
+    }
+
+    // Audiobijlage (opname van een echt gesprek, i.p.v. een document): SparClient.tsx upload
+    // die rechtstreeks naar Supabase Storage en stuurt hier alleen het pad mee, want de
+    // Vercel-functielimiet (4,5MB) staat de bytes zelf niet toe in deze JSON-body. Zelfde
+    // gate als /api/bot/audio-upload-url, hier herhaald omdat de client die eerdere check zou
+    // kunnen omzeilen door direct tegen deze route te posten.
+    if (!isWidget && rawDocument && typeof rawDocument === 'object'
+      && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
+      && typeof rawDocument.storagePath === 'string' && AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+      if (plan === 'basis') {
+        return NextResponse.json({ error: 'audio_alleen_betaald' }, { status: 403, headers: corsHeaders(origin) })
+      }
+      const { text, error } = await transcribeAudioAttachment(userId!, rawDocument.storagePath)
+      if (error || !text) {
+        return NextResponse.json({ error: error ?? 'audio_transcriptie_mislukt' }, { status: 502, headers: corsHeaders(origin) })
+      }
+      // Geen eigen "[Bijlage: ...]"-kop hier, die zet questionWithDocument hieronder er al
+      // overheen. Sprekerslabels (SPREKER A/B) i.p.v. namen: AssemblyAI kent de identiteit van
+      // de sprekers niet. De instructie duwt Claude om eerst te vragen wat de gebruiker met dit
+      // gesprek wil (technieken checken, samenvatten, iets anders) i.p.v. dat te veronderstellen,
+      // want dat verschilt wezenlijk van een geüpload document waarbij het doel al uit de vraag
+      // van de gebruiker blijkt.
+      documentText = `(Dit is een automatisch getranscribeerd gesprek met sprekerslabels, geen document. Vraag eerst wat de gebruiker hiermee wil als dat niet al duidelijk is uit zijn vraag, geef niet meteen een inhoudelijke beoordeling.)\n\n${text}`
     }
 
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')

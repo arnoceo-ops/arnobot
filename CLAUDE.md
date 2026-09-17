@@ -60,7 +60,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets), de auto-merge negeert die bewust. TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
 
 ### 3. AI-modelinventaris
-- Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), en OpenAI spraak (transcriptie).
+- Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), OpenAI spraak (transcriptie) en AssemblyAI (audiobijlage-transcriptie in de hoofdchat).
 - Nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI? Beoordeel op kwaliteit eerst, dan pas kosten.
 - **Vaste regel:** elke nieuwe externe AI/API-leverancier wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. (Voyage AI, Sentry, Upstash en OpenAI zijn alle vier ooit toegevoegd zonder dat de check werd bijgewerkt.)
 - **Verplichte verificatiestap:** verifieer dat de tabel nog klopt met de code. Zoek via de import-graph (elk bestand dat een AI-SDK importeert, en wat er precies wordt aangeroepen — niet alleen op `.messages.create(` grep'en, want dat mist `.messages.stream(`) en check `package.json` op AI-dependencies die nergens geïmporteerd worden.
@@ -147,6 +147,12 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1`.
 - **Harde deadline (gevonden 2026-09-16):** `whisper-1` is per 26 augustus 2026 deprecated, harde shutdown 26 februari 2027. Migratiepad: `gpt-transcribe` (bestandstranscriptie, vergelijkbaar met huidig gebruik) of `gpt-live-transcribe` (streaming). Nog niet gemigreerd.
 
+#### AssemblyAI (audiobijlage-transcriptie in de hoofdchat, `lib/assemblyai.ts`)
+- Ongedocumenteerde functie (bewust, Arno's keuze 2026-09-17): de bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only). Geen aparte pagina, geen consent-checkbox, geen FAQ-vermelding. Audio gaat via een signed upload URL rechtstreeks naar de private Supabase Storage-bucket `chat-audio-uploads`, model `universal-3-5-pro` met sprekerslabels, transcript stroomt als tekst de bestaande hoofdchat-call in. Audio en transcript worden na elke aanroep verwijderd, zowel bij AssemblyAI als in Supabase Storage, niets blijft bewaard buiten de resulterende chatbeurt zelf.
+- [assemblyai.com/changelog](https://www.assemblyai.com/changelog) op API-wijzigingen of prijswijzigingen.
+- Is `universal-3-5-pro` nog het nieuwste/best scorende model op Nederlands? (was bij invoering het beste op de FLEURS-Dutch-benchmark)
+- Quota/limiet binnen het account?
+
 #### ElevenLabs (tekst-naar-spraak voor ArnoBot Voice)
 - Publieke premium-gated feature (`voice_enabled=true` op `approved_users`). Model Flash v2.5 (`eleven_flash_v2_5`), streaming, rauwe `fetch()`, geen SDK. Gedeelde logica in `lib/voice.ts`. Verbruik gelogd in `arnobot_elevenlabs_usage`.
 - De "Improve the models for everyone"-instelling staat uit (moest handmatig, stond standaard AAN).
@@ -173,7 +179,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met git log en statusblokken. Vangnet voor de doorlopende schrijfregel, geen vervanging.
 
 ### 6. AVG & beveiliging gebruikers
-- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
+- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, AssemblyAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
 - Nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Openstaande verwijderverzoeken of datavragen van gebruikers?
 
@@ -471,6 +477,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 gaf leeg antwoord bij lange vragen. Retry-bij-leeg + max_tokens-buffer + Sentry-log bij afkapping. | 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
+| `app/api/chat/route.ts` (audiobijlage-transcriptie, `lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Best scorende model op Nederlands in AssemblyAI's eigen FLEURS-benchmark (6,7% WER), inclusief sprekersherkenning. Ongedocumenteerde functie: bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only), transcript stroomt als tekst de bestaande hoofdchat-call in, geen aparte pagina of opslag. | 2026-09-17 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |

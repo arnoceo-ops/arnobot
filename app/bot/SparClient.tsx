@@ -241,22 +241,65 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [toonGroeibalans, setToonGroeibalans] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
-  const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
+  const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data?: string; storagePath?: string } | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [uploadingAudio, setUploadingAudio] = useState(false)
   const [pendingLogout, setPendingLogout] = useState(false)
   const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_FILE_BYTES = 10 * 1024 * 1024
+  const MAX_AUDIO_BYTES = 150 * 1024 * 1024
   const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/webm']
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     setFileError(null)
+
+    if (ALLOWED_AUDIO_TYPES.includes(file.type)) {
+      if (file.size > MAX_AUDIO_BYTES) {
+        setFileError('Audiobestand is groter dan 150MB.')
+        return
+      }
+      // Rechtstreeks naar Supabase Storage, buiten onze eigen server-functie om: die heeft
+      // een harde limiet van 4,5MB op de request body, ver onder wat een opname weegt.
+      setUploadingAudio(true)
+      try {
+        const urlRes = await fetch('/api/bot/audio-upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaType: file.type }),
+        })
+        const urlData = await urlRes.json().catch(() => ({}))
+        if (!urlRes.ok) {
+          setFileError(urlData.error === 'audio_alleen_betaald'
+            ? 'Audio-analyse is een Pro- en Team-functie.'
+            : 'Bestand kon niet worden geüpload.')
+          return
+        }
+        const putRes = await fetch(urlData.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file,
+        })
+        if (!putRes.ok) {
+          setFileError('Bestand kon niet worden geüpload.')
+          return
+        }
+        setAttachedFile({ name: file.name, mediaType: file.type, storagePath: urlData.path })
+      } catch {
+        setFileError('Bestand kon niet worden geüpload.')
+      } finally {
+        setUploadingAudio(false)
+      }
+      return
+    }
+
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setFileError('Alleen PDF, Word of een afbeelding wordt ondersteund.')
+      setFileError('Alleen PDF, Word, een afbeelding of audio (mp3/wav/m4a) wordt ondersteund.')
       return
     }
     if (file.size > MAX_FILE_BYTES) {
@@ -1005,6 +1048,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
           if (!res.ok) {
             const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
+              || data.error === 'audio_alleen_betaald' || data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden'
             // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
             // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
             if (!isBestandsfout) setAttachedFile(null)
@@ -1019,6 +1063,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_niet_leesbaar') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'audio_alleen_betaald') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Audio-analyse is een Pro- en Team-functie. Upgrade je abonnement om dit te gebruiken, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Deze audio kon niet worden verwerkt. Probeer een ander bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else {
               setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
             }
@@ -2103,10 +2151,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </div>
           )}
 
-          {sparModus !== 'sparren' && (attachedFile || fileError) && (
+          {sparModus !== 'sparren' && (attachedFile || fileError || uploadingAudio) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, color: fileError ? '#cc4444' : '#9ca3af' }}>
               {fileError ? (
                 <span>{fileError}</span>
+              ) : uploadingAudio ? (
+                <span>Bestand uploaden...</span>
               ) : (
                 <>
                   <span>📎 {attachedFile!.name}</span>
@@ -2127,13 +2177,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileSelect}
-                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp,.mp3,.wav,.m4a"
                     style={{ display: 'none' }}
                   />
                   <button
                     className="spar-attach-btn"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={loading || blocked}
+                    disabled={loading || blocked || uploadingAudio}
                     title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
                   >
                     +

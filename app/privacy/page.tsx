@@ -168,6 +168,11 @@ export default function PrivacyPage() {
                   <td>SOC 2 · HIPAA, DPA op aanvraag</td>
                 </tr>
                 <tr>
+                  <td style={{ color: '#f1f5f9' }}>AssemblyAI</td>
+                  <td>Spraaktranscriptie en sprekersherkenning bij een audiobijlage in het gesprek (opname wordt direct na verwerking verwijderd, geen training op jouw data)</td>
+                  <td><a href="https://www.assemblyai.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">assemblyai.com/legal/dpa</a></td>
+                </tr>
+                <tr>
                   <td style={{ color: '#f1f5f9' }}>Sentry</td>
                   <td>Foutmonitoring en performance-tracing</td>
                   <td><a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener noreferrer">sentry.io/legal/dpa</a></td>
