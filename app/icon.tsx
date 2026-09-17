@@ -5,7 +5,7 @@ import { join } from 'node:path'
 export const size = { width: 48, height: 48 }
 export const contentType = 'image/png'
 
-const bebasNeuePromise = readFile(join(process.cwd(), 'public/fonts/BebasNeue-Regular.ttf'))
+const bebasNeuePromise = readFile(join(process.cwd(), 'assets/fonts/BebasNeue-Regular.ttf'))
 
 export default async function Icon() {
   const bebasNeue = await bebasNeuePromise

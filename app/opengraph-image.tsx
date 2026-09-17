@@ -10,8 +10,8 @@ export const alt = 'ArnoBot: Jouw AI Sales Coach'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-const bebasNeuePromise = readFile(join(process.cwd(), 'public/fonts/BebasNeue-Regular.ttf'))
-const spaceMonoPromise = readFile(join(process.cwd(), 'public/fonts/SpaceMono-Regular.ttf'))
+const bebasNeuePromise = readFile(join(process.cwd(), 'assets/fonts/BebasNeue-Regular.ttf'))
+const spaceMonoPromise = readFile(join(process.cwd(), 'assets/fonts/SpaceMono-Regular.ttf'))
 
 export default async function Image() {
   const [bebasNeue, spaceMono] = await Promise.all([bebasNeuePromise, spaceMonoPromise])
