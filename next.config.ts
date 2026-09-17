@@ -57,6 +57,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // opengraph-image/icon/apple-icon lezen lokale TTF's via fs.readFile bij module-init.
+  // @vercel/nft's automatische tracing bleek dit inconsistent te missen (wél getraceerd
+  // voor apple-icon, niet voor icon/opengraph-image, ondanks identiek codepatroon), met
+  // ENOENT in productie tot gevolg zodra de functie vers moest uitvoeren i.p.v. de
+  // statische cache te serveren. Expliciet forceren i.p.v. op de tracer vertrouwen.
+  outputFileTracingIncludes: {
+    '/opengraph-image': ['./assets/fonts/**/*'],
+    '/icon': ['./assets/fonts/**/*'],
+    '/apple-icon': ['./assets/fonts/**/*'],
+  },
 };
 
 export default withSentryConfig(nextConfig, {
