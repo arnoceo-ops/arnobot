@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Privacy: ArnoBot',
+  description: 'Het privacybeleid van ArnoBot: welke gegevens we verwerken, waarvoor, en welke rechten je hebt.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot/privacy' },
+  openGraph: {
+    title: 'Privacy: ArnoBot',
+    description: 'Het privacybeleid van ArnoBot: welke gegevens we verwerken, waarvoor, en welke rechten je hebt.',
+    url: 'https://www.arno.bot/privacy',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default function PrivacyPage() {

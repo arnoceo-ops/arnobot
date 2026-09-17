@@ -8,6 +8,17 @@ export const metadata: Metadata = {
   title: 'ArnoBot: Prijzen',
   description: 'Transparante prijzen voor je AI-salescoach. 30 dagen gratis, daarna vanaf €19 per maand.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot/prijzen' },
+  openGraph: {
+    title: 'ArnoBot: Prijzen',
+    description: 'Transparante prijzen voor je AI-salescoach. 30 dagen gratis, daarna vanaf €19 per maand.',
+    url: 'https://www.arno.bot/prijzen',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default async function PrijzenPage() {

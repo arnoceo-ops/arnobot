@@ -45,6 +45,17 @@ export const metadata: Metadata = {
   title: 'ArnoBot: Jouw AI Sales Coach',
   description: 'ArnoBot is de AI sales coach die salesprofessionals en teams elke dag scherper maakt. Meer omzet, betere gesprekken, hogere conversie. Probeer 30 dagen gratis.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot' },
+  openGraph: {
+    title: 'ArnoBot: Jouw AI Sales Coach',
+    description: 'ArnoBot is de AI sales coach die salesprofessionals en teams elke dag scherper maakt. Meer omzet, betere gesprekken, hogere conversie.',
+    url: 'https://www.arno.bot',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default async function ArnoBotLandingPage() {

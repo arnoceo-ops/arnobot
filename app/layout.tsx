@@ -25,6 +25,7 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.arno.bot'),
   title: 'ArnoBot: Jouw Personal Sales Coach',
   description: 'ArnoBot is jouw persoonlijke salescoach. Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. 24/7 beschikbaar.',
   robots: { index: false, follow: false },
