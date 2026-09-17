@@ -169,7 +169,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>AssemblyAI</td>
-                  <td>Spraaktranscriptie en sprekersherkenning bij een audiobijlage in het gesprek (opname wordt direct na verwerking verwijderd, geen training op jouw data)</td>
+                  <td>Spraaktranscriptie bij een audiobijlage (opname direct verwijderd, geen training op jouw data)</td>
                   <td><a href="https://www.assemblyai.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">assemblyai.com/legal/dpa</a></td>
                 </tr>
                 <tr>

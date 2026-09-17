@@ -1,15 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { AUDIO_MEDIA_TYPES, createAttachmentReadUrl, deleteAttachment } from '@/lib/chatAttachments'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export const AUDIO_UPLOAD_BUCKET = 'chat-audio-uploads'
-
-export const AUDIO_MEDIA_TYPES = new Set([
-  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/webm',
-])
+export { AUDIO_MEDIA_TYPES }
 
 const ASSEMBLYAI_BASE = 'https://api.assemblyai.com/v2'
 const POLL_INTERVAL_MS = 3000
@@ -37,9 +28,7 @@ export async function transcribeAudioAttachment(
     return { text: null, error: 'audio_transcriptie_mislukt' }
   }
 
-  const { data: signedUrlData, error: signError } = await supabase.storage
-    .from(AUDIO_UPLOAD_BUCKET)
-    .createSignedUrl(storagePath, 300)
+  const { data: signedUrlData, error: signError } = await createAttachmentReadUrl(storagePath, 300)
   if (signError || !signedUrlData?.signedUrl) {
     console.error('[assemblyai] kon geen signed URL maken:', signError?.message)
     return { text: null, error: 'audio_niet_gevonden' }
@@ -94,7 +83,7 @@ export async function transcribeAudioAttachment(
     // Opruimen ongeacht uitkomst: niets bewaren buiten deze ene aanroep (besloten bij het
     // ontwerp van deze feature). AssemblyAI en Supabase Storage zijn twee losse plekken
     // waar de audio anders zou kunnen blijven staan.
-    await supabase.storage.from(AUDIO_UPLOAD_BUCKET).remove([storagePath]).catch(() => {})
+    await deleteAttachment(storagePath)
     if (transcriptId) {
       await fetch(`${ASSEMBLYAI_BASE}/transcript/${transcriptId}`, {
         method: 'DELETE',
