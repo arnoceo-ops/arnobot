@@ -81,6 +81,15 @@ export default clerkMiddleware(async (auth, req) => {
     return new NextResponse(null, { status: 404 })
   }
 
+  // ArnoBot heeft geen Server Actions. Een verzoek met een Next-Action-header kan dus nooit
+  // van een echte client komen (ook niet van een pagina uit een oudere deploy): het is een
+  // scanner die naar kwetsbare Next.js-apps zoekt. Hier afkappen voorkomt dat Next.js er
+  // een "Failed to find Server Action"-fout van maakt die als ruis in Sentry belandt.
+  // Als er ooit Server Actions bijkomen: deze check verwijderen.
+  if (req.headers.has('next-action')) {
+    return new NextResponse(null, { status: 404 })
+  }
+
   // Blogposts leven op arno.blog, niet op arno.bot. Deze verwarring is logisch (zelfde
   // eigenaar, vergelijkbare naam) en komt voor bij getypte of verkeerd overgenomen links,
   // dus een 404 tonen is nodeloos hard. Redirect in plaats daarvan naar het echte domein.
