@@ -302,6 +302,9 @@ export default function AccountPage() {
           <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             PRIVACY
           </Link>
+          <a href="/arnobot-beveiliging.pdf" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
+            BEVEILIGING
+          </a>
         </div>
 
         {/* Profiel */}
@@ -409,7 +412,7 @@ export default function AccountPage() {
             </>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
-              <p style={{ color: '#f1f5f9', opacity: 0.7, fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
+              <p style={{ color: '#6b7280', fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
                 {isManager
                   ? `Weet je het zeker? Dit beëindigt de toegang voor jou én je hele team van ${memberCount ?? 'meerdere'} leden aan het einde van de periode.`
                   : 'Weet je het zeker? Je toegang loopt door tot einde van de periode.'}
@@ -424,7 +427,7 @@ export default function AccountPage() {
                 </button>
                 <button
                   onClick={() => setCancelConfirm(false)}
-                  style={{ ...btn, background: 'transparent', color: '#f1f5f9', border: '1px solid #374151', opacity: 0.5 }}
+                  style={{ ...btn, background: 'transparent', color: '#9ca3af', border: '1px solid #374151' }}
                 >
                   ANNULEREN
                 </button>
@@ -452,7 +455,7 @@ export default function AccountPage() {
             </button>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
-              <p style={{ color: '#f1f5f9', opacity: 0.7, fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
+              <p style={{ color: '#6b7280', fontSize: 14, letterSpacing: 1, lineHeight: 1.6 }}>
                 Typ <strong>VERWIJDER</strong> om het verzoek te bevestigen:
               </p>
               <input
@@ -471,7 +474,7 @@ export default function AccountPage() {
                 </button>
                 <button
                   onClick={() => { setDeleteConfirm(false); setDeleteInput('') }}
-                  style={{ ...btn, background: 'transparent', color: '#f1f5f9', border: '1px solid #374151', opacity: 0.5 }}
+                  style={{ ...btn, background: 'transparent', color: '#9ca3af', border: '1px solid #374151' }}
                 >
                   ANNULEREN
                 </button>

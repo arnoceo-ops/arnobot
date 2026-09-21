@@ -1,9 +1,7 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { notifyTeamLead } from '@/lib/teamLeadNotify'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,47 +27,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 
+  const { data: huidig } = await serviceDb
+    .from('approved_users')
+    .select('onboarding_done, paid_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  // Vangnet voor de vroege trigger in app/api/bot/team-lead-signal/route.ts (vuurt normaal al
+  // zodra "voor mijn team" + teamgrootte zijn aangeklikt). Vóór de onboarding_done-update
+  // hieronder aanroepen: notifyTeamLead leest onboarding_done zelf opnieuw, en die moet op dit
+  // moment nog de PRE-afronding-waarde zien, anders denkt hij ten onrechte dat dit niet meer de
+  // eerste keer is en slaat de mail (opnieuw) over.
+  if (profiel.gebruik === 'team') {
+    await notifyTeamLead(serviceDb, userId, profiel.rol ?? '', profiel.teamgrootte ?? '')
+  }
+
+  // De 30-dagen trial-klok wordt heraankerd op het moment dat de onboarding echt af is,
+  // niet op het moment van accountaanmaak. Zo kost aarzelen over de intake geen trialdagen.
+  // Alleen bij de allereerste keer (onboarding_done nog niet gezet) en alleen voor een
+  // echte trial (nog niet betaald); een latere profielaanpassing raakt trial_start nooit.
+  const onboardingUpdate: Record<string, unknown> = { onboarding_done: true }
+  if (!huidig?.onboarding_done && !huidig?.paid_at) {
+    onboardingUpdate.trial_start = new Date().toISOString()
+  }
+
   const { error: onboardingError } = await serviceDb
     .from('approved_users')
-    .update({ onboarding_done: true })
+    .update(onboardingUpdate)
     .eq('user_id', userId)
 
   if (onboardingError) {
     console.error('onboarding_done update:', onboardingError)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
-  }
-
-  if (profiel.team_waitlist === true) {
-    try {
-      const clerk = await clerkClient()
-      const user = await clerk.users.getUser(userId)
-      const email = user.emailAddresses[0]?.emailAddress ?? null
-      const naam = [user.firstName, user.lastName].filter(Boolean).join(' ') || null
-
-      const { data: existing } = await serviceDb
-        .from('arnobot_team_waitlist')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle()
-
-      await serviceDb
-        .from('arnobot_team_waitlist')
-        .upsert({ user_id: userId, email, naam, rol: profiel.rol ?? null }, { onConflict: 'user_id' })
-
-      if (!existing) {
-        await resend.emails.send({
-          from: 'ArnoBot <info@arno.bot>',
-          to: 'waitlist@arno.bot',
-          subject: 'Nieuwe aanmelding ArnoBot Team waitlist',
-          text: `Nieuwe aanmelding:\n\nNaam: ${naam ?? 'onbekend'}\nE-mail: ${email ?? 'onbekend'}\nRol: ${profiel.rol ?? 'onbekend'}`,
-        })
-      }
-    } catch (e) {
-      console.error('team_waitlist upsert:', e)
-    }
-  } else if (profiel.team_waitlist === false) {
-    const { error: deleteErr } = await serviceDb.from('arnobot_team_waitlist').delete().eq('user_id', userId)
-    if (deleteErr) console.error('team_waitlist delete:', deleteErr)
   }
 
   return NextResponse.json({ ok: true })

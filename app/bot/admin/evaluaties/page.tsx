@@ -17,8 +17,7 @@ export default async function EvaluatiesPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const [{ data: evaluaties }, { data: ratingsRaw }, { data: negRaw }] = await Promise.all([
-    supabase.from('arnobot_evaluaties').select('*').order('created_at', { ascending: false }),
+  const [{ data: ratingsRaw }, { data: negRaw }] = await Promise.all([
     supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID).neq('user_id', APP_REVIEWER_ID),
     supabase
       .from('arnobot_rds_logs')
@@ -59,11 +58,10 @@ export default async function EvaluatiesPage() {
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Feedback</h1>
         <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '48px' }}>
-          {(evaluaties ?? []).length} ingevuld
+          {totalRatings} chatantwoord{totalRatings !== 1 ? 'en' : ''} beoordeeld
         </p>
 
         <EvaluatiesClient
-          evaluaties={evaluaties ?? []}
           totalRatings={totalRatings}
           positiveRatings={positiveRatings}
           negativeRatings={negativeRatings ?? []}

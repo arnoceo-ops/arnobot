@@ -39,7 +39,6 @@ const EXCLUDED_PATH_PREFIXES = [
   'app/api/kosten-tracking',
   'app/api/track-pageview',
   'app/api/track-cta-click',
-  'app/api/evaluatie',
   'app/api/team-aanvraag',
   'app/api/csp-report',
   'app/api/optout',
@@ -75,7 +74,6 @@ const GEBRUIKERSTABELLEN = new Set([
   'arnobot_team_members',
   'arnobot_team_notifications',
   'arnobot_salesbaas_coaching',
-  'arnobot_team_waitlist',
   'arnobot_uitdaging_reminders_log',
   'arnobot_offtopic_flags',
 ])

@@ -243,6 +243,13 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Audiobijlage-analyse (AssemblyAI)</div>
+              <NumberField label="% Pro/Team-users dat audio uploadt" hint="hidden feature, geen aankondiging, geen gemeten data: voorzichtige aanname" value={inputs.pctAudioAnalyse} max={100} onChange={v => set('pctAudioAnalyse', v)} />
+              <NumberField label="Audiominuten per gebruiker/maand" hint="gemiddeld over wie het gebruikt" value={inputs.audioMinutenPerGebruiker} onChange={v => set('audioMinutenPerGebruiker', v)} />
+              <NumberField label="AssemblyAI kosten per minuut ($)" hint="universal-3-5-pro + sprekersherkenning: $0,23/uur" value={inputs.assemblyaiPerMinuut} step={0.0001} onChange={v => set('assemblyaiPerMinuut', v)} />
+            </div>
+
+            <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Vaste infrastructuurkosten</div>
               <NumberField label="Domeinverlenging (Porkbun, $/jaar)" value={inputs.domeinPerJaar} onChange={v => set('domeinPerJaar', v)} />
               <NumberField label="Vercel Pro, aantal seats" hint="1 = alleen jijzelf" value={inputs.vercelSeats} onChange={v => set('vercelSeats', v)} />
@@ -305,6 +312,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>AssemblyAI (audio-analyse)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.audioAnalyseKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Emirates NBD Pay)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>

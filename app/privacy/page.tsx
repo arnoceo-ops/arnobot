@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Privacy: ArnoBot',
+  description: 'Het privacybeleid van ArnoBot: welke gegevens we verwerken, waarvoor, en welke rechten je hebt.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot/privacy' },
+  openGraph: {
+    title: 'Privacy: ArnoBot',
+    description: 'Het privacybeleid van ArnoBot: welke gegevens we verwerken, waarvoor, en welke rechten je hebt.',
+    url: 'https://www.arno.bot/privacy',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default function PrivacyPage() {
@@ -168,6 +181,11 @@ export default function PrivacyPage() {
                   <td>SOC 2 · HIPAA, DPA op aanvraag</td>
                 </tr>
                 <tr>
+                  <td style={{ color: '#f1f5f9' }}>AssemblyAI</td>
+                  <td>Spraaktranscriptie bij een audiobijlage (opname direct verwijderd, geen training op jouw data)</td>
+                  <td><a href="https://www.assemblyai.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">assemblyai.com/legal/dpa</a></td>
+                </tr>
+                <tr>
                   <td style={{ color: '#f1f5f9' }}>Sentry</td>
                   <td>Foutmonitoring en performance-tracing</td>
                   <td><a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener noreferrer">sentry.io/legal/dpa</a></td>
@@ -179,7 +197,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>PostHog</td>
-                  <td>Bezoekers- en productgebruiksanalyse. Op de publieke pagina&apos;s anoniem. In de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID) om te zien welke functies worden gebruikt en waar mensen vastlopen. Gespreks-, coaching- en analyse-inhoud wordt nooit meegestuurd. EU-hosting (Frankfurt)</td>
+                  <td>Bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)</td>
                   <td>DPA op aanvraag</td>
                 </tr>
                 <tr>
@@ -189,8 +207,8 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Meta Platforms (WhatsApp)</td>
-                  <td>Support. Als je de WhatsApp-knop in de app gebruikt, start je zelf een gesprek met ArnoBot en verwerkt Meta je telefoonnummer en de inhoud van dat supportbericht. Gebruik van deze knop is optioneel; je kunt ook mailen naar support@arno.bot</td>
-                  <td>WhatsApp Business-voorwaarden, Meta Platforms Ireland (EER), doorgifte VS</td>
+                  <td>Support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud</td>
+                  <td><a href="https://www.whatsapp.com/legal/business-data-processing-terms/" target="_blank" rel="noopener noreferrer">whatsapp.com/legal/dpa</a></td>
                 </tr>
               </tbody>
             </table>
@@ -210,7 +228,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Persoonsgegevens en profiel</td><td>Zolang het account actief is. Na beëindiging verwijderd na 30 dagen. Op verzoek binnen 10 werkdagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Worden 30 dagen na beëindiging van het account geanonimiseerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven, indien ingeschakeld, maximaal 30 dagen.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>Niet opgeslagen. Alleen gebruikt om die ene vraag te beantwoorden, daarna direct weggegooid.</td></tr>
               </tbody>
             </table>
@@ -259,7 +277,7 @@ export default function PrivacyPage() {
                 'plaatst geen advertentiecookies, volgt je niet over andere websites en verkoopt niets door',
                 'gebruikt lokale opslag in je browser voor een pseudonieme bezoeker-ID, geen tracking-cookie',
                 'bewaart je IP-adres niet: het wordt alleen kort gebruikt om je land te bepalen en daarna weggegooid',
-                'is op de publieke pagina&apos;s anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses',
+                "is op de publieke pagina's anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses",
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <span style={{ color: '#f59e0b', flexShrink: 0 }}>·</span>

@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Algemene voorwaarden: ArnoBot',
+  description: 'De algemene voorwaarden van ArnoBot voor het gebruik van de AI-salescoach.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot/voorwaarden' },
+  openGraph: {
+    title: 'Algemene voorwaarden: ArnoBot',
+    description: 'De algemene voorwaarden van ArnoBot voor het gebruik van de AI-salescoach.',
+    url: 'https://www.arno.bot/voorwaarden',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default function VoorwaardenPage() {

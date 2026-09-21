@@ -71,7 +71,6 @@ const KNOWN_NOT_USER_FACING = new Set([
   'app/api/cron/refresh-openers/route.ts',           // JSON met openingsvragen per categorie
   'app/api/cron/model-check/route.ts',               // adviesmail aan Arno, geen gebruiker
   'app/api/admin/feedback-analyse/route.ts',         // interne analyse voor Arno
-  'app/api/admin/analyse-evaluaties/route.ts',       // interne analyse voor Arno
   'app/api/admin/blogs-analyse/route.ts',            // redactionele briefing voor Arno
   'app/api/admin/analyse/route.ts',                  // ANALYSE-tab briefing voor Arno in /bot/admin
   'app/api/admin/analyse-chat/route.ts',             // doorvraag-chat op die briefing, alleen Arno

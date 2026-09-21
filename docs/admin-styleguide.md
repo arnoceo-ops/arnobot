@@ -161,4 +161,4 @@ Elke nieuwe adminpagina vergelijken met de bestaande structuur:
 - **E-mail crons:** `app/bot/admin/emails/EmailsClient.tsx`
 - **Meta-analyse:** `app/bot/admin/meta-analyse/MetaAnalyseClient.tsx`
 - **Blog-ideeën:** `app/bot/admin/idee/page.tsx`
-- **Evaluaties:** `app/bot/admin/evaluaties/page.tsx`
+- **Feedback (chatantwoord-beoordelingen):** `app/bot/admin/evaluaties/page.tsx`

@@ -60,7 +60,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 - Een falende "Playwright E2E"-check op een Dependabot-PR is bekend en onschadelijk (GitHub geeft Dependabot-workflows geen secrets), de auto-merge negeert die bewust. TypeScript, Vitest, ESLint en npm audit zijn wél betekenisvol. Zie `docs/CLAUDE_HISTORY.md`.
 
 ### 3. AI-modelinventaris
-- Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), en OpenAI spraak (transcriptie).
+- Zie de modelinventaris-tabel verderop. Dekt de Anthropic chat-modellen, Voyage AI embedding/rerank (RAG), OpenAI spraak (transcriptie) en AssemblyAI (audiobijlage-transcriptie in de hoofdchat).
 - Nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI? Beoordeel op kwaliteit eerst, dan pas kosten.
 - **Vaste regel:** elke nieuwe externe AI/API-leverancier wordt in dezelfde commit toegevoegd aan deze check en aan de modelinventaris-tabel. Geen uitzondering. (Voyage AI, Sentry, Upstash en OpenAI zijn alle vier ooit toegevoegd zonder dat de check werd bijgewerkt.)
 - **Verplichte verificatiestap:** verifieer dat de tabel nog klopt met de code. Zoek via de import-graph (elk bestand dat een AI-SDK importeert, en wat er precies wordt aangeroepen — niet alleen op `.messages.create(` grep'en, want dat mist `.messages.stream(`) en check `package.json` op AI-dependencies die nergens geïmporteerd worden.
@@ -135,7 +135,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 #### Sentry (foutmonitoring + performance tracing)
 - [Sentry release notes](https://docs.sentry.io/product/relay/release-notes/) of het `@sentry/nextjs`-changelog op breaking changes
 - Komen er nog spans/errors binnen in het dashboard? (stille instrumentatiestoring is anders onzichtbaar)
-- Quota/limiet binnen het plan?
+- **Gratis tier, geen betaald plan** (bevestigd 2026-09-17, `TARIEVEN.sentryEur` in Abacus staat op 0). Check of het gratis quotum (events/spans per maand) nog volstaat, bij overschrijding stopt Sentry met nieuwe data i.p.v. door te factureren.
 
 #### Upstash (rate limiting)
 - [upstash.com/blog](https://upstash.com/blog) of changelog op breaking changes
@@ -145,6 +145,13 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 #### OpenAI (spraak: transcriptie, `app/api/transcribe/route.ts`)
 - `whisper-1` voor spraak-naar-tekst, rauwe `fetch()`, geen SDK. OpenAI's rol is uitsluitend spraakherkenning (TTS is verwijderd).
 - [platform.openai.com/docs/changelog](https://platform.openai.com/docs/changelog) op API-deprecaties voor `whisper-1`.
+- **Harde deadline (gevonden 2026-09-16):** `whisper-1` is per 26 augustus 2026 deprecated, harde shutdown 26 februari 2027. Migratiepad: `gpt-transcribe` (bestandstranscriptie, vergelijkbaar met huidig gebruik) of `gpt-live-transcribe` (streaming). Nog niet gemigreerd.
+
+#### AssemblyAI (audiobijlage-transcriptie in de hoofdchat, `lib/assemblyai.ts`)
+- Ongedocumenteerde functie (bewust, Arno's keuze 2026-09-17): de bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only). Geen aparte pagina, geen consent-checkbox, geen FAQ-vermelding. Audio gaat via een signed upload URL rechtstreeks naar de private Supabase Storage-bucket `chat-audio-uploads`, model `universal-3-5-pro` met sprekerslabels, transcript stroomt als tekst de bestaande hoofdchat-call in. Audio en transcript worden na elke aanroep verwijderd, zowel bij AssemblyAI als in Supabase Storage, niets blijft bewaard buiten de resulterende chatbeurt zelf.
+- [assemblyai.com/changelog](https://www.assemblyai.com/changelog) op API-wijzigingen of prijswijzigingen.
+- Is `universal-3-5-pro` nog het nieuwste/best scorende model op Nederlands? (was bij invoering het beste op de FLEURS-Dutch-benchmark)
+- Quota/limiet binnen het account?
 
 #### ElevenLabs (tekst-naar-spraak voor ArnoBot Voice)
 - Publieke premium-gated feature (`voice_enabled=true` op `approved_users`). Model Flash v2.5 (`eleven_flash_v2_5`), streaming, rauwe `fetch()`, geen SDK. Gedeelde logica in `lib/voice.ts`. Verbruik gelogd in `arnobot_elevenlabs_usage`.
@@ -155,7 +162,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Draait naast de eigen `arnobot_pageviews`/`arnobot_cta_clicks`/`arnobot_events`-tracking (bewust dubbel: die blijft de PostHog-onafhankelijke bron van waarheid voor `/bot/admin/stats`). Bewust géén autocapture. Env var: alleen `NEXT_PUBLIC_POSTHOG_KEY`. Reverse proxy via `/site-relay`. `person_profiles: 'always'`.
 - **Publiek:** anonieme `posthog.capture()` op publieke componenten (`PostHogTracker.tsx`).
 - **Ingelogd (`/bot`, sinds 2026-08-30):** pseudonieme productanalyse. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts` (plan, rol, trial-status, team, tellingen, `is_intern` voor testaccounts + oprichter, gefilterd via PostHog "Internal and test users"), genormaliseerde `$pageview` (geen query, geen echte IDs), event-whitelist in `lib/posthog.ts` (`track()`). `/bot/admin` volledig uitgesloten. Geen gespreks-/coaching-/analyse-inhoud, nooit. `team_id` als super-property i.p.v. de betaalde group-analytics-add-on.
-- **Session replay:** staat uit achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = alleen shell-pagina's (allowlist), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads. `PostHogSessionReplay.tsx` start/stopt per route.
+- **Session replay:** staat AAN sinds 2026-08-30 (`SESSION_REPLAY_ENABLED` in `lib/posthog.ts`), beperkt tot 6 shell-pagina's (allowlist: `/bot/profiel`, `/bot/account`, `/bot/doorgaan`, `/bot/upgrade`, `/bot/cgq`, `/bot/team/join`), alle tekst + alle invoer gemaskeerd, geen netwerk-payloads, bewaartermijn 30 dagen. `PostHogSessionReplay.tsx` start/stopt per route. Live maskeer-verificatie op één echte opname nog niet bevestigd, zie `docs/OPENSTAANDE_PUNTEN.md`.
 - **ePrivacy (besloten 2026-08-30, keuze B):** geen toestemmingsbanner. `persistence: 'localStorage'` (geen tracking-cookie), IP niet bewaard (PostHog-projectinstelling "Discard client IP data"), first-party via `/site-relay`, EU. Grondslag gerechtvaardigd belang, met bezwaarrecht. Vastgelegd in `app/privacy/page.tsx` artikel 9.
 - **Openstaand:** DPA opvragen (incl. sub-verwerkersketen). Data Warehouse Stripe-koppeling geblokkeerd tot betaalprovider; Supabase bewust niet als directe connector. Zie `docs/OPENSTAANDE_PUNTEN.md`.
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
@@ -172,7 +179,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met git log en statusblokken. Vangnet voor de doorlopende schrijfregel, geen vervanging.
 
 ### 6. AVG & beveiliging gebruikers
-- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
+- Is `public/arnobot-beveiliging.pdf` (via `scripts/generate-security-pdf.mjs`, opnieuw draaien na elke wijziging) nog actueel? Check specifieke claims: de leverancierslijst (incl. Voyage AI, Sentry, Upstash, OpenAI, AssemblyAI, Meta/WhatsApp), genoemde cijfers (npm audit-meldingen, rate-limit-drempels), rechten/termijnen.
 - Nieuwe verwerkingen bijgekomen die niet in de privacypagina staan?
 - Openstaande verwijderverzoeken of datavragen van gebruikers?
 
@@ -470,6 +477,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 |---|---|---|---|
 | `app/api/chat/route.ts` (hoofdchat, streaming) | `claude-sonnet-4-6` | Sonnet 5 gaf leeg antwoord bij lange vragen. Retry-bij-leeg + max_tokens-buffer + Sentry-log bij afkapping. | 2026-08-18 |
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
+| `app/api/chat/route.ts` (audiobijlage-transcriptie, `lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Best scorende model op Nederlands in AssemblyAI's eigen FLEURS-benchmark (6,7% WER), inclusief sprekersherkenning. Ongedocumenteerde functie: bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only), transcript stroomt als tekst de bestaande hoofdchat-call in, geen aparte pagina of opslag. | 2026-09-17 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |
@@ -483,7 +491,6 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/sparring/chat/route.ts` (live sparring) | `claude-sonnet-4-6` | try/catch + Sentry, expliciete 502 i.p.v. nepantwoord. | 2026-07 |
 | `app/api/sparring/open/route.ts` (opening sparring) | `claude-sonnet-4-6` | Zelfde bug/fix als sparring/chat. | 2026-07 |
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
-| `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse. Tijdgebonden instructie gecorrigeerd. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). voyage-4-large onderzocht 2026-09-02, geen kwaliteitswinst, traject geparkeerd (`docs/VOYAGE_REEMBED_PLAN.md`). | 2026-09-02 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |
@@ -494,6 +501,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout. | 2026-07 |
 | `lib/memoryEntities.ts` (`extractAndStoreEntities`) | `claude-haiku-4-5-20251001` | Extraheert namen/bedrijven/thema's per sessie. JSON-fallback, faalt stil (laag risico). | 2026-08-12 |
+| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie) | `claude-haiku-4-5-20251001` | Korte classificatietaak, fail-open gedrag. Aangeroepen vanuit session-end en sparring/debrief. | 2026-09-16 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur. | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst. | 2026-07 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |
@@ -515,7 +523,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 
 **Hoe te controleren**: vraag Claude Code "check de modelinventaris in CLAUDE.md — zijn er nieuwere of betere modellen beschikbaar bij Anthropic of Voyage AI?"
 
-**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block. Hercheck of Anthropic dit heeft aangepast, of schakel extended thinking bewust in met `budget_tokens`. Test eerst op staging. **Niet rond de commerciële livegang, wacht minimaal een week na go-live** (livegang uitgesteld, check de actuele datum bij Arno). Sonnet 5 is inmiddels structureel goedkoper dan Sonnet 4.6. Details in `docs/CLAUDE_HISTORY.md`.
+**Openstaand actiepunt:** hoofdchat staat op `claude-sonnet-4-6` omdat Sonnet 5 bij lange vragen in thinking mode gaat zonder text block. Hercheck of Anthropic dit heeft aangepast, of stem `thinking: {type: "adaptive"}` + `output_config.effort` af (`budget_tokens` bestaat niet meer op Sonnet 5, geeft een 400-fout). Test eerst op staging. **Niet rond de commerciële livegang, wacht minimaal een week na go-live** (livegang uitgesteld, check de actuele datum bij Arno). Sonnet 5 is inmiddels structureel goedkoper dan Sonnet 4.6. Details in `docs/CLAUDE_HISTORY.md`.
 
 ## E-mail crons — ALTIJD via email-templates.ts
 
@@ -585,3 +593,13 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 - NOOIT meer aanpassen tenzij de gebruiker er expliciet om vraagt
 - Huidig formaat: `<img src="/cyborg.jpg" style={{display:'block', width:'380px', maxWidth:'100%', height:'auto'}} />` in een `subscribe-text-col` div
 - Geen background-image, geen position:absolute, geen objectFit — gewoon de img tag
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

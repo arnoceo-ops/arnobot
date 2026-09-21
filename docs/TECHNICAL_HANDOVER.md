@@ -125,7 +125,7 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 |---|---|---|
 | Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar de community-vragenpagina |
 | Community vragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar `/bot/cgq` ("community generated questions"). Zelfde component/chatlogica als `/bot`, alleen desktop bereikbaar. Gesprekken die hier starten tellen standaard niet mee in coachingsdiagnose/analyses, tenzij de gebruiker dat via een expliciete opt-in-toestemming aanvinkt |
-| Profiel / intake | `/bot/profiel` | Onboarding-intakeformulier bij eerste inlog (rol, markt, uitdaging, targets), daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
+| Profiel / intake | `/bot/profiel` | Korte onboarding-intake bij eerste inlog (rol, markt, wat verkoop je, ideale klant, dealgrootte, salescyclus, ervaring, uitdaging; solo- en teamvariant iets afwijkend). Bij afronden wordt `trial_start` heraankerd op dat moment. Daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
 | Coaching | `/bot/coaching` | Coachingrapport aanvragen en bekijken (Pro-only, upsell voor Basic) |
 | Analyses | `/bot/analyses` | Archief van gesprekken + AI-analyses + blogsuggesties |
 | Sparren | `/bot/sparren` | Live rollenspel/oefenmodus tegen een AI-tegenstander |
@@ -149,7 +149,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling |
 | `/bot/admin/emails` | E-mail templates + crons testen |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar) |
-| `/bot/admin/evaluaties` | Gebruikersevaluaties + negatieve feedback bekijken |
+| `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
 | `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
@@ -191,7 +191,6 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Voorwaarden | `/voorwaarden` | Gebruiksvoorwaarden |
 | Referral-spelregels | `/referrals` | Spelregels referralprogramma |
 | Teamaanvraag | `/team` | Publiek leadformulier + prijscalculator voor teamlicenties (los van `/bot/team`) |
-| Evaluatie | `/evaluatie` | Publiek tevredenheidsformulier |
 | ArnoLive | `/arnolive` | Marketingpagina "ARNOLIVE"/"ARNOPRIME"-lidmaatschap, eigen (crème/oranje) huisstijl |
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
@@ -264,7 +263,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 
 | Route | Doel |
 |---|---|
-| `/api/bot/profiel` | Profiel opslaan + onboarding_done zetten |
+| `/api/bot/profiel` | Profiel opslaan + onboarding_done zetten (en bij de eerste keer `trial_start` heraankeren) |
 | `/api/bot/plan` | Eigen plan + command_manager-vlag ophalen |
 | `/api/bot/export` | Alle eigen data exporteren (AVG) |
 | `/api/bot/delete-account` | Verwijderverzoek account |
@@ -296,7 +295,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/export-csv` | Logs exporteren als CSV (limiet 100.000, directe downloadlink). Gedeelde auth/fetch-logica met `/api/admin/export` zit sinds 2026-08-21 in `lib/adminExport.ts`; blijven twee routes omdat het gedrag verschilt (JSON voor client-side PDF-opbouw vs. directe CSV-file-download) |
 | `/api/admin/test-email` | E-mailtemplates + cron-mails handmatig testen/versturen |
 | `/api/admin/test-telegram` | Telegram-bot testbericht sturen |
-| `/api/admin/analyse-evaluaties` | AI-analyse over ingevulde evaluatieformulieren |
 | `/api/admin/analyse` | GET: opgeslagen briefing per gebruiker ophalen. POST: briefing (opnieuw) genereren, opgeslagen in `arnobot_admin_analyses` |
 | `/api/admin/analyse/users` | Lichte gebruikerslijst voor het zoekveld op `/bot/admin/analyse`, alleen gebruikers met minstens één gesprek, testaccounts uitgesloten |
 | `/api/admin/analyse-chat` | Doorvragen op een briefing, niet-opgeslagen gesprek, zelfde databundel als de briefing zelf |
@@ -342,7 +340,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/auth-mode` | Leest of LinkedIn-loginfallback aan staat |
 | `/api/bot/instatus` | Proxy naar Instatus-API voor de statuspagina |
 | `/api/csp-report` | Ontvangt CSP-schendingen, meldt via Telegram |
-| `/api/evaluatie` | Publiek evaluatieformulier → opslag + mail |
 | `/api/track-pageview` | Anonieme pageview-tracking marketingpagina's |
 | `/api/track-cta-click` | Anonieme CTA-klik-tracking vóór accountaanmaak |
 
@@ -477,9 +474,6 @@ Meest recente Strategy People Execution-synthese van de teambaas zelf (upsert, 1
 ### `arnobot_salesbaas_coaching_history`
 Insert-only geschiedenis van eerdere zelfcoaching-synthesen (naast `arnobot_salesbaas_coaching`), voedt "Jouw leiderschapsreis" (mijlpalen met score + voortgangszin).
 
-### `arnobot_team_waitlist`
-Wachtlijst-aanmeldingen voor het Team-abonnement, via `/bot/profiel`.
-
 ### `arnobot_command_requests`
 Team-tier-aanvragen via het publieke `/team`-leadformulier (bedrijfsnaam, KVK-nummer, user_id).
 
@@ -488,9 +482,6 @@ Referraltracking: wie heeft wie uitgenodigd.
 
 ### `arnobot_shared_sessions`
 Publieke share-tokens voor individuele gesprekken (`/gesprek/[token]`).
-
-### `arnobot_evaluaties`
-Ingevulde tevredenheidsformulieren (`/evaluatie`).
 
 ### `arnobot_offtopic_flags`
 Vlaggen off-topic/ongepaste berichten per gebruiker; bij herhaling geforceerde uitlog.
@@ -615,7 +606,6 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/sparring/chat/route.ts` (live sparring) | `claude-sonnet-4-6` | try/catch + Sentry, expliciete 502 i.p.v. nepantwoord. | 2026-07 |
 | `app/api/sparring/open/route.ts` (opening sparring) | `claude-sonnet-4-6` | Zelfde bug/fix als sparring/chat. | 2026-07 |
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
-| `app/api/admin/analyse-evaluaties/route.ts` | `claude-sonnet-4-6` | Interne evaluatie-analyse. Tijdgebonden instructie gecorrigeerd. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
 | `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). Vereist volledige her-embedding. | 2026-07 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |

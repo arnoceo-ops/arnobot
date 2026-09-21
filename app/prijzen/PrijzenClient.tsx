@@ -153,6 +153,7 @@ export default function PrijzenClient() {
           <span className="prijzen-tier-plus">Alles van Basic, plus:</span>
           <ul className="prijzen-tier-bullets">
             <li>Onbeperkt chatten en oefenen</li>
+            <li>Uitgebreide, diepgaande antwoorden</li>
             <li>Uitgebreider gespreksgeheugen</li>
             <li>Volledig archief van al je output</li>
             <li>Coaching op mindset, systeem en actie</li>

@@ -7,6 +7,17 @@ export const metadata: Metadata = {
   title: 'ArnoBot Team',
   description: 'Geef elke verkoper een eigen AI-salescoach en jou als leidinggevende het overzicht: mindset, systeem en actie per persoon, waar iemand vastloopt, en een 1:1 die al klaarligt.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.arno.bot/team' },
+  openGraph: {
+    title: 'ArnoBot Team',
+    description: 'Geef elke verkoper een eigen AI-salescoach en jou als leidinggevende het overzicht: mindset, systeem en actie per persoon.',
+    url: 'https://www.arno.bot/team',
+    siteName: 'ArnoBot',
+    locale: 'nl_NL',
+    type: 'website',
+    images: '/opengraph-image',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default async function TeamPage() {

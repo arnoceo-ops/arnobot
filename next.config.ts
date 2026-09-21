@@ -57,6 +57,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // opengraph-image/icon/apple-icon lezen lokale TTF's via fs.readFile bij module-init.
+  // @vercel/nft's automatische tracing bleek dit inconsistent te missen, met ENOENT in
+  // productie tot gevolg. Route-specifieke includes (alleen '/opengraph-image' etc.) bleken
+  // onvoldoende: Next.js resolvet de og-image ook inline als onderdeel van het renderen van
+  // elke publieke pagina zelf (bevestigd via Vercel function-logs: GET / crashte met exact
+  // dezelfde ENOENT, in een andere functiebundel dan de losse image-route). Daarom globaal
+  // op alle routes forceren i.p.v. per route te gokken welke het nodig heeft.
+  outputFileTracingIncludes: {
+    '/*': ['./assets/fonts/**/*'],
+  },
 };
 
 export default withSentryConfig(nextConfig, {

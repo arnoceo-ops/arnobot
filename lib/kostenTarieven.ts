@@ -33,6 +33,14 @@ export const TARIEVEN = {
   tekensPerVoiceAntwoord: 500,
   // Whisper-transcriptie + korte Anthropic-voice-call, $ per voice-interactie
   kostenPerVoiceInteractie: 0.004,
+  // AssemblyAI: audiobijlage-transcriptie + sprekersherkenning in de hoofdchat
+  // (lib/assemblyai.ts, Pro/Team-only, "hidden" feature sinds 2026-09-17, geen
+  // eigen pagina/aankondiging). universal-3-5-pro $0,21/uur + standaard
+  // diarization $0,02/uur = $0,23/uur, omgerekend naar $/minuut. Nog geen
+  // gemeten gebruik (feature net gebouwd), dus de twee volume-aannames
+  // hieronder (DEFAULT_INPUTS) zijn een voorzichtige placeholder, geen
+  // gemeten data zoals bij de andere routes.
+  assemblyaiPerMinuut: 0.23 / 60,
   tiers: [
     { name: 'Starter', credits: 30000, price: 6 },
     { name: 'Creator', credits: 121000, price: 22 },
@@ -63,15 +71,24 @@ export const TARIEVEN = {
   // Arno's eigen keuze (2026-08-11), losse drempel, geen gekoppelde mijlpaal.
   supabasePitrUsd: 100,
   supabasePitrDrempel: 100,
-  clerkProUsd: 100,
+  clerkProUsd: 25,
   clerkProActief: false,
-  sentryEur: 26,
+  // Bevestigd door Arno (2026-09-17): nog op Sentry's gratis tier, geen
+  // betaald plan. Het eerdere bedrag (26) was een currency-mismatch, Sentry's
+  // eigen prijzen zijn in USD ($26/mo jaarlijks, $29/mo maandelijks), niet
+  // EUR, en waren sowieso niet van toepassing zolang er geen betaald plan is.
+  // Bijwerken naar het echte bedrag zodra Sentry's gratis tier niet meer volstaat.
+  sentryEur: 0,
   // PostHog staat bewust NIET in deze berekening: gratis tier (1M events, 5k session
   // recordings, 1M flag-requests per maand), verbruik stopt bij de limiet zonder
   // betaalmethode, dus geen verrassingskosten. Opnemen zodra een van die limieten
   // structureel wordt overschreden of er een betaald plan wordt genomen. Bij de
   // kwartaalcheck controleren tegen het werkelijke PostHog-verbruik.
-  fxRateEurUsd: 1.08,
+  // Bijgewerkt 2026-09-17 (kwartaalcheck-achtige verificatie): was 1.08, live
+  // mid-market koers was op dat moment 1,1542. Was ~7% te laag, wat elke
+  // USD-kostenpost (Vercel, Supabase, Clerk, Porkbun) structureel te laag
+  // omrekende naar EUR.
+  fxRateEurUsd: 1.1542,
   domeinPerJaarUsd: 52,
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
@@ -153,6 +170,9 @@ export type Inputs = {
   tekensPerAntwoord: number
   creditPerTeken: number
   kostenPerInteractie: number
+  pctAudioAnalyse: number
+  audioMinutenPerGebruiker: number
+  assemblyaiPerMinuut: number
   tiers: Tier[]
   vercelSeats: number
   vercelPerSeat: number
@@ -204,6 +224,14 @@ export const DEFAULT_INPUTS: Inputs = {
   // dat bevestigde bereik, niet de gunstigste kant uit derde-partij-bronnen.
   creditPerTeken: TARIEVEN.creditPerTeken,
   kostenPerInteractie: TARIEVEN.kostenPerVoiceInteractie,
+  // AssemblyAI-audioanalyse: net gebouwd (2026-09-17), "hidden" feature zonder
+  // eigen aankondiging, dus geen gemeten volume om op te baseren. Voorzichtige
+  // placeholder-aannames, bewust laag: 5% van de Pro/Team-gebruikers gebruikt
+  // 'm ooit in een maand, gemiddeld 20 minuten audio per keer (~één kort
+  // gespreksfragment). Bijwerken zodra er echt gebruik is.
+  pctAudioAnalyse: 5,
+  audioMinutenPerGebruiker: 20,
+  assemblyaiPerMinuut: TARIEVEN.assemblyaiPerMinuut,
   tiers: TARIEVEN.tiers,
   vercelSeats: TARIEVEN.vercelSeats,
   vercelPerSeat: TARIEVEN.vercelPerSeat,
@@ -274,6 +302,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const eleven = elevenLabsCost(creditsNodig, inputs.tiers)
   const whisperKosten = totaalInteracties * inputs.kostenPerInteractie
 
+  // Audiobijlage-analyse (AssemblyAI): net als Voice alleen voor Pro/Team
+  // (proEffectief), Basic heeft hier geen toegang toe (app/api/chat/route.ts,
+  // 'audio_alleen_betaald').
+  const audioAnalyseGebruikers = proEffectief * (inputs.pctAudioAnalyse / 100)
+  const audioAnalyseKosten = audioAnalyseGebruikers * inputs.audioMinutenPerGebruiker * inputs.assemblyaiPerMinuut
+
   const upstashCommands = totaalBerichten * inputs.upstashPerBericht
   const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
@@ -290,12 +324,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + upstashKosten + teamOverheadKosten
+    + eleven.price + whisperKosten + audioAnalyseKosten + upstashKosten + teamOverheadKosten
 
   return {
     vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, audioAnalyseKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 

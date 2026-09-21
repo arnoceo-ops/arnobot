@@ -87,11 +87,11 @@ function formatSparHistoryDate(iso: string): string {
 }
 
 const STRATEGISCH_ROLLEN = ['VP of Sales', 'CEO/DGA']
-const ORGANISATORISCH_ROLLEN = ['Sales Director']
+const ORGANISATORISCH_ROLLEN = ['Sales Manager', 'Sales Director']
 const SALES_ONLY_ROLLEN = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
 
 const VERKOPER_ROLLEN_SPAR = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
-const SALESBAAS_ROLLEN_SPAR = ['Sales Director', 'VP of Sales']
+const SALESBAAS_ROLLEN_SPAR = ['Sales Manager', 'Sales Director', 'VP of Sales']
 const EINDBAAS_ROLLEN_SPAR = ['CEO/DGA']
 const SOLOPRENEUR_ROLLEN_SPAR = ['Solopreneur']
 
@@ -241,36 +241,71 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [toonGroeibalans, setToonGroeibalans] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
-  const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; data: string } | null>(null)
+  const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; storagePath: string } | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [pendingLogout, setPendingLogout] = useState(false)
   const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_FILE_BYTES = 10 * 1024 * 1024
+  const MAX_AUDIO_BYTES = 150 * 1024 * 1024
   const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/webm']
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  // Elke bijlage (document én audio) gaat rechtstreeks naar Supabase Storage, buiten onze
+  // eigen server-functie om: die heeft een harde limiet van 4,5MB op de request body. Tot
+  // 2026-09-17 ging een document nog als base64 in de JSON-body mee, wat boven ~3,3MB ruwe
+  // bestandsgrootte al die limiet raakte, ook al claimde deze UI een limiet van 10MB.
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     setFileError(null)
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setFileError('Alleen PDF, Word of een afbeelding wordt ondersteund.')
+
+    const isAudio = ALLOWED_AUDIO_TYPES.includes(file.type)
+    if (!isAudio && !ALLOWED_FILE_TYPES.includes(file.type)) {
+      setFileError('Alleen PDF, Word, een afbeelding of audio (mp3/wav/m4a) wordt ondersteund.')
       return
     }
-    if (file.size > MAX_FILE_BYTES) {
+    if (isAudio && file.size > MAX_AUDIO_BYTES) {
+      setFileError('Audiobestand is groter dan 150MB.')
+      return
+    }
+    if (!isAudio && file.size > MAX_FILE_BYTES) {
       setFileError('Bestand is groter dan 10MB.')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      const base64 = result.split(',')[1] ?? ''
-      setAttachedFile({ name: file.name, mediaType: file.type, data: base64 })
+
+    setUploadingFile(true)
+    try {
+      const urlRes = await fetch('/api/bot/chat-upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaType: file.type }),
+      })
+      const urlData = await urlRes.json().catch(() => ({}))
+      if (!urlRes.ok) {
+        setFileError(urlData.error === 'audio_alleen_betaald'
+          ? 'Audio-analyse is een Pro- en Team-functie.'
+          : 'Bestand kon niet worden geüpload.')
+        return
+      }
+      const putRes = await fetch(urlData.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      if (!putRes.ok) {
+        setFileError('Bestand kon niet worden geüpload.')
+        return
+      }
+      setAttachedFile({ name: file.name, mediaType: file.type, storagePath: urlData.path })
+    } catch {
+      setFileError('Bestand kon niet worden geüpload.')
+    } finally {
+      setUploadingFile(false)
     }
-    reader.onerror = () => setFileError('Bestand kon niet worden gelezen.')
-    reader.readAsDataURL(file)
   }
   const [shareCopied, setShareCopied] = useState(false)
   // Bewust GEEN "wacht tot de fetch klaar is"-gate meer (29 augustus 2026, eerder had dit een
@@ -331,6 +366,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [sparContext, setSparContext] = useState('')
   const [startingSparring, setStartingSparring] = useState(false)
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')
+  const [toonUitgebreidUpsell, setToonUitgebreidUpsell] = useState(false)
+  useEffect(() => {
+    if (!toonUitgebreidUpsell) return
+    const timer = setTimeout(() => setToonUitgebreidUpsell(false), 5000)
+    return () => clearTimeout(timer)
+  }, [toonUitgebreidUpsell])
   useEffect(() => {
     if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
       setSparPersona(PERSONAS[rolCategorie][0].key)
@@ -999,6 +1040,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
           if (!res.ok) {
             const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
+              || data.error === 'audio_alleen_betaald' || data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden'
             // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
             // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
             if (!isBestandsfout) setAttachedFile(null)
@@ -1013,6 +1055,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_niet_leesbaar') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'audio_alleen_betaald') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Audio-analyse is een Pro- en Team-functie. Upgrade je abonnement om dit te gebruiken, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Deze audio kon niet worden verwerkt. Probeer een ander bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else {
               setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
             }
@@ -1276,13 +1322,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           padding: 0 clamp(20px,5vw,60px) 40px;
         }
         .voorbeeldvragen-link {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: 18px;
-          letter-spacing: 3px;
-          color: #f59e0b;
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 4px;
+          color: #9ca3af;
           text-decoration: none;
         }
-        .voorbeeldvragen-link:hover { color: #d97706; }
+        .voorbeeldvragen-link:hover { color: #f1f5f9; }
         @media (pointer: coarse) {
           .voorbeeldvragen-link-wrap { display: none; }
         }
@@ -2038,39 +2084,71 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </>
           )}
           {sparModus === 'gesprek' && (
-            <div style={{ display: 'flex', gap: 4, marginBottom: 8, width: '100%', maxWidth: 650, alignItems: 'center', margin: '0 auto 8px' }}>
-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginRight: 4 }}>OUTPUT:</span>
-              {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => (
-                <button
-                  key={optie}
-                  onClick={() => {
-                    setAntwoordLengte(optie)
-                    // Voice-mode geeft altijd een kort antwoord (eigen systeeminstructie in
-                    // /api/chat-voice), dat botst met een expliciete keuze voor UITGEBREID.
-                    // Automatisch uitzetten voorkomt een voice-toggle die aan blijft staan
-                    // terwijl de knop er zelf niet meer is (zie hieronder).
-                    if (optie === 'uitgebreid' && voiceMode) setVoiceMode(false)
-                  }}
-                  style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: 13, letterSpacing: 2,
-                    padding: '4px 0', borderRadius: 999, width: 96, textAlign: 'center' as const,
-                    background: antwoordLengte === optie ? '#374151' : 'none',
-                    color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
-                    border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {optie.toUpperCase()}
-                </button>
-              ))}
+            <div style={{ width: '100%', maxWidth: 650, margin: '0 auto 8px' }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 2, color: '#6b7280', marginRight: 4 }}>OUTPUT:</span>
+                {(['kort', 'normaal', 'uitgebreid'] as const).map(optie => {
+                  const isProBlocked = optie === 'uitgebreid' && plan === 'basis'
+                  return (
+                  <button
+                    key={optie}
+                    onClick={() => {
+                      // Uitgebreide antwoorden zijn Pro-only. Basic mag de knop wel zien en
+                      // erop klikken (bewuste keuze: laat zien wat er te upgraden valt i.p.v.
+                      // de knop te verbergen), maar de modus schakelt niet echt om — in plaats
+                      // daarvan tonen we de upsell-regel eronder. Server-side wordt dit los nog
+                      // een keer afgedwongen (app/api/chat/route.ts), dit is puur UI-gedrag.
+                      if (isProBlocked) {
+                        setToonUitgebreidUpsell(true)
+                        return
+                      }
+                      setAntwoordLengte(optie)
+                      setToonUitgebreidUpsell(false)
+                      // Voice-mode geeft altijd een kort antwoord (eigen systeeminstructie in
+                      // /api/chat-voice), dat botst met een expliciete keuze voor UITGEBREID.
+                      // Automatisch uitzetten voorkomt een voice-toggle die aan blijft staan
+                      // terwijl de knop er zelf niet meer is (zie hieronder).
+                      if (optie === 'uitgebreid' && voiceMode) setVoiceMode(false)
+                    }}
+                    style={{
+                      position: 'relative',
+                      fontFamily: "'Bebas Neue', sans-serif",
+                      fontSize: 13, letterSpacing: 2,
+                      padding: '4px 0', borderRadius: 999, width: 96, textAlign: 'center' as const,
+                      background: antwoordLengte === optie ? '#374151' : 'none',
+                      color: antwoordLengte === optie ? '#f1f5f9' : '#6b7280',
+                      border: antwoordLengte === optie ? 'none' : '1px solid #374151', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {optie.toUpperCase()}
+                    {isProBlocked && (
+                      <span style={{
+                        position: 'absolute', top: -7, right: -6,
+                        fontFamily: "'Bebas Neue', sans-serif", fontSize: 8, letterSpacing: 1,
+                        padding: '1px 5px', borderRadius: 999,
+                        background: '#f59e0b', color: '#111827', lineHeight: 1.4,
+                      }}>PRO</span>
+                    )}
+                  </button>
+                  )
+                })}
+              </div>
+              {toonUitgebreidUpsell && plan === 'basis' && (
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
+                  Uitgebreide antwoorden zijn onderdeel van Pro.{' '}
+                  <a href="/bot/doorgaan" style={{ color: '#f59e0b', textDecoration: 'underline' }}>Upgrade naar Pro</a>
+                </p>
+              )}
             </div>
           )}
 
-          {sparModus !== 'sparren' && (attachedFile || fileError) && (
+          {sparModus !== 'sparren' && (attachedFile || fileError || uploadingFile) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, color: fileError ? '#cc4444' : '#9ca3af' }}>
               {fileError ? (
                 <span>{fileError}</span>
+              ) : uploadingFile ? (
+                <span>Bestand uploaden...</span>
               ) : (
                 <>
                   <span>📎 {attachedFile!.name}</span>
@@ -2091,13 +2169,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileSelect}
-                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp"
+                    accept=".pdf,.docx,.png,.jpg,.jpeg,.webp,.mp3,.wav,.m4a"
                     style={{ display: 'none' }}
                   />
                   <button
                     className="spar-attach-btn"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={loading || blocked}
+                    disabled={loading || blocked || uploadingFile}
                     title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
                   >
                     +
@@ -2428,7 +2506,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         {!started && !loading && mode === 'gesprek' && (
           <div className="voorbeeldvragen-link-wrap">
-            <Link href="/bot/cgq" className="voorbeeldvragen-link">OF KIES EEN VRAAG UIT DE ARNOBOT-COMMUNITY →</Link>
+            <Link href="/bot/cgq" className="voorbeeldvragen-link">meest gestelde vragen in de arnobot-community ⟶</Link>
           </div>
         )}
 

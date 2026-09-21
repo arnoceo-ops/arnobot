@@ -1,6 +1,6 @@
 # ArnoBot — volledig productoverzicht
 
-**Laatst bijgewerkt:** 2026-08-29
+**Laatst bijgewerkt:** 2026-09-16
 **Doel van dit document:** een volledig, actueel beeld van ArnoBot als product en bedrijf, voor gebruik buiten de dagelijkse ontwikkelwerkzaamheden (bijv. upload naar NotebookLM voor een presentatie, briefing van nieuwe teamleden, gesprekken met investeerders of partners). Vult `docs/SALES_BIJBEL.md` aan: dat document behandelt waaróm een klant koopt (USP's, unique buying reasons), dit document behandelt wát ArnoBot precies is, in volle breedte.
 
 **Belangrijk voor gebruik in een presentatie:** dit document bevat alleen wat daadwerkelijk gebouwd en geverifieerd is tegen de code, op de datum hierboven. Waar iets gepland maar niet live is, staat dat er expliciet bij. Neem geen enkel cijfer of kenmerk over zonder dat onderscheid, dat voorkomt dat een presentatie iets belooft wat nog niet bestaat.
@@ -31,7 +31,7 @@ Voor managers bestaat een teammodule: zij zien de voortgang van hun verkopers en
 ## 3. Kernfunctionaliteit, volledig
 
 ### 3.1 Het hoofdgesprek
-De basisinteractie: een doorlopend chatgesprek met ArnoBot over sales-onderwerpen. Reageert met vragen, spiegelt terug, verwijst waar relevant naar Arno's eigen kennisbank (blogartikelen, video's) via een zoekmechanisme op de achtergrond. Antwoordlengte instelbaar (kort/normaal/uitgebreid). Documentupload mogelijk voor gebruikers die een concreet document (bijv. een offerte) willen laten meekijken.
+De basisinteractie: een doorlopend chatgesprek met ArnoBot over sales-onderwerpen. Reageert met vragen, spiegelt terug, verwijst waar relevant naar Arno's eigen kennisbank (blogartikelen, video's) via een zoekmechanisme op de achtergrond. Antwoordlengte instelbaar (kort/normaal/uitgebreid, sinds 2026-09-15 is "uitgebreid" Pro-only: Basic-gebruikers zien de knop met een PRO-badge en een upsell naar /bot/doorgaan). Documentupload mogelijk voor gebruikers die een concreet document (bijv. een offerte) willen laten meekijken.
 
 ### 3.2 Geheugen over gesprekken heen (kern-differentiator)
 Dit is het meest technisch uitgebreide onderdeel van het product en vandaag (12 augustus 2026) nog verder uitgebouwd. Drie, inmiddels vier lagen:
@@ -88,6 +88,7 @@ Een statuskader onder de hero op de hoofdpagina (alleen desktop/laptop, niet in 
 | Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial, manager start zelf als Pro |
 | Coaching (MSA-score) | Nee | Ja | Ja (elk teamlid) |
 | Gesproken antwoorden | Nee | Ja | Ja |
+| Uitgebreide antwoorden | Nee (upsell-badge) | Ja | Ja |
 | Teammanagerdashboard | Nee | Nee | Ja |
 | Chatberichten/dag | 25 | 100 | 100 (per lid) |
 | Sessiegeheugen (vorige gesprekken) | Laatste 10 | Laatste 25 | Laatste 25 |

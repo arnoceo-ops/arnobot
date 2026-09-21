@@ -1,9 +1,11 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
-**Laatst bijgewerkt:** 2026-09-01
+**Laatst bijgewerkt:** 2026-09-16
 **Waar we staan:** consolidatie-herschrijving van de persona-prompt gedaan en gepusht (1 september). Golf 1 + golf 2 zitten er nu samen in, in één opgeschoonde versie zonder de dubbelingen die er stonden, 12% korter dan ervoor. Smoke-test tegen de echte API bevestigde: golf 1 (kwalificeren bij klantsituatie) intact, golf 2 (ruimte in plaats van obstakel, zonder harde confrontatie) werkt, geen terugval naar de vraag-aan-het-eind-regressie van augustus, rekenregel werkt. Woordplafond staat nu op dit niveau (rond 1520 woorden voor `staticIntro` + `restVanPersona`): vanaf nu geldt herzien-niet-stapelen.
 **Eerstvolgende stap:** niets acuuts. Rond 1 oktober draait de volgende meta-analyse met de trendsectie. Openstaand voor later: gestructureerde bevindingen + trendgrafiek (wacht op 2-3 trendsecties), kennisbankdoc-alinea softenen bij volgende her-embed, Thijs' feedback (los traject, Bron 3).
 **Evaluatie:** de volgende meta-analyse (rond 1 oktober) checkt of de twee wortels (te snel leveren zonder verifiëren, te aardig bij excuses) en de herhaalde-vraag-bevinding zakken. Cijfer is geen KPI, terugkerendheid van de bevindingen wel.
+
+**Opgeruimd (2026-09-16):** de eenmalige `golf1-evaluatie-herinnering`-cron (geschreven 18-8, vóór het 1-9-besluit om niet apart te evalueren maar te wachten op de reguliere meta-analyse) vuurde vandaag alsnog en vroeg om een golf1-evaluatie die door het 1-9-besluit al was ingehaald. Verwijderd uit `vercel.json` en de routecode; de evaluatie loopt voortaan uitsluitend via de reguliere meta-analyse-cadans hierboven.
 
 ## Afvinklijst
 

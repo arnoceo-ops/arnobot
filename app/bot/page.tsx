@@ -70,6 +70,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       resumeSessionId={resume}
       voornaam={firstNameOf(userRes.data?.voornaam as string | null | undefined, userRes.data?.full_name as string | null | undefined)}
       groeibalans={groeibalans}
+      plan={plan}
     />
   )
 }

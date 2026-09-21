@@ -1,6 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 60
+// 60 volstond voor tekst/documenten, maar een audiobijlage transcriberen (lib/assemblyai.ts,
+// polling tot 240s) kan langer duren dan de rest van deze route ooit nodig had.
+export const maxDuration = 300
 
 const INJECTION_PATTERNS = [
   /negeer\s+(alle?\s+)?(vorige|eerdere|bovenstaande)\s+instructies/i,
@@ -78,6 +80,8 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
+import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
 const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
@@ -96,10 +100,8 @@ async function buildDocumentContentBlock(
     return { block: null, extractedText: null, error: 'bestandstype_niet_ondersteund' }
   }
 
-  const byteLength = Math.ceil((doc.data.length * 3) / 4)
-  if (byteLength > MAX_DOCUMENT_BYTES) {
-    return { block: null, extractedText: null, error: 'bestand_te_groot' }
-  }
+  // Grootte wordt al gecontroleerd door de aanroeper op het gedownloade buffer (vóór
+  // base64-encoderen), dat is nu de enige plek waar de ruwe bestandsgrootte nog bekend is.
 
   if (doc.mediaType === 'application/pdf') {
     return {
@@ -247,7 +249,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
-    const antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
+    let antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
 
@@ -315,11 +317,25 @@ export async function POST(req: NextRequest) {
 
       // Document-upload alleen voor ingelogde gebruikers, nooit voor de anonieme widget.
       // Bewust ná de auth-check: dit voorkomt dat een niet-ingelogde aanvrager (Origin
-      // vervalst/weggelaten) de server base64/mammoth-verwerkingswerk laat doen vóórdat er
+      // vervalst/weggelaten) de server download/mammoth-verwerkingswerk laat doen vóórdat er
       // ooit een 401 wordt teruggegeven.
+      //
+      // storagePath (niet meer data/base64 in de body): een document ging tot 2026-09-17 als
+      // base64 in deze JSON-body mee, wat boven ~3,3MB ruwe bestandsgrootte al de harde 4,5MB
+      // request-bodylimiet van een Vercel-functie raakte, ook al claimde de UI een limiet van
+      // 10MB. SparClient.tsx uploadt nu net als een audiobijlage rechtstreeks naar Supabase
+      // Storage en stuurt hier alleen het pad mee.
       if (rawDocument && typeof rawDocument === 'object'
-        && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string' && typeof rawDocument.data === 'string') {
-        const result = await buildDocumentContentBlock(rawDocument as UploadedDocument)
+        && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
+        && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+        const { buffer, error: downloadError } = await downloadAndDeleteAttachment(userId, rawDocument.storagePath)
+        if (downloadError || !buffer) {
+          return NextResponse.json({ error: downloadError ?? 'bestand_niet_leesbaar' }, { status: 400, headers: corsHeaders(origin) })
+        }
+        if (buffer.length > MAX_DOCUMENT_BYTES) {
+          return NextResponse.json({ error: 'bestand_te_groot' }, { status: 400, headers: corsHeaders(origin) })
+        }
+        const result = await buildDocumentContentBlock({ name: rawDocument.name, mediaType: rawDocument.mediaType, data: buffer.toString('base64') })
         if (result.error) {
           return NextResponse.json({ error: result.error }, { status: 400, headers: corsHeaders(origin) })
         }
@@ -377,6 +393,37 @@ export async function POST(req: NextRequest) {
       if (todayUsage >= dagelijksMax) {
         return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
       }
+    }
+
+    // Uitgebreide antwoorden zijn Pro-only. Client-side is dit al zo (PRO-label + upsell-tekst
+    // in SparClient.tsx), maar dat is te omzeilen door de request body aan te passen — dit is
+    // de eigenlijke afdwinging, niet te omzeilen vanuit de browser.
+    if (antwoordLengte === 'uitgebreid' && plan === 'basis') {
+      antwoordLengte = 'normaal'
+    }
+
+    // Audiobijlage (opname van een echt gesprek, i.p.v. een document): SparClient.tsx upload
+    // die rechtstreeks naar Supabase Storage en stuurt hier alleen het pad mee, want de
+    // Vercel-functielimiet (4,5MB) staat de bytes zelf niet toe in deze JSON-body. Zelfde
+    // gate als /api/bot/audio-upload-url, hier herhaald omdat de client die eerdere check zou
+    // kunnen omzeilen door direct tegen deze route te posten.
+    if (!isWidget && rawDocument && typeof rawDocument === 'object'
+      && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
+      && typeof rawDocument.storagePath === 'string' && AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+      if (plan === 'basis') {
+        return NextResponse.json({ error: 'audio_alleen_betaald' }, { status: 403, headers: corsHeaders(origin) })
+      }
+      const { text, error } = await transcribeAudioAttachment(userId!, rawDocument.storagePath)
+      if (error || !text) {
+        return NextResponse.json({ error: error ?? 'audio_transcriptie_mislukt' }, { status: 502, headers: corsHeaders(origin) })
+      }
+      // Geen eigen "[Bijlage: ...]"-kop hier, die zet questionWithDocument hieronder er al
+      // overheen. Sprekerslabels (SPREKER A/B) i.p.v. namen: AssemblyAI kent de identiteit van
+      // de sprekers niet. De instructie duwt Claude om eerst te vragen wat de gebruiker met dit
+      // gesprek wil (technieken checken, samenvatten, iets anders) i.p.v. dat te veronderstellen,
+      // want dat verschilt wezenlijk van een geüpload document waarbij het doel al uit de vraag
+      // van de gebruiker blijkt.
+      documentText = `(Dit is een automatisch getranscribeerd gesprek met sprekerslabels, geen document. Vraag eerst wat de gebruiker hiermee wil als dat niet al duidelijk is uit zijn vraag, geef niet meteen een inhoudelijke beoordeling.)\n\n${text}`
     }
 
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')
@@ -700,7 +747,7 @@ PROFIEL VAN DE GEBRUIKER:
 - Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}
 - Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
 - Ideale klant: ${profiel.ideale_klant || 'onbekend'}
-- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Target dit jaar halen: ${profiel.target_dit_jaar}` : ''}${profiel.target_3_jaar ? `\n- Target afgelopen 3 jaar: ${profiel.target_3_jaar}` : ''}${profiel.positionering ? `\n- Onderscheidend vermogen: ${profiel.positionering}` : ''}${Array.isArray(profiel.klantenbron) && profiel.klantenbron.length ? `\n- Klanten komen via: ${profiel.klantenbron.join(', ')}${profiel.kanaal_afhankelijkheid ? ` (${profiel.kanaal_afhankelijkheid})` : ''}` : ''}${profiel.acquisitie_tijd ? `\n- Tijd naar acquisitie: ${profiel.acquisitie_tijd}` : ''}${profiel.jaardoel ? `\n- Doel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.jaardoel}` : ''}${profiel.inkomensdoel ? `\n- Inkomensdoel dit jaar (zachte context, alleen gebruiken als het gesprek daar aanleiding toe geeft): ${profiel.inkomensdoel}` : ''}
+- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Verwacht team-/companytarget dit jaar te halen: ${profiel.target_dit_jaar}` : ''}${profiel.positionering ? `\n- Onderscheidend vermogen: ${profiel.positionering}` : ''}${Array.isArray(profiel.klantenbron) && profiel.klantenbron.length ? `\n- Klanten komen via: ${profiel.klantenbron.join(', ')}${profiel.kanaal_afhankelijkheid ? ` (${profiel.kanaal_afhankelijkheid})` : ''}` : ''}${profiel.acquisitie_tijd ? `\n- Tijd naar acquisitie: ${profiel.acquisitie_tijd}` : ''}
 ` : ''
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,

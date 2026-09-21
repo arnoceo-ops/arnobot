@@ -42,9 +42,8 @@ function formatProfiel(profiel: Record<string, ProfielVeld> | null): string {
     regel('Grootste uitdaging', 'uitdaging'),
     regel('Gemiddelde dealgrootte', 'dealgrootte'),
     regel('Salescyclus', 'salescyclus'),
-    regel('Target dit jaar', 'target_dit_jaar'),
-    regel('Target over 3 jaar', 'target_3_jaar'),
     regel('Teamgrootte', 'teamgrootte'),
+    regel('Verwacht team-/companytarget dit jaar', 'target_dit_jaar'),
     regel('Jaren in sales', 'jaren_sales'),
     regel('Jaren in huidige functie', 'jaren_functie'),
   ].filter(Boolean)
