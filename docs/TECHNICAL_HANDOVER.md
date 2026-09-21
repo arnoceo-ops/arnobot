@@ -229,6 +229,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
 | `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
+| `/api/bot/chat-upload-url` | Signed upload URL voor een bijlage (document of audio) in de hoofdchat, buiten de Vercel-bodylimiet om. Audio is Pro/Team-only (403 voor Basic), wordt door `/api/chat` via AssemblyAI getranscribeerd en na afloop verwijderd; documenten blijven voor elk plan beschikbaar |
 
 ### Sparring
 
@@ -369,7 +370,6 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's uit `arnobot_memory_entities` als e-mail |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 | `/api/cron/comp-heads-up-okt` | 16 oktober 2026 (eenmalig, jaar-guard) | Heads-up aan de 4 vroege comp-gebruikers dat hun gratis toegang op 1 november afloopt. Wegwerpcode: route + vercel.json-regel mogen na 17 oktober 2026 weg |
 
@@ -689,6 +689,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
 - `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `ASSEMBLYAI_API_KEY`: AssemblyAI (transcriptie audiobijlage hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
@@ -749,6 +750,11 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Doel:** Whisper (`whisper-1`) spraak-naar-tekst voor voice-input.
 **Dashboard:** https://platform.openai.com
 **Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
+
+### AssemblyAI
+**Doel:** transcriptie van de audiobijlage in de hoofdchat (model `universal-3-5-pro`, met sprekerslabels), losstaand van de OpenAI Whisper-integratie hierboven die alleen voor voice-input geldt. Ongedocumenteerde functie voor gebruikers (geen aparte pagina, geen FAQ), Pro/Team-only.
+**Dashboard:** https://www.assemblyai.com/app
+**Integratie:** rauwe fetch in `lib/assemblyai.ts`, geen SDK. Audio komt binnen via een signed upload URL naar de private Supabase Storage-bucket `chat-audio-uploads` (`lib/chatAttachments.ts`, `/api/bot/chat-upload-url`); audio en transcript worden na elke aanroep verwijderd, zowel bij AssemblyAI als in Supabase Storage.
 
 ### ElevenLabs
 **Doel:** Tekst-naar-spraak voor ArnoBot Voice (premium-feature, `plan` premium/team).
