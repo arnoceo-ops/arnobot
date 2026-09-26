@@ -37,7 +37,12 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // stond alleen de compilatie toe, niet deze fetch, waardoor de knoppen stil faalden.
     // Bevestigd via arnobot_csp_violations: herhaalde "connect-src blokkeert data"-meldingen,
     // uitsluitend op /bot/team en /bot/team/lid/* (13, 14 en 19 augustus 2026).
-    "connect-src 'self' data: https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com",
+    // fonts.googleapis.com staat hier naast style-src omdat een CSS @import in een inline
+    // <style>-tag (het patroon dat vrijwel elke pagina gebruikt voor Google Fonts) door sommige
+    // browsers als connect-src-fetch gerapporteerd wordt i.p.v. style-src, ook al is het
+    // logisch een stylesheet-load. Bevestigd via een echte CSP-schendingsmelding op arno.bot
+    // (26-9-2026, pagina '/', regel connect-src).
+    "connect-src 'self' data: https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com https://fonts.googleapis.com",
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",
