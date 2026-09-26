@@ -1,11 +1,35 @@
 # Systeemprompt-upgrade hoofdchat (mindset/systeem/actie → uitgebreid met meta-analyse-bevindingen)
 
-**Laatst bijgewerkt:** 2026-09-16
-**Waar we staan:** consolidatie-herschrijving van de persona-prompt gedaan en gepusht (1 september). Golf 1 + golf 2 zitten er nu samen in, in één opgeschoonde versie zonder de dubbelingen die er stonden, 12% korter dan ervoor. Smoke-test tegen de echte API bevestigde: golf 1 (kwalificeren bij klantsituatie) intact, golf 2 (ruimte in plaats van obstakel, zonder harde confrontatie) werkt, geen terugval naar de vraag-aan-het-eind-regressie van augustus, rekenregel werkt. Woordplafond staat nu op dit niveau (rond 1520 woorden voor `staticIntro` + `restVanPersona`): vanaf nu geldt herzien-niet-stapelen.
-**Eerstvolgende stap:** niets acuuts. Rond 1 oktober draait de volgende meta-analyse met de trendsectie. Openstaand voor later: gestructureerde bevindingen + trendgrafiek (wacht op 2-3 trendsecties), kennisbankdoc-alinea softenen bij volgende her-embed, Thijs' feedback (los traject, Bron 3).
+**Laatst bijgewerkt:** 2026-09-26
+**Waar we staan:** op 26 september is regel 1 van golf 1 (KWALIFICEREN VOOR JE UITGEBREID LEVERT) bewust herzien naar aanleiding van een echte sessie (Stefanie, zie "Besluit 2026-09-26" hieronder), inclusief een expliciete override van de "Golf 1 blijft ongewijzigd"-lijn uit het 1-september-besluit. Zie dat besluit voor de precieze aanleiding en afweging.
+**Eerstvolgende stap:** niets acuuts. Rond 1 oktober draait de volgende meta-analyse met de trendsectie, die nu ook kan meewegen of de nieuwe regel 1-tweede-uitzondering (schrijf/afmaak-verzoeken) en de mindset-scherping in `coaching/route.ts` het gedrag daadwerkelijk verbeteren.
 **Evaluatie:** de volgende meta-analyse (rond 1 oktober) checkt of de twee wortels (te snel leveren zonder verifiëren, te aardig bij excuses) en de herhaalde-vraag-bevinding zakken. Cijfer is geen KPI, terugkerendheid van de bevindingen wel.
 
 **Opgeruimd (2026-09-16):** de eenmalige `golf1-evaluatie-herinnering`-cron (geschreven 18-8, vóór het 1-9-besluit om niet apart te evalueren maar te wachten op de reguliere meta-analyse) vuurde vandaag alsnog en vroeg om een golf1-evaluatie die door het 1-9-besluit al was ingehaald. Verwijderd uit `vercel.json` en de routecode; de evaluatie loopt voortaan uitsluitend via de reguliere meta-analyse-cadans hierboven.
+
+---
+
+## Besluit 2026-09-26 — regel 1 herzien (override van "Golf 1 blijft ongewijzigd"), plus mindset-scherping en terugkoppeling
+
+**Aanleiding.** Een echt gesprek van Stefanie: ze vroeg ArnoBot een winback-mail voor een opgezegde klant af te maken, kreeg een correcte maar generieke tekst, en bij een kleine vervolgvraag ("maak ervan dat ze mij ook mogen bellen") leverde ArnoBot een zwakke, symmetrische "of"-zin die het initiatief weggaf, een klassiek LLM-patroon. Uitgebreid met Arno doorgesproken (zie chatlog 26-9). De kern bleek niet de toon van die ene mail, maar dat ArnoBot een schrijfopdracht uitvoerde in plaats van te coachen.
+
+**Verworpen tussenstappen, met reden (zodat een latere sessie ze niet opnieuw voorstelt):**
+- "Kwalificeer bij elke belangrijke situatie": verworpen, "belangrijk" is zelf weer een oppervlakkige classifier, geen gedragssignaal.
+- Een aparte, benoemde categorie "delegeert schrijfwerk" in de coaching-analyse: verworpen. Dit hoort impliciet onder de bestaande MINDSET-pijler te vallen (onzekerheid, iets vergeten of nog niet geleerd), geen nieuwe classificatie ernaast.
+- Een volledig nieuwe sectie in de persona-prompt over "herstelcontact met klanten": verworpen, te veel nieuwe bulk bovenop een al bestaand, bewust smal gehouden mechanisme. Zie hieronder voor wat er wel is gedaan.
+- "Een ander mens" als term in de nieuwe regel: verworpen, te generiek/AI-achtig. Dit gaat in ArnoBot's context altijd over een klant.
+
+**Wat wel is gedaan (drie plekken, alle drie een aanscherping van iets bestaands, geen nieuwe losse machinerie):**
+
+1. **`lib/systemPrompt.ts`, regel 1 (KWALIFICEREN VOOR JE UITGEBREID LEVERT):** van twee naar drie uitzonderingen. De bestaande klantsituatie-vraag ("hoe belangrijk is deze klant") blijft ongewijzigd. Nieuw ingevoegd als uitzondering twee: vraagt de gebruiker om een mail, bericht of script richting een klant te schrijven of af te maken, dan levert ArnoBot dat niet zomaar, maar onderzoekt eerst wat de gebruiker wil bereiken en of dit de beste besteding van zijn tijd is (hij kan dit zelf schrijven). Dit triggert op het verzoektype (schrijf/maak dit voor me af), niet op de aanleiding (klant die opzegt), en is dus breder toepasbaar dan de oude klant-opzegt-aanleiding, zonder bij elke vraag af te gaan.
+2. **`app/api/bot/coaching/route.ts`, MINDSET-definitie:** één zin toegevoegd die vermijding-verkleed-als-hulpvraag herkent als mindsetsignaal (herhaaldelijk vragen om kant-en-klare klantcommunicatie terwijl iemand dat zelf kan), impliciet, geen aparte categorie.
+3. **`app/api/chat/route.ts` + `lib/systemPrompt.ts` (OPENSTAANDE ACTIES EERST):** de laatste `mindset_diagnose` + mindset-`ontwikkelpunten` uit het coachingsdocument worden nu meegegeven aan de hoofdchat (`memoryContextPromise`), met instructie om dat patroon live te herkennen en erop te anticiperen, niet als rapportcijfer op te lezen. Dit was voorheen het ontbrekende gat: coaching-bevindingen bereikten het lopende gesprek niet, op afgesproken acties na.
+
+**Kernconclusie uit het gesprek, voor de volgende sessie:** de filosofie ("een coach zorgt dat de gebruiker het de volgende keer zelf kan") stond al bijna letterlijk in `staticIntro`, en dat was aantoonbaar niet genoeg: een abstracte identiteitsuitspraak wordt overstemd door een concrete, directe instructie ("maak de mail af") als er geen concreet ankerpunt tegenover staat. Dit is dus geen argument om meer filosofie toe te voegen, maar om bij het vinden van soortgelijke gevallen te zoeken naar het concrete, generaliseerbare verzoektype (zoals hier: schrijf/afmaak-verzoeken), niet naar de specifieke aanleiding (zoals hier: klant opzegt).
+
+**Woordplafond, eerlijk gemeten, niet aangenomen:** het 1-september-besluit noemde ~1520 woorden voor `staticIntro`+`restVanPersona` als vast plafond. Gemeten vlak vóór deze sessie (via de bestaande snapshot-test, dus reproduceerbaar): het was al naar ~1986 woorden gegroeid door tussentijdse, op zichzelf redelijke aanscherpingen (o.a. `46c72616`: alle openstaande acties i.p.v. alleen de laatste, `e3e2505c`: AI-schrijfregels). Het plafond werd dus al niet gehandhaafd vóór vandaag, zonder dat dit ergens is vastgelegd. Deze sessie voegt er nog eens ~171 woorden aan toe (~1986 → ~2157), in dezelfde orde van grootte als eerdere aanscherpingen. Geen nieuw besluit hierover genomen, alleen de discrepantie tussen het gedocumenteerde en het werkelijke woordaantal expliciet vastgelegd zodat een volgende sessie niet op de oude 1520 vertrouwt.
+
+**Getest:** `lib/systemPrompt.test.ts` snapshots bijgewerkt (`vitest -u`), volledige testsuite groen, `tsc --noEmit` schoon.
 
 ## Afvinklijst
 
