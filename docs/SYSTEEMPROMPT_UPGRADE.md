@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-09-26
 **Waar we staan:** op 26 september is regel 1 van golf 1 (KWALIFICEREN VOOR JE UITGEBREID LEVERT) bewust herzien naar aanleiding van een echte sessie (Stefanie, zie "Besluit 2026-09-26" hieronder), inclusief een expliciete override van de "Golf 1 blijft ongewijzigd"-lijn uit het 1-september-besluit. Zie dat besluit voor de precieze aanleiding en afweging.
-**Eerstvolgende stap:** niets acuuts. Rond 1 oktober draait de volgende meta-analyse met de trendsectie, die nu ook kan meewegen of de nieuwe regel 1-tweede-uitzondering (schrijf/afmaak-verzoeken) en de mindset-scherping in `coaching/route.ts` het gedrag daadwerkelijk verbeteren.
+**Eerstvolgende stap:** niets acuuts. Smoke-test tegen de echte API (26-9, 3 scenario's + een vervolgbeurt) al gedaan, zie onderaan "Besluit 2026-09-26". Rond 1 oktober draait de volgende meta-analyse met de trendsectie, die nu ook kan meewegen of de nieuwe regel 1-tweede-uitzondering (schrijf/afmaak-verzoeken) en de mindset-scherping in `coaching/route.ts` het gedrag daadwerkelijk verbeteren, en of de brede trigger (vrijwel elk klantmail-verzoek) in de praktijk te breed aanvoelt.
 **Evaluatie:** de volgende meta-analyse (rond 1 oktober) checkt of de twee wortels (te snel leveren zonder verifiëren, te aardig bij excuses) en de herhaalde-vraag-bevinding zakken. Cijfer is geen KPI, terugkerendheid van de bevindingen wel.
 
 **Opgeruimd (2026-09-16):** de eenmalige `golf1-evaluatie-herinnering`-cron (geschreven 18-8, vóór het 1-9-besluit om niet apart te evalueren maar te wachten op de reguliere meta-analyse) vuurde vandaag alsnog en vroeg om een golf1-evaluatie die door het 1-9-besluit al was ingehaald. Verwijderd uit `vercel.json` en de routecode; de evaluatie loopt voortaan uitsluitend via de reguliere meta-analyse-cadans hierboven.
@@ -30,6 +30,12 @@
 **Woordplafond, eerlijk gemeten, niet aangenomen:** het 1-september-besluit noemde ~1520 woorden voor `staticIntro`+`restVanPersona` als vast plafond. Gemeten vlak vóór deze sessie (via de bestaande snapshot-test, dus reproduceerbaar): het was al naar ~1986 woorden gegroeid door tussentijdse, op zichzelf redelijke aanscherpingen (o.a. `46c72616`: alle openstaande acties i.p.v. alleen de laatste, `e3e2505c`: AI-schrijfregels). Het plafond werd dus al niet gehandhaafd vóór vandaag, zonder dat dit ergens is vastgelegd. Deze sessie voegt er nog eens ~171 woorden aan toe (~1986 → ~2157), in dezelfde orde van grootte als eerdere aanscherpingen. Geen nieuw besluit hierover genomen, alleen de discrepantie tussen het gedocumenteerde en het werkelijke woordaantal expliciet vastgelegd zodat een volgende sessie niet op de oude 1520 vertrouwt.
 
 **Getest:** `lib/systemPrompt.test.ts` snapshots bijgewerkt (`vitest -u`), volledige testsuite groen, `tsc --noEmit` schoon.
+
+**Smoke-test tegen de echte API (26-9, zelfde dag), 3 scenario's + een vervolgbeurt:**
+- Stefanie-scenario (winback, mislukte belpoging), beurt 1: ArnoBot vroeg alleen naar het belang van de klant (regel één), leverde de mail nog niet.
+- Zelfde scenario, beurt 2, na "ja, belangrijke klant, 15k/jaar, 3 jaar klant": ArnoBot leverde niet zomaar de oorspronkelijke mail, benoemde waarom de opzet zwak was, stelde zelf de vraag "waarom zijn ze weggegaan? Als je dat niet weet, is elke mail een schot in het donker", en verlegde het zwaartepunt expliciet naar het telefoongesprek ("de mail is alleen de deur"). Dit is scherper dan de letterlijke prompttekst en bevestigt dat de wijziging werkt zoals bedoeld, sterker dan verwacht.
+- Routine-scenario (bevestigingsmail na een net getekende deal, geen wrijving): triggerde ook eerst een vraag, geen directe levering. Bevestigd en bewust geaccepteerd (26-9, Arno akkoord): dit betekent dat vrijwel elk verzoek om klanttekst te schrijven voortaan eerst een coachende vraag krijgt, geen aparte uitzondering voor evidente routinegevallen. Geen aanpassing gedaan naar aanleiding van drie testcases, dat zou het "verifiëren op basis van hypotheses i.p.v. echte data"-patroon herhalen dat deze hele wijziging juist adresseert. De meta-analyse van rond 1 oktober is de echte toets.
+- Controlegeval (BANT vs MEDDIC, geen schrijfverzoek): ongewijzigd, direct en volledig antwoord, geen regressie.
 
 ## Afvinklijst
 
