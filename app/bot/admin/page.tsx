@@ -274,7 +274,7 @@ export default async function ArnoBotAdminPage({
                         style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
                       >{naam}</a>
                     )}
-                    <CopyButton text={sessionAsText(idx, messages, naam)} label="SESSIE" />
+                    <CopyButton text={sessionAsText(idx, messages, naam)} label="GESPREK" />
                   </div>
                 </div>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
@@ -291,7 +291,10 @@ export default async function ArnoBotAdminPage({
                       <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
                         {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
                       </p>
-                      <CopyButton text={messageAsText(msg)} label="BERICHT" />
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <CopyButton text={messageAsText(msg)} label="BERICHT" />
+                        <CopyButton text={sessionAsText(idx, messages, naam)} label="GESPREK" />
+                      </div>
                     </div>
                   </div>
                 ))}
