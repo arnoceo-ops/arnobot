@@ -5,6 +5,7 @@ import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/in
 import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
+import CopyButton from './CopyButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,18 @@ function renderAnswer(text: string | null | undefined) {
   return escaped
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>')
+}
+
+function messageAsText(msg: LogRow): string {
+  return `VRAAG: ${msg.question ?? ''}\nANTWOORD: ${msg.answer ?? ''}`
+}
+
+function sessionAsText(idx: number, messages: LogRow[], naam?: string): string {
+  const header = `SESSIE ${idx + 1} · ${messages[0].ip}${naam ? ' · ' + naam : ''}`
+  const sessionDate = fmtDate(messages[0].created_at.slice(0, 10))
+  const tijden = `${sessionDate} · ${new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot ${new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}`
+  const body = messages.map(messageAsText).join('\n\n')
+  return `${header}\n${tijden}\n\n${body}`
 }
 
 function parseDate(input: string): string {
@@ -254,12 +267,15 @@ export default async function ArnoBotAdminPage({
                   <p style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', margin: 0 }}>
                     SESSIE {idx + 1} · {messages[0].ip}
                   </p>
-                  {naam && userId && (
-                    <a
-                      href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${userId}`}
-                      style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
-                    >{naam}</a>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {naam && userId && (
+                      <a
+                        href={`/bot/admin?from=${from}&to=${to}&sort=${sort}&user=${userId}`}
+                        style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}
+                      >{naam}</a>
+                    )}
+                    <CopyButton text={sessionAsText(idx, messages, naam)} label="SESSIE" />
+                  </div>
                 </div>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
                   {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
@@ -271,9 +287,12 @@ export default async function ArnoBotAdminPage({
                     </p>
                     <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
                       dangerouslySetInnerHTML={{ __html: renderAnswer(msg.answer) }} />
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px' }}>
-                      {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                      <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
+                        {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
+                      </p>
+                      <CopyButton text={messageAsText(msg)} label="BERICHT" />
+                    </div>
                   </div>
                 ))}
               </div>
