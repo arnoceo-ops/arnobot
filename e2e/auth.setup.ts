@@ -1,6 +1,8 @@
-import { clerk, clerkSetup } from '@clerk/testing/playwright'
+import { clerkSetup } from '@clerk/testing/playwright'
 import { test as setup } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
+import { E2E_TEST_USER_ID } from '../lib/internalTestAccounts'
+import { signInWithTicket } from './signInWithTicket'
 
 export const TEST_USER_EMAIL = 'playwright-test@arno.bot'
 const AUTH_FILE = 'e2e/.auth/user.json'
@@ -19,16 +21,15 @@ const TEST_PROFILE = {
   teamgrootte: 4,
 }
 
-// Logt eenmalig in via Clerk's Testing Token-mechanisme (officieel ondersteund, omzeilt
-// bot-detectie). Werkt alleen tegen een Clerk DEVELOPMENT-instance (@clerk/testing weigert
-// een production secret key). De ingelogde sessie wordt opgeslagen zodat alle andere tests
-// niet opnieuw hoeven in te loggen.
+// Logt eenmalig in. Werkt alleen tegen een Clerk DEVELOPMENT-instance (production secret key
+// werkt hier niet). De ingelogde sessie wordt opgeslagen zodat alle andere tests niet opnieuw
+// hoeven in te loggen.
 setup('authenticeren als testgebruiker', async ({ page }) => {
   await clerkSetup()
 
-  // Navigeer eerst naar een publieke pagina die Clerk laadt, vereist door clerk.signIn().
-  await page.goto('/')
-  await clerk.signIn({ page, emailAddress: TEST_USER_EMAIL })
+  // Zie e2e/signInWithTicket.ts: omweg voor clerk.signIn() uit @clerk/testing, die sinds
+  // medio september kapot is door een externe Clerk-bug. Navigeert zelf naar '/'.
+  await signInWithTicket(page, E2E_TEST_USER_ID)
 
   // Eerste bezoek aan /bot triggert proxy.ts om automatisch een approved_users-rij aan
   // te maken (trial-start). Op de allereerste run ooit stuurt dat door naar /bot/profiel
