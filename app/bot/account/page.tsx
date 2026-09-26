@@ -295,7 +295,7 @@ export default function AccountPage() {
         </div>
 
         {/* Voorwaarden en privacy — direct onder privacy statement */}
-        <div style={{ display: 'flex', gap: 24, marginBottom: 48 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 48 }}>
           <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             VOORWAARDEN
           </Link>
@@ -324,7 +324,7 @@ export default function AccountPage() {
             Je meldt je aan met LinkedIn. Voor de Android-app heb je daarnaast een wachtwoord nodig, want inloggen met LinkedIn kan daar niet. Stel hier een wachtwoord in, en gebruik dat samen met hetzelfde e-mailadres als je LinkedIn-account om in te loggen in de Android-app.
           </p>
           {passwordDone && !showPasswordForm ? (
-            <p style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <p style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
               <span style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Wachtwoord ingesteld</span>
               <button
                 onClick={() => setShowPasswordForm(true)}
@@ -417,7 +417,7 @@ export default function AccountPage() {
                   ? `Weet je het zeker? Dit beëindigt de toegang voor jou én je hele team van ${memberCount ?? 'meerdere'} leden aan het einde van de periode.`
                   : 'Weet je het zeker? Je toegang loopt door tot einde van de periode.'}
               </p>
-              <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
@@ -464,7 +464,7 @@ export default function AccountPage() {
                 onChange={e => setDeleteInput(e.target.value)}
                 placeholder="VERWIJDER"
               />
-              <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                 <button
                   onClick={handleDelete}
                   disabled={deleteInput !== 'VERWIJDER' || deleting}
