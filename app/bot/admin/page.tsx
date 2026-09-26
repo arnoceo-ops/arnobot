@@ -291,10 +291,7 @@ export default async function ArnoBotAdminPage({
                       <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
                         {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
                       </p>
-                      <div style={{ display: 'flex', gap: '16px' }}>
-                        <CopyButton text={messageAsText(msg)} label="BERICHT" />
-                        <CopyButton text={sessionAsText(idx, messages, naam)} label="GESPREK" />
-                      </div>
+                      <CopyButton text={messageAsText(msg)} label="BERICHT" />
                     </div>
                   </div>
                 ))}
