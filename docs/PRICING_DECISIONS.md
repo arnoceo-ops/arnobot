@@ -22,6 +22,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 
 **Features (bovenop Basic), volgorde besloten 2026-08-02:**
 - Onbeperkt chatten en oefenen
+- **Toegevoegd (2026-09-15):** uitgebreide, diepgaande antwoorden. Basic-gebruikers zien de UITGEBREID-knop nog gewoon, met een PRO-badge; klikken toont een korte melding met link naar `/bot/doorgaan` in plaats van de knop te verbergen. Server-side in `app/api/chat/route.ts` wordt dit nogmaals afgedwongen (`antwoordLengte` terug naar `normaal` als `plan === 'basis'`), niet te omzeilen via de request body.
 - Uitgebreider gespreksgeheugen
 - Volledig archief van al je output
 - Coaching op mindset, systeem en actie

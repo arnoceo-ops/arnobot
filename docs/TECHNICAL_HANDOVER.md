@@ -229,6 +229,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
 | `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
+| `/api/bot/chat-upload-url` | Signed upload URL voor een bijlage (document of audio) in de hoofdchat, buiten de Vercel-bodylimiet om. Audio is Pro/Team-only (403 voor Basic), wordt door `/api/chat` via AssemblyAI getranscribeerd en na afloop verwijderd; documenten blijven voor elk plan beschikbaar |
 
 ### Sparring
 
@@ -275,6 +276,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
 | `/api/bot/events` | Whitelisted clientevents loggen |
+| `/api/bot/posthog-identity` | Veilige PostHog person-properties ophalen (plan, rol, trial-status, team, tellingen) |
 | `/api/bot/response-feedback` | Duim omhoog/omlaag op een antwoord |
 | `/api/optout` | Marketingmail-opt-out verwerken (HMAC-signature-check) |
 
@@ -285,6 +287,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/arnobot-admin-login` | Admin-login (cookie, IP-rate-limit) |
 | `/api/admin/logout` | Admin-cookie wissen |
 | `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |
+| `/api/admin/comp` | Gratis toegang (comp) tot een datum zetten, los van de betaalstroom: zet `expires_at`, wist `trial_start` |
+| `/api/admin/active` | Gebruiker aan/uit zetten (`is_active`), los van betaal-/comp-status |
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
 | `/api/admin/sd-agent` | Sales-development-agent + attributiemethode koppelen |
@@ -366,8 +370,8 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's uit `arnobot_memory_entities` als e-mail |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
+| `/api/cron/comp-heads-up-okt` | 16 oktober 2026 (eenmalig, jaar-guard) | Heads-up aan de 4 vroege comp-gebruikers dat hun gratis toegang op 1 november afloopt. Wegwerpcode: route + vercel.json-regel mogen na 17 oktober 2026 weg |
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
 
@@ -531,7 +535,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 1. Scanner-requests (`.env`, `wp-admin`, etc.) → direct 404
 2. Admin-routes (`/bot/admin/*`) → cookie-gebaseerd (`arnobot_admin`)
 3. Bot-routes (`/bot/*`) → Clerk auth vereist + `approved_users` check
-4. Toegangsstatus op basis van: `paid_at` aanwezig → altijd toegang; anders `expires_at` in toekomst; anders `trial_start` + 30 dagen niet verstreken
+4. Toegangsstatus op basis van: `expires_at` gezet → bindend, verlopen = geen toegang (ook voor betalers, sinds 2026-09-02); anders `paid_at` aanwezig → onbeperkte toegang; anders `trial_start` + 30 dagen niet verstreken
 5. `onboarding_done` niet waar → redirect `/bot/profiel`
 
 **Losse cookie-gates buiten `/bot`:** `/abacus/*` via `arnobot_kosten` (`ARNOBOT_KOSTEN_KEY`), `/agents/*` via `arnobot_sd_verdien` (`SD_VERDIEN_PASSWORD`, admin-key werkt ook). Geen Clerk-auth, zelfde patroon als de admin-cookie.
@@ -685,6 +689,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
 - `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `ASSEMBLYAI_API_KEY`: AssemblyAI (transcriptie audiobijlage hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
@@ -746,6 +751,11 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Dashboard:** https://platform.openai.com
 **Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
 
+### AssemblyAI
+**Doel:** transcriptie van de audiobijlage in de hoofdchat (model `universal-3-5-pro`, met sprekerslabels), losstaand van de OpenAI Whisper-integratie hierboven die alleen voor voice-input geldt. Ongedocumenteerde functie voor gebruikers (geen aparte pagina, geen FAQ), Pro/Team-only.
+**Dashboard:** https://www.assemblyai.com/app
+**Integratie:** rauwe fetch in `lib/assemblyai.ts`, geen SDK. Audio komt binnen via een signed upload URL naar de private Supabase Storage-bucket `chat-audio-uploads` (`lib/chatAttachments.ts`, `/api/bot/chat-upload-url`); audio en transcript worden na elke aanroep verwijderd, zowel bij AssemblyAI als in Supabase Storage.
+
 ### ElevenLabs
 **Doel:** Tekst-naar-spraak voor ArnoBot Voice (premium-feature, `plan` premium/team).
 **Dashboard:** https://elevenlabs.io
@@ -779,9 +789,9 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture.
 **Scope publiek:** anonieme `capture()` op publieke componenten (`PostHogTracker.tsx`).
 **Scope ingelogd (`/bot`, sinds 2026-08-30):** pseudoniem. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts`, genormaliseerde `$pageview` (geen query/IDs), event-whitelist als getypte union in `lib/posthog.ts` (`track()`). `/bot/admin` uitgesloten. Nooit gespreks-/coaching-/analyse-inhoud. `team_id` als super-property (geen betaalde group-analytics).
-**Session replay:** `PostHogSessionReplay.tsx`, UIT achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
+**Session replay:** `PostHogSessionReplay.tsx`, AAN sinds 2026-08-30 achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
 **Feature flags / surveys:** operationeel met de SDK-integratie, per feature in te richten.
-**Openstaand:** DPA opvragen, bewaartermijn instellen, replay-vlag omzetten na verificatie. Data Warehouse Stripe geblokkeerd tot betaalprovider.
+**Openstaand:** DPA opvragen, bewaartermijn instellen, verificatie op een echte opname dat de maskering werkt zoals bedoeld. Data Warehouse Stripe geblokkeerd tot betaalprovider.
 
 ### Calendly
 **Doel:** Boeking van het 1-op-1-gesprek met Arno.
@@ -821,7 +831,20 @@ POST /api/admin/payment
 { "userId": "user_xxx", "months": 1 }
 ```
 
+### Gebruiker gratis toegang geven (comp)
+Ga naar `/bot/admin/gebruikers`, zoek de gebruiker op, of gebruik de admin comp route:
+```
+POST /api/admin/comp
+{ "userId": "user_xxx", "expiresAt": "2026-12-31" }
+```
+
 ### Gebruiker deactiveren
+Ga naar `/bot/admin/gebruikers`, zoek de gebruiker op en gebruik TOEGANG INTREKKEN in het toegangspaneel, of rechtstreeks:
+```
+POST /api/admin/active
+{ "userId": "user_xxx", "active": false }
+```
+Zelfde route met `"active": true` heractiveert. De oude directe SQL-route werkt nog steeds:
 ```sql
 UPDATE approved_users SET is_active = false WHERE user_id = 'user_xxx';
 ```
@@ -850,7 +873,7 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 
 1. **Sonnet 5 hoofdchat:** Teruggedraaid naar Sonnet 4.6 wegens thinking-mode truncatie. Sonnet 5's prijs is inmiddels permanent verlaagd, wat een hercheck aantrekkelijker maakt — check eerst de actuele livegang-datum bij Arno, test op staging.
 2. **RLS Supabase — bewust pending:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend, geen database-afgedwongen garantie). **Triggercriterium om alsnog op te pakken:** een tweede developer die routinematig gebruikersdata-routes wijzigt (het huidige risico is grotendeels beheersbaar zolang Arno alle wijzigingen zelf overziet), een compliance-eis van een enterprise-klant, of een keer dat de CI-check daadwerkelijk iets vindt dat pas laat wordt opgemerkt. Echte multi-tenant RLS met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is dan een apart traject van meerdere dagen, raakt ~40 routes.
-3. **Embedding-modellen verouderd — bewust pending:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated (nog geen aangekondigde einddatum). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel zonder dat de live zoekfunctie breekt (dual-write of versiegescheiden migratie). **Triggercriterium:** Voyage kondigt een harde uitfaseerdatum aan voor een van beide modellen, of de kwaliteitswinst van voyage-4 wordt de moeite waard bevonden bij een gerichte test.
+3. **Embedding-modellen verouderd — bewust pending:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated (nog geen aangekondigde einddatum). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel zonder dat de live zoekfunctie breekt (dual-write of versiegescheiden migratie). **Onderzocht en geparkeerd (2026-09-02, zie `docs/VOYAGE_REEMBED_PLAN.md`):** `voyage-4-large` haalde de "kwaliteit eerst"-lat niet t.o.v. de huidige modellen (wisselresultaat op retrieval), dus de kwaliteitswinst-vraag is inmiddels beantwoord. **Triggercriterium om te hervatten:** Voyage kondigt een echte EOL-datum aan voor `voyage-3-large` of `voyage-multilingual-2`.
 4. **Share intrekken:** Gebouwd maar bewust uitgesteld. Kleine kans op probleem bij huidige doelgroep.
 5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (100 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.
 6. **Clerk `createRouteMatcher()`:** gedeprecate sinds 7.5.14 t.g.v. `auth.protect()` per route, nog niet gemigreerd in `proxy.ts`. Geen harde deadline.
