@@ -494,10 +494,23 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setSpeechSupported(true)
   }, [])
 
-  async function startRecording(e: React.MouseEvent | React.TouchEvent, setTarget: React.Dispatch<React.SetStateAction<string>> = setInput) {
+  async function startRecording(
+    e: React.MouseEvent | React.TouchEvent,
+    setTarget: React.Dispatch<React.SetStateAction<string>> = setInput,
+    currentValue: string = input,
+  ) {
     e.preventDefault()
     if (recordingRef.current || transcribing || loading || blocked) return
     recordingRef.current = true
+    // Vast, ooit-berekend voorvoegsel (wat al in het veld stond vóór deze opname), niet via een
+    // React state-updater-callback ('prev => ...') opgehaald. Die callback mag zelf geen
+    // neveneffect hebben (hier: wegschrijven naar een buiten de callback gedefinieerde
+    // variabele) want React mag 'm meer dan één keer aanroepen om te controleren of hij puur
+    // is, wat hier ooit leidde tot een dubbel opgeteld voorvoegsel en dus een verdubbelde zin
+    // in het invoerveld. Dit voorvoegsel geldt voor de hele opname (geen live her-lezen tijdens
+    // het inspreken), bewust: iemand typt normaliter niet tegelijk met de andere hand terwijl
+    // de mic-knop ingedrukt blijft.
+    const prefix = currentValue ? `${currentValue} ` : ''
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
@@ -518,13 +531,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
           // SSE: transcript.text.delta-events komen binnen terwijl OpenAI het fragment nog
           // verwerkt, dus het veld vult zich geleidelijk i.p.v. pas na de volledige transcriptie
-          // in één keer te verschijnen. prefix (de tekst die al in het veld stond) wordt bij de
-          // eerste delta één keer opgehaald via de functional update, daarna schrijft elke
-          // volgende delta prefix+transcript-tot-nu-toe terug. dedupeRepeatedSentence knipt af
-          // zodra de streamende transcriptie in een herhaallus terechtkomt (bekend gedrag van
-          // deze modellen bij stilte aan het eind van een opname): zonder die afkap bleef de
-          // zin tientallen keren achter elkaar in het invoerveld verschijnen.
-          let prefix: string | null = null
+          // in één keer te verschijnen. dedupeRepeatedSentence knipt af zodra de streamende
+          // transcriptie in een herhaallus terechtkomt (bekend gedrag van deze modellen bij
+          // stilte aan het eind van een opname): zonder die afkap bleef de zin tientallen keren
+          // achter elkaar in het invoerveld verschijnen.
           let transcript = ''
           let stopped = false
           const reader = res.body.getReader()
@@ -543,11 +553,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               transcript = deduped.text
               stopped = true
             }
-            if (prefix === null) {
-              setTarget(prev => { prefix = prev ? `${prev} ` : ''; return prefix + transcript })
-            } else {
-              setTarget(prefix + transcript)
-            }
+            setTarget(prefix + transcript)
             if (setTarget === setInput) setResizeInput(true)
           }
           while (true) {
@@ -2201,10 +2207,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   {speechSupported && (
                     <button
                       className={`spar-mic${recording ? ' recording' : ''}`}
-                      onMouseDown={e => startRecording(e, setSparContext)}
+                      onMouseDown={e => startRecording(e, setSparContext, sparContext)}
                       onMouseUp={stopRecording}
                       onMouseLeave={() => { if (recording) stopRecording() }}
-                      onTouchStart={e => startRecording(e, setSparContext)}
+                      onTouchStart={e => startRecording(e, setSparContext, sparContext)}
                       onTouchEnd={stopRecording}
                       disabled={startingSparring || transcribing}
                       title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
