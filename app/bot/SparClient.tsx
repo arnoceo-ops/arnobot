@@ -464,8 +464,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const scrolledForCountRef = useRef(0)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
+  const lastAutoSaveCountRef = useRef(0)
 
-  useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
+  useEffect(() => {
+    sessionIdRef.current = sessionId
+    lastAutoSaveCountRef.current = 0
+  }, [sessionId])
 
   useEffect(() => {
     setSpeechSupported(true)
@@ -717,6 +721,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
+      // Niets nieuws sinds de vorige beacon (bv. tab twee keer kort naar de achtergrond zonder
+      // dat er tussendoor iets is gezegd): die eerdere aanroep dekt de huidige staat al, dus
+      // geen nieuwe synthese-aanroep nodig.
+      if (messages.length === lastAutoSaveCountRef.current) return
+      lastAutoSaveCountRef.current = messages.length
       // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
       // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
       // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
@@ -730,8 +739,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )
       navigator.sendBeacon('/api/bot/session-end', blob)
     }
+    // beforeunload is op mobiel onbetrouwbaar: de OS bevriest/sluit een tabblad vaak zonder dat
+    // er ooit een unload-event vuurt (het gerapporteerde "gesprek kwijt na tab sluiten op
+    // mobiel"). visibilitychange->hidden is de door browsers zelf aanbevolen, betrouwbaardere
+    // vervanging daarvoor: die vuurt altijd zodra een tab naar de achtergrond gaat, óók als de
+    // tab daarna nooit netjes wordt afgesloten. beforeunload blijft ernaast staan voor de
+    // desktop-navigatie/sluit-gevallen waar hij wel gewoon werkt.
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') handleUnload()
+    }
     window.addEventListener('beforeunload', handleUnload)
-    return () => window.removeEventListener('beforeunload', handleUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [messages, startedFromCommunity, communityConsentChecked])
 
   useEffect(() => {
@@ -1232,7 +1254,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: null }])
     } finally {
       setLoading(false)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      // Niet op mobiel: focus roept daar het schermtoetsenbord weer op, precies op het moment
+      // dat je het net binnengekomen antwoord wil lezen. Op desktop is meteen door kunnen typen
+      // wel prettig, daar heeft focus geen storend neveneffect.
+      if (!isMobile) setTimeout(() => inputRef.current?.focus(), 100)
     }
   }
 
