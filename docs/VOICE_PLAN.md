@@ -55,7 +55,12 @@ Dit is bedoeld om als openingsbericht te plakken in een nieuwe sessie. Kopieer a
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-08-13
+**Laatst bijgewerkt:** 2026-09-29
+
+**Karaoke-highlight + meescrollen tijdens voice-out (gebouwd 2026-09-29).** Aanleiding: op mobiel las je het antwoord niet meer vanaf het begin, de tekst gaf geen houvast bij het gesprokene. `/api/tts-voice` gebruikt nu ElevenLabs' niet-streamende `/with-timestamps`-endpoint (`fetchElevenLabsSpeechWithAlignment` in `lib/voice.ts`) i.p.v. de ruwe audio-stream: één JSON-respons met complete audio (base64) plus karakter-niveau alignment. Bewust niet de streamende `/stream/with-timestamps`-variant gebruikt (chunk-relatieve vs. cumulatieve timing was niet gedocumenteerd te verifiëren, en de client wacht toch al op de complete audio voordat wordt afgespeeld i.p.v. progressief via MediaSource, want mp3-in-MediaSource is onbetrouwbaar op mobiele Safari). Client (`SparClient.tsx`): `buildSpeakTokens`/`findActiveSpeakToken` zetten de alignment om naar woord-tokens, `startSpokenPlayback()` (gedeeld door de voice-mode auto-play én de handmatige ▶-herafspeelknop) bouwt een blob-URL en highlight/scrollt het huidige woord via `ontimeupdate`. Los daarvan is ook het geforceerde meescrollen naar de onderkant tijdens het gewone (niet-voice) streamende antwoord verwijderd: dat volgde de groeiende tekst nu alleen nog als je al onderaan de pagina stond, in plaats van bij elke chunk.
+**Eerstvolgende stap:** geen. Live testen door Arno op een echt mobiel toestel (screenshot-aanleiding was `arno.bot/bot` op mobiel).
+
+**Vorige status-update (2026-08-13):**
 
 **Traject afgerond en volledig live (2026-07-20): plan-kolom + gesprek-met-Arno-boeking + upgrade-flows.** Voor de volledige, actuele abonnementsstructuur zie `docs/ABONNEMENTEN.md` (dat document wordt voortaan bijgehouden bij elke wijziging aan de plan-structuur, dit VOICE_PLAN-statusblok blijft het bouw-logboek van deze specifieke sessie).
 

@@ -118,3 +118,40 @@ export function fetchElevenLabsSpeech(text: string): Promise<Response> {
     body: JSON.stringify({ text, model_id: ELEVENLABS_MODEL_ID }),
   })
 }
+
+export interface ElevenLabsAlignment {
+  characters: string[]
+  character_start_times_seconds: number[]
+  character_end_times_seconds: number[]
+}
+
+export interface ElevenLabsSpeechWithAlignment {
+  audio_base64: string
+  alignment: ElevenLabsAlignment | null
+  normalized_alignment: ElevenLabsAlignment | null
+}
+
+/**
+ * Niet-streamende variant: één complete audio (base64) plus karakter-niveau alignment
+ * (starttijd/eindtijd per letter) in één respons. Gebruikt voor de karaoke-achtige
+ * meescrollende/highlightende weergave in ArnoBot Voice (SparClient.tsx): de client wacht
+ * toch al tot de volledige audio binnen is vóór afspelen (betrouwbaarder op mobiele
+ * browsers dan progressief afspelen via MediaSource), dus de streaming-variant met
+ * per-chunk alignment biedt hier geen voordeel en voegt alleen chunk-grens-complexiteit toe.
+ */
+export async function fetchElevenLabsSpeechWithAlignment(text: string): Promise<ElevenLabsSpeechWithAlignment> {
+  const voiceId = process.env.ELEVENLABS_VOICE_ID!
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps?output_format=mp3_44100_128`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': process.env.ELEVENLABS_API_KEY!,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text, model_id: ELEVENLABS_MODEL_ID }),
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`ElevenLabs with-timestamps ${res.status}: ${errText}`)
+  }
+  return res.json()
+}

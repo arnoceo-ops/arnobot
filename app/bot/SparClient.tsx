@@ -40,6 +40,57 @@ interface Message {
   retryQuestion?: string
 }
 
+interface SpeakAlignment {
+  characters: string[]
+  character_start_times_seconds: number[]
+}
+
+interface SpeakToken {
+  text: string
+  start: number
+}
+
+// Zet de karakter-alignment van ElevenLabs om naar woord-tokens (whitespace als eigen token,
+// zodat spacing exact behouden blijft) met de starttijd van het eerste karakter van elk woord.
+// Basis voor de karaoke-highlight + meescrollen in ArnoBot Voice.
+function buildSpeakTokens(alignment: SpeakAlignment | null | undefined): SpeakToken[] {
+  if (!alignment?.characters?.length) return []
+  const { characters, character_start_times_seconds: starts } = alignment
+  const tokens: SpeakToken[] = []
+  let current = ''
+  let wordStart = 0
+  let inWord = false
+  for (let idx = 0; idx < characters.length; idx++) {
+    const ch = characters[idx]
+    if (/\s/.test(ch)) {
+      if (inWord) { tokens.push({ text: current, start: wordStart }); current = ''; inWord = false }
+      tokens.push({ text: ch, start: starts[idx] })
+    } else {
+      if (!inWord) { wordStart = starts[idx]; inWord = true }
+      current += ch
+    }
+  }
+  if (inWord) tokens.push({ text: current, start: wordStart })
+  return tokens
+}
+
+// Binary search: laatste token waarvan de starttijd nog niet voorbij het huidige afspeelpunt is.
+function findActiveSpeakToken(tokens: SpeakToken[], currentTime: number): number {
+  let lo = 0, hi = tokens.length - 1, result = -1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if (tokens[mid].start <= currentTime) { result = mid; lo = mid + 1 } else { hi = mid - 1 }
+  }
+  return result
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
 interface Props {
   userId: string
   profiel: Record<string, unknown>
@@ -315,6 +366,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
   const [voiceMode, setVoiceMode] = useState(false)
+  // Karaoke-achtige weergave van het bericht dat nu wordt uitgesproken: welke woord-tokens
+  // (buildSpeakTokens) en welk token (index) precies wordt voorgelezen op dit moment.
+  const [speakTokens, setSpeakTokens] = useState<SpeakToken[]>([])
+  const [speakTokenIdx, setSpeakTokenIdx] = useState(-1)
+  const activeSpeakWordRef = useRef<HTMLSpanElement>(null)
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
@@ -600,6 +656,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [synthesisLoading])
 
+  // Karaoke-meescrollen: alleen corrigeren als het huidige woord buiten de comfortabele
+  // leeszone (middelste helft van het scherm) valt, niet bij elk woord opnieuw, anders oogt
+  // het schokkerig in plaats van rustig meelopend met de stem.
+  useEffect(() => {
+    const el = activeSpeakWordRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const margin = window.innerHeight * 0.25
+    if (rect.top < margin || rect.bottom > window.innerHeight - margin) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [speakTokenIdx])
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = '0px'
@@ -734,6 +803,36 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
+  // Haalt de volledige audio + karakter-alignment op (/api/tts-voice, zie lib/voice.ts),
+  // bouwt daar een afspeelbare blob-URL van en wiert 'm op het gegeven <audio>-element,
+  // met een ontimeupdate-handler die het karaoke-highlight/meescroll-token bijhoudt.
+  // Bewust wachten tot de volledige audio binnen is vóór afspelen (geen progressief
+  // MediaSource-afspelen): mp3 in MediaSource is onbetrouwbaar op mobiele Safari, en dat is
+  // precies het platform waar dit vandaan komt.
+  async function startSpokenPlayback(text: string, idx: number, audio: HTMLAudioElement) {
+    const res = await fetch(`/api/tts-voice?text=${encodeURIComponent(text)}`)
+    if (!res.ok) throw new Error('tts_failed')
+    const data = await res.json()
+    const tokens = buildSpeakTokens(data.alignment)
+    const blob = new Blob([base64ToBytes(data.audio_base64) as BlobPart], { type: 'audio/mpeg' })
+    const url = URL.createObjectURL(blob)
+    const stop = () => {
+      setSpeakingIdx(null)
+      setSpeakTokens([])
+      setSpeakTokenIdx(-1)
+      URL.revokeObjectURL(url)
+    }
+    audio.src = url
+    audio.onended = stop
+    audio.onerror = stop
+    audio.ontimeupdate = () => setSpeakTokenIdx(findActiveSpeakToken(tokens, audio.currentTime))
+    audioRef.current = audio
+    setSpeakTokens(tokens)
+    setSpeakTokenIdx(-1)
+    setSpeakingIdx(idx)
+    await audio.play()
+  }
+
   // Alleen voor voice-antwoorden (ElevenLabs, msg.voiceAnswer): de knop die dit aanroept
   // is verwijderd voor gewone tekstberichten (was de OpenAI-tts-1-hd-stem, kwaliteit niet
   // goed genoeg bevonden, zie docs/VOICE_PLAN.md). Het volledige gesproken heen-en-weer-
@@ -743,6 +842,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       audioRef.current?.pause()
       audioRef.current = null
       setSpeakingIdx(null)
+      setSpeakTokens([])
+      setSpeakTokenIdx(-1)
       return
     }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
@@ -750,12 +851,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setTtsLoading(idx)
 
     try {
-      const audio = new Audio(`/api/tts-voice?text=${encodeURIComponent(text)}`)
-      audioRef.current = audio
-      audio.onended = () => setSpeakingIdx(null)
-      audio.onerror = () => setSpeakingIdx(null)
-      setSpeakingIdx(idx)
-      await audio.play()
+      await startSpokenPlayback(text, idx, new Audio())
     } catch {
       setSpeakingIdx(null)
     } finally {
@@ -999,14 +1095,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         ])
 
         // Automatisch afspelen op het al geprimede element (zie boven), zodat dit nog
-        // binnen dezelfde user-gesture-keten valt op mobiel.
+        // binnen dezelfde user-gesture-keten valt op mobiel. Bewust niet awaited: de rest
+        // van deze functie (loading uitzetten) hoeft niet te wachten tot de audio compleet
+        // is opgehaald en gedecodeerd.
         const audio = voiceAudioRef.current ?? new Audio()
-        audioRef.current = audio
-        audio.src = `/api/tts-voice?text=${encodeURIComponent(answer)}`
-        audio.onended = () => setSpeakingIdx(null)
-        audio.onerror = () => setSpeakingIdx(null)
-        setSpeakingIdx(startLen + 1)
-        audio.play().catch(() => setSpeakingIdx(null))
+        startSpokenPlayback(answer, startLen + 1, audio).catch(() => setSpeakingIdx(null))
       } else {
         const actieContext = (actieStatus && history.length === 0 && actieOpvolging)
           ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'ingepland' : 'nog niet gedaan'}] `
@@ -2585,7 +2678,23 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
+                      {i === speakingIdx && speakTokens.length > 0 ? (
+                        <span className="msg-arno-text">
+                          {speakTokens.map((tok, k) => /^\s+$/.test(tok.text) ? (
+                            <React.Fragment key={k}>{tok.text}</React.Fragment>
+                          ) : (
+                            <span
+                              key={k}
+                              ref={k === speakTokenIdx ? activeSpeakWordRef : undefined}
+                              style={{ color: k < speakTokenIdx ? '#f1f5f9' : k === speakTokenIdx ? '#f59e0b' : '#9ca3af' }}
+                            >
+                              {tok.text}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
+                      )}
                       {msg.log_id && !msg.content?.startsWith('**') && (
                         <div style={{ display: 'flex', gap: 4, marginTop: 20, alignItems: 'center' }}>
                           <button

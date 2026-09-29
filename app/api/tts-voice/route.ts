@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
-import { fetchElevenLabsSpeech, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
+import { fetchElevenLabsSpeechWithAlignment, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,9 +23,10 @@ const voiceTtsRateLimit = new Ratelimit({
   prefix: 'arnobot:voice-tts',
 })
 
-// GET, niet POST: een <audio src="..."> laat de browser de respons zelf progressief
-// ophalen en afspelen zodra de eerste bytes binnen zijn (zelfde reden als de
-// admin-testroute, zie app/api/admin/voice-test/tts/route.ts).
+// Geeft JSON terug (audio_base64 + karakter-alignment, zie lib/voice.ts), geen ruwe
+// audio-stream: de client bouwt hier een afspeelbare blob uit plus de karaoke-achtige
+// meescrollende/highlightende weergave (SparClient.tsx). Bewust geen <audio src="...">
+// meer op dit endpoint, dat kan geen JSON consumeren.
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return new NextResponse(null, { status: 401 })
@@ -53,11 +54,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Voice niet geconfigureerd' }, { status: 500 })
   }
 
-  const elevenRes = await fetchElevenLabsSpeech(text)
-
-  if (!elevenRes.ok || !elevenRes.body) {
-    const errText = await elevenRes.text().catch(() => '')
-    console.error('[tts-voice] ElevenLabs error:', elevenRes.status, errText)
+  let ttsData
+  try {
+    ttsData = await fetchElevenLabsSpeechWithAlignment(text)
+  } catch (err) {
+    console.error('[tts-voice] ElevenLabs error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'TTS mislukt' }, { status: 502 })
   }
 
@@ -66,10 +67,7 @@ export async function GET(req: NextRequest) {
     .insert({ user_id: userId, char_count: text.length })
     .then(({ error }) => { if (error) console.error('[tts-voice] log insert failed:', error.message) })
 
-  return new Response(elevenRes.body, {
-    headers: {
-      'Content-Type': 'audio/mpeg',
-      'Cache-Control': 'no-store',
-    },
+  return NextResponse.json(ttsData, {
+    headers: { 'Cache-Control': 'no-store' },
   })
 }

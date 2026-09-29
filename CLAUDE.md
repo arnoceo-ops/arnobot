@@ -517,7 +517,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/admin/analyse-chat/route.ts` (doorvragen op de briefing) | `claude-fable-5-1` | Zelfde databundel. Bewust niet opgeslagen. Naar Fable 5.1 (2026-09-07). | 2026-09-07 |
 | `app/api/transcribe/route.ts` | `whisper-1` (OpenAI, rauwe fetch) | Spraak-naar-tekst voor voice-input. | 2026-07 |
 | `app/api/chat-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `claude-sonnet-4-6` | Korte voice-systeeminstructie (`buildVoiceSystemPrompt`), niet-streamend. Eigen rate-limiter (30/uur). | 2026-07 |
-| `app/api/tts-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch) | Streaming TTS via `lib/voice.ts`. Verbruik gelogd. Eigen rate-limiter (60/uur). | 2026-07 |
+| `app/api/tts-voice/route.ts` (ArnoBot Voice, echte gebruikers) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch) | Niet-streamend: `/with-timestamps`-endpoint via `lib/voice.ts` (`fetchElevenLabsSpeechWithAlignment`), geeft complete audio + karakter-alignment in één JSON-respons voor de karaoke-highlight/meescroll-weergave in `SparClient.tsx`. Bewust geen MediaSource-streaming (onbetrouwbaar op mobiele Safari). Verbruik gelogd. Eigen rate-limiter (60/uur). | 2026-09-29 |
 | `app/api/admin/voice-test/chat/route.ts` (admin-only testfase) | `claude-sonnet-4-6` | Interne testroute, deelt `getVoiceAnswer()`. | 2026-07 |
 | `app/api/admin/voice-test/tts/route.ts` (admin-only testfase) | `eleven_flash_v2_5` (ElevenLabs, rauwe fetch) | Interne testroute, deelt `fetchElevenLabsSpeech()`. | 2026-07 |
 
