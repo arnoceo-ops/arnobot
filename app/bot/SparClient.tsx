@@ -1037,6 +1037,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, messages, explicitClose: true, startedFromCommunity, communityConsent: communityConsentChecked })
       })
+      if (!res.ok) throw new Error('session_end_failed')
       const data = await res.json()
       if (data.summary) {
         track('gesprek_afgerond', { aantal_berichten: messages.length })
@@ -1056,10 +1057,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         setShowSluiten(true)
         refreshHints()
       } else {
-        reset()
+        throw new Error('session_end_no_summary')
       }
     } catch {
-      reset()
+      // Bewust NIET meer reset(): dat gooide het hele gesprek stilzwijgend weg zodra het
+      // sluiten om welke reden dan ook mislukte (netwerkfout, serverfout), zonder dat je
+      // ooit een synthese zag of iets opgeslagen werd. Het gesprek blijft nu gewoon staan,
+      // met een duidelijke melding, zodat je het via SLUIT opnieuw kan proberen.
+      setMessages(prev => [...prev, { role: 'arno', content: `Het sluiten is niet gelukt. Je gesprek staat nog hier: probeer het opnieuw via SLUIT, of stuur Arno een [WhatsApp](${SUPPORT_WHATSAPP_VRAAG}) als het blijft mislukken.`, hint: null }])
     } finally {
       setSynthesisLoading(false)
     }

@@ -1,7 +1,7 @@
 ﻿export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
@@ -99,6 +99,43 @@ export async function POST(req: NextRequest) {
       `${m.role === 'user' ? 'GEBRUIKER' : 'ARNO'}: ${m.content}`
     )
     .join('\n\n')
+
+  // Blog-suggesties: eerst inline geciteerde blogs uit de berichten halen (synchroon, geen
+  // netwerkcall nodig).
+  type BlogSuggestion = { title: string; url: string }
+  const inlineBlogSuggestions: BlogSuggestion[] = []
+  const seenBlogUrls = new Set<string>()
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
+  for (const msg of messages as { role: string; content: string }[]) {
+    if (msg.role !== 'arno') continue
+    let match
+    const re = new RegExp(mdLinkRegex.source, 'g')
+    while ((match = re.exec(msg.content)) !== null) {
+      const [, text, url] = match
+      if (url.includes('arno.blog') && !seenBlogUrls.has(url)) {
+        seenBlogUrls.add(url)
+        const title = text.length > 60 ? text.slice(0, 57) + '...' : text
+        inlineBlogSuggestions.push({ title, url })
+        if (inlineBlogSuggestions.length >= 3) break
+      }
+    }
+    if (inlineBlogSuggestions.length >= 3) break
+  }
+
+  const userQuestions = (messages as { role: string; content: string }[])
+    .filter(m => m.role === 'user')
+    .map(m => m.content)
+    .join(' ')
+
+  // Alvast op userQuestions zoeken, PARALLEL met de synthese hieronder i.p.v. er sequentieel
+  // na te wachten: dit was de grootste sluipende vertraging bij het sluiten van een gesprek
+  // (RAG-zoekopdracht + rerank liep vroeger pas ná de synthese, samen met de embedding- en
+  // entiteiten-stappen goed voor ~10s extra wachttijd zonder dat de gebruiker daar iets van
+  // op het scherm zag). Alleen gestart als er geen inline blogs zijn, zelfde voorwaarde als
+  // de oorspronkelijke fallback hieronder.
+  const userQuestionsBlogPromise = inlineBlogSuggestions.length === 0 && userQuestions
+    ? getRelevantChunks(userQuestions, 15).catch(() => [])
+    : Promise.resolve([])
 
   // Synthese, feiten en uitdaging parallel genereren
   let summary = ''
@@ -224,53 +261,35 @@ ${RULE_NO_INVENTED_DETAILS}`,
     await notifyCronFailure(`session-end: synthese (sessie ${sessionId})`, e)
   }
 
-  // Blog-suggesties: eerst inline geciteerde blogs uit de berichten halen
-  type BlogSuggestion = { title: string; url: string }
-  const blogSuggestions: BlogSuggestion[] = []
-
-  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
-  const seenUrls = new Set<string>()
-  for (const msg of messages as { role: string; content: string }[]) {
-    if (msg.role !== 'arno') continue
-    let match
-    const re = new RegExp(mdLinkRegex.source, 'g')
-    while ((match = re.exec(msg.content)) !== null) {
-      const [, text, url] = match
-      if (url.includes('arno.blog') && !seenUrls.has(url)) {
-        seenUrls.add(url)
-        const title = text.length > 60 ? text.slice(0, 57) + '...' : text
-        blogSuggestions.push({ title, url })
-        if (blogSuggestions.length >= 3) break
+  // Blog-suggesties: begin met de inline blogs (al hierboven bepaald) en vul aan met het
+  // resultaat van de userQuestions-zoekopdracht die parallel met de synthese liep.
+  const blogSuggestions: BlogSuggestion[] = [...inlineBlogSuggestions]
+  if (blogSuggestions.length === 0) {
+    const userQuestionsChunks = await userQuestionsBlogPromise
+    for (const c of userQuestionsChunks) {
+      if (c.url && c.source && c.url.includes('arno.blog') && !seenBlogUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
+        seenBlogUrls.add(c.url)
+        blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url })
+        if (blogSuggestions.length >= 2) break
       }
     }
-    if (blogSuggestions.length >= 3) break
-  }
-
-  // Fallback: eerst op gebruikersvragen, dan op samenvatting
-  if (blogSuggestions.length === 0) {
-    try {
-      const userQuestions = (messages as { role: string; content: string }[])
-        .filter(m => m.role === 'user')
-        .map(m => m.content)
-        .join(' ')
-
-      const queries = [userQuestions, summary].filter(Boolean)
-      for (const query of queries) {
-        if (blogSuggestions.length >= 2) break
-        const chunks = await getRelevantChunks(query, 15)
+    // userQuestions leverde niet genoeg op: nog een keer zoeken, nu op de samenvatting (pas
+    // na de synthese beschikbaar). Dit is de uitzondering, niet het gangbare pad: de kleine
+    // extra sequentiële vertraging hier is aanvaardbaar, in tegenstelling tot de userQuestions-
+    // zoekopdracht die vrijwel altijd raak is en daarom hierboven al parallel liep.
+    if (blogSuggestions.length < 2 && summary) {
+      try {
+        const chunks = await getRelevantChunks(summary, 15)
         for (const c of chunks) {
-          if (c.url && c.source && c.url.includes('arno.blog') && !seenUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
-            seenUrls.add(c.url)
-            blogSuggestions.push({
-              title: c.source.replace(/\s*\([^)]+\)\s*$/, ''),
-              url: c.url,
-            })
+          if (c.url && c.source && c.url.includes('arno.blog') && !seenBlogUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
+            seenBlogUrls.add(c.url)
+            blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url })
             if (blogSuggestions.length >= 2) break
           }
         }
+      } catch (e) {
+        console.error('Blog suggestions error:', e)
       }
-    } catch (e) {
-      console.error('Blog suggestions error:', e)
     }
   }
 
@@ -300,20 +319,25 @@ ${RULE_NO_INVENTED_DETAILS}`,
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
 
-  // Embedding genereren en opslaan (voor semantisch zoeken)
-  try {
-    const embedding = await embedSessionText(title, summary, feiten)
-    await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
-  } catch (e) {
-    console.error('[session-end] Embedding error:', e)
-  }
-
-  // Entiteiten extraheren voor het patroongeheugen (namen, bedrijven, terugkerende thema's)
-  try {
-    await extractAndStoreEntities(userId, sessionId, conversationText)
-  } catch (e) {
-    console.error('[session-end] Entiteiten-extractie error:', e)
-  }
+  // Embedding en entiteiten-extractie zijn zuiver achtergrondwerk: de client leest het
+  // resultaat hiervan nooit terug in deze respons (alleen summary/feiten/blogs/uitdaging).
+  // Draaien pas ná het versturen van de respons (after(), Vercel's waitUntil eronder), zodat
+  // SLUIT niet langer op deze twee sequentiële AI-aanroepen hoeft te wachten. Was samen met de
+  // blog-zoekopdracht hierboven de grootste sluipende vertraging bij het sluiten van een
+  // gesprek (~10s), zonder dat de gebruiker daar iets van op het scherm zag.
+  after(async () => {
+    try {
+      const embedding = await embedSessionText(title, summary, feiten)
+      await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
+    } catch (e) {
+      console.error('[session-end] Embedding error:', e)
+    }
+    try {
+      await extractAndStoreEntities(userId, sessionId, conversationText)
+    } catch (e) {
+      console.error('[session-end] Entiteiten-extractie error:', e)
+    }
+  })
 
   return NextResponse.json({ ok: true, summary, blogs: blogSuggestions, uitdaging: explicitClose ? (uitdaging || null) : null })
 }
