@@ -406,7 +406,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
-  const autoFollowRef = useRef(true)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
 
@@ -563,6 +562,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     window.scrollTo({ top, behavior: 'smooth' })
   }
 
+  // Alleen "meescrollen" met een binnenstromend antwoord als je al écht onderaan de pagina
+  // staat (zelfde patroon als ChatGPT/Slack), nooit standaard. Een nieuw antwoord begint
+  // bewust bovenaan in beeld (scrollToRef(lastMessageRef) hieronder) zodat je vanaf het begin
+  // kan lezen en zelf in je eigen tempo naar beneden scrolt; zonder deze drempel-check trok
+  // de eerste binnenkomende chunk je meteen weer naar de onderkant.
+  function isNearBottom() {
+    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120
+  }
+
   useEffect(() => {
     if (showSluiten && synthesisRef.current) {
       scrollToRef(synthesisRef)
@@ -588,31 +596,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // nog moest komen.
   useEffect(() => {
     if (synthesisLoading) {
-      autoFollowRef.current = true
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
   }, [synthesisLoading])
-
-  // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
-  // gebruiker zelf scrolt: dan stopt het automatisch volgen tot de volgende vraag. Zonder dit
-  // moest je tijdens het genereren zelf blijven scrollen om de groeiende tekst bij te houden.
-  // Bewust wheel/touchmove i.p.v. het generieke 'scroll'-event: er lopen hier ook eigen
-  // programmatische smooth-scrolls (scrollToRef/bottomRef.scrollIntoView, elders in dit
-  // bestand), en die vuren tijdens hun animatie tussentijds ook 'scroll'-events af die dan
-  // (verkeerd) als "gebruiker scrolt weg" werden gelezen, waardoor meescrollen na de vorige
-  // wijziging soms helemaal niet meer werkte. wheel/touchmove komen alleen van echte
-  // gebruikersinput, nooit van een programmatische scroll.
-  useEffect(() => {
-    function handleUserScroll() {
-      autoFollowRef.current = false
-    }
-    window.addEventListener('wheel', handleUserScroll, { passive: true })
-    window.addEventListener('touchmove', handleUserScroll, { passive: true })
-    return () => {
-      window.removeEventListener('wheel', handleUserScroll)
-      window.removeEventListener('touchmove', handleUserScroll)
-    }
-  }, [])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -960,7 +946,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
     setLoading(true)
     setStreamingStarted(false)
-    autoFollowRef.current = true
 
     try {
       if (sparModus === 'sparren') {
@@ -1121,7 +1106,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText }
             return updated
           })
-          if (autoFollowRef.current) bottomRef.current?.scrollIntoView({ block: 'end' })
+          if (isNearBottom()) bottomRef.current?.scrollIntoView({ block: 'end' })
         }
 
         const metaIndex = rawBuffer.indexOf(META_MARKER)
@@ -1465,7 +1450,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           bottom: 0; left: 0; right: 0;
           background: rgba(17,24,39,0.97);
           border-top: 2px solid #f59e0b;
-          padding: 20px 16px 28px;
+          padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
           z-index: 50;
         }
         .spar-input-label {
@@ -1916,7 +1901,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )}
       <VersionBanner />
 
-      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
+      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 } : {}}>
 
         {mode === 'gesprek' && (
           <div className="spar-hero">
@@ -2783,7 +2768,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             </div>
           )}
-          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 280 : 240 }} />
+          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 }} />
         </div>
       </div>
 
