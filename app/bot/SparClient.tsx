@@ -384,6 +384,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // zwaarder dan het risico op een korte, onopvallende wissel zodra de community-set binnenkomt.
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
+  // Onderste balk (output-toggle/invoer/knoppen) verdwijnt tijdens het afspelen van VoiceOut,
+  // zodat het volledige antwoord leesbaar is, en verschijnt weer zodra je zelf verder naar
+  // beneden scrolt (signaal dat je wil interacteren) of de audio stopt.
+  const [voiceBarHidden, setVoiceBarHidden] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   // Karaoke-achtige weergave van het bericht dat nu wordt uitgesproken: welke woord-tokens
   // (buildSpeakTokens) en welk token (index) precies wordt voorgelezen op dit moment.
@@ -850,7 +854,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }, 0)
   }
 
-  function reset() {
+  function reset({ focus = true }: { focus?: boolean } = {}) {
     const newId = crypto.randomUUID()
     localStorage.setItem('arnobot_session', newId)
     setSessionId(newId)
@@ -876,7 +880,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setCommunityConsentChecked(false)
     setShowCommunityConsent(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setTimeout(() => inputRef.current?.focus(), 150)
+    if (focus) setTimeout(() => inputRef.current?.focus(), 150)
   }
 
   async function handleShare() {
@@ -958,6 +962,22 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
+  useEffect(() => {
+    setVoiceBarHidden(speakingIdx !== null)
+  }, [speakingIdx])
+
+  useEffect(() => {
+    if (!voiceBarHidden) return
+    let lastY = window.scrollY
+    function onScroll() {
+      const y = window.scrollY
+      if (y > lastY + 4) setVoiceBarHidden(false)
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [voiceBarHidden])
+
   async function handleNieuw() {
     if (synthesisLoading) return
     if (synthesisMessageCount > 0 && messages.length <= synthesisMessageCount) {
@@ -1007,7 +1027,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       const msgs = messages
       const community = startedFromCommunity
       const consent = communityConsentChecked
-      reset()
+      // focus: false, anders opent de auto-focus 150ms later het mobiele toetsenbord
+      // meteen weer na het sluiten, wat de toast hieronder (fixed onderin) kan verbergen.
+      reset({ focus: false })
       fetch('/api/bot/session-end', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1686,6 +1708,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           border-top: 2px solid #f59e0b;
           padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
           z-index: 50;
+          transition: transform 0.25s ease;
+        }
+        .spar-input-area.active.voice-hidden {
+          transform: translateY(100%);
         }
         .spar-input-label {
           font-family: 'Bebas Neue', sans-serif;
@@ -2283,7 +2309,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}${stickyActive && voiceBarHidden ? ' voice-hidden' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               {sparModus === 'sparren' ? (
@@ -2929,7 +2955,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {showSluiten && sparModus === 'sparren' && !loading && (
             <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,60px)', display: 'flex', justifyContent: 'center', background: '#111827' }}>
               <button
-                onClick={reset}
+                onClick={() => reset()}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#d97706')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#f59e0b')}
