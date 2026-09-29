@@ -42,14 +42,30 @@ export async function POST(req: NextRequest) {
   })
   if (!access.access) return NextResponse.json({ error: 'voice_not_enabled', reason: access.reason }, { status: 403 })
 
-  const { text } = await req.json().catch(() => ({}))
+  const { text, sessionId } = await req.json().catch(() => ({}))
   if (!text || typeof text !== 'string' || !text.trim()) {
     return NextResponse.json({ error: 'Geen tekst' }, { status: 400 })
   }
 
   try {
     const answer = await getVoiceAnswer(text)
-    return NextResponse.json({ answer })
+
+    // Zonder deze insert bevat arnobot_rds_logs geen enkele rij voor een voice-gesprek, en
+    // telt session-end/route.ts (messageCount, "de echte telling uit de database") zo'n
+    // gesprek dus altijd als leeg: geen synthese, geen opslag in de sessiehistorie, ondanks
+    // een geslaagd antwoord. Zelfde insert-vorm als de tekst-chat in app/api/chat/route.ts.
+    let logId: string | null = null
+    if (sessionId) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
+      const { data: logRow } = await supabase
+        .from('arnobot_rds_logs')
+        .insert({ question: text, answer, ip, session_id: sessionId, user_id: userId })
+        .select('id')
+        .single()
+      logId = logRow?.id ?? null
+    }
+
+    return NextResponse.json({ answer, log_id: logId })
   } catch (err) {
     console.error('[chat-voice] error:', err instanceof Error ? err.message : String(err))
     return NextResponse.json({ error: 'Verzoek mislukt' }, { status: 500 })

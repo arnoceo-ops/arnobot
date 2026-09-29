@@ -1170,7 +1170,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const res = await fetch('/api/chat-voice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: question })
+          body: JSON.stringify({ text: question, sessionId })
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
@@ -1187,7 +1187,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           return
         }
         const answer = data.answer || 'Geen antwoord ontvangen.'
-        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null, voiceAnswer: true }])
+        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: data.log_id ?? null, feedback: null, voiceAnswer: true }])
         setHistory(prev => [
           ...prev,
           { role: 'user', content: question },
