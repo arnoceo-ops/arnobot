@@ -73,7 +73,7 @@ Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aanda
 #### Milestone: Pro-upgrades bij 50 actieve gebruikers
 Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Vercel Firewall** aanzetten
-- **Supabase PITR** aanzetten ($100/maand extra bovenop Supabase Pro). Drempel bewust op 100 gebruikers (Arno's keuze), automatisch verwerkt in Abacus (`TARIEVEN.supabasePitrDrempel`). **Direct bij het aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, tabellen/rijen/encoding checken, tijdelijk project verwijderen).
+- **Supabase PITR** aanzetten ($100/maand extra bovenop Supabase Pro). Drempel bewust op 150 gebruikers (Arno's keuze, verhoogd van 100 op 2026-09-29), automatisch verwerkt in Abacus (`TARIEVEN.supabasePitrDrempel`). **Direct bij het aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, tabellen/rijen/encoding checken, tijdelijk project verwijderen).
 - **Clerk:** inactivity timeout inschakelen (zie hieronder) en session limits aanscherpen
 - **WhatsApp:** support-nummer overzetten van de WhatsApp Business-app naar het WhatsApp Business Platform (API) met een helpdesktool en een echte DPA met Meta (zie hieronder)
 

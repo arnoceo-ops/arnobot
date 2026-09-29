@@ -14,9 +14,10 @@ export const TARIEVEN = {
   anthropicPerBericht: 0.015,
   // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
   kostenPerAnalyse: 0.007,
-  // Fable 5: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze twee
-  // (arnobot_coaching is één rij per gebruiker, geen append-log), dus blijft
-  // een aanname, ook in de trackrecord-berekening.
+  // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
+  // twee (arnobot_coaching is één rij per gebruiker, geen append-log), dus
+  // blijft een aanname, ook in de trackrecord-berekening. Prijs ongewijzigd
+  // t.o.v. Fable 5 ($10 in / $50 uit per 1M tokens), geverifieerd 2026-09-29.
   coachingPerGebruikerPerMaand: 2,
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruikerPerMaand: 10,
@@ -67,21 +68,25 @@ export const TARIEVEN = {
   // snapshot). Geen handmatige toggle (besloten 2026-08-11, op Arno's
   // verzoek): telt automatisch mee zodra het gebruikersaantal de drempel
   // haalt, zodat dit niet vergeten kan worden aan te zetten. Bewust een
-  // hogere drempel (100) dan de andere Pro-upgrades in CLAUDE.md (50):
-  // Arno's eigen keuze (2026-08-11), losse drempel, geen gekoppelde mijlpaal.
+  // hogere drempel (150) dan de andere Pro-upgrades in CLAUDE.md (50):
+  // Arno's eigen keuze, losse drempel, geen gekoppelde mijlpaal. Verhoogd van
+  // 100 naar 150 op 2026-09-29.
   supabasePitrUsd: 100,
-  supabasePitrDrempel: 100,
+  supabasePitrDrempel: 150,
   clerkProUsd: 25,
   clerkProActief: false,
   // Moneybird (boekhouding, gekoppeld aan Mollie): Growth-tier, de eerste tier
   // met terugkerende facturen/abonnementen (nodig voor Team-facturatie),
-  // besloten 2026-09-29 bij de Mollie/Moneybird-keuze. Prijs is een schatting
-  // van moneybird.com/pricing (bronnen wijken tussen €28-29 excl. btw), nog
-  // te bevestigen bij het aanmaken van het account. EUR-native, geen fx nodig
+  // besloten 2026-09-29 bij de Mollie/Moneybird-keuze. €35/maand is het
+  // maandelijkse-betaling-tarief (bevestigd op moneybird.nl/prijzen,
+  // geverifieerd 2026-09-29); €29 was het jaarlijkse-betaling-tarief, niet van
+  // toepassing want Arno betaalt maandelijks. Altijd meegeteld, geen toggle
+  // (besloten 2026-09-29, was eerst `moneybirdActief` net als Clerk Pro, maar
+  // dit account staat altijd aan zodra het bestaat, geen optioneel scenario
+  // zoals Clerk Pro's inactivity-timeout-afweging). EUR-native, geen fx nodig
   // in vasteKostenPerMaand/computeScenarioKosten behalve de omrekening naar de
   // dollar-context daar (zelfde patroon als sentryEur).
-  moneybirdEur: 29,
-  moneybirdActief: false,
+  moneybirdEur: 35,
   // Bevestigd door Arno (2026-09-17): nog op Sentry's gratis tier, geen
   // betaald plan. Het eerdere bedrag (26) was een currency-mismatch, Sentry's
   // eigen prijzen zijn in USD ($26/mo jaarlijks, $29/mo maandelijks), niet
@@ -93,11 +98,12 @@ export const TARIEVEN = {
   // betaalmethode, dus geen verrassingskosten. Opnemen zodra een van die limieten
   // structureel wordt overschreden of er een betaald plan wordt genomen. Bij de
   // kwartaalcheck controleren tegen het werkelijke PostHog-verbruik.
-  // Bijgewerkt 2026-09-17 (kwartaalcheck-achtige verificatie): was 1.08, live
-  // mid-market koers was op dat moment 1,1542. Was ~7% te laag, wat elke
-  // USD-kostenpost (Vercel, Supabase, Clerk, Porkbun) structureel te laag
-  // omrekende naar EUR.
-  fxRateEurUsd: 1.1542,
+  // Bijgewerkt 2026-09-29 (doorrekenronde na de Mollie/Moneybird-migratie):
+  // was 1.1542, live mid-market koers op dat moment (xe.com) was 1,1350. Was
+  // ~1,7% te hoog, wat elke USD-kostenpost (Vercel, Supabase, Clerk, Porkbun)
+  // structureel iets te hoog omrekende naar EUR. Vorige update 2026-09-17: was
+  // toen 1.08, ~7% te laag.
+  fxRateEurUsd: 1.135,
   domeinPerJaarUsd: 52,
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
@@ -142,14 +148,17 @@ export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: n
 }
 
 // gebruikersAantal: echt gemeten actieve gebruikers deze maand (Trackrecord).
-// PITR telt automatisch mee zodra dat de mijlpaal-drempel haalt.
-export function vasteKostenPerMaand(gebruikersAantal: number): number {
+// PITR telt automatisch mee zodra dat de mijlpaal-drempel haalt. fxRate:
+// optioneel overschrijfbaar met een live-opgehaalde koers (lib/fxRate.ts),
+// valt terug op de hardcoded TARIEVEN.fxRateEurUsd als niemand er een
+// meegeeft (besloten 2026-09-29, bij de invoering van de live FX-koers).
+export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? TARIEVEN.supabaseProUsd : 0)
     + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
-    + (TARIEVEN.moneybirdActief ? TARIEVEN.moneybirdEur * TARIEVEN.fxRateEurUsd : 0)
-    + TARIEVEN.sentryEur * TARIEVEN.fxRateEurUsd
+    + TARIEVEN.moneybirdEur * fxRate
+    + TARIEVEN.sentryEur * fxRate
     + TARIEVEN.domeinPerJaarUsd / 12
 }
 
@@ -189,7 +198,6 @@ export type Inputs = {
   supabasePro: boolean
   clerkPro: boolean
   moneybirdEur: number
-  moneybirdActief: boolean
   sentryEur: number
   fxRate: number
   upstashFreeLimit: number
@@ -252,7 +260,6 @@ export const DEFAULT_INPUTS: Inputs = {
   supabasePro: TARIEVEN.supabaseProActief,
   clerkPro: TARIEVEN.clerkProActief,
   moneybirdEur: TARIEVEN.moneybirdEur,
-  moneybirdActief: TARIEVEN.moneybirdActief,
   sentryEur: TARIEVEN.sentryEur,
   fxRate: TARIEVEN.fxRateEurUsd,
   upstashFreeLimit: TARIEVEN.upstashFreeLimit,
@@ -330,7 +337,7 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
-  const moneybirdUsd = inputs.moneybirdActief ? inputs.moneybirdEur * inputs.fxRate : 0
+  const moneybirdUsd = inputs.moneybirdEur * inputs.fxRate
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
     + (inputs.supabasePro ? TARIEVEN.supabaseProUsd : 0)
     + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
@@ -356,8 +363,11 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 // en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
 //
 // Mollie-tarieven (mollie.com/pricing, geverifieerd 2026-09-29): kaart
-// (EU-consument) 1,8% + €0,25; SEPA-incasso (recurring) 0,4% + €0,25; SEPA-
-// overschrijving (Team-facturen via Moneybird-betaallink) €0,25 vlak, geen %.
+// (EU-consument) 1,8% + €0,25; SEPA-incasso (recurring) €0,35 vlak, geen %
+// (was eerst 0,4%+€0,25 aangenomen o.b.v. derde-partij-bronnen, Mollie's eigen
+// pricing-pagina bevestigt een vlak tarief zonder percentage-component,
+// gecorrigeerd bij de doorrekenronde van 2026-09-29); SEPA-overschrijving
+// (Team-facturen via Moneybird-betaallink) €0,25 vlak, geen %.
 // Realistisch NL-verkeerspatroon voor terugkerende Basic/Pro-abonnementen:
 // eerste betaling via iDEAL (mandaat), vervolgtermijnen via SEPA-incasso, dus
 // de meerderheid van het volume loopt NIET via kaart. pctCreditcard is bewust
@@ -413,7 +423,7 @@ export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = {
   mdrPct: 1.8, mdrFixed: 0.25, pctCreditcard: 25,
-  sepaPct: 0.4, sepaFixed: 0.25,
+  sepaPct: 0, sepaFixed: 0.35,
   teamFixed: 0.25,
 }
 // Team-tarief (besloten 2026-08-01, jaaroptie toegevoegd 2026-08-10): €97

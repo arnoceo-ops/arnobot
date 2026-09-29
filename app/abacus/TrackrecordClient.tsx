@@ -15,6 +15,7 @@ type Meting = {
   prognose_usd: number
   werkelijke_kosten_usd: number | null
   afgesloten_op: string | null
+  fx_rate_live?: boolean
 }
 
 function fmtUSD(n: number | null): string {
@@ -156,6 +157,9 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
           <div style={headlineValueStyle}>
             {fmtUSD(liveHuidigeMaand.prognose_usd)}
           </div>
+          {liveHuidigeMaand.fx_rate_live === false && (
+            <p style={{ fontSize: 11.5, color: '#6b7280', marginTop: 4 }}>Live EUR/USD-koers ophalen mislukt, fallback-waarde gebruikt voor de EUR-omrekening.</p>
+          )}
           <button
             onClick={handleAfsluiten}
             disabled={afsluiten}

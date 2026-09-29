@@ -712,7 +712,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - Database backups (Settings > Backups) — automatisch dagelijks op Pro plan (7 dagen bewaartermijn)
 - RLS-status controleren: Database > Tables, kolom RLS mag nooit "Disabled" tonen
 
-**Status:** Pro-plan actief. RLS aan op alle tabellen (geen policies, veilig zolang uitsluitend de service-role-key gebruikt wordt). PITR (Point-In-Time Recovery) nog niet aangezet — gepland bij 100 actieve gebruikers, zie CLAUDE.md.
+**Status:** Pro-plan actief. RLS aan op alle tabellen (geen policies, veilig zolang uitsluitend de service-role-key gebruikt wordt). PITR (Point-In-Time Recovery) nog niet aangezet, gepland bij 150 actieve gebruikers, zie CLAUDE.md.
 
 ### Clerk
 **Doel:** Authenticatie, gebruikersbeheer, LinkedIn OAuth.
@@ -852,7 +852,7 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 2. **RLS Supabase — bewust pending:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend, geen database-afgedwongen garantie). **Triggercriterium om alsnog op te pakken:** een tweede developer die routinematig gebruikersdata-routes wijzigt (het huidige risico is grotendeels beheersbaar zolang Arno alle wijzigingen zelf overziet), een compliance-eis van een enterprise-klant, of een keer dat de CI-check daadwerkelijk iets vindt dat pas laat wordt opgemerkt. Echte multi-tenant RLS met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is dan een apart traject van meerdere dagen, raakt ~40 routes.
 3. **Embedding-modellen verouderd — bewust pending:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated (nog geen aangekondigde einddatum). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel zonder dat de live zoekfunctie breekt (dual-write of versiegescheiden migratie). **Triggercriterium:** Voyage kondigt een harde uitfaseerdatum aan voor een van beide modellen, of de kwaliteitswinst van voyage-4 wordt de moeite waard bevonden bij een gerichte test.
 4. **Share intrekken:** Gebouwd maar bewust uitgesteld. Kleine kans op probleem bij huidige doelgroep.
-5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (100 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.
+5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (150 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.
 6. **Clerk `createRouteMatcher()`:** gedeprecate sinds 7.5.14 t.g.v. `auth.protect()` per route, nog niet gemigreerd in `proxy.ts`. Geen harde deadline.
 7. **Clerk TLS-cipher-deadline:** 18 januari 2027, vermoedelijk geen actie nodig, vlak vóór de deadline nog een keer bevestigen.
 8. **Anthropic API-key-rotatie:** harde deadline 6 januari 2027 voor zowel arnobot als salescanvas-app.

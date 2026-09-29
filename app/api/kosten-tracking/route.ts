@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { TARIEVEN, elevenLabsCost, vasteKostenPerMaand } from '@/lib/kostenTarieven'
+import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -112,7 +113,7 @@ async function meetOmzet(prijzen?: { basis?: number; premium?: number }): Promis
   }
 }
 
-function berekenPrognoseKostenUsd(m: Meting): number {
+function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
   const anthropicKosten = m.berichten_count * TARIEVEN.anthropicPerBericht
   const analysesKosten = m.analyses_count * TARIEVEN.kostenPerAnalyse
   const fable5Kosten = m.gebruikers_count * (
@@ -131,7 +132,7 @@ function berekenPrognoseKostenUsd(m: Meting): number {
   const upstashOverage = Math.max(0, upstashCommands - TARIEVEN.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * TARIEVEN.upstashPricePer100k
 
-  return vasteKostenPerMaand(m.gebruikers_count) + anthropicKosten + analysesKosten + fable5Kosten
+  return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + analysesKosten + fable5Kosten
     + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
 }
 
@@ -153,14 +154,15 @@ export async function GET() {
 
   let liveHuidigeMaand = null
   if (!alAfgesloten) {
-    const [meting, omzet] = await Promise.all([meetGebruikVoorMaand(huidigeMaand), meetOmzet()])
-    const prognoseKostenUsd = berekenPrognoseKostenUsd(meting)
+    const [meting, omzet, fxRate] = await Promise.all([meetGebruikVoorMaand(huidigeMaand), meetOmzet(), getLiveFxRateEurUsd()])
+    const prognoseKostenUsd = berekenPrognoseKostenUsd(meting, fxRate.rate)
     liveHuidigeMaand = {
       maand: huidigeMaand,
       ...meting,
       ...omzet,
       prognose_usd: prognoseKostenUsd,
-      prognose_kosten_eur: prognoseKostenUsd / TARIEVEN.fxRateEurUsd,
+      prognose_kosten_eur: prognoseKostenUsd / fxRate.rate,
+      fx_rate_live: fxRate.live,
     }
   }
 
@@ -184,11 +186,12 @@ export async function POST(req: NextRequest) {
 
   if (action === 'afsluiten') {
     const doelMaand = typeof maand === 'string' && maand ? maand : huidigeMaandIso()
-    const [meting, omzet] = await Promise.all([
+    const [meting, omzet, fxRate] = await Promise.all([
       meetGebruikVoorMaand(doelMaand),
       meetOmzet({ basis: prijsBasis, premium: prijsPremium }),
+      getLiveFxRateEurUsd(),
     ])
-    const prognose = berekenPrognoseKostenUsd(meting)
+    const prognose = berekenPrognoseKostenUsd(meting, fxRate.rate)
 
     const { error } = await supabase.from('arnobot_kosten_tracking').upsert({
       maand: doelMaand,
