@@ -91,6 +91,21 @@ function base64ToBytes(base64: string): Uint8Array {
   return bytes
 }
 
+// Streamende transcriptiemodellen kunnen vastlopen in een herhaallus (bekend gedrag bij o.a.
+// stilte aan het eind van een opname): dezelfde zin komt dan steeds opnieuw terug. Knipt het
+// transcript af zodra dezelfde zin twee keer direct achter elkaar voorkomt.
+function dedupeRepeatedSentence(text: string): { text: string; truncated: boolean } {
+  const sentences = text.match(/[^.!?]+[.!?]+(\s+|$)/g)
+  if (!sentences || sentences.length < 2) return { text, truncated: false }
+  const norm = (s: string) => s.trim().toLowerCase()
+  const last = norm(sentences[sentences.length - 1])
+  const prev = norm(sentences[sentences.length - 2])
+  if (last && last === prev) {
+    return { text: sentences.slice(0, sentences.length - 1).join(''), truncated: true }
+  }
+  return { text, truncated: false }
+}
+
 interface Props {
   userId: string
   profiel: Record<string, unknown>
@@ -465,6 +480,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
   const lastAutoSaveCountRef = useRef(0)
+  // Los van de recording-state (die pas ná de awaited getUserMedia bijgewerkt wordt): sluit het
+  // gaatje waarin een tweede touchstart/mousedown-ghost-event vóór die state-update alsnog een
+  // tweede opname start, wat dezelfde uitspraak twee keer liet transcriberen en optellen.
+  const recordingRef = useRef(false)
 
   useEffect(() => {
     sessionIdRef.current = sessionId
@@ -477,7 +496,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   async function startRecording(e: React.MouseEvent | React.TouchEvent, setTarget: React.Dispatch<React.SetStateAction<string>> = setInput) {
     e.preventDefault()
-    if (recording || transcribing || loading || blocked) return
+    if (recordingRef.current || transcribing || loading || blocked) return
+    recordingRef.current = true
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
@@ -485,6 +505,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       recorder.ondataavailable = (ev) => { if (ev.data.size > 0) audioChunksRef.current.push(ev.data) }
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
+        recordingRef.current = false
         setRecording(false)
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         if (blob.size < 1000) return
@@ -499,19 +520,29 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           // verwerkt, dus het veld vult zich geleidelijk i.p.v. pas na de volledige transcriptie
           // in één keer te verschijnen. prefix (de tekst die al in het veld stond) wordt bij de
           // eerste delta één keer opgehaald via de functional update, daarna schrijft elke
-          // volgende delta prefix+transcript-tot-nu-toe terug.
+          // volgende delta prefix+transcript-tot-nu-toe terug. dedupeRepeatedSentence knipt af
+          // zodra de streamende transcriptie in een herhaallus terechtkomt (bekend gedrag van
+          // deze modellen bij stilte aan het eind van een opname): zonder die afkap bleef de
+          // zin tientallen keren achter elkaar in het invoerveld verschijnen.
           let prefix: string | null = null
           let transcript = ''
+          let stopped = false
           const reader = res.body.getReader()
           const decoder = new TextDecoder()
           let buffer = ''
           const handleLine = (line: string) => {
+            if (stopped) return
             if (!line.startsWith('data: ')) return
             const payload = line.slice(6)
             if (payload === '[DONE]') return
             const evt = JSON.parse(payload)
             if (evt.type !== 'transcript.text.delta' || !evt.delta) return
             transcript += evt.delta
+            const deduped = dedupeRepeatedSentence(transcript)
+            if (deduped.truncated) {
+              transcript = deduped.text
+              stopped = true
+            }
             if (prefix === null) {
               setTarget(prev => { prefix = prev ? `${prev} ` : ''; return prefix + transcript })
             } else {
@@ -534,12 +565,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
-    } catch (err) { console.error('[Whisper] getUserMedia mislukt:', err) }
+    } catch (err) {
+      recordingRef.current = false
+      console.error('[Whisper] getUserMedia mislukt:', err)
+    }
   }
 
   function stopRecording(e?: React.MouseEvent | React.TouchEvent) {
     e?.preventDefault()
-    if (!recording) return
+    if (!recordingRef.current) return
     mediaRecorderRef.current?.stop()
   }
 
