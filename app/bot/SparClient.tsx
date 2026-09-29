@@ -656,18 +656,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }, [synthesisLoading])
 
-  // Karaoke-meescrollen: alleen corrigeren als het huidige woord buiten de comfortabele
-  // leeszone (middelste helft van het scherm) valt, niet bij elk woord opnieuw, anders oogt
-  // het schokkerig in plaats van rustig meelopend met de stem.
+  // Karaoke-meescrollen: het huidige woord mag nooit onder de vaste invoerbalk onderin
+  // verdwijnen (die balk overlapt het scherm, telt dus niet mee als leesbare ruimte) of
+  // boven de vaste nav bovenin. Zodra het woord die zone verlaat, scrollt de pagina zodat het
+  // woord weer bovenaan de leeszone start, niet gecentreerd: dat geeft maximale ruimte voordat
+  // de volgende correctie nodig is, i.p.v. steeds nét op tijd bijschieten.
   useEffect(() => {
     const el = activeSpeakWordRef.current
     if (!el) return
+    const topMargin = (isMobile ? 56 : 64) + 16
+    const bottomMargin = (isMobile ? 280 : 240) + 24
     const rect = el.getBoundingClientRect()
-    const margin = window.innerHeight * 0.25
-    if (rect.top < margin || rect.bottom > window.innerHeight - margin) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (rect.top < topMargin || rect.bottom > window.innerHeight - bottomMargin) {
+      window.scrollTo({ top: window.scrollY + rect.top - topMargin - 16, behavior: 'smooth' })
     }
-  }, [speakTokenIdx])
+  }, [speakTokenIdx, isMobile])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -1493,6 +1496,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .toggle-btn { font-size: 11px; letter-spacing: 0px; padding: 7px 4px; border-radius: 4px; }
           .opener-toggle .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
           .spar-input-row { max-width: 100%; }
+          /* De volledige knoppenrij (voice-toggle/mic/STUUR/SLUIT) moet altijd exact binnen de
+             schermbreedte passen: de vaste min-width:120px van .spar-send/.spar-reset (voor
+             desktop bedoeld) liep op smalle telefoons op tot buiten het scherm. De twee
+             icoonknoppen houden hun vaste breedte, STUUR/SLUIT delen de resterende ruimte. */
+          .spar-buttons-toolbar { width: 100%; gap: 6px; }
+          .spar-buttons-toolbar .spar-send,
+          .spar-buttons-toolbar .spar-reset { flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: 15px; letter-spacing: 1.5px; }
         }
 
         /* INPUT — BOVEN BIJ NIEUW GESPREK, STICKY-ONDER BIJ ACTIEF */
@@ -2317,7 +2327,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 {verfijnen ? '...' : '→ verbeter mijn prompt'}
               </button>
             )}
-            <div className="spar-buttons">
+            <div className="spar-buttons spar-buttons-toolbar">
               {voiceEnabled && sparModus !== 'sparren' && antwoordLengte !== 'uitgebreid' && (
                 <button
                   type="button"
