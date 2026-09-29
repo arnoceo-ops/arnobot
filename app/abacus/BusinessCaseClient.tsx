@@ -433,16 +433,23 @@ export default function BusinessCaseClient({
       </div>
 
       <div style={cardStyle}>
-        <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
-        <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: clamp(v, 0) })} />
-        <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: clamp(v, 0) })} />
+        <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Mollie)</div>
+        <NumberField label="Kaarttarief (%)" hint="Mollie EU-consumentenkaart" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: clamp(v, 0) })} />
+        <NumberField label="Kaart, vast bedrag per transactie (€)" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: clamp(v, 0) })} />
         <NumberField
-          label="% van omzet via creditcard"
+          label="% van Solo-omzet via kaart"
           hint={<>
-            <div>Geldt alleen voor Solo (Basic/Pro).</div>
-            <div>Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten.</div>
+            <div>Geldt alleen voor Solo (Basic/Pro). Resterend aandeel loopt via SEPA-incasso (recurring), niet gratis.</div>
+            <div>Realistisch NL-patroon: eerste betaling iDEAL, vervolgtermijnen SEPA-incasso, dus meerderheid niet via kaart.</div>
           </>}
           value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: clamp(v, 0, 100) })}
+        />
+        <NumberField label="SEPA-incasso tarief (%)" hint="resterend Solo-aandeel, recurring" value={betaalprovider.sepaPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, sepaPct: clamp(v, 0) })} />
+        <NumberField label="SEPA-incasso, vast bedrag per transactie (€)" value={betaalprovider.sepaFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, sepaFixed: clamp(v, 0) })} />
+        <NumberField
+          label="Team, vast bedrag per factuur (€)"
+          hint="SEPA-overschrijving via Moneybird-betaallink, één Mollie-transactie per teamaccount per factuurmoment"
+          value={betaalprovider.teamFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, teamFixed: clamp(v, 0) })}
         />
       </div>
     </div>

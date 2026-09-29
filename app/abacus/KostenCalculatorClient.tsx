@@ -271,6 +271,14 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
+              <NumberField label="Moneybird (€/maand)" hint="Growth-tier, boekhouding + Mollie-koppeling, nog niet live" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div>
+                  <div style={fieldLabelStyle}>Moneybird actief</div>
+                  <div style={fieldHintStyle}>aan zodra het account echt loopt</div>
+                </div>
+                <Toggle checked={inputs.moneybirdActief} onChange={v => set('moneybirdActief', v)} />
+              </div>
               <NumberField label="Sentry (€/maand)" value={inputs.sentryEur} onChange={v => set('sentryEur', v)} />
               <NumberField label="EUR → USD koers" value={inputs.fxRate} step={0.01} onChange={v => set('fxRate', v)} />
               <NumberField label="Upstash gratis tier (commands/maand)" hint="huidige limiet: 500.000" value={inputs.upstashFreeLimit} step={10000} onChange={v => set('upstashFreeLimit', v)} />
@@ -315,7 +323,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>AssemblyAI (audio-analyse)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.audioAnalyseKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
-                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Emirates NBD Pay)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Mollie)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
                 <div style={{ ...breakdownLineStyle, borderBottom: 'none' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>Totaal</span>
                   <span style={{ color: '#f59e0b', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</span>
