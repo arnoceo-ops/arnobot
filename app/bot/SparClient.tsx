@@ -493,11 +493,41 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           const form = new FormData()
           form.append('audio', blob, 'recording.webm')
           const res = await fetch('/api/transcribe', { method: 'POST', body: form })
-          const data = await res.json()
-          if (data.transcript) {
-            setTarget(prev => prev ? `${prev} ${data.transcript}` : data.transcript)
+          if (!res.ok || !res.body) throw new Error('transcribe_failed')
+
+          // SSE: transcript.text.delta-events komen binnen terwijl OpenAI het fragment nog
+          // verwerkt, dus het veld vult zich geleidelijk i.p.v. pas na de volledige transcriptie
+          // in één keer te verschijnen. prefix (de tekst die al in het veld stond) wordt bij de
+          // eerste delta één keer opgehaald via de functional update, daarna schrijft elke
+          // volgende delta prefix+transcript-tot-nu-toe terug.
+          let prefix: string | null = null
+          let transcript = ''
+          const reader = res.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
+          const handleLine = (line: string) => {
+            if (!line.startsWith('data: ')) return
+            const payload = line.slice(6)
+            if (payload === '[DONE]') return
+            const evt = JSON.parse(payload)
+            if (evt.type !== 'transcript.text.delta' || !evt.delta) return
+            transcript += evt.delta
+            if (prefix === null) {
+              setTarget(prev => { prefix = prev ? `${prev} ` : ''; return prefix + transcript })
+            } else {
+              setTarget(prefix + transcript)
+            }
             if (setTarget === setInput) setResizeInput(true)
           }
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+            for (const line of lines) handleLine(line)
+          }
+          handleLine(buffer)
         } catch {}
         finally { setTranscribing(false) }
       }
