@@ -2,15 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import {
-  TARIEVEN, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
+  DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
 import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
-// Was een losse hardgecodeerde 1.08 (besloten 2026-08-11, gevonden bij audit):
-// liep bij een toekomstige koerswijziging in TARIEVEN stil uit de pas met de
-// rest van de codebase. Nu dezelfde bron als tab 1/Trackrecord.
-const FX_EUR_USD = TARIEVEN.fxRateEurUsd
 
 // Stille clamping i.p.v. een blokkade/foutmelding: dit is Arno's eigen interne
 // tool, geen productieformulier. Voorkomt praktisch onmogelijke scenario's
@@ -48,7 +44,7 @@ function winstBijN(
   verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): number {
   const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team, teamBillingSplit)
-  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / FX_EUR_USD
+  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / inputs.fxRate
   return omzetTotaal - kostenEur - betaalproviderKosten
 }
 
@@ -242,7 +238,7 @@ export default function BusinessCaseClient({
     const { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld } =
       berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
     const kostenUsd = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal
-    const kostenEur = kostenUsd / FX_EUR_USD
+    const kostenEur = kostenUsd / inputs.fxRate
     return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
   }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs])
 
