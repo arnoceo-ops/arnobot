@@ -268,6 +268,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [showCommunityConsent, setShowCommunityConsent] = useState(false)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
+  // Alleen voor de instant-sluiten-op-mobiel-flow (afsluitenGesprek): korte, niet-blokkerende
+  // melding of het opslaan lukte, want er is geen inline samenvatting-scherm meer om dat aan
+  // af te lezen.
+  const [closeToast, setCloseToast] = useState<'saved' | 'failed' | null>(null)
   const [verfijnen, setVerfijnen] = useState(false)
   const [verfijndSuggestie, setVerfijndSuggestie] = useState('')
   const [verfijnFout, setVerfijnFout] = useState(false)
@@ -989,6 +993,33 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (showSluiten) setShowSluiten(false)
     setInput('')
     if (inputRef.current) inputRef.current.style.height = '55px'
+
+    // Mobiel (en niet-sparren): direct sluiten en resetten, geen inline samenvatting-scherm
+    // meer dat eerst weggeklikt moet worden. De synthese wordt gewoon gegenereerd en
+    // opgeslagen (verschijnt in Analyses), alleen niet meer getoond vóórdat je verder kan.
+    // Bewust explicitClose: false, niet true: je hebt de actie/uitdaging in dit geval nooit
+    // gezien, dus die mag nog wel een keer als ACTIE-REMINDER terugkomen, net als bij de
+    // bestaande sendBeacon-fallback (zie de explicitClose-uitleg in session-end/route.ts).
+    // Sparring-debrief blijft bewust ongewijzigd: dat is waardevollere inhoud om wél direct te
+    // lezen, en is niet gevraagd om aan te passen.
+    if (isMobile && sparModus !== 'sparren') {
+      const sid = sessionId
+      const msgs = messages
+      const community = startedFromCommunity
+      const consent = communityConsentChecked
+      reset()
+      fetch('/api/bot/session-end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid, messages: msgs, explicitClose: false, startedFromCommunity: community, communityConsent: consent })
+      })
+        .then(res => { if (!res.ok) throw new Error('session_end_failed') })
+        .then(() => setCloseToast('saved'))
+        .catch(() => setCloseToast('failed'))
+        .finally(() => setTimeout(() => setCloseToast(null), 3000))
+      return
+    }
+
     setSynthesisLoading(true)
 
     if (sparModus === 'sparren') {
@@ -3044,6 +3075,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               >DOORGAAN</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {closeToast && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)',
+          background: '#1f2937', border: `1px solid ${closeToast === 'failed' ? '#cc2200' : '#374151'}`, borderRadius: 8,
+          padding: '12px 20px', zIndex: 200, maxWidth: 'calc(100vw - 40px)', textAlign: 'center',
+          fontFamily: "'Space Mono', monospace", fontSize: 14, color: closeToast === 'failed' ? '#f1f5f9' : '#9ca3af',
+        }}>
+          {closeToast === 'saved' ? 'Gesprek opgeslagen.' : 'Opslaan van je gesprek is niet gelukt.'}
         </div>
       )}
 
