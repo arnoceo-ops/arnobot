@@ -9,6 +9,26 @@
 
 ---
 
+## Besluit 2026-10-02: meta-analyse 1 oktober verwerkt, twee aanscherpingen en een kennisbankdoc
+
+**Aanleiding.** Meta-analyse van 1-10 (30 dagen, 1 gesprek, overall 5,8/10, JOUW ANALYSE leeg). Dat ene gesprek was de Stefanie-sessie van **23-9**, drie dagen vóór de fix van 26-9. De "hardnekkige" bevindingen (kwalificatie vóór advies, geen eerst-laten-werken) meten dus de oude prompt en tellen niet mee in de trend.
+
+**Gekozen (alle drie een vervanging of aanscherping, geen nieuwe machinerie):**
+1. `lib/systemPrompt.ts` regel 2 (KWALIFICEREN, uitzondering Twee): "lever dat niet zomaar, daar ben je niet voor" vervangen door "schrijf het niet meteen uit, maar weiger ook niet". Aanleiding: Arno's eigen test van 2-10 liet zien dat de gewijzigde regel doorschoot in een botte weigering ("Scripts ga ik je niet geven") plus een diagnose als feit zonder context. Daarnaast de vraag naar de echte vertrekreden en of de gebruiker dat al heeft gevraagd, en de warme-lijn-regel (bellen of kort persoonlijk bericht boven formele mail aan meerdere mensen).
+2. `RULE_NO_DASH`: streepjeslijnen als scheiding boven/onder een tekst (voorbeeldmail) expliciet verboden. De regel dekte alleen streepjes als leesteken. Staat in `SHARED_RULES`, geldt dus voor alle routes.
+3. `docs/kennisbank/winback-bij-opzegging.md`: kennisdiepte (wie beslist, vier churnredenen, fasering, belopening, de ene vraag, bezwaarafhandeling) via RAG in plaats van promptbulk.
+
+**Verworpen, met reden:**
+- Commitment met tijdstip aan het eind van elk gesprek (Goldsmith/Musk/Belfort): botst met het absolute verbod op tijdgebonden aanwijzingen en met "een slotvraag is de uitzondering".
+- Aparte regel "bij aanpassingsverzoek benoemen wat de wijziging doet": één incident, in een pre-fix gesprek. Pas opnieuw bekijken als het in een gesprek na 26-9 terugkomt.
+- "Spiegelt de tekst, niet de persoon": dekt regel 2 al. Klantprofiel per terugkerende gebruiker: dat doet `arnobot_memory_entities` al.
+
+**Niet via prompt opgelost (model-/architectuurvragen, gelogd uit de test van 2-10):** beurt 2 was een kale vraag ("kan ik niet beantwoorden zonder context"), beurt 3 eindigde zonder concrete zet en presenteerde een aanname als feit. Eén gesprek, geen nieuwe regel. Terugkeer = apart onderzoeken.
+
+**Woordaantal:** persona (`staticIntro` + `restVanPersona`) gemeten 1914 naar 1949 (+35), `RULE_NO_DASH` +15, gedeeld over alle routes. Totaal persona ongeveer 2190, dus nog steeds ruim boven het oorspronkelijke 1520, zie het besluit van 26-9.
+
+**Openstaand:** kennisbankdoc staat als concept in git, nog NIET ge-embed. Eerst Arno's akkoord op de tekst.
+
 ## Besluit 2026-09-26 — regel 1 herzien (override van "Golf 1 blijft ongewijzigd"), plus mindset-scherping en terugkoppeling
 
 **Aanleiding.** Een echt gesprek van Stefanie: ze vroeg ArnoBot een winback-mail voor een opgezegde klant af te maken, kreeg een correcte maar generieke tekst, en bij een kleine vervolgvraag ("maak ervan dat ze mij ook mogen bellen") leverde ArnoBot een zwakke, symmetrische "of"-zin die het initiatief weggaf, een klassiek LLM-patroon. Uitgebreid met Arno doorgesproken (zie chatlog 26-9). De kern bleek niet de toon van die ene mail, maar dat ArnoBot een schrijfopdracht uitvoerde in plaats van te coachen.
