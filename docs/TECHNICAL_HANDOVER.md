@@ -360,7 +360,6 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/competitie` | 1e vd maand 04:05 | Competitierapport (meest actieve gebruikers) |
 | `/api/cron/data-cleanup` | 1e vd maand 04:05 | Verwijderde gesprekken opschonen, inactieve users flaggen |
 | `/api/cron/milestone-check` | 1e vd maand 04:05 | Alert als 50+ actieve gebruikers bereikt (Pro-upgrade trigger) |
-| `/api/cron/kwartaal-doel` | 1e vd maand 04:05 | Kwartaaldoelcheck en rapport |
 | `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachtsdocumenten bijwerken (dit bestand) |
 | `/api/cron/meta-analyse` | 1e vd maand 04:15 | Geautomatiseerde zelfbeoordeling + expertpanel + JOUW ANALYSE |
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's uit `arnobot_memory_entities` als e-mail |

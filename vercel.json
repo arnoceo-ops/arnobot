@@ -49,10 +49,6 @@
       "schedule": "5 4 1 * *"
     },
     {
-      "path": "/api/cron/kwartaal-doel",
-      "schedule": "5 4 1 * *"
-    },
-    {
       "path": "/api/cron/update-handover",
       "schedule": "10 4 1 * *"
     },

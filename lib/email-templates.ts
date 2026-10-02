@@ -65,7 +65,6 @@ export type EmailType =
   | 'inactivity_dag45'
   | 'inactivity_dag60'
   | 'bieb_bijgewerkt'
-  | 'kwartaal_doel'
   | 'uitdaging_herinnering'
   | 'patroon_samenvatting'
   | 'referral_aanmelding'
@@ -93,7 +92,6 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   inactivity_dag45:      { label: 'Inactivity dag 45',      description: 'Recurring:45 dagen geen activiteit, sportschool-vergelijking',     category: 'user' },
   inactivity_dag60:      { label: 'Inactivity dag 60',      description: 'Recurring:60 dagen geen activiteit, abonnement wordt opgezegd',    category: 'user' },
   bieb_bijgewerkt:       { label: 'Analyses bijgewerkt',    description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
-  kwartaal_doel:         { label: 'Kwartaaldoel check',     description: 'Recurring:bij kwartaalstart, check of jaardoel nog klopt',          category: 'user' },
   uitdaging_herinnering: { label: 'Uitdaging herinnering',  description: 'Recurring:dag 1/3/7 na een sessie, actie nog niet beantwoord',      category: 'user' },
   patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring:maandelijks, terugkerende namen/thema\'s uit gesprekken', category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
@@ -106,7 +104,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; jaardoel?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[] }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[] }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -331,16 +329,6 @@ export function getEmailTemplate(
           'Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.'
         ),
       }
-    case 'kwartaal_doel': {
-      const doel = options?.jaardoel ?? 'jouw doel voor dit jaar'
-      return {
-        subject: `${prefix}${naam}, klopt je doel voor dit jaar nog?`,
-        html: mail(
-          `Nieuw kwartaal, nieuw momentum.<br><br>Je hebt in je profiel dit als doel neergezet:<br><br><em style="color:#f1f5f9;">"${doel}"</em><br><br>Klopt dit nog? Of heeft het afgelopen kwartaal je perspectief verschoven? Pas je doel aan in je profiel als dat zo is. Of gebruik het als startpunt voor een gesprek vandaag.`,
-          'OPEN ARNOBOT →', 'https://arno.bot/bot'
-        ),
-      }
-    }
     case 'uitdaging_herinnering': {
       const uitdaging = options?.uitdaging ?? ''
       return {

@@ -62,7 +62,6 @@ const KNOWN_SAFE = new Set([
   // Draait per gebruiker, sluit testaccounts al op e-mailadres uit.
   'app/api/cron/trial-emails/route.ts:approved_users',
   'app/api/cron/inactivity-nudge/route.ts:approved_users',
-  'app/api/cron/kwartaal-doel/route.ts:approved_users',
   'app/api/cron/milestone-check/route.ts:approved_users',
   'app/api/admin/analyse/users/route.ts:approved_users',
   // AVG-opruimlijst van 30+ dagen geleden beëindigde accounts (is_active=false). De
