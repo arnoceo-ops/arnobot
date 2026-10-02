@@ -21,6 +21,13 @@ Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
   enabled: isProduction,
 
+  // Scanners POSTen met een gegokte/verouderde Next-Action-waarde naar publieke pagina's,
+  // wat Next.js als "Failed to find Server Action" logt. Eerder in proxy.ts geblokkeerd op
+  // de Next-Action-header, maar dat brak ook @clerk/nextjs's eigen, legitieme Server Action
+  // (signOut()), teruggedraaid 2-10-2026. Hier filteren i.p.v. blokkeren: de request mag
+  // gewoon door (Next.js handelt 'm vanzelf netjes af), alleen de Sentry-melding niet.
+  ignoreErrors: [/Failed to find Server Action/],
+
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
 

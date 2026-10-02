@@ -17,6 +17,10 @@ Sentry.init({
   dsn: "https://2b3a04a34d25d646ead9df3c13aee53e@o4511097015828480.ingest.de.sentry.io/4511703887118416",
   enabled: isProduction,
 
+  // Zie sentry.server.config.ts: scanner-ruis op een gegokte Next-Action-header hier filteren
+  // i.p.v. in proxy.ts blokkeren, dat brak eerder @clerk/nextjs's eigen signOut()-actie.
+  ignoreErrors: [/Failed to find Server Action/],
+
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
 

@@ -19,6 +19,10 @@ Sentry.init({
   tunnel: "/monitoring",
   enabled: isProduction,
 
+  // Zie sentry.server.config.ts: scanner-ruis op een gegokte Next-Action-header hier filteren
+  // i.p.v. in proxy.ts blokkeren, dat brak eerder @clerk/nextjs's eigen signOut()-actie.
+  ignoreErrors: [/Failed to find Server Action/],
+
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
 

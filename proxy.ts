@@ -86,14 +86,15 @@ export default clerkMiddleware(async (auth, req) => {
     return new NextResponse(null, { status: 404 })
   }
 
-  // ArnoBot heeft geen Server Actions. Een verzoek met een Next-Action-header kan dus nooit
-  // van een echte client komen (ook niet van een pagina uit een oudere deploy): het is een
-  // scanner die naar kwetsbare Next.js-apps zoekt. Hier afkappen voorkomt dat Next.js er
-  // een "Failed to find Server Action"-fout van maakt die als ruis in Sentry belandt.
-  // Als er ooit Server Actions bijkomen: deze check verwijderen.
-  if (req.headers.has('next-action')) {
-    return new NextResponse(null, { status: 404 })
-  }
+  // TERUGGEDRAAID (2-10-2026): hier stond een blokkade op elk verzoek met een Next-Action-
+  // header, met als aanname "ArnoBot heeft geen Server Actions" (grep op eigen broncode vond
+  // niets). Die aanname was fout: @clerk/nextjs registreert zelf een Server Action (voor
+  // signOut() en vergelijkbare server-side cookiewerk), die in node_modules zit en dus nooit
+  // in een grep op app-code opduikt. De blokkade brak daardoor uitloggen in productie, live
+  // bevestigd via netwerk-onderschepping (POST /bot/account met next-action-header, 404,
+  // __session-cookie bleef staan). Oorspronkelijke doel (scanner-ruis "Failed to find Server
+  // Action" in Sentry) wordt nu opgelost via Sentry's ignoreErrors i.p.v. hier blokkeren, zie
+  // sentry.server.config.ts.
 
   // Blogposts leven op arno.blog, niet op arno.bot. Deze verwarring is logisch (zelfde
   // eigenaar, vergelijkbare naam) en komt voor bij getypte of verkeerd overgenomen links,
