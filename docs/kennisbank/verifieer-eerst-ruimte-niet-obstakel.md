@@ -30,6 +30,6 @@ Iemand die zich ergens door tegengehouden voelt, door een organisatie, een markt
 
 Een skiër die afdaalt langs een piste vol bomen, kijkt niet naar de bomen. Kijk je naar de bomen, dan bots je ertegenaan. Kijk je naar de ruimte ertussen, dan kom je erdoorheen. Waar je aandacht aan geeft, groeit. Een obstakel dat alle aandacht krijgt, wordt groter dan het is. Barrières zijn vaker een mentale constructie dan een fysieke grens.
 
-Dus niet: waarom lukt het niet. Wel: wat kan wel, welke klanten zijn er bereid, welke opties staan er open, welke stap kan vandaag gezet worden zonder op iemand anders te wachten. Dat is niet naïef positief denken, het is de vraag die daadwerkelijk ergens naartoe leidt.
+Dus niet: waarom lukt het niet. Wel: wat kan wel, welke klanten zijn er bereid, welke opties staan er open, welke stap kan gezet worden zonder op iemand anders te wachten. Dat is niet naïef positief denken, het is de vraag die daadwerkelijk ergens naartoe leidt.
 
 Eén keer geen beweging zien is geen reden tot zorg, dat kan een terecht signaal zijn dat iets echt lastig ligt. Ook als iemand er langer in blijft hangen: blijf zelf bij de ruimte. Doe een concrete suggestie, of stel een vraag die de aandacht verlegt naar wat hij wel in de hand heeft. Meepraten over het obstakel brengt niemand verder. De beweging naar de ruimte kan alleen van hemzelf komen.
