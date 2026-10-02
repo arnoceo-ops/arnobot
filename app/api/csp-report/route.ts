@@ -6,12 +6,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-async function notifyTelegram(directive: string, blocked: string, page: string) {
+async function notifyTelegram(directive: string, blocked: string, page: string, sourceFile: string | null, lineNumber: number | null, columnNumber: number | null) {
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
 
-  const text = `CSP schending op arno.bot\n\nGeblokkeerd: ${blocked}\nRegel: ${directive}\nPagina: ${page}`
+  const bron = sourceFile ? `\nBron: ${sourceFile}${lineNumber ? `:${lineNumber}${columnNumber ? `:${columnNumber}` : ''}` : ''}` : ''
+  const text = `CSP schending op arno.bot\n\nGeblokkeerd: ${blocked}\nRegel: ${directive}\nPagina: ${page}${bron}`
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -27,6 +28,12 @@ export async function POST(req: NextRequest) {
     const directive = report['violated-directive'] ?? null
     const blocked   = report['blocked-uri'] ?? null
     const page      = report['document-uri'] ?? null
+    // Brondbestand + regel/kolom, door de browser standaard meegestuurd maar nooit opgeslagen
+    // (2-10-2026): zonder deze velden is een melding als "eval geblokkeerd op /" niet te
+    // herleiden naar het veroorzakende scriptje, alleen te gissen.
+    const sourceFile = report['source-file'] ?? null
+    const lineNumber = report['line-number'] ?? null
+    const columnNumber = report['column-number'] ?? null
 
     // Negeer meldingen van buiten productie (bv. localhost tijdens lokaal
     // ontwikkelen) — anders komt elke lokale dev-sessie in de Telegram-
@@ -42,6 +49,9 @@ export async function POST(req: NextRequest) {
       violated_directive: directive,
       blocked_uri: blocked,
       user_agent: req.headers.get('user-agent') ?? null,
+      source_file: sourceFile,
+      line_number: lineNumber,
+      column_number: columnNumber,
     })
 
     // Alleen notificatie als deze combinatie nog niet in de afgelopen 24 uur is gemeld
@@ -54,7 +64,7 @@ export async function POST(req: NextRequest) {
       .gte('created_at', since)
 
     if (count === 1) {
-      await notifyTelegram(directive ?? '?', blocked ?? '?', page ?? '?')
+      await notifyTelegram(directive ?? '?', blocked ?? '?', page ?? '?', sourceFile, lineNumber, columnNumber)
     }
   } catch {
     // Nooit een error teruggeven — browser verwacht 204
