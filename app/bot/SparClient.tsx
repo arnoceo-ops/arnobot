@@ -394,6 +394,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [speakTokens, setSpeakTokens] = useState<SpeakToken[]>([])
   const [speakTokenIdx, setSpeakTokenIdx] = useState(-1)
   const activeSpeakWordRef = useRef<HTMLSpanElement>(null)
+  const autoScrollGuardUntilRef = useRef(0)
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
@@ -750,6 +751,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     const bottomMargin = (isMobile ? 280 : 240) + 24
     const rect = el.getBoundingClientRect()
     if (rect.top < topMargin || rect.bottom > window.innerHeight - bottomMargin) {
+      autoScrollGuardUntilRef.current = Date.now() + 700
       window.scrollTo({ top: window.scrollY + rect.top - topMargin - 16, behavior: 'smooth' })
     }
   }, [speakTokenIdx, isMobile])
@@ -966,13 +968,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setVoiceBarHidden(speakingIdx !== null)
   }, [speakingIdx])
 
+  // Alleen terugkomen als je zelf helemaal naar de onderkant van de pagina scrolt (signaal dat
+  // je het ongeduldig wil overslaan), niet bij het automatische karaoke-meescrollen hierboven
+  // (autoScrollGuardUntilRef.current, gezet door dat effect): zonder die guard zag elke
+  // meescroll-correctie er voor deze listener ook uit als "gebruiker scrolt naar beneden",
+  // waardoor de balk bij een wat langer antwoord meteen weer terugkwam.
   useEffect(() => {
     if (!voiceBarHidden) return
-    let lastY = window.scrollY
     function onScroll() {
-      const y = window.scrollY
-      if (y > lastY + 4) setVoiceBarHidden(false)
-      lastY = y
+      if (Date.now() < autoScrollGuardUntilRef.current) return
+      const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48
+      if (nearBottom) setVoiceBarHidden(false)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
