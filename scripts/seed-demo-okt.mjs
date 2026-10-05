@@ -228,7 +228,7 @@ const SCORES = [
   ['me', '2026-09-14', 5, 4, 4], ['me', '2026-10-05', 4, 4, 4],
 ]
 
-// ── COACHINGPROFIELEN (leden: bijwerken; test@arno.bot: nieuw) ────────────────────────────
+// ── COACHINGPROFIELEN (alleen leden) ────────────────────────────
 const COACHING = {
   benny: {
     updated_at: at('2026-10-02', '12:20'), mindset_score: 4, systeem_score: 5, actie_score: 5,
@@ -251,14 +251,9 @@ const COACHING = {
     systeem_diagnose: 'Pipeline bewust geprioriteerd en bijgehouden. Kan de discipline verliezen als het druk wordt.',
     actie_diagnose: 'Hoge executiekracht. Brengt het gesprek consequent terug naar de waarde die de klant zelf noemde.',
   },
-  me: {
-    updated_at: at('2026-10-02'), mindset_score: 5, systeem_score: 4, actie_score: 4,
-    voortgang: 'Je groeide van een open pipeline zonder structuur naar een opgeschoonde lijst en gerichte prijsgesprekken. Je herkent nu dat stilte in een gesprek niet door jou opgevuld hoeft te worden. Volgende laag: een vast ritme voor je pipeline-opvolging.',
-    mindset_diagnose: 'Zelfreflectief en bereid om patronen bij zichzelf te benoemen, zoals sneller praten als de ander stiller wordt.',
-    systeem_diagnose: 'De pipeline is opgeschoond, maar het onderhouden gebeurt nog op gevoel in plaats van op een vast moment.',
-    actie_diagnose: 'Pakt knelpunten direct aan en kiest voor concrete voorstellen, zoals een opzegmogelijkheid in plaats van een kortere looptijd.',
-    conversation_count: 11, ontwikkelpunten: [], blogs: [], signalen: [],
-  },
+  // test@arno.bot ontbreekt hier bewust: zijn coachingrapport wordt live gegenereerd (en staat in
+  // de history). Een seed die dat overschrijft vernietigt echt werk, dat is al een keer gebeurd.
+
 }
 
 // ── ANALYSES (1 per lid eind september, test@arno.bot 2) ──────────────────────────────────
