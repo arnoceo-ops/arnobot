@@ -138,8 +138,8 @@ ${RULE_NEVER_BREAK_CHARACTER}
 ${RULE_NO_INVENTED_DETAILS}`
 
   const userContent = isDelta
-    ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Benoem concreet wat er nieuw is, wat er doorgebroken is, en wat de volgende stap is. Max 3 alinea's.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
-    : `Analyseer deze ${sessions.length} gesprekken en geef een patroonanalyse in Arno's stijl. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's.${profielText}\n\nGESPREKKEN:\n${sessiesText}`
+    ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT ER NIEUW IS, DOORBRAAK, VOLGENDE STAP. Benoem onder die kopjes concreet wat er nieuw is, wat er doorgebroken is en wat de volgende stap is. Geen andere kopjes, geen opsomming.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
+    : `Analyseer deze ${sessions.length} gesprekken en geef een patroonanalyse in Arno's stijl. Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: STERKE PUNTEN, GROEIKANS, COACHING FOCUS. Onder STERKE PUNTEN wat er goed gaat, onder GROEIKANS het patroon dat de gebruiker tegenhoudt en wat dat zegt, onder COACHING FOCUS één concrete uitdaging die de gebruiker zichzelf kan stellen. Geen andere kopjes, geen opsomming.${profielText}\n\nGESPREKKEN:\n${sessiesText}`
 
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',

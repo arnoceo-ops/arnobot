@@ -58,7 +58,7 @@ function renderAnalyseText(text: string): string {
     const isHeading = item.startsWith('<span class="ah">')
     const nextIsHeading = items[i + 1]?.startsWith('<span class="ah">') ?? true
     if (isHeading || nextIsHeading) return item
-    return item + '<br>'
+    return item + '<br><br>'
   }).join('')
 }
 

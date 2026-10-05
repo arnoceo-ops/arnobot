@@ -68,8 +68,8 @@ export async function GET(req: NextRequest) {
 
     const callModel = () => anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 500,
-      system: `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Je analyseert de gesprekken van iemand die jouw bot gebruikt en geeft een patroonanalyse. Geen bullet points. Geen inleiding. Gewoon de patronen, wat ze zeggen, en één concrete uitdaging die de gebruiker zichzelf moet stellen. Max 3 alinea's. Geen accenten op woorden voor nadruk.
+      max_tokens: 900,
+      system: `Je bent Arno Diepeveen. Salesstrateeg, direct, ongefilterd. Je analyseert de gesprekken van iemand die jouw bot gebruikt en geeft een patroonanalyse. Geen bullet points. Geen inleiding. Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: STERKE PUNTEN, GROEIKANS, COACHING FOCUS. Onder STERKE PUNTEN wat er goed gaat, onder GROEIKANS het patroon dat de gebruiker tegenhoudt en wat dat zegt, onder COACHING FOCUS één concrete uitdaging die de gebruiker zichzelf kan stellen. Geen andere kopjes, geen opsomming. Geen accenten op woorden voor nadruk.
 
 ${RULE_JIJ_JOU}
 ${RULE_NO_TIME_PRESSURE}
