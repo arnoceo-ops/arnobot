@@ -31,7 +31,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Hosting | Vercel | Pro |
 | AI (chat/coaching) | Anthropic Claude | via SDK ^0.115 |
 | Embeddings + rerank (RAG) | VoyageAI | rauwe fetch, geen SDK |
-| Spraakherkenning | OpenAI Whisper | rauwe fetch, geen SDK |
+| Spraakherkenning | OpenAI (`gpt-4o-transcribe`) | rauwe fetch, geen SDK |
 | Tekst-naar-spraak (Voice) | ElevenLabs | rauwe fetch, geen SDK |
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |
@@ -227,7 +227,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/openers` | Vaste set gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Ontbrekende embeddings aanvullen voor RAG |
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
-| `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
+| `/api/transcribe` | Spraak naar tekst (OpenAI `gpt-4o-transcribe`, SSE-streaming) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 | `/api/bot/chat-upload-url` | Signed upload URL voor een bijlage (document of audio) in de hoofdchat, buiten de Vercel-bodylimiet om. Audio is Pro/Team-only (403 voor Basic), wordt door `/api/chat` via AssemblyAI getranscribeerd en na afloop verwijderd; documenten blijven voor elk plan beschikbaar |
 
@@ -688,7 +688,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
-- `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `OPENAI_API_KEY` — OpenAI (transcriptie, `gpt-4o-transcribe`)
 - `ASSEMBLYAI_API_KEY`: AssemblyAI (transcriptie audiobijlage hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
@@ -747,12 +747,12 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** API-key beheren, gebruik bekijken.
 
 ### OpenAI
-**Doel:** Whisper (`whisper-1`) spraak-naar-tekst voor voice-input.
+**Doel:** spraak-naar-tekst voor voice-input (`gpt-4o-transcribe`, SSE-streaming, gemigreerd van `whisper-1` op 2026-09-29).
 **Dashboard:** https://platform.openai.com
 **Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
 
 ### AssemblyAI
-**Doel:** transcriptie van de audiobijlage in de hoofdchat (model `universal-3-5-pro`, met sprekerslabels), losstaand van de OpenAI Whisper-integratie hierboven die alleen voor voice-input geldt. Ongedocumenteerde functie voor gebruikers (geen aparte pagina, geen FAQ), Pro/Team-only.
+**Doel:** transcriptie van de audiobijlage in de hoofdchat (model `universal-3-5-pro`, met sprekerslabels), losstaand van de OpenAI-transcriptie-integratie hierboven die alleen voor voice-input geldt. Ongedocumenteerde functie voor gebruikers (geen aparte pagina, geen FAQ), Pro/Team-only.
 **Dashboard:** https://www.assemblyai.com/app
 **Integratie:** rauwe fetch in `lib/assemblyai.ts`, geen SDK. Audio komt binnen via een signed upload URL naar de private Supabase Storage-bucket `chat-audio-uploads` (`lib/chatAttachments.ts`, `/api/bot/chat-upload-url`); audio en transcript worden na elke aanroep verwijderd, zowel bij AssemblyAI als in Supabase Storage.
 
