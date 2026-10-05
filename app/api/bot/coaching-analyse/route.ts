@@ -1,11 +1,11 @@
-﻿export const maxDuration = 60
+﻿export const maxDuration = 120
 
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
+import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_NATUURLIJK_NEDERLANDS } from '@/lib/systemPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -135,15 +135,17 @@ ${RULE_NO_CRUDE_LANGUAGE}
 
 ${RULE_NEVER_BREAK_CHARACTER}
 
-${RULE_NO_INVENTED_DETAILS}`
+${RULE_NO_INVENTED_DETAILS}
+
+${RULE_NATUURLIJK_NEDERLANDS}`
 
   const userContent = isDelta
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT ER NIEUW IS, DOORBRAAK, VOLGENDE STAP. Benoem onder die kopjes concreet wat er nieuw is, wat er doorgebroken is en wat de volgende stap is. Geen andere kopjes, geen opsomming.${profielText}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
     : `Analyseer deze ${sessions.length} gesprekken en geef een patroonanalyse in Arno's stijl. Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: STERKE PUNTEN, GROEIKANS, COACHING FOCUS. Onder STERKE PUNTEN wat er goed gaat, onder GROEIKANS het patroon dat de gebruiker tegenhoudt en wat dat zegt, onder COACHING FOCUS één concrete uitdaging die de gebruiker zichzelf kan stellen. Geen andere kopjes, geen opsomming.${profielText}\n\nGESPREKKEN:\n${sessiesText}`
 
   const callModel = () => anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
+    model: 'claude-fable-5-1',
+    max_tokens: 3000,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }]
   })
