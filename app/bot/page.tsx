@@ -27,7 +27,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
 
   const [profileRes, userRes, tellers] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
-    serviceDb.from('approved_users').select('plan, voornaam, full_name, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen').eq('user_id', userId).single(),
+    serviceDb.from('approved_users').select('plan, voornaam, full_name, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen, groeibalans_advies, groeibalans_scenario').eq('user_id', userId).single(),
     telGebruik(serviceDb, userId),
   ])
 
@@ -56,7 +56,14 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
         : { tonen: false as const }
     if (classificatie.tonen) {
       const copy = getGroeibalansCopy(classificatie.state, classificatie.bouwsteen, plan)
-      groeibalans = { state: classificatie.state, bouwsteen: classificatie.bouwsteen, ...copy, kleur: GROEIBALANS_KLEUREN[classificatie.state], tellers }
+      // Persoonlijk advies uit de eigen historie (lib/groeibalansServer.ts) gaat voor de vaste tekst. Het
+      // voorgestelde sparscenario zet persona en weerstand alvast klaar op /bot/sparren; de waarden
+      // worden daar opnieuw gevalideerd tegen de rol van de gebruiker.
+      const advies = typeof userRes.data?.groeibalans_advies === 'string' && userRes.data.groeibalans_advies.trim() ? userRes.data.groeibalans_advies.trim() : null
+      const scenario = userRes.data?.groeibalans_scenario as { persona?: string; weerstand?: string } | null
+      const metScenario = classificatie.bouwsteen === 'sparsessies' && scenario?.persona && scenario?.weerstand
+        ? `/bot/sparren?persona=${encodeURIComponent(scenario.persona)}&weerstand=${encodeURIComponent(scenario.weerstand)}` : null
+      groeibalans = { state: classificatie.state, bouwsteen: classificatie.bouwsteen, ...copy, ...(advies ? { tekst: advies } : {}), ...(metScenario ? { href: metScenario } : {}), kleur: GROEIBALANS_KLEUREN[classificatie.state], tellers }
     }
   }
 

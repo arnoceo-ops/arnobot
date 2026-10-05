@@ -17,9 +17,15 @@ export type GroeibalansState = typeof GROEIBALANS_STATES[number]
 export const GROEIBALANS_BOUWSTENEN = ['sparsessies', 'analyses', 'coaching'] as const
 export type GroeibalansBouwsteen = typeof GROEIBALANS_BOUWSTENEN[number]
 
+// `advies` is de persoonlijke zin op basis van de eigen historie, `scenario` het bijbehorende
+// voorgestelde sparscenario (alleen bij bouwsteen sparsessies). Beide optioneel: zonder advies
+// valt het kader terug op de vaste tekst per state/bouwsteen (COPY hieronder).
+export type GroeibalansScenario = { persona: string; weerstand: string }
 export type GroeibalansClassificatie =
   | { tonen: false }
-  | { tonen: true; state: GroeibalansState; bouwsteen: GroeibalansBouwsteen }
+  | { tonen: true; state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; advies?: string; scenario?: GroeibalansScenario }
+
+export const GROEIBALANS_ADVIES_MAX_TEKENS = 320
 
 export function parseGroeibalansClassificatie(raw: string): GroeibalansClassificatie | null {
   const text = raw.trim()
@@ -31,7 +37,17 @@ export function parseGroeibalansClassificatie(raw: string): GroeibalansClassific
     const states = GROEIBALANS_STATES as readonly string[]
     const bouwstenen = GROEIBALANS_BOUWSTENEN as readonly string[]
     if (parsed.tonen === true && states.includes(parsed.state) && bouwstenen.includes(parsed.bouwsteen)) {
-      return { tonen: true, state: parsed.state, bouwsteen: parsed.bouwsteen }
+      const advies = typeof parsed.advies === 'string' ? parsed.advies.trim() : ''
+      const scenario = parsed.scenario && typeof parsed.scenario.persona === 'string' && typeof parsed.scenario.weerstand === 'string'
+        ? { persona: parsed.scenario.persona, weerstand: parsed.scenario.weerstand }
+        : undefined
+      return {
+        tonen: true,
+        state: parsed.state,
+        bouwsteen: parsed.bouwsteen,
+        ...(advies && advies.length <= GROEIBALANS_ADVIES_MAX_TEKENS ? { advies } : {}),
+        ...(scenario ? { scenario } : {}),
+      }
     }
     return null
   } catch {

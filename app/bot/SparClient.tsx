@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
+import { rolCategorieVoorRol, isGeldigSparScenario } from '@/lib/sparringPersonas'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 import { groeiNudgeGezien, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { track } from '@/lib/posthog'
@@ -116,6 +117,7 @@ interface Props {
   voornaam?: string | null
   mode?: 'gesprek' | 'sparren' | 'voorbeeldvragen'
   plan?: 'basis' | 'premium' | 'team'
+  voorinstelling?: { persona?: string; weerstand?: string } | null
   groeibalans?: {
     state: GroeibalansState
     bouwsteen: GroeibalansBouwsteen
@@ -156,10 +158,6 @@ const STRATEGISCH_ROLLEN = ['VP of Sales', 'CEO/DGA']
 const ORGANISATORISCH_ROLLEN = ['Sales Manager', 'Sales Director']
 const SALES_ONLY_ROLLEN = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
 
-const VERKOPER_ROLLEN_SPAR = ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales']
-const SALESBAAS_ROLLEN_SPAR = ['Sales Manager', 'Sales Director', 'VP of Sales']
-const EINDBAAS_ROLLEN_SPAR = ['CEO/DGA']
-const SOLOPRENEUR_ROLLEN_SPAR = ['Solopreneur']
 
 const PERSONAS: Record<string, { key: string; label: string }[]> = {
   verkoper: [
@@ -237,7 +235,7 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null }: Props) {
+export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null, voorinstelling = null }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
   const router = useRouter()
@@ -293,10 +291,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // toepasbare categorie (Underperformer/Marketing/CEO/Grote Klant), en elke categorie heeft
   // sowieso een eigen "Anders"-persona-optie waarmee de gebruiker zelf zijn situatie kan
   // omschrijven, dus een net niet perfect passende default is nooit een dead end meer.
-  const rolCategorie = VERKOPER_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'verkoper' :
-    SALESBAAS_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'salesbaas' :
-    EINDBAAS_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'eindbaas' :
-    SOLOPRENEUR_ROLLEN_SPAR.includes((profiel?.rol as string) ?? '') ? 'solopreneur' : 'salesbaas'
+  const rolCategorie = rolCategorieVoorRol(profiel?.rol)
   const [openerModus, setOpenerModus] = useState<'strategisch' | 'organisatorisch' | 'sales'>(
     isStrategischProfiel ? 'strategisch' : isOrganisatorischProfiel ? 'organisatorisch' : 'sales'
   )
@@ -441,8 +436,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       window.history.replaceState(null, '', '/bot')
     }
   }, [mode, started])
-  const [sparPersona, setSparPersona] = useState('')
-  const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>('stevig')
+  // Voorinstelling vanuit het Gebruiksbalans-kader (?persona=...&weerstand=...): alleen overgenomen
+  // als ze bij de rolcategorie van deze gebruiker passen, anders geldt de gewone default.
+  const [sparPersona, setSparPersona] = useState(() =>
+    voorinstelling?.persona && isGeldigSparScenario(rolCategorie, voorinstelling.persona, voorinstelling.weerstand ?? 'stevig') ? voorinstelling.persona : '')
+  const [sparWeerstand, setSparWeerstand] = useState<'licht' | 'stevig' | 'zwaar'>(() =>
+    voorinstelling?.persona && isGeldigSparScenario(rolCategorie, voorinstelling.persona, voorinstelling.weerstand ?? 'stevig')
+      ? (voorinstelling.weerstand as 'licht' | 'stevig' | 'zwaar') ?? 'stevig' : 'stevig')
   const [sparContext, setSparContext] = useState('')
   const [startingSparring, setStartingSparring] = useState(false)
   const [antwoordLengte, setAntwoordLengte] = useState<'kort' | 'normaal' | 'uitgebreid'>('normaal')

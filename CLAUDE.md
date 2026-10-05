@@ -501,7 +501,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout. | 2026-07 |
 | `lib/memoryEntities.ts` (`extractAndStoreEntities`) | `claude-haiku-4-5-20251001` | Extraheert namen/bedrijven/thema's per sessie. JSON-fallback, faalt stil (laag risico). | 2026-08-12 |
-| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie) | `claude-haiku-4-5-20251001` | Korte classificatietaak, fail-open gedrag. Aangeroepen vanuit session-end en sparring/debrief. | 2026-09-16 |
+| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie + persoonlijk advies en sparscenario) | `claude-sonnet-4-6` | Sinds 2026-10-05 ook een persoonlijke zin uit de eigen historie (thema's, laatste sparsessie, coaching, teamthema) plus voorgesteld sparscenario, daarom Sonnet i.p.v. Haiku (taalkwaliteit). Fail-open, advies valt terug op de vaste kadertekst. Aangeroepen vanuit session-end en sparring/debrief. | 2026-10-05 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur. | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst. | 2026-07 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |

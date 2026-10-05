@@ -9,8 +9,9 @@ const serviceDb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function SparrenPage() {
+export default async function SparrenPage({ searchParams }: { searchParams: Promise<{ persona?: string; weerstand?: string }> }) {
   const { userId } = await auth()
+  const { persona, weerstand } = await searchParams
   if (!userId) redirect('/sign-in')
 
   // Een bevestigde teambaas kan ook sparren (blokkade weggehaald 2026-08-29): een sales
@@ -38,6 +39,7 @@ export default async function SparrenPage() {
       taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       mode="sparren"
       plan={plan}
+      voorinstelling={persona ? { persona, weerstand } : null}
     />
   )
 }

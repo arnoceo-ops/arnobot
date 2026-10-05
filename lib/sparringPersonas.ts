@@ -25,6 +25,32 @@ export const PERSONA_BESCHRIJVINGEN: Record<string, Record<string, string>> = {
   },
 }
 
+// Eén bron voor "welke sparring-personacategorie hoort bij deze profielrol". Gebruikt door
+// SparClient.tsx (client) en lib/groeibalansServer.ts (server), zodat beide dezelfde mapping
+// delen. Onbekende of vrije-tekst-rol (bijv. 'Anders') valt terug op 'salesbaas', de breedst
+// toepasbare categorie (zie de uitleg in SparClient.tsx).
+export const SPAR_ROLLEN: Record<'verkoper' | 'salesbaas' | 'eindbaas' | 'solopreneur', string[]> = {
+  verkoper: ['AE Hunter', 'AM Farmer', 'Key AM', 'Inside Sales'],
+  salesbaas: ['Sales Manager', 'Sales Director', 'VP of Sales'],
+  eindbaas: ['CEO/DGA'],
+  solopreneur: ['Solopreneur'],
+}
+
+export type SparRolCategorie = keyof typeof SPAR_ROLLEN
+
+export function rolCategorieVoorRol(rol: unknown): SparRolCategorie {
+  const r = typeof rol === 'string' ? rol : ''
+  const gevonden = (Object.keys(SPAR_ROLLEN) as SparRolCategorie[]).find(k => SPAR_ROLLEN[k].includes(r))
+  return gevonden ?? 'salesbaas'
+}
+
+export const SPAR_WEERSTANDEN = ['licht', 'stevig', 'zwaar'] as const
+export type SparWeerstand = typeof SPAR_WEERSTANDEN[number]
+
+export function isGeldigSparScenario(rolCategorie: string, persona: string, weerstand: string): boolean {
+  return !!PERSONA_BESCHRIJVINGEN[rolCategorie]?.[persona] && (SPAR_WEERSTANDEN as readonly string[]).includes(weerstand)
+}
+
 export const WEERSTAND_INSTRUCTIE: Record<string, string> = {
   licht: 'Je bent professioneel en kritisch maar bereid mee te gaan als de argumenten kloppen. Je geeft de ruimte om te overtuigen.',
   stevig: 'Je pusht terug, stelt lastige vragen en geeft niet snel toe. Je laat je niet leiden door enthousiasme zonder onderbouwing.',
