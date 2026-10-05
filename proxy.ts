@@ -96,13 +96,6 @@ export default clerkMiddleware(async (auth, req) => {
   // Action" in Sentry) wordt nu opgelost via Sentry's ignoreErrors i.p.v. hier blokkeren, zie
   // sentry.server.config.ts.
 
-  // Blogposts leven op arno.blog, niet op arno.bot. Deze verwarring is logisch (zelfde
-  // eigenaar, vergelijkbare naam) en komt voor bij getypte of verkeerd overgenomen links,
-  // dus een 404 tonen is nodeloos hard. Redirect in plaats daarvan naar het echte domein.
-  if (path === '/blog' || path.startsWith('/blog/')) {
-    return NextResponse.redirect(`https://arno.blog${path}${req.nextUrl.search}`, 301)
-  }
-
   // Admin routes: cookie-auth wordt per pagina afgehandeld.
   if (isAdminRoute(req)) {
     return nextWithNonce()

@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
       { source: '/bot/bieb/:path*', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
+      // Blogposts leven op arno.blog, niet op arno.bot. Hier i.p.v. in proxy.ts: de
+      // proxy-matcher slaat elk pad met een punt over, dus oude URL's als /blog/2011/...html
+      // bereikten die redirect nooit en gaven een 404 (Sentry-ruis van bots). De query
+      // string blijft behouden.
+      { source: '/blog', destination: 'https://arno.blog/blog', permanent: true },
+      { source: '/blog/:path*', destination: 'https://arno.blog/blog/:path*', permanent: true },
     ]
   },
   // Reverse proxy voor PostHog (zelfde truc als de Sentry-tunnel hieronder,
