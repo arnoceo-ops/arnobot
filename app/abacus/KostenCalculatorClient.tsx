@@ -6,6 +6,7 @@ import {
   berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit,
 } from '@/lib/kostenTarieven'
+import type { FxRateResult } from '@/lib/fxRate'
 
 // Zelfde stille clamping als BusinessCaseClient.tsx (besloten 2026-08-11,
 // gevonden bij audit: dit tabblad miste de bescherming die tab 3 al kreeg,
@@ -107,9 +108,10 @@ type Props = {
   teamBillingSplit: TeamBillingSplit
   inputs: Inputs
   setInputs: React.Dispatch<React.SetStateAction<Inputs>>
+  fxRateInfo: FxRateResult
 }
 
-export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs, setInputs }: Props) {
+export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, tierVerdeling, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs, setInputs, fxRateInfo }: Props) {
   const [tiersOpen, setTiersOpen] = useState(false)
 
   // Tier-bewust, net als tab 3 (Business case): de instelbare aannames
@@ -266,13 +268,20 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
-                  <div style={fieldLabelStyle}>Clerk Pro ($100/maand)</div>
+                  <div style={fieldLabelStyle}>Clerk Pro (${TARIEVEN.clerkProUsd}/maand)</div>
                   <div style={fieldHintStyle}>alleen nodig voor inactivity-timeout, niet voor aantal users (Free dekt tot 50.000 MRU)</div>
                 </div>
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
+              <NumberField label="Moneybird (€/maand)" hint="Growth-tier, maandelijkse betaling, boekhouding + Mollie-koppeling, altijd aan" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
               <NumberField label="Sentry (€/maand)" value={inputs.sentryEur} onChange={v => set('sentryEur', v)} />
-              <NumberField label="EUR → USD koers" value={inputs.fxRate} step={0.01} onChange={v => set('fxRate', v)} />
+              <NumberField
+                label="EUR → USD koers"
+                hint={fxRateInfo.live
+                  ? `live via Frankfurter/ECB, koers van ${fxRateInfo.datum ?? new Date(fxRateInfo.fetchedAt).toLocaleDateString('nl-NL')}`
+                  : 'live koers ophalen mislukt, fallback-waarde uit TARIEVEN.fxRateEurUsd'}
+                value={inputs.fxRate} step={0.01} onChange={v => set('fxRate', v)}
+              />
               <NumberField label="Upstash gratis tier (commands/maand)" hint="huidige limiet: 500.000" value={inputs.upstashFreeLimit} step={10000} onChange={v => set('upstashFreeLimit', v)} />
               <NumberField label="Upstash commands per bericht" value={inputs.upstashPerBericht} onChange={v => set('upstashPerBericht', v)} />
               <NumberField label="Upstash prijs per 100k commands ($)" value={inputs.upstashPrice} step={0.01} onChange={v => set('upstashPrice', v)} />
@@ -315,7 +324,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>AssemblyAI (audio-analyse)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.audioAnalyseKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
-                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Emirates NBD Pay)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Mollie)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
                 <div style={{ ...breakdownLineStyle, borderBottom: 'none' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>Totaal</span>
                   <span style={{ color: '#f59e0b', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.totaal)}</span>
@@ -352,7 +361,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
-              Alle bedragen in USD, tenzij anders aangegeven (Sentry in EUR, omgerekend). ElevenLabs-plan wordt automatisch gekozen als de goedkoopste tier die het totale creditverbruik dekt; boven Business wordt in hele Business-veelvouden gerekend.
+              Alle bedragen in USD, tenzij anders aangegeven (Sentry en Moneybird in EUR, omgerekend). ElevenLabs-plan wordt automatisch gekozen als de goedkoopste tier die het totale creditverbruik dekt; boven Business wordt in hele Business-veelvouden gerekend.
             </p>
           </div>
         </div>

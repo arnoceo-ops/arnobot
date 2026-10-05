@@ -50,7 +50,7 @@
 - **Sparring preformatted-scenario-kaarten.** Bouwen zodra er 5 scenario's liggen, nu 1/5.
 - **HubSpot (of vergelijkbaar CRM) voor team-leads.** Capability-sweep gedaan 2026-09-15: gratis tier volstaat qua volume/API-limieten, integratie zou via de HubSpot REST API rechtstreeks vanuit `lib/teamLeadNotify.ts` gaan (Contact + Deal aanmaken), niet via een ingesloten formulier. Ambitieuze versie: dezelfde pipeline ook gebruiken voor de outbound sd-links van Stefanie/Anniek (`project_sales_development`), zodat beide aanlooproutes uit `docs/SALES_BIJBEL.md` voor het eerst samenkomen, plus owner-rotatie zodra Arno de lead-routing wil loslaten (nu bewust nog handmatig, besloten 2026-09-15). Vereist een nieuwe sub-verwerker in privacypagina/beveiligings-PDF/DPA bij een echte bouw. **Checkpoint: herbeoordelen circa 3 maanden na de commerciële livegang**, op basis van het daadwerkelijke aantal team-leads per maand tot dan.
 - **Referral-tegoed-automatisering, deels gefixt.** Commit `7f82ed6a` registreert `status='converted'` inmiddels bij een handmatige betaling. Alleen het bedrag en de 3-maanden-regel blijven handmatig.
-- **SYSTEEMPROMPT-upgrade golf 1/golf 2 — status onduidelijk, met Arno te bespreken.** De golf1-evaluatie-herinnering stond gepland op 2026-09-16 (vandaag), maar commit `b0a8cc76` (2026-09-01) heeft golf 2 (patroonherkenning + samengevoegde accountability/consistentie-regel) al ingevouwen in de hoofdpersona-prompt, vóór de geplande evaluatiedatum. Onduidelijk wat er nog te evalueren valt nu golf 2 al gebouwd is.
+- ~~**SYSTEEMPROMPT-upgrade golf 1/golf 2 — status onduidelijk.**~~ **Afgehandeld 2026-09-26.** Met Arno besproken en opgelost: golf 1 regel 1 is bewust herzien (verzoektype i.p.v. aanleiding als trigger), zie `docs/SYSTEEMPROMPT_UPGRADE.md` "Besluit 2026-09-26". Geen losse evaluatie meer nodig, golf 2 was al lang ingevouwen.
 - **Sessie-geheugen hybride retrieval.** Gebouwd 2026-08-12, nog niet live geobserveerd of het in de praktijk werkt.
 - **BetterUp-inzichten toepassen op team-bouwsteen 1.3.**
 - **GTM outbound-tool** (zelfbouw NL-outbound, apart van premium ArnoBot, hoort bij de volume-tier).
@@ -81,8 +81,8 @@
 
 ## Voorgestelde eerste drie (bijgewerkt bij de kwartaalcheck van 2026-09-16)
 
-1. **Session replay-maskering verifiëren.** 10 dagen over de eigen streefdatum, één echte opname openen en bevestigen.
-2. **Golf 1/golf 2-verwarring uitpraten met Arno.** Golf 2 blijkt al gebouwd vóór de geplande golf1-evaluatie van vandaag.
+1. **Session replay-maskering verifiëren.** Inmiddels 20 dagen over de eigen streefdatum (16-9: al 10 dagen over), één echte opname openen en bevestigen.
+2. ~~**Golf 1/golf 2-verwarring uitpraten met Arno.**~~ **Afgehandeld 2026-09-26.**
 3. **Manager-zelfcoaching-gat Stuk B**: akkoord geven op de vijf beslispunten in het projectplan (`TEAM_PLAN.md`), dan bouwen. Stuk A is al gebouwd.
 
 *(Verse TEAM_PLAN-statuscontrole en het Stuk-B-projectplan afgerond 2026-08-31. PostHog-kern en Dependabot-trigger afgerond bij de kwartaalcheck van 2026-09-16, zie hierboven.)*

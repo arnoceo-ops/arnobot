@@ -27,12 +27,12 @@ export async function GET(req: NextRequest) {
   try {
 
   const now = new Date()
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: logs } = await supabase
     .from('arnobot_rds_logs')
     .select('user_id, created_at')
-    .gte('created_at', twentyFourHoursAgo)
+    .gte('created_at', sevenDaysAgo)
     .order('created_at', { ascending: false })
 
   const userMap: Record<string, { count: number; lastActive: string }> = {}
@@ -46,15 +46,14 @@ export async function GET(req: NextRequest) {
 
   const userIds = Object.keys(userMap)
 
-  const dateLabel = now.toLocaleDateString('nl-NL', {
+  const weekOf = now.toLocaleDateString('nl-NL', {
     timeZone: 'Europe/Amsterdam',
-    weekday: 'long',
     day: 'numeric',
     month: 'long',
   })
 
   if (userIds.length === 0) {
-    await sendTelegram(`📊 ARNOBOT DAGELIJKS · ${dateLabel}\n\nGeen gesprekken in de afgelopen 24 uur.`)
+    await sendTelegram(`📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\nGeen gesprekken in de afgelopen 7 dagen.`)
     return NextResponse.json({ ok: true, activeUsers: 0 })
   }
 
@@ -72,10 +71,9 @@ export async function GET(req: NextRequest) {
     }))
     .sort((a, b) => b.count - a.count)
 
-  // Het venster is een rollend etmaal (laatste 24 uur), geen kalenderdag. Bij activiteit
-  // van "gisteren" die nog net binnen dat venster valt, staat er anders alleen een tijd bij
-  // zonder datum, wat het laat lijken alsof het vandaag was terwijl dateLabel hierboven
-  // altijd de datum van dit cron-moment toont, niet van de activiteit zelf.
+  // Het venster is een rollende week (laatste 7 dagen), geen kalenderweek. Alleen activiteit
+  // van exact de dag van dit cron-moment zelf (zaterdagochtend) toont alleen een tijd, al het
+  // overige (verreweg de meeste rijen bij een weekvenster) krijgt datum+tijd.
   const vandaag = now.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
   const lines = rows.map((r, i) => {
     const activiteitDatum = new Date(r.lastActive).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
@@ -90,13 +88,13 @@ export async function GET(req: NextRequest) {
     return `${i + 1}. ${r.name} · ${r.count} berichten · ${wanneer}`
   })
 
-  const text = `📊 ARNOBOT DAGELIJKS · ${dateLabel}\n\n${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief:\n\n${lines.join('\n')}`
+  const text = `📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\n${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief in de afgelopen 7 dagen:\n\n${lines.join('\n')}`
 
   await sendTelegram(text)
 
   return NextResponse.json({ ok: true, activeUsers: userIds.length })
   } catch (err) {
-    await notifyCronFailure('daily-activity', err)
+    await notifyCronFailure('weekly-activity', err)
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }

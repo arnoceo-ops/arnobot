@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkAppProvider from "./ClerkAppProvider";
@@ -29,6 +29,12 @@ export const metadata: Metadata = {
   title: 'ArnoBot: Jouw Personal Sales Coach',
   description: 'ArnoBot is jouw persoonlijke salescoach. Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. 24/7 beschikbaar.',
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 const organizationJsonLd = {

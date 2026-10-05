@@ -118,3 +118,81 @@ export function fetchElevenLabsSpeech(text: string): Promise<Response> {
     body: JSON.stringify({ text, model_id: ELEVENLABS_MODEL_ID }),
   })
 }
+
+export interface ElevenLabsAlignment {
+  characters: string[]
+  character_start_times_seconds: number[]
+  character_end_times_seconds: number[]
+}
+
+export interface ElevenLabsSpeechWithAlignment {
+  audio_base64: string
+  alignment: ElevenLabsAlignment | null
+  normalized_alignment: ElevenLabsAlignment | null
+}
+
+function appendAlignment(target: ElevenLabsAlignment, source: ElevenLabsAlignment | null | undefined) {
+  if (!source?.characters?.length) return
+  target.characters.push(...source.characters)
+  target.character_start_times_seconds.push(...source.character_start_times_seconds)
+  target.character_end_times_seconds.push(...source.character_end_times_seconds)
+}
+
+/**
+ * Haalt complete audio (base64) plus karakter-niveau alignment op voor de karaoke-achtige
+ * meescrollende/highlightende weergave in ArnoBot Voice (SparClient.tsx), via ElevenLabs'
+ * STREAMENDE `/stream/with-timestamps`-endpoint, server-side samengevoegd tot dezelfde
+ * ene-JSON-vorm als de niet-streamende variant (client blijft ongewijzigd: die wacht toch al
+ * op complete audio vóór afspelen, betrouwbaarder op mobiele browsers dan progressief
+ * afspelen via MediaSource). Bewust niet de niet-streamende `/with-timestamps` meer: die bleek
+ * bij meting ~3,5x trager (2,3s vs 0,65s voor een gemiddeld voice-antwoord) omdat ElevenLabs
+ * daar wacht tot de hele clip klaar is vóór er iets terugkomt, i.p.v. audio te sturen zodra
+ * die gegenereerd is. Karakter-tijden in de losse chunks zijn cumulatief over de hele stream
+ * (leeg getest), dus simpelweg na elkaar plakken in aankomstvolgorde geeft de juiste
+ * doorlopende alignment.
+ */
+export async function fetchElevenLabsSpeechWithAlignment(text: string): Promise<ElevenLabsSpeechWithAlignment> {
+  const voiceId = process.env.ELEVENLABS_VOICE_ID!
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream/with-timestamps?output_format=mp3_44100_128`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': process.env.ELEVENLABS_API_KEY!,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text, model_id: ELEVENLABS_MODEL_ID }),
+  })
+  if (!res.ok || !res.body) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`ElevenLabs stream/with-timestamps ${res.status}: ${errText}`)
+  }
+
+  const audioChunks: Buffer[] = []
+  const alignment: ElevenLabsAlignment = { characters: [], character_start_times_seconds: [], character_end_times_seconds: [] }
+  const normalizedAlignment: ElevenLabsAlignment = { characters: [], character_start_times_seconds: [], character_end_times_seconds: [] }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  const consumeLine = (line: string) => {
+    if (!line.trim()) return
+    const chunk = JSON.parse(line)
+    if (chunk.audio_base64) audioChunks.push(Buffer.from(chunk.audio_base64, 'base64'))
+    appendAlignment(alignment, chunk.alignment)
+    appendAlignment(normalizedAlignment, chunk.normalized_alignment)
+  }
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) consumeLine(line)
+  }
+  consumeLine(buffer)
+
+  return {
+    audio_base64: Buffer.concat(audioChunks).toString('base64'),
+    alignment: alignment.characters.length ? alignment : null,
+    normalized_alignment: normalizedAlignment.characters.length ? normalizedAlignment : null,
+  }
+}

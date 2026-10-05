@@ -9,8 +9,8 @@
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/cron/daily-activity",
-      "schedule": "0 3 * * *"
+      "path": "/api/cron/weekly-activity",
+      "schedule": "0 4 * * 6"
     },
     {
       "path": "/api/cron/uitdaging-herinnering",

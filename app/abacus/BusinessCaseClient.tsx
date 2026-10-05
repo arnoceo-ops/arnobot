@@ -2,15 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import {
-  TARIEVEN, DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
+  DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
 import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
-// Was een losse hardgecodeerde 1.08 (besloten 2026-08-11, gevonden bij audit):
-// liep bij een toekomstige koerswijziging in TARIEVEN stil uit de pas met de
-// rest van de codebase. Nu dezelfde bron als tab 1/Trackrecord.
-const FX_EUR_USD = TARIEVEN.fxRateEurUsd
 
 // Stille clamping i.p.v. een blokkade/foutmelding: dit is Arno's eigen interne
 // tool, geen productieformulier. Voorkomt praktisch onmogelijke scenario's
@@ -48,7 +44,7 @@ function winstBijN(
   verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
 ): number {
   const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team, teamBillingSplit)
-  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / FX_EUR_USD
+  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / inputs.fxRate
   return omzetTotaal - kostenEur - betaalproviderKosten
 }
 
@@ -242,7 +238,7 @@ export default function BusinessCaseClient({
     const { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten: betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld } =
       berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, scenarioPct, betaalprovider, nGebruikers, SCENARIO_TEAM_PRIJS, teamScenario, teamBillingSplit)
     const kostenUsd = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal
-    const kostenEur = kostenUsd / FX_EUR_USD
+    const kostenEur = kostenUsd / inputs.fxRate
     return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, kostenEur, betaalKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
   }, [nGebruikers, scenarioPct, billingSplit, betaalprovider, teamScenario, teamBillingSplit, inputs])
 
@@ -433,16 +429,23 @@ export default function BusinessCaseClient({
       </div>
 
       <div style={cardStyle}>
-        <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Emirates NBD Pay)</div>
-        <NumberField label="Tarief (%)" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: clamp(v, 0) })} />
-        <NumberField label="Vast bedrag per transactie (€)" hint="≈ AED 1" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: clamp(v, 0) })} />
+        <div style={cardHeadStyle}><span style={dotStyle} />Betaalprovider (Mollie)</div>
+        <NumberField label="Kaarttarief (%)" hint="Mollie EU-consumentenkaart" value={betaalprovider.mdrPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, mdrPct: clamp(v, 0) })} />
+        <NumberField label="Kaart, vast bedrag per transactie (€)" value={betaalprovider.mdrFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, mdrFixed: clamp(v, 0) })} />
         <NumberField
-          label="% van omzet via creditcard"
+          label="% van Solo-omzet via kaart"
           hint={<>
-            <div>Geldt alleen voor Solo (Basic/Pro).</div>
-            <div>Team loopt altijd via factuur; rest verondersteld via jaarfactuur, geen kaartkosten.</div>
+            <div>Geldt alleen voor Solo (Basic/Pro). Resterend aandeel loopt via SEPA-incasso (recurring), niet gratis.</div>
+            <div>Realistisch NL-patroon: eerste betaling iDEAL, vervolgtermijnen SEPA-incasso, dus meerderheid niet via kaart.</div>
           </>}
           value={betaalprovider.pctCreditcard} onChange={v => setBetaalprovider({ ...betaalprovider, pctCreditcard: clamp(v, 0, 100) })}
+        />
+        <NumberField label="SEPA-incasso tarief (%)" hint="resterend Solo-aandeel, recurring" value={betaalprovider.sepaPct} step={0.1} onChange={v => setBetaalprovider({ ...betaalprovider, sepaPct: clamp(v, 0) })} />
+        <NumberField label="SEPA-incasso, vast bedrag per transactie (€)" value={betaalprovider.sepaFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, sepaFixed: clamp(v, 0) })} />
+        <NumberField
+          label="Team, vast bedrag per factuur (€)"
+          hint="SEPA-overschrijving via Moneybird-betaallink, één Mollie-transactie per teamaccount per factuurmoment"
+          value={betaalprovider.teamFixed} step={0.01} onChange={v => setBetaalprovider({ ...betaalprovider, teamFixed: clamp(v, 0) })}
         />
       </div>
     </div>

@@ -61,8 +61,8 @@ export default async function EmailsOverzichtPage() {
 
         <Section title="NAAR MIJZELF: GEPLANDE CRONS" subtitle="Automatische rapportages op vaste tijdstippen">
           <Table rows={[
-            { name: 'Dagelijkse activiteit', trigger: 'Cron:daily-activity (dagelijks 05:00)',       ontvanger: 'arno@royaldutchsales.com', wanneer: 'Elke ochtend, actieve gebruikers afgelopen 24u',         type: 'Admin' },
-            { name: 'Weekly top gebruikers', trigger: 'Cron:weekly-top-users (zaterdag 06:05)',      ontvanger: 'analyses@arno.bot',        wanneer: 'Elke zaterdag, top 10 actieve gebruikers',              type: 'Admin' },
+            { name: 'Wekelijkse activiteit', trigger: 'Cron:weekly-activity (zaterdag 06:00)',       ontvanger: 'Telegram',                 wanneer: 'Elke zaterdagochtend, actieve gebruikers afgelopen 7 dagen', type: 'Admin' },
+            { name: 'Weekly top gebruikers', trigger: 'Cron:weekly-top-users (zaterdag 06:05)',      ontvanger: 'Telegram',                 wanneer: 'Elke zaterdag, top 10 actieve gebruikers',              type: 'Admin' },
             { name: 'Competitie',            trigger: 'Cron:competitie (maandelijks, 1e)',           ontvanger: 'arno@arno.bot',            wanneer: 'Eerste van de maand, competitierapport',                type: 'Admin' },
             { name: 'Model-check',           trigger: 'Cron:model-check (maandelijks, 1e)',         ontvanger: 'model@arno.bot',           wanneer: 'Eerste van de maand, modelkwaliteitscheck',             type: 'Admin' },
             { name: 'Data-cleanup',          trigger: 'Cron:data-cleanup (maandelijks, 1e)',        ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, gebruikers te verwerken',          type: 'Admin' },

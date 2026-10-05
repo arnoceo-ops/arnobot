@@ -453,8 +453,15 @@ export async function POST(req: NextRequest) {
             : Promise.resolve({ data: null as { persona: string | null; debrief: string | null; created_at: string }[] | null }),
           findSemanticallyRelevantOlderSessions(userId, sessionId, question),
           findRecurringEntitiesInQuestion(userId, question),
+          supabase
+            .from('arnobot_coaching')
+            .select('mindset_diagnose, ontwikkelpunten, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ])
-          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten]) => {
+          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -527,6 +534,15 @@ export async function POST(req: NextRequest) {
                 return `- ${e.entity_name}${e.entity_type ? ` (${e.entity_type})` : ''}: eerder genoemd in ${e.mention_count} gesprek${e.mention_count === 1 ? '' : 'ken'}, laatst op ${datum}`
               }).join('\n')
               geheugentekst += `\n\nTERUGKERENDE NAMEN/THEMA'S IN DEZE VRAAG (patroon over meerdere gesprekken heen, gebruik alleen als het de vraag versterkt):\n${entiteitenTekst}`
+            }
+            if (laatsteCoaching?.mindset_diagnose) {
+              const mindsetOntwikkelpunten = ((laatsteCoaching.ontwikkelpunten as { tekst: string; pijlar: string }[] | null) ?? [])
+                .filter(p => p.pijlar === 'mindset')
+              const datum = new Date(laatsteCoaching.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+              geheugentekst += `\n\nMINDSET-SIGNAAL UIT LAATSTE COACHINGSDOCUMENT (${datum}, zie de instructie bij OPENSTAANDE ACTIES EERST voor hoe je dit gebruikt):\n${laatsteCoaching.mindset_diagnose}`
+              if (mindsetOntwikkelpunten.length > 0) {
+                geheugentekst += `\nOntwikkelpunt(en) mindset: ${mindsetOntwikkelpunten.map(p => p.tekst).join(' | ')}`
+              }
             }
             return { geheugentekst, prevSessionCount }
           })

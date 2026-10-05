@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import KostenPageClient from './KostenPageClient'
+import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,5 +10,7 @@ export default async function KostenPage() {
   const token = cookieStore.get('arnobot_kosten')?.value
   if (!token || token !== process.env.ARNOBOT_KOSTEN_KEY) redirect('/abacus/login')
 
-  return <KostenPageClient />
+  const fxRate = await getLiveFxRateEurUsd()
+
+  return <KostenPageClient fxRate={fxRate} />
 }

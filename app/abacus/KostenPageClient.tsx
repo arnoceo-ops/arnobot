@@ -5,6 +5,7 @@ import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
 import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, DEFAULT_INPUTS, type Inputs } from '@/lib/kostenTarieven'
+import type { FxRateResult } from '@/lib/fxRate'
 
 type Tab = 'calculator' | 'trackrecord' | 'businesscase'
 
@@ -14,7 +15,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'businesscase', label: 'Business case' },
 ]
 
-export default function KostenPageClient() {
+type Props = { fxRate: FxRateResult }
+
+export default function KostenPageClient({ fxRate }: Props) {
   const [tab, setTab] = useState<Tab>('calculator')
   // Gedeeld tussen Calculator (tab 1) en het Scenario-blok op Business case
   // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
@@ -41,7 +44,11 @@ export default function KostenPageClient() {
   // (besloten 2026-08-11, gevonden bij audit + bevestigd door Arno: dit was
   // altijd de bedoeling, zie de Inputs-type-comment in lib/kostenTarieven.ts).
   // Nu gedeeld, zelfde patroon als de rest van deze state.
-  const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS)
+  // fxRate.rate overschrijft DEFAULT_INPUTS.fxRate: server-side live opgehaald
+  // (lib/fxRate.ts, besloten 2026-09-29), valt zelf al terug op
+  // TARIEVEN.fxRateEurUsd als de live aanroep mislukt, dus hier geen aparte
+  // fallback-logica nodig.
+  const [inputs, setInputs] = useState<Inputs>({ ...DEFAULT_INPUTS, fxRate: fxRate.rate })
   // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
   // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
   // Business case, verder alleen in geheugen (niet opgeslagen).
@@ -83,6 +90,7 @@ export default function KostenPageClient() {
           teamBillingSplit={teamBillingSplit}
           inputs={inputs}
           setInputs={setInputs}
+          fxRateInfo={fxRate}
         />
       )}
 

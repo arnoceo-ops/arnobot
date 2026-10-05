@@ -123,7 +123,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
                 <div style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: '#1f2937', alignItems: 'flex-start' }}>
                   <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>ARNO</span>
                   <p
-                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', fontWeight: 400 }}
+                    style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', fontWeight: 400, whiteSpace: 'pre-wrap' }}
                     dangerouslySetInnerHTML={{ __html: renderContent(msg.answer) }}
                   />
                 </div>

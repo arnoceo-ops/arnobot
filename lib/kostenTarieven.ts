@@ -14,9 +14,10 @@ export const TARIEVEN = {
   anthropicPerBericht: 0.015,
   // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
   kostenPerAnalyse: 0.007,
-  // Fable 5: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze twee
-  // (arnobot_coaching is één rij per gebruiker, geen append-log), dus blijft
-  // een aanname, ook in de trackrecord-berekening.
+  // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
+  // twee (arnobot_coaching is één rij per gebruiker, geen append-log), dus
+  // blijft een aanname, ook in de trackrecord-berekening. Prijs ongewijzigd
+  // t.o.v. Fable 5 ($10 in / $50 uit per 1M tokens), geverifieerd 2026-09-29.
   coachingPerGebruikerPerMaand: 2,
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruikerPerMaand: 10,
@@ -67,12 +68,25 @@ export const TARIEVEN = {
   // snapshot). Geen handmatige toggle (besloten 2026-08-11, op Arno's
   // verzoek): telt automatisch mee zodra het gebruikersaantal de drempel
   // haalt, zodat dit niet vergeten kan worden aan te zetten. Bewust een
-  // hogere drempel (100) dan de andere Pro-upgrades in CLAUDE.md (50):
-  // Arno's eigen keuze (2026-08-11), losse drempel, geen gekoppelde mijlpaal.
+  // hogere drempel (150) dan de andere Pro-upgrades in CLAUDE.md (50):
+  // Arno's eigen keuze, losse drempel, geen gekoppelde mijlpaal. Verhoogd van
+  // 100 naar 150 op 2026-09-29.
   supabasePitrUsd: 100,
-  supabasePitrDrempel: 100,
+  supabasePitrDrempel: 150,
   clerkProUsd: 25,
   clerkProActief: false,
+  // Moneybird (boekhouding, gekoppeld aan Mollie): Growth-tier, de eerste tier
+  // met terugkerende facturen/abonnementen (nodig voor Team-facturatie),
+  // besloten 2026-09-29 bij de Mollie/Moneybird-keuze. €35/maand is het
+  // maandelijkse-betaling-tarief (bevestigd op moneybird.nl/prijzen,
+  // geverifieerd 2026-09-29); €29 was het jaarlijkse-betaling-tarief, niet van
+  // toepassing want Arno betaalt maandelijks. Altijd meegeteld, geen toggle
+  // (besloten 2026-09-29, was eerst `moneybirdActief` net als Clerk Pro, maar
+  // dit account staat altijd aan zodra het bestaat, geen optioneel scenario
+  // zoals Clerk Pro's inactivity-timeout-afweging). EUR-native, geen fx nodig
+  // in vasteKostenPerMaand/computeScenarioKosten behalve de omrekening naar de
+  // dollar-context daar (zelfde patroon als sentryEur).
+  moneybirdEur: 35,
   // Bevestigd door Arno (2026-09-17): nog op Sentry's gratis tier, geen
   // betaald plan. Het eerdere bedrag (26) was een currency-mismatch, Sentry's
   // eigen prijzen zijn in USD ($26/mo jaarlijks, $29/mo maandelijks), niet
@@ -84,11 +98,12 @@ export const TARIEVEN = {
   // betaalmethode, dus geen verrassingskosten. Opnemen zodra een van die limieten
   // structureel wordt overschreden of er een betaald plan wordt genomen. Bij de
   // kwartaalcheck controleren tegen het werkelijke PostHog-verbruik.
-  // Bijgewerkt 2026-09-17 (kwartaalcheck-achtige verificatie): was 1.08, live
-  // mid-market koers was op dat moment 1,1542. Was ~7% te laag, wat elke
-  // USD-kostenpost (Vercel, Supabase, Clerk, Porkbun) structureel te laag
-  // omrekende naar EUR.
-  fxRateEurUsd: 1.1542,
+  // Bijgewerkt 2026-09-29 (doorrekenronde na de Mollie/Moneybird-migratie):
+  // was 1.1542, live mid-market koers op dat moment (xe.com) was 1,1350. Was
+  // ~1,7% te hoog, wat elke USD-kostenpost (Vercel, Supabase, Clerk, Porkbun)
+  // structureel iets te hoog omrekende naar EUR. Vorige update 2026-09-17: was
+  // toen 1.08, ~7% te laag.
+  fxRateEurUsd: 1.135,
   domeinPerJaarUsd: 52,
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
@@ -133,13 +148,17 @@ export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: n
 }
 
 // gebruikersAantal: echt gemeten actieve gebruikers deze maand (Trackrecord).
-// PITR telt automatisch mee zodra dat de mijlpaal-drempel haalt.
-export function vasteKostenPerMaand(gebruikersAantal: number): number {
+// PITR telt automatisch mee zodra dat de mijlpaal-drempel haalt. fxRate:
+// optioneel overschrijfbaar met een live-opgehaalde koers (lib/fxRate.ts),
+// valt terug op de hardcoded TARIEVEN.fxRateEurUsd als niemand er een
+// meegeeft (besloten 2026-09-29, bij de invoering van de live FX-koers).
+export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? TARIEVEN.supabaseProUsd : 0)
     + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
-    + TARIEVEN.sentryEur * TARIEVEN.fxRateEurUsd
+    + TARIEVEN.moneybirdEur * fxRate
+    + TARIEVEN.sentryEur * fxRate
     + TARIEVEN.domeinPerJaarUsd / 12
 }
 
@@ -178,6 +197,7 @@ export type Inputs = {
   vercelPerSeat: number
   supabasePro: boolean
   clerkPro: boolean
+  moneybirdEur: number
   sentryEur: number
   fxRate: number
   upstashFreeLimit: number
@@ -239,6 +259,7 @@ export const DEFAULT_INPUTS: Inputs = {
   // niet meer los hardgecodeerd, maar dezelfde bron als vasteKostenPerMaand().
   supabasePro: TARIEVEN.supabaseProActief,
   clerkPro: TARIEVEN.clerkProActief,
+  moneybirdEur: TARIEVEN.moneybirdEur,
   sentryEur: TARIEVEN.sentryEur,
   fxRate: TARIEVEN.fxRateEurUsd,
   upstashFreeLimit: TARIEVEN.upstashFreeLimit,
@@ -316,10 +337,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
+  const moneybirdUsd = inputs.moneybirdEur * inputs.fxRate
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
     + (inputs.supabasePro ? TARIEVEN.supabaseProUsd : 0)
     + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (inputs.clerkPro ? TARIEVEN.clerkProUsd : 0)
+    + moneybirdUsd
     + sentryUsd
     + domeinPerMaand
 
@@ -333,11 +356,26 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   }
 }
 
-// Betaalprovider (Emirates NBD Pay / Network International): geen publiek
-// tarief, marktbenchmark voor internationaal uitgegeven kaarten. Gedeeld
+// Betaalprovider: Mollie (besloten 2026-09-29, vervangt de eerdere generieke
+// Emirates NBD Pay/Network International-marktbenchmark placeholder). Gedeeld
 // tussen Calculator (tab 1, telt mee in de totale kosten) en het
 // Scenario-blok op Business case (tab 3), zodat beide exact dezelfde omzet-
 // en fee-berekening gebruiken voor eenzelfde hypothetisch aantal gebruikers.
+//
+// Mollie-tarieven (mollie.com/pricing, geverifieerd 2026-09-29): kaart
+// (EU-consument) 1,8% + €0,25; SEPA-incasso (recurring) €0,35 vlak, geen %
+// (was eerst 0,4%+€0,25 aangenomen o.b.v. derde-partij-bronnen, Mollie's eigen
+// pricing-pagina bevestigt een vlak tarief zonder percentage-component,
+// gecorrigeerd bij de doorrekenronde van 2026-09-29); SEPA-overschrijving
+// (Team-facturen via Moneybird-betaallink) €0,25 vlak, geen %.
+// Realistisch NL-verkeerspatroon voor terugkerende Basic/Pro-abonnementen:
+// eerste betaling via iDEAL (mandaat), vervolgtermijnen via SEPA-incasso, dus
+// de meerderheid van het volume loopt NIET via kaart. pctCreditcard is bewust
+// laag gezet (25%) t.o.v. de oude 100%-kaart-aanname, met sepaPct/sepaFixed
+// voor het resterende aandeel: de oude formule rekende dat deel op €0, wat
+// met een echte SEPA-incasso-fee niet meer klopt (gevonden bij de
+// Mollie-doorrekening, zie geheugen project_payment_provider). Aanname, geen
+// gemeten data, bijwerken zodra er echte transacties zijn.
 //
 // Prijzen (basis/premium) is losstaand: dat blijft de échte, huidige
 // live prijs zoals die nu op arno.bot staat, gebruikt door Trackrecord bij
@@ -355,7 +393,11 @@ export type Prijzen = { basis: number; premium: number }
 export type ScenarioPrijzen = { basicMaandelijks: number; basicJaarlijksTotaal: number; proMaandelijks: number; proJaarlijksTotaal: number }
 export type ScenarioBillingSplit = { basicPctJaarlijks: number; proPctJaarlijks: number }
 export type TierVerdeling = { basic: number; pro: number }
-export type Betaalprovider = { mdrPct: number; mdrFixed: number; pctCreditcard: number }
+export type Betaalprovider = {
+  mdrPct: number; mdrFixed: number; pctCreditcard: number
+  sepaPct: number; sepaFixed: number
+  teamFixed: number
+}
 // Team staat los van TierVerdeling: geen % van "Totaal aantal gebruikers",
 // want een teamklant is geen individu maar een manager-account met eigen
 // teamleden eronder (besloten 2026-08-01, optie B uit het gesprek over hoe
@@ -379,7 +421,11 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 59, proJaarlijksTotaal: 468 }
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
-export const DEFAULT_BETAALPROVIDER: Betaalprovider = { mdrPct: 3.5, mdrFixed: 0.25, pctCreditcard: 100 }
+export const DEFAULT_BETAALPROVIDER: Betaalprovider = {
+  mdrPct: 1.8, mdrFixed: 0.25, pctCreditcard: 25,
+  sepaPct: 0, sepaFixed: 0.35,
+  teamFixed: 0.25,
+}
 // Team-tarief (besloten 2026-08-01, jaaroptie toegevoegd 2026-08-10): €97
 // basis + €49/gebruiker/maand bij maandelijkse betaling, €77 + €39/gebruiker
 // als maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, bewust
@@ -427,16 +473,29 @@ export function berekenScenarioOmzetEnBetaalprovider(
   const omzet = basicN * basicPrijsGemiddeld + proN * proPrijsGemiddeld
   // Team is los van n: aantal teamaccounts × (basistarief + leden × tarief
   // per gebruiker), beide componenten geblend over maandelijks/jaarlijks met
-  // dezelfde gemiddeldePrijsPerMaand-logica als Basic/Pro. Team-betalingen
-  // lopen via factuur, niet via de betaalprovider (besloten 2026-08-01), dus
-  // teamOmzet telt wel mee in omzetTotaal maar niet in betaalproviderKosten.
+  // dezelfde gemiddeldePrijsPerMaand-logica als Basic/Pro. Team-facturen lopen
+  // via Moneybird, met een Mollie-betaallink erop (besloten 2026-09-29, was
+  // tot dan "via factuur, niet via de betaalprovider"): telt daarom nu wél
+  // mee in betaalproviderKosten, tegen het lage vlakke SEPA-overschrijving-
+  // tarief (teamFixed), niet tegen kaart-/SEPA-incassotarief. Eén Mollie-
+  // transactie per teamaccount per factuurmoment (basistarief + alle seats in
+  // één gecombineerde factuur), dus geteld over team.aantalKlanten, niet over
+  // teamLeden.
   const teamLeden = team.aantalKlanten * team.gemiddeldeLeden
   const teamBasisGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.basisMaandelijks, teamPrijs.basisJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
   const teamPerGebruikerGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.perGebruikerMaandelijks, teamPrijs.perGebruikerJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
   const teamOmzet = team.aantalKlanten * (teamBasisGemiddeld + team.gemiddeldeLeden * teamPerGebruikerGemiddeld)
   const omzetTotaal = omzet + teamOmzet
+  // Kaart-aandeel (Solo) tegen mdrPct/mdrFixed, resterend Solo-aandeel tegen
+  // SEPA-incasso (sepaPct/sepaFixed, niet langer €0 zoals de oude
+  // kaart-only-formule aannam), Team apart tegen het vlakke SEPA-
+  // overschrijvingstarief.
   const aandeel = betaalprovider.pctCreditcard / 100
-  const betaalproviderKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
+  const kaartKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
     + (basicN + proN) * aandeel * betaalprovider.mdrFixed
+  const sepaKosten = omzet * (1 - aandeel) * (betaalprovider.sepaPct / 100)
+    + (basicN + proN) * (1 - aandeel) * betaalprovider.sepaFixed
+  const teamBetaalKosten = team.aantalKlanten * betaalprovider.teamFixed
+  const betaalproviderKosten = kaartKosten + sepaKosten + teamBetaalKosten
   return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
 }

@@ -40,6 +40,72 @@ interface Message {
   retryQuestion?: string
 }
 
+interface SpeakAlignment {
+  characters: string[]
+  character_start_times_seconds: number[]
+}
+
+interface SpeakToken {
+  text: string
+  start: number
+}
+
+// Zet de karakter-alignment van ElevenLabs om naar woord-tokens (whitespace als eigen token,
+// zodat spacing exact behouden blijft) met de starttijd van het eerste karakter van elk woord.
+// Basis voor de karaoke-highlight + meescrollen in ArnoBot Voice.
+function buildSpeakTokens(alignment: SpeakAlignment | null | undefined): SpeakToken[] {
+  if (!alignment?.characters?.length) return []
+  const { characters, character_start_times_seconds: starts } = alignment
+  const tokens: SpeakToken[] = []
+  let current = ''
+  let wordStart = 0
+  let inWord = false
+  for (let idx = 0; idx < characters.length; idx++) {
+    const ch = characters[idx]
+    if (/\s/.test(ch)) {
+      if (inWord) { tokens.push({ text: current, start: wordStart }); current = ''; inWord = false }
+      tokens.push({ text: ch, start: starts[idx] })
+    } else {
+      if (!inWord) { wordStart = starts[idx]; inWord = true }
+      current += ch
+    }
+  }
+  if (inWord) tokens.push({ text: current, start: wordStart })
+  return tokens
+}
+
+// Binary search: laatste token waarvan de starttijd nog niet voorbij het huidige afspeelpunt is.
+function findActiveSpeakToken(tokens: SpeakToken[], currentTime: number): number {
+  let lo = 0, hi = tokens.length - 1, result = -1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if (tokens[mid].start <= currentTime) { result = mid; lo = mid + 1 } else { hi = mid - 1 }
+  }
+  return result
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
+// Streamende transcriptiemodellen kunnen vastlopen in een herhaallus (bekend gedrag bij o.a.
+// stilte aan het eind van een opname): dezelfde zin komt dan steeds opnieuw terug. Knipt het
+// transcript af zodra dezelfde zin twee keer direct achter elkaar voorkomt.
+function dedupeRepeatedSentence(text: string): { text: string; truncated: boolean } {
+  const sentences = text.match(/[^.!?]+[.!?]+(\s+|$)/g)
+  if (!sentences || sentences.length < 2) return { text, truncated: false }
+  const norm = (s: string) => s.trim().toLowerCase()
+  const last = norm(sentences[sentences.length - 1])
+  const prev = norm(sentences[sentences.length - 2])
+  if (last && last === prev) {
+    return { text: sentences.slice(0, sentences.length - 1).join(''), truncated: true }
+  }
+  return { text, truncated: false }
+}
+
 interface Props {
   userId: string
   profiel: Record<string, unknown>
@@ -202,6 +268,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [showCommunityConsent, setShowCommunityConsent] = useState(false)
   const [synthesisLoading, setSynthesisLoading] = useState(false)
   const [synthesisMessageCount, setSynthesisMessageCount] = useState(0)
+  // Alleen voor de instant-sluiten-op-mobiel-flow (afsluitenGesprek): korte, niet-blokkerende
+  // melding of het opslaan lukte, want er is geen inline samenvatting-scherm meer om dat aan
+  // af te lezen.
+  const [closeToast, setCloseToast] = useState<'saved' | 'failed' | null>(null)
   const [verfijnen, setVerfijnen] = useState(false)
   const [verfijndSuggestie, setVerfijndSuggestie] = useState('')
   const [verfijnFout, setVerfijnFout] = useState(false)
@@ -314,7 +384,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // zwaarder dan het risico op een korte, onopvallende wissel zodra de community-set binnenkomt.
   const [dynamicOpeners, setDynamicOpeners] = useState<{ strategisch: string[]; organisatorisch: string[]; operationeel: string[] } | null>(null)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
+  // Onderste balk (output-toggle/invoer/knoppen) verdwijnt tijdens het afspelen van VoiceOut,
+  // zodat het volledige antwoord leesbaar is, en verschijnt weer zodra je zelf verder naar
+  // beneden scrolt (signaal dat je wil interacteren) of de audio stopt.
+  const [voiceBarHidden, setVoiceBarHidden] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
+  // Karaoke-achtige weergave van het bericht dat nu wordt uitgesproken: welke woord-tokens
+  // (buildSpeakTokens) en welk token (index) precies wordt voorgelezen op dit moment.
+  const [speakTokens, setSpeakTokens] = useState<SpeakToken[]>([])
+  const [speakTokenIdx, setSpeakTokenIdx] = useState(-1)
+  const activeSpeakWordRef = useRef<HTMLSpanElement>(null)
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const [pendingNavDest, setPendingNavDest] = useState<string | null>(null)
@@ -406,19 +485,40 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
-  const autoFollowRef = useRef(true)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
+  const lastAutoSaveCountRef = useRef(0)
+  // Los van de recording-state (die pas ná de awaited getUserMedia bijgewerkt wordt): sluit het
+  // gaatje waarin een tweede touchstart/mousedown-ghost-event vóór die state-update alsnog een
+  // tweede opname start, wat dezelfde uitspraak twee keer liet transcriberen en optellen.
+  const recordingRef = useRef(false)
 
-  useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
+  useEffect(() => {
+    sessionIdRef.current = sessionId
+    lastAutoSaveCountRef.current = 0
+  }, [sessionId])
 
   useEffect(() => {
     setSpeechSupported(true)
   }, [])
 
-  async function startRecording(e: React.MouseEvent | React.TouchEvent, setTarget: React.Dispatch<React.SetStateAction<string>> = setInput) {
+  async function startRecording(
+    e: React.MouseEvent | React.TouchEvent,
+    setTarget: React.Dispatch<React.SetStateAction<string>> = setInput,
+    currentValue: string = input,
+  ) {
     e.preventDefault()
-    if (recording || transcribing || loading || blocked) return
+    if (recordingRef.current || transcribing || loading || blocked) return
+    recordingRef.current = true
+    // Vast, ooit-berekend voorvoegsel (wat al in het veld stond vóór deze opname), niet via een
+    // React state-updater-callback ('prev => ...') opgehaald. Die callback mag zelf geen
+    // neveneffect hebben (hier: wegschrijven naar een buiten de callback gedefinieerde
+    // variabele) want React mag 'm meer dan één keer aanroepen om te controleren of hij puur
+    // is, wat hier ooit leidde tot een dubbel opgeteld voorvoegsel en dus een verdubbelde zin
+    // in het invoerveld. Dit voorvoegsel geldt voor de hele opname (geen live her-lezen tijdens
+    // het inspreken), bewust: iemand typt normaliter niet tegelijk met de andere hand terwijl
+    // de mic-knop ingedrukt blijft.
+    const prefix = currentValue ? `${currentValue} ` : ''
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
@@ -426,6 +526,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       recorder.ondataavailable = (ev) => { if (ev.data.size > 0) audioChunksRef.current.push(ev.data) }
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
+        recordingRef.current = false
         setRecording(false)
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         if (blob.size < 1000) return
@@ -434,23 +535,59 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           const form = new FormData()
           form.append('audio', blob, 'recording.webm')
           const res = await fetch('/api/transcribe', { method: 'POST', body: form })
-          const data = await res.json()
-          if (data.transcript) {
-            setTarget(prev => prev ? `${prev} ${data.transcript}` : data.transcript)
+          if (!res.ok || !res.body) throw new Error('transcribe_failed')
+
+          // SSE: transcript.text.delta-events komen binnen terwijl OpenAI het fragment nog
+          // verwerkt, dus het veld vult zich geleidelijk i.p.v. pas na de volledige transcriptie
+          // in één keer te verschijnen. dedupeRepeatedSentence knipt af zodra de streamende
+          // transcriptie in een herhaallus terechtkomt (bekend gedrag van deze modellen bij
+          // stilte aan het eind van een opname): zonder die afkap bleef de zin tientallen keren
+          // achter elkaar in het invoerveld verschijnen.
+          let transcript = ''
+          let stopped = false
+          const reader = res.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
+          const handleLine = (line: string) => {
+            if (stopped) return
+            if (!line.startsWith('data: ')) return
+            const payload = line.slice(6)
+            if (payload === '[DONE]') return
+            const evt = JSON.parse(payload)
+            if (evt.type !== 'transcript.text.delta' || !evt.delta) return
+            transcript += evt.delta
+            const deduped = dedupeRepeatedSentence(transcript)
+            if (deduped.truncated) {
+              transcript = deduped.text
+              stopped = true
+            }
+            setTarget(prefix + transcript)
             if (setTarget === setInput) setResizeInput(true)
           }
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+            for (const line of lines) handleLine(line)
+          }
+          handleLine(buffer)
         } catch {}
         finally { setTranscribing(false) }
       }
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
-    } catch (err) { console.error('[Whisper] getUserMedia mislukt:', err) }
+    } catch (err) {
+      recordingRef.current = false
+      console.error('[Whisper] getUserMedia mislukt:', err)
+    }
   }
 
   function stopRecording(e?: React.MouseEvent | React.TouchEvent) {
     e?.preventDefault()
-    if (!recording) return
+    if (!recordingRef.current) return
     mediaRecorderRef.current?.stop()
   }
 
@@ -563,6 +700,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     window.scrollTo({ top, behavior: 'smooth' })
   }
 
+  // Alleen "meescrollen" met een binnenstromend antwoord als je al écht onderaan de pagina
+  // staat (zelfde patroon als ChatGPT/Slack), nooit standaard. Een nieuw antwoord begint
+  // bewust bovenaan in beeld (scrollToRef(lastMessageRef) hieronder) zodat je vanaf het begin
+  // kan lezen en zelf in je eigen tempo naar beneden scrolt; zonder deze drempel-check trok
+  // de eerste binnenkomende chunk je meteen weer naar de onderkant.
+  function isNearBottom() {
+    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120
+  }
+
   useEffect(() => {
     if (showSluiten && synthesisRef.current) {
       scrollToRef(synthesisRef)
@@ -588,31 +734,25 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // nog moest komen.
   useEffect(() => {
     if (synthesisLoading) {
-      autoFollowRef.current = true
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
   }, [synthesisLoading])
 
-  // Meescrollen met een binnenstromend antwoord (zoals elke andere chat-app), tenzij de
-  // gebruiker zelf scrolt: dan stopt het automatisch volgen tot de volgende vraag. Zonder dit
-  // moest je tijdens het genereren zelf blijven scrollen om de groeiende tekst bij te houden.
-  // Bewust wheel/touchmove i.p.v. het generieke 'scroll'-event: er lopen hier ook eigen
-  // programmatische smooth-scrolls (scrollToRef/bottomRef.scrollIntoView, elders in dit
-  // bestand), en die vuren tijdens hun animatie tussentijds ook 'scroll'-events af die dan
-  // (verkeerd) als "gebruiker scrolt weg" werden gelezen, waardoor meescrollen na de vorige
-  // wijziging soms helemaal niet meer werkte. wheel/touchmove komen alleen van echte
-  // gebruikersinput, nooit van een programmatische scroll.
+  // Karaoke-meescrollen: het huidige woord mag nooit onder de vaste invoerbalk onderin
+  // verdwijnen (die balk overlapt het scherm, telt dus niet mee als leesbare ruimte) of
+  // boven de vaste nav bovenin. Zodra het woord die zone verlaat, scrollt de pagina zodat het
+  // woord weer bovenaan de leeszone start, niet gecentreerd: dat geeft maximale ruimte voordat
+  // de volgende correctie nodig is, i.p.v. steeds nét op tijd bijschieten.
   useEffect(() => {
-    function handleUserScroll() {
-      autoFollowRef.current = false
+    const el = activeSpeakWordRef.current
+    if (!el) return
+    const topMargin = (isMobile ? 56 : 64) + 16
+    const bottomMargin = (isMobile ? 280 : 240) + 24
+    const rect = el.getBoundingClientRect()
+    if (rect.top < topMargin || rect.bottom > window.innerHeight - bottomMargin) {
+      window.scrollTo({ top: window.scrollY + rect.top - topMargin - 16, behavior: 'smooth' })
     }
-    window.addEventListener('wheel', handleUserScroll, { passive: true })
-    window.addEventListener('touchmove', handleUserScroll, { passive: true })
-    return () => {
-      window.removeEventListener('wheel', handleUserScroll)
-      window.removeEventListener('touchmove', handleUserScroll)
-    }
-  }, [])
+  }, [speakTokenIdx, isMobile])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -659,6 +799,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
+      // Niets nieuws sinds de vorige beacon (bv. tab twee keer kort naar de achtergrond zonder
+      // dat er tussendoor iets is gezegd): die eerdere aanroep dekt de huidige staat al, dus
+      // geen nieuwe synthese-aanroep nodig.
+      if (messages.length === lastAutoSaveCountRef.current) return
+      lastAutoSaveCountRef.current = messages.length
       // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
       // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
       // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
@@ -672,8 +817,21 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )
       navigator.sendBeacon('/api/bot/session-end', blob)
     }
+    // beforeunload is op mobiel onbetrouwbaar: de OS bevriest/sluit een tabblad vaak zonder dat
+    // er ooit een unload-event vuurt (het gerapporteerde "gesprek kwijt na tab sluiten op
+    // mobiel"). visibilitychange->hidden is de door browsers zelf aanbevolen, betrouwbaardere
+    // vervanging daarvoor: die vuurt altijd zodra een tab naar de achtergrond gaat, óók als de
+    // tab daarna nooit netjes wordt afgesloten. beforeunload blijft ernaast staan voor de
+    // desktop-navigatie/sluit-gevallen waar hij wel gewoon werkt.
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') handleUnload()
+    }
     window.addEventListener('beforeunload', handleUnload)
-    return () => window.removeEventListener('beforeunload', handleUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [messages, startedFromCommunity, communityConsentChecked])
 
   useEffect(() => {
@@ -696,7 +854,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }, 0)
   }
 
-  function reset() {
+  function reset({ focus = true }: { focus?: boolean } = {}) {
     const newId = crypto.randomUUID()
     localStorage.setItem('arnobot_session', newId)
     setSessionId(newId)
@@ -722,7 +880,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setCommunityConsentChecked(false)
     setShowCommunityConsent(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setTimeout(() => inputRef.current?.focus(), 150)
+    if (focus) setTimeout(() => inputRef.current?.focus(), 150)
   }
 
   async function handleShare() {
@@ -748,6 +906,36 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
+  // Haalt de volledige audio + karakter-alignment op (/api/tts-voice, zie lib/voice.ts),
+  // bouwt daar een afspeelbare blob-URL van en wiert 'm op het gegeven <audio>-element,
+  // met een ontimeupdate-handler die het karaoke-highlight/meescroll-token bijhoudt.
+  // Bewust wachten tot de volledige audio binnen is vóór afspelen (geen progressief
+  // MediaSource-afspelen): mp3 in MediaSource is onbetrouwbaar op mobiele Safari, en dat is
+  // precies het platform waar dit vandaan komt.
+  async function startSpokenPlayback(text: string, idx: number, audio: HTMLAudioElement) {
+    const res = await fetch(`/api/tts-voice?text=${encodeURIComponent(text)}`)
+    if (!res.ok) throw new Error('tts_failed')
+    const data = await res.json()
+    const tokens = buildSpeakTokens(data.alignment)
+    const blob = new Blob([base64ToBytes(data.audio_base64) as BlobPart], { type: 'audio/mpeg' })
+    const url = URL.createObjectURL(blob)
+    const stop = () => {
+      setSpeakingIdx(null)
+      setSpeakTokens([])
+      setSpeakTokenIdx(-1)
+      URL.revokeObjectURL(url)
+    }
+    audio.src = url
+    audio.onended = stop
+    audio.onerror = stop
+    audio.ontimeupdate = () => setSpeakTokenIdx(findActiveSpeakToken(tokens, audio.currentTime))
+    audioRef.current = audio
+    setSpeakTokens(tokens)
+    setSpeakTokenIdx(-1)
+    setSpeakingIdx(idx)
+    await audio.play()
+  }
+
   // Alleen voor voice-antwoorden (ElevenLabs, msg.voiceAnswer): de knop die dit aanroept
   // is verwijderd voor gewone tekstberichten (was de OpenAI-tts-1-hd-stem, kwaliteit niet
   // goed genoeg bevonden, zie docs/VOICE_PLAN.md). Het volledige gesproken heen-en-weer-
@@ -757,6 +945,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       audioRef.current?.pause()
       audioRef.current = null
       setSpeakingIdx(null)
+      setSpeakTokens([])
+      setSpeakTokenIdx(-1)
       return
     }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
@@ -764,18 +954,29 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setTtsLoading(idx)
 
     try {
-      const audio = new Audio(`/api/tts-voice?text=${encodeURIComponent(text)}`)
-      audioRef.current = audio
-      audio.onended = () => setSpeakingIdx(null)
-      audio.onerror = () => setSpeakingIdx(null)
-      setSpeakingIdx(idx)
-      await audio.play()
+      await startSpokenPlayback(text, idx, new Audio())
     } catch {
       setSpeakingIdx(null)
     } finally {
       setTtsLoading(null)
     }
   }
+
+  useEffect(() => {
+    setVoiceBarHidden(speakingIdx !== null)
+  }, [speakingIdx])
+
+  useEffect(() => {
+    if (!voiceBarHidden) return
+    let lastY = window.scrollY
+    function onScroll() {
+      const y = window.scrollY
+      if (y > lastY + 4) setVoiceBarHidden(false)
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [voiceBarHidden])
 
   async function handleNieuw() {
     if (synthesisLoading) return
@@ -812,6 +1013,35 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (showSluiten) setShowSluiten(false)
     setInput('')
     if (inputRef.current) inputRef.current.style.height = '55px'
+
+    // Mobiel (en niet-sparren): direct sluiten en resetten, geen inline samenvatting-scherm
+    // meer dat eerst weggeklikt moet worden. De synthese wordt gewoon gegenereerd en
+    // opgeslagen (verschijnt in Analyses), alleen niet meer getoond vóórdat je verder kan.
+    // Bewust explicitClose: false, niet true: je hebt de actie/uitdaging in dit geval nooit
+    // gezien, dus die mag nog wel een keer als ACTIE-REMINDER terugkomen, net als bij de
+    // bestaande sendBeacon-fallback (zie de explicitClose-uitleg in session-end/route.ts).
+    // Sparring-debrief blijft bewust ongewijzigd: dat is waardevollere inhoud om wél direct te
+    // lezen, en is niet gevraagd om aan te passen.
+    if (isMobile && sparModus !== 'sparren') {
+      const sid = sessionId
+      const msgs = messages
+      const community = startedFromCommunity
+      const consent = communityConsentChecked
+      // focus: false, anders opent de auto-focus 150ms later het mobiele toetsenbord
+      // meteen weer na het sluiten, wat de toast hieronder (fixed onderin) kan verbergen.
+      reset({ focus: false })
+      fetch('/api/bot/session-end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid, messages: msgs, explicitClose: false, startedFromCommunity: community, communityConsent: consent })
+      })
+        .then(res => { if (!res.ok) throw new Error('session_end_failed') })
+        .then(() => setCloseToast('saved'))
+        .catch(() => setCloseToast('failed'))
+        .finally(() => setTimeout(() => setCloseToast(null), 3000))
+      return
+    }
+
     setSynthesisLoading(true)
 
     if (sparModus === 'sparren') {
@@ -860,6 +1090,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, messages, explicitClose: true, startedFromCommunity, communityConsent: communityConsentChecked })
       })
+      if (!res.ok) throw new Error('session_end_failed')
       const data = await res.json()
       if (data.summary) {
         track('gesprek_afgerond', { aantal_berichten: messages.length })
@@ -879,10 +1110,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         setShowSluiten(true)
         refreshHints()
       } else {
-        reset()
+        throw new Error('session_end_no_summary')
       }
     } catch {
-      reset()
+      // Bewust NIET meer reset(): dat gooide het hele gesprek stilzwijgend weg zodra het
+      // sluiten om welke reden dan ook mislukte (netwerkfout, serverfout), zonder dat je
+      // ooit een synthese zag of iets opgeslagen werd. Het gesprek blijft nu gewoon staan,
+      // met een duidelijke melding, zodat je het via SLUIT opnieuw kan proberen.
+      setMessages(prev => [...prev, { role: 'arno', content: `Het sluiten is niet gelukt. Je gesprek staat nog hier: probeer het opnieuw via SLUIT, of stuur Arno een [WhatsApp](${SUPPORT_WHATSAPP_VRAAG}) als het blijft mislukken.`, hint: null }])
     } finally {
       setSynthesisLoading(false)
     }
@@ -960,7 +1195,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
     setLoading(true)
     setStreamingStarted(false)
-    autoFollowRef.current = true
 
     try {
       if (sparModus === 'sparren') {
@@ -989,7 +1223,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const res = await fetch('/api/chat-voice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: question })
+          body: JSON.stringify({ text: question, sessionId })
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
@@ -1006,7 +1240,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           return
         }
         const answer = data.answer || 'Geen antwoord ontvangen.'
-        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: null, feedback: null, voiceAnswer: true }])
+        setMessages(prev => [...prev, { role: 'arno', content: answer, hint: null, log_id: data.log_id ?? null, feedback: null, voiceAnswer: true }])
         setHistory(prev => [
           ...prev,
           { role: 'user', content: question },
@@ -1014,14 +1248,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         ])
 
         // Automatisch afspelen op het al geprimede element (zie boven), zodat dit nog
-        // binnen dezelfde user-gesture-keten valt op mobiel.
+        // binnen dezelfde user-gesture-keten valt op mobiel. Bewust niet awaited: de rest
+        // van deze functie (loading uitzetten) hoeft niet te wachten tot de audio compleet
+        // is opgehaald en gedecodeerd.
         const audio = voiceAudioRef.current ?? new Audio()
-        audioRef.current = audio
-        audio.src = `/api/tts-voice?text=${encodeURIComponent(answer)}`
-        audio.onended = () => setSpeakingIdx(null)
-        audio.onerror = () => setSpeakingIdx(null)
-        setSpeakingIdx(startLen + 1)
-        audio.play().catch(() => setSpeakingIdx(null))
+        startSpokenPlayback(answer, startLen + 1, audio).catch(() => setSpeakingIdx(null))
       } else {
         const actieContext = (actieStatus && history.length === 0 && actieOpvolging)
           ? `[Actieopvolging vorige sessie: actie was "${actieOpvolging.uitdaging}", status: ${actieStatus === 'ja' ? 'gedaan' : actieStatus === 'deels' ? 'ingepland' : 'nog niet gedaan'}] `
@@ -1121,7 +1352,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText }
             return updated
           })
-          if (autoFollowRef.current) bottomRef.current?.scrollIntoView({ block: 'end' })
+          if (isNearBottom()) bottomRef.current?.scrollIntoView({ block: 'end' })
         }
 
         const metaIndex = rawBuffer.indexOf(META_MARKER)
@@ -1151,7 +1382,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: null }])
     } finally {
       setLoading(false)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      // Niet op mobiel: focus roept daar het schermtoetsenbord weer op, precies op het moment
+      // dat je het net binnengekomen antwoord wil lezen. Op desktop is meteen door kunnen typen
+      // wel prettig, daar heeft focus geen storend neveneffect.
+      if (!isMobile) setTimeout(() => inputRef.current?.focus(), 100)
     }
   }
 
@@ -1415,6 +1649,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .toggle-btn { font-size: 11px; letter-spacing: 0px; padding: 7px 4px; border-radius: 4px; }
           .opener-toggle .toggle-btn:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
           .spar-input-row { max-width: 100%; }
+          /* De volledige knoppenrij (voice-toggle/mic/STUUR/SLUIT) moet altijd exact binnen de
+             schermbreedte passen: de vaste min-width:120px van .spar-send/.spar-reset (voor
+             desktop bedoeld) liep op smalle telefoons op tot buiten het scherm. De twee
+             icoonknoppen houden hun vaste breedte, STUUR/SLUIT delen de resterende ruimte. */
+          .spar-buttons-toolbar { width: 100%; gap: 6px; }
+          .spar-buttons-toolbar .spar-send,
+          .spar-buttons-toolbar .spar-reset { flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: 15px; letter-spacing: 1.5px; }
         }
 
         /* INPUT — BOVEN BIJ NIEUW GESPREK, STICKY-ONDER BIJ ACTIEF */
@@ -1465,8 +1706,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           bottom: 0; left: 0; right: 0;
           background: rgba(17,24,39,0.97);
           border-top: 2px solid #f59e0b;
-          padding: 20px 16px 28px;
+          padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
           z-index: 50;
+          transition: transform 0.25s ease;
+        }
+        .spar-input-area.active.voice-hidden {
+          transform: translateY(100%);
         }
         .spar-input-label {
           font-family: 'Bebas Neue', sans-serif;
@@ -1916,7 +2161,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       )}
       <VersionBanner />
 
-      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 280 : 240 } : {}}>
+      <div className="spar-page" style={started ? { paddingBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 } : {}}>
 
         {mode === 'gesprek' && (
           <div className="spar-hero">
@@ -2024,10 +2269,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   {speechSupported && (
                     <button
                       className={`spar-mic${recording ? ' recording' : ''}`}
-                      onMouseDown={e => startRecording(e, setSparContext)}
+                      onMouseDown={e => startRecording(e, setSparContext, sparContext)}
                       onMouseUp={stopRecording}
                       onMouseLeave={() => { if (recording) stopRecording() }}
-                      onTouchStart={e => startRecording(e, setSparContext)}
+                      onTouchStart={e => startRecording(e, setSparContext, sparContext)}
                       onTouchEnd={stopRecording}
                       disabled={startingSparring || transcribing}
                       title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
@@ -2064,7 +2309,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}${stickyActive && voiceBarHidden ? ' voice-hidden' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               {sparModus === 'sparren' ? (
@@ -2239,7 +2484,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 {verfijnen ? '...' : '→ verbeter mijn prompt'}
               </button>
             )}
-            <div className="spar-buttons">
+            <div className="spar-buttons spar-buttons-toolbar">
               {voiceEnabled && sparModus !== 'sparren' && antwoordLengte !== 'uitgebreid' && (
                 <button
                   type="button"
@@ -2600,7 +2845,23 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
+                      {i === speakingIdx && speakTokens.length > 0 ? (
+                        <span className="msg-arno-text">
+                          {speakTokens.map((tok, k) => /^\s+$/.test(tok.text) ? (
+                            <React.Fragment key={k}>{tok.text}</React.Fragment>
+                          ) : (
+                            <span
+                              key={k}
+                              ref={k === speakTokenIdx ? activeSpeakWordRef : undefined}
+                              style={{ color: k < speakTokenIdx ? '#f1f5f9' : k === speakTokenIdx ? '#f59e0b' : '#9ca3af' }}
+                            >
+                              {tok.text}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
+                      )}
                       {msg.log_id && !msg.content?.startsWith('**') && (
                         <div style={{ display: 'flex', gap: 4, marginTop: 20, alignItems: 'center' }}>
                           <button
@@ -2694,7 +2955,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {showSluiten && sparModus === 'sparren' && !loading && (
             <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,60px)', display: 'flex', justifyContent: 'center', background: '#111827' }}>
               <button
-                onClick={reset}
+                onClick={() => reset()}
                 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#d97706')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#f59e0b')}
@@ -2783,7 +3044,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             </div>
           )}
-          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 280 : 240 }} />
+          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 }} />
         </div>
       </div>
 
@@ -2840,6 +3101,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               >DOORGAAN</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {closeToast && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)',
+          background: '#1f2937', border: `1px solid ${closeToast === 'failed' ? '#cc2200' : '#374151'}`, borderRadius: 8,
+          padding: '12px 20px', zIndex: 200, maxWidth: 'calc(100vw - 40px)', textAlign: 'center',
+          fontFamily: "'Space Mono', monospace", fontSize: 14, color: closeToast === 'failed' ? '#f1f5f9' : '#9ca3af',
+        }}>
+          {closeToast === 'saved' ? 'Gesprek opgeslagen.' : 'Opslaan van je gesprek is niet gelukt.'}
         </div>
       )}
 
