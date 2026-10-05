@@ -80,24 +80,24 @@ const SESSIONS = [
     'De beslisser was vanaf gesprek twee betrokken.\nDe offerte is zonder herziening akkoord gegaan.',
     'De offerte is akkoord, zonder aanpassingen. De financieel directeur zat er vanaf het begin bij.',
     'Dat is het resultaat van je beslisser vroeg in kaart brengen. Je doet nu standaard wat je eerder pas deed als het misging. Let op dat je dit ook volhoudt bij een traject dat minder soepel loopt.'),
-  S('benny', '2026-10-03', 5, 'Ongeduld herkennen voordat ik bel', ['MINDSET', 'DISCIPLINE'],
+  S('benny', '2026-10-02', 5, 'Ongeduld herkennen voordat ik bel', ['MINDSET', 'DISCIPLINE'],
     'Je merkte bij een nieuw traject dat je ongeduld opkwam voordat je de telefoon pakte. Je benoemde het en koos voor een korte mail.',
     'Je herkende het ongeduld vooraf.\nJe koos bewust voor een kleinere stap.',
     'Bij het nieuwe traject voelde ik dezelfde drang. Ik heb het herkend en eerst een mail gestuurd.',
     'Herkennen vóór handelen is de echte winst. Noteer wat je op dat moment voelt, dan zie je na een paar keer wanneer het opkomt en kun je het eerder zien aankomen.'),
 
   // Alira: de vaste vrijdagse pipeline-review
-  S('alira', '2026-09-09', 6, 'Eerste vrijdagse pipeline-review', ['PIJPLIJNBEHEER', 'DISCIPLINE'],
+  S('alira', '2026-09-14', 6, 'Eerste vrijdagse pipeline-review', ['PIJPLIJNBEHEER', 'DISCIPLINE'],
     'Je hebt voor het eerst twintig minuten vastgezet om je open deals langs te lopen met één vraag per deal. Het voelde mechanisch maar leverde direct inzicht op.',
     'Je liep alle open deals langs in twintig minuten.\nBij vier deals stond geen vervolgstap in de agenda.',
     'Ik heb mijn eerste pipeline-review gedaan. Bij vier deals wist ik niet wat de volgende stap was.',
     'Dat is het nut van dit moment: je ziet wat eerder verborgen bleef. Zet bij elk van die vier deals een concrete volgende stap met een datum in je agenda.'),
-  S('alira', '2026-09-16', 5, 'Drie deals zonder volgende stap gevonden', ['PIJPLIJNBEHEER'],
+  S('alira', '2026-09-21', 5, 'Drie deals zonder volgende stap gevonden', ['PIJPLIJNBEHEER'],
     'De tweede review liet drie deals zien zonder afgesproken vervolg. Je pakte er twee op en liet de derde bewust los.',
     'Twee van de drie deals zijn opgepakt.\nDe derde is losgelaten met een reden.',
     'Drie deals hadden geen volgende stap. Twee heb ik opgepakt en de derde laat ik gaan.',
     'Loslaten met een reden is een besluit, geen verlies. Noteer waarom je hem loslaat, dan weet je bij een volgend patroon sneller wanneer je dezelfde afweging maakt.'),
-  S('alira', '2026-09-23', 6, 'Vervolgstap in de agenda zetten werkt', ['DISCIPLINE', 'CLOSING'],
+  S('alira', '2026-09-28', 6, 'Vervolgstap in de agenda zetten werkt', ['DISCIPLINE', 'CLOSING'],
     'Je zette na elk gesprek direct de volgende stap in je agenda. Twee klanten reageerden sneller omdat de afspraak al stond.',
     'Elke afspraak eindigde met een vervolgmoment in de agenda.\nTwee klanten reageerden sneller dan eerder.',
     'Sinds ik na elk gesprek de vervolgstap direct inplan, reageren klanten sneller.',
@@ -134,7 +134,7 @@ const SESSIONS = [
     'De deal is zonder korting gesloten.\nDe klant noemde zelf de reden om te tekenen.',
     'Deal binnen, zonder korting. De klant zei zelf waarom hij tekende.',
     'Dat is de bevestiging dat je werkwijze klopt. Schrijf op wat je deze keer anders deed dan bij eerdere prijsgesprekken, dan kun je het herhalen als het weer spannend wordt.'),
-  S('lisa', '2026-10-04', 5, 'Loslaten-lijst bijwerken', ['PIJPLIJNBEHEER', 'DISCIPLINE'],
+  S('lisa', '2026-10-05', 5, 'Loslaten-lijst bijwerken', ['PIJPLIJNBEHEER', 'DISCIPLINE'],
     'Je liep je deals langs en werkte je lijst met deals om los te laten bij. Twee nieuwe deals gingen naar duwen, één naar loslaten.',
     'Je werkte de lijst met duwen, wachten en loslaten bij.\nEén deal ging naar loslaten.',
     'Ik heb mijn lijst weer bijgewerkt. Twee deals naar duwen en één naar loslaten.',
@@ -181,7 +181,7 @@ const SESSIONS = [
     'De CFO wil een kortere looptijd.\nHij wil dezelfde prijs.',
     'De CFO wil een kortere looptijd tegen dezelfde prijs. Hoe ga ik hiermee om?',
     'Vraag wat hij probeert te beperken. Meestal is het risico, niet de duur. Je kunt dan een opzegmogelijkheid aanbieden tegen een duidelijk tarief in plaats van de looptijd te korten.'),
-  S('me', '2026-10-03', 6, 'Sparren over een stroef gesprek met een CEO', ['MINDSET', 'DEALSTRATEGIE'],
+  S('me', '2026-10-02', 6, 'Sparren over een stroef gesprek met een CEO', ['MINDSET', 'DEALSTRATEGIE'],
     'Je bespreekt een gesprek met een CEO dat stroef verliep. Je merkte dat je sneller ging praten naarmate hij stiller werd.',
     'De CEO werd stiller naarmate je meer praatte.\nJe herkende het patroon achteraf.',
     'Het gesprek met de CEO liep stroef. Hoe stiller hij werd, hoe meer ik ging praten.',
@@ -225,34 +225,34 @@ const SCORES = [
   ['alira', '2026-09-21', 4, 3, 4], ['alira', '2026-10-05', 4, 4, 4],
   ['lisa', '2026-09-21', 5, 4, 5], ['lisa', '2026-10-05', 5, 5, 5],
   ['me', '2026-06-22', 3, 2, 3], ['me', '2026-07-20', 3, 3, 4], ['me', '2026-08-17', 4, 3, 4],
-  ['me', '2026-09-14', 4, 4, 4], ['me', '2026-10-04', 5, 4, 4],
+  ['me', '2026-09-14', 5, 4, 4], ['me', '2026-10-05', 4, 4, 4],
 ]
 
 // ── COACHINGPROFIELEN (leden: bijwerken; test@arno.bot: nieuw) ────────────────────────────
 const COACHING = {
   benny: {
-    updated_at: at('2026-10-04'), mindset_score: 4, systeem_score: 5, actie_score: 5,
+    updated_at: at('2026-10-02', '12:20'), mindset_score: 4, systeem_score: 5, actie_score: 5,
     voortgang: 'De offertefase liep in tien dagen zonder duwen, met de beslisser vanaf gesprek twee aan tafel. Je herkent je ongeduld nu vooraf en kiest bewust een kleinere stap. Volgende laag: dit volhouden bij een deal met druk.',
     mindset_diagnose: 'Doelgericht en steeds beter in staat het eigen ongeduld te herkennen voordat het gedrag stuurt. Nog niet bewezen onder druk.',
     systeem_diagnose: 'Beslissers worden standaard vroeg in kaart gebracht en de offertefase verloopt voorspelbaar.',
     actie_diagnose: 'Proactief en resultaatgericht. Kiest steeds vaker voor een korte, waardevolle update in plaats van te duwen.',
   },
   alira: {
-    updated_at: at('2026-10-04'), mindset_score: 4, systeem_score: 4, actie_score: 4,
+    updated_at: at('2026-10-02', '15:05'), mindset_score: 4, systeem_score: 4, actie_score: 4,
     voortgang: 'Je vrijdagse pipeline-review geeft je overzicht en je plant na elk gesprek direct de vervolgstap in. Eén review viel weg en je merkte meteen het verschil. Volgende laag: de review vastleggen als vaste afspraak.',
     mindset_diagnose: 'Gemotiveerd en nuchter over eigen patronen. Ziet zelf wat het oplevert als de structuur even wegvalt.',
     systeem_diagnose: 'De pipeline-review en het inplannen van vervolgstappen brengen structuur. Het systeem hangt nog op discipline, nog niet op een vaste plek in de agenda.',
     actie_diagnose: 'Sterk in het openen van gesprekken en inmiddels ook in het concreet afspreken van vervolgstappen.',
   },
   lisa: {
-    updated_at: at('2026-10-04'), mindset_score: 5, systeem_score: 5, actie_score: 5,
+    updated_at: at('2026-10-02', '10:40'), mindset_score: 5, systeem_score: 5, actie_score: 5,
     voortgang: 'Je sloot een deal zonder korting door het gesprek terug te brengen naar wat de klant zelf wilde bereiken. Je houdt je lijst met duwen, wachten en loslaten bij. Volgende laag: dit blijven doen als je pipeline weer groeit.',
     mindset_diagnose: 'Sterk mentaal. Gebruikt afwijzing en twijfel als informatie en laat zich niet door een kortingsvraag van de wijs brengen.',
     systeem_diagnose: 'Pipeline bewust geprioriteerd en bijgehouden. Kan de discipline verliezen als het druk wordt.',
     actie_diagnose: 'Hoge executiekracht. Brengt het gesprek consequent terug naar de waarde die de klant zelf noemde.',
   },
   me: {
-    updated_at: at('2026-10-04'), mindset_score: 5, systeem_score: 4, actie_score: 4,
+    updated_at: at('2026-10-02'), mindset_score: 5, systeem_score: 4, actie_score: 4,
     voortgang: 'Je groeide van een open pipeline zonder structuur naar een opgeschoonde lijst en gerichte prijsgesprekken. Je herkent nu dat stilte in een gesprek niet door jou opgevuld hoeft te worden. Volgende laag: een vast ritme voor je pipeline-opvolging.',
     mindset_diagnose: 'Zelfreflectief en bereid om patronen bij zichzelf te benoemen, zoals sneller praten als de ander stiller wordt.',
     systeem_diagnose: 'De pipeline is opgeschoond, maar het onderhouden gebeurt nog op gevoel in plaats van op een vast moment.',
@@ -299,7 +299,7 @@ Je pipeline mist nog een vast ritme. Offertes blijven soms liggen zonder duideli
 
 COACHING FOCUS
 Zet na elke offerte direct een vervolgmoment vast, voordat je het gesprek afsluit.` },
-  { who: 'me', date: '2026-09-26', text:
+  { who: 'me', date: '2026-10-02', text:
 `STERKE PUNTEN
 Je schoonde je pipeline op en liet stilstaande deals bewust los. Bij een CFO zocht je een voorstel dat zijn risico verkleint zonder je marge weg te geven, wat laat zien dat je verder kijkt dan de prijs.
 
@@ -315,12 +315,25 @@ async function run() {
   const counts = { sessies: 0, rds: 0, scores: 0, oneOnOne: 0, coaching: 0, analyses: 0 }
   const idsByWho = {}
 
+  // Opruimen: rijen van een eerdere versie van dit script die inmiddels op andere datums staan.
+  const GEEN_SESSIES = ['benny-2026-10-03', 'lisa-2026-10-04', 'me-2026-10-03', 'alira-2026-09-09', 'alira-2026-09-16', 'alira-2026-09-23']
+  for (const k of GEEN_SESSIES) {
+    const who = k.split('-')[0]
+    await supabase.from('arnobot_blog_sessions').delete().eq('user_id', MEMBER[who]).eq('session_id', `seed-okt-${k}`)
+    await supabase.from('arnobot_rds_logs').delete().eq('user_id', MEMBER[who]).eq('session_id', `seed-okt-${k}`)
+  }
+  await supabase.from('arnobot_coaching_scores').delete().eq('user_id', ME).eq('created_at', at('2026-10-04'))
+  await supabase.from('arnobot_analyses').delete().eq('user_id', ME).in('created_at', [at('2026-09-26', '09:00'), at('2026-09-25', '09:00'), at('2026-09-25', '17:00')])
+  for (const who of ['benny', 'alira', 'lisa']) await supabase.from('arnobot_analyses').delete().eq('user_id', MEMBER[who]).eq('created_at', at('2026-09-30', '09:00'))
+  await supabase.from('arnobot_analyses').delete().eq('user_id', ME).eq('created_at', at('2026-07-24', '09:00'))
+
   // 1. sessies + gesprekslog
   for (const s of SESSIONS) {
     const user_id = MEMBER[s.who]
     const session_id = `seed-okt-${s.who}-${s.date}`
     const created_at = at(s.date)
-    ;(idsByWho[s.who] ||= []).push(session_id)
+    const entry = { id: null, created_at }
+    ;(idsByWho[s.who] ||= []).push(entry)
 
     await supabase.from('arnobot_blog_sessions').delete().eq('user_id', user_id).eq('session_id', session_id)
     await supabase.from('arnobot_rds_logs').delete().eq('user_id', user_id).eq('session_id', session_id)
@@ -328,11 +341,11 @@ async function run() {
     const embedding = await embed(s.title, s.summary, s.feiten)
     const { data, error } = await supabase.from('arnobot_blog_sessions').insert({
       user_id, session_id, title: s.title, summary: s.summary, feiten: s.feiten,
-      message_count: s.n, created_at, blog_suggestions: [], uitdaging: null, uitdaging_done: false,
+      message_count: s.who === 'me' ? 1 : s.n, created_at, blog_suggestions: [], uitdaging: null, uitdaging_done: false,
       themas: s.themas, excuustaal: false, actie_erkend: false, community_excluded: false, embedding,
     }).select('id').single()
     if (error) throw new Error(`sessie ${s.who} ${s.date}: ${error.message}`)
-    idsByWho[s.who][idsByWho[s.who].length - 1] = data.id
+    entry.id = data.id
     counts.sessies++
 
     const { error: e2 } = await supabase.from('arnobot_rds_logs').insert({
@@ -382,9 +395,10 @@ async function run() {
   // 5. analyses
   for (const a of ANALYSES) {
     const user_id = MEMBER[a.who]
-    const created_at = at(a.date, '09:00')
+    const created_at = at(a.date, a.time || '17:00')
     await supabase.from('arnobot_analyses').delete().eq('user_id', user_id).eq('created_at', created_at)
-    const ids = (idsByWho[a.who] || []).filter(id => id)
+    // Alleen gesprekken van vóór de analyse zelf, anders verwijst de analyse naar de toekomst.
+    const ids = (idsByWho[a.who] || []).filter(e => e.id && e.created_at < created_at).map(e => e.id)
     const { error } = await supabase.from('arnobot_analyses').insert({
       user_id, created_at, analyse_text: a.text, session_count: ids.length, session_ids: ids,
     })

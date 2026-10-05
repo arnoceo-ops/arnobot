@@ -71,7 +71,7 @@ const HISTORY = [
     'Beslissers worden vaker vroeg betrokken, maar het is nog geen vaste gewoonte.',
     'Proactief en snel. Neigt naar duwen als een traject stilvalt.',
     'Je escaleert nu eerder naar de beslisser, wat in het logistieke traject direct het budgetkader op tafel bracht. Volgende laag: het niet laten afhangen van een soepel traject.'),
-  H('benny', '2026-09-05', 5, 5, 4,
+  H('benny', '2026-09-07', 5, 5, 4,
     'Sterk mentaal en consistent, ook na een stroef traject.',
     'Pipeline-opvolging is scherper en beslissers staan vroeg in beeld.',
     'Resultaatgericht, met nog steeds de neiging om te duwen als het stilligt.',
@@ -81,7 +81,7 @@ const HISTORY = [
     'De pipeline krijgt meer overzicht, maar opvolging blijft wisselend.',
     'Sterk in het openen van gesprekken en rapport bouwen.',
     'Je begint scherper door te vragen en dat levert andere antwoorden op van klanten. De pipeline-opvolging heeft nog geen vaste structuur.'),
-  H('alira', '2026-09-05', 4, 3, 4,
+  H('alira', '2026-09-07', 4, 3, 4,
     'Meer bereid om eerst te luisteren voordat ze haar aanpak verdedigt.',
     'Opvolging mist nog een vaste plek in de agenda.',
     'Sluit steeds concreter op vervolgstappen.',
@@ -91,7 +91,7 @@ const HISTORY = [
     'Pipeline is vol en wordt bewuster geprioriteerd.',
     'Hoge executiekracht, soms sneller dan de klant kan volgen.',
     'Je bouwt bewust tussenstappen in en de klant beweegt mee in plaats van af te haken. Prijsgesprekken kunnen nog vanuit waarde.'),
-  H('lisa', '2026-09-05', 5, 4, 5,
+  H('lisa', '2026-09-07', 5, 4, 5,
     'Zeldzaam sterk mentaal, ook in lastige gesprekken.',
     'Prioriteren gebeurt zichtbaar, de discipline kan onder druk nog verslappen.',
     'Beweegt niet meer te snel voor de klant uit.',
@@ -178,13 +178,21 @@ Tip: kom terug op de prijs met een vraag, bijvoorbeeld wat het verschil in prijs
 
 // ── 4. meldingen voor de manager ─────────────────────────────────────────────────────────
 const NOTIFS = [
-  { type: 'coaching_gegenereerd', member: 'benny', name: 'Benny Verwaaijen', created_at: at('2026-10-04', '12:20') },
-  { type: 'coaching_gegenereerd', member: 'alira', name: 'Alira Bretton', created_at: at('2026-10-03', '15:05') },
-  { type: 'coaching_gegenereerd', member: 'lisa', name: 'Lisa Bakker', created_at: at('2026-10-04', '09:40') },
+  { type: 'coaching_gegenereerd', member: 'benny', name: 'Benny Verwaaijen', created_at: at('2026-10-02', '12:20') },
+  { type: 'coaching_gegenereerd', member: 'alira', name: 'Alira Bretton', created_at: at('2026-10-02', '15:05') },
+  { type: 'coaching_gegenereerd', member: 'lisa', name: 'Lisa Bakker', created_at: at('2026-10-02', '10:40') },
 ]
 
 async function run() {
   const c = { coaching: 0, history: 0, sparring: 0, meldingen: 0 }
+
+  // Opruimen van rijen uit de eerste versie (weekenddatums).
+  for (const who of ['benny', 'alira', 'lisa']) {
+    await supabase.from('arnobot_coaching_history').delete().eq('user_id', U[who]).eq('created_at', at('2026-09-05', '14:00'))
+  }
+  for (const [who, t] of [['benny', at('2026-10-04', '12:20')], ['alira', at('2026-10-03', '15:05')], ['lisa', at('2026-10-04', '09:40')]]) {
+    await supabase.from('arnobot_team_notifications').delete().eq('manager_id', ME).eq('member_id', U[who]).eq('created_at', t)
+  }
 
   for (const [key, extra] of Object.entries(COACHING_EXTRA)) {
     const { error } = await supabase.from('arnobot_coaching')
@@ -225,6 +233,35 @@ async function run() {
     })
     if (error) throw new Error(`melding ${n.member}: ${error.message}`)
     c.meldingen++
+  }
+
+  // 1:1-acties: een echte 1:1 heeft een afgesproken actie en later een terugkoppeling
+  // (ja/deels/nee). De eerdere seeds lieten `actie` leeg, waardoor OPENSTAAND en de
+  // follow-through op de leiderschapspagina niets te tonen hadden. De actie is de
+  // "ARNO ADVISEERT"-tekst uit de agenda, de status volgt het verhaal per lid. De nieuwste
+  // 1:1 van elk lid blijft bewust open (net gehouden).
+  const STATUS = {
+    benny: { '2026-07-22': 'ja', '2026-08-19': 'ja', '2026-09-04': 'ja', '2026-09-22': 'ja' },
+    alira: { '2026-08-12': 'nee', '2026-08-20': 'deels', '2026-09-04': 'ja', '2026-09-22': 'deels' },
+    lisa: { '2026-07-22': 'nee', '2026-08-19': 'ja', '2026-09-04': 'ja', '2026-09-22': 'ja' },
+  }
+  const { data: logs } = await supabase.from('arnobot_1on1_log')
+    .select('id, member_id, created_at, agenda, actie, actie_status')
+    .eq('manager_id', ME).gte('created_at', at('2026-07-10'))
+  c.acties = 0
+  for (const l of logs ?? []) {
+    const key = Object.keys(U).find(k => U[k] === l.member_id)
+    if (!key || key === 'me') continue
+    const update = {}
+    if (!l.actie && l.agenda?.includes('ARNO ADVISEERT')) {
+      update.actie = l.agenda.split('ARNO ADVISEERT')[1].replace(/^\s+/, '').trim()
+    }
+    const status = STATUS[key]?.[l.created_at.slice(0, 10)]
+    if (status && (update.actie || l.actie) && !l.actie_status) update.actie_status = status
+    if (Object.keys(update).length === 0) continue
+    const { error } = await supabase.from('arnobot_1on1_log').update(update).eq('id', l.id)
+    if (error) throw new Error(`1on1 actie ${key} ${l.created_at}: ${error.message}`)
+    c.acties++
   }
 
   console.log('Klaar.', JSON.stringify(c))
