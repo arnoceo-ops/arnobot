@@ -6,6 +6,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+function stripQuery(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  return value.split(/[?#]/)[0]
+}
+
 async function notifyTelegram(directive: string, blocked: string, page: string, sourceFile: string | null, lineNumber: number | null, columnNumber: number | null) {
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
@@ -26,12 +31,14 @@ export async function POST(req: NextRequest) {
     const report = body['csp-report'] ?? body
 
     const directive = report['violated-directive'] ?? null
-    const blocked   = report['blocked-uri'] ?? null
-    const page      = report['document-uri'] ?? null
+    // Query en fragment weg: signed-upload-URL's bevatten een token, en met unieke tokens
+    // werkte de 24-uurs-dedup hieronder niet (elke poging een nieuwe melding).
+    const blocked   = stripQuery(report['blocked-uri'] ?? null)
+    const page      = stripQuery(report['document-uri'] ?? null)
     // Brondbestand + regel/kolom, door de browser standaard meegestuurd maar nooit opgeslagen
     // (2-10-2026): zonder deze velden is een melding als "eval geblokkeerd op /" niet te
     // herleiden naar het veroorzakende scriptje, alleen te gissen.
-    const sourceFile = report['source-file'] ?? null
+    const sourceFile = stripQuery(report['source-file'] ?? null)
     const lineNumber = report['line-number'] ?? null
     const columnNumber = report['column-number'] ?? null
 
@@ -63,7 +70,9 @@ export async function POST(req: NextRequest) {
       .eq('blocked_uri', blocked)
       .gte('created_at', since)
 
-    if (count === 1) {
+    // frame-ancestors-schendingen (externe partijen die arno.bot inbedden, bv. linkpreviews)
+    // worden wel opgeslagen maar niet gemeld: ruis, geen bug in onze eigen pagina's.
+    if (count === 1 && !directive?.startsWith('frame-ancestors')) {
       await notifyTelegram(directive ?? '?', blocked ?? '?', page ?? '?', sourceFile, lineNumber, columnNumber)
     }
   } catch {
