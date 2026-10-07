@@ -17,6 +17,7 @@ function buildCSP(nonce: string, allowWasm = false): string {
   // ontdekt tijdens het testen van de Abacus Team-feature). NODE_ENV is altijd
   // 'production' in een `next build`, dus dit verzwakt de CSP van de live app niet.
   const clerkUnsafeEval = (isDevInstance || process.env.NODE_ENV === 'development') ? " 'unsafe-eval'" : ''
+  const supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
@@ -42,7 +43,10 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // browsers als connect-src-fetch gerapporteerd wordt i.p.v. style-src, ook al is het
     // logisch een stylesheet-load. Bevestigd via een echte CSP-schendingsmelding op arno.bot
     // (26-9-2026, pagina '/', regel connect-src).
-    "connect-src 'self' data: https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com https://fonts.googleapis.com",
+    // Het eigen Supabase-project staat toe voor de audiobijlage-upload (lib/assemblyai.ts): de
+    // browser PUT't via een signed upload URL rechtstreeks naar Storage (bucket chat-audio-uploads).
+    // Zonder deze host blokkeert de CSP de upload ("Bestand kon niet worden geüpload", 2026-10-07).
+    `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com https://fonts.googleapis.com`,
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",
