@@ -2731,6 +2731,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
                     onBlur={e => { e.currentTarget.style.borderColor = '#374151' }}
                   />
+                  {actieElaboratieInput.trim().length < 10 && (
+                    <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 400, color: '#6b7280', marginBottom: 12 }}>Nog minimaal {10 - actieElaboratieInput.trim().length} tekens</p>
+                  )}
                   <button
                     disabled={actieElaboratieInput.trim().length < 10}
                     onClick={() => {

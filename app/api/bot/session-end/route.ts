@@ -11,6 +11,7 @@ import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
+import { schoonUitdaging } from '@/lib/actiePatroon'
 import { Redis } from '@upstash/redis'
 
 const supabase = createClient(
@@ -193,7 +194,7 @@ Geef ALLEEN een JSON-object terug, geen andere tekst, geen uitleg: {"themas": ["
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 150,
-    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 20 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
+    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 20 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet", geen kop of label zoals "Actie:" of "Concrete actie voor de gebruiker:". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
 
 ${RULE_ENGLISH_TERMS}
 
@@ -234,7 +235,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
     ])
     summary = getText(summaryRes.content)
     feiten = getText(feitenRes.content)
-    uitdaging = uitdagingRes ? (getText(uitdagingRes.content).trim()).replace(/\*\*/g, '') : ''
+    uitdaging = uitdagingRes ? schoonUitdaging(getText(uitdagingRes.content).replace(/\*\*/g, '')) : ''
     if (themasRes) {
       const classificatie = parseThemaClassificatie(getText(themasRes.content, '{}'))
       themas = classificatie.themas
@@ -251,7 +252,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
     }
     if (!uitdaging && genereerUitdaging) {
       console.error(`[session-end] lege uitdaging, retry (sessie ${sessionId})`)
-      uitdaging = (getText(await callUitdagingModel().then(r => r.content)).trim()).replace(/\*\*/g, '')
+      uitdaging = schoonUitdaging(getText(await callUitdagingModel().then(r => r.content)).replace(/\*\*/g, ''))
     }
     if (!summary) {
       console.error(`[session-end] summary nog steeds leeg na retry (sessie ${sessionId})`)

@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { berekenActiePatroon, moetVervolgvraagStellen } from '@/lib/actiePatroon'
+import { berekenActiePatroon, moetVervolgvraagStellen, schoonUitdaging } from '@/lib/actiePatroon'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,7 +28,7 @@ export async function GET() {
   const patroon = await berekenActiePatroon(userId)
   const vraagVervolg = moetVervolgvraagStellen(patroon)
 
-  return NextResponse.json({ uitdaging: data.uitdaging, sessionId: data.session_id, vraagVervolg })
+  return NextResponse.json({ uitdaging: schoonUitdaging(data.uitdaging), sessionId: data.session_id, vraagVervolg })
 }
 
 export async function PATCH(req: Request) {
