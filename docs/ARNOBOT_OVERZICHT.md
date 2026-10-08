@@ -36,7 +36,7 @@ De basisinteractie: een doorlopend chatgesprek met ArnoBot over sales-onderwerpe
 ### 3.2 Geheugen over gesprekken heen (kern-differentiator)
 Dit is het meest technisch uitgebreide onderdeel van het product en vandaag (12 augustus 2026) nog verder uitgebouwd. Drie, inmiddels vier lagen:
 
-1. **Directe actie-opvolging:** elk gesprek eindigt met één concrete actie voor de gebruiker. Bij het volgende gesprek checkt ArnoBot actief of die actie is uitgevoerd, en benoemt het rechtstreeks als het antwoord niet klopt met wat er nu gezegd wordt. Geen slap "hoe ging het", een directe confrontatie met eerder gedrag, gedreven vanuit oprechte betrokkenheid, niet controle. **Uitgebreid (13 augustus 2026):** ArnoBot herkent ook reflexief "ja, gedaan" klikken (klik-snelheid gecombineerd met het patroon over tijd) en vraagt dan een korte toelichting in plaats van de klik zomaar te accepteren, zodat zelfrapportage niet zomaar te gamen is.
+1. **Directe actie-opvolging:** elk gesprek eindigt met één concrete actie voor de gebruiker. Bij het volgende gesprek checkt ArnoBot actief of die actie is uitgevoerd, en benoemt het rechtstreeks als het antwoord niet klopt met wat er nu gezegd wordt. Geen slap "hoe ging het", een directe confrontatie met eerder gedrag, gedreven vanuit oprechte betrokkenheid, niet controle. **Uitgebreid (13 augustus 2026):** ArnoBot herkent ook reflexief "ja, gedaan" klikken (klik-snelheid gecombineerd met het patroon over tijd) en vraagt dan een korte toelichting in plaats van de klik zomaar te accepteren, zodat zelfrapportage niet zomaar te gamen is. **Uitgebreid (2 september 2026):** oudere, nog niet afgehandelde acties verdwijnen niet langer zodra er een nieuwere bijkomt. ArnoBot houdt tot 3 openstaande acties tegelijk aan, niet alleen de laatste.
 2. **Samenvattingen en feiten uit eerdere gesprekken:** concrete details (namen, bedrijven, cijfers, situaties) die een gebruiker eerder deelde, komen automatisch terug als achtergrondcontext, zonder dat de gebruiker ze opnieuw hoeft uit te leggen.
 3. **Semantische retrieval buiten het recente venster (nieuw, 12 augustus 2026):** de twee lagen hierboven keken alleen naar de laatste 10 (Basic) of 25 (Pro/Team) gesprekken. Sinds vandaag zoekt ArnoBot ook actief in oudere, buiten dat venster vallende gesprekken naar content die relevant is voor de huidige vraag, op basis van betekenis, niet alleen recentheid. Een gebruiker die drie maanden geleden een vergelijkbaar probleem besprak, krijgt dat nu terug, ook als het gesprek allang buiten de standaardgeschiedenis valt.
 4. **Patroongeheugen over namen, bedrijven en thema's (nieuw, 12 augustus 2026):** ArnoBot herkent nu wanneer een naam, bedrijf of onderwerp al eerder is genoemd, ook in gesprekken die niet meer in de directe geschiedenis staan, en meldt dat expliciet ("dit is niet de eerste keer dat dit ter sprake komt"). Dit is het begin van echte patroonherkenning over de volledige relatie met een gebruiker heen, niet alleen losse gesprekken.
@@ -56,7 +56,7 @@ Een live oefengesprek tegen een AI-tegenstander: een lastige prospect, een scept
 Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyses over patronen in meerdere gesprekken. Sessies kunnen gedeeld worden via een link (bijv. met een coach), en individuele gesprekken of analyses kunnen verwijderd worden.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)
-Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI Whisper) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
+Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
 
 ### 3.7 Teammodule
 Voor Team-abonnees. De manager krijgt op zijn teampagina:
@@ -111,7 +111,7 @@ ArnoBot is gebouwd als een moderne, schaalbare webapplicatie (Next.js), gehost o
 **AI-leveranciers, elk voor een specifiek doel:**
 - **Anthropic (Claude):** de hoofdgesprekken, coaching-synthese, sparring, teamanalyses. Het belangrijkste model.
 - **Voyage AI:** het onderliggende zoek- en geheugensysteem (semantische retrieval, zowel voor de kennisbank als voor het sessiegeheugen).
-- **OpenAI (Whisper):** spraakherkenning voor voice-invoer.
+- **OpenAI:** spraakherkenning voor voice-invoer.
 - **ElevenLabs:** gesproken antwoorden voor ArnoBot Voice (Pro/Team).
 
 Geen van deze leveranciers traint op klantdata, dit is expliciet vastgelegd en gecommuniceerd op de privacypagina.
