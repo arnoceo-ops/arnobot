@@ -80,6 +80,7 @@ export default async function ArnoBotAdminPage({
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
     .neq('user_id', APP_REVIEWER_ID)
+    .not('user_id', 'like', 'fake\\_%')
 
   const alleNamen: { userId: string; naam: string }[] = (alleGebruikers ?? [])
     .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
@@ -98,6 +99,8 @@ export default async function ArnoBotAdminPage({
     .neq('user_id', E2E_TEST_USER_ID)
     .neq('user_id', MANUAL_TEST_USER_ID)
     .neq('user_id', APP_REVIEWER_ID)
+    // Nepleden van Team Hippios (demo-seed, user_id 'fake_...') horen niet tussen echte gesprekken.
+    .not('user_id', 'like', 'fake\\_%')
     .order('created_at', { ascending: true })
     .limit(2000)
 
