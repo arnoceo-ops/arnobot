@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 
 export const dynamic = 'force-dynamic'
 import EvaluatiesClient from './EvaluatiesClient'
@@ -18,14 +18,12 @@ export default async function EvaluatiesPage() {
   )
 
   const [{ data: ratingsRaw }, { data: negRaw }] = await Promise.all([
-    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).neq('user_id', E2E_TEST_USER_ID).neq('user_id', MANUAL_TEST_USER_ID).neq('user_id', APP_REVIEWER_ID),
+    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase
       .from('arnobot_rds_logs')
       .select('question, answer, created_at, user_id')
       .eq('feedback', 'neg')
-      .neq('user_id', E2E_TEST_USER_ID)
-      .neq('user_id', MANUAL_TEST_USER_ID)
-      .neq('user_id', APP_REVIEWER_ID)
+      .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
       .order('created_at', { ascending: false })
       .limit(10),
   ])

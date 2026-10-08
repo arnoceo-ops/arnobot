@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import {
   fetchVorigeAnalyse, vorigPanelBlok, vorigZelfBlok,
   TREND_PANEL_INSTRUCTIE, TREND_ZELF_INSTRUCTIE, BEVINDINGEN_INSTRUCTIE,
@@ -72,9 +72,7 @@ export async function runMetaAnalyse(
     .not('session_id', 'is', null)
     .order('created_at', { ascending: false })
     .limit(cap * 3)
-    .neq('user_id', E2E_TEST_USER_ID)
-    .neq('user_id', MANUAL_TEST_USER_ID)
-    .neq('user_id', APP_REVIEWER_ID)
+    .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
   if (ownerUserId) sessieQuery = sessieQuery.neq('user_id', ownerUserId)
   const { data: alleSessies } = await sessieQuery
 

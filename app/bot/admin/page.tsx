@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
+import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
@@ -77,10 +77,7 @@ export default async function ArnoBotAdminPage({
   const { data: alleGebruikers } = await supabase
     .from('approved_users')
     .select('user_id, voornaam, achternaam')
-    .neq('user_id', E2E_TEST_USER_ID)
-    .neq('user_id', MANUAL_TEST_USER_ID)
-    .neq('user_id', APP_REVIEWER_ID)
-    .not('user_id', 'like', 'fake\\_%')
+    .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
 
   const alleNamen: { userId: string; naam: string }[] = (alleGebruikers ?? [])
     .map(u => ({ userId: u.user_id, naam: [u.voornaam, u.achternaam].filter(Boolean).join(' ') }))
@@ -96,11 +93,7 @@ export default async function ArnoBotAdminPage({
     .select('*')
     .gte('created_at', `${from}T00:00:00`)
     .lte('created_at', `${to}T23:59:59`)
-    .neq('user_id', E2E_TEST_USER_ID)
-    .neq('user_id', MANUAL_TEST_USER_ID)
-    .neq('user_id', APP_REVIEWER_ID)
-    // Nepleden van Team Hippios (demo-seed, user_id 'fake_...') horen niet tussen echte gesprekken.
-    .not('user_id', 'like', 'fake\\_%')
+    .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
     .order('created_at', { ascending: true })
     .limit(2000)
 

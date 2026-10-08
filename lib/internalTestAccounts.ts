@@ -56,8 +56,22 @@ export const INTERNAL_TEST_USER_EMAILS: readonly string[] = [
   APP_REVIEWER_EMAIL,
 ]
 
+// Nepleden van Team Hippios (Benny, Alira, Lisa, user_id 'fake_...'): draaien in het team- en
+// demoscherm volledig mee, maar mogen nooit zichtbaar zijn of meetellen in admin-weergaves,
+// statistieken, cron-aggregaties of analyses. Zelfde uitsluitingsmechanisme als de interne
+// testaccounts, zodat de CI-achtervang (scripts/check-testaccount-filter.mjs) ze ook dekt.
+export const FAKE_DEMO_USER_PREFIX = 'fake_'
+// LIKE-patroon met geescapete underscore (anders is `_` een wildcard).
+export const FAKE_DEMO_USER_LIKE = 'fake\\_%'
+// PostgREST `in`-lijst van de interne testaccounts: `.not('user_id', 'in', INTERNAL_TEST_USERS_IN)`.
+export const INTERNAL_TEST_USERS_IN = `(${INTERNAL_TEST_USER_IDS.join(',')})`
+
+export function isFakeDemoUser(userId: string | null | undefined): boolean {
+  return userId != null && userId.startsWith(FAKE_DEMO_USER_PREFIX)
+}
+
 export function isInternalTestUser(userId: string | null | undefined): boolean {
-  return userId != null && INTERNAL_TEST_USER_IDS.includes(userId)
+  return userId != null && (INTERNAL_TEST_USER_IDS.includes(userId) || isFakeDemoUser(userId))
 }
 
 // Arno's echte LinkedIn-account (linkedin@royaldutchsales.com, elders BOUWER_EMAIL). Dit is
@@ -76,11 +90,11 @@ export function isExcludedFromProductAnalytics(userId: string | null | undefined
 
 // PostgREST-filter voor een Supabase-query: sluit de interne testaccounts uit op `column`
 // (default user_id). Equivalent aan drie losse .neq()-calls, maar in één greppbare vorm.
-export function excludeInternalTestUsers<T extends { not(column: string, operator: 'in', value: string): T }>(
+export function excludeInternalTestUsers<T extends { not(column: string, operator: string, value: string): T }>(
   query: T,
   column = 'user_id',
 ): T {
-  return query.not(column, 'in', `(${INTERNAL_TEST_USER_IDS.join(',')})`)
+  return query.not(column, 'in', INTERNAL_TEST_USERS_IN).not(column, 'like', FAKE_DEMO_USER_LIKE)
 }
 
 // Team Hippios: persistent testteam voor demo's/livetesten, twee echte managers
