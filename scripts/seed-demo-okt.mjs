@@ -42,6 +42,13 @@ const MEMBER = {
 const msa = (mn, sy, ac) => Math.max(1, Math.round((mn + sy + ac) / 15 * 100))
 const at = (date, time = '10:00') => `${date}T${time}:00+00:00`
 
+// Geloofwaardig, per gebruiker vast IP-adres voor het gesprekslog. De admin-weergave toont dit
+// veld in de sessiekop, dus een letterlijke 'seed' verraadt demodata (7-10-2026).
+const fakeIp = (userId) => {
+  const h = [...userId].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)
+  return `84.${(h % 200) + 20}.${((h >> 8) % 250) + 1}.${((h >> 16) % 250) + 1}`
+}
+
 // Zelfde model als lib/rag.ts embedSessionText (voyage-multilingual-2), tekst identiek samengesteld.
 async function embed(title, summary, feiten) {
   const text = [title, summary, feiten].filter(Boolean).join('\n')
@@ -344,7 +351,7 @@ async function run() {
     counts.sessies++
 
     const { error: e2 } = await supabase.from('arnobot_rds_logs').insert({
-      user_id, session_id, question: s.q, answer: s.a, created_at: at(s.date, '10:05'), ip: 'seed',
+      user_id, session_id, question: s.q, answer: s.a, created_at: at(s.date, '10:05'), ip: fakeIp(user_id),
     })
     if (e2) throw new Error(`rds_logs ${s.who} ${s.date}: ${e2.message}`)
     counts.rds++
