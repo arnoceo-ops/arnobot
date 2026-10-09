@@ -228,7 +228,7 @@ export default function TeamAanvraagPage() {
                   <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
                 </div>
                 <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
-                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Maandelijks opzegbaar.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
+                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Opzegtermijn één maand.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
                 </p>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>

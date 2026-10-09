@@ -99,7 +99,7 @@ export default async function PrijzenPage() {
         <div className="prijzen-trust-row">
           <span className="prijzen-trust-item">Privé & versleuteld opgeslagen</span>
           <span className="prijzen-trust-item">Nooit gedeeld met derden</span>
-          <span className="prijzen-trust-item">Maandelijks opzegbaar</span>
+          <span className="prijzen-trust-item">Geen creditcard nodig</span>
         </div>
       </section>
 

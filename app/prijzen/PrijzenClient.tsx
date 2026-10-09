@@ -119,7 +119,7 @@ export default function PrijzenClient() {
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? `€${BASIC_JAARLIJKS * 12} per jaar.` : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? `€${BASIC_JAARLIJKS * 12} per jaar.` : 'Per maand.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
@@ -145,7 +145,7 @@ export default function PrijzenClient() {
               <span className="prijzen-tier-periode">/ maand</span>
             </div>
             <p className="prijzen-tier-billingnote">
-              {cyclus === 'jaarlijks' ? `€${PRO_JAARLIJKS * 12} per jaar.` : 'Maandelijks opzegbaar.'}
+              {cyclus === 'jaarlijks' ? `€${PRO_JAARLIJKS * 12} per jaar.` : 'Per maand.'}
             </p>
             <p className="prijzen-tier-trial">30 dagen gratis proberen</p>
           </div>
@@ -184,7 +184,7 @@ export default function PrijzenClient() {
             <p className="prijzen-tier-billingnote">
               {cyclus === 'jaarlijks'
                 ? `€${TEAM_BASIS_JAARLIJKS * 12} + €${TEAM_PERGEBRUIKER_JAARLIJKS * 12} per gebruiker, per jaar`
-                : 'Maandelijks opzegbaar.'}
+                : 'Opzegtermijn één maand.'}
             </p>
           </div>
 

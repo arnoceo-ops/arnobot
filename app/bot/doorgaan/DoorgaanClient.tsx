@@ -178,7 +178,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                     <span className="plan-periode">/ maand</span>
                   </div>
                   <p className="plan-billingnote">
-                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €228 per jaar' : 'Maandelijks opzegbaar.'}
+                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €228 per jaar' : 'Per maand.'}
                   </p>
                 </div>
 
@@ -203,7 +203,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                     <span className="plan-periode">/ maand</span>
                   </div>
                   <p className="plan-billingnote">
-                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €468 per jaar' : 'Maandelijks opzegbaar.'}
+                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €468 per jaar' : 'Per maand.'}
                   </p>
                 </div>
 

@@ -70,7 +70,7 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 
 **Eén regel per bullet (besloten 2026-08-02):** elke feature-bullet moet in de kaartlay-out op één regel passen, niet uitwrappen naar een tweede regel. Reden: bij ongelijke regelaantallen per bullet ontstaat een rommelig, ongelijkmatig ritme tussen de drie kaarten. Bij het herzien van te lange bullets altijd eerst proberen te verkorten zonder de kern te verliezen, pas als dat niet lukt de inhoud zelf aanpassen (zoals bij "onbeperkt" hierboven).
 
-**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle).
+**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/PAYMENTS_PLAN.md` besluitenblok.
 
 ## Btw-weergave (besloten 2026-09-03)
 
