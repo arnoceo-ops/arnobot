@@ -60,8 +60,14 @@ export type EmailType =
   | 'testtoegang_afloop'
   | 'betaalwaarschuwing'
   | 'geblokkeerd'
+  | 'betaling_bevestiging'
+  | 'betaling_mislukt'
   | 'trial_afgelopen'
   | 'opzegging_bevestiging'
+  | 'verlenging_30d'
+  | 'verlenging_7d'
+  | 'abonnement_afgelopen'
+  | 'terugbetaling_bevestiging'
   | 'winback'
   | 'weekly_nudge'
   | 'inactivity_dag21'
@@ -87,8 +93,14 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   testtoegang_afloop:    { label: 'Testtoegang loopt af',   description: 'Eenmalig:heads-up voor vroege testgebruikers, comp eindigt 1 nov', category: 'user' },
   betaalwaarschuwing:    { label: 'Betaalwaarschuwing',     description: 'Dag 25+:7 dagen na opt-in zonder betaling',                         category: 'user' },
   geblokkeerd:           { label: 'Geblokkeerd',            description: 'Dag 26+:24u na waarschuwing, nog steeds geen betaling',             category: 'user' },
+  betaling_bevestiging: { label: 'Betaling bevestigd',     description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
+  betaling_mislukt:      { label: 'Betaling mislukt',       description: 'Event:herhaalbetaling niet gelukt, toegang loopt nog door',         category: 'user' },
   trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30:trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging',  description: 'Op elk moment:na opzegging via account pagina',                     category: 'user' },
+  verlenging_30d:        { label: 'Verlengen, 30 dagen',    description: 'Recurring:particulier, 30 dagen voor het einde van de 12 maanden',  category: 'user' },
+  verlenging_7d:         { label: 'Verlengen, 7 dagen',     description: 'Recurring:particulier, 7 dagen voor het einde van de 12 maanden',   category: 'user' },
+  abonnement_afgelopen:  { label: 'Abonnement afgelopen',   description: 'Event:abonnement geëindigd, er wordt niets meer afgeschreven',     category: 'user' },
+  terugbetaling_bevestiging: { label: 'Terugbetaling',      description: 'Event:na terugbetaling binnen de bedenktijd',                       category: 'user' },
   winback:               { label: 'Win-back',               description: 'Dag 45:15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
   weekly_nudge:          { label: 'Inactivity nudge',       description: 'Recurring:7 dagen geen activiteit',                                 category: 'user' },
   inactivity_dag21:      { label: 'Inactivity dag 21',      description: 'Recurring:21 dagen geen activiteit',                                category: 'user' },
@@ -103,11 +115,31 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
 }
 
+export interface BillingMailOptions {
+  planNaam?: string
+  /** Bedrag in centen, inclusief btw. */
+  bedragCent?: number
+  btwCent?: number
+  /** ISO-datum: einde van de betaalde periode of contracteinde. */
+  datum?: string
+  eerste?: boolean
+  betaalId?: string
+}
+
+function billingEuro(cent: number): string {
+  return `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function billingDatum(iso: string | undefined): string {
+  const d = iso ? new Date(iso) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[] }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -236,6 +268,67 @@ export function getEmailTemplate(
           'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers', isTest
         ),
       }
+    case 'betaling_bevestiging': {
+      const b = options?.billing
+      const bedrag = billingEuro(b?.bedragCent ?? 2900)
+      const btw = billingEuro(b?.btwCent ?? 503)
+      const regels = [
+        `Bedrag: ${bedrag}, inclusief ${btw} btw.`,
+        `Je abonnement loopt door tot ${billingDatum(b?.datum)}.`,
+        b?.betaalId ? `Betaalreferentie: ${b.betaalId}.` : '',
+      ].filter(Boolean).join('<br>')
+      return {
+        subject: b?.eerste === false ? `${prefix}Betaling ontvangen` : `${prefix}Je abonnement is actief`,
+        html: mail(
+          `${b?.eerste === false ? 'Je betaling voor' : 'Bedankt. Je betaling voor'} ArnoBot ${b?.planNaam ?? 'Pro'} is binnen.<br><br>${regels}<br><br>Dit is je betaalbevestiging. Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
+    case 'betaling_mislukt': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}Je betaling voor ArnoBot is niet gelukt`,
+        html: mail(
+          `Je laatste betaling voor ArnoBot ${b?.planNaam ?? 'Pro'} is niet gelukt. Je toegang loopt door tot ${billingDatum(b?.datum)}.<br><br>Wil je blijven, regel dan een nieuwe betaling via de knop hieronder. Lukt het niet, dan helpen we je graag via <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          'BETALING REGELEN →', 'https://arno.bot/bot/doorgaan'
+        ),
+      }
+    }
+    case 'verlenging_30d':
+      return {
+        subject: `${prefix}Wil je nog een jaar verder met ArnoBot?`,
+        html: mail(
+          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je nog een jaar verder? Met één klik verleng je, wij gebruiken je bestaande betaalmethode.<br><br>Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.`,
+          'VERLENGEN →', 'https://arno.bot/bot/doorgaan?verlengen=1'
+        ),
+      }
+    case 'verlenging_7d':
+      return {
+        subject: `${prefix}Je ArnoBot-abonnement loopt bijna af`,
+        html: mail(
+          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je door, verleng dan met één klik. Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.`,
+          'VERLENGEN →', 'https://arno.bot/bot/doorgaan?verlengen=1'
+        ),
+      }
+    case 'abonnement_afgelopen':
+      return {
+        subject: `${prefix}Je ArnoBot-abonnement is afgelopen`,
+        html: mail(
+          `Je ArnoBot-abonnement is afgelopen en er wordt niets meer afgeschreven. Je data blijft nog 30 dagen bewaard.<br><br>Wil je verder, dan kun je op elk moment weer een abonnement kiezen.`,
+          'ABONNEMENT KIEZEN →', 'https://arno.bot/bot/doorgaan'
+        ),
+      }
+    case 'terugbetaling_bevestiging': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}Je terugbetaling is onderweg`,
+        html: mail(
+          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag bij je staat.<br><br>Je abonnement is hiermee beëindigd. Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          'TERUG NAAR ARNOBOT →', 'https://arno.bot'
+        ),
+      }
+    }
     case 'opzegging_bevestiging':
       return {
         subject: `${prefix}Opzegging ontvangen`,

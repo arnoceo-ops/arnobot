@@ -7,7 +7,7 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
-type Action = 'paid' | 'comp' | 'active'
+type Action = 'paid' | 'comp' | 'active' | 'refund'
 const PANEL_W = 190
 
 export default function PaidButton({
@@ -32,6 +32,8 @@ export default function PaidButton({
   const [active, setActive] = useState(isActive)
   const [expires, setExpires] = useState(expiresAt ? expiresAt.slice(0, 10) : '')
   const [loading, setLoading] = useState<Action | ''>('')
+  const [refundStap, setRefundStap] = useState<0 | 1>(0)
+  const [refundMsg, setRefundMsg] = useState('')
   // Vaste positie i.p.v. absolute: de tabel zit in een overflow-container die het
   // paneel anders bij de onderste rijen afknipt.
   const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null)
@@ -52,6 +54,17 @@ export default function PaidButton({
     setLoading(action)
     try {
       let res: Response
+      if (action === 'refund') {
+        res = await fetch('/api/admin/refund', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        })
+        const data = await res.json().catch(() => ({}))
+        setRefundMsg(res.ok ? 'Terugbetaald, toegang beëindigd' : (data.error ?? 'Mislukt'))
+        setRefundStap(0)
+        if (res.ok) router.refresh()
+        return
+      }
       if (action === 'active') {
         res = await fetch('/api/admin/active', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -157,6 +170,22 @@ export default function PaidButton({
                 }}>
                 {loading === 'active' ? '...' : active ? 'TOEGANG INTREKKEN' : 'HERACTIVEER'}
               </button>
+            </div>
+
+            <div style={{ borderTop: '1px solid #374151', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                onClick={() => (refundStap === 0 ? setRefundStap(1) : run('refund'))}
+                disabled={loading !== ''}
+                style={{
+                  width: '100%', fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
+                  padding: '5px 0', borderRadius: 999, border: '1px solid #cc2200',
+                  background: refundStap === 1 ? '#cc2200' : 'transparent',
+                  color: refundStap === 1 ? '#fff' : '#cc2200',
+                  cursor: loading !== '' ? 'not-allowed' : 'pointer',
+                }}>
+                {loading === 'refund' ? '...' : refundStap === 1 ? 'WEET JE ZEKER?' : 'ONLINE BETALING TERUG'}
+              </button>
+              {refundMsg && <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{refundMsg}</p>}
             </div>
 
             <button onClick={() => setPos(null)}

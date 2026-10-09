@@ -2,7 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { emailHtml } from '@/lib/email-templates'
+import { emailHtml, getEmailTemplate, isValidEmail } from '@/lib/email-templates'
+import { meldOpzegging } from '@/lib/billing/opzeggen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,6 +56,22 @@ export async function POST() {
     .update({ cancelled_at: now })
     .eq('user_id', userId)
 
+  // Online betaald abonnement (Mollie): opzegging volgens artikel 7 automatisch verwerkt,
+  // incl. het stopzetten van het Mollie-abonnement. Zonder billing-record blijft de oude
+  // handmatige afhandeling door Arno gelden.
+  let automatisch: { ingaatOp: Date } | null = null
+  try {
+    automatisch = await meldOpzegging(userId)
+  } catch (e) {
+    console.error('[cancel-subscription] automatische opzegging mislukt', e instanceof Error ? e.message : e)
+  }
+
+  // Bevestiging aan de gebruiker, belofte uit de voorwaarden (artikel 7).
+  if (isValidEmail(user.email)) {
+    const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, { userId })
+    await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
+  }
+
   const datum = new Date(now).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
   const teamWaarschuwing = isManager
     ? `<br><br><strong style="color:#cc2200;">Dit is een teamabonnement met ${teamMemberCount ?? 'onbekend aantal'} leden. Bij het verwerken van deze opzegging moet je ook hun toegang zelf beëindigen, niet alleen die van de manager.</strong>`
@@ -64,7 +81,7 @@ export async function POST() {
     to: 'arno@arno.bot',
     subject: `Opzegging${isManager ? ' (TEAM)' : ''}: ${user.voornaam || user.email || userId}`,
     html: emailHtml(
-      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het${isManager ? ' team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.`,
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het${isManager ? ' team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>${automatisch ? `Automatisch verwerkt: het abonnement eindigt op ${automatisch.ingaatOp.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}, geen actie nodig.` : 'Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.'}`,
       'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
     ),
   }).catch(() => {})

@@ -1,0 +1,163 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import * as Sentry from '@sentry/nextjs'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+import { billingDb, type SubRow } from '@/lib/billing/db'
+import { MollieError, SITE_URL, maakEersteBetaling, maakKlant, mollieIngeschakeld } from '@/lib/billing/mollie'
+import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
+import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer } from '@/lib/billing/btwNummer'
+import { isTeamCovered } from '@/lib/teamAccess'
+
+const ratelimit = new Ratelimit({
+  redis: new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  }),
+  limiter: Ratelimit.slidingWindow(10, '1 h'),
+  prefix: 'arnobot:checkout',
+})
+
+const fout = (status: number, error: string, extra?: Record<string, unknown>) =>
+  NextResponse.json({ error, ...extra }, { status })
+
+export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return fout(401, 'Niet ingelogd')
+  if (!mollieIngeschakeld()) return fout(503, 'Online betalen is nog niet beschikbaar')
+
+  const { success } = await ratelimit.limit(userId)
+  if (!success) return fout(429, 'Te veel pogingen, probeer het over een uur opnieuw')
+
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object') return fout(400, 'Ongeldig verzoek')
+  const { plan, cyclus, klantType, bedrijfsnaam, kvk, btwNummer, akkoordVoorwaarden } = body as Record<string, unknown>
+
+  if (!isPlan(plan) || !isCyclus(cyclus) || !isKlantType(klantType)) return fout(400, 'Ongeldige keuze')
+  if (akkoordVoorwaarden !== true) return fout(400, 'Ga akkoord met de algemene voorwaarden om door te gaan')
+
+  // Een teamlid of teammanager heeft geen eigen abonnement (zelfde vangnet als confirm-renewal).
+  if (await isTeamCovered(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
+
+  let zakelijk: { bedrijfsnaam: string; kvk: string; btw: string; btwGevalideerd: boolean } | null = null
+  if (klantType === 'zakelijk') {
+    const naam = typeof bedrijfsnaam === 'string' ? bedrijfsnaam.trim() : ''
+    const kvkNr = typeof kvk === 'string' ? kvk.replace(/\s/g, '') : ''
+    const btwRaw = typeof btwNummer === 'string' ? btwNummer : ''
+    if (naam.length < 2 || naam.length > 120) return fout(400, 'Vul de bedrijfsnaam in')
+    if (!isKvkFormaat(kvkNr)) return fout(400, 'Een KvK-nummer heeft 8 cijfers')
+    if (!isNlBtwFormaat(btwRaw)) {
+      return fout(400, 'Vul een Nederlands btw-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan hq@arno.bot')
+    }
+    const check = await controleerBtwBijVies(btwRaw)
+    if (check === 'ongeldig') return fout(400, 'Dit btw-nummer is niet geldig')
+    zakelijk = { bedrijfsnaam: naam, kvk: kvkNr, btw: normaliseerBtwNummer(btwRaw), btwGevalideerd: check === 'geldig' }
+  }
+
+  const { data: user } = await billingDb
+    .from('approved_users')
+    .select('voornaam, email')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!user?.email) return fout(404, 'Account niet gevonden')
+
+  // Al een lopend abonnement? Dan geen tweede. Uitzondering: de laatste herhaalbetaling is
+  // mislukt, dan moet de gebruiker een nieuwe betaalmethode kunnen opgeven.
+  const nu = new Date()
+  const { data: lopend } = await billingDb
+    .from('arnobot_subscriptions')
+    .select('id, periode_einde')
+    .eq('user_id', userId)
+    .in('status', ['active', 'cancelled'])
+    .gt('periode_einde', nu.toISOString())
+    .returns<Pick<SubRow, 'id' | 'periode_einde'>[]>()
+  for (const s of lopend ?? []) {
+    const { data: laatste } = await billingDb
+      .from('arnobot_payments')
+      .select('status')
+      .eq('subscription_id', s.id)
+      .eq('soort', 'herhaling')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<{ status: string }>()
+    const mislukt = laatste && ['failed', 'expired', 'canceled'].includes(laatste.status)
+    if (!mislukt) return fout(409, 'Je hebt al een actief abonnement')
+  }
+
+  try {
+    // Mollie-klant hergebruiken of aanmaken.
+    const { data: bestaand } = await billingDb
+      .from('arnobot_billing_customers')
+      .select('mollie_customer_id')
+      .eq('user_id', userId)
+      .maybeSingle<{ mollie_customer_id: string }>()
+    const klantId = bestaand?.mollie_customer_id
+      ?? (await maakKlant({ naam: zakelijk?.bedrijfsnaam ?? (user.voornaam || user.email), email: user.email, userId })).id
+
+    await billingDb.from('arnobot_billing_customers').upsert(
+      {
+        user_id: userId,
+        mollie_customer_id: klantId,
+        klant_type: klantType,
+        bedrijfsnaam: zakelijk?.bedrijfsnaam ?? null,
+        kvk_nummer: zakelijk?.kvk ?? null,
+        btw_nummer: zakelijk?.btw ?? null,
+        btw_gevalideerd: zakelijk?.btwGevalideerd ?? false,
+        updated_at: nu.toISOString(),
+      },
+      { onConflict: 'user_id' },
+    )
+
+    // Eerdere onafgeronde pogingen afsluiten, dan een verse aanmaken.
+    await billingDb
+      .from('arnobot_subscriptions')
+      .update({ status: 'abandoned', updated_at: nu.toISOString() })
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+
+    const bedrag = berekenBedrag(plan, cyclus, klantType)
+    const { data: sub, error: subError } = await billingDb
+      .from('arnobot_subscriptions')
+      .insert({
+        user_id: userId,
+        plan,
+        cyclus,
+        klant_type: klantType,
+        status: 'pending',
+        bedrag_cent: bedrag.brutoCent,
+        btw_cent: bedrag.btwCent,
+        mollie_customer_id: klantId,
+      })
+      .select('id')
+      .single<{ id: string }>()
+    if (subError || !sub) throw new Error(subError?.message ?? 'Abonnement aanmaken mislukt')
+
+    const betaling = await maakEersteBetaling({
+      klantId,
+      brutoCent: bedrag.brutoCent,
+      omschrijving: `ArnoBot ${planNaam(plan)} ${cyclus}`,
+      redirectUrl: `${SITE_URL}/bot/doorgaan?betaling=terug`,
+      metadata: { userId, subscriptionRowId: sub.id },
+      idempotencyKey: `eerste-${sub.id}`,
+    })
+
+    await billingDb.from('arnobot_payments').insert({
+      user_id: userId,
+      subscription_id: sub.id,
+      mollie_payment_id: betaling.id,
+      soort: 'eerste',
+      status: betaling.status,
+      bedrag_cent: bedrag.brutoCent,
+      btw_cent: bedrag.btwCent,
+    })
+
+    const checkoutUrl = betaling._links?.checkout?.href
+    if (!checkoutUrl) throw new Error('Mollie gaf geen checkout-URL')
+    return NextResponse.json({ checkoutUrl })
+  } catch (e) {
+    // Nooit Mollie-details naar de gebruiker; wel loggen en melden.
+    Sentry.captureException(e, { tags: { onderdeel: 'billing-checkout' } })
+    console.error('[checkout]', e instanceof MollieError ? e.message : e instanceof Error ? e.message : e)
+    return fout(502, 'Betaling starten is niet gelukt, probeer het zo opnieuw of mail hq@arno.bot')
+  }
+}
