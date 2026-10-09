@@ -72,11 +72,11 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens</td><td>Naam en e-mailadres, afkomstig uit jouw LinkedIn-profiel via Clerk</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profielgegevens</td><td>Salesrol, markt, uitdagingen en doelstellingen die jij invult</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>AI-coachingsgesprekken die jij voert met ArnoBot</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die worden gedeeld via een publieke link. Deze zijn toegankelijk voor iedereen met de link en kunnen door zoekmachines worden geïndexeerd.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die je deelt via een publieke link. Iedereen met de link kan ze lezen, zoekmachines kunnen ze indexeren.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt en welke stappen je zet in de app, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken, coaching of analyses.</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek, bijvoorbeeld om een salesplan te laten checken</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Bij zakelijke klanten ook bedrijfsnaam, KvK-nummer, btw-nummer en adres.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Zakelijk ook bedrijfsnaam, KvK, btw-nummer en adres.</td></tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>PostHog</td>
-                  <td>Bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)</td>
+                  <td>Bezoekers- en gebruiksanalyse (pseudoniem), EU-hosting (Frankfurt)</td>
                   <td>DPA op aanvraag</td>
                 </tr>
                 <tr>
