@@ -59,7 +59,6 @@ export default function ContactPage() {
                 <tr><td style={rij}>Algemeen</td><td><a href={`mailto:${BEDRIJF.emailAlgemeen}`}>{BEDRIJF.emailAlgemeen}</a></td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Support</td><td><a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer">WhatsApp</a></td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Privacy</td><td><a href={`mailto:${BEDRIJF.emailPrivacy}`}>{BEDRIJF.emailPrivacy}</a></td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Opzeggen</td><td><a href={`mailto:${BEDRIJF.emailOpzeggen}`}>{BEDRIJF.emailOpzeggen}</a></td></tr>
               </tbody>
             </table>
           </div>
@@ -70,12 +69,11 @@ export default function ContactPage() {
             <table>
               <tbody>
                 <tr><td style={rij}>Bedrijf</td><td>{BEDRIJF.naam}</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Eigenaar</td><td>{BEDRIJF.eigenaar}</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>KvK-nummer</td><td>{BEDRIJF.kvk}</td></tr>
                 {BEDRIJF.btw && <tr><td style={{ color: '#f1f5f9' }}>Btw-nummer</td><td>{BEDRIJF.btw}</td></tr>}
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Bezoekadres</td>
-                  <td>{BEDRIJF.straat}<br />{BEDRIJF.postcode} {BEDRIJF.plaats}, {BEDRIJF.land}</td>
+                  <td>{BEDRIJF.straat}<br />{BEDRIJF.postcode} {BEDRIJF.plaats}</td>
                 </tr>
               </tbody>
             </table>

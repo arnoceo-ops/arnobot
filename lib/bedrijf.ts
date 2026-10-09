@@ -11,11 +11,9 @@ export const BEDRIJF = {
   straat: 'Oudegracht 161',
   postcode: '3511 AL',
   plaats: 'Utrecht',
-  land: 'Nederland',
   landCode: 'NL',
   emailAlgemeen: 'hq@arno.bot',
   emailPrivacy: 'privacy@arno.bot',
-  emailOpzeggen: 'cancel@arno.bot',
   reactietermijn: 'binnen 24 uur',
 } as const
 

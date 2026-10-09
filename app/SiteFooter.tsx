@@ -14,7 +14,7 @@ export default function SiteFooter() {
           font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 3px;
           text-transform: uppercase; color: #f59e0b; margin-bottom: 16px;
         }
-        .site-footer-col { display: flex; flex-direction: column; gap: 12px; }
+        .site-footer-col { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
         .site-footer-col a {
           font-family: 'DM Sans', sans-serif; font-size: 15px; color: #9ca3af;
           text-decoration: none; transition: color 0.2s;
