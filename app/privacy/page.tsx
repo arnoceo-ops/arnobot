@@ -149,12 +149,12 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>AssemblyAI</td>
-                  <td>Spraaktranscriptie bij een audiobijlage (opname direct verwijderd, geen training op jouw data)</td>
+                  <td>Transcriptie van audiobijlagen (direct verwijderd, geen training op jouw data)</td>
                   <td><a href="https://www.assemblyai.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">assemblyai.com/legal/dpa</a></td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Calendly</td>
-                  <td>Boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres</td>
+                  <td>Boeken van een kennismakingsgesprek met Arno</td>
                   <td><a href="https://calendly.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">calendly.com/legal/dpa</a></td>
                 </tr>
                 <tr>
@@ -164,7 +164,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>ElevenLabs</td>
-                  <td>Tekst-naar-spraak voor ArnoBot Voice-abonnees (gesproken antwoorden, geen training op jouw data)</td>
+                  <td>Tekst-naar-spraak voor ArnoBot Voice (geen training op jouw data)</td>
                   <td><a href="https://elevenlabs.io/dpa" target="_blank" rel="noopener noreferrer">elevenlabs.io/dpa</a></td>
                 </tr>
                 <tr>
@@ -184,7 +184,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>OpenAI</td>
-                  <td>Spraakherkenning (Whisper) voor voice-invoer (geen training op jouw data)</td>
+                  <td>Spraakherkenning voor voice-invoer (geen training op jouw data)</td>
                   <td><a href="https://openai.com/policies/data-processing-addendum/" target="_blank" rel="noopener noreferrer">openai.com/policies/dpa</a></td>
                 </tr>
                 <tr>
