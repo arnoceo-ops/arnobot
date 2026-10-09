@@ -36,7 +36,7 @@ export default function SiteFooter() {
             <p className="site-footer-heading">Product</p>
             <Link href="/prijzen">Prijzen</Link>
             <Link href="/#hoe-het-werkt">Hoe het werkt</Link>
-            <Link href="/#faq">Veelgestelde vragen</Link>
+            <Link href="/#faq">FAQ</Link>
           </div>
           <div className="site-footer-col">
             <p className="site-footer-heading">Bedrijf</p>
