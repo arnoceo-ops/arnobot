@@ -2,7 +2,7 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-10-10 (einde bouwsessie)
+- **Laatst bijgewerkt:** 2026-10-09 (einde sessie: privacy ingekort, managementfacturen besloten)
 - **Waar we staan:** de hele flow is gebouwd en op 2026-10-09 end-to-end getest in testmodus met het testaccount: Pro jaarlijks en Pro maandelijks als particulier, Pro jaarlijks als zakelijk (bedrag, btw, abonnement bij Mollie, toegang, bevestigingsmail, Telegram), terugbetaling (toegang direct dicht), opzegging (Mollie-abonnement gestopt, einddatum). Onderweg gevonden en gefixt: toegang bleef staan bij een pending terugbetaling, verlopen gebruikers konden niet opnieuw afrekenen (proxy.ts liet alleen /bot/doorgaan niet door), opzegbevestiging werd nooit verstuurd, misleidende melding bij opgezegd-maar-lopend abonnement. Nog niet getest: een mislukte betaling, de eerste echte vervolgbetaling (9 november 2026 voor de testbetaling is gestopt), de verlengmails en iDEAL. Met een test_-sleutel kunnen alleen de eigenaar en de interne testaccounts afrekenen; de VIES-controle wordt in testmodus overgeslagen.
 - **Eerstvolgende stap:** Arno voert `docs/sql/2026-10-10-mollie-billing.sql` uit in Supabase, maakt het Mollie-account aan (pay-as-you-go, testmodus) en zet `MOLLIE_API_KEY` (test_...) in `.env.local` en Vercel. Pas daarna kan de flow end-to-end in testmodus draaien.
 - **Blokkerend voor livegang (niet voor bouwen):** (1) Moneybird-koppeling voor facturen, want de voorwaarden beloven na elke betaling een factuur; (2) btw-nummer; (3) Mollie-verificatie van het account met KvK-gegevens.
@@ -24,6 +24,9 @@
 - [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
 - [x] Privacyverklaring (artikelen 2, 3, 5, 6) en beveiligings-PDF v1.6: Mollie en Moneybird als verwerkers (2026-10-09). Moneybird-verwerkersovereenkomst door Arno afgesloten op 2026-10-09 (opslag binnen de EER)
 - [ ] **Volgorde rond het adres (besloten 2026-10-09):** contract Oudegracht tekenen, dan KvK wijzigen (adres Oudegracht 161 en handelsnaam ArnoBot), dan pas Mollie verifiëren en in Moneybird het afzenderadres (Oudegracht, admin@arno.bot) en de betalingsvoorwaarden (admin@) in de workflow zetten. De website toont Oudegracht al, dus dit hoort klaar te zijn vóór de livegang
+
+- [x] Privacyverklaring ingekort (2026-10-09): artikel 2 en sub-verwerkerstabel korter en alfabetisch, OpenAI zonder "Whisper"
+- [ ] **Managementfacturen (besluit 2026-10-09):** handmatig in Moneybird zelf, buiten de app. Gekozen: zelfde administratie met eigen documentstijl (ander logo en opbouw) en eigen workflow (30 dagen, bank). Verworpen: aparte administratie (dubbele btw-aangifte, waarschijnlijk extra abonnement), Word/Excel (omzet op twee plekken), bouwen in ArnoBot (te veel voor weinig facturen). Open: Arno controleert of een documentstijl een andere handelsnaam toelaat en of een workflow een eigen nummerreeks kan hebben; zo niet, dan aparte administratie heroverwegen. De handelsnaam moet als tweede handelsnaam bij de KvK-wijziging
 
 ## Fase 2: Moneybird (voorbereid, nog nooit tegen een echt account gedraaid)
 
