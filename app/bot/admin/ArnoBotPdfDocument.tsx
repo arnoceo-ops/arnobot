@@ -35,7 +35,7 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.headerLabel}>ARNOBOT · ROYAL DUTCH SALES</Text>
+          <Text style={styles.headerLabel}>ARNOBOT</Text>
           <Text style={styles.headerTitle}>Gesprekken export</Text>
           <Text style={styles.headerDate}>{dateRange}</Text>
         </View>

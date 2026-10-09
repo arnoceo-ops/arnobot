@@ -1,11 +1,11 @@
 # Inputdocument voor DPA (Data Processing Agreement)
 
-Dit document verzamelt de feitelijke gegevens die een jurist of DPA-sjabloondienst nodig heeft om een verwerkersovereenkomst tussen Royal Dutch Sales (ArnoBot) en een corporate klant op te stellen. Dit is geen juridisch document en mag niet als zodanig worden gebruikt of verstuurd.
+Dit document verzamelt de feitelijke gegevens die een jurist of DPA-sjabloondienst nodig heeft om een verwerkersovereenkomst tussen ArnoBot (eenmanszaak van Anton Dirk Diepeveen) en een corporate klant op te stellen. Dit is geen juridisch document en mag niet als zodanig worden gebruikt of verstuurd.
 
 ## Partijen
 
 - **Verwerkingsverantwoordelijke (customer)**: de corporate klant, namens wie ArnoBot persoonsgegevens van hun medewerkers verwerkt.
-- **Verwerker (processor)**: Royal Dutch Sales, handelsnaam ArnoBot, gevestigd in Amsterdam, Nederland. Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
+- **Verwerker (processor)**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak, KvK 42184446), bezoekadres Oudegracht 161, 3511 AL Utrecht, Nederland. Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
 
 ## Onderwerp en duur van de verwerking
 
@@ -90,4 +90,4 @@ Inzage, rectificatie, verwijdering en overdraagbaarheid. Gebruikers kunnen dit d
 ## Openstaand vóór ondertekening
 
 - DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom niet nodig. Voor PostHog is dit urgenter geworden sinds de uitbreiding naar pseudonieme productanalyse van ingelogde gebruikers (2026-08-30): bij aanvraag ook de sub-verwerkersketen bevestigen (o.a. AWS eu-central-1).
-- SOC 2 Type II / ISO 27001-status van Royal Dutch Sales zelf: nog niet aanwezig, indien de klant dit als harde eis stelt is dit een apart traject
+- SOC 2 Type II / ISO 27001-status van ArnoBot zelf: nog niet aanwezig, indien de klant dit als harde eis stelt is dit een apart traject

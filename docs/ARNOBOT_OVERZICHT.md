@@ -14,9 +14,9 @@ ArnoBot is een AI-coach voor salesprofessionals, bereikbaar op **arno.bot**. Geb
 Het is geen generieke AI-assistent met een sales-laagje. Het is gebouwd op de eigen methodiek, toon en persoonlijkheid van **Arno Diepeveen**, oprichter van Royal Dutch Sales, als schaalbaar verlengstuk van zijn eigen coachingswerk. De stem is direct, zonder omwegen, bewust niet corporate.
 
 - **Live URL:** https://arno.bot
-- **Bedrijf:** Royal Dutch Sales
+- **Bedrijf:** ArnoBot, eenmanszaak (KvK 42184446)
 - **Oprichter:** Arno Diepeveen
-- **Vestiging:** Amsterdam, Nederland
+- **Bezoekadres:** Oudegracht 161, 3511 AL Utrecht, Nederland
 
 ---
 

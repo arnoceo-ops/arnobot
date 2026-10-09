@@ -8,9 +8,7 @@
 
 **Verwerkingsverantwoordelijke ("Klant")**: [PLACEHOLDER: naam en gegevens klant]
 
-**Verwerker ("ArnoBot")**: Royal Dutch Sales B.V., handelsnaam ArnoBot, gevestigd te Amsterdam, Nederland (KVK: [PLACEHOLDER: KVK-nummer nog onbekend]). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
-
-*Let op: vestigingsplaats voorlopig op Amsterdam gezet (2026-07-21), in lijn met de privacypagina en algemene voorwaarden. Exact straatadres en KVK-nummer nog aan te vullen.*
+**Verwerker ("ArnoBot")**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak), bezoekadres Oudegracht 161, 3511 AL Utrecht, Nederland (KVK: 42184446). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
 
 ---
 
@@ -127,7 +125,7 @@ Deze beperking geldt niet in geval van opzet of bewuste roekeloosheid van ArnoBo
 
 Op deze overeenkomst en de uitvoering daarvan is uitsluitend Nederlands recht van toepassing.
 
-Geschillen die voortvloeien uit of verband houden met deze overeenkomst worden voorgelegd aan de bevoegde rechter van de rechtbank in het arrondissement waar ArnoBot is gevestigd, onverminderd het recht van partijen om een voorlopige voorziening te vragen bij een andere bevoegde rechter. *(Het exacte arrondissement volgt zodra het vestigingsadres bekend is, zie preambule.)*
+Geschillen die voortvloeien uit of verband houden met deze overeenkomst worden voorgelegd aan de bevoegde rechter van de rechtbank Midden-Nederland, onverminderd het recht van partijen om een voorlopige voorziening te vragen bij een andere bevoegde rechter.
 
 ## Artikel 13 — Duur en beëindiging
 
@@ -156,7 +154,7 @@ Partijen verklaren bovenstaande te zijn overeengekomen en ondertekenen dit docum
 
 | | |
 |---|---|
-| Naam | Arno Diepeveen |
-| Functie | Oprichter, Royal Dutch Sales B.V. |
+| Naam | Anton Dirk Diepeveen |
+| Functie | Eigenaar, ArnoBot (eenmanszaak) |
 | Datum | ______________________ |
 | Handtekening | ______________________ |
