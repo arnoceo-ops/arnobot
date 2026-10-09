@@ -106,6 +106,9 @@ export async function maakKlant(input: { naam: string; email: string; userId: st
   })
 }
 
+/** Methoden voor een eerste betaling. Bancontact is voor Belgische klanten; iDEAL en kaart voor de rest. */
+const EERSTE_BETALING_METHODEN = ['ideal', 'creditcard', 'bancontact']
+
 export async function maakEersteBetaling(input: {
   klantId: string
   brutoCent: number
@@ -114,21 +117,34 @@ export async function maakEersteBetaling(input: {
   metadata: Record<string, unknown>
   idempotencyKey: string
 }): Promise<MolliePayment> {
-  return mollie('/payments', {
-    method: 'POST',
-    idempotencyKey: input.idempotencyKey,
-    body: {
-      amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
-      description: input.omschrijving,
-      redirectUrl: input.redirectUrl,
-      webhookUrl: MOLLIE_WEBHOOK_URL,
-      customerId: input.klantId,
-      sequenceType: 'first',
-      method: ['ideal', 'creditcard'],
-      locale: 'nl_NL',
-      metadata: input.metadata,
-    },
-  })
+  const maak = (methoden: string[], sleutel: string) =>
+    mollie<MolliePayment>('/payments', {
+      method: 'POST',
+      idempotencyKey: sleutel,
+      body: {
+        amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
+        description: input.omschrijving,
+        redirectUrl: input.redirectUrl,
+        webhookUrl: MOLLIE_WEBHOOK_URL,
+        customerId: input.klantId,
+        sequenceType: 'first',
+        method: methoden,
+        locale: 'nl_NL',
+        metadata: input.metadata,
+      },
+    })
+
+  try {
+    return await maak(EERSTE_BETALING_METHODEN, input.idempotencyKey)
+  } catch (e) {
+    // Een methode die nog niet is geactiveerd op het Mollie-profiel (bijv. Bancontact) laat
+    // Mollie de hele aanvraag weigeren (422). Dan zonder die methode opnieuw, zodat afrekenen
+    // nooit stukgaat op een activatie die nog moet gebeuren.
+    if (e instanceof MollieError && e.status === 422) {
+      return maak(['ideal', 'creditcard'], `${input.idempotencyKey}-basis`)
+    }
+    throw e
+  }
 }
 
 export async function haalBetaling(id: string): Promise<MolliePayment> {

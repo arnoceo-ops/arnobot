@@ -29,7 +29,7 @@
 | Onderwerp | Gekozen | Verworpen, want |
 |---|---|---|
 | Provider | Mollie (pay-as-you-go) plus Moneybird | Stripe/Paddle: NL-only start, geen OSS-probleem |
-| Betaalmethoden | iDEAL en creditcard | SEPA-incasso als eerste keuze: in testmodus niet volledig te testen, iDEAL maakt zelf een machtiging aan |
+| Betaalmethoden | iDEAL, creditcard en Bancontact (voor Belgische klanten, 2026-10-09). Bancontact en iDEAL leveren als eerste betaling een SEPA-machtiging voor vervolgbetalingen op, dus SEPA-incasso moet geactiveerd zijn in het Mollie-profiel. Is een methode nog niet geactiveerd, dan valt de checkout automatisch terug op iDEAL en creditcard | SEPA-incasso als eerste keuze: in testmodus niet volledig te testen, iDEAL maakt zelf een machtiging aan |
 | Particulier maandelijks | Eerste betaling plus abonnement van 11 maanden (totaal 12), daarna mail met vraag om verlenging | Doorlopend abonnement: eerder besloten om na 12 maanden te vragen |
 | Particulier jaarlijks | Eén betaling voor een jaar, geen abonnement | Auto-verlenging: Wet Van Dam-risico |
 | Zakelijk | Doorlopend, opzegtermijn een maand | n.v.t. |

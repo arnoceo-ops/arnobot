@@ -379,7 +379,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   Terug
                 </button>
               </div>
-              <p style={{ fontSize: 13, color: '#6b7280' }}>Je betaalt veilig met iDEAL of creditcard via Mollie.</p>
+              <p style={{ fontSize: 13, color: '#6b7280' }}>Je betaalt veilig via Mollie, met iDEAL, Bancontact of creditcard.</p>
             </div>
           )
         })()}
@@ -388,7 +388,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
           <>
             <p style={body}>
               {mollieEnabled
-                ? 'Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL of creditcard.'
+                ? 'Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'
                 : 'Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.'}
             </p>
 
