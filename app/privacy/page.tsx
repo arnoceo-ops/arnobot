@@ -76,6 +76,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt en welke stappen je zet in de app, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken, coaching of analyses.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek, bijvoorbeeld om een salesplan te laten checken</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Welk abonnement je hebt, wat je betaalt, de betaalmethode en of de betaling is gelukt. Bij zakelijke klanten ook bedrijfsnaam, KvK-nummer, btw-nummer en adres. Je kaart- of bankgegevens verwerken we zelf nooit, die gaan rechtstreeks naar Mollie.</td></tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -92,6 +93,7 @@ export default function PrivacyPage() {
                 'Het opslaan en tonen van jouw coachingsgesprekken en profiel',
                 'Het genereren van persoonlijke AI-coaching via Anthropic',
                 'Het versturen van transactionele e-mails (welkom, trial)',
+                'Het afhandelen van betalingen, het maken van facturen en het voldoen aan de wettelijke administratieplicht',
                 'Het beveiligen van de dienst en het opsporen van fouten',
                 'Het verbeteren van de dienst door te analyseren welke functies worden gebruikt en waar mensen vastlopen (pseudoniem, op grondslag van gerechtvaardigd belang)',
               ].map((item, i) => (
@@ -210,6 +212,16 @@ export default function PrivacyPage() {
                   <td>Support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud</td>
                   <td><a href="https://www.whatsapp.com/legal/business-data-processing-terms/" target="_blank" rel="noopener noreferrer">whatsapp.com/legal/dpa</a></td>
                 </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Mollie</td>
+                  <td>Online betalingen (iDEAL, Bancontact, creditcard)</td>
+                  <td><a href="https://www.mollie.com/legal/data-processing-agreement" target="_blank" rel="noopener noreferrer">mollie.com/legal/data-processing-agreement</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Moneybird</td>
+                  <td>Facturen en boekhouding, opslag binnen de EER</td>
+                  <td>Verwerkersovereenkomst afgesloten</td>
+                </tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -230,6 +242,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>Niet opgeslagen. Alleen gebruikt om die ene vraag te beantwoorden, daarna direct weggegooid.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd. Dat is de wettelijke bewaarplicht voor de administratie. Alleen de gegevens die daarvoor nodig zijn blijven bewaard.</td></tr>
               </tbody>
             </table>
           </div>

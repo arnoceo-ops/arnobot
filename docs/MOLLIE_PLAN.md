@@ -22,7 +22,8 @@
 - [x] Docs, CLAUDE.md (maandcheck, mailtypes), CI-checks bijgewerkt
 - [x] Testmodus end-to-end doorlopen (2026-10-09, zie Waar we staan)
 - [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
-- [ ] Privacyverklaring en beveiligings-PDF: Mollie en Moneybird als verwerkers (Arno: kan later)
+- [x] Privacyverklaring (artikelen 2, 3, 5, 6) en beveiligings-PDF v1.6: Mollie en Moneybird als verwerkers (2026-10-09). Moneybird-verwerkersovereenkomst door Arno afgesloten op 2026-10-09 (opslag binnen de EER)
+- [ ] **Volgorde rond het adres (besloten 2026-10-09):** contract Oudegracht tekenen, dan KvK wijzigen (adres Oudegracht 161 en handelsnaam ArnoBot), dan pas Mollie verifiëren en in Moneybird het afzenderadres (Oudegracht, admin@arno.bot) en de betalingsvoorwaarden (admin@) in de workflow zetten. De website toont Oudegracht al, dus dit hoort klaar te zijn vóór de livegang
 
 ## Fase 2: Moneybird (voorbereid, nog nooit tegen een echt account gedraaid)
 

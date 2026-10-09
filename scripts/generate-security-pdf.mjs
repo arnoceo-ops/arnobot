@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.5  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 1.6  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -163,6 +163,8 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
       TR('Gebruiksanalyse', 'PostHog: bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)'),
       TR('Afspraken', 'Calendly: boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres'),
+      TR('Betalingen', 'Mollie: online betalingen (iDEAL, Bancontact, creditcard), kaart- en bankgegevens gaan rechtstreeks naar Mollie en worden door ArnoBot nooit opgeslagen'),
+      TR('Facturen en boekhouding', 'Moneybird: facturen en administratie, opslag binnen de EER, verwerkersovereenkomst afgesloten'),
       TR('Support (optioneel)', 'Meta Platforms (WhatsApp): support via de optionele WhatsApp-knop, verwerkt telefoonnummer en berichtinhoud'),
     ),
     HR(),
