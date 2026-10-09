@@ -49,7 +49,9 @@ export async function POST(req: NextRequest) {
     if (!isNlBtwFormaat(btwRaw)) {
       return fout(400, 'Vul een Nederlands btw-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan hq@arno.bot')
     }
-    const check = await controleerBtwBijVies(btwRaw)
+    // In testmodus (test_-sleutel, alleen eigenaar en testaccounts) slaan we de VIES-controle over,
+    // zodat zakelijk afrekenen te testen is zonder een echt btw-nummer.
+    const check = process.env.MOLLIE_API_KEY?.startsWith('test_') ? 'onbekend' : await controleerBtwBijVies(btwRaw)
     if (check === 'ongeldig') return fout(400, 'Dit btw-nummer is niet geldig')
     zakelijk = { bedrijfsnaam: naam, kvk: kvkNr, btw: normaliseerBtwNummer(btwRaw), btwGevalideerd: check === 'geldig' }
   }
