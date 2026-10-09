@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow } from '@/lib/billing/db'
 import { betaalTerug, MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
-import { verwerkMolliebetaling } from '@/lib/billing/verwerking'
+import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 
 // Volledige terugbetaling van de laatste online betaling van een gebruiker, bedoeld voor de
 // bedenktijd van 14 dagen (voorwaarden artikel 8). Het beëindigen van de toegang, het
@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
       omschrijving: 'Terugbetaling binnen bedenktijd ArnoBot',
       idempotencyKey: `refund-${betaling.id}`,
     })
-    // Meteen verwerken zodat de toegang direct stopt, ook als de webhook wat later komt.
+    // Toegang meteen beëindigen: Mollie telt een terugbetaling pas mee als hij is afgerond,
+    // en dat kan uren tot dagen duren. De webhook later is dan een idempotente no-op.
+    await markeerTerugbetaald(betaling.id)
     await verwerkMolliebetaling(betaling.mollie_payment_id)
     return NextResponse.json({ ok: true, refundId: refund.id, bedragCent: betaling.bedrag_cent })
   } catch (e) {

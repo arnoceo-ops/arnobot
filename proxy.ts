@@ -322,6 +322,10 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     if (!toegestaan) {
+      // Wie geen toegang meer heeft (trial of abonnement afgelopen, of terugbetaald) moet wel op
+      // /bot/doorgaan kunnen komen om opnieuw af te rekenen of te verlengen. Dat is de enige
+      // uitzondering: de data-API's blijven los daarvan op auth() en eigen checks leunen.
+      if (path === '/bot/doorgaan') return nextWithNonce()
       return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 

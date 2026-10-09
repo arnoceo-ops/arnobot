@@ -191,3 +191,17 @@ export async function betaalTerug(input: {
     },
   })
 }
+
+export interface MollieRefund {
+  id: string
+  paymentId: string
+  status: 'queued' | 'pending' | 'processing' | 'refunded' | 'failed' | 'canceled'
+  amount: MollieAmount
+  createdAt: string
+}
+
+/** Recente terugbetalingen van het hele profiel, ook die in het Mollie-dashboard zijn gedaan. */
+export async function lijstRecenteTerugbetalingen(limiet = 250): Promise<MollieRefund[]> {
+  const res = await mollie<{ _embedded?: { refunds?: MollieRefund[] } }>(`/refunds?limit=${limiet}`)
+  return res._embedded?.refunds ?? []
+}

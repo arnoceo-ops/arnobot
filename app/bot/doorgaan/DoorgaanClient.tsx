@@ -86,7 +86,9 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     fetch('/api/bot/confirm-renewal')
       .then(r => r.json())
       .then(d => {
-        if (d.paid_at) setStatus('already_paid')
+        // Alleen "actief" als er betaald is en de toegang niet is verlopen (afgelopen of
+        // terugbetaald): zo kan iemand na afloop gewoon opnieuw afrekenen.
+        if (d.paid_at && !(d.expires_at && new Date(d.expires_at) < new Date())) setStatus('already_paid')
         else if (d.renewal_requested_at) { setStatus('already_requested'); setGekozenPlan(d.plan) }
         else setStatus('idle')
       })

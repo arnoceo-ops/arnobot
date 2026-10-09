@@ -123,6 +123,21 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
   }
 }
 
+/**
+ * Beëindigt toegang en abonnement na een volledige terugbetaling die Mollie heeft
+ * aangenomen, ook als die nog 'pending' is (kaart en iDEAL kunnen uren tot dagen duren, de
+ * klant mag in die tijd geen toegang meer hebben). Idempotent via terugbetaling_verwerkt_at.
+ */
+export async function markeerTerugbetaald(payRowId: string): Promise<boolean> {
+  const { data: rij } = await billingDb.from('arnobot_payments').select('*').eq('id', payRowId).maybeSingle<PayRow>()
+  if (!rij || !rij.subscription_id) return false
+  const { data: sub } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', rij.subscription_id).maybeSingle<SubRow>()
+  if (!sub) return false
+  if (!(await claim(rij.id, 'terugbetaling_verwerkt_at'))) return false
+  await verwerkVolledigeTerugbetaling(sub, rij, rij.bedrag_cent, false)
+  return true
+}
+
 /** Zet `kolom` atomair; true als deze aanroep de eerste was. */
 async function claim(payId: string, kolom: 'verwerkt_at' | 'terugbetaling_verwerkt_at'): Promise<boolean> {
   const { data } = await billingDb

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { billingDb, type PayRow, type SubRow } from '@/lib/billing/db'
-import { mollieIngeschakeld } from '@/lib/billing/mollie'
+import { lijstRecenteTerugbetalingen, mollieIngeschakeld } from '@/lib/billing/mollie'
 import { herinneringenDue, moetMollieAbonnementNuStoppen, toegangTot } from '@/lib/billing/perioden'
-import { maakMollieAbonnementVoor, stopMollieAbonnement, verwerkMolliebetaling } from '@/lib/billing/verwerking'
+import { maakMollieAbonnementVoor, markeerTerugbetaald, stopMollieAbonnement, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 import { verstuurBillingMail } from '@/lib/billing/mails'
 import { planNaam } from '@/lib/billing/prijzen'
+import { mollieNaarCenten } from '@/lib/billing/geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
 
-  const samenvatting = { betalingenOpnieuw: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
+  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
   try {
     const nu = new Date()
 
@@ -38,6 +39,23 @@ export async function GET(req: NextRequest) {
       .returns<Pick<PayRow, 'mollie_payment_id' | 'user_id'>[]>()
     for (const p of (openstaand ?? []).filter(p => !isInternalTestUser(p.user_id))) {
       try { await verwerkMolliebetaling(p.mollie_payment_id); samenvatting.betalingenOpnieuw++ } catch { samenvatting.fouten++ }
+    }
+
+    // 1b. Terugbetalingen die buiten de admin-knop om zijn gedaan (Mollie-dashboard): een
+    // volledige terugbetaling die niet is mislukt of geannuleerd beëindigt de toegang.
+    const refunds = (await lijstRecenteTerugbetalingen()).filter(r => r.status !== 'failed' && r.status !== 'canceled')
+    const perBetaling = new Map<string, number>()
+    for (const r of refunds) perBetaling.set(r.paymentId, (perBetaling.get(r.paymentId) ?? 0) + mollieNaarCenten(r.amount.value))
+    if (perBetaling.size) {
+      const { data: rijen } = await billingDb
+        .from('arnobot_payments')
+        .select('id, user_id, mollie_payment_id, bedrag_cent')
+        .in('mollie_payment_id', [...perBetaling.keys()])
+        .is('terugbetaling_verwerkt_at', null)
+        .returns<Pick<PayRow, 'id' | 'user_id' | 'mollie_payment_id' | 'bedrag_cent'>[]>()
+      for (const r of (rijen ?? []).filter(r => !isInternalTestUser(r.user_id))) {
+        if ((perBetaling.get(r.mollie_payment_id) ?? 0) >= r.bedrag_cent && (await markeerTerugbetaald(r.id))) samenvatting.terugbetalingen++
+      }
     }
 
     const { data: subsRaw } = await billingDb

@@ -67,13 +67,14 @@ export async function GET() {
 
   const { data } = await supabase
     .from('approved_users')
-    .select('renewal_requested_at, paid_at, plan')
+    .select('renewal_requested_at, paid_at, plan, expires_at')
     .eq('user_id', userId)
     .maybeSingle()
 
   return NextResponse.json({
     renewal_requested_at: data?.renewal_requested_at ?? null,
     paid_at: data?.paid_at ?? null,
+    expires_at: data?.expires_at ?? null,
     plan: data?.plan ?? null,
   })
 }
