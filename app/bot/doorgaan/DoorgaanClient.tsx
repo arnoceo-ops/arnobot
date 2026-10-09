@@ -316,6 +316,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
               ? 'Je betaalt eenmalig voor een jaar. Daarna vragen we of je wilt verlengen.'
               : 'Je betaalt elke maand automatisch. Na 12 maanden vragen we of je wilt verlengen.'
           const zakelijkCompleet = klantType === 'particulier' || (bedrijfsnaam.trim().length >= 2 && kvk.trim() !== '' && btwNummer.trim() !== '')
+          const belgisch = klantType === 'zakelijk' && /^\s*be/i.test(btwNummer)
           return (
             <div className="gegevens-card">
               <span className="plan-naam">{gekozenPlan === 'premium' ? 'Pro' : 'Basic'}, {cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}</span>
@@ -341,6 +342,11 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   <div className="gegevens-rij">
                     <label className="gegevens-label" htmlFor="btw">Btw-nummer</label>
                     <input id="btw" className="gegevens-input" value={btwNummer} onChange={e => setBtwNummer(e.target.value)} placeholder="NL123456789B01" />
+                    {belgisch && (
+                      <p style={{ fontSize: 14, color: '#f59e0b', lineHeight: 1.5 }}>
+                        Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar <a href="mailto:hq@arno.bot" style={{ color: '#f59e0b' }}>hq@arno.bot</a>, dan helpen we je snel verder.
+                      </p>
+                    )}
                   </div>
                 </>
               )}
@@ -372,7 +378,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
               {betaalFout && <p style={{ color: '#cc2200', fontSize: 14 }}>{betaalFout}</p>}
 
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button className="plan-btn" onClick={betaal} disabled={!akkoord || !zakelijkCompleet || betalen}>
+                <button className="plan-btn" onClick={betaal} disabled={!akkoord || !zakelijkCompleet || belgisch || betalen}>
                   {betalen ? 'Bezig...' : 'Naar betalen'}
                 </button>
                 <button onClick={() => { setStap('kies'); setBetaalFout('') }} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', textDecoration: 'underline' }}>

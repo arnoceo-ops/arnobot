@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
     const btwRaw = typeof btwNummer === 'string' ? btwNummer : ''
     if (naam.length < 2 || naam.length > 120) return fout(400, 'Vul de bedrijfsnaam in')
     if (!isKvkFormaat(kvkNr)) return fout(400, 'Een KvK-nummer heeft 8 cijfers')
+    if (/^BE/i.test(normaliseerBtwNummer(btwRaw))) {
+      return fout(400, 'Je hebt een Belgisch btw-nummer. Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar hq@arno.bot, dan helpen we je snel verder.')
+    }
     if (!isNlBtwFormaat(btwRaw)) {
       return fout(400, 'Vul een Nederlands btw-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan hq@arno.bot')
     }
