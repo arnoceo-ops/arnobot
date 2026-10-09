@@ -37,7 +37,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.3 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
+            Versie 2.4 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
           </p>
 
           {[
@@ -70,7 +70,9 @@ export default function VoorwaardenPage() {
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na de proefperiode kan de Gebruiker een individueel abonnement of een teamabonnement afsluiten. De actuele prijzen staan vermeld op de website.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Betaling geschiedt op basis van de overeengekomen betalingstermijn. Bij niet-tijdige betaling behoudt ArnoBot het recht de toegang te blokkeren.</p>,
                 <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle prijzen zijn in euro. Betaling verloopt via onze betaalprovider. Na elke betaling ontvang je een factuur per e-mail.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het abonnement geldt per maand of per jaar, afhankelijk van de gekozen optie, en wordt automatisch verlengd tenzij tijdig opgezegd.</p>,
+                <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier betaal je het getoonde bedrag inclusief btw. Als zakelijke klant betaal je het getoonde bedrag plus btw, die bij het afrekenen wordt getoond.</p>,
+                <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Een maandabonnement als particulier wordt maandelijks automatisch afgeschreven, maximaal 12 maanden. Daarna ontvang je een e-mail met de vraag of je nog een jaar wilt verlengen. Reageer je niet, dan eindigt het abonnement. Een jaarabonnement als particulier eindigt na een jaar, ook dan vragen we of je wilt verlengen.</p>,
+                <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
               ],
             },
             {
@@ -92,8 +94,8 @@ export default function VoorwaardenPage() {
               num: 'ARTIKEL 7', title: 'Opzegging',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement opzeggen via de accountpagina of per e-mail aan <a href="mailto:cancel@arno.bot">cancel@arno.bot</a>.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor zowel maandelijkse als jaarlijkse abonnementen geldt een opzegtermijn van één maand. Je zegt uiterlijk één maand voor de verlengingsdatum op, het abonnement eindigt dan aan het einde van de lopende betaalperiode.</p>,
-                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Wordt niet tijdig opgezegd, dan wordt het abonnement automatisch verlengd met dezelfde periode, dus met een maand of met een jaar.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier kun je op elk moment opzeggen. Het abonnement eindigt dan aan het einde van de lopende betaalperiode. Je krijgt geen geld terug voor de periode die al betaald is, behalve bij de bedenktijd in artikel 8.</p>,
+                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor zakelijke klanten geldt een opzegtermijn van één maand vóór het einde van de lopende betaalperiode. Zonder tijdige opzegging verlengt het abonnement met dezelfde periode.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
               ],
             },
