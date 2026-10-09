@@ -3,7 +3,7 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-10-10 (einde bouwsessie)
-- **Waar we staan:** de hele Mollie-flow is gebouwd en staat gepusht (client, prijzen en btw, perioden, verwerking, webhook, checkout, opzeggen, verlengen, dagelijkse cron, admin-terugbetaling, 6 mails, afrekenscherm in `/bot/doorgaan`, einddatum op de accountpagina, 25 unit tests). Alles is nog nooit tegen echt Mollie gedraaid: de eerste end-to-end test in testmodus moet nog. Zonder `MOLLIE_API_KEY` verandert er niets voor gebruikers.
+- **Waar we staan:** de hele flow is gebouwd en op 2026-10-09 end-to-end getest in testmodus met het testaccount: Pro jaarlijks en Pro maandelijks als particulier, Pro jaarlijks als zakelijk (bedrag, btw, abonnement bij Mollie, toegang, bevestigingsmail, Telegram), terugbetaling (toegang direct dicht), opzegging (Mollie-abonnement gestopt, einddatum). Onderweg gevonden en gefixt: toegang bleef staan bij een pending terugbetaling, verlopen gebruikers konden niet opnieuw afrekenen (proxy.ts liet alleen /bot/doorgaan niet door), opzegbevestiging werd nooit verstuurd, misleidende melding bij opgezegd-maar-lopend abonnement. Nog niet getest: een mislukte betaling, de eerste echte vervolgbetaling (9 november 2026 voor de testbetaling is gestopt), de verlengmails en iDEAL. Met een test_-sleutel kunnen alleen de eigenaar en de interne testaccounts afrekenen; de VIES-controle wordt in testmodus overgeslagen.
 - **Eerstvolgende stap:** Arno voert `docs/sql/2026-10-10-mollie-billing.sql` uit in Supabase, maakt het Mollie-account aan (pay-as-you-go, testmodus) en zet `MOLLIE_API_KEY` (test_...) in `.env.local` en Vercel. Pas daarna kan de flow end-to-end in testmodus draaien.
 - **Blokkerend voor livegang (niet voor bouwen):** (1) Moneybird-koppeling voor facturen, want de voorwaarden beloven na elke betaling een factuur; (2) btw-nummer; (3) Mollie-verificatie van het account met KvK-gegevens.
 
@@ -20,7 +20,7 @@
 - [x] Accountpagina: exacte einddatum na opzegging
 - [x] Admin: terugbetaling binnen bedenktijd (knop in het betaalpaneel)
 - [x] Docs, CLAUDE.md (maandcheck, mailtypes), CI-checks bijgewerkt
-- [ ] **Testmodus end-to-end doorlopen** (Arno: SQL uitvoeren, `MOLLIE_API_KEY=test_...` in `.env.local` en Vercel)
+- [x] Testmodus end-to-end doorlopen (2026-10-09, zie Waar we staan)
 - [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
 - [ ] Privacyverklaring en beveiligings-PDF: Mollie en Moneybird als verwerkers (Arno: kan later)
 
