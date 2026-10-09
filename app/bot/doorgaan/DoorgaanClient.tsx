@@ -47,6 +47,8 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   const [betalen, setBetalen] = useState(false)
   const [terug, setTerug] = useState(false)
   const [verlengen, setVerlengen] = useState<'idle' | 'bezig' | 'klaar' | 'fout'>('idle')
+  // Wie al eens betaald heeft verlengt; wie nog in de proefperiode zit gaat door met ArnoBot.
+  const [eerderBetaald, setEerderBetaald] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -86,6 +88,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     fetch('/api/bot/confirm-renewal')
       .then(r => r.json())
       .then(d => {
+        setEerderBetaald(!!d.paid_at)
         // Alleen "actief" als er betaald is en de toegang niet is verlopen (afgelopen of
         // terugbetaald): zo kan iemand na afloop gewoon opnieuw afrekenen.
         if (d.paid_at && !(d.expires_at && new Date(d.expires_at) < new Date())) setStatus('already_paid')
@@ -230,7 +233,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
 
         <p style={label}>Abonnement</p>
         <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 16 }}>
-          Verlengen.
+          {eerderBetaald || abonnement ? 'Verlengen.' : 'Doorgaan met ArnoBot.'}
         </h1>
 
         {status === 'already_paid' && (
