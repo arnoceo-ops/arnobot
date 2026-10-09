@@ -37,7 +37,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.4 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
+            Versie 2.5 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
           </p>
 
           {[
@@ -72,14 +72,16 @@ export default function VoorwaardenPage() {
                 <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle prijzen zijn in euro. Betaling verloopt via onze betaalprovider. Na elke betaling ontvang je een factuur per e-mail.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier betaal je het getoonde bedrag inclusief btw. Als zakelijke klant betaal je het getoonde bedrag plus btw, die bij het afrekenen wordt getoond.</p>,
                 <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Een maandabonnement als particulier wordt maandelijks automatisch afgeschreven, maximaal 12 maanden. Daarna ontvang je een e-mail met de vraag of je nog een jaar wilt verlengen. Reageer je niet, dan eindigt het abonnement. Een jaarabonnement als particulier eindigt na een jaar, ook dan vragen we of je wilt verlengen.</p>,
-                <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
+                <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
+                <p key="g" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan haar prijzen wijzigen. Dat kondigen we minimaal drie maanden vooraf per e-mail aan, en hooguit één keer per jaar. Ga je niet akkoord, dan kun je binnen 30 dagen na de aankondiging opzeggen met ingang van de datum waarop de nieuwe prijs ingaat.</p>,
               ],
             },
             {
               num: 'ARTIKEL 5', title: 'Gebruik en licentie',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot verleent de Gebruiker een niet-exclusieve, niet-overdraagbare licentie voor het gebruik van ArnoBot gedurende de looptijd van het abonnement of de proefperiode.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het is niet toegestaan ArnoBot te gebruiken voor onrechtmatige doeleinden, de werking te verstoren, of toegang te verlenen aan derden buiten het afgesproken aantal gebruikers.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Het is niet toegestaan ArnoBot te gebruiken voor onrechtmatige doeleinden, de werking te verstoren, of toegang te verlenen aan derden buiten het afgesproken aantal gebruikers.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Je bent zelf verantwoordelijk voor de gegevens die je invoert. Je zorgt dat je die gegevens mag invoeren en dat je daarmee geen rechten van anderen schendt, bijvoorbeeld een geheimhoudingsplicht jegens een klant of werkgever.</p>,
               ],
             },
             {
@@ -87,7 +89,9 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle rechten op ArnoBot, inclusief de software, vormgeving, teksten en methodologie, berusten bij ArnoBot.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De door de Gebruiker ingevoerde data blijft eigendom van de Gebruiker. ArnoBot gebruikt deze data uitsluitend voor het leveren van de dienst.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De Gebruiker heeft het recht te verzoeken zijn persoonsgegevens te verwijderen via de accountpagina. Wordt geen verzoek ingediend, dan worden persoonsgegevens uiterlijk 30 dagen na beëindiging van het account verwijderd en worden gespreksgegevens geanonimiseerd.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker heeft het recht te verzoeken zijn persoonsgegevens te verwijderen via de accountpagina. Wordt geen verzoek ingediend, dan worden persoonsgegevens uiterlijk 30 dagen na beëindiging van het account verwijderd en worden gespreksgegevens geanonimiseerd.</p>,
+                <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Het is niet toegestaan om ArnoBot, de teksten of de methodologie systematisch te verzamelen (scraping, mining of vergelijkbare technieken) of te gebruiken om andere AI-modellen te trainen.</p>,
+                <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Na het einde van je abonnement kun je je gegevens nog 30 dagen opvragen door een mail aan <a href="mailto:hq@arno.bot">hq@arno.bot</a>. Daarna verwijderen we ze zoals hierboven beschreven.</p>,
               ],
             },
             {
@@ -96,7 +100,8 @@ export default function VoorwaardenPage() {
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement opzeggen via de accountpagina of per e-mail aan <a href="mailto:cancel@arno.bot">cancel@arno.bot</a>.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier kun je op elk moment opzeggen. Het abonnement eindigt dan aan het einde van de lopende betaalperiode. Je krijgt geen geld terug voor de periode die al betaald is, behalve bij de bedenktijd in artikel 8.</p>,
                 <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor zakelijke klanten geldt een opzegtermijn van één maand vóór het einde van de lopende betaalperiode. Zonder tijdige opzegging verlengt het abonnement met dezelfde periode.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan het abonnement met onmiddellijke ingang beëindigen bij misbruik of overtreding van deze voorwaarden.</p>,
+                <p key="b3" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na elke opzegging ontvang je per e-mail een bevestiging.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan de toegang beperken of opschorten, of het abonnement met onmiddellijke ingang beëindigen, bij misbruik of overtreding van deze voorwaarden.</p>,
               ],
             },
             {
@@ -136,7 +141,9 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot is een AI-gedreven coachingsplatform. De uitkomsten, suggesties en analyses die ArnoBot genereert zijn bedoeld als reflectie en gespreksstof, niet als professioneel, juridisch, fiscaal, financieel of bedrijfskundig advies.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De door ArnoBot gegenereerde inhoud kan onjuist, onvolledig of niet toepasbaar zijn op de situatie van de Gebruiker. De Gebruiker beoordeelt zelf of en hoe hij de inhoud gebruikt en blijft volledig verantwoordelijk voor zijn eigen beslissingen en de gevolgen daarvan.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot garandeert niet dat het gebruik van ArnoBot leidt tot een bepaald resultaat, zoals meer omzet, behoud van klanten of commercieel succes.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot garandeert niet dat het gebruik van ArnoBot leidt tot een bepaald resultaat, zoals meer omzet, behoud van klanten of commercieel succes.</p>,
+                <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>AI kan bij dezelfde vraag verschillende antwoorden geven en uitkomsten kunnen in de loop van de tijd veranderen doordat onderliggende modellen worden bijgewerkt.</p>,
+                <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot garandeert niet dat de dienst foutloos en zonder onderbrekingen werkt. ArnoBot mag de dienst tijdelijk buiten gebruik stellen voor onderhoud en mag functionaliteit wijzigen, toevoegen of laten vervallen. Bij ingrijpende wijzigingen laten we dat vooraf weten.</p>,
               ],
             },
             {
