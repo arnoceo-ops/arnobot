@@ -153,14 +153,22 @@ export async function btwTariefId(): Promise<string> {
   return gevonden.id
 }
 
-/** Maakt de factuur aan en verstuurt hem per e-mail (concept wordt dan "open"). */
-export async function maakEnVerstuurFactuur(f: FactuurInput): Promise<{ id: string; factuurnummer: string | null }> {
+/** Maakt de factuur aan als concept. */
+export async function maakConceptFactuur(f: FactuurInput): Promise<{ id: string }> {
   const factuur = await mb<MbInvoice>('/sales_invoices.json', { method: 'POST', body: bouwFactuurBody(f) })
-  const verstuurd = await mb<MbInvoice>(`/sales_invoices/${factuur.id}/send_invoice.json`, {
+  return { id: factuur.id }
+}
+
+/**
+ * Verstuurt de factuur. 'Email' mailt hem naar de klant, 'Manual' zet hem alleen op "open"
+ * zonder mail (nodig om er een betaling op te kunnen registreren voordat de klant hem ziet).
+ */
+export async function verstuurFactuur(id: string, methode: 'Email' | 'Manual'): Promise<{ factuurnummer: string | null }> {
+  const v = await mb<MbInvoice>(`/sales_invoices/${id}/send_invoice.json`, {
     method: 'PATCH',
-    body: { sales_invoice_sending: { delivery_method: 'Email' } },
+    body: { sales_invoice_sending: { delivery_method: methode } },
   })
-  return { id: factuur.id, factuurnummer: verstuurd.invoice_id ?? null }
+  return { factuurnummer: v.invoice_id ?? null }
 }
 
 /** Betaling op de factuur registreren (de nieuwe endpoint, de oude register_payment vervalt eind 2026). */

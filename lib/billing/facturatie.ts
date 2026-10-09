@@ -3,9 +3,10 @@ import { billingDb, type PayRow, type SubRow } from './db'
 import {
   btwTariefId,
   maakCreditnota,
-  maakEnVerstuurFactuur,
+  maakConceptFactuur,
   moneybirdIngeschakeld,
   registreerBetaling,
+  verstuurFactuur,
   zoekOfMaakContact,
 } from './moneybird'
 import { planNaam } from './prijzen'
@@ -74,7 +75,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
 
     const betaaldOp = rij.betaald_at ? new Date(rij.betaald_at) : new Date()
     const periodeEinde = sub.periode_einde ? new Date(sub.periode_einde) : betaaldOp
-    const factuur = await maakEnVerstuurFactuur({
+    const factuur = await maakConceptFactuur({
       contactId,
       referentie: rij.mollie_payment_id,
       omschrijving: `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}`,
@@ -89,14 +90,24 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
     })
 
-    // Betaling afletteren staat bewust achter een eigen schakelaar: de boekhoudkundige
-    // afhandeling (betaling zonder bewijs of via een Mollie-rekening) moet eerst met het
-    // echte account worden vastgesteld.
-    if (process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
-      await registreerBetaling({ factuurId: factuur.id, betaaldOp, brutoCent: rij.bedrag_cent, mollieId: rij.mollie_payment_id })
-    }
-
+    // Het factuur-id meteen vastleggen: vanaf hier bestaat de factuur, en een nieuwe poging
+    // zou anders een dubbele factuur maken. Fouten in de stappen hierna worden alleen gemeld.
     await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: factuur.id }).eq('id', rij.id)
+
+    try {
+      // Betaling afletteren staat achter een eigen schakelaar: de boekhoudkundige afhandeling
+      // (betaling zonder bewijs of via de Mollie-koppeling van Moneybird) moet eerst met het echte
+      // account worden vastgesteld. Staat het aan, dan eerst "open" zetten zonder mail, dan de
+      // betaling registreren en pas daarna mailen, zodat de klant geen "openstaand bedrag" ziet.
+      if (process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
+        await verstuurFactuur(factuur.id, 'Manual')
+        await registreerBetaling({ factuurId: factuur.id, betaaldOp, brutoCent: rij.bedrag_cent, mollieId: rij.mollie_payment_id })
+      }
+      await verstuurFactuur(factuur.id, 'Email')
+    } catch (e) {
+      Sentry.captureException(e, { tags: { onderdeel: 'moneybird-factuur-afronden' } })
+      await notifyTelegram(`Factuur in Moneybird is aangemaakt maar niet volledig afgerond op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nFactuur-id: ${factuur.id}\nRond hem handmatig af in Moneybird.`)
+    }
   } catch (e) {
     // Claim vrijgeven zodat de cron het opnieuw kan proberen.
     await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: null }).eq('id', rij.id).eq('moneybird_factuur_id', BEZIG)
