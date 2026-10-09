@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { verwerkMolliebetaling } from '@/lib/billing/verwerking'
-import { mollieIngeschakeld } from '@/lib/billing/mollie'
+import { MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
 
 // Mollie-webhook. Mollie stuurt een form-body met alleen `id=tr_...` en ondertekent die
 // niet. Daarom vertrouwen we de body nooit: verwerkMolliebetaling haalt de betaling zelf
@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
     await verwerkMolliebetaling(id)
     return NextResponse.json({ ok: true })
   } catch (e) {
+    // Betaling bestaat niet bij Mollie (bijv. een nagemaakt id): opnieuw proberen heeft geen zin.
+    if (e instanceof MollieError && e.status === 404) return NextResponse.json({ ok: true })
     Sentry.captureException(e, { tags: { onderdeel: 'billing-webhook' } })
     console.error('[webhooks/mollie]', id, e instanceof Error ? e.message : e)
     return NextResponse.json({ error: 'Verwerking mislukt' }, { status: 500 })
