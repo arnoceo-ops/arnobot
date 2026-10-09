@@ -76,7 +76,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt en welke stappen je zet in de app, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken, coaching of analyses.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek, bijvoorbeeld om een salesplan te laten checken</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Welk abonnement je hebt, wat je betaalt, de betaalmethode en of de betaling is gelukt. Bij zakelijke klanten ook bedrijfsnaam, KvK-nummer, btw-nummer en adres. Je kaart- of bankgegevens verwerken we zelf nooit, die gaan rechtstreeks naar Mollie.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Bij zakelijke klanten ook bedrijfsnaam, KvK-nummer, btw-nummer en adres.</td></tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -143,44 +143,9 @@ export default function PrivacyPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Supabase</td>
-                  <td>Database en opslag van gesprekken en profiel</td>
-                  <td>EU · SOC 2 Type II</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Clerk</td>
-                  <td>Authenticatie en gebruikersbeheer (LinkedIn OAuth)</td>
-                  <td><a href="https://clerk.com/legal/dpa" target="_blank" rel="noopener noreferrer">clerk.com/legal/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Vercel</td>
-                  <td>Hosting en deployment</td>
-                  <td><a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener noreferrer">vercel.com/legal/dpa</a></td>
-                </tr>
-                <tr>
                   <td style={{ color: '#f1f5f9' }}>Anthropic</td>
                   <td>AI-verwerking voor coaching (geen training op jouw data)</td>
                   <td><a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">anthropic.com/legal/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>OpenAI</td>
-                  <td>Spraakherkenning (Whisper) voor voice-invoer (geen training op jouw data)</td>
-                  <td><a href="https://openai.com/policies/data-processing-addendum/" target="_blank" rel="noopener noreferrer">openai.com/policies/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>ElevenLabs</td>
-                  <td>Tekst-naar-spraak voor ArnoBot Voice-abonnees (gesproken antwoorden, geen training op jouw data)</td>
-                  <td><a href="https://elevenlabs.io/dpa" target="_blank" rel="noopener noreferrer">elevenlabs.io/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Resend</td>
-                  <td>Transactionele e-mails</td>
-                  <td><a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">resend.com/legal/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Voyage AI</td>
-                  <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen</td>
-                  <td>SOC 2 · HIPAA, DPA op aanvraag</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>AssemblyAI</td>
@@ -188,24 +153,19 @@ export default function PrivacyPage() {
                   <td><a href="https://www.assemblyai.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">assemblyai.com/legal/dpa</a></td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Sentry</td>
-                  <td>Foutmonitoring en performance-tracing</td>
-                  <td><a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener noreferrer">sentry.io/legal/dpa</a></td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Upstash</td>
-                  <td>Rate limiting (verwerkt IP-adressen)</td>
-                  <td>Geen publieke DPA, op aanvraag</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>PostHog</td>
-                  <td>Bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)</td>
-                  <td>DPA op aanvraag</td>
-                </tr>
-                <tr>
                   <td style={{ color: '#f1f5f9' }}>Calendly</td>
                   <td>Boeken van een kennismakingsgesprek met Arno, koppelt de boeking aan je e-mailadres</td>
                   <td><a href="https://calendly.com/legal/data-processing-addendum" target="_blank" rel="noopener noreferrer">calendly.com/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Clerk</td>
+                  <td>Authenticatie en gebruikersbeheer (LinkedIn OAuth)</td>
+                  <td><a href="https://clerk.com/legal/dpa" target="_blank" rel="noopener noreferrer">clerk.com/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>ElevenLabs</td>
+                  <td>Tekst-naar-spraak voor ArnoBot Voice-abonnees (gesproken antwoorden, geen training op jouw data)</td>
+                  <td><a href="https://elevenlabs.io/dpa" target="_blank" rel="noopener noreferrer">elevenlabs.io/dpa</a></td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Meta Platforms (WhatsApp)</td>
@@ -221,6 +181,46 @@ export default function PrivacyPage() {
                   <td style={{ color: '#f1f5f9' }}>Moneybird</td>
                   <td>Facturen en boekhouding, opslag binnen de EER</td>
                   <td>Verwerkersovereenkomst afgesloten</td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>OpenAI</td>
+                  <td>Spraakherkenning (Whisper) voor voice-invoer (geen training op jouw data)</td>
+                  <td><a href="https://openai.com/policies/data-processing-addendum/" target="_blank" rel="noopener noreferrer">openai.com/policies/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>PostHog</td>
+                  <td>Bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)</td>
+                  <td>DPA op aanvraag</td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Resend</td>
+                  <td>Transactionele e-mails</td>
+                  <td><a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">resend.com/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Sentry</td>
+                  <td>Foutmonitoring en performance-tracing</td>
+                  <td><a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener noreferrer">sentry.io/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Supabase</td>
+                  <td>Database en opslag van gesprekken en profiel</td>
+                  <td>EU · SOC 2 Type II</td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Upstash</td>
+                  <td>Rate limiting (verwerkt IP-adressen)</td>
+                  <td>Geen publieke DPA, op aanvraag</td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Vercel</td>
+                  <td>Hosting en deployment</td>
+                  <td><a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener noreferrer">vercel.com/legal/dpa</a></td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#f1f5f9' }}>Voyage AI</td>
+                  <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen</td>
+                  <td>SOC 2 · HIPAA, DPA op aanvraag</td>
                 </tr>
               </tbody>
             </table>
@@ -242,7 +242,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>Niet opgeslagen. Alleen gebruikt om die ene vraag te beantwoorden, daarna direct weggegooid.</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd. Dat is de wettelijke bewaarplicht voor de administratie. Alleen de gegevens die daarvoor nodig zijn blijven bewaard.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd (wettelijke bewaarplicht)</td></tr>
               </tbody>
             </table>
           </div>
