@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
   const nu = new Date()
   const { data: lopend } = await billingDb
     .from('arnobot_subscriptions')
-    .select('id, periode_einde')
+    .select('id, periode_einde, status')
     .eq('user_id', userId)
     .in('status', ['active', 'cancelled'])
     .gt('periode_einde', nu.toISOString())
-    .returns<Pick<SubRow, 'id' | 'periode_einde'>[]>()
+    .returns<Pick<SubRow, 'id' | 'periode_einde' | 'status'>[]>()
   for (const s of lopend ?? []) {
     const { data: laatste } = await billingDb
       .from('arnobot_payments')
@@ -83,7 +83,13 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle<{ status: string }>()
     const mislukt = laatste && ['failed', 'expired', 'canceled'].includes(laatste.status)
-    if (!mislukt) return fout(409, 'Je hebt al een actief abonnement')
+    if (!mislukt) {
+      if (s.status === 'cancelled' && s.periode_einde) {
+        const tot = new Date(s.periode_einde).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+        return fout(409, `Je abonnement is opgezegd en loopt nog tot ${tot}. Daarna kun je opnieuw afrekenen.`)
+      }
+      return fout(409, 'Je hebt al een actief abonnement')
+    }
   }
 
   try {
