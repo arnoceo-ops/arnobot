@@ -4,7 +4,7 @@
 
 - **Gekozen: Mollie (NL-start) + Moneybird.** Verworpen: Stripe/Paddle van 2026-09-02, want de start is NL-only en de OSS-zwakte van Mollie speelt dan nog niet. Zakelijke bankrekening is er. Btw-nummer volgt.
 - **Betaalmethoden:** iDEAL en creditcard voor Basic/Pro, Team per factuur.
-- **Verlenging:** particulieren GEEN automatische verlenging (verlengen is een nieuwe betaling, herinneringsmail vooraf), bedrijven wel automatisch met één maand opzegtermijn. Verworpen: automatische verlenging voor iedereen (Wet Van Dam-risico bij consumenten, jaarclausule vermoedelijk nietig).
+- **Verlenging (herzien 2026-10-10, voorstel wacht op akkoord):** particulieren betalen maandelijks automatisch, maar na 12 maanden stopt het en volgt een mail met de vraag of men nog een jaar wil verlengen; een jaarabonnement stopt na één jaar met dezelfde mail. Bedrijven lopen automatisch door met één maand opzegtermijn. Verworpen: geen automatische verlenging voor particulieren (eerste voorstel, te veel afhaak per maand), onbeperkt doorlopend voor iedereen (Wet Van Dam-risico bij jaarcontract, geen jaarcheck-in).
 - **Bedenktijd:** consumenten 14 dagen volledig geld terug na eerste betaling of upgrade, zakelijk geen restitutie. Staat live in `app/voorwaarden/page.tsx` (v2.3). Verworpen: alleen evenredige terugbetaling met toestemmingsvakje.
 - **Opzegtermijn:** één maand voor maand en jaar (live, v2.3).
 - **Btw:** particulier betaalt het getoonde bedrag inclusief, zakelijk het getoonde bedrag plus 21%, alleen zichtbaar bij het afrekenen. Boekhouder is bij een NL-only start niet nodig, wel de KOR-vraag (zie Moneybird/Belastingdienst).
