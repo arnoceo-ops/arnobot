@@ -86,6 +86,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       inclusiefBtw: sub.klant_type === 'particulier',
       taxRateId: await btwTariefId(),
       ledgerAccountId: process.env.MONEYBIRD_LEDGER_ACCOUNT_ID,
+      workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
     })
 
     // Betaling afletteren staat bewust achter een eigen schakelaar: de boekhoudkundige

@@ -87,6 +87,8 @@ export interface FactuurInput {
   inclusiefBtw: boolean
   taxRateId: string
   ledgerAccountId?: string
+  /** Eigen workflow zonder betalingsherinneringen (de factuur is al betaald via Mollie). */
+  workflowId?: string
 }
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, '')
@@ -97,6 +99,7 @@ export function bouwFactuurBody(f: FactuurInput) {
   return {
     sales_invoice: {
       contact_id: f.contactId,
+      ...(f.workflowId ? { workflow_id: f.workflowId } : {}),
       reference: f.referentie,
       invoice_date: dateOnly(f.factuurDatum),
       // Al betaald via Mollie: geen betaaltermijn.

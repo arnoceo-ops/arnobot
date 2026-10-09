@@ -35,6 +35,7 @@ Code staat klaar in `lib/billing/moneybird.ts` (client en pure bouwstenen, 7 uni
 - `MONEYBIRD_ADMINISTRATION_ID`: het administratie-id.
 - `MONEYBIRD_TAX_RATE_ID` (optioneel): het 21%-tarief voor verkoopfacturen; anders zoekt de code het zelf op.
 - `MONEYBIRD_LEDGER_ACCOUNT_ID` (optioneel): de omzet-grootboekrekening.
+- `MONEYBIRD_WORKFLOW_ID`: eigen factuurworkflow "ArnoBot betaald" zonder betalingsherinneringen en met betaaltermijn 0 (anders stuurt Moneybird een klant na zijn betaling een herinnering zolang de factuur op "open" staat).
 - `MONEYBIRD_FACTUREREN_VANAF`: ISO-datum; de cron factureert alleen betalingen vanaf dat moment, zodat oude betalingen nooit met terugwerkende kracht een factuur krijgen.
 - `MONEYBIRD_OOK_IN_TESTMODUS=true`: standaard maken Mollie-testbetalingen (test_-sleutel) GEEN factuur, om nepfacturen in de echte administratie te voorkomen.
 - `MONEYBIRD_BETALING_REGISTREREN=true`: afletteren van de betaling op de factuur. Staat standaard uit: de boekhoudkundige afhandeling (betaling zonder bewijs of via een Mollie-rekening) moet eerst met het echte account worden vastgesteld.

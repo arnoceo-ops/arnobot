@@ -50,6 +50,12 @@ describe('Moneybird factuur', () => {
     expect(sales_invoice.invoice_date).toBe('2026-10-09')
     expect(sales_invoice.reference).toBe('tr_abc123')
   })
+  it('gebruikt een eigen workflow (zonder herinneringen) als die is ingesteld', () => {
+    const met = bouwFactuurBody({ ...basis, brutoCent: 5900, nettoCent: 4876, inclusiefBtw: true, workflowId: '77' }).sales_invoice as Record<string, unknown>
+    expect(met.workflow_id).toBe('77')
+    const zonder = bouwFactuurBody({ ...basis, brutoCent: 5900, nettoCent: 4876, inclusiefBtw: true }).sales_invoice as Record<string, unknown>
+    expect(zonder.workflow_id).toBeUndefined()
+  })
   it('zet het grootboekrekening-id alleen als het is ingesteld', () => {
     const zonder = bouwFactuurBody({ ...basis, brutoCent: 5900, nettoCent: 4876, inclusiefBtw: true }).sales_invoice.details_attributes[0] as Record<string, unknown>
     expect(zonder.ledger_account_id).toBeUndefined()
