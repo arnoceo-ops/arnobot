@@ -5,6 +5,8 @@
 // VOORBEREIDING: nog nooit tegen een echt Moneybird-account gedraaid. Alles staat uit zolang
 // MONEYBIRD_API_TOKEN en MONEYBIRD_ADMINISTRATION_ID ontbreken. Zie docs/MOLLIE_PLAN.md, fase 2.
 
+import { BEDRIJF } from '@/lib/bedrijf'
+
 export function moneybirdIngeschakeld(): boolean {
   return !!process.env.MONEYBIRD_API_TOKEN && !!process.env.MONEYBIRD_ADMINISTRATION_ID
 }
@@ -132,6 +134,10 @@ interface MbTaxRate { id: string; percentage: string }
 export async function zoekOfMaakContact(k: FactuurKlant): Promise<string> {
   try {
     const bestaand = await mb<MbContact>(`/contacts/customer_id/${encodeURIComponent(k.userId)}.json`)
+    // Gegevens kunnen sinds de vorige betaling zijn veranderd (adres, bedrijf): bijwerken.
+    if (k.adres || k.bedrijfsnaam) {
+      await mb(`/contacts/${bestaand.id}.json`, { method: 'PATCH', body: bouwContactBody(k) })
+    }
     return bestaand.id
   } catch (e) {
     if (!(e instanceof MoneybirdError) || e.status !== 404) throw e
@@ -195,8 +201,7 @@ export async function registreerBetaling(input: {
   })
 }
 
-const CREDIT_VOORWAARDEN =
-  'Dit bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven. Vragen? Mail naar hq@arno.bot.'
+const CREDIT_VOORWAARDEN = `Dit bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven. Vragen? Mail naar ${BEDRIJF.emailFacturen}.`
 
 /**
  * De aanhef zetten we zelf in de mail: bij een zakelijk contact vult de Moneybird-tag de
@@ -213,7 +218,7 @@ export function factuurMailTekst(voornaam?: string | null): string {
     ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
     'In de bijlage vind je factuur {document.invoice_id} voor je ArnoBot-abonnement. Deze is al betaald, je hoeft niets over te maken.',
     '',
-    'Vragen? Mail naar hq@arno.bot.',
+    `Vragen? Mail naar ${BEDRIJF.emailFacturen}.`,
     '',
     'Groet,',
     'ArnoBot',
@@ -225,7 +230,7 @@ export function creditMailTekst(voornaam?: string | null): string {
     ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
     'In de bijlage vind je creditfactuur {document.invoice_id} voor je terugbetaling. Het bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.',
     '',
-    'Vragen? Mail naar hq@arno.bot.',
+    `Vragen? Mail naar ${BEDRIJF.emailFacturen}.`,
     '',
     'Groet,',
     'ArnoBot',

@@ -12,7 +12,7 @@ import {
   toegangTot,
   voegMaandenToe,
 } from './perioden'
-import { isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer } from './btwNummer'
+import { isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from './btwNummer'
 
 const d = (s: string) => new Date(s)
 
@@ -166,5 +166,19 @@ describe('btw- en kvk-nummer', () => {
     expect(isKvkFormaat('4218 4446')).toBe(true)
     expect(isKvkFormaat('1234567')).toBe(false)
     expect(isKvkFormaat('abcdefgh')).toBe(false)
+  })
+})
+
+describe('postcode', () => {
+  it('normaliseert een Nederlandse postcode', () => {
+    expect(normaliseerPostcode('3511al')).toBe('3511 AL')
+    expect(normaliseerPostcode('3511 AL')).toBe('3511 AL')
+    expect(normaliseerPostcode(' 1012 ab ')).toBe('1012 AB')
+  })
+  it('weigert ongeldige postcodes', () => {
+    expect(normaliseerPostcode('0123 AB')).toBeNull()
+    expect(normaliseerPostcode('3511')).toBeNull()
+    expect(normaliseerPostcode('35112AL')).toBeNull()
+    expect(normaliseerPostcode('')).toBeNull()
   })
 })

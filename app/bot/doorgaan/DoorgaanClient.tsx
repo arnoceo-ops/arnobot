@@ -42,6 +42,9 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   const [bedrijfsnaam, setBedrijfsnaam] = useState('')
   const [kvk, setKvk] = useState('')
   const [btwNummer, setBtwNummer] = useState('')
+  const [straat, setStraat] = useState('')
+  const [postcode, setPostcode] = useState('')
+  const [plaats, setPlaats] = useState('')
   const [akkoord, setAkkoord] = useState(false)
   const [betaalFout, setBetaalFout] = useState('')
   const [betalen, setBetalen] = useState(false)
@@ -118,7 +121,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: gekozenPlan, cyclus, klantType, bedrijfsnaam, kvk, btwNummer, akkoordVoorwaarden: akkoord,
+          plan: gekozenPlan, cyclus, klantType, bedrijfsnaam, kvk, btwNummer, straat, postcode, plaats, akkoordVoorwaarden: akkoord,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -315,7 +318,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
             : cyclus === 'jaarlijks'
               ? 'Je betaalt eenmalig voor een jaar. Daarna vragen we of je wilt verlengen.'
               : 'Je betaalt elke maand automatisch. Na 12 maanden vragen we of je wilt verlengen.'
-          const zakelijkCompleet = klantType === 'particulier' || (bedrijfsnaam.trim().length >= 2 && kvk.trim() !== '' && btwNummer.trim() !== '')
+          const zakelijkCompleet = klantType === 'particulier' || (bedrijfsnaam.trim().length >= 2 && kvk.trim() !== '' && btwNummer.trim() !== '' && straat.trim().length >= 3 && postcode.trim() !== '' && plaats.trim().length >= 2)
           const belgisch = klantType === 'zakelijk' && /^\s*be/i.test(btwNummer)
           return (
             <div className="gegevens-card">
@@ -347,6 +350,20 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                         Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar <a href="mailto:hq@arno.bot" style={{ color: '#f59e0b' }}>hq@arno.bot</a>, dan helpen we je snel verder.
                       </p>
                     )}
+                  </div>
+                  <div className="gegevens-rij">
+                    <label className="gegevens-label" htmlFor="straat">Straat en huisnummer</label>
+                    <input id="straat" className="gegevens-input" value={straat} onChange={e => setStraat(e.target.value)} autoComplete="street-address" />
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div className="gegevens-rij" style={{ flex: '0 0 140px' }}>
+                      <label className="gegevens-label" htmlFor="postcode">Postcode</label>
+                      <input id="postcode" className="gegevens-input" value={postcode} onChange={e => setPostcode(e.target.value)} autoComplete="postal-code" placeholder="1234 AB" />
+                    </div>
+                    <div className="gegevens-rij" style={{ flex: 1 }}>
+                      <label className="gegevens-label" htmlFor="plaats">Plaats</label>
+                      <input id="plaats" className="gegevens-input" value={plaats} onChange={e => setPlaats(e.target.value)} autoComplete="address-level2" />
+                    </div>
                   </div>
                 </>
               )}

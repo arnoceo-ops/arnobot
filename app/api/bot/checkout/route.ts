@@ -6,7 +6,7 @@ import { Redis } from '@upstash/redis'
 import { billingDb, type SubRow } from '@/lib/billing/db'
 import { MollieError, SITE_URL, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
-import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer } from '@/lib/billing/btwNummer'
+import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from '@/lib/billing/btwNummer'
 import { isTeamCovered } from '@/lib/teamAccess'
 
 const ratelimit = new Ratelimit({
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null)
   if (!body || typeof body !== 'object') return fout(400, 'Ongeldig verzoek')
-  const { plan, cyclus, klantType, bedrijfsnaam, kvk, btwNummer, akkoordVoorwaarden } = body as Record<string, unknown>
+  const { plan, cyclus, klantType, bedrijfsnaam, kvk, btwNummer, straat, postcode, plaats, akkoordVoorwaarden } = body as Record<string, unknown>
 
   if (!isPlan(plan) || !isCyclus(cyclus) || !isKlantType(klantType)) return fout(400, 'Ongeldige keuze')
   if (akkoordVoorwaarden !== true) return fout(400, 'Ga akkoord met de algemene voorwaarden om door te gaan')
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   // Een teamlid of teammanager heeft geen eigen abonnement (zelfde vangnet als confirm-renewal).
   if (await isTeamCovered(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
 
-  let zakelijk: { bedrijfsnaam: string; kvk: string; btw: string; btwGevalideerd: boolean } | null = null
+  let zakelijk: { bedrijfsnaam: string; kvk: string; btw: string; btwGevalideerd: boolean; straat: string; postcode: string; plaats: string } | null = null
   if (klantType === 'zakelijk') {
     const naam = typeof bedrijfsnaam === 'string' ? bedrijfsnaam.trim() : ''
     const kvkNr = typeof kvk === 'string' ? kvk.replace(/\s/g, '') : ''
@@ -56,7 +56,14 @@ export async function POST(req: NextRequest) {
     // zodat zakelijk afrekenen te testen is zonder een echt btw-nummer.
     const check = process.env.MOLLIE_API_KEY?.startsWith('test_') ? 'onbekend' : await controleerBtwBijVies(btwRaw)
     if (check === 'ongeldig') return fout(400, 'Dit btw-nummer is niet geldig')
-    zakelijk = { bedrijfsnaam: naam, kvk: kvkNr, btw: normaliseerBtwNummer(btwRaw), btwGevalideerd: check === 'geldig' }
+    // Een factuur aan een bedrijf moet het adres van het bedrijf bevatten.
+    const straatNaam = typeof straat === 'string' ? straat.trim() : ''
+    const plaatsNaam = typeof plaats === 'string' ? plaats.trim() : ''
+    const postcodeNorm = typeof postcode === 'string' ? normaliseerPostcode(postcode) : null
+    if (straatNaam.length < 3 || straatNaam.length > 100) return fout(400, 'Vul de straat en het huisnummer in')
+    if (!postcodeNorm) return fout(400, 'Vul een geldige postcode in (bijvoorbeeld 1234 AB)')
+    if (plaatsNaam.length < 2 || plaatsNaam.length > 80) return fout(400, 'Vul de plaats in')
+    zakelijk = { bedrijfsnaam: naam, kvk: kvkNr, btw: normaliseerBtwNummer(btwRaw), btwGevalideerd: check === 'geldig', straat: straatNaam, postcode: postcodeNorm, plaats: plaatsNaam }
   }
 
   const { data: user } = await billingDb
@@ -118,6 +125,16 @@ export async function POST(req: NextRequest) {
       },
       { onConflict: 'user_id' },
     )
+
+    // Adres apart opslaan en tolerant: de kolommen komen uit een SQL-migratie. Ontbreken ze nog,
+    // dan blijft afrekenen werken (de factuur krijgt dan geen adres) en loggen we een waarschuwing.
+    if (zakelijk) {
+      const { error: adresFout } = await billingDb
+        .from('arnobot_billing_customers')
+        .update({ straat: zakelijk.straat, postcode: zakelijk.postcode, plaats: zakelijk.plaats })
+        .eq('user_id', userId)
+      if (adresFout) console.warn('[checkout] adres niet opgeslagen, SQL-migratie uitgevoerd?', adresFout.message)
+    }
 
     // Eerdere onafgeronde pogingen afsluiten, dan een verse aanmaken.
     await billingDb

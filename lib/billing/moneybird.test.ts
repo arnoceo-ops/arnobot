@@ -77,6 +77,12 @@ describe('Moneybird mailtekst', () => {
   it('laat een naam nooit een Moneybird-tag worden', () => {
     expect(factuurMailTekst('{document.total_price}')).not.toContain('{document.total_price}')
   })
+  it('verwijst naar het factuurmailadres, nooit naar een onverwerkte placeholder', () => {
+    for (const t of [factuurMailTekst('Sanne'), creditMailTekst('Sanne')]) {
+      expect(t).toContain('admin@arno.bot')
+      expect(t).not.toContain('${')
+    }
+  })
   it('bewaart de factuurnummer-tag', () => {
     expect(factuurMailTekst('Sanne')).toContain('{document.invoice_id}')
   })

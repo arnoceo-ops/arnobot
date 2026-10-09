@@ -60,9 +60,9 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       .maybeSingle<{ voornaam: string | null; email: string | null }>()
     const { data: klant } = await billingDb
       .from('arnobot_billing_customers')
-      .select('bedrijfsnaam, kvk_nummer, btw_nummer')
+      .select('*')
       .eq('user_id', rij.user_id)
-      .maybeSingle<{ bedrijfsnaam: string | null; kvk_nummer: string | null; btw_nummer: string | null }>()
+      .maybeSingle<{ bedrijfsnaam: string | null; kvk_nummer: string | null; btw_nummer: string | null; straat?: string | null; postcode?: string | null; plaats?: string | null }>()
     if (!sub || !user?.email) throw new Error('Abonnement of e-mailadres ontbreekt voor de factuur')
 
     const contactId = await zoekOfMaakContact({
@@ -72,6 +72,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       bedrijfsnaam: klant?.bedrijfsnaam,
       kvk: klant?.kvk_nummer,
       btw: klant?.btw_nummer,
+      adres: klant?.straat && klant.postcode && klant.plaats ? { straat: klant.straat, postcode: klant.postcode, plaats: klant.plaats } : null,
     })
 
     const betaaldOp = rij.betaald_at ? new Date(rij.betaald_at) : new Date()

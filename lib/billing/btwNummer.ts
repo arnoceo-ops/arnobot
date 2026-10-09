@@ -14,6 +14,12 @@ export function isKvkFormaat(raw: string): boolean {
   return /^\d{8}$/.test(raw.replace(/\s/g, ''))
 }
 
+/** Nederlandse postcode (1234 AB). Geeft null bij een ongeldige invoer. */
+export function normaliseerPostcode(raw: string): string | null {
+  const p = raw.replace(/\s/g, '').toUpperCase()
+  return /^[1-9]\d{3}[A-Z]{2}$/.test(p) ? `${p.slice(0, 4)} ${p.slice(4)}` : null
+}
+
 export type VatCheck = 'geldig' | 'ongeldig' | 'onbekend'
 
 /**

@@ -14,6 +14,8 @@ export const BEDRIJF = {
   landCode: 'NL',
   emailAlgemeen: 'hq@arno.bot',
   emailPrivacy: 'privacy@arno.bot',
+  /** Staat op facturen en in de factuurmails (Moneybird). */
+  emailFacturen: 'admin@arno.bot',
   reactietermijn: 'binnen 24 uur',
 } as const
 
