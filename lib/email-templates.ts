@@ -280,7 +280,7 @@ export function getEmailTemplate(
       return {
         subject: b?.eerste === false ? `${prefix}Betaling ontvangen` : `${prefix}Je abonnement is actief`,
         html: mail(
-          `${b?.eerste === false ? 'Je betaling voor' : 'Bedankt. Je betaling voor'} ArnoBot ${b?.planNaam ?? 'Pro'} is binnen.<br><br>${regels}<br><br>Dit is je betaalbevestiging. Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          `${b?.eerste === false ? 'Je betaling voor' : 'Bedankt. Je betaling voor'} ArnoBot ${b?.planNaam ?? 'Pro'} is binnen.<br><br>${regels}<br><br>Dit is je betaalbevestiging.<br>Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
           'OPEN ARNOBOT →', 'https://arno.bot/bot'
         ),
       }
