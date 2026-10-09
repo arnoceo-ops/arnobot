@@ -324,7 +324,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je terugbetaling is onderweg`,
         html: mail(
-          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag bij je staat.<br><br>Je abonnement is hiermee beëindigd. Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.<br><br>Je abonnement is hiermee beëindigd.<br>Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
           'TERUG NAAR ARNOBOT →', 'https://arno.bot'
         ),
       }
