@@ -390,7 +390,7 @@ export default function AccountPage() {
             op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
         {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
         <div style={section}>
-          <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
+          <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
           {cancelledAt ? (
             <p style={body}>
               Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.
