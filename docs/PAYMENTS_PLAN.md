@@ -1,8 +1,18 @@
 # Betaalprovider, facturatie en abonnementsvoorwaarden
 
+## Besluiten 2026-10-10 (gaan voor op alles hieronder dat Stripe/Paddle noemt)
+
+- **Gekozen: Mollie (NL-start) + Moneybird.** Verworpen: Stripe/Paddle van 2026-09-02, want de start is NL-only en de OSS-zwakte van Mollie speelt dan nog niet. Zakelijke bankrekening is er. Btw-nummer volgt.
+- **Betaalmethoden:** iDEAL en creditcard voor Basic/Pro, Team per factuur.
+- **Verlenging:** particulieren GEEN automatische verlenging (verlengen is een nieuwe betaling, herinneringsmail vooraf), bedrijven wel automatisch met één maand opzegtermijn. Verworpen: automatische verlenging voor iedereen (Wet Van Dam-risico bij consumenten, jaarclausule vermoedelijk nietig).
+- **Bedenktijd:** consumenten 14 dagen volledig geld terug na eerste betaling of upgrade, zakelijk geen restitutie. Staat live in `app/voorwaarden/page.tsx` (v2.3). Verworpen: alleen evenredige terugbetaling met toestemmingsvakje.
+- **Opzegtermijn:** één maand voor maand en jaar (live, v2.3).
+- **Btw:** particulier betaalt het getoonde bedrag inclusief, zakelijk het getoonde bedrag plus 21%, alleen zichtbaar bij het afrekenen. Boekhouder is bij een NL-only start niet nodig, wel de KOR-vraag (zie Moneybird/Belastingdienst).
+- **Nog open:** Team per factuur (vooruitbetaald met betaallink voorgesteld), teksten "Maandelijks opzegbaar", herinneringsmail, artikel 3, 4 en 7 herschrijven voor het verschil particulier/zakelijk, bouw van de Mollie-adapter.
+
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-09-02
+- **Laatst bijgewerkt:** 2026-10-10 (besluitenblok hierboven), de rest van dit document is van 2026-09-02
 - **Waar we staan:** besluit genomen (Stripe voor de EU, Paddle later voor de rest), verder **geparkeerd, wordt later opgepakt**. Nog niks gebouwd. Alle betalingen lopen nu handmatig via `/bot/admin/gebruikers` → `POST /api/admin/payment`.
 - **Blokkerend, en van Arno (nog niet gestart, 2026-09-02):**
   1. **Rechtspersoon-keuze + Stripe-accountverificatie.** Besloten 2026-10-09: de contractpartij is de eenmanszaak ArnoBot van Anton Dirk Diepeveen (KvK 42184446), zie `BUSINESS_HANDOVER.md`. Dan het Stripe-account aanmaken en de KYC-verificatie doorlopen (KvK, btw-nummer, bestuurder/UBO-ID, zakelijke IBAN). Lange lijn: review kan dagen duren, uitbetalingen zijn geblokkeerd tot 't rond is.
