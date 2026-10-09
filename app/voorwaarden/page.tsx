@@ -37,7 +37,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.5 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
+            Versie 2.6 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
           </p>
 
           {[
@@ -69,7 +69,7 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na de proefperiode kan de Gebruiker een individueel abonnement of een teamabonnement afsluiten. De actuele prijzen staan vermeld op de website.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Betaling geschiedt op basis van de overeengekomen betalingstermijn. Bij niet-tijdige betaling behoudt ArnoBot het recht de toegang te blokkeren.</p>,
-                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle prijzen zijn in euro. Betaling verloopt via onze betaalprovider. Na elke betaling ontvang je een factuur per e-mail.</p>,
+                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle prijzen zijn in euro. Betaling verloopt via onze betaalprovider. Na elke betaling ontvang je per e-mail een betaalbevestiging. Zakelijke klanten ontvangen daarnaast een factuur.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier betaal je het getoonde bedrag inclusief btw. Als zakelijke klant betaal je het getoonde bedrag plus btw, die bij het afrekenen wordt getoond.</p>,
                 <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Een maandabonnement als particulier wordt maandelijks automatisch afgeschreven, maximaal 12 maanden. Daarna ontvang je een e-mail met de vraag of je nog een jaar wilt verlengen. Reageer je niet, dan eindigt het abonnement. Een jaarabonnement als particulier eindigt na een jaar, ook dan vragen we of je wilt verlengen.</p>,
                 <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
