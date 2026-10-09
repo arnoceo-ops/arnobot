@@ -245,7 +245,7 @@ export function creditMailTekst(voornaam?: string | null): string {
  */
 export async function maakCreditnota(
   factuurId: string,
-  opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string; voornaam?: string | null },
+  opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string; voornaam?: string | null; mailen: boolean },
 ): Promise<{ id: string }> {
   const credit = await mb<MbInvoice>(`/sales_invoices/${factuurId}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
   // De tekst uit de workflow zegt "al betaald, je hoeft niets over te maken", dat klopt niet voor een
@@ -268,6 +268,9 @@ export async function maakCreditnota(
       },
     })
   }
-  await verstuurFactuur(credit.id, 'Email', creditMailTekst(opties.voornaam))
+  // Particulieren krijgen een betaalbevestiging van ArnoBot, geen gemailde creditfactuur: dan alleen
+  // op "open" zetten (voor de administratie), zonder mail.
+  if (opties.mailen) await verstuurFactuur(credit.id, 'Email', creditMailTekst(opties.voornaam))
+  else if (!opties.terugbetalingRegistreren) await verstuurFactuur(credit.id, 'Manual')
   return { id: credit.id }
 }

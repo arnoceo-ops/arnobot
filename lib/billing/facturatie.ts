@@ -105,7 +105,11 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
         await verstuurFactuur(factuur.id, 'Manual')
         await registreerBetaling({ factuurId: factuur.id, betaaldOp, brutoCent: rij.bedrag_cent, mollieId: rij.mollie_payment_id })
       }
-      await verstuurFactuur(factuur.id, 'Email', factuurMailTekst(user.voornaam))
+      // Zakelijke klanten krijgen de factuur per e-mail. Particulieren krijgen alleen de
+      // betaalbevestiging van ArnoBot (voorwaarden artikel 4); hun verkoop staat wel in Moneybird,
+      // voor de administratie en de btw-aangifte, maar zonder mail aan de klant.
+      if (sub.klant_type === 'zakelijk') await verstuurFactuur(factuur.id, 'Email', factuurMailTekst(user.voornaam))
+      else if (process.env.MONEYBIRD_BETALING_REGISTREREN !== 'true') await verstuurFactuur(factuur.id, 'Manual')
     } catch (e) {
       Sentry.captureException(e, { tags: { onderdeel: 'moneybird-factuur-afronden' } })
       await notifyTelegram(`Factuur in Moneybird is aangemaakt maar niet volledig afgerond op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nFactuur-id: ${factuur.id}\nRond hem handmatig af in Moneybird.`)
@@ -128,6 +132,14 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
     .maybeSingle<Pick<PayRow, 'moneybird_factuur_id' | 'mollie_payment_id' | 'user_id' | 'bedrag_cent'>>()
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
   try {
+    const { data: abonnement } = await billingDb
+      .from('arnobot_payments')
+      .select('subscription_id')
+      .eq('id', payRowId)
+      .maybeSingle<{ subscription_id: string | null }>()
+    const { data: subRij } = abonnement?.subscription_id
+      ? await billingDb.from('arnobot_subscriptions').select('klant_type').eq('id', abonnement.subscription_id).maybeSingle<{ klant_type: string }>()
+      : { data: null }
     const { data: gebruiker } = await billingDb
       .from('approved_users')
       .select('voornaam')
@@ -135,6 +147,7 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
       .maybeSingle<{ voornaam: string | null }>()
     await maakCreditnota(rij.moneybird_factuur_id, {
       voornaam: gebruiker?.voornaam,
+      mailen: subRij?.klant_type === 'zakelijk',
       terugbetalingRegistreren: process.env.MONEYBIRD_BETALING_REGISTREREN === 'true',
       brutoCent: rij.bedrag_cent,
       betaaldOp: new Date(),
