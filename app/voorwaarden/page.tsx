@@ -37,7 +37,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.1 · September 2026 · ArnoBot, Utrecht, Nederland.
+            Versie 2.2 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
           </p>
 
           {[
@@ -69,6 +69,7 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na de proefperiode kan de Gebruiker een individueel abonnement of een teamabonnement afsluiten. De actuele prijzen staan vermeld op de website.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Betaling geschiedt op basis van de overeengekomen betalingstermijn. Bij niet-tijdige betaling behoudt ArnoBot het recht de toegang te blokkeren.</p>,
+                <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Alle prijzen zijn in euro. Betaling verloopt via onze betaalprovider. Na elke betaling ontvang je een factuur per e-mail.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het abonnement geldt per maand of per jaar, afhankelijk van de gekozen optie, en wordt automatisch verlengd tenzij tijdig opgezegd.</p>,
               ],
             },
@@ -97,14 +98,31 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 8', title: 'Overmacht',
+              num: 'ARTIKEL 8', title: 'Bedenktijd en terugbetaling',
+              content: [
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Ben je consument, dan kun je binnen 14 dagen na je eerste betaling of na een upgrade zonder opgave van reden herroepen. Je krijgt het volledige bedrag terug binnen 14 dagen nadat je ons dat hebt laten weten.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Stuur daarvoor een mail aan <a href="mailto:hq@arno.bot">hq@arno.bot</a> waarin je duidelijk aangeeft dat je herroept.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De gratis proefperiode kun je altijd stoppen zonder kosten.</p>,
+                <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het herroepingsrecht geldt alleen voor consumenten. Voor zakelijke klanten geldt geen herroepingsrecht en geen terugbetaling.</p>,
+              ],
+            },
+            {
+              num: 'ARTIKEL 9', title: 'Klachten',
+              content: [
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Heb je een klacht, mail dan <a href="mailto:hq@arno.bot">hq@arno.bot</a>.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Je ontvangt een bevestiging en binnen 7 dagen een inhoudelijke reactie. Heeft het langer nodig, dan laten we weten wanneer je antwoord krijgt.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Komen we er samen niet uit, dan gelden het toepasselijk recht en de bevoegde rechter uit deze voorwaarden.</p>,
+              ],
+            },
+            {
+              num: 'ARTIKEL 10', title: 'Overmacht',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot is niet gehouden tot nakoming van enige verplichting indien zij daartoe verhinderd is als gevolg van overmacht. Hieronder valt onder meer: storingen bij externe dienstverleners (waaronder Anthropic, Supabase, Vercel of Clerk), internetstoringen, cyberaanvallen en overheidsmaatregelen.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>In geval van overmacht worden de verplichtingen opgeschort zolang de situatie voortduurt. ArnoBot stelt de Gebruiker zo spoedig mogelijk op de hoogte.</p>,
               ],
             },
             {
-              num: 'ARTIKEL 9', title: 'Wijziging van de voorwaarden',
+              num: 'ARTIKEL 11', title: 'Wijziging van de voorwaarden',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot behoudt zich het recht voor deze voorwaarden te wijzigen. Wijzigingen worden minimaal 14 dagen van tevoren per e-mail aangekondigd aan actieve gebruikers.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Indien een wijziging nadelig is voor de Gebruiker, heeft de Gebruiker het recht de overeenkomst zonder opgaaf van reden te beëindigen, met ingang van de datum waarop de gewijzigde voorwaarden van kracht worden.</p>,
@@ -112,7 +130,7 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 10', title: 'Aard van de dienst en eigen verantwoordelijkheid',
+              num: 'ARTIKEL 12', title: 'Aard van de dienst en eigen verantwoordelijkheid',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot is een AI-gedreven coachingsplatform. De uitkomsten, suggesties en analyses die ArnoBot genereert zijn bedoeld als reflectie en gespreksstof, niet als professioneel, juridisch, fiscaal, financieel of bedrijfskundig advies.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De door ArnoBot gegenereerde inhoud kan onjuist, onvolledig of niet toepasbaar zijn op de situatie van de Gebruiker. De Gebruiker beoordeelt zelf of en hoe hij de inhoud gebruikt en blijft volledig verantwoordelijk voor zijn eigen beslissingen en de gevolgen daarvan.</p>,
@@ -120,7 +138,7 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 11', title: 'Aansprakelijkheid',
+              num: 'ARTIKEL 13', title: 'Aansprakelijkheid',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot is niet aansprakelijk voor schade die voortvloeit uit het gebruik van ArnoBot of uit beslissingen die de Gebruiker neemt op basis van de door ArnoBot gegenereerde inhoud, behoudens opzet of bewuste roekeloosheid aan de zijde van ArnoBot.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Iedere aansprakelijkheid van ArnoBot is beperkt tot directe schade en tot maximaal het bedrag dat de Gebruiker in de twaalf maanden voorafgaand aan de schadeveroorzakende gebeurtenis aan ArnoBot heeft betaald voor het gebruik van ArnoBot.</p>,
@@ -130,7 +148,7 @@ export default function VoorwaardenPage() {
               ],
             },
             {
-              num: 'ARTIKEL 12', title: 'Toepasselijk recht',
+              num: 'ARTIKEL 14', title: 'Toepasselijk recht',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Op deze voorwaarden is Nederlands recht van toepassing. Geschillen worden voorgelegd aan de bevoegde rechter in Nederland.</p>,
               ],
