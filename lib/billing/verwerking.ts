@@ -18,6 +18,7 @@ import {
   voegMaandenToe,
 } from './perioden'
 import { verstuurBillingMail } from './mails'
+import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
 import { notifyTelegram } from '@/lib/cron-notify'
 
 // Kern van de betaalverwerking. Wordt aangeroepen door de Mollie-webhook en is volledig
@@ -183,6 +184,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
       betaalId: mp.id,
     })
     await notifyTelegram(`Nieuw betaald abonnement op arno.bot\n\n${naam} ${sub.cyclus}, ${sub.klant_type}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}\nUser: ${sub.user_id}`)
+    await factureerBetaling(rij.id)
     return
   }
 
@@ -220,6 +222,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     eerste: false,
     betaalId: mp.id,
   })
+  await factureerBetaling(rij.id)
 }
 
 async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> {
@@ -261,6 +264,7 @@ async function verwerkVolledigeTerugbetaling(
     return
   }
   await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent })
+  await creditnotaVoorBetaling(rij.id)
   await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}`)
 }
 

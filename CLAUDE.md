@@ -106,7 +106,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [docs.mollie.com/changelog](https://docs.mollie.com/changelog) op API-wijzigingen of deprecations (o.a. Subscriptions API, Customers/Mandates).
 - Webhooks (`/api/webhooks/mollie`) zonder fouten? Mollie dashboard, Developers, Webhooks/Logs. Draait de dagelijkse `/api/cron/billing` (Vercel logs)? Hangen er betalingen op 'open' of abonnementen zonder `mollie_subscription_id`?
 - Tarieven (iDEAL, creditcard) nog zoals in Abacus (`DEFAULT_BETAALPROVIDER`)? Controle op de kwartaalcheck samen met sectie 8.
-- Moneybird (facturen, fase 2 van `docs/MOLLIE_PLAN.md`, nog niet gebouwd): bij aansluiting hier de API-changelog en het gekozen pakket opnemen.
+- Moneybird (facturen, fase 2 van `docs/MOLLIE_PLAN.md`): code staat voorbereid maar uit tot het account er is (`lib/billing/moneybird.ts`, `facturatie.ts`). Bij aansluiting hier de API-changelog ([developer.moneybird.com](https://developer.moneybird.com/)) en het gekozen pakket opnemen. Let op: de oude `register_payment`-endpoint vervalt per 2026-12-31, de code gebruikt al `POST .../payments`.
 
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)

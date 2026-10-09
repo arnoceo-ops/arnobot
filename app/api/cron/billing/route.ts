@@ -4,6 +4,7 @@ import { lijstRecenteTerugbetalingen, mollieIngeschakeld } from '@/lib/billing/m
 import { herinneringenDue, moetMollieAbonnementNuStoppen, toegangTot } from '@/lib/billing/perioden'
 import { maakMollieAbonnementVoor, markeerTerugbetaald, stopMollieAbonnement, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 import { verstuurBillingMail } from '@/lib/billing/mails'
+import { factureerOpenstaandeBetalingen } from '@/lib/billing/facturatie'
 import { planNaam } from '@/lib/billing/prijzen'
 import { mollieNaarCenten } from '@/lib/billing/geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
 
-  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
+  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
   try {
     const nu = new Date()
 
@@ -57,6 +58,10 @@ export async function GET(req: NextRequest) {
         if ((perBetaling.get(r.mollie_payment_id) ?? 0) >= r.bedrag_cent && (await markeerTerugbetaald(r.id))) samenvatting.terugbetalingen++
       }
     }
+
+    // 1c. Betalingen die verwerkt zijn maar nog geen Moneybird-factuur hebben (alleen actief
+    // als Moneybird is ingesteld).
+    samenvatting.facturen = await factureerOpenstaandeBetalingen()
 
     const { data: subsRaw } = await billingDb
       .from('arnobot_subscriptions')

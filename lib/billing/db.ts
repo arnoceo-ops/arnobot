@@ -46,4 +46,5 @@ export interface PayRow {
   betaald_at: string | null
   verwerkt_at: string | null
   terugbetaling_verwerkt_at: string | null
+  moneybird_factuur_id: string | null
 }

@@ -24,6 +24,25 @@
 - [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
 - [ ] Privacyverklaring en beveiligings-PDF: Mollie en Moneybird als verwerkers (Arno: kan later)
 
+## Fase 2: Moneybird (voorbereid, nog nooit tegen een echt account gedraaid)
+
+Code staat klaar in `lib/billing/moneybird.ts` (client en pure bouwstenen, 7 unit tests) en `lib/billing/facturatie.ts` (koppeling aan de betaalverwerking). Alles is uit zolang `MONEYBIRD_API_TOKEN` en `MONEYBIRD_ADMINISTRATION_ID` ontbreken. Gebaseerd op de officiële OpenAPI-specificatie (github.com/moneybird/openapi).
+
+**Wat het doet:** na elke verwerkte Mollie-betaling een contact zoeken of aanmaken (op de eigen gebruikers-id als `customer_id`), een factuur maken (particulier: prijs inclusief btw, zakelijk: exclusief, 21%-tarief, omzet uitgesmeerd over de betaalde periode, al betaald), de factuur per e-mail versturen, en bij een volledige terugbetaling een creditnota maken en versturen. Mislukt dat, dan Telegram-melding en de dagelijkse cron probeert het opnieuw.
+
+**Omgevingsvariabelen (allemaal pas invullen als het Moneybird-account er is):**
+- `MONEYBIRD_API_TOKEN`: persoonlijk API-token (Moneybird, Instellingen, Externe toepassingen), scope `sales_invoices` en `contacts`.
+- `MONEYBIRD_ADMINISTRATION_ID`: het administratie-id.
+- `MONEYBIRD_TAX_RATE_ID` (optioneel): het 21%-tarief voor verkoopfacturen; anders zoekt de code het zelf op.
+- `MONEYBIRD_LEDGER_ACCOUNT_ID` (optioneel): de omzet-grootboekrekening.
+- `MONEYBIRD_FACTUREREN_VANAF`: ISO-datum; de cron factureert alleen betalingen vanaf dat moment, zodat oude betalingen nooit met terugwerkende kracht een factuur krijgen.
+- `MONEYBIRD_OOK_IN_TESTMODUS=true`: standaard maken Mollie-testbetalingen (test_-sleutel) GEEN factuur, om nepfacturen in de echte administratie te voorkomen.
+- `MONEYBIRD_BETALING_REGISTREREN=true`: afletteren van de betaling op de factuur. Staat standaard uit: de boekhoudkundige afhandeling (betaling zonder bewijs of via een Mollie-rekening) moet eerst met het echte account worden vastgesteld.
+
+**Nog te doen zodra het account er is:** een testfactuur maken en nakijken, vaststellen hoe de betaling het beste wordt afgeletterd, de betaalbevestigingsmail aanpassen met een verwijzing naar de factuur, en Team per factuur met Mollie-betaallink bouwen.
+
+**Open punt, belangrijk voor de wet:** een factuur aan een consument boven de €100 moet naam en adres van de afnemer bevatten (vereenvoudigde factuur geldt tot €100). Het afrekenscherm vraagt nu geen adres, dus facturen zouden zonder adres worden gemaakt. Voorstel: adresvelden (straat, postcode, plaats, plus volledige naam) toevoegen aan het afrekenscherm voor zowel particulier als zakelijk, opslaan in `arnobot_billing_customers` (SQL-migratie nodig) en meegeven aan Moneybird. Wacht op akkoord van Arno en bevestiging door een boekhouder.
+
 ## Besluiten (met verworpen alternatieven)
 
 | Onderwerp | Gekozen | Verworpen, want |
