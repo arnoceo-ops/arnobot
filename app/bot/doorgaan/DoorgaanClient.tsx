@@ -260,7 +260,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   {verlengen === 'bezig' ? 'Bezig...' : 'Verleng met één klik'}
                 </button>
                 {verlengen === 'fout' && (
-                  <p style={{ color: '#cc2200', fontSize: 14 }}>Verlengen is niet gelukt. Probeer het opnieuw of mail <a href="mailto:hq@arno.bot" style={{ color: '#f59e0b' }}>hq@arno.bot</a>.</p>
+                  <p style={{ color: '#cc2200', fontSize: 14 }}>Verlengen is niet gelukt. Probeer het opnieuw of mail <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>.</p>
                 )}
               </div>
             )}
@@ -281,7 +281,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
             <p style={body}>We verwerken je betaling. Dit duurt meestal een paar seconden.</p>
             <p style={body}>Zie je na een minuut nog niets? Je ontvangt altijd een bevestiging per e-mail. Is je betaling niet gelukt of heb je geannuleerd, probeer het dan opnieuw.</p>
             <button className="plan-btn" onClick={() => { setTerug(false); setStap('kies') }}>Opnieuw proberen</button>
-            <p style={{ ...body, marginTop: 16, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:hq@arno.bot" style={{ color: '#f59e0b' }}>hq@arno.bot</a>.</p>
+            <p style={{ ...body, marginTop: 16, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>.</p>
           </div>
         )}
 
@@ -347,7 +347,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                     <input id="btw" className="gegevens-input" value={btwNummer} onChange={e => setBtwNummer(e.target.value)} placeholder="NL123456789B01" />
                     {belgisch && (
                       <p style={{ fontSize: 14, color: '#f59e0b', lineHeight: 1.5 }}>
-                        Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar <a href="mailto:hq@arno.bot" style={{ color: '#f59e0b' }}>hq@arno.bot</a>, dan helpen we je snel verder.
+                        Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>, dan helpen we je snel verder.
                       </p>
                     )}
                   </div>

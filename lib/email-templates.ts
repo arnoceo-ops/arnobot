@@ -280,7 +280,7 @@ export function getEmailTemplate(
       return {
         subject: b?.eerste === false ? `${prefix}Betaling ontvangen` : `${prefix}Je abonnement is actief`,
         html: mail(
-          `${b?.eerste === false ? 'Je betaling voor' : 'Bedankt. Je betaling voor'} ArnoBot ${b?.planNaam ?? 'Pro'} is binnen.<br><br>${regels}<br><br>Dit is je betaalbevestiging.<br>Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          `${b?.eerste === false ? 'Je betaling voor' : 'Bedankt. Je betaling voor'} ArnoBot ${b?.planNaam ?? 'Pro'} is binnen.<br><br>${regels}<br><br>Dit is je betaalbevestiging.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'OPEN ARNOBOT →', 'https://arno.bot/bot'
         ),
       }
@@ -290,7 +290,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je betaling voor ArnoBot is niet gelukt`,
         html: mail(
-          `Je laatste betaling voor ArnoBot ${b?.planNaam ?? 'Pro'} is niet gelukt. Je toegang loopt door tot ${billingDatum(b?.datum)}.<br><br>Wil je blijven, regel dan een nieuwe betaling via de knop hieronder. Lukt het niet, dan helpen we je graag via <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          `Je laatste betaling voor ArnoBot ${b?.planNaam ?? 'Pro'} is niet gelukt. Je toegang loopt door tot ${billingDatum(b?.datum)}.<br><br>Wil je blijven, regel dan een nieuwe betaling via de knop hieronder. Lukt het niet, dan helpen we je graag via <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'BETALING REGELEN →', 'https://arno.bot/bot/doorgaan'
         ),
       }
@@ -324,7 +324,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je terugbetaling is onderweg`,
         html: mail(
-          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.<br><br>Je abonnement is hiermee beëindigd.<br>Vragen? Mail naar <a href="mailto:hq@arno.bot" style="color:#f59e0b;">hq@arno.bot</a>.`,
+          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.<br><br>Je abonnement is hiermee beëindigd.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'TERUG NAAR ARNOBOT →', 'https://arno.bot'
         ),
       }

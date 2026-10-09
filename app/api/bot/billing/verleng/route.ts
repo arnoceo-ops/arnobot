@@ -67,6 +67,6 @@ export async function POST() {
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-verlengen' } })
     console.error('[billing/verleng]', e instanceof Error ? e.message : e)
-    return NextResponse.json({ error: 'Verlengen is niet gelukt, probeer het zo opnieuw of mail hq@arno.bot' }, { status: 502 })
+    return NextResponse.json({ error: 'Verlengen is niet gelukt, probeer het zo opnieuw of mail admin@arno.bot' }, { status: 502 })
   }
 }
