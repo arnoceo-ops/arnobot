@@ -57,6 +57,7 @@ export default function ContactPage() {
             <table>
               <tbody>
                 <tr><td style={rij}>Algemeen</td><td><a href={`mailto:${BEDRIJF.emailAlgemeen}`}>{BEDRIJF.emailAlgemeen}</a></td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Facturen en betalingen</td><td><a href={`mailto:${BEDRIJF.emailFacturen}`}>{BEDRIJF.emailFacturen}</a></td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Privacy</td><td><a href={`mailto:${BEDRIJF.emailPrivacy}`}>{BEDRIJF.emailPrivacy}</a></td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Support</td><td><a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer">WhatsApp</a></td></tr>
               </tbody>
