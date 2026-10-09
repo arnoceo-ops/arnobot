@@ -81,7 +81,7 @@ export async function POST() {
     to: 'arno@arno.bot',
     subject: `Opzegging${isManager ? ' (TEAM)' : ''}: ${user.voornaam || user.email || userId}`,
     html: emailHtml(
-      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het${isManager ? ' team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>${automatisch ? `Automatisch verwerkt: het abonnement eindigt op ${automatisch.ingaatOp.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}, geen actie nodig.` : 'Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.'}`,
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het ${isManager ? 'team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>${automatisch ? `Automatisch verwerkt: het abonnement eindigt op ${automatisch.ingaatOp.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}, geen actie nodig.` : 'Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.'}`,
       'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
     ),
   }).catch(() => {})
