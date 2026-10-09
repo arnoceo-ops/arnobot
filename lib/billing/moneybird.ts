@@ -205,13 +205,12 @@ const CREDIT_VOORWAARDEN =
  */
 function aanhef(voornaam?: string | null): string {
   const schoon = (voornaam ?? '').replace(/[{}\n\r]/g, '').trim()
-  return schoon ? `Hey ${schoon},` : 'Hallo,'
+  return schoon ? `Hey ${schoon},` : ''
 }
 
 export function factuurMailTekst(voornaam?: string | null): string {
   return [
-    aanhef(voornaam),
-    '',
+    ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
     'In de bijlage vind je factuur {document.invoice_id} voor je ArnoBot-abonnement. Deze is al betaald, je hoeft niets over te maken.',
     '',
     'Vragen? Mail naar hq@arno.bot.',
@@ -223,8 +222,7 @@ export function factuurMailTekst(voornaam?: string | null): string {
 
 export function creditMailTekst(voornaam?: string | null): string {
   return [
-    aanhef(voornaam),
-    '',
+    ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
     'In de bijlage vind je creditfactuur {document.invoice_id} voor je terugbetaling. Het bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.',
     '',
     'Vragen? Mail naar hq@arno.bot.',

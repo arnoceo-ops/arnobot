@@ -69,9 +69,10 @@ describe('Moneybird mailtekst', () => {
     expect(factuurMailTekst('Sanne').startsWith('Hey Sanne,')).toBe(true)
     expect(creditMailTekst('Sanne').startsWith('Hey Sanne,')).toBe(true)
   })
-  it('valt zonder naam terug op een neutrale aanhef', () => {
-    expect(factuurMailTekst(null).startsWith('Hallo,')).toBe(true)
-    expect(factuurMailTekst('  ').startsWith('Hallo,')).toBe(true)
+  it('begint zonder naam direct met de tekst, zonder aanhef', () => {
+    expect(factuurMailTekst(null).startsWith('In de bijlage')).toBe(true)
+    expect(factuurMailTekst('  ').startsWith('In de bijlage')).toBe(true)
+    expect(creditMailTekst(null).startsWith('In de bijlage')).toBe(true)
   })
   it('laat een naam nooit een Moneybird-tag worden', () => {
     expect(factuurMailTekst('{document.total_price}')).not.toContain('{document.total_price}')
