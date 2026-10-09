@@ -8,5 +8,6 @@ ArnoBot is bedoeld voor verkopers en salesteams. De coaching bestaat uit: onbepe
 
 - [Prijzen](https://www.arno.bot/prijzen): abonnementen en tarieven, 30 dagen gratis
 - [Team](https://www.arno.bot/team): ArnoBot voor teams, meerdere gebruikers onder één deal met een managerdashboard
+- [Contact](https://www.arno.bot/contact): bedrijfsgegevens en hoe je ons bereikt
 - [Privacy](https://www.arno.bot/privacy): privacybeleid en gegevensverwerking
 - [Algemene voorwaarden](https://www.arno.bot/voorwaarden)

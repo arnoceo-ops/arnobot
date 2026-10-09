@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BEDRIJF_REGEL } from '@/lib/bedrijf'
 
 export default function SiteFooter() {
   return (
@@ -40,7 +41,7 @@ export default function SiteFooter() {
           <div className="site-footer-col">
             <p className="site-footer-heading">Bedrijf</p>
             <a href="https://arno.blog/bio">Over Arno</a>
-            <a href="mailto:arno@arno.bot">Contact</a>
+            <Link href="/contact">Contact</Link>
             <a href="https://arno.blog">Blog</a>
           </div>
           <div className="site-footer-col">
@@ -51,7 +52,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="site-footer-bottom">
-          <span className="footer-copy">© 2026 ArnoBot</span>
+          <span className="footer-copy">© 2026 {BEDRIJF_REGEL}</span>
         </div>
       </footer>
     </>

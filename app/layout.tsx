@@ -6,6 +6,7 @@ import SentryUserIdentifier from "./components/SentryUserIdentifier";
 import PageviewTracker from "./components/PageviewTracker";
 import PostHogTracker from "./components/PostHogTracker";
 import PostHogSessionReplay from "./components/PostHogSessionReplay";
+import { BEDRIJF } from "@/lib/bedrijf";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,6 +49,16 @@ const organizationJsonLd = {
     '@type': 'Person',
     name: 'Arno Diepeveen',
   },
+  email: BEDRIJF.emailAlgemeen,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: BEDRIJF.straat,
+    postalCode: BEDRIJF.postcode,
+    addressLocality: BEDRIJF.plaats,
+    addressCountry: BEDRIJF.landCode,
+  },
+  identifier: { '@type': 'PropertyValue', name: 'KvK-nummer', value: BEDRIJF.kvk },
+  ...(BEDRIJF.btw ? { vatID: BEDRIJF.btw } : {}),
 }
 
 export default async function RootLayout({
