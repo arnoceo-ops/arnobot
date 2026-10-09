@@ -198,16 +198,41 @@ export async function registreerBetaling(input: {
 const CREDIT_VOORWAARDEN =
   'Dit bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven. Vragen? Mail naar hq@arno.bot.'
 
-const CREDIT_MAIL = [
-  'Hallo,',
-  '',
-  'In de bijlage vind je creditfactuur {document.invoice_id} voor je terugbetaling. Het bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.',
-  '',
-  'Vragen? Mail naar hq@arno.bot.',
-  '',
-  'Groet,',
-  'ArnoBot',
-].join('\n')
+/**
+ * De aanhef zetten we zelf in de mail: bij een zakelijk contact vult de Moneybird-tag de
+ * bedrijfsnaam in ("Hey Acme B.V."), terwijl we de voornaam van de gebruiker wel kennen.
+ * Accolades eruit, zodat een naam nooit een Moneybird-tag kan worden.
+ */
+function aanhef(voornaam?: string | null): string {
+  const schoon = (voornaam ?? '').replace(/[{}\n\r]/g, '').trim()
+  return schoon ? `Hey ${schoon},` : 'Hallo,'
+}
+
+export function factuurMailTekst(voornaam?: string | null): string {
+  return [
+    aanhef(voornaam),
+    '',
+    'In de bijlage vind je factuur {document.invoice_id} voor je ArnoBot-abonnement. Deze is al betaald, je hoeft niets over te maken.',
+    '',
+    'Vragen? Mail naar hq@arno.bot.',
+    '',
+    'Groet,',
+    'ArnoBot',
+  ].join('\n')
+}
+
+export function creditMailTekst(voornaam?: string | null): string {
+  return [
+    aanhef(voornaam),
+    '',
+    'In de bijlage vind je creditfactuur {document.invoice_id} voor je terugbetaling. Het bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.',
+    '',
+    'Vragen? Mail naar hq@arno.bot.',
+    '',
+    'Groet,',
+    'ArnoBot',
+  ].join('\n')
+}
 
 /**
  * Creditnota voor een eerder gemaakte factuur (bij terugbetaling). Mét `terugbetalingRegistreren`
@@ -217,7 +242,7 @@ const CREDIT_MAIL = [
  */
 export async function maakCreditnota(
   factuurId: string,
-  opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string },
+  opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string; voornaam?: string | null },
 ): Promise<{ id: string }> {
   const credit = await mb<MbInvoice>(`/sales_invoices/${factuurId}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
   // De tekst uit de workflow zegt "al betaald, je hoeft niets over te maken", dat klopt niet voor een
@@ -240,6 +265,6 @@ export async function maakCreditnota(
       },
     })
   }
-  await verstuurFactuur(credit.id, 'Email', CREDIT_MAIL)
+  await verstuurFactuur(credit.id, 'Email', creditMailTekst(opties.voornaam))
   return { id: credit.id }
 }

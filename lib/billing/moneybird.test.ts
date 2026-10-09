@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bouwContactBody, bouwFactuurBody } from './moneybird'
+import { bouwContactBody, bouwFactuurBody, creditMailTekst, factuurMailTekst } from './moneybird'
 
 const basis = {
   contactId: '123',
@@ -61,5 +61,22 @@ describe('Moneybird factuur', () => {
     expect(zonder.ledger_account_id).toBeUndefined()
     const met = bouwFactuurBody({ ...basis, brutoCent: 5900, nettoCent: 4876, inclusiefBtw: true, ledgerAccountId: '55' }).sales_invoice.details_attributes[0] as Record<string, unknown>
     expect(met.ledger_account_id).toBe('55')
+  })
+})
+
+describe('Moneybird mailtekst', () => {
+  it('begint met de voornaam, ook bij een zakelijke klant', () => {
+    expect(factuurMailTekst('Sanne').startsWith('Hey Sanne,')).toBe(true)
+    expect(creditMailTekst('Sanne').startsWith('Hey Sanne,')).toBe(true)
+  })
+  it('valt zonder naam terug op een neutrale aanhef', () => {
+    expect(factuurMailTekst(null).startsWith('Hallo,')).toBe(true)
+    expect(factuurMailTekst('  ').startsWith('Hallo,')).toBe(true)
+  })
+  it('laat een naam nooit een Moneybird-tag worden', () => {
+    expect(factuurMailTekst('{document.total_price}')).not.toContain('{document.total_price}')
+  })
+  it('bewaart de factuurnummer-tag', () => {
+    expect(factuurMailTekst('Sanne')).toContain('{document.invoice_id}')
   })
 })

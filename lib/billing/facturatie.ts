@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import {
   btwTariefId,
+  factuurMailTekst,
   maakCreditnota,
   maakConceptFactuur,
   moneybirdIngeschakeld,
@@ -103,7 +104,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
         await verstuurFactuur(factuur.id, 'Manual')
         await registreerBetaling({ factuurId: factuur.id, betaaldOp, brutoCent: rij.bedrag_cent, mollieId: rij.mollie_payment_id })
       }
-      await verstuurFactuur(factuur.id, 'Email')
+      await verstuurFactuur(factuur.id, 'Email', factuurMailTekst(user.voornaam))
     } catch (e) {
       Sentry.captureException(e, { tags: { onderdeel: 'moneybird-factuur-afronden' } })
       await notifyTelegram(`Factuur in Moneybird is aangemaakt maar niet volledig afgerond op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nFactuur-id: ${factuur.id}\nRond hem handmatig af in Moneybird.`)
@@ -126,7 +127,13 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
     .maybeSingle<Pick<PayRow, 'moneybird_factuur_id' | 'mollie_payment_id' | 'user_id' | 'bedrag_cent'>>()
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
   try {
+    const { data: gebruiker } = await billingDb
+      .from('approved_users')
+      .select('voornaam')
+      .eq('user_id', rij.user_id)
+      .maybeSingle<{ voornaam: string | null }>()
     await maakCreditnota(rij.moneybird_factuur_id, {
+      voornaam: gebruiker?.voornaam,
       terugbetalingRegistreren: process.env.MONEYBIRD_BETALING_REGISTREREN === 'true',
       brutoCent: rij.bedrag_cent,
       betaaldOp: new Date(),
