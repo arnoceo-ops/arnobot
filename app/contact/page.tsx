@@ -57,15 +57,15 @@ export default function ContactPage() {
             <table>
               <tbody>
                 <tr><td style={rij}>Algemeen</td><td><a href={`mailto:${BEDRIJF.emailAlgemeen}`}>{BEDRIJF.emailAlgemeen}</a></td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Support</td><td><a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer">WhatsApp</a></td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Privacy</td><td><a href={`mailto:${BEDRIJF.emailPrivacy}`}>{BEDRIJF.emailPrivacy}</a></td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Support</td><td><a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer">WhatsApp</a></td></tr>
               </tbody>
             </table>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={label}>BEDRIJFSGEGEVENS</p>
-            <h2 style={h2}>Wie er achter ArnoBot zit</h2>
+            <h2 style={h2}>Over ArnoBot</h2>
             <table>
               <tbody>
                 <tr><td style={rij}>Bedrijf</td><td>{BEDRIJF.naam}</td></tr>
