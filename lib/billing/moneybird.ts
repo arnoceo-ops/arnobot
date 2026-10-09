@@ -191,12 +191,31 @@ export async function registreerBetaling(input: {
   })
 }
 
-/** Creditnota voor een eerder gemaakte factuur (bij terugbetaling), meteen verstuurd. */
-export async function maakCreditnota(factuurId: string): Promise<{ id: string }> {
+/**
+ * Creditnota voor een eerder gemaakte factuur (bij terugbetaling). Mét `terugbetalingRegistreren`
+ * wordt de creditnota eerst op "open" gezet zonder mail, dan de terugstorting (negatieve
+ * betaling) erop geregistreerd en pas daarna gemaild, zodat hij op betaald staat.
+ * De "verrekenen met de originele factuur"-stap werkt niet als de originele factuur al is betaald.
+ */
+export async function maakCreditnota(
+  factuurId: string,
+  opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string },
+): Promise<{ id: string }> {
   const credit = await mb<MbInvoice>(`/sales_invoices/${factuurId}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
-  await mb(`/sales_invoices/${credit.id}/send_invoice.json`, {
-    method: 'PATCH',
-    body: { sales_invoice_sending: { delivery_method: 'Email' } },
-  })
+  if (opties.terugbetalingRegistreren) {
+    await verstuurFactuur(credit.id, 'Manual')
+    await mb(`/sales_invoices/${credit.id}/payments.json`, {
+      method: 'POST',
+      body: {
+        payment: {
+          payment_date: dateOnly(opties.betaaldOp),
+          price: `-${euro(opties.brutoCent)}`,
+          transaction_identifier: opties.mollieId,
+          manual_payment_action: 'payment_without_proof',
+        },
+      },
+    })
+  }
+  await verstuurFactuur(credit.id, 'Email')
   return { id: credit.id }
 }

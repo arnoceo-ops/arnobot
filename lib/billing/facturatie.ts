@@ -121,12 +121,17 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
   if (!factureringToegestaan()) return
   const { data: rij } = await billingDb
     .from('arnobot_payments')
-    .select('moneybird_factuur_id, mollie_payment_id, user_id')
+    .select('moneybird_factuur_id, mollie_payment_id, user_id, bedrag_cent')
     .eq('id', payRowId)
-    .maybeSingle<Pick<PayRow, 'moneybird_factuur_id' | 'mollie_payment_id' | 'user_id'>>()
+    .maybeSingle<Pick<PayRow, 'moneybird_factuur_id' | 'mollie_payment_id' | 'user_id' | 'bedrag_cent'>>()
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
   try {
-    await maakCreditnota(rij.moneybird_factuur_id)
+    await maakCreditnota(rij.moneybird_factuur_id, {
+      terugbetalingRegistreren: process.env.MONEYBIRD_BETALING_REGISTREREN === 'true',
+      brutoCent: rij.bedrag_cent,
+      betaaldOp: new Date(),
+      mollieId: rij.mollie_payment_id,
+    })
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'moneybird-creditnota' } })
     await notifyTelegram(`Creditnota maken in Moneybird mislukt op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nMaak de creditnota handmatig aan.`)
