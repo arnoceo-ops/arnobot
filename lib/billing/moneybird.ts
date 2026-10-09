@@ -163,10 +163,14 @@ export async function maakConceptFactuur(f: FactuurInput): Promise<{ id: string 
  * Verstuurt de factuur. 'Email' mailt hem naar de klant, 'Manual' zet hem alleen op "open"
  * zonder mail (nodig om er een betaling op te kunnen registreren voordat de klant hem ziet).
  */
-export async function verstuurFactuur(id: string, methode: 'Email' | 'Manual'): Promise<{ factuurnummer: string | null }> {
+export async function verstuurFactuur(
+  id: string,
+  methode: 'Email' | 'Manual',
+  emailBericht?: string,
+): Promise<{ factuurnummer: string | null }> {
   const v = await mb<MbInvoice>(`/sales_invoices/${id}/send_invoice.json`, {
     method: 'PATCH',
-    body: { sales_invoice_sending: { delivery_method: methode } },
+    body: { sales_invoice_sending: { delivery_method: methode, ...(emailBericht ? { email_message: emailBericht } : {}) } },
   })
   return { factuurnummer: v.invoice_id ?? null }
 }
@@ -191,6 +195,20 @@ export async function registreerBetaling(input: {
   })
 }
 
+const CREDIT_VOORWAARDEN =
+  'Dit bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven. Vragen? Mail naar hq@arno.bot.'
+
+const CREDIT_MAIL = [
+  'Hallo,',
+  '',
+  'In de bijlage vind je creditfactuur {document.invoice_id} voor je terugbetaling. Het bedrag is teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.',
+  '',
+  'Vragen? Mail naar hq@arno.bot.',
+  '',
+  'Groet,',
+  'ArnoBot',
+].join('\n')
+
 /**
  * Creditnota voor een eerder gemaakte factuur (bij terugbetaling). Mét `terugbetalingRegistreren`
  * wordt de creditnota eerst op "open" gezet zonder mail, dan de terugstorting (negatieve
@@ -202,6 +220,12 @@ export async function maakCreditnota(
   opties: { terugbetalingRegistreren: boolean; brutoCent: number; betaaldOp: Date; mollieId: string },
 ): Promise<{ id: string }> {
   const credit = await mb<MbInvoice>(`/sales_invoices/${factuurId}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
+  // De tekst uit de workflow zegt "al betaald, je hoeft niets over te maken", dat klopt niet voor een
+  // terugbetaling. Het concept is nog aan te passen voordat het wordt verstuurd.
+  await mb(`/sales_invoices/${credit.id}.json`, {
+    method: 'PATCH',
+    body: { sales_invoice: { payment_conditions: CREDIT_VOORWAARDEN } },
+  })
   if (opties.terugbetalingRegistreren) {
     await verstuurFactuur(credit.id, 'Manual')
     await mb(`/sales_invoices/${credit.id}/payments.json`, {
@@ -216,6 +240,6 @@ export async function maakCreditnota(
       },
     })
   }
-  await verstuurFactuur(credit.id, 'Email')
+  await verstuurFactuur(credit.id, 'Email', CREDIT_MAIL)
   return { id: credit.id }
 }
