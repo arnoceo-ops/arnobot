@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { mollieIngeschakeld } from '@/lib/billing/mollie'
+import { mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
 
 const DAG_MS = 24 * 60 * 60 * 1000
@@ -12,7 +12,7 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const mollieEnabled = mollieIngeschakeld()
+  const mollieEnabled = mollieBeschikbaarVoor(userId)
   if (!mollieEnabled) return NextResponse.json({ mollieEnabled, abonnement: null })
 
   const { data: sub } = await billingDb

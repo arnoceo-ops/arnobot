@@ -101,6 +101,13 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Openstaand (deadline 18 januari 2027):** Clerk stopt met oude CBC-mode TLS-cipher suites op custom domains. Vermoedelijk geen actie nodig (moderne stack), maar bij de maandcheck vlak vóór de deadline bevestigen dat er geen legacy clients op Clerk aansluiten.
 - **Openstaand:** `proxy.ts` gebruikt nog `createRouteMatcher()` (sinds `@clerk/nextjs` 7.5.14 gedeprecate t.g.v. `auth.protect()`, geen verwijderdatum). Migreren zodra dit is opgepakt.
 
+#### Mollie (betalingen, `lib/billing/`)
+- Pay-as-you-go, geen maandkosten. Rauwe `fetch()`, geen SDK. Bouwplan en voortgang: `docs/MOLLIE_PLAN.md`. Alles achter `MOLLIE_API_KEY`; een `test_`-sleutel werkt alleen voor de eigenaar en de interne testaccounts (`mollieBeschikbaarVoor`), pas een `live_`-sleutel opent het afrekenen voor iedereen.
+- [docs.mollie.com/changelog](https://docs.mollie.com/changelog) op API-wijzigingen of deprecations (o.a. Subscriptions API, Customers/Mandates).
+- Webhooks (`/api/webhooks/mollie`) zonder fouten? Mollie dashboard, Developers, Webhooks/Logs. Draait de dagelijkse `/api/cron/billing` (Vercel logs)? Hangen er betalingen op 'open' of abonnementen zonder `mollie_subscription_id`?
+- Tarieven (iDEAL, creditcard) nog zoals in Abacus (`DEFAULT_BETAALPROVIDER`)? Controle op de kwartaalcheck samen met sectie 8.
+- Moneybird (facturen, fase 2 van `docs/MOLLIE_PLAN.md`, nog niet gebouwd): bij aansluiting hier de API-changelog en het gekozen pakket opnemen.
+
 #### Resend
 - DKIM nog geldig? (Resend dashboard → Domains)
 - Geen bounces of spam-klachten die aandacht vragen?
@@ -579,7 +586,7 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 - Font: Arial, 11px, kleur `#374151`
 
 ### Marketing vs. transactioneel
-- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding
+- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding, betaling_bevestiging, betaling_mislukt, verlenging_30d, verlenging_7d, abonnement_afgelopen, terugbetaling_bevestiging
 - **Marketing** (opt-out verplicht): weekly_nudge, geen_gesprek_nudge, winback
 
 ### Opt-out mechanisme

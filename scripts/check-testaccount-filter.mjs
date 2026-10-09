@@ -37,6 +37,9 @@ const SCAN_PREFIXES = ['app/api/admin/', 'app/api/cron/', 'app/bot/admin/']
 // Tabellen met per-gebruiker eigendom (identiek aan check-missing-user-filter.mjs).
 const GEBRUIKERSTABELLEN = new Set([
   'approved_users',
+  'arnobot_billing_customers',
+  'arnobot_subscriptions',
+  'arnobot_payments',
   'arnobot_rds_logs',
   'arnobot_blog_sessions',
   'arnobot_analyses',

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { heeftGeldigeMachtiging, maakAbonnement, mollieIngeschakeld } from '@/lib/billing/mollie'
+import { heeftGeldigeMachtiging, maakAbonnement, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { abonnementVoorVerlenging, PARTICULIER_LOOPTIJD_MAANDEN, VERLENG_VENSTER_DAGEN, voegMaandenToe } from '@/lib/billing/perioden'
 import { planNaam } from '@/lib/billing/prijzen'
 
@@ -15,7 +15,7 @@ const DAG_MS = 24 * 60 * 60 * 1000
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
-  if (!mollieIngeschakeld()) return NextResponse.json({ error: 'Online betalen is nog niet beschikbaar' }, { status: 503 })
+  if (!mollieBeschikbaarVoor(userId)) return NextResponse.json({ error: 'Online betalen is nog niet beschikbaar' }, { status: 503 })
 
   const { data: sub } = await billingDb
     .from('arnobot_subscriptions')

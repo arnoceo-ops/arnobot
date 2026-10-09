@@ -24,6 +24,7 @@ export default function AccountPage() {
   const [deleteDone, setDeleteDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cancelledAt, setCancelledAt] = useState<string | null>(null)
+  const [eindigtOp, setEindigtOp] = useState<string | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
@@ -55,7 +56,7 @@ export default function AccountPage() {
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
-      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at) })
+      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op) })
       .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
@@ -91,7 +92,7 @@ export default function AccountPage() {
       const res = await fetch('/api/bot/cancel-subscription', { method: 'POST' })
       if (!res.ok) throw new Error('Opzegging mislukt')
       const data = await res.json()
-      setCancelledAt(data.cancelled_at)
+      setCancelledAt(data.cancelled_at); if (data.eindigt_op) setEindigtOp(data.eindigt_op)
       setCancelConfirm(false)
       setCancelDone(true)
       track('opzegging_gestart', { is_teambaas: !!isManager })
@@ -392,7 +393,7 @@ export default function AccountPage() {
           <p style={{ ...label, color: '#cc2200' }}>ABONNEMENT OPZEGGEN</p>
           {cancelledAt ? (
             <p style={body}>
-              Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot het einde van de lopende periode. Je data blijft bewaard totdat je account wordt afgesloten.
+              Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.
             </p>
           ) : cancelDone ? (
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>

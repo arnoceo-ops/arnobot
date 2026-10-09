@@ -327,6 +327,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | Route | Doel |
 |---|---|
 | `/api/webhooks/calendly` | Ontvangt boekingsevents (HMAC-signature + timestamp-verificatie) |
+| `/api/webhooks/mollie` | Ontvangt Mollie-betaalmeldingen (alleen een `id`, de betaling wordt altijd zelf bij Mollie opgehaald, idempotent via `verwerkt_at`). Actief zodra `MOLLIE_API_KEY` is gezet |
 | `/api/webhooks/github-pr` | Stuurt een Telegram-melding bij een nieuw geopende PR op de repo (X-Hub-Signature-256-verificatie). PR's van de documentatie-versheidsroutine (titel begint met "Documentatie-versheidscheck") worden bewust overgeslagen, die worden in een Claude Code-sessie afgehandeld |
 
 ### Infrastructuur
@@ -371,6 +372,10 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
 
 ---
+
+## Online betalen (Mollie)
+
+Zie `docs/MOLLIE_PLAN.md` voor het volledige plan, de besluiten en de livegang-checklist. Code in `lib/billing/` (client, prijzen en btw, perioden, verwerking, opzeggen, mails), routes `/api/bot/checkout`, `/api/bot/billing`, `/api/bot/billing/verleng`, `/api/webhooks/mollie`, `/api/cron/billing` (dagelijks 05:00 UTC: gemiste webhooks inhalen, ontbrekende abonnementen herstellen, opzeggingen stopzetten, verlengherinneringen, verlopen abonnementen afsluiten) en `/api/admin/refund`. Toegang loopt via `approved_users.expires_at` (einde betaalde periode plus 3 dagen respijt), `proxy.ts` is ongewijzigd. Tabellen: `arnobot_billing_customers`, `arnobot_subscriptions`, `arnobot_payments` (migratie: `docs/sql/2026-10-10-mollie-billing.sql`).
 
 ## Database-tabellen
 

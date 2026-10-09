@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { MollieError, SITE_URL, maakEersteBetaling, maakKlant, mollieIngeschakeld } from '@/lib/billing/mollie'
+import { MollieError, SITE_URL, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
 import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer } from '@/lib/billing/btwNummer'
 import { isTeamCovered } from '@/lib/teamAccess'
@@ -24,7 +24,7 @@ const fout = (status: number, error: string, extra?: Record<string, unknown>) =>
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return fout(401, 'Niet ingelogd')
-  if (!mollieIngeschakeld()) return fout(503, 'Online betalen is nog niet beschikbaar')
+  if (!mollieBeschikbaarVoor(userId)) return fout(503, 'Online betalen is nog niet beschikbaar')
 
   const { success } = await ratelimit.limit(userId)
   if (!success) return fout(429, 'Te veel pogingen, probeer het over een uur opnieuw')

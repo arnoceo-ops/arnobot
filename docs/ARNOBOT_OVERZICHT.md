@@ -98,7 +98,7 @@ Een statuskader onder de hero op de hoofdpagina (alleen desktop/laptop, niet in 
 
 **Elite (individueel, €397/maand):** verwijderd uit het systeem op 25 augustus 2026, bevestigd 0 actieve klanten. Binnen een Team-offerte-aanvraag kan een individueel teamlid nog wel Elite-niveau krijgen voor een vast surplus van €338/maand bovenop het gewone Team-tarief, dat is een losstaande, nog levende optie, geen relatie meer met een bestaand individueel Elite-abonnement.
 
-**Alle betalingen lopen momenteel volledig handmatig**, voor elke tier. Er is nog geen betaalprovider (bijv. Stripe) aangesloten, dat is een bewuste, latere stap in de bouwvolgorde.
+**Betalingen:** de online betaalflow is gebouwd op Mollie (iDEAL en creditcard) en staat klaar achter een schakelaar. Zolang die uit staat lopen betalingen handmatig. Bij de livegang geldt: particulieren (Basic en Pro) betalen maandelijks automatisch, maximaal 12 maanden, of eenmalig voor een jaar, en krijgen daarna een mail met de vraag of ze willen verlengen. Zakelijke klanten lopen door tot ze opzeggen, met een maand opzegtermijn. Particulieren hebben 14 dagen bedenktijd en krijgen dan het volledige bedrag terug; zakelijk geen terugbetaling. Particulier betaalt het getoonde bedrag inclusief btw, zakelijk het getoonde bedrag plus 21%. Team blijft per factuur, via Moneybird zodra dat is aangesloten. Facturen via Moneybird zijn de volgende stap vóór de livegang.
 
 **Team, aanvraagproces:** publieke aanvraagpagina op arno.bot/team (geen inlog vereist), met bedrijfsgegevens en een live berekende prijs. Na akkoord richt Arno de toegang handmatig in.
 

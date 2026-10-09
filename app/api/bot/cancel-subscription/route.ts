@@ -86,7 +86,7 @@ export async function POST() {
     ),
   }).catch(() => {})
 
-  return NextResponse.json({ ok: true, cancelled_at: now, isManager, teamMemberCount })
+  return NextResponse.json({ ok: true, cancelled_at: now, isManager, teamMemberCount, eindigt_op: automatisch?.ingaatOp.toISOString() ?? null })
 }
 
 export async function GET() {
@@ -99,5 +99,15 @@ export async function GET() {
     .eq('user_id', userId)
     .maybeSingle()
 
-  return NextResponse.json({ cancelled_at: data?.cancelled_at ?? null })
+  // Bij een online abonnement kennen we de exacte einddatum (artikel 7 van de voorwaarden).
+  const { data: sub } = await supabase
+    .from('arnobot_subscriptions')
+    .select('opzegging_ingaat_at')
+    .eq('user_id', userId)
+    .eq('status', 'cancelled')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({ cancelled_at: data?.cancelled_at ?? null, eindigt_op: sub?.opzegging_ingaat_at ?? null })
 }

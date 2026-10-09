@@ -2,25 +2,27 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-10-10
-- **Waar we staan:** plan geschreven, bouw gestart. Alles is achter de omgevingsvariabele `MOLLIE_API_KEY` gezet: zonder die variabele draait de oude handmatige flow (`/api/bot/confirm-renewal` plus factuur door Arno) ongewijzigd door. Zo is elke tussenstap veilig te deployen.
+- **Laatst bijgewerkt:** 2026-10-10 (einde bouwsessie)
+- **Waar we staan:** de hele Mollie-flow is gebouwd en staat gepusht (client, prijzen en btw, perioden, verwerking, webhook, checkout, opzeggen, verlengen, dagelijkse cron, admin-terugbetaling, 6 mails, afrekenscherm in `/bot/doorgaan`, einddatum op de accountpagina, 25 unit tests). Alles is nog nooit tegen echt Mollie gedraaid: de eerste end-to-end test in testmodus moet nog. Zonder `MOLLIE_API_KEY` verandert er niets voor gebruikers.
 - **Eerstvolgende stap:** Arno voert `docs/sql/2026-10-10-mollie-billing.sql` uit in Supabase, maakt het Mollie-account aan (pay-as-you-go, testmodus) en zet `MOLLIE_API_KEY` (test_...) in `.env.local` en Vercel. Pas daarna kan de flow end-to-end in testmodus draaien.
 - **Blokkerend voor livegang (niet voor bouwen):** (1) Moneybird-koppeling voor facturen, want de voorwaarden beloven na elke betaling een factuur; (2) btw-nummer; (3) Mollie-verificatie van het account met KvK-gegevens.
 
 ### Afvinklijst
 
 - [x] Plan en SQL
-- [ ] Fundament: Mollie-client, prijzen en btw, perioden (met unit tests)
-- [ ] Checkout-route en webhook (eerste betaling, abonnement aanmaken)
-- [ ] Verwerking herhaalbetalingen, mislukte betalingen, terugbetalingen en chargebacks
-- [ ] Opzeggen (particulier direct, zakelijk met opzegtermijn van een maand)
-- [ ] Dagelijkse cron: herinneringen 30 en 7 dagen, herstel, einde
-- [ ] E-mails (6 types)
-- [ ] Afrekenscherm in `/bot/doorgaan` (particulier of zakelijk, btw-regel, voorwaarden-vinkje)
-- [ ] Accountpagina: abonnementsstatus
-- [ ] Admin: terugbetaling binnen bedenktijd
-- [ ] Docs, CLAUDE.md-checks (maandcheck Mollie), unit tests groen
+- [x] Fundament: Mollie-client, prijzen en btw, perioden (met unit tests)
+- [x] Checkout-route en webhook (eerste betaling, abonnement aanmaken)
+- [x] Verwerking herhaalbetalingen, mislukte betalingen, terugbetalingen en chargebacks
+- [x] Opzeggen (particulier direct, zakelijk met opzegtermijn van een maand) plus opzegbevestiging per mail (stond in de voorwaarden maar werd nergens verstuurd)
+- [x] Dagelijkse cron: herinneringen 30 en 7 dagen, herstel, einde
+- [x] E-mails (6 types)
+- [x] Afrekenscherm in `/bot/doorgaan` (particulier of zakelijk, btw-regel, voorwaarden-vinkje, één klik verlengen)
+- [x] Accountpagina: exacte einddatum na opzegging
+- [x] Admin: terugbetaling binnen bedenktijd (knop in het betaalpaneel)
+- [x] Docs, CLAUDE.md (maandcheck, mailtypes), CI-checks bijgewerkt
+- [ ] **Testmodus end-to-end doorlopen** (Arno: SQL uitvoeren, `MOLLIE_API_KEY=test_...` in `.env.local` en Vercel)
 - [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
+- [ ] Privacyverklaring en beveiligings-PDF: Mollie en Moneybird als verwerkers (Arno: kan later)
 
 ## Besluiten (met verworpen alternatieven)
 

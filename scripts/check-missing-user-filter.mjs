@@ -55,6 +55,9 @@ const EXCLUDED_PATH_PREFIXES = [
 // verkeerde aanname over een ongeverifieerde tabel een fout-positief oplevert.
 const GEBRUIKERSTABELLEN = new Set([
   'approved_users',
+  'arnobot_billing_customers',
+  'arnobot_subscriptions',
+  'arnobot_payments',
   'arnobot_rds_logs',
   'arnobot_blog_sessions',
   'arnobot_analyses',
@@ -89,6 +92,9 @@ const OWNERSHIP_EQ = /\.(eq|in)\(\s*['"][^'"]*(?:user_id|manager_id|member_id)[^
 // (referral-code, team_id) waarvan de output nooit terug naar de aanroeper lekt.
 // Formaat: 'relatief/pad.ts:tabelnaam'.
 const KNOWN_SAFE_QUERIES = new Set([
+  // Betaling van een abonnement dat in dezelfde functie al op user_id is opgehaald (s.id komt
+  // uit een query met .eq('user_id', userId)).
+  'app/api/bot/checkout/route.ts:arnobot_payments',
   'app/api/bot/team/1on1/save/route.ts:arnobot_1on1_log',
   // Zoekt de referrer op via een publieke referral_code (niet de eigen user_id) om
   // een e-mail te sturen; referrer-data (incl. e-mailadres) wordt nooit teruggegeven

@@ -1,4 +1,5 @@
 import { centenNaarMollie } from './geld'
+import { INTERNAL_TEST_USER_IDS } from '@/lib/internalTestAccounts'
 
 // Dunne Mollie-client op rauwe fetch (geen SDK, zelfde keuze als OpenAI en ElevenLabs
 // elders in de app). Alleen de endpoints die we echt gebruiken.
@@ -13,6 +14,19 @@ export const MOLLIE_WEBHOOK_URL = `${SITE_URL}/api/webhooks/mollie`
 
 export function mollieIngeschakeld(): boolean {
   return !!process.env.MOLLIE_API_KEY
+}
+
+/**
+ * Mag deze gebruiker online afrekenen? Met een live_-sleutel iedereen. Met een test_-sleutel
+ * alleen de eigenaar en de interne testaccounts: in testmodus is een nepbetaling gratis te
+ * voltooien, dus echte gebruikers blijven op de handmatige factuurflow tot de live-sleutel er staat.
+ */
+export function mollieBeschikbaarVoor(userId: string): boolean {
+  const key = process.env.MOLLIE_API_KEY
+  if (!key) return false
+  if (key.startsWith('live_')) return true
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return INTERNAL_TEST_USER_IDS.includes(userId) || (!!eigenaar && eigenaar === userId)
 }
 
 export class MollieError extends Error {
