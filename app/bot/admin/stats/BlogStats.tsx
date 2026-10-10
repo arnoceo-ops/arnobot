@@ -11,6 +11,7 @@ import { StatCard, TileGrid, SubHeading, RatioBar, TrendChart } from './StatsUi'
 const DAY = 86_400_000
 const WEEKS = 8
 const RECENT_POSTS = 5
+const RECENT_SIGNUPS = 50
 
 type CountQuery = PromiseLike<{ count: number | null }>
 const n = async (q: CountQuery): Promise<number> => (await q).count ?? 0
@@ -111,13 +112,20 @@ async function laadBlogStats() {
     return [{ ...a, naam: abonnee.voornaam ?? '', email: abonnee.email, status: abonnee.status, isGebruiker: gebruikerEmails.has(abonnee.email.toLowerCase()) }]
   })
 
+  const { data: aanmeldingenRaw } = await db
+    .from('arnobot_blog_subscribers')
+    .select('email, voornaam, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(RECENT_SIGNUPS)
+  const aanmeldingen = (aanmeldingenRaw ?? []) as { email: string; voornaam: string | null; status: string; created_at: string }[]
+
   const nieuw: Record<string, number> = {}
   const weg: Record<string, number> = {}
   weeks.forEach((w, i) => { nieuw[w.label] = nieuwPerWeek[i]; weg[w.label] = afgemeldPerWeek[i] })
 
   return {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, aanmeldingen,
     budget: getDailyBlogMailBudget(),
     heeftGroei: nieuwPerWeek.some(x => x > 0) || afgemeldPerWeek.some(x => x > 0),
   }
@@ -126,7 +134,7 @@ async function laadBlogStats() {
 export default async function BlogStats() {
   const {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, budget, heeftGroei,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, aanmeldingen, budget, heeftGroei,
   } = await laadBlogStats()
 
   const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding: '10px 8px', borderBottom: '1px solid #374151' } as const
@@ -241,6 +249,41 @@ export default async function BlogStats() {
                         {a.laatste ? new Date(a.laatste).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' }) : ''}
                       </td>
                       <td style={{ ...cell, color: a.isGebruiker ? '#6b7280' : '#f59e0b', fontWeight: a.isGebruiker ? 400 : 700 }}>{a.isGebruiker ? 'JA' : 'NEE'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </StatCard>
+        </>
+      )}
+
+      {aanmeldingen.length > 0 && (
+        <>
+          <SubHeading label="AANMELDINGEN" />
+          <StatCard label="LAATSTE AANMELDINGEN" full
+            footnote={`Nieuwste bovenaan, laatste ${aanmeldingen.length} van ${totaal}. Wacht op bevestiging betekent dat de aanmelder de link in de mail nog niet heeft aangeklikt.`}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+                <thead>
+                  <tr>
+                    <th style={head}>DATUM</th>
+                    <th style={head}>VOORNAAM</th>
+                    <th style={head}>E-MAIL</th>
+                    <th style={head}>STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aanmeldingen.map(a => (
+                    <tr key={a.email}>
+                      <td style={cell}>
+                        {new Date(a.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
+                      </td>
+                      <td style={cell}>{a.voornaam ?? ''}</td>
+                      <td style={cell}>{a.email}</td>
+                      <td style={{ ...cell, color: a.status === 'confirmed' ? '#f1f5f9' : '#6b7280' }}>
+                        {a.status === 'confirmed' ? 'BEVESTIGD' : a.status === 'pending' ? 'WACHT OP BEVESTIGING' : 'AFGEMELD'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
