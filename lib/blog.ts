@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import {
   RESERVED_SLUGS,
   findForbiddenDashes,
@@ -14,6 +14,8 @@ import {
 
 export const BLOG_BASE_URL = 'https://www.arno.bot'
 export const BLOG_IMAGE_BUCKET = 'blog-images'
+export const BLOG_CACHE_TAG = 'blog'
+const BLOG_CACHE_SECONDS = 3600
 
 export type BlogStatus = 'draft' | 'scheduled' | 'published'
 
@@ -53,26 +55,44 @@ export function getBlogDb() {
   return _db
 }
 
+// Leesclient voor de publieke pagina's. De root layout leest headers() (CSP-nonce), dus alle
+// pagina's worden per verzoek gerenderd; om bij veel lezers niet elke keer de database te
+// raken cachen we de Supabase-GET's via Next's fetch-cache. revalidateBlog() ververst die
+// cache direct na elke wijziging in de admin. Daarom staat er bewust geen tijdstip in de
+// query-URL (dat zou elke aanroep een andere cachesleutel geven).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _readDb: SupabaseClient<any, 'public', any> | null = null
+export function getBlogReadDb() {
+  if (!_readDb) {
+    _readDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false },
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, next: { revalidate: BLOG_CACHE_SECONDS, tags: [BLOG_CACHE_TAG] } } as RequestInit),
+      },
+    })
+  }
+  return _readDb
+}
+
 // ─── Publiek lezen ───────────────────────────────────────────────────
 
 export async function getPublishedPosts(): Promise<BlogPostListItem[]> {
-  const { data, error } = await getBlogDb()
+  const { data, error } = await getBlogReadDb()
     .from('arnobot_blog_posts')
     .select(LIST_FIELDS)
     .eq('status', 'published')
-    .lte('published_at', new Date().toISOString())
     .order('published_at', { ascending: false })
   if (error) throw new Error(`Blogposts ophalen mislukt: ${error.message}`)
   return (data ?? []) as unknown as BlogPostListItem[]
 }
 
 export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
-  const { data, error } = await getBlogDb()
+  const { data, error } = await getBlogReadDb()
     .from('arnobot_blog_posts')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
-    .lte('published_at', new Date().toISOString())
     .maybeSingle()
   if (error) throw new Error(`Blogpost ophalen mislukt: ${error.message}`)
   return (data as unknown as BlogPost) ?? null
@@ -108,6 +128,7 @@ export interface PostInput {
   tags: string[]
   status: BlogStatus
   publish_at: string | null
+  notify_subscribers: boolean
 }
 
 const MAX_TITLE = 140
@@ -159,14 +180,16 @@ export function validatePostInput(raw: unknown): { ok: true; value: PostInput } 
   }
 
   if (errors.length) return { ok: false, errors }
-  return { ok: true, value: { title, slug, summary, body_md, cover_image_url: cover, tags, status, publish_at } }
+  const notify_subscribers = b.notify_subscribers === true
+  return { ok: true, value: { title, slug, summary, body_md, cover_image_url: cover, tags, status, publish_at, notify_subscribers } }
 }
 
 // ─── Cache verversen ─────────────────────────────────────────────────
 
-// Publieke pagina's worden statisch gegenereerd. Na elke wijziging die zichtbaar kan zijn,
-// markeren we ze als verouderd; de eerstvolgende bezoeker triggert de verversing.
+// Na elke wijziging die zichtbaar kan zijn: de gecachete leesdata direct ongeldig maken
+// (tag) en de paden als verouderd markeren.
 export function revalidateBlog(slug?: string) {
+  revalidateTag(BLOG_CACHE_TAG, { expire: 0 })
   revalidatePath('/blog')
   revalidatePath('/blog/[slug]', 'page')
   revalidatePath('/blog/tag/[tag]', 'page')

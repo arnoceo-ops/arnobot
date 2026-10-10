@@ -72,7 +72,14 @@ const corpus = searchFiles.map(f => ({ file: f, text: readFileSync(f, 'utf-8') }
 
 function isOrphan(routePath, ownFile) {
   // Boundary-check: voorkomt dat /api/bot/session matcht binnen /api/bot/sessions
-  const escaped = routePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // Dynamische segmenten ([id]) staan in de aanroepende code als template-string
+  // (`/api/x/${id}`) of als vaste waarde, dus die matchen we als wildcard.
+  const escapeRe = seg => seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const DYNAMIC_SEGMENT = '(?:\\$\\{[^}]*\\}|[^/\'"`\\s]+)'
+  const escaped = routePath
+    .split('/')
+    .map(seg => (/^\[.+\]$/.test(seg) ? DYNAMIC_SEGMENT : escapeRe(seg)))
+    .join('/')
   const re = new RegExp(escaped + '(?![a-zA-Z0-9_-])', 'g')
   for (const { file, text } of corpus) {
     if (file === ownFile) continue

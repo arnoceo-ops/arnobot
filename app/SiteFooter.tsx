@@ -42,7 +42,7 @@ export default function SiteFooter() {
             <p className="site-footer-heading">Bedrijf</p>
             <a href="https://arno.blog/bio">Over Arno</a>
             <Link href="/contact">Contact</Link>
-            <a href="https://arno.blog">Blog</a>
+            <Link href="/blog">Blog</Link>
           </div>
           <div className="site-footer-col">
             <p className="site-footer-heading">Juridisch</p>

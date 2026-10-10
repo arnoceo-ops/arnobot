@@ -10,6 +10,7 @@ import type { BlogPost, BlogStatus } from '@/lib/blog'
 interface Props {
   initial: BlogPost | null
   existingTags: string[]
+  subscriberCount: number
 }
 
 interface Backup {
@@ -32,7 +33,7 @@ function toLocalInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export default function PostEditor({ initial, existingTags }: Props) {
+export default function PostEditor({ initial, existingTags, subscriberCount }: Props) {
   const router = useRouter()
   const postId = initial?.id ?? null
   const backupKey = `blogdraft:${postId ?? 'nieuw'}`
@@ -46,6 +47,9 @@ export default function PostEditor({ initial, existingTags }: Props) {
   const [tagInput, setTagInput] = useState('')
   const [cover, setCover] = useState(initial?.cover_image_url ?? '')
   const [publishAt, setPublishAt] = useState(toLocalInput(initial?.publish_at ?? null))
+  const [notify, setNotify] = useState(initial?.notify_subscribers ?? false)
+  const [notifiedAt, setNotifiedAt] = useState<string | null>(initial?.notified_at ?? null)
+  const [testing, setTesting] = useState(false)
 
   const [savedStatus, setSavedStatus] = useState<BlogStatus | null>(initial?.status ?? null)
   const [savedSlug, setSavedSlug] = useState(initial?.slug ?? '')
@@ -161,6 +165,7 @@ export default function PostEditor({ initial, existingTags }: Props) {
       const payload = {
         title, slug, summary, body_md: body, cover_image_url: cover || null, tags, status,
         publish_at: status === 'scheduled' ? new Date(publishAt).toISOString() : null,
+        notify_subscribers: notify,
       }
       const res = await fetch(postId ? `/api/admin/blog/posts/${postId}` : '/api/admin/blog/posts', {
         method: postId ? 'PUT' : 'POST',
@@ -174,7 +179,8 @@ export default function PostEditor({ initial, existingTags }: Props) {
       try { localStorage.removeItem(backupKey) } catch { /* zie boven */ }
       setSavedStatus(status)
       setSavedSlug(slug)
-      setNotice(status === 'published' ? 'Opgeslagen en live.' : status === 'scheduled' ? 'Ingepland.' : 'Opgeslagen als concept.')
+      if (status === 'published' && notify && !notifiedAt) setNotifiedAt(new Date().toISOString())
+      setNotice(status === 'published' ? (notify && !notifiedAt ? 'Opgeslagen, live en ingepland voor abonnees.' : 'Opgeslagen en live.') : status === 'scheduled' ? 'Ingepland.' : 'Opgeslagen als concept.')
 
       if (!postId) router.replace(`/bot/admin/blog/${data.post.id}`)
       else router.refresh()
@@ -182,6 +188,25 @@ export default function PostEditor({ initial, existingTags }: Props) {
       setErrors(['Opslaan mislukt, controleer je verbinding'])
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function sendTest() {
+    if (!postId || testing) return
+    setTesting(true); setErrors([]); setNotice('')
+    try {
+      const res = await fetch('/api/admin/blog/test-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: postId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setErrors([data.error ?? 'Testmail versturen mislukt']); return }
+      setNotice(`Testmail gestuurd naar ${data.to}.`)
+    } catch {
+      setErrors(['Testmail versturen mislukt'])
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -355,7 +380,25 @@ export default function PostEditor({ initial, existingTags }: Props) {
         </div>
       )}
 
-      <div style={{ marginTop: 32, borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div style={{ marginTop: 32, borderTop: '1px solid #1e293b', paddingTop: 24 }}>
+        <span style={label}>ABONNEES</span>
+        {notifiedAt ? (
+          <p style={muted}>Verstuurd naar abonnees op {new Date(notifiedAt).toLocaleString('nl-NL', { dateStyle: 'medium', timeStyle: 'short' })}.</p>
+        ) : (
+          <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: '#f1f5f9', cursor: 'pointer' }}>
+            <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
+            Verstuur naar abonnees zodra de post live is ({subscriberCount} bevestigd)
+          </label>
+        )}
+        <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="button" disabled={!postId || testing || dirty} onClick={sendTest} style={{ ...btnSecondary, opacity: !postId || testing || dirty ? 0.5 : 1 }}>
+            {testing ? 'BEZIG...' : 'STUUR TESTMAIL NAAR MEZELF'}
+          </button>
+          {(!postId || dirty) && <span style={muted}>Sla de post eerst op.</span>}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24, borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <button type="button" disabled={saving} onClick={() => save('published')} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'BEZIG...' : isLive ? 'OPSLAAN' : 'PUBLICEER NU'}
         </button>

@@ -62,6 +62,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.squarespace-cdn.com',
       },
+      // Blogafbeeldingen (publieke bucket blog-images), geoptimaliseerd via next/image.
+      {
+        protocol: 'https',
+        hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://invalid.supabase.co').hostname,
+        pathname: '/storage/v1/object/public/blog-images/**',
+      },
     ],
   },
   // opengraph-image/icon/apple-icon lezen lokale TTF's via fs.readFile bij module-init.

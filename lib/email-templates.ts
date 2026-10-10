@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto'
 import { BEDRIJF_REGEL } from '@/lib/bedrijf'
+import { BLOG_COPY } from '@/lib/blogCopy'
 
 export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -79,6 +80,8 @@ export type EmailType =
   | 'referral_aanmelding'
   | 'team_1on1_ritme_nudge'
   | 'team_1on1_ritme_herinnering'
+  | 'blog_bevestiging'
+  | 'blog_nieuwe_post'
   | 'admin_derde_trial'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
@@ -112,7 +115,22 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
   team_1on1_ritme_nudge:       { label: '1:1-ritme nudge',       description: 'Event:teamlid 2+ weken geen 1:1, belletje 48u ongelezen',         category: 'user' },
   team_1on1_ritme_herinnering: { label: '1:1-ritme herinnering', description: 'Event:5 dagen na eerste leessignaal, nog steeds geen 1:1',        category: 'user' },
+  blog_bevestiging:      { label: 'Blog bevestiging',       description: 'Event:na aanmelden voor de blog, bevestig-link (double opt-in)',     category: 'user' },
+  blog_nieuwe_post:      { label: 'Blog nieuw artikel',     description: 'Event:bij publicatie van een artikel, naar bevestigde abonnees',     category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
+}
+
+export interface BlogMailOptions {
+  titel: string
+  samenvatting: string
+  /** Artikel-URL (nieuwe post) of bevestig-URL (aanmelding). */
+  url: string
+  afmeldUrl: string
+  voorkeurenUrl: string
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 export interface BillingMailOptions {
@@ -139,7 +157,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -432,6 +450,28 @@ export function getEmailTemplate(
         html: mail(
           `Na je laatste gesprek stond er één concrete actie voor je klaar. Weet je nog welke?<br><br><em style="color:#f1f5f9;">${uitdaging}</em><br><br>Gedaan? Nog niet begonnen? Beide is prima om te delen, ArnoBot gebruikt het om je beter te helpen, niet om af te rekenen.`,
           'GEEF EEN UPDATE →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
+    }
+    case 'blog_bevestiging': {
+      const b = options?.blog
+      return {
+        subject: `${prefix}${BLOG_COPY.mail.bevestigOnderwerp}`,
+        html: mail(BLOG_COPY.mail.bevestigTekst, BLOG_COPY.mail.bevestigKnop, b?.url ?? 'https://www.arno.bot/blog'),
+      }
+    }
+    case 'blog_nieuwe_post': {
+      const b = options?.blog
+      const titel = escapeHtml(b?.titel ?? 'Nieuw artikel')
+      const samenvatting = escapeHtml(b?.samenvatting ?? '')
+      const body = samenvatting ? `<strong style="color:#f1f5f9;">${titel}</strong><br><br>${samenvatting}` : `<strong style="color:#f1f5f9;">${titel}</strong>`
+      return {
+        subject: `${prefix}${b?.titel ?? 'Nieuw artikel'}`,
+        html: mail(
+          body,
+          BLOG_COPY.mail.nieuwKnop,
+          b?.url ?? 'https://www.arno.bot/blog',
+          `${BLOG_COPY.mail.nieuwVoet(b?.afmeldUrl ?? 'https://www.arno.bot/blog')}<br>${BLOG_COPY.mail.voorkeurenVoet(b?.voorkeurenUrl ?? 'https://www.arno.bot/blog')}`
         ),
       }
     }

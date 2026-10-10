@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { isAdminSession } from '@/lib/adminAuth'
 import { getBlogDb, revalidateBlog, validatePostInput, type BlogPost } from '@/lib/blog'
+import { notifySubscribersOfPost, processBlogDeliveries } from '@/lib/blogMail'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -42,6 +43,18 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   // Beide slugs verversen: bij een hernoemde slug moet de oude pagina verdwijnen.
   revalidateBlog(v.slug)
   if (existing.slug !== v.slug) revalidateBlog(existing.slug)
+
+  // Versturen naar abonnees gebeurt eenmalig per post (notified_at), zodra de post live is.
+  if (v.status === 'published' && v.notify_subscribers && !existing.notified_at) {
+    after(async () => {
+      try {
+        await notifySubscribersOfPost({ id, tags: v.tags })
+        await processBlogDeliveries()
+      } catch (err) {
+        console.error('[admin/blog] versturen naar abonnees mislukt:', err instanceof Error ? err.message : err)
+      }
+    })
+  }
   return NextResponse.json({ ok: true, slug: v.slug, status: v.status })
 }
 

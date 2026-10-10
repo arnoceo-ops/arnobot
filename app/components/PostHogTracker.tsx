@@ -17,6 +17,8 @@ import posthog from 'posthog-js'
 const VOLLEDIG_UITGESLOTEN = [
   '/abacus', '/api', '/sign-in', '/sign-up', '/sso-callback', '/clerk-proxy', '/monitoring',
   '/bot/admin',
+  // Bevestig-, afmeld- en voorkeurenlinks bevatten een geheim token in het pad.
+  '/blog/bevestig', '/blog/afmelden', '/blog/voorkeuren',
 ]
 
 function isExcluded(pathname: string): boolean {

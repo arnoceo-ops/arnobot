@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 // Alleen de publieke marketingpagina's tellen mee als "bezoeker" voor de
 // funnel. /bot (het product zelf), /abacus (interne tool) en de auth-/api-
 // routes zijn geen onderdeel van "bezoeker -> trial".
-const UITGESLOTEN_PREFIXES = ['/bot', '/abacus', '/api', '/sign-in', '/sign-up', '/sso-callback', '/clerk-proxy', '/monitoring']
+const UITGESLOTEN_PREFIXES = ['/bot', '/abacus', '/api', '/sign-in', '/sign-up', '/sso-callback', '/clerk-proxy', '/monitoring', '/blog/bevestig', '/blog/afmelden', '/blog/voorkeuren']
 
 export default function PageviewTracker() {
   const pathname = usePathname()

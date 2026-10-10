@@ -25,7 +25,9 @@ function buildCSP(nonce: string, allowWasm = false): string {
     "font-src 'self' https://fonts.gstatic.com",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
-    "img-src 'self' data: blob: https://images.squarespace-cdn.com https://img.clerk.com https://assets.feedblitz.com",
+    // Het eigen Supabase-project staat ook hier toe: afbeeldingen in blogposts staan in de
+    // publieke bucket blog-images (lib/blog.ts) en worden rechtstreeks geladen.
+    `img-src 'self' data: blob: ${supabaseOrigin} https://images.squarespace-cdn.com https://img.clerk.com https://assets.feedblitz.com`,
     // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin voor
     // normaal verkeer, 'self' dekt dat al. eu.i.posthog.com blijft daarnaast toegestaan als
     // vangnet: posthog-js negeert een custom api_host bij interne retries (bekende bug,

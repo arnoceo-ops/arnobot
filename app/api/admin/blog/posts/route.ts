@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { isAdminSession } from '@/lib/adminAuth'
 import { getBlogDb, revalidateBlog, validatePostInput } from '@/lib/blog'
+import { notifySubscribersOfPost, processBlogDeliveries } from '@/lib/blogMail'
 
 export async function GET() {
   if (!(await isAdminSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -35,6 +36,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
 
-  if (v.status === 'published') revalidateBlog(v.slug)
+  if (v.status === 'published') {
+    revalidateBlog(v.slug)
+    if (v.notify_subscribers) {
+      // Na het antwoord: de wachtrij vullen en de eerste mails binnen het dagbudget versturen.
+      after(async () => {
+        try {
+          await notifySubscribersOfPost({ id: data.id, tags: v.tags })
+          await processBlogDeliveries()
+        } catch (err) {
+          console.error('[admin/blog] versturen naar abonnees mislukt:', err instanceof Error ? err.message : err)
+        }
+      })
+    }
+  }
   return NextResponse.json({ post: data }, { status: 201 })
 }

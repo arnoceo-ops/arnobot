@@ -28,11 +28,15 @@ export default async function AdminBlogEditPage({ params }: { params: Promise<{ 
   // Bestaande tags als suggestie, zodat dezelfde tag niet in drie spellingen ontstaat.
   const { data: tagRows } = await db.from('arnobot_blog_posts').select('tags')
   const existingTags = countTags((tagRows ?? []) as { tags: string[] }[]).map(t => t.tag)
+  const { count: subscriberCount } = await db
+    .from('arnobot_blog_subscribers')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'confirmed')
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/blog" />
-      <PostEditor initial={post} existingTags={existingTags} />
+      <PostEditor initial={post} existingTags={existingTags} subscriberCount={subscriberCount ?? 0} />
     </main>
   )
 }
