@@ -16,7 +16,9 @@ export function newToken(): string {
 // we de database raadplegen.
 export const isTokenShape = (t: string): boolean => /^[A-Za-z0-9_-]{20,64}$/.test(t)
 
-export const confirmUrl = (token: string) => `${SITE_URL}/blog/bevestig/${token}`
+// Link in de bevestigingsmail: een klik van een mens bevestigt direct (api/blog/bevestig), een
+// scanner komt op de pagina /blog/bevestig/[token] met een knop terecht.
+export const confirmUrl = (token: string) => `${SITE_URL}/api/blog/bevestig?token=${token}`
 export const unsubscribeUrl = (token: string) => `${SITE_URL}/blog/afmelden/${token}`
 export const preferencesUrl = (token: string) => `${SITE_URL}/blog/voorkeuren/${token}`
 // Eén-klik-afmelden voor mailclients (RFC 8058 List-Unsubscribe-Post): POST zonder pagina.

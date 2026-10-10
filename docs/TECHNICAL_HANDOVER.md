@@ -200,7 +200,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
 | Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
-| Blog bevestigen | `/blog/bevestig/[token]` | Double opt-in. Bevestigt pas na een klik op de knop (mailscanners openen links automatisch). Token in het pad: uitgesloten van pageview- en PostHog-tracking |
+| Blog bevestigen | `/blog/bevestig/[token]` | Terugvalpagina voor double opt-in: bevestigt pas na een klik op de knop. De link in de mail wijst naar `/api/blog/bevestig?token=` (zie API), niet hierheen. Token in het pad: uitgesloten van pageview- en PostHog-tracking |
 | Blog afmelden | `/blog/afmelden/[token]` | Zelfde patroon, knop i.p.v. directe actie |
 | Blog voorkeuren | `/blog/voorkeuren/[token]` | Abonnee kiest onderwerpen (hashtags) of alles |
 
@@ -297,7 +297,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/blog/upload` | Afbeelding naar de publieke bucket `blog-images` (PNG/JPG/WebP/GIF, max 5 MB, type via magic bytes, geen SVG) |
 | `/api/admin/blog/test-send` | Stuurt de nieuw-artikel-mail naar arno@arno.bot |
 | `/api/blog/subscribe` | PUBLIEK. Aanmelden voor blogmails (double opt-in). Ratelimit per IP (5/uur) en per adres (3/dag), honeypot, bot-UA-filter. Antwoord is altijd gelijk (lijst niet af te vragen) |
-| `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token) |
+| `/api/blog/bevestig` | PUBLIEK. Doel van de link in de bevestigingsmail (GET). Echte klik van een mens (`Sec-Fetch-User: ?1` plus `Sec-Fetch-Mode: navigate`, `lib/blogConfirmGate.ts`) bevestigt direct en stuurt door naar `/blog?bevestigd=1` (of `0`). Scanners en browsers zonder die headers (Safari < 16.4) gaan naar `/blog/bevestig/[token]` met een knop, zonder iets te wijzigen |
+| `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token), gebruikt door de terugvalpagina |
 | `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |
 | `/api/blog/preferences` | PUBLIEK. Onderwerpen van een abonnee wijzigen |
 | `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |

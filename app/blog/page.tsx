@@ -27,12 +27,16 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
 }
 
-export default async function BlogOverviewPage() {
+export default async function BlogOverviewPage({ searchParams }: { searchParams: Promise<{ bevestigd?: string }> }) {
+  const { bevestigd } = await searchParams
   const posts = await getPublishedPosts()
   const tags = countTags(posts)
 
   return (
     <main className="bl-wrap">
+      {/* Melding na de klik op de bevestiglink in de mail (zie app/api/blog/bevestig/route.ts). */}
+      {bevestigd === '1' && <p role="status" className="bl-notice">{BLOG_COPY.bevestig.gelukt}</p>}
+      {bevestigd === '0' && <p role="alert" className="bl-notice err">{BLOG_COPY.bevestig.ongeldig}</p>}
       <p className="bl-label">{C.label}</p>
       <h1 className="bl-title">{C.titel}</h1>
       <p className="bl-sub">{C.sub}</p>
