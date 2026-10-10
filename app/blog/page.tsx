@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { countTags, getPublishedPosts } from '@/lib/blog'
 import { BLOG_COPY } from '@/lib/blogCopy'
-import BlogCard from './BlogCard'
+import BlogArchive from './BlogArchive'
 import BrandText from './BrandText'
 import TagChips from './TagChips'
 import SubscribeBox from './SubscribeBox'
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image' },
 }
 
-export default async function BlogOverviewPage({ searchParams }: { searchParams: Promise<{ bevestigd?: string }> }) {
-  const { bevestigd } = await searchParams
+export default async function BlogOverviewPage({ searchParams }: { searchParams: Promise<{ bevestigd?: string; q?: string }> }) {
+  const { bevestigd, q } = await searchParams
   const posts = await getPublishedPosts()
   const tags = countTags(posts)
 
@@ -47,9 +47,7 @@ export default async function BlogOverviewPage({ searchParams }: { searchParams:
       {posts.length === 0 ? (
         C.leeg ? <p className="bl-empty">{C.leeg}</p> : null
       ) : (
-        <div className="bl-grid">
-          {posts.map(p => <BlogCard key={p.id} post={p} />)}
-        </div>
+        <BlogArchive posts={posts} initialQuery={(q ?? '').slice(0, 100)} />
       )}
 
       <SubscribeBox />

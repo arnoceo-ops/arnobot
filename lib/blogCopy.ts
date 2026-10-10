@@ -9,6 +9,10 @@ export const BLOG_COPY = {
     sub: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
     // Bewust leeg: zolang er geen posts zijn toont het overzicht geen lege-staat-tekst.
     leeg: '',
+    zoekPlaceholder: 'Zoek op hashtag of trefwoord',
+    geenResultaat: 'Geen artikelen gevonden.',
+    toonMeer: 'Toon meer',
+    resultaten: (n: number) => `${n} ${n === 1 ? 'artikel' : 'artikelen'}`,
     metaTitel: 'ArnoBot Blog',
     metaBeschrijving: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
   },

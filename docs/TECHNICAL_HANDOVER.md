@@ -196,7 +196,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
 | Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
-| Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
+| Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's), doorzoekbaar archief (`BlogArchive`: zoeken op hashtag of trefwoord in de browser op de geladen lijst via `lib/blogSearch.ts`, 12 kaarten per keer met "Toon meer", zoekterm in de URL als `?q=`) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
 | Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
 | Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
