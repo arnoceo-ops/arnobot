@@ -8,6 +8,7 @@ import { isValidSlug, readingMinutes } from '@/lib/blogText'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import SignupCTA from '../../components/SignupCTA'
 import BlogCard, { formatBlogDate } from '../BlogCard'
+import BrandText from '../BrandText'
 import SubscribeBox from '../SubscribeBox'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -107,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
       </article>
 
       <section className="bl-box" aria-labelledby="bl-cta-title">
-        <h2 id="bl-cta-title">{BLOG_COPY.cta.kop}</h2>
+        <h2 id="bl-cta-title"><BrandText>{BLOG_COPY.cta.kop}</BrandText></h2>
         <p>{BLOG_COPY.cta.tekst}</p>
         <div className="bl-row" style={{ marginTop: 20 }}>
           <SignupCTA className="bl-btn">{BLOG_COPY.cta.primair}</SignupCTA>

@@ -42,7 +42,7 @@ export const BLOG_COPY = {
     privacyLink: 'Privacyverklaring',
   },
   cta: {
-    kop: 'Zelf ervaren?',
+    kop: 'ArnoBot zelf ervaren?',
     tekst: 'Probeer ArnoBot 30 dagen gratis.',
     primair: 'Start gratis',
     secundair: 'Bekijk prijzen',
