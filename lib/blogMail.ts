@@ -24,6 +24,10 @@ const REPLY_TO = 'hq@arno.bot'
 const MAX_ATTEMPTS = 5
 const BATCH_SIZE = 100
 
+export function getDailyBlogMailBudget(): number {
+  return dailyBudget()
+}
+
 function dailyBudget(): number {
   const n = Number(process.env.BLOG_DAILY_MAIL_BUDGET)
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 50
