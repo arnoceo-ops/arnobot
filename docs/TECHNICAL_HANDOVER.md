@@ -152,6 +152,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
 | `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
+| `/bot/admin/stats` (tab BLOG) | Blogstatistieken (`BlogStats.tsx`, gedeelde onderdelen in `StatsUi.tsx`): abonnees, conversie bevestigen/afmelden, groei per week, verzending en dagbudget, bezoek en klikken op Start gratis vanaf de blog, per artikel (verzonden, wachtrij, mislukt, geopend, geklikt, bezoeken), en "wie doet wat" met abonnees die klikken of openen en of ze al gebruiker zijn (lead). Alles zijn exacte head-counts in de database |
 | `/bot/admin/blog` | POSTS: de publieke blog beheren. Lijst + editor (`/bot/admin/blog/[id]`, `nieuw` voor een nieuwe post) met live Markdown-voorbeeld, afbeeldingen plakken/slepen, hashtags met suggesties, concept/publiceren/inplannen, "verstuur naar abonnees" en testmail naar jezelf, lokale noodback-up |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
@@ -343,7 +344,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/webhooks/calendly` | Ontvangt boekingsevents (HMAC-signature + timestamp-verificatie) |
 | `/api/webhooks/mollie` | Ontvangt Mollie-betaalmeldingen (alleen een `id`, de betaling wordt altijd zelf bij Mollie opgehaald, idempotent via `verwerkt_at`). Actief zodra `MOLLIE_API_KEY` is gezet |
-| `/api/webhooks/resend` | Resend-events `email.bounced` (alleen permanent) en `email.complained`: meldt het adres direct af bij de blogabonnees. Signature-verificatie via `RESEND_WEBHOOK_SECRET`; zonder secret doet de route niets (503) |
+| `/api/webhooks/resend` | Resend-events voor de blogmails. `email.bounced` (alleen permanent) en `email.complained`: meldt het adres direct af. `email.opened` en `email.clicked`: opgeslagen per bezorging (`lib/blogEngagement.ts`, kolommen `opened_count`/`clicked_count` e.d. op `arnobot_blog_deliveries`, SQL `docs/sql/2026-10-10-blog-engagement.sql`), voor de lijst "wie doet wat" in de stats. Alleen actief als open- en kliktracking voor `mail.arno.bot` in Resend aanstaat. Signature-verificatie via `RESEND_WEBHOOK_SECRET`; zonder secret doet de route niets (503) |
 | `/api/webhooks/github-pr` | Stuurt een Telegram-melding bij een nieuw geopende PR op de repo (X-Hub-Signature-256-verificatie). PR's van de documentatie-versheidsroutine (titel begint met "Documentatie-versheidscheck") worden bewust overgeslagen, die worden in een Claude Code-sessie afgehandeld |
 
 ### Infrastructuur

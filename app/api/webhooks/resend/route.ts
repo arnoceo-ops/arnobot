@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { suppressEmail } from '@/lib/blogSubscribers'
+import { recordMailEvent } from '@/lib/blogEngagement'
 
-// Resend-webhook voor harde bounces en spamklachten. Een adres dat bounct of klaagt wordt direct
-// afgemeld: doorgaan met mailen schaadt de reputatie van het afzenderdomein.
+// Resend-webhook voor de blogmails.
+// 1. Harde bounces en spamklachten: het adres wordt direct afgemeld, doorgaan met mailen schaadt
+//    de reputatie van het afzenderdomein.
+// 2. Openen en doorklikken (email.opened, email.clicked): per bezorging bijgehouden, zodat de
+//    admin kan zien welke abonnee wat doet (lib/blogEngagement.ts). Alleen actief als open- en
+//    kliktracking in Resend voor het domein aanstaat, en dit staat in de privacyverklaring.
 //
 // Instellen (Resend dashboard, Webhooks): URL https://www.arno.bot/api/webhooks/resend, events
-// email.bounced en email.complained, en het signing secret als RESEND_WEBHOOK_SECRET in Vercel.
+// email.bounced, email.complained, email.opened en email.clicked, en het signing secret als
+// RESEND_WEBHOOK_SECRET in Vercel.
 // De handtekening wordt geverifieerd; zonder geldig secret doet de route niets.
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
@@ -32,6 +38,10 @@ export async function POST(req: NextRequest) {
   try {
     if (event.type === 'email.complained') {
       for (const to of event.data.to) await suppressEmail(to)
+    } else if (event.type === 'email.opened') {
+      await recordMailEvent(event.data.email_id, 'opened', event.created_at)
+    } else if (event.type === 'email.clicked') {
+      await recordMailEvent(event.data.email_id, 'clicked', event.created_at, event.data.click?.link)
     } else if (event.type === 'email.bounced') {
       // Alleen blijvende bounces: een tijdelijke (volle inbox) is geen reden om af te melden.
       if (String(event.data.bounce?.type ?? '').toLowerCase() === 'permanent') {

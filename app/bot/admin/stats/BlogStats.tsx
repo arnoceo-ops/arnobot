@@ -61,15 +61,55 @@ async function laadBlogStats() {
   const recent = (posts ?? []) as { id: string; slug: string; title: string; published_at: string }[]
   const perPost = await Promise.all(recent.map(async p => {
     const path = `/blog/${p.slug}`
-    const [verzonden, inWachtrij, gefaald, bezoeken, klikken] = await Promise.all([
+    const [verzonden, inWachtrij, gefaald, bezoeken, klikken, geopend, geklikt] = await Promise.all([
       n(deliveries().eq('post_id', p.id).eq('status', 'sent')),
       n(deliveries().eq('post_id', p.id).eq('status', 'queued')),
       n(deliveries().eq('post_id', p.id).eq('status', 'failed')),
       n(views().eq('path', path)),
       n(clicks().eq('path', path)),
+      n(deliveries().eq('post_id', p.id).gt('opened_count', 0)),
+      n(deliveries().eq('post_id', p.id).gt('clicked_count', 0)),
     ])
-    return { ...p, verzonden, inWachtrij, gefaald, bezoeken, klikken }
+    return { ...p, verzonden, inWachtrij, gefaald, bezoeken, klikken, geopend, geklikt }
   }))
+
+  // Wie doet wat: de recentste bezorgingen met een open of klik, per abonnee opgeteld. Begrensd op
+  // de laatste 500 bezorgingen met activiteit, dat is ruim voldoende voor de top van de lijst.
+  const { data: activiteit } = await db
+    .from('arnobot_blog_deliveries')
+    .select('subscriber_id, opened_count, clicked_count, last_opened_at, last_clicked_at')
+    .or('opened_count.gt.0,clicked_count.gt.0')
+    .order('last_clicked_at', { ascending: false, nullsFirst: false })
+    .limit(500)
+  type Act = { subscriber_id: string; opened_count: number; clicked_count: number; last_opened_at: string | null; last_clicked_at: string | null }
+  const perAbonnee = new Map<string, { geklikt: number; geopend: number; laatste: string }>()
+  for (const a of (activiteit ?? []) as Act[]) {
+    const laatste = [a.last_clicked_at, a.last_opened_at].filter(Boolean).sort().pop() ?? ''
+    const huidig = perAbonnee.get(a.subscriber_id) ?? { geklikt: 0, geopend: 0, laatste: '' }
+    huidig.geklikt += a.clicked_count
+    huidig.geopend += a.opened_count
+    if (laatste > huidig.laatste) huidig.laatste = laatste
+    perAbonnee.set(a.subscriber_id, huidig)
+  }
+  const top = [...perAbonnee.entries()]
+    .sort((x, y) => y[1].geklikt - x[1].geklikt || y[1].geopend - x[1].geopend || y[1].laatste.localeCompare(x[1].laatste))
+    .slice(0, 25)
+  const ids = top.map(([id]) => id)
+  const { data: abonnees } = ids.length
+    ? await db.from('arnobot_blog_subscribers').select('id, email, voornaam, status').in('id', ids)
+    : { data: [] as { id: string; email: string; voornaam: string | null; status: string }[] }
+  const abonneeById = new Map(((abonnees ?? []) as { id: string; email: string; voornaam: string | null; status: string }[]).map(a => [a.id, a]))
+  const emails = [...abonneeById.values()].map(a => a.email)
+  // Is het adres al een ArnoBot-gebruiker? Een bezoeker die klikt en nog geen gebruiker is, is een lead.
+  const { data: gebruikers } = emails.length
+    ? await db.from('approved_users').select('email').in('email', emails)
+    : { data: [] as { email: string }[] }
+  const gebruikerEmails = new Set(((gebruikers ?? []) as { email: string }[]).map(g => g.email.toLowerCase()))
+  const wieDoetWat = top.flatMap(([id, a]) => {
+    const abonnee = abonneeById.get(id)
+    if (!abonnee) return []
+    return [{ ...a, naam: abonnee.voornaam ?? '', email: abonnee.email, status: abonnee.status, isGebruiker: gebruikerEmails.has(abonnee.email.toLowerCase()) }]
+  })
 
   const nieuw: Record<string, number> = {}
   const weg: Record<string, number> = {}
@@ -77,7 +117,7 @@ async function laadBlogStats() {
 
   return {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat,
     budget: getDailyBlogMailBudget(),
     heeftGroei: nieuwPerWeek.some(x => x > 0) || afgemeldPerWeek.some(x => x > 0),
   }
@@ -86,7 +126,7 @@ async function laadBlogStats() {
 export default async function BlogStats() {
   const {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, budget, heeftGroei,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, budget, heeftGroei,
   } = await laadBlogStats()
 
   const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding: '10px 8px', borderBottom: '1px solid #374151' } as const
@@ -133,15 +173,17 @@ export default async function BlogStats() {
       {perPost.length > 0 && (
         <>
           <SubHeading label={`PER ARTIKEL (LAATSTE ${RECENT_POSTS})`} />
-          <StatCard label="ARTIKELEN" full footnote="Bezoeken en klikken over de laatste 30 dagen. Verzonden, in de wachtrij en mislukt gaan over de mails naar abonnees.">
+          <StatCard label="ARTIKELEN" full footnote="Bezoeken en klikken over de laatste 30 dagen. Verzonden, in de wachtrij, mislukt, geopend en geklikt gaan over de mails naar abonnees (unieke abonnees, percentage van verzonden). Geopend en geklikt vullen zich zodra open- en kliktracking in Resend aanstaat.">
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
                 <thead>
                   <tr>
                     <th style={head}>ARTIKEL</th>
                     <th style={head}>VERZONDEN</th>
                     <th style={head}>WACHTRIJ</th>
                     <th style={head}>MISLUKT</th>
+                    <th style={head}>GEOPEND</th>
+                    <th style={head}>GEKLIKT</th>
                     <th style={head}>BEZOEKEN</th>
                     <th style={head}>KLIKKEN</th>
                   </tr>
@@ -158,8 +200,47 @@ export default async function BlogStats() {
                       <td style={cell}>{p.verzonden}</td>
                       <td style={{ ...cell, color: p.inWachtrij > 0 ? '#f59e0b' : '#f1f5f9' }}>{p.inWachtrij}</td>
                       <td style={{ ...cell, color: p.gefaald > 0 ? '#f59e0b' : '#f1f5f9' }}>{p.gefaald}</td>
+                      <td style={cell}>{p.geopend}{p.verzonden > 0 && p.geopend > 0 ? <span style={{ color: '#6b7280', fontSize: 12 }}> ({pct(p.geopend, p.verzonden)}%)</span> : null}</td>
+                      <td style={cell}>{p.geklikt}{p.verzonden > 0 && p.geklikt > 0 ? <span style={{ color: '#6b7280', fontSize: 12 }}> ({pct(p.geklikt, p.verzonden)}%)</span> : null}</td>
                       <td style={cell}>{p.bezoeken}</td>
                       <td style={cell}>{p.klikken}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </StatCard>
+        </>
+      )}
+
+      {wieDoetWat.length > 0 && (
+        <>
+          <SubHeading label="WIE DOET WAT" />
+          <StatCard label="ABONNEES MET ACTIVITEIT" full
+            footnote="Gesorteerd op klikken, dan openen. Klikken zijn betrouwbaar. Openen wordt opgeblazen doordat Apple Mail en Gmail afbeeldingen zelf vooraf laden. Is het adres geen ArnoBot-gebruiker, dan is het een mogelijke lead.">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+                <thead>
+                  <tr>
+                    <th style={head}>NAAM</th>
+                    <th style={head}>E-MAIL</th>
+                    <th style={head}>GEKLIKT</th>
+                    <th style={head}>GEOPEND</th>
+                    <th style={head}>LAATSTE ACTIVITEIT</th>
+                    <th style={head}>GEBRUIKER</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wieDoetWat.map(a => (
+                    <tr key={a.email}>
+                      <td style={cell}>{a.naam || ''}</td>
+                      <td style={{ ...cell, color: a.status === 'confirmed' ? '#f1f5f9' : '#6b7280' }}>{a.email}{a.status !== 'confirmed' ? ' (afgemeld)' : ''}</td>
+                      <td style={{ ...cell, fontWeight: 700 }}>{a.geklikt}</td>
+                      <td style={cell}>{a.geopend}</td>
+                      <td style={cell}>
+                        {a.laatste ? new Date(a.laatste).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' }) : ''}
+                      </td>
+                      <td style={{ ...cell, color: a.isGebruiker ? '#6b7280' : '#f59e0b', fontWeight: a.isGebruiker ? 400 : 700 }}>{a.isGebruiker ? 'JA' : 'NEE, LEAD'}</td>
                     </tr>
                   ))}
                 </tbody>

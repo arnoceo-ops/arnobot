@@ -114,7 +114,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Geen bounces of spam-klachten die aandacht vragen?
 - [resend.com/changelog](https://resend.com/changelog) op API-wijzigingen
 - Binnen de gratis verzendlimiet? (Resend dashboard → Usage)
-- **Blog (`mail.arno.bot`):** blogmails gaan via dit apart geverifieerde subdomein (DNS bij Vercel). Status Verified? Webhook (`/api/webhooks/resend`, events `email.bounced` en `email.complained`) actief en `RESEND_WEBHOOK_SECRET` gezet? Aantal bevestigde abonnees t.o.v. de Pro-milestone? Spamklachten of bounces op dit domein?
+- **Blog (`mail.arno.bot`):** blogmails gaan via dit apart geverifieerde subdomein (DNS bij Vercel). Status Verified? Webhook (`/api/webhooks/resend`, events `email.bounced`, `email.complained`, `email.opened` en `email.clicked`) actief en `RESEND_WEBHOOK_SECRET` gezet? Open- en kliktracking staat alleen aan als de privacyverklaring het noemt. Aantal bevestigde abonnees t.o.v. de Pro-milestone? Spamklachten of bounces op dit domein?
 
 #### VisualPing (monitoring van leverancierspagina's)
 - Gratis tier: 65 checks/maand. Check bij groei van het aantal gemonitorde URL's of de limiet in zicht komt.
