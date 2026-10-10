@@ -52,7 +52,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
 
   return (
     <section className="bl-box bl-sub-box" aria-labelledby="bl-sub-title">
-      <h2 id="bl-sub-title"><BrandText>{C.kop}</BrandText></h2>
+      <h2 id="bl-sub-title">{state === 'done' ? C.geluktKop : <BrandText>{C.kop}</BrandText>}</h2>
       {state === 'done' ? (
         <p role="status" className="bl-msg" style={{ marginTop: 12 }}>{C.gelukt}</p>
       ) : (
