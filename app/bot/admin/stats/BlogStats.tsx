@@ -1,6 +1,7 @@
 import { getBlogDb } from '@/lib/blog'
 import { getDailyBlogMailBudget } from '@/lib/blogMail'
-import { StatCard, TileGrid, SubHeading, RatioBar, TrendChart } from './StatsUi'
+import { StatCard, TileGrid, SubHeading, RatioBar } from './StatsUi'
+import MaandGrafieken, { type MaandPunt } from './MaandGrafieken'
 import AanmeldingenLijst, { type Aanmelding } from './AanmeldingenLijst'
 
 // Tabblad BLOG op /bot/admin/stats: abonnees, groei, verzending, bezoek en per artikel.
@@ -10,7 +11,7 @@ import AanmeldingenLijst, { type Aanmelding } from './AanmeldingenLijst'
 // bron van waarheid voor deze pagina, naast PostHog.
 
 const DAY = 86_400_000
-const WEEKS = 8
+const MONTHS = 12
 const RECENT_POSTS = 5
 const RECENT_SIGNUPS = 50
 
@@ -33,16 +34,24 @@ async function laadBlogStats() {
   const views = () => db.from('arnobot_pageviews').select('id', { count: 'exact', head: true }).gte('created_at', since30)
   const clicks = () => db.from('arnobot_cta_clicks').select('id', { count: 'exact', head: true }).gte('created_at', since30)
 
-  const weeks = Array.from({ length: WEEKS }, (_, i) => {
-    const end = now - i * 7 * DAY
-    return { label: new Date(end - 7 * DAY).toISOString().slice(0, 10), from: new Date(end - 7 * DAY).toISOString(), to: new Date(end).toISOString() }
+  // De laatste 12 maanden, oudste eerst, op UTC-maandgrenzen.
+  const huidig = new Date(now)
+  const maandBereiken = Array.from({ length: MONTHS }, (_, i) => {
+    const start = Date.UTC(huidig.getUTCFullYear(), huidig.getUTCMonth() - (MONTHS - 1 - i), 1)
+    const eind = Date.UTC(huidig.getUTCFullYear(), huidig.getUTCMonth() - (MONTHS - 2 - i), 1)
+    return {
+      label: new Date(start).toLocaleDateString('nl-NL', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
+      from: new Date(start).toISOString(),
+      to: new Date(eind).toISOString(),
+    }
   })
+  const eersteMaand = maandBereiken[0].from
 
   const [
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
     wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken,
     { data: posts },
-    nieuwPerWeek, afgemeldPerWeek,
+    nieuwPerMaand, afgemeldPerMaand, bevestigdVoorStart, afgemeldVoorStart,
   ] = await Promise.all([
     n(subs()),
     n(subs().eq('status', 'confirmed')),
@@ -56,8 +65,12 @@ async function laadBlogStats() {
     n(views().like('path', '/blog%')),
     n(clicks().like('path', '/blog%')),
     db.from('arnobot_blog_posts').select('id, slug, title, published_at').eq('status', 'published').order('published_at', { ascending: false }).limit(RECENT_POSTS),
-    Promise.all(weeks.map(w => n(subs().gte('confirmed_at', w.from).lt('confirmed_at', w.to)))),
-    Promise.all(weeks.map(w => n(subs().gte('unsubscribed_at', w.from).lt('unsubscribed_at', w.to)))),
+    Promise.all(maandBereiken.map(m => n(subs().gte('confirmed_at', m.from).lt('confirmed_at', m.to)))),
+    // Afmeldingen tellen alleen van wie eerst bevestigd had (een onbevestigde aanmelding is geen abonnee).
+    Promise.all(maandBereiken.map(m => n(subs().not('confirmed_at', 'is', null).gte('unsubscribed_at', m.from).lt('unsubscribed_at', m.to)))),
+    // Beginstand: abonnees vóór de eerste maand, zodat het totaal per maand klopt.
+    n(subs().lt('confirmed_at', eersteMaand)),
+    n(subs().not('confirmed_at', 'is', null).lt('unsubscribed_at', eersteMaand)),
   ])
 
   const recent = (posts ?? []) as { id: string; slug: string; title: string; published_at: string }[]
@@ -120,22 +133,24 @@ async function laadBlogStats() {
     .limit(RECENT_SIGNUPS)
   const aanmeldingen = (aanmeldingenRaw ?? []) as Aanmelding[]
 
-  const nieuw: Record<string, number> = {}
-  const weg: Record<string, number> = {}
-  weeks.forEach((w, i) => { nieuw[w.label] = nieuwPerWeek[i]; weg[w.label] = afgemeldPerWeek[i] })
+  let lopendTotaal = bevestigdVoorStart - afgemeldVoorStart
+  const maandPunten: MaandPunt[] = maandBereiken.map((m, i) => {
+    lopendTotaal += nieuwPerMaand[i] - afgemeldPerMaand[i]
+    return { label: m.label, aanmeldingen: nieuwPerMaand[i], afmeldingen: afgemeldPerMaand[i], totaal: lopendTotaal }
+  })
 
   return {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, aanmeldingen,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, wieDoetWat, aanmeldingen,
     budget: getDailyBlogMailBudget(),
-    heeftGroei: nieuwPerWeek.some(x => x > 0) || afgemeldPerWeek.some(x => x > 0),
+    heeftGroei: maandPunten.some(p => p.aanmeldingen > 0 || p.afmeldingen > 0 || p.totaal > 0),
   }
 }
 
 export default async function BlogStats() {
   const {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, nieuw, weg, wieDoetWat, aanmeldingen, budget, heeftGroei,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, wieDoetWat, aanmeldingen, budget, heeftGroei,
   } = await laadBlogStats()
 
   const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding: '10px 8px', borderBottom: '1px solid #374151' } as const
@@ -158,10 +173,10 @@ export default async function BlogStats() {
           </div>
         </StatCard>
 
-        <StatCard label="BEZOEK, LAATSTE 30 DAGEN" stats={[
-          { sublabel: 'BLOGBEZOEKEN', value: String(blogBezoeken) },
-          { sublabel: 'KLIKKEN OP START GRATIS VANAF DE BLOG', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de bezoeken` : undefined },
-        ]} footnote="Eigen anonieme tellers, inclusief je eigen bezoeken. Telt overzicht, artikelen en hashtagpagina's." />
+        <StatCard label="BLOG GELEZEN, LAATSTE 30 DAGEN" stats={[
+          { sublabel: 'PAGINA\'S GEOPEND', value: String(blogBezoeken), note: 'overzicht, artikelen en hashtagpagina\'s' },
+          { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de geopende pagina's` : undefined },
+        ]} footnote="Elke keer dat iemand een pagina van de blog opent telt als één, ook jijzelf. Start gratis is de oranje knop onder een artikel, waarmee iemand een account kan maken." />
 
         <StatCard label="VERZENDING" stats={[
           { sublabel: 'VANDAAG VERZONDEN', value: `${verzondenVandaag} van ${budget}`, warn: verzondenVandaag >= budget },
@@ -170,11 +185,9 @@ export default async function BlogStats() {
         ]} footnote="Het dagbudget houdt de gedeelde Resend-daglimiet vrij voor betalings- en trialmails. Wat niet past, gaat de volgende dag mee." />
 
         {heeftGroei && (
-          <StatCard label="GROEI PER WEEK" span={2} footnote="Per periode van 7 dagen, gerekend vanaf het begin van de periode. Bovenaan de laatste week.">
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', marginBottom: 8 }}>NIEUWE BEVESTIGDE ABONNEES</p>
-            <TrendChart data={nieuw} limit={WEEKS} />
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 2, color: '#6b7280', margin: '20px 0 8px' }}>AFMELDINGEN</p>
-            <TrendChart data={weg} limit={WEEKS} />
+          <StatCard label="ABONNEES PER MAAND" full
+            footnote="Laatste 12 maanden. Aanmeldingen zijn bevestigde aanmeldingen (de aanmelder klikte op de link in de mail). Afmeldingen zijn afmeldingen van eerder bevestigde abonnees. Wie zich na een afmelding opnieuw aanmeldt, telt in de afmeldingen niet meer mee.">
+            <MaandGrafieken maanden={maandPunten} />
           </StatCard>
         )}
       </TileGrid>
