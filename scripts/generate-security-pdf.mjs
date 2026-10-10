@@ -157,7 +157,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('Spraakverwerking', 'OpenAI: spraakherkenning (Whisper), verwerkt audio van voice-invoer, geen training op jouw data'),
       TR('Audiobijlage-transcriptie', 'AssemblyAI: spraaktranscriptie bij een audiobijlage, opname direct verwijderd, geen training op jouw data'),
       TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
-      TR('E-mail', 'Resend: transactionele e-mail via DKIM-geverifieerd domein'),
+      TR('E-mail', 'Resend: transactionele e-mail en blogmails via DKIM-geverifieerde domeinen. Bij blogmails wordt gemeten of een mail wordt geopend en op welke links wordt geklikt'),
       TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
       TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
       TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),

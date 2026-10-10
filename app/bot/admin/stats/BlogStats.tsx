@@ -100,7 +100,7 @@ async function laadBlogStats() {
     : { data: [] as { id: string; email: string; voornaam: string | null; status: string }[] }
   const abonneeById = new Map(((abonnees ?? []) as { id: string; email: string; voornaam: string | null; status: string }[]).map(a => [a.id, a]))
   const emails = [...abonneeById.values()].map(a => a.email)
-  // Is het adres al een ArnoBot-gebruiker? Een bezoeker die klikt en nog geen gebruiker is, is een lead.
+  // Is het adres al een ArnoBot-gebruiker? Handig om te zien of de lezers van de blog al gebruikers zijn.
   const { data: gebruikers } = emails.length
     ? await db.from('approved_users').select('email').in('email', emails)
     : { data: [] as { email: string }[] }
@@ -217,7 +217,7 @@ export default async function BlogStats() {
         <>
           <SubHeading label="WIE DOET WAT" />
           <StatCard label="ABONNEES MET ACTIVITEIT" full
-            footnote="Gesorteerd op klikken, dan openen. Klikken zijn betrouwbaar. Openen wordt opgeblazen doordat Apple Mail en Gmail afbeeldingen zelf vooraf laden. Is het adres geen ArnoBot-gebruiker, dan is het een mogelijke lead.">
+            footnote="Gesorteerd op klikken, dan openen. Klikken zijn betrouwbaar. Openen wordt opgeblazen doordat Apple Mail en Gmail afbeeldingen zelf vooraf laden. De kolom Gebruiker laat zien of het adres al een ArnoBot-account heeft.">
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
                 <thead>
@@ -240,7 +240,7 @@ export default async function BlogStats() {
                       <td style={cell}>
                         {a.laatste ? new Date(a.laatste).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' }) : ''}
                       </td>
-                      <td style={{ ...cell, color: a.isGebruiker ? '#6b7280' : '#f59e0b', fontWeight: a.isGebruiker ? 400 : 700 }}>{a.isGebruiker ? 'JA' : 'NEE, LEAD'}</td>
+                      <td style={{ ...cell, color: a.isGebruiker ? '#6b7280' : '#f59e0b', fontWeight: a.isGebruiker ? 400 : 700 }}>{a.isGebruiker ? 'JA' : 'NEE'}</td>
                     </tr>
                   ))}
                 </tbody>

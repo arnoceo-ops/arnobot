@@ -103,6 +103,9 @@ export default function PrivacyPage() {
                 </div>
               ))}
             </div>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
+              Als je je abonneert op de blogmails, meten we of je een mail opent en registreren we je klikgedrag.
+            </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de hieronder genoemde sub-verwerkers.
             </p>
@@ -194,7 +197,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Resend</td>
-                  <td>Transactionele e-mails</td>
+                  <td>Transactionele e-mails en blogmails</td>
                   <td><a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">resend.com/legal/dpa</a></td>
                 </tr>
                 <tr>
