@@ -296,7 +296,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/admin/blog/posts/[id]` | PUT bijwerken (publiceren, inplannen, naar concept), DELETE. Verstuurt bij publiceren met vinkje eenmalig naar abonnees (`notified_at`) |
 | `/api/admin/blog/upload` | Afbeelding naar de publieke bucket `blog-images` (PNG/JPG/WebP/GIF, max 5 MB, type via magic bytes, geen SVG) |
 | `/api/admin/blog/test-send` | Stuurt de nieuw-artikel-mail naar arno@arno.bot |
-| `/api/blog/subscribe` | PUBLIEK. Aanmelden voor blogmails (double opt-in). Ratelimit per IP (5/uur) en per adres (3/dag), honeypot, bot-UA-filter. Antwoord is altijd gelijk (lijst niet af te vragen) |
+| `/api/blog/subscribe` | PUBLIEK. Aanmelden voor blogmails (double opt-in). Ratelimit per IP (5/uur) en per adres (3/dag), honeypot, bot-UA-filter. Antwoord is altijd gelijk (lijst niet af te vragen). Nieuw of in afwachting: bevestigingsmail. Al bevestigd: mailtje "je bent al aangemeld" (`blog_al_aangemeld`), zodat niemand op een mail wacht die niet komt |
 | `/api/blog/bevestig` | PUBLIEK. Doel van de link in de bevestigingsmail (GET). Echte klik van een mens (`Sec-Fetch-User: ?1` plus `Sec-Fetch-Mode: navigate`, `lib/blogConfirmGate.ts`) bevestigt direct en stuurt door naar `/blog?bevestigd=1` (of `0`). Scanners en browsers zonder die headers (Safari < 16.4) gaan naar `/blog/bevestig/[token]` met een knop, zonder iets te wijzigen |
 | `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token), gebruikt door de terugvalpagina |
 | `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |

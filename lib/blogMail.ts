@@ -44,6 +44,32 @@ export async function sendConfirmationMail(email: string, confirmToken: string, 
   if (error) throw new Error(`Bevestigingsmail versturen mislukt: ${error.message}`)
 }
 
+// Mailtje voor wie zich opnieuw aanmeldt terwijl het adres al bevestigd is. Zo wacht niemand op een
+// bevestiging die nooit komt, terwijl het scherm voor iedereen hetzelfde blijft.
+export async function sendAlreadySubscribedMail(email: string, unsubscribeToken: string, voornaam: string | null = null): Promise<void> {
+  const { subject, html } = getEmailTemplate('blog_al_aangemeld', voornaam ?? '', false, {
+    blog: {
+      titel: '',
+      samenvatting: '',
+      url: `${BLOG_BASE_URL}/blog`,
+      afmeldUrl: unsubscribeUrl(unsubscribeToken),
+      voorkeurenUrl: preferencesUrl(unsubscribeToken),
+    },
+  })
+  const { error } = await resend().emails.send({
+    from: FROM,
+    to: email,
+    replyTo: REPLY_TO,
+    subject,
+    html,
+    headers: {
+      'List-Unsubscribe': `<${oneClickUnsubscribeUrl(unsubscribeToken)}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  })
+  if (error) throw new Error(`Mail versturen mislukt: ${error.message}`)
+}
+
 function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscribeToken: string, isTest: boolean, voornaam: string | null = null) {
   return getEmailTemplate('blog_nieuwe_post', voornaam ?? '', isTest, {
     blog: {

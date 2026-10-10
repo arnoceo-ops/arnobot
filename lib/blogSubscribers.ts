@@ -39,14 +39,19 @@ interface SubscriberRow {
   unsubscribe_token: string
 }
 
-// Verwerkt een aanmelding. Geeft terug naar wie een bevestigingsmail moet, of null als er
-// geen mail nodig is (al bevestigd). De aanroeper antwoordt in alle gevallen hetzelfde, zodat
-// niet te achterhalen is welke adressen al op de lijst staan.
+// Uitkomst van een aanmelding: 'bevestig' (nieuw, in afwachting of opnieuw aangemeld: stuur de
+// bevestigingsmail) of 'bestaand' (al bevestigd: stuur het mailtje "je staat al op de lijst").
+// Beide krijgen een mail, en de aanroeper antwoordt in alle gevallen hetzelfde, zodat niet te
+// achterhalen is welke adressen al op de lijst staan.
+export type SubscriptionRequestResult =
+  | { type: 'bevestig'; email: string; confirmToken: string; voornaam: string | null }
+  | { type: 'bestaand'; email: string; unsubscribeToken: string; voornaam: string | null }
+
 export async function requestSubscription(
   rawEmail: string,
   rawTopics: unknown,
   rawVoornaam?: unknown
-): Promise<{ email: string; confirmToken: string; voornaam: string | null } | null> {
+): Promise<SubscriptionRequestResult> {
   const db = getBlogDb()
   const email = normalizeEmail(rawEmail)
   const topics = normalizeTags(rawTopics)
@@ -77,10 +82,12 @@ export async function requestSubscription(
     existing = await find()
     if (!existing) throw new Error('Aanmelding niet teruggevonden')
     await db.from('arnobot_blog_subscribers').update({ confirm_sent_at: new Date().toISOString() }).eq('id', existing.id)
-    return { email: existing.email, confirmToken: existing.confirm_token, voornaam: existing.voornaam }
+    return { type: 'bevestig', email: existing.email, confirmToken: existing.confirm_token, voornaam: existing.voornaam }
   }
 
-  if (existing.status === 'confirmed') return null
+  if (existing.status === 'confirmed') {
+    return { type: 'bestaand', email: existing.email, unsubscribeToken: existing.unsubscribe_token, voornaam: existing.voornaam }
+  }
 
   // pending of eerder afgemeld: opnieuw bevestigen met een vers bevestigtoken. Het afmeldtoken
   // blijft gelijk, zodat oude mails blijven werken.
@@ -98,7 +105,7 @@ export async function requestSubscription(
     })
     .eq('id', existing.id)
   if (error) throw new Error(`Aanmelden mislukt: ${error.message}`)
-  return { email: existing.email, confirmToken: confirm_token, voornaam: voornaam ?? existing.voornaam }
+  return { type: 'bevestig', email: existing.email, confirmToken: confirm_token, voornaam: voornaam ?? existing.voornaam }
 }
 
 export async function confirmSubscription(token: string): Promise<'ok' | 'invalid'> {

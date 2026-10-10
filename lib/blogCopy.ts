@@ -77,6 +77,10 @@ export const BLOG_COPY = {
     bevestigTekst:
       'Dit e-mailadres is aangemeld voor de blogmails van ArnoBot. Bevestig het met de knop hieronder. Heb jij dit niet gedaan? Dan hoef je niets te doen en krijg je geen mails.',
     bevestigKnop: 'BEVESTIG AANMELDING',
+    alAangemeldOnderwerp: 'Je bent al aangemeld voor de ArnoBot blog',
+    alAangemeldTekst:
+      'Dit e-mailadres staat al op de lijst voor de blogmails van ArnoBot, dus je hoeft niets te bevestigen.',
+    alAangemeldKnop: 'NAAR DE BLOG',
     nieuwKnop: 'LEES HET ARTIKEL',
     nieuwVoet: (url: string) =>
       `Geen blogmails meer? <a href="${url}" style="color:#9ca3af;text-decoration:underline;">Klik dan hier.</a>`,

@@ -588,7 +588,7 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 - Font: Arial, 11px, kleur `#374151`
 
 ### Marketing vs. transactioneel
-- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding, betaling_bevestiging, betaling_mislukt, verlenging_30d, verlenging_7d, abonnement_afgelopen, terugbetaling_bevestiging, blog_bevestiging (double opt-in bevestiging van de blog)
+- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding, betaling_bevestiging, betaling_mislukt, verlenging_30d, verlenging_7d, abonnement_afgelopen, terugbetaling_bevestiging, blog_bevestiging (double opt-in bevestiging van de blog), blog_al_aangemeld (opnieuw aangemeld terwijl al bevestigd)
 - **Marketing** (opt-out verplicht): weekly_nudge, geen_gesprek_nudge, winback, blog_nieuwe_post (eigen afmeldlink per abonnee plus `List-Unsubscribe`-header, geen `/optout/{userId}`, want blogabonnees zijn geen gebruikers)
 
 ### Opt-out mechanisme

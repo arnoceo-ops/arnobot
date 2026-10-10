@@ -15,6 +15,16 @@ describe('blogmails', () => {
     expect(getEmailTemplate('blog_nieuwe_post', 'Arno', false, { blog }).html).toContain('Hey, Arno.')
   })
 
+  it('mail voor een al aangemeld adres: aanhef, geen bevestiglink, wel afmelden en voorkeuren', () => {
+    const { subject, html } = getEmailTemplate('blog_al_aangemeld', 'Arno', false, { blog })
+    expect(subject).toBe('Je bent al aangemeld voor de ArnoBot blog')
+    expect(html).toContain('Hey, Arno.')
+    expect(html).toContain('NAAR DE BLOG')
+    expect(html).toContain(blog.afmeldUrl)
+    expect(html).toContain(blog.voorkeurenUrl)
+    expect(html).not.toMatch(/[\u2014\u2013]/)
+  })
+
   it('heeft geen aanhef zonder voornaam', () => {
     expect(getEmailTemplate('blog_bevestiging', '', false, { blog }).html).not.toContain('Hey,')
     expect(getEmailTemplate('blog_nieuwe_post', '', false, { blog }).html).not.toContain('Hey,')

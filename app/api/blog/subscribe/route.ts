@@ -3,7 +3,7 @@ import { isBotUserAgent } from '@/lib/botDetection'
 import { isValidEmail } from '@/lib/email-templates'
 import { clientIp, subscribeEmailLimit, subscribeIpLimit } from '@/lib/blogRateLimit'
 import { requestSubscription, normalizeEmail } from '@/lib/blogSubscribers'
-import { sendConfirmationMail } from '@/lib/blogMail'
+import { sendAlreadySubscribedMail, sendConfirmationMail } from '@/lib/blogMail'
 import { normalizeVoornaam } from '@/lib/blogText'
 
 // Publiek aanmeldformulier voor de blogmails. Het antwoord is voor elk geldig adres gelijk,
@@ -43,8 +43,12 @@ export async function POST(req: NextRequest) {
   if (!emailLimit.success) return NextResponse.json({ error: 'Te veel pogingen' }, { status: 429 })
 
   try {
-    const pending = await requestSubscription(email, body.topics, voornaam)
-    if (pending) await sendConfirmationMail(pending.email, pending.confirmToken, pending.voornaam)
+    const result = await requestSubscription(email, body.topics, voornaam)
+    if (result.type === 'bevestig') {
+      await sendConfirmationMail(result.email, result.confirmToken, result.voornaam)
+    } else {
+      await sendAlreadySubscribedMail(result.email, result.unsubscribeToken, result.voornaam)
+    }
     return ok
   } catch (err) {
     console.error('[blog/subscribe]', err instanceof Error ? err.message : err)
