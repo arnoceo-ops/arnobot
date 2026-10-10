@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import { normalizeVoornaam } from '@/lib/blogText'
+import BrandText from './BrandText'
 
 const C = BLOG_COPY.abonneer
 
@@ -51,7 +52,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
 
   return (
     <section className="bl-box bl-sub-box" aria-labelledby="bl-sub-title">
-      <h2 id="bl-sub-title">{C.kop}</h2>
+      <h2 id="bl-sub-title"><BrandText>{C.kop}</BrandText></h2>
       {state === 'done' ? (
         <p role="status" className="bl-msg" style={{ marginTop: 12 }}>{C.gelukt}</p>
       ) : (

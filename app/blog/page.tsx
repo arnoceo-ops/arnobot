@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { countTags, getPublishedPosts } from '@/lib/blog'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import BlogCard from './BlogCard'
+import BrandText from './BrandText'
 import TagChips from './TagChips'
 import SubscribeBox from './SubscribeBox'
 
@@ -38,7 +39,7 @@ export default async function BlogOverviewPage({ searchParams }: { searchParams:
       {bevestigd === '1' && <p role="status" className="bl-notice">{BLOG_COPY.bevestig.gelukt}</p>}
       {bevestigd === '0' && <p role="alert" className="bl-notice err">{BLOG_COPY.bevestig.ongeldig}</p>}
       <p className="bl-label">{C.label}</p>
-      <h1 className="bl-title">{C.titel}</h1>
+      <h1 className="bl-title"><BrandText>{C.titel}</BrandText></h1>
       <p className="bl-sub">{C.sub}</p>
 
       <TagChips tags={tags} />
