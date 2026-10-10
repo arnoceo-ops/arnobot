@@ -128,7 +128,6 @@ export interface BlogMailOptions {
   /** Artikel-URL (nieuwe post) of bevestig-URL (aanmelding). */
   url: string
   afmeldUrl: string
-  voorkeurenUrl: string
 }
 
 function escapeHtml(s: string): string {
@@ -470,7 +469,7 @@ export function getEmailTemplate(
           BLOG_COPY.mail.alAangemeldTekst,
           BLOG_COPY.mail.alAangemeldKnop,
           b?.url ?? 'https://www.arno.bot/blog',
-          `${BLOG_COPY.mail.nieuwVoet(b?.afmeldUrl ?? 'https://www.arno.bot/blog')}<br>${BLOG_COPY.mail.voorkeurenVoet(b?.voorkeurenUrl ?? 'https://www.arno.bot/blog')}`
+          BLOG_COPY.mail.nieuwVoet(b?.afmeldUrl ?? 'https://www.arno.bot/blog')
         ),
       }
     }
@@ -485,7 +484,7 @@ export function getEmailTemplate(
           body,
           BLOG_COPY.mail.nieuwKnop,
           b?.url ?? 'https://www.arno.bot/blog',
-          `${BLOG_COPY.mail.nieuwVoet(b?.afmeldUrl ?? 'https://www.arno.bot/blog')}<br>${BLOG_COPY.mail.voorkeurenVoet(b?.voorkeurenUrl ?? 'https://www.arno.bot/blog')}`
+          BLOG_COPY.mail.nieuwVoet(b?.afmeldUrl ?? 'https://www.arno.bot/blog')
         ),
       }
     }

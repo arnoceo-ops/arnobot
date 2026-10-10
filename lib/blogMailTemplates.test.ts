@@ -6,7 +6,6 @@ const blog = {
   samenvatting: 'Een korte uitleg.',
   url: 'https://www.arno.bot/blog/wat-is-sparren',
   afmeldUrl: 'https://www.arno.bot/blog/afmelden/abc',
-  voorkeurenUrl: 'https://www.arno.bot/blog/voorkeuren/abc',
 }
 
 describe('blogmails', () => {
@@ -15,13 +14,12 @@ describe('blogmails', () => {
     expect(getEmailTemplate('blog_nieuwe_post', 'Arno', false, { blog }).html).toContain('Hey, Arno.')
   })
 
-  it('mail voor een al aangemeld adres: aanhef, geen bevestiglink, wel afmelden en voorkeuren', () => {
+  it('mail voor een al aangemeld adres: aanhef, knop en afmeldlink', () => {
     const { subject, html } = getEmailTemplate('blog_al_aangemeld', 'Arno', false, { blog })
     expect(subject).toBe('Je bent al aangemeld voor de ArnoBot blog')
     expect(html).toContain('Hey, Arno.')
     expect(html).toContain('NAAR DE BLOG')
     expect(html).toContain(blog.afmeldUrl)
-    expect(html).toContain(blog.voorkeurenUrl)
     expect(html).not.toMatch(/[\u2014\u2013]/)
   })
 
@@ -40,10 +38,9 @@ describe('blogmails', () => {
     expect(html).toContain('a &amp; b &lt;script&gt;')
   })
 
-  it('bevat afmeld- en voorkeurenlink in de artikelmail en de bevestiglink in de bevestiging', () => {
+  it('bevat afmeldlink in de artikelmail en de bevestiglink in de bevestiging', () => {
     const post = getEmailTemplate('blog_nieuwe_post', '', false, { blog }).html
     expect(post).toContain(blog.afmeldUrl)
-    expect(post).toContain(blog.voorkeurenUrl)
     expect(post).toContain(blog.url)
     const confirm = getEmailTemplate('blog_bevestiging', '', false, { blog: { ...blog, url: 'https://www.arno.bot/blog/bevestig/tok' } }).html
     expect(confirm).toContain('https://www.arno.bot/blog/bevestig/tok')

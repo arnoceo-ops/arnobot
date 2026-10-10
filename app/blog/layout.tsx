@@ -91,9 +91,6 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
         .bl-btn-secondary { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; background: none; color: #94a3b8; border: 1px solid #374151; border-radius: 6px; padding: 12px 28px; cursor: pointer; text-decoration: none; display: inline-block; }
         .bl-btn-secondary:hover { color: #f8fafc; border-color: #94a3b8; }
-        .bl-topics { display: flex; flex-wrap: wrap; gap: 8px; }
-        .bl-topic { font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 500; color: #94a3b8; background: none; border: 1px solid #374151; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
-        .bl-topic[aria-pressed="true"] { color: #111827; background: #f59e0b; border-color: #f59e0b; }
         .bl-small { font-size: 14px; color: #94a3b8; }
         .bl-small a { color: #94a3b8; }
         .bl-msg { font-size: 15px; color: #f8fafc; }

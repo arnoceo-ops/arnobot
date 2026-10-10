@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import { isTokenShape } from '@/lib/blogSubscribers'
 import TokenAction from '../../TokenAction'
@@ -26,10 +25,6 @@ export default async function AfmeldenPage({ params }: { params: Promise<{ token
     <TokenAction
       token={token} endpoint="/api/blog/unsubscribe"
       kop={C.kop} tekst={C.tekst} knop={C.knop} gelukt={C.gelukt} ongeldig={C.ongeldig} fout={C.fout}
-    >
-      <p className="bl-small" style={{ marginTop: 28 }}>
-        <Link href={`/blog/voorkeuren/${token}`}>{C.voorkeuren}</Link>
-      </p>
-    </TokenAction>
+    />
   )
 }

@@ -52,7 +52,7 @@ export default async function BlogOverviewPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <SubscribeBox topics={tags.map(t => t.tag)} />
+      <SubscribeBox />
     </main>
   )
 }

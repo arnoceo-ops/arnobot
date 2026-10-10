@@ -2,7 +2,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import type { NextRequest } from 'next/server'
 
-// Ratelimits voor de publieke blog-endpoints (aanmelden, bevestigen, afmelden, voorkeuren).
+// Ratelimits voor de publieke blog-endpoints (aanmelden, bevestigen, afmelden).
 // Aanmelden is het kwetsbaarste: zonder limiet kan het formulier misbruikt worden om een
 // willekeurig adres met bevestigingsmails te bestoken of om de lijst vol te pompen.
 

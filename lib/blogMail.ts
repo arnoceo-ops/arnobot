@@ -6,7 +6,6 @@ import { getEmailTemplate } from './email-templates'
 import {
   confirmUrl,
   oneClickUnsubscribeUrl,
-  preferencesUrl,
   unsubscribeUrl,
 } from './blogSubscribers'
 
@@ -38,7 +37,7 @@ function resend(): Resend {
 
 export async function sendConfirmationMail(email: string, confirmToken: string, voornaam: string | null = null): Promise<void> {
   const { subject, html } = getEmailTemplate('blog_bevestiging', voornaam ?? '', false, {
-    blog: { titel: '', samenvatting: '', url: confirmUrl(confirmToken), afmeldUrl: '', voorkeurenUrl: '' },
+    blog: { titel: '', samenvatting: '', url: confirmUrl(confirmToken), afmeldUrl: '' },
   })
   const { error } = await resend().emails.send({ from: FROM, to: email, replyTo: REPLY_TO, subject, html })
   if (error) throw new Error(`Bevestigingsmail versturen mislukt: ${error.message}`)
@@ -53,7 +52,6 @@ export async function sendAlreadySubscribedMail(email: string, unsubscribeToken:
       samenvatting: '',
       url: `${BLOG_BASE_URL}/blog`,
       afmeldUrl: unsubscribeUrl(unsubscribeToken),
-      voorkeurenUrl: preferencesUrl(unsubscribeToken),
     },
   })
   const { error } = await resend().emails.send({
@@ -77,7 +75,6 @@ function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscrib
       samenvatting: post.summary,
       url: `${BLOG_BASE_URL}/blog/${post.slug}`,
       afmeldUrl: unsubscribeUrl(unsubscribeToken),
-      voorkeurenUrl: preferencesUrl(unsubscribeToken),
     },
   })
 }
@@ -88,20 +85,21 @@ export async function sendBlogTestMail(post: Pick<BlogPost, 'title' | 'summary' 
   if (error) throw new Error(`Testmail versturen mislukt: ${error.message}`)
 }
 
-// Zet voor elke bevestigde, passende abonnee een bezorging in de wachtrij. Passend: kiest
-// "alles" (lege topics) of heeft minstens één tag gemeen met de post. De unieke combinatie
+// Zet voor elke bevestigde abonnee een bezorging in de wachtrij. Abonneren is altijd op alle
+// posts (hashtags dienen alleen om het archief te doorzoeken). De unieke combinatie
 // (post, abonnee) maakt dit veilig om opnieuw uit te voeren.
-export async function enqueueDeliveries(post: Pick<BlogPost, 'id' | 'tags'>): Promise<number> {
+export async function enqueueDeliveries(post: Pick<BlogPost, 'id'>): Promise<number> {
   const db = getBlogDb()
   const PAGE = 1000
   let queued = 0
 
   for (let from = 0; ; from += PAGE) {
-    let q = db.from('arnobot_blog_subscribers').select('id').eq('status', 'confirmed').order('created_at').range(from, from + PAGE - 1)
-    q = post.tags.length > 0
-      ? q.or(`topics.eq.{},topics.ov.{${post.tags.join(',')}}`)
-      : q.filter('topics', 'eq', '{}')
-    const { data, error } = await q
+    const { data, error } = await db
+      .from('arnobot_blog_subscribers')
+      .select('id')
+      .eq('status', 'confirmed')
+      .order('created_at')
+      .range(from, from + PAGE - 1)
     if (error) throw new Error(`Abonnees ophalen mislukt: ${error.message}`)
     const rows = (data ?? []) as { id: string }[]
     if (rows.length === 0) break
@@ -232,7 +230,7 @@ async function runDeliveries(): Promise<DeliveryRun> {
 
 // Eénmalig per post: wachtrij vullen en markeren dat de abonnees zijn ingepland. Daarna
 // verstuurt processBlogDeliveries() het binnen het dagbudget.
-export async function notifySubscribersOfPost(post: Pick<BlogPost, 'id' | 'tags'>): Promise<number> {
+export async function notifySubscribersOfPost(post: Pick<BlogPost, 'id'>): Promise<number> {
   const db = getBlogDb()
   // Eerst claimen, dan pas vullen: twee gelijktijdige publicaties kunnen zo niet dubbel inplannen.
   const { data: claimed } = await db

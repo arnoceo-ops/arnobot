@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   if (v.status === 'published' && v.notify_subscribers && !existing.notified_at) {
     after(async () => {
       try {
-        await notifySubscribersOfPost({ id, tags: v.tags })
+        await notifySubscribersOfPost({ id })
         await processBlogDeliveries()
       } catch (err) {
         console.error('[admin/blog] versturen naar abonnees mislukt:', err instanceof Error ? err.message : err)

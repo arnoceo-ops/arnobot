@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       // Na het antwoord: de wachtrij vullen en de eerste mails binnen het dagbudget versturen.
       after(async () => {
         try {
-          await notifySubscribersOfPost({ id: data.id, tags: v.tags })
+          await notifySubscribersOfPost({ id: data.id })
           await processBlogDeliveries()
         } catch (err) {
           console.error('[admin/blog] versturen naar abonnees mislukt:', err instanceof Error ? err.message : err)

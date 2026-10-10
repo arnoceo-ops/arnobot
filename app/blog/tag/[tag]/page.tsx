@@ -62,7 +62,7 @@ export default async function BlogTagPage({ params }: Props) {
         {posts.map(p => <BlogCard key={p.id} post={p} />)}
       </div>
 
-      <SubscribeBox topics={tags.map(t => t.tag)} />
+      <SubscribeBox />
     </main>
   )
 }

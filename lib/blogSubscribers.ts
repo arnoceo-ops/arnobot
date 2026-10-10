@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto'
 import { getBlogDb } from './blog'
-import { normalizeTags, normalizeVoornaam } from './blogText'
+import { normalizeVoornaam } from './blogText'
 
 // Abonneebeheer voor de blogmails. Alleen vanuit server-code importeren.
 // Statussen: pending (aangemeld, nog niet bevestigd), confirmed (ontvangt mail),
@@ -20,7 +20,6 @@ export const isTokenShape = (t: string): boolean => /^[A-Za-z0-9_-]{20,64}$/.tes
 // scanner komt op de pagina /blog/bevestig/[token] met een knop terecht.
 export const confirmUrl = (token: string) => `${SITE_URL}/api/blog/bevestig?token=${token}`
 export const unsubscribeUrl = (token: string) => `${SITE_URL}/blog/afmelden/${token}`
-export const preferencesUrl = (token: string) => `${SITE_URL}/blog/voorkeuren/${token}`
 // Eén-klik-afmelden voor mailclients (RFC 8058 List-Unsubscribe-Post): POST zonder pagina.
 export const oneClickUnsubscribeUrl = (token: string) => `${SITE_URL}/api/blog/unsubscribe?token=${token}`
 
@@ -49,12 +48,10 @@ export type SubscriptionRequestResult =
 
 export async function requestSubscription(
   rawEmail: string,
-  rawTopics: unknown,
   rawVoornaam?: unknown
 ): Promise<SubscriptionRequestResult> {
   const db = getBlogDb()
   const email = normalizeEmail(rawEmail)
-  const topics = normalizeTags(rawTopics)
   const voornaam = normalizeVoornaam(rawVoornaam)
 
   const find = async (): Promise<SubscriberRow | null> => {
@@ -72,7 +69,6 @@ export async function requestSubscription(
     const { error } = await db.from('arnobot_blog_subscribers').insert({
       email,
       status: 'pending',
-      topics,
       voornaam,
       confirm_token: newToken(),
       unsubscribe_token: newToken(),
@@ -96,7 +92,6 @@ export async function requestSubscription(
     .from('arnobot_blog_subscribers')
     .update({
       status: 'pending',
-      topics,
       // Een eerder ingevulde naam blijft staan als de bezoeker het veld nu leeg laat.
       voornaam: voornaam ?? existing.voornaam,
       confirm_token,
@@ -147,29 +142,6 @@ export async function unsubscribeByToken(token: string): Promise<'ok' | 'invalid
   // Wachtende bezorgingen vervallen: een afmelding werkt direct, ook voor al ingeplande mails.
   await db.from('arnobot_blog_deliveries').delete().eq('subscriber_id', row.id).eq('status', 'queued')
   return 'ok'
-}
-
-export async function getPreferences(token: string): Promise<{ topics: string[] } | null> {
-  const { data } = await getBlogDb()
-    .from('arnobot_blog_subscribers')
-    .select('topics, status')
-    .eq('unsubscribe_token', token)
-    .maybeSingle()
-  const row = data as { topics: string[]; status: string } | null
-  if (!row || row.status !== 'confirmed') return null
-  return { topics: row.topics ?? [] }
-}
-
-export async function updatePreferences(token: string, rawTopics: unknown): Promise<'ok' | 'invalid'> {
-  const db = getBlogDb()
-  const { data } = await db
-    .from('arnobot_blog_subscribers')
-    .update({ topics: normalizeTags(rawTopics) })
-    .eq('unsubscribe_token', token)
-    .eq('status', 'confirmed')
-    .select('id')
-    .maybeSingle()
-  return data ? 'ok' : 'invalid'
 }
 
 // Harde bounce of spamklacht: direct afmelden, anders blijven we een adres mailen dat onze

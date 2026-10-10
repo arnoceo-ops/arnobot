@@ -9,7 +9,6 @@ export const BLOG_COPY = {
     sub: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
     // Bewust leeg: zolang er geen posts zijn toont het overzicht geen lege-staat-tekst.
     leeg: '',
-    alleOnderwerpen: 'Alle onderwerpen',
     metaTitel: 'ArnoBot Blog',
     metaBeschrijving: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
   },
@@ -29,8 +28,6 @@ export const BLOG_COPY = {
     emailPlaceholder: 'Je e-mailadres',
     voornaamPlaceholder: 'Je voornaam',
     voornaamVerplicht: 'Vul je voornaam in.',
-    onderwerpenLabel: 'Waarover wil je lezen?',
-    alles: 'Alles',
     knop: 'Abonneer',
     bezig: 'Bezig',
     geluktKop: 'Check je inbox',
@@ -61,16 +58,6 @@ export const BLOG_COPY = {
     gelukt: 'Je bent afgemeld. Je krijgt geen blogmails meer van ons.',
     ongeldig: 'Deze link is ongeldig.',
     fout: 'Er ging iets mis. Probeer het nog eens.',
-    voorkeuren: 'Liever alleen bepaalde onderwerpen? Pas je voorkeuren aan.',
-  },
-  voorkeuren: {
-    kop: 'Je onderwerpen',
-    tekst: 'Kies waarover je mail wilt krijgen.',
-    knop: 'Opslaan',
-    opgeslagen: 'Opgeslagen.',
-    ongeldig: 'Deze link is ongeldig.',
-    fout: 'Er ging iets mis. Probeer het nog eens.',
-    afmelden: 'Helemaal afmelden',
   },
   mail: {
     bevestigOnderwerp: 'Bevestig je aanmelding voor de ArnoBot blog',
@@ -84,7 +71,5 @@ export const BLOG_COPY = {
     nieuwKnop: 'LEES HET ARTIKEL',
     nieuwVoet: (url: string) =>
       `Geen blogmails meer? <a href="${url}" style="color:#9ca3af;text-decoration:underline;">Klik dan hier.</a>`,
-    voorkeurenVoet: (url: string) =>
-      `<a href="${url}" style="color:#9ca3af;text-decoration:underline;">Onderwerpen aanpassen</a>`,
   },
 } as const

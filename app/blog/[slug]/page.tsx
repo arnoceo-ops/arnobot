@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound, redirect } from 'next/navigation'
-import { BLOG_BASE_URL, countTags, getPublishedPosts, getPublishedPostBySlug, relatedPosts } from '@/lib/blog'
+import { BLOG_BASE_URL, getPublishedPosts, getPublishedPostBySlug, relatedPosts } from '@/lib/blog'
 import { renderMarkdown } from '@/lib/blogMarkdown'
 import { isValidSlug, readingMinutes } from '@/lib/blogText'
 import { BLOG_COPY } from '@/lib/blogCopy'
@@ -115,7 +115,7 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </section>
 
-      <SubscribeBox topics={countTags(all).map(t => t.tag)} />
+      <SubscribeBox />
 
       {related.length > 0 && (
         <section className="bl-related">

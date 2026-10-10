@@ -11,7 +11,7 @@
 - [x] SQL: posts, abonnees, bezorgwachtrij, bucket `blog-images` (`docs/sql/2026-10-10-blog.sql`, uitgevoerd)
 - [x] Publieke pagina's, RSS, JSON-LD
 - [x] Adminbeheer: editor met live voorbeeld, afbeeldingen, hashtags, inplannen, versturen, testmail
-- [x] Aanmelden, bevestigen, afmelden (ook one-click), voorkeuren
+- [x] Aanmelden, bevestigen, afmelden (ook one-click). Onderwerpkeuze en voorkeurenpagina zijn op 10 oktober weer verwijderd
 - [x] Verzending via `mail.arno.bot`, dagbudget, wachtrij, Redis-slot, idempotency-key
 - [x] Cron elke 15 minuten (`/api/cron/blog`)
 - [x] Footer-link naar `/blog`, oude arno.blog-URL-vormen blijven doorgestuurd
@@ -28,6 +28,7 @@
 
 - **Gekozen:** intern bouwen, Resend als transport. **Verworpen:** externe nieuwsbrieftool (Substack, Beehiiv, Mailchimp), want nieuwe sub-verwerker, lijst buiten eigen database, blog niet onder eigen domein en geen koppeling met trial en funnel. **Verworpen:** Resend Audiences/Broadcasts, want lijst en templates buiten Supabase en `email-templates.ts`.
 - **Gekozen:** posts in Supabase met adminpagina (publiceren zonder deploy). **Verworpen:** Markdown-bestanden in git, want elke post kost een deploy.
+- **Gekozen:** abonneren is altijd op alle posts, hashtags zijn alleen om het archief te doorzoeken (10 oktober, Arno). **Verworpen:** abonneren per onderwerp met een voorkeurenpagina. Dat was eerst gebouwd, maar bleek onduidelijk en onnodig, en is verwijderd (pagina, API, mailvoetlink). De kolom `topics` staat nog in de database maar wordt niet meer gebruikt.
 - **Gekozen:** alleen hashtags, geen aparte categorieën. Tagpagina's met minder dan 3 posts zijn `noindex`.
 - **Gekozen:** apart verzendsubdomein `mail.arno.bot`, zodat de reputatie van blogmails los staat van betalings- en trialmails. **Verworpen:** `blog@arno.bot`, want reputatie hangt aan het domein, niet aan het adres.
 - **Gekozen:** Manual DNS-setup bij Vercel. **Verworpen:** Resend Auto configure, want schrijfrechten op de DNS van arno.bot.

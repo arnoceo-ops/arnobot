@@ -10,17 +10,12 @@ const C = BLOG_COPY.abonneer
 
 // Aanmeldformulier voor de blogmails. Double opt-in: dit formulier maakt alleen een
 // aanmelding in afwachting, pas de bevestigingsklik in de mail activeert hem.
-export default function SubscribeBox({ topics }: { topics: string[] }) {
+export default function SubscribeBox() {
   const [email, setEmail] = useState('')
   const [voornaam, setVoornaam] = useState('')
-  const [chosen, setChosen] = useState<string[]>([])
   const [website, setWebsite] = useState('') // honeypot: echte bezoekers laten dit leeg
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle')
   const [error, setError] = useState('')
-
-  function toggle(tag: string) {
-    setChosen(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,7 +29,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
       const res = await fetch('/api/blog/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, voornaam, topics: chosen, website }),
+        body: JSON.stringify({ email, voornaam, website }),
       })
       if (res.ok) { setState('done'); return }
       setState('idle')
@@ -59,17 +54,6 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
         <>
           <p>{C.tekst}</p>
           <form className="bl-form" onSubmit={submit} noValidate>
-            {topics.length > 0 && (
-              <div>
-                <p className="bl-small" style={{ marginBottom: 8 }}>{C.onderwerpenLabel}</p>
-                <div className="bl-topics">
-                  <button type="button" className="bl-topic" aria-pressed={chosen.length === 0} onClick={() => setChosen([])}>{C.alles}</button>
-                  {topics.map(t => (
-                    <button key={t} type="button" className="bl-topic" aria-pressed={chosen.includes(t)} onClick={() => toggle(t)}>#{t}</button>
-                  ))}
-                </div>
-              </div>
-            )}
             <div className="bl-hp" aria-hidden="true">
               <label>Website<input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)} /></label>
             </div>

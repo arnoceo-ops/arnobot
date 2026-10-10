@@ -196,13 +196,12 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
 | Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
-| Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
+| Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
 | Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
 | Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
 | Blog bevestigen | `/blog/bevestig/[token]` | Terugvalpagina voor double opt-in: bevestigt pas na een klik op de knop. De link in de mail wijst naar `/api/blog/bevestig?token=` (zie API), niet hierheen. Token in het pad: uitgesloten van pageview- en PostHog-tracking |
 | Blog afmelden | `/blog/afmelden/[token]` | Zelfde patroon, knop i.p.v. directe actie |
-| Blog voorkeuren | `/blog/voorkeuren/[token]` | Abonnee kiest onderwerpen (hashtags) of alles |
 
 **Let op:** `/team` (publiek leadformulier) en `/bot/team` (ingelogd managersdashboard) zijn twee verschillende pagina's met bijna dezelfde naam, niet met elkaar verwarren.
 
@@ -300,7 +299,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/blog/bevestig` | PUBLIEK. Doel van de link in de bevestigingsmail (GET). Echte klik van een mens (`Sec-Fetch-User: ?1` plus `Sec-Fetch-Mode: navigate`, `lib/blogConfirmGate.ts`) bevestigt direct en stuurt door naar `/blog?bevestigd=1` (of `0`). Scanners en browsers zonder die headers (Safari < 16.4) gaan naar `/blog/bevestig/[token]` met een knop, zonder iets te wijzigen |
 | `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token), gebruikt door de terugvalpagina |
 | `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |
-| `/api/blog/preferences` | PUBLIEK. Onderwerpen van een abonnee wijzigen |
 | `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
@@ -527,7 +525,7 @@ RAG-kennisbank-vectorstore (`content`, `context`, `url`, `embedding`), embed-mod
 Per-gebruiker character-count-verbruik voor ElevenLabs TTS (quota + kostenbewaking).
 
 ### `arnobot_blog_posts` / `arnobot_blog_subscribers` / `arnobot_blog_deliveries`
-De publieke blog (SQL: `docs/sql/2026-10-10-blog.sql`, RLS aan zonder policies, alleen service-role). **Posts:** `slug` (uniek), `title`, `summary`, `body_md` (Markdown), `cover_image_url`, `tags` (array, genormaliseerd, GIN-index), `status` (`draft`/`scheduled`/`published`), `publish_at`, `published_at`, `notify_subscribers`, `notified_at` (eenmalig versturen). **Abonnees:** `email` (unieke index op `lower(email)`), `status` (`pending`/`confirmed`/`unsubscribed`), `topics` (leeg = alles), `voornaam` (verplicht bij nieuwe aanmeldingen, strikte allowlist van tekens want de waarde komt ongeescaped in de mail-HTML, voor de aanhef "Hey, {voornaam}."; SQL `docs/sql/2026-10-10-blog-voornaam.sql`), `confirm_token`, `unsubscribe_token`, geen IP-opslag, de bevestigingsklik (`confirmed_at`) is het toestemmingsbewijs. **Bezorgingen:** een rij per post per abonnee (`unique(post_id, subscriber_id)`), `queued`/`sent`/`failed`, `attempts`, `resend_id`. Dit maakt versturen idempotent en laat het dagbudget de wachtrij over dagen verdelen. Afbeeldingen in de publieke Storage-bucket `blog-images`. Publieke pagina's lezen via een gecachete Supabase-client (Next fetch-cache, tag `blog`, direct ververst via `revalidateBlog()` na elke adminwijziging), omdat de root layout `headers()` leest en dus elke pagina per verzoek rendert.
+De publieke blog (SQL: `docs/sql/2026-10-10-blog.sql`, RLS aan zonder policies, alleen service-role). **Posts:** `slug` (uniek), `title`, `summary`, `body_md` (Markdown), `cover_image_url`, `tags` (array, genormaliseerd, GIN-index), `status` (`draft`/`scheduled`/`published`), `publish_at`, `published_at`, `notify_subscribers`, `notified_at` (eenmalig versturen). **Abonnees:** `email` (unieke index op `lower(email)`), `status` (`pending`/`confirmed`/`unsubscribed`), `topics` (ongebruikt sinds 10 oktober: abonneren is altijd op alle posts, de kolom is niet meer in gebruik), `voornaam` (verplicht bij nieuwe aanmeldingen, strikte allowlist van tekens want de waarde komt ongeescaped in de mail-HTML, voor de aanhef "Hey, {voornaam}."; SQL `docs/sql/2026-10-10-blog-voornaam.sql`), `confirm_token`, `unsubscribe_token`, geen IP-opslag, de bevestigingsklik (`confirmed_at`) is het toestemmingsbewijs. **Bezorgingen:** een rij per post per abonnee (`unique(post_id, subscriber_id)`), `queued`/`sent`/`failed`, `attempts`, `resend_id`. Dit maakt versturen idempotent en laat het dagbudget de wachtrij over dagen verdelen. Afbeeldingen in de publieke Storage-bucket `blog-images`. Publieke pagina's lezen via een gecachete Supabase-client (Next fetch-cache, tag `blog`, direct ververst via `revalidateBlog()` na elke adminwijziging), omdat de root layout `headers()` leest en dus elke pagina per verzoek rendert.
 
 ### `arnobot_csp_violations`
 CSP-schendingsrapporten (`document_uri`, `violated_directive`, `blocked_uri`).
