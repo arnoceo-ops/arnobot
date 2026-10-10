@@ -1,6 +1,7 @@
 import { getBlogDb } from '@/lib/blog'
 import { getDailyBlogMailBudget } from '@/lib/blogMail'
 import { StatCard, TileGrid, SubHeading, RatioBar, TrendChart } from './StatsUi'
+import AanmeldingenLijst, { type Aanmelding } from './AanmeldingenLijst'
 
 // Tabblad BLOG op /bot/admin/stats: abonnees, groei, verzending, bezoek en per artikel.
 // Alles zijn exacte tellingen in de database (head-count), geen rijen ophalen en zelf tellen,
@@ -114,10 +115,10 @@ async function laadBlogStats() {
 
   const { data: aanmeldingenRaw } = await db
     .from('arnobot_blog_subscribers')
-    .select('email, voornaam, status, created_at')
+    .select('id, email, voornaam, status, created_at')
     .order('created_at', { ascending: false })
     .limit(RECENT_SIGNUPS)
-  const aanmeldingen = (aanmeldingenRaw ?? []) as { email: string; voornaam: string | null; status: string; created_at: string }[]
+  const aanmeldingen = (aanmeldingenRaw ?? []) as Aanmelding[]
 
   const nieuw: Record<string, number> = {}
   const weg: Record<string, number> = {}
@@ -261,34 +262,9 @@ export default async function BlogStats() {
       {aanmeldingen.length > 0 && (
         <>
           <SubHeading label="AANMELDINGEN" />
-          <StatCard label="LAATSTE AANMELDINGEN" full
-            footnote={`Nieuwste bovenaan, laatste ${aanmeldingen.length} van ${totaal}. Wacht op bevestiging betekent dat de aanmelder de link in de mail nog niet heeft aangeklikt.`}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
-                <thead>
-                  <tr>
-                    <th style={head}>DATUM</th>
-                    <th style={head}>VOORNAAM</th>
-                    <th style={head}>E-MAIL</th>
-                    <th style={head}>STATUS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {aanmeldingen.map(a => (
-                    <tr key={a.email}>
-                      <td style={cell}>
-                        {new Date(a.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
-                      </td>
-                      <td style={cell}>{a.voornaam ?? ''}</td>
-                      <td style={cell}>{a.email}</td>
-                      <td style={{ ...cell, color: a.status === 'confirmed' ? '#f1f5f9' : '#6b7280' }}>
-                        {a.status === 'confirmed' ? 'BEVESTIGD' : a.status === 'pending' ? 'WACHT OP BEVESTIGING' : 'AFGEMELD'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <StatCard label="AANMELDINGEN" full
+            footnote="Nieuwste bovenaan. Wacht op bevestiging betekent dat de aanmelder de link in de mail nog niet heeft aangeklikt. De CSV bevat alle abonnees.">
+            <AanmeldingenLijst initialRows={aanmeldingen} total={totaal} />
           </StatCard>
         </>
       )}
