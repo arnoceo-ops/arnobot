@@ -11,6 +11,7 @@ const CENTER_LINKS = [
   { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
   { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
   { href: '/bot/admin/idee', label: 'BLOGS' },
+  { href: '/bot/admin/blog', label: 'POSTS' },
   { href: '/bot/admin/stats', label: 'STATS' },
 ]
 
