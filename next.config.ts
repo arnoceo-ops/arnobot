@@ -25,12 +25,13 @@ const nextConfig: NextConfig = {
       { source: '/bot/bieb/:path*', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
-      // Blogposts leven op arno.blog, niet op arno.bot. Hier i.p.v. in proxy.ts: de
-      // proxy-matcher slaat elk pad met een punt over, dus oude URL's als /blog/2011/...html
-      // bereikten die redirect nooit en gaven een 404 (Sentry-ruis van bots). De query
-      // string blijft behouden.
-      { source: '/blog', destination: 'https://arno.blog/blog', permanent: true },
-      { source: '/blog/:path*', destination: 'https://arno.blog/blog/:path*', permanent: true },
+      // /blog is sinds 2026-10-10 de eigen blog op arno.bot. Alleen de oude arno.blog-vormen
+      // blijven doorgestuurd: jaar-URL's en .html-URL's uit het Squarespace-tijdperk (anders
+      // 404-ruis van bots en gebroken oude links). Hier i.p.v. in proxy.ts: de proxy-matcher
+      // slaat elk pad met een punt over. Onbekende losse slugs onder /blog worden in
+      // app/blog/[slug]/page.tsx doorgestuurd. De query string blijft behouden.
+      { source: '/blog/:year(\\d{4})/:path*', destination: 'https://arno.blog/blog/:year/:path*', permanent: true },
+      { source: '/blog/:path(.+\\.html)', destination: 'https://arno.blog/blog/:path', permanent: true },
     ]
   },
   // Reverse proxy voor PostHog (zelfde truc als de Sentry-tunnel hieronder,
