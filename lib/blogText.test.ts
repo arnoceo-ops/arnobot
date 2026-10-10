@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findForbiddenDashes, normalizeTag, normalizeTags, slugify, isValidSlug } from './blogText'
+import { findForbiddenDashes, normalizeTag, normalizeTags, normalizeVoornaam, slugify, isValidSlug } from './blogText'
 import { renderMarkdown } from './blogMarkdown'
 
 describe('normalizeTag', () => {
@@ -64,5 +64,31 @@ describe('renderMarkdown veiligheid', () => {
   })
   it('geeft koppen een anker', () => {
     expect(renderMarkdown('## Hoe werkt het')).toContain('id="hoe-werkt-het"')
+  })
+})
+
+describe('normalizeVoornaam', () => {
+  it('laat gewone namen intact', () => {
+    expect(normalizeVoornaam('Arno')).toBe('Arno')
+    expect(normalizeVoornaam('  Jan-Willem ')).toBe('Jan-Willem')
+    expect(normalizeVoornaam("D'Angelo")).toBe("D'Angelo")
+    expect(normalizeVoornaam('Zoë')).toBe('Zoë')
+    expect(normalizeVoornaam('Anne  Marie')).toBe('Anne Marie')
+  })
+  it('haalt HTML en overige tekens eruit', () => {
+    expect(normalizeVoornaam('<script>alert(1)</script>')).toBe('scriptalertscript')
+    expect(normalizeVoornaam('Jan<b>')).toBe('Janb')
+    expect(normalizeVoornaam('Piet & Klaas')).toBe('Piet Klaas')
+    expect(normalizeVoornaam('x"onmouseover="y')).toBe('xonmouseovery')
+  })
+  it('geeft null bij leeg of zonder letters', () => {
+    expect(normalizeVoornaam('')).toBeNull()
+    expect(normalizeVoornaam('   ')).toBeNull()
+    expect(normalizeVoornaam('123 !!')).toBeNull()
+    expect(normalizeVoornaam(undefined)).toBeNull()
+    expect(normalizeVoornaam(42)).toBeNull()
+  })
+  it('kapt af op 40 tekens', () => {
+    expect(normalizeVoornaam('A'.repeat(100))?.length).toBe(40)
   })
 })

@@ -10,6 +10,7 @@ const C = BLOG_COPY.abonneer
 // aanmelding in afwachting, pas de bevestigingsklik in de mail activeert hem.
 export default function SubscribeBox({ topics }: { topics: string[] }) {
   const [email, setEmail] = useState('')
+  const [voornaam, setVoornaam] = useState('')
   const [chosen, setChosen] = useState<string[]>([])
   const [website, setWebsite] = useState('') // honeypot: echte bezoekers laten dit leeg
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle')
@@ -28,7 +29,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
       const res = await fetch('/api/blog/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, topics: chosen, website }),
+        body: JSON.stringify({ email, voornaam, topics: chosen, website }),
       })
       if (res.ok) { setState('done'); return }
       setState('idle')
@@ -61,6 +62,13 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
             )}
             <div className="bl-hp" aria-hidden="true">
               <label>Website<input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)} /></label>
+            </div>
+            <div className="bl-row">
+              <input
+                className="bl-input" type="text" autoComplete="given-name" maxLength={40}
+                placeholder={C.voornaamPlaceholder} aria-label={C.voornaamPlaceholder}
+                value={voornaam} onChange={e => setVoornaam(e.target.value)}
+              />
             </div>
             <div className="bl-row">
               <input

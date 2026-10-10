@@ -32,6 +32,22 @@ export function normalizeTags(list: unknown): string[] {
   return out
 }
 
+// Voornaam voor de aanhef in blogmails. Strikte allowlist: letters (ook met accenten), spaties,
+// koppelteken, apostrof en punt. De waarde komt ongeescaped in de mail-HTML terecht, dus niets
+// buiten deze tekens mag erdoor. Leeg resultaat = geen naam.
+export const MAX_VOORNAAM_LENGTH = 40
+export function normalizeVoornaam(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const cleaned = raw
+    .normalize('NFC')
+    .replace(/[^\p{L}\s'.-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_VOORNAAM_LENGTH)
+    .trim()
+  return /\p{L}/u.test(cleaned) ? cleaned : null
+}
+
 export function slugify(title: string): string {
   return stripAccents(String(title ?? ''))
     .toLowerCase()

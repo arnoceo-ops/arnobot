@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { success } = await subscribeIpLimit.limit(clientIp(req))
   if (!success) return NextResponse.json({ error: 'Te veel pogingen' }, { status: 429 })
 
-  const body = (await req.json().catch(() => null)) as { email?: unknown; topics?: unknown; website?: unknown } | null
+  const body = (await req.json().catch(() => null)) as { email?: unknown; topics?: unknown; voornaam?: unknown; website?: unknown } | null
   if (!body) return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
 
   // Honeypot: het verborgen veld is voor mensen leeg. Bots vullen het in, die krijgen een
@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
   if (!emailLimit.success) return NextResponse.json({ error: 'Te veel pogingen' }, { status: 429 })
 
   try {
-    const pending = await requestSubscription(email, body.topics)
-    if (pending) await sendConfirmationMail(pending.email, pending.confirmToken)
+    const pending = await requestSubscription(email, body.topics, body.voornaam)
+    if (pending) await sendConfirmationMail(pending.email, pending.confirmToken, pending.voornaam)
     return ok
   } catch (err) {
     console.error('[blog/subscribe]', err instanceof Error ? err.message : err)

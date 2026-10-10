@@ -36,16 +36,16 @@ function resend(): Resend {
   return _resend
 }
 
-export async function sendConfirmationMail(email: string, confirmToken: string): Promise<void> {
-  const { subject, html } = getEmailTemplate('blog_bevestiging', '', false, {
+export async function sendConfirmationMail(email: string, confirmToken: string, voornaam: string | null = null): Promise<void> {
+  const { subject, html } = getEmailTemplate('blog_bevestiging', voornaam ?? '', false, {
     blog: { titel: '', samenvatting: '', url: confirmUrl(confirmToken), afmeldUrl: '', voorkeurenUrl: '' },
   })
   const { error } = await resend().emails.send({ from: FROM, to: email, replyTo: REPLY_TO, subject, html })
   if (error) throw new Error(`Bevestigingsmail versturen mislukt: ${error.message}`)
 }
 
-function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscribeToken: string, isTest: boolean) {
-  return getEmailTemplate('blog_nieuwe_post', '', isTest, {
+function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscribeToken: string, isTest: boolean, voornaam: string | null = null) {
+  return getEmailTemplate('blog_nieuwe_post', voornaam ?? '', isTest, {
     blog: {
       titel: post.title,
       samenvatting: post.summary,
@@ -57,7 +57,7 @@ function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscrib
 }
 
 export async function sendBlogTestMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, to: string): Promise<void> {
-  const { subject, html } = postMail(post, 'test-token', true)
+  const { subject, html } = postMail(post, 'test-token', true, 'Arno')
   const { error } = await resend().emails.send({ from: FROM, to, replyTo: REPLY_TO, subject, html })
   if (error) throw new Error(`Testmail versturen mislukt: ${error.message}`)
 }
@@ -139,10 +139,10 @@ async function runDeliveries(): Promise<DeliveryRun> {
 
   const [{ data: posts }, { data: subs }] = await Promise.all([
     db.from('arnobot_blog_posts').select('id, title, summary, slug, status').in('id', [...new Set(rows.map(r => r.post_id))]),
-    db.from('arnobot_blog_subscribers').select('id, email, status, unsubscribe_token').in('id', [...new Set(rows.map(r => r.subscriber_id))]),
+    db.from('arnobot_blog_subscribers').select('id, email, status, voornaam, unsubscribe_token').in('id', [...new Set(rows.map(r => r.subscriber_id))]),
   ])
   const postById = new Map(((posts ?? []) as { id: string; title: string; summary: string; slug: string; status: string }[]).map(p => [p.id, p]))
-  const subById = new Map(((subs ?? []) as { id: string; email: string; status: string; unsubscribe_token: string }[]).map(s => [s.id, s]))
+  const subById = new Map(((subs ?? []) as { id: string; email: string; status: string; voornaam: string | null; unsubscribe_token: string }[]).map(s => [s.id, s]))
 
   const messages: { deliveryId: string; msg: Parameters<Resend['batch']['send']>[0][number] }[] = []
   for (const r of rows) {
@@ -154,7 +154,7 @@ async function runDeliveries(): Promise<DeliveryRun> {
       run.skipped++
       continue
     }
-    const { subject, html } = postMail(post, sub.unsubscribe_token, false)
+    const { subject, html } = postMail(post, sub.unsubscribe_token, false, sub.voornaam)
     messages.push({
       deliveryId: r.id,
       msg: {

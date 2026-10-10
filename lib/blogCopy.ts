@@ -26,6 +26,7 @@ export const BLOG_COPY = {
     kop: 'Nieuwe artikelen in je inbox',
     tekst: 'Je krijgt een mail bij elk nieuw artikel. Kies alles of alleen de onderwerpen die jou interesseren. Afmelden kan altijd met één klik.',
     emailPlaceholder: 'Je e-mailadres',
+    voornaamPlaceholder: 'Je voornaam (optioneel)',
     onderwerpenLabel: 'Waarover wil je lezen?',
     alles: 'Alles',
     knop: 'Abonneer',

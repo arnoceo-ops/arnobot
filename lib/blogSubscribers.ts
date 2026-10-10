@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto'
 import { getBlogDb } from './blog'
-import { normalizeTags } from './blogText'
+import { normalizeTags, normalizeVoornaam } from './blogText'
 
 // Abonneebeheer voor de blogmails. Alleen vanuit server-code importeren.
 // Statussen: pending (aangemeld, nog niet bevestigd), confirmed (ontvangt mail),
@@ -32,6 +32,7 @@ interface SubscriberRow {
   id: string
   email: string
   status: 'pending' | 'confirmed' | 'unsubscribed'
+  voornaam: string | null
   confirm_token: string
   unsubscribe_token: string
 }
@@ -41,16 +42,18 @@ interface SubscriberRow {
 // niet te achterhalen is welke adressen al op de lijst staan.
 export async function requestSubscription(
   rawEmail: string,
-  rawTopics: unknown
-): Promise<{ email: string; confirmToken: string } | null> {
+  rawTopics: unknown,
+  rawVoornaam?: unknown
+): Promise<{ email: string; confirmToken: string; voornaam: string | null } | null> {
   const db = getBlogDb()
   const email = normalizeEmail(rawEmail)
   const topics = normalizeTags(rawTopics)
+  const voornaam = normalizeVoornaam(rawVoornaam)
 
   const find = async (): Promise<SubscriberRow | null> => {
     const { data } = await db
       .from('arnobot_blog_subscribers')
-      .select('id, email, status, confirm_token, unsubscribe_token')
+      .select('id, email, status, voornaam, confirm_token, unsubscribe_token')
       .eq('email', email)
       .maybeSingle()
     return (data as SubscriberRow | null) ?? null
@@ -63,6 +66,7 @@ export async function requestSubscription(
       email,
       status: 'pending',
       topics,
+      voornaam,
       confirm_token: newToken(),
       unsubscribe_token: newToken(),
     })
@@ -71,7 +75,7 @@ export async function requestSubscription(
     existing = await find()
     if (!existing) throw new Error('Aanmelding niet teruggevonden')
     await db.from('arnobot_blog_subscribers').update({ confirm_sent_at: new Date().toISOString() }).eq('id', existing.id)
-    return { email: existing.email, confirmToken: existing.confirm_token }
+    return { email: existing.email, confirmToken: existing.confirm_token, voornaam: existing.voornaam }
   }
 
   if (existing.status === 'confirmed') return null
@@ -84,13 +88,15 @@ export async function requestSubscription(
     .update({
       status: 'pending',
       topics,
+      // Een eerder ingevulde naam blijft staan als de bezoeker het veld nu leeg laat.
+      voornaam: voornaam ?? existing.voornaam,
       confirm_token,
       confirm_sent_at: new Date().toISOString(),
       unsubscribed_at: null,
     })
     .eq('id', existing.id)
   if (error) throw new Error(`Aanmelden mislukt: ${error.message}`)
-  return { email: existing.email, confirmToken: confirm_token }
+  return { email: existing.email, confirmToken: confirm_token, voornaam: voornaam ?? existing.voornaam }
 }
 
 export async function confirmSubscription(token: string): Promise<'ok' | 'invalid'> {
