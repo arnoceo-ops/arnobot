@@ -63,6 +63,9 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-body strong { color: #f8fafc; font-weight: 600; }
         .bl-body a { color: #f59e0b; text-decoration: underline; text-underline-offset: 3px; }
         .bl-body ul, .bl-body ol { padding-left: 24px; }
+        .bl-body ul { list-style: disc; }
+        .bl-body ol { list-style: decimal; }
+        .bl-body li::marker { color: #f59e0b; }
         .bl-body li + li { margin-top: 8px; }
         .bl-body blockquote { border-left: 3px solid #f59e0b; padding-left: 20px; color: #f8fafc; }
         .bl-body img { max-width: 100%; height: auto; border-radius: 6px; display: block; }
