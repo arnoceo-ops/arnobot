@@ -361,6 +361,11 @@ export default function PostEditor({ initial, existingTags, subscriberCount }: P
           <div style={{ border: '1px solid #374151', borderRadius: 4, padding: 24, background: '#111827' }}>
             {title && <p style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>{title}</p>}
             {tags.length > 0 && <p style={{ ...muted, marginBottom: 16 }}>{tags.map(t => `#${t}`).join(' ')}</p>}
+            {cover && (
+              // Zelfde 16:9-uitsnede als op de site, zodat je ziet wat er wordt bijgesneden.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cover} alt="" style={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 4, marginBottom: 16 }} />
+            )}
             {/* Veilig: renderMarkdown escapet ruwe HTML en filtert URL-schema's. */}
             <div className="bl-preview" dangerouslySetInnerHTML={{ __html: html }} />
             {!body && <p style={muted}>Het voorbeeld verschijnt zodra je tekst schrijft.</p>}
