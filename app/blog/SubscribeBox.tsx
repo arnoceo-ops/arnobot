@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { BLOG_COPY } from '@/lib/blogCopy'
+import { normalizeVoornaam } from '@/lib/blogText'
 
 const C = BLOG_COPY.abonneer
 
@@ -24,6 +25,9 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
     e.preventDefault()
     if (state === 'loading') return
     setError('')
+    // Voornaam is verplicht (aanhef in de mails). Zelfde opschoning als de server, zodat een
+    // naam met alleen cijfers of tekens meteen een duidelijke melding geeft.
+    if (!normalizeVoornaam(voornaam)) { setError(C.voornaamVerplicht); return }
     setState('loading')
     try {
       const res = await fetch('/api/blog/subscribe', {
@@ -33,7 +37,12 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
       })
       if (res.ok) { setState('done'); return }
       setState('idle')
-      setError(res.status === 400 ? C.ongeldigEmail : res.status === 429 ? C.teVaak : C.fout)
+      if (res.status === 400) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.code === 'voornaam' ? C.voornaamVerplicht : C.ongeldigEmail)
+      } else {
+        setError(res.status === 429 ? C.teVaak : C.fout)
+      }
     } catch {
       setState('idle')
       setError(C.fout)
@@ -41,7 +50,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
   }
 
   return (
-    <section className="bl-box" aria-labelledby="bl-sub-title">
+    <section className="bl-box bl-sub-box" aria-labelledby="bl-sub-title">
       <h2 id="bl-sub-title">{C.kop}</h2>
       {state === 'done' ? (
         <p role="status" className="bl-msg" style={{ marginTop: 12 }}>{C.gelukt}</p>
@@ -65,7 +74,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
             </div>
             <div className="bl-row">
               <input
-                className="bl-input" type="text" autoComplete="given-name" maxLength={40}
+                className="bl-input" type="text" autoComplete="given-name" maxLength={40} required
                 placeholder={C.voornaamPlaceholder} aria-label={C.voornaamPlaceholder}
                 value={voornaam} onChange={e => setVoornaam(e.target.value)}
               />
@@ -82,7 +91,7 @@ export default function SubscribeBox({ topics }: { topics: string[] }) {
             </div>
             {error && <p role="alert" className="bl-msg err">{error}</p>}
             <p className="bl-small">
-              {C.privacy} <Link href="/privacy">{C.privacyLink}</Link>
+              <Link href="/privacy">{C.privacyLink}</Link>
             </p>
           </form>
         </>

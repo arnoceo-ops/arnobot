@@ -5,12 +5,13 @@
 export const BLOG_COPY = {
   overzicht: {
     label: 'Blog',
-    titel: 'Wat ArnoBot voor jou kan doen',
-    sub: 'Hoe ArnoBot werkt, wat je ermee kunt en hoe verkopers en teams het in de praktijk gebruiken.',
-    leeg: 'De eerste artikelen komen eraan. Abonneer je, dan krijg je ze als eerste.',
+    titel: 'ArnoBot Best Practices',
+    sub: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
+    // Bewust leeg: zolang er geen posts zijn toont het overzicht geen lege-staat-tekst.
+    leeg: '',
     alleOnderwerpen: 'Alle onderwerpen',
     metaTitel: 'ArnoBot Blog',
-    metaBeschrijving: 'Hoe ArnoBot werkt, wat je ermee kunt en hoe verkopers en teams het in de praktijk gebruiken.',
+    metaBeschrijving: 'Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken',
   },
   tag: {
     sub: (tag: string) => `Alle artikelen over ${tag}.`,
@@ -23,10 +24,11 @@ export const BLOG_COPY = {
     gerelateerd: 'Meer om te lezen',
   },
   abonneer: {
-    kop: 'Nieuwe artikelen in je inbox',
-    tekst: 'Je krijgt een mail bij elk nieuw artikel. Kies alles of alleen de onderwerpen die jou interesseren. Afmelden kan altijd met één klik.',
+    kop: "Abonneer je op ArnoBot's blog",
+    tekst: 'Afmelden kan altijd met één klik.',
     emailPlaceholder: 'Je e-mailadres',
-    voornaamPlaceholder: 'Je voornaam (optioneel)',
+    voornaamPlaceholder: 'Je voornaam',
+    voornaamVerplicht: 'Vul je voornaam in.',
     onderwerpenLabel: 'Waarover wil je lezen?',
     alles: 'Alles',
     knop: 'Abonneer',
@@ -35,7 +37,6 @@ export const BLOG_COPY = {
     ongeldigEmail: 'Dat is geen geldig e-mailadres.',
     fout: 'Er ging iets mis. Probeer het nog eens.',
     teVaak: 'Te veel pogingen. Probeer het later opnieuw.',
-    privacy: 'We gebruiken je e-mailadres alleen voor deze blogmails.',
     privacyLink: 'Privacyverklaring',
   },
   cta: {

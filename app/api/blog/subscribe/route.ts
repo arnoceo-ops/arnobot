@@ -4,6 +4,7 @@ import { isValidEmail } from '@/lib/email-templates'
 import { clientIp, subscribeEmailLimit, subscribeIpLimit } from '@/lib/blogRateLimit'
 import { requestSubscription, normalizeEmail } from '@/lib/blogSubscribers'
 import { sendConfirmationMail } from '@/lib/blogMail'
+import { normalizeVoornaam } from '@/lib/blogText'
 
 // Publiek aanmeldformulier voor de blogmails. Het antwoord is voor elk geldig adres gelijk,
 // ook als het al op de lijst staat, zodat de lijst niet af te vragen is.
@@ -30,15 +31,19 @@ export async function POST(req: NextRequest) {
     !isValidEmail(body.email.trim()) ||
     !/^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(body.email.trim())
   ) {
-    return NextResponse.json({ error: 'Ongeldig e-mailadres' }, { status: 400 })
+    return NextResponse.json({ error: 'Ongeldig e-mailadres', code: 'email' }, { status: 400 })
   }
   const email = normalizeEmail(body.email)
+
+  // Voornaam is verplicht: hij staat in de aanhef van elke mail.
+  const voornaam = normalizeVoornaam(body.voornaam)
+  if (!voornaam) return NextResponse.json({ error: 'Voornaam is verplicht', code: 'voornaam' }, { status: 400 })
 
   const emailLimit = await subscribeEmailLimit.limit(email)
   if (!emailLimit.success) return NextResponse.json({ error: 'Te veel pogingen' }, { status: 429 })
 
   try {
-    const pending = await requestSubscription(email, body.topics, body.voornaam)
+    const pending = await requestSubscription(email, body.topics, voornaam)
     if (pending) await sendConfirmationMail(pending.email, pending.confirmToken, pending.voornaam)
     return ok
   } catch (err) {

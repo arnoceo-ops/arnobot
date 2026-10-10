@@ -35,9 +35,10 @@
 - **Gekozen:** bevestigen en afmelden met een knop (POST), niet bij het openen van de link. **Verworpen:** directe GET, want mailscanners openen links automatisch.
 - **Gekozen:** gecachete Supabase-GET's met tag `blog` (ververst via `revalidateBlog()`). **Verworpen:** statische pagina's, want de root layout leest `headers()` voor de CSP-nonce en rendert daardoor elke pagina per verzoek.
 - **Gekozen:** onbekende slug onder `/blog` stuurt tijdelijk (307) door naar arno.blog. **Verworpen:** permanente redirect, want die blijft in de browser hangen als er later alsnog een post met die slug verschijnt.
-- **Gekozen:** optioneel veld "Je voornaam (optioneel)" in het aanmeldformulier voor de aanhef in de mails (10 oktober). **Verworpen:** naam afleiden uit het e-mailadres, want vaak fout en een foute naam is erger dan geen naam. Zonder naam geen aanhef.
+- **Gekozen:** voornaam in het aanmeldformulier voor de aanhef in de mails (10 oktober), eerst optioneel, nog dezelfde dag **verplicht** gemaakt op Arno's verzoek (client en server valideren). Oudere rijen zonder naam krijgen geen aanhef. **Verworpen:** naam afleiden uit het e-mailadres, want vaak fout en een foute naam is erger dan geen naam.
 - **Gekozen:** marketingstijl zoals `/prijzen` (Figtree, Oswald), niet de privacypagina-stijl. Bodytekst `#94a3b8`, koppen `#f8fafc`, binnen de bestaande marketingnorm.
 - **Gekozen:** de admin-tab heet POSTS (de tab BLOGS bestaat al en gaat over de arno.blog-briefing).
+- **Tekstwijzigingen 10 oktober (Arno):** overzichtskop "ArnoBot Best Practices" met subtekst "Nieuwe functionaliteiten en hoe je ArnoBot voor je kunt laten werken"; abonneerblok 600px breed, kop "Abonneer je op ArnoBot's blog", alleen "Afmelden kan altijd met één klik." als tekst, bij het formulier alleen de link naar de privacyverklaring; geen lege-staat-tekst op het overzicht.
 - **Teksten:** op Arno's expliciete akkoord eerst gebouwd en daarna gecorrigeerd, i.p.v. vooraf voorgelegd (afwijking van de standaardregel, gericht op deze blog). De privacytekst valt hier buiten en wordt wel eerst voorgelegd.
 
 ## Technische aandachtspunten

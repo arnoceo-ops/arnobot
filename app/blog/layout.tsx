@@ -75,6 +75,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-body th { color: #f8fafc; }
 
         .bl-box { margin-top: 56px; padding: 32px; border: 1px solid #374151; border-radius: 6px; background: #1f2937; }
+        .bl-sub-box { max-width: 600px; margin-left: auto; margin-right: auto; }
         .bl-box h2 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 600; text-transform: uppercase; color: #f8fafc; margin-bottom: 10px; }
         .bl-box p { font-size: 16px; line-height: 1.6; color: #94a3b8; }
         .bl-form { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }

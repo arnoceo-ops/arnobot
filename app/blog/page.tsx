@@ -40,7 +40,7 @@ export default async function BlogOverviewPage() {
       <TagChips tags={tags} />
 
       {posts.length === 0 ? (
-        <p className="bl-empty">{C.leeg}</p>
+        C.leeg ? <p className="bl-empty">{C.leeg}</p> : null
       ) : (
         <div className="bl-grid">
           {posts.map(p => <BlogCard key={p.id} post={p} />)}
