@@ -1,0 +1,47 @@
+# Blog op arno.bot/blog: plan en status
+
+**Laatst bijgewerkt:** 2026-10-10
+
+**Waar we staan:** de blog is gebouwd en live op productie (overzicht, artikel, hashtagpagina's, RSS, aanmelden met double opt-in, afmelden, voorkeuren, mailverzending met dagbudget, adminbeheer onder `/bot/admin/blog`, tab POSTS). Op productie end-to-end getest met een testpost en testabonnees (onderwerpfilter, batchverzending, geen dubbele mails, opruimen). De blog is nog niet vindbaar: `robots.ts` en `sitemap.ts` bevatten `/blog` bewust nog niet. Er staan nog geen echte posts.
+
+**Eerstvolgende stap:** Arno leest alle teksten op de live pagina's (alles staat in `lib/blogCopy.ts`) en keurt goed of corrigeert. Daarna: `/blog` in `robots.ts` (`PUBLIC_PATHS`) en `sitemap.ts` (statische lijst plus gepubliceerde posts) zetten.
+
+## Afvinklijst
+
+- [x] SQL: posts, abonnees, bezorgwachtrij, bucket `blog-images` (`docs/sql/2026-10-10-blog.sql`, uitgevoerd)
+- [x] Publieke pagina's, RSS, JSON-LD
+- [x] Adminbeheer: editor met live voorbeeld, afbeeldingen, hashtags, inplannen, versturen, testmail
+- [x] Aanmelden, bevestigen, afmelden (ook one-click), voorkeuren
+- [x] Verzending via `mail.arno.bot`, dagbudget, wachtrij, Redis-slot, idempotency-key
+- [x] Cron elke 15 minuten (`/api/cron/blog`)
+- [x] Footer-link naar `/blog`, oude arno.blog-URL-vormen blijven doorgestuurd
+- [x] Docs en PDF's (overzicht, technische overdracht, CLAUDE.md-regels voor e-mailtypen en Resend)
+- [x] End-to-end test op productie
+- [ ] Arno keurt teksten goed (`lib/blogCopy.ts`)
+- [ ] `/blog` in `robots.ts` en `sitemap.ts`
+- [ ] Privacytekst voor blogabonnees (eerst als platte tekst aan Arno voorleggen, dan pas op `/privacy` en in `scripts/generate-security-pdf.mjs`; Resend en het subdomein als sub-verwerker noemen)
+- [ ] Resend-webhook aanmaken (bounces en klachten) en `RESEND_WEBHOOK_SECRET` in Vercel zetten, daarna redeploy
+- [ ] Eerste echte post schrijven
+- [ ] Bij ~50 bevestigde abonnees: Resend Pro en `BLOG_DAILY_MAIL_BUDGET` verhogen (staat als milestone in CLAUDE.md)
+
+## Besluiten en verworpen alternatieven
+
+- **Gekozen:** intern bouwen, Resend als transport. **Verworpen:** externe nieuwsbrieftool (Substack, Beehiiv, Mailchimp), want nieuwe sub-verwerker, lijst buiten eigen database, blog niet onder eigen domein en geen koppeling met trial en funnel. **Verworpen:** Resend Audiences/Broadcasts, want lijst en templates buiten Supabase en `email-templates.ts`.
+- **Gekozen:** posts in Supabase met adminpagina (publiceren zonder deploy). **Verworpen:** Markdown-bestanden in git, want elke post kost een deploy.
+- **Gekozen:** alleen hashtags, geen aparte categorieën. Tagpagina's met minder dan 3 posts zijn `noindex`.
+- **Gekozen:** apart verzendsubdomein `mail.arno.bot`, zodat de reputatie van blogmails los staat van betalings- en trialmails. **Verworpen:** `blog@arno.bot`, want reputatie hangt aan het domein, niet aan het adres.
+- **Gekozen:** Manual DNS-setup bij Vercel. **Verworpen:** Resend Auto configure, want schrijfrechten op de DNS van arno.bot.
+- **Gekozen:** dagbudget voor blogmails (standaard 50 per UTC-dag) op de gratis Resend-tier (100 per dag voor alles samen). **Verworpen:** onbeperkt verzenden, want een blogpost kon dan betalings- en trialmails blokkeren.
+- **Gekozen:** bevestigen en afmelden met een knop (POST), niet bij het openen van de link. **Verworpen:** directe GET, want mailscanners openen links automatisch.
+- **Gekozen:** gecachete Supabase-GET's met tag `blog` (ververst via `revalidateBlog()`). **Verworpen:** statische pagina's, want de root layout leest `headers()` voor de CSP-nonce en rendert daardoor elke pagina per verzoek.
+- **Gekozen:** onbekende slug onder `/blog` stuurt tijdelijk (307) door naar arno.blog. **Verworpen:** permanente redirect, want die blijft in de browser hangen als er later alsnog een post met die slug verschijnt.
+- **Gekozen:** marketingstijl zoals `/prijzen` (Figtree, Oswald), niet de privacypagina-stijl. Bodytekst `#94a3b8`, koppen `#f8fafc`, binnen de bestaande marketingnorm.
+- **Gekozen:** de admin-tab heet POSTS (de tab BLOGS bestaat al en gaat over de arno.blog-briefing).
+- **Teksten:** op Arno's expliciete akkoord eerst gebouwd en daarna gecorrigeerd, i.p.v. vooraf voorgelegd (afwijking van de standaardregel, gericht op deze blog). De privacytekst valt hier buiten en wordt wel eerst voorgelegd.
+
+## Technische aandachtspunten
+
+- Mailstroom: `lib/blogMail.ts` (verzending), `lib/blogSubscribers.ts` (abonneelogica), `lib/blogRateLimit.ts`, `lib/blogCopy.ts` (alle teksten).
+- Afmeldtokens staan in mails: de paden `/blog/bevestig`, `/blog/afmelden` en `/blog/voorkeuren` zijn uitgesloten van pageview- en PostHog-tracking, `noindex` en `no-referrer`.
+- CSP `img-src` bevat het eigen Supabase-project voor afbeeldingen in posts.
+- `scripts/check-orphan-routes.mjs` begrijpt sinds deze bouw dynamische segmenten (`[id]`) in aanroepen via template-strings.
