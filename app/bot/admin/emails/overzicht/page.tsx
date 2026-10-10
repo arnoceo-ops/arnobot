@@ -55,6 +55,8 @@ export default async function EmailsOverzichtPage() {
             { name: 'Opzegging bevestiging', trigger: 'Event: bot/cancel-subscription',               ontvanger: 'Gebruiker',            wanneer: 'Direct bij opzegging via account pagina',               type: 'Transactioneel' },
             { name: 'Win-back',             trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
             { name: 'Referral aanmelding',   trigger: 'Event: bot/referral (direct)',                 ontvanger: 'Referrer (gebruiker)', wanneer: 'Zodra iemand zich aanmeldt via de referral link',       type: 'Transactioneel' },
+            { name: 'Blog bevestiging',     trigger: 'Event: api/blog/subscribe',                    ontvanger: 'Blogabonnee (aanmelder)', wanneer: 'Direct na aanmelden voor de blog, double opt-in',   type: 'Transactioneel' },
+            { name: 'Blog nieuw artikel',   trigger: 'Event/cron: admin/blog + cron/blog (elke 15 min)', ontvanger: 'Bevestigde blogabonnees', wanneer: 'Bij publicatie, binnen het dagbudget',          type: 'Marketing' },
             { name: 'Analyses bijgewerkt',   trigger: 'Cron:auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
           ]} />
         </Section>

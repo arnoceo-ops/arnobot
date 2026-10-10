@@ -152,6 +152,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
 | `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
+| `/bot/admin/blog` | POSTS: de publieke blog beheren. Lijst + editor (`/bot/admin/blog/[id]`, `nieuw` voor een nieuwe post) met live Markdown-voorbeeld, afbeeldingen plakken/slepen, hashtags met suggesties, concept/publiceren/inplannen, "verstuur naar abonnees" en testmail naar jezelf, lokale noodback-up |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
 | `/bot/admin/voice-test` | Testomgeving voor de ElevenLabs voice/TTS-integratie |
@@ -195,6 +196,13 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
 | Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
+| Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
+| Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
+| Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
+| Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
+| Blog bevestigen | `/blog/bevestig/[token]` | Double opt-in. Bevestigt pas na een klik op de knop (mailscanners openen links automatisch). Token in het pad: uitgesloten van pageview- en PostHog-tracking |
+| Blog afmelden | `/blog/afmelden/[token]` | Zelfde patroon, knop i.p.v. directe actie |
+| Blog voorkeuren | `/blog/voorkeuren/[token]` | Abonnee kiest onderwerpen (hashtags) of alles |
 
 **Let op:** `/team` (publiek leadformulier) en `/bot/team` (ingelogd managersdashboard) zijn twee verschillende pagina's met bijna dezelfde naam, niet met elkaar verwarren.
 
@@ -284,6 +292,14 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/arnobot-admin-login` | Admin-login (cookie, IP-rate-limit) |
 | `/api/admin/logout` | Admin-cookie wissen |
+| `/api/admin/blog/posts` | GET lijst, POST nieuwe blogpost (validatie incl. streepjesregel, slug-uniekheid) |
+| `/api/admin/blog/posts/[id]` | PUT bijwerken (publiceren, inplannen, naar concept), DELETE. Verstuurt bij publiceren met vinkje eenmalig naar abonnees (`notified_at`) |
+| `/api/admin/blog/upload` | Afbeelding naar de publieke bucket `blog-images` (PNG/JPG/WebP/GIF, max 5 MB, type via magic bytes, geen SVG) |
+| `/api/admin/blog/test-send` | Stuurt de nieuw-artikel-mail naar arno@arno.bot |
+| `/api/blog/subscribe` | PUBLIEK. Aanmelden voor blogmails (double opt-in). Ratelimit per IP (5/uur) en per adres (3/dag), honeypot, bot-UA-filter. Antwoord is altijd gelijk (lijst niet af te vragen) |
+| `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token) |
+| `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |
+| `/api/blog/preferences` | PUBLIEK. Onderwerpen van een abonnee wijzigen |
 | `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
@@ -328,6 +344,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/webhooks/calendly` | Ontvangt boekingsevents (HMAC-signature + timestamp-verificatie) |
 | `/api/webhooks/mollie` | Ontvangt Mollie-betaalmeldingen (alleen een `id`, de betaling wordt altijd zelf bij Mollie opgehaald, idempotent via `verwerkt_at`). Actief zodra `MOLLIE_API_KEY` is gezet |
+| `/api/webhooks/resend` | Resend-events `email.bounced` (alleen permanent) en `email.complained`: meldt het adres direct af bij de blogabonnees. Signature-verificatie via `RESEND_WEBHOOK_SECRET`; zonder secret doet de route niets (503) |
 | `/api/webhooks/github-pr` | Stuurt een Telegram-melding bij een nieuw geopende PR op de repo (X-Hub-Signature-256-verificatie). PR's van de documentatie-versheidsroutine (titel begint met "Documentatie-versheidscheck") worden bewust overgeslagen, die worden in een Claude Code-sessie afgehandeld |
 
 ### Infrastructuur
@@ -349,6 +366,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 
 | Pad | Schema | Doel |
 |---|---|---|
+| `/api/cron/blog` | Elke 15 minuten | Blog: ingeplande posts publiceren, wachtrij vullen voor posts met "verstuur naar abonnees", wachtende blogmails versturen binnen het dagbudget (`BLOG_DAILY_MAIL_BUDGET`, standaard 50 per UTC-dag, rest van de Resend-daglimiet blijft voor betalings- en trialmails). Redis-slot tegen gelijktijdige runs |
 | `/api/cron/trial-emails` | Dagelijks 04:05 | Lifecycle e-mails: dag1, dag4, dag14, dag25, first_conversation, first_coaching |
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
 | `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
@@ -506,6 +524,9 @@ RAG-kennisbank-vectorstore (`content`, `context`, `url`, `embedding`), embed-mod
 
 ### `arnobot_elevenlabs_usage`
 Per-gebruiker character-count-verbruik voor ElevenLabs TTS (quota + kostenbewaking).
+
+### `arnobot_blog_posts` / `arnobot_blog_subscribers` / `arnobot_blog_deliveries`
+De publieke blog (SQL: `docs/sql/2026-10-10-blog.sql`, RLS aan zonder policies, alleen service-role). **Posts:** `slug` (uniek), `title`, `summary`, `body_md` (Markdown), `cover_image_url`, `tags` (array, genormaliseerd, GIN-index), `status` (`draft`/`scheduled`/`published`), `publish_at`, `published_at`, `notify_subscribers`, `notified_at` (eenmalig versturen). **Abonnees:** `email` (unieke index op `lower(email)`), `status` (`pending`/`confirmed`/`unsubscribed`), `topics` (leeg = alles), `confirm_token`, `unsubscribe_token`, geen IP-opslag, de bevestigingsklik (`confirmed_at`) is het toestemmingsbewijs. **Bezorgingen:** een rij per post per abonnee (`unique(post_id, subscriber_id)`), `queued`/`sent`/`failed`, `attempts`, `resend_id`. Dit maakt versturen idempotent en laat het dagbudget de wachtrij over dagen verdelen. Afbeeldingen in de publieke Storage-bucket `blog-images`. Publieke pagina's lezen via een gecachete Supabase-client (Next fetch-cache, tag `blog`, direct ververst via `revalidateBlog()` na elke adminwijziging), omdat de root layout `headers()` leest en dus elke pagina per verzoek rendert.
 
 ### `arnobot_csp_violations`
 CSP-schendingsrapporten (`document_uri`, `violated_directive`, `blocked_uri`).
@@ -692,6 +713,8 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
+- `RESEND_WEBHOOK_SECRET` — signing secret van de Resend-webhook voor bounces en klachten (blog)
+- `BLOG_MAIL_FROM` (optioneel, standaard `ArnoBot <blog@mail.arno.bot>`) en `BLOG_DAILY_MAIL_BUDGET` (optioneel, standaard 50) — blogmails
 - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis
 - `CRON_SECRET` — Geheime token voor cron autorisatie
 - `ARNOBOT_ADMIN_KEY` — Admin paneel wachtwoord
@@ -765,7 +788,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - API-key beheren (API Keys)
 - Bounces en errors bekijken
 
-**Verzendend adres:** `ArnoBot <info@arno.bot>`
+**Verzendend adres:** `ArnoBot <info@arno.bot>` (transactioneel). Blogmails gaan via het apart geverifieerde subdomein `mail.arno.bot` (`ArnoBot <blog@mail.arno.bot>`, Reply-To `hq@arno.bot`), zodat de reputatie van blogmails gescheiden blijft van betalings- en trialmails. DNS staat bij Vercel (records: DKIM-TXT en twee CNAME's `rsend.mail` en `send.mail`). Gratis tier: 100 mails per dag voor alles samen, daarom het dagbudget voor blogmails; Resend Pro bij ~50 bevestigde abonnees.
 **Opt-out gaat naar:** `/optout/[token]` (publieke route, geen login nodig)
 
 ### Upstash

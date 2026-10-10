@@ -75,6 +75,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - **Vercel Firewall** aanzetten
 - **Supabase PITR** aanzetten ($100/maand extra bovenop Supabase Pro). Drempel bewust op 150 gebruikers (Arno's keuze, verhoogd van 100 op 2026-09-29), automatisch verwerkt in Abacus (`TARIEVEN.supabasePitrDrempel`). **Direct bij het aanzetten, in dezelfde actie:** een restore-test uitvoeren (recente backup terugzetten in een tijdelijk Supabase-project, tabellen/rijen/encoding checken, tijdelijk project verwijderen).
 - **Clerk:** inactivity timeout inschakelen (zie hieronder) en session limits aanscherpen
+- **Resend:** upgraden naar Pro (geen daglimiet) zodra de blog ~50 bevestigde abonnees heeft, en dan `BLOG_DAILY_MAIL_BUDGET` verhogen. Tot die tijd houdt het dagbudget in `lib/blogMail.ts` de gedeelde Resend-daglimiet (100) vrij voor betalings- en trialmails
 - **WhatsApp:** support-nummer overzetten van de WhatsApp Business-app naar het WhatsApp Business Platform (API) met een helpdesktool en een echte DPA met Meta (zie hieronder)
 
 #### Vercel
@@ -113,6 +114,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Geen bounces of spam-klachten die aandacht vragen?
 - [resend.com/changelog](https://resend.com/changelog) op API-wijzigingen
 - Binnen de gratis verzendlimiet? (Resend dashboard → Usage)
+- **Blog (`mail.arno.bot`):** blogmails gaan via dit apart geverifieerde subdomein (DNS bij Vercel). Status Verified? Webhook (`/api/webhooks/resend`, events `email.bounced` en `email.complained`) actief en `RESEND_WEBHOOK_SECRET` gezet? Aantal bevestigde abonnees t.o.v. de Pro-milestone? Spamklachten of bounces op dit domein?
 
 #### VisualPing (monitoring van leverancierspagina's)
 - Gratis tier: 65 checks/maand. Check bij groei van het aantal gemonitorde URL's of de limiet in zicht komt.
@@ -586,8 +588,8 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 - Font: Arial, 11px, kleur `#374151`
 
 ### Marketing vs. transactioneel
-- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding, betaling_bevestiging, betaling_mislukt, verlenging_30d, verlenging_7d, abonnement_afgelopen, terugbetaling_bevestiging
-- **Marketing** (opt-out verplicht): weekly_nudge, geen_gesprek_nudge, winback
+- **Transactioneel** (geen opt-out vereist): dag1, dag4, first_conversation, dag14, first_coaching, dag25, betaalwaarschuwing, geblokkeerd, trial_afgelopen, opzegging_bevestiging, referral_aanmelding, betaling_bevestiging, betaling_mislukt, verlenging_30d, verlenging_7d, abonnement_afgelopen, terugbetaling_bevestiging, blog_bevestiging (double opt-in bevestiging van de blog)
+- **Marketing** (opt-out verplicht): weekly_nudge, geen_gesprek_nudge, winback, blog_nieuwe_post (eigen afmeldlink per abonnee plus `List-Unsubscribe`-header, geen `/optout/{userId}`, want blogabonnees zijn geen gebruikers)
 
 ### Opt-out mechanisme
 - Opt-out link in e-mail → `https://arno.bot/optout/{userId}` — publieke pagina, één klik, geen login
