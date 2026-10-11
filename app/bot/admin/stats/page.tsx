@@ -348,7 +348,7 @@ export default async function AdminStatsPage() {
         </div>
 
         <StatsTabs tabs={[
-          { key: 'gezondheid', label: 'GEZONDHEID & RETENTIE', content: gezondheidTiles },
+          { key: 'gezondheid', label: 'HEALTH', content: gezondheidTiles },
           { key: 'groei', label: 'GROEI & FUNNEL', content: groeiContent },
           { key: 'gebruik', label: 'GEBRUIK', content: gebruikTiles },
           { key: 'blog', label: 'BLOG', content: <BlogStats /> },
