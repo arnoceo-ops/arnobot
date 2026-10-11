@@ -209,7 +209,7 @@ export default async function AdminStatsPage() {
           { label: 'GEEN RAPPORT', value: onbekendCount, color: '#60a5fa' },
         ]} />
         {risicoCount > 0 && (
-          <p style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#cc4444', marginTop: 16 }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', marginTop: 16 }}>
             {risicoCount} {risicoCount === 1 ? 'gebruiker vertoont' : 'gebruikers vertonen'} risicosignalen, bekijk de gebruikerspagina voor wie dit betreft.
           </p>
         )}
