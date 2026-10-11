@@ -2,7 +2,7 @@ export type HealthBucket = 'risico' | 'neutraal' | 'gezond'
 
 export const HEALTH_BUCKET_META: Record<HealthBucket, { label: string; color: string }> = {
   risico: { label: 'RISICO', color: '#cc4444' },
-  neutraal: { label: 'NEUTRAAL', color: '#6b7280' },
+  neutraal: { label: 'NEUTRAAL', color: '#f59e0b' },
   gezond: { label: 'GEZOND', color: '#44cc88' },
 }
 
