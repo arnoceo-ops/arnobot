@@ -27,13 +27,13 @@ export default function ShareButtons({ url, title }: { url: string; title: strin
   return (
     <div className="bl-share">
       <p className="bl-share-kop">{C.kop}</p>
-      <div className="bl-row" style={{ alignItems: 'center' }}>
+      <div className="bl-share-knoppen">
         <a href={whatsApp} target="_blank" rel="noopener noreferrer" className="bl-btn-secondary">{C.whatsapp}</a>
         <a href={linkedIn} target="_blank" rel="noopener noreferrer" className="bl-btn-secondary">{C.linkedin}</a>
         <button type="button" className="bl-btn-secondary" onClick={kopieer}>{C.kopieer}</button>
-        {state === 'gekopieerd' && <span role="status" className="bl-msg">{C.gekopieerd}</span>}
-        {state === 'fout' && <span role="alert" className="bl-msg err">{C.fout}</span>}
       </div>
+      {state === 'gekopieerd' && <p role="status" className="bl-msg" style={{ marginTop: 12 }}>{C.gekopieerd}</p>}
+      {state === 'fout' && <p role="alert" className="bl-msg err" style={{ marginTop: 12 }}>{C.fout}</p>}
     </div>
   )
 }
