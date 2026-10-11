@@ -2,7 +2,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import {
   RESERVED_SLUGS,
-  findForbiddenDashes,
   isValidSlug,
   normalizeTags,
   slugify,
@@ -172,11 +171,6 @@ export function validatePostInput(raw: unknown): { ok: true; value: PostInput } 
     if (!d || Number.isNaN(d.getTime())) errors.push('Kies een geldig tijdstip om in te plannen.')
     else if (d.getTime() <= Date.now()) errors.push('Het ingeplande tijdstip moet in de toekomst liggen.')
     else publish_at = d.toISOString()
-  }
-
-  // Huisregel: geen streepjes als leesteken in teksten van arno.bot.
-  for (const [label, text] of [['titel', title], ['samenvatting', summary], ['tekst', body_md]] as const) {
-    for (const hit of findForbiddenDashes(text)) errors.push(`Streepje in ${label}: "${hit}"`)
   }
 
   if (errors.length) return { ok: false, errors }

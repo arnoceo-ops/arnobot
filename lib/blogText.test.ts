@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findForbiddenDashes, normalizeTag, normalizeTags, normalizeVoornaam, slugify, isValidSlug } from './blogText'
+import { normalizeTag, normalizeTags, normalizeVoornaam, slugify, isValidSlug } from './blogText'
 import { renderMarkdown } from './blogMarkdown'
 
 describe('normalizeTag', () => {
@@ -23,22 +23,6 @@ describe('slug', () => {
     expect(isValidSlug('Hoofdletter')).toBe(false)
     expect(isValidSlug('tag')).toBe(false)
     expect(isValidSlug('feed.xml')).toBe(false)
-  })
-})
-
-describe('findForbiddenDashes', () => {
-  it('vindt em dash, en dash en losstaand koppelteken', () => {
-    expect(findForbiddenDashes('Dit \u2014 en dat')).toHaveLength(1)
-    expect(findForbiddenDashes('Dit \u2013 en dat')).toHaveLength(1)
-    expect(findForbiddenDashes('hij deed het - maar')).toHaveLength(1)
-  })
-  it('laat samengestelde woorden en markdown-syntax met rust', () => {
-    expect(findForbiddenDashes('Het MT-lid en de follow-up')).toHaveLength(0)
-    expect(findForbiddenDashes('- punt een\n- punt twee')).toHaveLength(0)
-    expect(findForbiddenDashes('---')).toHaveLength(0)
-    expect(findForbiddenDashes('| a | b |\n|---|---|\n| 1 | 2 |')).toHaveLength(0)
-    expect(findForbiddenDashes('```\na - b\n```')).toHaveLength(0)
-    expect(findForbiddenDashes('gebruik `a - b` zo')).toHaveLength(0)
   })
 })
 

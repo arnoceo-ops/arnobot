@@ -61,21 +61,6 @@ export function isValidSlug(slug: string): boolean {
   return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && slug.length <= 80 && !RESERVED_SLUGS.includes(slug)
 }
 
-// Streepjesregel uit CLAUDE.md: geen em dash, geen en dash en geen losstaand koppelteken
-// als leesteken. Markdown-syntax blijft toegestaan: lijstmarkeringen aan het begin van een
-// regel, tabelscheidingen, horizontale lijnen, codeblokken en inline code worden overgeslagen.
-export function findForbiddenDashes(text: string): string[] {
-  const hits: string[] = []
-  const withoutFences = String(text ?? '').replace(/```[\s\S]*?```/g, '')
-  for (const rawLine of withoutFences.split('\n')) {
-    const line = rawLine.replace(/`[^`]*`/g, '')
-    if (/^\s*[|:\-\s]+$/.test(line)) continue
-    const idx = line.search(/[—–]|(\S)\s-\s(\S)/)
-    if (idx >= 0) hits.push(line.trim().slice(Math.max(0, idx - 20), idx + 30))
-  }
-  return hits
-}
-
 export function readingMinutes(bodyMd: string): number {
   const words = String(bodyMd ?? '').trim().split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.ceil(words / 200))

@@ -292,7 +292,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/arnobot-admin-login` | Admin-login (cookie, IP-rate-limit) |
 | `/api/admin/logout` | Admin-cookie wissen |
-| `/api/admin/blog/posts` | GET lijst, POST nieuwe blogpost (validatie incl. streepjesregel, slug-uniekheid) |
+| `/api/admin/blog/posts` | GET lijst, POST nieuwe blogpost (validatie van lengtes, slug-uniekheid en toegestane afbeeldings-URL, geen streepjescontrole op de tekst) |
 | `/api/admin/blog/posts/[id]` | PUT bijwerken (publiceren, inplannen, naar concept), DELETE. Verstuurt bij publiceren met vinkje eenmalig naar abonnees (`notified_at`) |
 | `/api/admin/blog/upload` | Afbeelding naar de publieke bucket `blog-images` (PNG/JPG/WebP/GIF, max 5 MB, type via magic bytes, geen SVG) |
 | `/api/admin/blog/subscribers` | GET een pagina blogabonnees (`offset`, `limit` max 100), nieuwste aanmelding eerst. Voedt de lijst "Aanmeldingen" in de blogstatistieken (50 per keer, knop voor de volgende 50, geen maximum) |

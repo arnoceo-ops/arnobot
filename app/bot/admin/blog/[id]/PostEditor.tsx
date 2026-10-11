@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { renderMarkdown } from '@/lib/blogMarkdown'
-import { findForbiddenDashes, normalizeTag, slugify, readingMinutes, MAX_TAGS } from '@/lib/blogText'
+import { normalizeTag, slugify, readingMinutes, MAX_TAGS } from '@/lib/blogText'
 import type { BlogPost, BlogStatus } from '@/lib/blog'
 
 interface Props {
@@ -226,14 +226,6 @@ export default function PostEditor({ initial, existingTags, subscriberCount }: P
     }
   }
 
-  const dashHits = useMemo(
-    () => [
-      ...findForbiddenDashes(title).map(h => `titel: "${h}"`),
-      ...findForbiddenDashes(summary).map(h => `samenvatting: "${h}"`),
-      ...findForbiddenDashes(body).map(h => `tekst: "${h}"`),
-    ],
-    [title, summary, body]
-  )
   const html = useMemo(() => renderMarkdown(body), [body])
   const suggestions = existingTags.filter(t => !tags.includes(t) && (!tagInput || t.includes(normalizeTag(tagInput)))).slice(0, 12)
   const isLive = savedStatus === 'published'
@@ -374,13 +366,8 @@ export default function PostEditor({ initial, existingTags, subscriberCount }: P
         </div>
       </div>
 
-      {(dashHits.length > 0 || errors.length > 0) && (
+      {errors.length > 0 && (
         <div style={{ margin: '32px 0 0', border: '1px solid #cc2200', borderRadius: 4, padding: '14px 16px' }}>
-          {dashHits.length > 0 && (
-            <p style={{ fontSize: 14, color: '#f59e0b', marginBottom: errors.length ? 8 : 0 }}>
-              Streepjes gevonden. Herschrijf zonder streepje voordat je publiceert: {dashHits.join('; ')}
-            </p>
-          )}
           {errors.map((e, i) => <p key={i} style={{ fontSize: 14, color: '#f1f5f9' }}>{e}</p>)}
         </div>
       )}
