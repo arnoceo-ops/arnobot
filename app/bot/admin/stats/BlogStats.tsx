@@ -189,14 +189,13 @@ export default async function BlogStats() {
         ]} />
 
         {heeftGroei && (
-          <StatCard label="ABONNEES PER MAAND" full
-            footnote="Laatste 12 maanden. Aanmeldingen zijn bevestigde aanmeldingen (de aanmelder klikte op de link in de mail). Afmeldingen zijn afmeldingen van eerder bevestigde abonnees. Wie zich na een afmelding opnieuw aanmeldt, telt in de afmeldingen niet meer mee.">
+          <StatCard label="ABONNEES PER MAAND" full>
             <MaandGrafieken maanden={maandPunten} />
           </StatCard>
         )}
 
         {geopendPunten.some(p => p.waarde > 0) && (
-          <StatCard label="BLOGS GEOPEND PER MAAND" full>
+          <StatCard label="BLOGS GEOPEND" full>
             <LijnGrafiek label="Lijngrafiek van het aantal geopende blogs per maand" punten={geopendPunten} />
           </StatCard>
         )}
@@ -285,8 +284,7 @@ export default async function BlogStats() {
       {aanmeldingen.length > 0 && (
         <>
           <SubHeading label="AANMELDINGEN" />
-          <StatCard label="AANMELDINGEN" full
-            footnote="Nieuwste bovenaan. Wacht op bevestiging betekent dat de aanmelder de link in de mail nog niet heeft aangeklikt. De CSV bevat alle abonnees.">
+          <StatCard label="AANMELDINGEN" full>
             <AanmeldingenLijst initialRows={aanmeldingen} total={totaal} />
           </StatCard>
         </>

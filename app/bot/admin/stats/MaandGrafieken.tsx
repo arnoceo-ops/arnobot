@@ -138,7 +138,7 @@ export default function MaandGrafieken({ maanden }: { maanden: MaandPunt[] }) {
 
       <div style={{ marginTop: 28 }}>
         <LijnGrafiek
-          titel="TOTAAL BEVESTIGDE ABONNEES, EINDE VAN DE MAAND"
+          titel="BEVESTIGDE ABONNEES"
           label="Lijngrafiek van het totaal aantal abonnees per maand"
           punten={maanden.map(m => ({ label: m.label, waarde: m.totaal }))}
         />
