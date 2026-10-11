@@ -81,6 +81,8 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-bot { color: #f59e0b; }
         .bl-search { margin-top: 32px; max-width: 480px; }
         .bl-search .bl-input { width: 100%; }
+        .bl-share { margin-top: 48px; padding-top: 28px; border-top: 1px solid #374151; }
+        .bl-share-kop { font-size: 14px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
         .bl-notice { margin-bottom: 40px; padding: 16px 20px; font-size: 16px; line-height: 1.5; color: #f8fafc; background: #1f2937; border: 1px solid #374151; border-left: 3px solid #f59e0b; border-radius: 6px; }
         .bl-notice.err { border-left-color: #f87171; }
         .bl-sub-box { max-width: 600px; }

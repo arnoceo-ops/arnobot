@@ -41,6 +41,13 @@ export const BLOG_COPY = {
     teVaak: 'Te veel pogingen. Probeer het later opnieuw.',
     privacyLink: 'Privacyverklaring',
   },
+  deel: {
+    kop: 'Deel dit artikel',
+    linkedin: 'Deel op LinkedIn',
+    kopieer: 'Kopieer link',
+    gekopieerd: 'Link gekopieerd',
+    fout: 'Kopiëren lukt niet, kopieer de link uit de adresbalk.',
+  },
   cta: {
     kop: 'ArnoBot zelf ervaren?',
     tekst: 'Probeer ArnoBot 30 dagen gratis.',

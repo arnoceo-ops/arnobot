@@ -9,6 +9,7 @@ import { BLOG_COPY } from '@/lib/blogCopy'
 import SignupCTA from '../../components/SignupCTA'
 import BlogCard, { formatBlogDate } from '../BlogCard'
 import BrandText from '../BrandText'
+import ShareButtons from '../ShareButtons'
 import SubscribeBox from '../SubscribeBox'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -36,9 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: post.published_at ?? undefined,
       modifiedTime: post.updated_at,
       tags: post.tags,
-      images: post.cover_image_url ?? '/opengraph-image',
+      images: [{ url: `${url}/opengraph-image`, width: 1200, height: 630, alt: post.title }],
     },
-    twitter: { card: 'summary_large_image' },
+    twitter: { card: 'summary_large_image', images: [`${url}/opengraph-image`] },
   }
 }
 
@@ -106,6 +107,8 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Veilig: renderMarkdown escapet ruwe HTML en filtert URL-schema's (lib/blogMarkdown.ts). */}
         <div className="bl-body" dangerouslySetInnerHTML={{ __html: html }} />
       </article>
+
+      <ShareButtons url={url} />
 
       <section className="bl-box" aria-labelledby="bl-cta-title">
         <h2 id="bl-cta-title"><BrandText>{BLOG_COPY.cta.kop}</BrandText></h2>
