@@ -206,15 +206,11 @@ export default async function AdminStatsPage() {
           { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
           { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
           { label: HEALTH_BUCKET_META.risico.label, value: risicoCount, color: HEALTH_BUCKET_META.risico.color },
+          { label: 'GEEN RAPPORT', value: onbekendCount, color: '#374151' },
         ]} />
         {risicoCount > 0 && (
           <p style={{ fontFamily: 'sans-serif', fontSize: 14, fontWeight: 700, color: '#cc4444', marginTop: 16 }}>
             {risicoCount} {risicoCount === 1 ? 'gebruiker vertoont' : 'gebruikers vertonen'} risicosignalen, bekijk de gebruikerspagina voor wie dit betreft.
-          </p>
-        )}
-        {onbekendCount > 0 && (
-          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-            {onbekendCount} {onbekendCount === 1 ? 'gebruiker heeft' : 'gebruikers hebben'} nog geen coachingsdocument, niet meegenomen in de score.
           </p>
         )}
       </StatCard>
