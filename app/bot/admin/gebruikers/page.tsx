@@ -395,17 +395,17 @@ export default async function GebruikersPage({
                 </div>
                 {/* Coaching */}
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.coachingCount > 0 ? '#44cc88' : '#374151' }}>{u.coachingCount}</p>
                 </div>
                 {/* Analyses */}
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.analysesCount > 0 ? '#44cc88' : '#374151' }}>{u.analysesCount}</p>
                 </div>
                 {/* Gezondheid */}
                 <div style={{ textAlign: 'center' }}>
                   {u.healthBucket
                     ? <p style={{ fontSize: '12px', letterSpacing: '1px', fontWeight: 700, color: HEALTH_BUCKET_META[u.healthBucket].color }}>{HEALTH_BUCKET_META[u.healthBucket].label}</p>
-                    : <p style={{ fontSize: '12px', color: '#374151' }}>n.v.t.</p>
+                    : <p style={{ fontSize: '12px', color: '#6b7280' }}>GEEN RAPPORT</p>
                   }
                 </div>
                 {/* Plan */}
@@ -432,11 +432,11 @@ export default async function GebruikersPage({
                 </div>
                 {/* Referral aanmeldingen */}
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refSignups > 0 ? '#f59e0b' : '#374151' }}>{u.refSignups}</p>
                 </div>
                 {/* Referral betaald */}
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted || 'n.v.t.'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: u.refConverted > 0 ? '#44cc88' : '#374151' }}>{u.refConverted}</p>
                 </div>
                 {/* Betaling / toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG +,
                     en het paneel erachter regelt comp, betaling en aan/uit */}
