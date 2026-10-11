@@ -1,10 +1,10 @@
 # Blog op arno.bot/blog: plan en status
 
-**Laatst bijgewerkt:** 2026-10-10
+**Laatst bijgewerkt:** 2026-10-11
 
-**Waar we staan:** de blog is gebouwd en live op productie (overzicht, artikel, hashtagpagina's, RSS, aanmelden met double opt-in, afmelden, voorkeuren, mailverzending met dagbudget, adminbeheer onder `/bot/admin/blog`, tab POSTS). Op productie end-to-end getest met een testpost en testabonnees (onderwerpfilter, batchverzending, geen dubbele mails, opruimen). De blog is nog niet vindbaar: `robots.ts` en `sitemap.ts` bevatten `/blog` bewust nog niet. Er staan nog geen echte posts.
+**Waar we staan:** de blog is gebouwd en live op productie: overzicht met doorzoekbaar archief, artikelen met deelknoppen en deelkaart, hashtagpagina's, RSS, aanmelden met double opt-in en voornaam, afmelden, mailverzending met dagbudget, openen en klikken per abonnee (Resend-webhook, tracking en privacyzin staan), adminbeheer onder `/bot/admin/blog` en een tabblad BLOG in `/bot/admin/stats` met abonnees, grafieken, populariteit per blog en aanmeldingen met CSV. De blog is nog niet vindbaar voor Google en LinkedIn (zie de afvinklijst). Er staan nog geen echte posts.
 
-**Eerstvolgende stap:** Arno leest alle teksten op de live pagina's (alles staat in `lib/blogCopy.ts`) en keurt goed of corrigeert. Daarna: `/blog` in `robots.ts` (`PUBLIC_PATHS`) en `sitemap.ts` (statische lijst plus gepubliceerde posts) zetten.
+**Eerstvolgende stap:** Arno schrijft en publiceert de eerste echte post. Daarna de twee crawl-acties hieronder: Google (robots, sitemap, Search Console) en LinkedIn (Post Inspector).
 
 ## Afvinklijst
 
@@ -18,7 +18,8 @@
 - [x] Docs en PDF's (overzicht, technische overdracht, CLAUDE.md-regels voor e-mailtypen en Resend)
 - [x] End-to-end test op productie
 - [ ] Arno keurt teksten goed (`lib/blogCopy.ts`)
-- [ ] `/blog` in `robots.ts` en `sitemap.ts`
+- [ ] Google laten crawlen, pas zodra de eerste echte post live staat: `/blog` in `robots.ts` (`PUBLIC_PATHS`) en alle gepubliceerde posts in `sitemap.ts` (code door Claude), daarna in Google Search Console de sitemap indienen en indexering van de eerste post aanvragen (Arno)
+- [ ] LinkedIn laten crawlen: na het publiceren van elke post de link door LinkedIn Post Inspector (linkedin.com/post-inspector) halen, zodat de deelkaart in LinkedIn's cache staat, en opnieuw na een titelwijziging (Arno)
 - [ ] Privacytekst voor blogabonnees (eerst als platte tekst aan Arno voorleggen, dan pas op `/privacy` en in `scripts/generate-security-pdf.mjs`; Resend en het subdomein als sub-verwerker noemen)
 - [ ] Resend-webhook aanmaken (events `email.bounced`, `email.complained`, `email.opened`, `email.clicked`) en `RESEND_WEBHOOK_SECRET` in Vercel zetten, daarna redeploy
 - [ ] Open- en kliktracking aanzetten bij het domein `mail.arno.bot` in Resend, pas NADAT de privacyzin over het meten van openen en klikken op `/privacy` staat
