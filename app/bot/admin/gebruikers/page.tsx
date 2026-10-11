@@ -204,12 +204,6 @@ export default async function GebruikersPage({
     const huidig = laatsteSparringPerUser.get(s.user_id)
     if (!huidig || s.created_at > huidig) laatsteSparringPerUser.set(s.user_id, s.created_at)
   }
-  const recentSessionsPerUser = new Map<string, Set<string>>()
-  for (const l of logs) {
-    if (l.created_at < sevenDaysAgo) continue
-    if (!recentSessionsPerUser.has(l.user_id)) recentSessionsPerUser.set(l.user_id, new Set())
-    recentSessionsPerUser.get(l.user_id)!.add(l.session_id)
-  }
 
   function getHealthBucket(userId: string, lastSession: string | null): HealthBucket | null {
     const coaching = coachingByUser.get(userId)
@@ -226,7 +220,6 @@ export default async function GebruikersPage({
         .slice(0, 5)
         .map(x => x.actie_status),
       laatsteSparring: laatsteSparringPerUser.get(userId) ?? null,
-      coachingGesprekkenLaatste7Dagen: recentSessionsPerUser.get(userId)?.size ?? 0,
     }, now)
     return bucket
   }

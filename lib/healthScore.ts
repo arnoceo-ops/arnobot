@@ -15,7 +15,6 @@ export interface HealthScoreInput {
   laatsteCoachingGesprek?: string | null
   actieStatussenRecent: string[]
   laatsteSparring?: string | null
-  coachingGesprekkenLaatste7Dagen: number
 }
 
 export interface HealthScoreResult {
@@ -29,29 +28,35 @@ function dagenSinds(iso: string | null | undefined, nu: number): number {
 }
 
 export function computeHealthScore(input: HealthScoreInput, nu: number = Date.now()): HealthScoreResult {
+  const dagenCoaching = dagenSinds(input.laatsteCoachingGesprek, nu)
+  const dagenSparring = dagenSinds(input.laatsteSparring, nu)
+
+  // Langer dan 4 weken geen coachinggesprek en geen sparsessie: altijd risico, wat de rest ook zegt.
+  if (dagenCoaching > 28 && dagenSparring > 28) return { score: 0, bucket: 'risico' }
+
   let score = 50
 
   if (input.stagnatie) score -= 25
   else if (input.weinig_voortgang) score -= 10
 
-  if (input.actie_richting === 'dalend') score -= 10
+  if (input.actie_richting === 'dalend') score -= 5
   if (input.systeem_richting === 'dalend') score -= 5
   if (input.mindset_richting === 'dalend') score -= 5
 
-  if (dagenSinds(input.laatsteCoachingGesprek, nu) > 21) score -= 15
+  if (dagenCoaching > 21) score -= 15
 
   const recent = input.actieStatussenRecent.slice(0, 5)
   const aantalNee = recent.filter(s => s === 'nee').length
   const aantalJa = recent.filter(s => s === 'ja').length
-  if (aantalNee >= 3) score -= 15
+  if (aantalNee >= 3) score -= 5
   if (aantalJa >= 4) score += 10
 
   if (input.actie_richting === 'stijgend') score += 10
-  if (input.systeem_richting === 'stijgend') score += 5
-  if (input.mindset_richting === 'stijgend') score += 5
+  if (input.systeem_richting === 'stijgend') score += 10
+  if (input.mindset_richting === 'stijgend') score += 10
 
-  if (dagenSinds(input.laatsteSparring, nu) <= 14) score += 5
-  if (input.coachingGesprekkenLaatste7Dagen >= 2) score += 10
+  if (dagenSparring <= 14) score += 5
+  if (dagenCoaching <= 14) score += 10
 
   score = Math.max(0, Math.min(100, score))
   const bucket: HealthBucket = score < 40 ? 'risico' : score > 70 ? 'gezond' : 'neutraal'

@@ -174,12 +174,6 @@ export default async function AdminStatsPage() {
     if (!huidig || s.created_at > huidig) laatsteSparringPerUser.set(s.user_id, s.created_at)
   }
 
-  const coachingGesprekkenLaatste7DagenPerUser = new Map<string, Set<string>>()
-  for (const l of logsLaatste7Dagen) {
-    if (!coachingGesprekkenLaatste7DagenPerUser.has(l.user_id)) coachingGesprekkenLaatste7DagenPerUser.set(l.user_id, new Set())
-    coachingGesprekkenLaatste7DagenPerUser.get(l.user_id)!.add(l.session_id)
-  }
-
   let risicoCount = 0
   let neutraalCount = 0
   let gezondCount = 0
@@ -199,7 +193,6 @@ export default async function AdminStatsPage() {
         .slice(0, 5)
         .map(x => x.actie_status),
       laatsteSparring: laatsteSparringPerUser.get(u.user_id) ?? null,
-      coachingGesprekkenLaatste7Dagen: coachingGesprekkenLaatste7DagenPerUser.get(u.user_id)?.size ?? 0,
     }, now)
     if (bucket === 'risico') risicoCount++
     else if (bucket === 'gezond') gezondCount++
