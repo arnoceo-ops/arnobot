@@ -213,7 +213,7 @@ export default async function BlogStats() {
       {perPost.length > 0 && (
         <>
           <SubHeading label={`PER ARTIKEL (LAATSTE ${RECENT_POSTS})`} />
-          <StatCard label="ARTIKELEN" full footnote="Bezoeken en klikken over de laatste 30 dagen. Verzonden, in de wachtrij, mislukt, geopend en geklikt gaan over de mails naar abonnees (unieke abonnees, percentage van verzonden). Geopend en geklikt vullen zich zodra open- en kliktracking in Resend aanstaat.">
+          <StatCard label="ARTIKELEN" full>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
                 <thead>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { zetAangemeld } from '@/lib/blogClient'
 import Link from 'next/link'
 
 interface Props {
@@ -12,13 +13,15 @@ interface Props {
   gelukt: string
   ongeldig: string
   fout: string
+  // Bij gelukt: onthoud in de browser dat deze bezoeker is aangemeld of afgemeld (zie lib/blogClient.ts).
+  markeer?: 'aangemeld' | 'afgemeld'
   children?: React.ReactNode
 }
 
 // Eén knop die een POST doet met het token uit de link. Gebruikt voor bevestigen en afmelden:
 // de actie gebeurt bewust pas na een klik, niet bij het openen van de pagina, omdat mailscanners
 // links automatisch openen.
-export default function TokenAction({ token, endpoint, kop, tekst, knop, gelukt, ongeldig, fout, children }: Props) {
+export default function TokenAction({ token, endpoint, kop, tekst, knop, gelukt, ongeldig, fout, markeer, children }: Props) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'invalid' | 'error'>('idle')
 
   async function run() {
@@ -30,6 +33,7 @@ export default function TokenAction({ token, endpoint, kop, tekst, knop, gelukt,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       })
+      if (res.ok && markeer) zetAangemeld(markeer === 'aangemeld')
       setState(res.ok ? 'done' : res.status === 400 ? 'invalid' : 'error')
     } catch {
       setState('error')

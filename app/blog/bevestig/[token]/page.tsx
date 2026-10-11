@@ -26,6 +26,7 @@ export default async function BevestigPage({ params }: { params: Promise<{ token
     <TokenAction
       token={token} endpoint="/api/blog/confirm"
       kop={C.kop} tekst={C.tekst} knop={C.knop} gelukt={C.gelukt} ongeldig={C.ongeldig} fout={C.fout}
+      markeer="aangemeld"
     />
   )
 }

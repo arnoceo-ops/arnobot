@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import { normalizeVoornaam } from '@/lib/blogText'
+import { leesAangemeld, volgAangemeld, zetAangemeld } from '@/lib/blogClient'
 import BrandText from './BrandText'
 
 const C = BLOG_COPY.abonneer
@@ -15,6 +16,14 @@ export default function SubscribeBox() {
   const [website, setWebsite] = useState('') // honeypot: echte bezoekers laten dit leeg
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle')
   const [error, setError] = useState('')
+  // Loaded-gate: op de server en tijdens het laden is de status 'onbekend' en tonen we niets, pas
+  // daarna 'ja' (verbergen) of 'nee' (tonen). Zo ziet een aangemelde bezoeker het formulier niet
+  // even knipperen. Na de bevestigingslink uit de mail (/blog?bevestigd=1) onthouden we de aanmelding.
+  const status = useSyncExternalStore(volgAangemeld, () => (leesAangemeld() ? 'ja' : 'nee'), () => 'onbekend')
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('bevestigd') === '1') zetAangemeld(true)
+  }, [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,6 +52,8 @@ export default function SubscribeBox() {
       setError(C.fout)
     }
   }
+
+  if (status !== 'nee') return null
 
   return (
     <section className="bl-box bl-sub-box" aria-labelledby="bl-sub-title">

@@ -25,6 +25,7 @@ export default async function AfmeldenPage({ params }: { params: Promise<{ token
     <TokenAction
       token={token} endpoint="/api/blog/unsubscribe"
       kop={C.kop} tekst={C.tekst} knop={C.knop} gelukt={C.gelukt} ongeldig={C.ongeldig} fout={C.fout}
+      markeer="afgemeld"
     />
   )
 }
