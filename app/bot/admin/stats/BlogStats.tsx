@@ -265,8 +265,7 @@ export default async function BlogStats() {
       {wieDoetWat.length > 0 && (
         <>
           <SubHeading label="WIE DOET WAT" />
-          <StatCard label="ABONNEES MET ACTIVITEIT" full
-            footnote="Gesorteerd op klikken, dan openen. Klikken zijn betrouwbaar. Openen wordt opgeblazen doordat Apple Mail en Gmail afbeeldingen zelf vooraf laden. De kolom Gebruiker laat zien of het adres al een ArnoBot-account heeft.">
+          <StatCard label="ABONNEES MET ACTIVITEIT" full>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
                 <thead>
