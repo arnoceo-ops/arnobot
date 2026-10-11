@@ -53,6 +53,12 @@ export const TARIEVEN = {
   vercelSeats: 1,
   vercelPerSeat: 20,
   supabaseProUsd: 25,
+  // Compute per project (Micro, 720 uur x $0,01344) en het Pro-tegoed van $10 per maand, volgens
+  // de factuur van 2026-10-10 (LJURUH-00009): 2 projecten, 25 + 2 x 9,68 - 10 = $34,35.
+  // Zet supabaseProjecten op 1 als het tweede project is verwijderd.
+  supabaseServerUsd: 9.68,
+  supabaseProjecten: 2,
+  supabaseTegoedUsd: 10,
   // Bevestigd door Arno: op 2026-08-10 geüpgraded naar Supabase Pro. Zelfde
   // patroon als clerkProActief hieronder (besloten 2026-08-11, gevonden bij
   // audit: vasteKostenPerMaand() telde supabaseProUsd voorheen altijd mee,
@@ -152,9 +158,15 @@ export function elevenLabsCost(creditsNeeded: number, tiers: Tier[]): { price: n
 // optioneel overschrijfbaar met een live-opgehaalde koers (lib/fxRate.ts),
 // valt terug op de hardcoded TARIEVEN.fxRateEurUsd als niemand er een
 // meegeeft (besloten 2026-09-29, bij de invoering van de live FX-koers).
+// Pro-plan plus de servers van alle projecten, min het maandelijkse Pro-tegoed (dat nooit negatief wordt).
+export function supabaseBasisKosten(): number {
+  return TARIEVEN.supabaseProUsd
+    + Math.max(0, TARIEVEN.supabaseProjecten * TARIEVEN.supabaseServerUsd - TARIEVEN.supabaseTegoedUsd)
+}
+
 export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
-    + (TARIEVEN.supabaseProActief ? TARIEVEN.supabaseProUsd : 0)
+    + (TARIEVEN.supabaseProActief ? supabaseBasisKosten() : 0)
     + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
     + TARIEVEN.moneybirdEur * fxRate
@@ -339,7 +351,7 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const domeinPerMaand = inputs.domeinPerJaar / 12
   const moneybirdUsd = inputs.moneybirdEur * inputs.fxRate
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
-    + (inputs.supabasePro ? TARIEVEN.supabaseProUsd : 0)
+    + (inputs.supabasePro ? supabaseBasisKosten() : 0)
     + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (inputs.clerkPro ? TARIEVEN.clerkProUsd : 0)
     + moneybirdUsd

@@ -257,7 +257,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <NumberField label="Vercel Pro, aantal seats" hint="1 = alleen jijzelf" value={inputs.vercelSeats} onChange={v => set('vercelSeats', v)} />
               <NumberField label="Vercel prijs per seat ($)" value={inputs.vercelPerSeat} onChange={v => set('vercelPerSeat', v)} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <div style={fieldLabelStyle}>Supabase Pro ($25/maand)</div>
+                <div style={fieldLabelStyle}>Supabase Pro + 2 servers ($34,35/maand)</div>
                 <Toggle checked={inputs.supabasePro} onChange={v => set('supabasePro', v)} />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
