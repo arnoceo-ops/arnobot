@@ -1,7 +1,7 @@
 import { getBlogDb } from '@/lib/blog'
 import { getDailyBlogMailBudget } from '@/lib/blogMail'
-import { StatCard, TileGrid, SubHeading, RatioBar } from './StatsUi'
-import MaandGrafieken, { type MaandPunt } from './MaandGrafieken'
+import { StatCard, TileGrid, SubHeading } from './StatsUi'
+import MaandGrafieken, { LijnGrafiek, type LijnPunt, type MaandPunt } from './MaandGrafieken'
 import AanmeldingenLijst, { type Aanmelding } from './AanmeldingenLijst'
 
 // Tabblad BLOG op /bot/admin/stats: abonnees, groei, verzending, bezoek en per artikel.
@@ -51,7 +51,7 @@ async function laadBlogStats() {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
     wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken,
     { data: posts },
-    nieuwPerMaand, afgemeldPerMaand, bevestigdVoorStart, afgemeldVoorStart,
+    nieuwPerMaand, afgemeldPerMaand, bevestigdVoorStart, afgemeldVoorStart, geopendPerMaand,
   ] = await Promise.all([
     n(subs()),
     n(subs().eq('status', 'confirmed')),
@@ -71,6 +71,12 @@ async function laadBlogStats() {
     // Beginstand: abonnees vóór de eerste maand, zodat het totaal per maand klopt.
     n(subs().lt('confirmed_at', eersteMaand)),
     n(subs().not('confirmed_at', 'is', null).lt('unsubscribed_at', eersteMaand)),
+    // Blogs geopend per maand: alleen artikelpagina's, dus niet het overzicht en niet de hashtagpagina's.
+    Promise.all(maandBereiken.map(m =>
+      n(db.from('arnobot_pageviews').select('id', { count: 'exact', head: true })
+        .like('path', '/blog/%').not('path', 'like', '/blog/tag/%')
+        .gte('created_at', m.from).lt('created_at', m.to))
+    )),
   ])
 
   const recent = (posts ?? []) as { id: string; slug: string; title: string; published_at: string }[]
@@ -133,6 +139,7 @@ async function laadBlogStats() {
     .limit(RECENT_SIGNUPS)
   const aanmeldingen = (aanmeldingenRaw ?? []) as Aanmelding[]
 
+  const geopendPunten: LijnPunt[] = maandBereiken.map((m, i) => ({ label: m.label, waarde: geopendPerMaand[i] }))
   let lopendTotaal = bevestigdVoorStart - afgemeldVoorStart
   const maandPunten: MaandPunt[] = maandBereiken.map((m, i) => {
     lopendTotaal += nieuwPerMaand[i] - afgemeldPerMaand[i]
@@ -141,7 +148,7 @@ async function laadBlogStats() {
 
   return {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, wieDoetWat, aanmeldingen,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, wieDoetWat, aanmeldingen,
     budget: getDailyBlogMailBudget(),
     heeftGroei: maandPunten.some(p => p.aanmeldingen > 0 || p.afmeldingen > 0 || p.totaal > 0),
   }
@@ -150,7 +157,7 @@ async function laadBlogStats() {
 export default async function BlogStats() {
   const {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, wieDoetWat, aanmeldingen, budget, heeftGroei,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, wieDoetWat, aanmeldingen, budget, heeftGroei,
   } = await laadBlogStats()
 
   const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding: '10px 8px', borderBottom: '1px solid #374151' } as const
@@ -165,12 +172,10 @@ export default async function BlogStats() {
           { sublabel: 'AFGEMELD', value: String(afgemeld) },
         ]} />
 
-        <StatCard label="CONVERSIE">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <RatioBar label="BEVESTIGD" ratio={pct(ooitBevestigd, totaal)} />
-            <RatioBar label="AFGEMELD" ratio={pct(afgemeldNaBevestiging, ooitBevestigd)} />
-          </div>
-        </StatCard>
+        <StatCard label="CONVERSIE" stats={[
+          { sublabel: 'BEVESTIGD', value: `${pct(ooitBevestigd, totaal)}%` },
+          { sublabel: 'AFGEMELD', value: `${pct(afgemeldNaBevestiging, ooitBevestigd)}%` },
+        ]} />
 
         <StatCard label="BLOGS GEOPEND (30D)" stats={[
           { sublabel: 'GEOPEND', value: String(blogBezoeken) },
@@ -187,6 +192,12 @@ export default async function BlogStats() {
           <StatCard label="ABONNEES PER MAAND" full
             footnote="Laatste 12 maanden. Aanmeldingen zijn bevestigde aanmeldingen (de aanmelder klikte op de link in de mail). Afmeldingen zijn afmeldingen van eerder bevestigde abonnees. Wie zich na een afmelding opnieuw aanmeldt, telt in de afmeldingen niet meer mee.">
             <MaandGrafieken maanden={maandPunten} />
+          </StatCard>
+        )}
+
+        {geopendPunten.some(p => p.waarde > 0) && (
+          <StatCard label="BLOGS GEOPEND PER MAAND" full>
+            <LijnGrafiek label="Lijngrafiek van het aantal geopende blogs per maand" punten={geopendPunten} />
           </StatCard>
         )}
       </TileGrid>
