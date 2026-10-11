@@ -62,8 +62,8 @@ async function laadBlogStats() {
     n(deliveries().eq('status', 'queued')),
     n(deliveries().eq('status', 'failed')),
     n(deliveries().eq('status', 'sent').gte('sent_at', startOfDay.toISOString())),
-    n(views().like('path', '/blog%')),
-    n(clicks().like('path', '/blog%')),
+    n(views().like('path', '/blog/%').not('path', 'like', '/blog/tag/%')),
+    n(clicks().like('path', '/blog/%').not('path', 'like', '/blog/tag/%')),
     db.from('arnobot_blog_posts').select('id, slug, title, published_at').eq('status', 'published').order('published_at', { ascending: false }).limit(RECENT_POSTS),
     Promise.all(maandBereiken.map(m => n(subs().gte('confirmed_at', m.from).lt('confirmed_at', m.to)))),
     // Afmeldingen tellen alleen van wie eerst bevestigd had (een onbevestigde aanmelding is geen abonnee).
@@ -161,7 +161,7 @@ export default async function BlogStats() {
       <TileGrid>
         <StatCard label="ABONNEES" stats={[
           { sublabel: 'BEVESTIGD', value: String(bevestigd) },
-          { sublabel: 'WACHT OP BEVESTIGING', value: String(wachtOpBevestiging) },
+          { sublabel: 'PENDING', value: String(wachtOpBevestiging) },
           { sublabel: 'AFGEMELD', value: String(afgemeld) },
         ]} />
 
@@ -172,9 +172,9 @@ export default async function BlogStats() {
           </div>
         </StatCard>
 
-        <StatCard label="BLOG GELEZEN, LAATSTE 30 DAGEN" stats={[
-          { sublabel: 'PAGINA\'S GEOPEND', value: String(blogBezoeken), note: 'overzicht, artikelen en hashtagpagina\'s' },
-          { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de geopende pagina's` : undefined },
+        <StatCard label="BLOGS GEOPEND (30D)" stats={[
+          { sublabel: 'GEOPEND', value: String(blogBezoeken) },
+          { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de geopende blogs` : undefined },
         ]} />
 
         <StatCard label="VERZENDING" stats={[

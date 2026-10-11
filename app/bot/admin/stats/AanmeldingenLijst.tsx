@@ -17,7 +17,7 @@ const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding
 const knop = { fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, fontWeight: 700, color: '#9ca3af', background: 'none', border: '1px solid #374151', borderRadius: 4, padding: '10px 20px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' } as const
 
 function statusLabel(status: string): string {
-  return status === 'confirmed' ? 'BEVESTIGD' : status === 'pending' ? 'WACHT OP BEVESTIGING' : 'AFGEMELD'
+  return status === 'confirmed' ? 'BEVESTIGD' : status === 'pending' ? 'PENDING' : 'AFGEMELD'
 }
 
 // Lijst met aanmeldingen: de eerste 50 komen mee vanaf de server, de volgende 50 worden bij een klik
