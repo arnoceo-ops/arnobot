@@ -153,9 +153,6 @@ export default async function AdminStatsPage() {
     const maandBedrag = u.interval === 'jaar' ? (u.bedrag as number) / 12 : (u.bedrag as number)
     return sum + maandBedrag
   }, 0)
-  const mrrNote = betaaldeGebruikersMetBedrag.length === 0 && betaaldCount > 0
-    ? 'wordt betrouwbaar zodra betaalprovider actief is'
-    : undefined
 
   // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))
@@ -345,9 +342,9 @@ export default async function AdminStatsPage() {
 
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', paddingBottom: 24, marginBottom: 40, borderBottom: '2px solid #f59e0b' }}>
           <HeroStat label="GEBRUIKERS" value={String(totaalGebruikers)} />
-          <HeroStat label="CONVERSIE" value={`${conversieratio}%`} note={`n=${totaalGebruikers}`} />
+          <HeroStat label="CONVERSIE" value={`${conversieratio}%`} />
           <HeroStat label="ACTIEF 7D" value={String(actieveGebruikers.size)} />
-          <HeroStat label="MRR" value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'} note={mrrNote} />
+          <HeroStat label="MRR" value={mrr > 0 ? `€${Math.round(mrr)}` : '€0'} />
         </div>
 
         <StatsTabs tabs={[

@@ -163,26 +163,25 @@ export default async function BlogStats() {
           { sublabel: 'BEVESTIGD', value: String(bevestigd) },
           { sublabel: 'WACHT OP BEVESTIGING', value: String(wachtOpBevestiging) },
           { sublabel: 'AFGEMELD', value: String(afgemeld) },
-        ]} footnote="Abonneren is altijd op alle artikelen. Alleen bevestigde abonnees ontvangen mail." />
+        ]} />
 
-        <StatCard label="CONVERSIE"
-          footnote="Bevestiging: van alle aanmeldingen, hoeveel hebben op de link in de mail geklikt. Afmelding: van wie ooit bevestigd heeft, hoeveel zich later hebben afgemeld.">
+        <StatCard label="CONVERSIE">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <RatioBar label="BEVESTIGD" ratio={pct(ooitBevestigd, totaal)} note={`n=${totaal}`} />
-            <RatioBar label="AFGEMELD" ratio={pct(afgemeldNaBevestiging, ooitBevestigd)} note={`n=${ooitBevestigd}`} />
+            <RatioBar label="BEVESTIGD" ratio={pct(ooitBevestigd, totaal)} />
+            <RatioBar label="AFGEMELD" ratio={pct(afgemeldNaBevestiging, ooitBevestigd)} />
           </div>
         </StatCard>
 
         <StatCard label="BLOG GELEZEN, LAATSTE 30 DAGEN" stats={[
           { sublabel: 'PAGINA\'S GEOPEND', value: String(blogBezoeken), note: 'overzicht, artikelen en hashtagpagina\'s' },
           { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de geopende pagina's` : undefined },
-        ]} footnote="Elke keer dat iemand een pagina van de blog opent telt als één, ook jijzelf. Start gratis is de oranje knop onder een artikel, waarmee iemand een account kan maken." />
+        ]} />
 
         <StatCard label="VERZENDING" stats={[
           { sublabel: 'VANDAAG VERZONDEN', value: `${verzondenVandaag} van ${budget}`, warn: verzondenVandaag >= budget },
           { sublabel: 'IN DE WACHTRIJ', value: String(wachtrij), warn: wachtrij > 0 },
           { sublabel: 'MISLUKT', value: String(mislukt), warn: mislukt > 0 },
-        ]} footnote="Het dagbudget houdt de gedeelde Resend-daglimiet vrij voor betalings- en trialmails. Wat niet past, gaat de volgende dag mee." />
+        ]} />
 
         {heeftGroei && (
           <StatCard label="ABONNEES PER MAAND" full
