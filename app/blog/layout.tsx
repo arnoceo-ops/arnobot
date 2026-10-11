@@ -90,6 +90,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-sub-box { max-width: 600px; }
         .bl-narrow .bl-sub-box { max-width: none; }
         .bl-sub-box .bl-input { min-width: 140px; }
+        .bl-form .bl-row { gap: 14px; }
         .bl-box h2 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 600; text-transform: uppercase; color: #f8fafc; margin-bottom: 10px; }
         .bl-box p { font-size: 16px; line-height: 1.6; color: #94a3b8; }
         .bl-form { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
