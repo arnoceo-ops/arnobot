@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { BLOG_COPY } from '@/lib/blogCopy'
 import { normalizeVoornaam } from '@/lib/blogText'
 import BrandText from './BrandText'
@@ -59,25 +58,23 @@ export default function SubscribeBox() {
             </div>
             <div className="bl-row">
               <input
-                className="bl-input" type="text" autoComplete="given-name" maxLength={40} required
-                placeholder={C.voornaamPlaceholder} aria-label={C.voornaamPlaceholder}
-                value={voornaam} onChange={e => setVoornaam(e.target.value)}
+                className="bl-input" type="email" inputMode="email" autoComplete="email" required
+                placeholder={C.emailPlaceholder} aria-label={C.emailPlaceholder}
+                value={email} onChange={e => setEmail(e.target.value)} maxLength={254}
               />
             </div>
             <div className="bl-row">
               <input
-                className="bl-input" type="email" inputMode="email" autoComplete="email" required
-                placeholder={C.emailPlaceholder} aria-label={C.emailPlaceholder}
-                value={email} onChange={e => setEmail(e.target.value)} maxLength={254}
+                className="bl-input" type="text" autoComplete="given-name" maxLength={40} required
+                placeholder={C.voornaamPlaceholder} aria-label={C.voornaamPlaceholder}
+                value={voornaam} onChange={e => setVoornaam(e.target.value)}
               />
               <button type="submit" className="bl-btn" disabled={state === 'loading'}>
                 {state === 'loading' ? C.bezig : C.knop}
               </button>
             </div>
             {error && <p role="alert" className="bl-msg err">{error}</p>}
-            <p className="bl-small">
-              <Link href="/privacy">{C.privacyLink}</Link>
-            </p>
+            <p className="bl-small">{C.privacy}</p>
           </form>
         </>
       )}

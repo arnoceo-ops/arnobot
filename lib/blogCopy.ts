@@ -39,7 +39,7 @@ export const BLOG_COPY = {
     ongeldigEmail: 'Dat is geen geldig e-mailadres.',
     fout: 'Er ging iets mis. Probeer het nog eens.',
     teVaak: 'Te veel pogingen. Probeer het later opnieuw.',
-    privacyLink: 'Privacyverklaring',
+    privacy: 'We respecteren je privacy',
   },
   deel: {
     kop: 'Deel dit artikel',

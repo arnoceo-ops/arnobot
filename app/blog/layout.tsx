@@ -88,6 +88,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-notice { margin-bottom: 40px; padding: 16px 20px; font-size: 16px; line-height: 1.5; color: #f8fafc; background: #1f2937; border: 1px solid #374151; border-left: 3px solid #f59e0b; border-radius: 6px; }
         .bl-notice.err { border-left-color: #f87171; }
         .bl-sub-box { max-width: 600px; }
+        .bl-narrow .bl-sub-box { max-width: none; }
         .bl-box h2 { font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 600; text-transform: uppercase; color: #f8fafc; margin-bottom: 10px; }
         .bl-box p { font-size: 16px; line-height: 1.6; color: #94a3b8; }
         .bl-form { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
