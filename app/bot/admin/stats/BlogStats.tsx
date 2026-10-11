@@ -3,6 +3,7 @@ import { getDailyBlogMailBudget } from '@/lib/blogMail'
 import { StatCard, TileGrid, SubHeading } from './StatsUi'
 import MaandGrafieken, { LijnGrafiek, type LijnPunt, type MaandPunt } from './MaandGrafieken'
 import AanmeldingenLijst, { type Aanmelding } from './AanmeldingenLijst'
+import BlogPopulariteit, { type BlogRij } from './BlogPopulariteit'
 
 // Tabblad BLOG op /bot/admin/stats: abonnees, groei, verzending, bezoek en per artikel.
 // Alles zijn exacte tellingen in de database (head-count), geen rijen ophalen en zelf tellen,
@@ -62,8 +63,8 @@ async function laadBlogStats() {
     n(deliveries().eq('status', 'queued')),
     n(deliveries().eq('status', 'failed')),
     n(deliveries().eq('status', 'sent').gte('sent_at', startOfDay.toISOString())),
-    n(views().like('path', '/blog/%').not('path', 'like', '/blog/tag/%')),
-    n(clicks().like('path', '/blog/%').not('path', 'like', '/blog/tag/%')),
+    n(views().like('path', '/blog/%').not('path', 'like', '/blog/%/%')),
+    n(clicks().like('path', '/blog/%').not('path', 'like', '/blog/%/%')),
     db.from('arnobot_blog_posts').select('id, slug, title, published_at').eq('status', 'published').order('published_at', { ascending: false }).limit(RECENT_POSTS),
     Promise.all(maandBereiken.map(m => n(subs().gte('confirmed_at', m.from).lt('confirmed_at', m.to)))),
     // Afmeldingen tellen alleen van wie eerst bevestigd had (een onbevestigde aanmelding is geen abonnee).
@@ -74,7 +75,7 @@ async function laadBlogStats() {
     // Blogs geopend per maand: alleen artikelpagina's, dus niet het overzicht en niet de hashtagpagina's.
     Promise.all(maandBereiken.map(m =>
       n(db.from('arnobot_pageviews').select('id', { count: 'exact', head: true })
-        .like('path', '/blog/%').not('path', 'like', '/blog/tag/%')
+        .like('path', '/blog/%').not('path', 'like', '/blog/%/%')
         .gte('created_at', m.from).lt('created_at', m.to))
     )),
   ])
@@ -132,6 +133,13 @@ async function laadBlogStats() {
     return [{ ...a, naam: abonnee.voornaam ?? '', email: abonnee.email, status: abonnee.status, isGebruiker: gebruikerEmails.has(abonnee.email.toLowerCase()) }]
   })
 
+  // Populariteit per blog: één SQL-aanroep telt alle blogs (docs/sql/2026-10-11-blog-populariteit.sql).
+  // Mislukt dit (bijvoorbeeld SQL nog niet uitgevoerd), dan blijft alleen deze sectie weg.
+  const { data: populariteitRaw } = await db.rpc('arnobot_blog_post_stats', { p_since: since30 })
+  const populariteit: BlogRij[] = ((populariteitRaw ?? []) as BlogRij[]).map(r => ({
+    slug: r.slug, title: r.title, opens_period: r.opens_period, opens_total: r.opens_total, cta_period: r.cta_period, cta_total: r.cta_total,
+  }))
+
   const { data: aanmeldingenRaw } = await db
     .from('arnobot_blog_subscribers')
     .select('id, email, voornaam, status, created_at')
@@ -148,7 +156,7 @@ async function laadBlogStats() {
 
   return {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, wieDoetWat, aanmeldingen,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, populariteit, wieDoetWat, aanmeldingen,
     budget: getDailyBlogMailBudget(),
     heeftGroei: maandPunten.some(p => p.aanmeldingen > 0 || p.afmeldingen > 0 || p.totaal > 0),
   }
@@ -157,7 +165,7 @@ async function laadBlogStats() {
 export default async function BlogStats() {
   const {
     totaal, bevestigd, wachtOpBevestiging, afgemeld, ooitBevestigd, afgemeldNaBevestiging,
-    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, wieDoetWat, aanmeldingen, budget, heeftGroei,
+    wachtrij, mislukt, verzondenVandaag, blogBezoeken, blogKlikken, perPost, maandPunten, geopendPunten, populariteit, wieDoetWat, aanmeldingen, budget, heeftGroei,
   } = await laadBlogStats()
 
   const cell = { fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', padding: '10px 8px', borderBottom: '1px solid #374151' } as const
@@ -179,7 +187,8 @@ export default async function BlogStats() {
 
         <StatCard label="BLOGS GEOPEND (30D)" stats={[
           { sublabel: 'GEOPEND', value: String(blogBezoeken) },
-          { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken), note: blogBezoeken > 0 ? `${pct(blogKlikken, blogBezoeken)}% van de geopende blogs` : undefined },
+          { sublabel: 'KLIKKEN OP START GRATIS', value: String(blogKlikken) },
+          { sublabel: 'CONVERSIE', value: `${pct(blogKlikken, blogBezoeken)}%` },
         ]} />
 
         <StatCard label="VERZENDING" stats={[
@@ -240,6 +249,15 @@ export default async function BlogStats() {
                 </tbody>
               </table>
             </div>
+          </StatCard>
+        </>
+      )}
+
+      {populariteit.length > 0 && (
+        <>
+          <SubHeading label="POPULARITEIT" />
+          <StatCard label="BLOGS OP POPULARITEIT" full>
+            <BlogPopulariteit rijen={populariteit} />
           </StatCard>
         </>
       )}
