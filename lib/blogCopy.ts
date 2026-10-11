@@ -43,6 +43,7 @@ export const BLOG_COPY = {
   },
   deel: {
     kop: 'Deel dit artikel',
+    whatsapp: 'Deel via WhatsApp',
     linkedin: 'Deel op LinkedIn',
     kopieer: 'Kopieer link',
     gekopieerd: 'Link gekopieerd',

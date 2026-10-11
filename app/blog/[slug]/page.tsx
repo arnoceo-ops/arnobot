@@ -108,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="bl-body" dangerouslySetInnerHTML={{ __html: html }} />
       </article>
 
-      <ShareButtons url={url} />
+      <ShareButtons url={url} title={post.title} />
 
       <section className="bl-box" aria-labelledby="bl-cta-title">
         <h2 id="bl-cta-title"><BrandText>{BLOG_COPY.cta.kop}</BrandText></h2>

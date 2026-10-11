@@ -13,9 +13,23 @@ const AI_USER_AGENTS = [
   'CCBot',
 ]
 
+// Crawlers die alleen het voorbeeld (titel, tekst, afbeelding) ophalen als iemand een link deelt in
+// LinkedIn, WhatsApp, Slack enzovoort. Zij mogen /blog lezen, ook nu de blog voor zoekmachines nog
+// niet is opengezet: zonder dit toont LinkedIn "Cannot display preview" bij het delen van een artikel.
+// Google en andere zoekmachines staan hier bewust niet bij, die volgen de algemene regel hierboven.
+const SHARE_USER_AGENTS = [
+  'LinkedInBot', 'facebookexternalhit', 'Facebot', 'Twitterbot',
+  'Slackbot', 'Slackbot-LinkExpanding', 'WhatsApp', 'TelegramBot', 'Discordbot',
+]
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
+      {
+        userAgent: SHARE_USER_AGENTS,
+        allow: [...PUBLIC_PATHS, '/blog'],
+        disallow: '/',
+      },
       {
         userAgent: '*',
         allow: PUBLIC_PATHS,
