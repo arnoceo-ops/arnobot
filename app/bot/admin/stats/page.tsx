@@ -208,7 +208,7 @@ export default async function AdminStatsPage() {
 
   const gezondheidTiles = (
     <TileGrid>
-      <StatCard label="GEZONDHEIDSSCORE" span={2}>
+      <StatCard label="HEALTH SCORE" span={2}>
         <SplitBar segments={[
           { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
           { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
