@@ -22,6 +22,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 
 **Features (bovenop Basic), volgorde besloten 2026-08-02:**
 - Onbeperkt chatten en oefenen
+- **Toegevoegd (besloten 2026-09-15):** uitgebreide, diepgaande antwoorden. Basic ziet de knop met een PRO-badge en een upsell-melding, server-side afgedwongen in `app/api/chat/route.ts`.
 - Uitgebreider gespreksgeheugen
 - Volledig archief van al je output
 - Coaching op mindset, systeem en actie

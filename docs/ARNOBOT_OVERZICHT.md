@@ -1,6 +1,6 @@
 # ArnoBot — volledig productoverzicht
 
-**Laatst bijgewerkt:** 2026-09-16
+**Laatst bijgewerkt:** 2026-10-12
 **Doel van dit document:** een volledig, actueel beeld van ArnoBot als product en bedrijf, voor gebruik buiten de dagelijkse ontwikkelwerkzaamheden (bijv. upload naar NotebookLM voor een presentatie, briefing van nieuwe teamleden, gesprekken met investeerders of partners). Vult `docs/SALES_BIJBEL.md` aan: dat document behandelt waaróm een klant koopt (USP's, unique buying reasons), dit document behandelt wát ArnoBot precies is, in volle breedte.
 
 **Belangrijk voor gebruik in een presentatie:** dit document bevat alleen wat daadwerkelijk gebouwd en geverifieerd is tegen de code, op de datum hierboven. Waar iets gepland maar niet live is, staat dat er expliciet bij. Neem geen enkel cijfer of kenmerk over zonder dat onderscheid, dat voorkomt dat een presentatie iets belooft wat nog niet bestaat.
@@ -56,7 +56,7 @@ Een live oefengesprek tegen een AI-tegenstander: een lastige prospect, een scept
 Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyses over patronen in meerdere gesprekken. Sessies kunnen gedeeld worden via een link (bijv. met een coach), en individuele gesprekken of analyses kunnen verwijderd worden.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)
-Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI Whisper) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
+Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
 
 ### 3.7 Teammodule
 Voor Team-abonnees. De manager krijgt op zijn teampagina:
@@ -120,7 +120,8 @@ ArnoBot is gebouwd als een moderne, schaalbare webapplicatie (Next.js), gehost o
 **AI-leveranciers, elk voor een specifiek doel:**
 - **Anthropic (Claude):** de hoofdgesprekken, coaching-synthese, sparring, teamanalyses. Het belangrijkste model.
 - **Voyage AI:** het onderliggende zoek- en geheugensysteem (semantische retrieval, zowel voor de kennisbank als voor het sessiegeheugen).
-- **OpenAI (Whisper):** spraakherkenning voor voice-invoer.
+- **OpenAI:** spraakherkenning voor voice-invoer.
+- **AssemblyAI:** transcriptie van audiobijlagen in de hoofdchat (ongedocumenteerde functie, Pro/Team-only).
 - **ElevenLabs:** gesproken antwoorden voor ArnoBot Voice (Pro/Team).
 
 Geen van deze leveranciers traint op klantdata, dit is expliciet vastgelegd en gecommuniceerd op de privacypagina.
