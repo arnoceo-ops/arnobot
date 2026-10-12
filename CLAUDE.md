@@ -91,6 +91,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Schema-wijzigingen nodig voor nieuwe features?
 - Database binnen limieten? (Pro: 8GB — Settings → Billing → Usage)
 - **Openstaand:** PITR nog niet aangezet, zie de milestone hierboven.
+- **Openstaand (vóór begin 2027):** Supabase Logs gaan naar usage-based pricing (ingest en query scanning), aangekondigd oktober 2026. Pas begin 2027 kosten, >90% van de projecten blijft binnen de inbegrepen limieten. Check in december 2026 of begin januari 2027 in Settings → Billing → Usage of ArnoBot daarbinnen blijft, en voeg anders een logkostenpost toe aan Abacus (`lib/kostenTarieven.ts`).
 
 #### Clerk (app: clerk.arno.bot)
 - [clerk.com/changelog](https://clerk.com/changelog) op breaking changes in SDK of JWT-formaat
