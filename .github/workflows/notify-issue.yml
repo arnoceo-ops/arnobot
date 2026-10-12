@@ -1,20 +1,24 @@
 name: Issue-melding
 
 # Waarom dit bestaat: de cloud-routines (maandcheck, ACTIE-meldingen, key-reminders)
-# maken issues aan onder Arno's eigen GitHub-account. GitHub mailt je niet over je
-# eigen acties, dus een routine-issue gaf geen mail (getest 2026-10-12). Een comment
-# van github-actions[bot] met een @-vermelding is niet Arno's eigen actie en geeft
-# wel een melding via "Participating, @mentions".
+# maken issues aan onder Arno's eigen GitHub-account. GitHub mailt en meldt je niet
+# over je eigen acties (getest 2026-10-12: ook geen web-melding, zelfs niet met een
+# @-comment van github-actions[bot]). Daarom stuurt deze workflow zelf een Telegram-
+# bericht via dezelfde bot als lib/cron-notify.ts.
+#
+# Vereist twee repo-secrets (Settings, Secrets and variables, Actions):
+# TELEGRAM_BOT_TOKEN en TELEGRAM_CHAT_ID, dezelfde waarden als in Vercel.
 #
 # Veiligheid: alleen metadata, geen checkout, geen PR-code. Alleen issues die door de
-# eigenaar zelf zijn aangemaakt en een bekende titelprefix hebben.
+# eigenaar zelf zijn aangemaakt en een bekende titelprefix hebben. Titel gaat via een
+# env-variabele (niet in het script geinterpoleerd) tegen injectie.
 
 on:
   issues:
     types: [opened]
 
 permissions:
-  issues: write
+  issues: read
 
 jobs:
   melding:
@@ -26,12 +30,21 @@ jobs:
        startsWith(github.event.issue.title, 'Reminder') ||
        startsWith(github.event.issue.title, 'TEST'))
     steps:
-      - name: Plaats melding met mention
+      - name: Stuur Telegram-bericht
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          ISSUE: ${{ github.event.issue.number }}
-          OWNER: ${{ github.repository_owner }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TITLE: ${{ github.event.issue.title }}
+          URL: ${{ github.event.issue.html_url }}
         run: |
-          gh api "repos/$REPO/issues/$ISSUE/comments" \
-            -f body="@$OWNER nieuwe melding van een routine, zie dit issue."
+          set -euo pipefail
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
+            echo "Secrets TELEGRAM_BOT_TOKEN en/of TELEGRAM_CHAT_ID ontbreken in de repo."; exit 1
+          fi
+          curl -fsS "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "text=Nieuwe routine-melding op GitHub
+
+${TITLE}
+${URL}" > /dev/null
+          echo "Telegram-bericht verstuurd."
