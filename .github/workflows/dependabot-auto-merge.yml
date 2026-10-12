@@ -85,8 +85,10 @@ jobs:
           all_done=false
           all_ok=false
           for attempt in $(seq 1 $max_attempts); do
+            # --slurp kan niet samen met --jq (gh weigert dat en de job faalde dan
+            # voordat hij iets beoordeelde), dus de jq-stap staat in een pipe.
             runs=$(gh api --paginate --slurp "repos/$REPO/commits/$HEAD_SHA/check-runs" \
-              --jq '[.[].check_runs[]]')
+              | jq '[.[].check_runs[]]')
             all_done=true
             all_ok=true
             for name in "${names[@]}"; do
