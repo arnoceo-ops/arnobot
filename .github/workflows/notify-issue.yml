@@ -41,8 +41,16 @@ jobs:
           if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
             echo "Secrets TELEGRAM_BOT_TOKEN en/of TELEGRAM_CHAT_ID ontbreken in de repo."; exit 1
           fi
+          # Whitespace en quotes weghalen: een plakfout in het secret (spatie, regeleinde,
+          # aanhalingstekens) gaf anders een 400 van Telegram.
+          TG_TOKEN=$(printf '%s' "$TG_TOKEN" | tr -d '[:space:]"'"'")
+          TG_CHAT=$(printf '%s' "$TG_CHAT" | tr -d '[:space:]"'"'")
           TEXT=$(printf 'Nieuwe routine-melding op GitHub\n\n%s\n%s' "$TITLE" "$URL")
-          curl -fsS "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+          RESP=$(curl -sS -w '\n%{http_code}' "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TG_CHAT}" \
-            --data-urlencode "text=${TEXT}" > /dev/null
+            --data-urlencode "text=${TEXT}")
+          CODE=$(tail -n1 <<<"$RESP")
+          if [ "$CODE" != "200" ]; then
+            echo "Telegram gaf HTTP $CODE: $(head -n -1 <<<"$RESP")"; exit 1
+          fi
           echo "Telegram-bericht verstuurd."
