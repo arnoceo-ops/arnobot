@@ -5,15 +5,15 @@ import path from 'node:path'
 // Afdwinging van de regel "Lettertypen zelf hosten" (CLAUDE.md): een verwijzing naar Google Fonts
 // stuurt het IP-adres van elke bezoeker naar Google. Nieuwe lettertypen gaan via
 // scripts/fetch-fonts.mjs, nooit via een @import of <link> naar fonts.googleapis.com.
-// scripts/ is bewust uitgesloten: fetch-fonts.mjs haalt de bestanden eenmalig op en
-// generate-logo.mjs draait alleen lokaal, geen van beide raakt bezoekers.
+// scripts/ wordt ook gecontroleerd; alleen fetch-fonts.mjs mag naar Google, want die haalt de
+// bestanden eenmalig op (zie TOEGESTAAN).
 
 const ROOT = path.resolve(__dirname, '..')
-const SCAN = ['app', 'lib', 'public', 'proxy.ts', 'next.config.ts']
+const SCAN = ['app', 'lib', 'public', 'scripts', 'proxy.ts', 'next.config.ts']
 const EXT = /\.(ts|tsx|js|jsx|mjs|css|html|svg)$/
 const VERBODEN = /fonts\.googleapis\.com|fonts\.gstatic\.com/
 // Dit testbestand zelf, en pdfFonts.ts waar het in een uitleg-commentaar voorkomt.
-const TOEGESTAAN = new Set(['lib/noGoogleFonts.test.ts', 'lib/pdfFonts.ts'])
+const TOEGESTAAN = new Set(['lib/noGoogleFonts.test.ts', 'lib/pdfFonts.ts', 'scripts/fetch-fonts.mjs'])
 
 function walk(p: string, out: string[]) {
   const st = statSync(p)
@@ -25,7 +25,7 @@ function walk(p: string, out: string[]) {
 }
 
 describe('lettertypen zelf hosten', () => {
-  it('geen enkele verwijzing naar Google Fonts in app, lib, public, proxy of next.config', () => {
+  it('geen enkele verwijzing naar Google Fonts in app, lib, public, scripts, proxy of next.config', () => {
     const files: string[] = []
     for (const s of SCAN) walk(path.join(ROOT, s), files)
     const schenders = files

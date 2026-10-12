@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import { headers } from "next/headers";
 import ClerkAppProvider from "./ClerkAppProvider";
 import SentryUserIdentifier from "./components/SentryUserIdentifier";
@@ -8,22 +7,6 @@ import PostHogTracker from "./components/PostHogTracker";
 import PostHogSessionReplay from "./components/PostHogSessionReplay";
 import { BEDRIJF } from "@/lib/bedrijf";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-bebas",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.arno.bot'),
@@ -70,9 +53,7 @@ export default async function RootLayout({
   return (
     <ClerkAppProvider nonce={nonce}>
       <html lang="nl" style={{ backgroundColor: '#111827', colorScheme: 'dark' }}>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} antialiased`}
-        >
+        <body className="antialiased">
           <script
             type="application/ld+json"
             nonce={nonce}

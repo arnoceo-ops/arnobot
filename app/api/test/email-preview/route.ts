@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const TO = ['arnodiepeveen@gmail.com', 'arno@arno.bot']
+const TO = ['arno@arno.bot']
 const NAAM = 'Arno'
 const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:'Courier New',monospace;font-size:16px;font-weight:700;letter-spacing:3px;padding:16px 40px;text-decoration:none;border-radius:999px;`
 

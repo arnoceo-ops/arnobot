@@ -1,18 +1,21 @@
 import puppeteer from 'puppeteer';
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Zelf gehost lettertype (public/fonts, via scripts/fetch-fonts.mjs), als data-URI ingebed zodat
+// het logo genereren geen verbinding met Google maakt.
+const FONT_B64 = readFileSync(join(__dirname, '..', 'public', 'fonts', 'BarlowCondensed-normal-900-latin.woff2')).toString('base64');
 
 async function generateLogo(page, text, outFile) {
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&display=swap" rel="stylesheet">
   <style>
+    @font-face { font-family: 'Barlow Condensed'; font-weight: 900; src: url(data:font/woff2;base64,${FONT_B64}) format('woff2'); }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: transparent; display: inline-block; }
     .logo {
