@@ -136,3 +136,11 @@ De compacte tabel in `CLAUDE.md` geeft per route alleen route → model → éé
 **Beste-resultaat-regel (reden):** bij het ontwerpen van de teamcoaching-synthese (`docs/TEAM_PLAN.md` punt 5) is het voorstel gebouwd op de data die toevallig al bestond (1:1-logboek, teamscores), terwijl Fase 2A (thema-extractie over teamgesprekken) het resultaat fundamenteel sterker zou maken en die info al bekend was vóór het voorstel. Het verband had proactief gelegd moeten worden.
 
 **Professionaliteitscheck (ontstaan 2026-08-22):** naar aanleiding van een gemist gat (uitgenodigde teamleden konden managementrollen kiezen, `app/bot/profiel/page.tsx`) vroeg Arno om een manier om in het algemeen te verifiëren of er professioneel genoeg wordt ontwikkeld, op elk moment oproepbaar. Geen check op één bugklasse maar een verificatie of de normen in CLAUDE.md ("Rol", "Schaal en kwaliteitsniveau") in de praktijk worden nageleefd. Geen automatisering: punt 1 en 3 vereisen semantisch oordeel dat een grep-based CI-check niet betrouwbaar kan geven, punt 4 en 5 vereisen live codebase-context.
+
+---
+
+## Vercel- en GitHub-storingen op 2026-10-12
+
+Tussen ongeveer 14:45 en 16:00 UTC kreeg een deel van de pushes naar master geen Vercel-deployment, andere pas na ongeveer 8 minuten. Oorzaak: een Vercel-incident ("Increased build and deployment failures", vanaf 13:35 UTC) door een upstream-incident bij GitHub. Geen fout in de Git-koppeling of in de code. Handmatig deployen via de Vercel-API werkte wel. Les: na elke push controleren of er een deployment voor de commit bestaat, en bij uitblijven eerst de statuspagina's van Vercel en GitHub bekijken (vercel-status.com, githubstatus.com) voordat je aan de eigen configuratie gaat zoeken. Er is eerst in de configuratie gezocht (Git-link, ignore-regel), dat was een omweg.
+
+Dezelfde dag meldde GitHub een storing op meldingen (vanaf 12:21 UTC). De test of routine-issues Arno mailen viel daarin, dus de conclusie dat GitHub-mail niet werkt is niet sluitend. De Telegram-melding via `.github/workflows/notify-issue.yml` blijft de gekozen route, omdat die niet van GitHubs meldingen afhangt.
