@@ -40,6 +40,8 @@ Drie documenten met elk een eigen doel en actualiteitsrisico, naast de plandocum
 
 Voer onderstaande punten volledig uit. Rapporteer elk punt expliciet (OK / aandacht nodig / actie vereist).
 
+**Automatisch (sinds 2026-10-12):** een cloud-routine (`trig_01TEwYKKnPgDsKKhXDrm3hoM`, elke 1e van de maand 07:00 UTC) voert secties 1 t/m 7 alleen-lezen uit en mailt het rapport naar Arno via de Gmail-koppeling, inclusief een lijst met dashboardchecks die alleen Arno achter een login kan doen. Gekozen: mail i.p.v. Telegram, want de cloud-sessie heeft de Telegram-sleutel niet. Beheer: https://claude.ai/code/routines. Handmatig aanroepen met "doe de maandcheck" blijft mogelijk.
+
 **Werkwijze:** voer de secties uit als parallelle subagents, één per sectie, via de Agent-tool, niet sequentieel in je eigen context. Sneller, grondiger, voorkomt dat context vol raakt waardoor latere secties oppervlakkiger worden nagelopen.
 
 ### 1. Beveiliging
