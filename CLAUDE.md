@@ -558,7 +558,7 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 
 ### Layout
 - Achtergrond: `#111827`, max-width `560px`, padding `48px 40px 40px 40px`, `margin: 0 auto`
-- Bebas Neue via een inline `@font-face` in de `<style>` tag in `<head>`, wijzend naar `https://arno.bot/fonts/BebasNeue-normal-400-latin.woff2` (zelf gehost, geen Google)
+- Bebas Neue via een inline `@font-face` in de `<style>` tag in `<head>`, wijzend naar `https://www.arno.bot/fonts/BebasNeue-normal-400-latin.woff2` (zelf gehost, geen Google)
 
 ### ARNOBOT header
 - Font: `'Bebas Neue','Arial Black',Impact,sans-serif`, 26px, letter-spacing 6px

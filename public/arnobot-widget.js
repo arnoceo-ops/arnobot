@@ -19,7 +19,7 @@
   ];
 
   var CSS = [
-    '@import url("https://arno.bot/fonts/fonts.css");',
+    '@import url("https://www.arno.bot/fonts/fonts.css");',
     '#arnobot-widget*{box-sizing:border-box;margin:0;padding:0}',
     '#arnobot-widget{',
     '  font-family:"Open Sans",sans-serif;',

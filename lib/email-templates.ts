@@ -21,7 +21,7 @@ export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;src:url('https://arno.bot/fonts/BebasNeue-normal-400-latin.woff2') format('woff2');}</style>
+<style>@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;src:url('https://www.arno.bot/fonts/BebasNeue-normal-400-latin.woff2') format('woff2');}</style>
 </head>
 <body style="margin:0;padding:0;background:#111827;">
 <div style="max-width:560px;margin:0 auto;background:#111827;padding:48px 40px 40px 40px;">
