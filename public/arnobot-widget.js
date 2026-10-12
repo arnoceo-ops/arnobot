@@ -19,7 +19,7 @@
   ];
 
   var CSS = [
-    '@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@400;700&family=Playfair+Display:ital@0;1&display=swap");',
+    '@import url("https://arno.bot/fonts/fonts.css");',
     '#arnobot-widget*{box-sizing:border-box;margin:0;padding:0}',
     '#arnobot-widget{',
     '  font-family:"Open Sans",sans-serif;',

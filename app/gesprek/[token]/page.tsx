@@ -91,7 +91,6 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
   return (
     <>
       <style href="gesprek-shared" precedence="default">{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; font-family: 'Space Mono', monospace; font-weight: 400; }
         @media (max-width: 600px) {

@@ -26,7 +26,6 @@ export default async function PrijzenPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600&family=Figtree:wght@400;500&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }

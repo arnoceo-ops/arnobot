@@ -8,7 +8,6 @@ export default function UpgradePage() {
   return (
     <main style={{ background: '#f5f0e8', minHeight: '100vh' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;700&display=swap');
         :root {
           --cream: #f5f0e8;
           --cream-dark: #ede7d8;

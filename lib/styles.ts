@@ -159,7 +159,6 @@ export const layout = {
 // ─── Globale CSS-string ──────────────────────────────────────────────────────
 // Plak dit in de <style> tag bovenaan elke pagina/client-component.
 export const globalCss = `
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: ${colors.page}; color: ${colors.textBright}; font-family: ${fonts.mono}; font-weight: 400; }
   .btn-primary:hover  { background: ${colors.amberHover} !important; }

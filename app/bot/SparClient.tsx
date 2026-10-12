@@ -1416,7 +1416,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Barlow:wght@400;700&family=Barlow+Condensed:wght@300;600;900&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; }

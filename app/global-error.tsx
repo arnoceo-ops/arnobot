@@ -15,8 +15,8 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Er ging iets mis: ArnoBot</title>
+        <link rel="stylesheet" href="/fonts/fonts.css" />
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
           .reset-btn { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; padding: 12px 36px; border-radius: 999px; background: #f59e0b; color: #111827; border: none; cursor: pointer; display: inline-block; }

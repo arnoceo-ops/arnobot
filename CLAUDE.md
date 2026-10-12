@@ -332,7 +332,7 @@ Referentiebestanden: `app/bot/admin/status/page.tsx` en `app/bot/admin/gebruiker
 
 Pagina's die inhoudelijk bij de marketing-/conversieflow horen (abonnement kiezen, upgraden), ook achter de login, gebruiken bewust de marketingstijl. Referentie: `app/bot/doorgaan/page.tsx`, naast `/prijzen` en `/`.
 
-- **Font**: Figtree (body), Oswald (koppen/labels/knoppen, uppercase via CSS `text-transform`), zelfde Google Fonts-import als `/prijzen`
+- **Font**: Figtree (body), Oswald (koppen/labels/knoppen, uppercase via CSS `text-transform`), zelf gehost zoals alle merklettertypen (zie "Lettertypen zelf hosten" hieronder)
 - **Kleuren**: `#f8fafc` (wit), `#94a3b8` (gedempt)
 - **Primaire knop**: radius 6px, volle amber achtergrond, gloed-schaduw (`box-shadow: 0 12px 24px rgba(245,158,11,0.25)`), hover `scale(1.03-1.05)`
 - **`BotNav` blijft ongewijzigd** (gedeeld component, sitebreed)
@@ -458,7 +458,8 @@ Bij een verschil: dat is een fout die vóór opleveren gecorrigeerd wordt, niet 
 - **Gedempte tekst** (artikelnummers, voetnoten, meta): #6b7280 — nooit #4b5563 buiten placeholders gebruiken
 - **Secundaire link** (VOORWAARDEN, PRIVACY, SPELREGELS etc.): Space Mono, fontSize 13px, letterSpacing 4, color #6b7280, textDecoration none. Niet amber.
 - **Container**: maxWidth 812, padding 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px'
-- **Style-tag**: altijd bovenaan met font-import, `* { box-sizing: border-box; margin: 0; padding: 0; }`, body met font-weight 400
+- **Style-tag**: altijd bovenaan met `* { box-sizing: border-box; margin: 0; padding: 0; }` en body met font-weight 400. Geen font-import meer: de lettertypen komen globaal uit `app/fonts.css` (via `app/globals.css`), zie "Lettertypen zelf hosten"
+- **Lettertypen zelf hosten — ALTIJD (sinds 2026-10-12)**: nooit een verwijzing naar `fonts.googleapis.com` of `fonts.gstatic.com` in de app, e-mails, widget of statische pagina's. Een Google Fonts-verwijzing stuurt het IP-adres van elke bezoeker naar Google (AVG, en Arno wil niet afhankelijk zijn van Google). De woff2-bestanden staan in `public/fonts/`, de `@font-face`-regels in `app/fonts.css` (plus een identieke statische kopie `public/fonts/fonts.css` voor `app/global-error.tsx`, `public/kleuradvies.html` en de embed-widget). Beide worden gegenereerd door `node scripts/fetch-fonts.mjs`; een nieuw lettertype of gewicht = de lijst `FAMILIES` in dat script aanvullen en opnieuw draaien, nooit een `@import` in een pagina plakken. Familienamen in `font-family` blijven `'Bebas Neue'`, `'Space Mono'`, `'Oswald'`, `'Figtree'`. CSP in `proxy.ts` heeft bewust geen Google-hosts meer (`font-src 'self'`). Uitzondering: `scripts/generate-logo.mjs` haalt bij het genereren van het logo eenmalig een lettertype bij Google, dat raakt geen bezoekers.
 - **Achtergrond**: #111827 pagina, #1f2937 voor cards/inputs
 - **Amber scheidingslijn** (horizontale hero-divider): altijd `2px solid #f59e0b`, nooit dikker, en altijd **precies zo breed als de zichtbare hero-inhoud erboven, nooit paginabreedte**. Bij een enkel gecentreerd blok: de lijn op dezelfde `maxWidth` als dat blok. Bij een grid met meerdere blokken naast elkaar: de lijn als extra grid-item met `gridColumn: '1 / -1'`. Referentie voor het principe: de header-divider op `app/bot/team/TeamClient.tsx`. Geldt voor `border-bottom` op hero-secties (sparren, team, teamlid, coaching) en `border-top` op sectie-scheidingen (Q&A FAQ-blok).
 - **Scheiding tussen secties ónder de hero** (dus niet de hero-divider zelf): geen amber, gewoon `1px solid #374151`, kolombreedte. Amber is gereserveerd voor de ene hero-divider bovenaan een pagina.
@@ -557,7 +558,7 @@ E-mails hebben een eigen stijlnorm die afwijkt van de web-UI. Nooit Courier New 
 
 ### Layout
 - Achtergrond: `#111827`, max-width `560px`, padding `48px 40px 40px 40px`, `margin: 0 auto`
-- Google Fonts @import voor Bebas Neue in `<style>` tag in `<head>`
+- Bebas Neue via een inline `@font-face` in de `<style>` tag in `<head>`, wijzend naar `https://arno.bot/fonts/BebasNeue-normal-400-latin.woff2` (zelf gehost, geen Google)
 
 ### ARNOBOT header
 - Font: `'Bebas Neue','Arial Black',Impact,sans-serif`, 26px, letter-spacing 6px

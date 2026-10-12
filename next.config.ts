@@ -48,7 +48,27 @@ const nextConfig: NextConfig = {
   },
   skipTrailingSlashRedirect: true,
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // Zelf gehoste lettertypen. Cross-origin toestaan, want de embed-widget
+      // (public/arnobot-widget.js) laadt ze op andere sites vanaf arno.bot. De woff2-bestanden
+      // lang cachen (bestandsnamen veranderen alleen via scripts/fetch-fonts.mjs); fonts.css
+      // heeft een vaste naam en cachet daarom maar een dag.
+      {
+        source: '/fonts/:file*.woff2',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/fonts/fonts.css',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'public, max-age=86400' },
+        ],
+      },
+    ]
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

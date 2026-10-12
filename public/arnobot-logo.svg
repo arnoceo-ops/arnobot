@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 110" width="480" height="110">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&amp;display=swap');
+      @import url('https://arno.bot/fonts/fonts.css');
     </style>
   </defs>
   <text

@@ -21,8 +21,9 @@ function buildCSP(nonce: string, allowWasm = false): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.feedblitz.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://assets.feedblitz.com",
+    // Lettertypen worden zelf gehost (public/fonts, app/fonts.css), geen Google meer.
+    "font-src 'self'",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     // Het eigen Supabase-project staat ook hier toe: afbeeldingen in blogposts staan in de
@@ -40,15 +41,10 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // stond alleen de compilatie toe, niet deze fetch, waardoor de knoppen stil faalden.
     // Bevestigd via arnobot_csp_violations: herhaalde "connect-src blokkeert data"-meldingen,
     // uitsluitend op /bot/team en /bot/team/lid/* (13, 14 en 19 augustus 2026).
-    // fonts.googleapis.com staat hier naast style-src omdat een CSS @import in een inline
-    // <style>-tag (het patroon dat vrijwel elke pagina gebruikt voor Google Fonts) door sommige
-    // browsers als connect-src-fetch gerapporteerd wordt i.p.v. style-src, ook al is het
-    // logisch een stylesheet-load. Bevestigd via een echte CSP-schendingsmelding op arno.bot
-    // (26-9-2026, pagina '/', regel connect-src).
     // Het eigen Supabase-project staat toe voor de audiobijlage-upload (lib/assemblyai.ts): de
     // browser PUT't via een signed upload URL rechtstreeks naar Storage (bucket chat-audio-uploads).
     // Zonder deze host blokkeert de CSP de upload ("Bestand kon niet worden geüpload", 2026-10-07).
-    `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com https://fonts.googleapis.com`,
+    `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com`,
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",

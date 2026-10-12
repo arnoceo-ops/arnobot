@@ -34,7 +34,6 @@ function AuthPage({ onLinkedIn, error }: { onLinkedIn: () => void; error: string
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; }
         .li-btn {

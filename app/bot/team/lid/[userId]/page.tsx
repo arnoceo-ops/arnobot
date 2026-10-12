@@ -288,7 +288,6 @@ export default function LidPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
         .back-link { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; color: #9ca3af; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 48px; transition: color 0.15s; }
