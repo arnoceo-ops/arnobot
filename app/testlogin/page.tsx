@@ -7,14 +7,22 @@ import { useSignIn, useUser } from '@clerk/nextjs'
 // (test@arno.bot, zie lib/internalTestAccounts.ts). Stond eerst op /sign-in/intern, verplaatst
 // hierheen op 2026-10-13 vanuit de destijds-foutieve theorie dat het genest zitten onder
 // Clerk's eigen catch-all route (/sign-in/[[...sign-in]]) een client-side redirect-bug
-// veroorzaakte. De ECHTE oorzaak bleek achteraf (zelfde dag) een verlopen `expires_at` op dit
-// testaccount in approved_users (restant van een Mollie-live-betaaltest): proxy.ts stuurde
-// correct terug naar /sign-in omdat de toegangscheck faalde, wat er client-side uitzag als een
-// kapotte inlogpagina. Zie lib/internalTestAccounts.ts voor de fix-procedure bij "login kapot".
-// De route blijft hier staan (werkt, geen reden om terug te verplaatsen), maar de nesting
-// onder /sign-in/* was dus nooit het probleem. Wachtwoord-login i.p.v. LinkedIn, zodat inloggen
-// niet afhangt van een tweede LinkedIn-account. Zelfde Clerk-methode als de Capacitor-app
-// gebruikt in app/sign-in/AppSignIn.tsx.
+// veroorzaakte. Diezelfde dag bleek een verlopen `expires_at` op dit testaccount (restant van
+// een Mollie-live-betaaltest) EEN reële, bevestigde oorzaak van "login kapot" te zijn (zie
+// lib/internalTestAccounts.ts voor die fix-procedure), maar NIET de enige: later die avond,
+// met een vers, niet-verlopen testaccount, bleek deze pagina óók zonder enige invoer binnen
+// enkele seconden zelf naar /bot te navigeren en van daaruit terug te stuiten naar /sign-in.
+// Twee pogingen om dat op te lossen (wachten op Clerk's isLoaded vóór de redirect-beslissing;
+// een ontbrekend <div id="clerk-captcha">-element toevoegen) losten het niet op, en de tweede
+// isLoaded-wijziging (die ook in de echte /sign-in-pagina stond) brak zelfs Arno's eigen,
+// normale LinkedIn-login — teruggedraaid (commits 366faced/02cba262). De daadwerkelijke
+// oorzaak van deze resterende, los van expires_at bestaande bounce is dus NIET gevonden.
+// Kom hier niet terug met een nieuwe losse theorie zonder eerst, stap voor stap, na elke
+// wijziging live op zowel /testlogin ALS de echte /sign-in-pagina te verifiëren (niet alleen
+// de ene flow), gezien hoe makkelijk een wijziging hier de andere flow kapot bleek te maken.
+// De route blijft hier staan (werkt met de expires_at-fix, geen reden om terug te verplaatsen).
+// Wachtwoord-login i.p.v. LinkedIn, zodat inloggen niet afhangt van een tweede LinkedIn-account.
+// Zelfde Clerk-methode als de Capacitor-app gebruikt in app/sign-in/AppSignIn.tsx.
 export default function TestLoginPage() {
   const { signIn, fetchStatus } = useSignIn()
   const { isSignedIn } = useUser()
