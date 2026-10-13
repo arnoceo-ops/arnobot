@@ -35,7 +35,7 @@ De app is gebouwd door Arno Diepeveen, oprichter van Royal Dutch Sales, als verl
 **Bedrijf:** ArnoBot, eenmanszaak van Anton Dirk Diepeveen (roepnaam Arno)  
 **KvK-nummer:** 42184446  
 **Btw-nummer:** [ARNO: nog niet ontvangen]  
-**Bezoekadres:** Verdunplein 17, G9019, 5627 SZ Eindhoven, Nederland (nog door te geven aan de KvK)
+**Bezoekadres:** Verdunplein 17 G9019, 5627 SZ Eindhoven, Nederland (nog door te geven aan de KvK)
 
 ---
 
