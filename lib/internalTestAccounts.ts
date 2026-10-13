@@ -17,12 +17,17 @@ export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
 
 // Arno's eigen handmatige testaccount, voor interactief rondklikken buiten zijn echte
 // gebruiksaccount om. Ingelogd via de verborgen route app/testlogin/page.tsx (tot 2026-10-13
-// op /sign-in/intern, verplaatst nadat die genest-onder-/sign-in/*-route een client-side
-// redirect-bug bleek te hebben), niet via LinkedIn.
+// op /sign-in/intern), niet via LinkedIn.
 //
-// LET OP: deze accounts hebben geen betaling, dus hun 30-daagse trial verloopt gewoon,
-// waarna proxy.ts ze bij /bot terugstuurt naar /sign-in (ziet eruit als "login kapot").
-// Op 2026-08-30 gebeurde dat met test@arno.bot. Opgelost door in approved_users een
+// LET OP: een gezette expires_at is ALTIJD bindend in proxy.ts, ook als paid_at gezet is
+// (zie het commentaar daar). Elke actie die expires_at op dit account verkort of weglaat
+// (zoals het testen van een echte Mollie-betaling, elk abonnement zet een eigen expires_at)
+// bounced dit account alsnog uit /bot naar /sign-in, wat eruitziet als "login kapot" of een
+// mysterieuze client-side redirect-bug (zo gebeurd op 2026-08-30 via trial-verloop, en opnieuw
+// op 2026-10-13 via een Mollie-testbetaling die een expires_at van maar 41 minuten zette, wat
+// toen eerst ten onrechte aan Clerk/routing werd toegeschreven voordat de echte oorzaak in
+// approved_users werd gevonden). **Check dit ALTIJD eerst bij elke melding van "login kapot"
+// op /testlogin**, vóór enige Clerk- of routing-wijziging. Opgelost door in approved_users een
 // verre expires_at te zetten:
 //   UPDATE approved_users SET expires_at = '2035-01-01T00:00:00Z'
 //   WHERE user_id IN (E2E, MANUAL, APP_REVIEWER van hierboven);

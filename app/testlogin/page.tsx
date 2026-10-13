@@ -4,15 +4,17 @@ import { useState, useEffect } from 'react'
 import { useSignIn, useUser } from '@clerk/nextjs'
 
 // Verborgen, nergens gelinkte inlogroute voor Arno's eigen handmatige testaccount
-// (test@arno.bot, zie lib/internalTestAccounts.ts). Stond eerst op /sign-in/intern, maar
-// genest onder dezelfde map als Clerk's eigen catch-all route (/sign-in/[[...sign-in]])
-// bleek client-side een redirect terug naar /sign-in te veroorzaken (2026-10-13, oorzaak
-// niet gevonden ondanks uitgebreid onderzoek: niet de recente Clerk/Next.js-dependency-bump,
-// niet de font-hosting-commit van gisteren, reproduceerde zelfs op een preview-deployment van
-// een commit van vóór beide). Pragmatische fix: dit pad leeft niet meer onder /sign-in/*, dus
-// geen ambiguïteit meer met de catch-all mogelijk. Wachtwoord-login i.p.v. LinkedIn, zodat
-// inloggen niet afhangt van een tweede LinkedIn-account. Zelfde Clerk-methode als de
-// Capacitor-app gebruikt in app/sign-in/AppSignIn.tsx.
+// (test@arno.bot, zie lib/internalTestAccounts.ts). Stond eerst op /sign-in/intern, verplaatst
+// hierheen op 2026-10-13 vanuit de destijds-foutieve theorie dat het genest zitten onder
+// Clerk's eigen catch-all route (/sign-in/[[...sign-in]]) een client-side redirect-bug
+// veroorzaakte. De ECHTE oorzaak bleek achteraf (zelfde dag) een verlopen `expires_at` op dit
+// testaccount in approved_users (restant van een Mollie-live-betaaltest): proxy.ts stuurde
+// correct terug naar /sign-in omdat de toegangscheck faalde, wat er client-side uitzag als een
+// kapotte inlogpagina. Zie lib/internalTestAccounts.ts voor de fix-procedure bij "login kapot".
+// De route blijft hier staan (werkt, geen reden om terug te verplaatsen), maar de nesting
+// onder /sign-in/* was dus nooit het probleem. Wachtwoord-login i.p.v. LinkedIn, zodat inloggen
+// niet afhangt van een tweede LinkedIn-account. Zelfde Clerk-methode als de Capacitor-app
+// gebruikt in app/sign-in/AppSignIn.tsx.
 export default function TestLoginPage() {
   const { signIn, fetchStatus } = useSignIn()
   const { isSignedIn } = useUser()
