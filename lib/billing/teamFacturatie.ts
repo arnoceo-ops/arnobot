@@ -221,6 +221,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       brutoCent,
       omschrijving,
       redirectUrl: `${SITE_URL}/bot/team?betaling=terug`,
+      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team`,
       metadata: { teamFactuurId: rij.id, teamId: team.id },
       idempotencyKey: `teamfactuur-${rij.id}`,
     })

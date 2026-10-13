@@ -38,7 +38,11 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   const [mollieEnabled, setMollieEnabled] = useState(false)
   const [abonnement, setAbonnement] = useState<Abonnement | null>(null)
   const [stap, setStap] = useState<'kies' | 'gegevens'>('kies')
-  const [klantType, setKlantType] = useState<KlantType>('particulier')
+  // Standaard zakelijk (besloten 13-10-2026): voorkomt dat een zakelijke klant per ongeluk
+  // particulier afrekent en zonder btw-factuur komt te zitten (zie de zelf-bedieningscorrectie
+  // in app/bot/account/zakelijk-corrigeren). Iemand die wél particulier is, merkt het meteen
+  // doordat er een bedrijfsnaam wordt gevraagd, en schakelt dan zelf om.
+  const [klantType, setKlantType] = useState<KlantType>('zakelijk')
   const [bedrijfsnaam, setBedrijfsnaam] = useState('')
   const [kvk, setKvk] = useState('')
   const [btwNummer, setBtwNummer] = useState('')

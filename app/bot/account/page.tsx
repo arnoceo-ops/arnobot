@@ -433,6 +433,11 @@ export default function AccountPage() {
               </div>
             </div>
           )}
+          <p style={{ marginTop: 24 }}>
+            <Link href="/bot/account/zakelijk-corrigeren" style={{ color: '#6b7280', fontSize: 13, letterSpacing: 1, textDecoration: 'underline' }}>
+              Per ongeluk particulier besteld in plaats van zakelijk?
+            </Link>
+          </p>
         </div>
         )}
 

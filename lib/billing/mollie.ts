@@ -223,6 +223,8 @@ export async function maakBetaalLink(input: {
   brutoCent: number
   omschrijving: string
   redirectUrl: string
+  /** Welke webhook de statusupdates van betalingen via deze link ontvangt. */
+  webhookUrl: string
   metadata: Record<string, unknown>
   idempotencyKey: string
 }): Promise<MolliePaymentLink> {
@@ -233,7 +235,7 @@ export async function maakBetaalLink(input: {
       amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
       description: input.omschrijving,
       redirectUrl: input.redirectUrl,
-      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team`,
+      webhookUrl: input.webhookUrl,
       metadata: input.metadata,
     },
   })
