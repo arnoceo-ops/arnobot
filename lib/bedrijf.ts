@@ -6,8 +6,7 @@ export const BEDRIJF = {
   naam: 'ArnoBot',
   eigenaar: 'Anton Dirk Diepeveen',
   kvk: '42184446',
-  // Invullen zodra ontvangen; footer, /contact en JSON-LD tonen het dan vanzelf.
-  btw: '' as string,
+  btw: 'NL005565123B13' as string,
   straat: 'Verdunplein 17 G9019',
   postcode: '5627 SZ',
   plaats: 'Eindhoven',
