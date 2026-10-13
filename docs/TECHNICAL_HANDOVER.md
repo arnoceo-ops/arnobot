@@ -186,7 +186,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Aanmelden | `/aanmelden` | Zet referral-/SD-attributiecookies, redirect naar `/sign-in` |
 | Sign in | `/sign-in` | Clerk sign-in (LinkedIn OIDC) |
 | Sign in (enterprise) | `/sign-in/enterprise` | Enterprise SSO via e-maildomein |
-| Sign in (intern) | `/sign-in/intern` | Verborgen wachtwoord-login, alleen Arno's eigen testaccount |
+| Sign in (intern) | `/testlogin` | Verborgen wachtwoord-login, alleen Arno's eigen testaccount (tot 2026-10-13 op `/sign-in/intern`, verplaatst wegens een client-side redirect-bug onder `/sign-in/*`) |
 | Sign up | `/sign-up` | Clerk sign-up (LinkedIn OIDC) |
 | SSO callback | `/sso-callback` | Clerk SSO-redirect-afhandeling |
 | Privacy | `/privacy` | Privacyverklaring |

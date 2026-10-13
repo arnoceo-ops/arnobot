@@ -16,8 +16,9 @@ export const E2E_TEST_USER_EMAIL = 'playwright-test@arno.bot'
 export const E2E_TEST_USER_ID = 'user_3GMu51zQ4RJYqgQmpI4NMOwIvK2'
 
 // Arno's eigen handmatige testaccount, voor interactief rondklikken buiten zijn echte
-// gebruiksaccount om. Ingelogd via de verborgen route app/sign-in/intern/page.tsx, niet via
-// LinkedIn.
+// gebruiksaccount om. Ingelogd via de verborgen route app/testlogin/page.tsx (tot 2026-10-13
+// op /sign-in/intern, verplaatst nadat die genest-onder-/sign-in/*-route een client-side
+// redirect-bug bleek te hebben), niet via LinkedIn.
 //
 // LET OP: deze accounts hebben geen betaling, dus hun 30-daagse trial verloopt gewoon,
 // waarna proxy.ts ze bij /bot terugstuurt naar /sign-in (ziet eruit als "login kapot").
@@ -39,7 +40,7 @@ export const APP_REVIEWER_ID = 'user_3H5QqLMsGDjwk1mFQYRCLuJbdBk'
 // Alle drie de interne test-user-ID's als lijst, plus een helper. Gebruik dit op ELKE
 // gebruikersoverstijgende aggregatie of analyse over gebruikersdata (admin-overzichten,
 // cron-analyses, ranglijsten, opener-generatie): de geautomatiseerde E2E draait tegen een
-// apart Supabase-project, maar test@arno.bot (handmatig via /sign-in/intern) en
+// apart Supabase-project, maar test@arno.bot (handmatig via /testlogin) en
 // reviewer@arno.bot loggen in op de productie-Clerk en schrijven dus naar dezelfde
 // productie-tabellen als echte gebruikers. Zonder deze filter belandt hun testverkeer in
 // weekcijfers, competitie-ranglijsten en de gegenereerde gespreksopeners.

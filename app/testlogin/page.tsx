@@ -4,11 +4,16 @@ import { useState, useEffect } from 'react'
 import { useSignIn, useUser } from '@clerk/nextjs'
 
 // Verborgen, nergens gelinkte inlogroute voor Arno's eigen handmatige testaccount
-// (test@arno.bot, zie lib/internalTestAccounts.ts), analoog aan het al bestaande patroon
-// van app/sign-in/enterprise/page.tsx: alleen bereikbaar met de directe URL. Wachtwoord-login
-// i.p.v. LinkedIn, zodat inloggen niet afhangt van een tweede LinkedIn-account. Zelfde
-// Clerk-methode als de Capacitor-app gebruikt in ../AppSignIn.tsx.
-export default function InternSignInPage() {
+// (test@arno.bot, zie lib/internalTestAccounts.ts). Stond eerst op /sign-in/intern, maar
+// genest onder dezelfde map als Clerk's eigen catch-all route (/sign-in/[[...sign-in]])
+// bleek client-side een redirect terug naar /sign-in te veroorzaken (2026-10-13, oorzaak
+// niet gevonden ondanks uitgebreid onderzoek: niet de recente Clerk/Next.js-dependency-bump,
+// niet de font-hosting-commit van gisteren, reproduceerde zelfs op een preview-deployment van
+// een commit van vóór beide). Pragmatische fix: dit pad leeft niet meer onder /sign-in/*, dus
+// geen ambiguïteit meer met de catch-all mogelijk. Wachtwoord-login i.p.v. LinkedIn, zodat
+// inloggen niet afhangt van een tweede LinkedIn-account. Zelfde Clerk-methode als de
+// Capacitor-app gebruikt in app/sign-in/AppSignIn.tsx.
+export default function TestLoginPage() {
   const { signIn, fetchStatus } = useSignIn()
   const { isSignedIn } = useUser()
   const [email, setEmail] = useState('')
