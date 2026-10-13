@@ -25,6 +25,16 @@ import {
 
 const BTW_PCT = 0.21
 
+/**
+ * Zelfde bescherming als lib/billing/facturatie.ts: een Mollie-testsleutel (test_) maakt
+ * standaard GEEN Moneybird-factuur, anders belanden nepfacturen in de echte administratie.
+ */
+function factureringToegestaan(): boolean {
+  if (!moneybirdIngeschakeld()) return false
+  const testmodus = process.env.MOLLIE_API_KEY?.startsWith('test_')
+  return !testmodus || process.env.MONEYBIRD_OOK_IN_TESTMODUS === 'true'
+}
+
 export interface TeamRow {
   id: string
   name: string
@@ -185,7 +195,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   try {
     const omschrijving = `ArnoBot Team${input.soort === 'tussentijds' ? ' (tussentijdse uitbreiding)' : ''} ${cyclus}`
 
-    if (moneybirdIngeschakeld()) {
+    if (factureringToegestaan()) {
       const { contactId } = await verkrijgMollieEnMoneybirdKlant(team)
       const factuur = await maakConceptFactuur({
         contactId,
