@@ -71,7 +71,7 @@ export default function ZakelijkCorrigerenPage() {
       `}</style>
       <div style={{ background: '#111827', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Figtree', sans-serif" }}>
         <BotNav active="account" />
-        <div style={{ maxWidth: 560, margin: '0 auto', padding: 'clamp(40px,8vw,80px) 20px' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
           <span style={label}>Correctie</span>
           <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(28px,5vw,40px)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 20, lineHeight: 1.1 }}>
             Particulier naar zakelijk
