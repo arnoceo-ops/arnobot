@@ -5,7 +5,7 @@ Dit document verzamelt de feitelijke gegevens die een jurist of DPA-sjabloondien
 ## Partijen
 
 - **Verwerkingsverantwoordelijke (customer)**: de corporate klant, namens wie ArnoBot persoonsgegevens van hun medewerkers verwerkt.
-- **Verwerker (processor)**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak, KvK 42184446), bezoekadres Oudegracht 161, 3511 AL Utrecht, Nederland. Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
+- **Verwerker (processor)**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak, KvK 42184446), bezoekadres Verdunplein 17 G9019, 5627 SZ Eindhoven, Nederland. Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
 
 ## Onderwerp en duur van de verwerking
 

@@ -8,7 +8,7 @@
 
 **Verwerkingsverantwoordelijke ("Klant")**: [PLACEHOLDER: naam en gegevens klant]
 
-**Verwerker ("ArnoBot")**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak), bezoekadres Oudegracht 161, 3511 AL Utrecht, Nederland (KVK: 42184446). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
+**Verwerker ("ArnoBot")**: Anton Dirk Diepeveen, handelend onder de naam ArnoBot (eenmanszaak), bezoekadres Verdunplein 17 G9019, 5627 SZ Eindhoven, Nederland (KVK: 42184446). Contactpersoon: Arno Diepeveen. Privacycontact: privacy@arno.bot.
 
 ---
 

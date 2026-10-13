@@ -8,9 +8,9 @@ export const BEDRIJF = {
   kvk: '42184446',
   // Invullen zodra ontvangen; footer, /contact en JSON-LD tonen het dan vanzelf.
   btw: '' as string,
-  straat: 'Oudegracht 161',
-  postcode: '3511 AL',
-  plaats: 'Utrecht',
+  straat: 'Verdunplein 17 G9019',
+  postcode: '5627 SZ',
+  plaats: 'Eindhoven',
   landCode: 'NL',
   emailAlgemeen: 'hq@arno.bot',
   emailPrivacy: 'privacy@arno.bot',
