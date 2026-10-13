@@ -274,6 +274,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
               <NumberField label="Moneybird (€/maand)" hint="Growth-tier, maandelijkse betaling, boekhouding + Mollie-koppeling, altijd aan" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
+              <NumberField label="Revolut Business (€/maand)" hint="Basic-plan, zakelijke rekening, altijd aan" value={inputs.revolutBusinessEur} step={1} onChange={v => set('revolutBusinessEur', v)} />
               <NumberField label="Sentry (€/maand)" value={inputs.sentryEur} onChange={v => set('sentryEur', v)} />
               <NumberField
                 label="EUR → USD koers"
@@ -361,7 +362,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
-              Alle bedragen in USD, tenzij anders aangegeven (Sentry en Moneybird in EUR, omgerekend). ElevenLabs-plan wordt automatisch gekozen als de goedkoopste tier die het totale creditverbruik dekt; boven Business wordt in hele Business-veelvouden gerekend.
+              Alle bedragen in USD, tenzij anders aangegeven (Sentry, Moneybird en Revolut in EUR, omgerekend). ElevenLabs-plan wordt automatisch gekozen als de goedkoopste tier die het totale creditverbruik dekt; boven Business wordt in hele Business-veelvouden gerekend.
             </p>
           </div>
         </div>

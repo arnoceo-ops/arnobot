@@ -93,6 +93,14 @@ export const TARIEVEN = {
   // in vasteKostenPerMaand/computeScenarioKosten behalve de omrekening naar de
   // dollar-context daar (zelfde patroon als sentryEur).
   moneybirdEur: 35,
+  // Revolut Business (zakelijke rekening voor de Mollie-uitbetalingen): Basic-plan,
+  // vanaf €10/maand volgens revolut.com/en-NL/business/business-account-plans
+  // (gelezen via zoekresultaat 2026-10-13, de pagina zelf gaf een 403). Besloten
+  // 2026-10-13: als vaste kost meetellen, ook al is het klein. Verworpen: Grow
+  // (€35), pas relevant bij veel uitgaande betalingen of teamkaarten. Wisselkoers-
+  // marge op USD-leveranciers is niet meegerekend. EUR-native, zelfde patroon als
+  // moneybirdEur.
+  revolutBusinessEur: 10,
   // Bevestigd door Arno (2026-09-17): nog op Sentry's gratis tier, geen
   // betaald plan. Het eerdere bedrag (26) was een currency-mismatch, Sentry's
   // eigen prijzen zijn in USD ($26/mo jaarlijks, $29/mo maandelijks), niet
@@ -170,6 +178,7 @@ export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = T
     + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
     + TARIEVEN.moneybirdEur * fxRate
+    + TARIEVEN.revolutBusinessEur * fxRate
     + TARIEVEN.sentryEur * fxRate
     + TARIEVEN.domeinPerJaarUsd / 12
 }
@@ -210,6 +219,7 @@ export type Inputs = {
   supabasePro: boolean
   clerkPro: boolean
   moneybirdEur: number
+  revolutBusinessEur: number
   sentryEur: number
   fxRate: number
   upstashFreeLimit: number
@@ -272,6 +282,7 @@ export const DEFAULT_INPUTS: Inputs = {
   supabasePro: TARIEVEN.supabaseProActief,
   clerkPro: TARIEVEN.clerkProActief,
   moneybirdEur: TARIEVEN.moneybirdEur,
+  revolutBusinessEur: TARIEVEN.revolutBusinessEur,
   sentryEur: TARIEVEN.sentryEur,
   fxRate: TARIEVEN.fxRateEurUsd,
   upstashFreeLimit: TARIEVEN.upstashFreeLimit,
@@ -350,11 +361,13 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
   const moneybirdUsd = inputs.moneybirdEur * inputs.fxRate
+  const revolutUsd = inputs.revolutBusinessEur * inputs.fxRate
   const vastKosten = inputs.vercelSeats * inputs.vercelPerSeat
     + (inputs.supabasePro ? supabaseBasisKosten() : 0)
     + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (inputs.clerkPro ? TARIEVEN.clerkProUsd : 0)
     + moneybirdUsd
+    + revolutUsd
     + sentryUsd
     + domeinPerMaand
 
