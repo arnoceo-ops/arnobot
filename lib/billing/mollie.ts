@@ -208,6 +208,37 @@ export async function betaalTerug(input: {
   })
 }
 
+export interface MolliePaymentLink {
+  id: string
+  url: string
+  _links?: { paymentLink?: { href: string } }
+}
+
+/**
+ * Eenmalige betaallink met een vast bedrag (Payment Links API). Gebruikt voor Team-facturen:
+ * daar varieert het bedrag per factuur (seats × prijs), dus geen Mollie Subscription (die wil
+ * een vast bedrag per cyclus). reusable staat bewust niet aan: één link hoort bij één factuur.
+ */
+export async function maakBetaalLink(input: {
+  brutoCent: number
+  omschrijving: string
+  redirectUrl: string
+  metadata: Record<string, unknown>
+  idempotencyKey: string
+}): Promise<MolliePaymentLink> {
+  return mollie('/payment-links', {
+    method: 'POST',
+    idempotencyKey: input.idempotencyKey,
+    body: {
+      amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
+      description: input.omschrijving,
+      redirectUrl: input.redirectUrl,
+      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team`,
+      metadata: input.metadata,
+    },
+  })
+}
+
 export interface MollieRefund {
   id: string
   paymentId: string

@@ -307,8 +307,18 @@ export default clerkMiddleware(async (auth, req) => {
     // VERWIJDEREN) of doordat de manager 'm uit het team haalt (VERWIJDER UIT TEAM,
     // verwijdert de arnobot_team_members-rij), dus altijd live gecheckt, nooit een
     // eenmalig gezette vlag die na verwijdering zou blijven hangen.
+    // Team-betaalprotocol (fase 2b): een team wiens factuur 30 dagen over de vervaldatum nog
+    // onbetaald is, krijgt geblokkeerd_at gezet door de team-facturatie-cron. Dat blokkeert
+    // zowel de manager (command_manager-pad) als de teamleden (team_members-pad) hieronder,
+    // maar nooit iemands eigen, onafhankelijk geldige expires_at/paid_at/trial_start
+    // hierboven: dit raakt alleen toegang die uitsluitend via het team wordt verkregen.
     if (!toegestaan && user.command_manager === true) {
-      toegestaan = true
+      const { data: eigenTeam } = await supabase
+        .from('arnobot_teams')
+        .select('geblokkeerd_at')
+        .eq('manager_id', userId)
+        .maybeSingle()
+      if (!eigenTeam?.geblokkeerd_at) toegestaan = true
     }
     if (!toegestaan) {
       const { data: teamMember } = await supabase
@@ -316,7 +326,14 @@ export default clerkMiddleware(async (auth, req) => {
         .select('team_id')
         .eq('user_id', userId)
         .maybeSingle()
-      if (teamMember) toegestaan = true
+      if (teamMember) {
+        const { data: teamRow } = await supabase
+          .from('arnobot_teams')
+          .select('geblokkeerd_at')
+          .eq('id', teamMember.team_id)
+          .maybeSingle()
+        if (!teamRow?.geblokkeerd_at) toegestaan = true
+      }
     }
 
     if (!toegestaan) {

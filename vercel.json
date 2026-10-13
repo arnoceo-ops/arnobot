@@ -9,6 +9,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/cron/team-facturatie",
+      "schedule": "10 5 * * *"
+    },
+    {
       "path": "/api/cron/trial-emails",
       "schedule": "5 4 * * *"
     },

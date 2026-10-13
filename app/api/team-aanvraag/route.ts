@@ -87,9 +87,22 @@ export async function POST(req: Request) {
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Team-abonnement aangevraagd.<br><br>` +
       `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `Btw-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
-      'BEKIJK IN SUPABASE →', 'https://supabase.com/dashboard/project/wxrsmmzqbmoeackirsxc/editor'
+      'BEKIJK TEAMS →', 'https://www.arno.bot/bot/admin/teams'
     ),
   }).catch(() => {})
+
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN
+  const tgChat = process.env.TELEGRAM_CHAT_ID
+  if (tgToken && tgChat) {
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: tgChat,
+        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}`,
+      }),
+    }).catch(() => {})
+  }
 
   return NextResponse.json({ ok: true })
 }

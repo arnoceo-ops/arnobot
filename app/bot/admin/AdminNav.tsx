@@ -2,6 +2,7 @@ import AdminMobileNav from './AdminMobileNav'
 
 const CENTER_LINKS = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
+  { href: '/bot/admin/teams', label: 'TEAMS' },
   { href: '/bot/admin', label: 'GESPREKKEN' },
   { href: '/bot/admin/analyse', label: 'ANALYSE' },
   { href: '/bot/admin/status', label: 'STATUS' },

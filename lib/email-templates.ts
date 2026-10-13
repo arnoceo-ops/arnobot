@@ -84,6 +84,9 @@ export type EmailType =
   | 'blog_nieuwe_post'
   | 'blog_al_aangemeld'
   | 'admin_derde_trial'
+  | 'team_factuur'
+  | 'team_factuur_herinnering'
+  | 'team_geblokkeerd'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
   dag1:                  { label: 'Dag 1',                  description: 'Dag 1:welkom, waar begin je?',                                       category: 'user' },
@@ -120,6 +123,9 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   blog_al_aangemeld:     { label: 'Blog al aangemeld',      description: 'Event:opnieuw aangemeld terwijl het adres al bevestigd is',          category: 'user' },
   blog_nieuwe_post:      { label: 'Blog nieuw artikel',     description: 'Event:bij publicatie van een artikel, naar bevestigde abonnees',     category: 'user' },
   admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
+  team_factuur:               { label: 'Team-factuur',               description: 'Event:nieuwe Team-factuur, met betaallink',                        category: 'user' },
+  team_factuur_herinnering:   { label: 'Team-factuur herinnering',   description: 'Recurring:7 dagen na de vervaldatum, nog niet betaald',           category: 'user' },
+  team_geblokkeerd:           { label: 'Team geblokkeerd',           description: 'Recurring:30 dagen na de vervaldatum, toegang geblokkeerd',       category: 'user' },
 }
 
 export interface BlogMailOptions {
@@ -145,6 +151,14 @@ export interface BillingMailOptions {
   betaalId?: string
 }
 
+export interface TeamMailOptions {
+  teamNaam: string
+  bedragCent: number
+  seats: number
+  betaalLink?: string
+  tussentijds?: boolean
+}
+
 function billingEuro(cent: number): string {
   return `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -158,7 +172,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions; team?: TeamMailOptions }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -330,6 +344,37 @@ export function getEmailTemplate(
           'VERLENGEN →', 'https://arno.bot/bot/doorgaan?verlengen=1'
         ),
       }
+    case 'team_factuur': {
+      const t = options?.team
+      const bedrag = billingEuro(t?.bedragCent ?? 0)
+      return {
+        subject: `${prefix}Factuur ArnoBot Team${t?.tussentijds ? ', nieuwe gebruiker toegevoegd' : ''}`,
+        html: mail(
+          `${t?.tussentijds ? `Je team heeft een gebruiker toegevoegd.` : `Dit is de factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''}.`} Bedrag: ${bedrag}, voor ${t?.seats ?? 0} gebruikers.<br><br>Betaal binnen 14 dagen via de knop hieronder. Je ontvangt de factuur zelf ook via Moneybird.`,
+          'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
+        ),
+      }
+    }
+    case 'team_factuur_herinnering': {
+      const t = options?.team
+      return {
+        subject: `${prefix}Herinnering: factuur ArnoBot Team nog niet betaald`,
+        html: mail(
+          `De factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''} van ${billingEuro(t?.bedragCent ?? 0)} is nog niet betaald. Betaal binnen 14 dagen om te voorkomen dat de toegang van het team wordt geblokkeerd.`,
+          'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
+        ),
+      }
+    }
+    case 'team_geblokkeerd': {
+      const t = options?.team
+      return {
+        subject: `${prefix}Toegang Team geblokkeerd, factuur onbetaald`,
+        html: mail(
+          `De factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''} van ${billingEuro(t?.bedragCent ?? 0)} is nog steeds niet betaald. De toegang van het hele team is nu geblokkeerd.<br><br>Betaal de factuur om de toegang direct te herstellen.`,
+          'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
+        ),
+      }
+    }
     case 'abonnement_afgelopen':
       return {
         subject: `${prefix}Je ArnoBot-abonnement is afgelopen`,
