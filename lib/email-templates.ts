@@ -1,7 +1,6 @@
 import { createHmac } from 'crypto'
 import { BEDRIJF_MAIL_REGEL } from '@/lib/bedrijf'
 import { BLOG_COPY } from '@/lib/blogCopy'
-import { quoteVanVandaag } from '@/lib/emailQuotes'
 
 export function isValidEmail(email: unknown): email is string {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -16,35 +15,7 @@ function optOutSig(userId: string): string {
 
 const CTA = `display:inline-block;background:#f59e0b;color:#111827;font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.5px;padding:12px 24px;text-decoration:none;border-radius:999px;`
 
-// 'quote': logo + quote. 'trial': idem plus 30 dagen gratis, alleen voor ontvangers die nog geen gebruiker zijn.
-export type EmailFooterVariant = 'none' | 'quote' | 'trial'
-
-const FOOTER_QUOTE_TYPES: EmailType[] = [
-  'dag1', 'dag4', 'geen_gesprek_nudge', 'first_conversation', 'dag14', 'first_coaching', 'dag21_gesprek', 'dag25',
-  'weekly_nudge', 'inactivity_dag21', 'inactivity_dag45', 'bieb_bijgewerkt', 'uitdaging_herinnering',
-  'patroon_samenvatting', 'team_1on1_ritme_nudge', 'team_1on1_ritme_herinnering', 'winback',
-]
-const FOOTER_TRIAL_TYPES: EmailType[] = ['blog_bevestiging', 'blog_al_aangemeld', 'blog_nieuwe_post']
-
-function footerVariantVoor(type: EmailType): EmailFooterVariant {
-  if (FOOTER_TRIAL_TYPES.includes(type)) return 'trial'
-  if (FOOTER_QUOTE_TYPES.includes(type)) return 'quote'
-  return 'none'
-}
-
-function emailFooterBlok(variant: EmailFooterVariant): string {
-  if (variant === 'none') return ''
-  const q = quoteVanVandaag()
-  const sans = `Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif`
-  return `<div style="margin:48px 0 0 0;padding:24px 0 0 0;border-top:1px solid #374151;">
-    <p style="margin:0 0 14px 0;padding:0;font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-size:15px;letter-spacing:4px;line-height:1;"><span style="color:#f1f5f9;">ARNO</span><span style="color:#f59e0b;">BOT</span></p>
-    <p style="margin:0;padding:0;font-family:${sans};font-size:13px;font-style:italic;color:#9ca3af;line-height:1.6;">&ldquo;${escapeHtml(q.tekst)}&rdquo;</p>
-    <p style="margin:4px 0 0 0;padding:0;font-family:${sans};font-size:12px;color:#6b7280;">${escapeHtml(q.auteur)}</p>
-    ${variant === 'trial' ? `<p style="margin:16px 0 0 0;padding:0;font-family:${sans};font-size:13px;color:#9ca3af;line-height:1.6;">Probeer ArnoBot 30 dagen gratis: <a href="https://www.arno.bot" style="color:#f59e0b;text-decoration:none;">arno.bot</a></p>` : ''}
-  </div>`
-}
-
-export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false, footerNote?: string, greeting?: string, footer: EmailFooterVariant = 'none') {
+export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest = false, footerNote?: string, greeting?: string) {
   return `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -66,8 +37,6 @@ export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest 
   <div style="font-family:Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;color:#9ca3af;line-height:1.8;margin:0 0 36px 0;">${body}</div>
 
   <a href="${ctaUrl}" style="${CTA}">${ctaText}</a>
-
-  ${emailFooterBlok(footer)}
 
   ${footerNote ? `<p style="margin:48px 0 0 0;padding:0;font-family:Arial,sans-serif;font-size:12px;color:#6b7280;line-height:1.6;">${footerNote}</p>` : ''}
 
@@ -212,7 +181,7 @@ export function getEmailTemplate(
   const prefix = isTest ? '[TEST] ' : ''
 
   const mail = (body: string, ctaText: string, ctaUrl: string, footerNote?: string) =>
-    emailHtml(body, ctaText, ctaUrl, isTest, footerNote, naam, footerVariantVoor(type))
+    emailHtml(body, ctaText, ctaUrl, isTest, footerNote, naam)
 
   // "Sanne heeft" / "Sanne en Rik hebben" / "Sanne, Rik en Julia hebben" — werkwoordsvorm mee
   // laten gaan met het aantal namen, gebruikt door de 1:1-ritme-mails hieronder.
