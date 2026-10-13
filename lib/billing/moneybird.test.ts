@@ -27,8 +27,8 @@ describe('Moneybird contact', () => {
     expect(zakelijk).toMatchObject({ company_name: 'Test BV', tax_number: 'NL123456789B01', chamber_of_commerce: '12345678' })
   })
   it('zet het adres erbij als dat bekend is', () => {
-    const { contact } = bouwContactBody({ userId: 'u', email: 'a@b.nl', naam: 'Sanne', adres: { straat: 'Verdunplein 17 G9019', postcode: '5627 SZ', plaats: 'Eindhoven' } })
-    expect(contact).toMatchObject({ address1: 'Verdunplein 17 G9019', zipcode: '5627 SZ', city: 'Eindhoven' })
+    const { contact } = bouwContactBody({ userId: 'u', email: 'a@b.nl', naam: 'Sanne', adres: { straat: 'Verdunplein 17, G9019', postcode: '5627 SZ', plaats: 'Eindhoven' } })
+    expect(contact).toMatchObject({ address1: 'Verdunplein 17, G9019', zipcode: '5627 SZ', city: 'Eindhoven' })
   })
 })
 
