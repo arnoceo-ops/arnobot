@@ -2,10 +2,10 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-10-09 (einde sessie: privacy ingekort, managementfacturen besloten)
-- **Waar we staan:** de hele flow is gebouwd en op 2026-10-09 end-to-end getest in testmodus met het testaccount: Pro jaarlijks en Pro maandelijks als particulier, Pro jaarlijks als zakelijk (bedrag, btw, abonnement bij Mollie, toegang, bevestigingsmail, Telegram), terugbetaling (toegang direct dicht), opzegging (Mollie-abonnement gestopt, einddatum). Onderweg gevonden en gefixt: toegang bleef staan bij een pending terugbetaling, verlopen gebruikers konden niet opnieuw afrekenen (proxy.ts liet alleen /bot/doorgaan niet door), opzegbevestiging werd nooit verstuurd, misleidende melding bij opgezegd-maar-lopend abonnement. Nog niet getest: een mislukte betaling, de eerste echte vervolgbetaling (9 november 2026 voor de testbetaling is gestopt), de verlengmails en iDEAL. Met een test_-sleutel kunnen alleen de eigenaar en de interne testaccounts afrekenen; de VIES-controle wordt in testmodus overgeslagen.
-- **Eerstvolgende stap:** Arno voert `docs/sql/2026-10-10-mollie-billing.sql` uit in Supabase, maakt het Mollie-account aan (pay-as-you-go, testmodus) en zet `MOLLIE_API_KEY` (test_...) in `.env.local` en Vercel. Pas daarna kan de flow end-to-end in testmodus draaien.
-- **Blokkerend voor livegang (niet voor bouwen):** (1) Moneybird-koppeling voor facturen, want de voorwaarden beloven na elke betaling een factuur; (2) btw-nummer; (3) Mollie-verificatie van het account met KvK-gegevens.
+- **Laatst bijgewerkt:** 2026-10-13
+- **Waar we staan:** volledige setup afgerond: Revolut-IBAN bij Mollie, nieuwe testsleutel (lokaal + Vercel + geredeployed), SQL-migratie bevestigd tegen de echte database, Moneybird API-token aanwezig, betaalmethoden iDEAL/creditcard/Bancontact geactiveerd bij Mollie, Moneybird's eigen Mollie-koppeling ("uitbetalingen automatisch koppelen") aangezet. 2026-10-13: verse e2e-test met de nieuwe sleutel geslaagd (particulier, Pro maandelijks, iDEAL, status "paid", Moneybird-factuur 2026-0009 automatisch aangemaakt binnen 4 seconden). Eerder, 2026-10-09: Pro jaarlijks en Pro maandelijks als particulier, Pro jaarlijks als zakelijk, terugbetaling, opzegging getest. Onderweg gevonden en gefixt: toegang bleef staan bij een pending terugbetaling, verlopen gebruikers konden niet opnieuw afrekenen, opzegbevestiging werd nooit verstuurd, misleidende melding bij opgezegd-maar-lopend abonnement. **2026-10-13, zelfde sessie:** particulier-maandelijks-ontwerp herzien, zie de besluitentabel hieronder (doorlopend i.p.v. 12-maanden-stop). Nog niet getest: een mislukte betaling, een echte vervolgbetaling, de zakelijke flow met de nieuwe sleutel.
+- **Eerstvolgende stap:** de testsubscriptie + testfactuur van de e2e-test van vandaag opruimen (terugbetaling, Mollie-abonnement annuleren, factuur crediteren in Moneybird), zodat de eerste echte factuur bij 2026-0010 begint.
+- **Blokkerend voor livegang (niet voor bouwen):** (1) Moneybird-facturen voor Team (fase 2, zie onderaan); (2) btw-nummer; (3) Mollie-verificatie van het account met KvK-gegevens; (4) de Oudegracht-contract/KvK-volgorde (zie hieronder) vóór Mollie-verificatie en het Moneybird-afzenderadres.
 
 ### Afvinklijst
 
@@ -21,7 +21,8 @@
 - [x] Admin: terugbetaling binnen bedenktijd (knop in het betaalpaneel)
 - [x] Docs, CLAUDE.md (maandcheck, mailtypes), CI-checks bijgewerkt
 - [x] Testmodus end-to-end doorlopen (2026-10-09, zie Waar we staan)
-- [ ] **Fase 2 (wacht op Moneybird-account):** factuur per betaling via de Moneybird-API, Team per factuur met Mollie-betaallink
+- [x] **Fase 2a (Moneybird-account staat, 2026-10-13):** factuur per betaling via de Moneybird-API, bevestigd werkend in de e2e-test van vandaag (factuur 2026-0009, binnen 4 seconden na betaling)
+- [ ] **Fase 2b (nog te bouwen):** Team per factuur met Mollie-betaallink
 - [x] Privacyverklaring (artikelen 2, 3, 5, 6) en beveiligings-PDF v1.6: Mollie en Moneybird als verwerkers (2026-10-09). Moneybird-verwerkersovereenkomst door Arno afgesloten op 2026-10-09 (opslag binnen de EER)
 - [ ] **Volgorde rond het adres (besloten 2026-10-09):** contract Oudegracht tekenen, dan KvK wijzigen (adres Oudegracht 161 en handelsnaam ArnoBot), dan pas Mollie verifiëren en in Moneybird het afzenderadres (Oudegracht, admin@arno.bot) en de betalingsvoorwaarden (admin@) in de workflow zetten. De website toont Oudegracht al, dus dit hoort klaar te zijn vóór de livegang
 
@@ -58,7 +59,7 @@ Code staat klaar in `lib/billing/moneybird.ts` (client en pure bouwstenen, 7 uni
 |---|---|---|
 | Provider | Mollie (pay-as-you-go) plus Moneybird | Stripe/Paddle: NL-only start, geen OSS-probleem |
 | Betaalmethoden | iDEAL, creditcard en Bancontact (voor Belgische klanten, 2026-10-09). Bancontact en iDEAL leveren als eerste betaling een SEPA-machtiging voor vervolgbetalingen op, dus SEPA-incasso moet geactiveerd zijn in het Mollie-profiel. Is een methode nog niet geactiveerd, dan valt de checkout automatisch terug op iDEAL en creditcard | SEPA-incasso als eerste keuze: in testmodus niet volledig te testen, iDEAL maakt zelf een machtiging aan |
-| Particulier maandelijks | Eerste betaling plus abonnement van 11 maanden (totaal 12), daarna mail met vraag om verlenging | Doorlopend abonnement: eerder besloten om na 12 maanden te vragen |
+| Particulier maandelijks | **Herzien 2026-10-13:** doorlopend, net als zakelijk, geen 12-maanden-stop meer, geen herinneringsmail | Het oude ontwerp (eerste betaling plus abonnement van 11 maanden, totaal 12, daarna verlengmail) is losgelaten. Reden voor de omslag: het "Wet Van Dam-risico" dat in `docs/PAYMENTS_PLAN.md` tegen "onbeperkt doorlopend" werd ingebracht, gold voor een **jaarcontract** dat zichzelf stilzwijgend verlengt. Een altijd-opzegbaar maandabonnement is precies het patroon dat die wet toestaat (zelfde als Netflix/Spotify), dus dat risico speelt hier niet. Particulier **jaarlijks** behoudt de verlengmail (dat *is* een jaarcontract-situatie). |
 | Particulier jaarlijks | Eén betaling voor een jaar, geen abonnement | Auto-verlenging: Wet Van Dam-risico |
 | Zakelijk | Doorlopend, opzegtermijn een maand | n.v.t. |
 | Team | Blijft handmatig tot Moneybird er is, dan factuur met betaallink | Mollie Subscriptions voor Team: factuur is de afspraak, bedrag varieert per gebruiker |

@@ -73,18 +73,20 @@ describe('perioden', () => {
     expect(eersteperiodeEinde(start, 'jaarlijks').toISOString()).toBe('2027-10-10T12:00:00.000Z')
     expect(toegangTot(d('2026-11-10T12:00:00Z')).toISOString()).toBe('2026-11-13T12:00:00.000Z')
   })
-  it('particulier heeft een contracteinde van 12 maanden, zakelijk niet', () => {
+  it('alleen particulier jaarlijks heeft een contracteinde van 12 maanden', () => {
     const start = d('2026-10-10T12:00:00Z')
-    expect(contractEinde(start, 'particulier')?.toISOString()).toBe('2027-10-10T12:00:00.000Z')
-    expect(contractEinde(start, 'zakelijk')).toBeNull()
+    expect(contractEinde(start, 'particulier', 'jaarlijks')?.toISOString()).toBe('2027-10-10T12:00:00.000Z')
+    expect(contractEinde(start, 'particulier', 'maandelijks')).toBeNull()
+    expect(contractEinde(start, 'zakelijk', 'maandelijks')).toBeNull()
+    expect(contractEinde(start, 'zakelijk', 'jaarlijks')).toBeNull()
   })
 
   describe('abonnement na de eerste betaling', () => {
     const start = d('2026-10-10T12:00:00Z')
-    it('particulier maandelijks: nog 11 maanden, starend over een maand', () => {
+    it('particulier maandelijks: doorlopend, net als zakelijk, startend over een maand', () => {
       const p = abonnementNaEerstebetaling(start, 'maandelijks', 'particulier')
       expect(p.interval).toBe('1 month')
-      expect(p.times).toBe(11)
+      expect(p.times).toBeNull()
       expect(p.startDatum?.toISOString()).toBe('2026-11-10T12:00:00.000Z')
     })
     it('particulier jaarlijks: geen abonnement', () => {
@@ -97,10 +99,6 @@ describe('perioden', () => {
       const j = abonnementNaEerstebetaling(start, 'jaarlijks', 'zakelijk')
       expect(j.interval).toBe('12 months')
       expect(j.startDatum?.toISOString()).toBe('2027-10-10T12:00:00.000Z')
-    })
-    it('maandelijks particulier betaalt in totaal precies 12 keer', () => {
-      const p = abonnementNaEerstebetaling(start, 'maandelijks', 'particulier')
-      expect(1 + (p.times ?? 0)).toBe(12)
     })
   })
 

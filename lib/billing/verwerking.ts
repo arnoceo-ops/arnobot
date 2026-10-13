@@ -158,7 +158,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     await beeindigAndereAbonnementen(sub)
 
     const einde = eersteperiodeEinde(betaaldOp, sub.cyclus)
-    const contract = contractEinde(betaaldOp, sub.klant_type)
+    const contract = contractEinde(betaaldOp, sub.klant_type, sub.cyclus)
     await billingDb
       .from('arnobot_subscriptions')
       .update({

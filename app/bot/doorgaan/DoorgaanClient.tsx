@@ -316,7 +316,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
             ? 'Je abonnement loopt door tot je opzegt. De opzegtermijn is één maand.'
             : cyclus === 'jaarlijks'
               ? 'Je betaalt eenmalig voor een jaar. Daarna vragen we of je wilt verlengen.'
-              : 'Je betaalt elke maand automatisch. Na 12 maanden vragen we of je wilt verlengen.'
+              : 'Je betaalt elke maand automatisch. Je kunt op elk moment opzeggen.'
           const zakelijkCompleet = klantType === 'particulier' || (bedrijfsnaam.trim().length >= 2 && kvk.trim() !== '' && btwNummer.trim() !== '' && straat.trim().length >= 3 && postcode.trim() !== '' && plaats.trim().length >= 2)
           const belgisch = klantType === 'zakelijk' && /^\s*be/i.test(btwNummer)
           return (

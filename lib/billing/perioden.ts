@@ -4,8 +4,12 @@ import type { Cyclus, KlantType } from './prijzen'
 // meteen de toegang afsnijdt. proxy.ts leest alleen approved_users.expires_at.
 export const RESPIJT_DAGEN = 3
 
-// Particulieren lopen maximaal 12 maanden (voorwaarden artikel 4), daarna volgt de vraag
-// om te verlengen.
+// Particulier jaarlijks loopt een jaar (voorwaarden artikel 4), daarna volgt de vraag om te
+// verlengen. Particulier maandelijks loopt sinds 2026-10-13 net als zakelijk gewoon door tot
+// opzegging (besloten: Wet Van Dam-risico geldt voor een stilzwijgend verlengd JAARcontract,
+// niet voor een altijd-opzegbaar maandabonnement; zie docs/MOLLIE_PLAN.md).
+// PARTICULIER_LOOPTIJD_MAANDEN blijft de lengte van het jaarlijkse contract en van de
+// verlengperiode na een geslaagde verlenging (abonnementVoorVerlenging hieronder).
 export const PARTICULIER_LOOPTIJD_MAANDEN = 12
 
 const DAG_MS = 24 * 60 * 60 * 1000
@@ -38,9 +42,13 @@ export function toegangTot(periodeEinde: Date): Date {
   return new Date(periodeEinde.getTime() + RESPIJT_DAGEN * DAG_MS)
 }
 
-/** Contracteinde voor particulieren (12 maanden vanaf de start), null voor zakelijk. */
-export function contractEinde(start: Date, klantType: KlantType): Date | null {
-  return klantType === 'particulier' ? voegMaandenToe(start, PARTICULIER_LOOPTIJD_MAANDEN) : null
+/**
+ * Contracteinde: alleen particulier jaarlijks (12 maanden vanaf de start, daarna de
+ * verlengvraag). Particulier maandelijks en alles zakelijk: geen contracteinde, loopt door tot
+ * opzegging.
+ */
+export function contractEinde(start: Date, klantType: KlantType, cyclus: Cyclus): Date | null {
+  return klantType === 'particulier' && cyclus === 'jaarlijks' ? voegMaandenToe(start, PARTICULIER_LOOPTIJD_MAANDEN) : null
 }
 
 export interface AbonnementPlan {
@@ -53,14 +61,15 @@ export interface AbonnementPlan {
 
 /**
  * Welk Mollie-abonnement hoort bij een afgeronde eerste betaling?
- *  - particulier maandelijks: nog 11 maandbetalingen (totaal 12)
+ *  - particulier maandelijks: doorlopend, net als zakelijk (besloten 2026-10-13, geen
+ *    12-maanden-stop meer, zie contractEinde hierboven)
  *  - particulier jaarlijks: geen abonnement, een jaar is één betaling
  *  - zakelijk: doorlopend, per maand of per jaar
  */
 export function abonnementNaEerstebetaling(start: Date, cyclus: Cyclus, klantType: KlantType): AbonnementPlan {
   if (klantType === 'particulier') {
     if (cyclus === 'jaarlijks') return { times: null, interval: null, startDatum: null }
-    return { times: PARTICULIER_LOOPTIJD_MAANDEN - 1, interval: '1 month', startDatum: voegMaandenToe(start, 1) }
+    return { times: null, interval: '1 month', startDatum: voegMaandenToe(start, 1) }
   }
   return {
     times: null,
