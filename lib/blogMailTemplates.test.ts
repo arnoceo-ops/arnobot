@@ -58,3 +58,17 @@ describe('blogmails', () => {
     }
   })
 })
+
+describe('mailfooter', () => {
+  it('toont trial-regel alleen onder blogmails en quote onder lifecyclemails', () => {
+    expect(getEmailTemplate('blog_nieuwe_post', '', false, { blog }).html).toContain('30 dagen gratis')
+    const dag4 = getEmailTemplate('dag4', 'Arno').html
+    expect(dag4).toContain('&ldquo;')
+    expect(dag4).not.toContain('30 dagen gratis')
+  })
+  it('laat betaal- en foutmails zonder footer', () => {
+    const html = getEmailTemplate('betaling_mislukt', 'Arno').html
+    expect(html).not.toContain('&ldquo;')
+    expect(html).not.toContain('30 dagen gratis')
+  })
+})
