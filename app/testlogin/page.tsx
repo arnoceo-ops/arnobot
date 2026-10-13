@@ -7,25 +7,30 @@ import { useSignIn, useUser } from '@clerk/nextjs'
 // (test@arno.bot, zie lib/internalTestAccounts.ts). Stond eerst op /sign-in/intern, verplaatst
 // hierheen op 2026-10-13 vanuit de destijds-foutieve theorie dat het genest zitten onder
 // Clerk's eigen catch-all route (/sign-in/[[...sign-in]]) een client-side redirect-bug
-// veroorzaakte. De ECHTE oorzaak bleek achteraf (zelfde dag) een verlopen `expires_at` op dit
-// testaccount in approved_users (restant van een Mollie-live-betaaltest): proxy.ts stuurde
-// correct terug naar /sign-in omdat de toegangscheck faalde, wat er client-side uitzag als een
-// kapotte inlogpagina. Zie lib/internalTestAccounts.ts voor de fix-procedure bij "login kapot".
-// De route blijft hier staan (werkt, geen reden om terug te verplaatsen), maar de nesting
-// onder /sign-in/* was dus nooit het probleem. Wachtwoord-login i.p.v. LinkedIn, zodat inloggen
-// niet afhangt van een tweede LinkedIn-account. Zelfde Clerk-methode als de Capacitor-app
-// gebruikt in app/sign-in/AppSignIn.tsx.
+// veroorzaakte. Eerder diezelfde dag bleek een verlopen `expires_at` op dit testaccount
+// (restant van een Mollie-live-betaaltest) EEN oorzaak van "login kapot" te zijn, maar niet
+// de enige: later die avond, met een vers getest account, bleek de pagina óók zonder enige
+// invoer binnen enkele seconden zelf naar /bot te navigeren en van daaruit terug te stuiten
+// naar /sign-in (bevestigd via live netwerkinspectie: GET /bot direct gevolgd door GET
+// /sign-in, vóór er ook maar iets was ingetypt). De code checkte `isSignedIn` zonder op
+// `isLoaded` te wachten: Clerk kan tijdens het laden heel kort een verouderd/ongeldig
+// sessiesignaal tonen (bijv. een cookie die serverside al niet meer geldig is), waardoor de
+// effect hieronder voortijdig naar /bot stuurde, en proxy.ts/auth.protect() dat bij de
+// daadwerkelijke servercontrole weer afwees. Nu expliciet op `isLoaded` wachten vóór een
+// redirect-beslissing. Zie lib/internalTestAccounts.ts voor de losstaande expires_at-fix bij
+// "login kapot". Wachtwoord-login i.p.v. LinkedIn, zodat inloggen niet afhangt van een tweede
+// LinkedIn-account. Zelfde Clerk-methode als de Capacitor-app gebruikt in app/sign-in/AppSignIn.tsx.
 export default function TestLoginPage() {
   const { signIn, fetchStatus } = useSignIn()
-  const { isSignedIn } = useUser()
+  const { isLoaded, isSignedIn } = useUser()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (isSignedIn) window.location.href = '/bot'
-  }, [isSignedIn])
+    if (isLoaded && isSignedIn) window.location.href = '/bot'
+  }, [isLoaded, isSignedIn])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

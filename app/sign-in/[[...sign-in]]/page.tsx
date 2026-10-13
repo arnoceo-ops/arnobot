@@ -44,7 +44,7 @@ async function linkedInViaDirectFetch(): Promise<boolean> {
 
 export default function SignInPage() {
   const { fetchStatus, signIn } = useSignIn()
-  const { isSignedIn } = useUser()
+  const { isLoaded: userLoaded, isSignedIn } = useUser()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [autoTriggered, setAutoTriggered] = useState(false)
@@ -127,9 +127,12 @@ export default function SignInPage() {
       .finally(() => setFallbackChecked(true))
   }, [])
 
+  // Pas redirecten zodra Clerk volledig geladen is: isSignedIn kan tijdens het laden heel kort
+  // een verouderd/ongeldig sessiesignaal tonen, wat anders voortijdig naar /bot stuurt en daar
+  // weer terugstuit naar /sign-in. Zie app/testlogin/page.tsx voor de volledige toedracht.
   useEffect(() => {
-    if (isSignedIn) window.location.href = '/bot'
-  }, [isSignedIn])
+    if (userLoaded && isSignedIn) window.location.href = '/bot'
+  }, [userLoaded, isSignedIn])
 
   // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
   // met loading=true en de knop disabled. pageshow detecteert dit en reset de state.
@@ -146,12 +149,15 @@ export default function SignInPage() {
 
   // Auto-redirect naar LinkedIn alleen in de normale situatie. Staat de fallback aan
   // (Arno heeft 'm bij een storing aangezet), dan wachten we tot de gebruiker zelf kiest.
+  // userLoaded erbij: zonder die check kon dit vuren op een nog ongeladen, mogelijk verouderd
+  // isSignedIn-signaal (undefined/false), wat iemand met een geldige sessie soms toch naar
+  // LinkedIn stuurde vóórdat Clerk had kunnen vaststellen dat hij al ingelogd was.
   useEffect(() => {
-    if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled && !isNativeApp) {
+    if (userLoaded && fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled && !isNativeApp) {
       setAutoTriggered(true)
       handleLinkedIn()
     }
-  }, [fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled, isNativeApp])
+  }, [userLoaded, fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled, isNativeApp])
 
   async function handleEmailCodeRequest(e: React.FormEvent) {
     e.preventDefault()
