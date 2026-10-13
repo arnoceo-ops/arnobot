@@ -27,3 +27,6 @@ export const BEDRIJF_REGEL = [
   ...(BEDRIJF.btw ? [`Btw ${BEDRIJF.btw}`] : []),
   BEDRIJF_ADRES_REGEL,
 ].join(' · ')
+
+// Korte afzenderregel voor onder e-mails: alleen naam en adres.
+export const BEDRIJF_MAIL_REGEL = `${BEDRIJF.naam} · ${BEDRIJF_ADRES_REGEL}`

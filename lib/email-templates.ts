@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto'
-import { BEDRIJF_REGEL } from '@/lib/bedrijf'
+import { BEDRIJF_MAIL_REGEL } from '@/lib/bedrijf'
 import { BLOG_COPY } from '@/lib/blogCopy'
 
 export function isValidEmail(email: unknown): email is string {
@@ -42,7 +42,7 @@ export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest 
 
   <p style="margin:${footerNote ? '8px' : '48px'} 0 0 0;padding:0;font-family:Arial,sans-serif;font-size:11px;color:#374151;">© ARNOBOT</p>
 
-  <p style="margin:4px 0 0 0;padding:0;font-family:Arial,sans-serif;font-size:11px;color:#374151;">${BEDRIJF_REGEL}</p>
+  <p style="margin:4px 0 0 0;padding:0;font-family:Arial,sans-serif;font-size:11px;color:#374151;">${BEDRIJF_MAIL_REGEL}</p>
 
 </div>
 </body>
