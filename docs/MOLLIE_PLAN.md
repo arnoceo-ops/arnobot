@@ -55,6 +55,30 @@ Code staat klaar in `lib/billing/moneybird.ts` (client en pure bouwstenen, 7 uni
 
 **Afgehandeld (13-10-2026):** een factuur aan een consument boven de €100 moet naam en adres van de afnemer bevatten (vereenvoudigde factuur geldt tot €100). Al eerder met Arno besproken: niet nodig, geen verdere actie.
 
+## Fase 2b: Team-betaalprotocol (ontwerp klaar 13-10-2026, wacht op bouw-akkoord)
+
+**Capability-sweep gedaan (13-10-2026):** Mollie Subscriptions kan geen wisselend bedrag per cyclus (al verworpen in de besluitentabel), dus Team loopt via de **Payment Links API** (bevestigd via de actuele Mollie-docs: vast bedrag, eigen `webhookUrl`, `redirectUrl`, `expiresAt`, `reusable`). Moneybird zelf heeft geen native "betaal nu"-knop op een factuur die wij via de API kunnen aanzetten; de link moet van onze eigen kant komen, zoals de besluitentabel al zegt.
+
+**Ontwerpkeuze seat-aantal (belangrijk, voorkomt het heropenen van een eerder besluit):** GEEN live seat-tracking zoals Slack. Geheugen `project-team-pricing` legde al vast dat volledige automatisering van het gat tussen `/bot/team`-lidmaatschap en betaalde seats bewust is uitgesteld bij het huidige lage volume; dat besluit blijft staan. In plaats daarvan, zoals Salesforce het doet: het actuele ledenaantal in `arnobot_team_members` is al de bron van waarheid, en wordt pas **op het moment van de facturatie** afgelezen (geen self-serve bevestigingsstap, geen real-time proratie per dag). Nooit onder het bij ondertekening afgesproken minimum-seataantal, ook niet als leden wegvallen (bestaand besluit: geen terugbetaling bij afname).
+
+**Tussentijdse toevoeging, cyclus-afhankelijk (verduidelijkt 13-10-2026, komt overeen met het al bestaande true-up-besluit in `docs/ABONNEMENTEN.md`):**
+- **Maandelijks:** geen aparte regel nodig, de eerstvolgende reguliere (maand)factuur IS al de eerstvolgende gelegenheid.
+- **Jaarlijks:** een tussentijds toegevoegde seat wordt **apart en maandelijks bijgefactureerd** (eigen Mollie-betaallink, geen wachten tot de jaarvernieuwing, anders loopt ArnoBot tot 11 maanden inkomsten mis). De eerste tussenfactuur wordt **naar rato berekend**: (resterende dagen in die eerste maand-periode ÷ totaal dagen in die periode) × maandprijs per seat. Vanaf de volgende maand de volle maandprijs, tot de jaarvernieuwing, waarna het nieuwe totaal de baseline voor het volgende jaar wordt.
+- **Facturatiedatum op de dag van contractstart** (bevestigd): gestart op 16 oktober → volgende cyclus/interim-factuur op de 16e van de volgende maand, enzovoort. Hergebruikt de bestaande `voegMaandenToe()` uit `lib/billing/perioden.ts` (al gebruikt voor solo-abonnementen, handelt randgevallen als een start op de 31e al correct af), geen nieuwe datumlogica nodig.
+
+**Datamodel (nieuw, SQL-migratie nodig, Arno moet bevestigen vóór bouw):**
+- `arnobot_teams` uitbreiden: `min_seats integer`, `cyclus text` ('maandelijks'/'jaarlijks'), `volgende_factuurdatum date`, `mollie_customer_id text` (eigen klant-record voor het team, los van de command_manager's persoonlijke `arnobot_billing_customers`-rij).
+- Nieuwe tabel `arnobot_team_facturen`: `id, team_id, periode_start, periode_einde, cyclus, seats_aantal, bedrag_cent, btw_cent, mollie_payment_link_id, mollie_payment_link_url, status (open/paid/overdue/expired), moneybird_factuur_id, betaald_at, herinnering_at, created_at, updated_at`. RLS aan zonder policies, zelfde patroon als de bestaande billing-tabellen.
+
+**Routes/cron (nieuw):**
+- `/api/cron/team-facturatie` (dagelijks, zelfde cron-venster als de bestaande billing-cron): voor elk team waarvan `volgende_factuurdatum` is bereikt, telt `arnobot_team_members`, berekent het bedrag via `lib/teamPricing.ts` (met de minimum-vloer), maakt de Moneybird-factuur (hergebruik van `lib/billing/moneybird.ts`), maakt een Mollie-betaallink met exact dat bedrag, slaat de rij op, stuurt een Telegram-melding naar Arno ("Team X vernieuwd op N seats, was M") en toont/mailt de betaallink aan de command_manager. Reminders op dezelfde 30/7-dagen-logica als de bestaande solo-cron.
+- `/api/webhooks/mollie` uitbreiden: betalingen die van een payment-link komen (niet van een Subscription) herkennen en naar de `arnobot_team_facturen`-afhandeling routeren i.p.v. de bestaande solo-afhandeling; Moneybird-afletteren, status bijwerken.
+- Nieuwe pagina `/bot/team/facturatie` (alleen command_manager): huidige en eerdere facturen, status, betaalknop naar de opgeslagen `mollie_payment_link_url`.
+
+**Bewust niet aangeraakt:** de bestaande teamtoegang (`arnobot_team_members`-lidmaatschap) blijft de toegangsbron in `proxy.ts`, een onbetaalde Team-factuur blokkeert niemand automatisch; dat is een apart dunning-vraagstuk (herinneren, niet meteen afsluiten) dat in dezelfde bouwronde meekomt maar een eigen go/no-go verdient over de hardheid van afsluiting.
+
+**Volgende stap:** Arno's akkoord op dit ontwerp, dan de SQL-migratie ter bevestiging voorleggen, dan bouwen.
+
 ## Besluiten (met verworpen alternatieven)
 
 | Onderwerp | Gekozen | Verworpen, want |

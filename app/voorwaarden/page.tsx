@@ -36,7 +36,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 2.8 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
+            Versie 2.9 · Oktober 2026 · ArnoBot, Utrecht, Nederland.
           </p>
 
           {[
@@ -72,6 +72,7 @@ export default function VoorwaardenPage() {
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier betaal je het getoonde bedrag inclusief btw. Als zakelijke klant betaal je het getoonde bedrag plus btw, die bij het afrekenen wordt getoond.</p>,
                 <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Een maandabonnement als particulier wordt maandelijks automatisch afgeschreven en loopt door tot je opzegt, net als een zakelijk abonnement. Een jaarabonnement als particulier eindigt na een jaar; dan ontvang je een e-mail met de vraag of je wilt verlengen. Reageer je niet, dan eindigt het abonnement.</p>,
                 <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
+                <p key="f2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Bij Team kan het aantal gebruikers tussentijds alleen omhoog, niet omlaag; een vermindering gaat pas in bij de eerstvolgende verlenging, zonder terugbetaling. Een nieuwe gebruiker wordt bij een jaarabonnement apart en naar rato maandelijks bijgefactureerd tot de verlenging; bij een maandabonnement op de eerstvolgende factuur.</p>,
                 <p key="g" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan haar prijzen wijzigen. Dat kondigen we minimaal drie maanden vooraf per e-mail aan, en hooguit één keer per jaar. Ga je niet akkoord, dan kun je binnen 30 dagen na de aankondiging opzeggen met ingang van de datum waarop de nieuwe prijs ingaat.</p>,
               ],
             },
