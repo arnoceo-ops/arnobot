@@ -102,11 +102,6 @@ export default function TestLoginPage() {
               placeholder="Wachtwoord"
               className="intern-input"
             />
-            {/* Verplicht voor Clerk's bot-bescherming bij wachtwoord-logins. Zonder dit element
-                kan Clerk tijdens het initialiseren besluiten dat deze pagina de captcha niet
-                kan tonen en automatisch terugvallen op de geconfigureerde signInUrl (/sign-in),
-                wat er client-side uitziet als een voortijdige, onverklaarde redirect. */}
-            <div id="clerk-captcha" />
             <button type="submit" disabled={loading} className="intern-btn" style={{ alignSelf: 'center' }}>
               {loading ? 'BEZIG...' : 'INLOGGEN'}
             </button>
