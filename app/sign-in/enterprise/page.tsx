@@ -6,17 +6,14 @@ import Link from 'next/link'
 
 export default function EnterpriseSignInPage() {
   const { signIn } = useSignIn()
-  const { isLoaded, isSignedIn } = useUser()
+  const { isSignedIn } = useUser()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Pas redirecten zodra Clerk volledig geladen is: isSignedIn kan tijdens het laden heel kort
-  // een verouderd/ongeldig sessiesignaal tonen, wat anders voortijdig naar /bot stuurt en daar
-  // weer terugstuit naar /sign-in. Zie app/testlogin/page.tsx voor de volledige toedracht.
   useEffect(() => {
-    if (isLoaded && isSignedIn) window.location.href = '/bot'
-  }, [isLoaded, isSignedIn])
+    if (isSignedIn) window.location.href = '/bot'
+  }, [isSignedIn])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
