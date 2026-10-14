@@ -592,9 +592,11 @@ Vorige vraag/opmerking van ArnoBot: "${lastArnoMessage}"
 Reactie van de gebruiker: "${question}"
 
 Antwoord met precies één woord:
-ONGEPAST: seksueel, beledigend of trollen
-OFFTOPIC: heeft geen logische samenhang met het gesprek en gaat niet over sales/business
-OK: logisch vervolg op het gesprek of relevant voor sales/business, of een reactie die kritiek geeft op het gesprek zelf (bijvoorbeeld dat ArnoBot alleen maar terugvraagt in plaats van antwoord geeft). Dat is geen afdwalen, dat is een terechte reactie op de bot.`
+ONGEPAST: duidelijk seksueel, beledigend of trollen
+OFFTOPIC: heeft overduidelijk geen enkele samenhang met het gesprek en gaat niet over sales/business
+OK: logisch vervolg op het gesprek of relevant voor sales/business, of een reactie die kritiek geeft op het gesprek zelf (bijvoorbeeld dat ArnoBot alleen maar terugvraagt in plaats van antwoord geeft). Dat is geen afdwalen, dat is een terechte reactie op de bot.
+
+Een kort antwoord op een vraag of opdracht van ArnoBot is ALTIJD OK, ook als het heel kort, slordig of in een andere taal is (bijvoorbeeld "ja", "nee", "all positive", "beide", een getal, "weet ik niet"). Het gaat om de samenhang met wat ArnoBot net vroeg, niet om lengte of taal. Bij twijfel: OK.`
         : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
 
       const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check', op: 'ai.claude' }, () =>
@@ -612,15 +614,9 @@ OK: logisch vervolg op het gesprek of relevant voor sales/business, of een react
         return NextResponse.json({ redirect: LOST_URL }, { headers: corsHeaders(origin) })
       }
 
+      // OFFTOPIC blokkeert nooit permanent (een kort, slordig antwoord of een gedeeld kantoor-IP
+      // mag niet tot een blokkade leiden). Alleen ONGEPAST blokkeert.
       if (check.includes('OFFTOPIC')) {
-        const alreadyWarned = history && history.some(
-          (m: { role: string; content: string }) =>
-            m.role === 'assistant' && m.content?.includes('Interessant, maar laten we het over jouw sales hebben.')
-        )
-        if (alreadyWarned) {
-          await supabase.from('arno_blog_widget_blocked').upsert({ ip }, { onConflict: 'ip' })
-          return NextResponse.json({ redirect: LOST_URL }, { headers: corsHeaders(origin) })
-        }
         return NextResponse.json({ answer: 'Interessant, maar laten we het over jouw sales hebben.', hint: null }, { headers: corsHeaders(origin) })
       }
     }
