@@ -9,15 +9,6 @@
     .then(function (data) { if (data.blocked) window.location.href = 'https://arno.blog/lost'; })
     .catch(function () {});
 
-  var DEFAULT_OPENERS = [
-    'Mijn salesteam haalt structureel de targets niet. Waar ligt dat aan?',
-    'Wat onderscheidt een winnende salesorganisatie van een gemiddelde?',
-    'Hoe bouw ik een commerciële strategie die de markt op z\'n kop zet?',
-    'Mijn pipeline ziet er goed uit maar de conversie klopt niet. Oorzaken?',
-    'Hoe haal en houd ik structureel topverkopers binnen?',
-    'Ik heb superblije klanten, maar referrals? Ho maar. En nu?',
-  ];
-
   var CSS = [
     '@import url("https://www.arno.bot/fonts/fonts.css");',
     '#arnobot-widget*{box-sizing:border-box;margin:0;padding:0}',
@@ -60,22 +51,12 @@
     '.ab-dot:nth-child(3){animation-delay:.4s}',
     '@keyframes abpulse{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}',
     '.ab-loading-text{font-size:12px;letter-spacing:2px;color:#bbb;text-transform:uppercase;}',
-    '#arnobot-openers{padding:20px 28px 0;border-bottom:1px solid #f0f0f0;}',
-    '.ab-openers-label{font-family:"Open Sans",sans-serif;font-size:17px;font-weight:700;letter-spacing:0;color:rgb(51,51,51);display:block;margin-bottom:6px;line-height:1.4;}',
-    '.ab-openers-sub{font-family:"Open Sans",sans-serif;font-size:14px;font-weight:400;color:#888;display:block;margin-bottom:16px;line-height:1.5;}',
-    '.ab-openers-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;margin-bottom:2px;}',
-    '@media(max-width:480px){.ab-openers-grid{grid-template-columns:1fr}}',
-    '.ab-opener{',
-    '  background:#f7f7f7;border:none;border-left:3px solid transparent;color:rgb(51,51,51);',
-    '  font-family:"Open Sans",sans-serif;font-size:15px;',
-    '  padding:16px 18px;cursor:pointer;text-align:left;line-height:1.4;',
-    '  transition:all .15s;',
-    '}',
-    '.ab-opener:hover{background:#EE7700;color:#fff;border-left-color:#cc6600;}',
+    '#arnobot-openers{padding:20px 28px 0;}',
+    '.ab-openers-label{font-family:"Open Sans",sans-serif;font-size:17px;font-weight:700;letter-spacing:0;color:rgb(51,51,51);display:block;margin-bottom:16px;line-height:1.4;}',
     '#arnobot-input-area{',
-    '  padding:16px 20px;background:#fff;border-top:1px solid #f0f0f0;',
+    '  padding:16px 28px;background:#fff;border-top:1px solid #f0f0f0;',
     '  flex-shrink:0;',
-    '  display:flex;flex-direction:column;align-items:center;',
+    '  display:flex;flex-direction:column;align-items:flex-start;',
     '}',
     '#arnobot-input-area>*{width:100%;max-width:600px;}',
     '#arnobot-input-row{',
@@ -154,7 +135,6 @@
     this.history = [];
     this.loading = false;
     this.started = false;
-    this.openers = opts.openers || DEFAULT_OPENERS;
     this._build();
   }
 
@@ -172,14 +152,10 @@
       '<div id="arnobot-messages"></div>',
       '<div id="arnobot-openers">',
       '  <span class="ab-openers-label">Geen corporate vaagtaal. Gewoon Arno: direct en ongefilterd.</span>',
-      '  <span class="ab-openers-sub">Kies een vraag hieronder <span style="color:#EE7700">of stel je eigen vraag onderaan.</span></span>',
-      '  <div class="ab-openers-grid">' + this.openers.map(function (q) {
-        return '<button class="ab-opener">' + escapeHtml(q) + '</button>';
-      }).join('') + '</div>',
       '</div>',
       '<div id="arnobot-input-area">',
       '  <div id="arnobot-input-row">',
-      '    <textarea id="arnobot-textarea" rows="1" placeholder="Jouw eigen vraag aan Arno..."></textarea>',
+      '    <textarea id="arnobot-textarea" rows="1" placeholder="Ga in gesprek met Arno"></textarea>',
       '    <button id="arnobot-send" disabled>VRAAG &rarr;</button>',
       '  </div>',
       '',
@@ -191,16 +167,6 @@
     this.$inputRow = this.container.querySelector('#arnobot-input-row');
     this.$textarea = this.container.querySelector('#arnobot-textarea');
     this.$send     = this.container.querySelector('#arnobot-send');
-
-    // Opener clicks
-    var openerBtns = this.container.querySelectorAll('.ab-opener');
-    for (var i = 0; i < openerBtns.length; i++) {
-      (function (btn) {
-        btn.addEventListener('click', function () {
-          self.ask(btn.textContent);
-        });
-      })(openerBtns[i]);
-    }
 
     // Textarea input
     this.$textarea.addEventListener('input', function () {
@@ -453,7 +419,7 @@
     this.$textarea.value = '';
     this.$send.disabled = true;
     this.$openers.style.display = '';
-    this.$textarea.placeholder = 'Jouw eigen vraag aan Arno...';
+    this.$textarea.placeholder = 'Ga in gesprek met Arno';
     var existing = this.container.querySelector('#arnobot-actions');
     if (existing) existing.remove();
   };
