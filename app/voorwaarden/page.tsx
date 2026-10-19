@@ -43,7 +43,7 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 1', title: 'Definities',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>ArnoBot:</strong> de handelsnaam van de eenmanszaak van Anton Dirk Diepeveen (KvK-nummer 42184446, bezoekadres Verdunplein 17 G9019, 5627 SZ Eindhoven, Nederland, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>), en het digitale AI-coachingsplatform dat via arno.bot wordt aangeboden.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>ArnoBot:</strong> de handelsnaam van de eenmanszaak van Anton Dirk Diepeveen (KvK-nummer 42184446, bezoekadres Verdunplein 17 C3880, 5627 SZ Eindhoven, Nederland, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>), en het digitale AI-coachingsplatform dat via arno.bot wordt aangeboden.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Gebruiker:</strong> de natuurlijke of rechtspersoon die zich aanmeldt voor en gebruik maakt van ArnoBot.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}><strong style={{ color: '#f1f5f9' }}>Abonnement:</strong> de overeenkomst tussen ArnoBot en de Gebruiker voor toegang tot ArnoBot tegen de overeengekomen vergoeding.</p>,
               ],

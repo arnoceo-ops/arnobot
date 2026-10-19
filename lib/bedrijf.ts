@@ -7,7 +7,7 @@ export const BEDRIJF = {
   eigenaar: 'Anton Dirk Diepeveen',
   kvk: '42184446',
   btw: 'NL005565123B13' as string,
-  straat: 'Verdunplein 17 G9019',
+  straat: 'Verdunplein 17 C3880',
   postcode: '5627 SZ',
   plaats: 'Eindhoven',
   landCode: 'NL',
