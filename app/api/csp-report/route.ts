@@ -72,7 +72,12 @@ export async function POST(req: NextRequest) {
 
     // frame-ancestors-schendingen (externe partijen die arno.bot inbedden, bv. linkpreviews)
     // worden wel opgeslagen maar niet gemeld: ruis, geen bug in onze eigen pagina's.
-    if (count === 1 && !directive?.startsWith('frame-ancestors')) {
+    // eval zonder bronbestand wordt ook niet gemeld (wel opgeslagen): sinds 9-10-2026 komt dit
+    // dagelijks van een crawler (Chrome 118, regel 4 kolom 70, op niet-bestaande URL's) die zelf
+    // eval uitvoert. Eigen code die eval gebruikt heeft wel een bronbestand en blijft gemeld.
+    const botEval = blocked === 'eval' && !sourceFile
+
+    if (count === 1 && !directive?.startsWith('frame-ancestors') && !botEval) {
       await notifyTelegram(directive ?? '?', blocked ?? '?', page ?? '?', sourceFile, lineNumber, columnNumber)
     }
   } catch {
