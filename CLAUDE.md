@@ -92,6 +92,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [supabase.com/changelog](https://supabase.com/changelog) op breaking changes
 - Settings → API op deprecated key-formaten
 - Schema-wijzigingen nodig voor nieuwe features?
+- **Nieuwe tabellen sinds 2026-10-30:** hebben ze `grant ... to service_role` en RLS aan (zie "Supabase SQL"), en geen grant aan `anon`/`authenticated`? Controleer de migraties in `docs/sql/` van de afgelopen maand en in het dashboard onder Database, Tables.
 - Database binnen limieten? (Pro: 8GB — Settings → Billing → Usage)
 - **Openstaand:** PITR nog niet aangezet, zie de milestone hierboven.
 - **Openstaand (vóór begin 2027):** Supabase Logs gaan naar usage-based pricing (ingest en query scanning), aangekondigd oktober 2026. Pas begin 2027 kosten, >90% van de projecten blijft binnen de inbegrepen limieten. Check in december 2026 of begin januari 2027 in Settings → Billing → Usage of ArnoBot daarbinnen blijft, en voeg anders een logkostenpost toe aan Abacus (`lib/kostenTarieven.ts`).
@@ -254,6 +255,13 @@ Elke keer dat je een SQL-query geeft die de gebruiker handmatig moet uitvoeren i
 3. Vraag om een screenshot van het resultaat als verificatie nodig is (bijv. na REVOKE, ALTER TABLE, INSERT)
 
 Ga nooit verder met bouwen of pushen als een vereiste SQL-migratie nog niet bevestigd is.
+
+**Nieuwe tabel in `public` (sinds 2026-10-30):** Supabase geeft nieuwe tabellen niet meer automatisch Data API-rechten. Elke migratie die een tabel aanmaakt bevat in dezelfde SQL, direct na de `create table`:
+```sql
+alter table <tabel> enable row level security;
+grant select, insert, update, delete on public.<tabel> to service_role;
+```
+Nooit een grant aan `anon` of `authenticated`: de app gebruikt uitsluitend de service-role-key. Zonder grant geeft de eerste query "permission denied". Bestaande tabellen zijn niet geraakt. (Besloten 2026-10-20 na Supabase-aankondiging. Verworpen: grants aan alle drie de rollen zoals in de mail, want dat maakt de bescherming alleen afhankelijk van RLS.)
 
 ---
 
