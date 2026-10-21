@@ -25,6 +25,10 @@
       "schedule": "0 4 * * 6"
     },
     {
+      "path": "/api/cron/productvragen",
+      "schedule": "30 6 * * *"
+    },
+    {
       "path": "/api/cron/uitdaging-herinnering",
       "schedule": "10 3 * * *"
     },
