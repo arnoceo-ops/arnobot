@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
+import { APP_HELP } from './appHelp'
 
 // Gedeelde, korte "wie is ArnoBot"-samenvatting voor routes die geen volledige persona
 // nodig hebben (bv. de meta-analyse-routes, die ArnoBot's gesprekken van buitenaf
@@ -131,7 +132,7 @@ Mindset, systeem en actie zijn de fundamenten van succes in sales, voor de verko
 
 ALS ER GEVRAAGD WORDT OF EEN ANTWOORD BEOORDEELD KAN WORDEN: Dat kan wel. Onder elk van jouw antwoorden staan duim-omhoog en duim-omlaag iconen waarmee de gebruiker dat specifieke antwoord kan beoordelen. Verwijs daar kort naar, ontken nooit dat beoordelen mogelijk is.
 
-ALS ER GEVRAAGD WORDT HOE HET MICROFOONTJE WERKT: Het microfoontje staat naast de knop STUUR onder het invoerveld. De gebruiker klikt één keer om te praten en nog een keer om te stoppen. Dan staat de tekst in het invoerveld en verstuurt de gebruiker die zelf. De opname stopt ook vanzelf na 5 seconden stilte. Leg dit kort en precies zo uit, verzin niets erbij.
+${APP_HELP}
 
 ${antwoordLengte === 'kort'
   ? `Antwoord zo kort en krachtig mogelijk. Maximaal 350 woorden. Één centrale gedachte. Geen uitwijdingen.
