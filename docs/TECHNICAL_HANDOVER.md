@@ -31,7 +31,8 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Hosting | Vercel | Pro |
 | AI (chat/coaching) | Anthropic Claude | via SDK ^0.115 |
 | Embeddings + rerank (RAG) | VoyageAI | rauwe fetch, geen SDK |
-| Spraakherkenning | OpenAI Whisper | rauwe fetch, geen SDK |
+| Spraakherkenning (voice-invoer) | OpenAI (`gpt-4o-transcribe`) | rauwe fetch, geen SDK, streaming (SSE) |
+| Spraakherkenning (audiobijlage hoofdchat) | AssemblyAI (`universal-3-5-pro`) | rauwe fetch, geen SDK |
 | Tekst-naar-spraak (Voice) | ElevenLabs | rauwe fetch, geen SDK |
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |
@@ -198,7 +199,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
 | Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
 | Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's), doorzoekbaar archief (`BlogArchive`: zoeken op hashtag of trefwoord in de browser op de geladen lijst via `lib/blogSearch.ts`, 12 kaarten per keer met "Toon meer", zoekterm in de URL als `?q=`) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
-| Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, deelknoppen (LinkedIn via de deelpagina van LinkedIn zelf, plus link kopiëren, `ShareButtons.tsx`), CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Deelkaart per post: `app/blog/[slug]/opengraph-image.tsx` (1200 x 630, merkkaart met titel en hashtags, zonder omslagfoto, zelfde lettertypen en bundeling als `app/opengraph-image.tsx`). Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
+| Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, deelknoppen (WhatsApp, LinkedIn via de deelpagina van LinkedIn zelf, plus link kopiëren, `ShareButtons.tsx`), CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Deelkaart per post: `app/blog/[slug]/opengraph-image.tsx` (1200 x 630, merkkaart met titel en hashtags, zonder omslagfoto, zelfde lettertypen en bundeling als `app/opengraph-image.tsx`). Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
 | Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
 | Blog bevestigen | `/blog/bevestig/[token]` | Terugvalpagina voor double opt-in: bevestigt pas na een klik op de knop. De link in de mail wijst naar `/api/blog/bevestig?token=` (zie API), niet hierheen. Token in het pad: uitgesloten van pageview- en PostHog-tracking |
@@ -235,7 +236,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/openers` | Vaste set gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Ontbrekende embeddings aanvullen voor RAG |
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
-| `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
+| `/api/transcribe` | Spraak naar tekst voor voice-invoer (OpenAI `gpt-4o-transcribe`, streaming) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 
 ### Sparring
@@ -292,6 +293,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/arnobot-admin-login` | Admin-login (cookie, IP-rate-limit) |
 | `/api/admin/logout` | Admin-cookie wissen |
+| `/api/admin/comp` | Gratis toegang tot een datum geven (comp), los van de betaalstroom. Zet `expires_at`, wist `trial_start` zodat de trial-emails-cron de gebruiker niet oppikt |
+| `/api/admin/active` | Gebruiker aan/uit zetten (`is_active`), bewust los van de betaal-/comp-status |
 | `/api/admin/blog/posts` | GET lijst, POST nieuwe blogpost (validatie van lengtes, slug-uniekheid en toegestane afbeeldings-URL, geen streepjescontrole op de tekst) |
 | `/api/admin/blog/posts/[id]` | PUT bijwerken (publiceren, inplannen, naar concept), DELETE. Verstuurt bij publiceren met vinkje eenmalig naar abonnees (`notified_at`) |
 | `/api/admin/blog/upload` | Afbeelding naar de publieke bucket `blog-images` (PNG/JPG/WebP/GIF, max 5 MB, type via magic bytes, geen SVG) |
@@ -388,7 +391,6 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerende namen/thema's uit `arnobot_memory_entities` als e-mail |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
@@ -713,7 +715,8 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
-- `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `OPENAI_API_KEY` — OpenAI `gpt-4o-transcribe` (transcriptie voice-invoer)
+- `ASSEMBLYAI_API_KEY` — AssemblyAI (transcriptie audiobijlage in de hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
@@ -773,9 +776,14 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** API-key beheren, gebruik bekijken.
 
 ### OpenAI
-**Doel:** Whisper (`whisper-1`) spraak-naar-tekst voor voice-input.
+**Doel:** `gpt-4o-transcribe` spraak-naar-tekst voor voice-input, streaming (SSE). Gemigreerd van `whisper-1` (deprecated door OpenAI), zie modelinventaris in CLAUDE.md.
 **Dashboard:** https://platform.openai.com
 **Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
+
+### AssemblyAI
+**Doel:** `universal-3-5-pro` transcriptie van audiobijlagen (mp3/wav/m4a, max 150MB) in de hoofdchat, inclusief sprekerslabels. Ongedocumenteerde functie, Pro/Team-only, geen aparte pagina of opslag: audio en transcript worden na elke aanroep verwijderd (zowel bij AssemblyAI als in de private Supabase Storage-bucket `chat-audio-uploads`).
+**Dashboard:** https://www.assemblyai.com/app
+**Integratie:** rauwe fetch in `lib/assemblyai.ts`, geen SDK.
 
 ### ElevenLabs
 **Doel:** Tekst-naar-spraak voor ArnoBot Voice (premium-feature, `plan` premium/team).
@@ -810,7 +818,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture.
 **Scope publiek:** anonieme `capture()` op publieke componenten (`PostHogTracker.tsx`).
 **Scope ingelogd (`/bot`, sinds 2026-08-30):** pseudoniem. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts`, genormaliseerde `$pageview` (geen query/IDs), event-whitelist als getypte union in `lib/posthog.ts` (`track()`). `/bot/admin` uitgesloten. Nooit gespreks-/coaching-/analyse-inhoud. `team_id` als super-property (geen betaalde group-analytics).
-**Session replay:** `PostHogSessionReplay.tsx`, UIT achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
+**Session replay:** `PostHogSessionReplay.tsx`, AAN sinds 2026-08-30 via `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Beperkt tot een allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
 **Feature flags / surveys:** operationeel met de SDK-integratie, per feature in te richten.
 **Openstaand:** DPA opvragen, bewaartermijn instellen, replay-vlag omzetten na verificatie. Data Warehouse Stripe geblokkeerd tot betaalprovider.
 
