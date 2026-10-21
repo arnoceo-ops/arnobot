@@ -497,6 +497,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // Staat aan zodra de gebruiker tijdens het genereren zelf scrolt (vinger of wiel): dan stopt het
   // meescrollen met het binnenstromende antwoord voor de rest van dat antwoord.
   const userScrolledRef = useRef(false)
+  // Staat aan als het invoerveld net door inspreken is gevuld (zie de resize-effect hieronder).
+  const dictatedRef = useRef(false)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
   const lastAutoSaveCountRef = useRef(0)
@@ -602,7 +604,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               stopped = true
             }
             setTarget(prefix + transcript)
-            if (setTarget === setInput) setResizeInput(true)
+            if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
           }
           while (true) {
             const { done, value } = await reader.read()
@@ -929,10 +931,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (resizeInput && inputRef.current) {
       inputRef.current.style.height = '0px'
       inputRef.current.style.height = inputRef.current.scrollHeight + 'px'
-      inputRef.current.focus()
+      // Na inspreken op een telefoon geen focus: die roept het toetsenbord op terwijl je alleen
+      // nog op STUUR hoeft te klikken. Een eventueel open toetsenbord sluit juist.
+      if (dictatedRef.current && isMobile) inputRef.current.blur()
+      else inputRef.current.focus()
+      dictatedRef.current = false
       setResizeInput(false)
     }
-  }, [resizeInput, input])
+  }, [resizeInput, input, isMobile])
 
   function pickTopic(text: string) {
     setInput(text)
