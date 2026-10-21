@@ -27,6 +27,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Coaching op mindset, systeem en actie
 - Gesproken antwoorden, Arno's stem
 - De ArnoBot-app (Android)
+- **Toegevoegd (besloten 2026-09-15):** Uitgebreide, diepgaande antwoorden (naast kort/normaal), uitsluitend op de PC-versie van ArnoBot. Basic ziet de keuzeknop met een upsell-badge, geen harde blokkade van de pagina zelf. Technische gating: `app/bot/SparClient.tsx` (`isProBlocked`).
 - **Toegevoegd (besloten 2026-08-13):** eenmalig gesprek met Arno zelf, ontgrendeld zodra er een coachingdocument is gegenereerd (dus na minimaal 5 sessies, niet vanaf dag één) én pas na daadwerkelijke betaling, niet al tijdens de trial. Trial-gebruikers starten namelijk al standaard op `plan='premium'`, dus alleen op plan filteren sloot trials niet uit. Niet voor Basic, en niet voor teamleden onder een Team-abonnement (dat verloopt via de manager, buiten de app om, bewust geen in-app bouw hiervoor). Technische gating: `plan === 'premium' && paid` in `app/bot/coaching/CoachingClient.tsx`, identiek server-side afgedwongen op `app/bot/gesprek/page.tsx` zelf (die pagina had voorheen geen eigen check). Zie ABONNEMENTEN.md, sectie "Gesprek met Arno (eenmalig, Pro)" voor de volledige implementatie.
 
 ### Team

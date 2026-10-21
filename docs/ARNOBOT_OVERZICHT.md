@@ -120,7 +120,8 @@ ArnoBot is gebouwd als een moderne, schaalbare webapplicatie (Next.js), gehost o
 **AI-leveranciers, elk voor een specifiek doel:**
 - **Anthropic (Claude):** de hoofdgesprekken, coaching-synthese, sparring, teamanalyses. Het belangrijkste model.
 - **Voyage AI:** het onderliggende zoek- en geheugensysteem (semantische retrieval, zowel voor de kennisbank als voor het sessiegeheugen).
-- **OpenAI (Whisper):** spraakherkenning voor voice-invoer.
+- **OpenAI:** spraakherkenning voor voice-invoer (`gpt-4o-transcribe`).
+- **AssemblyAI:** transcriptie van audiobijlagen in de hoofdchat (Pro/Team).
 - **ElevenLabs:** gesproken antwoorden voor ArnoBot Voice (Pro/Team).
 
 Geen van deze leveranciers traint op klantdata, dit is expliciet vastgelegd en gecommuniceerd op de privacypagina.
