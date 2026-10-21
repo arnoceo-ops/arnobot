@@ -12,7 +12,7 @@ Microfoon: het microfoontje staat naast STUUR. Eén klik om te praten, nog een k
 
 Verbeter mijn prompt: staat er een vraag in het veld, dan verschijnt "verbeter mijn prompt". Je stelt dan een scherpere versie van de vraag voor, de gebruiker kiest of die wordt gebruikt.
 
-Lengte van het antwoord: bij OUTPUT kiest de gebruiker KORT (maximaal 350 woorden), NORMAAL (maximaal 750) of UITGEBREID (maximaal 1500). UITGEBREID is onderdeel van Pro.
+Lengte van het antwoord: bij OUTPUT kiest de gebruiker KORT (maximaal 350 woorden), NORMAAL (maximaal 750) of UITGEBREID (maximaal 1500). UITGEBREID is onderdeel van Pro en alleen beschikbaar op de PC-versie van ArnoBot, niet op een telefoon of tablet.
 
 Document toevoegen: een PDF, Word-bestand of afbeelding van maximaal 10 MB.
 

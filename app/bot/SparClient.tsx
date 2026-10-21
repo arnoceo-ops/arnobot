@@ -459,6 +459,19 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     const timer = setTimeout(() => setToonUitgebreidUpsell(false), 5000)
     return () => clearTimeout(timer)
   }, [toonUitgebreidUpsell])
+  // Op een aanraakscherm is UITGEBREID er wel, maar schakelt niet om: een tik toont kort een
+  // melding en verdwijnt na 2 seconden of zodra de gebruiker ergens anders tikt.
+  const [toonPcMelding, setToonPcMelding] = useState(false)
+  useEffect(() => {
+    if (!toonPcMelding) return
+    const timer = setTimeout(() => setToonPcMelding(false), 2000)
+    const hide = () => setToonPcMelding(false)
+    window.addEventListener('pointerdown', hide)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pointerdown', hide)
+    }
+  }, [toonPcMelding])
   useEffect(() => {
     if (sparModus === 'sparren' && rolCategorie && !sparPersona) {
       setSparPersona(PERSONAS[rolCategorie][0].key)
@@ -2445,6 +2458,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                       // de knop te verbergen), maar de modus schakelt niet echt om — in plaats
                       // daarvan tonen we de upsell-regel eronder. Server-side wordt dit los nog
                       // een keer afgedwongen (app/api/chat/route.ts), dit is puur UI-gedrag.
+                      // Op een aanraakscherm (telefoon, tablet) alleen KORT en NORMAAL: uitgebreid
+                      // werk en de volledige samenvatting horen op de pc-versie.
+                      if (optie === 'uitgebreid' && isMobile) {
+                        setToonPcMelding(true)
+                        return
+                      }
                       if (isProBlocked) {
                         setToonUitgebreidUpsell(true)
                         return
@@ -2481,7 +2500,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   )
                 })}
               </div>
-              {toonUitgebreidUpsell && plan === 'basis' && (
+              {toonPcMelding && (
+                <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', marginTop: 8, textAlign: 'center' }}>
+                  Uitgebreid antwoord uitsluitend op de PC-versie van ArnoBot
+                </p>
+              )}
+              {toonUitgebreidUpsell && plan === 'basis' && !isMobile && (
                 <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
                   Uitgebreide antwoorden zijn onderdeel van Pro.{' '}
                   <a href="/bot/doorgaan" style={{ color: '#f59e0b', textDecoration: 'underline' }}>Upgrade naar Pro</a>
