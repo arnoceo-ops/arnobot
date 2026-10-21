@@ -235,6 +235,13 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
+// Spraakopname: stopt vanzelf na zoveel stilte, of na maximaal zoveel opnametijd (vangnet voor wie
+// vergeet te klikken). Een klik stopt altijd meteen.
+const OPNAME_STILTE_STOP_MS = 10_000
+const OPNAME_MAX_MS = 120_000
+// Piek (0-128 rond de middellijn) waarboven we het als spraak tellen, boven ruis van een stille kamer.
+const OPNAME_SPRAAK_DREMPEL = 8
+
 export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null, voorinstelling = null }: Props) {
   const isMobile = useIsTouch()
   const { signOut } = useClerk()
@@ -493,6 +500,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // gaatje waarin een tweede touchstart/mousedown-ghost-event vóór die state-update alsnog een
   // tweede opname start, wat dezelfde uitspraak twee keer liet transcriberen en optellen.
   const recordingRef = useRef(false)
+  // Tweede klik terwijl de microfoon nog opstartte (getUserMedia is nog bezig).
+  const stopRequestedRef = useRef(false)
 
   useEffect(() => {
     sessionIdRef.current = sessionId
@@ -503,14 +512,39 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     setSpeechSupported(true)
   }, [])
 
-  async function startRecording(
-    e: React.MouseEvent | React.TouchEvent,
+  // Eén klik start de opname, nog een klik stopt hem en zet de tekst in het veld. Overal
+  // hetzelfde (hoofdchat, sparren, pc, mobiel). Vroeger was dit ingedrukt-houden
+  // (mousedown/mouseup, touchstart/touchend): dat gedroeg zich op een telefoon als klik-klik
+  // omdat het loslaten viel vóór de opname klaar was, en op een pc als ingedrukt-houden.
+  function toggleRecording(
     setTarget: React.Dispatch<React.SetStateAction<string>> = setInput,
     currentValue: string = input,
   ) {
-    e.preventDefault()
+    if (recordingRef.current) stopRecording()
+    else startRecording(setTarget, currentValue)
+  }
+
+  async function startRecording(
+    setTarget: React.Dispatch<React.SetStateAction<string>> = setInput,
+    currentValue: string = input,
+  ) {
     if (recordingRef.current || transcribing || loading || blocked) return
     recordingRef.current = true
+    stopRequestedRef.current = false
+    // AudioContext synchroon in de klik aanmaken: iOS Safari laat hem anders 'suspended' starten
+    // als dat pas na de awaited getUserMedia gebeurt.
+    let audioCtx: AudioContext | null = null
+    try {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (AC) audioCtx = new AC()
+    } catch {}
+    let silenceTimer: ReturnType<typeof setInterval> | null = null
+    let maxTimer: ReturnType<typeof setTimeout> | null = null
+    const stopWatching = () => {
+      if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null }
+      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
+      if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null }
+    }
     // Vast, ooit-berekend voorvoegsel (wat al in het veld stond vóór deze opname), niet via een
     // React state-updater-callback ('prev => ...') opgehaald. Die callback mag zelf geen
     // neveneffect hebben (hier: wegschrijven naar een buiten de callback gedefinieerde
@@ -526,6 +560,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       audioChunksRef.current = []
       recorder.ondataavailable = (ev) => { if (ev.data.size > 0) audioChunksRef.current.push(ev.data) }
       recorder.onstop = async () => {
+        stopWatching()
         stream.getTracks().forEach(t => t.stop())
         recordingRef.current = false
         setRecording(false)
@@ -580,16 +615,47 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
+      maxTimer = setTimeout(() => stopRecording(), OPNAME_MAX_MS)
+      // Stilte-detectie. Alleen actief als de AudioContext echt draait: een 'suspended' context
+      // levert alleen nullen, en dat zou iemand die wel praat na 10 seconden afkappen.
+      if (audioCtx) {
+        const ctx = audioCtx
+        ctx.resume().catch(() => {})
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 1024
+        ctx.createMediaStreamSource(stream).connect(analyser)
+        const buf = new Uint8Array(analyser.fftSize)
+        let lastSoundAt = Date.now()
+        silenceTimer = setInterval(() => {
+          if (ctx.state !== 'running') { lastSoundAt = Date.now(); return }
+          analyser.getByteTimeDomainData(buf)
+          let peak = 0
+          for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128))
+          if (peak > OPNAME_SPRAAK_DREMPEL) lastSoundAt = Date.now()
+          else if (Date.now() - lastSoundAt > OPNAME_STILTE_STOP_MS) {
+            if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null }
+            stopRecording()
+          }
+        }, 250)
+      }
+      // Tweede klik kwam binnen terwijl de microfoon nog opstartte: nu alsnog stoppen.
+      if (stopRequestedRef.current) {
+        stopRequestedRef.current = false
+        recorder.stop()
+      }
     } catch (err) {
+      stopWatching()
       recordingRef.current = false
+      stopRequestedRef.current = false
       console.error('[Whisper] getUserMedia mislukt:', err)
     }
   }
 
-  function stopRecording(e?: React.MouseEvent | React.TouchEvent) {
-    e?.preventDefault()
+  function stopRecording() {
     if (!recordingRef.current) return
-    mediaRecorderRef.current?.stop()
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state === 'recording') recorder.stop()
+    else stopRequestedRef.current = true
   }
 
   function handleNavAttempt(dest: string) {
@@ -2274,13 +2340,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   {speechSupported && (
                     <button
                       className={`spar-mic${recording ? ' recording' : ''}`}
-                      onMouseDown={e => startRecording(e, setSparContext, sparContext)}
-                      onMouseUp={stopRecording}
-                      onMouseLeave={() => { if (recording) stopRecording() }}
-                      onTouchStart={e => startRecording(e, setSparContext, sparContext)}
-                      onTouchEnd={stopRecording}
+                      onClick={() => toggleRecording(setSparContext, sparContext)}
                       disabled={startingSparring || transcribing}
-                      title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
+                      title={transcribing ? 'Transcriberen...' : recording ? 'Klik om te stoppen' : 'Klik om te spreken'}
                     >
                       {transcribing ? '⏳' : '🎤'}
                     </button>
@@ -2509,13 +2571,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {speechSupported && (
                 <button
                   className={`spar-mic${recording ? ' recording' : ''}`}
-                  onMouseDown={startRecording}
-                  onMouseUp={stopRecording}
-                  onMouseLeave={() => { if (recording) stopRecording() }}
-                  onTouchStart={startRecording}
-                  onTouchEnd={stopRecording}
+                  onClick={() => toggleRecording()}
                   disabled={loading || blocked || transcribing}
-                  title={transcribing ? 'Transcriberen...' : 'Houd ingedrukt om te spreken'}
+                  title={transcribing ? 'Transcriberen...' : recording ? 'Klik om te stoppen' : 'Klik om te spreken'}
                 >
                   {transcribing ? '⏳' : '🎤'}
                 </button>

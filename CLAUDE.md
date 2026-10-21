@@ -275,6 +275,14 @@ Nooit een grant aan `anon` of `authenticated`: de app gebruikt uitsluitend de se
 
 ---
 
+## Antwoorden aan Arno — kort, en eerst het plan — ALTIJD
+
+- **Zo kort mogelijk, met dezelfde exacte informatie** als in een lange versie: korte zinnen, geen herhaling, geen inleiding of terugblik. Arno leest alles en wil niet door lange uitleg heen. Liever twee zinnen en een ja/nee-vraag dan een alinea met opties.
+- **Eerst zeggen wat je gaat bouwen, dan pas bouwen.** Geef het plan kort (wat verandert, in welk bestand) en wacht op zijn akkoord, ook als hij het onderwerp zelf aandraagt. Bouw nooit tegelijk met het voorstel. Is er al iets gebouwd voordat hij akkoord gaf: terugdraaien en dat zeggen.
+- Noem dingen niet een "probleem" die Arno niet als probleem heeft gemeld.
+
+---
+
 ## Schaal en kwaliteitsniveau — ALTIJD
 
 ArnoBot is gebouwd voor enterprise-gebruik en hoge volumes.
