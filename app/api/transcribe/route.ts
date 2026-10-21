@@ -15,8 +15,13 @@ export async function POST(req: NextRequest) {
   const audio = formData.get('audio') as File | null
   if (!audio) return NextResponse.json({ error: 'No audio' }, { status: 400 })
 
+  // Bestandsnaam met de extensie die bij het echte opnameformaat hoort (webm, ogg of mp4,
+  // afhankelijk van de browser). OpenAI leidt het formaat mede af uit de extensie: een mp4-opname
+  // van Safari als 'recording.webm' doorsturen mislukte.
+  const gevraagdeExt = (audio.name.split('.').pop() ?? '').toLowerCase()
+  const ext = ['webm', 'ogg', 'mp4', 'wav'].includes(gevraagdeExt) ? gevraagdeExt : 'webm'
   const transcribeForm = new FormData()
-  transcribeForm.append('file', audio, 'recording.webm')
+  transcribeForm.append('file', audio, `recording.${ext}`)
   transcribeForm.append('model', 'gpt-4o-transcribe')
   transcribeForm.append('language', 'nl')
   transcribeForm.append('stream', 'true')

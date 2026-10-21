@@ -280,6 +280,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [verfijnen, setVerfijnen] = useState(false)
   const [verfijndSuggestie, setVerfijndSuggestie] = useState('')
   const [verfijnFout, setVerfijnFout] = useState(false)
+  // Korte melding als een opname niet omgezet kon worden naar tekst (mislukt of niets verstaan).
+  const [transcribeFout, setTranscribeFout] = useState(false)
+  useEffect(() => {
+    if (!transcribeFout) return
+    const timer = setTimeout(() => setTranscribeFout(false), 5000)
+    return () => clearTimeout(timer)
+  }, [transcribeFout])
   const [verfijnAlGoed, setVerfijnAlGoed] = useState(false)
   const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
@@ -583,12 +590,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         stream.getTracks().forEach(t => t.stop())
         recordingRef.current = false
         setRecording(false)
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        // Het echte formaat van de browser doorgeven: Chrome/Android neemt webm op, Firefox ogg,
+        // Safari/iPhone mp4. Alles als 'audio/webm' labelen liet de transcriptie bij Safari en
+        // Firefox stil mislukken (leeg invoerveld, STUUR bleef grijs).
+        const mime = (recorder.mimeType || 'audio/webm').split(';')[0]
+        const ext = mime.includes('mp4') || mime.includes('aac') ? 'mp4' : mime.includes('ogg') ? 'ogg' : mime.includes('wav') ? 'wav' : 'webm'
+        const blob = new Blob(audioChunksRef.current, { type: mime })
         if (blob.size < 1000) return
         setTranscribing(true)
         try {
           const form = new FormData()
-          form.append('audio', blob, 'recording.webm')
+          form.append('audio', blob, `recording.${ext}`)
           const res = await fetch('/api/transcribe', { method: 'POST', body: form })
           if (!res.ok || !res.body) throw new Error('transcribe_failed')
 
@@ -628,7 +640,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             for (const line of lines) handleLine(line)
           }
           handleLine(buffer)
-        } catch {}
+          if (!transcript.trim()) throw new Error('transcribe_empty')
+        } catch { setTranscribeFout(true) }
         finally { setTranscribing(false) }
       }
       mediaRecorderRef.current = recorder
@@ -2684,6 +2697,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {input.length > 3500 && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: input.length > 4000 ? '#cc4444' : '#6b7280', textAlign: 'center', marginTop: 8 }}>
               {input.length}/4000 tekens{input.length > 4000 ? ', maak je bericht wat korter' : ''}
+            </p>
+          )}
+          {transcribeFout && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
+              Ik kon je opname niet omzetten naar tekst. Probeer het opnieuw.
             </p>
           )}
           {verfijnFout && (
