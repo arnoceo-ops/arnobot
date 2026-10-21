@@ -1275,7 +1275,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
   }
 
-  async function ask(question: string, forceSession: boolean = false) {
+  // retryFromLen: bij "Probeer opnieuw" na een fout. De vraag staat dan al in messages (de
+  // afgebroken antwoord- en foutmelding zijn net weggehaald), dus het user-bericht wordt niet
+  // nog eens toegevoegd. Het is de lengte van messages op dat moment.
+  async function ask(question: string, forceSession: boolean = false, retryFromLen?: number) {
+    const isRetry = retryFromLen !== undefined
     // 4000 tekens is de harde grens in app/api/chat/route.ts, hier herhaald zodat een te lang
     // bericht nooit als vage "Ongeldig verzoek" 400 terugkomt, maar al vooraf wordt tegengehouden.
     if (!question.trim() || loading || blocked || question.length > 4000) return
@@ -1283,7 +1287,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     // functie voegt in de voice-tak precies twee berichten toe (user, dan arno), dus het
     // arno-antwoord komt altijd op startLen + 1. messages is de waarde uit de render
     // waarin deze ask() is aangemaakt, dus dit is de telling van vóór dit gesprek.
-    const startLen = messages.length
+    const startLen = isRetry ? retryFromLen - 1 : messages.length
 
     // Audio-element primen binnen dezelfde synchrone user-gesture (deze klik/Enter) die
     // ask() aanroept, vóór de eerste await hieronder. Zonder dit telt de latere, echte
@@ -1296,7 +1300,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     }
 
     setStarted(true)
-    if (!forceSession) {
+    if (!forceSession && !isRetry) {
       setMessages(prev => [...prev, { role: 'user', content: question }])
       setInput('')
       if (inputRef.current) { inputRef.current.style.height = '55px' }
@@ -1498,7 +1502,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         if (!userScrolledRef.current) requestAnimationFrame(() => scrollToRef(lastMessageRef))
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: null }])
+      // hint 'fout': wordt apart gerenderd met "Probeer opnieuw" als link (retryAsk), de tekst hier
+      // is de terugvaltekst als die weergave er niet is.
+      setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: 'fout', retryQuestion: question }])
     } finally {
       setLoading(false)
       // Niet op mobiel: focus roept daar het schermtoetsenbord weer op, precies op het moment
@@ -1506,6 +1512,18 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       // wel prettig, daar heeft focus geen storend neveneffect.
       if (!isMobile) setTimeout(() => inputRef.current?.focus(), 100)
     }
+  }
+
+  // "Probeer opnieuw" in de foutmelding: haalt de foutmelding en het eventueel half binnengekomen
+  // antwoord ervoor weg en stelt dezelfde vraag opnieuw, zonder dat de gebruiker moet typen.
+  function retryAsk(errIndex: number) {
+    const q = messages[errIndex]?.retryQuestion
+    if (!q || loading) return
+    const before = messages[errIndex - 1]
+    const dropPartial = !!before && before.role === 'arno' && !before.log_id
+    const removed = dropPartial ? 2 : 1
+    setMessages(prev => prev.filter((_, idx) => idx !== errIndex && !(dropPartial && idx === errIndex - 1)))
+    ask(q, false, messages.length - removed)
   }
 
   // stickyActive: de invoerbalk zou fixed onderin staan in deze modus (los van of hij nu
@@ -2983,6 +3001,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                               {tok.text}
                             </span>
                           ))}
+                        </span>
+                      ) : msg.hint === 'fout' && msg.retryQuestion ? (
+                        <span className="msg-arno-text">
+                          Er ging iets mis.{' '}
+                          <a
+                            href="#"
+                            onClick={e => { e.preventDefault(); retryAsk(i) }}
+                            style={{ color: '#f59e0b', textDecoration: 'underline' }}
+                          >Probeer opnieuw</a>
+                          , of{' '}
+                          <a href={SUPPORT_WHATSAPP_SPARRING} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'underline' }}>stuur Arno een WhatsApp</a>.
                         </span>
                       ) : (
                         <span className="msg-arno-text" dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
