@@ -237,8 +237,8 @@ const VRAGEN_ORGANISATORISCH = [
 
 // Spraakopname: stopt vanzelf na zoveel stilte, of na maximaal zoveel opnametijd (vangnet voor wie
 // vergeet te klikken). Een klik stopt altijd meteen.
-const OPNAME_STILTE_STOP_MS = 10_000
-const OPNAME_MAX_MS = 120_000
+const OPNAME_STILTE_STOP_MS = 5_000
+const OPNAME_MAX_MS = 90_000
 // Piek (0-128 rond de middellijn) waarboven we het als spraak tellen, boven ruis van een stille kamer.
 const OPNAME_SPRAAK_DREMPEL = 8
 
