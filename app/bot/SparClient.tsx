@@ -494,6 +494,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
+  // Staat aan zodra de gebruiker tijdens het genereren zelf scrolt (vinger of wiel): dan stopt het
+  // meescrollen met het binnenstromende antwoord voor de rest van dat antwoord.
+  const userScrolledRef = useRef(false)
   const verfijndRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef(sessionId)
   const lastAutoSaveCountRef = useRef(0)
@@ -768,14 +771,24 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     window.scrollTo({ top, behavior: 'smooth' })
   }
 
-  // Alleen "meescrollen" met een binnenstromend antwoord als je al écht onderaan de pagina
-  // staat (zelfde patroon als ChatGPT/Slack), nooit standaard. Een nieuw antwoord begint
-  // bewust bovenaan in beeld (scrollToRef(lastMessageRef) hieronder) zodat je vanaf het begin
-  // kan lezen en zelf in je eigen tempo naar beneden scrolt; zonder deze drempel-check trok
-  // de eerste binnenkomende chunk je meteen weer naar de onderkant.
-  function isNearBottom() {
-    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120
-  }
+  // Meescrollen met een binnenstromend antwoord gebeurt tot de gebruiker zelf scrolt
+  // (userScrolledRef, gezet door de wheel/touchmove-listener hieronder). Een afstandsdrempel
+  // ("bijna onderaan") werkte niet: elk nieuw stukje tekst trok je binnen milliseconden terug,
+  // dus langzaam terugscrollen lukte niet. Na afloop springt het scherm naar het begin van het
+  // antwoord, behalve als de gebruiker zelf gescrold heeft.
+
+  // Tijdens het genereren: zodra de gebruiker zelf scrolt (wiel of vinger), niet meer meescrollen.
+  // Programmatische scrolls vuren deze events niet, dus het meescrollen zelf triggert dit nooit.
+  useEffect(() => {
+    if (!loading) return
+    const stop = () => { userScrolledRef.current = true }
+    window.addEventListener('wheel', stop, { passive: true })
+    window.addEventListener('touchmove', stop, { passive: true })
+    return () => {
+      window.removeEventListener('wheel', stop)
+      window.removeEventListener('touchmove', stop)
+    }
+  }, [loading])
 
   useEffect(() => {
     if (showSluiten && synthesisRef.current) {
@@ -1276,6 +1289,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setInputIsVerfijnd(false)
     }
     setLoading(true)
+    userScrolledRef.current = false
     setStreamingStarted(false)
 
     try {
@@ -1434,7 +1448,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText }
             return updated
           })
-          if (isNearBottom()) bottomRef.current?.scrollIntoView({ block: 'end' })
+          if (!userScrolledRef.current) bottomRef.current?.scrollIntoView({ block: 'end' })
         }
 
         const metaIndex = rawBuffer.indexOf(META_MARKER)
@@ -1459,6 +1473,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           { role: 'user', content: question },
           { role: 'assistant', content: finalAnswer }
         ])
+        // Klaar: het scherm staat nu onderaan het antwoord. Terug naar het begin, zodat je vanaf
+        // de eerste regel kan lezen. Heb je tijdens het genereren zelf gescrold, dan blijf je
+        // staan waar je was.
+        if (!userScrolledRef.current) requestAnimationFrame(() => scrollToRef(lastMessageRef))
       }
     } catch {
       setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: null }])
@@ -3121,7 +3139,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             </div>
           )}
-          <div ref={bottomRef} style={{ scrollMarginBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 }} />
+          {/* Tijdens het genereren is de invoerbalk verborgen: dan hoeft er onderin geen ruimte voor
+              vrijgehouden te worden en vult de tekst het hele scherm. */}
+          <div ref={bottomRef} style={{ scrollMarginBottom: stickyActive && loading ? 24 : isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 }} />
         </div>
       </div>
 
