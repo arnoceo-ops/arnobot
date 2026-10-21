@@ -25,7 +25,9 @@ export type GroeibalansClassificatie =
   | { tonen: false }
   | { tonen: true; state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; advies?: string; scenario?: GroeibalansScenario }
 
-export const GROEIBALANS_ADVIES_MAX_TEKENS = 320
+// Het kader is een korte melding, geen uitleg: de prompt vraagt om onder de 150 tekens, dit is de
+// bovengrens die we nog accepteren (daarboven valt het kader terug op de korte vaste tekst).
+export const GROEIBALANS_ADVIES_MAX_TEKENS = 200
 
 export function parseGroeibalansClassificatie(raw: string): GroeibalansClassificatie | null {
   const text = raw.trim()

@@ -25,6 +25,30 @@ export function groeiNudgeGezien(clerkSessionId: string | null | undefined): boo
   }
 }
 
+// Aanvullende regel (Arno, 21 oktober 2026): dezelfde boodschap (state + bouwsteen) wordt maximaal
+// twee keer getoond, over logins heen. De derde keer niet meer, de boodschap geldt dan als verloren.
+// Verandert de boodschap (andere state of bouwsteen), dan telt hij als nieuw. Opslag per apparaat
+// in localStorage; per login wordt maar één keer geteld (refresh telt niet mee).
+const MAX_KEREN_TONEN = 2
+
+/** True = nu tonen. Telt een nieuwe vertoning pas mee bij de eerste keer in deze login. Bij
+ *  geblokkeerde opslag: false (liever niet tonen). */
+export function groeiNudgeMagTonen(clerkSessionId: string | null | undefined, signatuur: string): boolean {
+  if (!clerkSessionId || groeiNudgeGezien(clerkSessionId)) return false
+  try {
+    const geteldKey = `arnobot_groeinudge_geteld_${clerkSessionId}_${signatuur}`
+    if (sessionStorage.getItem(geteldKey) !== null) return true
+    const telKey = `arnobot_groeinudge_telling_${signatuur}`
+    const aantal = Number(localStorage.getItem(telKey)) || 0
+    if (aantal >= MAX_KEREN_TONEN) return false
+    localStorage.setItem(telKey, String(aantal + 1))
+    sessionStorage.setItem(geteldKey, '1')
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Markeer de nudge als gezien voor deze login. Aan te roepen zodra de gebruiker een gesprek,
  *  sparsessie, analyse of coaching afrondt. */
 export function markGroeiNudgeGezien(clerkSessionId: string | null | undefined): void {

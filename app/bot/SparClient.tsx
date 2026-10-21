@@ -10,7 +10,7 @@ import VersionBanner from '@/app/bot/components/VersionBanner'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { rolCategorieVoorRol, isGeldigSparScenario } from '@/lib/sparringPersonas'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
-import { groeiNudgeGezien, markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import { groeiNudgeMagTonen, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { track } from '@/lib/posthog'
 import { SUPPORT_WHATSAPP_VRAAG, SUPPORT_WHATSAPP_SPARRING } from '@/lib/support'
 
@@ -769,10 +769,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // Groei-nudge (zie lib/groeiNudge.ts voor de volledige regel): één keer per Clerk-login
   // zichtbaar, gaat pas weg bij een echte activiteit. Hier dekken we "gesprek" en "sparsessie"
   // af (beide zetten `started`); analyse en coaching markeren zelf vanaf hun eigen pagina.
+  // Daarbovenop: dezelfde boodschap (state + bouwsteen) maximaal twee keer, zie groeiNudgeMagTonen.
+  const groeibalansSignatuur = groeibalans ? `${groeibalans.state}|${groeibalans.bouwsteen}` : null
   useEffect(() => {
-    if (!clerkSessionId) return
-    if (!groeiNudgeGezien(clerkSessionId)) setToonGroeibalans(true)
-  }, [clerkSessionId])
+    if (!clerkSessionId || !groeibalansSignatuur || mode !== 'gesprek') return
+    if (groeiNudgeMagTonen(clerkSessionId, groeibalansSignatuur)) setToonGroeibalans(true)
+  }, [clerkSessionId, groeibalansSignatuur, mode])
 
   useEffect(() => {
     if (started) markGroeiNudgeGezien(clerkSessionId)
