@@ -5,7 +5,13 @@ import SiteFooter from '../SiteFooter'
 // Gedeelde omlijsting voor alle blogpagina's (overzicht, artikel, tag, aanmelden/afmelden).
 // Marketingstijl, zelfde als /prijzen: Figtree + Oswald, #111827 achtergrond.
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth()
+  // De proxy slaat paden met een punt erin over (matcher in proxy.ts), bijvoorbeeld een scanner die
+  // /blog/iets.php opvraagt. auth() gooit dan een fout omdat clerkMiddleware niet gedraaid heeft: die
+  // bezoeker behandelen we als niet-ingelogd, zodat het een gewone 404 blijft i.p.v. een 500.
+  let userId: string | null = null
+  try {
+    userId = (await auth()).userId
+  } catch {}
   return (
     <>
       <style>{`
