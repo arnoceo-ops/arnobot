@@ -63,31 +63,47 @@ export async function GET(req: NextRequest) {
     const { data: logs, error } = await excludeInternalTestUsers(
       supabase
         .from('arnobot_rds_logs')
-        .select('question')
+        .select('user_id, question')
         .gte('created_at', sinds)
     )
       .order('created_at', { ascending: true })
       .limit(MAX_VRAGEN)
     if (error) throw error
 
-    const vragen = (logs ?? [])
-      .map(l => (typeof l.question === 'string' ? l.question.trim() : ''))
-      .filter(v => v.length > 0)
-      .map(v => v.slice(0, MAX_TEKENS_PER_VRAAG))
+    const items = (logs ?? [])
+      .map(l => ({
+        userId: typeof l.user_id === 'string' ? l.user_id : '',
+        vraag: (typeof l.question === 'string' ? l.question.trim() : '').slice(0, MAX_TEKENS_PER_VRAAG),
+      }))
+      .filter(x => x.vraag.length > 0)
 
-    if (vragen.length === 0) return NextResponse.json({ ok: true, productvragen: 0 })
+    if (items.length === 0) return NextResponse.json({ ok: true, productvragen: 0 })
 
-    const gevonden: string[] = []
-    for (let i = 0; i < vragen.length; i += CHUNK) {
-      const chunk = vragen.slice(i, i + CHUNK)
-      const nummers = await kiesProductvragen(chunk)
+    const gevonden: { userId: string; vraag: string }[] = []
+    for (let i = 0; i < items.length; i += CHUNK) {
+      const chunk = items.slice(i, i + CHUNK)
+      const nummers = await kiesProductvragen(chunk.map(c => c.vraag))
       for (const n of nummers) gevonden.push(chunk[n - 1])
     }
 
     if (gevonden.length === 0) return NextResponse.json({ ok: true, productvragen: 0 })
 
+    // Naam per gebruiker, alleen voor de gevonden vragen (maximaal MAX_IN_BERICHT in het bericht).
+    const getoond = gevonden.slice(0, MAX_IN_BERICHT)
+    const ids = [...new Set(getoond.map(g => g.userId).filter(Boolean))]
+    const naamPerId = new Map<string, string>()
+    if (ids.length > 0) {
+      const { data: users } = await supabase
+        .from('approved_users')
+        .select('user_id, voornaam, achternaam, email')
+        .in('user_id', ids)
+      for (const u of users ?? []) {
+        naamPerId.set(u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id)
+      }
+    }
+
     const datum = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long' })
-    const regels = gevonden.slice(0, MAX_IN_BERICHT).map((v, i) => `${i + 1}. ${v}`)
+    const regels = getoond.map((g, i) => `${i + 1}. ${naamPerId.get(g.userId) ?? 'Onbekend'}\n${g.vraag}`)
     const rest = gevonden.length > MAX_IN_BERICHT ? `\n\nEn nog ${gevonden.length - MAX_IN_BERICHT} andere.` : ''
     await notifyTelegram(`ARNOBOT PRODUCTVRAGEN · ${datum}\n\n${regels.join('\n\n')}${rest}`)
 
