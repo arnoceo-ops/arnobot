@@ -490,6 +490,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const sparContextRef = useRef<HTMLTextAreaElement>(null)
   const synthesisRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
   const scrolledForCountRef = useRef(0)
@@ -901,6 +902,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [messages, startedFromCommunity, communityConsentChecked])
+
+  // Het contextveld bij sparren groeit ook mee als de tekst niet getypt maar ingesproken of
+  // voorgevuld binnenkomt (dan vuurt onChange niet).
+  useEffect(() => {
+    const el = sparContextRef.current
+    if (!el) return
+    el.style.height = '0px'
+    el.style.height = el.scrollHeight + 'px'
+  }, [sparContext])
 
   useEffect(() => {
     if (resizeInput && inputRef.current) {
@@ -2323,6 +2333,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   </p>
                 )}
                 <textarea
+                  ref={sparContextRef}
                   value={sparContext}
                   onChange={e => {
                     setSparContext(e.target.value)
