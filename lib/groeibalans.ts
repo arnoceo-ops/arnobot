@@ -27,7 +27,15 @@ export type GroeibalansClassificatie =
 
 // Het kader is een korte melding, geen uitleg: de prompt vraagt om onder de 150 tekens, dit is de
 // bovengrens die we nog accepteren (daarboven valt het kader terug op de korte vaste tekst).
-export const GROEIBALANS_ADVIES_MAX_TEKENS = 200
+export const GROEIBALANS_ADVIES_MAX_TEKENS = 160
+export const GROEIBALANS_ADVIES_MAX_WOORDEN = 22
+
+/** Een advies mag maximaal ~20 woorden zijn (marge tot 22 voor een natuurlijke zin). Langer wordt
+ *  genegeerd, ook als het al zo is opgeslagen: het kader valt dan terug op de korte vaste tekst. */
+export function adviesIsKortGenoeg(advies: string): boolean {
+  const woorden = advies.split(/\s+/).filter(Boolean).length
+  return advies.length > 0 && advies.length <= GROEIBALANS_ADVIES_MAX_TEKENS && woorden <= GROEIBALANS_ADVIES_MAX_WOORDEN
+}
 
 export function parseGroeibalansClassificatie(raw: string): GroeibalansClassificatie | null {
   const text = raw.trim()
@@ -47,7 +55,7 @@ export function parseGroeibalansClassificatie(raw: string): GroeibalansClassific
         tonen: true,
         state: parsed.state,
         bouwsteen: parsed.bouwsteen,
-        ...(advies && advies.length <= GROEIBALANS_ADVIES_MAX_TEKENS ? { advies } : {}),
+        ...(adviesIsKortGenoeg(advies) ? { advies } : {}),
         ...(scenario ? { scenario } : {}),
       }
     }

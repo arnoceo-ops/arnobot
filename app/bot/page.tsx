@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured, isVoiceLaunchAllowed } from '@/lib/voice'
-import { computeFallbackGroeibalans, getGroeibalansCopy, GROEIBALANS_ADVIES_MAX_TEKENS, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
+import { computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
 
 const serviceDb = createClient(
@@ -62,7 +62,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       // Een eerder opgeslagen, te lang advies (van voor de verkorting) valt terug op de korte vaste tekst
       // tot het bij het volgende gesprek opnieuw en korter wordt gegenereerd.
       const adviesRuw = typeof userRes.data?.groeibalans_advies === 'string' ? userRes.data.groeibalans_advies.trim() : ''
-      const advies = adviesRuw && adviesRuw.length <= GROEIBALANS_ADVIES_MAX_TEKENS ? adviesRuw : null
+      const advies = adviesIsKortGenoeg(adviesRuw) ? adviesRuw : null
       const scenario = userRes.data?.groeibalans_scenario as { persona?: string; weerstand?: string } | null
       const metScenario = classificatie.bouwsteen === 'sparsessies' && scenario?.persona && scenario?.weerstand
         ? `/bot/sparren?persona=${encodeURIComponent(scenario.persona)}&weerstand=${encodeURIComponent(scenario.weerstand)}` : null
