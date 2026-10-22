@@ -154,6 +154,18 @@ export default function GeschiedenisPage() {
       .catch(() => {})
   }, [])
 
+  // Mail-link ?open=nieuwste: de nieuwste analyse opent zichzelf en komt in beeld, eenmalig.
+  const openNieuwsteAfgehandeld = useRef(false)
+  useEffect(() => {
+    if (openNieuwsteAfgehandeld.current || savedAnalyses.length === 0) return
+    if (new URLSearchParams(window.location.search).get('open') !== 'nieuwste') return
+    openNieuwsteAfgehandeld.current = true
+    setExpandedAnalyse(savedAnalyses[0].id)
+    setTimeout(() => {
+      document.getElementById(`analyse-${savedAnalyses[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 150)
+  }, [savedAnalyses])
+
   useEffect(() => {
     if (!search || search.length < 2) {
       setSemanticSessions(null)
@@ -859,7 +871,7 @@ export default function GeschiedenisPage() {
             )}
 
             {savedAnalyses.slice(activeAnalyse && !isDuplicateAnalyse ? 1 : 0, showAllAnalyses ? undefined : (activeAnalyse && !isDuplicateAnalyse ? 4 : 5)).map(a => (
-              <div key={a.id} style={{ borderTop: '1px solid #374151', animation: 'fadein 0.3s ease' }}>
+              <div key={a.id} id={`analyse-${a.id}`} style={{ borderTop: '1px solid #374151', animation: 'fadein 0.3s ease' }}>
                 <button
                   onClick={() => {
                     if (expandedAnalyse === a.id) { setExpandedAnalyse(null); return }

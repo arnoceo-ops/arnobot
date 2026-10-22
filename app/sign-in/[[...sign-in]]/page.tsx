@@ -15,6 +15,23 @@ function getClerkFrontendApi(): string {
   }
 }
 
+// Clerk's auth.protect() (proxy.ts) stuurt niet-ingelogde bezoekers naar /sign-in?redirect_url=<volledige
+// url>. Alleen een pad onder /bot op dezelfde origin wordt gebruikt (geen open redirect), alles
+// anders valt terug op /bot.
+function terugNaInloggen(): string {
+  if (typeof window === 'undefined') return '/bot'
+  try {
+    const raw = new URLSearchParams(window.location.search).get('redirect_url')
+    if (!raw) return '/bot'
+    const url = new URL(raw, window.location.origin)
+    if (url.origin !== window.location.origin) return '/bot'
+    if (url.pathname !== '/bot' && !url.pathname.startsWith('/bot/')) return '/bot'
+    return url.pathname + url.search
+  } catch {
+    return '/bot'
+  }
+}
+
 async function linkedInViaDirectFetch(): Promise<boolean> {
   const frontendApi = getClerkFrontendApi()
   if (!frontendApi) return false
@@ -26,7 +43,7 @@ async function linkedInViaDirectFetch(): Promise<boolean> {
     body: new URLSearchParams({
       strategy: 'oauth_linkedin_oidc',
       redirect_url: `${window.location.origin}/sso-callback`,
-      action_complete_redirect_url: '/bot',
+      action_complete_redirect_url: terugNaInloggen(),
     }),
   })
 
@@ -104,7 +121,7 @@ export default function SignInPage() {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
         redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectCallbackUrl: '/bot',
+        redirectCallbackUrl: terugNaInloggen(),
       })
       clearTimeout(timer)
     } catch (err: unknown) {
@@ -128,7 +145,7 @@ export default function SignInPage() {
   }, [])
 
   useEffect(() => {
-    if (isSignedIn) window.location.href = '/bot'
+    if (isSignedIn) window.location.href = terugNaInloggen()
   }, [isSignedIn])
 
   // Bfcache fix: na LinkedIn-redirect kan de browser de pagina ingevroren herstellen
@@ -186,7 +203,7 @@ export default function SignInPage() {
         setEmailLoading(false)
         return
       }
-      window.location.href = '/bot'
+      window.location.href = terugNaInloggen()
     } else {
       setEmailError('Inloggen niet voltooid. Probeer opnieuw.')
       setEmailLoading(false)

@@ -485,7 +485,7 @@ export function getEmailTemplate(
         subject: `${prefix}Je analyses zijn bijgewerkt, ${naam}.`,
         html: mail(
           `Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste ${options?.sessionCount ?? 10} gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.`,
-          'OPEN MIJN ANALYSES →', 'https://arno.bot/bot/analyses',
+          'OPEN MIJN ANALYSES →', 'https://arno.bot/bot/analyses?open=nieuwste',
           'Je ontvangt deze mail zodra ArnoBot genoeg nieuwe gesprekken heeft om een patroonanalyse te maken.'
         ),
       }

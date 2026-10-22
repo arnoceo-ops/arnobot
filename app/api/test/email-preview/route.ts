@@ -104,7 +104,7 @@ const emails = [
       'Analyses notificatie',
       `Morning, ${NAAM}. Er staat een nieuwe analyse voor je klaar. ArnoBot heeft je laatste 12 gesprekken geanalyseerd en ziet patronen die misschien nieuw voor je zijn. Kijk eens of je er iets mee kunt.`,
       'OPEN MIJN ANALYSES →',
-      'https://arno.bot/bot/analyses'
+      'https://arno.bot/bot/analyses?open=nieuwste'
     ),
   },
 ]
