@@ -160,11 +160,20 @@ export default function GeschiedenisPage() {
     if (openNieuwsteAfgehandeld.current || savedAnalyses.length === 0) return
     if (new URLSearchParams(window.location.search).get('open') !== 'nieuwste') return
     openNieuwsteAfgehandeld.current = true
+    scrollNaOpenen.current = true
     setExpandedAnalyse(savedAnalyses[0].id)
-    setTimeout(() => {
-      document.getElementById(`analyse-${savedAnalyses[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
   }, [savedAnalyses])
+
+  // Scrollt pas nadat de analyse echt geopend en gerenderd is (de sectie staat onder de
+  // gesprekkenlijst, dus zonder scroll lijkt er niets te openen).
+  const scrollNaOpenen = useRef(false)
+  useEffect(() => {
+    if (!scrollNaOpenen.current || !expandedAnalyse) return
+    const el = document.getElementById(`analyse-${expandedAnalyse}`)
+    if (!el) return
+    scrollNaOpenen.current = false
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [expandedAnalyse, savedAnalyses])
 
   useEffect(() => {
     if (!search || search.length < 2) {
@@ -871,7 +880,7 @@ export default function GeschiedenisPage() {
             )}
 
             {savedAnalyses.slice(activeAnalyse && !isDuplicateAnalyse ? 1 : 0, showAllAnalyses ? undefined : (activeAnalyse && !isDuplicateAnalyse ? 4 : 5)).map(a => (
-              <div key={a.id} id={`analyse-${a.id}`} style={{ borderTop: '1px solid #374151', animation: 'fadein 0.3s ease' }}>
+              <div key={a.id} id={`analyse-${a.id}`} style={{ borderTop: '1px solid #374151', animation: 'fadein 0.3s ease', scrollMarginTop: 90 }}>
                 <button
                   onClick={() => {
                     if (expandedAnalyse === a.id) { setExpandedAnalyse(null); return }

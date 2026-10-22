@@ -1,25 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
 
-// Doel na het inloggen, door /sign-in in sessionStorage gezet. Alleen een pad onder /bot (geen
-// open redirect), anders de standaard /bot.
-function leesDoel(): string {
-  try {
-    const raw = sessionStorage.getItem('arnobot_na_inloggen')
-    sessionStorage.removeItem('arnobot_na_inloggen')
-    if (raw && raw.startsWith('/') && !raw.startsWith('//') && (raw === '/bot' || raw.startsWith('/bot/') || raw.startsWith('/bot?'))) return raw
-  } catch {}
-  return '/bot'
-}
-
 export default function SSOCallback() {
-  // Het doel moet bekend zijn voordat AuthenticateWithRedirectCallback rendert, anders gebruikt
-  // die al de standaard-redirect.
-  const [doel, setDoel] = useState<string | null>(null)
-  useEffect(() => { setDoel(leesDoel()) }, [])
-
   return (
     <>
       <style>{`
@@ -39,12 +22,7 @@ export default function SSOCallback() {
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#9ca3af' }}>
           ARNO DENKT NA
         </p>
-        {doel && (
-          <AuthenticateWithRedirectCallback
-            signInForceRedirectUrl={doel}
-            signUpForceRedirectUrl={doel}
-          />
-        )}
+        <AuthenticateWithRedirectCallback />
       </div>
     </>
   )

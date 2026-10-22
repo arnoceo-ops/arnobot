@@ -349,6 +349,22 @@ export default clerkMiddleware(async (auth, req) => {
     if (!onboarding_done) {
       if (path !== '/bot/profiel') return NextResponse.redirect(new URL('/bot/profiel', req.url))
     }
+
+    // Doel na inloggen (cookie gezet door /sign-in, zie terugNaInloggen daar). Clerk landt na de
+    // LinkedIn-ronde altijd op /bot; staat er een doel, dan sturen we daar alsnog heen. Alleen een
+    // echte paginanavigatie (geen prefetch/RSC-fetch) gebruikt of wist het cookie, en alleen een
+    // pad onder /bot telt (geen open redirect).
+    const naInloggen = req.cookies.get('arnobot_na_inloggen')?.value
+    if (naInloggen && req.headers.get('sec-fetch-dest') === 'document') {
+      let doel: string | null = null
+      try {
+        const d = decodeURIComponent(naInloggen)
+        if (d.startsWith('/bot/') && !d.startsWith('//') && !d.includes('\\')) doel = d
+      } catch {}
+      const res = doel && path === '/bot' ? NextResponse.redirect(new URL(doel, req.url)) : nextWithNonce()
+      res.cookies.delete('arnobot_na_inloggen')
+      return res
+    }
   }
 
   return nextWithNonce()

@@ -32,6 +32,15 @@ function terugNaInloggen(): string {
   }
 }
 
+function bewaarDoelNaInloggen() {
+  const doel = terugNaInloggen()
+  if (doel === '/bot') return
+  try {
+    const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+    document.cookie = `arnobot_na_inloggen=${encodeURIComponent(doel)}; path=/; max-age=600; SameSite=Lax${secure}`
+  } catch {}
+}
+
 async function linkedInViaDirectFetch(): Promise<boolean> {
   const frontendApi = getClerkFrontendApi()
   if (!frontendApi) return false
@@ -93,9 +102,9 @@ export default function SignInPage() {
     }
     setError('')
     setLoading(true)
-    // De OAuth-ronde via LinkedIn eindigt op /sso-callback, dat niets van deze URL weet. Het doel
-    // gaat daarom mee in sessionStorage (zelfde tabblad), /sso-callback leest het weer uit.
-    try { sessionStorage.setItem('arnobot_na_inloggen', terugNaInloggen()) } catch {}
+    // De OAuth-ronde via LinkedIn eindigt altijd op /bot, wat Clerk ook met deze URL doet. Het doel
+    // gaat daarom mee in een kortlevend cookie dat proxy.ts bij die landing uitleest (en wist).
+    bewaarDoelNaInloggen()
 
     // MetaMask's SES lockdown breekt Clerk's SDK — bypass via directe fetch
     const hasMetaMask = typeof window !== 'undefined' &&
