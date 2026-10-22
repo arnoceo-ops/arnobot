@@ -8,6 +8,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
+import { planHistorieBlok } from '@/lib/analyseContext'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 import { berekenActiePatroon } from '@/lib/actiePatroon'
 import { notifyTelegram } from '@/lib/cron-notify'
@@ -364,7 +365,8 @@ ${RULE_NEVER_BREAK_CHARACTER}
 
 ${RULE_NO_INVENTED_DETAILS}`
 
-  const dynamicTail = `${actieOpvolgingContext}${voortgangErkenningContext}${consistentieContext}${accountabilityContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
+  const planHistorieContext = await planHistorieBlok(userId)
+  const dynamicTail = `${actieOpvolgingContext}${planHistorieContext}${voortgangErkenningContext}${consistentieContext}${accountabilityContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
 
   const COACHING_MAX_TOKENS = 4000
 

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, contextBlok, schoonContext, sessiesAlsTekst } from '@/lib/analyseContext'
+import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, contextBlok, planHistorieBlok, schoonContext, sessiesAlsTekst } from '@/lib/analyseContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         .in('session_id', ids)
     : { data: [] }
 
-  const userContent = `Eerder zei je dit over deze persoon:\n"${analyse.analyse_text}"\n\nDe persoon reageert nu zelf met wat er buiten ArnoBot is gedaan. Schrijf een aanvulling op je analyse in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT JE ME VERTELD HEBT, WAT DIT VERANDERT, VOLGENDE STAP. Onder WAT DIT VERANDERT benoem je eerlijk welke conclusies uit je eerdere analyse niet meer kloppen of scherper moeten. Geen andere kopjes, geen opsomming.${await actieOpvolgingBlok(userId)}${contextBlok(context)}\n\nGESPREKKEN WAAR DE ANALYSE OP GEBASEERD WAS:\n${sessiesAlsTekst(sessions ?? [])}`
+  const userContent = `Eerder zei je dit over deze persoon:\n"${analyse.analyse_text}"\n\nDe persoon reageert nu zelf met wat er buiten ArnoBot is gedaan. Schrijf een aanvulling op je analyse in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT JE ME VERTELD HEBT, WAT DIT VERANDERT, VOLGENDE STAP. Onder WAT DIT VERANDERT benoem je eerlijk welke conclusies uit je eerdere analyse niet meer kloppen of scherper moeten. Geen andere kopjes, geen opsomming.${await actieOpvolgingBlok(userId)}${await planHistorieBlok(userId)}${contextBlok(context)}\n\nGESPREKKEN WAAR DE ANALYSE OP GEBASEERD WAS:\n${sessiesAlsTekst(sessions ?? [])}`
 
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',

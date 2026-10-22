@@ -54,6 +54,31 @@ export function sessiesAlsTekst(sessions: SessieRegel[]): string {
     .join('\n\n')
 }
 
+/** Wat de gebruiker zelf vertelde over eigen plannen (jaar, groei of goedkeuring, track record van
+ *  eerdere plannen, of het plan bleef leven). Komt uit de `feiten` van sessies, waar sessie-einde
+ *  zulke feiten met het voorvoegsel "Plan:" vastlegt. Lege string zonder planfeiten. Gefilterd op
+ *  user_id. Gespreksinput, nooit een losse KPI of dashboardwaarde. */
+export async function planHistorieBlok(userId: string): Promise<string> {
+  const { data } = await supabase
+    .from('arnobot_blog_sessions')
+    .select('feiten')
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .eq('community_excluded', false)
+    .not('feiten', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(30)
+  const regels: string[] = []
+  for (const rij of data ?? []) {
+    for (const lijn of String(rij.feiten).split('\n')) {
+      const schoon = lijn.replace(/^[\s\-*•]+/, '').trim()
+      if (/^plan\s*:/i.test(schoon) && !regels.includes(schoon)) regels.push(schoon)
+    }
+  }
+  if (regels.length === 0) return ''
+  return `\n\nPLANHISTORIE (door de gebruiker zelf verteld in gesprekken, meest recent eerst):\n${regels.slice(0, 8).map(r => `- ${r}`).join('\n')}\nGebruik dit alleen als het bij de analyse past, als feit en zonder oordeel. Staat er dat eerdere plannen niet gehaald zijn, dan mag je dat verbinden met wat je in de gesprekken ziet, nooit met aannames over wat de gebruiker buiten de gesprekken doet.`
+}
+
 /** Wat de gebruiker zelf bij sessiestart aangaf over de vorige actie (ja, deels, nee), als blok
  *  voor de prompt. Lege string zonder antwoorden. Gefilterd op user_id. */
 export async function actieOpvolgingBlok(userId: string): Promise<string> {

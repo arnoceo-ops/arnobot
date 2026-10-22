@@ -162,8 +162,10 @@ ${RULE_NEVER_BREAK_CHARACTER}`,
   })
   const callFeitenModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 200,
+    max_tokens: 300,
     system: `Extraheer alleen concrete, feitelijke informatie uit dit gesprek. Denk aan: producten, diensten, bedrijfsnaam, markt, specifieke situaties, namen, cijfers, uitdagingen, doelen. Geen interpretaties, geen advies. Alleen feiten die de gebruiker heeft gedeeld. Maximaal 8 korte bullets, elk op een nieuwe regel als losse zin.
+
+Vertelt de gebruiker over een eigen plan (jaarplan, salesplan, businesscase, strategie)? Leg dat dan vast in aparte bullets die beginnen met "Plan: " (deze tellen niet mee in de maximaal 8), alleen met wat de gebruiker zelf zegt: voor welk jaar, of het bedoeld is om te groeien of om goedgekeurd te worden, hoeveel van de plannen van eerdere jaren gehaald zijn en waarin ze niet slaagden, en of het vorige plan het hele jaar bleef leven of al snel in de la belandde. Verzin niets en vul niets aan.
 
 ${RULE_NO_DASH}
 

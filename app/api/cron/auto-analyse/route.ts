@@ -7,7 +7,7 @@ import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
-import { RULE_ANALYSE_BUITEN_CHAT, actieOpvolgingBlok, sessiesAlsTekst } from '@/lib/analyseContext'
+import { RULE_ANALYSE_BUITEN_CHAT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     const batch = newSessions.slice(0, 20)
 
     const sessiesText = sessiesAlsTekst(batch)
-    const actieBlok = await actieOpvolgingBlok(userId)
+    const actieBlok = (await actieOpvolgingBlok(userId)) + (await planHistorieBlok(userId))
 
     const callModel = () => anthropic.messages.create({
       model: 'claude-sonnet-4-6',
