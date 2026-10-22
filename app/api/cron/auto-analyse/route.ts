@@ -7,6 +7,7 @@ import { Resend } from 'resend'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { RULE_ANALYSE_BUITEN_CHAT, actieOpvolgingBlok, sessiesAlsTekst } from '@/lib/analyseContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,11 +61,8 @@ export async function GET(req: NextRequest) {
 
     const batch = newSessions.slice(0, 20)
 
-    const sessiesText = batch
-      .map((s: { title: string; summary?: string; created_at: string }, i: number) =>
-        `Gesprek ${i + 1} (${new Date(s.created_at).toLocaleDateString('nl-NL')}): ${s.title}${s.summary ? `\nSamenvatting: ${s.summary}` : ''}`
-      )
-      .join('\n\n')
+    const sessiesText = sessiesAlsTekst(batch)
+    const actieBlok = await actieOpvolgingBlok(userId)
 
     const callModel = () => anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -73,10 +71,12 @@ export async function GET(req: NextRequest) {
 
 ${RULE_JIJ_JOU}
 ${RULE_NO_TIME_PRESSURE}
-${RULE_NO_DASH}`,
+${RULE_NO_DASH}
+
+${RULE_ANALYSE_BUITEN_CHAT}`,
       messages: [{
         role: 'user',
-        content: `Analyseer deze ${batch.length} gesprekken en geef een patroonanalyse:\n\nGESPREKKEN:\n${sessiesText}`
+        content: `Analyseer deze ${batch.length} gesprekken en geef een patroonanalyse:${actieBlok}\n\nGESPREKKEN:\n${sessiesText}`
       }]
     })
 

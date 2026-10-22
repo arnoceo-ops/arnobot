@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from('arnobot_analyses')
-    .select('id, created_at, analyse_text, session_count')
+    .select('id, created_at, analyse_text, session_count, aanvulling_context, aanvulling_tekst, aanvulling_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(20)
