@@ -43,7 +43,7 @@ async function linkedInViaDirectFetch(): Promise<boolean> {
     body: new URLSearchParams({
       strategy: 'oauth_linkedin_oidc',
       redirect_url: `${window.location.origin}/sso-callback`,
-      action_complete_redirect_url: terugNaInloggen(),
+      action_complete_redirect_url: '/bot',
     }),
   })
 
@@ -93,6 +93,9 @@ export default function SignInPage() {
     }
     setError('')
     setLoading(true)
+    // De OAuth-ronde via LinkedIn eindigt op /sso-callback, dat niets van deze URL weet. Het doel
+    // gaat daarom mee in sessionStorage (zelfde tabblad), /sso-callback leest het weer uit.
+    try { sessionStorage.setItem('arnobot_na_inloggen', terugNaInloggen()) } catch {}
 
     // MetaMask's SES lockdown breekt Clerk's SDK — bypass via directe fetch
     const hasMetaMask = typeof window !== 'undefined' &&
@@ -121,7 +124,7 @@ export default function SignInPage() {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
         redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectCallbackUrl: terugNaInloggen(),
+        redirectCallbackUrl: '/bot',
       })
       clearTimeout(timer)
     } catch (err: unknown) {
