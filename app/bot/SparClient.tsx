@@ -598,6 +598,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const blob = new Blob(audioChunksRef.current, { type: mime })
         if (blob.size < 1000) return
         setTranscribing(true)
+        // Buiten de try: de foutmelding hieronder mag alleen verschijnen als er niets is omgezet.
+        // Een fout nadat de tekst al binnen is (stream die afbreekt, losse niet-JSON-regel,
+        // vooral bij Safari/iPhone) is geen mislukte transcriptie.
+        let transcript = ''
         try {
           const form = new FormData()
           form.append('audio', blob, `recording.${ext}`)
@@ -610,7 +614,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           // transcriptie in een herhaallus terechtkomt (bekend gedrag van deze modellen bij
           // stilte aan het eind van een opname): zonder die afkap bleef de zin tientallen keren
           // achter elkaar in het invoerveld verschijnen.
-          let transcript = ''
           let stopped = false
           const reader = res.body.getReader()
           const decoder = new TextDecoder()
@@ -620,8 +623,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             if (!line.startsWith('data: ')) return
             const payload = line.slice(6)
             if (payload === '[DONE]') return
-            const evt = JSON.parse(payload)
-            if (evt.type !== 'transcript.text.delta' || !evt.delta) return
+            let evt: { type?: string; delta?: string } | null = null
+            try { evt = JSON.parse(payload) } catch { return }
+            if (!evt || evt.type !== 'transcript.text.delta' || !evt.delta) return
             transcript += evt.delta
             const deduped = dedupeRepeatedSentence(transcript)
             if (deduped.truncated) {
@@ -641,7 +645,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           }
           handleLine(buffer)
           if (!transcript.trim()) throw new Error('transcribe_empty')
-        } catch { setTranscribeFout(true) }
+        } catch {
+          if (!transcript.trim()) setTranscribeFout(true)
+        }
         finally { setTranscribing(false) }
       }
       mediaRecorderRef.current = recorder
