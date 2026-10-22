@@ -824,14 +824,50 @@ PROFIEL VAN DE GEBRUIKER:
             }
             controller.enqueue(encoder.encode(answer))
           } else if (finalMessage.stop_reason === 'max_tokens') {
-            // Antwoord is al (deels afgekapt) naar de gebruiker gestreamd voordat dit bekend
-            // werd, hier is niets meer aan te herstellen. Wel loggen zodat zichtbaar wordt
-            // hoe vaak dit nog voorkomt ondanks de bufferruimte hierboven.
-            console.error('[chat] antwoord afgekapt op max_tokens, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)', 'antwoordLengte:', antwoordLengte)
-            Sentry.captureMessage('[chat] antwoord afgekapt op max_tokens', {
-              level: 'warning',
-              extra: { sessionId, userId: userId ?? null, antwoordLengte, isWidget, chatMaxTokens },
-            })
+            // Het afgekapte deel is al naar de gebruiker gestreamd. Eén keer doorgaan waar het
+            // model stopte (zelfde streepjesfilter, zelfde stream), zodat een lang antwoord niet
+            // midden in een zin of tabel eindigt. De beknoptheid blijft intact: alleen een
+            // antwoord dat de limiet daadwerkelijk raakt krijgt een vervolg.
+            let doorgegaan = false
+            try {
+              const vervolgStream = client.messages.stream({
+                model: 'claude-sonnet-4-6',
+                max_tokens: chatMaxTokens,
+                system: systemPrompt,
+                messages: [
+                  ...messages,
+                  { role: 'assistant' as const, content: answer },
+                  { role: 'user' as const, content: 'Je antwoord werd afgekapt. Ga verder precies waar je stopte, zonder iets te herhalen en zonder inleiding of opmerking over het afkappen. Begin gewoon met het volgende woord.' },
+                ],
+              })
+              const vervolgSanitizer = new StreamingDashSanitizer()
+              for await (const event of vervolgStream) {
+                if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                  const toSend = vervolgSanitizer.push(event.delta.text)
+                  if (toSend) controller.enqueue(encoder.encode(toSend))
+                }
+              }
+              const vervolgRest = vervolgSanitizer.flush()
+              if (vervolgRest) controller.enqueue(encoder.encode(vervolgRest))
+              const vervolgFinal = await vervolgStream.finalMessage()
+              const vervolgTekst = getText(vervolgFinal.content)
+              if (vervolgTekst) {
+                answer = answer + vervolgTekst
+                doorgegaan = true
+              }
+              if (vervolgFinal.stop_reason === 'max_tokens') doorgegaan = false
+            } catch (err) {
+              console.error('[chat] vervolg na max_tokens mislukt:', err instanceof Error ? err.message : String(err))
+            }
+            if (!doorgegaan) {
+              // Ook het vervolg raakte de limiet of faalde: wel loggen zodat zichtbaar blijft
+              // hoe vaak een antwoord echt afgekapt eindigt.
+              console.error('[chat] antwoord afgekapt op max_tokens, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)', 'antwoordLengte:', antwoordLengte)
+              Sentry.captureMessage('[chat] antwoord afgekapt op max_tokens', {
+                level: 'warning',
+                extra: { sessionId, userId: userId ?? null, antwoordLengte, isWidget, chatMaxTokens },
+              })
+            }
           }
 
           let logId: string | null = null
