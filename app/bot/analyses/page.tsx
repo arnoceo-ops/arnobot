@@ -165,7 +165,8 @@ export default function GeschiedenisPage() {
   }, [savedAnalyses])
 
   // Scrollt pas nadat de analyse echt geopend en gerenderd is (de sectie staat onder de
-  // gesprekkenlijst, dus zonder scroll lijkt er niets te openen).
+  // gesprekkenlijst, dus zonder scroll lijkt er niets te openen). De sectie wordt pas getekend
+  // als ook de gesprekkenlijst geladen is (`loading`), dus ook daarop opnieuw proberen.
   const scrollNaOpenen = useRef(false)
   useEffect(() => {
     if (!scrollNaOpenen.current || !expandedAnalyse) return
@@ -173,7 +174,7 @@ export default function GeschiedenisPage() {
     if (!el) return
     scrollNaOpenen.current = false
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [expandedAnalyse, savedAnalyses])
+  }, [expandedAnalyse, savedAnalyses, loading])
 
   useEffect(() => {
     if (!search || search.length < 2) {
