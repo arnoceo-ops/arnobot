@@ -69,3 +69,16 @@ export type ZonderToegangBeslissing = { actie: 'door' } | { actie: 'redirect'; n
 export function beslisZonderToegang(path: string): ZonderToegangBeslissing {
   return isHerstelPad(path) ? { actie: 'door' } : { actie: 'redirect', naar: HERSTEL_STANDAARD }
 }
+
+/**
+ * Einde van de proefperiode als de gebruiker op dit moment nog in de proefperiode zit zonder
+ * betaling of gezette einddatum, anders null. Gebruikt om een abonnement dat tijdens de trial
+ * wordt afgesloten pas op dat moment te laten ingaan, zodat vroeg betalen geen proefdagen kost.
+ */
+export function trialEinde(user: ToegangVelden, nu: Date = new Date()): Date | null {
+  if (user.expires_at || user.paid_at || !user.trial_start) return null
+  const start = new Date(user.trial_start)
+  if (isNaN(start.getTime())) return null
+  const einde = new Date(start.getTime() + TRIAL_DAGEN * 24 * 60 * 60 * 1000)
+  return einde > nu ? einde : null
+}

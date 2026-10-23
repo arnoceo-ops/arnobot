@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beslisZonderToegang, datumToegang, HERSTEL_STANDAARD, isHerstelPad, trialDagenOver } from './toegang'
+import { beslisZonderToegang, datumToegang, HERSTEL_STANDAARD, isHerstelPad, trialDagenOver, trialEinde } from './toegang'
 
 const nu = new Date('2026-10-23T10:00:00Z')
 const dagen = (n: number) => new Date(nu.getTime() + n * 24 * 60 * 60 * 1000).toISOString()
@@ -75,5 +75,20 @@ describe('beslisZonderToegang', () => {
     expect(doel.actie).toBe('redirect')
     expect(isHerstelPad(HERSTEL_STANDAARD)).toBe(true)
     expect(beslisZonderToegang(HERSTEL_STANDAARD)).toEqual({ actie: 'door' })
+  })
+})
+
+describe('trialEinde', () => {
+  it('geeft het einde van de proefperiode tijdens de trial', () => {
+    expect(trialEinde({ trial_start: dagen(-20) }, nu)).toEqual(new Date(nu.getTime() + 10 * 24 * 60 * 60 * 1000))
+  })
+  it('geeft null als de trial voorbij is', () => {
+    expect(trialEinde({ trial_start: dagen(-31) }, nu)).toBe(null)
+  })
+  it('geeft null bij betaald, een gezette einddatum of zonder trial', () => {
+    expect(trialEinde({ trial_start: dagen(-20), paid_at: dagen(-1) }, nu)).toBe(null)
+    expect(trialEinde({ trial_start: dagen(-20), expires_at: dagen(50) }, nu)).toBe(null)
+    expect(trialEinde({}, nu)).toBe(null)
+    expect(trialEinde({ trial_start: 'geen-datum' }, nu)).toBe(null)
   })
 })

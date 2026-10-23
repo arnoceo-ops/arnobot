@@ -15,11 +15,13 @@ import {
   moetMollieAbonnementNuStoppen,
   periodeMaanden,
   toegangTot,
+  eerstePeriodeStart,
   voegMaandenToe,
 } from './perioden'
 import { verstuurBillingMail } from './mails'
 import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { trialEinde } from '@/lib/toegang'
 
 // Kern van de betaalverwerking. Wordt aangeroepen door de Mollie-webhook en is volledig
 // idempotent: dezelfde betaling twee keer verwerken heeft geen dubbele gevolgen, omdat
@@ -157,20 +159,27 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
   if (rij.soort === 'eerste') {
     await beeindigAndereAbonnementen(sub)
 
-    const einde = eersteperiodeEinde(betaaldOp, sub.cyclus)
-    const contract = contractEinde(betaaldOp, sub.klant_type, sub.cyclus)
+    // Betaalt iemand tijdens de proefperiode, dan gaat het abonnement pas in op het einde daarvan.
+    const { data: gebruiker } = await billingDb
+      .from('approved_users')
+      .select('trial_start, paid_at, expires_at')
+      .eq('user_id', sub.user_id)
+      .maybeSingle()
+    const start = eerstePeriodeStart(betaaldOp, gebruiker ? trialEinde(gebruiker, betaaldOp) : null)
+    const einde = eersteperiodeEinde(start, sub.cyclus)
+    const contract = contractEinde(start, sub.klant_type, sub.cyclus)
     await billingDb
       .from('arnobot_subscriptions')
       .update({
         status: 'active',
-        periode_start: iso(betaaldOp),
+        periode_start: iso(start),
         periode_einde: iso(einde),
         contract_einde: contract ? iso(contract) : null,
         updated_at: iso(new Date()),
       })
       .eq('id', sub.id)
 
-    await maakMollieAbonnementVoor({ ...sub, periode_einde: iso(einde) }, betaaldOp)
+    await maakMollieAbonnementVoor({ ...sub, periode_einde: iso(einde) }, start)
 
     await zetToegang(sub.user_id, sub.plan, einde, { eerste: true, betaaldOp })
     await zetReferralConversie(sub.user_id, sub.plan)

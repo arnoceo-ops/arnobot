@@ -81,7 +81,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       contactId,
       referentie: rij.mollie_payment_id,
       omschrijving: `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}`,
-      periodeStart: betaaldOp,
+      periodeStart: sub.periode_start ? new Date(sub.periode_start) : betaaldOp,
       periodeEinde,
       factuurDatum: betaaldOp,
       brutoCent: rij.bedrag_cent,

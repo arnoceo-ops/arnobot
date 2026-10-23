@@ -11,6 +11,7 @@ import {
   opzeggingIngaat,
   toegangTot,
   voegMaandenToe,
+  eerstePeriodeStart,
 } from './perioden'
 import { isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from './btwNummer'
 
@@ -178,5 +179,23 @@ describe('postcode', () => {
     expect(normaliseerPostcode('5627')).toBeNull()
     expect(normaliseerPostcode('56272SZ')).toBeNull()
     expect(normaliseerPostcode('')).toBeNull()
+  })
+})
+
+describe('eerstePeriodeStart', () => {
+  const betaald = new Date('2026-10-25T10:00:00Z')
+  it('gaat in op het einde van de proefperiode als er tijdens de trial betaald wordt', () => {
+    const trialEinde = new Date('2026-10-30T10:00:00Z')
+    expect(eerstePeriodeStart(betaald, trialEinde)).toEqual(trialEinde)
+  })
+  it('gaat in op het betaalmoment zonder trial', () => {
+    expect(eerstePeriodeStart(betaald, null)).toEqual(betaald)
+  })
+  it('gaat in op het betaalmoment als de trial al voorbij is', () => {
+    expect(eerstePeriodeStart(betaald, new Date('2026-10-20T10:00:00Z'))).toEqual(betaald)
+  })
+  it('het einde van een maandabonnement volgt de latere start', () => {
+    const start = eerstePeriodeStart(betaald, new Date('2026-10-30T10:00:00Z'))
+    expect(eersteperiodeEinde(start, 'maandelijks')).toEqual(new Date('2026-11-30T10:00:00Z'))
   })
 })

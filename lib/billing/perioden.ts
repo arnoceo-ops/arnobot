@@ -122,3 +122,11 @@ export function herinneringenDue(
     dertig: !verzonden.dertig && dagenOver <= 30 && dagenOver > 7,
   }
 }
+
+/**
+ * Wanneer gaat de eerste betaalde periode in? Betaalt iemand tijdens de proefperiode, dan op het
+ * einde daarvan (de proefdagen blijven van de gebruiker), anders op het betaalmoment.
+ */
+export function eerstePeriodeStart(betaaldOp: Date, trialEindeDatum: Date | null): Date {
+  return trialEindeDatum && trialEindeDatum > betaaldOp ? trialEindeDatum : betaaldOp
+}
