@@ -12,6 +12,7 @@ import { planHistorieBlok } from '@/lib/analyseContext'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 import { berekenActiePatroon } from '@/lib/actiePatroon'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -176,6 +177,8 @@ export async function POST() {
     const newSparring = sparringSessions.filter(s => new Date(s.created_at) > new Date((prevCoaching as any).updated_at ?? 0))
     const forceAllow = newSessions.length >= 3 && hoursSince >= 48
 
+    // Alleen het handmatige testaccount mag de voortgangsblokkade omzeilen, om de generatietijd te kunnen meten.
+    const isMeettestAccount = userId === MANUAL_TEST_USER_ID
     const blockError = allPrevHighScores ? 'hoge_scores' : prevWeinigVoortgang ? 'stagnatie' : 'te_weinig_voortgang'
 
     if (newSessions.length > 0 || newAnalyses.length > 0 || newSparring.length > 0) {
@@ -215,7 +218,7 @@ export async function POST() {
         if (forceAllow) {
           weinig_voortgang = true
           if (prevWeinigVoortgang) stagnatie = true
-        } else {
+        } else if (!isMeettestAccount) {
           return NextResponse.json({ error: blockError }, { status: 429 })
         }
       }
@@ -223,7 +226,7 @@ export async function POST() {
       if (forceAllow) {
         weinig_voortgang = true
         if (prevWeinigVoortgang) stagnatie = true
-      } else {
+      } else if (!isMeettestAccount) {
         return NextResponse.json({ error: blockError }, { status: 429 })
       }
     }
