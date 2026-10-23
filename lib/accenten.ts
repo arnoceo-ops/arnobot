@@ -4,7 +4,7 @@
 // "reële", "ideeën") en gangbare leenwoorden ("café"). De prompts vragen het model dit zelf te
 // doen, maar dat gaat niet altijd goed, daarom ook deze vaste controle achteraf.
 const TOEGESTAAN = new Set([
-  'één', 'café', 'cafés', 'cliché', 'clichés', 'résumé', 'entrée', 'soirée', 'fiancé', 'coupé',
+  'één', 'eén', 'café', 'cafés', 'cliché', 'clichés', 'résumé', 'entrée', 'soirée', 'fiancé', 'coupé',
 ])
 
 const BASIS: Record<string, string> = {
