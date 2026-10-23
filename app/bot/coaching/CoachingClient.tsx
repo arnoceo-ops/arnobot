@@ -345,6 +345,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         @page { size: A4 portrait; margin: 14mm 12mm; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          html { color-scheme: light !important; }
           html, body { background: #ffffff !important; color: #111827 !important; }
           .coaching-label { page-break-after: avoid; break-after: avoid; }
           .coaching-breekbaar { page-break-inside: auto !important; break-inside: auto !important; }
