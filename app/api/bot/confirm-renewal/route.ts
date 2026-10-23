@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
 import { isTeamCovered } from '@/lib/teamAccess'
+import { datumToegang } from '@/lib/toegang'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,14 +68,19 @@ export async function GET() {
 
   const { data } = await supabase
     .from('approved_users')
-    .select('renewal_requested_at, paid_at, plan, expires_at')
+    .select('renewal_requested_at, paid_at, plan, expires_at, trial_start, is_active')
     .eq('user_id', userId)
     .maybeSingle()
+
+  // Alleen voor de tekst op /bot/doorgaan (loopt de proefperiode nog, of is de toegang al
+  // afgelopen). Zelfde regels als proxy.ts: actief, en eigen datums of teamtoegang.
+  const toegangActief = !!data && data.is_active !== false && (datumToegang(data) || await isTeamCovered(userId))
 
   return NextResponse.json({
     renewal_requested_at: data?.renewal_requested_at ?? null,
     paid_at: data?.paid_at ?? null,
     expires_at: data?.expires_at ?? null,
     plan: data?.plan ?? null,
+    toegang_actief: toegangActief,
   })
 }

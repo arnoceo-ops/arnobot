@@ -56,6 +56,9 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   const [verlengen, setVerlengen] = useState<'idle' | 'bezig' | 'klaar' | 'fout'>('idle')
   // Wie al eens betaald heeft verlengt; wie nog in de proefperiode zit gaat door met ArnoBot.
   const [eerderBetaald, setEerderBetaald] = useState(false)
+  // False als de toegang al is afgelopen (anders loopt de proefperiode nog). Zet in dezelfde
+  // fetch als `status`, en de pagina rendert pas na die fetch, dus geen flits van de verkeerde tekst.
+  const [toegangActief, setToegangActief] = useState(true)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -96,6 +99,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
       .then(r => r.json())
       .then(d => {
         setEerderBetaald(!!d.paid_at)
+        setToegangActief(d.toegang_actief !== false)
         // Alleen "actief" als er betaald is en de toegang niet is verlopen (afgelopen of
         // terugbetaald): zo kan iemand na afloop gewoon opnieuw afrekenen.
         if (d.paid_at && !(d.expires_at && new Date(d.expires_at) < new Date())) setStatus('already_paid')
@@ -413,9 +417,10 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
         {status === 'idle' && !terug && stap === 'kies' && (
           <>
             <p style={body}>
+              {toegangActief ? 'Je gratis proefperiode loopt binnenkort af.' : 'Je toegang is afgelopen.'}
               {mollieEnabled
-                ? 'Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'
-                : 'Je gratis proefperiode loopt binnenkort af. Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.'}
+                ? ' Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'
+                : ' Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.'}
             </p>
 
             <div className="doorgaan-toggle-rij">
@@ -482,7 +487,9 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
             </div>
 
             <p style={{ ...body, marginBottom: 0 }}>
-              Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft daarna nog 30 dagen bewaard. Op zoek naar Team, het teamabonnement?{' '}
+              {toegangActief
+                ? 'Wil je niet doorgaan? Dan stopt je toegang automatisch aan het einde van de proefperiode. Je data blijft daarna nog 30 dagen bewaard.'
+                : 'Je data blijft nog 30 dagen bewaard.'} Op zoek naar Team, het teamabonnement?{' '}
               {demoLink
                 ? <a href={demoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
                 : <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
