@@ -8,7 +8,8 @@ import { factureerOpenstaandeBetalingen } from '@/lib/billing/facturatie'
 import { planNaam } from '@/lib/billing/prijzen'
 import { mollieNaarCenten } from '@/lib/billing/geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
-import { notifyCronFailure } from '@/lib/cron-notify'
+import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
+import { controleerKoppelingen } from '@/lib/billing/gezondheid'
 
 const iso = (d: Date) => d.toISOString()
 const MIN_MS = 60 * 1000
@@ -24,6 +25,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
+
+  // Dagelijkse gezondheidscheck van de koppelingen met Mollie en Moneybird (alleen lezen). Een
+  // verlopen token of ingetrokken sleutel valt anders pas op bij de volgende betaling. Valt er
+  // iets om, dan een Telegram-melding. Faalt de check zelf, dan gaat de onderhoudsronde gewoon door.
+  try {
+    const kapot = (await controleerKoppelingen()).filter(k => k.niveau === 'fout')
+    if (kapot.length > 0) {
+      await notifyTelegram(
+        `Koppeling met betaalprovider werkt niet op arno.bot\n\n${kapot.map(k => `${k.naam}: ${k.beschrijving} (${k.regels[0] ?? ''})`).join('\n')}`,
+      )
+    }
+  } catch (e) {
+    console.error('[cron/billing] koppelingscheck', e instanceof Error ? e.message : e)
+  }
 
   const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
   try {

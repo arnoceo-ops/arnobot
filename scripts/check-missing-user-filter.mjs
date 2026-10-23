@@ -95,6 +95,10 @@ const KNOWN_SAFE_QUERIES = new Set([
   // Betaling van een abonnement dat in dezelfde functie al op user_id is opgehaald (s.id komt
   // uit een query met .eq('user_id', userId)).
   'app/api/bot/checkout/route.ts:arnobot_payments',
+  // Gezondheidscheck van Mollie/Moneybird voor de admin-statustegel en de billing-cron: leest
+  // alleen het tijdstip van de laatste betaling en factuur over alle gebruikers heen, geen
+  // gebruikersgegevens, en wordt alleen via admin of cron aangeroepen.
+  'lib/billing/gezondheid.ts:arnobot_payments',
   'app/api/bot/team/1on1/save/route.ts:arnobot_1on1_log',
   // Zoekt de referrer op via een publieke referral_code (niet de eigen user_id) om
   // een e-mail te sturen; referrer-data (incl. e-mailadres) wordt nooit teruggegeven

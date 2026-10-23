@@ -274,3 +274,8 @@ export async function maakCreditnota(
   else if (!opties.terugbetalingRegistreren) await verstuurFactuur(credit.id, 'Manual')
   return { id: credit.id }
 }
+
+/** Gezondheidscheck: een alleen-lezen aanroep die slaagt als token en administratie-ID kloppen. */
+export async function pingMoneybird(): Promise<void> {
+  await mb('/sales_invoices.json?per_page=1')
+}

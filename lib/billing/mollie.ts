@@ -254,3 +254,15 @@ export async function lijstRecenteTerugbetalingen(limiet = 250): Promise<MollieR
   const res = await mollie<{ _embedded?: { refunds?: MollieRefund[] } }>(`/refunds?limit=${limiet}`)
   return res._embedded?.refunds ?? []
 }
+
+/** Testmodus of live, afgeleid van het sleutelvoorvoegsel (de sleutel zelf verlaat dit bestand niet). */
+export function mollieModus(): 'live' | 'test' | null {
+  const key = process.env.MOLLIE_API_KEY
+  if (!key) return null
+  return key.startsWith('live_') ? 'live' : 'test'
+}
+
+/** Gezondheidscheck: een alleen-lezen aanroep die slaagt als de sleutel geldig is en Mollie bereikbaar. */
+export async function pingMollie(): Promise<void> {
+  await mollie('/methods')
+}
