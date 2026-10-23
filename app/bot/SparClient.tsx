@@ -7,6 +7,7 @@ import { useAuth, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
+import TrialBalk from '@/app/bot/components/TrialBalk'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { rolCategorieVoorRol, isGeldigSparScenario } from '@/lib/sparringPersonas'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
@@ -2317,6 +2318,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         </nav>
       )}
       <VersionBanner />
+      <TrialBalk />
 
       <div className="spar-page" style={started ? { paddingBottom: isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 } : {}}>
 

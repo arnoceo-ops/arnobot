@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beslisZonderToegang, datumToegang, HERSTEL_STANDAARD, isHerstelPad } from './toegang'
+import { beslisZonderToegang, datumToegang, HERSTEL_STANDAARD, isHerstelPad, trialDagenOver } from './toegang'
 
 const nu = new Date('2026-10-23T10:00:00Z')
 const dagen = (n: number) => new Date(nu.getTime() + n * 24 * 60 * 60 * 1000).toISOString()
@@ -26,6 +26,28 @@ describe('datumToegang', () => {
   it('een ongeldige datum geeft geen toegang', () => {
     expect(datumToegang({ expires_at: 'geen-datum' }, nu)).toBe(false)
     expect(datumToegang({ trial_start: 'geen-datum' }, nu)).toBe(false)
+  })
+})
+
+describe('trialDagenOver', () => {
+  it('telt de resterende dagen af, naar boven afgerond', () => {
+    expect(trialDagenOver({ trial_start: dagen(-25) }, nu)).toBe(5)
+    expect(trialDagenOver({ trial_start: dagen(-26.5) }, nu)).toBe(4)
+    expect(trialDagenOver({ trial_start: dagen(-29.5) }, nu)).toBe(1)
+  })
+  it('meldt niets als er nog meer dan 5 dagen over zijn', () => {
+    expect(trialDagenOver({ trial_start: dagen(-24) }, nu)).toBe(null)
+    expect(trialDagenOver({ trial_start: dagen(-5) }, nu)).toBe(null)
+  })
+  it('meldt niets als de trial voorbij is', () => {
+    expect(trialDagenOver({ trial_start: dagen(-30.1) }, nu)).toBe(null)
+    expect(trialDagenOver({ trial_start: dagen(-60) }, nu)).toBe(null)
+  })
+  it('meldt niets bij betaald, een gezette einddatum of zonder trial', () => {
+    expect(trialDagenOver({ trial_start: dagen(-27), paid_at: dagen(-2) }, nu)).toBe(null)
+    expect(trialDagenOver({ trial_start: dagen(-27), expires_at: dagen(100) }, nu)).toBe(null)
+    expect(trialDagenOver({}, nu)).toBe(null)
+    expect(trialDagenOver({ trial_start: 'geen-datum' }, nu)).toBe(null)
   })
 })
 

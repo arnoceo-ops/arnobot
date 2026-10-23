@@ -44,6 +44,25 @@ export function datumToegang(user: ToegangVelden, nu: Date = new Date()): boolea
   return false
 }
 
+/** Vanaf zoveel dagen vóór het einde van de proefperiode toont de app de balk "kies je abonnement". */
+export const TRIAL_MELDING_DAGEN = 5
+
+/**
+ * Hoeveel dagen (naar boven afgerond, 1 tot en met 5) de proefperiode nog loopt, voor de balk in
+ * de app. null als er niets te melden valt: al betaald of een gezette einddatum, geen trial, de
+ * trial is al voorbij, of er zijn nog meer dan 5 dagen over. Team-toegang wordt door de aanroeper
+ * uitgesloten.
+ */
+export function trialDagenOver(user: ToegangVelden, nu: Date = new Date()): number | null {
+  if (user.expires_at || user.paid_at || !user.trial_start) return null
+  const start = new Date(user.trial_start)
+  if (isNaN(start.getTime())) return null
+  const msOver = start.getTime() + TRIAL_DAGEN * 24 * 60 * 60 * 1000 - nu.getTime()
+  if (msOver <= 0) return null
+  const dagen = Math.ceil(msOver / (24 * 60 * 60 * 1000))
+  return dagen <= TRIAL_MELDING_DAGEN ? dagen : null
+}
+
 export type ZonderToegangBeslissing = { actie: 'door' } | { actie: 'redirect'; naar: string }
 
 /** Wat er met een pagina-aanvraag gebeurt van een ingelogde gebruiker zonder actieve toegang. */

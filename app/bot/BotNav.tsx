@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import NotificationBell from '@/app/bot/components/NotificationBell'
 import VersionBanner from '@/app/bot/components/VersionBanner'
+import TrialBalk from '@/app/bot/components/TrialBalk'
 import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
 
 interface Props {
@@ -94,6 +95,7 @@ export default function BotNav({ active }: Props) {
           </div>
         )}
         <VersionBanner />
+        <TrialBalk />
       </>
     )
   }
@@ -141,6 +143,7 @@ export default function BotNav({ active }: Props) {
         </div>
       </nav>
       <VersionBanner />
+      <TrialBalk />
     </>
   )
 }
