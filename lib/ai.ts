@@ -1,4 +1,5 @@
 import type { Message } from '@anthropic-ai/sdk/resources'
+import { stripEmphasisAccents } from '@/lib/accenten'
 
 // Vangnet: het taalmodel volgt de "geen streepje als leesteken"-instructie in de
 // systeemprompt niet altijd, ook als die er letterlijk in staat (live getest, 2026-07-11).
@@ -18,7 +19,7 @@ export function stripDashPunctuation(text: string): string {
 
 export function getText(content: Message['content'], fallback = ''): string {
   const block = content.find(b => b.type === 'text')
-  return block?.type === 'text' ? stripDashPunctuation(block.text) : fallback
+  return block?.type === 'text' ? stripEmphasisAccents(stripDashPunctuation(block.text)) : fallback
 }
 
 // Sanitizer voor streaming tekst: dashPunctuation kan pas correct beoordeeld worden zodra
@@ -35,6 +36,8 @@ export class StreamingDashSanitizer {
 
   private safeCutoff(): number {
     let cutoff = this.raw.length
+    // Een onaf woord aan het eind blijft in de buffer: de accentcontrole beoordeelt hele woorden.
+    while (cutoff > 0 && /\p{L}/u.test(this.raw[cutoff - 1])) cutoff--
     while (cutoff > 0) {
       const last = this.raw[cutoff - 1]
       if (last === ' ' || last === '\t') { cutoff--; continue }
@@ -49,7 +52,7 @@ export class StreamingDashSanitizer {
   // worden (kan leeg zijn als er nog niet genoeg context is om een streepje te beoordelen).
   push(chunk: string): string {
     this.raw += chunk
-    const sanitizedStable = stripDashPunctuation(this.raw.slice(0, this.safeCutoff()))
+    const sanitizedStable = stripEmphasisAccents(stripDashPunctuation(this.raw.slice(0, this.safeCutoff())))
     if (sanitizedStable.length <= this.sentLength) return ''
     const toSend = sanitizedStable.slice(this.sentLength)
     this.sentLength = sanitizedStable.length
@@ -58,7 +61,7 @@ export class StreamingDashSanitizer {
 
   // Rondt af: verwerkt alles wat nog in de buffer zit (aan te roepen na de laatste chunk).
   flush(): string {
-    const sanitizedFinal = stripDashPunctuation(this.raw)
+    const sanitizedFinal = stripEmphasisAccents(stripDashPunctuation(this.raw))
     const toSend = sanitizedFinal.slice(this.sentLength)
     this.sentLength = sanitizedFinal.length
     return toSend

@@ -10,6 +10,10 @@ describe('stripEmphasisAccents', () => {
     const t = 'Eén vraag, geïdentificeerd, reële ideeën bij het café.'
     expect(stripEmphasisAccents(t)).toBe(t)
   })
+  it('laat eigennamen met accent staan', () => {
+    const t = 'Overleg met René en José over Zoë.'
+    expect(stripEmphasisAccents(t)).toBe(t)
+  })
   it('behoudt hoofdletters', () => {
     expect(stripEmphasisAccents('Écht waar. DÁT klopt.')).toBe('Echt waar. DAT klopt.')
   })

@@ -63,6 +63,13 @@ describe('StreamingDashSanitizer', () => {
     })
   }
 
+  for (const deltaSize of [1, 2, 3, 5]) {
+    it(`haalt nadrukaccenten weg ook als een woord midden in een brokje breekt (delta ${deltaSize})`, () => {
+      const t = 'Luister wat er écht speelt, het is wéér uitgesteld. Eén vraag, René weet dát zó.'
+      expect(simulateStreaming(t, deltaSize)).toBe('Luister wat er echt speelt, het is weer uitgesteld. Eén vraag, René weet dat zo.')
+    })
+  }
+
   it('verwerkt tekst zonder streepjes praktisch direct (geen kunstmatige vertraging)', () => {
     const sanitizer = new StreamingDashSanitizer()
     const out = sanitizer.push('Dit is een zin zonder enig streepje erin.')
