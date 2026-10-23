@@ -1,4 +1,4 @@
-export const maxDuration = 15
+export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
+import { MAX_WOORDEN, isTeLang, knipOpZin } from '@/lib/uitdagingTekst'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,7 +105,7 @@ export async function GET() {
 
   const toonInstructie = `Toon: je bent Arno Diepeveen, een scherpe mentor die in de lezer gelooft. De gedachte mag prikkelen en een randje hebben, maar iemand moet het graag lezen en er energie van krijgen. Geen verhoor, geen opsomming van wat er misgaat, geen woorden als "blinde vlek", "zwakte" of "waarom lukt het je niet". Geen vleierij of loze complimenten. Reik een idee aan dat een deur opent, niet een spiegel die een fout aanwijst.`
 
-  const vormInstructie = `Vorm: kort. Ofwel een enkele rake gedachte van een of twee zinnen, ofwel een korte observatie gevolgd door een open vraag die uitnodigt om vooruit te denken, niet om jezelf te verdedigen. Kies zelf wat het sterkst is. Nooit meer dan drie zinnen. Geen inleiding, geen uitleg, geen opdrachten of acties. ${RULE_NO_TIME_PRESSURE}`
+  const vormInstructie = `Vorm: kort. Ofwel een enkele rake gedachte van een of twee zinnen, ofwel een korte observatie gevolgd door een open vraag die uitnodigt om vooruit te denken, niet om jezelf te verdedigen. Kies zelf wat het sterkst is. Maximaal 50 woorden, dat zijn ongeveer vier regels. Geen inleiding, geen uitleg, geen opdrachten of acties. ${RULE_NO_TIME_PRESSURE}`
 
   const taalInstructie = `Schrijf in verzorgd Nederlands. Lees de zin terug voordat je antwoordt: als een bijzin grammaticaal onhandig loopt, herschrijf hem. Gebruik reflexieve constructies correct (bijvoorbeeld "waarbij je je" in plaats van "die je"). Geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
 
@@ -119,10 +120,14 @@ export async function GET() {
     taalInstructie,
   ].filter(Boolean).join('\n\n')
 
-  const callModel = () => anthropic.messages.create({
+  // De beperking zit in de prompt (maximaal 50 woorden), niet in het aantal tokens: de API eist een
+  // tokengrens, die staat ruim genoeg om nooit midden in een zin af te kappen.
+  const callModel = (extra = '') => anthropic.messages.create({
     model: 'claude-fable-5-1',
-    max_tokens: 600,
-    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 4000,
+    messages: [{ role: 'user', content: extra ? `${prompt}
+
+${extra}` : prompt }],
   })
 
   let response
@@ -158,6 +163,19 @@ export async function GET() {
   if (!uitdaging) {
     console.error('[uitdaging] leeg antwoord na retry')
     return NextResponse.json({ error: 'generate_error' }, { status: 500 })
+  }
+
+  // Te lang (meer dan 50 woorden plus marge) of afgekapt: één keer opnieuw met een strengere
+  // opdracht, daarna terugknippen tot hele zinnen. Nooit een halve zin tonen.
+  if (isTeLang(uitdaging) || response.stop_reason === 'max_tokens') {
+    try {
+      const kort = await callModel(`Je vorige versie was te lang. Schrijf de gedachte opnieuw in maximaal ${MAX_WOORDEN} woorden, in hele zinnen.`)
+      const kortTekst = getText(kort.content).trim()
+      if (kortTekst && kort.stop_reason !== 'refusal') uitdaging = kortTekst
+    } catch (err: unknown) {
+      console.error('[uitdaging] herschrijven naar kortere versie mislukt', err)
+    }
+    if (isTeLang(uitdaging)) uitdaging = knipOpZin(uitdaging)
   }
 
   return NextResponse.json({ uitdaging })

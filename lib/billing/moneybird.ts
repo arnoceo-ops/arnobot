@@ -132,7 +132,6 @@ interface MbContact { id: string }
 interface MbInvoice { id: string; invoice_id?: string | null; state?: string }
 interface MbTaxRate { id: string; percentage: string }
 
-/** Zoekt het contact op onze eigen gebruikers-id, of maakt het aan. */
 /**
  * Body om een bestaand contact bij te werken. Voor een particulier worden bedrijfsnaam, KvK, btw-
  * en adresgegevens leeggemaakt: een contact dat eerder zakelijk afrekende hield die gegevens
@@ -154,6 +153,7 @@ export function bouwContactWijziging(k: FactuurKlant) {
   }
 }
 
+/** Zoekt het contact op onze eigen gebruikers-id, of maakt het aan. */
 export async function zoekOfMaakContact(k: FactuurKlant): Promise<string> {
   try {
     const bestaand = await mb<MbContact>(`/contacts/customer_id/${encodeURIComponent(k.userId)}.json`)
