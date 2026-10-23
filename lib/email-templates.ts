@@ -248,7 +248,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je aangeeft door te willen gaan.<br><br>Kies hieronder je abonnement. Je ontvangt dan een factuur van ArnoBot. Na de proefperiode loopt je toegang nog 5 dagen door, zodat je rustig kunt betalen.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement. Je ontvangt dan een factuur van ArnoBot.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }

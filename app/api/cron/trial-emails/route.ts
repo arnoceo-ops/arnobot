@@ -4,7 +4,6 @@ import { Resend } from 'resend'
 import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
-import { TRIAL_DAGEN, UITLOOP_DAGEN } from '@/lib/toegang'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,7 +51,7 @@ export async function GET(req: NextRequest) {
     if (!isValidEmail(user.email) || !user.trial_start) continue
 
     const trialStart = new Date(user.trial_start)
-    const trialEnd = new Date(trialStart.getTime() + TRIAL_DAGEN * 24 * 60 * 60 * 1000)
+    const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
     const naam = user.voornaam || 'daar'
 
     async function send(type: EmailType, options?: { sessionCount?: number }) {
@@ -72,15 +71,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // --- Betaalwaarschuwing op de voorlaatste dag van de uitloop ---
-    // Wie op "doorgaan" klikte houdt UITLOOP_DAGEN (5) toegang na de trial (zie lib/toegang.ts).
-    // De waarschuwing komt een dag vóór het einde daarvan, de blokkade 24 uur later. Wie pas
-    // na de uitloop op "doorgaan" klikt, heeft al geen toegang meer en krijgt geen waarschuwing.
+    // --- Betaalwaarschuwing 7 dagen na opt-in ---
     if (user.renewal_requested_at && !user.renewal_warning_sent_at && !user.paid_at) {
       const requestedAt = new Date(user.renewal_requested_at)
-      const waarschuwingVanaf = new Date(trialEnd.getTime() + (UITLOOP_DAGEN - 1) * 24 * 60 * 60 * 1000)
-      const uitloopEinde = new Date(trialEnd.getTime() + UITLOOP_DAGEN * 24 * 60 * 60 * 1000)
-      if (now >= waarschuwingVanaf && requestedAt < uitloopEinde) {
+      const daysSinceRequest = (now.getTime() - requestedAt.getTime()) / (1000 * 60 * 60 * 24)
+      if (daysSinceRequest >= 7) {
         await supabase.from('approved_users').update({ renewal_warning_sent_at: now.toISOString() }).eq('user_id', user.user_id)
         await send('betaalwaarschuwing').catch(() => {})
         sent++

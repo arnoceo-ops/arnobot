@@ -11,20 +11,6 @@ describe('datumToegang', () => {
   it('sluit na 30 dagen trial uit', () => {
     expect(datumToegang({ trial_start: dagen(-31) }, nu)).toBe(false)
   })
-  it('wie op doorgaan klikte houdt 5 dagen uitloop na de trial', () => {
-    const klik = { renewal_requested_at: dagen(-8) }
-    expect(datumToegang({ trial_start: dagen(-31), ...klik }, nu)).toBe(true)
-    expect(datumToegang({ trial_start: dagen(-34.9), ...klik }, nu)).toBe(true)
-  })
-  it('na die 5 dagen uitloop is de toegang dicht, ook zonder betaling', () => {
-    expect(datumToegang({ trial_start: dagen(-35.1), renewal_requested_at: dagen(-8) }, nu)).toBe(false)
-  })
-  it('zonder doorgaan-klik geen uitloop', () => {
-    expect(datumToegang({ trial_start: dagen(-30.1), renewal_requested_at: null }, nu)).toBe(false)
-  })
-  it('de uitloop verlengt een betaalde of gezette einddatum niet', () => {
-    expect(datumToegang({ expires_at: dagen(-1), trial_start: dagen(-100), renewal_requested_at: dagen(-90) }, nu)).toBe(false)
-  })
   it('geeft toegang tot een toekomstige expires_at', () => {
     expect(datumToegang({ expires_at: dagen(5), trial_start: dagen(-100) }, nu)).toBe(true)
   })

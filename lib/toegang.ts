@@ -20,22 +20,14 @@ export type ToegangVelden = {
   expires_at?: string | null
   paid_at?: string | null
   trial_start?: string | null
-  renewal_requested_at?: string | null
 }
 
-export const TRIAL_DAGEN = 30
-/** Wie op "doorgaan" klikte maar nog niet betaald heeft, houdt nog zoveel dagen toegang na het
- *  einde van de proefperiode, zodat het betalen rustig kan. De cron trial-emails stemt de
- *  betaalwaarschuwing en blokkade hierop af. */
-export const UITLOOP_DAGEN = 5
-
-const DAG_MS = 24 * 60 * 60 * 1000
+const TRIAL_DAGEN = 30
 
 /**
  * Toegang op basis van de eigen datums van de gebruiker. Een gezette expires_at is altijd
  * bindend, ook voor betalende gebruikers: zo begrenst de admin of de betaalperiode de toegang.
- * Alleen paid_at zonder expires_at is onbeperkte toegang. Zonder beide telt de trial van 30 dagen,
- * met een uitloop van 5 dagen voor wie al heeft aangegeven door te willen gaan.
+ * Alleen paid_at zonder expires_at is onbeperkte toegang. Zonder beide telt de trial van 30 dagen.
  * Team-toegang wordt apart (live) gecontroleerd in proxy.ts.
  */
 export function datumToegang(user: ToegangVelden, nu: Date = new Date()): boolean {
@@ -47,8 +39,7 @@ export function datumToegang(user: ToegangVelden, nu: Date = new Date()): boolea
   if (user.trial_start) {
     const start = new Date(user.trial_start)
     if (isNaN(start.getTime())) return false
-    const dagen = TRIAL_DAGEN + (user.renewal_requested_at ? UITLOOP_DAGEN : 0)
-    return nu < new Date(start.getTime() + dagen * DAG_MS)
+    return nu < new Date(start.getTime() + TRIAL_DAGEN * 24 * 60 * 60 * 1000)
   }
   return false
 }
