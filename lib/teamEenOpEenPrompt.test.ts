@@ -12,6 +12,10 @@ describe('agendaVerwijstGoed', () => {
   it('weigert hij of zij voor het teamlid', () => {
     expect(agendaVerwijstGoed('WAT GAAT GOED\nAlira doet het goed.\n\nARNO ADVISEERT\nVraag haar waarom.')).toBe(false)
   })
+  it('weigert tijdgebonden aanwijzingen maar niet "weken geleden"', () => {
+    expect(agendaVerwijstGoed('WAT GAAT GOED\nAlira.\n\nARNO ADVISEERT\nMaak dit volgende week af.')).toBe(false)
+    expect(agendaVerwijstGoed('WAT GAAT GOED\nAlira doet het goed.\n\nAANDACHTSPUNT\nDrie weken geleden was dit anders.\n\nARNO ADVISEERT\nVraag Alira: "Wat is er veranderd?"')).toBe(true)
+  })
   it('weigert gesprek met Arno erin', () => {
     expect(agendaVerwijstGoed('WAT GAAT GOED\nAlira.\n\nARNO ADVISEERT\nLaten we samen een zin schrijven.')).toBe(false)
   })

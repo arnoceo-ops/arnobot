@@ -49,6 +49,10 @@ ${RULE_NEVER_BREAK_CHARACTER}
 ${RULE_NO_INVENTED_DETAILS}`
 }
 
+// Tijdgebonden aanwijzingen ("vandaag", "volgende week") mogen nooit in AI-output staan.
+// Terugverwijzingen als "drie weken geleden" vallen er niet onder.
+const TIJDSDRUK = /\b(vandaag|morgen|overmorgen|vanavond|volgende week|komende week|deze week|dit weekend|voor het weekend|binnen (een|één|twee|drie|vier|\d+) (dag|dagen|week|weken|uur))\b/i
+
 // Controle op de uitvoer: WAT GAAT GOED en AANDACHTSPUNT gaan over het teamlid en bevatten dus
 // geen "je/jij/jouw", en nergens mag een hij/zij-verwijzing naar het teamlid staan (geslacht
 // onbekend). Bij ARNO ADVISEERT mag "je" (de manager) wel, en tussen aanhalingstekens ook.
@@ -59,5 +63,6 @@ export function agendaVerwijstGoed(agenda: string): boolean {
   if (/\b(je|jij|jouw|jou)\b/i.test(teamlidDeel)) return false
   if (/\b(hij|zij|hem|haar)\b/i.test(teamlidDeel + ' ' + adviesDeel)) return false
   if (/\b(laten we|samen met mij|bij mij)\b/i.test(agenda)) return false
+  if (TIJDSDRUK.test(agenda)) return false
   return true
 }

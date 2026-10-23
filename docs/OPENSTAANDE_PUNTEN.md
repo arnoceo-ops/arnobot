@@ -22,7 +22,7 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 
 **Blok 3. Product en gedrag**
 - [ ] **8. Hero-regel op `/bot`:** Arno scherpt de hero aan. Kandidaten: "ArnoBot is je coach, geen schrijfmachine. Hier word je scherper." en "Geen taalmodel dat je werk overneemt. Een coach die je sterker maakt." Niets bouwen zonder akkoord op de exacte tekst.
-- [ ] **9. Spraak op iPhone:** Robel laten testen of de foutmelding nog verschijnt terwijl de tekst al staat (fix `628562dd`). Arno.
+- [x] **9. Spraak op iPhone:** van de lijst gehaald op verzoek van Arno (2026-10-23): Robel komt zelf bij hem terug. Fix `628562dd` staat er al.
 - [ ] **10. Nieuwe chat-regels** (plan-weigering, "één richting") over een paar dagen bekijken in echte gesprekken. Claude, Arno zegt wanneer.
 - [ ] **11. Net gemaakte analyse** toont het veld "Mist er iets?" pas na herladen (de analyse staat dan bovenaan als "NIEUW GEGENEREERD"). Beslissing Arno: laten of aanpassen.
 
@@ -45,8 +45,8 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - [x] **28. "Nieuwe analyse" bij Mijn leiderschap (SPE) gaf een 500** 2026-10-23: `max_tokens` van 3000 naar 8000 (bij Fable 5.1 telt het denken mee), plus logregels met `stop_reason` bij een lege of onleesbare uitvoer. De oorzaak is niet uit de logs bevestigd (runtime-logs niet bereikbaar), het is de aannemelijkste. Na de fix door Arno opnieuw gegenereerd, PDF in orde.
 - [x] **29. 1:1-agenda schrijft aan de manager** 2026-10-23: manager is "jij", het teamlid staat bij voornaam (geen hij of zij, geslacht onbekend), letterlijke vragen aan het teamlid staan tussen aanhalingstekens in jij-vorm. Prompt in `lib/teamEenOpEenPrompt.ts`, controle `agendaVerwijstGoed` met een tweede poging, 5 van 6 testruns meteen goed. Gekozen: manager als lezer. Verworpen: de agenda aan het teamlid richten (geen voorbereiding meer voor de manager). Oude agenda's blijven zoals ze waren.
 - [x] **30. Nadrukaccenten (écht, wéér, dát) overal weg** 2026-10-23: `lib/accenten.ts`, toegepast in `getText` en in de streaming-sanitizer (hoofdchat), alleen op gewone Nederlandse woorden. Blijven staan: één, trema, café, eigennamen (René, José). Niet gedekt, bewust zo: interne tekstopvragen in `rag.ts`, `model-check`, `productvragen`, `rss-ingest`.
-- [ ] **31. Tijdsaanwijzing in de 1:1-agenda:** Haiku schreef één keer "volgende week" (tegen de regel "nooit tijdgebonden aanwijzingen"). Kan net als bij de accenten met een vaste controle achteraf worden afgevangen. Beslissing Arno.
-- [ ] **32. Testfacturen 2026-0013 en 2026-0014 crediteren in Moneybird.** Arno.
+- [x] **31. Tijdsaanwijzing in de 1:1-agenda** 2026-10-23: Haiku schreef één keer "volgende week" (tegen de regel "nooit tijdgebonden aanwijzingen"). Nu een vaste controle in `agendaVerwijstGoed` (vandaag, morgen, deze of volgende week, binnen X dagen, enzovoort) met een tweede poging. "Drie weken geleden" valt er niet onder.
+- [x] **32. Testfactuur 2026-0013 gecrediteerd in Moneybird** 2026-10-23 (creditnota 2026-0014, TEST BV, 468,00, op betaald gezet zoals de eerdere testcredits, geen mail). Er bestond geen aparte factuur 2026-0014: dat nummer is nu de creditnota. Alle testfacturen staan nu op nul.
 - [ ] **14. Resend-daglimiet van 100** deelt alle mails (trial, billing, blog). Schaalpunt, hoort bij de Pro-milestone, geen actie nu.
 
 **Besloten en niet meer open:** de planmails (Q4, voorjaar, zomer) zijn op 2026-10-22 verworpen. Gekozen: ArnoBot stelt de plan-vragen alleen in het gesprek. Verworpen: seizoensmails en een controle-mail, op Arno's besluit.
