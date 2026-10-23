@@ -185,6 +185,38 @@ export default async function AdminStatusPage() {
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
         <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Status</h1>
 
+        {/* Betalen en facturen: koppelingen met Mollie en Moneybird (live check, alleen lezen) */}
+        {koppelingen.length > 0 && (
+          <>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BETALEN EN FACTUREN</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 40 }}>
+              {koppelingen.map(k => (
+                <div key={k.naam} style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: k.regels.length > 0 ? 12 : 0 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: koppelingKleur(k.niveau), flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', fontWeight: 700 }}>{k.naam}</span>
+                    <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>{k.beschrijving}</span>
+                    <a href={k.link} target="_blank" rel="noopener noreferrer"
+                      style={{ marginLeft: 'auto', fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', textDecoration: 'none', letterSpacing: 2, flexShrink: 0 }}>
+                      DASHBOARD →
+                    </a>
+                  </div>
+                  {k.regels.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 18 }}>
+                      {k.regels.map(r => (
+                        <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#374151', flexShrink: 0 }} />
+                          <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#9ca3af' }}>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <LinkedInFallbackToggle initialEnabled={linkedinFallbackEnabled} />
 
         <div style={{ background: '#1f2937', borderRadius: 4, padding: '20px', display: 'flex', gap: 20, alignItems: 'center', marginBottom: 40 }}>
@@ -316,38 +348,6 @@ export default async function AdminStatusPage() {
             </div>
           ))}
         </div>
-
-        {/* Betalen en facturen: koppelingen met Mollie en Moneybird (live check, alleen lezen) */}
-        {koppelingen.length > 0 && (
-          <>
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>BETALEN EN FACTUREN</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 40 }}>
-              {koppelingen.map(k => (
-                <div key={k.naam} style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: k.regels.length > 0 ? 12 : 0 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: koppelingKleur(k.niveau), flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', fontWeight: 700 }}>{k.naam}</span>
-                    <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>{k.beschrijving}</span>
-                    <a href={k.link} target="_blank" rel="noopener noreferrer"
-                      style={{ marginLeft: 'auto', fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', textDecoration: 'none', letterSpacing: 2, flexShrink: 0 }}>
-                      DASHBOARD →
-                    </a>
-                  </div>
-                  {k.regels.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 18 }}>
-                      {k.regels.map(r => (
-                        <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#374151', flexShrink: 0 }} />
-                          <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#9ca3af' }}>{r}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
 
       </div>
     </main>
