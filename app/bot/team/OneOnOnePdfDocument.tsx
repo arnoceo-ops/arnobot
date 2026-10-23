@@ -20,6 +20,7 @@ interface OneOnOnePdfProps {
 const C = {
   bg: '#111827', cream: '#f1f5f9', orange: '#f59e0b', subtle: '#1f2937',
   white: '#ffffff', dark: '#3d3935', mid: '#8c8480', line: '#ddd8d0',
+  navy: '#111827', tile: '#f1f5f9',
 }
 
 // react-pdf herhaalt de padding van <Page> zelf betrouwbaar op elke automatisch gegenereerde
@@ -27,29 +28,29 @@ const C = {
 // (leidde live tot: content zonder gereserveerde ruimte tegen de vaste footer aan botste,
 // zie commit 8655444d die dit al eerder oploste in TeamPdfDocument.tsx). Daarom marge op
 // Page-niveau, met cover die er via een negatieve marge aan ontsnapt om full-bleed te blijven.
-const PAGE_TOP = 44, PAGE_BOTTOM = 50
+const PAGE_TOP = 40, PAGE_BOTTOM = 50
 
 const s = StyleSheet.create({
   page: { fontFamily: 'Space Mono', paddingTop: PAGE_TOP, paddingBottom: PAGE_BOTTOM },
-  cover: { backgroundColor: C.bg, padding: '40 44', marginTop: -PAGE_TOP, fontFamily: 'Space Mono' },
-  brandRow: { flexDirection: 'row', marginBottom: 32 },
-  brandArno: { color: C.cream, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
-  brandBot: { color: C.orange, fontSize: 16, fontFamily: 'Bebas Neue', letterSpacing: 3 },
-  label: { color: C.orange, fontSize: 8, letterSpacing: 3, marginBottom: 8 },
-  title: { fontSize: 34, color: C.cream, fontFamily: 'Bebas Neue', marginBottom: 4 },
-  sub: { color: C.cream, fontSize: 9, opacity: 0.4, marginBottom: 24 },
-  divider: { height: 1, backgroundColor: C.subtle, marginBottom: 20 },
-  scoresRow: { flexDirection: 'row', gap: 16 },
-  scoreCell: { flex: 1, backgroundColor: C.subtle, padding: '12 14', borderRadius: 2 },
-  scoreLabel: { color: C.orange, fontSize: 7, letterSpacing: 2, marginBottom: 6 },
-  scoreValue: { color: C.cream, fontSize: 26, fontFamily: 'Bebas Neue' },
-  body: { backgroundColor: C.white, padding: '20 44 0 44', fontFamily: 'Space Mono' },
-  groupLabel: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 8, marginTop: 20 },
-  groupLabelFirst: { fontSize: 8, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 2, marginBottom: 8 },
-  paragraph: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, marginBottom: 4 },
+  cover: { padding: '0 44', fontFamily: 'Space Mono' },
+  brandRow: { flexDirection: 'row', marginBottom: 6 },
+  brandArno: { color: C.navy, fontSize: 18, fontFamily: 'Bebas Neue', letterSpacing: 4 },
+  brandBot: { color: C.orange, fontSize: 18, fontFamily: 'Bebas Neue', letterSpacing: 4 },
+  label: { color: C.orange, fontSize: 9, letterSpacing: 3, marginBottom: 4 },
+  title: { fontSize: 38, color: C.navy, fontFamily: 'Bebas Neue', letterSpacing: 2, marginBottom: 6 },
+  sub: { color: C.mid, fontSize: 9.5, marginBottom: 14 },
+  divider: { height: 1.5, backgroundColor: C.orange, marginBottom: 22 },
+  scoresRow: { flexDirection: 'row', gap: 2 },
+  scoreCell: { flex: 1, backgroundColor: C.tile, padding: '14 12', alignItems: 'center' },
+  scoreLabel: { color: C.orange, fontSize: 8.5, letterSpacing: 4, marginBottom: 6 },
+  scoreValue: { color: C.navy, fontSize: 32, fontFamily: 'Bebas Neue' },
+  body: { backgroundColor: C.white, padding: '22 44 0 44', fontFamily: 'Space Mono' },
+  groupLabel: { fontSize: 9, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 3, marginBottom: 9, marginTop: 20 },
+  groupLabelFirst: { fontSize: 9, color: C.orange, fontFamily: 'Space Mono', letterSpacing: 3, marginBottom: 9 },
+  paragraph: { fontSize: 10.5, color: C.dark, lineHeight: 1.8, marginBottom: 4 },
   notitieBox: { marginTop: 24, borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 16 },
   notitieLabel: { fontSize: 8, color: C.mid, letterSpacing: 2, marginBottom: 6 },
-  notitieText: { fontSize: 9.5, color: C.dark, lineHeight: 1.7, fontFamily: 'Space Mono' },
+  notitieText: { fontSize: 10.5, color: C.dark, lineHeight: 1.8, fontFamily: 'Space Mono' },
   actieStatus: { fontSize: 8.5, fontFamily: 'Space Mono', letterSpacing: 1, marginTop: 4, marginBottom: 4 },
   footer: { position: 'absolute', bottom: 20, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { color: C.mid, fontSize: 6.5, letterSpacing: 1, opacity: 0.6 },
@@ -100,8 +101,8 @@ export function OneOnOnePdfDocument({ naam, datum, agenda, notitie, actie, actie
             <Text style={s.brandArno}>ARNO</Text>
             <Text style={s.brandBot}>BOT</Text>
           </View>
-          <Text style={s.label}>1:1 AGENDA</Text>
           <Text style={s.title}>{naam}</Text>
+          <Text style={s.label}>1:1 AGENDA</Text>
           <Text style={s.sub}>{formatDatum(datum)}</Text>
           <View style={s.divider} />
           {scores.some(sc => sc.value !== null) && (
@@ -133,7 +134,7 @@ export function OneOnOnePdfDocument({ naam, datum, agenda, notitie, actie, actie
 
           {sections.map((sec, i) => (
             <View key={i}>
-              {sec.heading ? <Text style={i === 0 && !actie ? s.groupLabelFirst : s.groupLabel}>{sec.heading}</Text> : null}
+              {sec.heading ? <Text minPresenceAhead={50} style={i === 0 && !actie ? s.groupLabelFirst : s.groupLabel}>{sec.heading}</Text> : null}
               {sec.lines.map((line, j) => (
                 <Text key={j} style={s.paragraph}>{line}</Text>
               ))}
