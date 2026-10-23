@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 // Balk onderin: de proefperiode loopt bijna af. Zelfde opzet en stijl als VersionBanner. Alleen
 // voor wie nog in de proefperiode zit zonder betaling (server bepaalt dat in /api/bot/trial-status),
-// vanaf 5 dagen ervoor. Zichtbaar op elke /bot-pagina, behalve op de afrekenpagina zelf.
+// vanaf 5 dagen ervoor. Alleen zichtbaar op de hoofdpagina /bot.
 // Bekijken zonder op dag 25 te zitten: voeg ?trialbalk=5 (1 tot en met 5) aan een /bot-adres toe.
 // Dat is puur visueel, het geeft niemand iets en wijzigt niets, en toont de balk ook als je hem
 // eerder weggeklikt had.
@@ -38,7 +38,7 @@ export default function TrialBalk() {
 
   // Pas zichtbaar als het antwoord er is (dagenOver start op null), dus geen flits van een
   // balk voor iemand die hem niet hoort te zien.
-  const zichtbaar = dagenOver !== null && !gesloten && pathname !== '/bot/doorgaan'
+  const zichtbaar = dagenOver !== null && !gesloten && pathname === '/bot'
 
   // Geef de pagina onderaan evenveel ruimte als de balk hoog is, zodat de laatste regel inhoud
   // niet achter de vaste balk verdwijnt. Weer ongedaan zodra de balk weg is.
@@ -61,9 +61,7 @@ export default function TrialBalk() {
         .trialbalk-tekst { padding: 0 8px; }
         @media (max-width: 700px) { .trialbalk-tekst { padding: 0 64px 0 8px; } }
       `}</style>
-      <div ref={balkRef} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', padding: '0 clamp(20px,4vw,32px) clamp(14px,2vw,18px)' }}>
-        {/* Amber lijn kolombreed (650px, de kolom van de hoofdpagina), niet schermbreed. */}
-        <div style={{ maxWidth: 650, margin: '0 auto', borderTop: '2px solid #f59e0b', marginBottom: 'clamp(14px,2vw,18px)' }} />
+      <div ref={balkRef} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', padding: 'clamp(14px,2vw,18px) clamp(20px,4vw,32px)' }}>
         <button
           onClick={() => { setGesloten(true); try { sessionStorage.setItem(SLUIT_KEY, '1') } catch { /* niet erg */ } }}
           aria-label="Sluiten"
