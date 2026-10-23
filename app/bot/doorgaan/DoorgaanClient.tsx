@@ -239,7 +239,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
 
         <p style={label}>Abonnement</p>
         <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 16 }}>
-          {eerderBetaald || abonnement ? 'Verlengen.' : 'Doorgaan met ArnoBot.'}
+          {eerderBetaald || abonnement ? 'Verlengen.' : 'Ga door met ArnoBot.'}
         </h1>
 
         {status === 'already_paid' && (
