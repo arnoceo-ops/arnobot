@@ -16,7 +16,7 @@ Het is geen generieke AI-assistent met een sales-laagje. Het is gebouwd op de ei
 - **Live URL:** https://arno.bot
 - **Bedrijf:** ArnoBot, eenmanszaak (KvK 42184446)
 - **Oprichter:** Arno Diepeveen
-- **Bezoekadres:** Verdunplein 17 C3880, 5627 SZ Eindhoven, Nederland
+- **Bezoekadres:** Verdunplein 17, 5627 SZ Eindhoven, Nederland
 
 ---
 
