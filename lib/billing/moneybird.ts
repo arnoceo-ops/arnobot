@@ -52,6 +52,8 @@ export interface FactuurKlant {
   kvk?: string | null
   btw?: string | null
   adres?: { straat: string; postcode: string; plaats: string } | null
+  /** Particulier: bij het bijwerken van een bestaand contact worden bedrijfsgegevens leeggemaakt. */
+  particulier?: boolean
 }
 
 export function bouwContactBody(k: FactuurKlant) {
@@ -131,12 +133,33 @@ interface MbInvoice { id: string; invoice_id?: string | null; state?: string }
 interface MbTaxRate { id: string; percentage: string }
 
 /** Zoekt het contact op onze eigen gebruikers-id, of maakt het aan. */
+/**
+ * Body om een bestaand contact bij te werken. Voor een particulier worden bedrijfsnaam, KvK, btw-
+ * en adresgegevens leeggemaakt: een contact dat eerder zakelijk afrekende hield die gegevens
+ * anders op een latere particuliere factuur ("TEST BV" op een testfactuur, 2026-10-23).
+ */
+export function bouwContactWijziging(k: FactuurKlant) {
+  const body = bouwContactBody(k)
+  if (!k.particulier) return body
+  return {
+    contact: {
+      ...body.contact,
+      company_name: '',
+      chamber_of_commerce: '',
+      tax_number: '',
+      address1: '',
+      zipcode: '',
+      city: '',
+    },
+  }
+}
+
 export async function zoekOfMaakContact(k: FactuurKlant): Promise<string> {
   try {
     const bestaand = await mb<MbContact>(`/contacts/customer_id/${encodeURIComponent(k.userId)}.json`)
     // Gegevens kunnen sinds de vorige betaling zijn veranderd (adres, bedrijf): bijwerken.
-    if (k.adres || k.bedrijfsnaam) {
-      await mb(`/contacts/${bestaand.id}.json`, { method: 'PATCH', body: bouwContactBody(k) })
+    if (k.adres || k.bedrijfsnaam || k.particulier) {
+      await mb(`/contacts/${bestaand.id}.json`, { method: 'PATCH', body: bouwContactWijziging(k) })
     }
     return bestaand.id
   } catch (e) {

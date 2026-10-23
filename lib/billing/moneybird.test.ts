@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bouwContactBody, bouwFactuurBody, creditMailTekst, factuurMailTekst } from './moneybird'
+import { bouwContactBody, bouwContactWijziging, bouwFactuurBody, creditMailTekst, factuurMailTekst } from './moneybird'
 
 const basis = {
   contactId: '123',
@@ -85,5 +85,23 @@ describe('Moneybird mailtekst', () => {
   })
   it('bewaart de factuurnummer-tag', () => {
     expect(factuurMailTekst('Sanne')).toContain('{document.invoice_id}')
+  })
+})
+
+describe('Moneybird contact bijwerken', () => {
+  const klant = { userId: 'user_1', email: 'a@b.nl', naam: 'Anna de Vries' }
+  it('maakt voor een particulier bedrijfs-, KvK-, btw- en adresgegevens leeg', () => {
+    const c = bouwContactWijziging({ ...klant, particulier: true }).contact
+    expect(c.company_name).toBe('')
+    expect(c.chamber_of_commerce).toBe('')
+    expect(c.tax_number).toBe('')
+    expect(c.address1).toBe('')
+    expect(c.zipcode).toBe('')
+    expect(c.city).toBe('')
+    expect(c.email).toBe('a@b.nl')
+  })
+  it('laat een zakelijke klant zoals bouwContactBody', () => {
+    const zakelijk = { ...klant, bedrijfsnaam: 'Voorbeeld BV', kvk: '12345678', btw: 'NL123456789B01', adres: { straat: 'Straat 1', postcode: '1234AB', plaats: 'Stad' } }
+    expect(bouwContactWijziging(zakelijk)).toEqual(bouwContactBody(zakelijk))
   })
 })

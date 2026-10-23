@@ -73,6 +73,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       kvk: klant?.kvk_nummer,
       btw: klant?.btw_nummer,
       adres: klant?.straat && klant.postcode && klant.plaats ? { straat: klant.straat, postcode: klant.postcode, plaats: klant.plaats } : null,
+      particulier: sub.klant_type === 'particulier',
     })
 
     const betaaldOp = rij.betaald_at ? new Date(rij.betaald_at) : new Date()
