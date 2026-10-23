@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { buildEenOpEenSystemPrompt, agendaVerwijstGoed } from '@/lib/teamEenOpEenPrompt'
+import { stripEmphasisAccents } from '@/lib/accenten'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -146,6 +147,7 @@ export async function POST(req: NextRequest) {
     if (tekst) agenda = tekst
     if (tekst && agendaVerwijstGoed(tekst)) break
   }
+  agenda = stripEmphasisAccents(agenda)
   const aandachtspunt = extractAandachtspunt(agenda)
 
   return NextResponse.json({ agenda, aandachtspunt })
