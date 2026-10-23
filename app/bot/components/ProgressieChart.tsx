@@ -165,6 +165,12 @@ export function ProgressieChart({ history, series = MSA_SERIES }: { history: Sco
               month: maandNaam(m.yearMonth as string),
               value: m[s.key as string] as number,
             }))
+          // Laatste punt = de meest recente score zelf, zodat het getal naast de grafiek
+          // overeenkomt met de score in het document. Eerdere maanden blijven gemiddelden.
+          const laatste = filtered
+            .filter(h => h[s.key] != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+          if (laatste && points.length > 0) points[points.length - 1].value = laatste[s.key] as number
           return <MiniChart key={s.key as string} points={points} label={s.label} color={s.color} />
         })}
       </div>
