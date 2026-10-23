@@ -1,6 +1,7 @@
 ﻿import { clerkMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { beslisZonderToegang, datumToegang } from '@/lib/toegang'
 
 function buildCSP(nonce: string, allowWasm = false): string {
   // Een pk_test_-sleutel betekent altijd de Clerk development-instance (bijv. lokaal
@@ -279,27 +280,25 @@ export default clerkMiddleware(async (auth, req) => {
       }
     }
 
-    if (!user || user.is_active === false) {
+    // Geen gebruikersrij: terug naar inloggen (de aanmaak hierboven is mislukt).
+    if (!user) {
       return NextResponse.redirect(new URL('/sign-in', req.url))
     }
 
-    // Een gezette expires_at is altijd bindend, ook voor betalende gebruikers: dat is
-    // hoe de admin een betaalde periode of een handmatige einddatum begrenst. Alleen
-    // paid_at zonder expires_at = onbeperkte toegang.
-    const expiresOk = (raw: string) => {
-      const exp = new Date(raw)
-      return !isNaN(exp.getTime()) && exp > new Date()
+    // Wie geen actieve toegang heeft (trial of abonnement afgelopen, gedeactiveerd, terugbetaald)
+    // mag wel afrekenen, een tweede trial starten en het account bekijken (zie lib/toegang.ts),
+    // en wordt voor alle andere pagina's naar /bot/doorgaan gestuurd. Vroeger ging dit naar
+    // /sign-in, dat ingelogden weer naar /bot stuurt: een redirect-loop waardoor de pagina's
+    // voor afrekenen en herstart voor gedeactiveerde gebruikers onbereikbaar waren (de
+    // winback-mail linkte erheen). Betalen zet is_active weer aan, dus deze route terug naar
+    // toegang blijft altijd open.
+    const zonderToegang = () => {
+      const b = beslisZonderToegang(path)
+      return b.actie === 'door' ? nextWithNonce() : NextResponse.redirect(new URL(b.naar, req.url))
     }
-    let toegestaan = false
-    if (user.expires_at) {
-      if (expiresOk(user.expires_at)) toegestaan = true
-    } else if (user.paid_at) {
-      toegestaan = true
-    } else if (user.trial_start) {
-      const trialStart = new Date(user.trial_start)
-      const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
-      if (new Date() < trialEnd) toegestaan = true
-    }
+    if (user.is_active === false) return zonderToegang()
+
+    let toegestaan = datumToegang(user)
 
     // Team-toegang is nooit tijdgebonden aan de eigen trial_start: een teamlid/-manager
     // betaalt niet zelf, dus mag nooit automatisch verlopen na 30 dagen (2026-08-24-fix,
@@ -336,13 +335,7 @@ export default clerkMiddleware(async (auth, req) => {
       }
     }
 
-    if (!toegestaan) {
-      // Wie geen toegang meer heeft (trial of abonnement afgelopen, of terugbetaald) moet wel op
-      // /bot/doorgaan kunnen komen om opnieuw af te rekenen of te verlengen. Dat is de enige
-      // uitzondering: de data-API's blijven los daarvan op auth() en eigen checks leunen.
-      if (path === '/bot/doorgaan') return nextWithNonce()
-      return NextResponse.redirect(new URL('/sign-in', req.url))
-    }
+    if (!toegestaan) return zonderToegang()
 
     const onboarding_done = (user as any).onboarding_done as boolean | null
 
