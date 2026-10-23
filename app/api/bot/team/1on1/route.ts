@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_JIJ_JOU } from '@/lib/systemPrompt'
+import { buildEenOpEenSystemPrompt, agendaVerwijstGoed } from '@/lib/teamEenOpEenPrompt'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -130,52 +130,22 @@ export async function POST(req: NextRequest) {
 
   const context = lines.join('\n')
 
-  const historyInstruction = history.length > 0
-    ? '\nEr zijn eerdere 1:1-gesprekken. Benoem expliciet of het aandachtspunt van de vorige keer is verbeterd, gelijk gebleven of verslechterd. Als hetzelfde thema terugkomt, benoem dat dan ook.'
-    : ''
+  const systemPrompt = buildEenOpEenSystemPrompt(history.length > 0, sessies.length > 0)
 
-  const sessiesInstruction = sessies.length > 0
-    ? '\nEr zijn recente gesprekken met ArnoBot beschikbaar. Gebruik die actief: wanneer een sessie een concreet thema, actie of voornemen bevatte dat daarna niet meer teruggekomen is, zet dat dan in VRAGEN OM TE STELLEN. Schrijf het als een echte vraag, niet als template. Bijv.: "Je had het X dagen geleden over [thema]. Hoe is dat gegaan?"'
-    : ''
-
-  const systemPrompt = `Je bent een sales management coach die managers helpt om betere 1:1-gesprekken te voeren met hun verkopers. Je werkt uitsluitend op basis van het coachingprofiel dat je krijgt aangeleverd. Je ziet nooit ruwe gesprekken of klantnamen.${historyInstruction}${sessiesInstruction}
-
-Schrijf een concrete 1:1-agenda voor de manager. Gebruik precies deze structuur en koppen:
-
-WAT GAAT GOED
-Noem één of twee concrete sterke punten op basis van de scores en diagnoses. Wees specifiek, geen lege complimenten.
-
-AANDACHTSPUNT
-Het voornaamste groeithema dit gesprek. Koppel het aan de laagste score of het patroon in de analyse. Één aandachtspunt, niet meerdere.
-
-ARNO ADVISEERT
-Geef concrete instructies voor de manager: welke vragen stelt hij letterlijk, en welk gedrag observeert hij actief in dit gesprek. Schrijf dit als directe coaching aan de manager. Niet als twee aparte blokken, maar als één samenhangende aanbeveling van maximaal vijf zinnen.
-
-Schrijf in jij-vorm gericht aan de manager. Geen inleiding, geen samenvatting achteraf. Direct beginnen met de eerste kop. Zorg dat alle drie de secties altijd volledig aanwezig zijn.
-Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
-Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó, dít, én). Gebruik het woord "moeten" niet; gebruik alternatieven als "kun je", "wil je", "loont het om".
-Gebruik bij gedragspatronen altijd hedging-taal: "lijkt", "heeft de neiging tot", "geeft de indruk van". Noem nooit percentages of specifieke getallen die je niet direct kunt afleiden uit de aangeleverde data. Formuleer gedragsobservaties als iets wat de manager in het gesprek kan verifiëren en bespreken met het lid, niet als vaststaand feit. Niet: "ze neemt te veel spreektijd." Wel: "Het is de moeite waard om in dit gesprek te checken hoeveel ruimte ze neemt om te praten versus te luisteren."
-
-${RULE_JIJ_JOU}
-
-${RULE_NO_TIME_PRESSURE}
-
-${RULE_ENGLISH_TERMS}
-
-${RULE_NO_CRUDE_LANGUAGE}
-
-${RULE_NEVER_BREAK_CHARACTER}
-
-${RULE_NO_INVENTED_DETAILS}`
-
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: context }],
-  })
-
-  const agenda = getText(response.content)
+  // Maximaal twee pogingen: bij een agenda die het teamlid met je/jij aanspreekt of met hij/zij
+  // aanduidt volgt een tweede poging, daarna geldt het laatste antwoord als het niet leeg is.
+  let agenda = ''
+  for (let poging = 0; poging < 2; poging++) {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: context }],
+    })
+    const tekst = getText(response.content)
+    if (tekst) agenda = tekst
+    if (tekst && agendaVerwijstGoed(tekst)) break
+  }
   const aandachtspunt = extractAandachtspunt(agenda)
 
   return NextResponse.json({ agenda, aandachtspunt })
