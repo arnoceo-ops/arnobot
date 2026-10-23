@@ -169,14 +169,14 @@ describe('btw- en kvk-nummer', () => {
 
 describe('postcode', () => {
   it('normaliseert een Nederlandse postcode', () => {
-    expect(normaliseerPostcode('3511al')).toBe('3511 AL')
-    expect(normaliseerPostcode('3511 AL')).toBe('3511 AL')
+    expect(normaliseerPostcode('5627sz')).toBe('5627 SZ')
+    expect(normaliseerPostcode('5627 SZ')).toBe('5627 SZ')
     expect(normaliseerPostcode(' 1012 ab ')).toBe('1012 AB')
   })
   it('weigert ongeldige postcodes', () => {
     expect(normaliseerPostcode('0123 AB')).toBeNull()
-    expect(normaliseerPostcode('3511')).toBeNull()
-    expect(normaliseerPostcode('35112AL')).toBeNull()
+    expect(normaliseerPostcode('5627')).toBeNull()
+    expect(normaliseerPostcode('56272SZ')).toBeNull()
     expect(normaliseerPostcode('')).toBeNull()
   })
 })
