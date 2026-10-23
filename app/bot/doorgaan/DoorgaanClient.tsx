@@ -59,6 +59,9 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
   // False als de toegang al is afgelopen (anders loopt de proefperiode nog). Zet in dezelfde
   // fetch als `status`, en de pagina rendert pas na die fetch, dus geen flits van de verkeerde tekst.
   const [toegangActief, setToegangActief] = useState(true)
+  // Einde van de proefperiode (ISO) als die nog loopt, voor de zin op de afrekenstap. Zelfde fetch
+  // als `status`, de pagina rendert pas daarna.
+  const [trialEindeDatum, setTrialEindeDatum] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -100,6 +103,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
       .then(d => {
         setEerderBetaald(!!d.paid_at)
         setToegangActief(d.toegang_actief !== false)
+        setTrialEindeDatum(typeof d.trial_einde === 'string' ? d.trial_einde : null)
         // Alleen "actief" als er betaald is en de toegang niet is verlopen (afgelopen of
         // terugbetaald): zo kan iemand na afloop gewoon opnieuw afrekenen.
         if (d.paid_at && !(d.expires_at && new Date(d.expires_at) < new Date())) setStatus('already_paid')
@@ -389,6 +393,12 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   </>
                 )}
               </div>
+
+              {trialEindeDatum && (
+                <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5 }}>
+                  Je abonnement gaat in op {new Date(trialEindeDatum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Dat betekent dat je de volledige proefperiode behoudt.
+                </p>
+              )}
 
               <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5 }}>
                 {afspraak} {klantType === 'particulier' ? 'Als particulier heb je 14 dagen bedenktijd na je eerste betaling.' : ''}

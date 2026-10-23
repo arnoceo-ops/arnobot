@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailHtml } from '@/lib/email-templates'
 import { isTeamCovered } from '@/lib/teamAccess'
-import { datumToegang } from '@/lib/toegang'
+import { datumToegang, trialEinde } from '@/lib/toegang'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,5 +82,8 @@ export async function GET() {
     expires_at: data?.expires_at ?? null,
     plan: data?.plan ?? null,
     toegang_actief: toegangActief,
+    // Einde van de proefperiode als die nog loopt: een abonnement dat nu wordt afgesloten gaat
+    // dan pas op dat moment in (lib/billing/verwerking.ts), de afrekenpagina toont die datum.
+    trial_einde: data && data.is_active !== false ? (trialEinde(data)?.toISOString() ?? null) : null,
   })
 }
