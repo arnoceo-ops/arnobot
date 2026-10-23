@@ -36,25 +36,25 @@ export default function TrialBalk() {
   // balk voor iemand die hem niet hoort te zien.
   if (dagenOver === null || gesloten || pathname === '/bot/doorgaan') return null
 
-  const tekst = dagenOver === 1
-    ? 'Je gratis proefperiode loopt vandaag af. Kies je abonnement om door te gaan.'
-    : `Je gratis proefperiode loopt over ${dagenOver} dagen af. Kies je abonnement om door te gaan.`
+  const regel1 = dagenOver === 1
+    ? 'Je gratis proefperiode loopt vandaag af.'
+    : `Je gratis proefperiode loopt over ${dagenOver} dagen af.`
+  const regel2 = 'Kies je abonnement om door te gaan.'
 
   return (
-    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', borderTop: '2px solid #f59e0b', padding: 'clamp(12px,2vw,16px) clamp(20px,4vw,32px)' }}>
-      <div style={{ maxWidth: 812, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>{tekst}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <a
-            href="/bot/doorgaan"
-            style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
-          >GA DOOR →</a>
-          <button
-            onClick={() => { setGesloten(true); try { sessionStorage.setItem(SLUIT_KEY, '1') } catch { /* niet erg */ } }}
-            style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
-            aria-label="Sluiten"
-          >×</button>
-        </div>
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', borderTop: '2px solid #f59e0b', padding: 'clamp(14px,2vw,18px) clamp(20px,4vw,32px)' }}>
+      <button
+        onClick={() => { setGesloten(true); try { sessionStorage.setItem(SLUIT_KEY, '1') } catch { /* niet erg */ } }}
+        style={{ position: 'absolute', top: 10, right: 'clamp(12px,2vw,20px)', fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+        aria-label="Sluiten"
+      >×</button>
+      <div style={{ maxWidth: 812, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>{regel1}</span>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>{regel2}</span>
+        <a
+          href="/bot/doorgaan"
+          style={{ marginTop: 6, fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}
+        >GA DOOR →</a>
       </div>
     </div>
   )
