@@ -33,6 +33,8 @@ Voor managers bestaat een teammodule: zij zien de voortgang van hun verkopers en
 ### 3.1 Het hoofdgesprek
 De basisinteractie: een doorlopend chatgesprek met ArnoBot over sales-onderwerpen. Reageert met vragen, spiegelt terug, verwijst waar relevant naar Arno's eigen kennisbank (blogartikelen, video's) via een zoekmechanisme op de achtergrond. Antwoordlengte instelbaar (kort/normaal/uitgebreid, sinds 2026-09-15 is "uitgebreid" Pro-only: Basic-gebruikers zien de knop met een PRO-badge en een upsell naar /bot/doorgaan). Documentupload mogelijk voor gebruikers die een concreet document (bijv. een offerte) willen laten meekijken.
 
+**Eigen plannen: harde grens (nieuw, 22 oktober 2026).** ArnoBot schrijft geen volledig plan, presentatie of rapport voor de gebruiker uit of om. Een plan dat ArnoBot schrijft is niet van de gebruiker, en eigenaarschap bepaalt of het wordt uitgevoerd. ArnoBot is een coach, geen taalmodel dat output voorschotelt. In plaats daarvan weigert het kort, legt het waarom uit en stelt het vragen: hoeveel komt van jou zelf, is het plan bedoeld om te groeien of om goedgekeurd te worden, hoeveel van de plannen van de afgelopen drie jaar zijn gehaald, bleef het vorige plan levend. Daarna geeft het input op de zwakste punten en kan het per onderdeel een voorstel doen, alleen op verzoek en nooit het hele plan. De taal is rolbewust: Mindset, Systeem en Actie voor verkopers en solopreneurs, Strategy, People en Execution voor leidinggevenden en CEO/DGA. Een mening of feedback op een plan mag wel. Mails, brieven en scripts naar klanten vallen hier niet onder (ArnoBot onderzoekt eerst wat je ermee wilt bereiken). Wat de gebruiker over eigen plannen vertelt wordt als feit onthouden en gebruikt in analyses en coaching. Bij een gewone adviesvraag kiest ArnoBot één richting in plaats van een draaiboek voor elke situatie, en vraagt het door als het advies van jouw situatie afhangt. Wordt een lang antwoord door de lengtegrens afgekapt, dan gaat het automatisch verder waar het stopte.
+
 ### 3.2 Geheugen over gesprekken heen (kern-differentiator)
 Dit is het meest technisch uitgebreide onderdeel van het product en vandaag (12 augustus 2026) nog verder uitgebouwd. Drie, inmiddels vier lagen:
 
@@ -54,6 +56,8 @@ Een live oefengesprek tegen een AI-tegenstander: een lastige prospect, een scept
 
 ### 3.5 Analyses
 Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyses over patronen in meerdere gesprekken. Sessies kunnen gedeeld worden via een link (bijv. met een coach), en individuele gesprekken of analyses kunnen verwijderd worden.
+
+Sinds 22 oktober 2026: de analyse ziet alleen wat in de gesprekken staat en beweert niets over wat de gebruiker daarbuiten doet. Voor een handmatige analyse kan de gebruiker optioneel vertellen wat die buiten ArnoBot heeft gedaan, en onder elke geopende analyse staat "Mist er iets?": daar voegt de gebruiker dat achteraf toe, waarna een aanvulling op de analyse verschijnt (privé, niet zichtbaar voor de manager bij delen). De analyse gebruikt ook de eigen antwoorden op "is de vorige actie gedaan" en wat de gebruiker over eigen plannen vertelde. De mail "Je analyses zijn bijgewerkt" opent direct de nieuwste analyse, ook na inloggen.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)
 Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI Whisper) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
@@ -135,7 +139,7 @@ Geen van deze leveranciers traint op klantdata, dit is expliciet vastgelegd en g
 
 Voor een eerlijke, geloofwaardige presentatie, geen enkele van deze als bestaand kenmerk noemen:
 
-- **Nog geen geautomatiseerde betaalverwerking.** Alles loopt via handmatige facturatie/registratie door Arno zelf.
+- **Online betalen staat nog niet open voor gebruikers.** Betalen via Mollie en facturen via Moneybird zijn gebouwd en in testmodus end-to-end getest, maar de livesleutel is nog niet gewisseld. Tot die tijd loopt het afrekenen voor gebruikers via handmatige facturatie en registratie door Arno zelf.
 - **Nog geen iOS-app.** Een Android-app (Capacitor) is in aanbouw en al aangekondigd op de prijzenpagina, iPhone nog niet.
 - **Nog geen herhaalbare maandelijkse boeking voor Team-Elite-teamleden** (momenteel technisch maar één boeking ooit mogelijk).
 - **Elite Member Community** (later mogelijk via Circle): nog niet gebouwd, bewust achteraan gepland.

@@ -5,6 +5,36 @@
 
 **Bewust weggelaten:** de Android-app, plus alles wat puur op de betaalprovider-integratie wacht: dunning-flow, voice fase 3 / pricingpagina, sales-agent-omzetmeting en -uitbetaling, herhaalbare Elite-boeking. **De betaalprovider-keuze zelf is genomen (2026-09-02): Stripe voor de hele EU (B2C + B2B), Paddle voor de rest van de wereld, sequentieel. Zie `docs/PAYMENTS_PLAN.md`.**
 
+## Actielijst 2026-10-23 (samengevoegd uit de sessie van 22 en 23 oktober)
+
+Voortgang hier afvinken. Wie: **Arno** of **Claude**.
+
+**Blok 1. Toegang en betaalketen**
+- [ ] **1. Redirect-loop** voor afgelopen en gedeactiveerde gebruikers (`proxy.ts` stuurt naar `/sign-in`, dat stuurt ingelogden terug naar `/bot`). Gedeactiveerde gebruikers bereiken `/bot/doorgaan` en `/bot/herstart` niet, dus de winback-mail werkt niet (Oscar en Charles kregen hem, niemand herstartte). Claude, na akkoord, daarna samen testen. Inlogroute is fragiel: geen speculatieve fixes.
+- [ ] **2. Dag-25-mail belooft meer dan de app doet:** "toegang blijft actief totdat de factuur is voldaan", maar `proxy.ts` kijkt alleen naar `trial_start` plus 30 dagen, niet naar `renewal_requested_at`. Beslissing Arno: tekst aanpassen of toegang laten doorlopen. Dan Claude.
+- [ ] **3. Handmatig betaalden** (gebruikers met `paid_at` zonder Mollie-abonnement): geen bevestigingsmail, geen verlengherinneringen, geen eindemail. Beslissing Arno: oplossen of laten vervallen zodra Mollie live is.
+- [ ] **4. Mailteksten voor de sleutelwissel:** dag 25, betaalwaarschuwing, geblokkeerd en trial afgelopen spreken over een factuur en "mail Arno". Claude, tekst eerst aan Arno.
+
+**Blok 2. Koppelingen Mollie en Moneybird**
+- [ ] **5. Gezondheidscheck:** dagelijkse controle (Mollie-organisatie, Moneybird-administratie, melding via `notifyCronFailure`) plus tegel op `/bot/admin/status`. Claude, na akkoord.
+- [ ] **6. Resterende tests met de testsleutel:** mislukte betaling, vervolgbetaling (herhaalincasso, nog nooit gedraaid: alle 9 testbetalingen zijn "eerste"), zakelijke flow, Team end-to-end. Arno, Claude schrijft de stappen.
+- [ ] **7. Sleutelwissel naar live**, pas na 5 en 6. Zie `docs/MOLLIE_PLAN.md`. Arno.
+
+**Blok 3. Product en gedrag**
+- [ ] **8. Hero-regel op `/bot`:** Arno scherpt de hero aan. Kandidaten: "ArnoBot is je coach, geen schrijfmachine. Hier word je scherper." en "Geen taalmodel dat je werk overneemt. Een coach die je sterker maakt." Niets bouwen zonder akkoord op de exacte tekst.
+- [ ] **9. Spraak op iPhone:** Robel laten testen of de foutmelding nog verschijnt terwijl de tekst al staat (fix `628562dd`). Arno.
+- [ ] **10. Nieuwe chat-regels** (plan-weigering, "één richting") over een paar dagen bekijken in echte gesprekken. Claude, Arno zegt wanneer.
+- [ ] **11. Net gemaakte analyse** toont het veld "Mist er iets?" pas na herladen (de analyse staat dan bovenaan als "NIEUW GEGENEREERD"). Beslissing Arno: laten of aanpassen.
+
+**Blok 4. Opruimen en bijhouden**
+- [x] **12. Documentatie** (`ARNOBOT_OVERZICHT.md`, `TECHNICAL_HANDOVER.md`, PDF's) bijgewerkt voor de analyse-aanvulling, de plan-weigering en de stand van Mollie, 2026-10-23.
+- [ ] **13. `admin_derde_trial`:** mailtype dat nergens wordt verstuurd. Beslissing Arno: verbinden of verwijderen.
+- [ ] **14. Resend-daglimiet van 100** deelt alle mails (trial, billing, blog). Schaalpunt, hoort bij de Pro-milestone, geen actie nu.
+
+**Besloten en niet meer open:** de planmails (Q4, voorjaar, zomer) zijn op 2026-10-22 verworpen. Gekozen: ArnoBot stelt de plan-vragen alleen in het gesprek. Verworpen: seizoensmails en een controle-mail, op Arno's besluit.
+
+---
+
 ## Vóór de commerciële livegang
 
 - (DEELS OPGELOST 2026-10-10: opzegtermijn en bedenktijd live, verlenging volgt) **Abonnementsvoorwaarden juridisch laten nakijken (NL SaaS + consumentenrecht).** `app/voorwaarden/page.tsx` artikel 7 klopt niet voor B2C: de jaarclausule (2 maanden opzegtermijn, anders een jaar erbij) is vermoedelijk nietig onder de Wet Van Dam, en de maandclausule botst met "Maandelijks opzegbaar" op `/prijzen`. Plus: auto-verleng-disclosure in de checkout, 14-dagen-herroepingsrecht-opt-in voor digitale content. Details en richting in `docs/PAYMENTS_PLAN.md` → "Opzegging, verlenging en consumentenrecht".

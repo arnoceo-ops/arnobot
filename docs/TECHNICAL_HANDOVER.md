@@ -216,14 +216,15 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 
 | Route | Doel |
 |---|---|
-| `/api/chat` | Hoofdgesprek met ArnoBot (streaming) |
+| `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de harde grens op het uitschrijven van een volledig plan (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed |
 | `/api/chat-voice` | Voice-variant van het hoofdgesprek (eigen rate limit + plancheck) |
 | `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten) |
 | `/api/bot/sessions` | Ruwe logs groeperen tot sessies, embedding + entiteiten-extractie |
 | `/api/bot/sessions/search` | AI-filter op eigen gesprekken |
 | `/api/bot/session` | Eén sessie ophalen/verwijderen |
 | `/api/bot/coaching` | Coachingrapport genereren (hoofdsynthese) |
-| `/api/bot/coaching-analyse` | Nieuwe analyse genereren voor `/bot/analyses` |
+| `/api/bot/coaching-analyse` | Nieuwe analyse genereren voor `/bot/analyses` (optioneel `context`: wat de gebruiker buiten ArnoBot deed, max 1000 tekens). Prompt en contextblokken in `lib/analyseContext.ts`, gedeeld met de aanvulling en `cron/auto-analyse` |
+| `/api/bot/coaching-analyse/aanvulling` | POST: aanvulling op een bestaande analyse (`analyseId` + `context`), opgeslagen in `arnobot_analyses.aanvulling_*`, max 5 per dag, eigen `user_id`-filter, privé (niet in DEEL MET MANAGER) |
 | `/api/bot/coaching-analyses` | Eerdere analyses ophalen (lijst) |
 | `/api/bot/coaching-precheck` | Check of er genoeg materiaal is voor coaching |
 | `/api/bot/coaching-history` | Coaching-geschiedenis (scores/diagnoses per keer) |
@@ -455,7 +456,7 @@ Sales-sparringsessie-log: persona, weerstand, debrief, message_count, favoriet, 
 Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`session_id` + `interval_dagen`, `UNIQUE`).
 
 ### `arnobot_analyses`
-Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`).
+Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`). Sinds 2026-10-22 ook `aanvulling_context` (wat de gebruiker buiten ArnoBot deed), `aanvulling_tekst` en `aanvulling_at`, migratie `docs/sql/2026-10-22-analyse-aanvulling.sql`.
 
 ### `arnobot_admin_analyses`
 Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot/admin/analyse`. Nooit zichtbaar voor de gebruiker zelf, alleen voor Arno. `generated_count` telt hoe vaak de briefing (opnieuw) gegenereerd is.
