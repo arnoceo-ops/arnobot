@@ -158,10 +158,12 @@ export default function SpeCoachingClient() {
           .msa-score-number { font-size: clamp(36px, 10vw, 64px); }
         }
         .print-only { display: none; }
-        @page { size: portrait; }
+        @page { size: A4 portrait; margin: 14mm 12mm; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { background: #ffffff !important; color: #111827 !important; }
+          html, body { background: #ffffff !important; color: #111827 !important; }
+          .coaching-label { page-break-after: avoid; break-after: avoid; }
+          .coaching-breekbaar { page-break-inside: auto !important; break-inside: auto !important; }
           .no-print { display: none !important; }
           .print-only { display: block !important; }
           h1 { color: #111827 !important; }
@@ -287,7 +289,7 @@ export default function SpeCoachingClient() {
               </div>
             ))}
 
-            <div className="coaching-section">
+            <div className="coaching-section coaching-breekbaar">
               <span className="coaching-label">JOUW ONTWIKKELPUNTEN</span>
               <div style={{ marginTop: 8 }}>
                 {(doc.ontwikkelpunten ?? []).map((p, i) => (
@@ -317,7 +319,7 @@ export default function SpeCoachingClient() {
             )}
 
             {history.length > 0 && (
-              <div className="coaching-section">
+              <div className="coaching-section no-print">
                 <span className="coaching-label">ARCHIEF</span>
                 <div style={{ marginTop: 8 }}>
                   {[...history].reverse().map(h => (
