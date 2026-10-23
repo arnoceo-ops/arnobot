@@ -46,6 +46,12 @@ export async function GET() {
 }
 
 export async function POST() {
+  // Tijd per stap, voor het zoeken naar waar een coaching zijn tijd verliest. Alleen tijden, geen
+  // gebruikersdata: één logregel en een Server-Timing-header (zichtbaar in F12, tabblad Network).
+  const t0 = Date.now()
+  const stappen: Record<string, number> = {}
+  let tLaatste = t0
+  const meet = (naam: string) => { const nu = Date.now(); stappen[naam] = (stappen[naam] ?? 0) + (nu - tLaatste); tLaatste = nu }
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   if (!await checkPremiumAccess(userId)) return NextResponse.json({ error: 'Premium vereist' }, { status: 403 })
@@ -116,6 +122,7 @@ export async function POST() {
       .order('created_at', { ascending: false })
       .limit(8),
   ])
+  meet('gegevens')
 
   const sessions = sessionsRes.data ?? []
   const totalSessionCount = sessionCountRes.count ?? sessions.length
@@ -385,6 +392,7 @@ ${RULE_NO_INVENTED_DETAILS}`
     }]
   }))
 
+  meet('controle')
   let response
   try {
     response = await callModel()
@@ -467,6 +475,8 @@ ${RULE_NO_INVENTED_DETAILS}`
     parsed.actie_richting = r(parsed.actie_score, prev.actie_score)
   }
 
+  meet('document')
+
   type Blog = { title: string; url: string; reden: string }
   const blogs: Blog[] = []
   try {
@@ -540,6 +550,8 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     used_session_ids: sessions.map(s => s.session_id),
     used_analyse_ids: analyses.map(a => a.id),
   }
+
+  meet('blogs')
 
   const { data: existing } = await supabase
     .from('arnobot_coaching')
@@ -618,5 +630,10 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   // binnen (voortgang-gate, 48u+3 gesprekken), dus een cap zou op termijn de nulmeting van
   // een trouwe gebruiker wegknippen. Opslagkosten zijn verwaarloosbaar op deze frequentie.
 
-  return NextResponse.json({ coaching: doc })
+  meet('opslaan')
+  const tijden = { ...stappen, totaal: Date.now() - t0 }
+  console.log('[coaching tijden ms]', JSON.stringify(tijden))
+  return NextResponse.json({ coaching: doc }, {
+    headers: { 'Server-Timing': Object.entries(tijden).map(([naam, ms]) => `${naam};dur=${ms}`).join(', ') },
+  })
 }
