@@ -61,7 +61,9 @@ export default function TrialBalk() {
         .trialbalk-tekst { padding: 0 8px; }
         @media (max-width: 700px) { .trialbalk-tekst { padding: 0 64px 0 8px; } }
       `}</style>
-      <div ref={balkRef} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', borderTop: '2px solid #f59e0b', padding: 'clamp(14px,2vw,18px) clamp(20px,4vw,32px)' }}>
+      <div ref={balkRef} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 149, background: '#1f2937', padding: '0 clamp(20px,4vw,32px) clamp(14px,2vw,18px)' }}>
+        {/* Amber lijn kolombreed (650px, de kolom van de hoofdpagina), niet schermbreed. */}
+        <div style={{ maxWidth: 650, margin: '0 auto', borderTop: '2px solid #f59e0b', marginBottom: 'clamp(14px,2vw,18px)' }} />
         <button
           onClick={() => { setGesloten(true); try { sessionStorage.setItem(SLUIT_KEY, '1') } catch { /* niet erg */ } }}
           aria-label="Sluiten"
