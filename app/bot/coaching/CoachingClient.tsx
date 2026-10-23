@@ -433,11 +433,6 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af', letterSpacing: 1 }}>✓ Advies is actueel</p>
             )}
           </div>
-          {generating && (
-            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, color: '#6b7280', marginTop: 12 }}>
-              Dit kan tot twee minuten duren. Laat deze pagina open.
-            </p>
-          )}
           {!doc && !loading && !blockReason && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: 1.9 }}>
               Arno analyseert je gesprekken op drie pijlers: Mindset, Systeem en Actie. Dit geeft je een indruk waar je staat en wat je het best aan zou kunnen pakken.
