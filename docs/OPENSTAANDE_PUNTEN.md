@@ -16,7 +16,7 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - [ ] **4. Mailteksten voor de sleutelwissel:** dag 25, betaalwaarschuwing, geblokkeerd en trial afgelopen spreken over een factuur en "mail Arno". Claude, tekst eerst aan Arno.
 
 **Blok 2. Koppelingen Mollie en Moneybird**
-- [ ] **5. Gezondheidscheck:** dagelijkse controle (Mollie-organisatie, Moneybird-administratie, melding via `notifyCronFailure`) plus tegel op `/bot/admin/status`. Claude, na akkoord.
+- [x] **5. Gezondheidscheck:** gebouwd en bevestigd 2026-10-23 (`29e8c092`, verplaatst naar bovenaan in `781b5189`). Dagelijkse controle in de billing-cron (05:00 UTC, Telegram bij een fout) en tegel BETALEN EN FACTUREN bovenaan `/bot/admin/status`. Code in `lib/billing/gezondheid.ts`, alleen leesaanroepen. In productie gezien: Mollie "Verbonden, testmodus" (oranje tot de sleutelwissel), Moneybird "Verbonden". Na de sleutelwissel wordt Mollie groen.
 - [ ] **6. Resterende tests met de testsleutel:** mislukte betaling, vervolgbetaling (herhaalincasso, nog nooit gedraaid: alle 9 testbetalingen zijn "eerste"), zakelijke flow, Team end-to-end. Arno, Claude schrijft de stappen.
 - [ ] **7. Sleutelwissel naar live**, pas na 5 en 6. Zie `docs/MOLLIE_PLAN.md`. Arno.
 
