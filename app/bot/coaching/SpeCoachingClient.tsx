@@ -148,6 +148,7 @@ export default function SpeCoachingClient() {
         .generate-btn:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
         .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
         .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
+        .pdf-btn:disabled { cursor: default; color: #6b7280; border-color: #374151; }
 
         .loading-dot { width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; animation: pulse 1.2s ease-in-out infinite; display: inline-block; margin: 0 3px; }
         .loading-dot:nth-child(2) { animation-delay: 0.2s; }
@@ -223,7 +224,7 @@ export default function SpeCoachingClient() {
               ) : doc ? 'NIEUWE ANALYSE →' : 'GENEREER ANALYSE →'}
             </button>
             {doc && (
-              <button className="pdf-btn no-print" onClick={() => window.print()} title="Download deze analyse als PDF">DOWNLOAD PDF ↓</button>
+              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading} title="Download deze analyse als PDF">DOWNLOAD PDF ↓</button>
             )}
           </div>
           {!doc && !loading && !error && (
@@ -242,7 +243,7 @@ export default function SpeCoachingClient() {
         </div>
 
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="loading-dot" />
             <span className="loading-dot" />
             <span className="loading-dot" />

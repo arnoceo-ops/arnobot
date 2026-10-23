@@ -115,6 +115,9 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
+  // PDF-knop pas bruikbaar als alles geladen is (document en scoregeschiedenis), anders komt de
+  // laadindicator mee en ontbreken de grafieken in de afdruk.
+  const [scoresLoaded, setScoresLoaded] = useState(!SCORE_HISTORY_ENABLED)
   const [isPreviewMember, setIsPreviewMember] = useState(false)
   const liveTeamStatus = useTeamStatus()
   // isTeamMember mag hier alleen gebruikt worden als teamStatusLoaded && !teamStatusFailed:
@@ -211,6 +214,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         .then(r => r.json())
         .then(data => setScoreHistory(data.scores ?? []))
         .catch(() => {})
+        .finally(() => setScoresLoaded(true))
     }
 
     const today = new Date().toISOString().slice(0, 10)
@@ -323,6 +327,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         .generate-btn:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
         .pdf-btn { background: none; border: 1px solid #374151; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: #9ca3af; padding: 11px 32px; transition: all 0.2s; border-radius: 999px; min-width: 220px; }
         .pdf-btn:hover { border-color: #6b7280; color: #f1f5f9; }
+        .pdf-btn:disabled { cursor: default; color: #6b7280; border-color: #374151; }
 
         .stat-block { text-align: center; }
         .stat-number { font-family: 'Bebas Neue', sans-serif; font-size: 56px; color: #f59e0b; line-height: 1; }
@@ -421,7 +426,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
               ) : 'COACH ME →'}
             </button>
             {doc && (
-              <button className="pdf-btn no-print" onClick={() => window.print()} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
+              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading || !scoresLoaded} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
             )}
             {isUpToDate && (
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af', letterSpacing: 1 }}>✓ Advies is actueel</p>
@@ -480,7 +485,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         </div>
 
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="loading-dot" />
             <span className="loading-dot" />
             <span className="loading-dot" />
