@@ -74,8 +74,8 @@ export default function TrialBalk() {
           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>{regel1}</span>
           <a
             href="/bot/doorgaan"
-            style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', textDecoration: 'underline', textUnderlineOffset: 4 }}
-          >Kies je abonnement om door te gaan →</a>
+            style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', textDecoration: 'none' }}
+          ><span style={{ color: '#f59e0b' }}>Kies je abonnement</span> om door te gaan →</a>
         </div>
       </div>
     </>
