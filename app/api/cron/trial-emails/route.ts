@@ -184,23 +184,23 @@ export async function GET(req: NextRequest) {
   }
 
   // --- Loop 2: auto-block betaalde gebruikers na opzegging + verstreken expires_at ---
+  // Alleen blokkeren, geen mail: wie opzegt krijgt het juiste bericht ("abonnement afgelopen") van
+  // cron/billing. De mail "je betaling is niet ontvangen" hoort alleen bij een uitgebleven betaling
+  // en kwam hier ten onrechte bij mensen die bewust opzegden (besluit Arno, 2026-10-24).
   const { data: cancelledPaid } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, expires_at')
+    .select('user_id, expires_at')
     .not('paid_at', 'is', null)
     .not('cancelled_at', 'is', null)
     .not('expires_at', 'is', null)
     .eq('is_active', true)
 
   for (const user of cancelledPaid ?? []) {
-    if (!user.email || !user.expires_at) continue
+    if (!user.expires_at) continue
     if (new Date(user.expires_at) > now) continue
-    const naam = user.voornaam || 'daar'
     await supabase.from('approved_users')
       .update({ is_active: false, deactivated_at: now.toISOString() })
       .eq('user_id', user.user_id)
-    const { subject, html } = getEmailTemplate('geblokkeerd', naam)
-    await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
     blocked++
   }
 
