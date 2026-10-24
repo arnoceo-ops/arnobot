@@ -43,11 +43,22 @@ export default function BotNav({ active }: Props) {
   // planLoaded voorkomt niet de vertraging zelf (die zit 'm in de netwerk-fetch), maar zorgt
   // ervoor dat isBouwer nooit ten onrechte "nee" concludeert vóór het antwoord binnen is.
   const [planLoaded, setPlanLoaded] = useState(false)
+  // Zonder actieve toegang (proefperiode of abonnement afgelopen) toont het menu alleen ACCOUNT, SUPPORT en
+  // UITLOGGEN: de andere pagina's sturen toch terug naar /bot/doorgaan. Start op true; het laatst bekende
+  // antwoord staat in sessionStorage zodat het menu bij een volgende pagina niet eerst vol en dan kort verschijnt.
+  const [toegang, setToegang] = useState(true)
 
   useEffect(() => {
+    try { if (sessionStorage.getItem('arnobot_toegang') === 'false') setToegang(false) } catch {}
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => setHeeftTeamPlan(!!d.commandManager))
+      .then(d => {
+        setHeeftTeamPlan(!!d.commandManager)
+        if (typeof d.toegang === 'boolean') {
+          setToegang(d.toegang)
+          try { sessionStorage.setItem('arnobot_toegang', String(d.toegang)) } catch {}
+        }
+      })
       .catch(() => {})
       .finally(() => setPlanLoaded(true))
   }, [])
@@ -84,11 +95,13 @@ export default function BotNav({ active }: Props) {
         </nav>
         {menuOpen && (
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
+            {toegang && <>
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-flow">ARNOBOT</Link>}
             {active === 'archief'  ? <span className="mob-active">ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow">ANALYSES</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-flow">COACHING</Link>}
             {isBouwer && <Link href="/bot/team" className={active === 'team' ? 'mob-active' : 'mob-flow'}>TEAM</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
+            </>}
             {active === 'account'  ? <span className="mob-active">ACCOUNT</span>  : <Link href="/bot/account">ACCOUNT</Link>}
             <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af' }}>SUPPORT</a>
           </div>
@@ -103,6 +116,7 @@ export default function BotNav({ active }: Props) {
       <nav style={navStyle}>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
+          {toegang && <>
           {active === 'bot'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
             : <Link href="/bot" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ARNOBOT</Link>}
@@ -118,6 +132,7 @@ export default function BotNav({ active }: Props) {
           {active === 'qa'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>Q&A</span>
             : <Link href="/bot/qa" style={linkBase}>Q&A</Link>}
+          </>}
           {active === 'account'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ACCOUNT</span>
             : <Link href="/bot/account" style={linkBase}>ACCOUNT</Link>}
