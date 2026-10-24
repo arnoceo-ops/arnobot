@@ -20,10 +20,14 @@ const MAX_VRAGEN = 1000
 const CHUNK = 150
 const MAX_TEKENS_PER_VRAAG = 400
 const MAX_IN_BERICHT = 30
+const MAX_TEKENS_IN_BERICHT = 100
+// De client zet bij de eerste vraag van een sessie deze context voor de vraag (SparClient.tsx).
+const ACTIE_PREFIX = /^\[Actieopvolging vorige sessie:.*?\]\s*/s
 
 const SYSTEEM = `Je krijgt genummerde vragen die gebruikers aan ArnoBot stelden, een AI salescoach voor sales managers.
-Kies de vragen waarin de gebruiker iets wil weten over de app zelf: hoe een knop of functie werkt, wat een functie doet, hoe iets in de app te vinden of te gebruiken is, of een vraag over abonnement, account of de werking van ArnoBot.
-Vragen over sales, leiderschap, coaching of andere inhoud van het werk van de gebruiker horen daar NIET bij.
+Kies alles wat mogelijk over de app zelf gaat: hoe een knop of functie werkt, wat een functie doet, hoe iets te vinden of te gebruiken is, abonnement of account, de vraag of ArnoBot iets kan (bijvoorbeeld een link of bestand lezen, een document maken of herschrijven), en elke wens of elk idee voor een functie.
+Bij twijfel kies je de vraag. Liever te veel dan iets missen.
+Gewone vragen over sales, leiderschap of coaching zonder verband met wat ArnoBot kan of doet horen er niet bij.
 Antwoord met alleen JSON in dit formaat: {"nummers":[1,5]}. Geen toelichting. Is er geen enkele, antwoord dan {"nummers":[]}.
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
@@ -73,7 +77,7 @@ export async function GET(req: NextRequest) {
     const items = (logs ?? [])
       .map(l => ({
         userId: typeof l.user_id === 'string' ? l.user_id : '',
-        vraag: (typeof l.question === 'string' ? l.question.trim() : '').slice(0, MAX_TEKENS_PER_VRAAG),
+        vraag: (typeof l.question === 'string' ? l.question.replace(ACTIE_PREFIX, '').trim() : '').slice(0, MAX_TEKENS_PER_VRAAG),
       }))
       .filter(x => x.vraag.length > 0)
 
@@ -95,17 +99,21 @@ export async function GET(req: NextRequest) {
     if (ids.length > 0) {
       const { data: users } = await supabase
         .from('approved_users')
-        .select('user_id, voornaam, achternaam, email')
+        .select('user_id, voornaam, achternaam')
         .in('user_id', ids)
       for (const u of users ?? []) {
-        naamPerId.set(u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id)
+        naamPerId.set(u.user_id, u.voornaam || u.achternaam || 'Onbekend')
       }
     }
 
     const datum = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long' })
-    const regels = getoond.map((g, i) => `${i + 1}. ${naamPerId.get(g.userId) ?? 'Onbekend'}\n${g.vraag}`)
-    const rest = gevonden.length > MAX_IN_BERICHT ? `\n\nEn nog ${gevonden.length - MAX_IN_BERICHT} andere.` : ''
-    await notifyTelegram(`ARNOBOT PRODUCTVRAGEN · ${datum}\n\n${regels.join('\n\n')}${rest}`)
+    const kort = (v: string) => {
+      const plat = v.replace(/\s+/g, ' ')
+      return plat.length > MAX_TEKENS_IN_BERICHT ? `${plat.slice(0, MAX_TEKENS_IN_BERICHT).trimEnd()}…` : plat
+    }
+    const regels = getoond.map(g => `${naamPerId.get(g.userId) ?? 'Onbekend'}: ${kort(g.vraag)}`)
+    const rest = gevonden.length > MAX_IN_BERICHT ? `\nEn nog ${gevonden.length - MAX_IN_BERICHT}.` : ''
+    await notifyTelegram(`ARNOBOT PRODUCTVRAGEN · ${datum}\n${regels.join('\n')}${rest}`)
 
     return NextResponse.json({ ok: true, productvragen: gevonden.length })
   } catch (err) {
