@@ -21,7 +21,7 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - [ ] **7. Sleutelwissel naar live**, pas na 5 en 6. Zie `docs/MOLLIE_PLAN.md`. Arno.
 
 **Blok 3. Product en gedrag**
-- [ ] **8. Hero-regel op `/bot`:** Arno scherpt de hero aan. Kandidaten: "ArnoBot is je coach, geen schrijfmachine. Hier word je scherper." en "Geen taalmodel dat je werk overneemt. Een coach die je sterker maakt." Niets bouwen zonder akkoord op de exacte tekst.
+- [x] **8. Hero-regel op `/bot`: vervallen (besluit Arno 2026-10-24, "vergeet 8").** Niets bouwen.
 - [x] **9. Spraak op iPhone:** van de lijst gehaald op verzoek van Arno (2026-10-23): Robel komt zelf bij hem terug. Fix `628562dd` staat er al.
 - [ ] **10. Nieuwe chat-regels** (plan-weigering, "één richting") over een paar dagen bekijken in echte gesprekken. Claude, Arno zegt wanneer.
 - [x] **11. De analyse-aanvulling is helemaal weggehaald** 2026-10-24 (besluit Arno): geen veld "Mist er iets?", geen optioneel venster voor het maken van een analyse, de route `coaching-analyse/aanvulling` is verwijderd. Gekozen: gebruikers beïnvloeden de analyse via de opvolg-pop-ups (gedaan, deels, niet gedaan), die de analyse al meeneemt. Verworpen: het veld ook in het blok "Nieuw gegenereerd" zetten, want de behoefte is er niet en het maakt het te complex. De kolommen `aanvulling_*` staan nog in de database. De regel dat de analyse niets beweert over wat buiten de gesprekken gebeurt blijft.
@@ -48,7 +48,7 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - [x] **31. Tijdsaanwijzing in de 1:1-agenda** 2026-10-23: Haiku schreef één keer "volgende week" (tegen de regel "nooit tijdgebonden aanwijzingen"). Nu een vaste controle in `agendaVerwijstGoed` (vandaag, morgen, deze of volgende week, binnen X dagen, enzovoort) met een tweede poging. "Drie weken geleden" valt er niet onder.
 - [x] **32. Testfactuur 2026-0013 gecrediteerd in Moneybird** 2026-10-23 (creditnota 2026-0014, TEST BV, 468,00, op betaald gezet zoals de eerdere testcredits, geen mail). Er bestond geen aparte factuur 2026-0014: dat nummer is nu de creditnota. Alle testfacturen staan nu op nul.
 - [x] **33. Kolommen `aanvulling_*` uit `arnobot_analyses` gehaald** 2026-10-24 (`docs/sql/2026-10-24-analyse-aanvulling-weg.sql`), door Claude gecontroleerd: `aanvulling_context` bestaat niet meer. Testaccount hersteld (actief, `expires_at` 2035).
-- [ ] **14. Resend-daglimiet van 100** deelt alle mails (trial, billing, blog). Schaalpunt, hoort bij de Pro-milestone, geen actie nu.
+- [x] **14. Resend-daglimiet van 100: vervallen als actiepunt (besluit Arno 2026-10-24, "vergeet 14").** De Pro-milestone in CLAUDE.md blijft de plek waar dit hoort.
 
 **Besloten en niet meer open:** de planmails (Q4, voorjaar, zomer) zijn op 2026-10-22 verworpen. Gekozen: ArnoBot stelt de plan-vragen alleen in het gesprek. Verworpen: seizoensmails en een controle-mail, op Arno's besluit.
 
