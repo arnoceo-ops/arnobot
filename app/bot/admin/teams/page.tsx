@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
+import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,7 @@ export default async function TeamsAdminPage() {
   const { data: teams } = await supabase
     .from('arnobot_teams')
     .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
+    .neq('id', TEST_TEAM_ID)
     .order('name')
   const managerIds = [...new Set((teams ?? []).map(t => t.manager_id))]
 

@@ -67,6 +67,11 @@ const KNOWN_SAFE = new Set([
   'app/api/cron/inactivity-nudge/route.ts:approved_users',
   'app/api/cron/milestone-check/route.ts:approved_users',
   'app/api/admin/analyse/users/route.ts:approved_users',
+  // Facturatie-oppervlak per team: Team Hippios (TEST_TEAM_ID) is uit de teamlijst gefilterd,
+  // de managerlookups hangen daaraan; de POST-route werkt op een expliciet teamId.
+  'app/bot/admin/teams/page.tsx:approved_users',
+  'app/bot/admin/teams/page.tsx:arnobot_billing_customers',
+  'app/api/admin/teams/route.ts:arnobot_billing_customers',
   // AVG-opruimlijst van 30+ dagen geleden beëindigde accounts (is_active=false). De
   // testaccounts zijn actief en verschijnen nooit; als er ooit toch een tussen staat
   // hoort die juist zichtbaar te zijn.
