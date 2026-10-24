@@ -20,7 +20,9 @@ const MAX_VRAGEN = 1000
 const CHUNK = 150
 const MAX_TEKENS_PER_VRAAG = 400
 const MAX_IN_BERICHT = 30
-const MAX_TEKENS_IN_BERICHT = 100
+const MAX_TEKENS_IN_BERICHT = 300
+// Telegram weigert berichten boven 4096 tekens; daaronder blijven en anders over meerdere berichten verdelen.
+const MAX_TEKENS_PER_TELEGRAM = 3800
 // De client zet bij de eerste vraag van een sessie deze context voor de vraag (SparClient.tsx).
 const ACTIE_PREFIX = /^\[Actieopvolging vorige sessie:[\s\S]*?\]\s*/
 
@@ -102,7 +104,7 @@ export async function GET(req: NextRequest) {
         .select('user_id, voornaam, achternaam')
         .in('user_id', ids)
       for (const u of users ?? []) {
-        naamPerId.set(u.user_id, u.voornaam || u.achternaam || 'Onbekend')
+        naamPerId.set(u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'Onbekend')
       }
     }
 
@@ -113,7 +115,19 @@ export async function GET(req: NextRequest) {
     }
     const regels = getoond.map(g => `${naamPerId.get(g.userId) ?? 'Onbekend'}: ${kort(g.vraag)}`)
     const rest = gevonden.length > MAX_IN_BERICHT ? `\nEn nog ${gevonden.length - MAX_IN_BERICHT}.` : ''
-    await notifyTelegram(`ARNOBOT PRODUCTVRAGEN · ${datum}\n${regels.join('\n')}${rest}`)
+    if (rest) regels.push(rest.trim())
+    const berichten: string[] = []
+    let huidig = `ARNOBOT PRODUCTVRAGEN · ${datum}`
+    for (const regel of regels) {
+      if (huidig.length + regel.length + 1 > MAX_TEKENS_PER_TELEGRAM) {
+        berichten.push(huidig)
+        huidig = regel
+      } else {
+        huidig += `\n${regel}`
+      }
+    }
+    berichten.push(huidig)
+    for (const b of berichten) await notifyTelegram(b)
 
     return NextResponse.json({ ok: true, productvragen: gevonden.length })
   } catch (err) {
