@@ -22,7 +22,7 @@ const MAX_TEKENS_PER_VRAAG = 400
 const MAX_IN_BERICHT = 30
 const MAX_TEKENS_IN_BERICHT = 100
 // De client zet bij de eerste vraag van een sessie deze context voor de vraag (SparClient.tsx).
-const ACTIE_PREFIX = /^\[Actieopvolging vorige sessie:.*?\]\s*/s
+const ACTIE_PREFIX = /^\[Actieopvolging vorige sessie:[\s\S]*?\]\s*/
 
 const SYSTEEM = `Je krijgt genummerde vragen die gebruikers aan ArnoBot stelden, een AI salescoach voor sales managers.
 Kies alles wat mogelijk over de app zelf gaat: hoe een knop of functie werkt, wat een functie doet, hoe iets te vinden of te gebruiken is, abonnement of account, de vraag of ArnoBot iets kan (bijvoorbeeld een link of bestand lezen, een document maken of herschrijven), en elke wens of elk idee voor een functie.
