@@ -75,7 +75,6 @@ export default async function EmailsOverzichtPage() {
 
         <Section title="NAAR MIJZELF: EVENT-NOTIFICATIES" subtitle="Vuren als een gebruiker iets doet, niet via een schema">
           <Table rows={[
-            { name: 'Derde trial',           trigger: 'Event: bot/herstart',                         ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker een derde trial start',               type: 'Admin' },
             { name: 'Opzegging (intern)',     trigger: 'Event: bot/cancel-subscription',              ontvanger: 'arno@arno.bot',       wanneer: 'Direct bij opzegging door een gebruiker',               type: 'Admin' },
             { name: 'Doorgaan bevestigd',    trigger: 'Event: bot/confirm-renewal',                  ontvanger: 'arno@arno.bot',       wanneer: 'Als een gebruiker doorgaan na trial bevestigt',         type: 'Admin' },
             { name: 'Account verwijderd',    trigger: 'Event: bot/delete-account',                   ontvanger: 'delete@arno.bot',     wanneer: 'Als een gebruiker zijn account verwijdert',             type: 'Admin' },

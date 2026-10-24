@@ -83,7 +83,6 @@ export type EmailType =
   | 'blog_bevestiging'
   | 'blog_nieuwe_post'
   | 'blog_al_aangemeld'
-  | 'admin_derde_trial'
   | 'team_factuur'
   | 'team_factuur_herinnering'
   | 'team_geblokkeerd'
@@ -122,7 +121,6 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   blog_bevestiging:      { label: 'Blog bevestiging',       description: 'Event:na aanmelden voor de blog, bevestig-link (double opt-in)',     category: 'user' },
   blog_al_aangemeld:     { label: 'Blog al aangemeld',      description: 'Event:opnieuw aangemeld terwijl het adres al bevestigd is',          category: 'user' },
   blog_nieuwe_post:      { label: 'Blog nieuw artikel',     description: 'Event:bij publicatie van een artikel, naar bevestigde abonnees',     category: 'user' },
-  admin_derde_trial:     { label: 'Derde trial',            description: 'Admin:notificatie bij start derde trial',                           category: 'admin' },
   team_factuur:               { label: 'Team-factuur',               description: 'Event:nieuwe Team-factuur, met betaallink',                        category: 'user' },
   team_factuur_herinnering:   { label: 'Team-factuur herinnering',   description: 'Recurring:7 dagen na de vervaldatum, nog niet betaald',           category: 'user' },
   team_geblokkeerd:           { label: 'Team geblokkeerd',           description: 'Recurring:30 dagen na de vervaldatum, toegang geblokkeerd',       category: 'user' },
@@ -291,14 +289,6 @@ export function getEmailTemplate(
           `Je trial is twee weken geleden afgelopen. Misschien was het timing. Misschien miste je iets.<br><br>We geven je de kans om het opnieuw te proberen. 30 dagen gratis, zonder verplichtingen.<br><br>Klik hieronder om je tweede trial te starten. Dit aanbod vervalt over 5 dagen.`,
           'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart',
           `Geen e-mails meer ontvangen? <a href="mailto:arno@arno.bot" style="color:#9ca3af;text-decoration:underline;">Stuur een bericht naar arno@arno.bot.</a>`
-        ),
-      }
-    case 'admin_derde_trial':
-      return {
-        subject: `${prefix}Derde trial: ${naam}`,
-        html: emailHtml(
-          `${naam} is vandaag begonnen aan een derde trial.<br><br>Tijd om ze persoonlijk te benaderen.`,
-          'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers', isTest
         ),
       }
     case 'betaling_bevestiging': {
