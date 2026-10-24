@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
-import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 import { berekenBedrag, type KlantType } from '@/lib/billing/prijzen'
 import { formatEuro } from '@/lib/billing/geld'
 
@@ -27,15 +26,12 @@ const fmtDatum = (iso: string | null) =>
 export default function DoorgaanClient({ demoLink }: { demoLink: string | null }) {
   const { isLoaded } = useUser()
   const previewIdle = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'idle'
-  const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid' | 'already_requested' | 'done' | 'error'>(previewIdle ? 'idle' : 'loading')
+  const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid'>(previewIdle ? 'idle' : 'loading')
   const [gekozenPlan, setGekozenPlan] = useState<PlanKeuze | null>(null)
-  const [submittingPlan, setSubmittingPlan] = useState<PlanKeuze | null>(null)
   const [cyclus, setCyclus] = useState<Cyclus>('jaarlijks')
 
-  // Online betalen (Mollie). Zonder MOLLIE_API_KEY meldt de server mollieEnabled=false en
-  // draait de oude handmatige factuurflow ongewijzigd door.
+  // Betalen loopt altijd online via Mollie (iDEAL, Bancontact, creditcard).
   const [billingLoaded, setBillingLoaded] = useState(previewIdle)
-  const [mollieEnabled, setMollieEnabled] = useState(false)
   const [abonnement, setAbonnement] = useState<Abonnement | null>(null)
   const [stap, setStap] = useState<'kies' | 'gegevens'>('kies')
   // Standaard zakelijk (besloten 13-10-2026): voorkomt dat een zakelijke klant per ongeluk
@@ -72,15 +68,21 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     fetch('/api/bot/billing')
       .then(r => r.json())
       .then(d => {
-        setMollieEnabled(!!d.mollieEnabled)
         setAbonnement(d.abonnement ?? null)
-        return d.abonnement as Abonnement | null
+        return d as { abonnement: Abonnement | null; eerderBetaald?: boolean; alBetaald?: boolean; toegangActief?: boolean; trialEinde?: string | null }
       })
       .catch(() => null)
 
   useEffect(() => {
     if (previewIdle) return
-    laadBilling().finally(() => setBillingLoaded(true))
+    laadBilling()
+      .then(d => {
+        setEerderBetaald(!!d?.eerderBetaald)
+        setToegangActief(d?.toegangActief !== false)
+        setTrialEindeDatum(typeof d?.trialEinde === 'string' ? d.trialEinde : null)
+        setStatus(d?.alBetaald ? 'already_paid' : 'idle')
+      })
+      .finally(() => setBillingLoaded(true))
   }, [previewIdle])
 
   // Na terugkomst van Mollie: wachten tot de webhook het abonnement heeft geactiveerd.
@@ -89,29 +91,12 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     let pogingen = 0
     const timer = setInterval(async () => {
       pogingen++
-      const a = await laadBilling()
+      const a = (await laadBilling())?.abonnement
       if (a?.status === 'active') { clearInterval(timer); setStatus('already_paid') }
       if (pogingen >= 20) clearInterval(timer)
     }, 2000)
     return () => clearInterval(timer)
   }, [terug])
-
-  useEffect(() => {
-    if (previewIdle) return
-    fetch('/api/bot/confirm-renewal')
-      .then(r => r.json())
-      .then(d => {
-        setEerderBetaald(!!d.paid_at)
-        setToegangActief(d.toegang_actief !== false)
-        setTrialEindeDatum(typeof d.trial_einde === 'string' ? d.trial_einde : null)
-        // Alleen "actief" als er betaald is en de toegang niet is verlopen (afgelopen of
-        // terugbetaald): zo kan iemand na afloop gewoon opnieuw afrekenen.
-        if (d.paid_at && !(d.expires_at && new Date(d.expires_at) < new Date())) setStatus('already_paid')
-        else if (d.renewal_requested_at) { setStatus('already_requested'); setGekozenPlan(d.plan) }
-        else setStatus('idle')
-      })
-      .catch(() => setStatus('idle'))
-  }, [previewIdle])
 
   if (!isLoaded || status === 'loading' || !billingLoaded) return null
 
@@ -159,28 +144,10 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
     }
   }
 
-  async function kies(plan: PlanKeuze) {
-    if (mollieEnabled) { setGekozenPlan(plan); setStap('gegevens'); return }
-    setSubmittingPlan(plan)
-    try {
-      const res = await fetch('/api/bot/confirm-renewal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      })
-      const data = await res.json()
-      if (data.already_paid) setStatus('already_paid')
-      else if (data.already_requested) setStatus('already_requested')
-      else if (data.ok) { setGekozenPlan(plan); setStatus('done') }
-      else setStatus('error')
-    } catch {
-      setStatus('error')
-    } finally {
-      setSubmittingPlan(null)
-    }
+  function kies(plan: PlanKeuze) {
+    setGekozenPlan(plan)
+    setStap('gegevens')
   }
-
-  const planLabel = gekozenPlan === 'premium' ? 'Pro' : gekozenPlan === 'basis' ? 'Basic' : null
 
   return (
     <>
@@ -296,31 +263,6 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
           </div>
         )}
 
-        {status === 'already_requested' && (
-          <>
-            <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
-              <p style={body}>Je hebt gekozen voor {planLabel ?? 'een abonnement'}. ArnoBot stuurt je een factuur. Je toegang blijft actief totdat de factuur is voldaan.</p>
-              <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
-            </div>
-            <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
-              Terug naar ArnoBot
-            </Link>
-          </>
-        )}
-
-        {status === 'done' && (
-          <>
-            <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #44cc88', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
-              <p style={{ ...body, color: '#44cc88', marginBottom: 8 }}>✓ Bevestiging ontvangen, {planLabel}.</p>
-              <p style={body}>ArnoBot stuurt je een factuur op het e-mailadres van je account. Je toegang blijft actief totdat de factuur is voldaan.</p>
-              <p style={{ ...body, marginBottom: 0 }}>Vragen? Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a></p>
-            </div>
-            <Link href="/bot" style={{ ...btn, textDecoration: 'none' }} className="primary-btn">
-              Terug naar ArnoBot
-            </Link>
-          </>
-        )}
-
         {status === 'idle' && !terug && stap === 'gegevens' && gekozenPlan && (() => {
           const bedrag = berekenBedrag(gekozenPlan, cyclus, klantType)
           const periode = cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'
@@ -428,9 +370,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
           <>
             <p style={body}>
               {toegangActief ? 'Je gratis proefperiode loopt binnenkort af.' : 'Je proefperiode zit erop.'}
-              {mollieEnabled
-                ? ' Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'
-                : ' Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.'}
+              {' Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'}
             </p>
 
             <div className="doorgaan-toggle-rij">
@@ -461,8 +401,8 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   <li>Eén gespreksanalyse per dag</li>
                   <li>Geheugen van je recente gesprekken</li>
                 </ul>
-                <button className="plan-btn" onClick={() => kies('basis')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'basis' ? 'Bezig...' : 'Kies Basic'}
+                <button className="plan-btn" onClick={() => kies('basis')}>
+                  Kies Basic
                 </button>
               </div>
 
@@ -490,8 +430,8 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   <li>Gesproken antwoorden, Arno's stem</li>
                   <li>De ArnoBot-app (Android)</li>
                 </ul>
-                <button className="plan-btn" onClick={() => kies('premium')} disabled={submittingPlan !== null}>
-                  {submittingPlan === 'premium' ? 'Bezig...' : 'Kies Pro'}
+                <button className="plan-btn" onClick={() => kies('premium')}>
+                  Kies Pro
                 </button>
               </div>
             </div>
@@ -506,12 +446,6 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
               }.
             </p>
           </>
-        )}
-
-        {status === 'error' && (
-          <p style={{ color: '#cc2200', fontSize: 14, letterSpacing: 1, marginTop: 16 }}>
-            Er ging iets mis. Probeer het opnieuw of <a href={SUPPORT_WHATSAPP_VASTGELOPEN} style={{ color: '#f59e0b' }} target="_blank" rel="noopener noreferrer">stuur een WhatsApp</a>.
-          </p>
         )}
 
       </div>

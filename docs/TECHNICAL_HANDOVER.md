@@ -277,7 +277,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/delete-account` | Verwijderverzoek account |
 | `/api/bot/referral` | Eigen referralcode ophalen/genereren |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
-| `/api/bot/confirm-renewal` | Verlenging/plankeuze bevestigen |
 | `/api/bot/herstart` | Reactivatie-eligibility bepalen (regels in `lib/herstart.ts`: na twee proefperiodes zonder betalen pas na 12 maanden weer een gratis proefperiode, betalen kan altijd) |
 | `/api/bot/welcome-done` | Welkomstscherm als gezien markeren |
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |

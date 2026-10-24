@@ -59,8 +59,6 @@ export type EmailType =
   | 'dag21_gesprek'
   | 'dag25'
   | 'testtoegang_afloop'
-  | 'betaalwaarschuwing'
-  | 'geblokkeerd'
   | 'betaling_bevestiging'
   | 'betaling_mislukt'
   | 'trial_afgelopen'
@@ -97,8 +95,6 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   dag21_gesprek:         { label: 'Dag 21 - gesprek Arno',  description: 'Dag 21:nog geen gesprek met Arno ingepland',                        category: 'user' },
   dag25:                 { label: 'Dag 25',                 description: 'Dag 25:trial bijna afgelopen, opt-in CTA',                          category: 'user' },
   testtoegang_afloop:    { label: 'Testtoegang loopt af',   description: 'Eenmalig:heads-up voor vroege testgebruikers, comp eindigt 1 nov', category: 'user' },
-  betaalwaarschuwing:    { label: 'Betaalwaarschuwing',     description: 'Dag 25+:7 dagen na opt-in zonder betaling',                         category: 'user' },
-  geblokkeerd:           { label: 'Geblokkeerd',            description: 'Dag 26+:24u na waarschuwing, nog steeds geen betaling',             category: 'user' },
   betaling_bevestiging: { label: 'Betaling bevestigd',     description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
   betaling_mislukt:      { label: 'Betaling mislukt',       description: 'Event:herhaalbetaling niet gelukt, toegang loopt nog door',         category: 'user' },
   trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30:trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
@@ -246,7 +242,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement. Je ontvangt dan een factuur van ArnoBot.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }
@@ -258,28 +254,12 @@ export function getEmailTemplate(
           'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
         ),
       }
-    case 'betaalwaarschuwing':
-      return {
-        subject: `${prefix}${naam}, betaling nog niet ontvangen`,
-        html: mail(
-          `Je hebt aangegeven door te willen gaan met ArnoBot, maar de betaling is nog niet ontvangen.<br><br>Je toegang wordt over <strong style="color:#f1f5f9;">24 uur</strong> geblokkeerd totdat de betaling is verwerkt.<br><br>Heb je al betaald? Dan hoef je niets te doen. Mail bij vragen naar <a href="mailto:arno@arno.bot" style="color:#f59e0b;">arno@arno.bot</a>.`,
-          'CONTACT ARNO →', 'mailto:arno@arno.bot'
-        ),
-      }
-    case 'geblokkeerd':
-      return {
-        subject: `${prefix}${naam}, je toegang is geblokkeerd`,
-        html: mail(
-          `Je betaling is niet ontvangen. Je toegang tot ArnoBot is tijdelijk geblokkeerd.<br><br>Zodra de betaling is verwerkt, wordt je toegang direct hersteld. Vragen? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b;">arno@arno.bot</a>.`,
-          'CONTACT ARNO →', 'mailto:arno@arno.bot'
-        ),
-      }
     case 'trial_afgelopen':
       return {
         subject: `${prefix}${naam}, je trial is afgelopen`,
         html: mail(
-          `Je gratis proefperiode van 30 dagen is afgelopen. Je toegang tot ArnoBot is gestopt.<br><br>Wil je toch doorgaan? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b;">arno@arno.bot</a> en Arno regelt het verder.`,
-          'CONTACT ARNO →', 'mailto:arno@arno.bot'
+          `Je gratis proefperiode van 30 dagen is afgelopen. Je toegang tot ArnoBot is gestopt.<br><br>Wil je toch doorgaan? Kies een abonnement en je kunt direct weer aan de slag. Je data blijft nog 30 dagen bewaard.`,
+          'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }
     case 'winback':

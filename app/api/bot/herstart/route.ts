@@ -50,8 +50,6 @@ export async function POST() {
     trial_reactivated_at: now.toISOString(),
     cancelled_at: null,
     deactivated_at: null,
-    renewal_requested_at: null,
-    renewal_warning_sent_at: null,
     paid_at: null,
     expires_at: null,
   }).eq('user_id', userId)

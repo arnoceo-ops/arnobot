@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data: usersRaw } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, paid_at, renewal_requested_at, renewal_warning_sent_at, arno_call_booked_at, command_manager')
+    .select('user_id, email, voornaam, trial_start, paid_at, arno_call_booked_at, command_manager')
     .not('trial_start', 'is', null)
     .is('paid_at', null)
     .eq('is_active', true)
@@ -59,32 +59,8 @@ export async function GET(req: NextRequest) {
       await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html })
     }
 
-    // --- Blokkering 24u na betaalwaarschuwing ---
-    if (user.renewal_warning_sent_at && !user.paid_at) {
-      const warnedAt = new Date(user.renewal_warning_sent_at)
-      const hoursSinceWarning = (now.getTime() - warnedAt.getTime()) / (1000 * 60 * 60)
-      if (hoursSinceWarning >= 24) {
-        await supabase.from('approved_users').update({ is_active: false }).eq('user_id', user.user_id)
-        await send('geblokkeerd').catch(() => {})
-        blocked++
-        continue
-      }
-    }
-
-    // --- Betaalwaarschuwing 7 dagen na opt-in ---
-    if (user.renewal_requested_at && !user.renewal_warning_sent_at && !user.paid_at) {
-      const requestedAt = new Date(user.renewal_requested_at)
-      const daysSinceRequest = (now.getTime() - requestedAt.getTime()) / (1000 * 60 * 60 * 24)
-      if (daysSinceRequest >= 7) {
-        await supabase.from('approved_users').update({ renewal_warning_sent_at: now.toISOString() }).eq('user_id', user.user_id)
-        await send('betaalwaarschuwing').catch(() => {})
-        sent++
-        continue
-      }
-    }
-
-    // --- Auto-cancel na 30 dagen zonder opt-in ---
-    if (now > trialEnd && !user.renewal_requested_at) {
+    // --- Trial voorbij: toegang stopt (afrekenen kan via /bot/doorgaan) ---
+    if (now > trialEnd) {
       await supabase.from('approved_users')
         .update({ is_active: false, deactivated_at: now.toISOString() })
         .eq('user_id', user.user_id)
@@ -92,10 +68,6 @@ export async function GET(req: NextRequest) {
       cancelled++
       continue
     }
-
-    // Geen trial-emails meer sturen als user al heeft geopteerd voor verlenging
-    if (user.renewal_requested_at) continue
-    if (now > trialEnd) continue
 
     const days = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24))
 

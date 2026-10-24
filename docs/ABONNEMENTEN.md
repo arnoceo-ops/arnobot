@@ -146,7 +146,7 @@ Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), pl
 
 ## Trial-einde-flow (`/bot/doorgaan`)
 
-**Gesynchroniseerd met Basic/Pro (2026-08-10).** Biedt nu dezelfde keuze als `/prijzen`: Basic en Pro, met een gedeelde jaarlijks/maandelijks-toggle boven de twee kaarten (niet meer twee losse toggles per kaart zoals de oude Premium/Elite-versie). Elite is uit deze flow verdwenen (geen bewust besluit om Elite af te bouwen, gevolg van 1:1 overnemen van `/prijzen`, zie "Elite" hierboven). Zet bij het kiezen `plan` op de gekozen waarde (`POST /api/bot/confirm-renewal` accepteert nu `'basis'` of `'premium'` als `plan`-parameter, was `'premium'`/`'elite'`).
+**Gesynchroniseerd met Basic/Pro (2026-08-10).** Biedt nu dezelfde keuze als `/prijzen`: Basic en Pro, met een gedeelde jaarlijks/maandelijks-toggle boven de twee kaarten (niet meer twee losse toggles per kaart zoals de oude Premium/Elite-versie). Elite is uit deze flow verdwenen (geen bewust besluit om Elite af te bouwen, gevolg van 1:1 overnemen van `/prijzen`, zie "Elite" hierboven). Het kiezen loopt sinds 2026-10-24 volledig via Mollie (`/api/bot/checkout`); de oude route `confirm-renewal` met een factuur is verwijderd.
 
 **Stijluitzondering, vastgelegd in CLAUDE.md:** deze pagina (en toekomstige vergelijkbare conversiemomenten binnen `/bot`) gebruikt de marketingstijl (Figtree/Oswald, zoals `/prijzen` en de homepage), niet de standaard `/bot`-stijl (Space Mono/Bebas Neue). Reden: dit is inhoudelijk een conversiemoment, geen gewone in-app functionaliteit.
 

@@ -1,19 +1,43 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { createClient } from '@supabase/supabase-js'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { mollieBeschikbaarVoor } from '@/lib/billing/mollie'
+import { isTeamCovered } from '@/lib/teamAccess'
+import { datumToegang, trialEinde } from '@/lib/toegang'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
 
 const DAG_MS = 24 * 60 * 60 * 1000
 
-// Status van het online abonnement voor /bot/doorgaan en de accountpagina. Alleen eigen
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+// Status van het abonnement en de toegang voor /bot/doorgaan en de accountpagina. Alleen eigen
 // gegevens: userId komt uit de sessie.
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const mollieEnabled = mollieBeschikbaarVoor(userId)
-  if (!mollieEnabled) return NextResponse.json({ mollieEnabled, abonnement: null })
+  const { data: gebruiker } = await supabase
+    .from('approved_users')
+    .select('paid_at, expires_at, trial_start, is_active')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  // Voor de tekst op /bot/doorgaan: loopt de proefperiode nog, of is de toegang al afgelopen. Zelfde
+  // regels als proxy.ts: actief, en eigen datums of teamtoegang.
+  const toegangActief = !!gebruiker && gebruiker.is_active !== false && (datumToegang(gebruiker) || await isTeamCovered(userId))
+  const status = {
+    eerderBetaald: !!gebruiker?.paid_at,
+    // Alleen "betaald en actief" als de toegang niet is verlopen (afgelopen of terugbetaald): zo kan
+    // iemand na afloop gewoon opnieuw afrekenen.
+    alBetaald: !!gebruiker?.paid_at && !(gebruiker.expires_at && new Date(gebruiker.expires_at) < new Date()),
+    toegangActief,
+    // Einde van de proefperiode als die nog loopt: een abonnement dat nu wordt afgesloten gaat dan
+    // pas op dat moment in (lib/billing/verwerking.ts), de afrekenpagina toont die datum.
+    trialEinde: gebruiker && gebruiker.is_active !== false ? (trialEinde(gebruiker)?.toISOString() ?? null) : null,
+  }
 
   const { data: sub } = await billingDb
     .from('arnobot_subscriptions')
@@ -24,11 +48,11 @@ export async function GET() {
     .limit(1)
     .maybeSingle<SubRow>()
 
-  if (!sub) return NextResponse.json({ mollieEnabled, abonnement: null })
+  if (!sub) return NextResponse.json({ ...status, abonnement: null })
 
   // Een onafgeronde poging van meer dan twee uur oud telt niet meer mee.
   if (sub.status === 'pending' && Date.now() - new Date(sub.created_at ?? 0).getTime() > 2 * 60 * 60 * 1000) {
-    return NextResponse.json({ mollieEnabled, abonnement: null })
+    return NextResponse.json({ ...status, abonnement: null })
   }
 
   const nu = Date.now()
@@ -41,7 +65,7 @@ export async function GET() {
     contractEinde - nu <= VERLENG_VENSTER_DAGEN * DAG_MS
 
   return NextResponse.json({
-    mollieEnabled,
+    ...status,
     abonnement: {
       status: sub.status,
       plan: sub.plan,

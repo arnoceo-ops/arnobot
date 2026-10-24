@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (!isPlan(plan) || !isCyclus(cyclus) || !isKlantType(klantType)) return fout(400, 'Ongeldige keuze')
   if (akkoordVoorwaarden !== true) return fout(400, 'Ga akkoord met de algemene voorwaarden om door te gaan')
 
-  // Een teamlid of teammanager heeft geen eigen abonnement (zelfde vangnet als confirm-renewal).
+  // Een teamlid of teammanager heeft geen eigen abonnement (vangnet: teamgedekte accounts rekenen niet zelf af).
   if (await isTeamCovered(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
 
   let zakelijk: { bedrijfsnaam: string; kvk: string; btw: string; btwGevalideerd: boolean; straat: string; postcode: string; plaats: string } | null = null
