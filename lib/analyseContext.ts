@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 
-// Gedeelde bouwstenen voor de patroonanalyse: de handmatige route (coaching-analyse), de aanvulling
-// daarop (coaching-analyse/aanvulling) en de dagelijkse auto-analyse. Alleen server-side importeren.
+// Gedeelde bouwstenen voor de patroonanalyse: de handmatige route (coaching-analyse) en de
+// dagelijkse auto-analyse. Alleen server-side importeren.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,22 +27,6 @@ ${RULE_NEVER_BREAK_CHARACTER}
 ${RULE_NO_INVENTED_DETAILS}
 
 ${RULE_ANALYSE_BUITEN_CHAT}`
-
-export const CONTEXT_MAX_TEKENS = 1000
-
-/** Vrije tekst van de gebruiker over wat er buiten ArnoBot is gedaan: getrimd, zonder
- *  stuurtekens en begrensd. Lege string = niets aangeleverd. */
-export function schoonContext(raw: unknown): string {
-  if (typeof raw !== 'string') return ''
-  // eslint-disable-next-line no-control-regex
-  return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim().slice(0, CONTEXT_MAX_TEKENS)
-}
-
-/** Blok voor de prompt met wat de gebruiker zelf over het werk buiten ArnoBot vertelt. */
-export function contextBlok(context: string): string {
-  if (!context) return ''
-  return `\n\nDOOR DE GEBRUIKER ZELF VERTELD OVER WAT BUITEN ARNOBOT GEBEURD IS (behandel dit als feit, spreek het niet tegen en beweer niets dat hiermee botst):\n"""\n${context}\n"""`
-}
 
 type SessieRegel = { title: string; summary?: string | null; created_at: string }
 

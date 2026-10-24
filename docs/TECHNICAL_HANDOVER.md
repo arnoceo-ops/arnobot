@@ -223,8 +223,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/sessions/search` | AI-filter op eigen gesprekken |
 | `/api/bot/session` | Eén sessie ophalen/verwijderen |
 | `/api/bot/coaching` | Coachingrapport genereren (hoofdsynthese) |
-| `/api/bot/coaching-analyse` | Nieuwe analyse genereren voor `/bot/analyses` (optioneel `context`: wat de gebruiker buiten ArnoBot deed, max 1000 tekens). Prompt en contextblokken in `lib/analyseContext.ts`, gedeeld met de aanvulling en `cron/auto-analyse` |
-| `/api/bot/coaching-analyse/aanvulling` | POST: aanvulling op een bestaande analyse (`analyseId` + `context`), opgeslagen in `arnobot_analyses.aanvulling_*`, max 5 per dag, eigen `user_id`-filter, privé (niet in DEEL MET MANAGER) |
+| `/api/bot/coaching-analyse` | Nieuwe analyse genereren voor `/bot/analyses` (alleen `sessionIds`). Prompt en blokken in `lib/analyseContext.ts`, gedeeld met `cron/auto-analyse` |
 | `/api/bot/coaching-analyses` | Eerdere analyses ophalen (lijst) |
 | `/api/bot/coaching-precheck` | Check of er genoeg materiaal is voor coaching |
 | `/api/bot/coaching-history` | Coaching-geschiedenis (scores/diagnoses per keer) |
@@ -279,7 +278,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/referral` | Eigen referralcode ophalen/genereren |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/confirm-renewal` | Verlenging/plankeuze bevestigen |
-| `/api/bot/herstart` | Reactivatie-eligibility bepalen |
+| `/api/bot/herstart` | Reactivatie-eligibility bepalen (regels in `lib/herstart.ts`: na twee proefperiodes zonder betalen pas na 12 maanden weer een gratis proefperiode, betalen kan altijd) |
 | `/api/bot/welcome-done` | Welkomstscherm als gezien markeren |
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
@@ -456,7 +455,7 @@ Sales-sparringsessie-log: persona, weerstand, debrief, message_count, favoriet, 
 Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`session_id` + `interval_dagen`, `UNIQUE`).
 
 ### `arnobot_analyses`
-Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`). Sinds 2026-10-22 ook `aanvulling_context` (wat de gebruiker buiten ArnoBot deed), `aanvulling_tekst` en `aanvulling_at`, migratie `docs/sql/2026-10-22-analyse-aanvulling.sql`.
+Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`). De kolommen `aanvulling_context`, `aanvulling_tekst` en `aanvulling_at` (migratie `docs/sql/2026-10-22-analyse-aanvulling.sql`) worden sinds 2026-10-24 niet meer gebruikt: de aanvulling-functie is verwijderd. De kolommen staan nog in de database.
 
 ### `arnobot_admin_analyses`
 Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot/admin/analyse`. Nooit zichtbaar voor de gebruiker zelf, alleen voor Arno. `generated_count` telt hoe vaak de briefing (opnieuw) gegenereerd is.

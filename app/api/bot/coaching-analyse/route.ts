@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, contextBlok, planHistorieBlok, schoonContext, sessiesAlsTekst } from '@/lib/analyseContext'
+import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const sessionIds: string[] | undefined = body.sessionIds
-  const context = schoonContext(body.context)
 
   const [planRes, todayRes] = await Promise.all([
     supabase.from('approved_users').select('plan').eq('user_id', userId).single(),
@@ -121,7 +120,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sessiesText = sessiesAlsTekst(isDelta ? newSessionIds : sessions)
-  const extraContext = (await actieOpvolgingBlok(userId)) + (await planHistorieBlok(userId)) + contextBlok(context)
+  const extraContext = (await actieOpvolgingBlok(userId)) + (await planHistorieBlok(userId))
 
   const userContent = isDelta
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT ER NIEUW IS, DOORBRAAK, VOLGENDE STAP. Benoem onder die kopjes concreet wat er nieuw is, wat er doorgebroken is en wat de volgende stap is. Geen andere kopjes, geen opsomming.${profielText}${extraContext}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
@@ -150,7 +149,6 @@ export async function POST(req: NextRequest) {
       analyse_text: analyse,
       session_count: sessions.length,
       session_ids: sessions.map(s => s.session_id),
-      ...(context ? { aanvulling_context: context } : {}),
     })
     .select('id, created_at')
     .single()

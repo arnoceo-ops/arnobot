@@ -59,7 +59,7 @@ export default function HerstartPage() {
 
         <p style={label}>ARNOBOT</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1, marginBottom: 40 }}>
-          {status === 'paid_only' ? 'BUMMER.' : 'WELKOM TERUG.'}
+          {status === 'paid_only' ? 'JE KENT ARNOBOT AL.' : 'WELKOM TERUG.'}
         </h1>
 
         {status === 'active' && (
@@ -74,7 +74,8 @@ export default function HerstartPage() {
         {canStart && (
           <>
             <p style={body}>
-              Je hebt nog een kans voor een volledige gratis trial van 30 dagen. Je data staat er nog. Je kunt gewoon verdergaan waar je gebleven was.
+              Je hebt nog een kans voor een volledige gratis trial van 30 dagen.
+              {status === 'winback' && ' Je data staat er nog. Je kunt gewoon verdergaan waar je gebleven was.'}
             </p>
             <p style={{ ...body, marginBottom: 40 }}>Geen verplichtingen.</p>
             <button
@@ -106,24 +107,14 @@ export default function HerstartPage() {
         )}
 
         {status === 'paid_only' && (
-          <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '24px 28px' }}>
-            <p style={{ ...body, marginBottom: 24 }}>
-              Je hebt al een trial gehad, vervolgens een tweede kans gekregen voor nog eens een trial van 30 dagen, en nu wil je er nog een? Bummer. Je mag starten met een betaalde account. Graag. Of niet.
+          <>
+            <p style={{ ...body, marginBottom: 40 }}>
+              Heb je een derde proefperiode nodig? Dat kan tegen betaling.
             </p>
-            <p style={{ ...body, marginBottom: 24 }}>
-              Voor mij scheelt het een paar tientjes in de maand. Voor jou kapitalen. Als je er iets mee doet, tenminste. Maar dat betwijfel ik. Hoe dan ook, it&apos;s your call.
-            </p>
-            <p style={{ ...body, marginBottom: 32 }}>
-              NB Ken je deze quotes? &quot;We are what we repeatedly do. Excellence, then, is not an act but a habit.&quot; ~ Aristotle. &quot;Unfortunately, so is failure.&quot; ~ Vince Lombardi. Moest ik even aan denken...
-            </p>
-            <a
-              href="mailto:pannekoek@arno.bot"
-              style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
-              className="primary-btn"
-            >
-              OKAY, DAN
-            </a>
-          </div>
+            <Link href="/bot/doorgaan" style={{ ...btn, textDecoration: 'none', display: 'inline-block' }} className="primary-btn">
+              KIES JE ABONNEMENT
+            </Link>
+          </>
         )}
 
         {status === 'not_eligible' && (

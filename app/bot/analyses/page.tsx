@@ -29,9 +29,6 @@ interface SavedAnalyse {
   created_at: string
   analyse_text: string
   session_count: number
-  aanvulling_context?: string | null
-  aanvulling_tekst?: string | null
-  aanvulling_at?: string | null
 }
 
 function renderContent(text: string) {
@@ -101,13 +98,6 @@ export default function GeschiedenisPage() {
   const [isSimilarAnalyse, setIsSimilarAnalyse] = useState(false)
   const [isDeltaAnalyse, setIsDeltaAnalyse] = useState(false)
   const [analyseLimiet, setAnalyseLimiet] = useState(false)
-  // Optionele context vóór een handmatige analyse: wat de gebruiker buiten ArnoBot heeft gedaan.
-  const [pendingAnalyseIds, setPendingAnalyseIds] = useState<string[] | null>(null)
-  const [analyseContext, setAnalyseContext] = useState('')
-  // Aanvulling achteraf onder een bestaande analyse (invoer per analyse-id).
-  const [aanvullingInput, setAanvullingInput] = useState<Record<string, string>>({})
-  const [aanvullingLoadingId, setAanvullingLoadingId] = useState<string | null>(null)
-  const [aanvullingFout, setAanvullingFout] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
@@ -351,34 +341,7 @@ export default function GeschiedenisPage() {
     setTeamShareLoadingId(null)
   }
 
-  async function submitAanvulling(analyseId: string) {
-    const context = (aanvullingInput[analyseId] ?? savedAnalyses.find(a => a.id === analyseId)?.aanvulling_context ?? '').trim()
-    if (!context || aanvullingLoadingId) return
-    setAanvullingLoadingId(analyseId)
-    setAanvullingFout(null)
-    try {
-      const res = await fetch('/api/bot/coaching-analyse/aanvulling', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analyseId, context }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok && data.aanvulling_tekst) {
-        setSavedAnalyses(prev => prev.map(a => a.id === analyseId
-          ? { ...a, aanvulling_context: data.aanvulling_context, aanvulling_tekst: data.aanvulling_tekst, aanvulling_at: data.aanvulling_at }
-          : a))
-      } else if (res.status === 429) {
-        setAanvullingFout('Je hebt vandaag al meerdere aanvullingen gemaakt. Probeer het morgen opnieuw.')
-      } else {
-        setAanvullingFout('Het bijwerken is niet gelukt. Probeer het opnieuw.')
-      }
-    } catch {
-      setAanvullingFout('Het bijwerken is niet gelukt. Probeer het opnieuw.')
-    }
-    setAanvullingLoadingId(null)
-  }
-
-  async function runAnalyse(sessionIds?: string[], context?: string) {
+  async function runAnalyse(sessionIds?: string[]) {
     setAnalyseLoading(true)
     setActiveAnalyse(null)
     setIsDuplicateAnalyse(false)
@@ -386,7 +349,7 @@ export default function GeschiedenisPage() {
     setIsDeltaAnalyse(false)
     setAnalyseLimiet(false)
     try {
-      const body = { ...(sessionIds ? { sessionIds } : {}), ...(context ? { context } : {}) }
+      const body = { ...(sessionIds ? { sessionIds } : {}) }
       const res = await fetch('/api/bot/coaching-analyse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -412,7 +375,6 @@ export default function GeschiedenisPage() {
             created_at: data.created_at,
             analyse_text: data.analyse,
             session_count: data.count,
-            aanvulling_context: context || null,
           }, ...prev])
         }
       }
@@ -969,42 +931,6 @@ export default function GeschiedenisPage() {
                 {expandedAnalyse === a.id && (
                   <div style={{ paddingBottom: 40, animation: 'fadein 0.3s ease' }}>
                     <div className="analyse-item-full" dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.analyse_text) }} />
-                    {a.aanvulling_tekst && (
-                      <div className="analyse-item-full" style={{ marginTop: 8 }}>
-                        <span className="ah">AANVULLING</span>
-                        <div dangerouslySetInnerHTML={{ __html: renderAnalyseText(a.aanvulling_tekst) }} />
-                      </div>
-                    )}
-                    <div style={{ marginTop: 16 }}>
-                      <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f1f5f9', marginBottom: 8 }}>MIST ER IETS?</p>
-                      <textarea
-                        value={aanvullingInput[a.id] ?? a.aanvulling_context ?? ''}
-                        onChange={e => setAanvullingInput(prev => ({ ...prev, [a.id]: e.target.value.slice(0, 1000) }))}
-                        placeholder="Vertel wat je buiten ArnoBot hebt gedaan, dan werk ik de analyse bij."
-                        rows={3}
-                        style={{ width: '100%', background: '#1f2937', border: '1.5px solid #374151', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, padding: '12px 16px', outline: 'none', resize: 'vertical', marginBottom: 12 }}
-                        onFocus={e => (e.target.style.borderColor = '#f59e0b')}
-                        onBlur={e => (e.target.style.borderColor = '#374151')}
-                      />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => submitAanvulling(a.id)}
-                          disabled={aanvullingLoadingId === a.id || !(aanvullingInput[a.id] ?? a.aanvulling_context ?? '').trim()}
-                          style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, background: 'none', border: '1px solid #374151', color: '#9ca3af', cursor: 'pointer' }}
-                        >
-                          {a.aanvulling_tekst ? 'WERK BIJ →' : 'VOEG TOE →'}
-                        </button>
-                        {aanvullingLoadingId === a.id && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span className="loading-dot" /><span className="loading-dot" /><span className="loading-dot" />
-                            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 15, letterSpacing: 4, color: '#6b7280' }}>ARNO LEEST MEE</span>
-                          </span>
-                        )}
-                      </div>
-                      {aanvullingFout && aanvullingLoadingId === null && expandedAnalyse === a.id && (
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 12 }}>{aanvullingFout}</p>
-                      )}
-                    </div>
                     {teamStatusLoaded && !teamStatusFailed && isTeamMember && (
                       <button
                         onClick={() => toggleTeamShare(a.id)}
@@ -1079,7 +1005,7 @@ export default function GeschiedenisPage() {
             {selected.size >= 3 && (
               <button
                 className="delete-bar-outline"
-                onClick={() => { setAnalyseContext(''); setPendingAnalyseIds([...selected]) }}
+                onClick={() => runAnalyse([...selected])}
                 disabled={analyseLoading}
               >
                 {analyseLoading ? 'ANALYSEREN...' : 'ANALYSEER →'}
@@ -1088,45 +1014,6 @@ export default function GeschiedenisPage() {
             <button className={selected.size >= 3 ? 'delete-bar-destructive' : 'delete-bar-btn'} onClick={deleteSelected} disabled={deleting}>
               {deleting ? 'VERWIJDEREN...' : 'VERWIJDER →'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {pendingAnalyseIds && (
-        <div
-          onClick={() => setPendingAnalyseIds(null)}
-          style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-        >
-          <div onClick={e => e.stopPropagation()} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 4, padding: '28px 28px 24px', maxWidth: 560, width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>OPTIONEEL</p>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 16 }}>
-              Ik zie alleen wat je hier bespreekt. Vertel wat je sinds deze gesprekken zelf hebt gedaan, dan houdt de analyse daar rekening mee.
-            </p>
-            <textarea
-              value={analyseContext}
-              onChange={e => setAnalyseContext(e.target.value.slice(0, 1000))}
-              placeholder="Bijvoorbeeld: ik heb de klant gebeld en een afspraak ingepland."
-              rows={4}
-              style={{ width: '100%', background: '#111827', border: '1.5px solid #374151', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, padding: '12px 16px', outline: 'none', resize: 'vertical', marginBottom: 20 }}
-              onFocus={e => (e.target.style.borderColor = '#f59e0b')}
-              onBlur={e => (e.target.style.borderColor = '#374151')}
-            />
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <button
-                onClick={() => { const ids = pendingAnalyseIds; const c = analyseContext.trim(); setPendingAnalyseIds(null); runAnalyse(ids, c) }}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', borderRadius: 999, background: '#f59e0b', color: '#111827', border: 'none', cursor: 'pointer' }}
-                onMouseOver={e => (e.currentTarget.style.background = '#d97706')}
-                onMouseOut={e => (e.currentTarget.style.background = '#f59e0b')}
-              >
-                ANALYSEER →
-              </button>
-              <button
-                onClick={() => setPendingAnalyseIds(null)}
-                style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 32px', borderRadius: 999, background: 'none', border: '1px solid #374151', color: '#9ca3af', cursor: 'pointer' }}
-              >
-                ANNULEER
-              </button>
-            </div>
           </div>
         </div>
       )}

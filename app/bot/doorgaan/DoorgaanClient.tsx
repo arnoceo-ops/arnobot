@@ -427,7 +427,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
         {status === 'idle' && !terug && stap === 'kies' && (
           <>
             <p style={body}>
-              {toegangActief ? 'Je gratis proefperiode loopt binnenkort af.' : 'Je toegang is afgelopen.'}
+              {toegangActief ? 'Je gratis proefperiode loopt binnenkort af.' : 'Je proefperiode zit erop.'}
               {mollieEnabled
                 ? ' Kies hieronder het abonnement waarmee je door wil. Je betaalt veilig met iDEAL, Bancontact of creditcard.'
                 : ' Kies hieronder het abonnement waarmee je door wil. Je ontvangt dan een factuur van ArnoBot.'}
