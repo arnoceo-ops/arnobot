@@ -75,9 +75,9 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 - Credit werkt als korting op de volgende verlengingsbetaling, niet als cashback
 
 **Betalingsverwerking:**
-- **Bevestigd via codebase-onderzoek:** geen enkele betaalprovider is geïntegreerd (geen Stripe/Mollie-SDK, geen betaal-webhook). Betaling verloopt dus volledig extern aan de app. [ARNO: vul aan welk kanaal je zelf gebruikt om te innen, bijv. handmatige overschrijving, een los factuurprogramma]
-- Betaling registreren in het systeem: ga naar `/bot/admin/gebruikers` en gebruik de "Betaling registreren" functie, of roep `/api/admin/payment` aan
-- **Bewust pending:** geautomatiseerde betalingsverwerking bouwen binnen 30 dagen na de commerciële livegang (Arno's eigen toezegging 2026-08-21). Zie `docs/TECHNICAL_HANDOVER.md`, "Bekende beperkingen" punt 11.
+- **Bevestigd via codebase-onderzoek (bijgewerkt 2026-10-26):** Mollie (afrekenen) en Moneybird (facturatie) zijn volledig geïntegreerd en getest: `/bot/doorgaan` → `/api/bot/checkout`, webhook `/api/webhooks/mollie`, automatische factuur per betaling via Moneybird. Betaling verloopt dus niet meer extern aan de app; de hieronder genoemde "bewust pending"-toezegging is hiermee ingevuld. Afrekenen staat nog op de Mollie-testsleutel, dus alleen bruikbaar voor jou en de interne testaccounts. Zie `docs/MOLLIE_PLAN.md` voor de actuele stand. [ARNO: vul aan welk kanaal je zelf gebruikt om te innen, bijv. handmatige overschrijving, een los factuurprogramma]
+- Handmatig corrigeren kan nog via `/bot/admin/gebruikers` ("Betaling registreren") of `/api/admin/payment`, voor uitzonderingen.
+- **Was bewust pending, nu gebouwd:** geautomatiseerde betalingsverwerking (Arno's eigen toezegging 2026-08-21). Zie `docs/TECHNICAL_HANDOVER.md`, "Bekende beperkingen" punt 11.
 
 ---
 
