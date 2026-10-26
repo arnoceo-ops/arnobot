@@ -57,6 +57,6 @@
 ## Technische aandachtspunten
 
 - Mailstroom: `lib/blogMail.ts` (verzending), `lib/blogSubscribers.ts` (abonneelogica), `lib/blogRateLimit.ts`, `lib/blogCopy.ts` (alle teksten).
-- Afmeldtokens staan in mails: de paden `/blog/bevestig`, `/blog/afmelden` en `/blog/voorkeuren` zijn uitgesloten van pageview- en PostHog-tracking, `noindex` en `no-referrer`.
+- Afmeldtokens staan in mails: de paden `/blog/bevestig` en `/blog/afmelden` zijn uitgesloten van pageview- en PostHog-tracking, `noindex` en `no-referrer`.
 - CSP `img-src` bevat het eigen Supabase-project voor afbeeldingen in posts.
 - `scripts/check-orphan-routes.mjs` begrijpt sinds deze bouw dynamische segmenten (`[id]`) in aanroepen via template-strings.

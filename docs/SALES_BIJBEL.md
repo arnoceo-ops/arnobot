@@ -177,7 +177,7 @@ Belangrijk voor het salesteam zelf, niet alleen voor wat je tegen een prospect z
 
 **Voor sales agents zelf:** gebruik ArnoBot in je eigen voorbereiding zoals je het aan een prospect verkoopt, dus mét acties, analyses en coaching, niet als snelle vraagbaak. Je eigen gebruikspatroon is het meest geloofwaardige bewijsstuk dat je in een gesprek hebt.
 
-**Nog niet gebouwd, dus niet pitchen als bestaand kenmerk (GEPLAND):** een herkenning van dit gedrag die ArnoBot zelf gebruikt om een gesprek te onderbreken voordat een nieuwe losse vraag wordt beantwoord ("je kreeg vorige keer deze actie mee, wat heb je ermee gedaan?"). Hangt samen met golf 1/golf 2 van `docs/SYSTEEMPROMPT_UPGRADE.md`: golf 1 (live, 19 augustus) checkt al eenmalig de meest recente openstaande actie voordat een nieuw onderwerp begint, golf 2 (nog niet gebouwd, evaluatie gepland 16 september 2026) voegt de eigenlijke confrontatie toe bij herhaald genegeerd gedrag.
+**Nog niet gebouwd, dus niet pitchen als bestaand kenmerk (GEPLAND):** een herkenning van dit gedrag die ArnoBot zelf gebruikt om een gesprek te onderbreken voordat een nieuwe losse vraag wordt beantwoord ("je kreeg vorige keer deze actie mee, wat heb je ermee gedaan?"). Hangt samen met golf 1/golf 2 van `docs/SYSTEEMPROMPT_UPGRADE.md`: golf 1 (live, 19 augustus) checkt al eenmalig de meest recente openstaande actie voordat een nieuw onderwerp begint, golf 2 (live sinds 1 september 2026) stuurt bij vastlopen al het gesprek naar de ruimte in plaats van het obstakel, bewust zonder confrontatie-escalatie (Arno's keuze). De hierboven beschreven onderbreking bij herhaald genegeerd gedrag is het stuk dat nog niet gebouwd is.
 
 ---
 
