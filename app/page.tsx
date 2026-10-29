@@ -87,6 +87,11 @@ export default async function ArnoBotLandingPage() {
           color: #9ca3af; text-decoration: none; transition: color 0.2s;
         }
         .nav-login:hover { color: #f1f5f9; }
+        .nav-link {
+          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+          color: #9ca3af; text-decoration: none; transition: color 0.2s;
+        }
+        .nav-link:hover { color: #f1f5f9; }
         .nav-cta-btn {
           font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
           color: #111827; text-decoration: none; background: #f59e0b;
@@ -122,6 +127,9 @@ export default async function ArnoBotLandingPage() {
         .hero-cta:hover { transform: scale(1.05); }
         .hero-cta:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
         .hero-photo-col { position: relative; flex: 1; width: 100%; }
+        .hero-team-line { font-size: 15px; color: #94a3b8; }
+        .hero-team-line a { color: #f59e0b; text-decoration: underline; text-underline-offset: 3px; }
+        .hero-team-line a:hover { color: #d97706; }
 
         @media (min-width: 768px) {
           .hero-inner { padding-top: 96px; }
@@ -166,6 +174,22 @@ export default async function ArnoBotLandingPage() {
           letter-spacing: 0.02em; color: #f8fafc;
         }
         .feature-desc { line-height: 1.6; color: #94a3b8; }
+
+        /* TEAMBLOK */
+        .teamblok-section { margin: 0 auto; max-width: 1152px; padding: 0 40px 96px; }
+        .teamblok {
+          display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: center;
+          background: #0d1526; border: 1px solid rgba(245,158,11,0.45); border-radius: 12px; padding: 52px 48px;
+        }
+        .teamblok-tekst { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+        .teamblok-tekst p { font-size: 17px; line-height: 1.7; color: #9ca3af; }
+        .teamblok-shot { margin: 0; }
+        .teamblok-shot img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); }
+        .teamblok-shot figcaption { margin-top: 12px; font-size: 14px; color: #94a3b8; }
+        @media (max-width: 860px) {
+          .teamblok { grid-template-columns: 1fr; padding: 40px 28px; gap: 32px; }
+          .teamblok-section { padding: 0 20px 56px; }
+        }
 
         /* WAAROM ARNOBOT */
         .waarom-section { margin: 0 auto; max-width: 1152px; padding: 96px 40px; }
@@ -290,8 +314,9 @@ export default async function ArnoBotLandingPage() {
         @media (max-width: 768px) {
           .site-nav { padding: 0 16px; }
           .nav-logo { font-size: 18px; letter-spacing: 2px; }
-          .nav-auth { gap: 10px; }
+          .nav-auth { gap: 12px; }
           .nav-login { font-size: 16px; letter-spacing: 2px; }
+          .nav-link { font-size: 16px; letter-spacing: 2px; }
 
           .features-section { padding: 56px 20px; }
           .features-grid { grid-template-columns: 1fr; }
@@ -307,6 +332,8 @@ export default async function ArnoBotLandingPage() {
         <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
         <div className="nav-spacer" />
         <div className="nav-auth">
+          <Link href="/team" className="nav-link">VOOR TEAMS</Link>
+          <Link href="/prijzen" className="nav-link">PRIJZEN</Link>
           {userId
             ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
             : <Link href="/sign-in" className="nav-login">LOGIN</Link>
@@ -327,6 +354,7 @@ export default async function ArnoBotLandingPage() {
               ArnoBot coacht je door elk salesgesprek, elke pipeline-review en elke deal. Persoonlijke AI-coaching op het niveau van een topcoach, altijd beschikbaar, altijd scherp.
             </p>
             <SignupCTA className="hero-cta">30 dagen gratis</SignupCTA>
+            <p className="hero-team-line">Leid je een salesteam? <Link href="/team">Bekijk ArnoBot voor teams</Link>.</p>
           </div>
           <div className="hero-photo-col">
             <img src="/cyborg.jpg" alt="Arno Diepeveen" className="hero-photo" />
@@ -354,6 +382,22 @@ export default async function ArnoBotLandingPage() {
               </div>
             )
           })}
+        </div>
+      </section>
+
+      {/* TEAMBLOK */}
+      <section className="teamblok-section">
+        <div className="teamblok">
+          <div className="teamblok-tekst">
+            <p className="section-eyebrow">VOOR SALESLEIDERS</p>
+            <h2 className="section-h2">Leid je een salesteam?</h2>
+            <p>Wat je hierboven ziet, krijgt elke verkoper in je team. Jij krijgt het overzicht erbij: waar iemand vastloopt, wat per verkoper de volgende stap is en een 1:1 die al klaarligt. Je ziet nooit de gesprekken die je verkopers met ArnoBot voeren.</p>
+            <Link href="/team" className="hero-cta">Bekijk ArnoBot voor teams</Link>
+          </div>
+          <figure className="teamblok-shot">
+            <img src="/team/overzicht.jpg" width="1566" height="873" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" loading="lazy" />
+            <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
+          </figure>
         </div>
       </section>
 

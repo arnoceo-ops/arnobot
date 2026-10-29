@@ -67,6 +67,8 @@ export default async function TeamPage() {
         }
         .tm-hero p { font-size: 18px; line-height: 1.7; color: #94a3b8; max-width: 58ch; margin: 0 auto 32px; }
 
+        .tm-backlink { text-align: center; margin: -32px 0 40px; font-size: 15px; }
+        .tm-backlink a { color: #f59e0b; text-decoration: underline; text-underline-offset: 3px; }
         .tm-cta-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
         .tm-btn {
           display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
@@ -189,6 +191,8 @@ export default async function TeamPage() {
           </a>
         </div>
       </section>
+
+      <p className="tm-backlink"><Link href="/">Wat je verkopers krijgen</Link></p>
 
       <figure className="tm-heroshot">
         <div className="tm-heroshot-frame">
