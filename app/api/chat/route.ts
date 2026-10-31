@@ -74,6 +74,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt, embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
+import { feitenRegels } from '@/lib/memoryLabels'
 import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
@@ -216,7 +217,17 @@ function geheugenDatum(iso: string): string {
   return `${datum}, ${geleden}`
 }
 
-type OudereSessie = { session_id: string; summary: string | null; feiten: string | null; created_at: string }
+// Herinneringen ouder dan 6 weken komen niet meer als situatiefeiten de prompt in, alleen als
+// neutraal onderwerp en blijvende feiten (lib/memoryLabels.ts). Zie de replay-meting van 2026-10-31.
+const OUD_GEHEUGEN_MS = 42 * 24 * 60 * 60 * 1000
+function isOudGeheugen(createdAt: string): boolean {
+  return Date.now() - new Date(createdAt).getTime() > OUD_GEHEUGEN_MS
+}
+function geheugenOnderwerp(s: { onderwerp?: string | null; title?: string | null }): string {
+  return (s.onderwerp || String(s.title ?? '').slice(0, 60) || 'gesprek').trim()
+}
+
+type OudereSessie = { session_id: string; title: string | null; summary: string | null; feiten: string | null; onderwerp: string | null; created_at: string }
 
 async function findSemanticallyRelevantOlderSessions(
   targetUserId: string,
@@ -244,7 +255,7 @@ async function findSemanticallyRelevantOlderSessions(
     // 25-sessie-grens) terug in het geheugen terwijl die voor de gebruiker verwijderd is.
     const { data: validRows } = await supabase
       .from('arnobot_blog_sessions')
-      .select('session_id, summary, feiten, created_at')
+      .select('session_id, title, summary, feiten, onderwerp, created_at')
       .in('session_id', candidateIds)
       .is('deleted_at', null)
       .eq('community_excluded', false)
@@ -453,7 +464,7 @@ export async function POST(req: NextRequest) {
       ? Promise.all([
           supabase
             .from('arnobot_blog_sessions')
-            .select('session_id, title, summary, feiten, uitdaging, actie_status, created_at')
+            .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, uitdaging, actie_status, created_at')
             .eq('user_id', userId)
             .not('session_id', 'eq', sessionId)
             .is('deleted_at', null)
@@ -498,17 +509,17 @@ export async function POST(req: NextRequest) {
               // Herinneringen ouder dan 6 weken staan in een eigen blok dat zichzelf als vaak
               // achterhaald markeert. Samen met de recente feiten in één lijst behandelde het model ze
               // als de huidige stand van zaken (replay Robel/Kindergarden, 2026-10-31).
-              const OUD_NA_MS = 42 * 24 * 60 * 60 * 1000
-              const recenteSessies = prevSessions.filter(s => Date.now() - new Date(s.created_at).getTime() <= OUD_NA_MS)
-              const oudeSessies = prevSessions.filter(s => Date.now() - new Date(s.created_at).getTime() > OUD_NA_MS)
+              const recenteSessies = prevSessions.filter(s => !isOudGeheugen(s.created_at))
+              const oudeSessies = prevSessions.filter(s => isOudGeheugen(s.created_at))
               const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
               const samenvattingen = recenteSessies.filter(s => s.summary).map(s => {
                 const datum = geheugenDatum(s.created_at)
                 return `- ${datum}: ${s.summary}`
               }).join('\n')
-              const oudeHerinneringen = oudeSessies.filter(s => s.summary || s.feiten).map(s => {
-                return `- ${geheugenDatum(s.created_at)}: ${[s.summary, s.feiten].filter(Boolean).join(' ')}`
-              }).join('\n')
+              const blijvendeFeiten = [...new Set(oudeSessies.flatMap(s => feitenRegels(s.feiten_blijvend)))]
+              const oudeOnderwerpen = oudeSessies
+                .map(s => `- ${geheugenDatum(s.created_at)}: ${geheugenOnderwerp(s)}`)
+                .join('\n')
               const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
               const recentSessieMetUitdaging = uitdagingSessies[0] ?? null
               const recentUitdaging = recentSessieMetUitdaging?.uitdaging ?? null
@@ -520,11 +531,12 @@ export async function POST(req: NextRequest) {
               const openActies = uitdagingSessies
                 .filter(s => s.actie_status !== 'ja' && s.actie_status !== 'skip')
                 .slice(0, 3)
-              if (feitenBlokken || samenvattingen || oudeHerinneringen || recentUitdaging) {
+              if (feitenBlokken || samenvattingen || oudeOnderwerpen || recentUitdaging) {
                 geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum, vandaag staat bovenaan):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. De tekst die de gebruiker nu geeft beoordeel je gerust direct. Conclusies over de situatie eromheen (de stand van een klantrelatie, een traject of een afspraak) bouw je alleen op wat de gebruiker nu zegt. Noem tijdsaanduidingen alleen zoals ze hier staan, reken of schat nooit zelf, en zeg nooit dat je iets eerder hebt geadviseerd tenzij dat letterlijk in dit gesprek staat. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
                 if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
                 if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
-                if (oudeHerinneringen) geheugentekst += `\n\nOUDE HERINNERINGEN (meer dan 6 weken geleden, vaak achterhaald):\nVerwijs hier alleen naar met de datum erbij, bijvoorbeeld "in juli vertelde je dat...", en presenteer ze nooit als de huidige situatie. Gebruik ze om een vraag te stellen ("hoe staat dat er nu voor?"), niet om conclusies op te bouwen.\n${oudeHerinneringen}`
+                if (blijvendeFeiten.length > 0) geheugentekst += `\n\nBLIJVENDE FEITEN UIT OUDERE GESPREKKEN (veranderen zelden, deze mag je als feit gebruiken):\n${blijvendeFeiten.map(f => `- ${f}`).join('\n')}`
+                if (oudeOnderwerpen) geheugentekst += `\n\nOUDE ONDERWERPEN (meer dan 6 weken geleden, de stand van zaken is onbekend):\nGebruik ze alleen om een vraag te stellen ("hoe staat dat er nu voor?"), nooit om iets over de huidige situatie te beweren.\n${oudeOnderwerpen}`
                 if (recentUitdaging) {
                   const statusTekst = recentActieStatus === 'ja'
                     ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno. Als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt. Dat is de toon: eerlijk en direct vanuit oprechte betrokkenheid.'
@@ -562,7 +574,10 @@ export async function POST(req: NextRequest) {
             if (relevanteOudereSessies.length > 0) {
               const oudereTekst = relevanteOudereSessies.map(s => {
                 const datum = geheugenDatum(s.created_at)
-                const inhoud = [s.summary, s.feiten].filter(Boolean).join(' ')
+                // Oud: alleen het onderwerp (de stand van zaken is onbekend), recent: volledige inhoud.
+                const inhoud = isOudGeheugen(s.created_at)
+                  ? `${geheugenOnderwerp(s)} (stand van zaken onbekend, alleen als vraag gebruiken)`
+                  : [s.summary, s.feiten].filter(Boolean).join(' ')
                 return `- ${datum}: ${inhoud}`
               }).join('\n')
               geheugentekst += `\n\nMOGELIJK RELEVANTE OUDERE GESPREKKEN (buiten de recente geschiedenis hierboven, gevonden op basis van de huidige vraag, gebruik alleen als het echt aansluit):\n${oudereTekst}`
@@ -595,12 +610,15 @@ export async function POST(req: NextRequest) {
               // (replay-meting 2026-10-31). De samenvatting van de sessie, met datum, wel.
               const { data: dezeSessie } = await supabase
                 .from('arnobot_blog_sessions')
-                .select('summary, feiten')
+                .select('title, onderwerp')
                 .eq('user_id', userId)
                 .eq('session_id', sessionId)
                 .maybeSingle()
-              const inhoud = [dezeSessie?.summary, dezeSessie?.feiten].filter(Boolean).join(' ')
-                || String((history as { content: string }[]).filter((_, i) => i % 2 === 0).slice(-1)[0]?.content ?? '').slice(0, 300)
+              // Alleen het neutrale onderwerp van toen: de samenvatting en feiten bevatten juist de
+              // stand van zaken van toen, die het model als "nu" ging noemen.
+              const inhoud = dezeSessie
+                ? `Onderwerp van toen: ${geheugenOnderwerp(dezeSessie)}. Wat er toen speelde is mogelijk achterhaald, vraag hoe het er nu voor staat.`
+                : String((history as { content: string }[]).filter((_, i) => i % 2 === 0).slice(-1)[0]?.content ?? '').slice(0, 300)
               geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Wat hieronder staat is een herinnering aan dat gesprek en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag.\n${inhoud}`
             }
             return { geheugentekst, prevSessionCount, verouderd }

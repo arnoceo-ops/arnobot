@@ -12,6 +12,7 @@ import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
+import { labelGesprek } from '@/lib/memoryLabels'
 import { Redis } from '@upstash/redis'
 
 const supabase = createClient(
@@ -37,7 +38,7 @@ function schoonSamenvatting(tekst: string, stopReason: string | null): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent, cronUserId, alleenSamenvatting } = await req.json()
+  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent, cronUserId, alleenSamenvatting, alleenLabels } = await req.json()
   // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT, SparClient.tsx): het
   // gesprek wordt ALTIJD opgeslagen (nodig voor ArnoBot's eigen big-data-analyse over de hele
   // community, refresh-openers/route.ts), maar community_excluded=true sluit 'm uit van alles
@@ -262,6 +263,31 @@ ${BRONDATA_REGEL}`,
   // een bestaande sessie. Uitdaging, actie_erkend, feiten en thema's blijven ongemoeid, anders zouden
   // oude acties als reminder terugkomen. Gebruikt om samenvattingen te herstellen die met de oude
   // prompt als ARNO-antwoord waren geschreven (2026-10-31, 17 van 81 sessies).
+  // Labelmodus (alleen via CRON_SECRET): voegt onderwerp en blijvende feiten toe aan een bestaande
+  // sessie, voor het achteraf labelen van gesprekken van voor 2026-10-31. Raakt verder niets.
+  if (viaCron && alleenLabels === true) {
+    const { data: rij } = await supabase
+      .from('arnobot_blog_sessions')
+      .select('title, summary, feiten')
+      .eq('user_id', userId)
+      .eq('session_id', sessionId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!rij) return NextResponse.json({ error: 'Sessie niet gevonden' }, { status: 404 })
+    try {
+      const l = await labelGesprek(anthropic, rij)
+      const { error: labelError } = await supabase
+        .from('arnobot_blog_sessions')
+        .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
+        .eq('user_id', userId)
+        .eq('session_id', sessionId)
+      if (labelError) return NextResponse.json({ error: labelError.message }, { status: 500 })
+      return NextResponse.json({ ok: true, onderwerp: l.onderwerp, blijvend: l.blijvend.length })
+    } catch (e) {
+      return NextResponse.json({ error: String(e) }, { status: 502 })
+    }
+  }
+
   if (viaCron && alleenSamenvatting === true) {
     const { data: bestaand } = await supabase
       .from('arnobot_blog_sessions')
@@ -414,6 +440,18 @@ ${BRONDATA_REGEL}`,
       await extractAndStoreEntities(userId, sessionId, conversationText)
     } catch (e) {
       console.error('[session-end] Entiteiten-extractie error:', e)
+    }
+    // Onderwerp en blijvende feiten voor het sessiegeheugen (lib/memoryLabels.ts). Mislukt dit, dan
+    // blijven de kolommen leeg en valt de chat terug op alleen de titel: veilig, nooit situatiefeiten.
+    try {
+      const l = await labelGesprek(anthropic, { title, summary, feiten })
+      await supabase
+        .from('arnobot_blog_sessions')
+        .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
+        .eq('user_id', userId)
+        .eq('session_id', sessionId)
+    } catch (e) {
+      console.error('[session-end] Labels error:', e)
     }
   })
 
