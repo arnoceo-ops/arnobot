@@ -201,6 +201,17 @@ const SEMANTIC_MEMORY_CANDIDATES = 15
 const SEMANTIC_MEMORY_MIN_SIMILARITY = 0.3
 const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
 
+// Datumlabel voor alles wat uit het sessiegeheugen in de prompt komt: dag, maand, jaar en hoe
+// lang geleden. Zonder dat zag het model feiten van maanden terug als de huidige stand van zaken
+// (2026-10-31, Robel/Kindergarden: een traject dat intussen on hold stond werd als actueel behandeld).
+function geheugenDatum(iso: string): string {
+  const d = new Date(iso)
+  const dagen = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000))
+  const datum = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+  const geleden = dagen < 14 ? `${dagen} dag${dagen === 1 ? '' : 'en'} geleden` : dagen < 70 ? `${Math.round(dagen / 7)} weken geleden` : `${Math.round(dagen / 30)} maanden geleden`
+  return `${datum}, ${geleden}`
+}
+
 type OudereSessie = { session_id: string; summary: string | null; feiten: string | null; created_at: string }
 
 async function findSemanticallyRelevantOlderSessions(
@@ -466,9 +477,9 @@ export async function POST(req: NextRequest) {
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
               prevSessionCount = prevSessions.length
-              const feitenBlokken = prevSessions.filter(s => s.feiten).map(s => s.feiten).join('\n')
+              const feitenBlokken = prevSessions.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
               const samenvattingen = prevSessions.filter(s => s.summary).map(s => {
-                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                const datum = geheugenDatum(s.created_at)
                 return `- ${datum}: ${s.summary}`
               }).join('\n')
               const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
@@ -483,7 +494,7 @@ export async function POST(req: NextRequest) {
                 .filter(s => s.actie_status !== 'ja' && s.actie_status !== 'skip')
                 .slice(0, 3)
               if (feitenBlokken || samenvattingen || recentUitdaging) {
-                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD:'
+                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum en hoe lang geleden dat was):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. Geef over een situatie waarvan je de laatste stand alleen uit het geheugen kent nooit een categorisch oordeel ("stuur dit niet") voordat je die vraag hebt gesteld. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
                 if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
                 if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
                 if (recentUitdaging) {
@@ -499,7 +510,7 @@ export async function POST(req: NextRequest) {
                 const extraOpen = openActies.filter(s => s.session_id !== recentSessieMetUitdaging?.session_id)
                 if (extraOpen.length > 0) {
                   const lijst = extraOpen.map(s => {
-                    const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                    const datum = geheugenDatum(s.created_at)
                     const st = s.actie_status === 'deels' ? 'deels gedaan' : s.actie_status === 'nee' ? 'nog niet gedaan' : 'geen antwoord gegeven'
                     return `- ${datum}: ${s.uitdaging} (${st})`
                   }).join('\n')
@@ -510,7 +521,7 @@ export async function POST(req: NextRequest) {
             const relevanteSparring = (sparringSessions ?? []).filter(s => s.debrief)
             if (relevanteSparring.length > 0) {
               const sparringTekst = relevanteSparring.map(s => {
-                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                const datum = geheugenDatum(s.created_at)
                 return `- ${datum} (rol: ${s.persona ?? 'onbekend'}):\n${s.debrief}`
               }).join('\n\n')
               geheugentekst += `\n\nSPARRING-OEFENSESSIES VAN DEZE GEBRUIKER (laatste ${relevanteSparring.length}, alleen relevant omdat de gebruiker er zelf naar verwijst):\n${sparringTekst}`
@@ -522,7 +533,7 @@ export async function POST(req: NextRequest) {
               .slice(0, semantischeTopN)
             if (relevanteOudereSessies.length > 0) {
               const oudereTekst = relevanteOudereSessies.map(s => {
-                const datum = new Date(s.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+                const datum = geheugenDatum(s.created_at)
                 const inhoud = [s.summary, s.feiten].filter(Boolean).join(' ')
                 return `- ${datum}: ${inhoud}`
               }).join('\n')
