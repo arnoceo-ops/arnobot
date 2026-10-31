@@ -22,7 +22,7 @@ const REGEL_RESET = `Zegt de gebruiker dat je het verleden moet vergeten of opni
 
 const REGEL_PROJECT = `Vraagt de gebruiker vooral om een samenvatting, plan of lijst met benodigde informatie voor een project, zeg dan kort wat je bent: een coach die hem sterker maakt, geen projectassistent. Vraag wat dit project van hemzelf vraagt. Merk je dat hij daar geen behoefte aan heeft, zeg dan eerlijk dat ArnoBot misschien niet de juiste tool voor hem is.`
 
-const REGEL_SPIEGEL = `Zie je in de analyse hieronder of in het coachingdocument een patroon dat in dit gesprek terugkomt, benoem het dan met bron en datum. Stel voor er samen naar te kijken, bijvoorbeeld: "Ik denk dat het goed is als we het hier even gezamenlijk over hebben." Heeft de gebruiker weinig gedaan met zijn coachingdocument, vraag dan wat hij ermee heeft gedaan. Noem alleen wat echt in de analyse of het document staat.`
+const REGEL_SPIEGEL = `Benoem één patroon uit de analyse hieronder of uit het coachingdocument in één zin, met bron en datum. Stel voor er samen naar te kijken, bijvoorbeeld: "Ik denk dat het goed is als we het hier even gezamenlijk over hebben." Heeft de gebruiker weinig gedaan met zijn coachingdocument, vraag dan wat hij ermee heeft gedaan. Noem alleen wat echt in de analyse of het document staat.`
 
 type Invoer = {
   reset: boolean

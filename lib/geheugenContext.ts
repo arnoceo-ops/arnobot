@@ -3,6 +3,7 @@ import { embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { feitenRegels } from '@/lib/memoryLabels'
 import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
+import { feitenRegel } from '@/lib/feitenControle'
 import { coachRolRegels, coachRolTrigger, coachRolVraagtAnalyse } from '@/lib/coachRol'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
@@ -281,6 +282,7 @@ export async function haalGeheugenContext(
                 analyseDatum: laatsteAnalyse ? geheugenDatum(laatsteAnalyse.created_at) : '',
               })
             }
+            geheugentekst += feitenRegel(question)
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
               verouderd = true
