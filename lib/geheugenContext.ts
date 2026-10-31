@@ -3,6 +3,7 @@ import { embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { feitenRegels } from '@/lib/memoryLabels'
 import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
+import { coachRolRegels, coachRolTrigger, coachRolVraagtAnalyse } from '@/lib/coachRol'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
 // app/api/chat/route.ts; hierheen verplaatst zodat de route en de testroute
@@ -263,6 +264,23 @@ export async function haalGeheugenContext(
             const recenteGesprekken = prevSessions ?? []
             geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
             geheugentekst += mailConceptRegel(question, history)
+            // Coachrol: reset, projectassistentie en patroonspiegel (lib/coachRol.ts)
+            const coachTrigger = coachRolTrigger(question, history)
+            if (coachRolVraagtAnalyse(coachTrigger)) {
+              const { data: laatsteAnalyse } = await supabase
+                .from('arnobot_analyses')
+                .select('analyse_text, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+              geheugentekst += coachRolRegels({
+                ...coachTrigger,
+                heeftCoaching: !!laatsteCoaching,
+                laatsteAnalyse,
+                analyseDatum: laatsteAnalyse ? geheugenDatum(laatsteAnalyse.created_at) : '',
+              })
+            }
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
               verouderd = true
