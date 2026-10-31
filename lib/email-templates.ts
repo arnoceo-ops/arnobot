@@ -61,6 +61,7 @@ export type EmailType =
   | 'testtoegang_afloop'
   | 'testtoegang_verlengd'
   | 'testtoegang_rechtzetting'
+  | 'testtoegang_reminder'
   | 'betaling_bevestiging'
   | 'betaling_mislukt'
   | 'trial_afgelopen'
@@ -99,7 +100,8 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   testtoegang_afloop:    { label: 'Testtoegang loopt af',   description: 'Eenmalig:heads-up voor vroege testgebruikers, comp eindigt 1 nov', category: 'user' },
   testtoegang_verlengd:  { label: 'Testtoegang verlengd',  description: 'Eenmalig:testgebruiker (Robel) tot 1 december verlengd, handmatig verstuurd', category: 'user' },
   testtoegang_rechtzetting: { label: 'Testtoegang rechtzetting', description: 'Eenmalig:rechtzetting van de Calendly-link in testtoegang_verlengd, handmatig verstuurd', category: 'user' },
-  betaling_bevestiging: { label: 'Betaling bevestigd',   description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
+  testtoegang_reminder:  { label: 'Testtoegang reminder',  description: 'Eenmalig:25 nov, Robel kan kiezen voor een abonnement (alleen als Mollie live staat)', category: 'user' },
+  betaling_bevestiging: { label: 'Betaling bevestigd',  description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
   betaling_mislukt:      { label: 'Betaling mislukt',       description: 'Event:herhaalbetaling niet gelukt, toegang loopt nog door',         category: 'user' },
   trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30:trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging',  description: 'Op elk moment:na opzegging via account pagina',                     category: 'user' },
@@ -272,6 +274,15 @@ export function getEmailTemplate(
         html: mail(
           `In mijn vorige mail over je verlengde toegang stond een verkeerde link om een gesprek in te plannen. Sorry daarvoor.<br><br>Via de knop hieronder plan je wel het goede gesprek in. Verder staat alles in de vorige mail nog zoals het was: je toegang loopt tot 1 december.`,
           'GESPREK INPLANNEN →', 'https://calendly.com/arnobot/ab'
+        ),
+      }
+    case 'testtoegang_reminder':
+      return {
+        subject: `${prefix}Je gratis toegang tot ArnoBot stopt op 1 december`,
+        html: mail(
+          `Je gratis toegang als testgebruiker loopt tot 1 december. Tegen die tijd kun je beslissen of je wilt doorgaan met een betaald abonnement.<br><br>Wil je doorgaan? Kies dan een abonnement en je kunt direct verder waar je gebleven was. Wil je niet doorgaan, dan hoef je niks te doen. Je toegang stopt dan automatisch en je data blijft daarna nog 30 dagen bewaard.<br><br>Wil je eerst bespreken wat het je heeft opgeleverd? Plan een gesprek in via de link hieronder.`,
+          'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan',
+          `Gesprek inplannen: <a href="https://calendly.com/arnobot/ab" style="color:#9ca3af;text-decoration:underline;">calendly.com/arnobot/ab</a>`
         ),
       }
     case 'trial_afgelopen':

@@ -79,6 +79,9 @@ const KNOWN_SAFE = new Set([
   // Wegwerpcron, verwijderd na 2026-10-17. Query is .in('email', [4 vaste adressen]):
   // kan per definitie alleen die vier bekende testers raken, geen testaccountpollutie.
   'app/api/cron/comp-heads-up-okt/route.ts:approved_users',
+  // Wegwerpcron, verwijderd na 2026-12-01. Query is .eq('email', 1 vast adres): raakt alleen
+  // die ene bekende testgebruiker, geen testaccountpollutie.
+  'app/api/cron/comp-reminder-nov/route.ts:approved_users',
   // Blogstatistieken, "wie doet wat": controleert alleen of de e-mailadressen van de 25 getoonde
   // blogabonnees al een ArnoBot-account hebben (.in('email', [...])). Een abonnee die toevallig
   // een testaccount is hoort juist als gebruiker te tonen, uitsluiten zou een verkeerde "lead" geven.
