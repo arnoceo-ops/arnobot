@@ -120,3 +120,31 @@ describe('getRelevantChunks (single-query, gebruikt door andere routes dan de ho
     expect(embeddingModelUsed).toBe('voyage-3-large')
   })
 })
+
+describe('volltekst-zoekleg', () => {
+  beforeEach(() => {
+    mockRpc.mockReset()
+    mockFetch.mockReset()
+  })
+
+  it('krijgt hooguit 40 woorden, de vectorleg krijgt de volledige tekst', async () => {
+    mockRpc.mockImplementation(() => Promise.resolve({ data: [], error: null }))
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/embeddings')) return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [{ embedding: [0.1, 0.2] }] }) })
+      return Promise.reject(new Error('onverwachte fetch-aanroep: ' + url))
+    })
+    const lang = Array.from({ length: 300 }, (_, i) => 'woord' + i).join(' ')
+
+    await getRelevantChunks(lang, 5)
+
+    const ft = mockRpc.mock.calls.find(c => c[0] === 'match_blog_chunks_fulltext')
+    expect(ft).toBeDefined()
+    const woorden = String(ft![1].query_text).split(' ')
+    expect(woorden.length).toBe(40)
+    expect(woorden[0]).toBe('woord0')
+    // Een korte vraag blijft ongewijzigd.
+    mockRpc.mockClear()
+    await getRelevantChunks('hoe ga ik om met een bezwaar', 5)
+    expect(mockRpc.mock.calls.find(c => c[0] === 'match_blog_chunks_fulltext')![1].query_text).toBe('hoe ga ik om met een bezwaar')
+  })
+})

@@ -158,8 +158,11 @@ async function searchCandidates(searchQuery: string): Promise<Candidate[]> {
       query_embedding: queryEmbedding,
       match_count: 100,
     }),
+    // Volltekst eist dat alle woorden voorkomen: gemeten 2026-10-31 geeft hij vanaf 13 woorden 0 resultaten en
+    // bij een heel lange tekst een PostgreSQL-fout ("tsquery stack too small", o.a. via session-end met alle
+    // gebruikersvragen van een lang gesprek). Daarom alleen de eerste woorden, de vectorleg krijgt de volle tekst.
     supabase.rpc('match_blog_chunks_fulltext', {
-      query_text: searchQuery,
+      query_text: searchQuery.split(/\s+/).slice(0, 40).join(' '),
       match_count: 30,
     }),
   ])
