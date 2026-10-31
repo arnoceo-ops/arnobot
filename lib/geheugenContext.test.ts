@@ -52,9 +52,9 @@ describe('detectSparringReference', () => {
 
 describe('bouwProfielContext', () => {
   it('zet datum van vandaag en voornaam in de context', () => {
-    const c = bouwProfielContext({ rol: 'AE Hunter' }, 'Robel', NU)
+    const c = bouwProfielContext({ rol: 'AE Hunter' }, 'Sanne', NU)
     expect(c).toContain('VANDAAG IS zaterdag 31 oktober 2026')
-    expect(c).toContain('DE GEBRUIKER HEET Robel')
+    expect(c).toContain('DE GEBRUIKER HEET Sanne')
     expect(c).toContain('Rol: AE Hunter')
   })
   it('laat de naam weg als die onbekend is', () => {

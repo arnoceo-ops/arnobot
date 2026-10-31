@@ -123,6 +123,8 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - **Telegram-notificaties bewust niet gedocumenteerd als sub-verwerker (besloten 2026-09-16).** `lib/cron-notify.ts` en diverse cron-routes/webhooks sturen IP's, Clerk user-ID's en teamdata naar de Telegram Bot API. Arno heeft er bewust voor gekozen dit niet toe te voegen aan privacypagina/DPA-concept/security-PDF. Vastgelegd als expliciet besluit, geen open actiepunt, wel een bewust geaccepteerd AVG-risico (ongedocumenteerde sub-verwerker).
 
 ## Verificaties die CLAUDE.md vraagt
+- **Sessie-sluiter live bewijzen (gezet 2026-10-31):** het gesprek van 31 oktober 07:45 tot 07:57 UTC (4 vragen, een echt gesprek van een gebruiker) had geen rij in `arnobot_blog_sessions` en was de eerste natuurlijke kandidaat voor `cron/sessies-afsluiten`. Controleer na 20:40 UTC: bestaat er nu een rij met `message_count` 4 en een `onderwerp`? Zo ja, dan is de volledige keten (selectie, `session-end` met CRON_SECRET, opslag, labels) bewezen. Zo nee en de browser heeft het niet eerder opgeslagen: Vercel-logs van de cron nakijken.
+
 
 - ~~**Verse controle van het `TEAM_PLAN.md`-statusblok tegen de code**~~ **Gedaan 2026-08-31.** 2B/2C zijn echt gebouwd en aangeroepen; tegenstrijdigheid was achterhaalde planningstaal, rechtgezet in `TEAM_PLAN.md`.
 - **Voice:** een echte proefboeking om de Calendly-webhook-matching end-to-end te bevestigen (bewust overgeslagen, Arno vertrouwt de logica; kan alsnog als losse verificatie).

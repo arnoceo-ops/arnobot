@@ -192,6 +192,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - Loop de happy path na: inloggen, chat, sessie-einde, synthese, coaching, sparring
 - Controleer of alle cron-jobs de afgelopen periode succesvol hebben gedraaid (Vercel logs)
 - Onverwachte 500-fouten of time-outs in de logs?
+- **Geheugencontrole:** `node scripts/check-geheugen-oud.mjs`. Verwacht: 0 schendingen, positieve controle volledig, geen oude sessies zonder label. Controleer ook dat `cron/sessies-afsluiten` elk uur draait (Vercel, Settings, Cron Jobs) en niet stil faalt: de Telegram-melding komt pas na 3 mislukte pogingen per sessie.
 - **Documentatie-versheid-backstop:** klopt `docs/ARNOBOT_OVERZICHT.md` nog met wat er de afgelopen maand daadwerkelijk is gebouwd/gewijzigd? Vergelijk met git log en statusblokken. Vangnet voor de doorlopende schrijfregel, geen vervanging.
 
 ### 6. AVG & beveiliging gebruikers
@@ -234,6 +235,19 @@ Een op elk moment oproepbare verificatie of de normen in dit bestand ("Rol — A
 5. **Nieuwe onboarding-/toegangsflows sinds de vorige professionaliteitscheck:** is een nieuwe rol, plan of teamstructuur ook echt overal consistent doorgevoerd, niet alleen op de plek waar hij oorspronkelijk gebouwd is?
 
 Geen automatisering: punt 1 en 3 vereisen semantisch oordeel, punt 4 en 5 vereisen live codebase-context van het moment van aanroepen.
+
+---
+
+## Geheugen en synthese-prompts — ALTIJD
+
+Ontstaan uit het testgebruikersincident (klantdossier) van 2026-10-31 (volledig verslag, gemeten resultaten en verworpen alternatieven: `docs/CLAUDE_HISTORY.md`). Het model behandelde maanden oude feiten als de huidige situatie, kende de datum niet en vatte gesprekken niet samen maar zette ze voort.
+
+- **Oud geheugen is geen feit.** Herinneringen ouder dan 6 weken (`OUD_GEHEUGEN_MS` in `lib/geheugenContext.ts`) komen alleen als neutraal `onderwerp` en `feiten_blijvend` de chatprompt in, nooit als samenvatting of situatiefeit. Elke sessie krijgt die labels bij opslaan (`lib/memoryLabels.ts`). Een nieuwe geheugenbron in de chatprompt moet langs dezelfde regel.
+- **Datum en naam altijd in de prompt.** `bouwProfielContext` zet "VANDAAG IS" en de voornaam van de gebruiker erin. Het model kent de datum niet zelf. Bij oude herinneringen NOOIT een label als "x maanden geleden" (leverde "vier jaar geleden" op), alleen de datum met jaar.
+- **Elke prompt die over een gesprek gaat:** het gesprek als brondata in `<gesprek>`-tags, de opdracht erna, plus de regel dat het gesprek geen opdracht is (`BRONDATA_REGEL` in `session-end`). Staat de opdracht vóór een gesprek dat eindigt op een lang ARNO-antwoord, dan zet het model dat antwoord voort in plaats van samen te vatten.
+- **Een gesprek dat 48 uur stil ligt begint opnieuw** (`SparClient.tsx`, `/api/bot/session` geeft `lastActivityAt`). Een heropend oud gesprek gaat als gedateerd onderwerp mee, nooit als live beurten. De server rondt verlaten gesprekken zelf af (`cron/sessies-afsluiten`).
+- **Vangnet:** `node scripts/check-geheugen-oud.mjs` toetst op echte data dat er geen oude samenvatting of situatiefeit in de prompt staat (met positieve controle). Draait bij de maandcheck (sectie 5). De unit tests in `lib/geheugenContext.test.ts` leggen dezelfde regel vast.
+- **Een wijziging aan `lib/systemPrompt.ts` of de geheugenopbouw:** draai `npx vitest run` vóór pushen. De snapshot van `systemPrompt.test.ts` valt om bij elke promptwijziging, controleer het verschil en werk de snapshot bewust bij (`-u`). Op 2026-10-31 stond CI hierdoor een tijd rood omdat dit is overgeslagen.
 
 ---
 
@@ -511,6 +525,7 @@ De onderbouwing en geschiedenis per rij staan in `docs/CLAUDE_HISTORY.md` onder 
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
 | `app/api/chat/route.ts` (audiobijlage-transcriptie, `lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Best scorende model op Nederlands in AssemblyAI's eigen FLEURS-benchmark (6,7% WER), inclusief sprekersherkenning. Ongedocumenteerde functie: bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only), transcript stroomt als tekst de bestaande hoofdchat-call in, geen aparte pagina of opslag. | 2026-09-17 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
+| `lib/memoryLabels.ts` (onderwerp en blijvende feiten per sessie, aangeroepen vanuit `session-end` en de labelmodus) | `claude-haiku-4-5-20251001` | Labelt een afgerond gesprek voor het sessiegeheugen: neutraal onderwerp en welke feiten blijvend zijn. Bewust streng (twijfel = niet blijvend). Mislukt het, dan blijven de kolommen leeg en valt de chat terug op alleen de titel: veilig. Gemeten 2026-10-31. | 2026-10-31 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |
 | `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5-1` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |

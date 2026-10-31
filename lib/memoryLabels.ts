@@ -4,7 +4,7 @@ import { RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 
 // Labelt een afgerond gesprek voor het sessiegeheugen. Herinneringen ouder dan een paar weken gaan
 // de chatprompt in als onderwerp plus blijvende feiten, nooit als situatiefeiten: een model dat
-// "Kindergarden werkt aan een verbetertraject" uit juli leest, noemt dat in oktober als nu
+// "Klant X werkt aan een verbetertraject" uit juli leest, noemt dat in oktober als nu
 // (replay-meting 2026-10-31: oude feiten als huidige situatie in 5 van 8 runs, na labelen 1 van 8).
 
 export type GesprekLabels = { onderwerp: string; blijvend: string[] }

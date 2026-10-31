@@ -219,6 +219,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de harde grens op het uitschrijven van een volledig plan (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed |
 | `/api/chat-voice` | Voice-variant van het hoofdgesprek (eigen rate limit + plancheck) |
 | `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten) |
+| `/api/admin/geheugen-preview` | Toont exact de geheugen- en gebruikerscontext die de hoofdchat voor een gebruiker in de prompt zet (zelfde code, `lib/geheugenContext.ts`), zonder model-aanroep en zonder writes. Alleen met admin-cookie. Optioneel `negeerSessieIds` om een eerder moment na te spelen. Gebruikt door `scripts/check-geheugen-oud.mjs` |
 | `/api/bot/sessions` | Ruwe logs groeperen tot sessies, embedding + entiteiten-extractie |
 | `/api/bot/sessions/search` | AI-filter op eigen gesprekken |
 | `/api/bot/session` | Eén sessie ophalen/verwijderen |
@@ -371,6 +372,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/blog` | Elke 15 minuten | Blog: ingeplande posts publiceren, wachtrij vullen voor posts met "verstuur naar abonnees", wachtende blogmails versturen binnen het dagbudget (`BLOG_DAILY_MAIL_BUDGET`, standaard 50 per UTC-dag, rest van de Resend-daglimiet blijft voor betalings- en trialmails). Redis-slot tegen gelijktijdige runs |
 | `/api/cron/trial-emails` | Dagelijks 04:05 | Lifecycle e-mails: dag1, dag4, dag14, dag25, first_conversation, first_coaching |
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
+| `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
 | `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
 | `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
@@ -443,6 +445,8 @@ Gesprekssessies na afsluiting, met synthese.
 | `actie_elaboratie` | Optionele toelichting bij "JA, GEDAAN" |
 | `embedding` | Vector (voyage-multilingual-2) van title+summary+feiten, via de gedeelde `embedSessionText()` in `lib/rag.ts`. Doorzoekbaar via Supabase-functie `match_sessions` (user-gescoped, filtert `deleted_at`) |
 | `deleted_at` | Soft delete timestamp. Schrijvers roepen ook `pruneEntitiesForDeletedSessions()` aan |
+| `onderwerp` | Neutrale titel van waar het gesprek over ging (zonder uitkomst of status), gezet door `lib/memoryLabels.ts` bij opslaan en achteraf via de labelmodus van `session-end`. Dit is wat oude herinneringen in de chatprompt worden |
+| `feiten_blijvend` | Alleen de feiten die over de gebruiker zelf of zijn eigen bedrijf gaan en jaren geldig blijven. Leeg = geen of nog niet gelabeld. Oude herinneringen (meer dan 6 weken) komen alleen hiermee en met `onderwerp` de chatprompt in, nooit met `summary` of `feiten` |
 
 ### `arnobot_memory_entities`
 Patroongeheugen over sessies heen: namen, bedrijven en terugkerende thema's. Schrijvers via `extractAndStoreEntities()` in `lib/memoryEntities.ts`, lezer `findRecurringEntitiesInQuestion()` in `chat/route.ts`.

@@ -28,7 +28,7 @@ export const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
 
 // Datumlabel voor alles wat uit het sessiegeheugen in de prompt komt: dag, maand en jaar, bij
 // recente herinneringen ook hoe lang geleden. Zonder datum zag het model feiten van maanden terug
-// als de huidige stand van zaken (2026-10-31, Robel/Kindergarden: een traject dat intussen on hold
+// als de huidige stand van zaken (2026-10-31, testgebruikersincident: een traject dat intussen on hold
 // stond werd als actueel behandeld). Bij oudere herinneringen bewust GEEN "x maanden geleden":
 // met dat label verzon het model in 8 van 8 testruns "vier jaar geleden". Alleen de datum, het
 // model rekent zelf vanaf "VANDAAG IS" (chat-route, profielContext).
@@ -163,7 +163,7 @@ export async function haalGeheugenContext(
               prevSessionCount = prevSessions.length
               // Herinneringen ouder dan 6 weken staan in een eigen blok dat zichzelf als vaak
               // achterhaald markeert. Samen met de recente feiten in één lijst behandelde het model ze
-              // als de huidige stand van zaken (replay Robel/Kindergarden, 2026-10-31).
+              // als de huidige stand van zaken (replay testgebruikersincident, 2026-10-31).
               const recenteSessies = prevSessions.filter(s => !isOudGeheugen(s.created_at))
               const oudeSessies = prevSessions.filter(s => isOudGeheugen(s.created_at))
               const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
@@ -256,7 +256,7 @@ export async function haalGeheugenContext(
             // Verouderd gesprek (laatste bericht langer dan 48 uur geleden, bv. via ?resume= of een
             // tab die dagen openstond): de oude berichten gaan NIET als live beurten mee, want dan
             // ankert het model erop en behandelt het ze als de actuele stand (bevestigd met een
-            // replay van het Robel-gesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
+            // replay van het testgesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
             // als gedateerd, ingekort geheugen mee.
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
@@ -282,7 +282,7 @@ export async function haalGeheugenContext(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function bouwProfielContext(profiel: any, voornaamGebruiker: string, nu: Date = new Date()): string {
-    // Zonder de naam wist het model niet dat "Hoi Robel" of "Met vriendelijke groet, Robel" in een
+    // Zonder de naam wist het model niet dat "Hoi Sanne" of "Met vriendelijke groet, Sanne" in een
     // geplakte mail de gebruiker zelf is en nam het aan dat het over iemand anders ging (2026-10-31).
     const naamContext = voornaamGebruiker
       ? `\nDE GEBRUIKER HEET ${voornaamGebruiker}. Staat die naam in een geplakte mail, brief of tekst als afzender of ontvanger, dan is dat de gebruiker zelf. Gebruik de naam niet als standaard aanhef.\n`

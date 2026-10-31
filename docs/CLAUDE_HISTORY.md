@@ -144,3 +144,30 @@ De compacte tabel in `CLAUDE.md` geeft per route alleen route → model → éé
 Tussen ongeveer 14:45 en 16:00 UTC kreeg een deel van de pushes naar master geen Vercel-deployment, andere pas na ongeveer 8 minuten. Oorzaak: een Vercel-incident ("Increased build and deployment failures", vanaf 13:35 UTC) door een upstream-incident bij GitHub. Geen fout in de Git-koppeling of in de code. Handmatig deployen via de Vercel-API werkte wel. Les: na elke push controleren of er een deployment voor de commit bestaat, en bij uitblijven eerst de statuspagina's van Vercel en GitHub bekijken (vercel-status.com, githubstatus.com) voordat je aan de eigen configuratie gaat zoeken. Er is eerst in de configuratie gezocht (Git-link, ignore-regel), dat was een omweg.
 
 Dezelfde dag meldde GitHub een storing op meldingen (vanaf 12:21 UTC). De test of routine-issues Arno mailen viel daarin. Achteraf bevestigd in Arno's inbox: de mails (ook van eigen acties, met "Includes your own updates" aan) kwamen wel binnen, ongeveer 3 uur te laat. De eerdere conclusie "GitHub-mail werkt niet" was dus onjuist. De Telegram-melding via `.github/workflows/notify-issue.yml` blijft de snelle hoofdroute, omdat die niet van GitHubs meldingen afhangt.
+
+
+---
+
+## Geheugen, oude feiten en kapotte samenvattingen: het testgebruikersincident (2026-10-31)
+
+**Wat er gebeurde.** Een testgebruiker (accountmanager bij een softwareleverancier) plakte op 29 oktober een mail van zijn CEO in ArnoBot. Het antwoord begon met "Stuur deze mail niet", noemde "het gesprek van morgen" en een verbetertraject dat al on hold stond, wisselde in 17 minuten vier keer van standpunt, behandelde de rol van de gebruiker verkeerd en stelde dat een nieuwe interim IT-manager bij de klant "waarschijnlijk geen beslissingsbevoegdheid" had.
+
+**Oorzaken (alle vastgesteld in code of data, niet vermoed).**
+1. De gebruiker gebruikte dezelfde sessie als in juli, omdat hij nooit op SLUIT drukte (`localStorage` houdt het sessie-id vast). De berichten van 7 tot 28 juli kwamen als live gespreksgeschiedenis mee, zonder tijdsaanduiding.
+2. De prompt noemde nergens de datum van vandaag en kende de voornaam van de gebruiker niet, dus "Hoi [voornaam]" in een geplakte mail was voor het model een ander persoon.
+3. Het geheugen toonde "Concrete feiten uit eerdere gesprekken" zonder datum, samen met recente feiten.
+4. De samenvattingsstap (`session-end`) zette de opdracht vóór het gesprek. Het gesprek eindigde op een lang ARNO-antwoord, dus Haiku zette dat voort: 17 van 81 echte sessies hadden een kapotte samenvatting (reactie als ARNO, markdown, tot 15 zinnen, halverwege afgebroken). Die zaten in het geheugen en de analyses van gebruikers. Drie andere synthesestappen hadden hetzelfde patroon.
+5. Een samenvatting van een lang openstaande sessie werd steeds over het hele gesprek opnieuw gemaakt, waardoor de juli-rij oktober-inhoud kreeg.
+
+**Besluiten, met verworpen alternatieven.**
+- **Gekozen: oud geheugen als onderwerp plus blijvende feiten** (optie A, verfijnd). Situatiefeiten ouder dan 6 weken gaan nooit meer als feit de prompt in. Verworpen: **B** een controlestap na elk antwoord (het antwoord streamt, dus controleren kan pas als het al op het scherm staat en maakt elk antwoord trager, en een beoordelaar kan zich ook vergissen) en **C** niets doen (oude feiten als "nu" in ongeveer de helft van de testruns). Verworpen als losse maatregelen: alleen een tijdsprong-notitie in de prompt (werkte niet, het model zei nog "jij hebt morgen een gesprek"), oude berichten als letterlijk fragment (kwam over als "nu"), het label "x maanden geleden" (gaf "vier jaar geleden" in 8 van 8 runs).
+- **Een gesprek dat 48 uur stil ligt begint opnieuw**, en een server-cron rondt verlaten gesprekken af. Reden: 12 van 136 stille sessies hadden geen of een achterlopende samenvatting (het `sendBeacon`-vangnet faalt als een tab sneuvelt). De cron kijkt bewust alleen 36 uur terug, anders komen maandenoude uitdagingen als "openstaande actie" terug.
+- **Herstel van bestaande data:** de 17 kapotte samenvattingen opnieuw gemaakt via een herstelmodus die ALLEEN samenvatting en embedding vernieuwt (niet `actie_erkend` of uitdaging, anders komen oude acties als reminder terug). De oude teksten zijn bewaard. De sessie van de testgebruiker is gesplitst in een deel van juli en een deel van oktober. 146 sessies zijn achteraf gelabeld.
+
+**Gemeten resultaat (replay van het echte eerste bericht van de testgebruiker, exact de productie-input via `/api/admin/geheugen-preview`, 12 runs per pad, beoordeeld door een tweede model).** Oude feiten als huidige situatie: van ongeveer de helft naar 0 van 12 (heropend gesprek) en 1 van 12 (verse sessie). Verzonnen toekomst 0, foute tijdsaanduiding 0, verwijzing naar interne regels 0. Op echte data: 0 schendingen bij 10 echte gebruikers, positieve controle 111 van 111 recente feiten gevonden. Mutatietest op de unit tests: het oude gedrag laat 5 resp. 1 tests falen.
+
+**Wat niet is opgelost, om eerlijk te houden.** (a) Het model is niet deterministisch: een stellige uitspraak over de situatie kan nog voorkomen, het risico is alleen veel kleiner. (b) De labeling is een model: in een steekproef van 96 blijvende feiten stond één duidelijk verkeerd (een RVO-probleem). (c) De RAG-kennisbankcontext en de coachingcontext zaten niet in de replay. (d) Een gebruiker zonder rij in `approved_users` (1 gevonden) heeft sessies maar geen geheugenpreview.
+
+**Gereedschap om het te bewaken.** `scripts/check-geheugen-oud.mjs` (echte data), `lib/geheugenContext.test.ts` (13 tests), `/api/admin/geheugen-preview` (toont exact de productiecontext, alleen met admin-cookie, optioneel sessies negeren om een eerder moment na te spelen).
+
+**Les over CI.** De snapshot van `lib/systemPrompt.test.ts` is niet bijgewerkt bij de promptwijzigingen van deze dag, waardoor CI rood stond tot commit `55234fff`. Zie de regel in CLAUDE.md.
