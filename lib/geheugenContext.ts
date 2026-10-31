@@ -57,7 +57,8 @@ export async function findSemanticallyRelevantOlderSessions(
   supabase: SupabaseClient,
   targetUserId: string,
   currentSessionId: string,
-  vraag: string
+  vraag: string,
+  negeerSessieIds: string[] = [],
 ): Promise<OudereSessie[]> {
   try {
     const queryEmbedding = await embedSessionQuery(vraag)
@@ -71,7 +72,7 @@ export async function findSemanticallyRelevantOlderSessions(
       return []
     }
     const candidateIds = ((matches ?? []) as { session_id: string; similarity: number }[])
-      .filter(m => m.session_id !== currentSessionId && m.similarity >= SEMANTIC_MEMORY_MIN_SIMILARITY)
+      .filter(m => m.session_id !== currentSessionId && !negeerSessieIds.includes(m.session_id) && m.similarity >= SEMANTIC_MEMORY_MIN_SIMILARITY)
       .map(m => m.session_id)
     if (candidateIds.length === 0) return []
 
@@ -106,15 +107,21 @@ export async function haalGeheugenContext(
     question: string
     history: { role: string; content: string }[] | undefined
     plan: 'basis' | 'premium' | 'team'
+    // Alleen voor de testroute (admin/geheugen-preview): sessies die het geheugen moet negeren, om een
+    // eerder moment na te spelen zonder dat gesprekken van daarna al meetellen. De chatroute geeft dit nooit mee.
+    negeerSessieIds?: string[]
   },
 ): Promise<GeheugenContext> {
   const { userId, sessionId, question, history, plan } = p
+  const negeer = p.negeerSessieIds ?? []
+  let recenteQuery = supabase
+    .from('arnobot_blog_sessions')
+    .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, uitdaging, actie_status, created_at')
+    .eq('user_id', userId)
+    .not('session_id', 'eq', sessionId)
+  for (const id of negeer) recenteQuery = recenteQuery.not('session_id', 'eq', id)
   return Promise.all([
-          supabase
-            .from('arnobot_blog_sessions')
-            .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, uitdaging, actie_status, created_at')
-            .eq('user_id', userId)
-            .not('session_id', 'eq', sessionId)
+          recenteQuery
             .is('deleted_at', null)
             .eq('community_excluded', false)
             .order('created_at', { ascending: false })
@@ -127,7 +134,7 @@ export async function haalGeheugenContext(
                 .order('created_at', { ascending: false })
                 .limit(10)
             : Promise.resolve({ data: null as { persona: string | null; debrief: string | null; created_at: string }[] | null }),
-          findSemanticallyRelevantOlderSessions(supabase, userId, sessionId, question),
+          findSemanticallyRelevantOlderSessions(supabase, userId, sessionId, question, negeer),
           findRecurringEntitiesInQuestion(userId, question),
           supabase
             .from('arnobot_coaching')

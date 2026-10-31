@@ -24,11 +24,13 @@ async function checkAuth() {
 export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { userId, question, sessionId, history } = await req.json().catch(() => ({}))
+  const { userId, question, sessionId, history, negeerSessieIds } = await req.json().catch(() => ({}))
   if (typeof userId !== 'string' || !userId || typeof question !== 'string' || !question) {
     return NextResponse.json({ error: 'userId en question zijn verplicht' }, { status: 400 })
   }
   const hist = Array.isArray(history) ? history.slice(0, 40) : undefined
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const negeer = Array.isArray(negeerSessieIds) ? negeerSessieIds.filter((x: unknown): x is string => typeof x === 'string' && UUID.test(x)).slice(0, 20) : []
 
   const [{ data: gebruiker }, { data: profielRij }] = await Promise.all([
     supabase.from('approved_users').select('plan, voornaam').eq('user_id', userId).maybeSingle(),
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
     question,
     history: hist,
     plan,
+    negeerSessieIds: negeer,
   })
 
   return NextResponse.json({
