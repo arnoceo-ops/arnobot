@@ -19,6 +19,7 @@ Document toevoegen: een PDF, Word-bestand of afbeelding van maximaal 10 MB.
 Antwoord beoordelen: onder elk antwoord staan een duim omhoog en een duim omlaag, en een knop om het antwoord te kopiëren.
 
 SLUIT: sluit het gesprek af. Er wordt een samenvatting gemaakt die de gebruiker terugvindt in Analyses, daarna kan een nieuw gesprek beginnen.
+Een gesprek waar meer dan 48 uur niets in is gezegd, begint bij terugkomen als een nieuw gesprek. Het oude gesprek blijft bewaard en is terug te vinden en weer te openen in Analyses.
 
 Gesproken antwoorden: het luidsprekertje laat je antwoord voorlezen. Alleen zichtbaar als voice voor het account aanstaat, en niet bij UITGEBREID.
 

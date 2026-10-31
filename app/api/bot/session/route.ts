@@ -34,7 +34,11 @@ export async function GET(req: NextRequest) {
     history.push({ role: 'assistant', content: row.answer })
   }
 
-  return NextResponse.json({ messages, history })
+  // Tijdstip van het laatste bericht, zodat de client een gesprek van weken of maanden terug
+  // niet stilzwijgend als lopend gesprek hervat (2026-10-31: één sessie liep zo vier maanden door).
+  const lastActivityAt = data[data.length - 1].created_at as string
+
+  return NextResponse.json({ messages, history, lastActivityAt })
 }
 
 export async function DELETE(req: NextRequest) {

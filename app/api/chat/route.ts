@@ -389,9 +389,10 @@ export async function POST(req: NextRequest) {
     // Plan + dagelijks gebruik
     let plan: 'basis' | 'premium' | 'team' = 'basis'
     let todayUsage = 0
+    let voornaamGebruiker = ''
     if (!isWidget) {
       const [planRes, todayRes] = await Promise.all([
-        supabase.from('approved_users').select('plan').eq('user_id', userId!).single(),
+        supabase.from('approved_users').select('plan, voornaam').eq('user_id', userId!).single(),
         supabase
           .from('arnobot_rds_logs')
           .select('*', { count: 'exact', head: true })
@@ -399,6 +400,7 @@ export async function POST(req: NextRequest) {
           .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
       ])
       plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
+      voornaamGebruiker = (planRes.data?.voornaam ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, 40)
       todayUsage = todayRes.count ?? 0
       const dagelijksMax = plan !== 'basis' ? 100 : 25
       if (todayUsage >= dagelijksMax) {
@@ -443,7 +445,7 @@ export async function POST(req: NextRequest) {
     // Gespreksgeheugen en coachingsdiagnose starten nu al, parallel aan de moderatie-check en
     // de RAG-pipeline hierboven, in plaats van pas na de RAG-context te beginnen. Beide hangen
     // alleen af van userId/plan/sessionId, niet van het RAG- of moderatie-resultaat.
-    const memoryContextPromise: Promise<{ geheugentekst: string; prevSessionCount: number }> = (userId && !isWidget)
+    const memoryContextPromise: Promise<{ geheugentekst: string; prevSessionCount: number; verouderd: boolean }> = (userId && !isWidget)
       ? Promise.all([
           supabase
             .from('arnobot_blog_sessions')
@@ -471,16 +473,37 @@ export async function POST(req: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
+          // Tijdstip van het vorige bericht in dit gesprek: bij een hervat gesprek van weken of
+          // maanden terug is de meegestuurde geschiedenis geen actuele stand van zaken meer.
+          Array.isArray(history) && history.length > 0
+            ? supabase
+                .from('arnobot_rds_logs')
+                .select('created_at')
+                .eq('user_id', userId)
+                .eq('session_id', sessionId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+            : Promise.resolve({ data: null as { created_at: string } | null }),
         ])
-          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }]) => {
+          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
               prevSessionCount = prevSessions.length
-              const feitenBlokken = prevSessions.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
-              const samenvattingen = prevSessions.filter(s => s.summary).map(s => {
+              // Herinneringen ouder dan 6 weken staan in een eigen blok dat zichzelf als vaak
+              // achterhaald markeert. Samen met de recente feiten in één lijst behandelde het model ze
+              // als de huidige stand van zaken (replay Robel/Kindergarden, 2026-10-31).
+              const OUD_NA_MS = 42 * 24 * 60 * 60 * 1000
+              const recenteSessies = prevSessions.filter(s => Date.now() - new Date(s.created_at).getTime() <= OUD_NA_MS)
+              const oudeSessies = prevSessions.filter(s => Date.now() - new Date(s.created_at).getTime() > OUD_NA_MS)
+              const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
+              const samenvattingen = recenteSessies.filter(s => s.summary).map(s => {
                 const datum = geheugenDatum(s.created_at)
                 return `- ${datum}: ${s.summary}`
+              }).join('\n')
+              const oudeHerinneringen = oudeSessies.filter(s => s.summary || s.feiten).map(s => {
+                return `- ${geheugenDatum(s.created_at)}: ${[s.summary, s.feiten].filter(Boolean).join(' ')}`
               }).join('\n')
               const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
               const recentSessieMetUitdaging = uitdagingSessies[0] ?? null
@@ -493,10 +516,11 @@ export async function POST(req: NextRequest) {
               const openActies = uitdagingSessies
                 .filter(s => s.actie_status !== 'ja' && s.actie_status !== 'skip')
                 .slice(0, 3)
-              if (feitenBlokken || samenvattingen || recentUitdaging) {
-                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum en hoe lang geleden dat was):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. Geef over een situatie waarvan je de laatste stand alleen uit het geheugen kent nooit een categorisch oordeel ("stuur dit niet") voordat je die vraag hebt gesteld. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
+              if (feitenBlokken || samenvattingen || oudeHerinneringen || recentUitdaging) {
+                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum en hoe lang geleden dat was):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. Geef over een situatie waarvan je de laatste stand alleen uit het geheugen kent nooit een categorisch oordeel ("stuur dit niet") voordat je die vraag hebt gesteld. Een voorlopige lezing, als voorlopig benoemd, mag wel naast die vraag. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
                 if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
                 if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
+                if (oudeHerinneringen) geheugentekst += `\n\nOUDE HERINNERINGEN (meer dan 6 weken geleden, vaak achterhaald):\nVerwijs hier alleen naar met de datum erbij, bijvoorbeeld "in juli vertelde je dat...", en presenteer ze nooit als de huidige situatie. Gebruik ze om een vraag te stellen ("hoe staat dat er nu voor?"), niet om conclusies op te bouwen.\n${oudeHerinneringen}`
                 if (recentUitdaging) {
                   const statusTekst = recentActieStatus === 'ja'
                     ? 'De gebruiker heeft aangegeven dit gedaan te hebben. Transparantie is een kernwaarde van Arno. Als iets in dit gesprek duidelijk niet klopt met dat antwoord, benoem het direct. Geen aannames over de reden want de volledige context is niet altijd zichtbaar. Het feit zelf benoemen is geen aanname. Sluit af met een open vraag: "Wat speelt er bij je?" Arno doet dit niet om te controleren maar omdat zijn enige drive is dat de gebruiker beter presteert en succesvol wordt. Dat is de toon: eerlijk en direct vanuit oprechte betrokkenheid.'
@@ -555,9 +579,22 @@ export async function POST(req: NextRequest) {
                 geheugentekst += `\nOntwikkelpunt(en) mindset: ${mindsetOntwikkelpunten.map(p => p.tekst).join(' | ')}`
               }
             }
-            return { geheugentekst, prevSessionCount }
+            // Verouderd gesprek (laatste bericht langer dan 48 uur geleden, bv. via ?resume= of een
+            // tab die dagen openstond): de oude berichten gaan NIET als live beurten mee, want dan
+            // ankert het model erop en behandelt het ze als de actuele stand (bevestigd met een
+            // replay van het Robel-gesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
+            // als gedateerd, ingekort geheugen mee.
+            let verouderd = false
+            if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
+              verouderd = true
+              const fragment = (history as { role: string; content: string }[]).slice(-6)
+                .map(m => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${String(m.content).slice(0, 500)}`)
+                .join('\n')
+              geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Hieronder de laatste berichten van toen, ingekort. Dit is een herinnering en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag voordat je een oordeel geeft.\n${fragment}`
+            }
+            return { geheugentekst, prevSessionCount, verouderd }
           })
-      : Promise.resolve({ geheugentekst: '', prevSessionCount: 0 })
+      : Promise.resolve({ geheugentekst: '', prevSessionCount: 0, verouderd: false })
 
     const coachingContextPromise: Promise<string> = (!isWidget && plan !== 'basis' && userId)
       ? Promise.resolve(
@@ -752,8 +789,16 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`
       : question
 
+    // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
+    // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
+    const { geheugentekst, prevSessionCount, verouderd } = await memoryContextPromise
+    const coachingContext = await coachingContextPromise
+
+    // Bij een verouderd gesprek zit de oude geschiedenis als gedateerd geheugen in geheugentekst.
+    const effectieveHistory = verouderd ? [] : (history || [])
+
     const messages = [
-      ...(history || []),
+      ...effectieveHistory,
       {
         role: 'user' as const,
         content: documentBlock
@@ -762,7 +807,13 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       },
     ]
 
-    const profielContext = profiel ? `
+    // Zonder de naam wist het model niet dat "Hoi Robel" of "Met vriendelijke groet, Robel" in een
+    // geplakte mail de gebruiker zelf is en nam het aan dat het over iemand anders ging (2026-10-31).
+    const naamContext = voornaamGebruiker
+      ? `\nDE GEBRUIKER HEET ${voornaamGebruiker}. Staat die naam in een geplakte mail, brief of tekst als afzender of ontvanger, dan is dat de gebruiker zelf. Gebruik de naam niet als standaard aanhef.\n`
+      : ''
+
+    const profielContext = naamContext + (profiel ? `
 PROFIEL VAN DE GEBRUIKER:
 - Rol: ${profiel.rol || 'onbekend'}
 - Jaren in sales: ${profiel.jaren_sales || 'onbekend'}
@@ -771,16 +822,11 @@ PROFIEL VAN DE GEBRUIKER:
 - Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
 - Ideale klant: ${profiel.ideale_klant || 'onbekend'}
 - Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}${profiel.dealgrootte ? `\n- Gemiddelde dealgrootte: ${profiel.dealgrootte}` : ''}${profiel.salescyclus ? `\n- Salescyclus: ${profiel.salescyclus}` : ''}${profiel.teamgrootte ? `\n- Salesteam grootte: ${profiel.teamgrootte}` : ''}${profiel.target_dit_jaar ? `\n- Verwacht team-/companytarget dit jaar te halen: ${profiel.target_dit_jaar}` : ''}${profiel.positionering ? `\n- Onderscheidend vermogen: ${profiel.positionering}` : ''}${Array.isArray(profiel.klantenbron) && profiel.klantenbron.length ? `\n- Klanten komen via: ${profiel.klantenbron.join(', ')}${profiel.kanaal_afhankelijkheid ? ` (${profiel.kanaal_afhankelijkheid})` : ''}` : ''}${profiel.acquisitie_tijd ? `\n- Tijd naar acquisitie: ${profiel.acquisitie_tijd}` : ''}
-` : ''
-
-    // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
-    // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
-    const { geheugentekst, prevSessionCount } = await memoryContextPromise
-    const coachingContext = await coachingContextPromise
+` : '')
 
     const systemPrompt = isWidget
       ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
-      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, (history || []).length, antwoordLengte, prevSessionCount)
+      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount)
 
     // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
     // Claude hem genereert, in plaats van pas na het volledige antwoord. StreamingDashSanitizer

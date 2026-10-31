@@ -750,6 +750,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           .then(r => r.json())
           .then(data => {
             if (data.messages?.length > 0) {
+              // Laatste bericht langer dan 48 uur geleden: niet stilzwijgend hervatten, maar een
+              // vers gesprek beginnen. Het oude staat in het archief en komt via het sessiegeheugen
+              // (met datum) terug. Expliciet hervatten via ?resume= blijft kunnen, dat is de tak hierboven.
+              const stil = data.lastActivityAt ? Date.now() - new Date(data.lastActivityAt).getTime() : 0
+              if (stil > 48 * 60 * 60 * 1000) {
+                const nieuwId = crypto.randomUUID()
+                localStorage.setItem('arnobot_session', nieuwId)
+                setSessionId(nieuwId)
+                return
+              }
               setMessages(data.messages)
               setHistory(data.history)
               setStarted(true)
