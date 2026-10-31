@@ -1,7 +1,7 @@
 # ArnoBot Sales Bijbel
 
-**Laatst bijgewerkt:** 2026-08-26 (concurrentievergelijking toegevoegd: ArnoBot tegenover LLM's, managers, coachingsbureaus en sales-enablement-tools, plus een nieuwe sectie over het vraag-en-antwoordpatroon als grootste onzichtbare conversierisico). **Los daarvan, in twee ronden gecorrigeerd (2026-08-18):** eerste ronde verving de ongefundeerde "dekt het abonnement"-claim door een lange uitleg waarom het gesprek niet over kosten moet gaan, wat zelf het woord kosten bleef herhalen. Tweede ronde (op Arno's signaal, "je mind kent niet niet") haalde ook die uitleg weg: nu puur positieve opbrengst-taal, het woord kosten of prijs komt nergens meer voor als het over de eigen prijsvorming gaat. USP 8 ("Kostenvoordeel") hernoemd naar "Schaalbaar voor het hele team" om dezelfde reden. Zie ook `docs/SALES_NOTEBOOKLM.md`, dat na deze fix opnieuw is gesynchroniseerd.
-**Waar we staan:** 13 van de 14 USP-punten LIVE, plus sinds 22 augustus een leidende sectie bovenaan ("De kernbelofte") die het waardeverhaal boven de losse punten uittilt: wat een manager, hoe goed ook, structureel nooit alleen kan. Bewust gekozen boven bezwaarafhandeling/prijsargumentatie als eerstvolgende stap, op Arno's expliciete voorkeur: waardeverkoop eerst, dan pas verdediging. Punt 1 feitelijk gecorrigeerd (een standaard AI-tool heeft wel degelijk geheugen binnen één gesprek, het verschil zit in verwatering en per-sessie geheugenverlies). Alleen "Man & Machine" (nu punt 14, verschoven door de nieuwe toevoeging) blijft GEPLAND. Een sectie "Verborgen functies — bestaand, maar nooit pitchen", voor "Manager als Variabele" (teamniveau-patroonherkenning), zodat het salesteam weet dat het bestaat zonder het ooit actief te noemen. Nieuw (2026-08-26): de "Concurrentievergelijking"-sectie uit de openstaande takenlijst is nu ingevuld, gecategoriseerd tegenover LLM's/chatbots, menselijke managers, coachingsbureaus en sales-enablement-tools, plus een apart "onder de motorkap"-blokje. Direct daaraan gekoppeld: een sectie die het grootste, meest onzichtbare conversierisico benoemt, gebruikers die ArnoBot als snelle vraagbaak gebruiken en daardoor nooit de kernwaarde ervaren. Het achterliggende productmechanisme daarvoor (een gate die dit gedrag herkent en afremt) is nog niet gebouwd, alleen als GEPLAND gemarkeerd, expliciet gekoppeld aan golf 1/2 in `docs/SYSTEEMPROMPT_UPGRADE.md`.
+**Laatst bijgewerkt:** 2026-10-31. Nieuw: punt 14 (gesprek boven mail en het mailpatroon), verdieping bij punt 1 (geheugen met ouderdomsfilter) en punt 6 (voice), een bijgewerkte status in "Het onzichtbare lek" (Gebruiksbalans en mailpatroon bestaan nu) en de homepage-teamingang bij route 1. "Man & Machine" is nu punt 15. Eerder: 2026-08-26 concurrentievergelijking en het vraag-en-antwoordpatroon; 2026-08-18 kostentaal volledig verwijderd (USP 8 heet sindsdien "Schaalbaar voor het hele team"). Zie ook `docs/SALES_NOTEBOOKLM.md`.
+**Waar we staan:** 14 van de 15 USP-punten LIVE, plus de leidende sectie "De kernbelofte" bovenaan, de concurrentievergelijking, het vraag-en-antwoordpatroon, de verborgen functie "Manager als Variabele" en de twee aanlooproutes. Alleen "Man & Machine" (punt 15) is GEPLAND. De confrontatie bij herhaald genegeerde acties (golf 2) is niet als apart kenmerk gebouwd en blijft GEPLAND.
 **Eerstvolgende stap:** bezwaarafhandeling, prijsargumentatie en pitch-scripts (case studies wachten nog op input van Arno).
 
 Dit document is het naslagwerk voor het salesteam: wat ArnoBot uniek maakt, wat je daadwerkelijk mag zeggen tegen een prospect, en wat nog niet gezegd mag worden omdat het nog niet bestaat. Groeit door met elke sessie die hieraan werkt, zelfde principe als de andere `docs/`-bestanden in dit project: klein beginnen, disciplined uitbreiden, nooit een bewering opnemen die niet geverifieerd is tegen de actuele code.
@@ -53,6 +53,8 @@ ArnoBot onthoudt wat iemand weken geleden deelde en brengt dat gericht terug wan
 
 **Pitch-zin:** "Bij de meeste AI-tools verwatert wat je eerder deelde naarmate het gesprek langer wordt, en is het na een nieuwe sessie sowieso weg. Bij ArnoBot blijft het scherp, hoe lang je 'm ook al gebruikt."
 
+**Verdieping (2026-10-31):** oude herinneringen worden niet meer als huidige situatie behandeld. Wat ouder is dan zes weken komt alleen terug als neutraal onderwerp en als blijvende feiten (een naam, een rol, een vaste afspraak), nooit als samenvatting van hoe het toen ging. ArnoBot kent altijd de datum van vandaag en de voornaam van de gebruiker, en een gesprek dat 48 uur stil ligt begint opnieuw in plaats van een oud gesprek als live gesprek voort te zetten. Zo wordt een maanden oud bezwaar of een oude deal niet gepresenteerd alsof het nu speelt. Dit is het eerlijke antwoord op de technische vervolgvraag "wat doet het geheugen met oude informatie": het onthoudt, maar het weet ook wat verouderd is.
+
 ### 2. Directe accountability — LIVE
 ArnoBot onthoudt niet alleen wat er is afgesproken, maar checkt actief of het ook is gedaan, en benoemt het rechtstreeks als het antwoord niet klopt met eerder gedrag. Geen menselijke coach checkt dat structureel bij elk gesprek, een generieke chatbot heeft niets om tegen te checken.
 
@@ -81,6 +83,8 @@ De manager ziet een synthese van patronen binnen zijn team, nooit de ruwe gespre
 24/7, geen wachttijd, geen coach die pas volgende week tijd heeft.
 
 **Sterkst vlak:** vóór of na een echt klantgesprek, wanneer de behoefte acuut is, niet wanneer de kalender het toevallig uitkomt.
+
+**Verdieping (2026-10-31):** praten in plaats van typen. Elke gebruiker kan de microfoon gebruiken om een vraag in te spreken, bijvoorbeeld in de auto na een klantbezoek. Pro- en Team-gebruikers krijgen daarnaast gesproken antwoorden in Arno's eigen stem (ArnoBot Voice). Sterk als iemand zegt "ik heb geen tijd om te typen": het gesprek past in de minuten tussen twee afspraken.
 
 ### 7. Arno's eigen methodiek, niet generieke AI-adviezen — LIVE
 Geen ChatGPT met een sales-prompt erop. Gebouwd op Arno's eigen aanpak en toon (direct, zonder omwegen, eerlijk, bewust niet corporate). Ook inhoudelijk: de MSA-diagnose (zie punt 4) rust op Arno's eigen geschreven "De Zes Succesfactoren"-framework, geen generiek AI-diagnosemodel.
@@ -127,6 +131,19 @@ Elke maand analyseert Claude alle gesprekken en analyses van alle ArnoBot-gebrui
 
 **Pitch-zin:** "de vragen die je hier ziet komen niet uit een lijstje. Ze komen uit wat honderden andere sales professionals deze maand ook al bezighield, volledig anoniem."
 
+### 14. Gesprek boven mail, en het mailpatroon — LIVE (2026-10-31)
+ArnoBot heeft een eigen overtuiging over klantcontact: een mail aan een klant verdwijnt in een inbox en maakt je zelden top of mind. Bellen werkt meestal beter, en bij een strategische klant kan een afspraak het verschil maken. Een klant die langdurig niet bereikbaar is, is een teken aan de wand. Bij een klant die minder belangrijk is, is een korte mail prima. ArnoBot vraagt daarom eerst hoe belangrijk de klant is en wat de gebruiker wil bereiken, voordat hij een mail schrijft. Hij weigert een mail nooit: kiest de gebruiker daarna toch voor een mail, dan helpt ArnoBot.
+
+Daarbovenop herkent ArnoBot het patroon per gebruiker. Gaat het in de recente gesprekken vooral om mails aan klanten laten schrijven, dan zegt ArnoBot na drie gesprekken één keer in het gesprek zelf dat de gebruiker hem vooral als tekstschrijver gebruikt en zijn eigen hersenen niet laat werken. Na vijf gesprekken nemen de patroonanalyse en de coaching het mee, als ontwikkelpunt onder actie. Ook het omgekeerde is verwerkt: een korte bevestigingsmail na een afgesproken vervolgstap is wel goed.
+
+**Lost op:** verkopers die schrijven wat ze beter kunnen zeggen. Een gratis chatbot schrijft elke mail die je vraagt en blijft daarna altijd aardig. ArnoBot is een coach en geen tekstschrijfmachine.
+
+**Pitch-zin:** "Een chatbot schrijft elke mail die je hem vraagt. ArnoBot vraagt eerst of een gesprek niet beter werkt, en zegt het je als je hem alleen nog als tekstschrijver gebruikt."
+
+**Sterk voor:** salesbazen, die dit gedrag bij hun eigen mensen kennen. Sluit aan op punt 2 (accountability) en punt 4 (diagnose).
+
+**Let op:** zeg nooit dat ArnoBot "geen AI" of "geen LLM" is. Hij draait wel op een taalmodel, dat zou onwaar zijn. De boodschap is dat hij een coach is en geen tekstschrijfmachine.
+
 ---
 
 ## Concurrentievergelijking: ArnoBot tegenover alles (toegevoegd 2026-08-26)
@@ -158,7 +175,7 @@ De losse USP's hierboven bewijzen de kernbelofte. Deze sectie zet ze naast elkaa
 
 ### Onder de motorkap — niet zichtbaar voor een prospect, wel het fundament — LIVE
 Niet als losse pitch-zin gebruiken, wel paraat hebben als een technisch onderlegde prospect (IT, inkoop) doorvraagt naar hoe dit werkt:
-- Drielaags geheugen: feiten, samenvattingen, en semantische retrieval over alle oude sessies plus herkenning van terugkerende namen/thema's
+- Drielaags geheugen: feiten, samenvattingen, en semantische retrieval over alle oude sessies plus herkenning van terugkerende namen/thema's. Sinds 31 oktober met een ouderdomsfilter: herinneringen ouder dan zes weken komen alleen als neutraal onderwerp en blijvende feiten de prompt in, met labels die bij het afsluiten van elk gesprek worden vastgelegd
 - Kwaliteit-eerst modelkeuze per taak, met retry/fallback-engineering zodat een leeg of afgekapt AI-antwoord nooit stilzwijgend wordt opgeslagen
 - Community-gedreven gespreksopeners: een netwerkeffect dat sterker wordt naarmate ArnoBot groeit, niet na te bouwen door een concurrent zonder diezelfde schaal (zie punt 13)
 - Enterprise-beveiliging en compliance al op orde: RLS, DPA's met elke leverancier, geen training op klantdata (zie punt 9)
@@ -177,13 +194,15 @@ Belangrijk voor het salesteam zelf, niet alleen voor wat je tegen een prospect z
 
 **Voor sales agents zelf:** gebruik ArnoBot in je eigen voorbereiding zoals je het aan een prospect verkoopt, dus mét acties, analyses en coaching, niet als snelle vraagbaak. Je eigen gebruikspatroon is het meest geloofwaardige bewijsstuk dat je in een gesprek hebt.
 
+**Wat inmiddels wel bestaat (bijgewerkt 2026-10-31):** ArnoBot stuurt een gebruiker die alleen losse vragen stelt zelf naar de volgende bouwsteen. De Gebruiksbalans op de hoofdpagina (vanaf 5 gesprekken) toont de tellers en geeft een persoonlijk advies van maximaal twee zinnen, gebaseerd op iemands eigen historie, over wat nu het meest waardevol is: sparren, analyseren of coachen. En het mailpatroon (zie punt 14) spreekt iemand aan die ArnoBot vooral als tekstschrijver gebruikt. Dit is de zachte variant: sturen en benoemen, niet onderbreken.
+
 **Nog niet gebouwd, dus niet pitchen als bestaand kenmerk (GEPLAND):** een herkenning van dit gedrag die ArnoBot zelf gebruikt om een gesprek te onderbreken voordat een nieuwe losse vraag wordt beantwoord ("je kreeg vorige keer deze actie mee, wat heb je ermee gedaan?"). Hangt samen met golf 1/golf 2 van `docs/SYSTEEMPROMPT_UPGRADE.md`: golf 1 (live, 19 augustus) checkt al eenmalig de meest recente openstaande actie voordat een nieuw onderwerp begint, golf 2 (nog niet gebouwd, evaluatie gepland 16 september 2026) voegt de eigenlijke confrontatie toe bij herhaald genegeerd gedrag.
 
 ---
 
 ## Gepland — nog NIET pitchen als bestaand kenmerk
 
-### 14. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
+### 15. "Man & Machine" — menselijk contactmoment naast de AI — GEPLAND
 Puur toekomstplan. Geen certificeringsprogramma, geen aangestelde coaches, geen publieke aankondiging. Niet noemen in een klantgesprek, zelfs niet als richting.
 
 ---
@@ -203,7 +222,7 @@ Als 3 of meer teamleden onafhankelijk van elkaar hetzelfde onderwerp laten terug
 
 Belangrijk voor sales agents om te begrijpen: er zijn twee volledig verschillende manieren waarop iemand bij ArnoBot terechtkomt, en die bepalen wat een prospect al wel of niet heeft.
 
-**Route 1 — homepage, inloggen/aanmelden met LinkedIn.** Een gewone trial-aanmelding via arno.bot zelf. Tijdens de profiel-intake kiest iemand zelf zijn rol, ook Sales Director of VP of Sales is hier gewoon te kiezen. Geeft hij aan dat hij ArnoBot voor zijn team wil gebruiken, dan ziet hij een kort blok dat naar de teampagina (`/team`) verwijst en vult daarna gewoon zijn eigen profiel verder in; hij heeft op dit moment nog geen Team-abonnement, alleen interesse. Die keuze is feitelijk een lead: er gaat bij het afronden van de onboarding automatisch één mailtje naar `waitlist@arno.bot` (naam, e-mail, rol, teamgrootte). Die mail in de inbox is voldoende als lead-signaal, geen apart CRM-proces nodig (Arno's expliciete besluit, 2026-08-24; de oude wachtlijst-tabel is op 2026-09-08 opgeruimd, alleen het lead-mailtje bleef).
+**Route 1 — homepage, inloggen/aanmelden met LinkedIn.** Een gewone trial-aanmelding via arno.bot zelf. Tijdens de profiel-intake kiest iemand zelf zijn rol, ook Sales Director of VP of Sales is hier gewoon te kiezen. Geeft hij aan dat hij ArnoBot voor zijn team wil gebruiken, dan ziet hij een kort blok dat naar de teampagina (`/team`) verwijst en vult daarna gewoon zijn eigen profiel verder in; hij heeft op dit moment nog geen Team-abonnement, alleen interesse. Sinds 29 oktober 2026 is er daarnaast ook een directe teamingang zonder omweg via de intake: de homepage heeft een teamlink in de navigatie, een regel in de hero, een eigen teamblok en een link in de footer, die naar `/team` leiden, en `/team` verwijst op zijn beurt terug naar de homepage. Die keuze is feitelijk een lead: er gaat bij het afronden van de onboarding automatisch één mailtje naar `waitlist@arno.bot` (naam, e-mail, rol, teamgrootte). Die mail in de inbox is voldoende als lead-signaal, geen apart CRM-proces nodig (Arno's expliciete besluit, 2026-08-24; de oude wachtlijst-tabel is op 2026-09-08 opgeruimd, alleen het lead-mailtje bleef).
 
 **Route 2 — een link van een Sales Agent.** Hier komt iemand binnen via een persoonlijke sd-link (zie `docs/SALES_DEVELOPMENT.md`), en krijgt al bij de trial-aanmaak een écht Team-account (`command_manager`). Deze persoon ziet het "voor mijn team"-blok helemaal niet: hij hoeft zich nergens voor aan te melden, hij heeft het al. Zijn profiel-intake ziet er ook bewust iets anders uit dan bij route 1 (andere rollen: Sales Manager, Sales Director, VP of Sales, CCO; teamgerichte formulering), zie `docs/TEAM_PLAN.md` voor de volledige toedracht.
 
@@ -213,7 +232,7 @@ Belangrijk voor sales agents om te begrijpen: er zijn twee volledig verschillend
 
 ## Prioriteit voor de eerste trainingsronde
 
-Niet alle 13 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10, 11, 12, 13) zijn goede ondersteunende argumenten die daarna aangevuld worden.
+Niet alle 14 live punten tegelijk aanleren aan een nieuw salesteam. Begin met **2, 5 en 9** (accountability, privacy-model voor teams, compliance): dat zijn de drie die specifiek een salesbaas'-koopbeslissing raken (vertrouwen in het team, verantwoording naar de organisatie, inkoop-goedkeuring), niet alleen een leuk kenmerk. De rest (1, 3, 4, 6, 7, 8, 10, 11, 12, 13, 14) zijn goede ondersteunende argumenten die daarna aangevuld worden.
 
 ---
 
