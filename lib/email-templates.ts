@@ -59,6 +59,7 @@ export type EmailType =
   | 'dag21_gesprek'
   | 'dag25'
   | 'testtoegang_afloop'
+  | 'testtoegang_verlengd'
   | 'betaling_bevestiging'
   | 'betaling_mislukt'
   | 'trial_afgelopen'
@@ -95,7 +96,8 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   dag21_gesprek:         { label: 'Dag 21 - gesprek Arno',  description: 'Dag 21:nog geen gesprek met Arno ingepland',                        category: 'user' },
   dag25:                 { label: 'Dag 25',                 description: 'Dag 25:trial bijna afgelopen, opt-in CTA',                          category: 'user' },
   testtoegang_afloop:    { label: 'Testtoegang loopt af',   description: 'Eenmalig:heads-up voor vroege testgebruikers, comp eindigt 1 nov', category: 'user' },
-  betaling_bevestiging: { label: 'Betaling bevestigd',     description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
+  testtoegang_verlengd:  { label: 'Testtoegang verlengd',  description: 'Eenmalig:testgebruiker (Robel) tot 1 december verlengd, handmatig verstuurd', category: 'user' },
+  betaling_bevestiging: { label: 'Betaling bevestigd',    description: 'Event:na elke geslaagde betaling van het abonnement',               category: 'user' },
   betaling_mislukt:      { label: 'Betaling mislukt',       description: 'Event:herhaalbetaling niet gelukt, toegang loopt nog door',         category: 'user' },
   trial_afgelopen:       { label: 'Trial afgelopen',        description: 'Dag 30:trial afgelopen, nooit opt-in gedaan',                       category: 'user' },
   opzegging_bevestiging: { label: 'Opzegging bevestiging',  description: 'Op elk moment:na opzegging via account pagina',                     category: 'user' },
@@ -252,6 +254,14 @@ export function getEmailTemplate(
         html: mail(
           `Je gebruikt ArnoBot nu een paar maanden als testgebruiker. Die periode loopt tot en met 1 november.<br><br>Daarna stopt je toegang automatisch. Wil je doorgaan, dan kies je een abonnement via je account. Wil je stoppen, dan hoef je niks te doen, je data blijft daarna nog 30 dagen bewaard.<br><br>Wil je eerst even sparren over wat het je tot nu toe heeft opgeleverd? Antwoord op deze mail, dan plannen we iets.`,
           'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
+        ),
+      }
+    case 'testtoegang_verlengd':
+      return {
+        subject: `${prefix}Je gratis toegang tot ArnoBot is verlengd tot 1 december`,
+        html: mail(
+          `Goed nieuws: je gratis toegang als testgebruiker is verlengd. Je kunt ArnoBot gebruiken tot 1 december.<br><br>Tegen het eind van november kun je beslissen of je wilt doorgaan met een betaald abonnement. Je krijgt daar tegen die tijd nog een reminder voor. Wil je niet doorgaan, dan hoef je niks te doen. Je toegang stopt dan automatisch en je data blijft daarna nog 30 dagen bewaard.<br><br>Wil je bespreken wat het je tot nu toe heeft opgeleverd? Plan een gesprek in via de link hieronder.`,
+          'GESPREK INPLANNEN →', 'https://calendly.com/arnodiepeveen/30min'
         ),
       }
     case 'trial_afgelopen':
