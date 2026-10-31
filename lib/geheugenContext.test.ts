@@ -136,6 +136,14 @@ describe('haalGeheugenContext', () => {
     expect(r.geheugentekst).not.toContain('FEIT_OUD_DEAL_STAAT_OPEN')
   })
 
+  it('zet het mailpatroon in de prompt vanaf 3 gesprekken met een mailverzoek, niet eerder', async () => {
+    const mail = (n: number) => Array.from({ length: n }, (_, i) => ({ ...RECENT, session_id: 'm' + i, mail_verzoek: true }))
+    const geen = await haalGeheugenContext(nepSupabase({ arnobot_blog_sessions: [RECENT, ...mail(2)] }), basis)
+    expect(geen.geheugentekst).not.toContain('MAILPATROON')
+    const wel = await haalGeheugenContext(nepSupabase({ arnobot_blog_sessions: [RECENT, ...mail(3)] }), basis)
+    expect(wel.geheugentekst).toContain('MAILPATROON (3 van de laatste 4 gesprekken')
+  })
+
   it('behandelt een gesprek van een paar uur terug niet als verouderd', async () => {
     const r = await haalGeheugenContext(
       nepSupabase({ arnobot_blog_sessions: [], arnobot_rds_logs: [{ created_at: new Date(NU.getTime() - 3 * 3_600_000).toISOString() }] }),

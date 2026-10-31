@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { feitenRegels } from '@/lib/memoryLabels'
+import { mailChatSignaal } from '@/lib/mailPatroon'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
 // app/api/chat/route.ts; hierheen verplaatst zodat de route en de testroute
@@ -116,7 +117,7 @@ export async function haalGeheugenContext(
   const negeer = p.negeerSessieIds ?? []
   let recenteQuery = supabase
     .from('arnobot_blog_sessions')
-    .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, uitdaging, actie_status, created_at')
+    .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, mail_verzoek, uitdaging, actie_status, created_at')
     .eq('user_id', userId)
     .not('session_id', 'eq', sessionId)
   for (const id of negeer) recenteQuery = recenteQuery.not('session_id', 'eq', id)
@@ -258,6 +259,9 @@ export async function haalGeheugenContext(
             // ankert het model erop en behandelt het ze als de actuele stand (bevestigd met een
             // replay van het testgesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
             // als gedateerd, ingekort geheugen mee.
+            // Mailpatroon: gebruikt de gebruiker ArnoBot vooral als tekstschrijver? (lib/mailPatroon.ts)
+            const recenteGesprekken = prevSessions ?? []
+            geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
               verouderd = true

@@ -447,6 +447,7 @@ Gesprekssessies na afsluiting, met synthese.
 | `deleted_at` | Soft delete timestamp. Schrijvers roepen ook `pruneEntitiesForDeletedSessions()` aan |
 | `onderwerp` | Neutrale titel van waar het gesprek over ging (zonder uitkomst of status), gezet door `lib/memoryLabels.ts` bij opslaan en achteraf via de labelmodus van `session-end`. Dit is wat oude herinneringen in de chatprompt worden |
 | `feiten_blijvend` | Alleen de feiten die over de gebruiker zelf of zijn eigen bedrijf gaan en jaren geldig blijven. Leeg = geen of nog niet gelabeld. Oude herinneringen (meer dan 6 weken) komen alleen hiermee en met `onderwerp` de chatprompt in, nooit met `summary` of `feiten` |
+| `mail_verzoek` | `true` als het gesprek vooral ging om een mail of bericht aan een klant of prospect laten schrijven (`lib/mailPatroon.ts`, bepaald bij opslaan en achteraf via de mailverzoek-modus van `session-end`). `null` = nog niet bepaald. Vanaf 3 recente gesprekken met `true` zegt de chat het één keer, vanaf 5 nemen `coaching-analyse` en `coaching` het mee |
 
 ### `arnobot_memory_entities`
 Patroongeheugen over sessies heen: namen, bedrijven en terugkerende thema's. Schrijvers via `extractAndStoreEntities()` in `lib/memoryEntities.ts`, lezer `findRecurringEntitiesInQuestion()` in `chat/route.ts`.

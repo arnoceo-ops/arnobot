@@ -171,3 +171,20 @@ Dezelfde dag meldde GitHub een storing op meldingen (vanaf 12:21 UTC). De test o
 **Gereedschap om het te bewaken.** `scripts/check-geheugen-oud.mjs` (echte data), `lib/geheugenContext.test.ts` (13 tests), `/api/admin/geheugen-preview` (toont exact de productiecontext, alleen met admin-cookie, optioneel sessies negeren om een eerder moment na te spelen).
 
 **Les over CI.** De snapshot van `lib/systemPrompt.test.ts` is niet bijgewerkt bij de promptwijzigingen van deze dag, waardoor CI rood stond tot commit `55234fff`. Zie de regel in CLAUDE.md.
+
+
+---
+
+## Gesprek boven mail en het mailpatroon (2026-10-31)
+
+**Aanleiding.** Arno ziet bij gebruikers dat ze veel mails aan klanten laten schrijven terwijl een gesprek meestal sterker is. ArnoBot had hier wel een mening (alleen in "uitzondering Twee": de gebruiker vraagt om een mail), maar niet consequent en zelden met de reden. Gemeten voor de wijziging: bij vier mailvragen noemde hij bellen of persoonlijk contact in 2 tot 4 van de 4 keer, en de reden (inbox, weerstand, top of mind) in 0 tot 2 van de 4. Na de wijziging: bellen of persoonlijk contact 4, 4, 4 en 2 van 4, de reden 3, 2, 4 en 3 van 4.
+
+**Besluiten.**
+- Een eigen persona-sectie met Arno's eigen formulering (de gebruiker beslist, een korte mail is prima bij een klant die minder belangrijk is, steeds checken hoe belangrijk de klant is).
+- Een detectie per gesprek (`mail_verzoek`). Vanaf 3 gesprekken zegt ArnoBot één keer dat de gebruiker hem vooral als tekstschrijver gebruikt, vanaf 5 nemen de patroonanalyse en de coaching het mee. Getest: met signaal en een mailvraag 12 van 12 keer de boodschap, zonder signaal 0 van 12, met signaal maar zonder mailvraag 0 van 8.
+- De actie na een gesprek kiest bij een belangrijke klant voor bellen of een afspraak en alleen bij een minder belangrijke klant voor een korte mail.
+- **Verworpen:** ArnoBot laten zeggen dat hij "geen LLM" is (onwaar, hij draait op een LLM). Gekozen: hij is een coach en geen tekstschrijfmachine. Verworpen als aparte onderdelen, op verzoek van Arno niet nu: een sparringscenario "bel in plaats van mail" en een eigen thema in analyses en team.
+
+**Dilutiecontrole.** Blind oud tegen nieuw, 64 vergelijkingen over 8 salesvragen: oud 36, nieuw 28, scores 0,1 tot 0,2 punt lager. Op de 6 vragen die niet over mail gaan: oud 26, nieuw 22, scores vrijwel gelijk. Het verschil zit dus bij de mailvragen, waar het gedrag bewust anders is (eerst doorvragen in plaats van meteen een mail leveren). Alle oorspronkelijke regels staan er nog letterlijk in (0 verdwenen), de prompt is circa 9,5% langer geworden door de regels van deze dag, voor de mailsectie nog niet meegeteld.
+
+**Open.** ArnoBot opent bij een bevestigingsmail na een goed gesprek met "zelden de sterkste zet", strenger dan de tekst ("een mail past ook als bevestiging na een gesprek"). Bij de eigen test noemde hij daarna wel dat een korte bevestiging prima is als de volgende stap al is afgesproken.

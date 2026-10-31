@@ -13,6 +13,7 @@ import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER,
 import { berekenActiePatroon } from '@/lib/actiePatroon'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
+import { mailCoachingBlok } from '@/lib/mailPatroon'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,7 +61,7 @@ export async function POST() {
   const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes, scoreHistoryRes] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
-      .select('session_id, title, summary, feiten, message_count, created_at, excuustaal')
+      .select('session_id, title, summary, feiten, message_count, created_at, excuustaal, mail_verzoek')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .eq('community_excluded', false)
@@ -156,6 +157,10 @@ export async function POST() {
   if (excuustaalRecent.length >= 3 && excuustaalCount >= 2) {
     accountabilityContext = `\n\nACCOUNTABILITY (excuustaal-detectie, ${excuustaalCount} van de laatste ${excuustaalRecent.length} gesprekken): meerdere recente gesprekken bevatten taal die de uitkomst toeschrijft aan iets buiten de gebruiker zelf, in plaats van eigenaarschap. Weeg dit expliciet mee in de mindset_diagnose.`
   }
+
+  // Mailpatroon (lib/mailPatroon.ts): veel gesprekken waarin ArnoBot vooral als tekstschrijver is gebruikt.
+  const mailRecent = sessions.slice(0, 20)
+  const mailContext = mailCoachingBlok(mailRecent.filter(s => (s as { mail_verzoek: boolean | null }).mail_verzoek === true).length, mailRecent.length)
 
   const analyses = analysesRes.data ?? []
   const prevCoaching = prevCoachingRes.data
@@ -376,7 +381,7 @@ ${RULE_NEVER_BREAK_CHARACTER}
 ${RULE_NO_INVENTED_DETAILS}`
 
   const planHistorieContext = await planHistorieBlok(userId)
-  const dynamicTail = `${actieOpvolgingContext}${planHistorieContext}${voortgangErkenningContext}${consistentieContext}${accountabilityContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
+  const dynamicTail = `${actieOpvolgingContext}${planHistorieContext}${voortgangErkenningContext}${consistentieContext}${accountabilityContext}${mailContext}${stagnatie ? '\n\nBELANGRIJK: Er is sprake van hardnekkige stagnatie. De gebruiker zit al meerdere coaching-rondes in hetzelfde patroon. Benoem dit expliciet en geef directe, confronterende actieadviezen. Concreet gedrag, geen zachte aanmoedigingen.' : weinig_voortgang ? '\n\nBELANGRIJK: Er is weinig kwalitatieve verandering zichtbaar in de nieuwe gesprekken. Geef in de ontwikkelpunten extra specifieke, directe acties. Concreet gedrag, geen algemene adviezen.' : ''}`
 
   const COACHING_MAX_TOKENS = 4000
 

@@ -13,6 +13,7 @@ import { recomputeGroeibalans } from '@/lib/groeibalansServer'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
 import { labelGesprek } from '@/lib/memoryLabels'
+import { herkenMailVerzoek } from '@/lib/mailPatroon'
 import { Redis } from '@upstash/redis'
 
 const supabase = createClient(
@@ -38,7 +39,7 @@ function schoonSamenvatting(tekst: string, stopReason: string | null): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent, cronUserId, alleenSamenvatting, alleenLabels } = await req.json()
+  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent, cronUserId, alleenSamenvatting, alleenLabels, alleenMailVerzoek } = await req.json()
   // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT, SparClient.tsx): het
   // gesprek wordt ALTIJD opgeslagen (nodig voor ArnoBot's eigen big-data-analyse over de hele
   // community, refresh-openers/route.ts), maar community_excluded=true sluit 'm uit van alles
@@ -235,7 +236,7 @@ ${BRONDATA_REGEL}`,
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 150,
-    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 20 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet", geen kop of label zoals "Actie:" of "Concrete actie voor de gebruiker:". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
+    system: `Extraheer de concrete actie of uitdaging die uit dit gesprek volgt voor de gebruiker. Één bondige zin van maximaal 20 woorden, beginnen met een werkwoord. Eén enkele actie, geen opsomming van meerdere stappen in dezelfde zin. Geen inleiding, geen "je moet", geen kop of label zoals "Actie:" of "Concrete actie voor de gebruiker:". Direct de actie. Als er geen expliciete actie was, formuleer dan de logische volgende stap. Gaat de actie over contact met een klant of prospect: kies bij een strategische of belangrijke klant voor bellen of een afspraak maken, en alleen bij een klant die niet strategisch of minder belangrijk is voor een korte mail. Een mail is nooit de standaardactie. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Gebruik geen accenten om woorden te benadrukken (geen écht, dát, zó). Schrijf de actie zonder tijdslimiet: geen "vandaag", "morgen", "deze week", "voor het weekend" of andere tijdsdruk. Gewoon de actie zelf.
 
 ${RULE_ENGLISH_TERMS}
 
@@ -265,6 +266,24 @@ ${BRONDATA_REGEL}`,
   // prompt als ARNO-antwoord waren geschreven (2026-10-31, 17 van 81 sessies).
   // Labelmodus (alleen via CRON_SECRET): voegt onderwerp en blijvende feiten toe aan een bestaande
   // sessie, voor het achteraf labelen van gesprekken van voor 2026-10-31. Raakt verder niets.
+  // Mailverzoek-modus (alleen via CRON_SECRET): bepaalt achteraf of een bestaand gesprek vooral ging om
+  // een mail aan een klant laten schrijven (lib/mailPatroon.ts). Raakt verder niets.
+  if (viaCron && alleenMailVerzoek === true) {
+    try {
+      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content))
+      const { error: mailError } = await supabase
+        .from('arnobot_blog_sessions')
+        .update({ mail_verzoek: mail })
+        .eq('user_id', userId)
+        .eq('session_id', sessionId)
+        .is('deleted_at', null)
+      if (mailError) return NextResponse.json({ error: mailError.message }, { status: 500 })
+      return NextResponse.json({ ok: true, mail })
+    } catch (e) {
+      return NextResponse.json({ error: String(e) }, { status: 502 })
+    }
+  }
+
   if (viaCron && alleenLabels === true) {
     const { data: rij } = await supabase
       .from('arnobot_blog_sessions')
@@ -452,6 +471,17 @@ ${BRONDATA_REGEL}`,
         .eq('session_id', sessionId)
     } catch (e) {
       console.error('[session-end] Labels error:', e)
+    }
+    // Ging dit gesprek vooral om een mail aan een klant laten schrijven? (lib/mailPatroon.ts)
+    try {
+      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content))
+      await supabase
+        .from('arnobot_blog_sessions')
+        .update({ mail_verzoek: mail })
+        .eq('user_id', userId)
+        .eq('session_id', sessionId)
+    } catch (e) {
+      console.error('[session-end] Mailverzoek error:', e)
     }
   })
 

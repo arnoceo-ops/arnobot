@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
+import { mailAnalyseBlok } from '@/lib/mailPatroon'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   const { data } = await supabase
     .from('arnobot_blog_sessions')
-    .select('title, summary, message_count, created_at, session_id')
+    .select('title, summary, message_count, created_at, session_id, mail_verzoek')
     .eq('user_id', userId)
     .is('deleted_at', null)
     .eq('community_excluded', false)
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sessiesText = sessiesAlsTekst(isDelta ? newSessionIds : sessions)
-  const extraContext = (await actieOpvolgingBlok(userId)) + (await planHistorieBlok(userId))
+  const extraContext = (await actieOpvolgingBlok(userId)) + (await planHistorieBlok(userId)) + mailAnalyseBlok(sessions.filter(s => s.mail_verzoek === true).length, sessions.length)
 
   const userContent = isDelta
     ? `Eerder zei je dit over deze persoon:\n"${similarAnalyse.analyse_text}"\n\nSindsdien zijn er ${newSessionIds.length} nieuwe gesprekken. Wat is er veranderd? Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: WAT ER NIEUW IS, DOORBRAAK, VOLGENDE STAP. Benoem onder die kopjes concreet wat er nieuw is, wat er doorgebroken is en wat de volgende stap is. Geen andere kopjes, geen opsomming.${profielText}${extraContext}\n\nNIEUWE GESPREKKEN:\n${sessiesText}`
