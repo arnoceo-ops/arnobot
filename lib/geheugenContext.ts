@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { feitenRegels } from '@/lib/memoryLabels'
-import { mailChatSignaal } from '@/lib/mailPatroon'
+import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
 // app/api/chat/route.ts; hierheen verplaatst zodat de route en de testroute
@@ -262,6 +262,7 @@ export async function haalGeheugenContext(
             // Mailpatroon: gebruikt de gebruiker ArnoBot vooral als tekstschrijver? (lib/mailPatroon.ts)
             const recenteGesprekken = prevSessions ?? []
             geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
+            geheugentekst += mailConceptRegel(question, history)
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
               verouderd = true

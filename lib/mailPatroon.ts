@@ -20,6 +20,18 @@ export function mailChatSignaal(aantal: number, van: number): string {
   return `\n\nMAILPATROON (${aantal} van de laatste ${van} gesprekken ging vooral over een mail of bericht aan een klant laten schrijven):\nDeze gebruiker gebruikt ArnoBot nu vooral als tekstschrijver. Vraagt hij in dit gesprek weer om een mail of bericht aan een klant, of gaat het gesprek erover, zeg het dan één keer, direct en zonder verwijt, in je eigen woorden: wie ArnoBot vooral mails laat bedenken, laat zijn eigen hersenen niet werken en haalt niet het maximale uit ArnoBot. Daarvoor zijn de gesprekken met ArnoBot, de analyse en het coachdocument waarin je ziet hoe je beter wordt. Mails door ArnoBot laten bedenken maakt je niet structureel sterker als salesprofessional. Wie vooral mailt en daar veel aandacht aan besteedt, besteedt zijn tijd niet aan de beste klantcommunicatie: spreken en zien. Heb je dit in dit gesprek al gezegd, herhaal het dan niet. Vraagt hij niet om een mail of bericht, laat dit dan rusten.`
 }
 
+// Alleen als het gesprek over een mail of bericht aan een klant gaat, niet in de vaste persona: een zin in
+// de persona voor elke vraag kostte op onderwerpen zonder mail kwaliteit (blinde test 2026-10-31, 45 tegen
+// 69 voor de versie zonder). Gemeten effect op conceptmails: verzonnen tijdsaanduiding 2 naar 0 van 27,
+// afsluiten met een voorstel voor een gesprek 3 naar 15 van 27.
+const MAIL_ONDERWERP = /\b(e-?mail|mailtje|mailen|mail|nieuwsbrief|brief|bericht aan|script)\b/i
+
+export function mailConceptRegel(vraag: string, history?: { content: string }[]): string {
+  const recent = (history ?? []).slice(-4).map(h => String(h.content).slice(0, 600)).join(' ')
+  if (!MAIL_ONDERWERP.test(`${vraag} ${recent}`)) return ''
+  return '\n\nCONCEPTTEKST VOOR EEN KLANT: sluit een concept af met een voorstel voor een kort gesprek. Gebruik [haakjes] voor wat je niet weet (naam, datum, wat er is besproken) en verzin geen tijdsaanduiding zoals "vorige week".'
+}
+
 export function mailAnalyseBlok(aantal: number, van: number): string {
   if (aantal < MAIL_COACHING_DREMPEL) return ''
   return `\n\nMAILPATROON (${aantal} van deze ${van} gesprekken ging vooral over een mail of bericht aan een klant laten schrijven): verwerk dit in het laatste van de drie delen, zonder extra kopje. Wie veel mailt en daar veel aandacht aan besteedt, besteedt zijn tijd niet aan de beste klantcommunicatie: spreken en zien. Mails door ArnoBot laten bedenken maakt iemand niet structureel sterker als salesprofessional.`
