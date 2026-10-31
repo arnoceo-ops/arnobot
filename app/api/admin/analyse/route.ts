@@ -1,4 +1,4 @@
-export const maxDuration = 120
+export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
@@ -32,8 +32,12 @@ function extractText(response: Message, label: string): string {
 // Fable 5, zelfde afweging als de coaching-hoofdsynthese en de meta-analyse: dit vervangt
 // Arno's eigen handmatige uitzoekwerk vóór een echt gesprek, kwaliteit weegt zwaarder dan
 // kosten. max_tokens ruim boven wat de vaste structuur (5 vaste onderdelen) normaal vraagt,
-// voor Fable 5's thinking-overhead; bij afkapping één retry met dubbel budget.
-const ANALYSE_MAX_TOKENS = 6000
+// voor Fable 5.1's thinking-overhead; bij afkapping één retry met meer budget. Stond op 6000
+// met maxDuration 120: de eerste call werd dan afgekapt en de retry (12000) paste niet meer
+// in de resterende tijd, resultaat een 504 (2026-10-31). Nu 10000 eerste keer, retry max 16000,
+// binnen maxDuration 300 (zelfde als coaching en meta-analyse).
+const ANALYSE_MAX_TOKENS = 10000
+const ANALYSE_RETRY_MAX_TOKENS = 16000
 
 function buildSystemPrompt(): string {
   return `Je bent ArnoBot's analytische blik, puur voor Arno zelf, nooit voor de gebruiker die je analyseert. Je krijgt de volledige, ruwe data van één gebruiker (gesprekken, coachingdata, profiel, eventueel teamdata) en schrijft daar een scherpe, bruikbare briefing over, ter voorbereiding op een echt gesprek dat Arno met deze persoon gaat voeren.
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest) {
     analyse = extractText(await callModel(), 'analyse retry')
   } else if (response.stop_reason === 'max_tokens') {
     console.error('[admin/analyse] analyse afgekapt op max_tokens, retry met meer ruimte')
-    const retryText = extractText(await callModel(ANALYSE_MAX_TOKENS * 2), 'analyse retry (meer ruimte)')
+    const retryText = extractText(await callModel(ANALYSE_RETRY_MAX_TOKENS), 'analyse retry (meer ruimte)')
     if (retryText) analyse = retryText
   }
 
