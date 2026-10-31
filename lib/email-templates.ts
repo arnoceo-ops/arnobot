@@ -261,7 +261,7 @@ export function getEmailTemplate(
         subject: `${prefix}Je gratis toegang tot ArnoBot is verlengd tot 1 december`,
         html: mail(
           `Goed nieuws: je gratis toegang als testgebruiker is verlengd. Je kunt ArnoBot gebruiken tot 1 december.<br><br>Tegen het eind van november kun je beslissen of je wilt doorgaan met een betaald abonnement. Je krijgt daar tegen die tijd nog een reminder voor. Wil je niet doorgaan, dan hoef je niks te doen. Je toegang stopt dan automatisch en je data blijft daarna nog 30 dagen bewaard.<br><br>Wil je bespreken wat het je tot nu toe heeft opgeleverd? Plan een gesprek in via de link hieronder.`,
-          'GESPREK INPLANNEN →', 'https://calendly.com/arnodiepeveen/30min'
+          'GESPREK INPLANNEN →', 'https://calendly.com/arnobot/ab'
         ),
       }
     case 'trial_afgelopen':
