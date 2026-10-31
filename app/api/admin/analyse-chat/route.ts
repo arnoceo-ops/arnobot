@@ -1,4 +1,4 @@
-export const maxDuration = 60
+export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
@@ -27,7 +27,11 @@ function extractText(response: Message, label: string): string {
 // Doorvragen op de ANALYSE-tab. Bewust niet opgeslagen (zie docs/TEAM_PLAN.md-gesprek van
 // 25 aug 2026): het gesprek bestaat alleen voor het huidige bezoek, alleen de analyse zelf
 // (het openingsbericht) blijft bewaard in arnobot_admin_analyses.
-const CHAT_MAX_TOKENS = 1200
+// Stond op 1200 met maxDuration 60: Fable 5.1 gebruikt een deel van het budget voor denkwerk, dus
+// een kort antwoord kon leeg of halverwege afgekapt terugkomen (zelfde oorzaak als de 504 op
+// admin/analyse, 2026-10-31). Nu ruimer, met één retry als het antwoord tóch op max_tokens eindigt.
+const CHAT_MAX_TOKENS = 5000
+const CHAT_RETRY_MAX_TOKENS = 8000
 
 export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -65,17 +69,22 @@ ${RULE_NEVER_BREAK_CHARACTER}`
 
   const userContent = `VOLLEDIGE DATA OVER DEZE GEBRUIKER:\n${context.contextText}\n\nEERDER GEGEVEN ANALYSE:\n${typeof analyse === 'string' && analyse ? analyse : '(geen)'}\n\n${historyText}VERVOLGVRAAG VAN ARNO: ${question.trim()}`
 
-  const callModel = () => anthropic.messages.create({
+  const callModel = (maxTokens = CHAT_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5-1',
-    max_tokens: CHAT_MAX_TOKENS,
+    max_tokens: maxTokens,
     system: systeem,
     messages: [{ role: 'user', content: userContent }],
   })
 
-  let antwoord = extractText(await callModel(), 'antwoord')
+  const response = await callModel()
+  let antwoord = extractText(response, 'antwoord')
   if (!antwoord) {
     console.error('[admin/analyse-chat] leeg/refusal antwoord, retry')
     antwoord = extractText(await callModel(), 'antwoord retry')
+  } else if (response.stop_reason === 'max_tokens') {
+    console.error('[admin/analyse-chat] antwoord afgekapt op max_tokens, retry met meer ruimte')
+    const retryTekst = extractText(await callModel(CHAT_RETRY_MAX_TOKENS), 'antwoord retry (meer ruimte)')
+    if (retryTekst) antwoord = retryTekst
   }
   if (!antwoord) {
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
