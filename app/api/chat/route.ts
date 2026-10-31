@@ -201,14 +201,18 @@ const SEMANTIC_MEMORY_CANDIDATES = 15
 const SEMANTIC_MEMORY_MIN_SIMILARITY = 0.3
 const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
 
-// Datumlabel voor alles wat uit het sessiegeheugen in de prompt komt: dag, maand, jaar en hoe
-// lang geleden. Zonder dat zag het model feiten van maanden terug als de huidige stand van zaken
-// (2026-10-31, Robel/Kindergarden: een traject dat intussen on hold stond werd als actueel behandeld).
+// Datumlabel voor alles wat uit het sessiegeheugen in de prompt komt: dag, maand en jaar, bij
+// recente herinneringen ook hoe lang geleden. Zonder datum zag het model feiten van maanden terug
+// als de huidige stand van zaken (2026-10-31, Robel/Kindergarden: een traject dat intussen on hold
+// stond werd als actueel behandeld). Bij oudere herinneringen bewust GEEN "x maanden geleden":
+// met dat label verzon het model in 8 van 8 testruns "vier jaar geleden". Alleen de datum, het
+// model rekent zelf vanaf "VANDAAG IS" (chat-route, profielContext).
 function geheugenDatum(iso: string): string {
   const d = new Date(iso)
   const dagen = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000))
   const datum = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
-  const geleden = dagen < 14 ? `${dagen} dag${dagen === 1 ? '' : 'en'} geleden` : dagen < 70 ? `${Math.round(dagen / 7)} weken geleden` : `${Math.round(dagen / 30)} maanden geleden`
+  if (dagen >= 70) return datum
+  const geleden = dagen < 14 ? `${dagen} dag${dagen === 1 ? '' : 'en'} geleden` : `${Math.round(dagen / 7)} weken geleden`
   return `${datum}, ${geleden}`
 }
 
@@ -486,7 +490,7 @@ export async function POST(req: NextRequest) {
                 .maybeSingle()
             : Promise.resolve({ data: null as { created_at: string } | null }),
         ])
-          .then(([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
+          .then(async ([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -517,7 +521,7 @@ export async function POST(req: NextRequest) {
                 .filter(s => s.actie_status !== 'ja' && s.actie_status !== 'skip')
                 .slice(0, 3)
               if (feitenBlokken || samenvattingen || oudeHerinneringen || recentUitdaging) {
-                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum en hoe lang geleden dat was):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. Geef over een situatie waarvan je de laatste stand alleen uit het geheugen kent nooit een categorisch oordeel ("stuur dit niet") voordat je die vraag hebt gesteld. Een voorlopige lezing, als voorlopig benoemd, mag wel naast die vraag. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
+                geheugentekst = '\n\nWAT DEZE GEBRUIKER EERDER HEEFT GEDEELD (elk blok heeft een datum, vandaag staat bovenaan):\nDit is geheugen, geen actuele stand van zaken. Wat de gebruiker in dit gesprek zegt wint altijd van het geheugen. Is iets langer dan een paar weken geleden, behandel het dan als een herinnering ("in juli vertelde je dat...") en toets met één korte vraag of het nog klopt voordat je er een oordeel of advies op bouwt. De tekst die de gebruiker nu geeft beoordeel je gerust direct. Conclusies over de situatie eromheen (de stand van een klantrelatie, een traject of een afspraak) bouw je alleen op wat de gebruiker nu zegt. Noem tijdsaanduidingen alleen zoals ze hier staan, reken of schat nooit zelf, en zeg nooit dat je iets eerder hebt geadviseerd tenzij dat letterlijk in dit gesprek staat. Noem geen toekomstige momenten of afspraken (zoals "het gesprek van morgen") tenzij de gebruiker ze in dit gesprek zelf noemt.'
                 if (feitenBlokken) geheugentekst += `\n\nConcrete feiten uit eerdere gesprekken:\n${feitenBlokken}`
                 if (samenvattingen) geheugentekst += `\n\nSamenvattingen van eerdere gesprekken:\n${samenvattingen}`
                 if (oudeHerinneringen) geheugentekst += `\n\nOUDE HERINNERINGEN (meer dan 6 weken geleden, vaak achterhaald):\nVerwijs hier alleen naar met de datum erbij, bijvoorbeeld "in juli vertelde je dat...", en presenteer ze nooit als de huidige situatie. Gebruik ze om een vraag te stellen ("hoe staat dat er nu voor?"), niet om conclusies op te bouwen.\n${oudeHerinneringen}`
@@ -587,10 +591,17 @@ export async function POST(req: NextRequest) {
             let verouderd = false
             if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
               verouderd = true
-              const fragment = (history as { role: string; content: string }[]).slice(-6)
-                .map(m => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${String(m.content).slice(0, 500)}`)
-                .join('\n')
-              geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Hieronder de laatste berichten van toen, ingekort. Dit is een herinnering en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag voordat je een oordeel geeft.\n${fragment}`
+              // Geen letterlijke berichten van toen: die komen als gespreksfragment over als "nu"
+              // (replay-meting 2026-10-31). De samenvatting van de sessie, met datum, wel.
+              const { data: dezeSessie } = await supabase
+                .from('arnobot_blog_sessions')
+                .select('summary, feiten')
+                .eq('user_id', userId)
+                .eq('session_id', sessionId)
+                .maybeSingle()
+              const inhoud = [dezeSessie?.summary, dezeSessie?.feiten].filter(Boolean).join(' ')
+                || String((history as { content: string }[]).filter((_, i) => i % 2 === 0).slice(-1)[0]?.content ?? '').slice(0, 300)
+              geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Wat hieronder staat is een herinnering aan dat gesprek en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag.\n${inhoud}`
             }
             return { geheugentekst, prevSessionCount, verouderd }
           })
@@ -813,7 +824,12 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
       ? `\nDE GEBRUIKER HEET ${voornaamGebruiker}. Staat die naam in een geplakte mail, brief of tekst als afzender of ontvanger, dan is dat de gebruiker zelf. Gebruik de naam niet als standaard aanhef.\n`
       : ''
 
-    const profielContext = naamContext + (profiel ? `
+    // Het model kent de datum van vandaag niet. Zonder die kon het "4 maanden geleden" in het
+    // geheugen niet controleren en verzon het tijdsaanduidingen ("vier jaar geleden", "vorige week",
+    // gemeten in de replay van 2026-10-31).
+    const vandaagContext = `\nVANDAAG IS ${new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })}. Reken tijdsverschillen met geheugen vanaf deze datum.\n`
+
+    const profielContext = vandaagContext + naamContext + (profiel ? `
 PROFIEL VAN DE GEBRUIKER:
 - Rol: ${profiel.rol || 'onbekend'}
 - Jaren in sales: ${profiel.jaren_sales || 'onbekend'}

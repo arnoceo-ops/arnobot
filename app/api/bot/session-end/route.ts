@@ -25,7 +25,7 @@ const redis = new Redis({
 })
 
 export async function POST(req: NextRequest) {
-  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent } = await req.json()
+  const { sessionId, messages, explicitClose, startedFromCommunity, communityConsent, cronUserId } = await req.json()
   // Community-vraag zonder expliciete toestemming (checkbox bij SLUIT, SparClient.tsx): het
   // gesprek wordt ALTIJD opgeslagen (nodig voor ArnoBot's eigen big-data-analyse over de hele
   // community, refresh-openers/route.ts), maar community_excluded=true sluit 'm uit van alles
@@ -37,10 +37,21 @@ export async function POST(req: NextRequest) {
 
   // Auth via Clerk cookie, of fallback via bestaande log-rij (voor sendBeacon die geen cookies meestuurt)
   let userId: string | null = null
-  try {
-    const clerkAuth = await auth()
-    userId = clerkAuth.userId
-  } catch {}
+  // Serverkant sluiten van een verlaten gesprek (cron/sessies-afsluiten): geen cookie, wel het
+  // CRON_SECRET. Alleen dan wordt cronUserId vertrouwd, nooit zonder die header.
+  if (
+    typeof cronUserId === 'string' && cronUserId &&
+    process.env.CRON_SECRET &&
+    req.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    userId = cronUserId
+  }
+  if (!userId) {
+    try {
+      const clerkAuth = await auth()
+      userId = clerkAuth.userId
+    } catch {}
+  }
 
   if (!userId) {
     // Alleen recente sessies (laatste 2 uur): sendBeacon bij het sluiten van een tab hoort
