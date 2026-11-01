@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { stripDashPunctuation } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
-export const maxDuration = 120
+export const maxDuration = 300
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -78,7 +78,9 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     const res = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
+      // max_uses begrenst het aantal zoekopdrachten: onbegrensd liep dit op 2026-11-01 tegen de
+      // tijdslimiet van 120s aan (Vercel Runtime Timeout), zonder maandmail als gevolg.
+      tools: [{ type: 'web_search_20250305' as const, name: 'web_search', max_uses: 8 }],
       messages: [{ role: 'user', content: prompt }],
     })
 
