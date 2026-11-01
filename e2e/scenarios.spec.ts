@@ -74,6 +74,6 @@ test('netwerkfout toont de vriendelijke fallback-melding met WhatsApp-link', asy
   await page.locator('.spar-send').click()
 
   await expect(page.locator('.msg-arno-text').last()).toContainText('Er ging iets mis')
-  await expect(page.locator('.msg-arno-text').last().locator('a')).toHaveAttribute('href', /wa\.me/)
+  await expect(page.locator('.msg-arno-text').last().locator('a[href*="wa.me"]')).toHaveAttribute('href', /wa\.me/)
   await expect(page.getByLabel('Je bericht')).toBeEnabled()
 })
