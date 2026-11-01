@@ -5,7 +5,7 @@ Dit document beschrijft de volledige technische structuur van ArnoBot. Het is be
 Sectie **AI-modellen** en **Package-versies** worden automatisch bijgewerkt op de 1e van elke maand door de `update-handover` cron.
 
 <!-- AUTO:UPDATED -->
-Laatste automatische update: 2026-10-01
+Laatste automatische update: 2026-11-01
 <!-- /AUTO:UPDATED -->
 
 ---
@@ -624,6 +624,8 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/chat/route.ts` (RAG-queryherschrijving/checks) | `claude-haiku-4-5-20251001` | Korte classificatie/herschrijfstappen met expliciete fallbacks. | 2026-07 |
 | `app/api/chat/route.ts` (audiobijlage-transcriptie, `lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Best scorende model op Nederlands in AssemblyAI's eigen FLEURS-benchmark (6,7% WER), inclusief sprekersherkenning. Ongedocumenteerde functie: bestaande bijlage-knop in de hoofdchat accepteert ook audio (mp3/wav/m4a, max 150MB, Pro/Team-only), transcript stroomt als tekst de bestaande hoofdchat-call in, geen aparte pagina of opslag. | 2026-09-17 |
 | `app/api/bot/uitdaging/route.ts` | `claude-fable-5-1` | "Thought of the day", grammaticale kwaliteit vereist Fable. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs, blinde A/B toonde geen regressie. Toon/drempel herzien 2026-08-29. | 2026-09-07 |
+| `lib/memoryLabels.ts` (onderwerp en blijvende feiten per sessie, aangeroepen vanuit `session-end` en de labelmodus) | `claude-haiku-4-5-20251001` | Labelt een afgerond gesprek voor het sessiegeheugen: neutraal onderwerp en welke feiten blijvend zijn. Bewust streng (twijfel = niet blijvend). Mislukt het, dan blijven de kolommen leeg en valt de chat terug op alleen de titel: veilig. Gemeten 2026-10-31. | 2026-10-31 |
+| `lib/mailPatroon.ts` (`herkenMailVerzoek`, aangeroepen vanuit `session-end` en de mailverzoek-modus) | `claude-sonnet-4-6` | Ja/nee per gesprek: ging het vooral om een mail of bericht aan een klant laten schrijven? Klein, alleen de vragen van de gebruiker als invoer. Sonnet en niet Haiku: Haiku had 4 van 16 valse positieven (strategievragen waarin een script terloops werd genoemd), en een vals "je gebruikt mij als tekstschrijver" naar de gebruiker is een foute bewering. Mislukt het, dan blijft `mail_verzoek` leeg en komt er geen signaal. Gemeten 2026-10-31. | 2026-10-31 |
 | `app/api/bot/session-end/route.ts` (synthese/feiten/uitdaging/classificatie) | `claude-haiku-4-5-20251001` | 4 parallelle batch-calls. Retry-bij-leeg per call; classificatie bewust zonder retry. | 2026-08-21 |
 | `app/api/bot/coaching/route.ts` (precheck) | `claude-sonnet-5` | Alleen ja/nee-vraag, Fable overkill. | 2026-07 |
 | `app/api/bot/team/zelfcoaching/route.ts` (SPE-synthese teambaas) | `claude-fable-5-1` | Belangrijkste synthese voor de teambaas, kosten geen factor. Refusal-check + retry vanaf v1. Naar Fable 5.1 (2026-09-07): drop-in, gelijke prijs. | 2026-09-07 |
@@ -646,9 +648,11 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/bot/sessions/route.ts` | `claude-haiku-4-5-20251001` | Nog niet beoordeeld op leeg-antwoord-risico. | 2026-07 |
 | `app/api/bot/sessions/search/route.ts` | `claude-haiku-4-5-20251001` | JSON-fallback (`[]`) bij parse-fout. | 2026-07 |
 | `lib/memoryEntities.ts` (`extractAndStoreEntities`) | `claude-haiku-4-5-20251001` | Extraheert namen/bedrijven/thema's per sessie. JSON-fallback, faalt stil (laag risico). | 2026-08-12 |
-| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie + persoonlijk advies en sparscenario) | `claude-sonnet-4-6` | Sinds 2026-10-05 ook een persoonlijke zin uit de eigen historie (thema's, laatste sparsessie, coaching, teamthema) plus voorgesteld sparscenario, daarom Sonnet i.p.v. Haiku (taalkwaliteit). Resultaat op `approved_users.groeibalans_advies` (text) en `groeibalans_scenario` (jsonb). Fail-open, kader valt terug op de vaste tekst. Aangeroepen vanuit session-end en sparring/debrief. | 2026-10-05 |
+| `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie + persoonlijk advies en sparscenario) | `claude-sonnet-4-6` | Sinds 2026-10-05 ook een persoonlijke zin uit de eigen historie (thema's, laatste sparsessie, coaching, teamthema) plus voorgesteld sparscenario, daarom Sonnet i.p.v. Haiku (taalkwaliteit). Fail-open, advies valt terug op de vaste kadertekst. Aangeroepen vanuit session-end en sparring/debrief. | 2026-10-05 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur. | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst. | 2026-07 |
+| `app/api/cron/feitencontrole/route.ts` | `claude-sonnet-4-6` | Dagelijks 06:45 UTC. Voorselectie op telwoorden in antwoorden die niet in het gesprek staan (`lib/feitenControle.ts`), daarna een oordeel van Sonnet over alleen die kandidaten, Telegram-melding als een antwoord een feit van de gebruiker verkeerd terugspeelt ("vier bronnen" terwijl er twee genoemd waren). Draait op opgeslagen antwoorden, dus zonder vertraging in de chat. Sonnet en niet Haiku: een valse melding kost Arno tijd, en Haiku had bij het mailpatroon te veel valse positieven. Besloten 2026-10-31 (verworpen: eerst controleren dan tonen, want de chat streamt en dat maakt elk antwoord trager). Gemeten: bij Thijs' briefing 0 echte telfouten in 60 runs, dus zeldzaam. | 2026-10-31 |
+| `app/api/cron/productvragen/route.ts` | `claude-haiku-4-5-20251001` | Dagelijks 06:30 UTC. Kiest uit de vragen van de laatste 24 uur (zonder testaccounts) welke over het gebruik van ArnoBot zelf gaan en meldt die in één Telegram-bericht, alleen als er iets is. Retry-bij-leeg, bij aanhoudend ongeldig antwoord een cron-foutmelding i.p.v. stilte. Besloten 2026-10-21 als losse cron (verworpen: controle per bericht in `chat/route.ts`, raakt de chat). | 2026-10-21 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |
 | `app/api/cron/model-check/route.ts` (adviesgeneratie, e-mail only) | `claude-sonnet-4-6` (+ web_search) | Haalt de modeltabel live uit CLAUDE.md via GitHub API, echte web_search naar pricingpagina's. Faalt hard bij ophaalfout. | 2026-08-12 |
 | `app/api/admin/feedback-analyse/route.ts` | `claude-haiku-4-5-20251001` | Nog geen expliciete leeg-check. | 2026-07 |
@@ -680,15 +684,15 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 <!-- AUTO:VERSIONS -->
 | Package | Versie |
 |---|---|
-| next | ^16.3.5 |
+| next | ^16.4.3 |
 | react | ^19.2.8 |
 | @anthropic-ai/sdk | ^0.115.0 |
-| @clerk/nextjs | ^7.9.1 |
+| @clerk/nextjs | ^7.9.10 |
 | @supabase/supabase-js | ^2.115.0 |
-| resend | ^6.18.1 |
+| resend | ^6.32.1 |
 | @upstash/ratelimit | ^2.0.8 |
 | @upstash/redis | ^1.38.3 |
-| @sentry/nextjs | ^10.68.0 |
+| @sentry/nextjs | ^10.78.0 |
 | posthog-js | ^1.430.3 |
 | @react-pdf/renderer | ^4.3.3 |
 | jspdf | ^4.2.0 |
