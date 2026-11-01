@@ -169,6 +169,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [assemblyai.com/changelog](https://www.assemblyai.com/changelog) op API-wijzigingen of prijswijzigingen.
 - Is `universal-3-5-pro` nog het nieuwste/best scorende model op Nederlands? (was bij invoering het beste op de FLEURS-Dutch-benchmark)
 - Quota/limiet binnen het account?
+- **Watch-item (beoordeeld 2026-11-01):** AssemblyAI-TTS-1 (tekst-naar-spraak, $15 per miljoen tekens, woordtijdstempels, kloonstemmen) ondersteunt alleen Engels, Spaans, Frans, Duits, Italiaans en Portugees, dus GEEN Nederlands: niet bruikbaar voor ArnoBot Voice. Ter vergelijking kost ElevenLabs bij onze tiers ruwweg $80 tot $165 per miljoen tekens. Heroverwegen zodra Nederlands in de TTS-talenlijst staat (docs: assemblyai.com/docs/tts/voices). Verder onzeker: bewaring en training van TTS-tekst niet gedocumenteerd, kloonstem moet elke 60 dagen opnieuw toestemming krijgen, geen SSML. Niet bouwen.
 
 #### ElevenLabs (tekst-naar-spraak voor ArnoBot Voice)
 - Publieke premium-gated feature (`voice_enabled=true` op `approved_users`). Model Flash v2.5 (`eleven_flash_v2_5`), streaming, rauwe `fetch()`, geen SDK. Gedeelde logica in `lib/voice.ts`. Verbruik gelogd in `arnobot_elevenlabs_usage`.
