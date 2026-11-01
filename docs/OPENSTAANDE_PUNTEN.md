@@ -137,3 +137,14 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 3. **Manager-zelfcoaching-gat Stuk B**: akkoord geven op de vijf beslispunten in het projectplan (`TEAM_PLAN.md`), dan bouwen. Stuk A is al gebouwd.
 
 *(Verse TEAM_PLAN-statuscontrole en het Stuk-B-projectplan afgerond 2026-08-31. PostHog-kern en Dependabot-trigger afgerond bij de kwartaalcheck van 2026-09-16, zie hierboven.)*
+
+## Kennisbank: zoekkwaliteit onderzocht (2026-11-01, eerste bevindingen)
+
+Gemeten met 66 echte gebruikersvragen uit de laatste 120 dagen (testaccounts uitgesloten), top 10 na rerank-2.5, per fragment blind beoordeeld door Fable 5.1 (0 tot 3).
+
+- **Soort vragen:** 77% eigen situatie (concrete deal, klant, mail), 12% algemene vakkennis, 11% app of overig. Bij situatievragen zit in 49% van de gevallen geen relevant fragment (>=2) in de top 10. De kennisbank is voor dit grootste deel niet waar het antwoord vandaan komt.
+- **Vakkennisvragen (n=8):** bij 25% geen relevant fragment. Onderwerpen zonder dekking: een beslisser vroeg in het traject identificeren, de structuur van een discovery gesprek. Kleine steekproef, kernonderwerpen, dus de moeite waard om te controleren.
+- **Technisch 1:** de volltekst-zoekleg (`match_blog_chunks_fulltext`) geeft bij 56 van 60 vragen niets terug (alle woorden moeten voorkomen). Praktisch dood, en de reden dat namen en exacte termen niet gevonden worden.
+- **Technisch 2:** `match_blog_chunks` geeft ondanks `match_count: 100` maar 4 tot 34 fragmenten terug, ook bij een kernthema als prijsbezwaren (4). `match_count` en `match_threshold` veranderen dat niet (ook niet bij 500 en -1). Waarschijnlijk een vaste ondergrens of een indexinstelling in de databasefunctie. De functie staat niet in de repo (alleen in Supabase), dus eerst `select pg_get_functiondef('public.match_blog_chunks'::regproc)` laten draaien en bekijken.
+- **Rerank:** rerank-3 tegenover rerank-2.5 geen aantoonbaar verschil, niet wisselen.
+- **Volgende stap:** functiedefinitie opvragen (Arno, Supabase SQL-editor), dan beoordelen of meer kandidaten de relevantie verbeteren (zelfde blinde meting opnieuw), en de gevonden gaten in de kennisbank aanvullen.
