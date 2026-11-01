@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { samenvattingParams, feitenParams } from '@/lib/sessieSamenvatting'
+import { samenvattingParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
 
@@ -56,15 +57,31 @@ export async function GET() {
         const messageCount = messages.length
         const createdAt = messages[0]?.created_at
 
+        const bronTekst = gebruikersBron(messages.flatMap(m => [
+          { role: 'user', content: m.question ?? '' },
+          { role: 'arno', content: m.answer ?? '' },
+        ]))
+
         let summary = ''
         let feiten = ''
         try {
           const [summaryRes, feitenRes] = await Promise.all([
             anthropic.messages.create(samenvattingParams(conversationText)),
-            anthropic.messages.create(feitenParams(conversationText)),
+            anthropic.messages.create(feitenParams(bronTekst)),
           ])
           summary = getText(summaryRes.content)
           feiten = getText(feitenRes.content)
+          const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten }).catch(() => null)
+          if (t?.ingegrepen) {
+            feiten = t.feiten
+            if (t.vermijd.length) {
+              const nieuw = await herstelSamenvatting(anthropic, {
+                volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
+                schrijf: async (gesprek, vermijd) => getText((await anthropic.messages.create(samenvattingParams(gesprek, vermijd))).content),
+              })
+              if (nieuw) summary = nieuw
+            }
+          }
         } catch {}
 
         let embedding: number[] | null = null
@@ -85,7 +102,7 @@ export async function GET() {
         }, { onConflict: 'session_id' })
 
         try {
-          await extractAndStoreEntities(userId, sessionId, conversationText)
+          await extractAndStoreEntities(userId, sessionId, bronTekst)
         } catch (e) {
           console.error('[sessions] Entiteiten-extractie error (wees-sessie):', e)
         }

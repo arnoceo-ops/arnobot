@@ -15,7 +15,7 @@ async function extractEntities(conversationText: string): Promise<ExtractedEntit
     const res = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
-      system: 'Extraheer belangrijke, herbruikbare entiteiten uit een salesgesprek: namen van personen, bedrijven, en concrete terugkerende thema\'s die de gebruiker waarschijnlijk vaker zal noemen. Geen algemene sales-termen. Geef een JSON-array van objecten {"name": string, "type": "persoon"|"bedrijf"|"thema"} terug, maximaal 5. Geef alleen de JSON-array terug, niets anders.',
+      system: 'Extraheer belangrijke, herbruikbare entiteiten uit een salesgesprek: namen van personen, bedrijven, en concrete terugkerende thema\'s die de gebruiker waarschijnlijk vaker zal noemen. Alleen entiteiten die de gebruiker zelf noemt (regels GEBRUIKER), regels ARNO zijn alleen context. Geen algemene sales-termen. Geef een JSON-array van objecten {"name": string, "type": "persoon"|"bedrijf"|"thema"} terug, maximaal 5. Geef alleen de JSON-array terug, niets anders.',
       messages: [{ role: 'user', content: conversationText.slice(0, 8000) }],
     })
     const text = getText(res.content, '[]').trim()

@@ -10,7 +10,8 @@ import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
-import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, feitenParams } from '@/lib/sessieSamenvatting'
+import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
 import { labelGesprek } from '@/lib/memoryLabels'
@@ -176,7 +177,9 @@ export async function POST(req: NextRequest) {
 
 
   const callSummaryModel = () => anthropic.messages.create(samenvattingParams(conversationText))
-  const callFeitenModel = () => anthropic.messages.create(feitenParams(conversationText))
+  // Feiten en entiteiten komen alleen uit wat de gebruiker zelf zegt (ARNO ingekort als context).
+  const bronTekst = gebruikersBron(messages as { role: string; content: string }[])
+  const callFeitenModel = () => anthropic.messages.create(feitenParams(bronTekst))
   const callThemasModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 60,
@@ -411,21 +414,49 @@ ${BRONDATA_REGEL}`,
   // blog-zoekopdracht hierboven de grootste sluipende vertraging bij het sluiten van een
   // gesprek (~10s), zonder dat de gebruiker daar iets van op het scherm zag.
   after(async () => {
+    // Controlestap: staat er in de feiten of samenvatting iets over de gebruiker dat alleen ArnoBot
+    // zelf zei? Dan eruit (feiten) of de samenvatting opnieuw zonder die bewering. Fail-open.
+    let samenvattingDef = summary
+    let feitenDef = feiten
     try {
-      const embedding = await embedSessionText(title, summary, feiten)
+      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten })
+      if (t.ingegrepen) {
+        console.warn(`[session-end] geheugentoets greep in (sessie ${sessionId}): ${t.vermijd.length} samenvattingsclaims, feiten ${feiten === t.feiten ? 'ongewijzigd' : 'aangepast'}`)
+        feitenDef = t.feiten
+        if (t.vermijd.length) {
+          const nieuw = await herstelSamenvatting(anthropic, {
+            volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
+            schrijf: async (gesprek, vermijd) => {
+              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd))
+              return schoonSamenvatting(getText(res.content), res.stop_reason)
+            },
+          })
+          if (nieuw) samenvattingDef = nieuw
+        }
+        await supabase
+          .from('arnobot_blog_sessions')
+          .update({ summary: samenvattingDef, feiten: feitenDef })
+          .eq('user_id', userId)
+          .eq('session_id', sessionId)
+      }
+    } catch (e) {
+      console.error('[session-end] Geheugentoets error:', e)
+    }
+    try {
+      const embedding = await embedSessionText(title, samenvattingDef, feitenDef)
       await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
     } catch (e) {
       console.error('[session-end] Embedding error:', e)
     }
     try {
-      await extractAndStoreEntities(userId, sessionId, conversationText)
+      await extractAndStoreEntities(userId, sessionId, bronTekst)
     } catch (e) {
       console.error('[session-end] Entiteiten-extractie error:', e)
     }
     // Onderwerp en blijvende feiten voor het sessiegeheugen (lib/memoryLabels.ts). Mislukt dit, dan
     // blijven de kolommen leeg en valt de chat terug op alleen de titel: veilig, nooit situatiefeiten.
     try {
-      const l = await labelGesprek(anthropic, { title, summary, feiten })
+      const l = await labelGesprek(anthropic, { title, summary: samenvattingDef, feiten: feitenDef })
       await supabase
         .from('arnobot_blog_sessions')
         .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
