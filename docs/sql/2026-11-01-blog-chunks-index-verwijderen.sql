@@ -1,0 +1,21 @@
+-- Kennisbank-zoekkwaliteit (2026-11-01, zie docs/OPENSTAANDE_PUNTEN.md).
+-- blog_chunks (1529 fragmenten) heeft een ivfflat-index met lists=100 en de standaard probes=1:
+-- elke zoekopdracht doorzoekt maar 1 van de 100 groepjes (circa 1% van de tabel), waardoor
+-- match_blog_chunks ondanks match_count 100 maar 4 tot 34 fragmenten teruggaf, ongeacht de
+-- ondergrens. Voor deze tabelgrootte is een index niet nodig: een volledige vergelijking duurt
+-- milliseconden en vindt altijd de beste fragmenten.
+--
+-- UITVOEREN in de Supabase SQL-editor:
+drop index if exists public.blog_chunks_embedding_idx;
+
+-- TERUGZETTEN (alleen als er iets misgaat):
+-- create index blog_chunks_embedding_idx on public.blog_chunks
+--   using ivfflat (embedding vector_cosine_ops) with (lists = '100');
+--
+-- Later: groeit blog_chunks tot ruim boven de 30.000 rijen, maak dan een HNSW-index
+-- (create index ... using hnsw (embedding vector_cosine_ops)), geen ivfflat met probes=1.
+--
+-- Let op: idx_sessions_embedding (arnobot_blog_sessions, ivfflat lists=50) is NIET aangepast.
+-- match_sessions filtert op match_user_id en vindt in de praktijk alle sessies van een gebruiker
+-- terug (gemeten 2026-11-01: 18 van 18, 17 van 17). Opnieuw meten als het aantal sessies per
+-- gebruiker flink groeit.
