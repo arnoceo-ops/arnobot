@@ -66,6 +66,7 @@ const MARKER_NO_TIME = new RegExp(`tijdgebonden aanwijzingen|zonder tijdslimiet|
 // Superset van KNOWN_NO_SANITIZER plus routes met wél sanitizer maar zonder vrije tekst.
 const KNOWN_NOT_USER_FACING = new Set([
   ...KNOWN_NO_SANITIZER,
+  'app/api/bot/sessions/route.ts',          // prompts komen uit lib/sessieSamenvatting.ts (gedeeld met session-end), regels staan daar
   'app/api/bot/session-end/route.ts:classificatie', // los, per-call uitgezonderd hieronder
   'lib/groeibalansServer.ts',                        // JSON-classificatie gebruiksbalans
   'app/api/cron/refresh-openers/route.ts',           // JSON met openingsvragen per categorie
