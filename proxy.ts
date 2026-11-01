@@ -21,15 +21,15 @@ function buildCSP(nonce: string, allowWasm = false): string {
   const supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com https://assets.feedblitz.com https://app.feedblitz.com`,
-    "style-src 'self' 'unsafe-inline' https://assets.feedblitz.com",
+    `script-src 'self' 'nonce-${nonce}'${allowWasm ? " 'wasm-unsafe-eval'" : ''}${clerkUnsafeEval} ${clerkScriptSrc} https://challenges.cloudflare.com`,
+    "style-src 'self' 'unsafe-inline'",
     // Lettertypen worden zelf gehost (public/fonts, app/fonts.css), geen Google meer.
     "font-src 'self'",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     // Het eigen Supabase-project staat ook hier toe: afbeeldingen in blogposts staan in de
     // publieke bucket blog-images (lib/blog.ts) en worden rechtstreeks geladen.
-    `img-src 'self' data: blob: ${supabaseOrigin} https://images.squarespace-cdn.com https://img.clerk.com https://assets.feedblitz.com`,
+    `img-src 'self' data: blob: ${supabaseOrigin} https://images.squarespace-cdn.com https://img.clerk.com`,
     // PostHog loopt sinds de reverse proxy (next.config.ts, /site-relay) same-origin voor
     // normaal verkeer, 'self' dekt dat al. eu.i.posthog.com blijft daarnaast toegestaan als
     // vangnet: posthog-js negeert een custom api_host bij interne retries (bekende bug,
@@ -45,12 +45,12 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // Het eigen Supabase-project staat toe voor de audiobijlage-upload (lib/assemblyai.ts): de
     // browser PUT't via een signed upload URL rechtstreeks naar Storage (bucket chat-audio-uploads).
     // Zonder deze host blokkeert de CSP de upload ("Bestand kon niet worden geüpload", 2026-10-07).
-    `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://app.feedblitz.com https://arnobot.instatus.com https://eu.i.posthog.com`,
+    `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com https://arnobot.instatus.com https://eu.i.posthog.com`,
     "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
-    "form-action 'self' https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://app.feedblitz.com",
+    "form-action 'self' https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev",
     "report-uri /api/csp-report",
   ].join('; ')
 }
