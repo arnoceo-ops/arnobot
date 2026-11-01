@@ -140,7 +140,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - DPA gewijzigd? [anthropic.com/legal/dpa](https://www.anthropic.com/legal/data-processing-addendum) — let op de "effective date". Zo ja, privacypagina bijwerken.
 - API-deprecaties aangekondigd? [docs.anthropic.com/changelog](https://docs.anthropic.com/en/release-notes/overview)
 - Worden de huidige model-IDs nog ondersteund?
-- **Key-deadline:** de arnobot-key is op 2026-11-01 vervangen (verloopt 1 januari 2028, staat in `.env.local`, Vercel Production en Preview en het GitHub-secret). De salescanvas-app-key verloopt nog op 6 januari 2027, door Anthropic afgedwongen: ruim van tevoren vervangen. De oude arnobot-key vervalt vanzelf op 6 januari 2027.
+- **Key-deadline (afgerond 2026-11-01):** beide Anthropic-keys (arnobot en salescanvas-app) zijn vervangen, de arnobot-key verloopt 1 januari 2028 (staat in `.env.local`, Vercel Production en Preview en het GitHub-secret). De oude keys vervallen vanzelf op 6 januari 2027. Rotatie opnieuw plannen vóór december 2027.
 - **Watch-item:** Claude Haiku 4.5 heeft een voorlopige pensioendatum van niet eerder dan 15 oktober 2026. Geen harde aankondiging. Haiku 4.5 wordt breed gebruikt (o.a. `session-end`, RAG-queryherschrijving, `memoryEntities`), dus bij een officiële aankondiging tijdig een migratiepad zoeken.
 
 #### Voyage AI (embedding + rerank, `lib/rag.ts`)
