@@ -24,13 +24,23 @@ Sentry.init({
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
 
   dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
+    // Bewust de restrictieve v10-basis: v11 verzamelt zonder deze regels standaard gebruikersinfo,
+    // cookies, request- en response-bodies, GenAI-inputs en -outputs en databasequerydata. In
+    // ArnoBot staat daar gespreks- en coachinginhoud tussen, en dat hoort niet bij Sentry.
+    // Laat dit blok nooit leeg (leeg = ruim verzamelen).
+    userInfo: false,
+    cookies: false,
+    httpHeaders: {
+      request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+      response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+    },
+    httpBodies: [],
+    urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+    genAI: { inputs: false, outputs: false },
+    databaseQueryData: false,
+    queues: false,
+    graphQL: { document: false, variables: false },
   },
 });
