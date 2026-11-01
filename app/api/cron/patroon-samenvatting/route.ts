@@ -21,6 +21,8 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic()
 
 const PARALLEL = 5
+const EMAIL_TYPE = 'patroon_samenvatting'
+const HERHAAL_DAGEN = 25
 
 // Maandelijks. Een thema uit De Spiegel dat in de laatste 8 weken in minstens 3 gesprekken terugkwam,
 // één zin over wat dat in de gesprekken van deze gebruiker betekent (Sonnet) en een knop die Sparren
@@ -51,7 +53,8 @@ export async function GET(req: NextRequest) {
 
     const nu = new Date()
     const vensterStart = new Date(nu.getTime() - PATROON_VENSTER_DAGEN * 24 * 60 * 60 * 1000).toISOString()
-    const sparGrens = new Date(nu.getTime() - PATROON_SPAR_RUST_DAGEN * 24 * 60 * 60 * 1000).toISOString()
+    const herhaalGrens = new Date(nu.getTime() - HERHAAL_DAGEN * 24 * 60 * 60 * 1000).toISOString()
+    const sparGrens =new Date(nu.getTime() - PATROON_SPAR_RUST_DAGEN * 24 * 60 * 60 * 1000).toISOString()
 
     let sent = 0
     const overgeslagen: Record<string, number> = {}
@@ -59,6 +62,15 @@ export async function GET(req: NextRequest) {
     const sla = (reden: string) => { overgeslagen[reden] = (overgeslagen[reden] ?? 0) + 1 }
 
     async function verwerk(user: { user_id: string; email: string; voornaam: string | null }) {
+      // Dubbele-verzendbeveiliging: nooit twee patroonmails binnen 25 dagen, ook niet als de route
+      // vaker wordt aangeroepen (handmatig, herstart of dubbele trigger). Op 2026-11-01 kreeg elke
+      // ontvanger zes keer dezelfde mail doordat de route handmatig is aangeroepen. Faalt de controle,
+      // dan sturen we niet (liever geen mail dan een dubbele).
+      const { data: eerder, error: logErr } = await supabase.from('arnobot_email_log').select('id')
+        .eq('user_id', user.user_id).eq('email_type', EMAIL_TYPE).gte('sent_at', herhaalGrens).limit(1)
+      if (logErr) return sla('logboek_onleesbaar')
+      if ((eerder ?? []).length > 0) return sla('al_gemaild')
+
       const [sessiesRes, sparRes, profielRes, analyseRes] = await Promise.all([
         supabase.from('arnobot_blog_sessions').select('title, themas, created_at, summary')
           .eq('user_id', user.user_id).is('deleted_at', null).eq('community_excluded', false)
@@ -94,6 +106,10 @@ export async function GET(req: NextRequest) {
       try {
         await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject: template.subject, html: template.html })
         sent++
+        // Direct na het verzenden vastleggen. Mislukt dit, dan melden we het: zonder logregel kan een
+        // volgende aanroep dezelfde mail opnieuw sturen.
+        const { error: insErr } = await supabase.from('arnobot_email_log').insert({ user_id: user.user_id, email_type: EMAIL_TYPE })
+        if (insErr) await notifyCronFailure('patroon-samenvatting', new Error(`logregel niet opgeslagen: ${insErr.message}`))
       } catch (e) {
         console.error(`[patroon-samenvatting] e-mail naar ${user.user_id} mislukt:`, e)
         sla('verzenden_mislukt')
