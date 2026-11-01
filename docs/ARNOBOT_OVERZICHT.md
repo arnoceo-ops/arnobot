@@ -65,7 +65,7 @@ Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyse
 Sinds 22 oktober 2026: de analyse ziet alleen wat in de gesprekken staat en beweert niets over wat de gebruiker daarbuiten doet. Een gebruiker beïnvloedt de analyse via de opvolgvragen in ArnoBot (is de vorige actie gedaan), niet via een eigen invoerveld. De analyse gebruikt ( de eigen antwoorden op "is de vorige actie gedaan" en wat de gebruiker over eigen plannen vertelde. De mail "Je analyses zijn bijgewerkt" opent direct de nieuwste analyse, ook na inloggen.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)
-Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI Whisper) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
+Voor Pro- en Team-gebruikers: gesproken antwoorden in Arno's eigen stem (via ElevenLabs, Flash v2.5-model, op termijn een volledige stemkloon van Arno zelf). Spraakherkenning voor voice-invoer (OpenAI, sinds 1 november 2026 live: de tekst verschijnt terwijl je praat, met een automatische terugval op transcriptie na het stoppen als de verbinding traag of onbeschikbaar is) is beschikbaar voor alle gebruikers die de microfoonknop gebruiken, ongeacht plan. Niet beschikbaar bij Basic (harde blokkade).
 
 ### 3.7 Teammodule
 Voor Team-abonnees. De manager krijgt op zijn teampagina:
@@ -131,7 +131,7 @@ ArnoBot is gebouwd als een moderne, schaalbare webapplicatie (Next.js), gehost o
 **AI-leveranciers, elk voor een specifiek doel:**
 - **Anthropic (Claude):** de hoofdgesprekken, coaching-synthese, sparring, teamanalyses. Het belangrijkste model.
 - **Voyage AI:** het onderliggende zoek- en geheugensysteem (semantische retrieval, zowel voor de kennisbank als voor het sessiegeheugen).
-- **OpenAI (Whisper):** spraakherkenning voor voice-invoer.
+- **OpenAI (gpt-live-transcribe en gpt-transcribe):** spraakherkenning voor voice-invoer, live en als terugval.
 - **ElevenLabs:** gesproken antwoorden voor ArnoBot Voice (Pro/Team).
 
 Geen van deze leveranciers traint op klantdata, dit is expliciet vastgelegd en gecommuniceerd op de privacypagina.
