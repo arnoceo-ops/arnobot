@@ -32,8 +32,13 @@ export const TARIEVEN = {
   // een bereik van 0,5-1, dit is de veilige kant van dat bereik.
   creditPerTeken: 1.0,
   tekensPerVoiceAntwoord: 500,
-  // Whisper-transcriptie + korte Anthropic-voice-call, $ per voice-interactie
+  // Transcriptie (gpt-transcribe, eerder Whisper) + korte Anthropic-voice-call, $ per voice-interactie
   kostenPerVoiceInteractie: 0.004,
+  // Dicteren in de chat en bij Sparren (spraak naar tekst, alle plannen). OpenAI, $ per minuut,
+  // pricing-pagina 2026-11-01: gpt-transcribe 0,0045 (gewone transcriptie na het stoppen en
+  // terugval), gpt-live-transcribe 0,017 (tekst verschijnt terwijl je praat).
+  dicteerPerMinuutUsd: 0.0045,
+  dicteerLivePerMinuutUsd: 0.017,
   // AssemblyAI: audiobijlage-transcriptie + sprekersherkenning in de hoofdchat
   // (lib/assemblyai.ts, Pro/Team-only, "hidden" feature sinds 2026-09-17, geen
   // eigen pagina/aankondiging). universal-3-5-pro $0,21/uur + standaard
@@ -213,6 +218,10 @@ export type Inputs = {
   pctAudioAnalyse: number
   audioMinutenPerGebruiker: number
   assemblyaiPerMinuut: number
+  dicteerMinutenPerGebruiker: number
+  pctDicteerLive: number
+  dicteerPerMinuut: number
+  dicteerLivePerMinuut: number
   tiers: Tier[]
   vercelSeats: number
   vercelPerSeat: number
@@ -274,6 +283,13 @@ export const DEFAULT_INPUTS: Inputs = {
   pctAudioAnalyse: 5,
   audioMinutenPerGebruiker: 20,
   assemblyaiPerMinuut: TARIEVEN.assemblyaiPerMinuut,
+  // Dicteren: nog geen gemeten gebruik, voorzichtige startwaarde van 30 minuten per gebruiker per
+  // maand (alle gebruikers, ook Basic). Live is de bedoelde standaard, dus 100%. Bijwerken zodra er
+  // echte cijfers zijn.
+  dicteerMinutenPerGebruiker: 30,
+  pctDicteerLive: 100,
+  dicteerPerMinuut: TARIEVEN.dicteerPerMinuutUsd,
+  dicteerLivePerMinuut: TARIEVEN.dicteerLivePerMinuutUsd,
   tiers: TARIEVEN.tiers,
   vercelSeats: TARIEVEN.vercelSeats,
   vercelPerSeat: TARIEVEN.vercelPerSeat,
@@ -346,6 +362,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const eleven = elevenLabsCost(creditsNodig, inputs.tiers)
   const whisperKosten = totaalInteracties * inputs.kostenPerInteractie
 
+  // Dicteren (OpenAI spraak naar tekst) geldt voor alle gebruikers, niet alleen Pro/Team: de
+  // microfoon zit in elk plan. Deel live (duurder) en deel gewoon, instelbaar.
+  const liveDeel = inputs.pctDicteerLive / 100
+  const dicteerKosten = n * inputs.dicteerMinutenPerGebruiker
+    * (liveDeel * inputs.dicteerLivePerMinuut + (1 - liveDeel) * inputs.dicteerPerMinuut)
+
   // Audiobijlage-analyse (AssemblyAI): net als Voice alleen voor Pro/Team
   // (proEffectief), Basic heeft hier geen toegang toe (app/api/chat/route.ts,
   // 'audio_alleen_betaald').
@@ -372,12 +394,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + audioAnalyseKosten + upstashKosten + teamOverheadKosten
+    + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + teamOverheadKosten
 
   return {
     vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, audioAnalyseKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, dicteerKosten, audioAnalyseKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 

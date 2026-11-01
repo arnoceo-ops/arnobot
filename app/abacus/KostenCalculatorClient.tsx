@@ -216,12 +216,20 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
-              <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + Whisper)</div>
+              <div style={cardHeadStyle}><span style={dotStyle} />Dicteren (spraak naar tekst, OpenAI)</div>
+              <NumberField label="Dicteerminuten per user/maand" hint="alle plannen, aanname, nog geen gemeten gebruik" value={inputs.dicteerMinutenPerGebruiker} onChange={v => set('dicteerMinutenPerGebruiker', v)} />
+              <NumberField label="% live (tekst terwijl je praat)" hint="rest loopt via de gewone transcriptie na het stoppen" value={inputs.pctDicteerLive} max={100} onChange={v => set('pctDicteerLive', v)} />
+              <NumberField label="Live (gpt-live-transcribe) per minuut ($)" value={inputs.dicteerLivePerMinuut} step={0.0005} onChange={v => set('dicteerLivePerMinuut', v)} />
+              <NumberField label="Gewoon (gpt-transcribe) per minuut ($)" value={inputs.dicteerPerMinuut} step={0.0005} onChange={v => set('dicteerPerMinuut', v)} />
+            </div>
+
+            <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + transcriptie)</div>
               <NumberField label="% users met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} max={100} onChange={v => set('pctVoice', v)} />
               <NumberField label="Interacties per Voice-user/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
               <NumberField label="Tekens per gesproken antwoord" hint="doellengte buildVoiceSystemPrompt: 400-600" value={inputs.tekensPerAntwoord} step={10} onChange={v => set('tekensPerAntwoord', v)} />
               <NumberField label="ElevenLabs credits per teken" hint="Flash v2.5, ElevenLabs zelf bevestigt 0,5-1, dit is de veilige kant" value={inputs.creditPerTeken} step={0.05} onChange={v => set('creditPerTeken', v)} />
-              <NumberField label="Whisper + Anthropic-voice per interactie ($)" value={inputs.kostenPerInteractie} step={0.0005} onChange={v => set('kostenPerInteractie', v)} />
+              <NumberField label="Transcriptie + Anthropic-voice per interactie ($)" value={inputs.kostenPerInteractie} step={0.0005} onChange={v => set('kostenPerInteractie', v)} />
 
               <details open={tiersOpen} onToggle={e => setTiersOpen((e.target as HTMLDetailsElement).open)} style={{ marginTop: 10 }}>
                 <summary style={{ fontSize: 12.5, color: '#94a3b8', padding: '4px 0' }}>
@@ -321,7 +329,8 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
-                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Whisper + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Transcriptie + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Dicteren (OpenAI spraak naar tekst)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.dicteerKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>AssemblyAI (audio-analyse)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.audioAnalyseKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
