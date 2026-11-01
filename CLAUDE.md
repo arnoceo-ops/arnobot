@@ -89,6 +89,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [vercel.com/changelog](https://vercel.com/changelog) op breaking changes die arno.bot raken
 - Build logs op deprecation warnings
 - Nieuwe platform-limieten of planwijzigingen?
+- **Openstaand (migratie begint 2026-12-10):** Vercel voegt Data Cache samen met Runtime Cache, voorheen onbetaald gebruik van Next.js-`fetch`-caching en `unstable_cache` wordt dan betaald ($0,40 per miljoen leesacties, $4 per miljoen schrijfacties). Beoordeeld 2026-11-01: alleen `lib/blog.ts` (blogleesacties, `next.revalidate` met tag) en `lib/fxRate.ts` (wisselkoers per uur) gebruiken dit, `unstable_cache` en `use cache` staan nergens. Verwachte kosten verwaarloosbaar. Niet uitzetten (Team Settings, CDN): dan raakt elke bloglezer Supabase. Check in december of begin januari in Vercel, Usage, of Runtime Cache binnen enkele dollars blijft.
 
 #### Supabase (project: wxrsmmzqbmoeackirsxc — arno.bot)
 - Dashboard op banners/waarschuwingen (Supabase toont deprecated features in de UI)
