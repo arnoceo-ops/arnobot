@@ -193,6 +193,16 @@ function dedupeCandidates(candidateLists: Candidate[][]): Candidate[] {
   return merged
 }
 
+// Alleen voor de dagelijkse kennisbank-controle (app/api/cron/kennisbank-controle): hoeveel kandidaten
+// levert de zoekstap per vraag op? Een mislukte zoekstap telt als 0.
+export async function meetKennisbankKandidaten(vragen: string[]): Promise<number[]> {
+  const uit: number[] = []
+  for (const v of vragen) {
+    try { uit.push((await searchCandidates(v)).length) } catch { uit.push(0) }
+  }
+  return uit
+}
+
 export async function getRelevantChunks(query: string, topN = 20, expand = false): Promise<RagChunk[]> {
   const searchQuery = expand ? await expandQuery(query) : query
   const candidates = await searchCandidates(searchQuery)
