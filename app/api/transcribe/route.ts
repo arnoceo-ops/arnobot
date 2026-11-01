@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-// gpt-4o-transcribe i.p.v. whisper-1 (deprecated per 26-8-2026, harde shutdown 26-2-2027, zie
-// CLAUDE.md-modelinventaris). stream=true geeft de respons als SSE (transcript.text.delta per
+// gpt-transcribe (2026-11-01 gewisseld van gpt-4o-transcribe, dat net als whisper-1 per 26-2-2027 uit
+// de API gaat, zie CLAUDE.md-modelinventaris). Dit is de gewone transcriptie na het stoppen en de
+// terugval voor de live transcriptie (/api/transcribe/live). stream=true geeft de respons als SSE (transcript.text.delta per
 // stuk, transcript.text.done aan het eind) i.p.v. één blokkerende JSON-call: bij een langere
 // opname zie je de tekst binnenkomen terwijl de rest nog verwerkt wordt, i.p.v. een stilte tot
 // het einde. Deze route proxyt de SSE-bytes ongewijzigd door, de client (SparClient.tsx) parset
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
   const ext = ['webm', 'ogg', 'mp4', 'wav'].includes(gevraagdeExt) ? gevraagdeExt : 'webm'
   const transcribeForm = new FormData()
   transcribeForm.append('file', audio, `recording.${ext}`)
-  transcribeForm.append('model', 'gpt-4o-transcribe')
+  transcribeForm.append('model', 'gpt-transcribe')
   transcribeForm.append('language', 'nl')
   transcribeForm.append('stream', 'true')
 

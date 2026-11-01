@@ -10,6 +10,7 @@ import VersionBanner from '@/app/bot/components/VersionBanner'
 import TrialBalk from '@/app/bot/components/TrialBalk'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { rolCategorieVoorRol, isGeldigSparScenario } from '@/lib/sparringPersonas'
+import { startLiveTranscriptie, type LiveSessie } from '@/lib/liveTranscribe'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 import { groeiNudgeMagTonen, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { track } from '@/lib/posthog'
@@ -529,6 +530,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const recordingRef = useRef(false)
   // Tweede klik terwijl de microfoon nog opstartte (getUserMedia is nog bezig).
   const stopRequestedRef = useRef(false)
+  // Live transcriptie van de lopende opname (null = niet beschikbaar, dan loopt alles via /api/transcribe).
+  const liveSessieRef = useRef<LiveSessie | null>(null)
 
   useEffect(() => {
     sessionIdRef.current = sessionId
@@ -591,6 +594,22 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         stream.getTracks().forEach(t => t.stop())
         recordingRef.current = false
         setRecording(false)
+        // Live transcriptie liep mee: vraag de definitieve tekst. Is die leeg of mislukt het, dan
+        // valt alles hieronder terug op de opname die na het stoppen getranscribeerd wordt.
+        const live = liveSessieRef.current
+        liveSessieRef.current = null
+        if (live) {
+          setTranscribing(true)
+          let liveTekst = ''
+          try { liveTekst = (await live.stop()).trim() } catch {} finally { live.sluit() }
+          if (liveTekst) {
+            setTarget(prefix + dedupeRepeatedSentence(liveTekst).text)
+            if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+            setTranscribing(false)
+            return
+          }
+          setTranscribing(false)
+        }
         // Het echte formaat van de browser doorgeven: Chrome/Android neemt webm op, Firefox ogg,
         // Safari/iPhone mp4. Alles als 'audio/webm' labelen liet de transcriptie bij Safari en
         // Firefox stil mislukken (leeg invoerveld, STUUR bleef grijs).
@@ -651,6 +670,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
         finally { setTranscribing(false) }
       }
+      // Live transcriptie (alleen als de server die voor dit account aanzet): de tekst verschijnt
+      // terwijl je praat. Lukt verbinden niet (null), dan loopt alles zoals voorheen. De opname
+      // loopt hoe dan ook mee als vangnet. Het geluid wordt meteen lokaal opgevangen en gebufferd,
+      // dus er gaat niets verloren terwijl de verbinding met OpenAI nog opstart.
+      liveSessieRef.current = await startLiveTranscriptie(stream, audioCtx, (t) => {
+        setTarget(prefix + dedupeRepeatedSentence(t).text)
+        if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+      })
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
@@ -686,6 +713,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       stopWatching()
       recordingRef.current = false
       stopRequestedRef.current = false
+      liveSessieRef.current?.sluit()
+      liveSessieRef.current = null
       console.error('[Whisper] getUserMedia mislukt:', err)
     }
   }
