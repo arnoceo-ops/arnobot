@@ -116,7 +116,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   inactivity_dag60:      { label: 'Inactivity dag 60',      description: 'Recurring:60 dagen geen activiteit, abonnement wordt opgezegd',    category: 'user' },
   bieb_bijgewerkt:       { label: 'Analyses bijgewerkt',    description: 'Recurring:na 10+ nieuwe gesprekken, patroonanalyse klaar',          category: 'user' },
   uitdaging_herinnering: { label: 'Uitdaging herinnering',  description: 'Recurring:dag 1/3/7 na een sessie, actie nog niet beantwoord',      category: 'user' },
-  patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring:maandelijks, terugkerende namen/thema\'s uit gesprekken', category: 'user' },
+  patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring:maandelijks, een terugkerend thema met één zin en een sparscenario', category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event:naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
   team_1on1_ritme_nudge:       { label: '1:1-ritme nudge',       description: 'Event:teamlid 2+ weken geen 1:1, belletje 48u ongelezen',         category: 'user' },
   team_1on1_ritme_herinnering: { label: '1:1-ritme herinnering', description: 'Event:5 dagen na eerste leessignaal, nog steeds geen 1:1',        category: 'user' },
@@ -172,7 +172,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patronen?: { naam: string; aantal: number }[]; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions; team?: TeamMailOptions }
+  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patroon?: { zin: string; thema: string; aantal: number; url: string }; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions; team?: TeamMailOptions }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -535,13 +535,16 @@ export function getEmailTemplate(
       }
     }
     case 'patroon_samenvatting': {
-      const patronen = options?.patronen ?? []
-      const lijst = patronen.map(p => `- ${p.naam} (${p.aantal}x genoemd)`).join('<br>')
+      // Zonder opties (admin-testmail) een voorbeeld, met opties de echte zin uit lib/patroonMail.ts.
+      const p = options?.patroon ?? {
+        zin: 'Je komt in je gesprekken steeds terug op hoe je een prijs onderbouwt voordat de klant ernaar vraagt.',
+        thema: 'dealstrategie', aantal: 3, url: 'https://arno.bot/bot/sparren',
+      }
       return {
         subject: `${prefix}${naam}, dit kwam de afgelopen tijd vaker terug.`,
         html: mail(
-          `ArnoBot ziet patronen in je gesprekken die je zelf misschien niet zo scherp hebt. Dit kwam de afgelopen tijd meerdere keren terug:<br><br>${lijst}<br><br>Soms is het patroon zelf de belangrijkste inzicht, niet het losse gesprek. Kijk of er iets bij zit om verder uit te pakken.`,
-          'SPAR ER VERDER OVER →', 'https://arno.bot/bot', optOutNote
+          `${escapeHtml(p.zin)}<br><br>Het thema ${escapeHtml(p.thema)} kwam in ${p.aantal} van je gesprekken van de afgelopen weken terug. Soms is het patroon zelf het belangrijkste inzicht, niet het losse gesprek. In een sparsessie kun je het oefenen.`,
+          'OEFEN DIT IN SPARREN →', p.url, optOutNote
         ),
       }
     }
