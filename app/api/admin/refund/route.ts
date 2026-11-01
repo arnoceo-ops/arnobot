@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow } from '@/lib/billing/db'
 import { betaalTerug, MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwerking'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 // Volledige terugbetaling van de laatste online betaling van een gebruiker, bedoeld voor de
 // bedenktijd van 14 dagen (voorwaarden artikel 8). Het beëindigen van de toegang, het
@@ -12,7 +13,7 @@ import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwer
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ error: 'Mollie is niet ingeschakeld' }, { status: 503 })

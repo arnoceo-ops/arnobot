@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 // In-memory rate limiter: werkt per serverless instance, zelfde patroon als arnobot-admin-login.
 const ipAttempts = new Map<string, { count: number; firstAt: number }>()
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   // Arno's eigen adminwachtwoord werkt hier ook: zet dan de bestaande arnobot_admin-cookie
   // (zelfde als /bot/admin/login), zodat hij in één stap zowel op /agents als op /bot/admin
   // is ingelogd, geen apart wachtwoord voor zichzelf nodig.
-  if (password === process.env.ARNOBOT_ADMIN_KEY) {
+  if (adminKeyMatches(password)) {
     ipAttempts.delete(ip)
     const res = NextResponse.json({ ok: true })
     res.cookies.set('arnobot_admin', process.env.ARNOBOT_ADMIN_KEY!, {

@@ -3,13 +3,14 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(_req: NextRequest) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Niet geautoriseerd' }, { status: 401 })
   }
 

@@ -14,3 +14,13 @@ export async function isAdminSession(): Promise<boolean> {
   const b = Buffer.from(expected)
   return a.length === b.length && timingSafeEqual(a, b)
 }
+
+// Constante-tijd-vergelijking van een meegegeven token (cookie, header of loginwachtwoord)
+// met ARNOBOT_ADMIN_KEY. Gebruik dit overal i.p.v. `token === process.env.ARNOBOT_ADMIN_KEY`.
+export function adminKeyMatches(token: string | null | undefined): boolean {
+  const expected = process.env.ARNOBOT_ADMIN_KEY
+  if (!expected || !token) return false
+  const a = Buffer.from(token)
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { runMetaAnalyse } from '@/lib/metaAnalyse'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,7 +14,7 @@ const supabase = createClient(
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  return token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 export async function GET() {

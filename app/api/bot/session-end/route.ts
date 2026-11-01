@@ -15,6 +15,7 @@ import { schoonUitdaging } from '@/lib/actiePatroon'
 import { labelGesprek } from '@/lib/memoryLabels'
 import { herkenMailVerzoek } from '@/lib/mailPatroon'
 import { Redis } from '@upstash/redis'
+import * as Sentry from '@sentry/nextjs'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -277,10 +278,11 @@ ${BRONDATA_REGEL}`,
         .eq('user_id', userId)
         .eq('session_id', sessionId)
         .is('deleted_at', null)
-      if (mailError) return NextResponse.json({ error: mailError.message }, { status: 500 })
+      if (mailError) { Sentry.captureException(mailError); return NextResponse.json({ error: 'db_error' }, { status: 500 }) }
       return NextResponse.json({ ok: true, mail })
     } catch (e) {
-      return NextResponse.json({ error: String(e) }, { status: 502 })
+      Sentry.captureException(e)
+      return NextResponse.json({ error: 'upstream_error' }, { status: 502 })
     }
   }
 
@@ -300,10 +302,11 @@ ${BRONDATA_REGEL}`,
         .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
         .eq('user_id', userId)
         .eq('session_id', sessionId)
-      if (labelError) return NextResponse.json({ error: labelError.message }, { status: 500 })
+      if (labelError) { Sentry.captureException(labelError); return NextResponse.json({ error: 'db_error' }, { status: 500 }) }
       return NextResponse.json({ ok: true, onderwerp: l.onderwerp, blijvend: l.blijvend.length })
     } catch (e) {
-      return NextResponse.json({ error: String(e) }, { status: 502 })
+      Sentry.captureException(e)
+      return NextResponse.json({ error: 'upstream_error' }, { status: 502 })
     }
   }
 

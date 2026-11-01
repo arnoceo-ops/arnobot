@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 // In-memory rate limiter: werkt per serverless instance (good enough voor admin endpoint)
 const ipAttempts = new Map<string, { count: number; firstAt: number }>()
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const { password } = await req.json()
 
-  if (password !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(password)) {
     await new Promise(r => setTimeout(r, 500))
     const current = ipAttempts.get(ip)
     if (current) {

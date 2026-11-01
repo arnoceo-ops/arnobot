@@ -4,6 +4,7 @@ import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -25,7 +26,7 @@ const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; cate
 export async function GET() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const templates = [...getEmailTemplateList(), ...ADMIN_ONLY_ITEMS]
@@ -35,7 +36,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

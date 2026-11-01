@@ -8,6 +8,7 @@ import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT, RULE_NO_DASH, RULE_NO_ACCENTS, RULE_NO_MOETEN, RULE_NO_TIME_PRESSURE, RULE_NO_INVENTED_DETAILS, RULE_NEVER_BREAK_CHARACTER } from '@/lib/systemPrompt'
 import { gatherAdminAnalyseContext } from '@/lib/adminAnalyse'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +19,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  return token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 function extractText(response: Message, label: string): string {

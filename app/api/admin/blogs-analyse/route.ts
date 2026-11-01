@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +17,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  return token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 export async function GET() {

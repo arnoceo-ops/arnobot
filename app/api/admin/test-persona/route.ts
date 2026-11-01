@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { MANUAL_TEST_USER_ID, TEST_TEAM_ID } from '@/lib/internalTestAccounts'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +27,7 @@ const ROL_PER_PERSONA: Record<TestPersona, string> = {
 }
 
 function isAuthorized(token: string | undefined) {
-  return !!token && token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 export async function POST(req: NextRequest) {

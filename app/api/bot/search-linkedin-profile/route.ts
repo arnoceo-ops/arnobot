@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import Anthropic from '@anthropic-ai/sdk'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +13,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Geen toegang' }, { status: 403 })
   }
 

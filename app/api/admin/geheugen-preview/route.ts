@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { haalGeheugenContext, bouwProfielContext } from '@/lib/geheugenContext'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 // Toont EXACT welke geheugen- en gebruikerscontext de hoofdchat voor een gebruiker in de prompt zet
 // (zelfde functies als app/api/chat/route.ts, lib/geheugenContext.ts), zonder het model aan te
@@ -18,7 +19,7 @@ const supabase = createClient(
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  return !!token && token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 export async function POST(req: NextRequest) {

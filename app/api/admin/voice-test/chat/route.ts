@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getVoiceAnswer } from '@/lib/voice'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 async function checkAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  return token === process.env.ARNOBOT_ADMIN_KEY
+  return adminKeyMatches(token)
 }
 
 export async function POST(req: NextRequest) {

@@ -406,7 +406,8 @@ ${RULE_NO_INVENTED_DETAILS}`
     response = await callModel()
   } catch (err: any) {
     console.error('[coaching generate error]', err?.status, err?.message ?? err)
-    return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
+    Sentry.captureException(err)
+    return NextResponse.json({ error: 'generate_error', detail: err?.status ? `upstream_${err.status}` : 'upstream_error' }, { status: 500 })
   }
 
   if (response.stop_reason === 'refusal') {
@@ -421,7 +422,8 @@ ${RULE_NO_INVENTED_DETAILS}`
       response = await callModel()
     } catch (err: any) {
       console.error('[coaching generate error - retry]', err?.status, err?.message ?? err)
-      return NextResponse.json({ error: 'generate_error', detail: `${err?.status ?? 'no-status'}: ${err?.message ?? String(err)}` }, { status: 500 })
+      Sentry.captureException(err)
+      return NextResponse.json({ error: 'generate_error', detail: err?.status ? `upstream_${err.status}` : 'upstream_error' }, { status: 500 })
     }
     if (response.stop_reason === 'refusal') {
       console.error('[coaching refusal - retry]', response.stop_reason)

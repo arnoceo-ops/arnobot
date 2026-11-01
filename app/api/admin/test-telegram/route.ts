@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { adminKeyMatches } from '@/lib/adminAuth'
 
 async function sendTg(token: string, chatId: string, text: string): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -18,7 +19,7 @@ async function sendTg(token: string, chatId: string, text: string): Promise<{ ok
 export async function POST() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
-  if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) {
+  if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
