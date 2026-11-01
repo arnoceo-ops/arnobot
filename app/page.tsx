@@ -87,11 +87,6 @@ export default async function ArnoBotLandingPage() {
           color: #9ca3af; text-decoration: none; transition: color 0.2s;
         }
         .nav-login:hover { color: #f1f5f9; }
-        .nav-link {
-          font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
-          color: #9ca3af; text-decoration: none; transition: color 0.2s;
-        }
-        .nav-link:hover { color: #f1f5f9; }
         .nav-cta-btn {
           font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
           color: #111827; text-decoration: none; background: #f59e0b;
@@ -316,7 +311,6 @@ export default async function ArnoBotLandingPage() {
           .nav-logo { font-size: 18px; letter-spacing: 2px; }
           .nav-auth { gap: 12px; }
           .nav-login { font-size: 16px; letter-spacing: 2px; }
-          .nav-link { font-size: 16px; letter-spacing: 2px; }
 
           .features-section { padding: 56px 20px; }
           .features-grid { grid-template-columns: 1fr; }
@@ -332,8 +326,7 @@ export default async function ArnoBotLandingPage() {
         <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
         <div className="nav-spacer" />
         <div className="nav-auth">
-          <Link href="/team" className="nav-link">VOOR TEAMS</Link>
-          <Link href="/prijzen" className="nav-link">PRIJZEN</Link>
+          <Link href="/team" className="nav-login">VOOR TEAMS</Link>
           {userId
             ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
             : <Link href="/sign-in" className="nav-login">LOGIN</Link>
