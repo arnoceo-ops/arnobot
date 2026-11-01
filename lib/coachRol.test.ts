@@ -68,6 +68,7 @@ describe('adviesRegels termijn', () => {
   })
   it('niet bij een gewone vraag of als de termijn al besproken is', () => {
     expect(adviesRegels('Hoe pak ik een koude call aan?')).toBe('')
+    expect(adviesRegels('Hoe voer ik een goed gesprek met een klant die wil opzeggen?')).toBe('')
     expect(adviesRegels('Wat nu met de gunning?', [{ content: 'De termijn loopt tot 1 december' }])).toBe('')
   })
 })

@@ -72,14 +72,15 @@ const PATROON = /\b(over de schutting|eilandjes|silo'?s?|micromanag\w*|angstcult
 const ACTIE_PREFIX = /^\s*\[Actieopvolging vorige sessie/i
 // Formele procedures met een termijn (meta-analyse 2026-11-01: een gesprek over een verloren aanbesteding ging over toon en
 // structuur zonder de standstilltermijn te noemen).
-const PROCEDURE = /\b(aanbesteding\w*|gunning\w*|inschrijving|rfp|tender|standstill|alcatel|kort geding|opzeg\w*|ingebrekestelling|bezwaartermijn|bezwaarschrift|ontbinding|aansprakelijkheidsstelling)\b/i
+const PROCEDURE = /\b(aanbesteding\w*|gunning\w*|inschrijving|rfp|tender|standstill|alcatel|kort geding|ingebrekestelling|bezwaartermijn|bezwaarschrift|aansprakelijkheidsstelling)\b/i
+// Bewust zonder "opzeggen" en "ontbinding": een klant die wil opzeggen is een gewone salesvraag (retentie), geen formele procedure (2026-11-01).
 
 const REGEL_FEIT = `Hangt je advies af van een feit dat je niet weet (hoeveel mensen er in het team zitten, hoe vaak iets nu gebeurt, hoe groot iets is), stel dan in dit antwoord een vraag over dat feit, voordat je een vast aantal, een vaste frequentie of een vast plan noemt. Een voorlopige richting mag, een vast advies niet.`
 const REGEL_BEZWAAR = `De gebruiker heeft bezwaar tegen je voorstel. Meebuigen mag, maar vraag eerst wat er niet goed voelt of wat er in zijn situatie anders is, en pas daarna je voorstel aan. Geef niet meteen toe met een zin als "dan doen we het zo", en houd vast aan wat nog steeds klopt.`
 const REGEL_PATROON = `De gebruiker noemde een patroon in de organisatie (bijvoorbeeld afdelingen die als eilandjes werken, dingen over de schutting gooien, micromanagement). Benoem dat patroon kort en vraag of hij naast de oplossing voor de korte termijn ook naar de structuur en cultuur erachter wil kijken. Gebruikt de gebruiker het patroon als reden waarom jouw voorstel niet werkt, ga dan eerst op dat patroon in en vraag naar de structuur en cultuur erachter, voordat je je voorstel aanpast. Doe dat één keer.`
 const REGEL_ACTIE = `Dit gesprek begon met een actieopvolging. Geef de actie een eigen plek: vraag wat de gebruiker ermee deed of wat eruit kwam, en laat de actie niet vallen als hij over iets anders begint. Een korte bevestiging van de status is niet genoeg: stel er in dit antwoord een vraag over.`
 
-const REGEL_TERMIJN = `De vraag gaat over een formele procedure met termijnen (aanbesteding, gunning, opzegging, ingebrekestelling, kort geding). Vraag als eerste of de gebruiker weet welke termijn er loopt en wanneer die afloopt, en pas daarna toon en inhoud. Weet hij het niet, laat hem dat eerst nagaan, want alles hangt aan die datum. Noem zelf geen termijn en geef geen juridisch oordeel, jij bent geen jurist.`
+const REGEL_TERMIJN = `De vraag gaat over een formele procedure met termijnen (aanbesteding, gunning, ingebrekestelling, kort geding). Vraag als eerste of de gebruiker weet welke termijn er loopt en wanneer die afloopt, en pas daarna toon en inhoud. Weet hij het niet, laat hem dat eerst nagaan, want alles hangt aan die datum. Noem zelf geen termijn en geef geen juridisch oordeel, jij bent geen jurist.`
 
 export function adviesRegels(vraag: string, history?: { content: string }[]): string {
   const hist = Array.isArray(history) ? history : []
