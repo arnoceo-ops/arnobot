@@ -58,6 +58,11 @@ describe('parsePatroonUitvoer', () => {
   it('weigert te korte of te lange zinnen', () => {
     expect(parsePatroonUitvoer(goed('Te kort.'), rol)).toBeNull()
     expect(parsePatroonUitvoer(goed('a '.repeat(200)), rol)).toBeNull()
+    expect(parsePatroonUitvoer(goed('Je zoekt in elk gesprek over dealstrategie naar de diepere logica, of het nu gaat om twijfelende klanten, afsluittechnieken of het bouwen van een pipeline voor later.'), rol)).toBeNull()
+  })
+  it('weigert ik-taal en vragen', () => {
+    expect(parsePatroonUitvoer(goed('Je zoekt steeds de diepere logica en dat maakt me nieuwsgierig naar je aanpak.'), rol)).toBeNull()
+    expect(parsePatroonUitvoer(goed('Wat zou er gebeuren als je je prijs eerder noemt in het gesprek?'), rol)).toBeNull()
   })
 })
 

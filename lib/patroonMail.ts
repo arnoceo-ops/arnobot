@@ -78,9 +78,11 @@ export function parsePatroonUitvoer(raw: string, rolCategorie: string): PatroonU
   const p = parsed as { patroon?: unknown; zin?: unknown; scenario?: { persona?: unknown; weerstand?: unknown } }
   if (p.patroon !== true || typeof p.zin !== 'string') return null
   const zin = p.zin.replace(/\s+/g, ' ').trim()
-  if (zin.length < 30 || zin.length > 320) return null
+  if (zin.length < 30 || zin.length > 180 || zin.split(' ').length > 25) return null
   if (STREEPJES.test(zin) || MARKDOWN.test(zin) || TIJDSDRUK.test(zin)) return null
   if (/\b(u|uw)\b/i.test(zin)) return null
+  // ArnoBot praat in deze mail over de gebruiker, nooit over zichzelf, en stelt geen vraag.
+  if (/\b(ik|me|mij|mijn)\b/i.test(zin) || zin.includes('?')) return null
   const persona = p.scenario?.persona
   const weerstand = p.scenario?.weerstand
   if (typeof persona !== 'string' || typeof weerstand !== 'string') return null
@@ -91,7 +93,9 @@ export function parsePatroonUitvoer(raw: string, rolCategorie: string): PatroonU
 
 const PATROON_SYSTEEM = `Je bent ArnoBot, een salescoach die de gebruiker sterker maakt. Je krijgt een thema dat de laatste weken in meerdere gesprekken van deze gebruiker terugkwam, de titels en samenvattingen van die gesprekken en soms de laatste analyse.
 
-Opdracht: schrijf één zin (maximaal 40 woorden) die het patroon benoemt zoals het in de gesprekken van deze gebruiker zichtbaar is, concreet en in eigen woorden van de gebruiker waar dat kan. Het gaat om wat de gebruiker steeds opnieuw bespreekt, niet om een oordeel. Toon: nieuwsgierig en uitnodigend, een uitdaging die energie geeft, nooit kritiek en geen verhoor. Zie je in de gesprekken geen echt patroon (alleen losse onderwerpen met hetzelfde label), geef dan geen patroon.
+Opdracht: schrijf één korte zin (maximaal 25 woorden) die één concreet, terugkerend gedrag of dilemma benoemt zoals het in de gesprekken van deze gebruiker zichtbaar is, bijvoorbeeld "Je zoekt steeds eerst bevestiging van de klant voordat je een prijs durft te noemen." Geen opsomming van onderwerpen, geen algemeenheden als "de diepere logica", geen vraag en geen speculatie over wat er zou gebeuren. Het gaat om wat de gebruiker steeds opnieuw doet of bespreekt, niet om een oordeel. Schrijf als een observatie over de gebruiker, nooit over jezelf: dus geen "ik", "me", "mij" of "mijn". Toon: nuchter en uitnodigend, nooit kritiek en geen verhoor. Zie je in de gesprekken geen echt patroon (alleen losse onderwerpen met hetzelfde label), geef dan geen patroon.
+
+Kies het sparscenario zo dat het past bij het gedrag in je zin: de persona is degene bij wie dit gedrag het zwaarst op de proef wordt gesteld.
 
 Kies daarna een sparscenario uit de lijst met personas voor deze rol, en een weerstand (licht, stevig of zwaar), waarmee de gebruiker precies dit patroon kan oefenen.
 
