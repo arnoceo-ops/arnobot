@@ -202,3 +202,11 @@ Dezelfde dag meldde GitHub een storing op meldingen (vanaf 12:21 UTC). De test o
 **Gekozen:** B (feiten en entiteiten alleen uit GEBRUIKER-regels, ARNO ingekort tot begin en eind, `gebruikersBron`), A (`GEBRUIKER_BRON_REGEL` in beide prompts) en C (`lib/geheugenToets.ts`, Sonnet, in `after()`, fail-open): feiten weghalen die alleen in ARNO staan, samenvatting opnieuw, bij een nieuwe treffer uit de ingekorte bron. Verworpen: alleen A (zelfde model dat het fout deed), C vóór het antwoord (vertraagt SLUIT). Gemeten: C vond de bewering in beide oude sessies en gaf 0 valse treffers op 3 controlesessies. Bijvangst: C haalt ook feiten weg die ArnoBot uit het geheugen opdiepte en die in dit gesprek niet door de gebruiker werden genoemd. Die staan nog in de sessie waar ze vandaan komen.
 
 **Open.** De drie bestaande sessies (09abfd2a, 26f175be, 78c1078a) zijn nog niet hersteld: de schrijfactie op productiedata werd door de classifier geblokkeerd.
+
+## Rekenfout in de hoofdchat (2026-11-01)
+
+Een gebruiker (penningmeester, huurinkomsten) kreeg "115 m2 tegen 90 euro = 12.420" (moet 10.350) en "61 m2 tegen 90 euro = 6.588" (moet 5.490). Beide uitkomsten komen overeen met 108 per m2: het model schreef 90 en rekende met iets anders. Na de correctie van één som presenteerde ArnoBot "de correcte totalen" met de tweede fout er nog in (30.738 i.p.v. 29.640).
+
+**Gekozen:** rekentool `bereken` (`lib/rekenTool.ts`, eigen parser, alleen als het gesprek een cijfer bevat) plus deterministisch vangnet in `cron/feitencontrole` (`lib/rekenControle.ts`: foute sommen en "u"). Verworpen: alleen een promptregel "reken stap voor stap" (het model deed dit net fout, geen garantie), een modelcontrole achteraf (antwoord is dan al gelezen). Gemeten: 5 van 5 runs gebruikten de tool en gaven alle juiste getallen.
+
+**Let op:** de tool dekt rekenwerk dat het model zelf als berekening herkent. Een som die het model zonder tool opschrijft vangt alleen de cron, na afloop.

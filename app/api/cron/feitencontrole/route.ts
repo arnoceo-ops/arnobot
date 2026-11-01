@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { verdachteTellingen } from '@/lib/feitenControle'
+import { vindFouteSommen, vindUVorm } from '@/lib/rekenControle'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -114,20 +115,42 @@ export async function GET(req: NextRequest) {
       if (o.fout) fouten.push({ userId: k.userId, citaat: (o.citaat ?? k.woorden.join(', ')).slice(0, MAX_TEKENS_CITAAT), juist: (o.juist ?? '').slice(0, MAX_TEKENS_CITAAT) })
     }
 
-    if (fouten.length > 0) {
-      const ids = [...new Set(fouten.map(f => f.userId).filter(Boolean))]
+    // Deterministisch vangnet (lib/rekenControle.ts): een som die het antwoord zelf opschrijft maar niet
+    // klopt, en "u" als aanspreekvorm. Zonder modelkosten, over alle gecontroleerde antwoorden.
+    const rekenFouten: { userId: string; tekst: string; juist: number }[] = []
+    const uVormen: { userId: string; tekst: string }[] = []
+    for (const r of rijen) {
+      const uid = String(r.user_id ?? '')
+      for (const f of vindFouteSommen(r.answer as string)) rekenFouten.push({ userId: uid, tekst: f.tekst, juist: f.juist })
+      const u = vindUVorm(r.answer as string)
+      if (u) uVormen.push({ userId: uid, tekst: u })
+    }
+
+    if (fouten.length + rekenFouten.length + uVormen.length > 0) {
+      const ids = [...new Set([...fouten, ...rekenFouten, ...uVormen].map(f => f.userId).filter(Boolean))]
       const naamPerId = new Map<string, string>()
       if (ids.length > 0) {
         const { data: users } = await supabase.from('approved_users').select('user_id, voornaam').in('user_id', ids)
         for (const u of users ?? []) naamPerId.set(u.user_id, u.voornaam || 'Onbekend')
       }
       const datum = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long' })
-      const regels = fouten.slice(0, 15).map(f => `${naamPerId.get(f.userId) ?? 'Onbekend'}: "${f.citaat}"${f.juist ? ` (gebruiker noemde: ${f.juist})` : ''}`)
-      const rest = fouten.length > 15 ? `\nEn nog ${fouten.length - 15}.` : ''
-      await notifyTelegram(`ARNOBOT FEITENCONTROLE · ${datum}\n${fouten.length} antwoord${fouten.length === 1 ? '' : 'en'} met een telling die niet klopt, van ${rijen.length} gecontroleerd:\n${regels.join('\n')}${rest}`)
+      const naam = (id: string) => naamPerId.get(id) ?? 'Onbekend'
+      const blokken: string[] = []
+      if (fouten.length > 0) {
+        const regels = fouten.slice(0, 15).map(f => `${naam(f.userId)}: "${f.citaat}"${f.juist ? ` (gebruiker noemde: ${f.juist})` : ''}`)
+        const rest = fouten.length > 15 ? `\nEn nog ${fouten.length - 15}.` : ''
+        blokken.push(`${fouten.length} antwoord${fouten.length === 1 ? '' : 'en'} met een telling die niet klopt:\n${regels.join('\n')}${rest}`)
+      }
+      if (rekenFouten.length > 0) {
+        blokken.push(`${rekenFouten.length} som${rekenFouten.length === 1 ? '' : 'men'} die niet klopt:\n${rekenFouten.slice(0, 15).map(f => `${naam(f.userId)}: "${f.tekst}" (moet ${f.juist} zijn)`).join('\n')}`)
+      }
+      if (uVormen.length > 0) {
+        blokken.push(`${uVormen.length} antwoord${uVormen.length === 1 ? '' : 'en'} met "u" in plaats van jij:\n${uVormen.slice(0, 15).map(f => `${naam(f.userId)}: "${f.tekst}"`).join('\n')}`)
+      }
+      await notifyTelegram(`ARNOBOT FEITENCONTROLE · ${datum}\nVan ${rijen.length} gecontroleerd.\n\n${blokken.join('\n\n')}`)
     }
 
-    return NextResponse.json({ ok: true, gecontroleerd: rijen.length, kandidaten: kandidaten.length, fouten: fouten.length })
+    return NextResponse.json({ ok: true, gecontroleerd: rijen.length, kandidaten: kandidaten.length, fouten: fouten.length, rekenFouten: rekenFouten.length, uVormen: uVormen.length })
   } catch (err) {
     await notifyCronFailure('feitencontrole', err)
     return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })

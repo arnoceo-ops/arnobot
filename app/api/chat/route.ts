@@ -74,6 +74,10 @@ import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
+import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
+
+// Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
+const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
@@ -607,11 +611,17 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
     // grens dreigt te gaan niet midden in een woord afkapt. Dit verruimt de bedoelde
     // beknoptheid niet structureel, het voorkomt alleen dat de rand de zin doorsnijdt.
     const chatMaxTokens = isWidget ? 1800 : antwoordLengte === 'kort' ? 750 : antwoordLengte === 'uitgebreid' ? 2500 : 1450
+    // Rekentool (lib/rekenTool.ts): alleen als het gesprek getallen bevat, zodat gewone vragen
+    // ongemoeid blijven. De tool-beschrijving zelf bevat de instructie, de vaste persona blijft
+    // ongewijzigd (verwatering).
+    const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
+    const rekenTools: Anthropic.Tool[] | undefined = !isWidget && /\d/.test(gesprekTekst) ? [REKEN_TOOL] : undefined
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: chatMaxTokens,
       system: systemPrompt,
-      messages
+      messages,
+      ...(rekenTools ? { tools: rekenTools } : {}),
     })
 
     const readable = new ReadableStream({
@@ -630,8 +640,53 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
           const remainder = sanitizer.flush()
           if (remainder) controller.enqueue(encoder.encode(remainder))
 
-          const finalMessage = await anthropicStream.finalMessage()
-          let answer = getText(finalMessage.content)
+          let finalMessage = await anthropicStream.finalMessage()
+          // Rekenrondes: vraagt het model de rekentool, voer die uit en laat het model verdergaan.
+          // De tekst van eerdere rondes is al naar de gebruiker gestreamd en telt mee in het opgeslagen antwoord.
+          let werkBerichten = messages as Anthropic.MessageParam[]
+          let eerdereTekst = ''
+          for (let ronde = 0; ronde < MAX_REKENRONDES && rekenTools && finalMessage.stop_reason === 'tool_use'; ronde++) {
+            const toolGebruik = finalMessage.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+            eerdereTekst += getText(finalMessage.content)
+            werkBerichten = [
+              ...werkBerichten,
+              { role: 'assistant', content: finalMessage.content },
+              {
+                role: 'user',
+                content: toolGebruik.map(tu => {
+                  const r = tu.name === 'bereken' ? voerRekenToolUit(tu.input) : { content: 'Onbekende tool.', isError: true }
+                  return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
+                }),
+              },
+            ]
+            if (eerdereTekst && !/\s$/.test(eerdereTekst)) {
+              controller.enqueue(encoder.encode('\n\n'))
+              eerdereTekst += '\n\n'
+            }
+            const rondeStream = client.messages.stream({
+              model: 'claude-sonnet-4-6',
+              max_tokens: chatMaxTokens,
+              system: systemPrompt,
+              messages: werkBerichten,
+              tools: rekenTools,
+            })
+            const rondeSanitizer = new StreamingDashSanitizer()
+            for await (const event of rondeStream) {
+              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                const toSend = rondeSanitizer.push(event.delta.text)
+                if (toSend) controller.enqueue(encoder.encode(toSend))
+              }
+            }
+            const rondeRest = rondeSanitizer.flush()
+            if (rondeRest) controller.enqueue(encoder.encode(rondeRest))
+            finalMessage = await rondeStream.finalMessage()
+          }
+          if (finalMessage.stop_reason === 'tool_use') {
+            console.error('[chat] rekenrondes op, antwoord zonder slot, sessionId:', sessionId)
+            Sentry.captureMessage('[chat] rekenrondes op', { level: 'warning', extra: { sessionId } })
+          }
+          const laatsteTekst = getText(finalMessage.content)
+          let answer = eerdereTekst + laatsteTekst
 
           if (!answer) {
             console.error('[chat] leeg antwoord na streaming, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)')
