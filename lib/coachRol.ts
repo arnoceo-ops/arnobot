@@ -70,11 +70,16 @@ const FREQUENTIE = /\b(hoe vaak|elke dag|dagelijks|per week|wekelijks|frequentie
 const BEZWAAR = /\b(voelt (niet|wat)|vind ik (niet|te|al)|dat wil ik niet|zie ik niet zitten|niet productief|te veel|te vaak|dat kan niet|werkt niet|niet realistisch|past niet)\b/i
 const PATROON = /\b(over de schutting|eilandjes|silo'?s?|micromanag\w*|angstcultuur|geen vertrouwen|elkaar de schuld|interne conflicten|politiek spel|afdelingen (werken|spelen))\b/i
 const ACTIE_PREFIX = /^\s*\[Actieopvolging vorige sessie/i
+// Formele procedures met een termijn (meta-analyse 2026-11-01: een gesprek over een verloren aanbesteding ging over toon en
+// structuur zonder de standstilltermijn te noemen).
+const PROCEDURE = /\b(aanbesteding\w*|gunning\w*|inschrijving|rfp|tender|standstill|alcatel|kort geding|opzeg\w*|ingebrekestelling|bezwaartermijn|bezwaarschrift|ontbinding|aansprakelijkheidsstelling)\b/i
 
 const REGEL_FEIT = `Hangt je advies af van een feit dat je niet weet (hoeveel mensen er in het team zitten, hoe vaak iets nu gebeurt, hoe groot iets is), stel dan in dit antwoord een vraag over dat feit, voordat je een vast aantal, een vaste frequentie of een vast plan noemt. Een voorlopige richting mag, een vast advies niet.`
 const REGEL_BEZWAAR = `De gebruiker heeft bezwaar tegen je voorstel. Meebuigen mag, maar vraag eerst wat er niet goed voelt of wat er in zijn situatie anders is, en pas daarna je voorstel aan. Geef niet meteen toe met een zin als "dan doen we het zo", en houd vast aan wat nog steeds klopt.`
 const REGEL_PATROON = `De gebruiker noemde een patroon in de organisatie (bijvoorbeeld afdelingen die als eilandjes werken, dingen over de schutting gooien, micromanagement). Benoem dat patroon kort en vraag of hij naast de oplossing voor de korte termijn ook naar de structuur en cultuur erachter wil kijken. Gebruikt de gebruiker het patroon als reden waarom jouw voorstel niet werkt, ga dan eerst op dat patroon in en vraag naar de structuur en cultuur erachter, voordat je je voorstel aanpast. Doe dat één keer.`
 const REGEL_ACTIE = `Dit gesprek begon met een actieopvolging. Geef de actie een eigen plek: vraag wat de gebruiker ermee deed of wat eruit kwam, en laat de actie niet vallen als hij over iets anders begint. Een korte bevestiging van de status is niet genoeg: stel er in dit antwoord een vraag over.`
+
+const REGEL_TERMIJN = `De vraag gaat over een formele procedure met termijnen (aanbesteding, gunning, opzegging, ingebrekestelling, kort geding). Benoem als eerste welke termijn er loopt en wanneer die afloopt, en pas daarna toon en inhoud. Ken je de termijn niet zeker, zeg dan dat je die niet zeker weet en laat de gebruiker hem nagaan. Noem een termijn nooit als vaststaand feit.`
 
 export function adviesRegels(vraag: string, history?: { content: string }[]): string {
   const hist = Array.isArray(history) ? history : []
@@ -86,6 +91,7 @@ export function adviesRegels(vraag: string, history?: { content: string }[]): st
   if (PATROON.test(`${vraag} ${recent}`) && !/structuur en cultuur/i.test(recent)) delen.push(REGEL_PATROON)
   // Alleen in het openingsbericht: later in het gesprek duwde de regel een bezwaar van de gebruiker opzij (gemeten 2026-11-01).
   if (eerste && ACTIE_PREFIX.test(vraag)) delen.push(REGEL_ACTIE)
+  if (PROCEDURE.test(vraag) && !/\btermijn/i.test(recent)) delen.push(REGEL_TERMIJN)
   if (delen.length === 0) return ''
   return `\n\nADVIESREGELS, GELDEN VOOR DIT BERICHT:\n${delen.join('\n\n')}`
 }

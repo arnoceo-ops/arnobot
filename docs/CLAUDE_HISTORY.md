@@ -210,3 +210,13 @@ Een gebruiker (penningmeester, huurinkomsten) kreeg "115 m2 tegen 90 euro = 12.4
 **Gekozen:** rekentool `bereken` (`lib/rekenTool.ts`, eigen parser, alleen als het gesprek een cijfer bevat) plus deterministisch vangnet in `cron/feitencontrole` (`lib/rekenControle.ts`: foute sommen en "u"). Verworpen: alleen een promptregel "reken stap voor stap" (het model deed dit net fout, geen garantie), een modelcontrole achteraf (antwoord is dan al gelezen). Gemeten: 5 van 5 runs gebruikten de tool en gaven alle juiste getallen.
 
 **Let op:** de tool dekt rekenwerk dat het model zelf als berekening herkent. Een som die het model zonder tool opschrijft vangt alleen de cron, na afloop.
+
+## Systeemprompt changelog: meta-analyse 1 november 2026 verwerkt
+
+Panel overall 5,7/10 (9 gesprekken, oktober). Het grootste deel van de bevindingen was al opgelost door eerdere fixes: harde grens op plannen (22-10), rol/bevoegdheid en één lijn (31-10), rekentool, geheugentoets en adviesregels (1-11).
+
+**Toegevoegd:** (1) onbekend woord of afkorting: vragen wat bedoeld wordt, geen raadwerk (vaste zin in "ÉÉN LIJN, EERST DE FEITEN", `lib/systemPrompt.ts`); (2) termijn eerst bij een formele procedure (`REGEL_TERMIJN` in `adviesRegels`, voorwaardelijk op trefwoord, `lib/coachRol.ts`); (3) vaste uitleg over bijlagen, geen stellige uitspraken over wat hij niet kan lezen (`lib/appHelp.ts`).
+
+**Gemeten (regel 1, sonnet-4-6):** gewone vragen zonder/met de zin 332/347 woorden gemiddeld, 3/12 eindigt op een vraag in beide gevallen: geen verwatering. Scenario met onbekend woord: vraagt naar het woord 3/6 zonder, 5/6 met. Regel blijft.
+
+**Verworpen:** Goldsmith (elke actie een dag plus terugkomvraag): botst met de regel tegen tijdgebonden aanwijzingen. Belfort (elk advies eindigt met drie regels): botst met "één richting, geen draaiboek". Robbins (groter verhaal benoemen): te vaag om als regel te volgen. Kennishiaten (aanbestedingsrecht, SaaS-licentieconflicten, maatschappelijk vastgoed): horen in de kennisbank, eigen besluit.

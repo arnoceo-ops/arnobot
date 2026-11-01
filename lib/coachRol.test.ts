@@ -61,3 +61,13 @@ describe('adviesRegels', () => {
     expect(adviesRegels('Mijn klant dreigt weg te gaan, hoe ga ik het gesprek in?')).toBe('')
   })
 })
+
+describe('adviesRegels termijn', () => {
+  it('komt mee bij een formele procedure', () => {
+    expect(adviesRegels('We hebben de aanbesteding verloren, hoe reageer ik op de gunning?')).toContain('welke termijn er loopt')
+  })
+  it('niet bij een gewone vraag of als de termijn al besproken is', () => {
+    expect(adviesRegels('Hoe pak ik een koude call aan?')).toBe('')
+    expect(adviesRegels('Wat nu met de gunning?', [{ content: 'De termijn loopt tot 1 december' }])).toBe('')
+  })
+})
