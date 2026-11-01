@@ -18,7 +18,10 @@ export async function GET() {
       headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store'
     }).then(r => r.json())
 
-    const m = monitorsData?.monitors?.[0]
+    // De hoofdmonitor (homepage) is de basis voor de cijfers op de accountpagina. Er kunnen
+    // aanvullende monitoren bij komen (bijv. de inlogpagina), die mogen de cijfers niet overnemen.
+    const monitors: { name?: string; url?: string }[] = monitorsData?.monitors ?? []
+    const m = (monitors.find(x => !/sign-in/i.test(`${x.name ?? ''} ${x.url ?? ''}`)) ?? monitors[0]) as typeof monitorsData.monitors[number] | undefined
     if (!m) return NextResponse.json({ error: 'no monitor' }, { status: 500 })
 
     let avgMs: number | null = m.averageResponseTime ?? null
