@@ -33,7 +33,10 @@ export type LiveSessie = {
 }
 
 const VERBINDEN_MAX_MS = 6000
-const DEFINITIEF_MAX_MS = 5000
+// Ruim genoeg voor een traag netwerk (VPN) waar het geluid achterloopt. Komt de definitieve tekst
+// daarna nog niet binnen, dan nemen we NOOIT de half afgemaakte tussentijdse tekst over (dat brak
+// zinnen halverwege af), maar valt alles terug op de gewone transcriptie van de hele opname.
+const DEFINITIEF_MAX_MS = 10000
 const MAX_BUFFER_BYTES = 24000 * 2 * 8 // 8 seconden geluid wachten op een verbinding is genoeg
 
 function naarBase64(buf: ArrayBuffer): string {
@@ -116,8 +119,9 @@ export async function startLiveTranscriptie(
         state = verwerkLiveEvent(state, evt)
         if (state.tekst !== vorige && !afgesloten) opTekst(state.tekst)
         if (state.definitief !== null && klaar) klaar(state.definitief)
-        // Een fout (bijv. lege commit bij stilte) mag het wachten niet laten hangen.
-        if (evt.type === 'error' && klaar) klaar(state.tekst)
+        // Een fout (bijv. lege commit bij stilte) mag het wachten niet laten hangen. Leeg = de
+        // gewone transcriptie van de opname neemt het over, nooit een half resultaat.
+        if (evt.type === 'error' && klaar) klaar('')
       }
       socket.onclose = () => { open = false; if (!afgesloten) { verbroken = true; if (klaar) klaar('') } }
       socket.onerror = () => { verbroken = true }
@@ -148,7 +152,7 @@ export async function startLiveTranscriptie(
       try { ws?.send(JSON.stringify({ type: 'input_audio_buffer.commit' })) } catch {}
       const tekst = await Promise.race([
         wachten,
-        new Promise<string>((resolve) => setTimeout(() => resolve(state.tekst), DEFINITIEF_MAX_MS)),
+        new Promise<string>((resolve) => setTimeout(() => resolve(''), DEFINITIEF_MAX_MS)),
       ])
       sluit()
       return tekst
