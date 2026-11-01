@@ -278,6 +278,24 @@ jobs:
         # weekly-top-users, competitie, refresh-openers en auto-analyse. Bevestigde
         # false positives toevoegen aan KNOWN_SAFE in het script zelf.
 
+  cron-mail-dedupe:
+    name: Mail-crons met dubbele-verzendbeveiliging (blokkeert)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Controleer dat elke cron die gebruikers mailt een verzendlogboek of vlag heeft
+        run: node scripts/check-cron-mail-dedupe.mjs
+        # Blokkeert bewust wel: de regel is eenduidig (verzendlogboek of alleen interne ontvangers).
+        # Toegevoegd 2026-11-01 nadat cron/patroon-samenvatting door een handmatige aanroep zes keer
+        # dezelfde mail naar elke ontvanger stuurde. Bevestigde legitieme gevallen in KNOWN_SAFE.
+
   missing-loaded-gate:
     name: Client-fetch zonder loaded-gate (informatief, blokkeert niet)
     runs-on: ubuntu-latest
