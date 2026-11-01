@@ -117,25 +117,33 @@ async function main() {
   }
   console.log('Context gegenereerd. Begin met embedden...')
 
-  let inserted = 0
+  // Eerst alles embedden, dan pas de oude versie van dit document vervangen: mislukt er iets halverwege,
+  // dan blijft de oude versie staan. Opnieuw draaien met hetzelfde bron-label VERVANGT het document
+  // (geen dubbele fragmenten), zodat een aangepast kennisdocument gewoon opnieuw ingeladen kan worden.
+  const rijen = []
   for (let i = 0; i < contextedChunks.length; i += BATCH_SIZE) {
     const batch = contextedChunks.slice(i, i + BATCH_SIZE)
     const textsToEmbed = batch.map(c => c.context ? `${c.context}\n\n${c.content}` : c.content)
     const embeddings = await embedBatch(textsToEmbed)
-
-    const rows = batch.map((chunk, j) => ({
+    batch.forEach((chunk, j) => rijen.push({
       content: chunk.content,
       context: chunk.context ?? null,
       source: chunk.source,
       url: null,
       embedding: embeddings[j],
     }))
-    const { error } = await supabase.from('blog_chunks').insert(rows)
-    if (error) throw new Error(`Insert error: ${error.message}`)
-
-    inserted += batch.length
-    console.log(`${inserted}/${contextedChunks.length} chunks opgeslagen...`)
+    console.log(`${rijen.length}/${contextedChunks.length} chunks geembed...`)
   }
+
+  const { count: oud } = await supabase.from('blog_chunks').select('id', { count: 'exact', head: true }).eq('source', sourceLabel)
+  if (oud) {
+    const { error: delError } = await supabase.from('blog_chunks').delete().eq('source', sourceLabel)
+    if (delError) throw new Error(`Oude versie verwijderen mislukt: ${delError.message}`)
+    console.log(`${oud} fragment(en) van de oude versie vervangen.`)
+  }
+  const { error } = await supabase.from('blog_chunks').insert(rijen)
+  if (error) throw new Error(`Insert error: ${error.message}`)
+  const inserted = rijen.length
 
   console.log(`\nKlaar. ${inserted} chunk(s) toegevoegd aan blog_chunks voor "${sourceLabel}".`)
 }
