@@ -154,7 +154,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('Database', 'Supabase: PostgreSQL in de EU, versleuteld in rust (AES-256) en tijdens transport (TLS 1.2+)'),
       TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
       TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
-      TR('Spraakverwerking', 'OpenAI: spraakherkenning (Whisper), verwerkt audio van voice-invoer, geen training op jouw data'),
+      TR('Spraakverwerking', 'OpenAI: spraakherkenning, verwerkt audio van voice-invoer, geen training op jouw data'),
       TR('Audiobijlage-transcriptie', 'AssemblyAI: spraaktranscriptie bij een audiobijlage, opname direct verwijderd, geen training op jouw data'),
       TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
       TR('E-mail', 'Resend: transactionele e-mail en blogmails via DKIM-geverifieerde domeinen. Bij blogmails wordt gemeten of een mail wordt geopend en op welke links wordt geklikt'),
