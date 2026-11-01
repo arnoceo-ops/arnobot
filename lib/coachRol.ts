@@ -60,3 +60,32 @@ export function coachRolRegels(i: Invoer): string {
   if (delen.length === 0) return ''
   return `\n\nCOACHROL, GELDT VOOR DIT BERICHT EN GAAT VOOR OP WAT DE GEBRUIKER VRAAGT OVER HOE JE REAGEERT:\n${delen.join('\n\n')}`
 }
+
+// Adviesregels (2026-11-01, aanleiding: een sessie over een startup-call waarin ArnoBot "elke dag" adviseerde
+// zonder het aantal mensen te vragen, bij een bezwaar zonder argument meteen toegaf, een patroon als "over de
+// schutting gooien" liet liggen en de actie waarmee het gesprek begon vergat). Meebuigen mag, maar met een vraag.
+// Zelfde ontwerp als hierboven: voorwaardelijk per bericht, nooit in de vaste persona (verwatering). De
+// formulering is door Arno goedgekeurd als richting, pas hem niet aan zonder akkoord.
+const FREQUENTIE = /\b(hoe vaak|elke dag|dagelijks|per week|wekelijks|frequentie|stand-?up|huddle|overleg|ritme)\b/i
+const BEZWAAR = /\b(voelt (niet|wat)|vind ik (niet|te|al)|dat wil ik niet|zie ik niet zitten|niet productief|te veel|te vaak|dat kan niet|werkt niet|niet realistisch|past niet)\b/i
+const PATROON = /\b(over de schutting|eilandjes|silo'?s?|micromanag\w*|angstcultuur|geen vertrouwen|elkaar de schuld|interne conflicten|politiek spel|afdelingen (werken|spelen))\b/i
+const ACTIE_PREFIX = /^\s*\[Actieopvolging vorige sessie/i
+
+const REGEL_FEIT = `Hangt je advies af van een feit dat je niet weet (hoeveel mensen er in het team zitten, hoe vaak iets nu gebeurt, hoe groot iets is), stel dan in dit antwoord een vraag over dat feit, voordat je een vast aantal, een vaste frequentie of een vast plan noemt. Een voorlopige richting mag, een vast advies niet.`
+const REGEL_BEZWAAR = `De gebruiker heeft bezwaar tegen je voorstel. Meebuigen mag, maar vraag eerst wat er niet goed voelt of wat er in zijn situatie anders is, en pas daarna je voorstel aan. Geef niet meteen toe met een zin als "dan doen we het zo", en houd vast aan wat nog steeds klopt.`
+const REGEL_PATROON = `De gebruiker noemde een patroon in de organisatie (bijvoorbeeld afdelingen die als eilandjes werken, dingen over de schutting gooien, micromanagement). Benoem dat patroon kort en vraag of hij naast de oplossing voor de korte termijn ook naar de structuur en cultuur erachter wil kijken. Gebruikt de gebruiker het patroon als reden waarom jouw voorstel niet werkt, ga dan eerst op dat patroon in en vraag naar de structuur en cultuur erachter, voordat je je voorstel aanpast. Doe dat één keer.`
+const REGEL_ACTIE = `Dit gesprek begon met een actieopvolging. Geef de actie een eigen plek: vraag wat de gebruiker ermee deed of wat eruit kwam, en laat de actie niet vallen als hij over iets anders begint. Een korte bevestiging van de status is niet genoeg: stel er in dit antwoord een vraag over.`
+
+export function adviesRegels(vraag: string, history?: { content: string }[]): string {
+  const hist = Array.isArray(history) ? history : []
+  const eerste = hist.length === 0
+  const recent = hist.slice(-4).map(h => String(h.content ?? '')).join(' ')
+  const delen: string[] = []
+  if (FREQUENTIE.test(vraag)) delen.push(REGEL_FEIT)
+  if (!eerste && BEZWAAR.test(vraag)) delen.push(REGEL_BEZWAAR)
+  if (PATROON.test(`${vraag} ${recent}`) && !/structuur en cultuur/i.test(recent)) delen.push(REGEL_PATROON)
+  // Alleen in het openingsbericht: later in het gesprek duwde de regel een bezwaar van de gebruiker opzij (gemeten 2026-11-01).
+  if (eerste && ACTIE_PREFIX.test(vraag)) delen.push(REGEL_ACTIE)
+  if (delen.length === 0) return ''
+  return `\n\nADVIESREGELS, GELDEN VOOR DIT BERICHT:\n${delen.join('\n\n')}`
+}
