@@ -2,7 +2,7 @@
 // dat iemand moet zoeken naar een mailadres. Het nummer staat hier centraal, zodat een
 // nummerwissel (zoals de overstap naar het WhatsApp Business Platform bij de 50-gebruikers-
 // mijlpaal) één plek is in plaats van een zoek-en-vervang door de hele app.
-const SUPPORT_WHATSAPP_NUMMER = '31614439326'
+const SUPPORT_WHATSAPP_NUMMER = '31614131513'
 
 function supportWhatsappUrl(bericht: string): string {
   return `https://wa.me/${SUPPORT_WHATSAPP_NUMMER}?text=${encodeURIComponent(bericht)}`
