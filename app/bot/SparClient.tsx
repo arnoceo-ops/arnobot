@@ -405,6 +405,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [speakTokens, setSpeakTokens] = useState<SpeakToken[]>([])
   const [speakTokenIdx, setSpeakTokenIdx] = useState(-1)
   const activeSpeakWordRef = useRef<HTMLSpanElement>(null)
+  const speakUserScrolledRef = useRef(false)
   const autoScrollGuardUntilRef = useRef(0)
 
   const [navGuardOpen, setNavGuardOpen] = useState(false)
@@ -902,7 +903,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // de volgende correctie nodig is, i.p.v. steeds nét op tijd bijschieten.
   useEffect(() => {
     const el = activeSpeakWordRef.current
-    if (!el) return
+    if (!el || speakUserScrolledRef.current) return
     const topMargin = (isMobile ? 56 : 64) + 16
     const bottomMargin = (isMobile ? 280 : 240) + 24
     const rect = el.getBoundingClientRect()
@@ -1134,7 +1135,22 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   useEffect(() => {
+    speakUserScrolledRef.current = false
     setVoiceBarHidden(speakingIdx !== null)
+    if (speakingIdx === null) return
+    // Raakt de gebruiker tijdens het voorlezen het scherm aan (vinger of wiel), dan stopt het
+    // karaoke-meescrollen en komt de invoerbalk direct terug. Het voorlezen zelf loopt door.
+    // Programmatische scrolls vuren deze events niet, dus het meescrollen triggert dit nooit.
+    const stop = () => {
+      speakUserScrolledRef.current = true
+      setVoiceBarHidden(false)
+    }
+    window.addEventListener('wheel', stop, { passive: true })
+    window.addEventListener('touchmove', stop, { passive: true })
+    return () => {
+      window.removeEventListener('wheel', stop)
+      window.removeEventListener('touchmove', stop)
+    }
   }, [speakingIdx])
 
   // Alleen terugkomen als je zelf helemaal naar de onderkant van de pagina scrolt (signaal dat
