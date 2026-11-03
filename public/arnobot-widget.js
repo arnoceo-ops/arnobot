@@ -69,7 +69,7 @@
     '  padding:10px 16px;outline:none;resize:none;overflow:hidden;box-sizing:border-box;',
     '  min-height:44px;max-height:160px;line-height:1.5;',
     '}',
-    '@media(max-width:600px){#arnobot-textarea{min-height:64px;padding:12px 16px;}}',
+    '@media(max-width:600px){#arnobot-textarea{min-height:56px;max-height:112px;padding:8px 16px;}}',
     '#arnobot-textarea::placeholder{color:#bbb;font-size:13px;}',
     '#arnobot-textarea:focus{background:#fafafa;}',
     '#arnobot-send{',
@@ -79,7 +79,7 @@
     '  transition:background .15s;white-space:nowrap;min-width:100px;',
     '  height:44px;align-self:flex-end;',
     '}',
-    '@media(max-width:600px){#arnobot-send{height:64px;}}',
+    '@media(max-width:600px){#arnobot-send{height:56px;}}',
     '#arnobot-send:hover{background:#ff8800;}',
     '#arnobot-send:disabled{background:#f0f0f0;color:#ccc;cursor:not-allowed;}',
     '@media(max-width:700px){#arnobot-send{min-width:72px;padding:0 10px;font-size:18px;}}',
@@ -191,13 +191,14 @@
     });
   };
 
-  // Het invoerveld groeit mee met de tekst tot 160px (max-height in de CSS), daarna scrollt het.
-  // Leeg valt het terug op de min-height (44px op pc, 64px op mobiel).
+  // Het invoerveld groeit mee met de tekst tot de max-height uit de CSS (160px op pc, 112px op
+  // mobiel), daarna scrollt het. Leeg valt het terug op de min-height (44px op pc, 56px op mobiel).
   ArnoBot.prototype._grow = function () {
     var ta = this.$textarea;
+    var max = parseFloat(window.getComputedStyle(ta).maxHeight) || 160;
     ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 160) + 'px';
-    ta.style.overflowY = ta.scrollHeight > 160 ? 'auto' : 'hidden';
+    ta.style.height = Math.min(ta.scrollHeight, max) + 'px';
+    ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
   };
 
   ArnoBot.prototype.ask = function (question) {
