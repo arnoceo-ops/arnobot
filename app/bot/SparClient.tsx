@@ -3281,6 +3281,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               </div>
             </div>
           )}
+          {/* Lang gesprek: boven de 100 berichten laat de server de oudste weg uit de context en bij
+              veel berichten verwatert het antwoord. Vanaf 80 een rustige verwijzing naar SLUIT,
+              dat het gesprek in het geheugen opslaat. */}
+          {mode === 'gesprek' && started && !loading && !showSluiten && history.length >= 80 && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, lineHeight: 1.9, color: '#6b7280', padding: 'clamp(16px,2vw,24px) clamp(20px,3vw,32px)' }}>
+              Dit gesprek is al lang. Sluit het af met SLUIT, dan onthoudt ArnoBot de kern en begin je fris.
+            </p>
+          )}
           {/* Tijdens het genereren is de invoerbalk verborgen: dan hoeft er onderin geen ruimte voor
               vrijgehouden te worden en vult de tekst het hele scherm. */}
           <div ref={bottomRef} style={{ scrollMarginBottom: stickyActive && loading ? 24 : isMobile ? 'calc(280px + env(safe-area-inset-bottom, 0px))' : 240 }} />
