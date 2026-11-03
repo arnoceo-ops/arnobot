@@ -67,8 +67,9 @@
     '  flex:1;background:#fff;border:none;color:rgb(51,51,51);',
     '  font-family:"Open Sans",sans-serif;font-size:15px;',
     '  padding:10px 16px;outline:none;resize:none;overflow:hidden;box-sizing:border-box;',
-    '  min-height:44px;max-height:44px;line-height:1.5;',
+    '  min-height:44px;max-height:160px;line-height:1.5;',
     '}',
+    '@media(max-width:600px){#arnobot-textarea{min-height:64px;padding:12px 16px;}}',
     '#arnobot-textarea::placeholder{color:#bbb;font-size:13px;}',
     '#arnobot-textarea:focus{background:#fafafa;}',
     '#arnobot-send{',
@@ -171,6 +172,7 @@
     // Textarea input
     this.$textarea.addEventListener('input', function () {
       self.$send.disabled = !self.$textarea.value.trim() || self.loading;
+      self._grow();
     });
 
     // Enter to send
@@ -187,6 +189,15 @@
     });
   };
 
+  // Het invoerveld groeit mee met de tekst tot 160px (max-height in de CSS), daarna scrollt het.
+  // Leeg valt het terug op de min-height (44px op pc, 64px op mobiel).
+  ArnoBot.prototype._grow = function () {
+    var ta = this.$textarea;
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 160) + 'px';
+    ta.style.overflowY = ta.scrollHeight > 160 ? 'auto' : 'hidden';
+  };
+
   ArnoBot.prototype.ask = function (question) {
     question = question.trim();
     if (!question || this.loading) return;
@@ -198,6 +209,7 @@
 
     this._addUserMsg(question);
     this.$textarea.value = '';
+    this._grow();
     this.$send.disabled = true;
     this._setLoading(true);
 
@@ -417,6 +429,7 @@
     this.loading = false;
     this.$messages.innerHTML = '';
     this.$textarea.value = '';
+    this._grow();
     this.$send.disabled = true;
     this.$openers.style.display = '';
     this.$textarea.placeholder = 'Ga in gesprek met Arno';
