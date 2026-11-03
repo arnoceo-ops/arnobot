@@ -85,6 +85,7 @@
     '@media(max-width:700px){#arnobot-send{min-width:72px;padding:0 10px;font-size:18px;}}',
     '#arnobot-hint{font-size:9px;letter-spacing:2px;color:rgb(51,51,51);text-transform:uppercase;margin-top:6px;text-align:center;}',
     '#arnobot-actions{padding:16px 28px;display:flex;gap:10px;border-top:1px solid #f0f0f0;}',
+    '@media(max-width:600px){.ab-pijl,.ab-lang{display:none;}}',
     '.ab-action{',
     '  background:none;font-family:"Bebas Neue",sans-serif;font-size:20px;letter-spacing:2px;',
     '  padding:8px 16px;cursor:pointer;border:1px solid;transition:all .15s;',
@@ -412,7 +413,8 @@
 
     var el = document.createElement('div');
     el.id = 'arnobot-actions';
-    el.innerHTML = '<button class="ab-action primary">&#8593; Vervolgvraag stellen</button><button class="ab-action secondary">&#8592; Nieuwe sessie</button>';
+    // Op mobiel (zie CSS) vervalt de pijl en het woord "stellen": korter label, geen pijl zonder functie.
+    el.innerHTML = '<button class="ab-action primary"><span class="ab-pijl">&#8593; </span>Vervolgvraag<span class="ab-lang"> stellen</span></button><button class="ab-action secondary"><span class="ab-pijl">&#8592; </span>Nieuwe sessie</button>';
 
     el.querySelector('.ab-action.primary').addEventListener('click', function () {
       self.$textarea.focus();
