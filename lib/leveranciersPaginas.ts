@@ -1,7 +1,8 @@
 import { createHash } from 'crypto'
 
 // Pagina's van leveranciers die wekelijks gecontroleerd worden door cron/leveranciers-wijzigingen.
-// De 5 DPA's van Supabase, Clerk, Vercel, Anthropic en Resend staan bewust in VisualPing (gratis tier).
+// De DPA's van Supabase, Clerk, Vercel, Anthropic en OpenAI staan bewust in VisualPing (gratis tier, 5 pagina's).
+// OpenAI blokkeert geautomatiseerde aanvragen (cron faalde), VisualPing gebruikt een echte browser.
 export type PaginaCategorie = 'dpa' | 'deprecations'
 
 export interface LeverancierPagina {
@@ -12,7 +13,7 @@ export interface LeverancierPagina {
 }
 
 export const PAGINAS: LeverancierPagina[] = [
-  { url: 'https://openai.com/policies/data-processing-addendum', label: 'OpenAI DPA', categorie: 'dpa' },
+  { url: 'https://resend.com/legal/dpa', label: 'Resend DPA', categorie: 'dpa' },
   { url: 'https://elevenlabs.io/dpa', label: 'ElevenLabs DPA', categorie: 'dpa' },
   { url: 'https://posthog.com/dpa', label: 'PostHog DPA', categorie: 'dpa' },
   { url: 'https://sentry.io/legal/dpa/', label: 'Sentry DPA', categorie: 'dpa' },
