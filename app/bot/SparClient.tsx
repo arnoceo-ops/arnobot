@@ -14,7 +14,7 @@ import { startLiveTranscriptie, type LiveSessie } from '@/lib/liveTranscribe'
 import { GroeibalansState, GroeibalansBouwsteen, GROEIBALANS_KLEUREN, GROEIBALANS_LABELS } from '@/lib/groeibalans'
 import { groeiNudgeMagTonen, markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { track } from '@/lib/posthog'
-import { SUPPORT_WHATSAPP_VRAAG, SUPPORT_WHATSAPP_SPARRING } from '@/lib/support'
+import { SUPPORT_WHATSAPP_VRAAG, SUPPORT_WHATSAPP_SPARRING, SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 
 function renderContent(text: string) {
   const escaped = text
@@ -1487,7 +1487,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             } else if (data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Deze audio kon niet worden verwerkt. Probeer een ander bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else {
-              setMessages(prev => [...prev, { role: 'arno', content: `Fout: ${data.error || res.status}` }])
+              setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer het opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_VASTGELOPEN}).` }])
             }
             return
           }

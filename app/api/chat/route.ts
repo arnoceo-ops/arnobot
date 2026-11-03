@@ -20,6 +20,8 @@ const INJECTION_PATTERNS = [
   /###\s*instruction/i,
 ]
 
+const MAX_HISTORY_BERICHTEN = 100
+
 function detectPromptInjection(text: string): boolean {
   return INJECTION_PATTERNS.some(p => p.test(text))
 }
@@ -192,7 +194,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { question, history, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
+    const { question, history: rawHistory, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
     let antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
@@ -200,8 +202,14 @@ export async function POST(req: NextRequest) {
     if (typeof question !== 'string' || question.length > 4000) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
     }
-    if (Array.isArray(history) && history.length > 40) {
-      return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
+    // Een lang gesprek is geen misbruik: boven de limiet laten we de oudste berichten weg in
+    // plaats van te weigeren (een weigering liet de gebruiker vastzitten, 3 november 2026).
+    // De limiet begrenst nog steeds de invoer per verzoek. Het eerste bericht moet van de
+    // gebruiker zijn, dus een eventueel openend assistent-bericht na het inkorten vervalt.
+    let history = rawHistory
+    if (Array.isArray(history) && history.length > MAX_HISTORY_BERICHTEN) {
+      history = history.slice(-MAX_HISTORY_BERICHTEN)
+      while (history.length > 0 && history[0]?.role !== 'user') history = history.slice(1)
     }
     if (detectPromptInjection(question)) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
