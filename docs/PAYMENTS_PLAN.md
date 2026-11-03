@@ -13,7 +13,7 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-10-10 (besluitenblok hierboven), de rest van dit document is van 2026-09-02
-- **Waar we staan:** besluit genomen (Stripe voor de EU, Paddle later voor de rest), verder **geparkeerd, wordt later opgepakt**. Nog niks gebouwd. Alle betalingen lopen nu handmatig via `/bot/admin/gebruikers` → `POST /api/admin/payment`.
+- **Waar we staan:** achterhaald. Het Stripe/Paddle-besluit hieronder (2026-09-02) is vervangen door het Mollie/Moneybird-besluit van 2026-10-10 bovenaan dit document. Mollie (afrekenen) en Moneybird (facturatie) zijn gebouwd en getest; sinds 2026-10-24 is de online betaalflow via Mollie de enige betaalroute, de oude handmatige factuurroute via `/bot/admin/gebruikers` → `POST /api/admin/payment` is verwijderd. Zie `docs/MOLLIE_PLAN.md` voor de actuele stand. De rest van dit statusblok (Stripe/Paddle-blokkerend, eerstvolgende stap) en de Stripe/Paddle-vergelijking verderop in dit document zijn historisch en niet meer van toepassing.
 - **Blokkerend, en van Arno (nog niet gestart, 2026-09-02):**
   1. **Rechtspersoon-keuze + Stripe-accountverificatie.** Besloten 2026-10-09: de contractpartij is de eenmanszaak ArnoBot van Anton Dirk Diepeveen (KvK 42184446), zie `BUSINESS_HANDOVER.md`. Dan het Stripe-account aanmaken en de KYC-verificatie doorlopen (KvK, btw-nummer, bestuurder/UBO-ID, zakelijke IBAN). Lange lijn: review kan dagen duren, uitbetalingen zijn geblokkeerd tot 't rond is.
   2. **Juridische review van de abonnementsvoorwaarden** (NL SaaS + consumentenrecht). Zie de sectie "Opzegging, verlenging en consumentenrecht" hieronder.
