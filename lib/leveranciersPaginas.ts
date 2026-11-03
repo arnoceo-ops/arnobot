@@ -18,6 +18,7 @@ export const PAGINAS: LeverancierPagina[] = [
   { url: 'https://sentry.io/legal/dpa/', label: 'Sentry DPA', categorie: 'dpa' },
   { url: 'https://www.mollie.com/legal/data-processing-agreement', label: 'Mollie DPA', categorie: 'dpa' },
   { url: 'https://www.assemblyai.com/legal/data-processing-addendum', label: 'AssemblyAI DPA', categorie: 'dpa' },
+  { url: 'https://www.moneybird.nl/privacy/', label: 'Moneybird privacyverklaring', categorie: 'dpa' },
   { url: 'https://upstash.com/trust/dpa.pdf', label: 'Upstash DPA (PDF)', categorie: 'dpa', pdf: true },
   { url: 'https://platform.openai.com/docs/deprecations', label: 'OpenAI deprecations', categorie: 'deprecations' },
   { url: 'https://docs.anthropic.com/en/docs/about-claude/model-deprecations', label: 'Anthropic deprecations', categorie: 'deprecations' },
