@@ -99,13 +99,6 @@ export default async function TeamPage() {
         }
         .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
 
-        .tm-navdemo {
-          font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-          color: #f59e0b; border: 1.5px solid #f59e0b; border-radius: 6px; padding: 8px 18px; text-decoration: none;
-          transition: background 0.15s, color 0.15s;
-        }
-        .tm-navdemo:hover { background: #f59e0b; color: #111827; }
-
 
         /* Zes dingen die geen manager kan: twee kolommen, rustig en strak */
         .tm-big-list {
@@ -152,15 +145,11 @@ export default async function TeamPage() {
       <nav className="site-nav">
         <Link href="/" className="nav-logo">ARNO<span>BOT.</span></Link>
         <div className="nav-spacer" />
-        <div className="nav-auth" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          {userId && <Link href="/bot" className="nav-login">MIJN BOT</Link>}
-          <a
-            className="tm-navdemo"
-            href={demoHref}
-            {...(demoExtern ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-          >
-            Plan een demo
-          </a>
+        <div className="nav-auth">
+          {userId
+            ? <Link href="/bot" className="nav-login">MIJN BOT</Link>
+            : <Link href="/sign-in" className="nav-login">LOGIN</Link>
+          }
         </div>
       </nav>
 
