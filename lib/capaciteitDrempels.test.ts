@@ -38,10 +38,11 @@ describe('beoordeelCapaciteit', () => {
     expect(r[0].tekst).toContain('3 keer')
   })
 
-  it('mijlpalen: 50 en 150 actieve gebruikers, elk één keer per drempel', () => {
-    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 49 })).toEqual([])
-    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 50 }).map(m => m.sleutel)).toEqual(['mijlpaal:50'])
-    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 150 }).map(m => m.sleutel)).toEqual(['mijlpaal:50', 'mijlpaal:150'])
+  it('mijlpalen: 30, 50 en 150 actieve gebruikers, elk één keer per drempel', () => {
+    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 29 })).toEqual([])
+    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 30 }).map(m => m.sleutel)).toEqual(['mijlpaal:30'])
+    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 50 }).map(m => m.sleutel)).toEqual(['mijlpaal:30', 'mijlpaal:50'])
+    expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 150 }).map(m => m.sleutel)).toEqual(['mijlpaal:30', 'mijlpaal:50', 'mijlpaal:150'])
   })
 
   it('geen streepjes als leesteken in de meldingen', () => {
