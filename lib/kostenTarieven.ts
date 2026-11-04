@@ -98,18 +98,19 @@ export const TARIEVEN = {
   resendOveragePer1000Usd: 0.9,
   // Schatting, niet gemeten: bijwerken met het echte verbruik uit Resend, Settings, Usage.
   resendMailsPerGebruikerPerMaand: 6,
-  // Moneybird (boekhouding, gekoppeld aan Mollie): Growth-tier, de eerste tier
-  // met terugkerende facturen/abonnementen (nodig voor Team-facturatie),
-  // besloten 2026-09-29 bij de Mollie/Moneybird-keuze. €35/maand is het
-  // maandelijkse-betaling-tarief (bevestigd op moneybird.nl/prijzen,
-  // geverifieerd 2026-09-29); €29 was het jaarlijkse-betaling-tarief, niet van
-  // toepassing want Arno betaalt maandelijks. Altijd meegeteld, geen toggle
+  // Moneybird (boekhouding, gekoppeld aan Mollie): Start-pakket, €18 excl. btw per maand bij
+  // maandelijkse betaling (jaarlijks €15), besloten door Arno 2026-11-04 bij het afsluiten na de
+  // proefperiode (eerste incasso 2026-12-09). Start: 1 gebruiker en 20 verwerkte banktransacties per
+  // maand. De eerste 30 dagen zijn er alleen proefgebruikers, dus pas vanaf eind december lopen er
+  // betalingen: bij de maandcheck Instellingen, Abonnement, Verbruik bekijken en zo nodig naar Groei
+  // (€35, 50 transacties) of Compleet (€49, onbeperkt). Eerder was hier Groei €35 aangenomen
+  // (2026-09-29). Altijd meegeteld, geen toggle
   // (besloten 2026-09-29, was eerst `moneybirdActief` net als Clerk Pro, maar
   // dit account staat altijd aan zodra het bestaat, geen optioneel scenario
   // zoals Clerk Pro's inactivity-timeout-afweging). EUR-native, geen fx nodig
   // in vasteKostenPerMaand/computeScenarioKosten behalve de omrekening naar de
   // dollar-context daar (zelfde patroon als sentryEur).
-  moneybirdEur: 35,
+  moneybirdEur: 18,
   // Revolut Business (zakelijke rekening voor de Mollie-uitbetalingen): Basic-plan,
   // vanaf €10/maand volgens revolut.com/en-NL/business/business-account-plans
   // (gelezen via zoekresultaat 2026-10-13, de pagina zelf gaf een 403). Besloten

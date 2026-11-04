@@ -289,7 +289,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <Toggle checked={inputs.resendPro} onChange={v => set('resendPro', v)} />
               </div>
               <NumberField label="Resend mails per gebruiker per maand" hint="schatting: trial-, betaal- en nudgemails, daarboven $0,90 per 1.000" value={inputs.resendMailsPerGebruiker} step={1} onChange={v => set('resendMailsPerGebruiker', v)} />
-              <NumberField label="Moneybird (€/maand)" hint="Growth-tier, maandelijkse betaling, boekhouding + Mollie-koppeling, altijd aan" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
+              <NumberField label="Moneybird (€/maand)" hint="Start-pakket (20 banktransacties per maand), maandelijkse betaling, altijd aan" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
               <NumberField label="Revolut Business (€/maand)" hint="Basic-plan, zakelijke rekening, altijd aan" value={inputs.revolutBusinessEur} step={1} onChange={v => set('revolutBusinessEur', v)} />
               <NumberField label="Sentry (€/maand)" value={inputs.sentryEur} onChange={v => set('sentryEur', v)} />
               <NumberField
