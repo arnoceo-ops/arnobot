@@ -93,6 +93,10 @@ export interface FactuurInput {
   ledgerAccountId?: string
   /** Eigen workflow zonder betalingsherinneringen (de factuur is al betaald via Mollie). */
   workflowId?: string
+  /** Betaaltermijn in dagen. Standaard 0: de factuur is al betaald via Mollie. Een Team-factuur is nog niet betaald. */
+  betaaltermijnDagen?: number
+  /** Eigen betaalvoorwaarden onderaan de factuur. Zonder dit geldt de tekst van de workflow ("al betaald"). */
+  betaalvoorwaarden?: string
 }
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, '')
@@ -106,8 +110,9 @@ export function bouwFactuurBody(f: FactuurInput) {
       ...(f.workflowId ? { workflow_id: f.workflowId } : {}),
       reference: f.referentie,
       invoice_date: dateOnly(f.factuurDatum),
-      // Al betaald via Mollie: geen betaaltermijn.
-      first_due_interval: 0,
+      // Standaard al betaald via Mollie: geen betaaltermijn.
+      first_due_interval: f.betaaltermijnDagen ?? 0,
+      ...(f.betaalvoorwaarden ? { payment_conditions: f.betaalvoorwaarden } : {}),
       currency: 'EUR',
       prices_are_incl_tax: f.inclusiefBtw,
       details_attributes: [
@@ -240,6 +245,26 @@ export function factuurMailTekst(voornaam?: string | null): string {
   return [
     ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
     'In de bijlage vind je factuur {document.invoice_id} voor je ArnoBot-abonnement. Deze is al betaald, je hoeft niets over te maken.',
+    '',
+    `Vragen? Mail naar ${BEDRIJF.emailFacturen}.`,
+    '',
+    'Groet,',
+    'ArnoBot',
+  ].join('\n')
+}
+
+/** Onderaan een Team-factuur die nog betaald moet worden (de workflow-tekst zegt "al betaald", dat klopt hier niet). */
+export function teamFactuurVoorwaarden(termijnDagen: number): string {
+  return `Betaal binnen ${termijnDagen} dagen via de betaallink in de mail van ArnoBot, of maak het bedrag over naar de rekening bovenaan deze factuur onder vermelding van het factuurnummer. Vragen? Mail naar ${BEDRIJF.emailFacturen}.`
+}
+
+/** De mail van Moneybird bij een Team-factuur: de factuur zit als bijlage, met de betaallink erbij. */
+export function teamFactuurMailTekst(voornaam: string | null | undefined, betaalLink: string, termijnDagen: number): string {
+  return [
+    ...(aanhef(voornaam) ? [aanhef(voornaam), ''] : []),
+    `In de bijlage vind je factuur {document.invoice_id} voor jullie ArnoBot Team-abonnement. Betaal binnen ${termijnDagen} dagen via deze link: ${betaalLink}`,
+    '',
+    'Je kunt het bedrag ook overmaken naar de rekening op de factuur, onder vermelding van het factuurnummer.',
     '',
     `Vragen? Mail naar ${BEDRIJF.emailFacturen}.`,
     '',

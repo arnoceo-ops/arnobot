@@ -7,6 +7,8 @@ import {
   maakConceptFactuur,
   moneybirdIngeschakeld,
   registreerBetaling,
+  teamFactuurMailTekst,
+  teamFactuurVoorwaarden,
   verstuurFactuur,
   zoekOfMaakContact,
 } from './moneybird'
@@ -106,7 +108,10 @@ export function berekenTussentijdsBedrag(
   return { nettoCent, btwCent, brutoCent: nettoCent + btwCent }
 }
 
-async function verkrijgMollieEnMoneybirdKlant(team: TeamRow): Promise<{ mollieKlantId: string; contactId: string }> {
+/** Moet gelijk zijn aan BETAALTERMIJN_DAGEN in app/api/cron/team-facturatie/route.ts (herinnering en blokkade tellen vanaf de vervaldatum). */
+const TEAM_BETAALTERMIJN_DAGEN = 14
+
+async function verkrijgMollieEnMoneybirdKlant(team: TeamRow): Promise<{ mollieKlantId: string; contactId: string; voornaam: string | null }> {
   const { data: klant } = await billingDb
     .from('arnobot_billing_customers')
     .select('mollie_customer_id, bedrijfsnaam, kvk_nummer, btw_nummer, straat, postcode, plaats')
@@ -157,7 +162,7 @@ async function verkrijgMollieEnMoneybirdKlant(team: TeamRow): Promise<{ mollieKl
     adres: klant.straat && klant.postcode && klant.plaats ? { straat: klant.straat, postcode: klant.postcode, plaats: klant.plaats } : null,
   })
 
-  return { mollieKlantId, contactId }
+  return { mollieKlantId, contactId, voornaam: manager.voornaam }
 }
 
 /** Maakt de factuurregel (arnobot_team_facturen), de Moneybird-factuur en de Mollie-betaallink. */
@@ -196,8 +201,21 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   try {
     const omschrijving = `ArnoBot Team${input.soort === 'tussentijds' ? ' (tussentijdse uitbreiding)' : ''} ${cyclus}`
 
+    // Eerst de betaallink: die staat in de mail van Moneybird die de factuur bij de klant bezorgt.
+    const link = await maakBetaalLink({
+      brutoCent,
+      omschrijving,
+      redirectUrl: `${SITE_URL}/bot/team?betaling=terug`,
+      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team?r=${rij.id}`,
+      idempotencyKey: `teamfactuur-${rij.id}`,
+    })
+    await billingDb
+      .from('arnobot_team_facturen')
+      .update({ mollie_payment_link_id: link.id, mollie_payment_link_url: link.url })
+      .eq('id', rij.id)
+
     if (factureringToegestaan()) {
-      const { contactId } = await verkrijgMollieEnMoneybirdKlant(team)
+      const { contactId, voornaam } = await verkrijgMollieEnMoneybirdKlant(team)
       const factuur = await maakConceptFactuur({
         contactId,
         referentie: `team-${rij.id}`,
@@ -211,24 +229,15 @@ export async function maakTeamFactuur(team: TeamRow, input: {
         taxRateId: await btwTariefId(),
         ledgerAccountId: process.env.MONEYBIRD_LEDGER_ACCOUNT_ID,
         workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
+        // Nog niet betaald: een betaaltermijn en eigen voorwaarden, niet de workflow-tekst "al betaald".
+        betaaltermijnDagen: TEAM_BETAALTERMIJN_DAGEN,
+        betaalvoorwaarden: teamFactuurVoorwaarden(TEAM_BETAALTERMIJN_DAGEN),
       })
       await billingDb.from('arnobot_team_facturen').update({ moneybird_factuur_id: factuur.id }).eq('id', rij.id)
-      // Niet via Moneybirds eigen mail: die tekst gaat uit van een al-betaalde factuur. ArnoBot
-      // mailt zelf met de betaallink (hieronder), de factuur blijft "open" in Moneybird tot betaling.
-      await verstuurFactuur(factuur.id, 'Manual')
+      // De factuur gaat als bijlage per mail naar de teambaas (zakelijk, voorwaarden artikel 4), met de
+      // betaallink erin. De factuur blijft "open" in Moneybird tot de betaling binnen is.
+      await verstuurFactuur(factuur.id, 'Email', teamFactuurMailTekst(voornaam, link.url, TEAM_BETAALTERMIJN_DAGEN))
     }
-
-    const link = await maakBetaalLink({
-      brutoCent,
-      omschrijving,
-      redirectUrl: `${SITE_URL}/bot/team?betaling=terug`,
-      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team?r=${rij.id}`,
-      idempotencyKey: `teamfactuur-${rij.id}`,
-    })
-    await billingDb
-      .from('arnobot_team_facturen')
-      .update({ mollie_payment_link_id: link.id, mollie_payment_link_url: link.url })
-      .eq('id', rij.id)
 
     await verstuurTeamMail(team.manager_id, 'team_factuur', {
       teamNaam: team.name,

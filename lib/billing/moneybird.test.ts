@@ -1,5 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { bouwContactBody, bouwContactWijziging, bouwFactuurBody, creditMailTekst, factuurMailTekst } from './moneybird'
+import { bouwContactBody, bouwContactWijziging, bouwFactuurBody, creditMailTekst, factuurMailTekst, teamFactuurMailTekst, teamFactuurVoorwaarden } from './moneybird'
+
+describe('Moneybird Team-factuur', () => {
+  const team = { contactId: '123', referentie: 'team-1', omschrijving: 'ArnoBot Team maandelijks', periodeStart: new Date('2026-11-04'), periodeEinde: new Date('2026-12-04'), factuurDatum: new Date('2026-11-04'), brutoCent: 29524, nettoCent: 24400, inclusiefBtw: false, taxRateId: '9' }
+
+  it('standaard: al betaald, geen eigen voorwaarden', () => {
+    const { sales_invoice } = bouwFactuurBody(team) as { sales_invoice: Record<string, unknown> }
+    expect(sales_invoice.first_due_interval).toBe(0)
+    expect('payment_conditions' in sales_invoice).toBe(false)
+  })
+
+  it('met betaaltermijn en voorwaarden: nog niet betaald', () => {
+    const { sales_invoice } = bouwFactuurBody({ ...team, betaaltermijnDagen: 14, betaalvoorwaarden: teamFactuurVoorwaarden(14) }) as { sales_invoice: Record<string, unknown> }
+    expect(sales_invoice.first_due_interval).toBe(14)
+    expect(String(sales_invoice.payment_conditions)).toContain('14 dagen')
+    expect(String(sales_invoice.payment_conditions)).not.toContain('al betaald')
+  })
+
+  it('mail: factuurtag en betaallink, aanhef veilig, geen streepjes als leesteken', () => {
+    const tekst = teamFactuurMailTekst('Ar{no}', 'https://payment-links.mollie.com/payment/abc', 14)
+    expect(tekst).toContain('{document.invoice_id}')
+    expect(tekst).toContain('https://payment-links.mollie.com/payment/abc')
+    expect(tekst).toContain('Hey Arno,')
+    expect(tekst).not.toContain('al betaald')
+    expect(tekst).not.toMatch(/[—–]/)
+  })
+})
 
 const basis = {
   contactId: '123',
