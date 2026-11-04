@@ -116,7 +116,7 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 ## Kleine hygiëne (opgemerkt op 2026-08-30)
 
 - `arnobot_openers` heeft geen `updated_at`/`last_refreshed_at`, dus aan de tabel zie je niet wanneer de openers voor het laatst ververst zijn.
-- `test@arno.bot` is `manager_id` in `arnobot_1on1_log` (Team Hippios) maar staat niet in `arnobot_team_members`; de manager daar is een ander account (`user_3Eiy...`).
+- `test@arno.bot` is `manager_id` in `arnobot_1on1_log` (Team Apex) maar staat niet in `arnobot_team_members`; de manager daar is een ander account (`user_3Eiy...`).
 - **`lib/kostenTarieven.ts`: Clerk Pro-tarief staat op $100, live is $25/mnd** (gevonden 2026-09-16). Nu zonder praktisch effect (`clerkProActief: false`), maar corrigeren vóór activatie, anders rekent Abacus de vaste kosten 4x te hoog.
 - **UI-stijlsweep (2026-09-16), drie concrete afwijkingen:** `app/bot/admin/gebruikers/SdAgentSelect.tsx` (11px i.p.v. 12px in de admin-sectie), `app/bot/account/page.tsx` (gedempte tekst via `opacity` i.p.v. `#6b7280`), `app/bot/admin/ArnoBotPdfDocument.tsx` (10px + `#4b5563` als echte tekstkleur, niet als placeholder).
 - **Telegram-notificaties bewust niet gedocumenteerd als sub-verwerker (besloten 2026-09-16).** `lib/cron-notify.ts` en diverse cron-routes/webhooks sturen IP's, Clerk user-ID's en teamdata naar de Telegram Bot API. Arno heeft er bewust voor gekozen dit niet toe te voegen aan privacypagina/DPA-concept/security-PDF. Vastgelegd als expliciet besluit, geen open actiepunt, wel een bewust geaccepteerd AVG-risico (ongedocumenteerde sub-verwerker).

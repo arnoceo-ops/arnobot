@@ -62,7 +62,7 @@ export const INTERNAL_TEST_USER_EMAILS: readonly string[] = [
   APP_REVIEWER_EMAIL,
 ]
 
-// Nepleden van Team Hippios (Benny, Alira, Lisa, user_id 'fake_...'): draaien in het team- en
+// Nepleden van Team Apex (Benny, Alira, Lisa, user_id 'fake_...'): draaien in het team- en
 // demoscherm volledig mee, maar mogen nooit zichtbaar zijn of meetellen in admin-weergaves,
 // statistieken, cron-aggregaties of analyses. Zelfde uitsluitingsmechanisme als de interne
 // testaccounts, zodat de CI-achtervang (scripts/check-testaccount-filter.mjs) ze ook dekt.
@@ -103,7 +103,7 @@ export function excludeInternalTestUsers<T extends { not(column: string, operato
   return query.not(column, 'in', INTERNAL_TEST_USERS_IN).not(column, 'like', FAKE_DEMO_USER_LIKE)
 }
 
-// Team Hippios: persistent testteam voor demo's/livetesten, twee echte managers
+// Team Apex: persistent testteam voor demo's/livetesten, twee echte managers
 // (test@arno.bot, thijs@tenshare.nl) + drie fake teamleden. Nieuw gegenereerde content
 // (1:1's, team-analyses) mag tijdens een demo/test wel getoond worden, maar wordt bewust NIET
 // opgeslagen (Arno's expliciete verzoek, 2026-08-22): anders drift de zorgvuldig samengestelde

@@ -1,5 +1,5 @@
 /**
- * Maakt de MSA-scores van de Team Hippios-leden realistischer: ze stonden te hoog
+ * Maakt de MSA-scores van de Team Apex-leden realistischer: ze stonden te hoog
  * (Lisa 5/5/5 = 100, Benny 5/5/4 enz.), terwijl een echt team verschillende sterke en zwakke
  * pijlers heeft, met dips en aandachtspunten. Dit script is de leidende bron voor de scores
  * vanaf mei 2026 en hoort na seed-hippios-demo.mjs en seed-demo-okt.mjs te draaien

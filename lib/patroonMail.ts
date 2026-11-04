@@ -21,7 +21,7 @@ export const PATROON_SPAR_RUST_DAGEN = 14
 // Eerst alleen de oprichter. Voor iedereen pas vanaf 2027-01-01 (besloten door Arno, 2026-11-04):
 // PATROON_MAIL=aan staat in Vercel, maar opent het pas vanaf die datum, dus de cron van 2026-12-01
 // mailt nog alleen de oprichter. De datum staat in code zodat hij niet vergeten wordt en niet te
-// vroeg ingaat. De interne testaccounts en de nepleden van Team Hippios krijgen nooit een mail.
+// vroeg ingaat. De interne testaccounts en de nepleden van Team Apex krijgen nooit een mail.
 export const PATROON_MAIL_VOOR_IEDEREEN_VANAF = Date.parse('2027-01-01T00:00:00Z')
 
 export function patroonMailBeschikbaarVoor(userId: string, nu: number = Date.now()): boolean {

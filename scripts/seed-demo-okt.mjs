@@ -1,7 +1,7 @@
 /**
  * Vervolg op seed-hippios-demo.mjs: brengt de demo-omgeving bij tot begin oktober 2026.
  *
- * Deel 1, Team Hippios (Benny, Alira, Lisa): sessies (met thema's en embedding), 1:1-logs
+ * Deel 1, Team Apex (Benny, Alira, Lisa): sessies (met thema's en embedding), 1:1-logs
  * van test@arno.bot, tweewekelijkse MSA-scores, ververste coachingprofielen en een analyse
  * per lid. Het verhaal loopt door vanuit de adviezen van de 1:1's van 4 september.
  *

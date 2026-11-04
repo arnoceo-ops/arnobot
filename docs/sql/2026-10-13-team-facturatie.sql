@@ -1,6 +1,6 @@
 -- Team-betaalprotocol (fase 2b, zie docs/MOLLIE_PLAN.md): automatische Moneybird-factuur
 -- + Mollie-betaallink per Team-cyclus. Uitvoeren in Supabase (SQL Editor). Veilig om
--- opnieuw te draaien (IF NOT EXISTS). Bestaande teams (incl. Team Hippios) krijgen de
+-- opnieuw te draaien (IF NOT EXISTS). Bestaande teams (incl. Team Apex) krijgen de
 -- nieuwe kolommen leeg; de cron slaat een team over zolang volgende_factuurdatum leeg is,
 -- dus niemand wordt per ongeluk meegenomen in de automatische facturatie.
 

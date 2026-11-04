@@ -10,7 +10,7 @@ import { E2E_TEST_USER_ID } from '../lib/internalTestAccounts'
 //
 // Bewust NIET verwijderd: de approved_users-rij en het arnobot_blog_profiles-profiel van
 // het testaccount. Die worden door e2e/auth.setup.ts hergebruikt/ge-upsert en hoeven niet
-// elke run opnieuw opgebouwd te worden. Team Hippios (TEST_TEAM_ID) staat los van dit
+// elke run opnieuw opgebouwd te worden. Team Apex (TEST_TEAM_ID) staat los van dit
 // account en wordt hier niet aangeraakt.
 //
 // test@arno.bot (Arno's handmatige testaccount) valt hier NIET onder: dat is geen

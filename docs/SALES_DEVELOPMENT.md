@@ -75,7 +75,7 @@ Ze zijn niet alleen verkoper van dit product, ze zijn ook zelf gebruiker ervan. 
 
 ### Managerervaring voor de sales agents (bewust uitgesteld)
 
-Lidmaatschap alleen laat zien hoe het is om gecoacht te worden, niet hoe het is om zelf manager te zijn, en juist dát verkopen ze aan een prospect. Besloten (2026-08-13, Arno): een apart, klein demoteam voor de twee sales agents samen, met een paar fake teamleden met realistische activiteit (zelfde recept als "Team Hippios"), waarin beiden manager zijn en dus een echt gevuld managerdashboard zien. Uitgesteld naar een later stadium, geen huidige actie.
+Lidmaatschap alleen laat zien hoe het is om gecoacht te worden, niet hoe het is om zelf manager te zijn, en juist dát verkopen ze aan een prospect. Besloten (2026-08-13, Arno): een apart, klein demoteam voor de twee sales agents samen, met een paar fake teamleden met realistische activiteit (zelfde recept als "Team Apex"), waarin beiden manager zijn en dus een echt gevuld managerdashboard zien. Uitgesteld naar een later stadium, geen huidige actie.
 
 **Technische reden voor een apart team, niet gecombineerd met bovenstaand lidmaatschap:** iemand kan maar in één team tegelijk zitten (`/api/bot/team/create` en `/team/join` blokkeren allebei expliciet een tweede lidmaatschap). Manager zijn op hetzelfde kleine team als waar ze zelf lid van zijn levert bovendien een bijna leeg dashboard op, managers worden zelf uitgesloten van de ledenlijst die ze te zien krijgen.
 

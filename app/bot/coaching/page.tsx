@@ -10,10 +10,10 @@ import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 // Wie de ?bekijkAls=-testswitch hieronder mag gebruiken: Arno's eigen testaccount, plus Thijs
-// (thijs@tenshare.nl), tweede manager van het testteam Team Hippios. Thijs is in de praktijk
+// (thijs@tenshare.nl), tweede manager van het testteam Team Apex. Thijs is in de praktijk
 // geen teambaas, Arno's expliciete verzoek (2026-08-22) om ook voor hem tussen de MSA- en
 // SPE-weergave te kunnen wisselen. Ger Erades (ger@eradesrecruitment.nl) is sinds 2026-11-03
-// op Arno's verzoek op dezelfde manier tester van Team Hippios.
+// op Arno's verzoek op dezelfde manier tester van Team Apex.
 const BEKIJK_ALS_TOEGESTAAN = [MANUAL_TEST_USER_ID, 'user_3EiyfRK85W4Vx4ebqbxbTys79LC', 'user_3FSTb9JBKzm8pDziEVqLBlcco3N']
 
 export default async function CoachingPage({ searchParams }: { searchParams: Promise<{ bekijkAls?: string }> }) {

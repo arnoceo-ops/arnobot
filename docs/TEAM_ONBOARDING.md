@@ -37,7 +37,7 @@
 7. **Enterprise-klanten met eigen inlog (SSO, domeinbinding):** aanvullende stappen staan in de lijst "Corporate accounts" (`arnobot_teams.domain`, Clerk Pro, SAML of OIDC).
 8. **Een team-aanvraag is geen automatische betaalopdracht.** Het formulier geeft een prijs en een mail, geen account en geen factuur.
 
-## Test en bewijs (2026-11-04, testmodus, testteam Hippios)
+## Test en bewijs (2026-11-04, testmodus, testteam Apex)
 
 Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extra seat, betaling via de link (iDEAL), afletteren in Moneybird, herinnering, blokkade en deblokkade, alle bijbehorende mails en Telegram-meldingen. Gevonden en gefixt: zie `docs/MOLLIE_PLAN.md` (betaallinks kennen geen metadata, geen `url`-veld, betaalvoorwaarden en factuurmail). Niet getest met echt geld: een Team-factuur in live-modus.
 

@@ -1,7 +1,7 @@
 /**
- * Seed / verversing van de demo-dataset van Team Hippios.
+ * Seed / verversing van de demo-dataset van Team Apex.
  *
- * Team Hippios (`TEST_TEAM_ID`) is de vaste demo-database: 3 fake teamleden met historie,
+ * Team Apex (`TEST_TEAM_ID`) is de vaste demo-database: 3 fake teamleden met historie,
  * bekeken door test@arno.bot en thijs@tenshare.nl als managers. De data was tot nu toe
  * volledig met de hand ingevoerd in Supabase en nergens vastgelegd, waardoor hij bij elke
  * demo verder achterloopt. Dit script legt de recente maanden vast en is idempotent: het
