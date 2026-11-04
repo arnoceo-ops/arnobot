@@ -230,7 +230,7 @@ export async function maakBetaalLink(input: {
   webhookUrl: string
   idempotencyKey: string
 }): Promise<MolliePaymentLink> {
-  return mollie('/payment-links', {
+  const res = await mollie<{ id: string; _links?: { paymentLink?: { href: string } } }>('/payment-links', {
     method: 'POST',
     idempotencyKey: input.idempotencyKey,
     body: {
@@ -240,6 +240,10 @@ export async function maakBetaalLink(input: {
       webhookUrl: input.webhookUrl,
     },
   })
+  // Mollie geeft de betaalpagina als _links.paymentLink.href, er is geen `url`-veld.
+  const url = res._links?.paymentLink?.href
+  if (!url) throw new MollieError(0, 'Mollie gaf geen betaallink-url terug')
+  return { id: res.id, url, _links: res._links }
 }
 
 /** Betalingen die via een betaallink zijn gedaan (Mollie: GET /payment-links/{id}/payments). */
