@@ -132,7 +132,7 @@ Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), pl
 
 **Vestigiale kolom `niveau`, `cyclus` weer betekenisvol:** de tabel heeft nog een `niveau`-kolom uit de oude staffelflow die niet meer overeenkomt met wat de UI aanbiedt (geen niveau-keuze meer), de route stuurt hiervoor nu altijd `'premium'` als vaste, geldige filler-waarde, geen Supabase-migratie nodig. `cyclus` is sinds de jaaroptie weer een echte, betekenisvolle waarde (`'maandelijks'`/`'jaarlijks'`), niet langer vestigiaal.
 
-**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is.
+**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is. De volledige checklist van aanvraag tot eerste factuur staat in `docs/TEAM_ONBOARDING.md`.
 
 **Afgerond en losgelaten: DocuSeal-offerte-automatisering.** Was gebouwd en getest, maar het brondocument-template liep vast op opmaakproblemen en heeft nooit echt gedraaid. Besloten (2026-08-01): niet hervatten. Arno gebruikt DocuSeal niet meer en heeft geen account meer. De code (`lib/docusealOffer.ts` en de aanroep ervan) is verwijderd.
 
