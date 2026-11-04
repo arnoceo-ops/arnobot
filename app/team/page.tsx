@@ -140,6 +140,16 @@ export default async function TeamPage() {
         .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
         .tm-step p { font-size: 14px; line-height: 1.65; color: #94a3b8; margin-top: 10px; }
 
+        /* Zes dingen die geen manager kan */
+        .tm-six { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; text-align: left; }
+        .tm-six-item { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 24px; }
+        .tm-six-num { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
+        .tm-six-item h3 {
+          font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; margin: 8px 0 10px; line-height: 1.2;
+        }
+        .tm-six-item p { font-size: 14px; line-height: 1.65; color: #94a3b8; }
+
         /* Prijs */
 
         /* FAQ */
@@ -157,6 +167,7 @@ export default async function TeamPage() {
           .tm-feat { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
           .tm-feat-flip .tm-feat-frag { order: 0; }
           .tm-steps { grid-template-columns: 1fr; }
+          .tm-six { grid-template-columns: 1fr; }
           .tm-hero { padding: 120px 24px 48px; }
           .tm-heroshot { margin-top: 4px; }
         }
@@ -211,6 +222,46 @@ export default async function TeamPage() {
             tegenvallen. En je ziet geen patroon over je team heen: waar zit de gedeelde
             zwakte, wie groeit er echt, en waar levert coachen deze periode het meeste op.
           </p>
+        </section>
+
+        <section className="tm-section">
+          <p className="tm-label">Wat geen manager kan</p>
+          <h2 className="tm-h2">Ook de beste manager kan dit niet alleen</h2>
+          <p className="tm-lead" style={{ marginTop: 18 }}>
+            Niet door gebrek aan inzet, maar omdat er maar één van hem is. Daar vult ArnoBot aan.
+          </p>
+          <div className="tm-six">
+            <div className="tm-six-item">
+              <div className="tm-six-num">1</div>
+              <h3>Overal tegelijk</h3>
+              <p>Jij coacht één verkoper per keer. ArnoBot is er voor iedereen tegelijk: vlak voor een lastig gesprek, laat op de avond, in het weekend na een verloren deal.</p>
+            </div>
+            <div className="tm-six-item">
+              <div className="tm-six-num">2</div>
+              <h3>Nooit een slechte dag</h3>
+              <p>Geen vermoeidheid, geen vakantie, geen druk. Elke verkoper krijgt altijd dezelfde volle aandacht, ook nummer twintig op de lijst.</p>
+            </div>
+            <div className="tm-six-item">
+              <div className="tm-six-num">3</div>
+              <h3>Perfect geheugen</h3>
+              <p>Wat een verkoper drie maanden geleden beloofde, legt ArnoBot naast wat hij vandaag zegt. Voor elk teamlid tegelijk.</p>
+            </div>
+            <div className="tm-six-item">
+              <div className="tm-six-num">4</div>
+              <h3>Geen politiek en geen favoriet</h3>
+              <p>Feedback van een manager wordt altijd een beetje gekleurd door de relatie. ArnoBot geeft iedereen dezelfde eerlijke spiegel, gebaseerd op iemands eigen patronen.</p>
+            </div>
+            <div className="tm-six-item">
+              <div className="tm-six-num">5</div>
+              <h3>Eerlijkheid die jij nooit krijgt</h3>
+              <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese.</p>
+            </div>
+            <div className="tm-six-item">
+              <div className="tm-six-num">6</div>
+              <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
+              <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Verkoper twintig krijgt dezelfde coaching als verkoper één.</p>
+            </div>
+          </div>
         </section>
 
         <section className="tm-section" style={{ paddingBottom: 0, borderBottom: 'none' }}>
