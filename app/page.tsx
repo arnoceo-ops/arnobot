@@ -123,8 +123,12 @@ export default async function ArnoBotLandingPage() {
         .hero-cta:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
         .hero-photo-col { position: relative; flex: 1; width: 100%; }
         .hero-team-line { font-size: 15px; color: #94a3b8; }
-        .hero-team-line a { color: #f59e0b; text-decoration: underline; text-underline-offset: 3px; }
-        .hero-team-line a:hover { color: #d97706; }
+        .hero-team-line a {
+          font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+          color: #94a3b8; text-decoration: none; border-bottom: 1px solid #475569; padding-bottom: 3px; margin-left: 6px;
+          transition: color 0.15s, border-color 0.15s;
+        }
+        .hero-team-line a:hover { color: #f59e0b; border-color: #f59e0b; }
 
         @media (min-width: 768px) {
           .hero-inner { padding-top: 96px; }
@@ -347,7 +351,7 @@ export default async function ArnoBotLandingPage() {
               ArnoBot coacht je door elk salesgesprek, elke pipeline-review en elke deal. Persoonlijke AI-coaching op het niveau van een topcoach, altijd beschikbaar, altijd scherp.
             </p>
             <SignupCTA className="hero-cta">30 dagen gratis</SignupCTA>
-            <p className="hero-team-line">Leid je een salesteam? <Link href="/team">Bekijk ArnoBot voor teams</Link>.</p>
+            <p className="hero-team-line">Leid je een salesteam? <Link href="/team">Bekijk ArnoBot voor teams &rarr;</Link></p>
           </div>
           <div className="hero-photo-col">
             <img src="/cyborg.jpg" alt="Arno Diepeveen" className="hero-photo" />
