@@ -111,7 +111,7 @@ export default async function TeamPage() {
           display: grid; grid-template-columns: 1fr 1fr; column-gap: 72px;
         }
         .tm-big { padding: 40px 0 52px; border-top: 1px solid #2a3547; text-align: left; }
-        .tm-big-num { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.28em; color: #f59e0b; margin-bottom: 18px; }
+        .tm-big-num { font-family: 'Oswald', sans-serif; font-size: 34px; font-weight: 600; line-height: 1; letter-spacing: 0.06em; color: #f59e0b; margin-bottom: 14px; }
         .tm-big h3 {
           font-family: 'Oswald', sans-serif; font-size: 30px; font-weight: 600; text-transform: uppercase;
           color: #f8fafc; line-height: 1.12; letter-spacing: 0.01em; margin-bottom: 14px;
@@ -119,11 +119,12 @@ export default async function TeamPage() {
         .tm-big p { font-size: 16px; line-height: 1.75; color: #a3b1c6; max-width: 42ch; }
 
         .tm-seven {
-          text-align: center; padding: 96px 24px; margin-top: 40px; background: #f59e0b; color: #111827;
+          width: calc(100% - 48px); max-width: 992px; margin: 56px auto 24px; padding: 72px 32px; text-align: center;
+          background: linear-gradient(180deg, rgba(245,158,11,0.13), rgba(245,158,11,0.05));
+          border: 1px solid rgba(245,158,11,0.4); border-radius: 16px;
         }
-        .tm-seven .tm-label { color: #111827; opacity: 0.65; }
-        .tm-seven .tm-h2 { color: #111827; font-size: clamp(34px, 5vw, 60px); line-height: 1.05; }
-        .tm-seven p:not(.tm-label) { font-size: 18px; line-height: 1.7; color: #1f2937; max-width: 46ch; margin: 22px auto 0; }
+        .tm-seven .tm-h2 { font-size: clamp(32px, 4.4vw, 52px); line-height: 1.05; }
+        .tm-seven p:not(.tm-label) { font-size: 18px; line-height: 1.7; color: #cbd5e1; max-width: 46ch; margin: 22px auto 0; }
 
         /* Prijs */
 
@@ -141,7 +142,7 @@ export default async function TeamPage() {
         @media (max-width: 820px) {
           .tm-steps { grid-template-columns: 1fr; }
           .tm-big-list { grid-template-columns: 1fr; }
-          .tm-seven { padding: 64px 20px; }
+          .tm-seven { padding: 48px 20px; }
           .tm-hero { padding: 120px 24px 48px; }
           .tm-heroshot { margin-top: 4px; }
         }
@@ -256,7 +257,7 @@ export default async function TeamPage() {
       <div className="tm-wrap">
         <section className="tm-section">
           <p className="tm-label">Hoe het werkt</p>
-          <h2 className="tm-h2">Meteen aan de gang. Opgezet binnen een uur.</h2>
+          <h2 className="tm-h2">Zo werkt het</h2>
           <div className="tm-steps">
             <div className="tm-step">
               <div className="tm-step-num">Stap 1</div>
