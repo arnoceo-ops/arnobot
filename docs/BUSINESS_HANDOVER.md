@@ -113,30 +113,34 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 
 ## Accounttoegang en wachtwoorden
 
-[ARNO: vul in waar de inloggegevens voor elk van de onderstaande diensten staan opgeslagen]
+Stand 2026-11-04 (antwoord van Arno): alle inloggegevens staan in Proton Pass.
 
 | Dienst | Toegang opgeslagen in | Url |
 |---|---|---|
-| Vercel | [ARNO: bijv. 1Password > ArnoBot] | vercel.com |
-| Supabase | [ARNO: vul in] | supabase.com |
-| Clerk | [ARNO: vul in] | clerk.com |
-| Anthropic | [ARNO: vul in] | console.anthropic.com |
-| OpenAI | [ARNO: vul in] | platform.openai.com |
-| ElevenLabs | [ARNO: vul in] | elevenlabs.io |
-| VoyageAI | [ARNO: vul in] | voyageai.com |
-| Resend | [ARNO: vul in] | resend.com |
-| Upstash | [ARNO: vul in] | upstash.com |
-| Sentry | [ARNO: vul in] | sentry.io |
-| PostHog | [ARNO: vul in] | posthog.com |
-| Calendly | [ARNO: vul in] | calendly.com |
-| Instatus | [ARNO: vul in] | instatus.com |
-| VisualPing | [ARNO: vul in] | visualping.io |
-| GitHub | [ARNO: vul in] | github.com |
-| Porkbun (domeinregistrar) | [ARNO: vul in] | porkbun.com |
-| Telegram | [ARNO: vul in] | t.me |
-| Admin paneel ArnoBot | [ARNO: vul in — het wachtwoord staat als ARNOBOT_ADMIN_KEY in Vercel] | arno.bot/bot/admin |
+| Vercel | Proton Pass | vercel.com |
+| Supabase | Proton Pass | supabase.com |
+| Clerk | Proton Pass | clerk.com |
+| Anthropic | Proton Pass | console.anthropic.com |
+| OpenAI | Proton Pass | platform.openai.com |
+| ElevenLabs | Proton Pass | elevenlabs.io |
+| VoyageAI | Proton Pass | voyageai.com |
+| Resend | Proton Pass | resend.com |
+| Upstash | Proton Pass | upstash.com |
+| Sentry | Proton Pass | sentry.io |
+| PostHog | Proton Pass | posthog.com |
+| Calendly | Proton Pass | calendly.com |
+| Instatus | Proton Pass | instatus.com |
+| VisualPing | Proton Pass | visualping.io |
+| GitHub | Proton Pass | github.com |
+| Porkbun (domeinregistrar) | Proton Pass | porkbun.com |
+| Telegram | Proton Pass | t.me |
+| Admin paneel ArnoBot | Proton Pass (de sleutel staat ook als ARNOBOT_ADMIN_KEY in Vercel) | arno.bot/bot/admin |
+| Mollie (betalingen) | Proton Pass | mollie.com |
+| Moneybird (facturen) | Proton Pass | moneybird.nl |
+| Revolut (bankrekening) | Proton Pass | revolut.com |
+| AssemblyAI (audiotranscriptie) | Proton Pass | assemblyai.com |
 
-**Aanbeveling:** Sla al deze gegevens op in een wachtwoordmanager (bijv. 1Password of Bitwarden). Geef een vertrouwde persoon noodtoegang tot die kluis.
+**Aanbeveling:** de wachtwoordmanager is Proton Pass. Noodtoegang voor een vertrouwd persoon is nog niet ingesteld, zie "Aanbevolen noodvoorbereiding" verderop.
 
 ---
 
@@ -245,10 +249,11 @@ Wat wél handmatig is:
 
 ### Aanbevolen noodvoorbereiding
 
-[ARNO: vul in]
-- Is er een vertrouwde persoon die weet waar de wachtwoordkluis staat?
-- Is er een notarieel document of brief die aangeeft wat er met het bedrijf moet gebeuren?
-- Is er een developer die je kunt benaderen als noodcontact?
+Stand 2026-11-04 (antwoord van Arno):
+- Wachtwoordkluis: Proton Pass. Er is nog niemand die weet waar de kluis staat of er bij kan.
+- Er is geen document of brief over wat er met het bedrijf moet gebeuren.
+- Er is geen developer als noodcontact.
+- Dit is een bekend open risico: bij onbeschikbaarheid van Arno heeft niemand toegang tot de accounts.
 
 ---
 
