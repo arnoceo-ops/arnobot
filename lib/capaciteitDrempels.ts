@@ -44,7 +44,7 @@ export const MIJLPALEN: { aantal: number; tekst: string }[] = [
   },
   {
     aantal: 75,
-    tekst: 'Mijlpaal van 75 actieve gebruikers. Nu doen: de belastingtest met ingelogde gebruikers en de echte AI-chat (scripts/loadtest-k6.js uitbreiden, k6 Cloud, max 100 gelijktijdige bezoekers, kosten naar schatting 15 tot 45 dollar). Eerst controleren: Anthropic-tegoed en bestedingslimiet, Upstash-plan (ongeveer 10 commando\'s per chatbericht), Resend Pro, Supabase-servergrootte. Daarna kan Upstash ook in de capaciteitswacht.',
+    tekst: 'Mijlpaal van 75 actieve gebruikers. Nu doen: de belastingtest met ingelogde gebruikers en de echte AI-chat (scripts/loadtest-k6.js uitbreiden en draaien in Grafana Cloud k6 (je account staat er al, gratis plan, max 100 gelijktijdige bezoekers, kosten naar schatting 15 tot 45 dollar). Eerst controleren: Anthropic-tegoed en bestedingslimiet, Upstash-plan (ongeveer 10 commando\'s per chatbericht), Resend Pro, Supabase-servergrootte. Daarna kan Upstash ook in de capaciteitswacht.',
   },
   {
     aantal: 150,
