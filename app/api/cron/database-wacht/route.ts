@@ -5,7 +5,7 @@ import { nieuwMelden } from '@/lib/capaciteit'
 import { beoordeelCapaciteit } from '@/lib/capaciteitDrempels'
 import { leesServerMeting } from '@/lib/supabaseMetrics'
 
-// Elke 15 minuten. Meet het geheugen van de databaseserver (Prometheus-endpoint van Supabase) en
+// Elk uur. Meet het geheugen van de databaseserver (Prometheus-endpoint van Supabase) en
 // het aantal databaseverbindingen, zodat een piek overdag wordt gezien en niet alleen het moment
 // van de dagelijkse capaciteitswacht. Meldt via Telegram pas bij 70% of 90%, anders stil. Dezelfde
 // dubbele-meldingsbeveiliging als de dagelijkse wacht, dus nooit twee keer dezelfde melding.
