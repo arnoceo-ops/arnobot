@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb } from './db'
-import { haalBetaling, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { mollieNaarCenten } from './geld'
+import { betaaldeBetalingVanLink, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
   maakConceptFactuur,
@@ -221,8 +222,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       brutoCent,
       omschrijving,
       redirectUrl: `${SITE_URL}/bot/team?betaling=terug`,
-      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team`,
-      metadata: { teamFactuurId: rij.id, teamId: team.id },
+      webhookUrl: `${SITE_URL}/api/webhooks/mollie-team?r=${rij.id}`,
       idempotencyKey: `teamfactuur-${rij.id}`,
     })
     await billingDb
@@ -255,20 +255,37 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   }
 }
 
-/** Verwerkt een betaalde/mislukte Mollie-betaling die via een Team-betaallink binnenkomt. */
-export async function verwerkTeamBetaling(mollieId: string): Promise<void> {
-  const mp = await haalBetaling(mollieId)
-  const teamFactuurId = typeof mp.metadata?.teamFactuurId === 'string' ? mp.metadata.teamFactuurId : null
-  if (!teamFactuurId) return
+/**
+ * Verwerkt een Mollie-melding over een Team-betaallink. `webhookId` is het betaling- (tr_) of
+ * betaallink-id (pl_) uit de webhook, `hintRijId` het `?r=` uit onze eigen webhook-URL. Beide
+ * worden alleen gebruikt om de factuur te vinden: de betaling zelf wordt altijd bij Mollie
+ * bevestigd als betaald en als horend bij de betaallink van déze factuur.
+ */
+export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<void> {
+  let rij: TeamFactuurRow | null = null
+  if (webhookId.startsWith('pl_')) {
+    const { data } = await billingDb
+      .from('arnobot_team_facturen')
+      .select('*')
+      .eq('mollie_payment_link_id', webhookId)
+      .maybeSingle<TeamFactuurRow>()
+    rij = data
+  } else if (hintRijId) {
+    const { data } = await billingDb
+      .from('arnobot_team_facturen')
+      .select('*')
+      .eq('id', hintRijId)
+      .maybeSingle<TeamFactuurRow>()
+    rij = data
+  }
+  if (!rij || rij.status === 'paid' || !rij.mollie_payment_link_id) return
 
-  const { data: rij } = await billingDb
-    .from('arnobot_team_facturen')
-    .select('*')
-    .eq('id', teamFactuurId)
-    .maybeSingle<TeamFactuurRow>()
-  if (!rij || rij.status === 'paid') return
-
-  if (mp.status !== 'paid') return
+  const mp = await betaaldeBetalingVanLink(rij.mollie_payment_link_id, webhookId)
+  if (!mp) return
+  if (mollieNaarCenten(mp.amount.value) !== rij.bedrag_cent) {
+    Sentry.captureMessage('Team-betaling met afwijkend bedrag genegeerd', { level: 'error', tags: { onderdeel: 'team-facturatie' }, extra: { factuurId: rij.id, betaling: mp.id } })
+    return
+  }
 
   const betaaldOp = mp.paidAt ? new Date(mp.paidAt) : new Date()
   const { data: geclaimd } = await billingDb

@@ -218,6 +218,9 @@ export interface MolliePaymentLink {
  * Eenmalige betaallink met een vast bedrag (Payment Links API). Gebruikt voor Team-facturen:
  * daar varieert het bedrag per factuur (seats × prijs), dus geen Mollie Subscription (die wil
  * een vast bedrag per cyclus). reusable staat bewust niet aan: één link hoort bij één factuur.
+ *
+ * Een betaallink kent GEEN metadata (Mollie geeft 422). De koppeling met onze eigen rij loopt
+ * via `?r=<rij-id>` in de webhookUrl, zie lib/billing/webhookId.ts.
  */
 export async function maakBetaalLink(input: {
   brutoCent: number
@@ -225,7 +228,6 @@ export async function maakBetaalLink(input: {
   redirectUrl: string
   /** Welke webhook de statusupdates van betalingen via deze link ontvangt. */
   webhookUrl: string
-  metadata: Record<string, unknown>
   idempotencyKey: string
 }): Promise<MolliePaymentLink> {
   return mollie('/payment-links', {
@@ -236,9 +238,25 @@ export async function maakBetaalLink(input: {
       description: input.omschrijving,
       redirectUrl: input.redirectUrl,
       webhookUrl: input.webhookUrl,
-      metadata: input.metadata,
     },
   })
+}
+
+/** Betalingen die via een betaallink zijn gedaan (Mollie: GET /payment-links/{id}/payments). */
+export async function lijstBetaalLinkBetalingen(linkId: string): Promise<MolliePayment[]> {
+  const res = await mollie<{ _embedded?: { payments?: MolliePayment[] } }>(`/payment-links/${encodeURIComponent(linkId)}/payments`)
+  return res._embedded?.payments ?? []
+}
+
+/**
+ * De betaalde betaling van een betaallink, of null. Bij een tr_-id telt alleen die ene
+ * betaling, en alleen als Mollie bevestigt dat hij bij deze link hoort: zo kan een nagemaakte
+ * webhook-aanroep nooit een andere betaling aan deze factuur koppelen.
+ */
+export async function betaaldeBetalingVanLink(linkId: string, webhookId: string): Promise<MolliePayment | null> {
+  const betalingen = await lijstBetaalLinkBetalingen(linkId)
+  const kandidaten = webhookId.startsWith('tr_') ? betalingen.filter(p => p.id === webhookId) : betalingen
+  return kandidaten.find(p => p.status === 'paid') ?? null
 }
 
 export interface MollieRefund {

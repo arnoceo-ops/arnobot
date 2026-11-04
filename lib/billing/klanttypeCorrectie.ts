@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
-import { haalBetaling, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { mollieNaarCenten } from './geld'
+import { betaaldeBetalingVanLink, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
   maakConceptFactuur,
@@ -64,17 +65,37 @@ export async function vindTeCorrigerenAbonnement(userId: string): Promise<{ sub:
   return null
 }
 
-export async function verwerkKlanttypeCorrectie(mollieId: string): Promise<void> {
-  const mp = await haalBetaling(mollieId)
-  const correctieId = typeof mp.metadata?.correctieId === 'string' ? mp.metadata.correctieId : null
-  if (!correctieId) return
+/**
+ * Verwerkt een Mollie-melding over een correctie-betaallink. `webhookId` is het betaling- (tr_)
+ * of betaallink-id (pl_), `hintRijId` het `?r=` uit onze eigen webhook-URL. Beide dienen alleen
+ * om de rij te vinden: de betaling zelf wordt bij Mollie bevestigd als betaald en als horend
+ * bij de betaallink van déze correctie (die staat in `mollie_payment_id`).
+ */
+export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: string | null): Promise<void> {
+  let rij: KlanttypeCorrectieRow | null = null
+  if (webhookId.startsWith('pl_')) {
+    const { data } = await billingDb
+      .from('arnobot_klanttype_correcties')
+      .select('*')
+      .eq('mollie_payment_id', webhookId)
+      .maybeSingle<KlanttypeCorrectieRow>()
+    rij = data
+  } else if (hintRijId) {
+    const { data } = await billingDb
+      .from('arnobot_klanttype_correcties')
+      .select('*')
+      .eq('id', hintRijId)
+      .maybeSingle<KlanttypeCorrectieRow>()
+    rij = data
+  }
+  if (!rij || rij.status === 'paid' || !rij.mollie_payment_id) return
 
-  const { data: rij } = await billingDb
-    .from('arnobot_klanttype_correcties')
-    .select('*')
-    .eq('id', correctieId)
-    .maybeSingle<KlanttypeCorrectieRow>()
-  if (!rij || rij.status === 'paid' || mp.status !== 'paid') return
+  const mp = await betaaldeBetalingVanLink(rij.mollie_payment_id, webhookId)
+  if (!mp) return
+  if (mollieNaarCenten(mp.amount.value) !== rij.verschil_cent) {
+    Sentry.captureMessage('Correctiebetaling met afwijkend bedrag genegeerd', { level: 'error', tags: { onderdeel: 'klanttype-correctie' }, extra: { correctieId: rij.id, betaling: mp.id } })
+    return
+  }
 
   const { data: geclaimd } = await billingDb
     .from('arnobot_klanttype_correcties')
@@ -238,8 +259,7 @@ export async function startKlanttypeCorrectie(input: {
       brutoCent: verschilCent,
       omschrijving: 'ArnoBot, correctie particulier naar zakelijk',
       redirectUrl: `${SITE_URL}/bot/account/zakelijk-corrigeren?betaling=terug`,
-      webhookUrl: `${SITE_URL}/api/webhooks/mollie-correctie`,
-      metadata: { correctieId: rij.id, userId: input.userId },
+      webhookUrl: `${SITE_URL}/api/webhooks/mollie-correctie?r=${rij.id}`,
       idempotencyKey: `correctie-${rij.id}`,
     })
     await billingDb.from('arnobot_klanttype_correcties').update({ mollie_payment_id: link.id }).eq('id', rij.id)

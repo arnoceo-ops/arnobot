@@ -2,20 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { verwerkKlanttypeCorrectie } from '@/lib/billing/klanttypeCorrectie'
 import { MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
+import { leesRijHint, leesWebhookId } from '@/lib/billing/webhookId'
 
 // Losse webhook voor de particulier->zakelijk correctiebetaling (zie
 // lib/billing/klanttypeCorrectie.ts), bewust gescheiden van de solo- en Team-webhooks: raakt
-// zo geen van beide bewezen flows. Zelfde beveiliging: Mollie stuurt alleen `id`, altijd zelf
-// ophalen bij Mollie, nooit de body vertrouwen.
+// zo geen van beide bewezen flows. Zelfde beveiliging: nooit de body of het `?r=`-hint
+// vertrouwen, de betaling wordt altijd bij Mollie bevestigd.
 export async function POST(req: NextRequest) {
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true })
 
-  const raw = await req.text()
-  const id = new URLSearchParams(raw).get('id') ?? ''
-  if (!/^tr_[A-Za-z0-9]{4,40}$/.test(id)) return NextResponse.json({ ok: true })
+  const id = leesWebhookId(await req.text())
+  if (!id) return NextResponse.json({ ok: true })
+  const hint = leesRijHint(req.nextUrl.searchParams.get('r'))
 
   try {
-    await verwerkKlanttypeCorrectie(id)
+    await verwerkKlanttypeCorrectie(id, hint)
     return NextResponse.json({ ok: true })
   } catch (e) {
     if (e instanceof MollieError && e.status === 404) return NextResponse.json({ ok: true })
