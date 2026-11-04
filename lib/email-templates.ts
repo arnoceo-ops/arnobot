@@ -361,7 +361,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Herinnering: factuur ArnoBot Team nog niet betaald`,
         html: mail(
-          `De factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''} van ${billingEuro(t?.bedragCent ?? 0)} is nog niet betaald. Betaal binnen 14 dagen om te voorkomen dat de toegang van het team wordt geblokkeerd.`,
+          `De factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''} van ${billingEuro(t?.bedragCent ?? 0)} is nog niet betaald. Betaal zo snel mogelijk om te voorkomen dat de toegang van het team wordt geblokkeerd.`,
           'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
         ),
       }

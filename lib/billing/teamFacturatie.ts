@@ -108,6 +108,8 @@ export function berekenTussentijdsBedrag(
   return { nettoCent, btwCent, brutoCent: nettoCent + btwCent }
 }
 
+const datumNl = (d: Date) => d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
+
 /** Moet gelijk zijn aan BETAALTERMIJN_DAGEN in app/api/cron/team-facturatie/route.ts (herinnering en blokkade tellen vanaf de vervaldatum). */
 const TEAM_BETAALTERMIJN_DAGEN = 14
 
@@ -218,7 +220,8 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       const { contactId, voornaam } = await verkrijgMollieEnMoneybirdKlant(team)
       const factuur = await maakConceptFactuur({
         contactId,
-        referentie: `team-${rij.id}`,
+        // Het Kenmerk staat op de factuur en in de mail: leesbaar voor de klant, geen interne id.
+        referentie: `${team.name}, ${input.soort === 'tussentijds' ? 'tussentijdse uitbreiding, ' : ''}periode ${datumNl(input.periodeStart)} tot ${datumNl(input.periodeEinde)}`,
         omschrijving,
         periodeStart: input.periodeStart,
         periodeEinde: input.periodeEinde,
