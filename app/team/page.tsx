@@ -192,7 +192,7 @@ export default async function TeamPage() {
           <p className="tm-label">Wat geen manager kan</p>
           <h2 className="tm-h2">Ook de beste manager kan dit niet alleen</h2>
           <p className="tm-lead" style={{ marginTop: 18 }}>
-            Niet door gebrek aan inzet, maar omdat er maar één van hem is. Daar vult ArnoBot aan.
+            Niet door gebrek aan inzet, maar omdat er maar één van hem is.<br />Daar vult ArnoBot aan.
           </p>
         </section>
 
