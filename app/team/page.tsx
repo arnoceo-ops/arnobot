@@ -99,56 +99,27 @@ export default async function TeamPage() {
         }
         .tm-heroshot figcaption { margin-top: 16px; text-align: center; font-size: 13px; color: #6b7280; }
 
-        /* Feature-secties: korte tekst naast een herbouwd productfragment (Stripe/Attio-patroon) */
-        .tm-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding: 52px 0; border-top: 1px solid #1f2937; }
-        .tm-feat-flip .tm-feat-frag { order: -1; }
-        .tm-feat-text h3 {
-          font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
-          color: #f8fafc; margin-bottom: 12px;
-        }
-        .tm-feat-text p { font-size: 15px; line-height: 1.7; color: #94a3b8; }
-
-        /* Productfragment in de dashboard-stijl (Space Mono, amber accent, elevated card) */
-        .tm-frag {
-          position: relative; overflow: hidden;
-          background: #1f2937; border: 1px solid #374151; border-left: 3px solid #f59e0b;
-          border-radius: 6px; padding: 24px 26px 40px;
-          font-family: 'Space Mono', monospace;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-        }
-        .tm-frag::after {
-          content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
-          background: linear-gradient(to bottom, rgba(31,41,55,0), #1f2937);
-        }
-        .tm-frag-label { font-size: 12px; letter-spacing: 0.25em; color: #f59e0b; }
-        .tm-frag-h { font-size: 12px; letter-spacing: 0.22em; color: #f1f5f9; margin: 20px 0 7px; }
-        .tm-frag-p { font-size: 13px; line-height: 1.85; color: #9ca3af; }
-        .tm-frag-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 16px; }
-        .tm-frag-score-name { font-size: 10px; letter-spacing: 0.18em; color: #94a3b8; }
-        .tm-frag-score-bar { height: 5px; border-radius: 999px; background: #111827; margin: 7px 0; overflow: hidden; }
-        .tm-frag-score-bar i { display: block; height: 100%; }
-        .tm-frag-score-num { font-size: 20px; font-weight: 700; line-height: 1; }
-        .tm-frag-pill {
-          position: relative; z-index: 2; display: inline-block; margin-top: 22px;
-          background: #f59e0b; color: #111827; font-size: 11px; font-weight: 700;
-          letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px; border-radius: 999px;
-        }
-
         /* Steps */
         .tm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; counter-reset: step; }
-        .tm-step { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 22px; }
-        .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
-        .tm-step p { font-size: 14px; line-height: 1.65; color: #94a3b8; margin-top: 10px; }
+        .tm-step { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 28px 24px; text-align: center; }
+        .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
+        .tm-step p { font-size: 16px; line-height: 1.65; color: #cbd5e1; margin-top: 12px; }
 
-        /* Zes dingen die geen manager kan */
-        .tm-six { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; text-align: left; }
-        .tm-six-item { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 24px; }
-        .tm-six-num { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
-        .tm-six-item h3 {
-          font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; text-transform: uppercase;
-          color: #f8fafc; margin: 8px 0 10px; line-height: 1.2;
+        /* Zes dingen die geen manager kan: grote, brede blokken */
+        .tm-big-list { margin-top: 8px; }
+        .tm-big { display: grid; grid-template-columns: 120px 1fr; gap: 32px; align-items: start; padding: 56px 0; border-top: 1px solid #1f2937; }
+        .tm-big-num { font-family: 'Oswald', sans-serif; font-size: 96px; font-weight: 700; line-height: 0.9; color: #f59e0b; }
+        .tm-big h3 {
+          font-family: 'Oswald', sans-serif; font-size: 38px; font-weight: 700; text-transform: uppercase;
+          color: #f8fafc; line-height: 1.1; margin-bottom: 16px;
         }
-        .tm-six-item p { font-size: 14px; line-height: 1.65; color: #94a3b8; }
+        .tm-big p { font-size: 19px; line-height: 1.75; color: #cbd5e1; max-width: 56ch; }
+
+        .tm-seven {
+          text-align: center; padding: 72px 32px; margin: 24px 0 56px;
+          background: linear-gradient(180deg, #1e293b, #172033); border: 1px solid #f59e0b; border-radius: 16px;
+        }
+        .tm-seven p:not(.tm-label) { font-size: 20px; line-height: 1.75; color: #e2e8f0; max-width: 52ch; margin: 18px auto 0; }
 
         /* Prijs */
 
@@ -214,149 +185,68 @@ export default async function TeamPage() {
 
       <div className="tm-wrap">
 
-        <section className="tm-section tm-section-narrow">
-          <p className="tm-label">Het probleem</p>
-          <h2 className="tm-h2">Je stuurt je team op onderbuikgevoel</h2>
-          <p className="tm-lead" style={{ marginTop: 18 }}>
-            Je voert 1:1&apos;s, maar je weet pas dat een verkoper vastzit als de cijfers
-            tegenvallen. En je ziet geen patroon over je team heen: waar zit de gedeelde
-            zwakte, wie groeit er echt, en waar levert coachen deze periode het meeste op.
-          </p>
-        </section>
-
-        <section className="tm-section">
+        <section className="tm-section tm-section-narrow" style={{ borderBottom: 'none', paddingBottom: 0 }}>
           <p className="tm-label">Wat geen manager kan</p>
           <h2 className="tm-h2">Ook de beste manager kan dit niet alleen</h2>
           <p className="tm-lead" style={{ marginTop: 18 }}>
             Niet door gebrek aan inzet, maar omdat er maar één van hem is. Daar vult ArnoBot aan.
           </p>
-          <div className="tm-six">
-            <div className="tm-six-item">
-              <div className="tm-six-num">1</div>
-              <h3>Overal tegelijk</h3>
-              <p>Jij coacht één verkoper per keer. ArnoBot is er voor iedereen tegelijk: vlak voor een lastig gesprek, laat op de avond, in het weekend na een verloren deal.</p>
-            </div>
-            <div className="tm-six-item">
-              <div className="tm-six-num">2</div>
-              <h3>Nooit een slechte dag</h3>
-              <p>Geen vermoeidheid, geen vakantie, geen druk. Elke verkoper krijgt altijd dezelfde volle aandacht, ook nummer twintig op de lijst.</p>
-            </div>
-            <div className="tm-six-item">
-              <div className="tm-six-num">3</div>
-              <h3>Perfect geheugen</h3>
-              <p>Wat een verkoper drie maanden geleden beloofde, legt ArnoBot naast wat hij vandaag zegt. Voor elk teamlid tegelijk.</p>
-            </div>
-            <div className="tm-six-item">
-              <div className="tm-six-num">4</div>
-              <h3>Geen politiek en geen favoriet</h3>
-              <p>Feedback van een manager wordt altijd een beetje gekleurd door de relatie. ArnoBot geeft iedereen dezelfde eerlijke spiegel, gebaseerd op iemands eigen patronen.</p>
-            </div>
-            <div className="tm-six-item">
-              <div className="tm-six-num">5</div>
-              <h3>Eerlijkheid die jij nooit krijgt</h3>
-              <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese.</p>
-            </div>
-            <div className="tm-six-item">
-              <div className="tm-six-num">6</div>
-              <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
-              <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Verkoper twintig krijgt dezelfde coaching als verkoper één.</p>
-            </div>
-          </div>
         </section>
 
-        <section className="tm-section" style={{ paddingBottom: 0, borderBottom: 'none' }}>
-          <p className="tm-label">Wat je als manager krijgt</p>
-          <h2 className="tm-h2">Van overzicht naar het volgende gesprek</h2>
-          <p className="tm-lead" style={{ marginTop: 18 }}>
-            Het teamoverzicht laat zien waar iedereen staat. Deze twee schermen vertellen je
-            wat je ermee doet.
+        <div className="tm-big-list">
+          <div className="tm-big">
+            <div className="tm-big-num">1</div>
+            <div>
+              <h3>Overal tegelijk</h3>
+              <p>Jij coacht één verkoper per keer. ArnoBot is er voor iedereen tegelijk: vlak voor een lastig gesprek, laat op de avond, in het weekend na een verloren deal. Precies op het moment dat coaching het meeste oplevert, en jij er niet bent.</p>
+            </div>
+          </div>
+          <div className="tm-big">
+            <div className="tm-big-num">2</div>
+            <div>
+              <h3>Nooit een slechte dag</h3>
+              <p>Geen vermoeidheid, geen vakantie, geen druk. Elke verkoper krijgt altijd dezelfde volle aandacht, ook nummer twintig op de lijst, ook op vrijdagmiddag na een zware week.</p>
+            </div>
+          </div>
+          <div className="tm-big">
+            <div className="tm-big-num">3</div>
+            <div>
+              <h3>Perfect geheugen</h3>
+              <p>Wat een verkoper drie maanden geleden beloofde, legt ArnoBot naast wat hij vandaag zegt. Elk patroon, elke afspraak, elke terugval. Voor elk teamlid tegelijk, zonder dat jij iets hoeft bij te houden.</p>
+            </div>
+          </div>
+          <div className="tm-big">
+            <div className="tm-big-num">4</div>
+            <div>
+              <h3>Geen politiek en geen favoriet</h3>
+              <p>Feedback van een manager wordt altijd een beetje gekleurd door de relatie. ArnoBot geeft iedereen dezelfde eerlijke spiegel, gebaseerd op iemands eigen patronen en niet op sympathie.</p>
+            </div>
+          </div>
+          <div className="tm-big">
+            <div className="tm-big-num">5</div>
+            <div>
+              <h3>Eerlijkheid die jij nooit krijgt</h3>
+              <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is of een deal laat liggen. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese. Daardoor hoor je eindelijk wat er echt speelt.</p>
+            </div>
+          </div>
+          <div className="tm-big">
+            <div className="tm-big-num">6</div>
+            <div>
+              <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
+              <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Met ArnoBot krijgt verkoper twintig dezelfde coaching als verkoper één. Je team groeit, je coachingkwaliteit niet.</p>
+            </div>
+          </div>
+        </div>
+
+        <section className="tm-seven">
+          <p className="tm-label">En dan jijzelf</p>
+          <h2 className="tm-h2">Wie coacht eigenlijk jou?</h2>
+          <p>
+            Jij coacht je mensen. Maar wie kijkt naar hoe jij dat doet? Wie helpt jou met je
+            1:1&apos;s, met je blinde vlekken, met wat je team van jou nodig heeft? ArnoBot
+            coacht ook jou: eerlijk, zonder agenda, op elk moment.
           </p>
         </section>
-
-        <div className="tm-feat tm-feat-flip">
-          <div className="tm-feat-text">
-            <h3>Profiel per verkoper</h3>
-            <p>
-              Je ziet welke verkoper achterloopt op systeem en welke op mindset, en of het
-              beter wordt of niet. Niet uit een vragenlijst die iedereen invult zoals hij
-              denkt dat het hoort, maar uit wat er in de gesprekken zelf gebeurt.
-            </p>
-            <p style={{ marginTop: 14 }}>
-              De diagnose waar je normaal maanden meelopen voor nodig hebt, ligt er na de
-              eerste week.
-            </p>
-          </div>
-          <div className="tm-feat-frag">
-            <div className="tm-frag">
-              <p className="tm-frag-label">BENNY VERWAAIJEN</p>
-              <div className="tm-frag-scores">
-                <div>
-                  <p className="tm-frag-score-name">MINDSET</p>
-                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#f59e0b' }} /></div>
-                  <span className="tm-frag-score-num" style={{ color: '#f59e0b' }}>5</span>
-                </div>
-                <div>
-                  <p className="tm-frag-score-name">SYSTEEM</p>
-                  <div className="tm-frag-score-bar"><i style={{ width: '100%', background: '#60a5fa' }} /></div>
-                  <span className="tm-frag-score-num" style={{ color: '#60a5fa' }}>5</span>
-                </div>
-                <div>
-                  <p className="tm-frag-score-name">ACTIE</p>
-                  <div className="tm-frag-score-bar"><i style={{ width: '80%', background: '#4ade80' }} /></div>
-                  <span className="tm-frag-score-num" style={{ color: '#4ade80' }}>4</span>
-                </div>
-              </div>
-              <p className="tm-frag-h">SYSTEEM</p>
-              <p className="tm-frag-p">
-                Pipeline-opvolging is scherper geworden. Beslissers worden nu vroeg in kaart
-                gebracht in plaats van halverwege ontdekt.
-              </p>
-              <p className="tm-frag-h">ACTIE</p>
-              <p className="tm-frag-p">
-                Proactief en resultaatgericht. Nog steeds de neiging om te duwen als een traject
-                stilligt, waar afwachten soms sterker is.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="tm-feat">
-          <div className="tm-feat-text">
-            <h3>1:1-voorbereiding</h3>
-            <p>
-              Je opent je 1:1 niet meer met de vraag hoe het gaat. Voor elke verkoper ligt er
-              een agenda klaar: wat er goed gaat, het ene punt dat er nu toe doet, en de vragen
-              die Arno zou stellen.
-            </p>
-            <p style={{ marginTop: 14 }}>
-              Jij leest het door, past aan waar je iets beter weet, en voert een gesprek dat
-              ergens over gaat.
-            </p>
-          </div>
-          <div className="tm-feat-frag">
-            <div className="tm-frag">
-              <p className="tm-frag-label">1:1 AGENDA</p>
-              <p className="tm-frag-h">WAT GAAT GOED</p>
-              <p className="tm-frag-p">
-                Je hebt recent een duidelijke stap gemaakt in het stellen van directe
-                afsluitvragen. De deal die drie maanden vastzat sloot je af door scherper door
-                te vragen.
-              </p>
-              <p className="tm-frag-h">AANDACHTSPUNT</p>
-              <p className="tm-frag-p">
-                Je pipeline-opvolging mist nog vaste structuur, en dat kost je klanten die je
-                goed hebt bereikt.
-              </p>
-              <p className="tm-frag-h">ARNO ADVISEERT</p>
-              <p className="tm-frag-p">
-                Vraag Alira in dit gesprek wat ze zelf zag voordat ze die afsluitvraag stelde,
-                en wat er anders was aan die twee gesprekken.
-              </p>
-              <span className="tm-frag-pill">Bereid 1:1 voor</span>
-            </div>
-          </div>
-        </div>
-
         <section className="tm-section">
           <p className="tm-label">Hoe het werkt</p>
           <h2 className="tm-h2">Meteen aan de gang. Opgezet binnen een uur.</h2>
@@ -376,26 +266,6 @@ export default async function TeamPage() {
           </div>
         </section>
 
-        <section className="tm-section tm-section-narrow">
-          <p className="tm-label">Voor je verkopers</p>
-          <h2 className="tm-h2">Geen kaal dashboard, het hele product</h2>
-          <p className="tm-lead" style={{ marginTop: 18 }}>
-            Elke verkoper in je team krijgt de volledige Pro-versie van ArnoBot: 24/7 sparren,
-            oefengesprekken tegen lastige types, een analyse van elk verkoopgesprek, en coaching
-            op mindset, systeem en actie. Het management dashboard is jouw laag daarbovenop.
-          </p>
-        </section>
-
-        <section className="tm-section tm-section-narrow">
-          <p className="tm-label">Wat je wel en niet ziet</p>
-          <h2 className="tm-h2">De synthese, nooit de ruwe gesprekken</h2>
-          <p className="tm-lead" style={{ marginTop: 18 }}>
-            Je ziet de coaching-diagnose en de scores van je verkopers, plus de 1:1&apos;s die
-            je zelf voert. Je ziet nooit de gesprekken die een verkoper met ArnoBot voert.
-            Verkopers zien elkaars data niet.
-          </p>
-        </section>
-
         <section className="tm-section">
           <p className="tm-label">Vragen</p>
           <h2 className="tm-h2">Kort antwoord</h2>
@@ -407,6 +277,14 @@ export default async function TeamPage() {
             <div className="tm-faq-item">
               <p className="tm-faq-q">Kan ik het eerst zien zonder mijn team erbij?</p>
               <p className="tm-faq-a">Ja. In de demo lopen we samen door een ingericht voorbeeldteam. Je hoeft niets voor te bereiden.</p>
+            </div>
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Zie ik de gesprekken van mijn verkopers?</p>
+              <p className="tm-faq-a">Nee. Je ziet de coaching-diagnose, de scores en de 1:1&apos;s die je zelf voert, nooit de gesprekken die een verkoper met ArnoBot voert.</p>
+            </div>
+            <div className="tm-faq-item">
+              <p className="tm-faq-q">Krijgen mijn verkopers alleen een dashboard?</p>
+              <p className="tm-faq-a">Nee, elke verkoper krijgt de volledige Pro-versie van ArnoBot: sparren, oefengesprekken, gespreksanalyses en coaching. Het dashboard is jouw laag daarbovenop.</p>
             </div>
             <div className="tm-faq-item">
               <p className="tm-faq-q">Zien mijn verkopers elkaars scores?</p>
