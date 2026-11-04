@@ -39,12 +39,12 @@ export const KRITIEK = 0.9
 // zijn al geregeld, dus staan hier niet meer.
 export const MIJLPALEN: { aantal: number; tekst: string }[] = [
   {
-    aantal: 30,
-    tekst: 'Mijlpaal van 30 actieve gebruikers. Nu doen: de belastingtest met ingelogde gebruikers en de echte AI-chat (scripts/loadtest-k6.js uitbreiden, k6 Cloud, max 100 gelijktijdige bezoekers, kosten naar schatting 15 tot 45 dollar). Eerst controleren: Anthropic-tegoed en bestedingslimiet, Upstash-plan (ongeveer 10 commando\'s per chatbericht), Resend Pro, Supabase-servergrootte. Daarna kan Upstash ook in de capaciteitswacht.',
-  },
-  {
     aantal: 50,
     tekst: 'Mijlpaal van 50 actieve gebruikers. Nu doen: Clerk inactivity timeout aanzetten (Clerk Pro), en het WhatsApp-supportnummer overzetten naar het WhatsApp Business Platform met een helpdesktool en een echte DPA met Meta.',
+  },
+  {
+    aantal: 75,
+    tekst: 'Mijlpaal van 75 actieve gebruikers. Nu doen: de belastingtest met ingelogde gebruikers en de echte AI-chat (scripts/loadtest-k6.js uitbreiden, k6 Cloud, max 100 gelijktijdige bezoekers, kosten naar schatting 15 tot 45 dollar). Eerst controleren: Anthropic-tegoed en bestedingslimiet, Upstash-plan (ongeveer 10 commando\'s per chatbericht), Resend Pro, Supabase-servergrootte. Daarna kan Upstash ook in de capaciteitswacht.',
   },
   {
     aantal: 150,
