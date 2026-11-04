@@ -2,6 +2,7 @@ import { Resend, type CreateEmailOptions } from 'resend'
 import * as Sentry from '@sentry/nextjs'
 import { Redis } from '@upstash/redis'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { telMail } from '@/lib/capaciteit'
 
 // Eén plek voor alle mail via Resend. De Resend-bibliotheek GOOIT GEEN fout als een mail wordt
 // geweigerd (daglimiet, maandlimiet, rate limit, ongeldig adres): hij geeft { data: null, error }
@@ -57,6 +58,7 @@ export async function verstuurMail(opties: CreateEmailOptions): Promise<{ id: st
     if (fout.limiet) await meldLimiet(fout)
     throw fout
   }
+  await telMail()
   return { id: data.id }
 }
 

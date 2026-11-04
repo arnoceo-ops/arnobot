@@ -62,6 +62,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ blocked: !!data }, { headers: corsHeaders(origin) })
 }
 
+import { telAnthropicLimiet } from '@/lib/capaciteit'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText, StreamingDashSanitizer } from '@/lib/ai'
@@ -795,6 +796,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
           controller.enqueue(encoder.encode(`\n<<<ARNOBOT_META>>>${JSON.stringify({ log_id: logId })}`))
         } catch (err) {
           console.error('Chat stream error:', err instanceof Error ? err.message : String(err))
+          await telAnthropicLimiet(err)
           controller.error(err)
         } finally {
           controller.close()
@@ -809,6 +811,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
     return new Response(readable, { headers: responseHeaders })
   } catch (err) {
     console.error('Chat error:', err instanceof Error ? err.message : String(err))
+    await telAnthropicLimiet(err)
     const origin = req.headers.get('origin')
     return NextResponse.json({ error: 'Verzoek mislukt' }, { status: 500, headers: corsHeaders(origin) })
   }

@@ -69,7 +69,6 @@ export default async function EmailsOverzichtPage() {
             { name: 'Competitie',            trigger: 'Cron:competitie (maandelijks, 1e)',           ontvanger: 'arno@arno.bot',            wanneer: 'Eerste van de maand, competitierapport',                type: 'Admin' },
             { name: 'Model-check',           trigger: 'Cron:model-check (maandelijks, 1e)',         ontvanger: 'model@arno.bot',           wanneer: 'Eerste van de maand, modelkwaliteitscheck',             type: 'Admin' },
             { name: 'Data-cleanup',          trigger: 'Cron:data-cleanup (maandelijks, 1e)',        ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, gebruikers te verwerken',          type: 'Admin' },
-            { name: 'Milestone-check',       trigger: 'Cron:milestone-check (maandelijks, 1e)',     ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, alert bij 50 actieve gebruikers',  type: 'Admin' },
           ]} />
         </Section>
 

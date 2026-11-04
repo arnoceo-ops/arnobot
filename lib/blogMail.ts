@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { Redis } from '@upstash/redis'
 import { getBlogDb, BLOG_BASE_URL, type BlogPost } from './blog'
 import { getEmailTemplate } from './email-templates'
+import { telMail } from './capaciteit'
 import {
   confirmUrl,
   oneClickUnsubscribeUrl,
@@ -45,6 +46,7 @@ export async function sendConfirmationMail(email: string, confirmToken: string, 
   })
   const { error } = await resend().emails.send({ from: FROM, to: email, replyTo: REPLY_TO, subject, html })
   if (error) throw new Error(`Bevestigingsmail versturen mislukt: ${error.message}`)
+  await telMail()
 }
 
 // Mailtje voor wie zich opnieuw aanmeldt terwijl het adres al bevestigd is. Zo wacht niemand op een
@@ -70,6 +72,7 @@ export async function sendAlreadySubscribedMail(email: string, unsubscribeToken:
     },
   })
   if (error) throw new Error(`Mail versturen mislukt: ${error.message}`)
+  await telMail()
 }
 
 function postMail(post: Pick<BlogPost, 'title' | 'summary' | 'slug'>, unsubscribeToken: string, isTest: boolean, voornaam: string | null = null) {
@@ -87,6 +90,7 @@ export async function sendBlogTestMail(post: Pick<BlogPost, 'title' | 'summary' 
   const { subject, html } = postMail(post, 'test-token', true, 'Arno')
   const { error } = await resend().emails.send({ from: FROM, to, replyTo: REPLY_TO, subject, html })
   if (error) throw new Error(`Testmail versturen mislukt: ${error.message}`)
+  await telMail()
 }
 
 // Zet voor elke bevestigde abonnee een bezorging in de wachtrij. Abonneren is altijd op alle

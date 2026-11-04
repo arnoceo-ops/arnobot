@@ -383,7 +383,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met CLAUDE.md-inventaris |
 | `/api/cron/competitie` | 1e vd maand 04:05 | Competitierapport (meest actieve gebruikers) |
 | `/api/cron/data-cleanup` | 1e vd maand 04:05 | Verwijderde gesprekken opschonen, inactieve users flaggen |
-| `/api/cron/milestone-check` | 1e vd maand 04:05 | Alert als 50+ actieve gebruikers bereikt (Pro-upgrade trigger) |
+| `/api/cron/capaciteitswacht` | dagelijks 07:30 UTC | Telegram bij 70% of 90% van een limiet (Resend, database, Anthropic 429) en bij 50 en 150 actieve gebruikers |
 | `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachtsdocumenten bijwerken (dit bestand) |
 | `/api/cron/meta-analyse` | 1e vd maand 04:15 | Geautomatiseerde zelfbeoordeling + expertpanel + JOUW ANALYSE |
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerend De Spiegel-thema met één zin en een sparscenario als e-mail (`lib/patroonMail.ts`, flag `PATROON_MAIL`, standaard alleen oprichter) |

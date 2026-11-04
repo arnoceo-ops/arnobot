@@ -78,9 +78,8 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - **Leeg-antwoord-bescherming ontbreekt** op `cron/refresh-openers`, `bot/sessions*`, `admin/feedback-analyse` e.a. Bewust overgeslagen (kortere prompts, Haiku zonder thinking, of al gedeeltelijke bescherming). Herbeoordelen bij een maandcheck als een prompt qua lengte groeit.
 - **Dependabot-auto-merge werkt structureel niet (gevonden 2026-09-16).** De `workflow_run`-listener in `.github/workflows/dependabot-auto-merge.yml` triggert nooit op een Dependabot-PR-branch (vermoedelijk een GitHub Actions-beperking rond het read-only token waarmee Dependabot-workflows draaien). Vier veilige, groene minor-PR's (#46-#49) stonden hierdoor al 5+ weken vast. Nodig: trigger-mechanisme herzien (bv. de merge-stap direct in de Security Audit-workflow met een `dependabot[bot]`-actor-guard i.p.v. een losse `workflow_run`-listener).
 
-## Gated op de 50-gebruikers-milestone (auto-bewaakt via `cron/milestone-check`)
+## Gated op de gebruikersmijlpalen (auto-bewaakt via `cron/capaciteitswacht`, 50 en 150)
 
-- Vercel Firewall aanzetten.
 - Supabase PITR aanzetten (~$100/maand) plus in dezelfde actie een restore-test.
 - Clerk inactivity timeout inschakelen (vereist betaald plan).
 - Apart Supabase-project voor de E2E-suite heroverwegen (op 2026-08-30 bewust verworpen wegens schema-sync-last; zie `CLAUDE_HISTORY.md`).

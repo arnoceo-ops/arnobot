@@ -65,7 +65,6 @@ const KNOWN_SAFE = new Set([
   // Draait per gebruiker, sluit testaccounts al op e-mailadres uit.
   'app/api/cron/trial-emails/route.ts:approved_users',
   'app/api/cron/inactivity-nudge/route.ts:approved_users',
-  'app/api/cron/milestone-check/route.ts:approved_users',
   'app/api/admin/analyse/users/route.ts:approved_users',
   // Facturatie-oppervlak per team: Team Hippios (TEST_TEAM_ID) is uit de teamlijst gefilterd,
   // de managerlookups hangen daaraan; de POST-route werkt op een expliciet teamId.
