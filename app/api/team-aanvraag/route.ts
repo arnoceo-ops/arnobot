@@ -1,6 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+import { limietVeilig } from '@/lib/limietVeilig'
 import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml } from '@/lib/email-templates'
 import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
@@ -14,7 +17,20 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+// Publiek formulier zonder login: elke inzending stuurt een mail en een Telegram-melding. Zonder
+// limiet kon een bot je Telegram vullen en de gedeelde Resend-daglimiet opmaken, waardoor betaal-
+// en welkomstmails niet aankomen (gevonden 2026-11-04). Zelfde patroon als de blog-aanmelding.
+const aanvraagIpLimit = new Ratelimit({
+  redis: new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! }),
+  limiter: Ratelimit.slidingWindow(5, '1 h'),
+  prefix: 'arnobot:team-aanvraag:ip',
+})
+
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'onbekend'
+  const { success: ipOk } = await limietVeilig(aanvraagIpLimit, ip)
+  if (!ipOk) return NextResponse.json({ error: 'Te veel aanvragen vanaf dit netwerk, probeer het later opnieuw of mail naar admin@arno.bot' }, { status: 429 })
+
   const { userId } = await auth().catch(() => ({ userId: null }))
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })

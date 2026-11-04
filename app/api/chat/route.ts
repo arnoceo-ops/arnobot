@@ -72,6 +72,7 @@ import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@
 import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
+import { limietVeilig } from '@/lib/limietVeilig'
 import { Redis } from '@upstash/redis'
 import mammoth from 'mammoth'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
@@ -170,9 +171,13 @@ async function notifyRateLimit(identifier: string, reden: string, dedupKey?: str
 
   // Deduplicatie: zelfde melding max 1x per uur (voor IP-spam)
   if (dedupKey) {
-    const seen = await redis.get(dedupKey)
-    if (seen) return
-    await redis.set(dedupKey, '1', { ex: 3600 })
+    try {
+      const seen = await redis.get(dedupKey)
+      if (seen) return
+      await redis.set(dedupKey, '1', { ex: 3600 })
+    } catch {
+      // Upstash weg: liever een dubbele Telegram-melding dan een 500 op een limietantwoord.
+    }
   }
 
   const text = `Rate limit geraakt op arno.bot\n\nGebruiker: ${identifier}\nReden: ${reden}`
@@ -217,6 +222,28 @@ export async function POST(req: NextRequest) {
 
     const isWidget = origin?.includes('arno.blog') ?? false
 
+    // Eerst de goedkope poorten, pas daarna de RAG-pipeline starten. De pipeline hieronder start
+    // meteen een Haiku- en Voyage-aanroep: stond hij vóór de auth- en IP-controle, dan kostte elk
+    // anoniem verzoek geld terwijl het daarna toch een 401 of 429 kreeg (gevonden 2026-11-04).
+    // De IP-limiet geldt alleen voor de anonieme widget. Ingelogde gebruikers hebben hun eigen
+    // limiet per gebruiker hieronder: een IP-limiet raakte een heel team op één kantoornetwerk,
+    // want die 5 per minuut werd gedeeld.
+    // Test-IP's overgeslagen: dezelfde reden als isTestIdentifier hieronder, localhost draait bij
+    // lokale E2E-runs meerdere testbestanden kort na elkaar tegen dezelfde production-Redis-instantie.
+    let sessionUserId: string | null = null
+    if (isWidget) {
+      if (ip && !isTestIdentifier(ip)) {
+        const { success: ipOk } = await limietVeilig(ipRateLimit, ip)
+        if (!ipOk) {
+          await notifyRateLimit(ip, 'IP-limiet (5/min)', `arnobot:notify:ip:${ip}`)
+          return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+        }
+      }
+    } else {
+      sessionUserId = (await auth()).userId
+      if (!sessionUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
+    }
+
     // Start de VOLLEDIGE RAG-pipeline (queryherschrijving + opzoeking + rerank) meteen,
     // parallel aan de moderatie-check en de rest hierna, in plaats van pas te beginnen ná
     // de moderatie-check. Pas verderop ge-await't, op het punt waar de context daadwerkelijk
@@ -249,21 +276,9 @@ export async function POST(req: NextRequest) {
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
 
-    // Per-IP rate limit via Upstash (atomisch, geen race conditions). Test-IP's overgeslagen:
-    // dezelfde reden als isTestIdentifier hieronder, localhost draait bij lokale E2E-runs
-    // meerdere testbestanden kort na elkaar tegen dezelfde production-Redis-instantie.
-    if (ip && !isTestIdentifier(ip)) {
-      const { success: ipOk } = await ipRateLimit.limit(ip)
-      if (!ipOk) {
-        await notifyRateLimit(ip, 'IP-limiet (5/min)', `arnobot:notify:ip:${ip}`)
-        return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
-      }
-    }
-
     // Voor ArnoBot-gebruikers (niet-widget): altijd de Clerk session gebruiken, nooit de body-waarde vertrouwen
     let userId: string | null = bodyUserId ?? null
     if (!isWidget) {
-      const { userId: sessionUserId } = await auth()
       userId = sessionUserId
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
 
@@ -302,7 +317,7 @@ export async function POST(req: NextRequest) {
       // heel anders (sessie-lock-herstel). isTestIdentifier bestond al om Telegram-ruis te
       // onderdrukken (2026-08-12), maar de blokkade zelf bleef toen onbedoeld staan.
       if (!isTestIdentifier(userId)) {
-        const { success: userOk } = await userRateLimit.limit(userId)
+        const { success: userOk } = await limietVeilig(userRateLimit, userId)
         if (!userOk) {
           await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
           return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
@@ -318,12 +333,20 @@ export async function POST(req: NextRequest) {
       // lock altijd, blijft achter Clerk-auth dus alleen de accounteigenaar zelf kan dit.
       if (userId !== process.env.ARNOBOT_OWNER_USER_ID && typeof clientSessionId === 'string' && clientSessionId.length > 0) {
         const lockKey = `arnobot:active:${userId}`
-        const activeSid = await redis.get<string>(lockKey)
-        if (activeSid && activeSid !== clientSessionId && !forceSession) {
+        // Fail-open: een Upstash-storing mag geen chat blokkeren, dan vervalt alleen de
+        // dubbele-sessiebescherming voor even.
+        let dubbeleSessie = false
+        try {
+          const activeSid = await redis.get<string>(lockKey)
+          if (activeSid && activeSid !== clientSessionId && !forceSession) dubbeleSessie = true
+          else await redis.set(lockKey, clientSessionId, { ex: 120 })
+        } catch (e) {
+          Sentry.captureException(e, { tags: { onderdeel: 'sessie-lock-upstash' }, level: 'warning' })
+        }
+        if (dubbeleSessie) {
           await notifyRateLimit(userId, 'dubbele sessie (twee vensters/apparaten)', `arnobot:notify:dual:${userId}`)
           return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
         }
-        await redis.set(lockKey, clientSessionId, { ex: 120 })
       }
     }
 
