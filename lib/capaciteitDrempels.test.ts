@@ -52,6 +52,13 @@ describe('beoordeelCapaciteit', () => {
     expect(beoordeelCapaciteit({ ...rustig, dbVerbindingen: null, dbMaxVerbindingen: null })).toEqual([])
   })
 
+  it('servergeheugen: waarschuwing bij 70%, kritiek bij 90%, niets zonder meting', () => {
+    expect(beoordeelCapaciteit({ ...rustig, serverGeheugen: 0.4 })).toEqual([])
+    expect(beoordeelCapaciteit({ ...rustig, serverGeheugen: 0.72 }).map(m => m.sleutel)).toEqual(['database-geheugen:waarschuwing'])
+    expect(beoordeelCapaciteit({ ...rustig, serverGeheugen: 0.93 }).map(m => m.sleutel)).toEqual(['database-geheugen:kritiek'])
+    expect(beoordeelCapaciteit({ ...rustig, serverGeheugen: null })).toEqual([])
+  })
+
   it('geen streepjes als leesteken in de meldingen', () => {
     const alles = beoordeelCapaciteit({ resendPlan: 'gratis', mailDag: 95, mailMaand: 2900, dbBytes: DB_LIMIET_BYTES, anthropic429Dag: 2, actieveGebruikers: 200 })
     for (const m of alles) expect(m.tekst).not.toMatch(/[—–]/)

@@ -65,6 +65,10 @@
       "schedule": "5 4 1 * *"
     },
     {
+      "path": "/api/cron/database-wacht",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/capaciteitswacht",
       "schedule": "30 7 * * *"
     },

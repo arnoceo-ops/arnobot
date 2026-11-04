@@ -13,6 +13,8 @@ export type Meting = {
   /** Actieve databaseverbindingen en het maximum van de server, null/afwezig als de SQL-functie nog niet bestaat. */
   dbVerbindingen?: number | null
   dbMaxVerbindingen?: number | null
+  /** Aandeel gebruikt geheugen van de databaseserver (0 tot 1), null/afwezig als de meting ontbreekt. */
+  serverGeheugen?: number | null
   /** Aantal Anthropic-limietfouten (429) in de afgelopen dag. */
   anthropic429Dag: number
   actieveGebruikers: number
@@ -108,6 +110,17 @@ export function beoordeelCapaciteit(m: Meting): Melding[] {
         sleutel: `database-verbindingen:${n}`,
         niveau: n,
         tekst: `Supabase: ${m.dbVerbindingen} van ${m.dbMaxVerbindingen} databaseverbindingen in gebruik (${Math.round((m.dbVerbindingen / m.dbMaxVerbindingen) * 100)}%). De server wordt krap: upgrade de computergrootte (Supabase, Project Settings, Infrastructure, Compute size, van Micro naar Small).`,
+      })
+    }
+  }
+
+  if (m.serverGeheugen != null) {
+    const n = niveauVan(m.serverGeheugen, 1)
+    if (n) {
+      meldingen.push({
+        sleutel: `database-geheugen:${n}`,
+        niveau: n,
+        tekst: `Supabase: ${Math.round(m.serverGeheugen * 100)}% van het geheugen van de databaseserver in gebruik. Bij een volle server wordt de database traag of herstart hij. Upgrade de computergrootte (Supabase, Project Settings, Infrastructure, Compute size, van Micro naar Small). Dit duurt een paar minuten downtime, doe het buiten de piekuren.`,
       })
     }
   }

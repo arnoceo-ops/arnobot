@@ -81,3 +81,20 @@ export async function leesTellers(): Promise<Tellers> {
   ])
   return { mailDag: Number(mailDag ?? 0), mailMaand: Number(mailMaand ?? 0), anthropic429Dag: Number(a429 ?? 0) }
 }
+
+/**
+ * Eén melding per sleutel per dag (kritiek) of per week (waarschuwing). Mijlpalen eenmalig.
+ * Gedeeld door de dagelijkse capaciteitswacht en de database-wacht van elke 15 minuten.
+ * Zonder Redis liever een dubbele melding dan geen melding.
+ */
+export async function nieuwMelden(sleutel: string, niveau: string): Promise<boolean> {
+  const r = redis()
+  if (!r) return true
+  const ttl = niveau === 'mijlpaal' ? 400 * 86400 : niveau === 'waarschuwing' ? 7 * 86400 : 86400
+  try {
+    const gezet = await r.set(`arnobot:capaciteitswacht:${sleutel}`, dagSleutel(), { nx: true, ex: ttl })
+    return gezet !== null
+  } catch {
+    return true
+  }
+}

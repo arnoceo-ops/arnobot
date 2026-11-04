@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Redis } from '@upstash/redis'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
-import { leesTellers, dagSleutel } from '@/lib/capaciteit'
+import { leesTellers, nieuwMelden } from '@/lib/capaciteit'
 import { beoordeelCapaciteit, type ResendPlan } from '@/lib/capaciteitDrempels'
 
 // Dagelijks 07:30 UTC. Vergelijkt het echte verbruik met de limiet van elk plan waar we op zitten
@@ -11,21 +10,6 @@ import { beoordeelCapaciteit, type ResendPlan } from '@/lib/capaciteitDrempels'
 // Vervangt de maandelijkse milestone-check (2026-11-04).
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
-function redis(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  return url && token ? new Redis({ url, token }) : null
-}
-
-/** Eén melding per sleutel per dag (kritiek) of per week (waarschuwing). Mijlpalen eenmalig. */
-async function nieuwMelden(sleutel: string, niveau: string): Promise<boolean> {
-  const r = redis()
-  if (!r) return true
-  const ttl = niveau === 'mijlpaal' ? 400 * 86400 : niveau === 'waarschuwing' ? 7 * 86400 : 86400
-  const gezet = await r.set(`arnobot:capaciteitswacht:${sleutel}`, dagSleutel(), { nx: true, ex: ttl })
-  return gezet !== null
-}
 
 export async function GET(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
