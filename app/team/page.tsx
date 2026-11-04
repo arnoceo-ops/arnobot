@@ -105,21 +105,31 @@ export default async function TeamPage() {
         .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
         .tm-step p { font-size: 16px; line-height: 1.65; color: #cbd5e1; margin-top: 12px; }
 
-        /* Zes dingen die geen manager kan: grote, brede blokken */
-        .tm-big-list { margin-top: 8px; }
-        .tm-big { display: grid; grid-template-columns: 120px 1fr; gap: 32px; align-items: start; padding: 56px 0; border-top: 1px solid #1f2937; }
-        .tm-big-num { font-family: 'Oswald', sans-serif; font-size: 96px; font-weight: 700; line-height: 0.9; color: #f59e0b; }
-        .tm-big h3 {
-          font-family: 'Oswald', sans-serif; font-size: 38px; font-weight: 700; text-transform: uppercase;
-          color: #f8fafc; line-height: 1.1; margin-bottom: 16px;
+        /* Zes dingen die geen manager kan: schermvullende, gecentreerde blokken */
+        .tm-big-list { margin-top: 56px; }
+        .tm-big {
+          position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+          min-height: 78vh; padding: 96px 24px; text-align: center; border-top: 1px solid #1f2937;
         }
-        .tm-big p { font-size: 19px; line-height: 1.75; color: #cbd5e1; max-width: 56ch; }
+        .tm-big:nth-child(even) { background: #0b1220; }
+        .tm-big-num {
+          position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+          font-family: 'Oswald', sans-serif; font-weight: 700; line-height: 1;
+          font-size: clamp(260px, 42vw, 620px); color: rgba(245,158,11,0.07); user-select: none; pointer-events: none;
+        }
+        .tm-big-body { position: relative; max-width: 820px; }
+        .tm-big h3 {
+          font-family: 'Oswald', sans-serif; font-size: clamp(38px, 6vw, 80px); font-weight: 700; text-transform: uppercase;
+          color: #f8fafc; line-height: 1.04; margin-bottom: 28px; letter-spacing: 0.005em;
+        }
+        .tm-big p { font-size: clamp(18px, 2vw, 24px); line-height: 1.65; color: #cbd5e1; max-width: 36ch; margin: 0 auto; }
 
         .tm-seven {
-          text-align: center; padding: 72px 32px; margin: 24px 0 56px;
-          background: linear-gradient(180deg, #1e293b, #172033); border: 1px solid #f59e0b; border-radius: 16px;
+          text-align: center; padding: 140px 24px; background: #f59e0b; color: #111827;
         }
-        .tm-seven p:not(.tm-label) { font-size: 20px; line-height: 1.75; color: #e2e8f0; max-width: 52ch; margin: 18px auto 0; }
+        .tm-seven .tm-label { color: #111827; opacity: 0.7; }
+        .tm-seven .tm-h2 { color: #111827; font-size: clamp(44px, 8vw, 104px); line-height: 1; }
+        .tm-seven p:not(.tm-label) { font-size: clamp(19px, 2.2vw, 26px); line-height: 1.6; color: #1f2937; max-width: 34ch; margin: 32px auto 0; }
 
         /* Prijs */
 
@@ -193,45 +203,47 @@ export default async function TeamPage() {
           </p>
         </section>
 
+      </div>
+
         <div className="tm-big-list">
           <div className="tm-big">
             <div className="tm-big-num">1</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Overal tegelijk</h3>
               <p>Jij coacht één verkoper per keer. ArnoBot is er voor iedereen tegelijk: vlak voor een lastig gesprek, laat op de avond, in het weekend na een verloren deal. Precies op het moment dat coaching het meeste oplevert, en jij er niet bent.</p>
             </div>
           </div>
           <div className="tm-big">
             <div className="tm-big-num">2</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Nooit een slechte dag</h3>
               <p>Geen vermoeidheid, geen vakantie, geen druk. Elke verkoper krijgt altijd dezelfde volle aandacht, ook nummer twintig op de lijst, ook op vrijdagmiddag na een zware week.</p>
             </div>
           </div>
           <div className="tm-big">
             <div className="tm-big-num">3</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Perfect geheugen</h3>
               <p>Wat een verkoper drie maanden geleden beloofde, legt ArnoBot naast wat hij vandaag zegt. Elk patroon, elke afspraak, elke terugval. Voor elk teamlid tegelijk, zonder dat jij iets hoeft bij te houden.</p>
             </div>
           </div>
           <div className="tm-big">
             <div className="tm-big-num">4</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Geen politiek en geen favoriet</h3>
               <p>Feedback van een manager wordt altijd een beetje gekleurd door de relatie. ArnoBot geeft iedereen dezelfde eerlijke spiegel, gebaseerd op iemands eigen patronen en niet op sympathie.</p>
             </div>
           </div>
           <div className="tm-big">
             <div className="tm-big-num">5</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Eerlijkheid die jij nooit krijgt</h3>
               <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is of een deal laat liggen. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese. Daardoor hoor je eindelijk wat er echt speelt.</p>
             </div>
           </div>
           <div className="tm-big">
             <div className="tm-big-num">6</div>
-            <div>
+            <div className="tm-big-body">
               <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
               <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Met ArnoBot krijgt verkoper twintig dezelfde coaching als verkoper één. Je team groeit, je coachingkwaliteit niet.</p>
             </div>
@@ -247,6 +259,8 @@ export default async function TeamPage() {
             coacht ook jou: eerlijk, zonder agenda, op elk moment.
           </p>
         </section>
+
+      <div className="tm-wrap">
         <section className="tm-section">
           <p className="tm-label">Hoe het werkt</p>
           <h2 className="tm-h2">Meteen aan de gang. Opgezet binnen een uur.</h2>
