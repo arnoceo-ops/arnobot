@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis'
+import { notifyTelegram } from '@/lib/cron-notify'
 
 // Eigen tellers voor de capaciteitswacht (cron/capaciteitswacht), in Redis. Bewust zelf geteld:
 // Resend heeft geen gebruiksendpoint dat we kunnen bevragen, en Anthropic geeft alleen een
@@ -34,11 +35,30 @@ export async function telMail(): Promise<void> {
   }
 }
 
-/** Telt een Anthropic-limietfout (HTTP 429). Andere fouten (overbelasting, 5xx) tellen niet: dat is Anthropic zelf, geen tier-probleem. */
+/** Herkent de Anthropic-fout bij een leeg tegoed (HTTP 400, "credit balance is too low"). */
+export function isSaldoOp(err: unknown): boolean {
+  const e = err as { status?: number; message?: string } | null
+  return e?.status === 400 && /credit balance/i.test(e?.message ?? '')
+}
+
+/**
+ * Telt een Anthropic-limietfout (HTTP 429) voor het dagrapport. Andere fouten (overbelasting, 5xx)
+ * tellen niet: dat is Anthropic zelf, geen tier-probleem. Een leeg tegoed (400) is wel urgent en
+ * wacht niet op de dagelijkse cron: dat geeft meteen een Telegram-melding, hooguit één per uur.
+ */
 export async function telAnthropicLimiet(err: unknown): Promise<void> {
   try {
-    if ((err as { status?: number } | null)?.status !== 429) return
     const r = redis()
+    if (isSaldoOp(err)) {
+      const nieuw = r ? await r.set('arnobot:capaciteit:saldo-op-gemeld', '1', { nx: true, ex: 3600 }) : 'OK'
+      if (nieuw) {
+        await notifyTelegram(
+          'ArnoBot capaciteit: ACTIE NODIG\n\nHet Anthropic-tegoed is op, de chat geeft gebruikers nu geen antwoord. Open console.anthropic.com, Billing, en controleer of de automatische bijvulling is mislukt (kaart geweigerd?). Koop direct credits.',
+        )
+      }
+      return
+    }
+    if ((err as { status?: number } | null)?.status !== 429) return
     if (!r) return
     const sleutel = ANTHROPIC_429(dagSleutel())
     await r.incr(sleutel)
