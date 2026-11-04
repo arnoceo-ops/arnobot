@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml, getEmailTemplate, isValidEmail } from '@/lib/email-templates'
 import { meldOpzegging } from '@/lib/billing/opzeggen'
 
@@ -9,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST() {
   const { userId } = await auth()
@@ -69,14 +68,14 @@ export async function POST() {
   // Bevestiging aan de gebruiker, belofte uit de voorwaarden (artikel 7).
   if (isValidEmail(user.email)) {
     const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, { userId })
-    await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
+    await verstuurMailZacht({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
   }
 
   const datum = new Date(now).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
   const teamWaarschuwing = isManager
     ? `<br><br><strong style="color:#cc2200;">Dit is een teamabonnement met ${teamMemberCount ?? 'onbekend aantal'} leden. Bij het verwerken van deze opzegging moet je ook hun toegang zelf beëindigen, niet alleen die van de manager.</strong>`
     : ''
-  await resend.emails.send({
+  await verstuurMailZacht({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
     subject: `Opzegging${isManager ? ' (TEAM)' : ''}: ${user.voornaam || user.email || userId}`,

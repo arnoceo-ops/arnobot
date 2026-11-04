@@ -597,6 +597,7 @@ Elke cron die een e-mail naar gebruikers stuurt:
 2. Voeg metadata toe in `EMAIL_META` (label, description, category) op de **chronologisch juiste positie** in de lifecycle
 3. Voeg een `case` toe in `getEmailTemplate()` voor de inhoud
 4. Gebruik `getEmailTemplate()` in de cron route — **nooit** inline `emailHtml()` direct aanroepen
+5. Verstuur via `lib/mail.ts`: `verstuurMail` (gooit bij een weigering, voor crons die daarna een logregel schrijven) of `verstuurMailZacht` (gooit nooit, voor mail die een flow niet mag breken). **Nooit** een kale `resend.emails.send(...)`: de Resend-bibliotheek gooit geen fout bij een weigering (daglimiet, ongeldig adres), dus de mail ging stil verloren terwijl hij als verzonden gelogd werd (gevonden 2026-11-04). Afgedwongen door `scripts/check-mail-send.mjs` (blokkerende CI-stap). Een limiet geeft één Telegram-melding per 6 uur.
 
 Zo verschijnt elke mail automatisch in de admin CRONS-pagina (`/bot/admin/emails`) in de juiste volgorde en is direct testbaar zonder code aan te passen.
 

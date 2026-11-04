@@ -3,13 +3,12 @@
 export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { runMetaAnalyse } from '@/lib/metaAnalyse'
 import { stripBevindingenBlok } from '@/lib/metaAnalyseTrend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -86,7 +85,7 @@ export async function GET(req: NextRequest) {
       </div>
     `
 
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'ArnoBot <arno@arno.bot>',
       to: 'arno@arno.bot',
       subject: `Meta-analyse ArnoBot ${date}`,

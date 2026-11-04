@@ -1,7 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { isValidEmail, emailHtml } from '@/lib/email-templates'
 import { isTeamCovered } from '@/lib/teamAccess'
 
@@ -9,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 function generateCode(firstName: string): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -139,7 +138,7 @@ export async function POST(req: NextRequest) {
   const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
   if (isValidEmail(referrer.email)) {
     const body = `<strong style="color:#f1f5f9;">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b;">${code.toUpperCase()}</strong>.<br><br>Kiest ${newUserName} voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, maximaal je eigen maandprijs. Bij Basic ontvang je geen tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'ArnoBot <noreply@arno.bot>',
       to: referrer.email,
       subject: `${newUserName} heeft zich aangemeld via jouw referral code`,

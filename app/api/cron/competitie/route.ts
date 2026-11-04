@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
@@ -8,7 +8,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const VALID_ROLES = ['Verkoper', 'Salesbaas', 'Eindbaas'] as const
 type Rol = typeof VALID_ROLES[number]
@@ -213,7 +212,7 @@ export async function GET(req: NextRequest) {
     day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam',
   })
 
-  await resend.emails.send({
+  await verstuurMailZacht({
     from: 'Arno <arno@arno.bot>',
     to: 'arno@arno.bot',
     subject: `Competitie ${date}`,

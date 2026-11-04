@@ -20,7 +20,7 @@ const ROOT = join(import.meta.dirname, '..')
 const CRON_DIR = join(ROOT, 'app/api/cron')
 
 // Wanneer de route een van deze aanroept of importeert, verstuurt hij mail.
-const SEND_TOKENS = /\.emails\.send\(|\bsendBlogMail\w*|lib\/billing\/mails|lib\/billing\/teamMails|lib\/teamLeadNotify|\bsendEmail\(/
+const SEND_TOKENS = /\.emails\.send\(|\bverstuurMail(?:Zacht)?\(|\bsendBlogMail\w*|lib\/billing\/mails|lib\/billing\/teamMails|lib\/teamLeadNotify|\bsendEmail\(/
 
 // Tekenen van een verzendlogboek, verzendvlag of wachtrijstatus die een tweede verzending tegenhoudt.
 const DEDUPE_TOKENS = [

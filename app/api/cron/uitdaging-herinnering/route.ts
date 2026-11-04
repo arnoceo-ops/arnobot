@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -9,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Oplopende tussenpozen (Ebbinghaus-vergeetcurve, zie docs/SALES_BIJBEL.md), niet één
 // willekeurig moment. Stuurt alleen als actie_status nog nooit is ingevuld (heeft de
@@ -85,7 +84,7 @@ export async function GET(req: NextRequest) {
         })
 
         try {
-          await resend.emails.send({
+          await verstuurMail({
             from: 'ArnoBot <info@arno.bot>',
             to: user.email,
             subject: template.subject,

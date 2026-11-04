@@ -1,13 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function DELETE() {
   const { userId } = await auth()
@@ -23,7 +22,7 @@ export async function DELETE() {
     const naam = [user?.voornaam, user?.achternaam].filter(Boolean).join(' ') || 'Onbekend'
     const email = user?.email || 'Onbekend'
 
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'ArnoBot <noreply@arno.bot>',
       to: 'delete@arno.bot',
       subject: `Verwijderverzoek: ${naam}`,

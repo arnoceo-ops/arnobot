@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
@@ -17,7 +17,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic()
 
 const PARALLEL = 5
@@ -104,7 +103,7 @@ export async function GET(req: NextRequest) {
       if (dry) { voorbeelden.push({ userId: user.user_id, thema: keuze.thema, aantal: keuze.aantal, ...uitvoer, subject: template.subject }); return }
 
       try {
-        await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject: template.subject, html: template.html })
+        await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject: template.subject, html: template.html })
         sent++
         // Direct na het verzenden vastleggen. Mislukt dit, dan melden we het: zonder logregel kan een
         // volgende aanroep dezelfde mail opnieuw sturen.

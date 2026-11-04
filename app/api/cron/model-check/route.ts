@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
 import { stripDashPunctuation } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 export const maxDuration = 300
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const REPO = 'arnoceo-ops/arnobot'
@@ -238,7 +237,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'Arno <arno@arno.bot>',
       to: 'model@arno.bot',
       subject: `Modelcheck ${date}`,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
@@ -12,7 +12,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 const anthropic = new Anthropic()
 
 export async function GET(req: NextRequest) {
@@ -169,7 +168,7 @@ export async function GET(req: NextRequest) {
     const template = getEmailTemplate(type, naam, false, { userId: user.user_id, nudgeQuestion })
 
     try {
-      await resend.emails.send({
+      await verstuurMail({
         from: 'ArnoBot <info@arno.bot>',
         to: user.email,
         subject: template.subject,

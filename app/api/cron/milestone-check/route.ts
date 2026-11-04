@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -9,7 +9,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const MILESTONE = 50
 
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
       <p style="font-family:Arial,sans-serif;font-size:14px;color:#9ca3af;line-height:1.8;margin:0;">${body}</p>
     </div>`
 
-  await resend.emails.send({
+  await verstuurMailZacht({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'hq@arno.bot',
     subject: `ArnoBot heeft ${total} actieve gebruikers: tijd voor Pro-upgrades`,

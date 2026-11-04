@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -56,7 +57,10 @@ export async function GET(req: NextRequest) {
 
     async function send(type: EmailType, options?: { sessionCount?: number }) {
       const { subject, html } = getEmailTemplate(type, naam, false, options)
-      await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html })
+      // verstuurMail gooit bij een weigering (limiet, ongeldig adres): dan schrijft de aanroeper hieronder
+      // GEEN logregel en probeert de volgende run opnieuw. Met een kale resend.emails.send ging de mail
+      // stil verloren terwijl hij als verzonden gelogd werd.
+      await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html })
     }
 
     // --- Trial voorbij: toegang stopt (afrekenen kan via /bot/doorgaan) ---

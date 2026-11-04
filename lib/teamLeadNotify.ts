@@ -1,8 +1,7 @@
 import { clerkClient } from '@clerk/nextjs/server'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { SupabaseClient } from '@supabase/supabase-js'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Lead-signaal: iemand die via een gewone trial binnenkomt en bij de intake aangeeft ArnoBot
 // voor zijn team te willen (geen bestaand Team-account, want dan is command_manager gezet en
@@ -36,7 +35,7 @@ export async function notifyTeamLead(
     const email = user.emailAddresses[0]?.emailAddress ?? 'onbekend'
     const naam = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'onbekend'
     const linkedin = (huidig?.linkedin as string | null) || 'onbekend'
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'ArnoBot <info@arno.bot>',
       to: 'waitlist@arno.bot',
       subject: 'Team-lead vanuit de trial-onboarding',

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -34,7 +33,7 @@ export async function GET(req: NextRequest) {
   `
 
   try {
-    await resend.emails.send({
+    await verstuurMailZacht({
       from: 'ArnoBot <arno@arno.bot>',
       to: 'arno@arno.bot',
       subject: 'Meta-analyse over 4 dagen, vul je input in',

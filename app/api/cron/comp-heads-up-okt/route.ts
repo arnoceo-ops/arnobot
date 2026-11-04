@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import { getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
@@ -15,7 +15,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const META_FLAG = 'comp_heads_up_okt_sent'
 const DOELGROEP = [
@@ -55,7 +54,7 @@ export async function GET(req: NextRequest) {
     for (const u of users ?? []) {
       if (!u.email || !u.is_active) { overgeslagen.push(u.email ?? '?'); continue }
       const { subject, html } = getEmailTemplate('testtoegang_afloop', u.voornaam || 'daar')
-      await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: u.email, subject, html })
+      await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: u.email, subject, html })
       sent++
     }
 

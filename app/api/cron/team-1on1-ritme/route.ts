@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { clerkClient } from '@clerk/nextjs/server'
-import { Resend } from 'resend'
+import { verstuurMail } from '@/lib/mail'
 import { Redis } from '@upstash/redis'
 import { getEmailTemplate, isValidEmail } from '@/lib/email-templates'
 import { getLagendeLeden } from '@/lib/team1on1Ritme'
@@ -26,7 +26,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -159,7 +158,7 @@ export async function GET(req: NextRequest) {
         if (belLeeftijdUur >= MAIL1_WACHTTIJD_UUR) {
           const template = getEmailTemplate('team_1on1_ritme_nudge', managerNaam, false, { userId: m.user_id, laggingNames: namenLijst })
           try {
-            await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: managerEmail, subject: template.subject, html: template.html })
+            await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: managerEmail, subject: template.subject, html: template.html })
             await redis.set(mail1Key, new Date().toISOString(), { ex: REDIS_TTL_SECONDEN })
             mail1Verstuurd++
           } catch (e) {
@@ -176,7 +175,7 @@ export async function GET(req: NextRequest) {
         if (dagenSindsSignaal >= MAIL2_WACHTTIJD_DAGEN) {
           const template = getEmailTemplate('team_1on1_ritme_herinnering', managerNaam, false, { userId: m.user_id, laggingNames: namenLijst })
           try {
-            await resend.emails.send({ from: 'ArnoBot <info@arno.bot>', to: managerEmail, subject: template.subject, html: template.html })
+            await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: managerEmail, subject: template.subject, html: template.html })
             await redis.set(mail2Key, new Date().toISOString(), { ex: REDIS_TTL_SECONDEN })
             mail2Verstuurd++
           } catch (e) {

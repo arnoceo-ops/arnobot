@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const TO = ['arno@arno.bot']
 const NAAM = 'Arno'
@@ -119,7 +118,7 @@ export async function GET(req: NextRequest) {
 
   for (const email of emails) {
     try {
-      await resend.emails.send({
+      await verstuurMailZacht({
         from: 'ArnoBot <info@arno.bot>',
         to: TO,
         subject: `[TEST] ${email.subject}`,

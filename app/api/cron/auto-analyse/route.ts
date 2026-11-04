@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_NO_DASH, RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -14,7 +14,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -106,7 +105,7 @@ ${RULE_ANALYSE_BUITEN_CHAT}`,
     if (isValidEmail(userRow?.email)) {
       const voornaam = userRow.voornaam || 'daar'
       const { subject, html } = getEmailTemplate('bieb_bijgewerkt', voornaam, false, { sessionCount: batch.length })
-      resend.emails.send({
+      verstuurMailZacht({
         from: 'ArnoBot <info@arno.bot>',
         to: userRow.email,
         subject,

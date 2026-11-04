@@ -298,6 +298,12 @@ jobs:
         # Toegevoegd 2026-11-01 nadat cron/patroon-samenvatting door een handmatige aanroep zes keer
         # dezelfde mail naar elke ontvanger stuurde. Bevestigde legitieme gevallen in KNOWN_SAFE.
 
+      - name: Controleer dat elke mail via Resend zijn foutmelding uitleest (lib/mail.ts)
+        run: node scripts/check-mail-send.mjs
+        # Blokkeert bewust wel. De Resend-bibliotheek gooit geen fout bij een weigering (limiet,
+        # ongeldig adres), dus een kale `await resend.emails.send(...)` verliest mails stil.
+        # Toegevoegd 2026-11-04 na de vondst in cron/trial-emails.
+
   missing-loaded-gate:
     name: Client-fetch zonder loaded-gate (informatief, blokkeert niet)
     runs-on: ubuntu-latest

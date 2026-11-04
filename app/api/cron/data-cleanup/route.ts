@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
+import { verstuurMailZacht } from '@/lib/mail'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -66,7 +65,7 @@ export async function GET(req: NextRequest) {
     </ol>
   `
 
-  await resend.emails.send({
+  await verstuurMailZacht({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'hq@arno.bot',
     subject: `Data-opruiming: ${users.length} gebruiker${users.length !== 1 ? 's' : ''} te verwerken`,
