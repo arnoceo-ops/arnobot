@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { kiesPatroonThema, parsePatroonUitvoer, bouwSparUrl, patroonMailBeschikbaarVoor, themaLeesbaar } from '@/lib/patroonMail'
+import { kiesPatroonThema, parsePatroonUitvoer, bouwSparUrl, patroonMailBeschikbaarVoor, PATROON_MAIL_VOOR_IEDEREEN_VANAF, themaLeesbaar } from '@/lib/patroonMail'
 import { FOUNDER_USER_ID, E2E_TEST_USER_ID } from '@/lib/internalTestAccounts'
 import { PERSONA_BESCHRIJVINGEN, SPAR_WEERSTANDEN } from '@/lib/sparringPersonas'
 
@@ -84,10 +84,22 @@ describe('patroonMailBeschikbaarVoor', () => {
     expect(patroonMailBeschikbaarVoor(FOUNDER_USER_ID)).toBe(true)
     expect(patroonMailBeschikbaarVoor('user_ergens')).toBe(false)
   })
-  it('opent voor iedereen met PATROON_MAIL=aan, maar nooit voor testaccounts of nepleden', () => {
+  it('met PATROON_MAIL=aan nog steeds alleen de oprichter vóór 2027-01-01', () => {
     process.env.PATROON_MAIL = 'aan'
-    expect(patroonMailBeschikbaarVoor('user_ergens')).toBe(true)
-    expect(patroonMailBeschikbaarVoor(E2E_TEST_USER_ID)).toBe(false)
-    expect(patroonMailBeschikbaarVoor('fake_benny')).toBe(false)
+    const decemberRonde = Date.parse('2026-12-01T04:20:00Z')
+    expect(patroonMailBeschikbaarVoor('user_ergens', decemberRonde)).toBe(false)
+    expect(patroonMailBeschikbaarVoor(FOUNDER_USER_ID, decemberRonde)).toBe(true)
+    expect(patroonMailBeschikbaarVoor('user_ergens', PATROON_MAIL_VOOR_IEDEREEN_VANAF - 1)).toBe(false)
+  })
+  it('opent voor iedereen vanaf 2027-01-01 met PATROON_MAIL=aan, maar nooit voor testaccounts of nepleden', () => {
+    process.env.PATROON_MAIL = 'aan'
+    const januariRonde = Date.parse('2027-01-01T04:20:00Z')
+    expect(patroonMailBeschikbaarVoor('user_ergens', januariRonde)).toBe(true)
+    expect(patroonMailBeschikbaarVoor(E2E_TEST_USER_ID, januariRonde)).toBe(false)
+    expect(patroonMailBeschikbaarVoor('fake_benny', januariRonde)).toBe(false)
+  })
+  it('zonder PATROON_MAIL=aan blijft het ook na 2027-01-01 alleen de oprichter', () => {
+    delete process.env.PATROON_MAIL
+    expect(patroonMailBeschikbaarVoor('user_ergens', Date.parse('2027-03-01T00:00:00Z'))).toBe(false)
   })
 })

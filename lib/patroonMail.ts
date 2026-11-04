@@ -18,12 +18,16 @@ export const PATROON_SAMENVATTING_DAGEN = 42
 // Wie de afgelopen dagen al gespard heeft, krijgt geen mail om dat te gaan doen.
 export const PATROON_SPAR_RUST_DAGEN = 14
 
-// Eerst alleen de oprichter (zoals bij live transcriptie). PATROON_MAIL=aan opent het voor iedereen.
-// De interne testaccounts en de nepleden van Team Hippios krijgen nooit een mail.
-export function patroonMailBeschikbaarVoor(userId: string): boolean {
+// Eerst alleen de oprichter. Voor iedereen pas vanaf 2027-01-01 (besloten door Arno, 2026-11-04):
+// PATROON_MAIL=aan staat in Vercel, maar opent het pas vanaf die datum, dus de cron van 2026-12-01
+// mailt nog alleen de oprichter. De datum staat in code zodat hij niet vergeten wordt en niet te
+// vroeg ingaat. De interne testaccounts en de nepleden van Team Hippios krijgen nooit een mail.
+export const PATROON_MAIL_VOOR_IEDEREEN_VANAF = Date.parse('2027-01-01T00:00:00Z')
+
+export function patroonMailBeschikbaarVoor(userId: string, nu: number = Date.now()): boolean {
   if (isInternalTestUser(userId)) return false
-  if (process.env.PATROON_MAIL === 'aan') return true
-  return userId === FOUNDER_USER_ID
+  if (userId === FOUNDER_USER_ID) return true
+  return process.env.PATROON_MAIL === 'aan' && nu >= PATROON_MAIL_VOOR_IEDEREEN_VANAF
 }
 
 export type PatroonSessie = { title: string | null; themas: string[] | null; created_at: string; summary?: string | null }
