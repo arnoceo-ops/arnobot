@@ -45,6 +45,13 @@ describe('beoordeelCapaciteit', () => {
     expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 150 }).map(m => m.sleutel)).toEqual(['mijlpaal:50', 'mijlpaal:75', 'mijlpaal:150'])
   })
 
+  it('databaseverbindingen: waarschuwing bij 70%, kritiek bij 90%, niets zonder meting', () => {
+    expect(beoordeelCapaciteit({ ...rustig, dbVerbindingen: 10, dbMaxVerbindingen: 60 })).toEqual([])
+    expect(beoordeelCapaciteit({ ...rustig, dbVerbindingen: 42, dbMaxVerbindingen: 60 }).map(m => m.sleutel)).toEqual(['database-verbindingen:waarschuwing'])
+    expect(beoordeelCapaciteit({ ...rustig, dbVerbindingen: 54, dbMaxVerbindingen: 60 }).map(m => m.sleutel)).toEqual(['database-verbindingen:kritiek'])
+    expect(beoordeelCapaciteit({ ...rustig, dbVerbindingen: null, dbMaxVerbindingen: null })).toEqual([])
+  })
+
   it('geen streepjes als leesteken in de meldingen', () => {
     const alles = beoordeelCapaciteit({ resendPlan: 'gratis', mailDag: 95, mailMaand: 2900, dbBytes: DB_LIMIET_BYTES, anthropic429Dag: 2, actieveGebruikers: 200 })
     for (const m of alles) expect(m.tekst).not.toMatch(/[—–]/)

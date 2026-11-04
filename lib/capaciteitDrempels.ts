@@ -10,6 +10,9 @@ export type Meting = {
   mailMaand: number
   /** Grootte van de database in bytes, null als de SQL-functie nog niet bestaat. */
   dbBytes: number | null
+  /** Actieve databaseverbindingen en het maximum van de server, null/afwezig als de SQL-functie nog niet bestaat. */
+  dbVerbindingen?: number | null
+  dbMaxVerbindingen?: number | null
   /** Aantal Anthropic-limietfouten (429) in de afgelopen dag. */
   anthropic429Dag: number
   actieveGebruikers: number
@@ -94,6 +97,17 @@ export function beoordeelCapaciteit(m: Meting): Melding[] {
         sleutel: `database:${n}`,
         niveau: n,
         tekst: `Supabase: database ${gb(m.dbBytes)} van ${gb(DB_LIMIET_BYTES)} GB (${Math.round((m.dbBytes / DB_LIMIET_BYTES) * 100)}%). Boven de limiet wordt Pro-opslag bijbetaald of de database beperkt: opruimen of de opslag verhogen (Supabase, Settings, Billing).`,
+      })
+    }
+  }
+
+  if (m.dbVerbindingen != null && m.dbMaxVerbindingen != null) {
+    const n = niveauVan(m.dbVerbindingen, m.dbMaxVerbindingen)
+    if (n) {
+      meldingen.push({
+        sleutel: `database-verbindingen:${n}`,
+        niveau: n,
+        tekst: `Supabase: ${m.dbVerbindingen} van ${m.dbMaxVerbindingen} databaseverbindingen in gebruik (${Math.round((m.dbVerbindingen / m.dbMaxVerbindingen) * 100)}%). De server wordt krap: upgrade de computergrootte (Supabase, Project Settings, Infrastructure, Compute size, van Micro naar Small).`,
       })
     }
   }

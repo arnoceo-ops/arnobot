@@ -42,10 +42,20 @@ export async function GET(req: NextRequest) {
     const { data: grootte, error: grootteFout } = await supabase.rpc('arnobot_db_grootte')
     if (!grootteFout && grootte !== null && grootte !== undefined) dbBytes = Number(grootte)
 
+    // Databaseverbindingen via een SQL-functie (docs/sql/2026-11-04-db-gezondheid.sql). Ontbreekt die, dan slaan we dit over.
+    let dbVerbindingen: number | null = null
+    let dbMaxVerbindingen: number | null = null
+    const { data: gezondheid, error: gezondheidFout } = await supabase.rpc('arnobot_db_gezondheid')
+    if (!gezondheidFout && gezondheid) {
+      dbVerbindingen = Number((gezondheid as { verbindingen?: number }).verbindingen ?? NaN)
+      dbMaxVerbindingen = Number((gezondheid as { max_verbindingen?: number }).max_verbindingen ?? NaN)
+      if (Number.isNaN(dbVerbindingen) || Number.isNaN(dbMaxVerbindingen)) dbVerbindingen = dbMaxVerbindingen = null
+    }
+
     const tellers = await leesTellers()
     const resendPlan: ResendPlan = process.env.RESEND_PLAN === 'pro' ? 'pro' : 'gratis'
 
-    const meldingen = beoordeelCapaciteit({ resendPlan, ...tellers, dbBytes, actieveGebruikers })
+    const meldingen = beoordeelCapaciteit({ resendPlan, ...tellers, dbBytes, dbVerbindingen, dbMaxVerbindingen, actieveGebruikers })
 
     const nieuw = []
     for (const m of meldingen) if (await nieuwMelden(m.sleutel, m.niveau)) nieuw.push(m)
@@ -61,6 +71,8 @@ export async function GET(req: NextRequest) {
       resendPlan,
       ...tellers,
       dbBytes,
+      dbVerbindingen,
+      dbMaxVerbindingen,
       gemeld: nieuw.map(m => m.sleutel),
     })
   } catch (err) {
