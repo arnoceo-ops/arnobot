@@ -106,11 +106,6 @@ export default async function TeamPage() {
         }
         .tm-navdemo:hover { background: #f59e0b; color: #111827; }
 
-        /* Steps */
-        .tm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; counter-reset: step; }
-        .tm-step { background: #1e293b; border: 1px solid #374151; border-radius: 12px; padding: 28px 24px; text-align: center; }
-        .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
-        .tm-step p { font-size: 16px; line-height: 1.65; color: #cbd5e1; margin-top: 12px; }
 
         /* Zes dingen die geen manager kan: twee kolommen, rustig en strak */
         .tm-big-list {
@@ -147,7 +142,6 @@ export default async function TeamPage() {
         .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
 
         @media (max-width: 820px) {
-          .tm-steps { grid-template-columns: 1fr; }
           .tm-big-list { grid-template-columns: 1fr; }
           .tm-seven { padding: 48px 20px; }
           .tm-hero { padding: 120px 24px 48px; }
@@ -257,7 +251,7 @@ export default async function TeamPage() {
 
         <section className="tm-seven">
           <p className="tm-label">En dan jijzelf</p>
-          <h2 className="tm-h2">Wie coacht eigenlijk jou?</h2>
+          <h2 className="tm-h2">Wie coacht jou eigenlijk?</h2>
           <p>
             Jij coacht je mensen. Maar wie kijkt naar hoe jij dat doet? Wie helpt jou met je
             1:1&apos;s, met je blinde vlekken, met wat je team van jou nodig heeft? ArnoBot
@@ -266,25 +260,6 @@ export default async function TeamPage() {
         </section>
 
       <div className="tm-wrap">
-        <section className="tm-section">
-          <p className="tm-label">Hoe het werkt</p>
-          <h2 className="tm-h2">Zo werkt het</h2>
-          <div className="tm-steps">
-            <div className="tm-step">
-              <div className="tm-step-num">Stap 1</div>
-              <p>Je maakt een team aan en nodigt je verkopers uit met een link.</p>
-            </div>
-            <div className="tm-step">
-              <div className="tm-step-num">Stap 2</div>
-              <p>Elke verkoper krijgt zijn eigen volledige ArnoBot: sparren, coaching, gespreksanalyses.</p>
-            </div>
-            <div className="tm-step">
-              <div className="tm-step-num">Stap 3</div>
-              <p>Jij ziet het dashboard. Geen invulformulieren, geen extra taken voor je team.</p>
-            </div>
-          </div>
-        </section>
-
         <section className="tm-section">
           <p className="tm-label">Vragen</p>
           <h2 className="tm-h2">Kort antwoord</h2>
