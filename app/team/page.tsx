@@ -105,31 +105,25 @@ export default async function TeamPage() {
         .tm-step-num { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1em; color: #f59e0b; }
         .tm-step p { font-size: 16px; line-height: 1.65; color: #cbd5e1; margin-top: 12px; }
 
-        /* Zes dingen die geen manager kan: schermvullende, gecentreerde blokken */
-        .tm-big-list { margin-top: 56px; }
-        .tm-big {
-          position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
-          min-height: 78vh; padding: 96px 24px; text-align: center; border-top: 1px solid #1f2937;
+        /* Zes dingen die geen manager kan: twee kolommen, rustig en strak */
+        .tm-big-list {
+          max-width: 1040px; margin: 40px auto 0; padding: 0 24px;
+          display: grid; grid-template-columns: 1fr 1fr; column-gap: 72px;
         }
-        .tm-big:nth-child(even) { background: #0b1220; }
-        .tm-big-num {
-          position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-          font-family: 'Oswald', sans-serif; font-weight: 700; line-height: 1;
-          font-size: clamp(260px, 42vw, 620px); color: rgba(245,158,11,0.07); user-select: none; pointer-events: none;
-        }
-        .tm-big-body { position: relative; max-width: 820px; }
+        .tm-big { padding: 40px 0 52px; border-top: 1px solid #2a3547; text-align: left; }
+        .tm-big-num { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.28em; color: #f59e0b; margin-bottom: 18px; }
         .tm-big h3 {
-          font-family: 'Oswald', sans-serif; font-size: clamp(38px, 6vw, 80px); font-weight: 700; text-transform: uppercase;
-          color: #f8fafc; line-height: 1.04; margin-bottom: 28px; letter-spacing: 0.005em;
+          font-family: 'Oswald', sans-serif; font-size: 30px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; line-height: 1.12; letter-spacing: 0.01em; margin-bottom: 14px;
         }
-        .tm-big p { font-size: clamp(18px, 2vw, 24px); line-height: 1.65; color: #cbd5e1; max-width: 36ch; margin: 0 auto; }
+        .tm-big p { font-size: 16px; line-height: 1.75; color: #a3b1c6; max-width: 42ch; }
 
         .tm-seven {
-          text-align: center; padding: 140px 24px; background: #f59e0b; color: #111827;
+          text-align: center; padding: 96px 24px; margin-top: 40px; background: #f59e0b; color: #111827;
         }
-        .tm-seven .tm-label { color: #111827; opacity: 0.7; }
-        .tm-seven .tm-h2 { color: #111827; font-size: clamp(44px, 8vw, 104px); line-height: 1; }
-        .tm-seven p:not(.tm-label) { font-size: clamp(19px, 2.2vw, 26px); line-height: 1.6; color: #1f2937; max-width: 34ch; margin: 32px auto 0; }
+        .tm-seven .tm-label { color: #111827; opacity: 0.65; }
+        .tm-seven .tm-h2 { color: #111827; font-size: clamp(34px, 5vw, 60px); line-height: 1.05; }
+        .tm-seven p:not(.tm-label) { font-size: 18px; line-height: 1.7; color: #1f2937; max-width: 46ch; margin: 22px auto 0; }
 
         /* Prijs */
 
@@ -145,10 +139,9 @@ export default async function TeamPage() {
         .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
 
         @media (max-width: 820px) {
-          .tm-feat { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
-          .tm-feat-flip .tm-feat-frag { order: 0; }
           .tm-steps { grid-template-columns: 1fr; }
-          .tm-six { grid-template-columns: 1fr; }
+          .tm-big-list { grid-template-columns: 1fr; }
+          .tm-seven { padding: 64px 20px; }
           .tm-hero { padding: 120px 24px 48px; }
           .tm-heroshot { margin-top: 4px; }
         }
@@ -207,43 +200,43 @@ export default async function TeamPage() {
 
         <div className="tm-big-list">
           <div className="tm-big">
-            <div className="tm-big-num">1</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">01</div>
+            <div>
               <h3>Overal tegelijk</h3>
               <p>Jij coacht één verkoper per keer. ArnoBot is er voor iedereen tegelijk: vlak voor een lastig gesprek, laat op de avond, in het weekend na een verloren deal. Precies op het moment dat coaching het meeste oplevert, en jij er niet bent.</p>
             </div>
           </div>
           <div className="tm-big">
-            <div className="tm-big-num">2</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">02</div>
+            <div>
               <h3>Nooit een slechte dag</h3>
               <p>Geen vermoeidheid, geen vakantie, geen druk. Elke verkoper krijgt altijd dezelfde volle aandacht, ook nummer twintig op de lijst, ook op vrijdagmiddag na een zware week.</p>
             </div>
           </div>
           <div className="tm-big">
-            <div className="tm-big-num">3</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">03</div>
+            <div>
               <h3>Perfect geheugen</h3>
               <p>Wat een verkoper drie maanden geleden beloofde, legt ArnoBot naast wat hij vandaag zegt. Elk patroon, elke afspraak, elke terugval. Voor elk teamlid tegelijk, zonder dat jij iets hoeft bij te houden.</p>
             </div>
           </div>
           <div className="tm-big">
-            <div className="tm-big-num">4</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">04</div>
+            <div>
               <h3>Geen politiek en geen favoriet</h3>
               <p>Feedback van een manager wordt altijd een beetje gekleurd door de relatie. ArnoBot geeft iedereen dezelfde eerlijke spiegel, gebaseerd op iemands eigen patronen en niet op sympathie.</p>
             </div>
           </div>
           <div className="tm-big">
-            <div className="tm-big-num">5</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">05</div>
+            <div>
               <h3>Eerlijkheid die jij nooit krijgt</h3>
               <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is of een deal laat liggen. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese. Daardoor hoor je eindelijk wat er echt speelt.</p>
             </div>
           </div>
           <div className="tm-big">
-            <div className="tm-big-num">6</div>
-            <div className="tm-big-body">
+            <div className="tm-big-num">06</div>
+            <div>
               <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
               <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Met ArnoBot krijgt verkoper twintig dezelfde coaching als verkoper één. Je team groeit, je coachingkwaliteit niet.</p>
             </div>
