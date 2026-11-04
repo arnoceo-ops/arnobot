@@ -35,10 +35,10 @@ export async function telMail(): Promise<void> {
   }
 }
 
-/** Herkent de Anthropic-fout bij een leeg tegoed (HTTP 400, "credit balance is too low"). */
+/** Herkent de Anthropic-fout bij een leeg tegoed ("credit balance is too low") of een bereikte maandelijkse bestedingslimiet ("reached your specified API usage limits"), beide HTTP 400. */
 export function isSaldoOp(err: unknown): boolean {
   const e = err as { status?: number; message?: string } | null
-  return e?.status === 400 && /credit balance/i.test(e?.message ?? '')
+  return e?.status === 400 && /credit balance|usage limits/i.test(e?.message ?? '')
 }
 
 /**
@@ -53,7 +53,7 @@ export async function telAnthropicLimiet(err: unknown): Promise<void> {
       const nieuw = r ? await r.set('arnobot:capaciteit:saldo-op-gemeld', '1', { nx: true, ex: 3600 }) : 'OK'
       if (nieuw) {
         await notifyTelegram(
-          'ArnoBot capaciteit: ACTIE NODIG\n\nHet Anthropic-tegoed is op, de chat geeft gebruikers nu geen antwoord. Open console.anthropic.com, Billing, en controleer of de automatische bijvulling is mislukt (kaart geweigerd?). Koop direct credits.',
+          'ArnoBot capaciteit: ACTIE NODIG\n\nAnthropic weigert verzoeken: het tegoed is op of de maandelijkse bestedingslimiet is bereikt. De chat geeft gebruikers nu geen antwoord. Open console.anthropic.com: bij Billing de bijvulling (kaart geweigerd?), bij Limits de bestedingslimiet. Verhoog of koop direct.',
         )
       }
       return
