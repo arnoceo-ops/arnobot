@@ -135,7 +135,7 @@ export default async function TeamPage() {
         .tm-faq-q { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; text-transform: uppercase; color: #f8fafc; }
         .tm-faq-a { font-size: 14px; line-height: 1.7; color: #94a3b8; margin: 8px auto 0; max-width: 60ch; }
 
-        .tm-final { text-align: center; padding: 64px 0 8px; }
+        .tm-final { text-align: center; padding: 64px 0 80px; }
         .tm-final .tm-h2 { margin-bottom: 14px; }
         .tm-final p { font-size: 16px; color: #94a3b8; max-width: 46ch; margin: 0 auto 28px; line-height: 1.7; }
 
