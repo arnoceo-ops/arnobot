@@ -45,7 +45,7 @@ export const KRITIEK = 0.9
 export const MIJLPALEN: { aantal: number; tekst: string }[] = [
   {
     aantal: 50,
-    tekst: 'Mijlpaal van 50 actieve gebruikers. Nu doen: Clerk inactivity timeout aanzetten (Clerk Pro), en het WhatsApp-supportnummer overzetten naar het WhatsApp Business Platform met een helpdesktool en een echte DPA met Meta.',
+    tekst: 'Mijlpaal van 50 actieve gebruikers. Nu doen: Clerk Pro nemen (nu Hobby, $240 per jaar): inactivity timeout en sessieduur instellen, MFA overwegen voor managers, 7 dagen logs in plaats van 1 dag. Verder het WhatsApp-supportnummer overzetten naar het WhatsApp Business Platform met een helpdesktool en een echte DPA met Meta.',
   },
   {
     aantal: 75,
