@@ -4,7 +4,6 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { Brain, LineChart, MessageSquare, Mic, Target, Zap } from 'lucide-react'
 import HeroWordRotator from './HeroWordRotator'
-import HomeTestimonialCarousel from './HomeTestimonialCarousel'
 import SiteFooter from './SiteFooter'
 import SignupCTA from './components/SignupCTA'
 
@@ -382,22 +381,6 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* TEAMBLOK */}
-      <section className="teamblok-section">
-        <div className="teamblok">
-          <div className="teamblok-tekst">
-            <p className="section-eyebrow">VOOR SALESLEIDERS</p>
-            <h2 className="section-h2">Leid je een salesteam?</h2>
-            <p>Wat je hierboven ziet, krijgt elke verkoper in je team. Jij krijgt het overzicht erbij: waar iemand vastloopt, wat per verkoper de volgende stap is en een 1:1 die al klaarligt. Je ziet nooit de gesprekken die je verkopers met ArnoBot voeren.</p>
-            <Link href="/team" className="hero-cta">Bekijk ArnoBot voor teams</Link>
-          </div>
-          <figure className="teamblok-shot">
-            <img src="/team/overzicht.jpg" width="1566" height="873" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" loading="lazy" />
-            <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
-          </figure>
-        </div>
-      </section>
-
       {/* WAAROM ARNOBOT */}
       <section className="waarom-section" id="waarom-arnobot">
         <p className="waarom-eyebrow">Waarom ArnoBot</p>
@@ -445,9 +428,20 @@ export default async function ArnoBotLandingPage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="testimonial-section">
-        <HomeTestimonialCarousel />
+      {/* TEAMBLOK */}
+      <section className="teamblok-section">
+        <div className="teamblok">
+          <div className="teamblok-tekst">
+            <p className="section-eyebrow">VOOR SALESLEIDERS</p>
+            <h2 className="section-h2">Leid je een salesteam?</h2>
+            <p>Wat je hierboven ziet, krijgt elke verkoper in je team. Jij krijgt het overzicht erbij: waar iemand vastloopt, wat per verkoper de volgende stap is en een 1:1 die al klaarligt. Je ziet nooit de gesprekken die je verkopers met ArnoBot voeren.</p>
+            <Link href="/team" className="hero-cta">Bekijk ArnoBot voor teams</Link>
+          </div>
+          <figure className="teamblok-shot">
+            <img src="/team/overzicht.jpg" width="1566" height="873" alt="Het teamdashboard: de score van elke verkoper naast elkaar met de teamtrend over de maanden" loading="lazy" />
+            <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
+          </figure>
+        </div>
       </section>
 
       {/* CTA BAND */}
