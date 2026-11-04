@@ -281,6 +281,14 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div>
+                  <div style={fieldLabelStyle}>Resend Pro (${TARIEVEN.resendProUsd}/maand)</div>
+                  <div style={fieldHintStyle}>50.000 mails inbegrepen, geen daglimiet. Gratis plan: 100 per dag en 3.000 per maand</div>
+                </div>
+                <Toggle checked={inputs.resendPro} onChange={v => set('resendPro', v)} />
+              </div>
+              <NumberField label="Resend mails per gebruiker per maand" hint="schatting: trial-, betaal- en nudgemails, daarboven $0,90 per 1.000" value={inputs.resendMailsPerGebruiker} step={1} onChange={v => set('resendMailsPerGebruiker', v)} />
               <NumberField label="Moneybird (€/maand)" hint="Growth-tier, maandelijkse betaling, boekhouding + Mollie-koppeling, altijd aan" value={inputs.moneybirdEur} step={1} onChange={v => set('moneybirdEur', v)} />
               <NumberField label="Revolut Business (€/maand)" hint="Basic-plan, zakelijke rekening, altijd aan" value={inputs.revolutBusinessEur} step={1} onChange={v => set('revolutBusinessEur', v)} />
               <NumberField label="Sentry (€/maand)" value={inputs.sentryEur} onChange={v => set('sentryEur', v)} />
@@ -333,6 +341,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Dicteren (OpenAI spraak naar tekst)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.dicteerKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>AssemblyAI (audio-analyse)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.audioAnalyseKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Upstash overage</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.upstashKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Resend overage (boven 50.000 mails)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.resendOverageKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Team-overhead (1:1-voorbereiding, teamoverzicht)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.teamOverheadKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Betaalprovider (Mollie)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.betaalKosten)}</span></div>
                 <div style={{ ...breakdownLineStyle, borderBottom: 'none' }}>

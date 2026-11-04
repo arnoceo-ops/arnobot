@@ -86,6 +86,18 @@ export const TARIEVEN = {
   supabasePitrDrempel: 150,
   clerkProUsd: 25,
   clerkProActief: false,
+  // Resend (transactionele mail): Pro is $20/maand voor 50.000 mails, geen daglimiet, daarboven $0,90 per
+  // 1.000 (resend.com/pricing, gelezen via een zoekresultaat op 2026-11-04, de pagina zelf niet geopend:
+  // controleer bij de kwartaalcheck). Het gratis plan heeft 100 mails per dag en 3.000 per maand (Settings,
+  // Usage, 2026-11-04). Besloten 2026-11-04: upgraden op 2026-11-19, vóór de lancering van 2026-11-20 (elke
+  // aanmelding geeft in 30 dagen zo'n 5 tot 6 trialmails, plus betaal- en nudgemails). Staat op actief als
+  // gepland: zet op false zolang de upgrade niet is gedaan. Zelfde patroon als clerkProActief.
+  resendProUsd: 20,
+  resendProActief: true,
+  resendInbegrepen: 50000,
+  resendOveragePer1000Usd: 0.9,
+  // Schatting, niet gemeten: bijwerken met het echte verbruik uit Resend, Settings, Usage.
+  resendMailsPerGebruikerPerMaand: 6,
   // Moneybird (boekhouding, gekoppeld aan Mollie): Growth-tier, de eerste tier
   // met terugkerende facturen/abonnementen (nodig voor Team-facturatie),
   // besloten 2026-09-29 bij de Mollie/Moneybird-keuze. €35/maand is het
@@ -177,11 +189,24 @@ export function supabaseBasisKosten(): number {
     + Math.max(0, TARIEVEN.supabaseProjecten * TARIEVEN.supabaseServerUsd - TARIEVEN.supabaseTegoedUsd)
 }
 
+// Resend-kosten boven de 50.000 inbegrepen mails van Pro. Zonder Pro (gratis plan) is er geen
+// overschrijding mogelijk, Resend weigert dan de mails (daglimiet 100, maandlimiet 3.000).
+export function resendOverageUsd(
+  gebruikers: number,
+  mailsPerGebruiker: number = TARIEVEN.resendMailsPerGebruikerPerMaand,
+  pro: boolean = TARIEVEN.resendProActief,
+): number {
+  if (!pro) return 0
+  const overschot = Math.max(0, gebruikers * mailsPerGebruiker - TARIEVEN.resendInbegrepen)
+  return (overschot / 1000) * TARIEVEN.resendOveragePer1000Usd
+}
+
 export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? supabaseBasisKosten() : 0)
     + (gebruikersAantal >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (TARIEVEN.clerkProActief ? TARIEVEN.clerkProUsd : 0)
+    + (TARIEVEN.resendProActief ? TARIEVEN.resendProUsd : 0)
     + TARIEVEN.moneybirdEur * fxRate
     + TARIEVEN.revolutBusinessEur * fxRate
     + TARIEVEN.sentryEur * fxRate
@@ -227,6 +252,8 @@ export type Inputs = {
   vercelPerSeat: number
   supabasePro: boolean
   clerkPro: boolean
+  resendPro: boolean
+  resendMailsPerGebruiker: number
   moneybirdEur: number
   revolutBusinessEur: number
   sentryEur: number
@@ -297,6 +324,8 @@ export const DEFAULT_INPUTS: Inputs = {
   // niet meer los hardgecodeerd, maar dezelfde bron als vasteKostenPerMaand().
   supabasePro: TARIEVEN.supabaseProActief,
   clerkPro: TARIEVEN.clerkProActief,
+  resendPro: TARIEVEN.resendProActief,
+  resendMailsPerGebruiker: TARIEVEN.resendMailsPerGebruikerPerMaand,
   moneybirdEur: TARIEVEN.moneybirdEur,
   revolutBusinessEur: TARIEVEN.revolutBusinessEur,
   sentryEur: TARIEVEN.sentryEur,
@@ -379,6 +408,7 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
 
   const teamOverheadKosten = teamLeden * inputs.teamOverheadPerLid
+  const resendOverageKosten = resendOverageUsd(n, inputs.resendMailsPerGebruiker, inputs.resendPro)
 
   const sentryUsd = inputs.sentryEur * inputs.fxRate
   const domeinPerMaand = inputs.domeinPerJaar / 12
@@ -388,18 +418,19 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + (inputs.supabasePro ? supabaseBasisKosten() : 0)
     + (n >= TARIEVEN.supabasePitrDrempel ? TARIEVEN.supabasePitrUsd : 0)
     + (inputs.clerkPro ? TARIEVEN.clerkProUsd : 0)
+    + (inputs.resendPro ? TARIEVEN.resendProUsd : 0)
     + moneybirdUsd
     + revolutUsd
     + sentryUsd
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + teamOverheadKosten
+    + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
 
   return {
     vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, dicteerKosten, audioAnalyseKosten, upstashKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, dicteerKosten, audioAnalyseKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 

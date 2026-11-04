@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { TARIEVEN, elevenLabsCost, vasteKostenPerMaand } from '@/lib/kostenTarieven'
+import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand } from '@/lib/kostenTarieven'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 
 const supabase = createClient(
@@ -134,6 +134,7 @@ function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
 
   return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + analysesKosten + fable5Kosten
     + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
+    + resendOverageUsd(m.gebruikers_count)
 }
 
 export async function GET() {

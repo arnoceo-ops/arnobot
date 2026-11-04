@@ -190,7 +190,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 - [posthog.com/changelog](https://posthog.com/changelog) op API-wijzigingen.
 
 #### Kostencalculator (Abacus, `/abacus`)
-- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Anthropic/Fable 5.1 per aanroep (zelfde tarief als Fable 5: $10/$50 per 1M), Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
+- `lib/kostenTarieven.ts` bevat harde standaardwaarden voor externe tarieven (Vercel Pro, Supabase Pro, Clerk Pro, Resend Pro ($20 voor 50.000 mails, daarboven $0,90 per 1.000, upgrade gepland 2026-11-19), ElevenLabs-tiers, Anthropic/Fable 5.1 per aanroep (zelfde tarief als Fable 5: $10/$50 per 1M), Porkbun-domeinverlenging). Verdeeld over drie tabbladen, alle tarieven gecentraliseerd in dat bestand.
 - Wordt bij de **kwartaalcheck** gecontroleerd tegen de live pricing-pagina's, niet bij de maandcheck (prijswijzigingen komen niet vaak genoeg voor).
 - Sentry en Upstash staan hier bewust niet als hardcoded bedrag in (al instelbare velden in de calculator).
 
@@ -217,7 +217,7 @@ Zodra ArnoBot 50 actieve gebruikers bereikt (nu bewust uitgesteld):
 De kwartaalcheck is een aparte, minder frequente laag bovenop de maandcheck. Voer eerst de volledige maandcheck uit (secties 1-7), voeg dan deze vier punten toe. Zelfde werkwijze: parallelle subagents per punt.
 
 ### 8. Kostencalculator-tarieven vs. live pricing
-Controleer de hardcoded tarieven in `lib/kostenTarieven.ts` (Vercel Pro, Supabase Pro, Clerk Pro, ElevenLabs-tiers, Porkbun) tegen de actuele pricing-pagina's. Bij een wijziging: bijwerken in dezelfde commit als deze check.
+Controleer de hardcoded tarieven in `lib/kostenTarieven.ts` (Vercel Pro, Supabase Pro, Clerk Pro, Resend Pro, ElevenLabs-tiers, Porkbun) tegen de actuele pricing-pagina's. Bij een wijziging: bijwerken in dezelfde commit als deze check.
 
 ### 9. UI-stijlconsistentie-sweep
 Gebruik een agent om alle pagina's/componenten te grep'en op hardcoded kleuren, fonts of spacing die afwijken van de Vaste Normen-tabel en de admin-UI-stijlnorm. Periodieke vangnet-sweep, geen vervanging van de doorlopende regel om afwijkingen direct te signaleren.
