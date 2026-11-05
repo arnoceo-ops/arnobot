@@ -33,7 +33,10 @@ export default function AppSignIn() {
         window.location.href = '/bot'
         return
       }
-      setError('Inloggen niet voltooid. Controleer je gegevens.')
+      const missing = Array.isArray((signIn as { missingFields?: string[] }).missingFields)
+        ? (signIn as { missingFields?: string[] }).missingFields!.join(', ')
+        : ''
+      setError(`Inloggen niet voltooid (status: ${String(signIn.status)}${missing ? `, ontbreekt: ${missing}` : ''}).`)
     } catch (err: unknown) {
       const clerr = err as { errors?: { message: string; longMessage?: string }[] }
       const msg = clerr?.errors?.[0]?.longMessage || clerr?.errors?.[0]?.message || 'Onjuist e-mailadres of wachtwoord.'
