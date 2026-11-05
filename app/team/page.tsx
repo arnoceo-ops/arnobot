@@ -118,6 +118,43 @@ export default async function TeamPage() {
         }
         .tm-big p { font-size: 16px; line-height: 1.75; color: #a3b1c6; max-width: 42ch; }
 
+        /* Waar het om draait */
+        .tm-draait { max-width: 1040px; margin: 0 auto; padding: 72px 24px 24px; }
+        .tm-draait-head { max-width: 22ch; margin: 0 auto 48px; text-align: center; }
+        .tm-draait-head .tm-h2 { font-size: clamp(30px, 4.4vw, 48px); line-height: 1.08; }
+        .tm-amber { color: #f59e0b; }
+        .tm-draait-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 72px; }
+        .tm-draait-item { padding: 28px 0 32px; border-top: 1px solid #2a3547; text-align: left; }
+        .tm-draait-item h3 {
+          font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; line-height: 1.15; margin-bottom: 10px;
+        }
+        .tm-draait-item p { font-size: 16px; line-height: 1.7; color: #94a3b8; max-width: 42ch; }
+        .tm-draait-slot {
+          margin-top: 24px; text-align: center; font-family: 'Oswald', sans-serif; font-size: clamp(22px, 3vw, 30px);
+          font-weight: 600; text-transform: uppercase; line-height: 1.2; color: #f8fafc;
+        }
+
+        /* Verkeerde keuze of verkeerde begeleiding */
+        .tm-keuze { max-width: 1040px; margin: 0 auto; padding: 56px 24px 24px; }
+        .tm-keuze-head { max-width: 62ch; margin: 0 auto 36px; text-align: center; }
+        .tm-keuze-head .tm-lead { margin: 18px auto 0; }
+        .tm-keuze-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .tm-keuze-card { background: #1e293b; border: 1px solid #2a3547; border-radius: 12px; padding: 28px; text-align: left; }
+        .tm-keuze-card h3 {
+          font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600; text-transform: uppercase;
+          color: #f8fafc; letter-spacing: 0.04em; margin-bottom: 10px;
+        }
+        .tm-keuze-card p { font-size: 15px; line-height: 1.65; color: #94a3b8; }
+
+        /* AVG */
+        .tm-avg { max-width: 1040px; margin: 0 auto; padding: 56px 24px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+        .tm-avg-tekst .tm-lead { margin-top: 18px; }
+        .tm-avg-lijst { border-top: 1px solid #2a3547; }
+        .tm-avg-rij { display: grid; grid-template-columns: 11ch 1fr; gap: 20px; padding: 18px 0; border-bottom: 1px solid #2a3547; text-align: left; }
+        .tm-avg-rij dt { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #f59e0b; }
+        .tm-avg-rij dd { font-size: 15px; line-height: 1.6; color: #cbd5e1; }
+
         .tm-seven {
           width: calc(100% - 48px); max-width: 992px; margin: 56px auto 24px; padding: 72px 32px; text-align: center;
           background: linear-gradient(180deg, rgba(245,158,11,0.13), rgba(245,158,11,0.05));
@@ -141,6 +178,10 @@ export default async function TeamPage() {
 
         @media (max-width: 820px) {
           .tm-big-list { grid-template-columns: 1fr; }
+          .tm-draait-grid { grid-template-columns: 1fr; }
+          .tm-keuze-grid { grid-template-columns: 1fr; }
+          .tm-avg { grid-template-columns: 1fr; gap: 32px; }
+          .tm-avg-rij { grid-template-columns: 1fr; gap: 6px; }
           .tm-seven { padding: 48px 20px; }
           .tm-hero { padding: 120px 24px 48px; }
           .tm-heroshot { margin-top: 4px; }
@@ -185,6 +226,32 @@ export default async function TeamPage() {
         </div>
         <figcaption>Je hele team in één scherm, bijgewerkt na elk gesprek dat je verkopers voeren.</figcaption>
       </figure>
+
+      <section className="tm-draait">
+        <div className="tm-draait-head">
+          <p className="tm-label">Waar het om draait</p>
+          <h2 className="tm-h2">Je hebt goede mensen aangenomen. <span className="tm-amber">Nu moet het eruit komen.</span></h2>
+        </div>
+        <div className="tm-draait-grid">
+          <div className="tm-draait-item">
+            <h3>Talent komt niet vanzelf tot bloei.</h3>
+            <p>Het groeit door herhaling, eerlijke feedback en iemand die doorvraagt.</p>
+          </div>
+          <div className="tm-draait-item">
+            <h3>Je kunt het niet voor ze doen.</h3>
+            <p>Wie het overneemt, wint de deal en houdt de verkoper afhankelijk.</p>
+          </div>
+          <div className="tm-draait-item">
+            <h3>Coaching groeit niet mee met je agenda.</h3>
+            <p>Hoe groter het team, hoe minder tijd er per verkoper overblijft.</p>
+          </div>
+          <div className="tm-draait-item">
+            <h3>Achterstand zie je pas in de cijfers.</h3>
+            <p>En dan is het kwartaal meestal al bijna voorbij.</p>
+          </div>
+        </div>
+        <p className="tm-draait-slot">Dat ligt niet aan jouw leiderschap. <span className="tm-amber">Er is maar één van jou.</span></p>
+      </section>
 
       <div className="tm-wrap">
 
@@ -234,14 +301,33 @@ export default async function TeamPage() {
               <p>Niemand geeft graag aan zijn baas toe dat hij onzeker is of een deal laat liggen. Aan ArnoBot wel, want jij ziet de gesprekken nooit, alleen de synthese. Daardoor hoor je eindelijk wat er echt speelt.</p>
             </div>
           </div>
-          <div className="tm-big">
-            <div className="tm-big-num">06</div>
-            <div>
-              <h3>Dezelfde kwaliteit, hoe groot het team ook is</h3>
-              <p>Hoe meer verkopers, hoe minder tijd jij per verkoper hebt. Met ArnoBot krijgt verkoper twintig dezelfde coaching als verkoper één. Je team groeit, je coachingkwaliteit niet.</p>
+        </div>
+
+        <section className="tm-keuze">
+          <div className="tm-keuze-head">
+            <p className="tm-label">Voordat je conclusies trekt</p>
+            <h2 className="tm-h2">Verkeerde keuze? <span className="tm-amber">Of verkeerde begeleiding?</span></h2>
+            <p className="tm-lead">
+              Een verkoper die achterblijft, kost je meer dan omzet. Het kost je tijd, energie en
+              soms het vertrouwen in je eigen oordeel. ArnoBot laat per verkoper zien waar het
+              zit, op drie lagen.
+            </p>
+          </div>
+          <div className="tm-keuze-grid">
+            <div className="tm-keuze-card">
+              <h3>Mindset</h3>
+              <p>Gelooft hij in zichzelf, het product en de prijs? Of remt twijfel hem al af vóór het gesprek begint?</p>
+            </div>
+            <div className="tm-keuze-card">
+              <h3>Systeem</h3>
+              <p>Heeft hij een aanpak die werkt, of improviseert hij elk gesprek opnieuw en lekt hij kansen in de opvolging?</p>
+            </div>
+            <div className="tm-keuze-card">
+              <h3>Actie</h3>
+              <p>Weet hij wat hij moet doen, maar gebeurt het niet? Te weinig gesprekken, te laat bellen, te snel opgeven.</p>
             </div>
           </div>
-        </div>
+        </section>
 
         <section className="tm-seven">
           <p className="tm-label">En dan jijzelf</p>
@@ -251,6 +337,29 @@ export default async function TeamPage() {
             1:1&apos;s, met je blinde vlekken, met wat je team van jou nodig heeft? ArnoBot
             coacht ook jou: eerlijk, zonder agenda, op elk moment.
           </p>
+          <p>
+            Geen vervanging van jou. Je mensen volgen jou, niet een tool. ArnoBot zorgt dat jouw
+            coaching doorwerkt tussen de momenten dat je ze spreekt.
+          </p>
+        </section>
+
+        <section className="tm-avg">
+          <div className="tm-avg-tekst">
+            <p className="tm-label">AVG</p>
+            <h2 className="tm-h2">Liever vooraf geregeld <span className="tm-amber">dan achteraf uitgelegd.</span></h2>
+            <p className="tm-lead">
+              Een systeem dat iets zegt over hoe medewerkers presteren, vraagt om een goed gesprek
+              vooraf. Betrek je functionaris gegevensbescherming dus voor de start, niet erna. Wij
+              leveren je de antwoorden op de vragen die hij of zij gaat stellen.
+            </p>
+          </div>
+          <dl className="tm-avg-lijst">
+            <div className="tm-avg-rij"><dt>Opslag</dt><dd>Binnen de EU.</dd></div>
+            <div className="tm-avg-rij"><dt>Bewaartermijn</dt><dd>Zolang het account actief is. Na beëindiging verwijderd of geanonimiseerd binnen 30 dagen.</dd></div>
+            <div className="tm-avg-rij"><dt>AI-training</dt><dd>Nee. Jouw gegevens worden niet gebruikt om modellen te trainen.</dd></div>
+            <div className="tm-avg-rij"><dt>Wie ziet wat</dt><dd>Jij ziet de diagnose en de scores, nooit de gesprekken van je verkopers.</dd></div>
+            <div className="tm-avg-rij"><dt>Verwerkers&shy;overeenkomst</dt><dd>Op aanvraag.</dd></div>
+          </dl>
         </section>
 
       <div className="tm-wrap">
