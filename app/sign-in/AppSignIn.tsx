@@ -22,7 +22,14 @@ export default function AppSignIn() {
     setLoading(true)
     setError('')
     try {
-      await signIn.create({ identifier: email, password })
+      // In deze Clerk-versie negeert signIn.create() het wachtwoord (status blijft needs_first_factor);
+      // signIn.password() is de methode die identifier en wachtwoord samen indient.
+      const { error: pwError } = await signIn.password({ identifier: email, password })
+      if (pwError) {
+        setError(pwError.longMessage || pwError.message || 'Onjuist e-mailadres of wachtwoord.')
+        setLoading(false)
+        return
+      }
       if (signIn.status === 'complete') {
         const { error: finalizeError } = await signIn.finalize()
         if (finalizeError) {
