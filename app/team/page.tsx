@@ -288,7 +288,7 @@ export default async function TeamPage() {
         <section className="tm-final">
           <h2 className="tm-h2">Zie het op je eigen scherm</h2>
           <p>
-            Twintig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
+            Dertig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
             vraag direct aan, daar zie je meteen de prijs voor jouw teamgrootte.
           </p>
           <div className="tm-cta-row">
