@@ -43,4 +43,8 @@
          extra native onPermissionRequest-afhandeling werkt, is nog een expliciete test
          (zie docs/MOBILE_PLAN.md, risico "microfoontoegang binnen een Capacitor-webview"). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Capacitor's BridgeWebChromeClient vraagt bij getUserMedia({audio}) beide permissies aan
+         (RECORD_AUDIO en MODIFY_AUDIO_SETTINGS). Ontbreekt deze tweede, dan blijft de opname
+         stil hangen zonder permissievraag (gemeten 2026-11-05 op een fysiek toestel, versie 1). -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
