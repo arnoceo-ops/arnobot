@@ -91,8 +91,10 @@ export default function SignInPage() {
   // docs/MOBILE_PLAN.md). Start op false (zelfde als een gewone webbezoeker) om een
   // hydration-mismatch te voorkomen, en wordt pas na de eerste client-render gezet.
   const [isNativeApp, setIsNativeApp] = useState(false)
+  const [nativeChecked, setNativeChecked] = useState(false)
   useEffect(() => {
     setIsNativeApp(Capacitor.isNativePlatform())
+    setNativeChecked(true)
   }, [])
 
   async function handleLinkedIn() {
@@ -222,6 +224,8 @@ export default function SignInPage() {
     }
   }
 
+  // Tot de native-check gedaan is een leeg donker scherm, zodat de app niet even de LinkedIn-flow flitst.
+  if (!nativeChecked) return <div style={{ minHeight: '100vh', background: '#111827' }} />
   if (isNativeApp) return <AppSignIn />
 
   return (

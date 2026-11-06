@@ -80,14 +80,7 @@ export default function AppSignIn() {
           </div>
 
           <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
-            Log in met je LinkedIn-e-mailadres en je ArnoBot-wachtwoord.{' '}
-            <button
-              type="button"
-              onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
-              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 1, lineHeight: 1.8, padding: 0, textAlign: 'center' }}
-            >
-              Nog geen wachtwoord? Stel het in op de Account pagina van arno.bot
-            </button>
+            Log in met je LinkedIn-e-mailadres en je ArnoBot-wachtwoord.
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -113,6 +106,16 @@ export default function AppSignIn() {
             {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           </form>
 
+          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8, marginTop: 24 }}>
+            <button
+              type="button"
+              onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
+              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 1, lineHeight: 1.8, padding: 0 }}
+            >
+              Nog geen wachtwoord?
+            </button>{' '}
+            Stel in op de account-pagina van arno.bot.
+          </p>
         </div>
       </div>
     </>
