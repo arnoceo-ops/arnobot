@@ -17,7 +17,9 @@ const config: CapacitorConfig = {
   appName: 'ArnoBot',
   webDir: 'public',
   server: {
-    url: 'https://www.arno.bot',
+    // Startpagina /bot (sinds 2026-11-06): de app opent direct op de gesprekken, of voor wie niet
+    // is ingelogd via proxy.ts direct op het inlogscherm, zonder de homepage te laden.
+    url: 'https://www.arno.bot/bot',
     androidScheme: 'https',
     allowNavigation: ['arno.bot', 'www.arno.bot', 'clerk.arno.bot'],
   },
