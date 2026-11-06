@@ -1648,9 +1648,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .nav-flow { text-decoration: underline !important; text-decoration-color: #f59e0b !important; text-decoration-thickness: 2px !important; text-underline-offset: 6px !important; }
 
         /* MOBILE NAV */
+        /* Android-app (Capacitor, edge-to-edge): ruimte voor de statusbalk, zelfde aanpak als BotNav.
+           In een gewone browser is --sai 0. */
+        :root { --sai: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px)); }
         .mob-nav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          height: 56px; padding: 0 20px;
+          box-sizing: border-box; height: calc(56px + var(--sai)); padding: var(--sai) 20px 0;
           display: flex; align-items: center; justify-content: space-between;
           border-bottom: 1px solid rgba(255,255,255,0.06);
           background: rgba(17,24,39,0.97); backdrop-filter: blur(12px);
@@ -1666,7 +1669,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
         .mob-hamburger span { display: block; width: 22px; height: 2px; background: #f1f5f9; transition: all 0.2s; }
         .mob-menu {
-          position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
+          position: fixed; top: calc(56px + var(--sai)); left: 0; right: 0; z-index: 99;
           background: #111827; border-bottom: 1px solid rgba(255,255,255,0.06);
           padding: 24px 20px; display: flex; flex-direction: column; gap: 24px;
           align-items: flex-end;
@@ -1682,7 +1685,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         /* SPAR LAYOUT */
         .spar-page {
-          min-height: 100vh; padding-top: 64px;
+          min-height: 100vh; padding-top: calc(64px + var(--sai));
           display: flex; flex-direction: column;
         }
 
