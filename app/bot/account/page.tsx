@@ -43,8 +43,8 @@ export default function AccountPage() {
   const [showAppPassword, setShowAppPassword] = useState(false)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
-  // De Android-app is Pro/Team-only (zie /prijzen), Basic mist 'm. Zonder deze gate zag elke
-  // gebruiker de sectie ongeacht plan, ook een teruggevallen trial-gebruiker na 30 dagen.
+  // De Android-app is er voor Basic, Pro en Team (besluit 2026-11-06, vervangt het eerdere
+  // Pro/Team-only). Verschil zit in de functies: Basic heeft alleen voice-in, Pro/Team ook voice-uit.
   const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
 
@@ -318,8 +318,8 @@ export default function AccountPage() {
           </Link>
         </div>
 
-        {/* App-wachtwoord — Pro/Team-only, zie /prijzen */}
-        {planLoaded && plan !== 'basis' && (
+        {/* App-wachtwoord: voor alle plannen (Basic, Pro, Team) */}
+        {planLoaded && (
         <div style={section}>
           <p style={label}>ANDROID APP</p>
           <p style={body}>

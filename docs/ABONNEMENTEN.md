@@ -28,7 +28,9 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) |
 | Gesproken antwoorden | Nee | Ja | Ja |
 | Command/Team-managerdashboard | Nee | Nee | Ja |
-| Extra | — | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android), 1x gesprek met Arno (na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
+| Extra | ArnoBot-app (Android) met voice-in (mic, spraak naar tekst) | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android) met voice-in én voice-uit, 1x gesprek met Arno (na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
+
+**Android-app per plan (besloten 2026-11-06):** de app staat open voor Basic, Pro en Team. Gekozen: Basic krijgt de app met alleen voice-in (mic), Pro/Team ook voice-uit (luidspreker, nu tijdelijk uit voor iedereen behalve Arno's accounts). De luidspreker is voor Basic niet zichtbaar (geen doorgestreept icoon, geen upgrademelding, vanwege Google's betalingsbeleid). Verworpen: app alleen Pro/Team (het eerdere besluit van 2026-08-10/26), want Basic-gebruikers horen ook de Basic-ervaring op hun telefoon te kunnen hebben. In de code: het app-wachtwoordblok op de accountpagina toont voor elk plan; de plan-limieten gelden server-side ongewijzigd in de app. **Open:** de bullets op `/prijzen` en `/bot/doorgaan` (app nu alleen bij Pro) zijn nog niet aangepast, tekstvoorstel wacht op akkoord van Arno.
 
 **Trial-standaard:** iedere nieuwe gebruiker krijgt bij aanmelden `plan='premium'` (=Pro) (`proxy.ts`), ongeacht welke kaart hij op `/prijzen` aanklikt. Alle "Start nu"-knoppen linken naar dezelfde generieke `/sign-up`. De definitieve keuze (Basic/Pro) volgt pas bij `/bot/doorgaan`.
 

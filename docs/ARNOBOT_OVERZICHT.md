@@ -110,7 +110,7 @@ ArnoBot heeft een eigen publieke blog op arno.bot/blog, voor iedereen leesbaar z
 | Teammanagerdashboard | Nee | Nee | Ja |
 | Chatberichten/dag | 25 | 100 | 100 (per lid) |
 | Sessiegeheugen (vorige gesprekken) | Laatste 10 | Laatste 25 | Laatste 25 |
-| Extra | — | Volledig archief, uitgebreider geheugen, Android-app | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
+| Extra | Android-app (alleen voice-in) | Volledig archief, uitgebreider geheugen, Android-app (voice-in en voice-uit) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
 
 **Basic vs. Pro, conceptueel:** Basic is gericht op het gesprek en oefenen zelf ("boven water"), Pro voegt persoonlijke groei en diepgang toe ("onder water"). Bij Basic zijn coaching en voice geen afgeslankte versie maar een principiële nul, dat onderscheid is bewust zo gepositioneerd.
 
