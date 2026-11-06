@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 
 function renderAnswer(text: React.ReactNode) {
   if (typeof text !== 'string') return text
@@ -178,6 +179,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
   )
   const liveTeamStatus = useTeamStatus()
+  const isNativeApp = useIsNativeApp()
   const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
   const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
   const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
@@ -269,6 +271,8 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
             {teamStatusLoaded && FAQ_GROUPS.filter(g => {
               // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,
               // dus verbergen we alle rolafhankelijke groepen in plaats van te gokken.
+              // In de Android-app geen prijzen, abonnementen of referral (Google Play-betalingsbeleid).
+              if (isNativeApp && ['REFERRAL', 'ABONNEMENT'].includes(g.label)) return false
               if (teamStatusFailed) return !['REFERRAL', 'ABONNEMENT', 'JOUW TEAM'].includes(g.label)
               if (isTeamMember && g.label === 'REFERRAL') return false
               if (isTeamMember && g.label === 'ABONNEMENT') return false

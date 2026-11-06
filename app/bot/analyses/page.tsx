@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@clerk/nextjs'
 import BotNav from '../BotNav'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
@@ -119,6 +120,8 @@ export default function GeschiedenisPage() {
   // Bepaalt of de coaching-hint/link hieronder "naar coaching" of "upgrade naar Pro" zegt.
   const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
+  // In de Android-app geen upgrade-verwijzingen (Google Play-betalingsbeleid).
+  const isNativeApp = useIsNativeApp()
 
   useEffect(() => {
     setAnalysesNudgeGezien(!!sessionStorage.getItem('arnobot_analyses_nudge_gezien'))
@@ -819,7 +822,7 @@ export default function GeschiedenisPage() {
         {analyseLimiet && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 16 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#f59e0b', lineHeight: 1.9, border: '1px solid #f59e0b', borderLeft: '3px solid #f59e0b', padding: '16px 20px' }}>
-              Je hebt vandaag al een analyse gemaakt. Basic-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug of <Link href="/bot/upgrade" style={{ color: '#f59e0b', textDecoration: 'underline' }}>upgrade naar Pro</Link> voor onbeperkte analyses.
+              Je hebt vandaag al een analyse gemaakt. Basic-gebruikers kunnen 1 analyse per dag aanmaken. Kom morgen terug{isNativeApp ? '.' : <> of <Link href="/bot/upgrade" style={{ color: '#f59e0b', textDecoration: 'underline' }}>upgrade naar Pro</Link> voor onbeperkte analyses.</>}
             </p>
           </div>
         )}
@@ -838,6 +841,7 @@ export default function GeschiedenisPage() {
                   }
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  {!(isNativeApp && plan === 'basis') && (
                   <Link
                     href={planLoaded && plan === 'basis' ? '/bot/upgrade' : '/bot/coaching'}
                     className="coaching-hint-btn"
@@ -845,6 +849,7 @@ export default function GeschiedenisPage() {
                   >
                     {planLoaded && plan === 'basis' ? 'UPGRADE NAAR PRO →' : 'NAAR COACHING →'}
                   </Link>
+                  )}
                   <button
                     onClick={dismissCoachingHint}
                     style={{ fontFamily: "'Space Mono', monospace", fontSize: 16, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
@@ -975,7 +980,7 @@ export default function GeschiedenisPage() {
             <Link href="/bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               ← TERUG NAAR ARNOBOT
             </Link>
-            {!showCoachingHint && (
+            {!showCoachingHint && !(isNativeApp && plan === 'basis') && (
               <Link href={planLoaded && plan === 'basis' ? '/bot/upgrade' : '/bot/coaching'} style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
                 {planLoaded && plan === 'basis' ? 'UPGRADE NAAR PRO →' : 'VERDER NAAR COACHING →'}
               </Link>

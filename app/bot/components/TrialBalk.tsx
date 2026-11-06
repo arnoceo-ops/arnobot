@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 
 // Balk onderin: de proefperiode loopt bijna af. Zelfde opzet en stijl als VersionBanner. Alleen
 // voor wie nog in de proefperiode zit zonder betaling (server bepaalt dat in /api/bot/trial-status),
@@ -38,7 +39,9 @@ export default function TrialBalk() {
 
   // Pas zichtbaar als het antwoord er is (dagenOver start op null), dus geen flits van een
   // balk voor iemand die hem niet hoort te zien.
-  const zichtbaar = dagenOver !== null && !gesloten && pathname === '/bot'
+  // Niet in de Android-app: de balk verwijst naar een abonnement kiezen (Google Play-betalingsbeleid).
+  const isNativeApp = useIsNativeApp()
+  const zichtbaar = dagenOver !== null && !gesloten && pathname === '/bot' && !isNativeApp
 
   // Geef de pagina onderaan evenveel ruimte als de balk hoog is, zodat de laatste regel inhoud
   // niet achter de vaste balk verdwijnt. Weer ongedaan zodra de balk weg is.

@@ -80,9 +80,14 @@ export default function AppSignIn() {
           </div>
 
           <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
-            Log in met het e-mailadres van je LinkedIn-account en je ArnoBot-wachtwoord.
-            <br />
-            Nog geen wachtwoord? Stel het in op arno.bot, onder Account, bij Android app (minimaal 8 tekens).
+            Log in met je LinkedIn-e-mailadres en je ArnoBot-wachtwoord.{' '}
+            <button
+              type="button"
+              onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
+              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 1, lineHeight: 1.8, padding: 0, textAlign: 'center' }}
+            >
+              Nog geen wachtwoord? Stel het in op de Account pagina van arno.bot
+            </button>
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -108,26 +113,6 @@ export default function AppSignIn() {
             {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           </form>
 
-          <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
-              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, padding: 0 }}
-            >
-              Wachtwoord vergeten?
-            </button>
-          </p>
-
-          <p style={{ fontSize: 13, color: '#6b7280', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
-            Nog geen account?{' '}
-            <button
-              type="button"
-              onClick={() => Browser.open({ url: 'https://www.arno.bot/sign-up' })}
-              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, padding: 0 }}
-            >
-              Meld je aan op de website
-            </button>
-          </p>
         </div>
       </div>
     </>

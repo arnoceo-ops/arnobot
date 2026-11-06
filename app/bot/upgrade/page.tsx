@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import BotNav from '../BotNav'
+import HideInNativeApp from '@/app/components/HideInNativeApp'
 import UpgradeButton from './UpgradeButton'
 import { SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
 import { isTeamCovered } from '@/lib/teamAccess'
@@ -48,6 +49,7 @@ export default async function UpgradePage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
         <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
+        <HideInNativeApp fallback={<p style={body}>Deze pagina is niet beschikbaar in de app.</p>}>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>
           UPGRADE
         </h1>
@@ -83,6 +85,7 @@ export default async function UpgradePage() {
         {plan === 'team' && (
           <p style={body}>Je zit al op het hoogste plan.</p>
         )}
+        </HideInNativeApp>
       </div>
     </>
   )

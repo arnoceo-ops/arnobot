@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useIsTouch } from '@/hooks/useBreakpoint'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { useAuth, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import NotificationBell from '@/app/bot/components/NotificationBell'
@@ -246,6 +247,8 @@ const OPNAME_SPRAAK_DREMPEL = 8
 
 export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null, voorinstelling = null }: Props) {
   const isMobile = useIsTouch()
+  // In de Android-app geen koop-, upgrade- of prijsverwijzingen (Google Play-betalingsbeleid).
+  const isNativeApp = useIsNativeApp()
   const { signOut } = useClerk()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1334,7 +1337,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       })
       const data = await res.json().catch(() => ({}))
       if (res.status === 429 && data.error === 'dagelijks_limiet') {
-        setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt vandaag al een sparsessie gebruikt. Basic geeft één sparsessie per dag, Pro onbeperkt. Kom morgen terug of upgrade naar Pro.', hint: null, log_id: null, feedback: null }])
+        setMessages(prev => [...prev, { role: 'arno', content: 'Je hebt vandaag al een sparsessie gebruikt. Basic geeft één sparsessie per dag, Pro onbeperkt. Kom morgen terug' + (isNativeApp ? '.' : ' of upgrade naar Pro.'), hint: null, log_id: null, feedback: null }])
       } else if (!res.ok || !data.answer) {
         setMessages(prev => [...prev, { role: 'arno', content: 'Dit gesprek kon niet gestart worden. Pas je rolomschrijving aan en probeer opnieuw.', hint: null, log_id: null, feedback: null }])
       } else {
@@ -1424,9 +1427,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
           const msg = data.reason === 'trial_expired'
-            ? 'Je gratis proefperiode voor gesproken antwoorden is voorbij. Wil je doorgaan? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).'
+            ? (isNativeApp
+              ? 'Je gratis proefperiode voor gesproken antwoorden is voorbij.'
+              : 'Je gratis proefperiode voor gesproken antwoorden is voorbij. Wil je doorgaan? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).')
             : data.reason === 'trial_cap_reached'
-              ? 'Je hebt je gratis tegoed voor gesproken antwoorden voor deze proefperiode bereikt. Wil je meteen door? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).'
+              ? (isNativeApp
+                ? 'Je hebt je gratis tegoed voor gesproken antwoorden voor deze proefperiode bereikt.'
+                : 'Je hebt je gratis tegoed voor gesproken antwoorden voor deze proefperiode bereikt. Wil je meteen door? [Bekijk ArnoBot Voice](https://arno.bot/prijzen).')
               : data.error === 'voice_not_enabled'
                 ? 'Voice is niet actief voor jouw account.'
                 : data.error === 'rate_limit'
@@ -1483,7 +1490,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             } else if (data.error === 'bestand_niet_leesbaar') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'audio_alleen_betaald') {
-              setMessages(prev => [...prev, { role: 'arno', content: 'Audio-analyse is een Pro- en Team-functie. Upgrade je abonnement om dit te gebruiken, of verwijder de bijlage om zonder verder te gaan.' }])
+              setMessages(prev => [...prev, { role: 'arno', content: isNativeApp ? 'Audio-analyse is een Pro- en Team-functie. Verwijder de bijlage om zonder verder te gaan.' : 'Audio-analyse is een Pro- en Team-functie. Upgrade je abonnement om dit te gebruiken, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Deze audio kon niet worden verwerkt. Probeer een ander bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else {
@@ -2604,7 +2611,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   Uitgebreid antwoord uitsluitend op de PC-versie van ArnoBot
                 </p>
               )}
-              {toonUitgebreidUpsell && plan === 'basis' && !isMobile && (
+              {toonUitgebreidUpsell && plan === 'basis' && !isMobile && !isNativeApp && (
                 <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
                   Uitgebreide antwoorden zijn onderdeel van Pro.{' '}
                   <a href="/bot/doorgaan" style={{ color: '#f59e0b', textDecoration: 'underline' }}>Upgrade naar Pro</a>

@@ -6,6 +6,7 @@ import { logEvent } from '@/lib/events'
 import CoachingClient from './CoachingClient'
 import SpeCoachingClient from './SpeCoachingClient'
 import BotNav from '../BotNav'
+import HideInNativeApp from '@/app/components/HideInNativeApp'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
@@ -69,6 +70,7 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
                 Coaching is beschikbaar voor Pro-gebruikers. Arno analyseert al je gesprekken en je eerdere analyses in relatie tot jouw specifieke profiel. Hij laat je zien wat werkt en ook wat je het best kunt veranderen voor nog betere performance.
               </p>
             </div>
+            <HideInNativeApp>
             <Link
               href="/bot/upgrade"
               style={{
@@ -81,6 +83,7 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
             >
               UPGRADE →
             </Link>
+            </HideInNativeApp>
           </div>
         </div>
       </>
