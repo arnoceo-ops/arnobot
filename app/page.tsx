@@ -6,6 +6,7 @@ import { Brain, LineChart, MessageSquare, Mic, Target, Zap } from 'lucide-react'
 import HeroWordRotator from './HeroWordRotator'
 import SiteFooter from './SiteFooter'
 import SignupCTA from './components/SignupCTA'
+import NativeAppRedirect from './components/NativeAppRedirect'
 
 const FEATURES = [
   {
@@ -62,6 +63,7 @@ export default async function ArnoBotLandingPage() {
   if (userId) redirect('/bot')
   return (
     <>
+      <NativeAppRedirect />
       <style>{`
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
