@@ -79,6 +79,12 @@ export default function AppSignIn() {
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1 }}>INLOGGEN</h1>
           </div>
 
+          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
+            Log in met het e-mailadres van je LinkedIn-account en je ArnoBot-wachtwoord.
+            <br />
+            Nog geen wachtwoord? Stel het in op arno.bot, onder Account, bij Android app (minimaal 8 tekens).
+          </p>
+
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
               type="email"
