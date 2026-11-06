@@ -38,6 +38,7 @@ export default function AccountPage() {
   const [passwordDone, setPasswordDone] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [showAppPassword, setShowAppPassword] = useState(false)
   const [sysStatus, setSysStatus] = useState<'UP' | 'HASISSUES' | 'UNDERINCIDENT' | 'UNDERMAINTENANCE' | null>(null)
   const [metrics, setMetrics] = useState<{ status: string; avgMs: number | null; p95: number | null; availDay: number | null; availWeek: number | null; downSeconds: number } | null>(null)
   // De Android-app is Pro/Team-only (zie /prijzen), Basic mist 'm. Zonder deze gate zag elke
@@ -335,17 +336,32 @@ export default function AccountPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
               <input
-                type="password"
+                type={showAppPassword ? 'text' : 'password'}
                 value={appPassword}
                 onChange={e => setAppPassword(e.target.value)}
                 placeholder="Nieuw wachtwoord (min. 8 tekens)"
+                autoComplete="new-password"
               />
               <input
-                type="password"
+                type={showAppPassword ? 'text' : 'password'}
                 value={appPasswordConfirm}
                 onChange={e => setAppPasswordConfirm(e.target.value)}
                 placeholder="Herhaal wachtwoord"
+                autoComplete="new-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowAppPassword(v => !v)}
+                aria-label={showAppPassword ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+                style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: '4px', color: '#6b7280' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                  {showAppPassword && <line x1="3" y1="3" x2="21" y2="21" />}
+                </svg>
+                {showAppPassword ? 'VERBERG' : 'TOON'}
+              </button>
               <button
                 onClick={handleSetPassword}
                 disabled={settingPassword}

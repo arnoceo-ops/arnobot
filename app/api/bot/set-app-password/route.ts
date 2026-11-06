@@ -19,6 +19,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('[set-app-password] error:', err instanceof Error ? err.message : String(err))
+    // Clerk meldt zelf welke wachtwoordregel niet gehaald is (bv. hoofdletter, cijfer, te zwak of
+    // eerder gelekt). Die melding is bedoeld voor de gebruiker en bevat geen interne details.
+    const clerkErr = err as { status?: number; errors?: { code?: string; message?: string; longMessage?: string }[] }
+    const first = clerkErr?.errors?.[0]
+    if (clerkErr?.status === 422 && (first?.longMessage || first?.message)) {
+      return NextResponse.json({ error: first.longMessage || first.message }, { status: 400 })
+    }
     return NextResponse.json({ error: 'Wachtwoord instellen mislukt. Controleer of het voldoet aan de eisen (minimaal 8 tekens).' }, { status: 500 })
   }
 }

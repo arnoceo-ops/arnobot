@@ -5,6 +5,9 @@ import { useVersionCheck } from '@/hooks/useVersionCheck'
 export default function VersionBanner() {
   const { updateAvailable, dismiss } = useVersionCheck()
   if (!updateAvailable) return null
+  // In de Android-app (Capacitor) niet tonen: de pagina komt altijd live van arno.bot, dus er is
+  // niets te vernieuwen, en de balk overlapte de systeemknoppen onderaan (2026-11-06).
+  if ((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) return null
 
   return (
     <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 150, background: '#1f2937', borderTop: '1px solid #374151', padding: 'clamp(12px,2vw,16px) clamp(20px,4vw,32px)' }}>
