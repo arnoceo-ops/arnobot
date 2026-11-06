@@ -128,6 +128,7 @@ export default function PrijzenClient() {
             <li>Dagelijks sparren met ArnoBot</li>
             <li>Eén gespreksanalyse per dag</li>
             <li>Geheugen van je recente gesprekken</li>
+            <li>Android-app met spraakinvoer</li>
           </ul>
 
           <SignupCTA className="prijzen-tier-cta">Start nu</SignupCTA>
@@ -158,8 +159,8 @@ export default function PrijzenClient() {
             <li>Volledig archief van al je output</li>
             <li>Coaching op mindset, systeem en actie</li>
             <li>Eén gesprek met Arno zelf</li>
+            <li>Android-app met spraak in en uit</li>
             <li>Gesproken antwoorden, Arno's stem</li>
-            <li>De ArnoBot-app (Android)</li>
           </ul>
 
           <SignupCTA className="prijzen-tier-cta">Start nu</SignupCTA>

@@ -400,6 +400,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   <li>Dagelijks sparren met ArnoBot</li>
                   <li>Eén gespreksanalyse per dag</li>
                   <li>Geheugen van je recente gesprekken</li>
+                  <li>Android-app met spraakinvoer</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('basis')}>
                   Kies Basic
@@ -427,8 +428,8 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                   <li>Uitgebreider gespreksgeheugen</li>
                   <li>Volledig archief van al je output</li>
                   <li>Coaching op mindset, systeem en actie</li>
+                  <li>Android-app met spraak in en uit</li>
                   <li>Gesproken antwoorden, Arno's stem</li>
-                  <li>De ArnoBot-app (Android)</li>
                 </ul>
                 <button className="plan-btn" onClick={() => kies('premium')}>
                   Kies Pro
