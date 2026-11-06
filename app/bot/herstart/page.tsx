@@ -6,10 +6,12 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import type { HerstartStatus } from '@/app/api/bot/herstart/route'
 import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 
 type PageStatus = HerstartStatus | 'loading' | 'done' | 'error'
 
 export default function HerstartPage() {
+  const isNativeApp = useIsNativeApp()
   const { isLoaded } = useUser()
   const [status, setStatus] = useState<PageStatus>('loading')
   const [submitting, setSubmitting] = useState(false)
@@ -106,7 +108,7 @@ export default function HerstartPage() {
           </div>
         )}
 
-        {status === 'paid_only' && (
+        {status === 'paid_only' && !isNativeApp && (
           <>
             <p style={{ ...body, marginBottom: 40 }}>
               Heb je een derde proefperiode nodig? Dat kan tegen betaling.

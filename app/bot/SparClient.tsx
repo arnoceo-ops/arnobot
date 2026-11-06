@@ -1678,13 +1678,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         .mob-menu {
           position: fixed; top: calc(56px + var(--sai)); left: 0; right: 0; z-index: 99;
           background: #111827; border-bottom: 1px solid rgba(255,255,255,0.06);
-          padding: 24px 20px; display: flex; flex-direction: column; gap: 24px;
-          align-items: flex-end;
+          padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;
+          align-items: flex-start;
         }
         .mob-menu a, .mob-menu span {
           font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px;
           text-decoration: none;
         }
+        .mob-menu a, .mob-menu span, .mob-menu button { padding-left: 16px !important; }
         .mob-menu a { color: #9ca3af; }
         .mob-menu a:hover { color: #f1f5f9; }
         .mob-menu .active { color: #f59e0b; }
@@ -2328,7 +2329,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       {isMobile ? (
         <>
           <nav className="mob-nav">
-            <Link href="/" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
+            <Link href="/bot" className="mob-nav-logo">ARNO<span>BOT.</span></Link>
             <button className="mob-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
               {menuOpen
                 ? <span style={{ fontSize: 22, fontFamily: "'Bebas Neue', sans-serif", color: '#f59e0b', lineHeight: 1, height: 'auto', width: 'auto', background: 'transparent' }}>✕</span>
@@ -3175,7 +3176,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     </button>
                   </div>
                 )}
-                {(msg.hint === 'salescanvas' || msg.hint === 'blocked') && (
+                {(msg.hint === 'salescanvas' || msg.hint === 'blocked') && !isNativeApp && (
                   <div className="msg-cta">
                     <p>{msg.hint === 'blocked' ? 'Toch proberen, hè? 😂' : <>Als je echt de diepte in wilt, doe dan een free trial op <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer" style={{color:'#f59e0b'}}>salescanvas.app</a></>}</p>
                     <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer" className="msg-cta-btn">

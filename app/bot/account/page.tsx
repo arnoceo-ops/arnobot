@@ -8,6 +8,7 @@ import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
@@ -16,6 +17,7 @@ export default function AccountPage() {
   const { signOut } = useClerk()
   const router = useRouter()
 
+  const isNativeApp = useIsNativeApp()
   const [exporting, setExporting] = useState(false)
   const [exportDone, setExportDone] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -271,7 +273,7 @@ export default function AccountPage() {
         </p>
 
         {/* Referral — openingssectie (verborgen voor teamleden) */}
-        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
+        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && !isNativeApp && (
           <>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
@@ -449,11 +451,13 @@ export default function AccountPage() {
               </div>
             </div>
           )}
-          <p style={{ marginTop: 24 }}>
-            <Link href="/bot/account/zakelijk-corrigeren" style={{ color: '#6b7280', fontSize: 13, letterSpacing: 1, textDecoration: 'underline' }}>
-              Per ongeluk particulier besteld in plaats van zakelijk?
-            </Link>
-          </p>
+          {!isNativeApp && (
+            <p style={{ marginTop: 24 }}>
+              <Link href="/bot/account/zakelijk-corrigeren" style={{ color: '#6b7280', fontSize: 13, letterSpacing: 1, textDecoration: 'underline' }}>
+                Per ongeluk particulier besteld in plaats van zakelijk?
+              </Link>
+            </p>
+          )}
         </div>
         )}
 
