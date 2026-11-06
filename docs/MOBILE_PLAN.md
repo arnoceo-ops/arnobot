@@ -6,9 +6,21 @@ Dit document bereidt fase 4 van `docs/VOICE_PLAN.md` voor: een mobiele app via C
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-11-05 (avond)
+**Laatst bijgewerkt:** 2026-11-06
 
-**Stand 2026-11-05 avond (laatste):**
+**Stand 2026-11-06 (nieuwste, gaat voor op de punten hieronder):**
+- **Microfoon geverifieerd op een fysiek Android-toestel** met versie 2 (1.0.1): werkt.
+- **Statusbalk (twee oorzaken):** `BotNav.tsx` kreeg op 5-11 een safe-area-padding, maar de hoofdpagina heeft een eigen kop in `SparClient.tsx` die dat niet had. Op 6-11 ook daar gefixt. Gemeten in de app: `env(safe-area-inset-top)` en de door Capacitor geïnjecteerde `--safe-area-inset-top` zijn beide 32px. Meetregel daarna weer verwijderd. Les: de app heeft twee kopimplementaties (BotNav en SparClient), wijzigingen altijd in beide.
+- **Versiebalk ("Er is een nieuwe versie") verborgen in de app** (`VersionBanner.tsx`): de app laadt altijd live, vernieuwen heeft geen zin, en de balk overlapte de systeemknoppen.
+- **Homepage overgeslagen:** `NativeAppRedirect` stuurt de app van `/` naar `/bot` (webcode), en de native start-URL in `capacitor.config.ts` is nu `https://www.arno.bot/bot` (versiecode 3, 1.0.2), zodat de homepage niet eens laadt. Een niet-ingelogde gebruiker komt via `proxy.ts` direct op het inlogscherm.
+- **Inlogscherm:** korte uitleg "Log in met je LinkedIn-e-mailadres en je ArnoBot-wachtwoord. Nog geen wachtwoord? Stel het in op de Account pagina van arno.bot" (tikbaar, opent de accountpagina in de browser). De aanmeldlink en "Wachtwoord vergeten?" zijn weggehaald. Gekozen: aanmeldlink weg. Verworpen: laten staan, want een link naar een aanmeld- en koop-traject buiten Play is een beleidsrisico.
+- **Koop-, upgrade- en prijsverwijzingen verborgen in de app** (hook `hooks/useIsNativeApp.ts`, component `app/components/HideInNativeApp.tsx`): Analyses, Coaching, gesprek (sparsessie- en audiomeldingen, uitgebreid-upsell), proefperiodebalk, Q&A-groepen ABONNEMENT en REFERRAL, upgradepagina, doorgaan-pagina (toont in de app "Geen toegang"). Bewust NIET verborgen: ABONNEMENT OPZEGGEN op de accountpagina (opzeggen is geen koopactie). Google's beleid hierover is in beweging en de officiële tekst is niet bevestigd (bronnen: Play Console-help, Pugpig-gids); zekerheidshalve alles verborgen. Nog niet gecontroleerd: referral-deelsectie op de profielpagina en de overige verwijzingen (`account/zakelijk-corrigeren`).
+- **App-wachtwoord:** accountpagina heeft TOON/VERBERG (oogje); foutmelding toont nu Clerk's echte reden. Clerk-instellingen (Password): minimaal 8 tekens, "Reject compromised passwords" aan, sterkte-eis uit, geen regels. Een eerder geweigerd wachtwoord zonder hoofdletter was dus een lek-afwijzing, geen hoofdletter-eis. Een ingesteld wachtwoord kan nooit worden teruggezien (alleen opnieuw instellen).
+- **Uitloggen:** er is in de app geen uitlogknop (bewust, Arno vindt dat prima). Wisselen van account kan via Android Instellingen, Apps, ArnoBot, Opslag, Gegevens wissen.
+- **Release:** alpha 3 (1.0.2) ingediend op 2026-11-06, alleen testerslijst met arnodiepeveen@gmail.com. Nog te verifiëren na goedkeuring: app opent direct op het inlogscherm, geen koop-/prijsknoppen na inloggen.
+- **Eerstvolgende stap:** (1) na goedkeuring 1.0.2 op de telefoon testen (punten bij Release); (2) menu app versus mobiele browser vergelijken (Arno levert screenshots van beide hamburgermenu's open); (3) overgebleven koopverwijzingen nalopen (profiel, zakelijk-corrigeren); (4) pas dan de productierelease aanmaken (versie 3 of hoger, landen, Beheerd publiceren aan).
+
+**Stand 2026-11-05 avond:**
 - Account is omgezet naar **Organisatie** en goedgekeurd. Openbaar contact: hq@arno.bot en +31614131513. Handelaarsstatus "Handelaar" is op accountniveau en op app-niveau (ToS-link https://www.arno.bot/voorwaarden) afgerond; App-content toont "Je bent helemaal bij".
 - **Productiepad:** Play toont de productierelease zonder 12-testers-eis (positief teken, nog niet formeel bevestigd). Productie staat bewust nog NIET aan: er is geen productierelease ingediend. De landenwijziging (België, Nederland) zit wel in de indiening maar doet zonder release niets. "Beheerd publiceren" staat uit; vóór productie aanzetten zodat livegang handmatig is.
 - **Microfoon in de app (oorzaak gevonden):** Capacitor's `BridgeWebChromeClient` vraagt voor `getUserMedia({audio})` zowel RECORD_AUDIO als MODIFY_AUDIO_SETTINGS aan. Ontbrak de tweede, dan hing de opname stil zonder permissievraag. Gefixt in `AndroidManifest.xml`, versiecode 2 (1.0.1), AAB gebouwd en als alpha-release 2 ingediend (2026-11-05, ongeveer 22:30). **Nog te verifiëren op een fysiek toestel** na de update (hoofdchat en Sparren).
