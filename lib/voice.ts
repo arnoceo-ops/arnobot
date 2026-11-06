@@ -63,18 +63,11 @@ export function stripMarkdownForSpeech(text: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
 }
 
-// Ruwe schatting: ~100 gesproken antwoorden x ~500 tekens, de helft van de nog niet formeel
-// vastgestelde betaalde-cap-schatting uit VOICE_PLAN.md fase 2 ("ruim 200/mnd"). Makkelijk
-// aan te passen, geen harde onderzochte waarde. Betaalde Voice-abonnees (plan premium/team)
-// hebben bewust nog geen plafond-enforcement, dat is het bredere, nog niet gebouwde fase-2-werk.
-const TRIAL_VOICE_CHAR_CAP = 50_000
-
-export type VoiceAccessReason = 'paid' | 'trial' | 'trial_expired' | 'trial_cap_reached' | 'none'
+export type VoiceAccessReason = 'paid' | 'none'
 
 /**
- * Bepaalt of een gebruiker nu voice-toegang heeft: premium/team-abonnees altijd, anders
- * gratis tijdens de eerste 30 dagen na trial_start (dezelfde canonieke berekening als
- * proxy.ts:244-246 en cron/trial-emails/route.ts) tot aan TRIAL_VOICE_CHAR_CAP verbruik.
+ * Bepaalt of een gebruiker nu voice-toegang heeft: premium/team (ook tijdens de trial, want
+ * die start als premium) wel, Basic nooit.
  */
 export async function hasVoiceAccess(
   supabase: SupabaseClient,
@@ -82,21 +75,11 @@ export async function hasVoiceAccess(
   approvedUser: { plan: 'basis' | 'premium' | 'team'; trial_start: string | null }
 ): Promise<{ access: boolean; reason: VoiceAccessReason }> {
   if (!isVoiceLaunchAllowed(userId)) return { access: false, reason: 'none' }
-  if (approvedUser.plan !== 'basis') return { access: true, reason: 'paid' }
-  if (!approvedUser.trial_start) return { access: false, reason: 'none' }
-
-  const trialEnd = new Date(new Date(approvedUser.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
-  if (new Date() >= trialEnd) return { access: false, reason: 'trial_expired' }
-
-  const { data } = await supabase
-    .from('arnobot_elevenlabs_usage')
-    .select('char_count')
-    .eq('user_id', userId)
-    .gte('created_at', approvedUser.trial_start)
-  const used = ((data ?? []) as { char_count: number }[]).reduce((sum, r) => sum + r.char_count, 0)
-  if (used >= TRIAL_VOICE_CHAR_CAP) return { access: false, reason: 'trial_cap_reached' }
-
-  return { access: true, reason: 'trial' }
+  // Besluit 2026-11-06: Basic heeft nooit spraakuitvoer, ook niet binnen de eerste 30 dagen.
+  // Een trial-gebruiker start als Pro (plan 'premium') en heeft dus voice; kiest hij Basic,
+  // dan stopt voice direct. (De oude Basic-trial-tak met plafond is daarmee vervallen.)
+  if (approvedUser.plan === 'basis') return { access: false, reason: 'none' }
+  return { access: true, reason: 'paid' }
 }
 
 export function isElevenLabsConfigured(): boolean {
