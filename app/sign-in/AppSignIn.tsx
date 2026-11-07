@@ -13,6 +13,7 @@ export default function AppSignIn() {
   const { signIn, fetchStatus } = useSignIn()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -92,14 +93,29 @@ export default function AppSignIn() {
               placeholder="E-mailadres"
               className="app-signin-input"
             />
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Wachtwoord"
-              className="app-signin-input"
-            />
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Wachtwoord"
+                className="app-signin-input"
+                style={{ paddingRight: 52 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+                style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: showPassword ? '#f59e0b' : '#9ca3af' }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                  {showPassword && <line x1="3" y1="3" x2="21" y2="21" />}
+                </svg>
+              </button>
+            </div>
             <button type="submit" disabled={loading} className="app-signin-btn" style={{ alignSelf: 'center' }}>
               {loading ? 'BEZIG...' : 'INLOGGEN'}
             </button>
