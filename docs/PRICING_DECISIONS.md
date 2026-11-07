@@ -35,7 +35,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 - Vanaf 3 gebruikers
 - **Jaaroptie toegevoegd (besloten 2026-08-10):** ~20% korting bij vooruitbetalen, bewust minder dan Basic/Pro's ~34% (Team is een volledig platform hoger: managerlaag, teamoverzicht en coaching zijn voor elk lid inbegrepen, niet alleen voor de manager). €39/gebruiker/maand is bewust exact gelijk aan Pro's jaarprijs, zodat een teamlid nooit goedkoper uitpakt dan een solo Pro-jaarabonnee (zelfde principe als bij de €49-maandprijs t.o.v. Pro €59/maand). Seat-wijzigingen tijdens een lopend jaarcontract: true-up, volledig handmatig (jaarprijs vast op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijgefactureerd tot de volgende jaarvernieuwing, weggevallen seats niet terugbetaald), gangbare aanpak bij SaaS-jaarcontracten. Was eerder bewust uitgesteld vanwege fluctuerende teamgrootte, nu alsnog gebouwd op Arno's verzoek.
 - **Geen aparte trial.** De manager start zelf als individuele Pro-gebruiker (30 dagen gratis) en upgradet later naar Team wanneer hij zijn team wil meenemen. Deze upgrade-flow moet functioneel bestaan in de app (zie open punt onderaan).
-- **Facturatie voorlopig handmatig** (bevestigd 2026-08-02), net als Basic/Pro nu al werken (geen payment provider aangesloten). Geen aparte, uitgebreide aanvraagflow met factuurgegevens/KvK/btw meer zoals de oude Command-staffel had, dat vervalt samen met de staffel zelf. Zodra er een payment provider is aangesloten, wordt dit voor alle tiers tegelijk geautomatiseerd, niet Team als eerste of enige uitzondering.
+- **Facturatie voorlopig handmatig** (bevestigd 2026-08-02), net als Basic/Pro nu al werken (geen payment provider aangesloten). Geen aparte, uitgebreide aanvraagflow met factuurgegevens/KvK/BTW meer zoals de oude Command-staffel had, dat vervalt samen met de staffel zelf. Zodra er een payment provider is aangesloten, wordt dit voor alle tiers tegelijk geautomatiseerd, niet Team als eerste of enige uitzondering.
 - Copy-patroon: "Alles van Pro, plus:", geldt per teamlid (elk teamlid krijgt volledige Pro-functionaliteit)
 
 **Features (bovenop Pro, per teamlid):**
@@ -72,15 +72,15 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 
 **"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/PAYMENTS_PLAN.md` besluitenblok.
 
-## Btw-weergave (besloten 2026-09-03)
+## BTW-weergave (besloten 2026-09-03)
 
-Volledige onderbouwing en de Stripe-/checkout-consequenties in `docs/PAYMENTS_PLAN.md`, sectie "Btw-weergave". Kort:
+Volledige onderbouwing en de Stripe-/checkout-consequenties in `docs/PAYMENTS_PLAN.md`, sectie "BTW-weergave". Kort:
 
-- `/prijzen` toont kale bedragen, geen btw-vermelding. Voor een consument geldt dat als het eindbedrag inclusief btw.
+- `/prijzen` toont kale bedragen, geen BTW-vermelding. Voor een consument geldt dat als het eindbedrag inclusief BTW.
 - Consument betaalt het getoonde bedrag all-in; netto voor ArnoBot = bedrag / 1,21 (Pro-jaar €39 → €32,23 netto). Checkout-totaal voor een consument moet exact het getoonde bedrag zijn.
-- Zakelijke klant voert een btw-nummer in bij de checkout en rekent af exclusief btw; netto voor ArnoBot = het volle bedrag.
-- Team blijft "excl. btw" tonen (B2B-only).
-- Abacus modelleert de B2C-btw-haircut bewust niet: B2C-volume naar verwachting een verwaarloosbaar deel van de omzet.
+- Zakelijke klant voert een BTW-nummer in bij de checkout en rekent af exclusief BTW; netto voor ArnoBot = het volle bedrag.
+- Team blijft "excl. BTW" tonen (B2B-only).
+- Abacus modelleert de B2C-BTW-haircut bewust niet: B2C-volume naar verwachting een verwaarloosbaar deel van de omzet.
 
 ## UI-gedrag
 

@@ -128,7 +128,7 @@ ALTER TABLE arnobot_command_requests ADD COLUMN elite_aantal integer;
 ```
 Bevestig na uitvoering dat de kolom is aangemaakt (bijv. via Table Editor), pas daarna wordt deze wijziging gecommit en gepusht — zonder de kolom faalt elke `/team`-aanvraag stil op de insert.
 
-Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, btw-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. btw.
+Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, BTW-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. BTW.
 
 Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), plus e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/team-aanvraag/route.ts`).
 

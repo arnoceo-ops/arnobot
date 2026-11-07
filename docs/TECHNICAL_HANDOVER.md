@@ -398,7 +398,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 
 ## Online betalen (Mollie)
 
-Zie `docs/MOLLIE_PLAN.md` voor het volledige plan, de besluiten en de livegang-checklist. Code in `lib/billing/` (client, prijzen en btw, perioden, verwerking, opzeggen, mails), routes `/api/bot/checkout`, `/api/bot/billing`, `/api/bot/billing/verleng`, `/api/webhooks/mollie`, `/api/cron/billing` (dagelijks 05:00 UTC: gemiste webhooks inhalen, ontbrekende abonnementen herstellen, opzeggingen stopzetten, verlengherinneringen, verlopen abonnementen afsluiten) en `/api/admin/refund`. Toegang loopt via `approved_users.expires_at` (einde betaalde periode plus 3 dagen respijt), `proxy.ts` is ongewijzigd. Tabellen: `arnobot_billing_customers`, `arnobot_subscriptions`, `arnobot_payments` (migratie: `docs/sql/2026-10-10-mollie-billing.sql`).
+Zie `docs/MOLLIE_PLAN.md` voor het volledige plan, de besluiten en de livegang-checklist. Code in `lib/billing/` (client, prijzen en BTW, perioden, verwerking, opzeggen, mails), routes `/api/bot/checkout`, `/api/bot/billing`, `/api/bot/billing/verleng`, `/api/webhooks/mollie`, `/api/cron/billing` (dagelijks 05:00 UTC: gemiste webhooks inhalen, ontbrekende abonnementen herstellen, opzeggingen stopzetten, verlengherinneringen, verlopen abonnementen afsluiten) en `/api/admin/refund`. Toegang loopt via `approved_users.expires_at` (einde betaalde periode plus 3 dagen respijt), `proxy.ts` is ongewijzigd. Tabellen: `arnobot_billing_customers`, `arnobot_subscriptions`, `arnobot_payments` (migratie: `docs/sql/2026-10-10-mollie-billing.sql`).
 
 ## Database-tabellen
 

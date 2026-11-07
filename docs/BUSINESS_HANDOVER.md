@@ -18,7 +18,7 @@ Alles hieronder is iets dat alleen Arno kan invullen (eigen facturen, wachtwoord
 - [ ] **Vaste kosten per dienst:** Vercel, Supabase, Clerk, Resend, Upstash, Sentry, PostHog, Calendly, Instatus, VisualPing, GitHub, Porkbun, Telegram (tabel "Maandelijkse kosten (extern)"), plus het maandtotaal.
 - [ ] **Facturatiekanaal:** hoe int je nu daadwerkelijk (handmatige overschrijving, Moneybird, e-Boekhouden, iets anders)?
 - [ ] **DPA-status per sub-verwerker:** Anthropic, Supabase, Clerk, Voyage AI, OpenAI, ElevenLabs, Resend, Upstash, Sentry, PostHog, Vercel — welke zijn getekend/geregeld?
-- [ ] **Bedrijfs- en btw-gegevens:** rechtsvorm, btw-nummer, vestigingsdetails.
+- [ ] **Bedrijfs- en BTW-gegevens:** rechtsvorm, BTW-nummer, vestigingsdetails.
 - [ ] **Noodcontact:** een externe developer/freelancer als back-up naast Arno zelf, plus een vertrouwd persoon die weet waar de kluis staat (en eventueel een notarieel document).
 - [ ] **Statuscommunicatie:** is er een kanaal richting gebruikers bij een storing langer dan 30 minuten, naast losse e-mails via Resend?
 - [ ] **Livegangdatum:** invullen in de changelog zodra bekend, was oorspronkelijk 1 augustus 2026, uitgesteld.
@@ -34,7 +34,7 @@ De app is gebouwd door Arno Diepeveen, oprichter van Royal Dutch Sales, als verl
 **Live URL:** https://arno.bot  
 **Bedrijf:** ArnoBot, eenmanszaak van Anton Dirk Diepeveen (roepnaam Arno)  
 **KvK-nummer:** 42184446  
-**Btw-nummer:** [ARNO: nog niet ontvangen]  
+**BTW-nummer:** [ARNO: nog niet ontvangen]  
 **Bezoekadres:** Verdunplein 17, 5627 SZ Eindhoven, Nederland (nog door te geven aan de KvK)
 
 ---
@@ -187,7 +187,7 @@ Downloadbaar op https://arno.bot/api/beveiliging-pdf. Beschrijft de technische b
 - [ARNO: is er een verwerkersovereenkomst (DPA) met alle sub-verwerkers? Volledige huidige lijst (zie ook `app/privacy/page.tsx` en `public/arnobot-beveiliging.pdf`): Anthropic, Supabase, Clerk, Voyage AI, OpenAI (spraak), ElevenLabs (Voice), Resend, Upstash, Sentry, PostHog, Vercel. Vul in per leverancier of dit geregeld is]
 
 ### Vestiging en belastingen
-- [ARNO: vul in: welk rechtsgebied, welk btw-nummer, hoe worden abonnementen gefactureerd]
+- [ARNO: vul in: welk rechtsgebied, welk BTW-nummer, hoe worden abonnementen gefactureerd]
 
 ---
 

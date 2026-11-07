@@ -2,12 +2,12 @@
 
 ## Besluiten 2026-10-10 (gaan voor op alles hieronder dat Stripe/Paddle noemt)
 
-- **Gekozen: Mollie (NL-start) + Moneybird.** Verworpen: Stripe/Paddle van 2026-09-02, want de start is NL-only en de OSS-zwakte van Mollie speelt dan nog niet. Zakelijke bankrekening is er. Btw-nummer volgt.
+- **Gekozen: Mollie (NL-start) + Moneybird.** Verworpen: Stripe/Paddle van 2026-09-02, want de start is NL-only en de OSS-zwakte van Mollie speelt dan nog niet. Zakelijke bankrekening is er. BTW-nummer volgt.
 - **Betaalmethoden:** iDEAL en creditcard voor Basic/Pro, Team per factuur.
 - **Verlenging (herzien 2026-10-13, zie `docs/MOLLIE_PLAN.md` voor de volledige besluitentabel):** particulieren betalen maandelijks automatisch en lopen door tot opzegging, net als zakelijk, geen 12-maanden-stop meer. Een jaarabonnement stopt na één jaar met een verlengmail. Bedrijven lopen automatisch door met één maand opzegtermijn. Het 10-oktober-besluit (particulier maandelijks stopte na 12 maanden met een verlengmail) is hiermee vervangen. Nuance t.o.v. de toen genoemde afwijzingsgrond "onbeperkt doorlopend voor iedereen (Wet Van Dam-risico bij jaarcontract)": dat risico gold voor een jaarcontract dat zichzelf stilzwijgend verlengt, niet voor een altijd-opzegbaar maandabonnement (zelfde patroon als Netflix/Spotify), dus is nu alleen het maandabonnement doorlopend gemaakt, het jaarabonnement behoudt de verlengmail.
 - **Bedenktijd:** consumenten 14 dagen volledig geld terug na eerste betaling of upgrade, zakelijk geen restitutie. Staat live in `app/voorwaarden/page.tsx` (v2.3). Verworpen: alleen evenredige terugbetaling met toestemmingsvakje.
 - **Opzegtermijn:** één maand voor maand en jaar (live, v2.3).
-- **Btw:** particulier betaalt het getoonde bedrag inclusief, zakelijk het getoonde bedrag plus 21%, alleen zichtbaar bij het afrekenen. Boekhouder is bij een NL-only start niet nodig, wel de KOR-vraag (zie Moneybird/Belastingdienst).
+- **BTW:** particulier betaalt het getoonde bedrag inclusief, zakelijk het getoonde bedrag plus 21%, alleen zichtbaar bij het afrekenen. Boekhouder is bij een NL-only start niet nodig, wel de KOR-vraag (zie Moneybird/Belastingdienst).
 - **Nog open:** Team per factuur (vooruitbetaald met betaallink voorgesteld), teksten "Maandelijks opzegbaar", herinneringsmail, artikel 3, 4 en 7 herschrijven voor het verschil particulier/zakelijk, bouw van de Mollie-adapter.
 
 ## Statusblok
@@ -15,7 +15,7 @@
 - **Laatst bijgewerkt:** 2026-10-10 (besluitenblok hierboven), de rest van dit document is van 2026-09-02
 - **Waar we staan:** besluit genomen (Stripe voor de EU, Paddle later voor de rest), verder **geparkeerd, wordt later opgepakt**. Nog niks gebouwd. Alle betalingen lopen nu handmatig via `/bot/admin/gebruikers` → `POST /api/admin/payment`.
 - **Blokkerend, en van Arno (nog niet gestart, 2026-09-02):**
-  1. **Rechtspersoon-keuze + Stripe-accountverificatie.** Besloten 2026-10-09: de contractpartij is de eenmanszaak ArnoBot van Anton Dirk Diepeveen (KvK 42184446), zie `BUSINESS_HANDOVER.md`. Dan het Stripe-account aanmaken en de KYC-verificatie doorlopen (KvK, btw-nummer, bestuurder/UBO-ID, zakelijke IBAN). Lange lijn: review kan dagen duren, uitbetalingen zijn geblokkeerd tot 't rond is.
+  1. **Rechtspersoon-keuze + Stripe-accountverificatie.** Besloten 2026-10-09: de contractpartij is de eenmanszaak ArnoBot van Anton Dirk Diepeveen (KvK 42184446), zie `BUSINESS_HANDOVER.md`. Dan het Stripe-account aanmaken en de KYC-verificatie doorlopen (KvK, BTW-nummer, bestuurder/UBO-ID, zakelijke IBAN). Lange lijn: review kan dagen duren, uitbetalingen zijn geblokkeerd tot 't rond is.
   2. **Juridische review van de abonnementsvoorwaarden** (NL SaaS + consumentenrecht). Zie de sectie "Opzegging, verlenging en consumentenrecht" hieronder.
 - **Eerstvolgende stap:** niks aan de codekant tot 1 en 2 lopen. De bouw (fasering hieronder) start pas wanneer de NL-livegang dichtbij is.
 
@@ -25,21 +25,21 @@
 
 | Segment | Type | Provider |
 |---|---|---|
-| Basic / Pro | B2C **en** B2B door elkaar: particuliere verkoper zonder btw-nummer én ZZP/bedrijf mét | **Stripe** |
-| Team (maandelijks en jaarlijks) | B2B, bedrijven met KvK/btw | **Stripe** (jaarcontract via `send_invoice` = bankoverschrijving) |
+| Basic / Pro | B2C **en** B2B door elkaar: particuliere verkoper zonder BTW-nummer én ZZP/bedrijf mét | **Stripe** |
+| Team (maandelijks en jaarlijks) | B2B, bedrijven met KvK/BTW | **Stripe** (jaarcontract via `send_invoice` = bankoverschrijving) |
 | Engelse/internationale site, later | rest van de wereld | **Paddle** (merchant of record) |
 
-**Waarom Stripe genoeg is voor de EU, ook met B2C:** de extra belasting-admin is twee kwartaalaangiftes bovenop de normale NL-btw-aangifte, routineus werk voor een boekhouder:
-- **B2C in andere EU-landen:** boven €10.000 grensoverschrijdende B2C-omzet per jaar → registratie voor de **EU OSS-regeling** (One Stop Shop): elke klant het btw-tarief van zijn eigen land, één kwartaalaangifte. Onder €10k gewoon NL-btw. Stripe Tax berekent, de OSS-aangifte is voor Arno/boekhouder.
-- **B2B EU met geldig btw-nummer:** 0% reverse-charge + kwartaal-**ICP-opgaaf** (EC Sales List). Stripe levert de data.
+**Waarom Stripe genoeg is voor de EU, ook met B2C:** de extra belasting-admin is twee kwartaalaangiftes bovenop de normale NL-BTW-aangifte, routineus werk voor een boekhouder:
+- **B2C in andere EU-landen:** boven €10.000 grensoverschrijdende B2C-omzet per jaar → registratie voor de **EU OSS-regeling** (One Stop Shop): elke klant het BTW-tarief van zijn eigen land, één kwartaalaangifte. Onder €10k gewoon NL-BTW. Stripe Tax berekent, de OSS-aangifte is voor Arno/boekhouder.
+- **B2B EU met geldig BTW-nummer:** 0% reverse-charge + kwartaal-**ICP-opgaaf** (EC Sales List). Stripe levert de data.
 
 **Waarom Paddle pas buiten de EU:** VS sales tax (40+ staten apart registreren), UK VAT, Australië GST enzovoort. Dáár wordt "zelf overal registreren" onhoudbaar en verdient een merchant of record zijn ~5%. Binnen de EU niet.
 
 ### Verworpen alternatieven
 
 - **Eén MoR voor alles (Paddle, ook NL/EU).** Simpelst om te draaien, maar ~3,5 procentpunt extra op elke EU-transactie, structureel. Weegt niet op tegen twee kwartaalaangiftes.
-- **Alleen Stripe, wereldwijd.** Goedkoopste fees, maar dan zelf btw/sales-tax registreren en afdragen in elk niet-EU-rechtsgebied (of via een betaalde filing-partner). Als solo-operatie te veel.
-- **B2B-only, ook voor Basic/Pro** (KvK/btw-nummer verplicht bij elke aanmelding). Zou consumentenrecht wegnemen, maar sluit de particuliere verkoper in loondienst uit die ArnoBot privé koopt. Voor een product van €19-77 een te groot marktsegment om te weigeren. Verworpen 2026-09-02.
+- **Alleen Stripe, wereldwijd.** Goedkoopste fees, maar dan zelf BTW/sales-tax registreren en afdragen in elk niet-EU-rechtsgebied (of via een betaalde filing-partner). Als solo-operatie te veel.
+- **B2B-only, ook voor Basic/Pro** (KvK/BTW-nummer verplicht bij elke aanmelding). Zou consumentenrecht wegnemen, maar sluit de particuliere verkoper in loondienst uit die ArnoBot privé koopt. Voor een product van €19-77 een te groot marktsegment om te weigeren. Verworpen 2026-09-02.
 - **Mollie.** Nederlands, maar een PSP, geen merchant of record. Lost het belastingprobleem niet op. Bovendien door Arno uitgesloten.
 - **Lemon Squeezy als MoR i.p.v. Paddle.** Sinds juli 2024 overgenomen door Stripe, wordt "Stripe Managed Payments". Integratie bouwen op een product in transitie = herbouwrisico. Paddle is zelfstandig en stabiel sinds 2012, sterker op EU B2B-facturatie.
 
@@ -73,13 +73,13 @@
 
 **Stripe doet de mechanica** (auto-renew, `cancel_at_period_end`, `cancel_at` op een specifieke datum). De *regel* (opzegtermijn) staat in de voorwaarden; "te laat, dus nog een periode" is logica die de app bovenop Stripe zet door `cancel_at` op het eind van de volgende periode te zetten. Voor consumenten vervalt dat grotendeels omdat de gedwongen verlenging niet mag.
 
-### Btw-weergave (besloten 2026-09-03)
+### BTW-weergave (besloten 2026-09-03)
 
-- **`/prijzen` toont kale bedragen, zonder btw-vermelding.** Een blote prijs geldt voor een consument automatisch als het eindbedrag inclusief btw. Dit is compliant en het is wat B2B-leunende SaaS breed doet. Bewust géén "incl. btw"-regel eronder (eerst overwogen, verworpen: niet nodig, en niemand in dit marktsegment doet het).
-- **Consument:** het bedrag op `/prijzen` is wat hij all-in betaalt. Netto voor ArnoBot is dat bedrag / 1,21 (bij Pro-jaar: €39 → €32,23 netto). Harde eis: het checkout-totaal voor een consument moet exact gelijk zijn aan de getoonde prijs, geen btw-regel eroverheen.
-- **Zakelijk:** voert bij de checkout een geldig btw-nummer in en rekent af exclusief btw (het getoonde bedrag + 21%, bij Pro-jaar €47,19; bedrijf vordert terug, echte kosten €39). Netto voor ArnoBot is het volle bedrag. Vereist de juiste Stripe-instelling (prijs btw-inclusief voor consumenten, btw-exclusief zodra een btw-nummer is ingevoerd) plus btw-nummer-validatie in de checkout. Bevestigen met de boekhouder.
-- **Team** is B2B-only en toont al "excl. btw" op `/team`, dat blijft.
-- **Abacus (`/abacus`) modelleert de B2C-btw-haircut bewust niet.** Het volume B2C is naar verwachting een uiterst klein percentage van de omzet, dus de calculator rekent met het volle bedrag als netto. Als de B2C-mix in de praktijk substantieel blijkt, alsnog een correctiefactor toevoegen.
+- **`/prijzen` toont kale bedragen, zonder BTW-vermelding.** Een blote prijs geldt voor een consument automatisch als het eindbedrag inclusief BTW. Dit is compliant en het is wat B2B-leunende SaaS breed doet. Bewust géén "incl. BTW"-regel eronder (eerst overwogen, verworpen: niet nodig, en niemand in dit marktsegment doet het).
+- **Consument:** het bedrag op `/prijzen` is wat hij all-in betaalt. Netto voor ArnoBot is dat bedrag / 1,21 (bij Pro-jaar: €39 → €32,23 netto). Harde eis: het checkout-totaal voor een consument moet exact gelijk zijn aan de getoonde prijs, geen BTW-regel eroverheen.
+- **Zakelijk:** voert bij de checkout een geldig BTW-nummer in en rekent af exclusief BTW (het getoonde bedrag + 21%, bij Pro-jaar €47,19; bedrijf vordert terug, echte kosten €39). Netto voor ArnoBot is het volle bedrag. Vereist de juiste Stripe-instelling (prijs BTW-inclusief voor consumenten, BTW-exclusief zodra een BTW-nummer is ingevoerd) plus BTW-nummer-validatie in de checkout. Bevestigen met de boekhouder.
+- **Team** is B2B-only en toont al "excl. BTW" op `/team`, dat blijft.
+- **Abacus (`/abacus`) modelleert de B2C-BTW-haircut bewust niet.** Het volume B2C is naar verwachting een uiterst klein percentage van de omzet, dus de calculator rekent met het volle bedrag als netto. Als de B2C-mix in de praktijk substantieel blijkt, alsnog een correctiefactor toevoegen.
 
 ### Checkpoint: juridische review vóór de commerciële livegang
 
@@ -89,7 +89,7 @@ Harde poort. Laat een jurist (NL SaaS + consumentenrecht) nakijken:
 - de herroepingsrecht-opt-in voor digitale content
 - de `/prijzen`-claims vs de voorwaarden
 
-En laat de boekhouder de btw-opzet bevestigen: prijs btw-inclusief voor consumenten, btw-exclusief bij een geldig btw-nummer, OSS-drempel voor EU-consumenten, factuurvereisten.
+En laat de boekhouder de BTW-opzet bevestigen: prijs BTW-inclusief voor consumenten, BTW-exclusief bij een geldig BTW-nummer, OSS-drempel voor EU-consumenten, factuurvereisten.
 
 ## Fasering en tijdsindicatie (Stripe, EU)
 
@@ -102,8 +102,8 @@ Bouwtijd met Claude Code, bij gestage inzet:
 | 1 | Basic/Pro: Checkout-flow, webhook, trial → betaald (`trial_period_days`), Customer Portal vanaf `/bot/account`, toegangslogica | ~1 week |
 | 1b | Team maandelijks: per-seat abonnement (€97 + €49 × seats). Start met vaste quantity die Arno in het dashboard aanpast; auto seat-sync (`/bot/team` → Stripe) later | ~1-2 dagen |
 | 1c | Team jaarlijks: `send_invoice`-abonnement, bankoverschrijving, proration voor mid-jaar seats | ~1-2 dagen |
-| 2 | Stripe Tax + Invoicing config, factuur-PDF, "geen geldig btw-nummer"-afhandeling, herroepings-opt-in, auto-verleng-disclosure | ~2 dagen |
-| Test | Test-mode, mislukte betaling, opzeggen mid-periode, upgrade/downgrade, btw-nummer-invoer, webhook replay, staging-soak | ~3-5 dagen |
+| 2 | Stripe Tax + Invoicing config, factuur-PDF, "geen geldig BTW-nummer"-afhandeling, herroepings-opt-in, auto-verleng-disclosure | ~2 dagen |
+| Test | Test-mode, mislukte betaling, opzeggen mid-periode, upgrade/downgrade, BTW-nummer-invoer, webhook replay, staging-soak | ~3-5 dagen |
 
 **Realistische kalendertijd voor de volledige Stripe-integratie: ~4 tot 6 weken** bij gestage inzet, plus de juridische review parallel.
 
