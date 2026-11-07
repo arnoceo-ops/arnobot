@@ -23,7 +23,7 @@
     "@react-pdf/renderer": "^4.3.3",
     "@sentry/nextjs": "^11.10.0",
     "@supabase/supabase-js": "^2.115.0",
-    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.38.3",
     "disposable-email-domains": "^1.0.62",
     "jspdf": "^4.2.0",
