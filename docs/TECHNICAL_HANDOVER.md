@@ -82,7 +82,7 @@ Eerste inlog → /bot/profiel (intake/onboarding, onboarding_done gezet)
     ↓
 Elke sessie → /api/bot/session-end (synthese: title + summary + feiten + uitdaging + entiteiten-extractie)
     ↓
-Na 5+ gesprekken → /api/cron/auto-analyse (analyse aangemaakt in arnobot_analyses, zichtbaar op /bot/analyses)
+Na 10+ nieuwe gesprekken (sinds de laatste analyse) → /api/cron/auto-analyse (analyse aangemaakt in arnobot_analyses, zichtbaar op /bot/analyses)
     ↓
 /bot/coaching → /api/bot/coaching (coachingrapport in arnobot_coaching + arnobot_coaching_history)
     ↓
@@ -377,7 +377,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
 | `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
-| `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 5+ nieuwe gesprekken |
+| `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 10+ nieuwe gesprekken sinds de laatste analyse, plus mail "Je analyses zijn bijgewerkt" |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
 | `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output. Analyseert de 300 meest recente gesprekken + 50 meest recente analyses (over alle gebruikers samen, aantal-gebaseerd, geen datumvenster) |
 | `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met CLAUDE.md-inventaris |
