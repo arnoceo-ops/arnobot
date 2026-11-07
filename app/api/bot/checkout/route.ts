@@ -47,15 +47,15 @@ export async function POST(req: NextRequest) {
     if (naam.length < 2 || naam.length > 120) return fout(400, 'Vul de bedrijfsnaam in')
     if (!isKvkFormaat(kvkNr)) return fout(400, 'Een KvK-nummer heeft 8 cijfers')
     if (/^BE/i.test(normaliseerBtwNummer(btwRaw))) {
-      return fout(400, 'Je hebt een Belgisch btw-nummer. Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar admin@arno.bot, dan helpen we je snel verder.')
+      return fout(400, 'Je hebt een Belgisch BTW-nummer. Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de BTW dan wordt verlegd. Mail naar admin@arno.bot, dan helpen we je snel verder.')
     }
     if (!isNlBtwFormaat(btwRaw)) {
-      return fout(400, 'Vul een Nederlands btw-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan admin@arno.bot')
+      return fout(400, 'Vul een Nederlands BTW-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan admin@arno.bot')
     }
     // In testmodus (test_-sleutel, alleen eigenaar en testaccounts) slaan we de VIES-controle over,
     // zodat zakelijk afrekenen te testen is zonder een echt btw-nummer.
     const check = process.env.MOLLIE_API_KEY?.startsWith('test_') ? 'onbekend' : await controleerBtwBijVies(btwRaw)
-    if (check === 'ongeldig') return fout(400, 'Dit btw-nummer is niet geldig')
+    if (check === 'ongeldig') return fout(400, 'Dit BTW-nummer is niet geldig')
     // Een factuur aan een bedrijf moet het adres van het bedrijf bevatten.
     const straatNaam = typeof straat === 'string' ? straat.trim() : ''
     const plaatsNaam = typeof plaats === 'string' ? plaats.trim() : ''

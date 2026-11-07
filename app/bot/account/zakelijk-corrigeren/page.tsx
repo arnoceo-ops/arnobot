@@ -91,7 +91,7 @@ export default function ZakelijkCorrigerenPage() {
             <>
               <p style={body}>
                 Je hebt ArnoBot {abonnement.planNaam} ({abonnement.cyclus}) als particulier afgerekend voor {formatEuro(abonnement.betaaldCent)}.
-                Vul hieronder je bedrijfsgegevens in: we maken er een correcte zakelijke btw-factuur van. Het al betaalde bedrag blijft
+                Vul hieronder je bedrijfsgegevens in: we maken er een correcte zakelijke BTW-factuur van. Het al betaalde bedrag blijft
                 gewoon staan, je betaalt alleen het verschil van {formatEuro(abonnement.verschilCent)}.
               </p>
 
@@ -105,7 +105,7 @@ export default function ZakelijkCorrigerenPage() {
                   <input id="kvk" className="gegevens-input" value={kvk} onChange={e => setKvk(e.target.value)} inputMode="numeric" />
                 </div>
                 <div className="gegevens-rij">
-                  <label className="gegevens-label" htmlFor="btw">Btw-nummer</label>
+                  <label className="gegevens-label" htmlFor="btw">BTW-nummer</label>
                   <input id="btw" className="gegevens-input" value={btwNummer} onChange={e => setBtwNummer(e.target.value)} placeholder="NL123456789B01" />
                 </div>
                 <div className="gegevens-rij">

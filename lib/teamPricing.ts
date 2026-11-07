@@ -46,6 +46,6 @@ export function teamPrijsWeergave(gebruikers: number, cyclus: Cyclus = 'maandeli
   const prijs = berekenTeamPrijsPerMaand(gebruikers, cyclus)
   if (prijs === null) return `Vanaf ${TEAM_MIN_GEBRUIKERS} gebruikers`
   return cyclus === 'jaarlijks'
-    ? `€${prijs}/maand-equivalent, €${prijs * 12} per jaar vooruit (excl. btw)`
-    : `€${prijs} per maand (excl. btw)`
+    ? `€${prijs}/maand-equivalent, €${prijs * 12} per jaar vooruit (excl. BTW)`
+    : `€${prijs} per maand (excl. BTW)`
 }

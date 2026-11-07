@@ -157,7 +157,7 @@ export default function TeamAanvraagPage() {
                     <input required value={kvkNummer} onChange={e => setKvkNummer(e.target.value)} />
                   </div>
                   <div className="ca-field">
-                    <label>Btw-nummer *</label>
+                    <label>BTW-nummer *</label>
                     <input required value={btwNummer} onChange={e => setBtwNummer(e.target.value)} />
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export default function TeamAanvraagPage() {
                       <p className="ca-prijs-num">€ {(prijsMetElite * 12).toLocaleString('nl-NL')} / jaar</p>
                       <p className="ca-prijs-sub">
                         € 77 platformtarief + € 39 per gebruiker, maand-equivalent
-                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief btw
+                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief BTW
                       </p>
                     </>
                   ) : (
@@ -273,7 +273,7 @@ export default function TeamAanvraagPage() {
                       <p className="ca-prijs-num">€ {prijsMetElite.toLocaleString('nl-NL')} / maand</p>
                       <p className="ca-prijs-sub">
                         € 97 platformtarief + € 49 per gebruiker
-                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief btw
+                        {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief BTW
                       </p>
                     </>
                   )}

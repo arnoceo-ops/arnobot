@@ -99,7 +99,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
           <input style={input} value={kvkNummer} onChange={e => setKvkNummer(e.target.value)} />
         </div>
         <div>
-          <label style={label}>Btw-nummer</label>
+          <label style={label}>BTW-nummer</label>
           <input style={input} value={btwNummer} onChange={e => setBtwNummer(e.target.value)} />
         </div>
       </div>

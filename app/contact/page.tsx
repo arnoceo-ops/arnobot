@@ -70,7 +70,7 @@ export default function ContactPage() {
               <tbody>
                 <tr><td style={rij}>Bedrijf</td><td>{BEDRIJF.naam}</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>KvK-nummer</td><td>{BEDRIJF.kvk}</td></tr>
-                {BEDRIJF.btw && <tr><td style={{ color: '#f1f5f9' }}>Btw-nummer</td><td>{BEDRIJF.btw}</td></tr>}
+                {BEDRIJF.btw && <tr><td style={{ color: '#f1f5f9' }}>BTW-nummer</td><td>{BEDRIJF.btw}</td></tr>}
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Bezoekadres</td>
                   <td>{BEDRIJF.straat}<br />{BEDRIJF.postcode} {BEDRIJF.plaats}</td>

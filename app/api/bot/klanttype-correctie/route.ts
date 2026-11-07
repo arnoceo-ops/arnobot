@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
   if (naam.length < 2 || naam.length > 120) return fout(400, 'Vul de bedrijfsnaam in')
   if (!isKvkFormaat(kvkNr)) return fout(400, 'Een KvK-nummer heeft 8 cijfers')
   if (/^BE/i.test(normaliseerBtwNummer(btwRaw))) {
-    return fout(400, 'Je hebt een Belgisch btw-nummer. Mail naar admin@arno.bot, dan helpen we je verder.')
+    return fout(400, 'Je hebt een Belgisch BTW-nummer. Mail naar admin@arno.bot, dan helpen we je verder.')
   }
-  if (!isNlBtwFormaat(btwRaw)) return fout(400, 'Vul een Nederlands btw-nummer in (NL123456789B01)')
+  if (!isNlBtwFormaat(btwRaw)) return fout(400, 'Vul een Nederlands BTW-nummer in (NL123456789B01)')
   const check = process.env.MOLLIE_API_KEY?.startsWith('test_') ? 'onbekend' : await controleerBtwBijVies(btwRaw)
-  if (check === 'ongeldig') return fout(400, 'Dit btw-nummer is niet geldig')
+  if (check === 'ongeldig') return fout(400, 'Dit BTW-nummer is niet geldig')
   if (straatNaam.length < 3 || straatNaam.length > 100) return fout(400, 'Vul de straat en het huisnummer in')
   if (!postcodeNorm) return fout(400, 'Vul een geldige postcode in (bijvoorbeeld 1234 AB)')
   if (plaatsNaam.length < 2 || plaatsNaam.length > 80) return fout(400, 'Vul de plaats in')

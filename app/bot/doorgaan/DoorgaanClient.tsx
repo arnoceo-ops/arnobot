@@ -296,11 +296,11 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                     <input id="kvk" className="gegevens-input" value={kvk} onChange={e => setKvk(e.target.value)} inputMode="numeric" />
                   </div>
                   <div className="gegevens-rij">
-                    <label className="gegevens-label" htmlFor="btw">Btw-nummer</label>
+                    <label className="gegevens-label" htmlFor="btw">BTW-nummer</label>
                     <input id="btw" className="gegevens-input" value={btwNummer} onChange={e => setBtwNummer(e.target.value)} placeholder="NL123456789B01" />
                     {belgisch && (
                       <p style={{ fontSize: 14, color: '#f59e0b', lineHeight: 1.5 }}>
-                        Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de btw dan wordt verlegd. Mail naar <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>, dan helpen we je snel verder.
+                        Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de BTW dan wordt verlegd. Mail naar <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>, dan helpen we je snel verder.
                       </p>
                     )}
                   </div>
@@ -325,13 +325,13 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                 {klantType === 'zakelijk' ? (
                   <>
                     <div className="gegevens-regel"><span>Abonnement {periode}</span><strong>{formatEuro(bedrag.nettoCent)}</strong></div>
-                    <div className="gegevens-regel"><span>Btw 21%</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
+                    <div className="gegevens-regel"><span>BTW 21%</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
                     <div className="gegevens-regel"><span>Totaal {periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
                   </>
                 ) : (
                   <>
                     <div className="gegevens-regel"><span>Totaal {periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
-                    <div className="gegevens-regel"><span>Inclusief btw</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
+                    <div className="gegevens-regel"><span>Inclusief BTW</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
                   </>
                 )}
               </div>

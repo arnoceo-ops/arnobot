@@ -307,7 +307,7 @@ export function getEmailTemplate(
       const bedrag = billingEuro(b?.bedragCent ?? 2900)
       const btw = billingEuro(b?.btwCent ?? 503)
       const regels = [
-        `Bedrag: ${bedrag}, inclusief ${btw} btw.`,
+        `Bedrag: ${bedrag}, inclusief ${btw} BTW.`,
         `Je abonnement loopt door tot ${billingDatum(b?.datum)}.`,
         b?.betaalId ? `Betaalreferentie: ${b.betaalId}.` : '',
       ].filter(Boolean).join('<br>')

@@ -24,7 +24,7 @@ export const BEDRIJF_ADRES_REGEL = `${BEDRIJF.straat}, ${BEDRIJF.postcode} ${BED
 export const BEDRIJF_REGEL = [
   BEDRIJF.naam,
   `KvK ${BEDRIJF.kvk}`,
-  ...(BEDRIJF.btw ? [`Btw ${BEDRIJF.btw}`] : []),
+  ...(BEDRIJF.btw ? [`BTW ${BEDRIJF.btw}`] : []),
   BEDRIJF_ADRES_REGEL,
 ].join(' · ')
 
