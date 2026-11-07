@@ -79,7 +79,7 @@ export default function AppSignIn() {
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1 }}>INLOGGEN</h1>
           </div>
 
-          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
+          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', textWrap: 'balance', lineHeight: 1.8 }}>
             Log in met je LinkedIn-mail en je ArnoBot-wachtwoord.
           </p>
 
@@ -106,8 +106,9 @@ export default function AppSignIn() {
             {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           </form>
 
-          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8, marginTop: 24 }}>
-            Nog geen wachtwoord?{' '}
+          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', textWrap: 'balance', lineHeight: 1.8, marginTop: 24 }}>
+            Nog geen wachtwoord?
+            <br />
             <button
               type="button"
               onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
