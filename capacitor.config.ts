@@ -16,6 +16,22 @@ const config: CapacitorConfig = {
   appId: 'arno.bot',
   appName: 'ArnoBot',
   webDir: 'public',
+  // Donkerblauwe WebView-achtergrond (zelfde als de app), zodat er nooit zwart zichtbaar is.
+  backgroundColor: '#111827',
+  plugins: {
+    // Splash (logo op donkerblauw) blijft staan tot de webpagina klaar is en zichzelf verbergt
+    // (app/components/NativeSplashHide.tsx). launchShowDuration is alleen het vangnet, voor het
+    // geval de pagina niet laadt (bv. geen internet).
+    SplashScreen: {
+      launchAutoHide: true,
+      launchShowDuration: 12000,
+      launchFadeOutDuration: 250,
+      backgroundColor: '#111827',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+  },
   server: {
     // Startpagina /bot (sinds 2026-11-06): de app opent direct op de gesprekken, of voor wie niet
     // is ingelogd via proxy.ts direct op het inlogscherm, zonder de homepage te laden.

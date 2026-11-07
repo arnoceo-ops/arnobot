@@ -5,6 +5,7 @@ import SentryUserIdentifier from "./components/SentryUserIdentifier";
 import PageviewTracker from "./components/PageviewTracker";
 import PostHogTracker from "./components/PostHogTracker";
 import PostHogSessionReplay from "./components/PostHogSessionReplay";
+import NativeSplashHide from "./components/NativeSplashHide";
 import { BEDRIJF } from "@/lib/bedrijf";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default async function RootLayout({
           <PageviewTracker />
           <PostHogTracker />
           <PostHogSessionReplay />
+          <NativeSplashHide />
           {children}
         </body>
       </html>
