@@ -4,18 +4,18 @@
 
 **Waar we staan:** onderzoek klaar, nog niets gebouwd. Alle indieneisen van Apple zijn gelezen (zie vanaf de sectie "Eisenlijst en risico's"). De Android-app (1.0.4) is de basis; koop-, upgrade- en prijsverwijzingen zijn in de app al verborgen en dat werkt ook op iOS.
 
-**Eerstvolgende stap:** na de pushmeldingen op Android (zie `docs/PUSH_PLAN.md`): inschrijven bij het Apple Developer Program als Individual. Dat kan al eerder gestart worden omdat de goedkeuring weken kan duren.
+**Eerstvolgende stap (Arno):** inschrijven bij het Apple Developer Program als Individual; de goedkeuring kan weken duren en de APNs-sleutel voor push komt uit dat account. Intussen bouw ik de serverkant van de pushmeldingen (zie `docs/PUSH_PLAN.md`).
 
 **Besluiten en verworpen alternatieven (2026-11-08):**
 - Gekozen: **Individual-account**. Verworpen: Organization, want Apple eist voor een eenmanszaak een Individual-inschrijving en accepteert geen handelsnamen; een D-U-N-S-nummer verandert dat niet. Gevolg: Arno's eigen naam staat als verkoper in de store; omzetten kan later met een BV.
 - Gekozen: **bouwen in de cloud** (Codemagic, Capawesome Cloud of GitHub Actions macOS-runners). Verworpen: een Mac huren, want niet nodig.
 - Gekozen: **geen in-app aankoop**, abonnementen blijven via de website (Mollie, Moneybird). Verworpen (voor nu): in-app aankoop, want dat vraagt een tweede abonnementssysteem naast Mollie en past niet bij teamfacturen, referral-tegoed en zakelijke btw-facturen. Terugvaloptie als de review het eist.
-- Gekozen: **pushmeldingen als echte native meerwaarde** tegen het webwrapper-risico (4.2), eerst op Android. Verworpen: indienen zonder native meerwaarde, want 4.2 is het grootste afwijzingsrisico.
+- Gekozen: **pushmeldingen als echte native meerwaarde** tegen het webwrapper-risico (4.2), **alleen in de iOS-app**, rechtstreeks via APNs zonder Firebase (wijziging van 2026-11-08: eerst was Android met Firebase gepland). Verworpen: push ook op Android en Firebase, want de gebruikerswaarde is dun, Android is al goedgekeurd en FCM is Google. Verworpen: indienen zonder native meerwaarde, want 4.2 is het grootste afwijzingsrisico.
 - Gekozen: het **toestemmingsscherm voor AI-verwerking door derden** bouwen (5.1.2(i)), voor de Apple-versie en bij voorkeur voor beide apps.
 - Niet nodig: **Sign in with Apple** zolang de app alleen e-mail en wachtwoord biedt, en **testers** (Apple heeft geen minimum).
 
 **Afvinklijst:**
-- [ ] Pushmeldingen op Android gebouwd en live (zie PUSH_PLAN)
+- [ ] Pushmeldingen voor iOS gebouwd (zie PUSH_PLAN)
 - [ ] Apple Developer Program: Individual ingeschreven, handelaarsgegevens met zakelijk adres
 - [ ] Toestemmingsscherm AI-verwerking gebouwd en getest
 - [ ] iOS-project gegenereerd (`npx cap add ios`), microfoontekst in Info.plist, iconen
