@@ -14,8 +14,8 @@ const BRANCH = 'master'
 type ModelRow = { route: string; model: string; reden: string; laatsteCheck: string }
 type AdviesMap = Record<string, { actie: 'blijven' | 'overwegen' | 'switchen'; tekst: string }>
 
-async function getClaudeMd(token: string): Promise<string | null> {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/CLAUDE.md?ref=${BRANCH}`, {
+async function getInventarisDoc(token: string): Promise<string | null> {
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/docs/MODELINVENTARIS.md?ref=${BRANCH}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/vnd.github+json',
@@ -57,7 +57,7 @@ function parseModelsTable(markdown: string): ModelRow[] {
 async function getAdviezen(rows: ModelRow[]): Promise<{ adviezen: AdviesMap; voorstel: string }> {
   const inventarisText = rows.map(r => `- ${r.route}: huidig model ${r.model} (${r.reden})`).join('\n')
 
-  const prompt = `Dit zijn de huidige modelkeuzes voor ArnoBot, een sales coaching chatbot (bron: de modelinventaris-tabel in CLAUDE.md):
+  const prompt = `Dit zijn de huidige modelkeuzes voor ArnoBot, een sales coaching chatbot (bron: de modelinventaris-tabel in docs/MODELINVENTARIS.md):
 
 ${inventarisText}
 
@@ -68,7 +68,7 @@ Zoek via web_search de meest actuele stand op van:
 Vergelijk de huidige keuzes hierboven met wat je vindt. Let vooral op: nieuwe modelgeneraties, aangekondigde deprecations, en prijs/kwaliteitsverschillen. Kwaliteit weegt zwaarder dan prijs bij het advies.
 
 Geef het resultaat terug als JSON, exact dit formaat, niets anders:
-{"adviezen": [{"route": "exacte route-string uit de lijst hierboven", "actie": "blijven|overwegen|switchen", "tekst": "max 12 woorden"}], "voorstel": "platte tekst met voorgestelde wijzigingen voor de CLAUDE.md-modelinventaristabel, of \\"Geen wijzigingen nodig\\" als er niets te wijzigen is"}
+{"adviezen": [{"route": "exacte route-string uit de lijst hierboven", "actie": "blijven|overwegen|switchen", "tekst": "max 12 woorden"}], "voorstel": "platte tekst met voorgestelde wijzigingen voor de modelinventaristabel in docs/MODELINVENTARIS.md, of \\"Geen wijzigingen nodig\\" als er niets te wijzigen is"}
 
 Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.`
@@ -168,7 +168,7 @@ function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorste
 
   const voorstelHtml = voorstel && voorstel.trim() && !/^geen wijzigingen nodig$/i.test(voorstel.trim())
     ? `
-      <p style="color: #f59e0b; font-size: 11px; letter-spacing: 3px; margin: 0 0 12px;">VOORGESTELDE WIJZIGING IN CLAUDE.MD</p>
+      <p style="color: #f59e0b; font-size: 11px; letter-spacing: 3px; margin: 0 0 12px;">VOORGESTELDE WIJZIGING IN MODELINVENTARIS.MD</p>
       <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0 0 32px; white-space: pre-wrap;">${escapeHtml(voorstel)}</p>
     `
     : `<p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">Geen wijzigingen voorgesteld op basis van het live onderzoek.</p>`
@@ -180,7 +180,7 @@ function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorste
       <p style="color: #6b7280; font-size: 13px; margin: 0 0 32px;">${date}</p>
 
       <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
-        Automatische check op de huidige modelkeuzes. De modelinventaris is live opgehaald uit CLAUDE.md, het advies is gegenereerd door Claude op basis van een live zoekopdracht naar de actuele Anthropic- en Voyage AI-pricingpagina's, niet uit trainingskennis.<br><br>
+        Automatische check op de huidige modelkeuzes. De modelinventaris is live opgehaald uit docs/MODELINVENTARIS.md, het advies is gegenereerd door Claude op basis van een live zoekopdracht naar de actuele Anthropic- en Voyage AI-pricingpagina's, niet uit trainingskennis.<br><br>
         Controleer altijd zelf de bronnen voordat je iets doorvoert.
       </p>
 
@@ -190,7 +190,7 @@ function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorste
       ${voorstelHtml}
 
       <p style="color: #6b7280; font-size: 13px; line-height: 1.8; margin: 0 0 8px;">
-        Na een wijziging: update CLAUDE.md (modelinventaris-tabel). Deze cron leest die tabel voortaan live uit, dus geen aparte kopie meer om bij te houden.
+        Na een wijziging: update docs/MODELINVENTARIS.md (modelinventaris-tabel). Deze cron leest die tabel voortaan live uit, dus geen aparte kopie meer om bij te houden.
       </p>
       <p style="color: #6b7280; font-size: 13px;">
         Prijzen: <a href="https://platform.claude.com/docs/en/about-claude/pricing" style="color: #f59e0b;">platform.claude.com/docs/pricing</a>
@@ -217,10 +217,10 @@ export async function GET(req: NextRequest) {
 
   let rows: ModelRow[]
   try {
-    const claudeMd = await getClaudeMd(githubToken)
-    if (!claudeMd) throw new Error('CLAUDE.md niet gevonden of niet leesbaar via GitHub API')
+    const claudeMd = await getInventarisDoc(githubToken)
+    if (!claudeMd) throw new Error('docs/MODELINVENTARIS.md niet gevonden of niet leesbaar via GitHub API')
     rows = parseModelsTable(extractModelsTable(claudeMd))
-    if (rows.length === 0) throw new Error('Modelinventaris-tabel leeg of niet gevonden in CLAUDE.md')
+    if (rows.length === 0) throw new Error('Modelinventaris-tabel leeg of niet gevonden in docs/MODELINVENTARIS.md')
   } catch (e) {
     await notifyCronFailure('model-check', e)
     return NextResponse.json({ error: 'claude_md_fetch_failed' }, { status: 500 })

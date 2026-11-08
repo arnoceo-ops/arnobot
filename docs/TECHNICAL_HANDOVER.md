@@ -654,7 +654,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/cron/feitencontrole/route.ts` | `claude-sonnet-4-6` | Dagelijks 06:45 UTC. Voorselectie op telwoorden in antwoorden die niet in het gesprek staan (`lib/feitenControle.ts`), daarna een oordeel van Sonnet over alleen die kandidaten, Telegram-melding als een antwoord een feit van de gebruiker verkeerd terugspeelt ("vier bronnen" terwijl er twee genoemd waren). Draait op opgeslagen antwoorden, dus zonder vertraging in de chat. Sonnet en niet Haiku: een valse melding kost Arno tijd, en Haiku had bij het mailpatroon te veel valse positieven. Besloten 2026-10-31 (verworpen: eerst controleren dan tonen, want de chat streamt en dat maakt elk antwoord trager). Gemeten: bij Thijs' briefing 0 echte telfouten in 60 runs, dus zeldzaam. | 2026-10-31 |
 | `app/api/cron/productvragen/route.ts` | `claude-haiku-4-5-20251001` | Dagelijks 06:30 UTC. Kiest uit de vragen van de laatste 24 uur (zonder testaccounts) welke over het gebruik van ArnoBot zelf gaan en meldt die in één Telegram-bericht, alleen als er iets is. Retry-bij-leeg, bij aanhoudend ongeldig antwoord een cron-foutmelding i.p.v. stilte. Besloten 2026-10-21 als losse cron (verworpen: controle per bericht in `chat/route.ts`, raakt de chat). | 2026-10-21 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |
-| `app/api/cron/model-check/route.ts` (adviesgeneratie, e-mail only) | `claude-sonnet-4-6` (+ web_search) | Haalt de modeltabel live uit CLAUDE.md via GitHub API, echte web_search naar pricingpagina's. Faalt hard bij ophaalfout. | 2026-08-12 |
+| `app/api/cron/model-check/route.ts` (adviesgeneratie, e-mail only) | `claude-sonnet-4-6` (+ web_search) | Haalt de modeltabel live uit docs/MODELINVENTARIS.md via GitHub API, echte web_search naar pricingpagina's. Faalt hard bij ophaalfout. | 2026-08-12 |
 | `app/api/admin/feedback-analyse/route.ts` | `claude-haiku-4-5-20251001` | Nog geen expliciete leeg-check. | 2026-07 |
 | `scripts/embed-chunks.mjs` (contextgeneratie per chunk) | `claude-haiku-4-5-20251001` | Offline script dat de kennisbank vult. try/catch-fallback. | 2026-07 |
 | `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Enige Opus-gebruik. `tool_choice` forceert tool_use. Opus 5 kost gelijk aan 4.8, presteert beter. | 2026-07 |
@@ -675,7 +675,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 
 **Openstaand actiepunt:** Hercheck of Sonnet 5 de thinking-mode-truncatie heeft opgelost voor de hoofdchat. Sonnet 5's introductieprijs ($2/$10 per miljoen tokens) is sinds 11 augustus 2026 permanent gemaakt, dus structureel goedkoper dan Sonnet 4.6 — maakt de hercheck aantrekkelijker. Test eerst op staging. Livegang-datum is uitgesteld (was 1 augustus 2026, nu vermoedelijk september/oktober 2026); check bij Arno de actuele datum vóór dit oppakken, ga niet af op een datum die eerder in CLAUDE.md heeft gestaan.
 
-**Volledige inventaris + toelichting per beslissing:** zie CLAUDE.md, sectie "Model-inventaris".
+**Volledige inventaris + toelichting per beslissing:** zie `docs/MODELINVENTARIS.md`.
 
 ---
 

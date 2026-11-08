@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
 
     // Haal benodigde bronbestanden op
     const [claudeMdFile, pkgFile, techFile, bizFile] = await Promise.all([
-      getFile(token, 'CLAUDE.md'),
+      getFile(token, 'docs/MODELINVENTARIS.md'),
       getFile(token, 'package.json'),
       getFile(token, 'docs/TECHNICAL_HANDOVER.md'),
       getFile(token, 'docs/BUSINESS_HANDOVER.md'),
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       // Timestamp
       doc = replaceAutoSection(doc, 'UPDATED', `Laatste automatische update: ${now}`)
 
-      // Model-inventaris uit CLAUDE.md
+      // Model-inventaris uit docs/MODELINVENTARIS.md
       if (claudeMdFile) {
         const modelsTable = extractModelsTable(claudeMdFile.content)
         if (modelsTable) {
