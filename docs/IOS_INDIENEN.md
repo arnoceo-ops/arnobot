@@ -1,4 +1,34 @@
-# iOS indienen: eisenlijst en risico's
+# iOS-app: plan, status en eisenlijst
+
+**Laatst bijgewerkt:** 2026-11-08
+
+**Waar we staan:** onderzoek klaar, nog niets gebouwd. Alle indieneisen van Apple zijn gelezen (zie vanaf de sectie "Eisenlijst en risico's"). De Android-app (1.0.4) is de basis; koop-, upgrade- en prijsverwijzingen zijn in de app al verborgen en dat werkt ook op iOS.
+
+**Eerstvolgende stap:** na de pushmeldingen op Android (zie `docs/PUSH_PLAN.md`): inschrijven bij het Apple Developer Program als Individual. Dat kan al eerder gestart worden omdat de goedkeuring weken kan duren.
+
+**Besluiten en verworpen alternatieven (2026-11-08):**
+- Gekozen: **Individual-account**. Verworpen: Organization, want Apple eist voor een eenmanszaak een Individual-inschrijving en accepteert geen handelsnamen; een D-U-N-S-nummer verandert dat niet. Gevolg: Arno's eigen naam staat als verkoper in de store; omzetten kan later met een BV.
+- Gekozen: **bouwen in de cloud** (Codemagic, Capawesome Cloud of GitHub Actions macOS-runners). Verworpen: een Mac huren, want niet nodig.
+- Gekozen: **geen in-app aankoop**, abonnementen blijven via de website (Mollie, Moneybird). Verworpen (voor nu): in-app aankoop, want dat vraagt een tweede abonnementssysteem naast Mollie en past niet bij teamfacturen, referral-tegoed en zakelijke btw-facturen. Terugvaloptie als de review het eist.
+- Gekozen: **pushmeldingen als echte native meerwaarde** tegen het webwrapper-risico (4.2), eerst op Android. Verworpen: indienen zonder native meerwaarde, want 4.2 is het grootste afwijzingsrisico.
+- Gekozen: het **toestemmingsscherm voor AI-verwerking door derden** bouwen (5.1.2(i)), voor de Apple-versie en bij voorkeur voor beide apps.
+- Niet nodig: **Sign in with Apple** zolang de app alleen e-mail en wachtwoord biedt, en **testers** (Apple heeft geen minimum).
+
+**Afvinklijst:**
+- [ ] Pushmeldingen op Android gebouwd en live (zie PUSH_PLAN)
+- [ ] Apple Developer Program: Individual ingeschreven, handelaarsgegevens met zakelijk adres
+- [ ] Toestemmingsscherm AI-verwerking gebouwd en getest
+- [ ] iOS-project gegenereerd (`npx cap add ios`), microfoontekst in Info.plist, iconen
+- [ ] Cloudbouw gekozen en eerste build in TestFlight
+- [ ] Microfoontest op een echte iPhone (leen er een voor een uur)
+- [ ] Opname-aanduiding gecontroleerd (2.5.14)
+- [ ] App Store Connect ingevuld (screenshots, leeftijd, privacy, exportcompliance, demoaccount, Notes for Review)
+- [ ] Store-compliance-agent met verse richtlijnen vlak voor indienen
+- [ ] Ingediend
+
+---
+
+## Eisenlijst en risico's
 
 > Opgesteld 2026-11-08 uit de officiële Apple-pagina's zelf (richtlijnen laatst bijgewerkt door Apple op 16 oktober 2026). Doel: geen verrassingen bij indienen. Elk punt is gemarkeerd: **[geverifieerd]** (Apple-tekst gelezen), **[samenvatting]** (alleen via een samenvatting gezien, controleer in de browser), **[niet geverifieerd]**. Geen juridisch advies.
 
