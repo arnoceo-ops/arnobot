@@ -43,7 +43,7 @@ padding:      0 40px
 - actief: kleur `#f59e0b`, achtergrond `#1e293b`, border-radius: 4px
 - padding: 6px 20px
 
-**Volgorde links (links → rechts):** USERS · CRONS · ARNOBOT · BLOGS · META · FEEDBACK | ARNO.BLOG · UITLOGGEN
+**Volgorde links (links → rechts):** USERS · TEAMS · GESPREKKEN · ANALYSE · STATUS · META · TEMP · CRONS · FEEDBACK · KENNISBANK · BLOGS · POSTS · STATS | ARNO.BLOG · UITLOGGEN
 
 ---
 
@@ -158,7 +158,7 @@ Elke nieuwe adminpagina vergelijken met de bestaande structuur:
 
 - **Hoofdpagina gesprekken:** `app/bot/admin/page.tsx`
 - **Gebruikersbeheer:** `app/bot/admin/gebruikers/page.tsx`
-- **E-mail crons:** `app/bot/admin/emails/EmailsClient.tsx`
+- **E-mail crons:** `app/bot/admin/emails/EmailTestClient.tsx`
 - **Meta-analyse:** `app/bot/admin/meta-analyse/MetaAnalyseClient.tsx`
 - **Blog-ideeën:** `app/bot/admin/idee/page.tsx`
 - **Feedback (chatantwoord-beoordelingen):** `app/bot/admin/evaluaties/page.tsx`

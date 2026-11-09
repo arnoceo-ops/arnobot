@@ -101,7 +101,7 @@ Vanaf 3 gebruikers: €97 per maand plus €49 per gebruiker per maand, of €77
 
 ## Wat nog niet bestaat, dus nooit als bestaand kenmerk noemen
 
-Geen geautomatiseerde betaalverwerking, alle facturatie loopt nog handmatig. Geen iOS-app (een Android-app is in aanbouw). Geen herhaalbare maandelijkse boeking voor een individueel Elite-teamlid binnen een teamabonnement, dat is nu een eenmalige mogelijkheid. Geen "Man en Machine"-uitbreiding (gecertificeerde menselijke coaches naast de AI), puur een toekomstplan, niet noemen, zelfs niet als richting.
+Online betalen (Mollie) en facturatie (Moneybird) zijn gebouwd en live sinds 4 november 2026, nog wel achter een test-sleutel. Geen iOS-app (de Android-app is sinds 7 november 2026 live in de Play Store). Geen herhaalbare maandelijkse boeking voor een individueel Elite-teamlid binnen een teamabonnement, dat is nu een eenmalige mogelijkheid. Geen "Man en Machine"-uitbreiding (gecertificeerde menselijke coaches naast de AI), puur een toekomstplan, niet noemen, zelfs niet als richting.
 
 ---
 
