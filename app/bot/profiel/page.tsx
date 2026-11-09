@@ -373,20 +373,20 @@ export default function BotProfielPage() {
               <>
                 <HideInNativeApp>
                 <div style={{ marginTop: 24 }}>
-                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Overweeg je ArnoBot ook voor je team?</p>
+                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Gebruik je ArnoBot individueel of voor jouw team?</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <Chip label="NEE, ALLEEN VOOR MIJZELF" selected={answers.gebruik === 'individueel'} onClick={() => set('gebruik', 'individueel')} />
-                    <Chip label="JA, VOOR MIJN TEAM" selected={answers.gebruik === 'team'} onClick={() => set('gebruik', 'team')} />
+                    <Chip label="INDIVIDUEEL" selected={answers.gebruik === 'individueel'} onClick={() => set('gebruik', 'individueel')} />
+                    <Chip label="VOOR MIJN TEAM" selected={answers.gebruik === 'team'} onClick={() => set('gebruik', 'team')} />
                   </div>
                   {submitted && answers.gebruik === '' && (
-                    <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Geef aan of je ArnoBot ook voor je team overweegt.</p>
+                    <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Geef aan of je ArnoBot individueel of voor je team gebruikt.</p>
                   )}
                   {answers.gebruik === 'team' && (
                     <HideInNativeApp>
                     <div style={{ marginTop: 20, background: '#1f2937', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
                       <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>ARNOBOT TEAM</p>
                       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-                        Elke verkoper een eigen coach, jij het overzicht over je team. Bekijk wat het inhoudt op <Link href="/team" style={{ color: '#f59e0b', textDecoration: 'underline' }}>de teampagina</Link>. Vul hieronder verder je eigen profiel in.
+                        Elke verkoper een eigen coach, jij het overzicht over je team. Bekijk wat het inhoudt op de <Link href="/team" style={{ color: '#f59e0b', textDecoration: 'underline' }}>teampagina</Link>.
                       </p>
                     </div>
                     </HideInNativeApp>
