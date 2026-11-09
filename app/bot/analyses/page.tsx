@@ -500,6 +500,14 @@ export default function GeschiedenisPage() {
         .ah:first-child { margin-top:0; }
 
         @media (max-width: 768px) {
+          .sort-bar { flex-direction: column; align-items: stretch !important; gap: 8px !important; }
+          .sort-group { flex-direction: column; width: 100%; gap: 8px !important; }
+          .sort-group-sort { flex-direction: row; }
+          .sort-group .sort-btn { width: 100%; white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+          .sort-group-sort .sort-btn { flex: 1 1 0; min-width: 0 !important; }
+        }
+
+        @media (max-width: 768px) {
           .delete-bar { padding: 16px 20px; gap: 12px; }
           .delete-bar-cancel, .delete-bar-btn, .delete-bar-outline, .delete-bar-destructive { width: 140px; font-size: 14px; padding: 10px 0; }
         }
@@ -553,8 +561,8 @@ export default function GeschiedenisPage() {
 
         {/* Knoppen balk */}
         {!loading && visibleSessions.length > 0 && (
-          <div style={{ marginBottom: 32, padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 4 }}>
+          <div className="sort-bar" style={{ marginBottom: 32, padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div className="sort-group" style={{ display: 'flex', gap: 4 }}>
               <button
                 className={`sort-btn${selected.size > 0 ? ' active' : ''}`}
                 style={{ borderRadius: 8 }}
@@ -578,7 +586,7 @@ export default function GeschiedenisPage() {
                 </button>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="sort-group sort-group-sort" style={{ display: 'flex', gap: 4 }}>
               <button
                 className={`sort-btn${sort === 'newest' || sort === 'oldest' ? ' active' : ''}`}
                 style={{ borderRadius: 8, minWidth: 110 }}
