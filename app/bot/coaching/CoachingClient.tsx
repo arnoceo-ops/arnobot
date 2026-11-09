@@ -305,7 +305,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         .coaching-label { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 400; letter-spacing: 4px; color: #f59e0b; display: block; margin-bottom: 16px; }
         .coaching-body { color: #9ca3af; font-size: 15px; line-height: 1.9; font-weight: 400; font-family: 'Space Mono', monospace; white-space: pre-wrap; }
 
-        .msa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin: 32px 0 48px; }
+        .msa-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin: 32px 0 48px; }
         .msa-card { background: #1f2937; padding: clamp(16px,4vw,32px) clamp(8px,3vw,28px); text-align: center; }
         .msa-score-number { font-family: 'Bebas Neue', sans-serif; font-size: 80px; color: #f1f5f9; line-height: 1; }
         .msa-dots { display: flex; gap: 6px; margin: 12px 0 8px; justify-content: center; }
@@ -338,7 +338,8 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         .loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
         @media (max-width: 640px) {
-          .msa-grid { grid-template-columns: repeat(3, 1fr); }
+          .msa-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .msa-richting { font-size: 11px; letter-spacing: 1px; }
           .msa-score-number { font-size: clamp(36px, 10vw, 64px); }
         }
         .print-only { display: none; }
