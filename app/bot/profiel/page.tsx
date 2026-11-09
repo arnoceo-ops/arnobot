@@ -379,12 +379,14 @@ export default function BotProfielPage() {
                     <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Geef aan of je ArnoBot individueel of voor je team gebruikt.</p>
                   )}
                   {answers.gebruik === 'team' && (
+                    <HideInNativeApp>
                     <div style={{ marginTop: 20, background: '#1f2937', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', padding: '20px 24px' }}>
                       <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 10 }}>ARNOBOT TEAM</p>
                       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-                        Elke verkoper een eigen coach, jij het overzicht over je team.<HideInNativeApp> Bekijk wat het inhoudt op <Link href="/team" style={{ color: '#f59e0b', textDecoration: 'underline' }}>de teampagina</Link>.</HideInNativeApp> Vul hieronder verder je eigen profiel in.
+                        Elke verkoper een eigen coach, jij het overzicht over je team. Bekijk wat het inhoudt op <Link href="/team" style={{ color: '#f59e0b', textDecoration: 'underline' }}>de teampagina</Link>. Vul hieronder verder je eigen profiel in.
                       </p>
                     </div>
+                    </HideInNativeApp>
                   )}
                 </div>
                 <div style={{ marginTop: 24 }}>
