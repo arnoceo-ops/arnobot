@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "ClaudeInChromeDomain(arno.bot)",
+      "ClaudeInChromeDomain(www.mollie.com)",
+      "mcp__claude-in-chrome__tabs_create_mcp",
+      "ClaudeInChromeDomain(arnobot-ospn0icdw-arnoceo.vercel.app)",
+      "ClaudeInChromeDomain(idealab.ai)",
+      "ClaudeInChromeDomain(arnobot-6rd7r43cr-arnoceo.vercel.app)",
+      "ClaudeInChromeDomain(vercel.com)",
+      "ClaudeInChromeDomain(arnobot-jjmu996fk-arnoceo.vercel.app)",
+      "ClaudeInChromeDomain(arnobot-qi0zh9d34-arnoceo.vercel.app)",
+      "ClaudeInChromeDomain(arnobot-7k7airmns-arnoceo.vercel.app)",
+      "ClaudeInChromeDomain(arnobot-r8ujdbc5u-arnoceo.vercel.app)",
+      "Bash(git worktree list)",
+      "Bash(git worktree remove *)",
+      "Bash(git worktree prune)",
+      "Bash(git branch -d *)"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "Tijdelijk een firewall-regel toevoegen en weer verwijderen in het Vercel-project arnobot (prj_2lbiACvbH5J98vkEZZkYItsuyZNI) via api.vercel.com, voor de belastingtest van 4 november 2026"
+    ]
+  }
+}
