@@ -373,7 +373,7 @@ export default function BotProfielPage() {
               <>
                 <HideInNativeApp>
                 <div style={{ marginTop: 24 }}>
-                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Gebruik je ArnoBot individueel of voor jouw team?</p>
+                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Overweeg je ArnoBot ook voor je team?</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     <Chip label="INDIVIDUEEL" selected={answers.gebruik === 'individueel'} onClick={() => set('gebruik', 'individueel')} />
                     <Chip label="VOOR MIJN TEAM" selected={answers.gebruik === 'team'} onClick={() => set('gebruik', 'team')} />
