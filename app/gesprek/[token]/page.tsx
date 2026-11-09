@@ -95,6 +95,8 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
         body { background: #111827; font-family: 'Space Mono', monospace; font-weight: 400; }
         @media (max-width: 600px) {
           .shared-footer { flex-direction: column; align-items: flex-start; gap: 20px; }
+          .gs-rij { flex-direction: column !important; gap: 6px !important; }
+          .gs-label { min-width: 0 !important; padding-top: 0 !important; }
         }
       `}</style>
 
@@ -115,12 +117,12 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {(messages ?? []).map((msg, i) => (
               <div key={i}>
-                <div style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: 'transparent', alignItems: 'flex-start' }}>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#6b7280', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>JIJ</span>
+                <div className="gs-rij" style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: 'transparent', alignItems: 'flex-start' }}>
+                  <span className="gs-label" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#6b7280', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>JIJ</span>
                   <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(18px,3vw,26px)', lineHeight: 1.5, color: '#f1f5f9', letterSpacing: 0.5 }}>{msg.question}</p>
                 </div>
-                <div style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: '#1f2937', alignItems: 'flex-start' }}>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>ARNO</span>
+                <div className="gs-rij" style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: '#1f2937', alignItems: 'flex-start' }}>
+                  <span className="gs-label" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>ARNO</span>
                   <p
                     style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', fontWeight: 400, whiteSpace: 'pre-wrap' }}
                     dangerouslySetInnerHTML={{ __html: renderContent(msg.answer) }}
