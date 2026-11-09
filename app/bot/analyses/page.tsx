@@ -9,6 +9,7 @@ import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { useProgressHints } from '@/hooks/useProgressHints'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import { kortTitel } from '@/lib/kortTitel'
 
 interface Session {
   id: string
@@ -649,7 +650,7 @@ export default function GeschiedenisPage() {
                     style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
                   >
                     <p style={{ color: '#f1f5f9', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, marginBottom: session.summary ? 6 : 0 }}>
-                      {session.title}
+                      {kortTitel(session.title)}
                     </p>
                     {session.summary && (
                       <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -680,7 +681,7 @@ export default function GeschiedenisPage() {
                     </span>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: '#f1f5f9', fontSize: 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, marginBottom: session.summary ? 6 : 0 }}>
-                        {session.title}
+                        {kortTitel(session.title)}
                       </p>
                       {session.summary && (
                         <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
