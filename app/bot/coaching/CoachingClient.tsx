@@ -287,6 +287,9 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
     ? computeMsaScore(doc!.mindset_score, doc!.systeem_score, doc!.actie_score)
     : null
 
+  // Opgeslagen documenten kunnen nog het oude analyse-signaal bevatten; dat hoort niet op deze pagina.
+  const signalenZichtbaar = (doc?.signalen ?? []).filter(s => !s.includes('pas ') || !s.includes('analyse naar coaching'))
+
   const msaPijlars = hasMSA ? [
     { key: 'mindset', label: 'MINDSET', score: doc!.mindset_score, richting: doc!.mindset_richting },
     { key: 'systeem', label: 'SYSTEEM', score: doc!.systeem_score, richting: doc!.systeem_richting },
@@ -584,8 +587,8 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
 
             {/* Gesprek met Arno: direct na de ontwikkelpunten, het moment waarop "doorspreken" logisch is */}
             {doc && plan === 'premium' && teamStatusLoaded && !teamStatusFailed && !isTeamMember && !gesprekBookedAt && (
-              <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
-                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+              <div className="no-print" style={{ margin: '48px 0', background: '#1f2937', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
                   Wil je dit doorspreken met Arno zelf?<br />
                   Elke gebruiker krijgt één gratis gesprek.
                 </p>
@@ -606,15 +609,15 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
             )}
 
             {/* Signalen */}
-            {(doc.signalen?.length ?? 0) > 0 && (
+            {signalenZichtbaar.length > 0 && (
               <div className="coaching-section">
                 <span className="coaching-label">SIGNALEN</span>
                 <div style={{ marginTop: 8 }}>
-                  {doc.signalen!.map((s, i) => (
+                  {signalenZichtbaar.map((s, i) => (
                     <p
                       key={i}
                       className="coaching-body"
-                      style={{ marginBottom: i < doc.signalen!.length - 1 ? 8 : 0 }}
+                      style={{ marginBottom: i < signalenZichtbaar.length - 1 ? 8 : 0 }}
                       dangerouslySetInnerHTML={{ __html: renderMd(s) }}
                     />
                   ))}

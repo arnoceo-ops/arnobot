@@ -269,10 +269,8 @@ export async function POST() {
   // kernscoring. Nieuwe tips van dit type horen HIER thuis, niet in de systeemprompt hieronder,
   // anders verdrukken ze de mindset/systeem/actie-diagnoses die wel AI-interpretatie vereisen.
   const signalen: string[] = []
-  const analyseRatio = analyses.length / Math.max(totalSessionCount, 1)
-  if (totalSessionCount >= 10 && analyseRatio < 0.2) {
-    signalen.push(`Je hebt ${totalSessionCount} gesprekken gevoerd maar pas ${analyses.length} ${analyses.length === 1 ? 'analyse' : 'analyses'} gemaakt. Groei gaat het snelst via de route gesprek naar analyse naar coaching.`)
-  }
+  // (Het analyse-signaal "gesprekken gevoerd maar pas X analyses gemaakt" is bewust verwijderd:
+  // een analyse-melding hoort niet op de coachingpagina.)
   if (totalSessionCount >= 10 && sparringSessions.length === 0) {
     signalen.push(`Je hebt ${totalSessionCount} coaching-gesprekken gevoerd maar nog niet gesparred. Oefenen in sparring helpt om wat je hier bespreekt ook echt te trainen.`)
   }
