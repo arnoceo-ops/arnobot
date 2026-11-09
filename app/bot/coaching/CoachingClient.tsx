@@ -582,6 +582,29 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
               </div>
             </div>
 
+            {/* Gesprek met Arno: direct na de ontwikkelpunten, het moment waarop "doorspreken" logisch is */}
+            {doc && plan === 'premium' && teamStatusLoaded && !teamStatusFailed && !isTeamMember && !gesprekBookedAt && (
+              <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+                <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                  Wil je dit doorspreken met Arno zelf?<br />
+                  Elke gebruiker krijgt één gratis gesprek.
+                </p>
+                <a
+                  href="/bot/gesprek"
+                  onClick={() => {
+                    fetch('/api/bot/events', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ eventName: 'coaching_gesprek_click' }),
+                    }).catch(() => {})
+                  }}
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', textDecoration: 'none', borderRadius: 999, whiteSpace: 'nowrap', minWidth: 220, textAlign: 'center' }}
+                >
+                  PLAN GESPREK →
+                </a>
+              </div>
+            )}
+
             {/* Signalen */}
             {(doc.signalen?.length ?? 0) > 0 && (
               <div className="coaching-section">
@@ -681,28 +704,6 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
               </div>
             )}
 
-          </div>
-        )}
-
-        {doc && plan === 'premium' && teamStatusLoaded && !teamStatusFailed && !isTeamMember && !gesprekBookedAt && (
-          <div className="no-print" style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-              Wil je dit doorspreken met Arno zelf?<br />
-              Elke gebruiker krijgt één gratis gesprek.
-            </p>
-            <a
-              href="/bot/gesprek"
-              onClick={() => {
-                fetch('/api/bot/events', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ eventName: 'coaching_gesprek_click' }),
-                }).catch(() => {})
-              }}
-              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, padding: '12px 36px', background: '#f59e0b', color: '#111827', textDecoration: 'none', borderRadius: 999, whiteSpace: 'nowrap', minWidth: 220, textAlign: 'center' }}
-            >
-              PLAN GESPREK →
-            </a>
           </div>
         )}
 
