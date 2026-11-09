@@ -103,6 +103,7 @@ Onderliggende technische realiteit (niet op de pagina tonen, wel intern vastgele
 - Sessiegeheugen: Basic 10 vorige gesprekken, Premium 25 (2,5x)
 - Voice: geen maandelijkse cap voor betalende gebruikers op dit moment (alleen 30 voice-berichten/uur rate-limit tegen misbruik). Trial-gebruikers: 50.000 tekens cap.
 - Coaching synthese (`/coaching`, mindset/systeem/actie-scores): exclusief Premium+, Basic krijgt 403.
+- Antwoordlengte UITGEBREID (lange, diepgaande antwoorden): exclusief Pro/Team. Basic ziet de OUTPUT-knop met een PRO-badge en krijgt een upsell-regel i.p.v. dat de modus omschakelt (`isProBlocked` in `app/bot/SparClient.tsx`), ook server-side afgedwongen in `app/api/chat/route.ts`.
 - Team: erft alle Pro-functionaliteit (bevestigd), inclusief coachingdocument.
 
 (De plan-waarde `premium` hierboven is de huidige interne/database-naam vóór de Basic/Pro-hernoeming is doorgevoerd in de code, zie het open punt hieronder. `elite` bestond hier ooit ook, verwijderd 2026-08-25.)

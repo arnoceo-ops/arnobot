@@ -29,9 +29,10 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Authenticatie | Clerk | ^7 |
 | Database | Supabase (PostgreSQL, RLS aan op alle tabellen) | ^2 |
 | Hosting | Vercel | Pro |
-| AI (chat/coaching) | Anthropic Claude | via SDK ^0.115 |
+| AI (chat/coaching) | Anthropic Claude | via SDK ^1.3 |
 | Embeddings + rerank (RAG) | VoyageAI | rauwe fetch, geen SDK |
-| Spraakherkenning | OpenAI Whisper | rauwe fetch, geen SDK |
+| Spraakherkenning (voice-invoer) | OpenAI (`gpt-transcribe` na stoppen/terugval, `gpt-live-transcribe` live) | rauwe fetch, geen SDK |
+| Spraakherkenning (audiobijlagen) | AssemblyAI (`universal-3-5-pro`) | rauwe fetch, geen SDK |
 | Tekst-naar-spraak (Voice) | ElevenLabs | rauwe fetch, geen SDK |
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |
@@ -40,7 +41,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Admin/ops-notificaties | Telegram Bot API | directe fetch |
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
-| Mobiele wrapper (in ontwikkeling) | Capacitor (Android) | ^8 |
+| Mobiele wrapper | Capacitor (Android, live in de Play Store sinds 2026-11-07) | ^8 |
 
 **Verwijderd (2026-08-01):** Sanity, next-sanity en @portabletext/react zijn volledig verwijderd. De kennisbank draait sindsdien uitsluitend op de eigen `blog_chunks`-tabel (RAG via VoyageAI), niet meer op een CMS.
 
@@ -155,7 +156,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/stats` (tab BLOG) | Blogstatistieken (`BlogStats.tsx`, gedeelde onderdelen in `StatsUi.tsx`): abonnees, conversie bevestigen/afmelden, groei per week, verzending en dagbudget, bezoek en klikken op Start gratis vanaf de blog, per artikel (verzonden, wachtrij, mislukt, geopend, geklikt, bezoeken), populariteit per blog (`BlogPopulariteit.tsx`: meest en minst geopend, schakelaar 30 dagen of totaal, alle blogs 10 per keer, CSV), "wie doet wat" met abonnees die klikken of openen en of ze al gebruiker zijn, en een aanmeldingenlijst met CSV. Blogtellingen tellen alleen echte blogpaden (één niveau onder `/blog`). Alles zijn exacte head-counts in de database |
 | `/bot/admin/blog` | POSTS: de publieke blog beheren. Lijst + editor (`/bot/admin/blog/[id]`, `nieuw` voor een nieuwe post) met live Markdown-voorbeeld, afbeeldingen plakken/slepen, hashtags met suggesties, concept/publiceren/inplannen, "verstuur naar abonnees" en testmail naar jezelf, lokale noodback-up |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
-| `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
+| `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle, Mollie/Moneybird-koppelingsgezondheid) |
 | `/bot/admin/voice-test` | Testomgeving voor de ElevenLabs voice/TTS-integratie |
 | `/bot/admin/widget` | Losse log-viewer voor de publieke embed-widget |
 | `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel) |
@@ -198,7 +199,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
 | Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
 | Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's), doorzoekbaar archief (`BlogArchive`: zoeken op hashtag of trefwoord in de browser op de geladen lijst via `lib/blogSearch.ts`, 12 kaarten per keer met "Toon meer", zoekterm in de URL als `?q=`) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
-| Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, deelknoppen (LinkedIn via de deelpagina van LinkedIn zelf, plus link kopiëren, `ShareButtons.tsx`), CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Deelkaart per post: `app/blog/[slug]/opengraph-image.tsx` (1200 x 630, merkkaart met titel en hashtags, zonder omslagfoto, zelfde lettertypen en bundeling als `app/opengraph-image.tsx`). Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
+| Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, deelknoppen (WhatsApp, LinkedIn via de deelpagina van LinkedIn zelf, plus link kopiëren, `ShareButtons.tsx`), CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Deelkaart per post: `app/blog/[slug]/opengraph-image.tsx` (1200 x 630, merkkaart met titel en hashtags, zonder omslagfoto, zelfde lettertypen en bundeling als `app/opengraph-image.tsx`). Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
 | Blog RSS | `/blog/feed.xml` | RSS 2.0 met volledige tekst |
 | Blog bevestigen | `/blog/bevestig/[token]` | Terugvalpagina voor double opt-in: bevestigt pas na een klik op de knop. De link in de mail wijst naar `/api/blog/bevestig?token=` (zie API), niet hierheen. Token in het pad: uitgesloten van pageview- en PostHog-tracking |
@@ -236,7 +237,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/openers` | Vaste set gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Ontbrekende embeddings aanvullen voor RAG |
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
-| `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
+| `/api/transcribe` | Spraak naar tekst na het stoppen / terugval bij live-transcriptie (OpenAI `gpt-transcribe`, SSE) |
+| `/api/transcribe/live` | Kortlevende sessiecode voor live spraakherkenning via WebRTC (OpenAI `gpt-live-transcribe`) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 
 ### Sparring
@@ -280,6 +282,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/herstart` | Reactivatie-eligibility bepalen (regels in `lib/herstart.ts`: na twee proefperiodes zonder betalen pas na 12 maanden weer een gratis proefperiode, betalen kan altijd) |
 | `/api/bot/welcome-done` | Welkomstscherm als gezien markeren |
+| `/api/bot/team-lead-signal` | Vroege leadmelding tijdens de profiel-intake zodra een teamgrootte is opgegeven (`lib/teamLeadNotify.ts`) |
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
 | `/api/bot/events` | Whitelisted clientevents loggen |
@@ -305,6 +308,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |
 | `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
+| `/api/admin/comp` | Gratis toegang tot een datum toekennen (comp), los van de betaalstroom: zet `expires_at` en wist `trial_start` |
+| `/api/admin/active` | Gebruiker handmatig aan/uit zetten (`is_active`), los van betaal-/comp-status |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
 | `/api/admin/sd-agent` | Sales-development-agent + attributiemethode koppelen |
 | `/api/admin/export` | Logs exporteren als JSON (limiet 2000, sorteerbaar, gebruikt door `DownloadPdfButton.tsx`) |
@@ -389,7 +394,8 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerend De Spiegel-thema met één zin en een sparscenario als e-mail (`lib/patroonMail.ts`, flag `PATROON_MAIL`, standaard alleen oprichter) |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
+| `/api/cron/feitencontrole` | Dagelijks 06:45 UTC | Feitencontrole op opgeslagen antwoorden: vindt telwoorden die niet in het gesprek staan en laat Sonnet oordelen, Telegram-melding bij een echte fout (`lib/feitenControle.ts`) |
+| `/api/cron/kennisbank-controle` | Dagelijks 06:55 UTC | Kennisbankcontrole: drie kernvragen moeten voldoende kandidaten opleveren, geen fragment zonder embedding, minimaal aantal fragmenten; Telegram-melding alleen bij een probleem (`lib/kennisbankControle.ts`) |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
@@ -721,7 +727,8 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
-- `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `OPENAI_API_KEY` — OpenAI (transcriptie: `gpt-transcribe`/`gpt-live-transcribe`)
+- `ASSEMBLYAI_API_KEY` — AssemblyAI (audiobijlage-transcriptie in de hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
@@ -781,9 +788,14 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** API-key beheren, gebruik bekijken.
 
 ### OpenAI
-**Doel:** Whisper (`whisper-1`) spraak-naar-tekst voor voice-input.
+**Doel:** Spraak-naar-tekst voor voice-input: live transcriptie (`gpt-live-transcribe`, WebRTC) en transcriptie na het stoppen/als terugval (`gpt-transcribe`).
 **Dashboard:** https://platform.openai.com
-**Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
+**Integratie:** rauwe fetch in `app/api/transcribe/route.ts` en `app/api/transcribe/live/route.ts`, geen SDK.
+
+### AssemblyAI
+**Doel:** Transcriptie van audiobijlagen in de hoofdchat (mp3/wav/m4a, max 150MB, Pro/Team-only), model `universal-3-5-pro`.
+**Dashboard:** https://www.assemblyai.com/app
+**Integratie:** rauwe fetch in `lib/assemblyai.ts`, geen SDK.
 
 ### ElevenLabs
 **Doel:** Tekst-naar-spraak voor ArnoBot Voice (premium-feature, `plan` premium/team).
@@ -818,7 +830,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Integratie:** `posthog-js`, geproxyd via `/site-relay` (same-origin, dodge ad-blockers). Bewust géén autocapture.
 **Scope publiek:** anonieme `capture()` op publieke componenten (`PostHogTracker.tsx`).
 **Scope ingelogd (`/bot`, sinds 2026-08-30):** pseudoniem. `identify()` met Clerk `user_id`, veilige person-properties via `app/api/bot/posthog-identity/route.ts`, genormaliseerde `$pageview` (geen query/IDs), event-whitelist als getypte union in `lib/posthog.ts` (`track()`). `/bot/admin` uitgesloten. Nooit gespreks-/coaching-/analyse-inhoud. `team_id` als super-property (geen betaalde group-analytics).
-**Session replay:** `PostHogSessionReplay.tsx`, UIT achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
+**Session replay:** `PostHogSessionReplay.tsx`, AAN achter `SESSION_REPLAY_ENABLED` in `lib/posthog.ts`. Aan = allowlist van shell-pagina's, alle tekst + invoer gemaskeerd, geen netwerk-payloads.
 **Feature flags / surveys:** operationeel met de SDK-integratie, per feature in te richten.
 **Openstaand:** DPA opvragen, bewaartermijn instellen, replay-vlag omzetten na verificatie. Data Warehouse Stripe geblokkeerd tot betaalprovider.
 
@@ -840,7 +852,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Doel:** Ops-notificaties (nieuwe gebruikers, cron-failures, CSP-schendingen).
 **Setup:** Een Telegram-bot (`TELEGRAM_BOT_TOKEN`) stuurt berichten naar een chat (`TELEGRAM_CHAT_ID`). Beheren via @BotFather.
 
-**Geen payment-provider geïntegreerd:** bewust pending, zie "Bekende beperkingen" punt 11 voor het triggercriterium.
+**Online betalen (Mollie/Moneybird):** gebouwd en gekoppeld (zie sectie "Online betalen (Mollie)" hierboven), maar nog achter een test-sleutel: alleen de eigenaar en interne testaccounts kunnen daadwerkelijk afrekenen. Zie "Bekende beperkingen" punt 11.
 
 ---
 
@@ -897,4 +909,4 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 8. **Anthropic API-key-rotatie:** harde deadline 6 januari 2027 voor zowel arnobot als salescanvas-app.
 9. **`/api/admin/export` vs `/api/admin/export-csv`:** opgelost (2026-08-21). Beide routes blijven bestaan (verschillend gebruik: JSON voor client-side PDF-opbouw vs. directe CSV-download), maar de gedupliceerde auth/fetch-logica is samengevoegd in `lib/adminExport.ts`.
 10. **`/api/test/email-preview`:** geen actie nodig. Heeft wel een auth-check en is een bewust behouden, admin-only diagnosetool (2026-08-12).
-11. **Geen betalingsprovider-koppeling — bewust pending:** `/api/admin/payment` zet alleen `paid_at`/`is_active`, facturatie zelf loopt volledig handmatig buiten deze codebase. Geen technisch gebrek maar een bewuste procesconditie bij de huidige schaal. **Triggercriterium:** binnen 30 dagen na de commerciële livegang (Arno's eigen toezegging 2026-08-21), niet gekoppeld aan een gebruikersaantal-drempel zoals de overige Pro-upgrade-triggers hierboven. Livegang-datum zelf staat elders in dit document als uitgesteld/onzeker genoteerd, dus deze deadline schuift daarmee automatisch mee.
+11. **Online betalen nog niet open voor alle gebruikers — bewust pending:** Mollie (betalen) en Moneybird (facturen) zijn gebouwd en end-to-end getest (zie sectie "Online betalen (Mollie)" hierboven), maar draaien nog op een test-sleutel: alleen de eigenaar en interne testaccounts kunnen daadwerkelijk afrekenen. `/api/admin/payment` blijft de handmatige weg voor wie buiten Mollie om wordt geregistreerd. Geen technisch gebrek maar een bewuste procesconditie bij de huidige schaal. **Triggercriterium:** het wisselen naar de live-sleutel (Arno's eigen toezegging 2026-08-21), niet gekoppeld aan een gebruikersaantal-drempel zoals de overige Pro-upgrade-triggers hierboven.
