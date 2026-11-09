@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   const { data: huidig } = await serviceDb
     .from('approved_users')
-    .select('onboarding_done, paid_at')
+    .select('onboarding_done, paid_at, command_manager')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -38,7 +38,10 @@ export async function POST(req: Request) {
   // hieronder aanroepen: notifyTeamLead leest onboarding_done zelf opnieuw, en die moet op dit
   // moment nog de PRE-afronding-waarde zien, anders denkt hij ten onrechte dat dit niet meer de
   // eerste keer is en slaat de mail (opnieuw) over.
-  if (profiel.gebruik === 'team') {
+  // Ook wie "alleen voor mezelf" koos maar wél een teamgrootte opgaf is een lead (een salesbaas
+  // heeft niet altijd door dat ArnoBot voor het hele team kan). Een bestaand Team-account
+  // (command_manager) is al klant en geen lead.
+  if (!huidig?.command_manager && (profiel.gebruik === 'team' || !!profiel.teamgrootte)) {
     await notifyTeamLead(serviceDb, userId, profiel.rol ?? '', profiel.teamgrootte ?? '')
   }
 

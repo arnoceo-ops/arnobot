@@ -1,6 +1,7 @@
 'use client'
 
 import HideInNativeApp from '@/app/components/HideInNativeApp'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
@@ -157,6 +158,7 @@ export default function BotProfielPage() {
   const [submitted, setSubmitted] = useState(false)
   const [isTeamMember, setIsTeamMember] = useState(false)
   const [isCommandManager, setIsCommandManager] = useState(false)
+  const isNativeApp = useIsNativeApp()
   // Bij een mislukte /api/bot/profiel-fetch weten we niet of dit account een teamlid is,
   // dus mag rolOpties hieronder niet stil terugvallen op de volledige, ongefilterde lijst
   // inclusief managementrollen. Restrictie bij twijfel, niet de ruimste optie.
@@ -194,7 +196,7 @@ export default function BotProfielPage() {
   useEffect(() => {
     if (isFirstTime !== true) return
     if (teamSignaalVerstuurd.current) return
-    if (answers.gebruik === 'team' && answers.teamgrootte !== '') {
+    if (toontTeamVraag(answers.rol) && !isCommandManager && answers.teamgrootte !== '') {
       teamSignaalVerstuurd.current = true
       fetch('/api/bot/team-lead-signal', {
         method: 'POST',
@@ -202,7 +204,7 @@ export default function BotProfielPage() {
         body: JSON.stringify({ rol: answers.rol, teamgrootte: answers.teamgrootte }),
       }).catch(() => {})
     }
-  }, [isFirstTime, answers.gebruik, answers.teamgrootte, answers.rol])
+  }, [isFirstTime, isCommandManager, answers.teamgrootte, answers.rol])
 
   const rolOpties = isCommandManager
     ? TEAM_VERSIE_ROL_OPTIONS
@@ -262,7 +264,7 @@ export default function BotProfielPage() {
       answers.jaren_functie !== '' &&
       (isCommandManager
         ? (answers.teamgrootte !== '' && answers.target_dit_jaar !== '')
-        : (!toontTeamVraag(answers.rol) || (answers.gebruik !== '' && answers.teamgrootte !== '')))
+        : (!toontTeamVraag(answers.rol) || ((isNativeApp || answers.gebruik !== '') && answers.teamgrootte !== '')))
     )
 
   async function handleSubmit() {
@@ -369,14 +371,15 @@ export default function BotProfielPage() {
             )}
             {toontTeamVraag(answers.rol) && !isCommandManager && (
               <>
+                <HideInNativeApp>
                 <div style={{ marginTop: 24 }}>
-                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Gebruik je ArnoBot individueel of voor jouw team?</p>
+                  <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Overweeg je ArnoBot ook voor je team?</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <Chip label="INDIVIDUEEL" selected={answers.gebruik === 'individueel'} onClick={() => set('gebruik', 'individueel')} />
-                    <Chip label="VOOR MIJN TEAM" selected={answers.gebruik === 'team'} onClick={() => set('gebruik', 'team')} />
+                    <Chip label="NEE, ALLEEN VOOR MIJZELF" selected={answers.gebruik === 'individueel'} onClick={() => set('gebruik', 'individueel')} />
+                    <Chip label="JA, VOOR MIJN TEAM" selected={answers.gebruik === 'team'} onClick={() => set('gebruik', 'team')} />
                   </div>
                   {submitted && answers.gebruik === '' && (
-                    <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Geef aan of je ArnoBot individueel of voor je team gebruikt.</p>
+                    <p data-error="true" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc2200', marginTop: 8 }}>Geef aan of je ArnoBot ook voor je team overweegt.</p>
                   )}
                   {answers.gebruik === 'team' && (
                     <HideInNativeApp>
@@ -389,6 +392,7 @@ export default function BotProfielPage() {
                     </HideInNativeApp>
                   )}
                 </div>
+                </HideInNativeApp>
                 <div style={{ marginTop: 24 }}>
                   <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.9, color: '#9ca3af', marginBottom: 12 }}>Hoe groot is je sales team?</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

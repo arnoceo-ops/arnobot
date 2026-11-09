@@ -39,7 +39,7 @@ export async function notifyTeamLead(
       from: 'ArnoBot <info@arno.bot>',
       to: 'waitlist@arno.bot',
       subject: 'Team-lead vanuit de trial-onboarding',
-      text: `Iemand gaf bij de profiel-intake aan ArnoBot voor zijn team te willen:\n\nNaam: ${naam}\nE-mail: ${email}\nLinkedIn: ${linkedin}\nRol: ${rol || 'onbekend'}\nTeamgrootte: ${teamgrootte || 'onbekend'}`,
+      text: `Iemand met een team vulde de profiel-intake in (kan ook iemand zijn die ArnoBot alleen voor zichzelf wil, maar wel een team heeft):\n\nNaam: ${naam}\nE-mail: ${email}\nLinkedIn: ${linkedin}\nRol: ${rol || 'onbekend'}\nTeamgrootte: ${teamgrootte || 'onbekend'}`,
     })
   } catch (e) {
     console.error('team-lead mail:', e)
