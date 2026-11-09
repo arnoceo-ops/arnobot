@@ -600,7 +600,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
             )}
 
             {/* Scoregeschiedenis */}
-            {SCORE_HISTORY_ENABLED && scoreHistory.length > 0 && (
+            {SCORE_HISTORY_ENABLED && scoreHistory.length > 1 && (
               <div className="coaching-section">
                 <span className="coaching-label">PROGRESSIE</span>
                 <div style={{ marginTop: 16 }}>
