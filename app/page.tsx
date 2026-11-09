@@ -70,9 +70,11 @@ export default async function ArnoBotLandingPage() {
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 15px; }
 
         /* NAV */
+        :root { --sai: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px)); --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px)); }
+        body { padding-top: var(--sai); padding-bottom: var(--sab); }
         .site-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          padding: 0 40px; height: 60px; display: flex; align-items: center;
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100; box-sizing: border-box;
+          padding: var(--sai) 40px 0; height: calc(60px + var(--sai)); display: flex; align-items: center;
           border-bottom: 1px solid rgba(255,255,255,0.06);
           background: rgba(17,24,39,0.9); backdrop-filter: blur(12px);
         }
@@ -312,7 +314,7 @@ export default async function ArnoBotLandingPage() {
 
         /* MOBILE */
         @media (max-width: 768px) {
-          .site-nav { padding: 0 16px; }
+          .site-nav { padding: var(--sai) 16px 0; }
           .nav-logo { font-size: 18px; letter-spacing: 2px; }
           .nav-auth { gap: 12px; }
           .nav-login { font-size: 16px; letter-spacing: 2px; }

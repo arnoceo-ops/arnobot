@@ -19,9 +19,11 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f8fafc; font-family: 'Figtree', sans-serif; font-size: 16px; }
 
+        :root { --sai: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px)); --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px)); }
+        body { padding-top: var(--sai); padding-bottom: var(--sab); }
         .site-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          padding: 0 40px; height: 60px; display: flex; align-items: center;
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100; box-sizing: border-box;
+          padding: var(--sai) 40px 0; height: calc(60px + var(--sai)); display: flex; align-items: center;
           border-bottom: 1px solid rgba(255,255,255,0.06);
           background: rgba(17,24,39,0.9); backdrop-filter: blur(12px);
         }
@@ -118,7 +120,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         .bl-related h2 { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; color: #f8fafc; }
 
         @media (max-width: 768px) {
-          .site-nav { padding: 0 20px; }
+          .site-nav { padding: var(--sai) 20px 0; }
           .bl-wrap, .bl-narrow { padding: 110px 20px 56px; }
           .bl-body { font-size: 17px; }
           .bl-box { padding: 24px 20px; }
