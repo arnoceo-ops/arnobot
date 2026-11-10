@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 
 const REGELS = 5
 
-export default function VraagKlap({ tekst }: { tekst: string }) {
+export default function VraagKlap({ tekst: ruweTekst }: { tekst: string }) {
+  // Lege regels samenvoegen: ze tellen mee voor de 5 regels en laten dan een kale "…" over.
+  const tekst = ruweTekst.replace(/\s*\n\s*/g, '\n').trim()
   const ref = useRef<HTMLParagraphElement>(null)
   const [open, setOpen] = useState(false)
   const [kanKlappen, setKanKlappen] = useState(false)
