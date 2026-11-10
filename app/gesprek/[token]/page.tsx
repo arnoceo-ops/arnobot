@@ -105,6 +105,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
           .shared-footer { flex-direction: column; align-items: flex-start; gap: 20px; }
           .gs-rij { flex-direction: column !important; gap: 6px !important; }
           .gs-label { min-width: 0 !important; padding-top: 0 !important; }
+          .gs-antwoord { font-size: 13px !important; line-height: 1.75 !important; }
         }
       `}</style>
 
@@ -139,6 +140,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
                 <div className="gs-rij" style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: '#1f2937', alignItems: 'flex-start' }}>
                   <span className="gs-label" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>ARNO</span>
                   <p
+                    className="gs-antwoord"
                     style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', fontWeight: 400, whiteSpace: 'pre-wrap' }}
                     dangerouslySetInnerHTML={{ __html: renderContent(msg.answer) }}
                   />
