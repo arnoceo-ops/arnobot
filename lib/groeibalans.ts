@@ -84,6 +84,19 @@ export function computeFallbackGroeibalans(t: GroeibalansTellers): GroeibalansCl
   return { tonen: true, state, bouwsteen }
 }
 
+// Analyses en coaching zijn waar een gebruiker echt beter wordt, sparren is daarnaast. De AI-classificatie
+// koos voor een gebruiker met 16 gesprekken, 1 analyse en 0 coachings toch sparsessies (10 november 2026).
+// Deze vaste correctie draait bij het tonen: heeft iemand vanaf 5 gesprekken nog geen analyse, dan wijst
+// het kader daarheen, en anders naar coaching, voordat het naar sparren wijst. Bij een wijziging vervalt
+// het AI-advies en het sparscenario, want die horen bij de oorspronkelijke bouwsteen.
+export const KADER_MIN_GESPREKKEN_VOOR_CORRECTIE = 5
+
+export function corrigeerBouwsteen(c: GroeibalansClassificatie, t: GroeibalansTellers): GroeibalansClassificatie {
+  if (!c.tonen || c.bouwsteen !== 'sparsessies' || t.gesprekken < KADER_MIN_GESPREKKEN_VOOR_CORRECTIE) return c
+  const bouwsteen: GroeibalansBouwsteen | null = t.analyses === 0 ? 'analyses' : t.coaching === 0 ? 'coaching' : null
+  return bouwsteen ? { tonen: true, state: c.state, bouwsteen } : c
+}
+
 export type GroeibalansPlan = 'basis' | 'premium' | 'team'
 
 export type GroeibalansCopy = { tekst: string; knop: string; href: string }

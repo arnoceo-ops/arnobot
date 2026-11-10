@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured, isVoiceLaunchAllowed } from '@/lib/voice'
 import { coachingIsActueel } from '@/lib/coachingActueel'
-import { computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
+import { corrigeerBouwsteen, computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
 
 const serviceDb = createClient(
@@ -50,11 +50,14 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   // community-uitgesloten gesprekken al wegfiltert (zelfde filters als de Bieb).
   let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers } | null = null
   if (tellers.gesprekken >= 5) {
-    const classificatie = userRes.data?.groeibalans_tonen === null || userRes.data?.groeibalans_tonen === undefined
+    const classificatieRuw = userRes.data?.groeibalans_tonen === null || userRes.data?.groeibalans_tonen === undefined
       ? computeFallbackGroeibalans(tellers)
       : userRes.data.groeibalans_tonen
         ? { tonen: true as const, state: userRes.data.groeibalans_state as GroeibalansState, bouwsteen: userRes.data.groeibalans_bouwsteen as GroeibalansBouwsteen }
         : { tonen: false as const }
+    // Vaste correctie: analyses en coaching gaan vóór sparren als die nog niet gebruikt zijn (lib/groeibalans.ts)
+    const classificatie = corrigeerBouwsteen(classificatieRuw, tellers)
+    const bouwsteenGewijzigd = classificatieRuw.tonen && classificatie.tonen && classificatieRuw.bouwsteen !== classificatie.bouwsteen
     if (classificatie.tonen) {
       const copy = getGroeibalansCopy(classificatie.state, classificatie.bouwsteen, plan)
       // Persoonlijk advies uit de eigen historie (lib/groeibalansServer.ts) gaat voor de vaste tekst. Het
@@ -63,7 +66,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       // Een eerder opgeslagen, te lang advies (van voor de verkorting) valt terug op de korte vaste tekst
       // tot het bij het volgende gesprek opnieuw en korter wordt gegenereerd.
       const adviesRuw = typeof userRes.data?.groeibalans_advies === 'string' ? userRes.data.groeibalans_advies.trim() : ''
-      const advies = adviesIsKortGenoeg(adviesRuw) ? adviesRuw : null
+      const advies = !bouwsteenGewijzigd && adviesIsKortGenoeg(adviesRuw) ? adviesRuw : null
       const scenario = userRes.data?.groeibalans_scenario as { persona?: string; weerstand?: string } | null
       const metScenario = classificatie.bouwsteen === 'sparsessies' && scenario?.persona && scenario?.weerstand
         ? `/bot/sparren?persona=${encodeURIComponent(scenario.persona)}&weerstand=${encodeURIComponent(scenario.weerstand)}` : null
