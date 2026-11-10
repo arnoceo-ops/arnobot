@@ -18,6 +18,8 @@ Meerdaagse plandocumenten (bv. `docs/VOICE_PLAN.md`, `docs/MOBILE_PLAN.md`) hebb
 
 **Periodieke verse controle:** aan het eind van een fase een nieuwe sessie of subagent, zonder de aannames van de bouwsessie, laten verifiëren dat de statusblokken kloppen met de werkelijke code. Bewust lichtgewicht: geen extra hooks of automatisering.
 
+**Hoofdmap op master:** de hoofdmap `C:Usersarnoarnobot` staat op `master`. Werk aan een andere tak (bv. `team-voorbeeld`) in een aparte worktree, niet door de hoofdmap om te zetten. Controleer bij de start van een sessie `git status` en `git rev-list --left-right --count origin/master...HEAD`, en meld het aan Arno als de hoofdmap niet op master staat of achterloopt. Android-wijzigingen (gradle, manifest, iconen, versiecode) worden dezelfde dag op master gecommit, niet als losse wijzigingen in de werkmap achtergelaten. (Achtergrond: 28 identieke niet-gecommitte Android-kopieën op een tak die 70 commits achterliep, 2026-11-10, zie `docs/CLAUDE_HISTORY.md`.)
+
 ## Documentatie actueel houden — ALTIJD
 
 Drie documenten met elk een eigen doel en actualiteitsrisico, naast de plandocumenten hierboven:
