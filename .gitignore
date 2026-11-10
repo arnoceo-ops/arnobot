@@ -66,3 +66,6 @@ next-env.d.ts
 
 # Claude Code: persoonlijke permission-overrides, niet gedeeld met andere bijdragers.
 /.claude/settings.local.json
+/.claude/settings.json
+# VS Code: persoonlijk pad naar de Java van Android Studio.
+/.vscode/
