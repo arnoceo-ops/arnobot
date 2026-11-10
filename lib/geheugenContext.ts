@@ -3,6 +3,7 @@ import { embedSessionQuery } from '@/lib/rag'
 import { findRecurringEntitiesInQuestion } from '@/lib/memoryEntities'
 import { feitenRegels } from '@/lib/memoryLabels'
 import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
+import { opzegRegel } from '@/lib/opzegPatroon'
 import { feitenRegel } from '@/lib/feitenControle'
 import { coachRolRegels, coachRolTrigger, coachRolVraagtAnalyse, adviesRegels } from '@/lib/coachRol'
 
@@ -265,6 +266,8 @@ export async function haalGeheugenContext(
             const recenteGesprekken = prevSessions ?? []
             geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
             geheugentekst += mailConceptRegel(question, history)
+            // Opzeggende klanten: oorzaak boven gevolg, en herhaling vanaf drie gesprekken (lib/opzegPatroon.ts)
+            geheugentekst += opzegRegel(question, history, recenteGesprekken.map(s => s.onderwerp ?? s.title))
             // Coachrol: reset, projectassistentie en patroonspiegel (lib/coachRol.ts)
             const coachTrigger = coachRolTrigger(question, history)
             if (coachRolVraagtAnalyse(coachTrigger)) {
