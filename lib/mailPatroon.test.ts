@@ -10,7 +10,8 @@ describe('mailChatSignaal', () => {
     const s = mailChatSignaal(MAIL_CHAT_DREMPEL, 12)
     expect(s).toContain('3 van de laatste 12 gesprekken')
     expect(s).toContain('spreken en zien')
-    expect(s).toContain('tekstschrijver')
+    expect(s).toContain('zonder verwijt')
+    expect(s).not.toContain('laat zijn eigen hersenen niet werken')
   })
   it('zegt het één keer en laat het rusten als er niet om een mail wordt gevraagd', () => {
     const s = mailChatSignaal(4, 10)
