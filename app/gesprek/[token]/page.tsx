@@ -31,7 +31,11 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
     .eq('token', token)
     .maybeSingle()
 
-  if (!shared) return { title: 'ArnoBot' }
+  // Gedeelde gesprekken bevatten namen uit echte gesprekken: nooit in zoekmachines. De link werkt
+  // en de preview in WhatsApp/LinkedIn blijft werken, die lezen alleen de og-tags.
+  const robots = { index: false, follow: false }
+
+  if (!shared) return { title: 'ArnoBot', robots }
 
   const { data: session } = await supabase
     .from('arnobot_blog_sessions')
@@ -47,6 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   return {
     title,
     description,
+    robots,
     openGraph: {
       title,
       description,

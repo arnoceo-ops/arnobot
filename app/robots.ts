@@ -37,7 +37,10 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: AI_USER_AGENTS,
-        allow: PUBLIC_PATHS,
+        // Gedeelde gesprekken bevatten namen uit echte gesprekken en zijn niet voor AI-training of
+        // -zoekindexen bedoeld. Zoekmachines blijven wel toegelaten (regel '*'), anders kunnen ze de
+        // noindex op de pagina niet lezen.
+        allow: PUBLIC_PATHS.filter(p => p !== '/gesprek/'),
         disallow: '/',
       },
     ],
