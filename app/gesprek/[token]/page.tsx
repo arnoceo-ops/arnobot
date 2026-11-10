@@ -1,6 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import VraagKlap from './VraagKlap'
+
+// Lange vraag als titel: kap af op een woordgrens zodat de pagina niet met een lap tekst opent.
+function kortTitel(t: string, max = 80) {
+  if (t.length <= max) return t
+  const knip = t.slice(0, max)
+  const spatie = knip.lastIndexOf(' ')
+  return (spatie > 40 ? knip.slice(0, spatie) : knip).trimEnd() + '…'
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -109,7 +118,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
             </p>
             <a href="https://arno.bot" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', letterSpacing: 2, textDecoration: 'none', display: 'block', marginBottom: 40 }}>arno.bot</a>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8 }}>
-              {title}
+              {kortTitel(title)}
             </h1>
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 1 }}>{datum}</p>
           </div>
@@ -119,7 +128,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
               <div key={i}>
                 <div className="gs-rij" style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: 'transparent', alignItems: 'flex-start' }}>
                   <span className="gs-label" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#6b7280', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>JIJ</span>
-                  <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(18px,3vw,26px)', lineHeight: 1.5, color: '#f1f5f9', letterSpacing: 0.5 }}>{msg.question}</p>
+                  <VraagKlap tekst={msg.question} />
                 </div>
                 <div className="gs-rij" style={{ display: 'flex', gap: 'clamp(16px,3vw,40px)', padding: 'clamp(20px,3vw,32px)', background: '#1f2937', alignItems: 'flex-start' }}>
                   <span className="gs-label" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', whiteSpace: 'nowrap', paddingTop: 2, minWidth: 48 }}>ARNO</span>
