@@ -216,7 +216,7 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 
 | Route | Doel |
 |---|---|
-| `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de harde grens op het uitschrijven van een volledig plan (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed |
+| `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de regel voor eigen plannen: vragen eerst en onderdeel voor onderdeel, zonder weigering (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed |
 | `/api/chat-voice` | Voice-variant van het hoofdgesprek (eigen rate limit + plancheck) |
 | `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten) |
 | `/api/admin/geheugen-preview` | Toont exact de geheugen- en gebruikerscontext die de hoofdchat voor een gebruiker in de prompt zet (zelfde code, `lib/geheugenContext.ts`), zonder model-aanroep en zonder writes. Alleen met admin-cookie. Optioneel `negeerSessieIds` om een eerder moment na te spelen. Gebruikt door `scripts/check-geheugen-oud.mjs` |
