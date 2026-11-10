@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { isElevenLabsConfigured, isVoiceLaunchAllowed } from '@/lib/voice'
+import { coachingIsActueel } from '@/lib/coachingActueel'
 import { computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
 
@@ -66,7 +67,22 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       const scenario = userRes.data?.groeibalans_scenario as { persona?: string; weerstand?: string } | null
       const metScenario = classificatie.bouwsteen === 'sparsessies' && scenario?.persona && scenario?.weerstand
         ? `/bot/sparren?persona=${encodeURIComponent(scenario.persona)}&weerstand=${encodeURIComponent(scenario.weerstand)}` : null
-      groeibalans = { state: classificatie.state, bouwsteen: classificatie.bouwsteen, ...copy, ...(advies ? { tekst: advies } : {}), ...(metScenario ? { href: metScenario } : {}), kleur: GROEIBALANS_KLEUREN[classificatie.state], tellers }
+      // COACH ME start de generatie op de coachingspagina direct (?start=1), zodat de gebruiker daar
+      // niet nog eens hoeft te klikken. Alleen voor de coaching-knop zelf, niet voor UPGRADE.
+      const metStart = classificatie.bouwsteen === 'coaching' && copy.href === '/bot/coaching' ? '/bot/coaching?start=1' : null
+      groeibalans = { state: classificatie.state, bouwsteen: classificatie.bouwsteen, ...copy, ...(advies ? { tekst: advies } : {}), ...(metScenario ? { href: metScenario } : {}), ...(metStart ? { href: metStart } : {}), kleur: GROEIBALANS_KLEUREN[classificatie.state], tellers }
+    }
+    // Harde controle: nooit coaching aanbevelen als het advies al actueel is. De AI-classificatie
+    // kent die stand niet (alleen tellers en geschiedenis), de coachingspagina wel.
+    if (groeibalans?.bouwsteen === 'coaching') {
+      const [coachingRes, sessieRes, analyseRes] = await Promise.all([
+        serviceDb.from('arnobot_coaching').select('updated_at').eq('user_id', userId).maybeSingle(),
+        serviceDb.from('arnobot_blog_sessions').select('created_at').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        serviceDb.from('arnobot_analyses').select('created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      ])
+      if (coachingIsActueel((coachingRes.data as { updated_at?: string } | null)?.updated_at, sessieRes.data?.created_at, analyseRes.data?.created_at)) {
+        groeibalans = null
+      }
     }
   }
 

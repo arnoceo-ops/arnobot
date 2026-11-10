@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { coachingIsActueel } from '@/lib/coachingActueel'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useUser, useAuth } from '@clerk/nextjs'
@@ -113,6 +114,9 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
   const [teWeinigCount, setTeWeinigCount] = useState(0)
   const [stats, setStats] = useState<Stats | null>(null)
   const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
+  const [statsKlaar, setStatsKlaar] = useState(false)
+  const [analysesKlaar, setAnalysesKlaar] = useState(false)
+  const autoStartGedaan = useRef(false)
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
   // PDF-knop pas bruikbaar als alles geladen is (document en scoregeschiedenis), anders komt de
@@ -196,10 +200,12 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         })
       })
       .catch(() => {})
+      .finally(() => setStatsKlaar(true))
     fetch('/api/bot/coaching-analyses')
       .then(r => r.json())
       .then(data => setAnalyses(data.analyses ?? []))
       .catch(() => {})
+      .finally(() => setAnalysesKlaar(true))
     fetch('/api/bot/coaching-history')
       .then(r => r.json())
       .then(data => setHistory(data.history ?? []))
@@ -273,13 +279,23 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
     setGenerating(false)
   }
 
-  const isUpToDate = (() => {
-    if (!doc?.updated_at) return false
-    const docDate = new Date(doc.updated_at)
-    const lastSession = stats?.lastSessionDate ? new Date(stats.lastSessionDate) : null
-    const lastAnalyse = analyses[0]?.created_at ? new Date(analyses[0].created_at) : null
-    return (!lastSession || docDate >= lastSession) && (!lastAnalyse || docDate >= lastAnalyse)
-  })()
+  const isUpToDate = coachingIsActueel(doc?.updated_at, stats?.lastSessionDate, analyses[0]?.created_at)
+
+  // Doorschakeling vanaf COACH ME op /bot (?start=1): de generatie start hier direct, zodat de
+  // gebruiker niet nog eens hoeft te klikken. Pas als alles geladen is (anders is "actueel" nog niet
+  // te bepalen), één keer, de parameter gaat uit de URL zodat een refresh niet opnieuw genereert,
+  // en nooit als het advies al actueel is.
+  useEffect(() => {
+    if (autoStartGedaan.current || loading || !statsKlaar || !analysesKlaar || !scoresLoaded) return
+    if (new URLSearchParams(window.location.search).get('start') !== '1') return
+    autoStartGedaan.current = true
+    const url = new URL(window.location.href)
+    url.searchParams.delete('start')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+    if (!isUpToDate && !generating) setTimeout(() => { void generate() }, 0)
+    // generate is een functie in dezelfde render en leest alleen setters; bewust niet in de deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, statsKlaar, analysesKlaar, scoresLoaded, isUpToDate, generating])
 
   const hasMSA = doc?.mindset_score != null && doc?.systeem_score != null && doc?.actie_score != null
 
