@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { metaTitel } from '@/lib/gesprekTitel'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -20,11 +21,11 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
     if (shared?.session_id) {
       const sessionRes = await fetch(
-        `${baseUrl}/rest/v1/arnobot_blog_sessions?session_id=eq.${shared.session_id}&select=title&limit=1`,
+        `${baseUrl}/rest/v1/arnobot_blog_sessions?session_id=eq.${shared.session_id}&select=title,onderwerp&limit=1`,
         { headers, signal: AbortSignal.timeout(3000) }
       )
       const [session] = await sessionRes.json()
-      if (session?.title) title = session.title
+      if (session) title = metaTitel(session, 90)
     }
   } catch {}
 

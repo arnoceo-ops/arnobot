@@ -3,13 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import VraagKlap from './VraagKlap'
 
-// Lange vraag als titel: kap af op een woordgrens zodat de pagina niet met een lap tekst opent.
-function kortTitel(t: string, max = 80) {
-  if (t.length <= max) return t
-  const knip = t.slice(0, max)
-  const spatie = knip.lastIndexOf(' ')
-  return (spatie > 40 ? knip.slice(0, spatie) : knip).trimEnd() + '…'
-}
+import { metaTitel, paginaKop } from '@/lib/gesprekTitel'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,11 +35,11 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
 
   const { data: session } = await supabase
     .from('arnobot_blog_sessions')
-    .select('title, summary')
+    .select('title, onderwerp, summary')
     .eq('session_id', shared.session_id)
     .maybeSingle()
 
-  const title = session?.title || 'Gesprek met ArnoBot'
+  const title = metaTitel(session)
   const description = session?.summary
     ? session.summary.slice(0, 155)
     : 'Een salesgesprek met ArnoBot, de AI-salescoach van Arno Diepeveen.'
@@ -82,7 +76,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
   const [{ data: session }, { data: messages }] = await Promise.all([
     supabase
       .from('arnobot_blog_sessions')
-      .select('title, created_at')
+      .select('title, onderwerp, created_at')
       .eq('session_id', shared.session_id)
       .maybeSingle(),
     supabase
@@ -92,7 +86,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
       .order('created_at', { ascending: true }),
   ])
 
-  const title = session?.title || 'Gesprek met ArnoBot'
+  const kop = paginaKop(session)
   const datum = new Date(session?.created_at || shared.created_at).toLocaleDateString('nl-NL', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
@@ -117,9 +111,16 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
               <span style={{ color: '#f1f5f9' }}>ARNO</span><span style={{ color: '#f59e0b' }}>BOT</span>
             </p>
             <a href="https://arno.bot" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', letterSpacing: 2, textDecoration: 'none', display: 'block', marginBottom: 40 }}>arno.bot</a>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8 }}>
-              {kortTitel(title)}
-            </h1>
+            {kop ? (
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8 }}>
+                {kop}
+              </h1>
+            ) : (
+              // Geen onderwerp (gesprek nog niet afgesloten): de vraag staat al eronder, dus alleen een verborgen kop.
+              <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                {metaTitel(session)}
+              </h1>
+            )}
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 1 }}>{datum}</p>
           </div>
 
