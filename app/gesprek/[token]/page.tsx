@@ -117,7 +117,7 @@ export default async function GedeeldGesprekPage({ params }: { params: Promise<{
             </p>
             <a href="https://arno.bot" style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', letterSpacing: 2, textDecoration: 'none', display: 'block', marginBottom: 40 }}>arno.bot</a>
             {kop ? (
-              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8 }}>
+              <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(30px,8.5vw,64px)', letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.1, marginBottom: 8, overflowWrap: 'anywhere' }}>
                 {kop}
               </h1>
             ) : (
