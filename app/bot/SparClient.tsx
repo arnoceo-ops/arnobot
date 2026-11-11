@@ -402,6 +402,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // zodat het volledige antwoord leesbaar is, en verschijnt weer zodra je zelf verder naar
   // beneden scrolt (signaal dat je wil interacteren) of de audio stopt.
   const [voiceBarHidden, setVoiceBarHidden] = useState(false)
+  // Op mobiel blijft de balk na een klaar antwoord weg tot je zelf onderaan bent: na afloop
+  // springt het scherm naar het begin van het antwoord, en een balk die dan meteen verschijnt
+  // ligt over de tekst die je net gaat lezen. Zie het effect bij voiceBarHidden hieronder.
+  const [leesHold, setLeesHold] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   // Karaoke-achtige weergave van het bericht dat nu wordt uitgesproken: welke woord-tokens
   // (buildSpeakTokens) en welk token (index) precies wordt voorgelezen op dit moment.
@@ -1034,6 +1038,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     localStorage.setItem('arnobot_session', newId)
     setSessionId(newId)
     setStarted(false)
+    setLeesHold(false)
     setMessages([])
     setHistory([])
     setInput('')
@@ -1171,6 +1176,41 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [voiceBarHidden])
+
+  // Leeshold: de balk komt terug zodra je onderaan de pagina bent. "Onderaan" wordt pas
+  // beoordeeld als het scherm tot rust is gekomen (200 ms zonder scroll-events), want direct
+  // na afloop scrolt de pagina zelf nog (smooth) naar het begin van het antwoord, en die
+  // beweging mag niet als "gebruiker is onderaan" tellen. Vangnetten tegen een balk die
+  // wegblijft (de fout van de eerdere scroll-versie, zie git 7dd14da1): een kort antwoord
+  // staat na de rusttijd al onderaan, de pijl-knop scrolt je er zelf heen, en een nieuwe vraag
+  // of een nieuw gesprek heft de hold altijd op.
+  useEffect(() => {
+    if (!leesHold) return
+    const nearBottom = () =>
+      document.documentElement.scrollHeight - (window.scrollY + window.innerHeight) <= 80
+    let settled = false
+    let timer: ReturnType<typeof setTimeout>
+    const arm = () => {
+      settled = true
+      if (nearBottom()) setLeesHold(false)
+    }
+    const onScroll = () => {
+      clearTimeout(timer)
+      if (settled) {
+        if (nearBottom()) setLeesHold(false)
+      } else {
+        timer = setTimeout(arm, 200)
+      }
+    }
+    timer = setTimeout(arm, 200)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [leesHold])
 
   async function handleNieuw() {
     if (synthesisLoading) return
@@ -1392,6 +1432,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setInputIsVerfijnd(false)
     }
     setLoading(true)
+    setLeesHold(false)
     userScrolledRef.current = false
     setStreamingStarted(false)
 
@@ -1583,6 +1624,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setMessages(prev => [...prev, { role: 'arno', content: `Er ging iets mis. Probeer opnieuw, of [stuur Arno een WhatsApp](${SUPPORT_WHATSAPP_SPARRING}).`, hint: 'fout', retryQuestion: question }])
     } finally {
       setLoading(false)
+      if (isMobile) setLeesHold(true)
       // Niet op mobiel: focus roept daar het schermtoetsenbord weer op, precies op het moment
       // dat je het net binnengekomen antwoord wil lezen. Op desktop is meteen door kunnen typen
       // wel prettig, daar heeft focus geen storend neveneffect.
@@ -1604,11 +1646,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   // stickyActive: de invoerbalk zou fixed onderin staan in deze modus (los van of hij nu
   // zichtbaar is). showInputArea: of de balk daadwerkelijk gerenderd wordt, puur op basis van
-  // loading, bewust GEEN scroll-positie meer (Thijs' oorspronkelijke wens was scroll-gebaseerd,
-  // maar dat mechanisme (readyForInput + IntersectionObserver) bleek na meerdere pogingen live
-  // onbetrouwbaar: soms bleef de balk voorgoed weg omdat "tot het einde gescrold" nooit
-  // gedetecteerd werd). Simpeler en robuust: tijdens genereren houdt het automatisch meescrollen
-  // (hieronder) je toch al bij de tekst, dus zodra het antwoord klaar is heb je het al gelezen.
+  // loading, bewust GEEN scroll-positie (de eerste scroll-versie met readyForInput +
+  // IntersectionObserver was live onbetrouwbaar: de balk bleef soms voorgoed weg). Sinds
+  // 11-11-2026 zit de scroll-afhankelijkheid op mobiel apart in `leesHold` (alleen een
+  // translateY-verberging, geen unmount) met vangnetten, omdat het scherm na afloop naar het
+  // begin van het antwoord springt en de balk dan over de te lezen tekst lag.
   // De paddingBottom op .spar-page (verderop) reserveert altijd ruimte voor de balk zolang
   // started, ook als hij nu niet zichtbaar is, en bottomRef heeft een scroll-margin-bottom van
   // diezelfde grootte, zodat het meescrollen daar vanzelf al rekening mee houdt en de balk bij
@@ -2523,7 +2565,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           </div>
         )}
 
-        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}${stickyActive && voiceBarHidden ? ' voice-hidden' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
+        {showInputArea && <div className={`spar-input-area${stickyActive ? ' active' : ''}${stickyActive && (voiceBarHidden || leesHold) ? ' voice-hidden' : ''}`} style={sparModus === 'sparren' ? { order: 5 } : undefined}>
           {!started && !loading && (
             <>
               {sparModus === 'sparren' ? (
@@ -3352,6 +3394,22 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             </div>
           </div>
         </div>
+      )}
+
+      {stickyActive && leesHold && showInputArea && (
+        <button
+          type="button"
+          aria-label="Naar beneden"
+          onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
+          style={{
+            position: 'fixed', right: 20, bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', zIndex: 50,
+            width: 48, height: 48, borderRadius: '50%', cursor: 'pointer',
+            background: '#f59e0b', color: '#111827', border: 'none',
+            fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, lineHeight: 1,
+          }}
+        >
+          ↓
+        </button>
       )}
 
       {closeToast && (
