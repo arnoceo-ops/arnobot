@@ -7,7 +7,7 @@
 Doel: een korte video die een sales agent naar een prospect stuurt vóórdat het live gesprek plaatsvindt. Geen volledige featuretour, wel genoeg om nieuwsgierig te maken en de kernbelofte te laten landen. Gebaseerd op de kernbelofte en de LIVE USP's uit `docs/SALES_BIJBEL.md`, geen nieuwe claims.
 
 **Lengte:** 2,5 tot 3 minuten. Langer werkt averechts voor een pre-demo teaser.
-**Vorm:** ongepolijste screen-recording met voice-over (Loom of vergelijkbaar), geen montage-animaties nodig. Snel te maken, snel te updaten als de app verandert.
+**Vorm:** ongepolijste screen-recording met voice-over, geen montage-animaties nodig. Snel te maken, snel te updaten als de app verandert.
 **Opnemen tegen:** uitsluitend het fake demoteam, nooit tegen echte klantdata. Zie de AVG-toelichting in `docs/SALES_DEVELOPMENT.md`.
 **Toon:** direct, geen corporate taal, zelfde stem als de rest van ArnoBot. Spreek de kijker aan met "je/jij", nooit "u".
 

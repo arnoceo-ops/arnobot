@@ -5,6 +5,7 @@ import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
+import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
 
 function renderAnswer(text: React.ReactNode) {
   if (typeof text !== 'string') return text
@@ -240,14 +241,19 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
       )}
 
       <div style={{ minHeight: '100vh', paddingTop: 64, background: '#111827' }}>
-        <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(60px,8vw,80px) clamp(16px,4vw,20px) 80px' }}>
+        <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
           {/* FAQ */}
-          <div style={{ borderTop: '2px solid #f59e0b', paddingTop: 40, marginBottom: 64 }}>
+          <div style={{ marginBottom: 64 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>VRAGEN</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 48 }}>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, margin: '0 0 32px 0' }}>
               FAQ
-            </h2>
+            </h1>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
+              Heb je vragen die hier niet worden beantwoord? Stuur Arno een{' '}
+              <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>WhatsApp</a>
+              {!isOnboarding && ' of gebruik SUPPORT in de menubalk'}.
+            </p>
 
             {teamStatusLoaded && FAQ_GROUPS.filter(g => {
               // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,

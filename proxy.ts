@@ -46,7 +46,7 @@ function buildCSP(nonce: string, allowWasm = false): string {
     // browser PUT't via een signed upload URL rechtstreeks naar Storage (bucket chat-audio-uploads).
     // Zonder deze host blokkeert de CSP de upload ("Bestand kon niet worden geüpload", 2026-10-07).
     `connect-src 'self' data: ${supabaseOrigin} https://clerk.arno.bot wss://clerk.arno.bot https://*.clerk.com https://*.accounts.dev wss://*.clerk.com wss://api.openai.com https://arnobot.instatus.com https://eu.i.posthog.com`,
-    "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com https://www.loom.com",
+    "frame-src https://clerk.arno.bot https://*.clerk.com https://*.accounts.dev https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
