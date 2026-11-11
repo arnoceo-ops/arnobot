@@ -16,3 +16,13 @@ Hersteld 2026-11-08 uit de code (de tabel was sinds de afslanking van 2026-08-29
 | Audiobijlage in de hoofdchat (`lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Transcriptie van geüploade audio. | 2026-11-08 |
 | Stem uit (`lib/voice.ts`) | `eleven_flash_v2_5` (ElevenLabs) | Lage latency voor spraakuitvoer. | 2026-11-08 |
 | Offline: `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Eenmalig vertaalscript. | 2026-11-08 |
+
+## Modelvergelijking Opus 5.5 tegen Fable 5.2 (2026-11-11)
+
+Aanleiding: een externe sales-expert vond Opus 5.5 beter dan Fable 5.2. Blinde A/B op echte data van twee gebruikers (coaching-hoofdsynthese en dagelijkse mindsetvraag), scripts `scripts/test-opus55-vs-fable52.mjs` (zet `TEST_USER_ID` voor een andere gebruiker) en `scripts/test-meta-fable52-vs-opus55.ts` (meta-analyse met de echte productiecode, model vervangen in het verzoek).
+
+**Gekozen:** geen modelwissel, productie blijft `claude-fable-5-1`. Ronde 1: geen duidelijke winnaar (coaching Fable 5.2 iets beter, mindsetvraag Opus 5.5 iets beter). Ronde 2 en de meta-analyse: niet afgerond. **Verworpen:** nu wisselen, want geen aantoonbare kwaliteitswinst en de technische voorwaarden ontbreken.
+
+**Technische voorwaarde voor elke wissel naar Fable 5.2 of Opus 5.5:** beide denken standaard eerst, en die denktokens tellen mee in `max_tokens`. Gevolg in de test: afgekapte of lege antwoorden bij een te lage limiet. In `lib/metaAnalyse.ts` kapte de zelfbeoordeling met Fable 5.2 af op 12000 tokens, en de retry met meer ruimte crashte omdat de SDK bij zo'n grote limiet streaming eist (`messages.create` moet `.messages.stream(...).finalMessage()` worden). Eerst dit rechtzetten in de Fable-routes, dan pas testen en wisselen.
+
+**Volgende test:** bij de eerstvolgende modelcontrole (cron `model-check`, elke 1e van de maand, volgende 2026-12-01) of de kwartaalcheck van januari, als daar een nieuw model uit komt. Dan Opus 5.5 en Fable 5.2 opnieuw meenemen, inclusief de meta-analyse.
