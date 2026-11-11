@@ -374,7 +374,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
 | `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
 | `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
-| `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is |
+| `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is. Stuurt daarnaast de FAQ-zoektermen zonder treffer (tabel `faq_zoekmislukkingen`) en ruimt die na 30 dagen op |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
 | `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 10+ nieuwe gesprekken sinds de laatste analyse, plus mail "Je analyses zijn bijgewerkt" |
@@ -517,6 +517,9 @@ Generiek event-log voor productanalyse (bijv. `qa_page_view`, `coaching_gesprek_
 
 ### `arnobot_pageviews` / `arnobot_cta_clicks`
 Anonieme pageview- en CTA-klik-tracking voor marketingpagina's (eigen tracking, naast PostHog).
+
+### `faq_zoekmislukkingen`
+Zoektermen uit het zoekveld op `/bot/qa` die geen enkel antwoord opleverden (SQL: `docs/sql/2026-11-11-faq-zoekmislukkingen.sql`, RLS aan zonder policies). Kolommen: `term` (genormaliseerd: kleine letters, zonder accenten, 3 tot 80 tekens), `created_at`. Bewust zonder `user_id`. Geschreven door `POST /api/bot/faq-zoek` (Clerk-login vereist, 20 per uur per gebruiker, interne testaccounts en de oprichter worden niet gelogd, de client logt na 1,5 s typestilte, één keer per term per bezoek). De cron `productvragen` meldt de termen van de laatste 24 uur (met aantallen) in een apart Telegram-bericht en wist rijen ouder dan 30 dagen. Zoeklogica: `lib/faqZoek.ts`.
 
 ### `arnobot_idee_analyses`
 Opgeslagen AI-blogideeën-analyses (`/api/admin/blogs-analyse`).
