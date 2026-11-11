@@ -59,10 +59,50 @@ async function kiesProductvragen(vragen: string[]): Promise<number[]> {
   throw new Error('Geen geldig antwoord van het model bij het beoordelen van de vragen')
 }
 
+// Zoektermen op /bot/qa die geen antwoord opleverden (tabel faq_zoekmislukkingen, zonder user_id).
+// Eigen foutafhandeling: een storing hier mag de productvragen-melding niet blokkeren.
+const ZOEK_BEWAARTERMIJN_MS = 30 * 24 * 60 * 60 * 1000
+const MAX_ZOEKTERMEN_IN_BERICHT = 40
+
+async function meldZoektermen() {
+  try {
+    await supabase
+      .from('faq_zoekmislukkingen')
+      .delete()
+      .lt('created_at', new Date(Date.now() - ZOEK_BEWAARTERMIJN_MS).toISOString())
+
+    const sinds = new Date(Date.now() - VENSTER_MS).toISOString()
+    const { data, error } = await supabase
+      .from('faq_zoekmislukkingen')
+      .select('term')
+      .gte('created_at', sinds)
+      .limit(1000)
+    if (error) throw error
+    if (!data || data.length === 0) return
+
+    const telling = new Map<string, number>()
+    for (const r of data) {
+      if (typeof r.term === 'string' && r.term) telling.set(r.term, (telling.get(r.term) ?? 0) + 1)
+    }
+    const regels = [...telling.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_ZOEKTERMEN_IN_BERICHT)
+      .map(([term, n]) => (n > 1 ? `${term} (${n}x)` : term))
+    if (regels.length === 0) return
+
+    const datum = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long' })
+    await notifyTelegram(`ARNOBOT FAQ-ZOEKTERMEN ZONDER TREFFER · ${datum}\n${regels.join('\n')}`)
+  } catch (err) {
+    await notifyCronFailure('productvragen (faq-zoektermen)', err)
+  }
+}
+
 export async function GET(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  await meldZoektermen()
 
   try {
     const sinds = new Date(Date.now() - VENSTER_MS).toISOString()

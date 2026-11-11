@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import BotNav from '@/app/bot/BotNav'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
+import { matchtZoekopdracht, normaliseerZoekterm, FAQ_ZOEK_MIN_TEKENS } from '@/lib/faqZoek'
 
 function renderAnswer(text: React.ReactNode) {
   if (typeof text !== 'string') return text
@@ -175,6 +176,8 @@ const FAQ_GROUPS = [
 
 export default function QAClient() {
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [zoek, setZoek] = useState('')
+  const gelogd = useRef<Set<string>>(new Set())
   const [isPreviewMember] = useState(() =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
   )
@@ -183,6 +186,47 @@ export default function QAClient() {
   const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
   const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
   const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
+
+  const zichtbareGroepen = FAQ_GROUPS.filter(g => {
+    // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,
+    // dus verbergen we alle rolafhankelijke groepen in plaats van te gokken.
+    // In de Android-app geen prijzen, abonnementen of referral (Google Play-betalingsbeleid).
+    if (isNativeApp && ['REFERRAL', 'ABONNEMENT'].includes(g.label)) return false
+    if (teamStatusFailed) return !['REFERRAL', 'ABONNEMENT', 'JOUW TEAM'].includes(g.label)
+    if (isTeamMember && g.label === 'REFERRAL') return false
+    if (isTeamMember && g.label === 'ABONNEMENT') return false
+    if (!isTeamMember && g.label === 'JOUW TEAM') return false
+    return true
+  })
+
+  const zoekterm = normaliseerZoekterm(zoek)
+  const zoekt = zoekterm.length > 0
+  // De oorspronkelijke index blijft behouden, zodat de sleutels stabiel zijn tijdens het zoeken.
+  const getoondeGroepen = zichtbareGroepen
+    .map(group => ({
+      group,
+      gi: FAQ_GROUPS.indexOf(group),
+      items: group.items
+        .map((faq, fi) => ({ faq, fi }))
+        .filter(({ faq }) => !zoekt || matchtZoekopdracht(zoek, faq.q, faq.a)),
+    }))
+    .filter(g => g.items.length > 0)
+  const geenTreffers = teamStatusLoaded && zoekt && getoondeGroepen.length === 0
+
+  // Een zoekterm zonder treffer wordt (anoniem, alleen de term) gelogd zodra de gebruiker stopt met typen,
+  // zodat Arno ziet welke antwoorden in de FAQ ontbreken. Eén keer per term per bezoek.
+  useEffect(() => {
+    if (!geenTreffers || zoekterm.length < FAQ_ZOEK_MIN_TEKENS || gelogd.current.has(zoekterm)) return
+    const timer = setTimeout(() => {
+      gelogd.current.add(zoekterm)
+      fetch('/api/bot/faq-zoek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ term: zoekterm }),
+      }).catch(() => {})
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [geenTreffers, zoekterm])
 
   return (
     <>
@@ -205,6 +249,13 @@ export default function QAClient() {
           color: #6b7280; flex-shrink: 0; transition: color 0.15s;
         }
         .faq-arrow.open { color: #f59e0b; }
+        .faq-zoek {
+          width: 100%; background: #1f2937; border: 1px solid #374151; border-radius: 0;
+          color: #f1f5f9; font-family: 'Space Mono', monospace; font-size: 15px;
+          padding: 14px 16px; margin-bottom: 40px; outline: none;
+        }
+        .faq-zoek::placeholder { color: #6b7280; }
+        .faq-zoek:focus { border-color: #f59e0b; }
         .faq-answer {
           font-family: 'Space Mono', monospace; font-size: 15px;
           color: #9ca3af; line-height: 1.9; padding-bottom: 28px;
@@ -228,31 +279,44 @@ export default function QAClient() {
               {' '}of gebruik SUPPORT in de menubalk.
             </p>
 
-            {teamStatusLoaded && FAQ_GROUPS.filter(g => {
-              // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,
-              // dus verbergen we alle rolafhankelijke groepen in plaats van te gokken.
-              // In de Android-app geen prijzen, abonnementen of referral (Google Play-betalingsbeleid).
-              if (isNativeApp && ['REFERRAL', 'ABONNEMENT'].includes(g.label)) return false
-              if (teamStatusFailed) return !['REFERRAL', 'ABONNEMENT', 'JOUW TEAM'].includes(g.label)
-              if (isTeamMember && g.label === 'REFERRAL') return false
-              if (isTeamMember && g.label === 'ABONNEMENT') return false
-              if (!isTeamMember && g.label === 'JOUW TEAM') return false
-              return true
-            }).map((group, gi) => (
+            {teamStatusLoaded && (
+              <input
+                type="search"
+                className="faq-zoek"
+                value={zoek}
+                onChange={e => setZoek(e.target.value)}
+                placeholder="Zoek in de FAQ"
+                aria-label="Zoek in de FAQ"
+                maxLength={80}
+                autoComplete="off"
+              />
+            )}
+
+            {geenTreffers && (
+              <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+                Geen antwoord gevonden. Stuur Arno een{' '}
+                <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>WhatsApp</a>
+                {' '}of gebruik SUPPORT in de menubalk.
+              </p>
+            )}
+
+            {teamStatusLoaded && getoondeGroepen.map(({ group, gi, items }) => (
               <div key={gi} style={{ marginBottom: 48 }}>
                 <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase' }}>{group.label}</p>
                 <div style={{ borderTop: '1px solid #374151' }}>
-                  {group.items.map((faq, fi) => {
+                  {items.map(({ faq, fi }) => {
                     const key = `${gi}-${fi}`
-                    const isOpen = openKey === key
+                    // Tijdens het zoeken staan alle treffers open, zodat het antwoord direct zichtbaar is.
+                    const isOpen = zoekt || openKey === key
                     return (
                       <div key={fi} className="faq-item">
                         <button
                           className="faq-question"
-                          onClick={() => setOpenKey(isOpen ? null : key)}
+                          onClick={() => { if (!zoekt) setOpenKey(isOpen ? null : key) }}
+                          style={zoekt ? { cursor: 'default' } : undefined}
                         >
                           <span className="faq-q-text">{faq.q}</span>
-                          <span className={`faq-arrow${isOpen ? ' open' : ''}`}>{isOpen ? '↑' : '↓'}</span>
+                          {!zoekt && <span className={`faq-arrow${isOpen ? ' open' : ''}`}>{isOpen ? '↑' : '↓'}</span>}
                         </button>
                         {isOpen && (
                           <p className="faq-answer">{renderAnswer(faq.a)}</p>
