@@ -242,25 +242,6 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
       <div style={{ minHeight: '100vh', paddingTop: 64, background: '#111827' }}>
         <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(60px,8vw,80px) clamp(16px,4vw,20px) 80px' }}>
 
-          <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
-          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(40px, 6vw, 64px)', color: '#f1f5f9', lineHeight: 1.0, letterSpacing: 3, marginBottom: 16 }}>
-            Video
-          </h1>
-          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Dit is de video die je bij je ArnoBot entree hebt gezien. Heb je vragen die hier niet beantwoord worden? Neem dan contact op met Arno op{' '}
-            <a href="https://t.me/arnodiepeveen" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>Telegram</a>. Niet de bot, de man 😎
-          </p>
-
-          {/* Video */}
-          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: 64, overflow: 'hidden' }}>
-            <iframe
-              src="https://www.loom.com/embed/0ac8f70256fa4ecb8d49bc111c897050?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true"
-              frameBorder={0}
-              allowFullScreen
-              style={{ position: 'absolute', top: -36, left: 0, width: '100%', height: 'calc(100% + 36px)' }}
-            />
-          </div>
-
           {/* FAQ */}
           <div style={{ borderTop: '2px solid #f59e0b', paddingTop: 40, marginBottom: 64 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>VRAGEN</p>
