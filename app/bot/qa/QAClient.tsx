@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import BotNav from '@/app/bot/BotNav'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
@@ -174,7 +173,7 @@ const FAQ_GROUPS = [
   },
 ]
 
-export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
+export default function QAClient() {
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [isPreviewMember] = useState(() =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewMember') === '1'
@@ -190,7 +189,6 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
-        .qa-continue:hover { background: #d97706 !important; }
         .faq-item { border-bottom: 1px solid #374151; }
         .faq-question {
           width: 100%; background: none; border: none; cursor: pointer;
@@ -213,32 +211,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
         }
       `}</style>
 
-      {isOnboarding ? (
-        <nav style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-          padding: '0 clamp(20px, 4vw, 40px)', height: 64,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          background: 'rgba(17,24,39,0.95)', backdropFilter: 'blur(12px)',
-        }}>
-          <Link href="/" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: '#f1f5f9', textDecoration: 'none' }}>
-            ARNO<span style={{ color: '#f59e0b' }}>BOT.</span>
-          </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 48, height: 3, background: '#f59e0b', borderRadius: 2 }} />
-              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#f59e0b' }}>VIDEO</span>
-            </div>
-            <div style={{ width: 16, height: 1, background: '#374151', marginBottom: 13 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 48, height: 3, background: '#374151', borderRadius: 2 }} />
-              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 2, color: '#6b7280' }}>PROFIEL</span>
-            </div>
-          </div>
-        </nav>
-      ) : (
-        <BotNav active="qa" />
-      )}
+      <BotNav active="qa" />
 
       <div style={{ minHeight: '100vh', paddingTop: 64, background: '#111827' }}>
         <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
@@ -252,7 +225,7 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
               Heb je vragen die hier niet worden beantwoord? Stuur Arno een{' '}
               <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>WhatsApp</a>
-              {!isOnboarding && ' of gebruik SUPPORT in de menubalk'}.
+              {' '}of gebruik SUPPORT in de menubalk.
             </p>
 
             {teamStatusLoaded && FAQ_GROUPS.filter(g => {
@@ -291,24 +264,6 @@ export default function QAClient({ isOnboarding }: { isOnboarding: boolean }) {
               </div>
             ))}
           </div>
-
-          {isOnboarding && (
-            <div style={{ textAlign: 'center' }}>
-              <Link
-                href="/bot/profiel"
-                className="qa-continue"
-                style={{
-                  display: 'inline-block', padding: '12px 36px',
-                  background: '#f59e0b', color: '#111827',
-                  fontFamily: "'Bebas Neue', sans-serif",
-                  fontSize: 18, letterSpacing: 3,
-                  textDecoration: 'none', borderRadius: 999, transition: 'background 0.2s',
-                }}
-              >
-                I&apos;M READY.
-              </Link>
-            </div>
-          )}
 
         </div>
       </div>

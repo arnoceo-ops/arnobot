@@ -25,7 +25,7 @@ export default async function SparrenPage({ searchParams }: { searchParams: Prom
     serviceDb.from('approved_users').select('plan').eq('user_id', userId).single(),
   ])
 
-  if (!profileRes.data) redirect('/bot/qa')
+  if (!profileRes.data) redirect('/bot/profiel')
 
   const plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'premium'
   const voiceEnabled = plan !== 'basis' && isElevenLabsConfigured()

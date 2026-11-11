@@ -32,7 +32,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
     telGebruik(serviceDb, userId),
   ])
 
-  if (!profileRes.data) redirect('/bot/qa')
+  if (!profileRes.data) redirect('/bot/profiel')
 
   const plan = (userRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'premium'
   // isElevenLabsConfigured() als extra schakelaar: ELEVENLABS_API_KEY tijdelijk weghalen in
