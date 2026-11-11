@@ -270,15 +270,9 @@ export default function QAClient() {
           {/* FAQ */}
           <div style={{ marginBottom: 64 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>VRAGEN</p>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, margin: '0 0 32px 0' }}>
+            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, margin: '0 0 48px 0' }}>
               FAQ
             </h1>
-            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-              Heb je vragen die hier niet worden beantwoord? Stuur Arno een{' '}
-              <a href={SUPPORT_WHATSAPP_VRAAG} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none' }}>WhatsApp</a>
-              {' '}of gebruik SUPPORT in de menubalk.
-            </p>
-
             {teamStatusLoaded && (
               <input
                 type="search"
