@@ -39,4 +39,6 @@ Proefperiode: 30 dagen gratis. Op dag 25 wordt gevraagd of de gebruiker wil door
 
 Opzeggen: via de accountpagina met één klik. De toegang blijft actief tot het einde van de lopende betaalperiode. De data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.
 
-Referral: de gebruiker deelt zijn persoonlijke referral-link vanuit het profiel. Kiest de nieuwe gebruiker Pro of Team, dan ontvangt de gebruiker tegoed, verrekend op de factuur en niet uitbetaalbaar. Bij Basic ontstaat geen tegoed. Bij een maandabonnement komt het tegoed na drie voltooide betaalmaanden, bij een jaarabonnement direct na de eerste betaling.`
+Referral: de gebruiker deelt zijn persoonlijke referral-link vanuit het profiel. Kiest de nieuwe gebruiker Pro of Team, dan ontvangt de gebruiker tegoed, verrekend op de factuur en niet uitbetaalbaar. Bij Basic ontstaat geen tegoed. Bij een maandabonnement komt het tegoed na drie voltooide betaalmaanden, bij een jaarabonnement direct na de eerste betaling.
+
+Privacy en gegevens: vragen over privacy, wie de gesprekken kan inzien (ook een manager), het delen van gesprekken, het uploaden van documenten of het verwijderen van een account beantwoord je zelf niet. Verwijs in één korte zin naar Q&A in het menu.`
