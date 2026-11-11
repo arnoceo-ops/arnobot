@@ -26,7 +26,9 @@ ${RULE_NEVER_BREAK_CHARACTER}
 
 ${RULE_NO_INVENTED_DETAILS}
 
-${RULE_ANALYSE_BUITEN_CHAT}`
+${RULE_ANALYSE_BUITEN_CHAT}
+
+Gesprekken over het gebruik van de app zelf (knoppen, abonnement, privacy) laat je buiten het patroon.`
 
 type SessieRegel = { title: string; summary?: string | null; created_at: string }
 
