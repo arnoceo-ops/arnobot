@@ -29,6 +29,16 @@ export interface SubRow {
   herinnering_30_at: string | null
   herinnering_7_at: string | null
   einde_mail_at: string | null
+  // Geplande wijziging (docs/OVERSTAP_PLAN.md, docs/sql/2026-11-12-overstap-geplande-wijziging.sql).
+  // Optioneel: de kolommen bestaan pas na de SQL-migratie, en leeg betekent "niets gepland".
+  gepland_plan?: 'basis' | 'premium' | null
+  gepland_cyclus?: 'maandelijks' | 'jaarlijks' | null
+  gepland_bedrag_cent?: number | null
+  gepland_btw_cent?: number | null
+  gepland_mollie_subscription_id?: string | null
+  gepland_mollie_sub_geannuleerd_at?: string | null
+  gepland_ingangs_at?: string | null
+  gepland_at?: string | null
   created_at?: string
 }
 

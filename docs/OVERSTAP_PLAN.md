@@ -78,7 +78,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 
 **Wat B in de code vraagt (gecontroleerd in `verwerking.ts`, `db.ts`, `mollie.ts`):**
 - Nieuwe Mollie-functie voor een losse vervolgbetaling (nu alleen `maakEersteBetaling` met `sequenceType: 'first'`).
-- Nieuwe betaalsoort (bijvoorbeeld `upgrade`) naast `eerste` en `herhaling`: `rondBetalingAf` behandelt nu elke betaling die niet `eerste` is als een herhaling en telt dan een periode bij. Een upgradebetaling mag de periode niet verlengen. `PayRow.soort` kent `verlenging` al maar niets gebruikt het; mogelijk een CHECK-constraint in de database, nog te controleren.
+- Nieuwe betaalsoort (bijvoorbeeld `upgrade`) naast `eerste` en `herhaling`: `rondBetalingAf` behandelt nu elke betaling die niet `eerste` is als een herhaling en telt dan een periode bij. Een upgradebetaling mag de periode niet verlengen. `PayRow.soort` kent `verlenging` al maar niets gebruikt het. **Bevestigd (docs/sql/2026-10-10-mollie-billing.sql):** `arnobot_payments.soort` heeft een CHECK-constraint (`eerste`, `herhaling`, `verlenging`); voor `upgrade` moet die constraint worden verruimd, in de SQL-stap van Basic naar Pro.
 - Bij een mislukte upgradebetaling: plan terugzetten naar Basic, mail en Telegram (nu stuurt `verwerkMislukteBetaling` voor niet-`eerste` een generieke "betaling mislukt"-mail).
 - Het Mollie-abonnement moet daarna het Pro-bedrag incasseren: hergebruik de geplande-wijziging-machinerie (nieuw abonnement, zelfde interval, start op `periode_einde`, oude stoppen) of PATCH op `amount` (docs: voor toekomstige betalingen). Daarom komt `gepland_plan` in de migratie.
 - Btw van de betaalrij nu uit de rij (`s.btw_cent`); een late betaling van het oude bedrag zou verkeerde btw krijgen. Btw uit het Mollie-bedrag en `klant_type` afleiden.
@@ -92,7 +92,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 
 ## Afvinklijst
 
-- [ ] Migratie (`docs/sql/`)
+- [ ] Migratie (`docs/sql/2026-11-12-overstap-geplande-wijziging.sql`): bestand en `SubRow`-type klaar (2026-11-12), nog door Arno uit te voeren in Supabase en daarna alleen-lezen te controleren; verruiming van de `soort`-constraint volgt bij Basic naar Pro
 - [ ] `stopMollieAbonnement`: twee id's, verificatie, `boolean`-variant
 - [ ] Mollie-wrapper: `haalAbonnement` (GET, `nextPaymentDate`, status) en lijst betalingen van een abonnement
 - [ ] Webhook-conversie plus tests (dubbele webhook, late maandbetaling, stop-fout, opzeggen tussendoor, cron stap 5 bij pending)
