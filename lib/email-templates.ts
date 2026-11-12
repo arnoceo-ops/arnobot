@@ -70,6 +70,9 @@ export type EmailType =
   | 'verlenging_7d'
   | 'abonnement_afgelopen'
   | 'terugbetaling_bevestiging'
+  | 'overstap_ingepland'
+  | 'opzegging_ingetrokken'
+  | 'upgrade_bijbetaling_mislukt'
   | 'winback'
   | 'weekly_nudge'
   | 'inactivity_dag21'
@@ -109,6 +112,9 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   verlenging_7d:         { label: 'Verlengen, 7 dagen',     description: 'Recurring:particulier, 7 dagen voor het einde van de 12 maanden',   category: 'user' },
   abonnement_afgelopen:  { label: 'Abonnement afgelopen',   description: 'Event:abonnement geëindigd, er wordt niets meer afgeschreven',     category: 'user' },
   terugbetaling_bevestiging: { label: 'Terugbetaling',      description: 'Event:na terugbetaling binnen de bedenktijd',                       category: 'user' },
+  overstap_ingepland:    { label: 'Overstap ingepland',     description: 'Event:na het inplannen van een overstap (maand naar jaar, Pro naar Basic)', category: 'user' },
+  opzegging_ingetrokken: { label: 'Opzegging ingetrokken',  description: 'Event:na het intrekken van een opzegging via de accountpagina',     category: 'user' },
+  upgrade_bijbetaling_mislukt: { label: 'Upgrade-bijbetaling mislukt', description: 'Event:de bijbetaling bij een upgrade naar Pro is mislukt, plan terug naar Basic', category: 'user' },
   winback:               { label: 'Win-back',               description: 'Dag 45:15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
   weekly_nudge:          { label: 'Inactivity nudge',       description: 'Recurring:7 dagen geen activiteit',                                 category: 'user' },
   inactivity_dag21:      { label: 'Inactivity dag 21',      description: 'Recurring:21 dagen geen activiteit',                                category: 'user' },
@@ -149,6 +155,15 @@ export interface BillingMailOptions {
   datum?: string
   eerste?: boolean
   betaalId?: string
+  /** Overstap: het huidige en het nieuwe abonnement, bijvoorbeeld "Basic maandelijks" en "Basic jaarlijks". */
+  van?: string
+  naar?: string
+  /** Overstap: "per maand" of "per jaar". */
+  perPeriode?: string
+  /** Opzegging ingetrokken: false als er geen automatische betaling volgt (particulier jaarabonnement). */
+  metBetaling?: boolean
+  /** Terugbetaling: het ging om de bijbetaling van een upgrade, het abonnement loopt door. */
+  upgrade?: boolean
 }
 
 export interface TeamMailOptions {
@@ -389,8 +404,40 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je terugbetaling is onderweg`,
         html: mail(
-          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.<br><br>Je abonnement is hiermee beëindigd.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          `We hebben ${billingEuro(b?.bedragCent ?? 2900)} teruggestort naar de rekening waarmee je betaalde. Het kan een paar werkdagen duren voordat het bedrag op je rekening is bijgeschreven.<br><br>${b?.upgrade ? 'Je upgrade is hiermee teruggedraaid. Je abonnement loopt door.' : 'Je abonnement is hiermee beëindigd.'}<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'TERUG NAAR ARNOBOT →', 'https://arno.bot'
+        ),
+      }
+    }
+    case 'overstap_ingepland': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}Je overstap is ingepland`,
+        html: mail(
+          `Je stapt op ${billingDatum(b?.datum)} over van ${b?.van ?? 'je huidige abonnement'} naar ${b?.naar ?? 'je nieuwe abonnement'}. Vanaf die datum betaal je ${billingEuro(b?.bedragCent ?? 0)} ${b?.perPeriode ?? 'per maand'}, inclusief BTW. Tot dan blijft alles zoals het is.<br><br>Wil je dit toch niet, trek de overstap dan in via je account, uiterlijk een dag voor ${billingDatum(b?.datum)}.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
+        ),
+      }
+    }
+    case 'opzegging_ingetrokken': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}Je opzegging is ingetrokken`,
+        html: mail(
+          b?.metBetaling === false
+            ? `Je abonnement loopt gewoon door tot ${billingDatum(b?.datum)}.`
+            : `Je abonnement loopt gewoon door. Je volgende betaling is op ${billingDatum(b?.datum)}.`,
+          'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
+    case 'upgrade_bijbetaling_mislukt': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}De bijbetaling voor je upgrade is niet gelukt`,
+        html: mail(
+          `De bijbetaling voor je upgrade naar Pro is niet gelukt. Daarom heb je weer Basic.${b?.datum ? ` Je overstap naar Pro per ${billingDatum(b.datum)} blijft staan.` : ''} Wil je ${b?.datum ? 'eerder ' : ''}Pro, probeer de upgrade dan opnieuw via je account of mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
         ),
       }
     }

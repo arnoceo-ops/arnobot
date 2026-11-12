@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
+import OverstapSectie, { OpzeggingIntrekken } from './OverstapSectie'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
@@ -405,12 +406,19 @@ export default function AccountPage() {
             ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een AVG-recht
             op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
         {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
+        <>
+        {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
+            mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}
+        <OverstapSectie />
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
           {cancelledAt ? (
-            <p style={body}>
-              Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.
-            </p>
+            <>
+              <p style={body}>
+                Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.
+              </p>
+              <OpzeggingIntrekken onIngetrokken={() => { setCancelledAt(null); setEindigtOp(null); setCancelDone(false) }} />
+            </>
           ) : cancelDone ? (
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
           ) : !cancelConfirm ? (
@@ -459,6 +467,7 @@ export default function AccountPage() {
             </p>
           )}
         </div>
+        </>
         )}
 
         {/* Account verwijderen */}

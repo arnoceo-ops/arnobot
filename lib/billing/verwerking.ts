@@ -383,7 +383,11 @@ async function zetUpgradeTerug(sub: SubRow): Promise<'teruggezet' | 'niet-nodig'
 async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> {
   if (rij.soort === 'upgrade') {
     const uitkomst = await zetUpgradeTerug(sub)
-    await notifyTelegram(`Upgradebetaling mislukt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\n${uitkomst === 'teruggezet' ? 'Het plan is teruggezet naar Basic; het Pro-abonnement start nog wel per einde van de periode.' : 'Het plan is niet teruggezet (de overstap naar Pro is al ingegaan).'}\nEr is geen mail naar de klant gestuurd.`)
+    // De klant hoort het alleen als hij echt weer Basic heeft; na de omzetting naar het Pro-abonnement is er niets veranderd.
+    if (uitkomst === 'teruggezet') {
+      await verstuurBillingMail(sub.user_id, 'upgrade_bijbetaling_mislukt', { datum: sub.gepland_ingangs_at ?? undefined })
+    }
+    await notifyTelegram(`Upgradebetaling mislukt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\n${uitkomst === 'teruggezet' ? 'Het plan is teruggezet naar Basic; de klant heeft een mail gekregen.' : 'Het plan is niet teruggezet (de overstap naar Pro is al ingegaan); er is geen mail gestuurd.'}`)
     return
   }
   if (rij.soort === 'eerste') {
@@ -415,7 +419,7 @@ async function verwerkVolledigeTerugbetaling(
       await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
       return
     }
-    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent })
+    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent, upgrade: true })
     await creditnotaVoorBetaling(rij.id)
     await notifyTelegram(`Upgradebetaling terugbetaald op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet abonnement loopt door; het plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
     return

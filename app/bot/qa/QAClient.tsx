@@ -104,6 +104,10 @@ const FAQ_GROUPS = [
         q: 'Hoe zeg ik op?',
         a: 'Via de accountpagina, met één klik. Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.',
       },
+      {
+        q: 'Kan ik overstappen naar een jaarabonnement of een ander abonnement?',
+        a: 'Een maandabonnement kan per einde van je betaalperiode naar jaar, en Pro kan naar Basic. Basic naar Pro kan direct. Je regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en neem daarna een maandabonnement. Een geplande overstap of opzegging kun je tot een dag van tevoren intrekken.',
+      },
     ],
   },
   {

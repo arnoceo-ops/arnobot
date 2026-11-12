@@ -26,16 +26,6 @@ const KNOWN_MANUAL_ROUTES = new Set([
   // geen UI-knop. Herbruikbare diagnosetool, geen eenmalige migratie zoals de twee
   // backfill-routes die op 2026-08-13 alsnog verwijderd zijn (Arno herkende ze niet meer).
   '/api/admin/test-telegram',
-  // Overstap maand naar jaar en Pro naar Basic (docs/OVERSTAP_PLAN.md): de knop op de accountpagina is
-  // het laatste onderdeel van dat plan. Tot dan bewust zonder aanroeper (en alleen voor de eigenaar en
-  // testaccounts, OVERSTAP_OPEN staat uit). Verwijder deze regel zodra de knop er is.
-  '/api/bot/billing/overstappen',
-  // Idem voor het intrekken van een geplande overstap en van een opzegging: de knoppen volgen met
-  // de accountpagina. Verwijder deze twee regels zodra die knoppen er zijn.
-  '/api/bot/billing/overstap-intrekken',
-  '/api/bot/billing/opzegging-intrekken',
-  // En de upgrade van Basic naar Pro, direct (zelfde plan, zelfde knoppen-moment).
-  '/api/bot/billing/upgrade',
 ])
 
 function walk(dir, matcher, results = []) {

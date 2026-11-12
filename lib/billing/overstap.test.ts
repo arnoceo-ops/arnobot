@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
   heeftOpenstaandeBetaling: vi.fn(),
   stopEnBevestig: vi.fn(),
   notifyTelegram: vi.fn(async () => {}),
+  verstuurBillingMail: vi.fn(async () => true),
   isInternalTestUser: vi.fn(() => false),
   updateFout: { aan: false },
 }))
@@ -24,6 +25,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.notifyTelegram }))
 vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: h.isInternalTestUser }))
 vi.mock('./openstaandeBetaling', () => ({ heeftOpenstaandeBetaling: h.heeftOpenstaandeBetaling }))
 vi.mock('./verwerking', () => ({ stopEnBevestig: h.stopEnBevestig }))
+vi.mock('./mails', () => ({ verstuurBillingMail: h.verstuurBillingMail }))
 vi.mock('./mollie', () => ({
   heeftGeldigeMachtiging: h.heeftGeldigeMachtiging,
   haalAbonnement: h.haalAbonnement,
@@ -95,7 +97,8 @@ function zet(rij: Rij, extra: Record<string, Rij[]> = {}) {
 }
 
 beforeEach(() => {
-  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.mollieBeschikbaarVoor, h.heeftOpenstaandeBetaling, h.stopEnBevestig, h.notifyTelegram, h.isInternalTestUser]) f.mockReset()
+  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.mollieBeschikbaarVoor, h.heeftOpenstaandeBetaling, h.stopEnBevestig, h.notifyTelegram, h.verstuurBillingMail, h.isInternalTestUser]) f.mockReset()
+  h.verstuurBillingMail.mockResolvedValue(true)
   h.updateFout.aan = false
   h.heeftGeldigeMachtiging.mockResolvedValue(true)
   h.haalAbonnement.mockResolvedValue({ id: 'sub_huidig', status: 'active', nextPaymentDate: '2026-12-04' })
@@ -182,6 +185,9 @@ describe('plaatsOverstap: gelukt', () => {
     }))
     expect(h.stopEnBevestig).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'rij-1' }), 'sub_huidig', 'huidig')
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'overstap_ingepland', {
+      van: 'Basic maandelijks', naar: 'Basic jaarlijks', bedragCent: bedrag.brutoCent, datum: ISO('2026-12-04'), perPeriode: 'per jaar',
+    })
   })
 
   it('maand naar jaar (zakelijk): doorlopend jaarabonnement met zakelijk bedrag', async () => {
@@ -201,6 +207,9 @@ describe('plaatsOverstap: gelukt', () => {
       brutoCent: berekenBedrag('basis', 'maandelijks', 'particulier').brutoCent, interval: '1 month', times: null,
     }))
     expect(sub()).toMatchObject({ gepland_plan: 'basis', gepland_cyclus: 'maandelijks', plan: 'premium' })
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'overstap_ingepland', expect.objectContaining({
+      van: 'Pro maandelijks', naar: 'Basic maandelijks', perPeriode: 'per maand',
+    }))
   })
 
   it('gebruikt Mollies volgende incassodatum als ingangsdatum, ook als die iets afwijkt van periode_einde', async () => {
@@ -233,6 +242,7 @@ describe('plaatsOverstap: weigeren zonder iets achter te laten', () => {
     expect(r).toMatchObject({ ok: false, status })
     expect(h.maakAbonnement).not.toHaveBeenCalled()
     expect(h.stopEnBevestig).not.toHaveBeenCalled()
+    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
     expect(geplandLeeg()).toBe(true)
   }
 
@@ -281,6 +291,7 @@ describe('plaatsOverstap: terugdraaien als een stap mislukt', () => {
     expect(h.stopEnBevestig).toHaveBeenCalledTimes(2)
     expect(h.stopEnBevestig).toHaveBeenLastCalledWith(expect.objectContaining({ gepland_mollie_subscription_id: 'sub_nieuw' }), 'sub_nieuw', 'gepland')
     expect(geplandLeeg()).toBe(true)
+    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
     expect(h.notifyTelegram).not.toHaveBeenCalled() // de stopfunctie meldt zelf een mislukte stop
   })
 

@@ -1,0 +1,90 @@
+import { describe, expect, it } from 'vitest'
+import { EMAIL_META, getEmailTemplate } from '@/lib/email-templates'
+
+// De klantmails rond overstappen, intrekken en een upgrade (docs/OVERSTAP_PLAN.md, teksten door Arno
+// goedgekeurd op 2026-11-12). Controleert de inhoud en de huisregel: nooit een streepje in klanttekst.
+
+const DATUM = '2026-12-04T00:00:00.000Z'
+const heeftStreepje = (s: string) => /[—–]/.test(s)
+
+describe('overstap_ingepland', () => {
+  const m = getEmailTemplate('overstap_ingepland', 'Test', false, {
+    billing: { van: 'Basic maandelijks', naar: 'Basic jaarlijks', bedragCent: 22800, datum: DATUM, perPeriode: 'per jaar' },
+  })
+
+  it('noemt datum, oud en nieuw abonnement, bedrag en hoe je intrekt', () => {
+    expect(m.subject).toBe('Je overstap is ingepland')
+    expect(m.html).toContain('4 december 2026')
+    expect(m.html).toContain('over van Basic maandelijks naar Basic jaarlijks')
+    expect(m.html).toContain('228,00')
+    expect(m.html).toContain('per jaar')
+    expect(m.html).toContain('Tot dan blijft alles zoals het is')
+    expect(m.html).toContain('uiterlijk een dag voor 4 december 2026')
+    expect(m.html).toContain('admin@arno.bot')
+  })
+
+  it('heeft geen streepjes', () => {
+    expect(heeftStreepje(m.subject)).toBe(false)
+    expect(heeftStreepje(m.html)).toBe(false)
+  })
+
+  it('valt terug op neutrale woorden als gegevens ontbreken', () => {
+    const leeg = getEmailTemplate('overstap_ingepland', 'Test', false, { billing: {} })
+    expect(leeg.html).toContain('je huidige abonnement')
+    expect(leeg.html).toContain('je nieuwe abonnement')
+  })
+})
+
+describe('opzegging_ingetrokken', () => {
+  it('met automatische betaling: noemt de volgende betaling', () => {
+    const m = getEmailTemplate('opzegging_ingetrokken', 'Test', false, { billing: { datum: DATUM, metBetaling: true } })
+    expect(m.subject).toBe('Je opzegging is ingetrokken')
+    expect(m.html).toContain('Je abonnement loopt gewoon door. Je volgende betaling is op 4 december 2026.')
+    expect(heeftStreepje(m.html)).toBe(false)
+  })
+
+  it('zonder automatische betaling (particulier jaar): zegt alleen dat het doorloopt tot de datum', () => {
+    const m = getEmailTemplate('opzegging_ingetrokken', 'Test', false, { billing: { datum: DATUM, metBetaling: false } })
+    expect(m.html).toContain('Je abonnement loopt gewoon door tot 4 december 2026.')
+    expect(m.html).not.toContain('volgende betaling')
+  })
+})
+
+describe('upgrade_bijbetaling_mislukt', () => {
+  it('met een geplande overstap: verwijst naar de datum en zegt "eerder Pro"', () => {
+    const m = getEmailTemplate('upgrade_bijbetaling_mislukt', 'Test', false, { billing: { datum: DATUM } })
+    expect(m.subject).toBe('De bijbetaling voor je upgrade is niet gelukt')
+    expect(m.html).toContain('Daarom heb je weer Basic.')
+    expect(m.html).toContain('Je overstap naar Pro per 4 december 2026 blijft staan.')
+    expect(m.html).toContain('Wil je eerder Pro')
+    expect(heeftStreepje(m.subject)).toBe(false)
+    expect(heeftStreepje(m.html)).toBe(false)
+  })
+
+  it('zonder geplande overstap: belooft geen overstap en zegt "Wil je Pro"', () => {
+    const m = getEmailTemplate('upgrade_bijbetaling_mislukt', 'Test', false, { billing: {} })
+    expect(m.html).not.toContain('blijft staan')
+    expect(m.html).toContain('Wil je Pro, probeer')
+  })
+})
+
+describe('terugbetaling_bevestiging', () => {
+  it('bij een gewone terugbetaling: het abonnement is beëindigd (ongewijzigd)', () => {
+    const m = getEmailTemplate('terugbetaling_bevestiging', 'Test', false, { billing: { bedragCent: 2900 } })
+    expect(m.html).toContain('Je abonnement is hiermee beëindigd.')
+  })
+
+  it('bij een upgrade: de upgrade is teruggedraaid en het abonnement loopt door', () => {
+    const m = getEmailTemplate('terugbetaling_bevestiging', 'Test', false, { billing: { bedragCent: 1500, upgrade: true } })
+    expect(m.html).toContain('Je upgrade is hiermee teruggedraaid. Je abonnement loopt door.')
+    expect(m.html).not.toContain('beëindigd')
+    expect(m.html).toContain('15,00')
+  })
+})
+
+describe('registratie', () => {
+  it.each(['overstap_ingepland', 'opzegging_ingetrokken', 'upgrade_bijbetaling_mislukt'] as const)('%s staat in EMAIL_META', type => {
+    expect(EMAIL_META[type]).toMatchObject({ category: 'user' })
+    expect(EMAIL_META[type].label.length).toBeGreaterThan(0)
+  })
+})

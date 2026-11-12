@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   heeftOpenstaandeBetaling: vi.fn(),
   stopEnBevestig: vi.fn(),
   notifyTelegram: vi.fn(async () => {}),
+  verstuurBillingMail: vi.fn(async () => true),
   isInternalTestUser: vi.fn(() => false),
   insertFout: { aan: false },
   teller: { n: 0 },
@@ -26,6 +27,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.notifyTelegram }))
 vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: h.isInternalTestUser }))
 vi.mock('./openstaandeBetaling', () => ({ heeftOpenstaandeBetaling: h.heeftOpenstaandeBetaling }))
 vi.mock('./verwerking', () => ({ stopEnBevestig: h.stopEnBevestig }))
+vi.mock('./mails', () => ({ verstuurBillingMail: h.verstuurBillingMail }))
 vi.mock('./mollie', () => ({
   heeftGeldigeMachtiging: h.heeftGeldigeMachtiging,
   haalAbonnement: h.haalAbonnement,
@@ -156,7 +158,8 @@ function zet(rij: Rij) {
 }
 
 beforeEach(() => {
-  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.maakLosseHerhaalBetaling, h.mollieBeschikbaarVoor, h.heeftOpenstaandeBetaling, h.stopEnBevestig, h.notifyTelegram, h.isInternalTestUser]) f.mockReset()
+  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.maakLosseHerhaalBetaling, h.mollieBeschikbaarVoor, h.heeftOpenstaandeBetaling, h.stopEnBevestig, h.notifyTelegram, h.verstuurBillingMail, h.isInternalTestUser]) f.mockReset()
+  h.verstuurBillingMail.mockResolvedValue(true)
   h.insertFout.aan = false
   h.teller.n = 0
   h.heeftGeldigeMachtiging.mockResolvedValue(true)
@@ -191,6 +194,8 @@ describe('plaatsUpgrade: maandabonnement (het Pro-abonnement start per einde per
     expect(h.stopEnBevestig).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'rij-1' }), 'sub_huidig', 'huidig')
     // De probe-rij voor de betaalsoort is weer weg.
     expect(h.tabellen.arnobot_payments.some(p => String(p.mollie_payment_id).startsWith('probe-'))).toBe(false)
+    // Geen "overstap ingepland"-mail: bij een upgrade volgt de betaalbevestiging na de bijbetaling.
+    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
   })
 
   it('zakelijk jaar: doorlopend jaarabonnement voor Pro en een zakelijk bedrag', async () => {

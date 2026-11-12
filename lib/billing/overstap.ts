@@ -5,6 +5,7 @@ import { abonnementVoorOverstap } from './perioden'
 import { berekenBedrag, planNaam, type Bedrag, type Cyclus, type Plan } from './prijzen'
 import { berekenUpgradeBedrag } from './upgradeBedrag'
 import { heeftOpenstaandeBetaling } from './openstaandeBetaling'
+import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -352,6 +353,17 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
     ? `Upgrade naar Pro op arno.bot (${direct ? 'Pro direct' : 'Pro per einde periode, bijbetaling niet gelukt'})\n\nUser: ${userId}\n${sub.klant_type}, ${sub.cyclus}\nBijbetaling: €${((upgrade?.brutoCent ?? 0) / 100).toFixed(2)}\nPro-abonnement vanaf: ${datum}, €${(bedrag.brutoCent / 100).toFixed(2)}`
     : `Overstap gepland op arno.bot\n\nUser: ${userId}\n${planNaam(sub.plan)} ${sub.cyclus} naar ${planNaam(doel.plan)} ${doel.cyclus}, ${sub.klant_type}\nIngaand: ${datum}\nNieuw bedrag: €${(bedrag.brutoCent / 100).toFixed(2)}`
   await notifyTelegram(`${soortTekst}\n${await infoVoorTelegram(userId)}`).catch(() => {})
+
+  // Bevestiging aan de klant. Bij een upgrade volgt de betaalbevestiging na de bijbetaling, dus daar geen aparte mail.
+  if (modus === 'overstap') {
+    await verstuurBillingMail(userId, 'overstap_ingepland', {
+      van: `${planNaam(sub.plan)} ${sub.cyclus}`,
+      naar: `${planNaam(doel.plan)} ${doel.cyclus}`,
+      bedragCent: bedrag.brutoCent,
+      datum: geplandIngang.toISOString(),
+      perPeriode: doel.cyclus === 'jaarlijks' ? 'per jaar' : 'per maand',
+    })
+  }
 
   return {
     ok: true,

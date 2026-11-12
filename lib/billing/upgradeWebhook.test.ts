@@ -163,8 +163,8 @@ describe('upgradebetaling: mislukt', () => {
     expect(sub()).toMatchObject({ plan: 'basis', gepland_plan: 'premium', gepland_mollie_subscription_id: 'sub_nieuw', status: 'active' })
     expect(gebruiker().plan).toBe('basis')
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
-    // De mail "je betaling is niet gelukt, je toegang loopt door" klopt niet voor een upgrade.
-    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
+    // Niet de gewone "betaling mislukt, je toegang loopt door" (klopt niet voor een upgrade), maar de eigen mail.
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'upgrade_bijbetaling_mislukt', { datum: ISO('2026-12-04') })
   })
 
   it.each(['canceled', 'expired'])('ook bij status %s', async status => {
@@ -184,6 +184,8 @@ describe('upgradebetaling: mislukt', () => {
     expect(sub()).toMatchObject({ plan: 'premium', bedrag_cent: 5900 })
     expect(gebruiker().plan).toBe('premium')
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
+    // Niets veranderd voor de klant: geen mail.
+    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
   })
 
   it('particulier jaar (geen Mollie-abonnement): plan én bedrag terug naar Basic', async () => {
@@ -198,6 +200,8 @@ describe('upgradebetaling: mislukt', () => {
     await verwerkMolliebetaling('tr_up1')
     expect(sub()).toMatchObject({ plan: 'basis', bedrag_cent: basic.brutoCent, btw_cent: basic.btwCent })
     expect(gebruiker().plan).toBe('basis')
+    // Geen geplande overstap om naar te verwijzen: de mail noemt geen datum.
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'upgrade_bijbetaling_mislukt', { datum: undefined })
   })
 })
 
@@ -212,7 +216,7 @@ describe('upgradebetaling: terugbetaald', () => {
     expect(gebruiker()).toMatchObject({ plan: 'basis', is_active: true })
     expect(gebruiker().expires_at).toBeUndefined() // de toegang wordt niet afgesneden
     expect(h.stopAbonnement).not.toHaveBeenCalled()
-    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'terugbetaling_bevestiging', expect.anything())
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'terugbetaling_bevestiging', expect.objectContaining({ upgrade: true }))
     expect(h.creditnotaVoorBetaling).toHaveBeenCalledExactlyOnceWith('pay-up')
   })
 

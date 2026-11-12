@@ -5,6 +5,9 @@ import { billingDb, type SubRow } from '@/lib/billing/db'
 import { isTeamCovered } from '@/lib/teamAccess'
 import { datumToegang, trialEinde } from '@/lib/toegang'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
+import { haalAbonnement } from '@/lib/billing/mollie'
+import { overstapBeschikbaarVoor } from '@/lib/billing/overstap'
+import { bepaalOverstapStatus, type OverstapStatus } from '@/lib/billing/overstapStatus'
 
 const DAG_MS = 24 * 60 * 60 * 1000
 
@@ -48,11 +51,26 @@ export async function GET() {
     .limit(1)
     .maybeSingle<SubRow>()
 
-  if (!sub) return NextResponse.json({ ...status, abonnement: null })
+  if (!sub) return NextResponse.json({ ...status, abonnement: null, overstap: null })
 
   // Een onafgeronde poging van meer dan twee uur oud telt niet meer mee.
   if (sub.status === 'pending' && Date.now() - new Date(sub.created_at ?? 0).getTime() > 2 * 60 * 60 * 1000) {
-    return NextResponse.json({ ...status, abonnement: null })
+    return NextResponse.json({ ...status, abonnement: null, overstap: null })
+  }
+
+  // Overstappen (docs/OVERSTAP_PLAN.md): alleen voor wie het mag (dark launch), en de kaart "per jaar betalen"
+  // alleen met Mollies echte volgende incassodatum. Niet op te halen betekent geen kaart, nooit een geschatte datum.
+  let overstap: OverstapStatus | null = null
+  if (overstapBeschikbaarVoor(userId)) {
+    let volgendeIncasso: string | null = null
+    if (sub.status === 'active' && sub.cyclus === 'maandelijks' && sub.mollie_subscription_id && !sub.mollie_sub_geannuleerd_at && !sub.gepland_at) {
+      try {
+        volgendeIncasso = (await haalAbonnement(sub.mollie_customer_id, sub.mollie_subscription_id)).nextPaymentDate ?? null
+      } catch {
+        volgendeIncasso = null
+      }
+    }
+    overstap = bepaalOverstapStatus(sub, new Date(), volgendeIncasso)
   }
 
   const nu = Date.now()
@@ -76,5 +94,6 @@ export async function GET() {
       opzeggingIngaatOp: sub.opzegging_ingaat_at,
       kanVerlengen,
     },
+    overstap,
   })
 }

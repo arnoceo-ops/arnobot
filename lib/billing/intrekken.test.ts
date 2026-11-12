@@ -13,6 +13,7 @@ const h = vi.hoisted(() => ({
   maakAbonnement: vi.fn(),
   stopEnBevestig: vi.fn(),
   notifyTelegram: vi.fn(async () => {}),
+  verstuurBillingMail: vi.fn(async () => true),
   failUpdates: { n: 0 },
 }))
 
@@ -21,6 +22,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.notifyTelegram }))
 vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: vi.fn() }))
 vi.mock('./openstaandeBetaling', () => ({ heeftOpenstaandeBetaling: vi.fn() }))
 vi.mock('./verwerking', () => ({ stopEnBevestig: h.stopEnBevestig }))
+vi.mock('./mails', () => ({ verstuurBillingMail: h.verstuurBillingMail }))
 vi.mock('./mollie', () => ({
   heeftGeldigeMachtiging: h.heeftGeldigeMachtiging,
   haalAbonnement: h.haalAbonnement,
@@ -94,7 +96,8 @@ function zet(r: Rij) {
 }
 
 beforeEach(() => {
-  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.stopEnBevestig, h.notifyTelegram]) f.mockReset()
+  for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.stopEnBevestig, h.notifyTelegram, h.verstuurBillingMail]) f.mockReset()
+  h.verstuurBillingMail.mockResolvedValue(true)
   h.failUpdates.n = 0
   h.heeftGeldigeMachtiging.mockResolvedValue(true)
   h.haalAbonnement.mockResolvedValue({ id: 'x', status: 'active' })
@@ -210,6 +213,7 @@ describe('trekOpzeggingIn', () => {
     expect(sub()).toMatchObject({ status: 'active', opzegging_aangevraagd_at: null, opzegging_ingaat_at: null, mollie_subscription_id: 'sub_herstel', mollie_sub_geannuleerd_at: null })
     expect(h.tabellen.approved_users[0].cancelled_at).toBeNull()
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'opzegging_ingetrokken', { datum: ISO('2026-12-04'), metBetaling: true })
   })
 
   it('zakelijk te laat opgezegd: het Mollie-abonnement loopt nog, er wordt niets nieuws aangemaakt', async () => {
@@ -219,6 +223,7 @@ describe('trekOpzeggingIn', () => {
     expect(h.maakAbonnement).not.toHaveBeenCalled()
     expect(sub()).toMatchObject({ status: 'active', opzegging_ingaat_at: null, mollie_subscription_id: 'sub_huidig' })
     expect(h.tabellen.approved_users[0].cancelled_at).toBeNull()
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'opzegging_ingetrokken', expect.objectContaining({ metBetaling: true }))
   })
 
   it('weigert als het lopende Mollie-abonnement niet meer actief blijkt', async () => {
@@ -234,6 +239,8 @@ describe('trekOpzeggingIn', () => {
     expect(h.heeftGeldigeMachtiging).not.toHaveBeenCalled()
     expect(h.maakAbonnement).not.toHaveBeenCalled()
     expect(sub()).toMatchObject({ status: 'active', opzegging_ingaat_at: null, mollie_subscription_id: null })
+    // Geen automatische betaling bij een particulier jaarabonnement: de mail zegt dat niet.
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'opzegging_ingetrokken', expect.objectContaining({ metBetaling: false }))
   })
 
   it('geen opgezegd abonnement', async () => { zet(rij()); expect(await trekOpzeggingIn('user_1', NU)).toMatchObject({ ok: false, status: 404 }) })

@@ -4,6 +4,7 @@ import { haalAbonnement, heeftGeldigeMachtiging, maakAbonnement } from './mollie
 import { GEPLAND_LEEG } from './overstap'
 import { abonnementVoorOverstap } from './perioden'
 import { planNaam } from './prijzen'
+import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -200,6 +201,11 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
   }
   await wisOpzeggingOpAccount()
 
+  await verstuurBillingMail(userId, 'opzegging_ingetrokken', {
+    datum: periodeEinde.toISOString(),
+    // Particulier jaar heeft geen automatische betaling: dan volgt aan het einde de verlengvraag.
+    metBetaling: !!sub.mollie_subscription_id,
+  })
   await notifyTelegram(`Opzegging ingetrokken op arno.bot\n\nUser: ${userId}\nBlijft: ${planNaam(sub.plan)} ${sub.cyclus}, ${sub.klant_type}\n${nieuwId ? `Nieuw Mollie-abonnement vanaf ${periodeEinde.toISOString().slice(0, 10)}` : 'Het Mollie-abonnement liep nog door'}`).catch(() => {})
   return { ok: true }
 }
