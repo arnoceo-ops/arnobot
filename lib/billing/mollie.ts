@@ -99,12 +99,31 @@ async function mollie<T>(
   return json as T
 }
 
-export async function maakKlant(input: { naam: string; email: string; userId: string }): Promise<{ id: string }> {
+/**
+ * `vervangt` is het id van een klant die bij Mollie niet (meer) bestaat; de idempotency-key krijgt dan een
+ * eigen achtervoegsel, anders zou Mollie binnen de bewaartermijn de oude respons teruggeven.
+ */
+export async function maakKlant(input: { naam: string; email: string; userId: string; vervangt?: string }): Promise<{ id: string }> {
   return mollie('/customers', {
     method: 'POST',
     body: { name: input.naam, email: input.email, metadata: { userId: input.userId } },
-    idempotencyKey: `klant-${input.userId}`,
+    idempotencyKey: input.vervangt ? `klant-${input.userId}-na-${input.vervangt}` : `klant-${input.userId}`,
   })
+}
+
+/**
+ * Bestaat deze klant bij Mollie in de huidige modus (test of live)? Een klant uit de andere modus, of uit een
+ * ander profiel, geeft 404. Andere fouten (Mollie onbereikbaar, sleutel fout) gooien we door: dan weten we het niet.
+ */
+export async function klantBestaat(klantId: string): Promise<boolean> {
+  if (!/^cst_[A-Za-z0-9]+$/.test(klantId)) return false
+  try {
+    await mollie(`/customers/${klantId}`)
+    return true
+  } catch (e) {
+    if (e instanceof MollieError && (e.status === 404 || e.status === 410)) return false
+    throw e
+  }
 }
 
 /** Methoden voor een eerste betaling. Bancontact is voor Belgische klanten; iDEAL en kaart voor de rest. */

@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/nextjs'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { MollieError, SITE_URL, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
+import { MollieError, SITE_URL, klantBestaat, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
 import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from '@/lib/billing/btwNummer'
 import { isTeamCovered } from '@/lib/teamAccess'
@@ -109,8 +109,16 @@ export async function POST(req: NextRequest) {
       .select('mollie_customer_id')
       .eq('user_id', userId)
       .maybeSingle<{ mollie_customer_id: string }>()
-    const klantId = bestaand?.mollie_customer_id
-      ?? (await maakKlant({ naam: zakelijk?.bedrijfsnaam ?? (user.voornaam || user.email), email: user.email, userId })).id
+    // Een bewaarde klant kan bij Mollie ontbreken (betaald in een andere modus of onder een andere sleutel,
+    // bijvoorbeeld testaccounts na het wisselen tussen test en live). Dan maken we een nieuwe aan.
+    const bewaardeKlant = bestaand?.mollie_customer_id
+    const bewaardeBestaat = bewaardeKlant ? await klantBestaat(bewaardeKlant) : false
+    if (bewaardeKlant && !bewaardeBestaat) {
+      console.warn('[checkout] bewaarde Mollie-klant bestaat niet meer bij Mollie, nieuwe aangemaakt', bewaardeKlant)
+    }
+    const klantId = bewaardeKlant && bewaardeBestaat
+      ? bewaardeKlant
+      : (await maakKlant({ naam: zakelijk?.bedrijfsnaam ?? (user.voornaam || user.email), email: user.email, userId, vervangt: bewaardeKlant })).id
 
     await billingDb.from('arnobot_billing_customers').upsert(
       {
