@@ -238,11 +238,12 @@ const VRAGEN_ORGANISATORISCH = [
   'Wanneer is een bonussysteem een motor en wanneer is het een pleister op een cultuurprobleem?',
 ]
 
-// Spraakopname: stopt alleen op klik, of na maximaal zoveel opnametijd (vangnet voor wie vergeet te
-// klikken). Bewust geen stilte-stop: nadenkpauzes kapten berichten halverwege af (Robel, 2026-11-12).
-// De laatste OPNAME_WAARSCHUWING_S seconden toont de pagina een aftelmelding.
+// Spraakopname: stopt vanzelf na zoveel stilte, of na maximaal zoveel opnametijd (vangnet voor wie
+// vergeet te klikken). Een klik stopt altijd meteen.
+const OPNAME_STILTE_STOP_MS = 15_000
 const OPNAME_MAX_MS = 90_000
-const OPNAME_WAARSCHUWING_S = 10
+// Piek (0-128 rond de middellijn) waarboven we het als spraak tellen, boven ruis van een stille kamer.
+const OPNAME_SPRAAK_DREMPEL = 8
 
 export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null, voorinstelling = null }: Props) {
   const isMobile = useIsTouch()
@@ -314,8 +315,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     isStrategischProfiel ? 'strategisch' : isOrganisatorischProfiel ? 'organisatorisch' : 'sales'
   )
   const [recording, setRecording] = useState(false)
-  // Seconden die nog resteren in de laatste OPNAME_WAARSCHUWING_S van een opname (anders null).
-  const [opnameResterend, setOpnameResterend] = useState<number | null>(null)
   const [transcribing, setTranscribing] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(false)
   const [ttsLoading, setTtsLoading] = useState<number | null>(null)
@@ -577,12 +576,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
       if (AC) audioCtx = new AC()
     } catch {}
-    let aftelTimer: ReturnType<typeof setInterval> | null = null
+    let silenceTimer: ReturnType<typeof setInterval> | null = null
     let maxTimer: ReturnType<typeof setTimeout> | null = null
     const stopWatching = () => {
-      if (aftelTimer) { clearInterval(aftelTimer); aftelTimer = null }
+      if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null }
       if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
-      setOpnameResterend(null)
       if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null }
     }
     // Vast, ooit-berekend voorvoegsel (wat al in het veld stond vóór deze opname), niet via een
@@ -692,13 +690,28 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       recorder.start()
       setRecording(true)
       maxTimer = setTimeout(() => stopRecording(), OPNAME_MAX_MS)
-      // Aftelling voor de laatste seconden voor het vangnet van OPNAME_MAX_MS.
-      const startMs = Date.now()
-      aftelTimer = setInterval(() => {
-        const rest = Math.ceil((OPNAME_MAX_MS - (Date.now() - startMs)) / 1000)
-        setOpnameResterend(rest <= OPNAME_WAARSCHUWING_S ? Math.max(rest, 1) : null)
-      }, 500)
-      if (audioCtx) audioCtx.resume().catch(() => {})
+      // Stilte-detectie. Alleen actief als de AudioContext echt draait: een 'suspended' context
+      // levert alleen nullen, en dat zou iemand die wel praat na 10 seconden afkappen.
+      if (audioCtx) {
+        const ctx = audioCtx
+        ctx.resume().catch(() => {})
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 1024
+        ctx.createMediaStreamSource(stream).connect(analyser)
+        const buf = new Uint8Array(analyser.fftSize)
+        let lastSoundAt = Date.now()
+        silenceTimer = setInterval(() => {
+          if (ctx.state !== 'running') { lastSoundAt = Date.now(); return }
+          analyser.getByteTimeDomainData(buf)
+          let peak = 0
+          for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128))
+          if (peak > OPNAME_SPRAAK_DREMPEL) lastSoundAt = Date.now()
+          else if (Date.now() - lastSoundAt > OPNAME_STILTE_STOP_MS) {
+            if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null }
+            stopRecording()
+          }
+        }, 250)
+      }
       // Tweede klik kwam binnen terwijl de microfoon nog opstartte: nu alsnog stoppen.
       if (stopRequestedRef.current) {
         stopRequestedRef.current = false
@@ -712,17 +725,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       liveSessieRef.current = null
       console.error('[Whisper] getUserMedia mislukt:', err)
     }
-  }
-
-  function opnameMelding() {
-    if (!recording) return null
-    return (
-      <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#f59e0b', textAlign: 'center', marginTop: 8 }}>
-        {opnameResterend !== null
-          ? `Nog ${opnameResterend} ${opnameResterend === 1 ? 'seconde' : 'seconden'}, dan stopt de opname vanzelf.`
-          : 'Je neemt op. Klik op de microfoon als je klaar bent.'}
-      </p>
-    )
   }
 
   function stopRecording() {
@@ -2542,7 +2544,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     {startingSparring ? '...' : 'STUUR →'}
                   </button>
                 </div>
-                {opnameMelding()}
               </div>
             </div>
           </div>
@@ -2806,7 +2807,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {input.length}/4000 tekens{input.length > 4000 ? ', maak je bericht wat korter' : ''}
             </p>
           )}
-          {opnameMelding()}
           {transcribeFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Ik kon je opname niet omzetten naar tekst. Probeer het opnieuw.
