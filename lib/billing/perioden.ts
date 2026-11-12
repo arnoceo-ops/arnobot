@@ -86,6 +86,20 @@ export function abonnementVoorVerlenging(contractEindeDatum: Date, cyclus: Cyclu
 }
 
 /**
+ * Mollie-abonnement voor een geplande overstap (docs/OVERSTAP_PLAN.md): start op de ingangsdatum, de
+ * volgende incassodatum van het huidige abonnement. Particulier jaar is één betaling met daarna de
+ * verlengvraag (zoals abonnementVoorVerlenging); zakelijk jaar en alle maandabonnementen lopen door.
+ */
+export function abonnementVoorOverstap(
+  ingang: Date,
+  cyclus: Cyclus,
+  klantType: KlantType,
+): { interval: '1 month' | '12 months'; times: number | null; startDatum: Date } {
+  if (cyclus === 'maandelijks') return { interval: '1 month', times: null, startDatum: ingang }
+  return { interval: '12 months', times: klantType === 'particulier' ? 1 : null, startDatum: ingang }
+}
+
+/**
  * Wanneer eindigt een abonnement na een opzegging?
  *  - particulier: aan het einde van de lopende betaalperiode
  *  - zakelijk: opzegtermijn van één maand vóór het einde van de lopende betaalperiode; is dat

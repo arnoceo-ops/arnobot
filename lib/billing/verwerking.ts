@@ -432,7 +432,7 @@ export async function maakMollieAbonnementVoor(sub: SubRow, startVan: Date): Pro
  * de guardkolom. Zo betekent "guardkolom gezet" altijd "Mollie bevestigt: gestopt", en blijft
  * een mislukte of onbevestigde stop opnieuw te proberen. Geeft true bij een bevestigde stop.
  */
-async function stopEnBevestig(sub: SubRow, abonnementId: string, soort: 'huidig' | 'gepland'): Promise<boolean> {
+export async function stopEnBevestig(sub: SubRow, abonnementId: string, soort: 'huidig' | 'gepland'): Promise<boolean> {
   const kolom = soort === 'huidig' ? 'mollie_sub_geannuleerd_at' : 'gepland_mollie_sub_geannuleerd_at'
   const label = soort === 'huidig' ? 'Mollie-abonnement' : 'Gepland Mollie-abonnement'
   try {
