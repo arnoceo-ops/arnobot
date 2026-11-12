@@ -28,6 +28,7 @@ Een maandklant (Basic of Pro, particulier of zakelijk) stapt over naar jaar per 
 - **Opzeggen met geplande overstap:** besluit 1. **Verlengen en klanttype-correctie:** weigeren zolang een overstap gepland staat.
 - **Bestaand risico, los van de overstap:** cron stap 5 beëindigt na `periode_einde` + 3 dagen ook als een SEPA-betaling nog `pending` is; komt die daarna binnen, dan wordt hij genegeerd. Fixen: stap 5 overslaan zolang er een open of pending betaling is.
 - **UI en communicatie:** knop op de accountpagina met prijs, ingangsdatum, akkoord op de voorwaarden en (zakelijk) opzegtermijn; bevestigingsmail; Telegram bij elke overstap met referral-info en aantal betaalmaanden.
+- **Vindbaarheid (als laatste bouwen, besloten 2026-11-12):** (1) kaart in het blok ABONNEMENT op de accountpagina, boven "Abonnement opzeggen" (`app/bot/account/page.tsx`), met het voordeel in euro's (Basic €348 wordt €228, Pro €708 wordt €468; zakelijk excl. btw), knop "Overstappen naar jaar", bevestigingsvenster met ingangsdatum, jaarbedrag en akkoord, daarna de kaart "Je stapt over op [datum]" met een link om in te trekken; (2) een regel in de betalingsbevestiging per mail met het voordeel en een link naar de kaart, als platte tekst eerst aan Arno voorleggen (copy-regel); (3) `appHelp.ts` en Q&A, zodat ArnoBot "hoe stap ik over op jaar?" beantwoordt (verplicht in dezelfde commit als de knop). Open: of de kaart altijd getoond wordt of pas na de tweede betaalmaand. Geen betaalscherm en geen nieuwe machtiging nodig, de bestaande machtiging wordt gebruikt.
 - **Referral:** tegoed bij de eerste betaalde jaarperiode of na drie betaalmaanden, wat het eerst komt; bij particulieren pas na 14 dagen. Plafond blijft de maandprijs van de referrer op het moment van toekennen. Tegoed toekennen blijft handmatig.
 
 ## Solo-maand naar Team (wordt gebouwd)
@@ -54,7 +55,8 @@ Arno verwacht dit niet snel. Besloten: de rest van het plan wordt volledig gebou
 - [ ] Webhook-conversie plus tests (dubbele webhook, late maandbetaling, stop-fout, opzeggen tussendoor, cron stap 5 bij pending)
 - [ ] Cron stap 5: niet beëindigen bij open of pending betaling
 - [ ] Overstap-route
-- [ ] Knop plus bevestigingsmail (eerst alleen eigenaar en testaccounts)
+- [ ] Overstap-knop plus bevestigingsmail (eerst alleen eigenaar en testaccounts)
+- [ ] **Als laatste:** vindbaarheid: kaart op de accountpagina, mailregel in de betalingsbevestiging (tekst eerst aan Arno), `appHelp.ts` en Q&A
 - [ ] Referral-copy en -regel, voorwaarden (art. 4, 7, 8), `appHelp.ts`, Q&A, `ABONNEMENTEN.md`
 - [ ] Solo-maand naar Team: eigen stopfunctie, afscheidsmail-fix, adminactie met voorbeeldscherm
 - [ ] Test in testmodus met eigen account; vlak voor livegang één echte betaling met terugbetaling
