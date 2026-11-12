@@ -1,6 +1,6 @@
 # Team-klant onboarden: checklist
 
-**Laatst bijgewerkt:** 2026-11-04
+**Laatst bijgewerkt:** 2026-11-12 (sectie "Teambaas met een zakelijk solo-maandabonnement")
 **Doel:** de stappen van een Team-aanvraag tot de eerste betaalde factuur, zodat bij de eerste echte klant niets vergeten wordt. Het inrichten na akkoord is een bewust besluit: volledig handmatig, blijvend (zie `docs/ABONNEMENTEN.md`, "Team-aanvraagflow"). Dit document legt vast wat daarbij gebeurt, wat automatisch loopt en waar je op moet letten.
 
 ## De stappen
@@ -49,7 +49,7 @@ Alleen zakelijk maandelijks. Voor een jaarabonnement of particulier: `docs/SOLO_
 
 ## Test en bewijs (2026-11-04, testmodus, testteam Apex)
 
-Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extra seat, betaling via de link (iDEAL), afletteren in Moneybird, herinnering, blokkade en deblokkade, alle bijbehorende mails en Telegram-meldingen. Gevonden en gefixt: zie `docs/MOLLIE_PLAN.md` (betaallinks kennen geen metadata, geen `url`-veld, betaalvoorwaarden en factuurmail). Niet getest met echt geld: een Team-factuur in live-modus.
+Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extra seat, betaling via de link (iDEAL), afletteren in Moneybird, herinnering, blokkade en deblokkade, alle bijbehorende mails en Telegram-meldingen. Gevonden en gefixt: zie `docs/MOLLIE_PLAN.md` (betaallinks kennen geen metadata, geen `url`-veld, betaalvoorwaarden en factuurmail). Niet getest met echt geld: een Team-factuur in live-modus. Ook de knop SOLO NAAR TEAM (2026-11-12) is alleen met tests gedekt en nog niet op een echte zakelijke solo-klant gedraaid: lees bij het eerste geval eerst het voorbeeld, en controleer daarna de Telegram-melding en in de database dat het solo-abonnement op `cancelled` staat met als einddatum `periode_einde` en dat het team als volgende factuurdatum dezelfde dag heeft.
 
 ## Open punten
 
