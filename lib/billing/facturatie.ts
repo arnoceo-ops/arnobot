@@ -78,11 +78,13 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
 
     const betaaldOp = rij.betaald_at ? new Date(rij.betaald_at) : new Date()
     const periodeEinde = sub.periode_einde ? new Date(sub.periode_einde) : betaaldOp
+    // De bijbetaling bij een upgrade verrekent het verschil vanaf het betaalmoment tot het einde van de periode.
+    const isUpgrade = rij.soort === 'upgrade'
     const factuur = await maakConceptFactuur({
       contactId,
       referentie: rij.mollie_payment_id,
-      omschrijving: `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}`,
-      periodeStart: sub.periode_start ? new Date(sub.periode_start) : betaaldOp,
+      omschrijving: isUpgrade ? 'ArnoBot upgrade naar Pro, naar rato' : `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}`,
+      periodeStart: isUpgrade ? betaaldOp : sub.periode_start ? new Date(sub.periode_start) : betaaldOp,
       periodeEinde,
       factuurDatum: betaaldOp,
       brutoCent: rij.bedrag_cent,

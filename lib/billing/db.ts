@@ -47,7 +47,7 @@ export interface PayRow {
   user_id: string
   subscription_id: string | null
   mollie_payment_id: string
-  soort: 'eerste' | 'herhaling' | 'verlenging'
+  soort: 'eerste' | 'herhaling' | 'verlenging' | 'upgrade'
   status: string
   bedrag_cent: number
   btw_cent: number

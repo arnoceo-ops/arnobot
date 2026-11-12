@@ -34,6 +34,8 @@ const KNOWN_MANUAL_ROUTES = new Set([
   // de accountpagina. Verwijder deze twee regels zodra die knoppen er zijn.
   '/api/bot/billing/overstap-intrekken',
   '/api/bot/billing/opzegging-intrekken',
+  // En de upgrade van Basic naar Pro, direct (zelfde plan, zelfde knoppen-moment).
+  '/api/bot/billing/upgrade',
 ])
 
 function walk(dir, matcher, results = []) {

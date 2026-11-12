@@ -178,6 +178,32 @@ export async function maakAbonnement(input: {
   })
 }
 
+/**
+ * Een losse vervolgbetaling met de bestaande machtiging van de klant (geen abonnement), bijvoorbeeld de
+ * bijbetaling bij een upgrade. Gaat direct af; bij SEPA blijft hij eerst "pending". Gemeten in testmodus
+ * (2026-11-12): geen subscriptionId, wel de eigen metadata, mandateId staat erbij.
+ */
+export async function maakLosseHerhaalBetaling(input: {
+  klantId: string
+  brutoCent: number
+  omschrijving: string
+  metadata: Record<string, unknown>
+  idempotencyKey: string
+}): Promise<MolliePayment> {
+  return mollie('/payments', {
+    method: 'POST',
+    idempotencyKey: input.idempotencyKey,
+    body: {
+      amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
+      description: input.omschrijving,
+      webhookUrl: MOLLIE_WEBHOOK_URL,
+      customerId: input.klantId,
+      sequenceType: 'recurring',
+      metadata: input.metadata,
+    },
+  })
+}
+
 export async function stopAbonnement(klantId: string, abonnementId: string): Promise<void> {
   try {
     await mollie(`/customers/${klantId}/subscriptions/${abonnementId}`, { method: 'DELETE' })

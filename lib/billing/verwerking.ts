@@ -9,7 +9,7 @@ import {
   type MolliePayment,
 } from './mollie'
 import { mollieNaarCenten } from './geld'
-import { planNaam } from './prijzen'
+import { berekenBedrag, planNaam } from './prijzen'
 import {
   abonnementNaEerstebetaling,
   contractEinde,
@@ -45,6 +45,13 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
   let sub: SubRow | null = null
 
   if (!rij) {
+    // Een upgradebetaling heeft altijd een eigen rij (gemaakt bij het aanmaken van de betaling). Ontbreekt
+    // die, dan is er iets misgegaan; nooit als gewone herhaling verwerken, dat zou de periode verlengen.
+    if (mp.metadata?.soort === 'upgrade') {
+      console.warn('[billing] upgradebetaling zonder rij niet verwerkt', mp.id)
+      await notifyTelegram(`Upgradebetaling zonder rij ontvangen op arno.bot\n\nBetaling: ${mp.id}\nStatus: ${mp.status}\nEr is niets verwerkt. Maak de rij in arnobot_payments aan (soort upgrade) of beoordeel handmatig.`)
+      return
+    }
     // Herhaalbetaling uit een Mollie-abonnement: koppelen via subscriptionId.
     if (!mp.subscriptionId && !mp.metadata?.subscriptionRowId) {
       console.warn('[billing] onbekende betaling zonder abonnement', mp.id)
@@ -175,6 +182,20 @@ async function claim(payId: string, kolom: 'verwerkt_at' | 'terugbetaling_verwer
 async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Promise<void> {
   const betaaldOp = mp.paidAt ? new Date(mp.paidAt) : new Date()
   const naam = planNaam(sub.plan)
+
+  // De bijbetaling bij een upgrade verrekent het prijsverschil over de lopende periode: nooit verlengen.
+  if (rij.soort === 'upgrade') {
+    await verstuurBillingMail(sub.user_id, 'betaling_bevestiging', {
+      planNaam: planNaam('premium'),
+      bedragCent: rij.bedrag_cent,
+      btwCent: rij.btw_cent,
+      datum: sub.periode_einde ?? iso(new Date()),
+      eerste: false,
+      betaalId: mp.id,
+    })
+    await factureerBetaling(rij.id)
+    return
+  }
 
   if (rij.soort === 'eerste') {
     await beeindigAndereAbonnementen(sub)
@@ -336,7 +357,35 @@ async function zetGeplandeWijzigingOm(sub: SubRow): Promise<SubRow> {
   return actueel ?? sub
 }
 
+/**
+ * Zet een upgrade terug naar Basic als de bijbetaling mislukt of wordt terugbetaald: de Pro-toegang valt
+ * weg, een nog geplande overstap naar Pro per einde van de periode blijft staan. Alleen zolang de klant nog
+ * niet op het Pro-abonnement zit; na die omzetting betaalt hij gewoon Pro en blijft het plan staan.
+ */
+async function zetUpgradeTerug(sub: SubRow): Promise<'teruggezet' | 'niet-nodig'> {
+  const geplandPro = sub.gepland_plan === 'premium'
+  // Particulier jaar heeft geen Mollie-abonnement: plan en bedrag zijn bij de upgrade direct omgezet.
+  const zonderAbonnement =
+    !sub.mollie_subscription_id && !sub.gepland_mollie_subscription_id && sub.cyclus === 'jaarlijks' && sub.klant_type === 'particulier'
+  if (sub.plan !== 'premium' || !(geplandPro || zonderAbonnement)) return 'niet-nodig'
+  const nu = iso(new Date())
+  const patch: Record<string, unknown> = { plan: 'basis', updated_at: nu }
+  if (zonderAbonnement) {
+    const basic = berekenBedrag('basis', sub.cyclus, sub.klant_type)
+    patch.bedrag_cent = basic.brutoCent
+    patch.btw_cent = basic.btwCent
+  }
+  await billingDb.from('arnobot_subscriptions').update(patch).eq('id', sub.id).eq('plan', 'premium')
+  await billingDb.from('approved_users').update({ plan: 'basis' }).eq('user_id', sub.user_id)
+  return 'teruggezet'
+}
+
 async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> {
+  if (rij.soort === 'upgrade') {
+    const uitkomst = await zetUpgradeTerug(sub)
+    await notifyTelegram(`Upgradebetaling mislukt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\n${uitkomst === 'teruggezet' ? 'Het plan is teruggezet naar Basic; het Pro-abonnement start nog wel per einde van de periode.' : 'Het plan is niet teruggezet (de overstap naar Pro is al ingegaan).'}\nEr is geen mail naar de klant gestuurd.`)
+    return
+  }
   if (rij.soort === 'eerste') {
     // Eerste betaling niet gelukt of afgebroken: niets activeren, rij opruimen zodat een
     // nieuwe poging een nieuw abonnement-record maakt.
@@ -359,6 +408,18 @@ async function verwerkVolledigeTerugbetaling(
   terugbetaaldCent: number,
   isChargeback: boolean,
 ): Promise<void> {
+  // Een terugbetaling van de upgradebetaling beëindigt het abonnement NIET: alleen de upgrade gaat terug.
+  if (rij.soort === 'upgrade') {
+    await zetUpgradeTerug(sub)
+    if (isChargeback) {
+      await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
+      return
+    }
+    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent })
+    await creditnotaVoorBetaling(rij.id)
+    await notifyTelegram(`Upgradebetaling terugbetaald op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet abonnement loopt door; het plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
+    return
+  }
   await stopMollieAbonnement(sub)
   await billingDb
     .from('arnobot_subscriptions')
