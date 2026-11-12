@@ -176,7 +176,7 @@ Een fundamentele ontwerpkeuze: de manager ziet nooit de inhoud van de individuel
 
 ## 7. Spraak
 
-Gebruikers kunnen spreken in plaats van typen (de microfoonknop naast STUUR). De opname stopt na 5 seconden stilte of na anderhalve minuut. Voor Pro en Team kan ArnoBot antwoorden ook voorlezen in een stem die op Arno's stem is gebaseerd.
+Gebruikers kunnen spreken in plaats van typen (de microfoonknop naast STUUR). De opname stopt na 15 seconden stilte of na anderhalve minuut. Voor Pro en Team kan ArnoBot antwoorden ook voorlezen in een stem die op Arno's stem is gebaseerd.
 
 ---
 
