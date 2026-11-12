@@ -58,6 +58,15 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
         .eq('mollie_subscription_id', mp.subscriptionId)
         .maybeSingle<SubRow>()
       s = res.data
+      if (!s) {
+        // Eerste betaling van een GEPLAND abonnement (overstap): het id staat nog in de gepland-kolom.
+        const gepland = await billingDb
+          .from('arnobot_subscriptions')
+          .select('*')
+          .eq('gepland_mollie_subscription_id', mp.subscriptionId)
+          .maybeSingle<SubRow>()
+        s = gepland.data
+      }
     }
     if (!s) {
       // Een eerder, door verlenging vervangen Mollie-abonnement heeft nog betalingen
@@ -73,6 +82,15 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
       return
     }
     sub = s
+    // Een betaling van het geplande abonnement moet exact het geplande bedrag zijn, en krijgt de
+    // geplande btw (de rij heeft tot de omzetting nog de oude waarden). Klopt het bedrag niet, dan
+    // verwerken we niets en melden het: een afwijking is een zaak voor Arno, niet voor een gok.
+    const geplandeBetaling = isGeplandeBetaling(s, mp)
+    if (geplandeBetaling && mollieNaarCenten(mp.amount.value) !== s.gepland_bedrag_cent) {
+      Sentry.captureException(new Error('Betaling van geplande wijziging heeft een afwijkend bedrag'), { tags: { onderdeel: 'billing-gepland-bedrag' } })
+      await notifyTelegram(`Betaling van een geplande abonnementswijziging heeft een afwijkend bedrag op arno.bot\n\nUser: ${s.user_id}\nBetaling: ${mp.id}\nVerwacht: €${((s.gepland_bedrag_cent ?? 0) / 100).toFixed(2)}, ontvangen: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}\nEr is niets verwerkt. Beoordeel handmatig.`)
+      return
+    }
     await billingDb.from('arnobot_payments').upsert(
       {
         user_id: s.user_id,
@@ -81,7 +99,7 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
         soort: 'herhaling',
         status: mp.status,
         bedrag_cent: mollieNaarCenten(mp.amount.value),
-        btw_cent: s.btw_cent,
+        btw_cent: geplandeBetaling ? (s.gepland_btw_cent ?? s.btw_cent) : s.btw_cent,
       },
       { onConflict: 'mollie_payment_id', ignoreDuplicates: true },
     )
@@ -206,27 +224,46 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     await notifyTelegram(`Betaling op beëindigd abonnement (${sub.status}) ontvangen op arno.bot\nBetaling: ${mp.id}\nUser: ${sub.user_id}\nBeoordeel handmatig of terugbetalen nodig is.`)
     return
   }
-  const huidigEinde = sub.periode_einde ? new Date(sub.periode_einde) : betaaldOp
-  const nieuwEinde = voegMaandenToe(huidigEinde, periodeMaanden(sub.cyclus))
+  // Eerste betaling van een gepland abonnement: eerst de rij omzetten (plan, cyclus, bedrag, btw,
+  // Mollie-id), pas daarna de periode verlengen. Anders telt de verkeerde periodelengte mee.
+  let huidig = sub
+  if (isGeplandeBetaling(sub, mp)) huidig = await zetGeplandeWijzigingOm(sub)
+
+  // Een betaling van een door een overstap of verlenging VERVANGEN abonnement met een ander bedrag
+  // dan het huidige: de periodelengte is dan niet te raden (na een omzetting is de cyclus van de rij
+  // al de nieuwe). Niet verlengen, melden. Gelijk bedrag (de gewone verlenging) loopt zoals vroeger.
+  if (
+    mp.subscriptionId &&
+    huidig.mollie_subscription_id &&
+    mp.subscriptionId !== huidig.mollie_subscription_id &&
+    mollieNaarCenten(mp.amount.value) !== huidig.bedrag_cent
+  ) {
+    console.warn('[billing] betaling van vervangen abonnement met afwijkend bedrag niet verwerkt', huidig.id, mp.id)
+    await notifyTelegram(`Betaling van een vervangen abonnement met een afwijkend bedrag op arno.bot\n\nUser: ${huidig.user_id}\nBetaling: ${mp.id}\nBedrag: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}, huidig abonnement: €${(huidig.bedrag_cent / 100).toFixed(2)}\nDe periode is NIET verlengd. Beoordeel handmatig.`)
+    return
+  }
+
+  const huidigEinde = huidig.periode_einde ? new Date(huidig.periode_einde) : betaaldOp
+  const nieuwEinde = voegMaandenToe(huidigEinde, periodeMaanden(huidig.cyclus))
   await billingDb
     .from('arnobot_subscriptions')
     .update({ periode_start: iso(huidigEinde), periode_einde: iso(nieuwEinde), updated_at: iso(new Date()) })
-    .eq('id', sub.id)
+    .eq('id', huidig.id)
 
-  await zetToegang(sub.user_id, sub.plan, nieuwEinde, { eerste: false, betaaldOp })
+  await zetToegang(huidig.user_id, huidig.plan, nieuwEinde, { eerste: false, betaaldOp })
 
   // Opgezegd, en dit was de laatste betaling die nog verschuldigd was: abonnement stoppen.
   if (
-    sub.opzegging_ingaat_at &&
-    sub.mollie_subscription_id &&
-    !sub.mollie_sub_geannuleerd_at &&
-    moetMollieAbonnementNuStoppen(nieuwEinde, new Date(sub.opzegging_ingaat_at))
+    huidig.opzegging_ingaat_at &&
+    huidig.mollie_subscription_id &&
+    !huidig.mollie_sub_geannuleerd_at &&
+    moetMollieAbonnementNuStoppen(nieuwEinde, new Date(huidig.opzegging_ingaat_at))
   ) {
-    await stopMollieAbonnement(sub)
+    await stopMollieAbonnement(huidig)
   }
 
-  await verstuurBillingMail(sub.user_id, 'betaling_bevestiging', {
-    planNaam: naam,
+  await verstuurBillingMail(huidig.user_id, 'betaling_bevestiging', {
+    planNaam: planNaam(huidig.plan),
     bedragCent: rij.bedrag_cent,
     btwCent: rij.btw_cent,
     datum: iso(nieuwEinde),
@@ -234,6 +271,61 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     betaalId: mp.id,
   })
   await factureerBetaling(rij.id)
+}
+
+/** Hoort deze betaling bij het GEPLANDE Mollie-abonnement van de rij (de eerste na een overstap)? */
+function isGeplandeBetaling(sub: SubRow, mp: MolliePayment): boolean {
+  return !!sub.gepland_mollie_subscription_id && mp.subscriptionId === sub.gepland_mollie_subscription_id
+}
+
+/**
+ * Zet een geplande wijziging om naar de huidige waarden: plan, cyclus, bedrag, btw en het
+ * Mollie-abonnement-id worden die van het geplande abonnement, de guard van het oude abonnement
+ * wordt vrijgegeven en alle gepland-kolommen worden leeg. Atomair: de update werkt alleen zolang
+ * het geplande id er nog staat, dus twee gelijktijdige verwerkingen leveren één omzetting op; de
+ * andere krijgt de al omgezette rij terug. Geeft de bijgewerkte rij.
+ */
+async function zetGeplandeWijzigingOm(sub: SubRow): Promise<SubRow> {
+  const geplandId = sub.gepland_mollie_subscription_id
+  if (!geplandId) return sub
+  const nu = iso(new Date())
+  const nieuweCyclus = sub.gepland_cyclus ?? sub.cyclus
+  const patch: Record<string, unknown> = {
+    plan: sub.gepland_plan ?? sub.plan,
+    cyclus: nieuweCyclus,
+    bedrag_cent: sub.gepland_bedrag_cent ?? sub.bedrag_cent,
+    btw_cent: sub.gepland_btw_cent ?? sub.btw_cent,
+    mollie_subscription_id: geplandId,
+    mollie_sub_geannuleerd_at: null,
+    gepland_plan: null,
+    gepland_cyclus: null,
+    gepland_bedrag_cent: null,
+    gepland_btw_cent: null,
+    gepland_mollie_subscription_id: null,
+    gepland_mollie_sub_geannuleerd_at: null,
+    gepland_ingangs_at: null,
+    gepland_at: null,
+    updated_at: nu,
+  }
+  // Een particulier die van maand naar jaar gaat krijgt een jaarcontract met verlengvraag aan het
+  // einde; alleen dat geval heeft een contracteinde (zie contractEinde in perioden.ts).
+  if (sub.klant_type === 'particulier' && sub.cyclus === 'maandelijks' && nieuweCyclus === 'jaarlijks') {
+    const start = sub.periode_einde ? new Date(sub.periode_einde) : new Date()
+    patch.contract_einde = iso(voegMaandenToe(start, 12))
+    patch.herinnering_30_at = null
+    patch.herinnering_7_at = null
+  }
+  const { data } = await billingDb
+    .from('arnobot_subscriptions')
+    .update(patch)
+    .eq('id', sub.id)
+    .eq('gepland_mollie_subscription_id', geplandId)
+    .select('*')
+    .returns<SubRow[]>()
+  if (data?.length === 1) return data[0]
+  // Een gelijktijdige verwerking was ons voor: de actuele rij ophalen.
+  const { data: actueel } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', sub.id).maybeSingle<SubRow>()
+  return actueel ?? sub
 }
 
 async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> {
