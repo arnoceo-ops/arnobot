@@ -64,5 +64,5 @@ Een maandklant (Basic of Pro, particulier of zakelijk) stapt over naar jaar per 
 - [ ] Knop plus bevestigingsmail (eerst alleen eigenaar en testaccounts)
 - [ ] Referral-copy en -regel, voorwaarden (art. 4, 7, 8), `appHelp.ts`, Q&A, `ABONNEMENTEN.md`
 - [ ] Solo naar Team: deelterugbetaling (Mollie) en deel-creditnota (Moneybird), afscheidsmail-fix, adminactie met voorbeeldscherm
-- [ ] Solo naar Team: de vier open Mollie- en Moneybird-vragen beantwoorden (support of test)
+- [ ] Solo naar Team: de vier open Mollie- en Moneybird-vragen beantwoorden. **Besloten 2026-11-12:** zelf testen, niet via Mollie-support. Voorwaarde: de adminactie krijgt een terugvaloptie (weigert Mollie de deelterugbetaling, dan het restant verrekenen op de eerste Team-factuur), en vlak voor livegang één echte deelterugbetaling met klein bedrag (kosten en iDEAL zichtbaar). Bewijs al aanwezig: de echte iDEAL-betaling van 4 november is volledig terugbetaald. Niet te testen: de maximale termijn (pas bij een oude betaling), vandaar de terugvaloptie.
 - [ ] Test in testmodus met eigen account; vlak voor livegang één echte betaling met terugbetaling
