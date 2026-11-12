@@ -64,6 +64,7 @@ vi.mock('./db', () => ({
 }))
 
 import { trekOpzeggingIn, trekOverstapIn } from './intrekken'
+import { berekenBedrag } from './prijzen'
 
 const ISO = (s: string) => new Date(s).toISOString()
 const NU = new Date('2026-11-20T10:00:00.000Z')
@@ -214,6 +215,33 @@ describe('trekOpzeggingIn', () => {
     expect(h.tabellen.approved_users[0].cancelled_at).toBeNull()
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
     expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'opzegging_ingetrokken', { datum: ISO('2026-12-04'), metBetaling: true })
+  })
+
+  // Gevonden bij de test in testmodus (2026-11-12): upgrade naar Pro, opzeggen, opzegging intrekken gaf een
+  // abonnement van €29 terwijl het plan Pro was, en een mislukte bijbetaling zette het plan niet meer terug.
+  it('na een nog niet omgezette upgrade: nieuw abonnement met het Pro-bedrag, als geplande wijziging', async () => {
+    zet(rij({ ...opgezegd, plan: 'premium', bedrag_cent: 2900, btw_cent: 503 }))
+    expect(await trekOpzeggingIn('user_1', NU)).toEqual({ ok: true })
+    expect(h.maakAbonnement).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      brutoCent: berekenBedrag('premium', 'maandelijks', 'particulier').brutoCent, startDatum: new Date('2026-12-04T00:00:00.000Z'),
+    }))
+    expect(sub()).toMatchObject({
+      status: 'active', plan: 'premium',
+      // het gestopte basisabonnement blijft als gestopt geregistreerd, het Pro-abonnement is de geplande wijziging
+      mollie_subscription_id: 'sub_huidig', mollie_sub_geannuleerd_at: ISO('2026-11-10'),
+      gepland_plan: 'premium', gepland_cyclus: 'maandelijks', gepland_mollie_subscription_id: 'sub_herstel',
+      gepland_bedrag_cent: berekenBedrag('premium', 'maandelijks', 'particulier').brutoCent,
+      gepland_btw_cent: berekenBedrag('premium', 'maandelijks', 'particulier').btwCent,
+      gepland_ingangs_at: ISO('2026-12-04'), gepland_mollie_sub_geannuleerd_at: null,
+    })
+  })
+
+  it('een gewone Pro-klant (bedrag al het Pro-bedrag): ongewijzigd, geen geplande wijziging', async () => {
+    const pro = berekenBedrag('premium', 'maandelijks', 'particulier')
+    zet(rij({ ...opgezegd, plan: 'premium', bedrag_cent: pro.brutoCent, btw_cent: pro.btwCent }))
+    expect(await trekOpzeggingIn('user_1', NU)).toEqual({ ok: true })
+    expect(h.maakAbonnement).toHaveBeenCalledWith(expect.objectContaining({ brutoCent: pro.brutoCent }))
+    expect(sub()).toMatchObject({ mollie_subscription_id: 'sub_herstel', mollie_sub_geannuleerd_at: null, gepland_plan: null, gepland_mollie_subscription_id: null })
   })
 
   it('zakelijk te laat opgezegd: het Mollie-abonnement loopt nog, er wordt niets nieuws aangemaakt', async () => {

@@ -3,7 +3,7 @@ import { billingDb, type SubRow } from './db'
 import { haalAbonnement, heeftGeldigeMachtiging, maakAbonnement } from './mollie'
 import { GEPLAND_LEEG } from './overstap'
 import { abonnementVoorOverstap } from './perioden'
-import { planNaam } from './prijzen'
+import { berekenBedrag, planNaam } from './prijzen'
 import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
@@ -156,6 +156,8 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
   const wisOpzeggingOpAccount = () => billingDb.from('approved_users').update({ cancelled_at: null }).eq('user_id', userId)
 
   let nieuwId: string | null = null
+  let upgradeHerstel: { brutoCent: number; btwCent: number } | null = null
+  let geplandeStart = ''
   try {
     if (sub.mollie_subscription_id && !sub.mollie_sub_geannuleerd_at) {
       // Het Mollie-abonnement loopt nog: controleren dat het echt actief is.
@@ -170,9 +172,16 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
         return weiger(409, 'Er is geen geldige betaalmachtiging meer. Rond een nieuwe betaling af zodra je abonnement is afgelopen.')
       }
       const nieuw = abonnementVoorOverstap(periodeEinde, sub.cyclus, sub.klant_type)
+      // Een upgrade naar Pro die nog niet is omgezet: het plan staat al op Pro, maar het bedrag op de rij is nog
+      // dat van Basic en het Pro-abonnement is bij het opzeggen gestopt. Het nieuwe abonnement moet dan het
+      // Pro-bedrag krijgen, en terugkomen als geplande wijziging, precies zoals na de upgrade zelf: dan zet de
+      // eerste Pro-betaling het om, en zet een mislukte bijbetaling het plan weer terug naar Basic.
+      if (sub.plan === 'premium' && sub.bedrag_cent === berekenBedrag('basis', sub.cyclus, sub.klant_type).brutoCent) {
+        upgradeHerstel = berekenBedrag('premium', sub.cyclus, sub.klant_type)
+      }
       const ms = await maakAbonnement({
         klantId: sub.mollie_customer_id,
-        brutoCent: sub.bedrag_cent,
+        brutoCent: upgradeHerstel ? upgradeHerstel.brutoCent : sub.bedrag_cent,
         interval: nieuw.interval,
         times: nieuw.times,
         startDatum: nieuw.startDatum,
@@ -181,6 +190,7 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
         idempotencyKey: `opzegging-intrekken-${sub.id}-${sub.opzegging_aangevraagd_at ?? sub.created_at ?? nuIso}`,
       })
       nieuwId = ms.id
+      geplandeStart = nieuw.startDatum.toISOString()
     }
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-opzegging-intrekken' } })
@@ -188,7 +198,23 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
   }
 
   const { data, error } = await updateMetEenHerkansing(() =>
-    heractiveer(nieuwId ? { mollie_subscription_id: nieuwId, mollie_sub_geannuleerd_at: null } : {}),
+    heractiveer(
+      !nieuwId
+        ? {}
+        : upgradeHerstel
+          // De rij houdt het gestopte basisabonnement (bewaking blijft gezet); het Pro-abonnement is de geplande wijziging.
+          ? {
+              gepland_plan: 'premium',
+              gepland_cyclus: sub.cyclus,
+              gepland_bedrag_cent: upgradeHerstel.brutoCent,
+              gepland_btw_cent: upgradeHerstel.btwCent,
+              gepland_mollie_subscription_id: nieuwId,
+              gepland_mollie_sub_geannuleerd_at: null,
+              gepland_ingangs_at: geplandeStart,
+              gepland_at: nuIso,
+            }
+          : { mollie_subscription_id: nieuwId, mollie_sub_geannuleerd_at: null },
+    ),
   )
   if (error || data?.length !== 1) {
     // Niet bijgewerkt: een zojuist aangemaakt abonnement mag niet blijven staan zonder dat de rij ervan weet.
