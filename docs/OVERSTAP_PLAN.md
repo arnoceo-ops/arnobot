@@ -5,7 +5,7 @@
 - **Laatst bijgewerkt:** 2026-11-12
 - **Waar we staan:** plan goedgekeurd door Arno (11-11), nog niets gebouwd. Mollie staat sinds 11-11 weer op de `test_`-sleutel (status-pagina toont "testmodus, nog niet voor gebruikers open"); er zijn geen betalende klanten. De `live_`-sleutel heeft Arno apart opgeslagen, terugzetten bij livegang is een stap op de livegang-checklist. Het plan is aangevallen door een onafhankelijke reviewer (zonder voorgeschiedenis); de bevindingen zijn hieronder verwerkt.
 - **Eerstvolgende stap:** wachten op het sein van Arno ("ik zeg wel wanneer je kunt beginnen met de migratie"). Daarna stap 1 t/m 4 en de tests (migratie, `stopMollieAbonnement` met twee id's en verificatie, webhook-conversie, opzeggen), dan de overstap-route en de knop (alleen eigenaar en testaccounts).
-- **Besloten 2026-11-12:** (a) maand naar jaar en solo-maand naar Team worden gebouwd; (b) **solo-jaar naar Team wordt NIET gebouwd** maar pas opgelost als het zich voordoet, volgens de checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (Arno verwacht dit niet snel); (c) **jaar naar maand bestaat niet**: aan het einde van het jaar opzeggen en daarna opnieuw afrekenen met maand, er komt geen andere route.
+- **Besloten 2026-11-12:** (a) maand naar jaar en solo-maand naar Team worden gebouwd; (b) **solo-jaar naar Team wordt NIET gebouwd** maar pas opgelost als het zich voordoet, volgens de checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (Arno verwacht dit niet snel); (c) **jaar naar maand bestaat niet**: aan het einde van het jaar opzeggen en daarna opnieuw afrekenen met maand, er komt geen andere route; (d) de scenario-matrix is doorlopen (2026-11-12) en elke rij heeft een keuze.
 
 ## Uitgangspunt
 
@@ -66,7 +66,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 | Opzegging ongedaan maken | Niet mogelijk (checkout geeft 409 tot `periode_einde`) | Bouwen (Arno, 2026-11-12): knop "Opzegging intrekken" op de accountpagina; abonnement weer actief, nieuw Mollie-abonnement vanaf het einde van de betaalde periode |
 | Betaalmethode wijzigen (verlopen kaart, ander IBAN) | Alleen als de laatste herhaalbetaling mislukte | Bestaande route, niet bouwen (Arno, 2026-11-12): een mislukte incasso geeft de klant de mail BETALING REGELEN naar `/bot/doorgaan` en Arno een Telegram-melding; de nieuwe eerste betaling stopt het oude abonnement. Mollie-onderzoek (docs.mollie.com, 2026-11-12): kaart-eerstebetaling mag €0,00, iDEAL/SEPA niet gedocumenteerd, mandaatwissel op een lopend abonnement niet beschreven, geen klantportaal; mandaat intrekken annuleert alle gekoppelde abonnementen. Niet gecontroleerd: of de mail bij elke van Mollies 5 pogingen opnieuw gaat |
 | Team: cyclus wijzigen of Team naar solo | Admin kan `team.cyclus` zetten in `/bot/admin/teams` | Team maand naar jaar: handmatig door Arno (besloten 2026-11-12): cyclus op jaarlijks zetten op een willekeurig moment vóór `volgende_factuurdatum`, de volgende factuur wordt een jaarfactuur; bijeffect: seats bijgekomen sinds de laatste factuur geven direct een kleine tussenfactuur naar rato (`cron/team-facturatie` regel 61-83). Team jaar naar maand: niet mogelijk (voorstel, zoals solo; zet een jaarteam halverwege het jaar op maand, dan vervalt de tussentijdse seat-factuur). Team naar solo: handmatig, manager zegt het team op, Arno beëindigt de teamtoegang, daarna opnieuw afrekenen als solo (voorstel; checklist nog te schrijven) |
-| Zakelijk naar particulier | Niet gezien | Open |
+| Zakelijk naar particulier | Niet gezien | Niet mogelijk (Arno, 2026-11-12): opzeggen, laten uitlopen en opnieuw afrekenen als particulier. Reden: de omgekeerde richting bestaat om een fiscale reden, hier is die er niet; een zakelijke factuur laat zich niet omzetten, een particulier krijgt andere rechten (herroeping, opzegtermijn); komt vrijwel niet voor |
 
 ## Basic naar Pro (onderzocht 2026-11-12, richting B)
 
@@ -104,5 +104,8 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 - [ ] Solo-maand naar Team: eigen stopfunctie, afscheidsmail-fix, adminactie met voorbeeldscherm
 - [ ] Test in testmodus met eigen account; vlak voor livegang één echte betaling met terugbetaling
 - [ ] Basic naar Pro (B): `gepland_plan` in de migratie, losse vervolgbetaling, betaalsoort `upgrade`, terugzetten bij mislukken, Moneybird-omschrijving; test in testmodus welke status en webhook zo'n losse betaling krijgt
+- [ ] Pro naar Basic: per einde betaalde periode via de geplande-wijziging-machinerie, intrekbaar
+- [ ] Opzegging intrekken: knop op de accountpagina, abonnement weer actief, nieuw Mollie-abonnement vanaf het einde van de betaalde periode
+- [ ] Team naar solo: checklist schrijven (handmatig, voorstel)
 - [ ] Prijswijziging bestaande abonnementen: pas bouwen bij aankondiging (PATCH op `amount`, script met voorbeeldrun)
 - [x] Solo-jaar naar Team: bewust niet gebouwd, checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (2026-11-12)
