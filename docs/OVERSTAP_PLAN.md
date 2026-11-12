@@ -86,7 +86,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 - Bedrag: (Pro-prijs min Basic-prijs) maal resterende dagen gedeeld door dagen in de betaalperiode, bruto per klanttype. Geldt voor maand en jaar (jaar: €468 min €228 naar rato).
 - Beperking: SEPA-limiet van €1.000 per incasso (ruim genoeg voor Basic naar Pro).
 
-**Nog open besluit:** Pro-toegang direct bij de klik en terugzetten als de betaling mislukt (SEPA kan dagen pending zijn, de SaaS-praktijk geeft ook direct toegang), of pas nadat de betaling is geslaagd. Voorstel: direct.
+**Besloten (Arno, 2026-11-12):** Pro-toegang direct bij de klik, terugzetten naar Basic als de betaling mislukt. **Verworpen:** pas toegang na een geslaagde betaling (SEPA kan dagen pending zijn; de SaaS-praktijk geeft ook direct toegang).
 
 **Pro naar Basic:** nog niet besloten. Volgens de SaaS-praktijk (Stripe) gaat een downgrade aan het einde van de periode of levert een credit op zonder terugbetaling; voorstel: aan het einde van de betaalde periode, zonder verrekening.
 
