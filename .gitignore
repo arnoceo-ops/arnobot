@@ -69,3 +69,5 @@ next-env.d.ts
 /.claude/settings.json
 # VS Code: persoonlijk pad naar de Java van Android Studio.
 /.vscode/
+# Tresorit: lokale synchronisatie-instellingen van deze computer.
+/.tresorit/
