@@ -194,6 +194,13 @@ export async function haalAbonnement(klantId: string, abonnementId: string): Pro
   return mollie(`/customers/${klantId}/subscriptions/${abonnementId}`)
 }
 
+/** Betalingen van één abonnement bij Mollie (nieuwste eerst, standaard maximaal 50). Alleen lezen. */
+export async function lijstAbonnementBetalingen(klantId: string, abonnementId: string): Promise<MolliePayment[]> {
+  if (!/^sub_[A-Za-z0-9]+$/.test(abonnementId)) throw new MollieError(422, 'Ongeldig abonnement-id')
+  const res = await mollie<{ _embedded?: { payments?: MolliePayment[] } }>(`/customers/${klantId}/subscriptions/${abonnementId}/payments`)
+  return res._embedded?.payments ?? []
+}
+
 export async function heeftGeldigeMachtiging(klantId: string): Promise<boolean> {
   const res = await mollie<{ _embedded?: { mandates?: MollieMandate[] } }>(`/customers/${klantId}/mandates`)
   return (res._embedded?.mandates ?? []).some(m => m.status === 'valid')

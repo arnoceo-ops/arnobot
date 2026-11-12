@@ -10,6 +10,7 @@ import { mollieNaarCenten } from '@/lib/billing/geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { controleerKoppelingen } from '@/lib/billing/gezondheid'
+import { moetAfsluitingUitstellen, WACHT_OP_BETALING_DAGEN } from '@/lib/billing/openstaandeBetaling'
 
 const iso = (d: Date) => d.toISOString()
 const MIN_MS = 60 * 1000
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     console.error('[cron/billing] koppelingscheck', e instanceof Error ? e.message : e)
   }
 
-  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, fouten: 0 }
+  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, wachtOpBetaling: 0, fouten: 0 }
   try {
     const nu = new Date()
 
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
       .from('arnobot_payments')
       .select('mollie_payment_id, user_id')
       .or('status.in.(open,pending,authorized),and(status.eq.paid,verwerkt_at.is.null)')
-      .gt('created_at', iso(new Date(nu.getTime() - 3 * 24 * 60 * MIN_MS)))
+      .gt('created_at', iso(new Date(nu.getTime() - WACHT_OP_BETALING_DAGEN * 24 * 60 * MIN_MS)))
       .lt('created_at', iso(new Date(nu.getTime() - 15 * MIN_MS)))
       .returns<Pick<PayRow, 'mollie_payment_id' | 'user_id'>[]>()
     for (const p of (openstaand ?? []).filter(p => !isInternalTestUser(p.user_id))) {
@@ -132,8 +133,14 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        // 5. Toegang verlopen: afsluiten.
+        // 5. Toegang verlopen: afsluiten, tenzij er nog een betaling onderweg is (een SEPA-incasso kan
+        // dagen "pending" staan; sluiten we dan af, dan wordt de binnenkomende betaling genegeerd en
+        // betaalt de klant zonder toegang). Na WACHT_OP_BETALING_DAGEN sluiten we toch af.
         if (s.periode_einde && toegangTot(new Date(s.periode_einde)).getTime() < nu.getTime()) {
+          if (await moetAfsluitingUitstellen(s, nu)) {
+            samenvatting.wachtOpBetaling++
+            continue
+          }
           await stopMollieAbonnement(s)
           await billingDb.from('arnobot_subscriptions').update({ status: 'ended', updated_at: iso(nu) }).eq('id', s.id)
           samenvatting.afgesloten++
