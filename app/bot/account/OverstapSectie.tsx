@@ -26,15 +26,16 @@ const datumNl = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
 const euro = (cent: number) => `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-function useBilling() {
+/** `versie` ophogen laadt de gegevens opnieuw, bijvoorbeeld nadat de pagina zelf het abonnement heeft opgezegd. */
+function useBilling(versie = 0) {
   const [data, setData] = useState<BillingAntwoord | null>(null)
   const laad = useCallback(() => {
-    fetch('/api/bot/billing')
+    fetch('/api/bot/billing', { cache: 'no-store' })
       .then(r => r.json())
       .then((d: BillingAntwoord) => setData(d))
       .catch(() => {})
   }, [])
-  useEffect(() => { laad() }, [laad])
+  useEffect(() => { laad() }, [laad, versie])
   return { data, laad }
 }
 
@@ -47,15 +48,15 @@ async function post(pad: string, body?: Record<string, unknown>): Promise<{ ok: 
 function Akkoord({ aan, zet }: { aan: boolean; zet: (v: boolean) => void }) {
   return (
     <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, color: '#94a3b8', lineHeight: 1.5, cursor: 'pointer', marginBottom: 20, maxWidth: 520 }}>
-      <input type="checkbox" checked={aan} onChange={e => zet(e.target.checked)} style={{ marginTop: 3, accentColor: '#f59e0b' }} />
+      <input type="checkbox" checked={aan} onChange={e => zet(e.target.checked)} style={{ marginTop: 3, accentColor: '#f59e0b', width: 'auto', flex: 'none' }} />
       <span>Ik ga akkoord met de <a href="/voorwaarden" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>algemene voorwaarden</a> en heb de <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>privacyverklaring</a> gelezen.</span>
     </label>
   )
 }
 
-export default function OverstapSectie() {
+export default function OverstapSectie({ versie = 0 }: { versie?: number }) {
   const isNativeApp = useIsNativeApp()
-  const { data, laad } = useBilling()
+  const { data, laad } = useBilling(versie)
   const [open, setOpen] = useState<'jaar' | 'upgrade' | null>(null)
   const [akkoord, setAkkoord] = useState(false)
   const [bezig, setBezig] = useState(false)

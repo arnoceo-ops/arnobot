@@ -22,11 +22,22 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
-  const { data: gebruiker } = await supabase
-    .from('approved_users')
-    .select('paid_at, expires_at, trial_start, is_active')
-    .eq('user_id', userId)
-    .maybeSingle()
+  // De twee databasevragen onafhankelijk van elkaar, dus tegelijk (scheelt een heen-en-weer bij elke paginalading).
+  const [{ data: gebruiker }, { data: sub }] = await Promise.all([
+    supabase
+      .from('approved_users')
+      .select('paid_at, expires_at, trial_start, is_active')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    billingDb
+      .from('arnobot_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .in('status', ['pending', 'active', 'cancelled'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<SubRow>(),
+  ])
 
   // Voor de tekst op /bot/doorgaan: loopt de proefperiode nog, of is de toegang al afgelopen. Zelfde
   // regels als proxy.ts: actief, en eigen datums of teamtoegang.
@@ -41,15 +52,6 @@ export async function GET() {
     // pas op dat moment in (lib/billing/verwerking.ts), de afrekenpagina toont die datum.
     trialEinde: gebruiker && gebruiker.is_active !== false ? (trialEinde(gebruiker)?.toISOString() ?? null) : null,
   }
-
-  const { data: sub } = await billingDb
-    .from('arnobot_subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .in('status', ['pending', 'active', 'cancelled'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle<SubRow>()
 
   if (!sub) return NextResponse.json({ ...status, abonnement: null, overstap: null })
 

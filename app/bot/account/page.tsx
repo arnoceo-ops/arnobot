@@ -31,6 +31,8 @@ export default function AccountPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
+  // Telt op zodra het abonnement hier is opgezegd of ingetrokken, zodat de overstapkaarten opnieuw laden.
+  const [overstapVersie, setOverstapVersie] = useState(0)
   // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
@@ -98,6 +100,7 @@ export default function AccountPage() {
       setCancelledAt(data.cancelled_at); if (data.eindigt_op) setEindigtOp(data.eindigt_op)
       setCancelConfirm(false)
       setCancelDone(true)
+      setOverstapVersie(v => v + 1)
       track('opzegging_gestart', { is_teambaas: !!isManager })
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Opzegging mislukt')
@@ -409,7 +412,7 @@ export default function AccountPage() {
         <>
         {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
             mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}
-        <OverstapSectie />
+        <OverstapSectie versie={overstapVersie} />
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
           {cancelledAt ? (
@@ -417,7 +420,7 @@ export default function AccountPage() {
               <p style={body}>
                 Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.
               </p>
-              <OpzeggingIntrekken onIngetrokken={() => { setCancelledAt(null); setEindigtOp(null); setCancelDone(false) }} />
+              <OpzeggingIntrekken onIngetrokken={() => { setCancelledAt(null); setEindigtOp(null); setCancelDone(false); setOverstapVersie(v => v + 1) }} />
             </>
           ) : cancelDone ? (
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2 }}>✓ Opzegging ontvangen</p>
