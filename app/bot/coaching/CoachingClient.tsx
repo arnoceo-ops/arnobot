@@ -526,7 +526,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
                 <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
                   {progressSignal === true
                     ? 'Arno ziet in je recente gesprekken aanleiding voor een bijgewerkt advies.'
-                    : 'De vorige actiepunten zijn nog niet volledig doorgevoerd in je aanpak. You can do it, tiger!'}
+                    : 'De vorige actiepunten zijn nog niet volledig doorgevoerd in je aanpak.'}
                 </p>
               </div>
             )}
