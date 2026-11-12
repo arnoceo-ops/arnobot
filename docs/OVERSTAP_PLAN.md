@@ -47,6 +47,27 @@ Een maandklant (Basic of Pro, particulier of zakelijk) stapt over naar jaar per 
 
 Arno verwacht dit niet snel. Besloten: de rest van het plan wordt volledig gebouwd, dit geval wordt pas opgelost als het zich voordoet. De uitvoering (deelterugbetaling naar rato, creditnota, nieuwe Team-factuur), de formule, de terugvaloptie en de vier open Mollie- en Moneybird-vragen staan in `docs/SOLO_JAAR_NAAR_TEAM.md`. **Gekozen:** handmatig volgens die checklist. **Verworpen:** nu bouwen (deelterugbetaling, deel-creditnota, voorbeeldscherm), want het geval is niet te verwachten en de vier vragen zijn pas bij een echt geval te beantwoorden.
 
+## Scenario-matrix tussentijdse wijzigingen (2026-11-12)
+
+Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolom "Keuze" wordt per rij besloten: bouwen, handmatig of niet mogelijk.
+
+| Situatie | Stand | Keuze |
+|---|---|---|
+| Maand naar jaar (solo) | In dit plan | Bouwen |
+| Jaar naar maand | Niet mogelijk, opzeggen en na het einde opnieuw afrekenen met maand | Besloten |
+| Solo-maand naar Team | In dit plan | Bouwen |
+| Solo-jaar naar Team | `docs/SOLO_JAAR_NAAR_TEAM.md` | Handmatig, pas bij het eerste geval |
+| Opzeggen, terugbetaling in bedenktijd, particulier verlengen | Bestaat | n.v.t. |
+| Particulier naar zakelijk (verkeerd gekozen) | Bestaat (`klanttypeCorrectie.ts`) | n.v.t. |
+| Team: seat erbij of eraf | Bestaat (eraf pas bij verlenging, voorwaarden) | n.v.t. |
+| Basic naar Pro | `/bot/upgrade` is een mailto, niet in het billing-systeem; een Mollie-abonnement houdt zijn bedrag | **Open, voorgelegd aan Arno** |
+| Prijswijziging bij bestaande abonnementen | Voorwaarden art. 4 belooft dit; `mollie()` kent geen PATCH | **Open, voorgelegd aan Arno** |
+| Pro naar Basic | Niet gezien | Open |
+| Opzegging ongedaan maken | Niet mogelijk (checkout geeft 409 tot `periode_einde`) | Open |
+| Betaalmethode wijzigen (verlopen kaart, ander IBAN) | Alleen als de laatste herhaalbetaling mislukte | Open |
+| Team: cyclus wijzigen of Team naar solo | Admin kan `team.cyclus` zetten; effect midden in een periode en Team naar solo niet onderzocht | Open |
+| Zakelijk naar particulier | Niet gezien | Open |
+
 ## Afvinklijst
 
 - [ ] Migratie (`docs/sql/`)
