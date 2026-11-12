@@ -60,13 +60,35 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 | Opzeggen, terugbetaling in bedenktijd, particulier verlengen | Bestaat | n.v.t. |
 | Particulier naar zakelijk (verkeerd gekozen) | Bestaat (`klanttypeCorrectie.ts`) | n.v.t. |
 | Team: seat erbij of eraf | Bestaat (eraf pas bij verlenging, voorwaarden) | n.v.t. |
-| Basic naar Pro | `/bot/upgrade` is een mailto, niet in het billing-systeem; een Mollie-abonnement houdt zijn bedrag | **Open, voorgelegd aan Arno** |
-| Prijswijziging bij bestaande abonnementen | Voorwaarden art. 4 belooft dit; `mollie()` kent geen PATCH | **Open, voorgelegd aan Arno** |
+| Basic naar Pro | `/bot/upgrade` is een mailto, niet in het billing-systeem; een Mollie-abonnement houdt zijn bedrag | **Richting B (direct, naar rato), zie sectie hieronder; nog één besluit open** |
+| Prijswijziging bij bestaande abonnementen | Voorwaarden art. 4 belooft dit; `mollie()` kent geen PATCH | Besloten: bedrag via Mollie (PATCH op `amount`) aanpassen met een script met voorbeeldrun, pas bouwen wanneer Arno een prijswijziging aankondigt |
 | Pro naar Basic | Niet gezien | Open |
 | Opzegging ongedaan maken | Niet mogelijk (checkout geeft 409 tot `periode_einde`) | Open |
 | Betaalmethode wijzigen (verlopen kaart, ander IBAN) | Alleen als de laatste herhaalbetaling mislukte | Open |
 | Team: cyclus wijzigen of Team naar solo | Admin kan `team.cyclus` zetten; effect midden in een periode en Team naar solo niet onderzocht | Open |
 | Zakelijk naar particulier | Niet gezien | Open |
+
+## Basic naar Pro (onderzocht 2026-11-12, richting B)
+
+**Besluit Arno:** onderzoek B (direct naar Pro, verschil naar rato direct afrekenen), omdat dat is wat een professionele SaaS doet.
+
+**Onderzoek, SaaS-praktijk** (Stripe Billing, docs.stripe.com/billing/subscriptions/prorations en /upgrade-downgrade, gelezen 2026-11-12): een upgrade gaat direct in, het ongebruikte deel van het oude plan wordt als credit verrekend tegen het resterende deel van het nieuwe plan (per seconde berekend). Standaard (`create_prorations`) wordt dat verschil pas op de eerstvolgende factuur in rekening gebracht; direct factureren is de instelling `always_invoice`. Een downgrade levert een credit op die niet automatisch wordt terugbetaald. B is dus de praktijk, in de variant "direct factureren".
+
+**Onderzoek, Mollie** (docs.mollie.com/docs/recurring-payments, geraadpleegd 2026-11-12): een losse vervolgbetaling met een geldig mandaat kan direct ("Charging immediately on-demand", `sequenceType: recurring`, `customerId` verplicht, `redirectUrl` mag weg, `metadata` toegestaan) en het bedrag mag afwijken ("the amount for a recurring payment is variable"). SEPA-standaardlimiet per incasso €1.000 (docs.mollie.com/docs/sepa-direct-debit). **Niet in de docs gevonden:** beginstatus en looptijd van zo'n losse betaling, herpogingen bij mislukken (bij abonnementen: tot 5 keer, eens per dag), of de webhook de metadata meegeeft, of een losse betaling zonder `subscriptionId` komt. Dat moet in de test worden vastgesteld.
+
+**Wat B in de code vraagt (gecontroleerd in `verwerking.ts`, `db.ts`, `mollie.ts`):**
+- Nieuwe Mollie-functie voor een losse vervolgbetaling (nu alleen `maakEersteBetaling` met `sequenceType: 'first'`).
+- Nieuwe betaalsoort (bijvoorbeeld `upgrade`) naast `eerste` en `herhaling`: `rondBetalingAf` behandelt nu elke betaling die niet `eerste` is als een herhaling en telt dan een periode bij. Een upgradebetaling mag de periode niet verlengen. `PayRow.soort` kent `verlenging` al maar niets gebruikt het; mogelijk een CHECK-constraint in de database, nog te controleren.
+- Bij een mislukte upgradebetaling: plan terugzetten naar Basic, mail en Telegram (nu stuurt `verwerkMislukteBetaling` voor niet-`eerste` een generieke "betaling mislukt"-mail).
+- Het Mollie-abonnement moet daarna het Pro-bedrag incasseren: hergebruik de geplande-wijziging-machinerie (nieuw abonnement, zelfde interval, start op `periode_einde`, oude stoppen) of PATCH op `amount` (docs: voor toekomstige betalingen). Daarom komt `gepland_plan` in de migratie.
+- Btw van de betaalrij nu uit de rij (`s.btw_cent`); een late betaling van het oude bedrag zou verkeerde btw krijgen. Btw uit het Mollie-bedrag en `klant_type` afleiden.
+- Moneybird-factuur voor de upgradebetaling met een eigen omschrijving ("Upgrade naar Pro, naar rato").
+- Bedrag: (Pro-prijs min Basic-prijs) maal resterende dagen gedeeld door dagen in de betaalperiode, bruto per klanttype. Geldt voor maand en jaar (jaar: €468 min €228 naar rato).
+- Beperking: SEPA-limiet van €1.000 per incasso (ruim genoeg voor Basic naar Pro).
+
+**Nog open besluit:** Pro-toegang direct bij de klik en terugzetten als de betaling mislukt (SEPA kan dagen pending zijn, de SaaS-praktijk geeft ook direct toegang), of pas nadat de betaling is geslaagd. Voorstel: direct.
+
+**Pro naar Basic:** nog niet besloten. Volgens de SaaS-praktijk (Stripe) gaat een downgrade aan het einde van de periode of levert een credit op zonder terugbetaling; voorstel: aan het einde van de betaalde periode, zonder verrekening.
 
 ## Afvinklijst
 
@@ -81,4 +103,6 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 - [ ] Referral-copy en -regel, voorwaarden (art. 4, 7, 8), `appHelp.ts`, Q&A, `ABONNEMENTEN.md`
 - [ ] Solo-maand naar Team: eigen stopfunctie, afscheidsmail-fix, adminactie met voorbeeldscherm
 - [ ] Test in testmodus met eigen account; vlak voor livegang één echte betaling met terugbetaling
+- [ ] Basic naar Pro (B): `gepland_plan` in de migratie, losse vervolgbetaling, betaalsoort `upgrade`, terugzetten bij mislukken, Moneybird-omschrijving; test in testmodus welke status en webhook zo'n losse betaling krijgt
+- [ ] Prijswijziging bestaande abonnementen: pas bouwen bij aankondiging (PATCH op `amount`, script met voorbeeldrun)
 - [x] Solo-jaar naar Team: bewust niet gebouwd, checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (2026-11-12)
