@@ -102,7 +102,7 @@ export default async function GesprekPage() {
           </p>
         ) : !bookingLink ? (
           <p style={{ fontSize: 15, lineHeight: 1.9, color: '#9ca3af' }}>
-            Het inplannen is tijdelijk niet beschikbaar. Mail naar <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a> om je gesprek te regelen.
+            Het inplannen is tijdelijk niet beschikbaar. Mail naar <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a> om je gesprek te regelen.
           </p>
         ) : (
           <>

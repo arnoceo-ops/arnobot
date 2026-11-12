@@ -100,7 +100,7 @@ export default function HerstartPage() {
               Wil je toch toegang? Arno regelt het persoonlijk.
             </p>
             <a
-              href="mailto:arno@arno.bot"
+              href="mailto:admin@arno.bot"
               style={{ ...secBtn, textDecoration: 'none', display: 'inline-block' }}
             >
               MAIL ARNO
@@ -121,7 +121,7 @@ export default function HerstartPage() {
 
         {status === 'not_eligible' && (
           <div style={{ background: '#1f2937', borderLeft: '4px solid #374151', padding: '20px 24px' }}>
-            <p style={body}>Je komt nog niet in aanmerking voor een nieuwe trial. Vragen? Mail <a href="mailto:arno@arno.bot" style={{ color: '#f59e0b' }}>arno@arno.bot</a>.</p>
+            <p style={body}>Je komt nog niet in aanmerking voor een nieuwe trial. Vragen? Mail <a href="mailto:admin@arno.bot" style={{ color: '#f59e0b' }}>admin@arno.bot</a>.</p>
           </div>
         )}
 

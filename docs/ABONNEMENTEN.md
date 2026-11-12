@@ -156,7 +156,7 @@ Technisch gesplitst in een server `page.tsx` (leest `ARNO_BOOKING_URL` server-si
 
 Preview-modus: `?preview=idle` in de URL toont de plankeuze ongeacht de echte renewal-status van de ingelogde gebruiker, zonder Supabase aan te raken.
 
-**Vaste regel:** in alle factuur-gerelateerde copy is **ArnoBot** de afzender, nooit de persoon Arno ("ArnoBot stuurt je een factuur"). Geldt niet voor support-verwijzingen ("mail naar arno@arno.bot bij vragen").
+**Vaste regel:** in alle factuur-gerelateerde copy is **ArnoBot** de afzender, nooit de persoon Arno ("ArnoBot stuurt je een factuur"). Geldt niet voor support-verwijzingen ("mail naar admin@arno.bot bij vragen").
 
 ---
 

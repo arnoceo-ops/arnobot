@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default async function TeamPage() {
   const { userId } = await auth()
   const demoLink = process.env.ARNO_BOOKING_URL ?? null
-  const demoHref = demoLink ?? 'mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team'
+  const demoHref = demoLink ?? 'mailto:admin@arno.bot?subject=Demo%20ArnoBot%20Team'
   const demoExtern = Boolean(demoLink)
 
   return (

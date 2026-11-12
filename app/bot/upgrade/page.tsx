@@ -61,7 +61,7 @@ export default async function UpgradePage() {
               Onbeperkte coaching, gesproken antwoorden met ArnoBot Voice, en 100 berichten per dag in plaats van 25. Vraag hieronder een upgrade aan, Arno regelt de rest persoonlijk.
             </p>
             <UpgradeButton
-              href="mailto:arno@arno.bot?subject=Upgrade%20naar%20Pro"
+              href="mailto:admin@arno.bot?subject=Upgrade%20naar%20Pro"
               label="VRAAG AAN →"
               eventName="upgrade_premium_click"
             />

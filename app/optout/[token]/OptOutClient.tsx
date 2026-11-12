@@ -50,7 +50,7 @@ export default function OptOutClient({ token, sig }: { token: string; sig: strin
               </p>
               {state === 'error' && (
                 <p style={{ fontSize: 13, color: '#cc2200', letterSpacing: 1, marginBottom: 24 }}>
-                  Er ging iets mis. Probeer het opnieuw of mail naar arno@arno.bot.
+                  Er ging iets mis. Probeer het opnieuw of mail naar admin@arno.bot.
                 </p>
               )}
               <button

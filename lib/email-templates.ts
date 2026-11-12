@@ -316,7 +316,7 @@ export function getEmailTemplate(
         html: mail(
           `Je trial is twee weken geleden afgelopen. Misschien was het timing. Misschien miste je iets.<br><br>We geven je de kans om het opnieuw te proberen. 30 dagen gratis, zonder verplichtingen.<br><br>Klik hieronder om je tweede trial te starten. Dit aanbod vervalt over 5 dagen.`,
           'START 30-DAAGSE TRIAL →', 'https://arno.bot/bot/herstart',
-          `Geen e-mails meer ontvangen? <a href="mailto:arno@arno.bot" style="color:#9ca3af;text-decoration:underline;">Stuur een bericht naar arno@arno.bot.</a>`
+          `Geen e-mails meer ontvangen? <a href="mailto:admin@arno.bot" style="color:#9ca3af;text-decoration:underline;">Stuur een bericht naar admin@arno.bot.</a>`
         ),
       }
     case 'betaling_bevestiging': {
@@ -447,7 +447,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Opzegging ontvangen`,
         html: mail(
-          `Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Vragen? Mail naar <a href="mailto:arno@arno.bot" style="color:#f59e0b;">arno@arno.bot</a>.`,
+          `Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'MIJN DATA DOWNLOADEN →', 'https://arno.bot/bot/account'
         ),
       }
@@ -519,7 +519,7 @@ export function getEmailTemplate(
         subject: `${prefix}${naam}, dat was ’m dan.`,
         html: mail(
           `Wat de sportschool niet doet maar wij wel: stoppen. Twee maanden geen activiteit zonder opgaaf van redenen? Daar verbinden we onze naam niet aan. Je abonnement is per morgen beëindigd, tenzij je ons laat weten wat je excuus is.`,
-          'MAIL ARNO →', 'mailto:arno@arno.bot'
+          'MAIL ARNO →', 'mailto:admin@arno.bot'
         ),
       }
     case 'geen_gesprek_nudge':

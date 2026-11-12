@@ -443,7 +443,7 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
                 : 'Je data blijft nog 30 dagen bewaard.'} Op zoek naar Team, het teamabonnement?{' '}
               {demoLink
                 ? <a href={demoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
-                : <a href="mailto:arno@arno.bot?subject=Demo%20ArnoBot%20Team" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
+                : <a href="mailto:admin@arno.bot?subject=Demo%20ArnoBot%20Team" style={{ color: '#f59e0b' }}>Vraag een demo aan</a>
               }.
             </p>
           </>
