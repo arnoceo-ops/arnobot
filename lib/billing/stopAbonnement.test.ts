@@ -46,7 +46,7 @@ vi.mock('./mollie', () => ({
   maakAbonnement: vi.fn(),
 }))
 
-import { stopMollieAbonnement } from './verwerking'
+import { stopEnBevestig, stopMollieAbonnement } from './verwerking'
 import type { SubRow } from './db'
 
 function rij(extra: Partial<SubRow> = {}): SubRow {
@@ -175,6 +175,20 @@ describe('stopMollieAbonnement', () => {
     const ok = await stopMollieAbonnement(rij({ mollie_subscription_id: 'sub_huidig' }))
     expect(ok).toBe(true)
     expect(h.updates).toHaveLength(1)
+  })
+
+  it('een ongeregistreerd abonnement wordt gestopt en bevestigd zonder iets in de rij vast te leggen', async () => {
+    expect(await stopEnBevestig(rij(), 'sub_nieuw', 'ongeregistreerd')).toBe(true)
+    expect(h.stopAbonnement).toHaveBeenCalledExactlyOnceWith('cst_1', 'sub_nieuw')
+    expect(h.haalAbonnement).toHaveBeenCalledWith('cst_1', 'sub_nieuw')
+    expect(h.updates).toHaveLength(0)
+  })
+
+  it('een ongeregistreerd abonnement dat niet gestopt blijkt: false en melden, nog steeds niets vastgelegd', async () => {
+    h.haalAbonnement.mockResolvedValue({ id: 'x', status: 'active' })
+    expect(await stopEnBevestig(rij(), 'sub_nieuw', 'ongeregistreerd')).toBe(false)
+    expect(h.updates).toHaveLength(0)
+    expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
   })
 
   it('telt status "completed" als gestopt', async () => {

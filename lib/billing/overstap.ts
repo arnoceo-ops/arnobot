@@ -54,7 +54,7 @@ export function isToegestaneOverstap(huidig: Wens, nieuw: Wens): boolean {
 
 const weiger = (status: number, fout: string): OverstapUitkomst => ({ ok: false, status, fout })
 
-const GEPLAND_LEEG = {
+export const GEPLAND_LEEG = {
   gepland_plan: null,
   gepland_cyclus: null,
   gepland_bedrag_cent: null,

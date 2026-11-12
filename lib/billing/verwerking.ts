@@ -432,9 +432,15 @@ export async function maakMollieAbonnementVoor(sub: SubRow, startVan: Date): Pro
  * de guardkolom. Zo betekent "guardkolom gezet" altijd "Mollie bevestigt: gestopt", en blijft
  * een mislukte of onbevestigde stop opnieuw te proberen. Geeft true bij een bevestigde stop.
  */
-export async function stopEnBevestig(sub: SubRow, abonnementId: string, soort: 'huidig' | 'gepland'): Promise<boolean> {
-  const kolom = soort === 'huidig' ? 'mollie_sub_geannuleerd_at' : 'gepland_mollie_sub_geannuleerd_at'
-  const label = soort === 'huidig' ? 'Mollie-abonnement' : 'Gepland Mollie-abonnement'
+export async function stopEnBevestig(
+  sub: SubRow,
+  abonnementId: string,
+  // 'ongeregistreerd': een zojuist aangemaakt abonnement dat (nog) nergens in de rij staat, bijvoorbeeld
+  // bij het terugdraaien van een mislukte stap. Er wordt dan geen guardkolom gezet.
+  soort: 'huidig' | 'gepland' | 'ongeregistreerd',
+): Promise<boolean> {
+  const kolom = soort === 'huidig' ? 'mollie_sub_geannuleerd_at' : soort === 'gepland' ? 'gepland_mollie_sub_geannuleerd_at' : null
+  const label = soort === 'huidig' ? 'Mollie-abonnement' : soort === 'gepland' ? 'Gepland Mollie-abonnement' : 'Nieuw aangemaakt Mollie-abonnement'
   try {
     await stopAbonnement(sub.mollie_customer_id, abonnementId)
     // Bevestigen: een abonnement dat Mollie niet meer kent (404, 410) telt als gestopt.
@@ -445,8 +451,10 @@ export async function stopEnBevestig(sub: SubRow, abonnementId: string, soort: '
     if (ms && ms.status !== 'canceled' && ms.status !== 'completed') {
       throw new Error(`Mollie meldt na het stoppen nog status ${ms.status}`)
     }
-    const nu = iso(new Date())
-    await billingDb.from('arnobot_subscriptions').update({ [kolom]: nu, updated_at: nu }).eq('id', sub.id)
+    if (kolom) {
+      const nu = iso(new Date())
+      await billingDb.from('arnobot_subscriptions').update({ [kolom]: nu, updated_at: nu }).eq('id', sub.id)
+    }
     return true
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-abonnement-stoppen' } })

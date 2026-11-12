@@ -30,6 +30,10 @@ const KNOWN_MANUAL_ROUTES = new Set([
   // het laatste onderdeel van dat plan. Tot dan bewust zonder aanroeper (en alleen voor de eigenaar en
   // testaccounts, OVERSTAP_OPEN staat uit). Verwijder deze regel zodra de knop er is.
   '/api/bot/billing/overstappen',
+  // Idem voor het intrekken van een geplande overstap en van een opzegging: de knoppen volgen met
+  // de accountpagina. Verwijder deze twee regels zodra die knoppen er zijn.
+  '/api/bot/billing/overstap-intrekken',
+  '/api/bot/billing/opzegging-intrekken',
 ])
 
 function walk(dir, matcher, results = []) {
