@@ -359,7 +359,9 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
     await verstuurBillingMail(userId, 'overstap_ingepland', {
       van: `${planNaam(sub.plan)} ${sub.cyclus}`,
       naar: `${planNaam(doel.plan)} ${doel.cyclus}`,
-      bedragCent: bedrag.brutoCent,
+      // Zakelijke bedragen altijd exclusief btw in de klanttekst.
+      bedragCent: sub.klant_type === 'zakelijk' ? bedrag.nettoCent : bedrag.brutoCent,
+      zakelijk: sub.klant_type === 'zakelijk',
       datum: geplandIngang.toISOString(),
       perPeriode: doel.cyclus === 'jaarlijks' ? 'per jaar' : 'per maand',
     })

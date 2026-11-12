@@ -23,6 +23,15 @@ describe('overstap_ingepland', () => {
     expect(m.html).toContain('admin@arno.bot')
   })
 
+  it('particulier: inclusief BTW, zakelijk: exclusief BTW', () => {
+    expect(m.html).toContain('inclusief BTW')
+    const z = getEmailTemplate('overstap_ingepland', 'Test', false, {
+      billing: { van: 'Basic maandelijks', naar: 'Basic jaarlijks', bedragCent: 19000, datum: DATUM, perPeriode: 'per jaar', zakelijk: true },
+    })
+    expect(z.html).toContain('exclusief BTW')
+    expect(z.html).not.toContain('inclusief BTW')
+  })
+
   it('heeft geen streepjes', () => {
     expect(heeftStreepje(m.subject)).toBe(false)
     expect(heeftStreepje(m.html)).toBe(false)

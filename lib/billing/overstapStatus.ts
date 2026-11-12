@@ -15,7 +15,7 @@ export interface OverstapStatus {
     besparingEuro: number
     zakelijk: boolean
   }
-  /** Basic-klant: direct naar Pro. `bijbetalingCent` is wat nu wordt bijbetaald (inclusief btw). */
+  /** Basic-klant: direct naar Pro. `bijbetalingCent` is het getoonde bedrag: exclusief btw voor zakelijk, inclusief voor particulier. */
   upgrade: null | { bijbetalingCent: number; zakelijk: boolean }
   /** Een geplande overstap die nog kan worden ingetrokken. */
   gepland: null | { ingaatOp: string }
@@ -57,7 +57,8 @@ export function bepaalOverstapStatus(sub: SubRow, nu: Date, volgendeIncasso: str
 
   if (sub.plan === 'basis' && sub.periode_start && sub.periode_einde && new Date(sub.periode_einde).getTime() > nu.getTime()) {
     const bij = berekenUpgradeBedrag(sub.klant_type, sub.cyclus, new Date(sub.periode_start), new Date(sub.periode_einde), nu)
-    status.upgrade = { bijbetalingCent: bij.brutoCent, zakelijk }
+    // Zakelijke bedragen worden altijd exclusief btw getoond; de werkelijke betaling blijft inclusief btw.
+    status.upgrade = { bijbetalingCent: zakelijk ? bij.nettoCent : bij.brutoCent, zakelijk }
   }
 
   return status

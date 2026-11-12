@@ -186,7 +186,7 @@ describe('plaatsOverstap: gelukt', () => {
     expect(h.stopEnBevestig).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'rij-1' }), 'sub_huidig', 'huidig')
     expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
     expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'overstap_ingepland', {
-      van: 'Basic maandelijks', naar: 'Basic jaarlijks', bedragCent: bedrag.brutoCent, datum: ISO('2026-12-04'), perPeriode: 'per jaar',
+      van: 'Basic maandelijks', naar: 'Basic jaarlijks', bedragCent: bedrag.brutoCent, zakelijk: false, datum: ISO('2026-12-04'), perPeriode: 'per jaar',
     })
   })
 
@@ -196,6 +196,10 @@ describe('plaatsOverstap: gelukt', () => {
     expect(r.ok).toBe(true)
     expect(h.maakAbonnement).toHaveBeenCalledWith(expect.objectContaining({
       brutoCent: berekenBedrag('basis', 'jaarlijks', 'zakelijk').brutoCent, interval: '12 months', times: null,
+    }))
+    // In de klantmail staat het zakelijke bedrag exclusief btw.
+    expect(h.verstuurBillingMail).toHaveBeenCalledWith('user_1', 'overstap_ingepland', expect.objectContaining({
+      bedragCent: berekenBedrag('basis', 'jaarlijks', 'zakelijk').nettoCent, zakelijk: true,
     }))
   })
 

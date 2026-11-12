@@ -162,6 +162,8 @@ export interface BillingMailOptions {
   perPeriode?: string
   /** Opzegging ingetrokken: false als er geen automatische betaling volgt (particulier jaarabonnement). */
   metBetaling?: boolean
+  /** Overstap: zakelijk, dan is `bedragCent` exclusief btw en staat dat zo in de mail. */
+  zakelijk?: boolean
   /** Terugbetaling: het ging om de bijbetaling van een upgrade, het abonnement loopt door. */
   upgrade?: boolean
 }
@@ -414,7 +416,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je overstap is ingepland`,
         html: mail(
-          `Je stapt op ${billingDatum(b?.datum)} over van ${b?.van ?? 'je huidige abonnement'} naar ${b?.naar ?? 'je nieuwe abonnement'}. Vanaf die datum betaal je ${billingEuro(b?.bedragCent ?? 0)} ${b?.perPeriode ?? 'per maand'}, inclusief BTW. Tot dan blijft alles zoals het is.<br><br>Wil je dit toch niet, trek de overstap dan in via je account, uiterlijk een dag voor ${billingDatum(b?.datum)}.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          `Je stapt op ${billingDatum(b?.datum)} over van ${b?.van ?? 'je huidige abonnement'} naar ${b?.naar ?? 'je nieuwe abonnement'}. Vanaf die datum betaal je ${billingEuro(b?.bedragCent ?? 0)} ${b?.perPeriode ?? 'per maand'}, ${b?.zakelijk ? 'exclusief' : 'inclusief'} BTW. Tot dan blijft alles zoals het is.<br><br>Wil je dit toch niet, trek de overstap dan in via je account, uiterlijk een dag voor ${billingDatum(b?.datum)}.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
         ),
       }
