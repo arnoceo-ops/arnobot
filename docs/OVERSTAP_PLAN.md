@@ -4,7 +4,7 @@
 
 - **Laatst bijgewerkt:** 2026-11-12
 - **Waar we staan:** plan goedgekeurd door Arno (11-11), nog niets gebouwd. Mollie staat sinds 11-11 weer op de `test_`-sleutel (status-pagina toont "testmodus, nog niet voor gebruikers open"); er zijn geen betalende klanten. De `live_`-sleutel heeft Arno apart opgeslagen, terugzetten bij livegang is een stap op de livegang-checklist. Het plan is aangevallen door een onafhankelijke reviewer (zonder voorgeschiedenis); de bevindingen zijn hieronder verwerkt.
-- **Eerstvolgende stap:** wachten op het sein van Arno ("ik zeg wel wanneer je kunt beginnen met de migratie"). Daarna stap 1 t/m 4 en de tests (migratie, `stopMollieAbonnement` met twee id's en verificatie, webhook-conversie, opzeggen), dan de overstap-route en de knop (alleen eigenaar en testaccounts).
+- **Eerstvolgende stap:** de migratie is klaar (2026-11-12, kolommen live, niets leest ze). Daarna in deze volgorde, elk onderdeel met een eigen melding vooraf: `stopMollieAbonnement` met twee id's en verificatie, de Mollie-wrapper (GET abonnement, lijst betalingen), webhook-conversie plus tests, cron stap 5, dan de overstap-route en de knop (alleen eigenaar en testaccounts).
 - **Besloten 2026-11-12:** (a) maand naar jaar en solo-maand naar Team worden gebouwd; (b) **solo-jaar naar Team wordt NIET gebouwd** maar pas opgelost als het zich voordoet, volgens de checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (Arno verwacht dit niet snel); (c) **jaar naar maand bestaat niet**: aan het einde van het jaar opzeggen en daarna opnieuw afrekenen met maand, er komt geen andere route; (d) de scenario-matrix is doorlopen (2026-11-12) en elke rij heeft een keuze.
 
 ## Uitgangspunt
@@ -92,7 +92,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 
 ## Afvinklijst
 
-- [ ] Migratie (`docs/sql/2026-11-12-overstap-geplande-wijziging.sql`): bestand en `SubRow`-type klaar (2026-11-12), nog door Arno uit te voeren in Supabase en daarna alleen-lezen te controleren; verruiming van de `soort`-constraint volgt bij Basic naar Pro
+- [x] Migratie (`docs/sql/2026-11-12-overstap-geplande-wijziging.sql`): uitgevoerd door Arno en alleen-lezen gecontroleerd (2026-11-12): 8 van 8 kolommen aanwezig, 13 bestaande rijen, geen enkele met een gevulde `gepland_`-kolom. Commit `1c8def0b`. Verruiming van de `soort`-constraint volgt bij Basic naar Pro
 - [ ] `stopMollieAbonnement`: twee id's, verificatie, `boolean`-variant
 - [ ] Mollie-wrapper: `haalAbonnement` (GET, `nextPaymentDate`, status) en lijst betalingen van een abonnement
 - [ ] Webhook-conversie plus tests (dubbele webhook, late maandbetaling, stop-fout, opzeggen tussendoor, cron stap 5 bij pending)
