@@ -125,6 +125,39 @@ Geen streepjes, geen bedragen in `appHelp.ts` (de bedragen op de kaarten komen u
 **7. `lib/appHelp.ts` en de Q&A** (verplicht in dezelfde commit als de knoppen)
 - "Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar en Pro kan naar Basic. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken."
 
+## Testchecklist in testmodus (voor Arno)
+
+Voorwaarde: Mollie staat op `test_`, je bent ingelogd met je eigen account of een intern testaccount (de kaarten zijn dan zichtbaar zonder `OVERSTAP_OPEN`), en niet in de Android-app. Gebruik een testaccount zonder bestaand abonnement. Doe alles met een testkaart/testbetaling; Mollie vraagt in testmodus welke status de betaling moet krijgen, kies "Betaald".
+
+**A. Voorbereiding**
+- [ ] Neem een Basic-maandabonnement af (particulier) en rond de eerste betaling af. Controleer: abonnement actief op de accountpagina, betalingsbevestiging per mail.
+- [ ] In het Mollie-testdashboard staat nu een actief abonnement met een volgende incassodatum ongeveer een maand verder.
+
+**B. Maand naar jaar (particulier)**
+- [ ] Accountpagina toont de kaart PER JAAR BETALEN met de besparing en, na STAP OVER OP JAAR, de datum van de volgende incasso en het jaarbedrag naast het maandbedrag.
+- [ ] Zonder vinkje bij akkoord is JA, OVERSTAPPEN niet te gebruiken. Met vinkje: "Je stapt over op [datum]" en de kaart wordt OVERSTAP met INTREKKEN.
+- [ ] Mail "Je overstap is ingepland": juiste datum, bedrag per jaar inclusief BTW, geen streepjes.
+- [ ] Mollie-dashboard: het maandabonnement is gestopt en er staat een nieuw jaarabonnement met startdatum op de ingangsdatum.
+- [ ] Telegram-melding "Overstap gepland" aangekomen.
+- [ ] INTREKKEN: de kaart PER JAAR BETALEN is terug, in Mollie staat weer een maandabonnement met dezelfde volgende incasso en het jaarabonnement is gestopt.
+- [ ] Nogmaals overstappen en laten staan voor test D.
+
+**C. Upgrade naar Pro** (bij een Basic-klant zonder geplande overstap; trek een overstap eerst in)
+- [ ] Kaart PRO NU toont een bedrag; controleer het tegen de rekensom (prijsverschil naar rato van de resterende dagen).
+- [ ] UPGRADE NAAR PRO: betaal de bijbetaling; daarna staat het account op Pro en komt de betalingsbevestiging.
+- [ ] Mislukte bijbetaling: herhaal met de testbetaling op "Mislukt". Verwacht: plan terug naar Basic en de mail "De bijbetaling voor je upgrade is niet gelukt"; het abonnement loopt gewoon door.
+- [ ] Een upgradebetaling terugbetalen in het Mollie-dashboard: terugbetalingsmail zegt "Je upgrade is hiermee teruggedraaid. Je abonnement loopt door."
+
+**D. Opzeggen en intrekken**
+- [ ] Zeg het abonnement op (met een geplande overstap uit B): beide Mollie-abonnementen gestopt, toegang tot einde periode.
+- [ ] OPZEGGING INTREKKEN verschijnt onder de tekst "Je opzegging is ontvangen"; na klikken is het abonnement weer actief, het account is niet meer gemarkeerd als opgezegd, en de mail "Je opzegging is ingetrokken" komt aan.
+- [ ] Dezelfde ronde met een zakelijk testaccount: alle bedragen op kaarten en in de mail staan exclusief BTW.
+
+**E. Weigeringen (moeten een duidelijke melding geven, geen fout)**
+- [ ] Overstappen binnen 4 dagen voor de volgende incasso, intrekken binnen 1 dag voor de ingangsdatum, tweemaal achter elkaar klikken (geen dubbel abonnement in Mollie).
+
+**Niet te testen in testmodus (alleen Vitest):** de omzetting zelf op de ingangsdatum (de eerste betaling van het nieuwe abonnement, pas over een maand) en hoe lang een losse SEPA-betaling in livemodus pending blijft. Het eerste volgt bij de eerste echte overstap (Telegram-melding bij elke overstap), het tweede bij de echte betaling vlak voor livegang.
+
 ## Afvinklijst
 
 - [x] Migratie (`docs/sql/2026-11-12-overstap-geplande-wijziging.sql`): uitgevoerd door Arno en alleen-lezen gecontroleerd (2026-11-12): 8 van 8 kolommen aanwezig, 13 bestaande rijen, geen enkele met een gevulde `gepland_`-kolom. Commit `1c8def0b`. Verruiming van de `soort`-constraint volgt bij Basic naar Pro
