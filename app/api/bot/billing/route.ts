@@ -7,6 +7,7 @@ import { datumToegang, trialEinde } from '@/lib/toegang'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
 import { haalAbonnement } from '@/lib/billing/mollie'
 import { overstapBeschikbaarVoor } from '@/lib/billing/overstap'
+import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
 import { bepaalOverstapStatus, type OverstapStatus } from '@/lib/billing/overstapStatus'
 
 const DAG_MS = 24 * 60 * 60 * 1000
@@ -72,7 +73,8 @@ export async function GET() {
         volgendeIncasso = null
       }
     }
-    overstap = bepaalOverstapStatus(sub, new Date(), volgendeIncasso)
+    const stoptVoorTeam = sub.status === 'cancelled' ? !!(await soloStoptVoorTeam(userId)) : false
+    overstap = bepaalOverstapStatus(sub, new Date(), volgendeIncasso, stoptVoorTeam)
   }
 
   const nu = Date.now()

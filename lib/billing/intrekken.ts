@@ -5,6 +5,7 @@ import { GEPLAND_LEEG } from './overstap'
 import { abonnementVoorOverstap } from './perioden'
 import { berekenBedrag, planNaam } from './prijzen'
 import { verstuurBillingMail } from './mails'
+import { soloStoptVoorTeam } from './soloNaarTeam'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -137,6 +138,10 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
   if (!sub || !sub.periode_einde) return weiger(404, 'Geen opgezegd abonnement gevonden')
   if (sub.gepland_at || sub.gepland_mollie_subscription_id) {
     return weiger(409, 'Deze opzegging kan niet automatisch worden ingetrokken. Mail naar admin@arno.bot.')
+  }
+  // Gestopt omdat de klant Team wordt: intrekken zou een nieuw solo-abonnement naast het Team maken.
+  if (await soloStoptVoorTeam(userId, nu)) {
+    return weiger(409, 'Je solo-abonnement stopt omdat je naar Team gaat. Dit kan niet worden ingetrokken. Mail naar admin@arno.bot.')
   }
   const periodeEinde = new Date(sub.periode_einde)
   if (sub.opzegging_ingaat_at && new Date(sub.opzegging_ingaat_at).getTime() <= nu.getTime()) {

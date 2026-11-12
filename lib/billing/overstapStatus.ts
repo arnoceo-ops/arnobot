@@ -29,11 +29,12 @@ const LEEG: OverstapStatus = { naarJaar: null, upgrade: null, gepland: null, opz
  * @param volgendeIncasso Mollies `nextPaymentDate` van het huidige abonnement (YYYY-MM-DD), of null als die
  *   niet op te halen was: dan verschijnt de kaart "per jaar betalen" niet, want zonder datum is er niets te bevestigen.
  */
-export function bepaalOverstapStatus(sub: SubRow, nu: Date, volgendeIncasso: string | null): OverstapStatus {
+export function bepaalOverstapStatus(sub: SubRow, nu: Date, volgendeIncasso: string | null, soloStoptVoorTeam = false): OverstapStatus {
   if (sub.status === 'cancelled') {
     const ingaat = sub.opzegging_ingaat_at ? new Date(sub.opzegging_ingaat_at) : null
     const geplandOpRij = !!sub.gepland_at || !!sub.gepland_mollie_subscription_id
-    return { ...LEEG, opzeggingIntrekbaar: !!ingaat && ingaat.getTime() > nu.getTime() && !geplandOpRij }
+    // Gestopt omdat de klant Team wordt: niet intrekbaar (het zou een nieuw solo-abonnement naast het Team maken).
+    return { ...LEEG, opzeggingIntrekbaar: !!ingaat && ingaat.getTime() > nu.getTime() && !geplandOpRij && !soloStoptVoorTeam }
   }
   if (sub.status !== 'active') return LEEG
 

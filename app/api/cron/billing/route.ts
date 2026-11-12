@@ -8,6 +8,7 @@ import { factureerOpenstaandeBetalingen } from '@/lib/billing/facturatie'
 import { planNaam } from '@/lib/billing/prijzen'
 import { mollieNaarCenten } from '@/lib/billing/geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { isTeamCovered } from '@/lib/teamAccess'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { controleerKoppelingen } from '@/lib/billing/gezondheid'
 import { moetAfsluitingUitstellen, WACHT_OP_BETALING_DAGEN } from '@/lib/billing/openstaandeBetaling'
@@ -154,7 +155,11 @@ export async function GET(req: NextRequest) {
             .in('status', ['active', 'cancelled'])
             .gt('periode_einde', iso(nu))
             .limit(1)
-          if (!vervolg?.length) {
+          // Ook geen afscheidsmail voor een manager die door een team wordt gedekt (solo naar Team): het Team start net.
+          // De einde_mail_at-claim zetten we dan wel, zodat een volgende run het niet opnieuw probeert.
+          if (!vervolg?.length && (await isTeamCovered(s.user_id))) {
+            await billingDb.from('arnobot_subscriptions').update({ einde_mail_at: iso(nu) }).eq('id', s.id).is('einde_mail_at', null)
+          } else if (!vervolg?.length) {
             const { data: geclaimd } = await billingDb
               .from('arnobot_subscriptions')
               .update({ einde_mail_at: iso(nu) })

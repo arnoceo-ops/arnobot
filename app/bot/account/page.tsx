@@ -33,6 +33,8 @@ export default function AccountPage() {
   const [cancelDone, setCancelDone] = useState(false)
   // Telt op zodra het abonnement hier is opgezegd of ingetrokken, zodat de overstapkaarten opnieuw laden.
   const [overstapVersie, setOverstapVersie] = useState(0)
+  // Einddatum van een solo-abonnement dat stopt omdat de klant Team wordt (docs/OVERSTAP_PLAN.md): dan geen opzegknop.
+  const [soloNaarTeamOp, setSoloNaarTeamOp] = useState<string | null>(null)
   // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
@@ -62,7 +64,7 @@ export default function AccountPage() {
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
-      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op) })
+      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op); if (d.solo_naar_team_op) setSoloNaarTeamOp(d.solo_naar_team_op) })
       .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
@@ -415,7 +417,11 @@ export default function AccountPage() {
         <OverstapSectie versie={overstapVersie} />
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
-          {cancelledAt ? (
+          {soloNaarTeamOp ? (
+            <p style={body}>
+              Je solo-abonnement stopt op {new Date(soloNaarTeamOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })} omdat je naar Team gaat. Tot die datum blijft alles werken, daarna loopt je Team.
+            </p>
+          ) : cancelledAt ? (
             <>
               <p style={body}>
                 Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je toegang blijft actief tot {eindigtOp ? new Date(eindigtOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'het einde van de lopende periode'}. Je data blijft bewaard totdat je account wordt afgesloten.

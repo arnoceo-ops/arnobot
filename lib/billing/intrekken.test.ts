@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
   notifyTelegram: vi.fn(async () => {}),
   verstuurBillingMail: vi.fn(async () => true),
   failUpdates: { n: 0 },
+  soloStoptVoorTeam: vi.fn(),
 }))
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }))
@@ -22,6 +23,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.notifyTelegram }))
 vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: vi.fn() }))
 vi.mock('./openstaandeBetaling', () => ({ heeftOpenstaandeBetaling: vi.fn() }))
 vi.mock('./verwerking', () => ({ stopEnBevestig: h.stopEnBevestig }))
+vi.mock('./soloNaarTeam', () => ({ soloStoptVoorTeam: h.soloStoptVoorTeam }))
 vi.mock('./mails', () => ({ verstuurBillingMail: h.verstuurBillingMail }))
 vi.mock('./mollie', () => ({
   heeftGeldigeMachtiging: h.heeftGeldigeMachtiging,
@@ -100,6 +102,8 @@ beforeEach(() => {
   for (const f of [h.heeftGeldigeMachtiging, h.haalAbonnement, h.maakAbonnement, h.stopEnBevestig, h.notifyTelegram, h.verstuurBillingMail]) f.mockReset()
   h.verstuurBillingMail.mockResolvedValue(true)
   h.failUpdates.n = 0
+  h.soloStoptVoorTeam.mockReset()
+  h.soloStoptVoorTeam.mockResolvedValue(null)
   h.heeftGeldigeMachtiging.mockResolvedValue(true)
   h.haalAbonnement.mockResolvedValue({ id: 'x', status: 'active' })
   h.maakAbonnement.mockResolvedValue({ id: 'sub_herstel', status: 'pending' })
@@ -242,6 +246,14 @@ describe('trekOpzeggingIn', () => {
     expect(await trekOpzeggingIn('user_1', NU)).toEqual({ ok: true })
     expect(h.maakAbonnement).toHaveBeenCalledWith(expect.objectContaining({ brutoCent: pro.brutoCent }))
     expect(sub()).toMatchObject({ mollie_subscription_id: 'sub_herstel', mollie_sub_geannuleerd_at: null, gepland_plan: null, gepland_mollie_subscription_id: null })
+  })
+
+  it('gestopt omdat de klant Team wordt: niet in te trekken, er gebeurt niets bij Mollie', async () => {
+    zet(rij(opgezegd))
+    h.soloStoptVoorTeam.mockResolvedValue(ISO('2026-12-04'))
+    expect(await trekOpzeggingIn('user_1', NU)).toMatchObject({ ok: false, status: 409 })
+    expect(h.maakAbonnement).not.toHaveBeenCalled()
+    expect(sub()).toMatchObject({ status: 'cancelled' })
   })
 
   it('zakelijk te laat opgezegd: het Mollie-abonnement loopt nog, er wordt niets nieuws aangemaakt', async () => {

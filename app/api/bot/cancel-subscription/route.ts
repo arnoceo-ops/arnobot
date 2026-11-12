@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml, getEmailTemplate, isValidEmail } from '@/lib/email-templates'
 import { meldOpzegging } from '@/lib/billing/opzeggen'
+import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,6 +37,14 @@ export async function POST() {
 
   if (teamMember && teamMember.role !== 'manager') {
     return NextResponse.json({ error: 'Teamleden hebben geen eigen abonnement om op te zeggen' }, { status: 400 })
+  }
+
+  // Een solo-abonnement dat al stopt omdat de klant Team wordt: opzeggen zou `cancelled_at` op het hele account zetten
+  // en de toegang via het Team na de einddatum afsluiten. Dat kan pas nadat het Team is ingegaan.
+  const stoptVoorTeam = await soloStoptVoorTeam(userId)
+  if (stoptVoorTeam) {
+    const tot = new Date(stoptVoorTeam).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+    return NextResponse.json({ error: `Je solo-abonnement stopt op ${tot} omdat je naar Team gaat. Opzeggen van het Team kan daarna.` }, { status: 409 })
   }
 
   const isManager = teamMember?.role === 'manager'
@@ -108,5 +117,7 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
-  return NextResponse.json({ cancelled_at: data?.cancelled_at ?? null, eindigt_op: sub?.opzegging_ingaat_at ?? null })
+  // Gestopt omdat de klant Team wordt: de pagina toont dan een uitleg in plaats van de opzegknop.
+  const soloNaarTeamOp = await soloStoptVoorTeam(userId)
+  return NextResponse.json({ cancelled_at: data?.cancelled_at ?? null, eindigt_op: sub?.opzegging_ingaat_at ?? null, solo_naar_team_op: soloNaarTeamOp })
 }

@@ -59,6 +59,25 @@ describe('opzegging_ingetrokken', () => {
   })
 })
 
+describe('solo_naar_team', () => {
+  it('noemt de einddatum van het solo-abonnement, het Team en de eerste Team-factuur exclusief BTW', () => {
+    const m = getEmailTemplate('solo_naar_team', 'Test', false, { billing: { datum: DATUM, bedragCent: 15000, perPeriode: 'per maand' } })
+    expect(m.subject).toBe('Je solo-abonnement gaat over naar je Team')
+    expect(m.html).toContain('Je solo-abonnement stopt op 4 december 2026.')
+    expect(m.html).toContain('Tot die datum blijft alles werken en betaal je niets extra.')
+    expect(m.html).toContain('Vanaf 4 december 2026 loopt je Team')
+    expect(m.html).toContain('eerste Team-factuur van €150,00 exclusief BTW per maand.')
+    expect(m.html).toContain('admin@arno.bot')
+    expect(heeftStreepje(m.subject)).toBe(false)
+    expect(heeftStreepje(m.html)).toBe(false)
+  })
+
+  it('jaarlijks Team: per jaar', () => {
+    const m = getEmailTemplate('solo_naar_team', 'Test', false, { billing: { datum: DATUM, bedragCent: 180000, perPeriode: 'per jaar' } })
+    expect(m.html).toContain('€1.800,00 exclusief BTW per jaar.')
+  })
+})
+
 describe('upgrade_gelukt', () => {
   const basis = { datum: DATUM, perPeriode: 'per maand', bedragCent: 5900, bijbetalingCent: 3000 }
 
@@ -120,7 +139,7 @@ describe('terugbetaling_bevestiging', () => {
 })
 
 describe('registratie', () => {
-  it.each(['overstap_ingepland', 'opzegging_ingetrokken', 'upgrade_gelukt', 'upgrade_bijbetaling_mislukt'] as const)('%s staat in EMAIL_META', type => {
+  it.each(['overstap_ingepland', 'opzegging_ingetrokken', 'upgrade_gelukt', 'solo_naar_team', 'upgrade_bijbetaling_mislukt'] as const)('%s staat in EMAIL_META', type => {
     expect(EMAIL_META[type]).toMatchObject({ category: 'user' })
     expect(EMAIL_META[type].label.length).toBeGreaterThan(0)
   })

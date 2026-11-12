@@ -97,6 +97,8 @@ describe('opzegging', () => {
   })
   it('niet meer intrekbaar als hij al is ingegaan', () => {
     expect(bepaalOverstapStatus(rij({ ...opgezegd, opzegging_ingaat_at: ISO('2026-11-15') }), NU, null).opzeggingIntrekbaar).toBe(false)
+    // Gestopt omdat de klant Team wordt: niet intrekbaar.
+    expect(bepaalOverstapStatus(rij(opgezegd), NU, null, true).opzeggingIntrekbaar).toBe(false)
   })
   it('niet automatisch intrekbaar als er ook een overstap gepland staat', () => {
     expect(bepaalOverstapStatus(rij({ ...opgezegd, gepland_at: ISO('2026-11-10') }), NU, null).opzeggingIntrekbaar).toBe(false)

@@ -72,6 +72,7 @@ export type EmailType =
   | 'terugbetaling_bevestiging'
   | 'overstap_ingepland'
   | 'opzegging_ingetrokken'
+  | 'solo_naar_team'
   | 'upgrade_gelukt'
   | 'upgrade_bijbetaling_mislukt'
   | 'winback'
@@ -115,6 +116,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   terugbetaling_bevestiging: { label: 'Terugbetaling',      description: 'Event:na terugbetaling binnen de bedenktijd',                       category: 'user' },
   overstap_ingepland:    { label: 'Overstap ingepland',     description: 'Event:na het inplannen van een overstap (maand naar jaar, Pro naar Basic)', category: 'user' },
   opzegging_ingetrokken: { label: 'Opzegging ingetrokken',  description: 'Event:na het intrekken van een opzegging via de accountpagina',     category: 'user' },
+  solo_naar_team:        { label: 'Solo naar Team',         description: 'Event:een zakelijke solo-klant wordt Team, de solo-incasso stopt en het Team start op de einddatum', category: 'user' },
   upgrade_gelukt:        { label: 'Upgrade naar Pro gelukt', description: 'Event:direct na een upgrade naar Pro, de bijbetaling volgt per incasso', category: 'user' },
   upgrade_bijbetaling_mislukt: { label: 'Upgrade-bijbetaling mislukt', description: 'Event:de bijbetaling bij een upgrade naar Pro is mislukt, plan terug naar Basic', category: 'user' },
   winback:               { label: 'Win-back',               description: 'Dag 45:15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
@@ -434,6 +436,16 @@ export function getEmailTemplate(
             ? `Je abonnement loopt gewoon door tot ${billingDatum(b?.datum)}.`
             : `Je abonnement loopt gewoon door. Je volgende betaling is op ${billingDatum(b?.datum)}.`,
           'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
+    case 'solo_naar_team': {
+      const b = options?.billing
+      return {
+        subject: `${prefix}Je solo-abonnement gaat over naar je Team`,
+        html: mail(
+          `Je solo-abonnement stopt op ${billingDatum(b?.datum)}. Tot die datum blijft alles werken en betaal je niets extra. Vanaf ${billingDatum(b?.datum)} loopt je Team: je ontvangt dan je eerste Team-factuur van ${billingEuro(b?.bedragCent ?? 0)} exclusief BTW ${b?.perPeriode ?? 'per maand'}.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          'NAAR MIJN ACCOUNT →', 'https://arno.bot/bot/account'
         ),
       }
     }
