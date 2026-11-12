@@ -93,8 +93,8 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 ## Afvinklijst
 
 - [x] Migratie (`docs/sql/2026-11-12-overstap-geplande-wijziging.sql`): uitgevoerd door Arno en alleen-lezen gecontroleerd (2026-11-12): 8 van 8 kolommen aanwezig, 13 bestaande rijen, geen enkele met een gevulde `gepland_`-kolom. Commit `1c8def0b`. Verruiming van de `soort`-constraint volgt bij Basic naar Pro
-- [ ] `stopMollieAbonnement`: twee id's, verificatie, `boolean`-variant
-- [ ] Mollie-wrapper: `haalAbonnement` (GET, `nextPaymentDate`, status) en lijst betalingen van een abonnement
+- [x] `stopMollieAbonnement`: twee id's met eigen guardkolommen, bevestiging bij Mollie vóór het vastleggen, geeft `boolean` (2026-11-12). Guard betekent nu "Mollie bevestigt gestopt"; 404 of 410 bij de bevestiging telt als gestopt; een mislukte bevestiging legt niets vast zodat het opnieuw kan. 11 Vitest-tests in `lib/billing/stopAbonnement.test.ts`. `opzeggen.ts` neemt de waarde over in `mollieDirectGestopt`. Bestaand gedrag ongewijzigd zolang `gepland_mollie_subscription_id` leeg is
+- [ ] Mollie-wrapper: `haalAbonnement` (GET, `nextPaymentDate`, status) is klaar (2026-11-12); de lijst betalingen van een abonnement volgt bij de overstap-route
 - [ ] Webhook-conversie plus tests (dubbele webhook, late maandbetaling, stop-fout, opzeggen tussendoor, cron stap 5 bij pending)
 - [ ] Cron stap 5: niet beëindigen bij open of pending betaling
 - [ ] Overstap-route

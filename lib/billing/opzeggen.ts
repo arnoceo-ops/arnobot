@@ -41,8 +41,7 @@ export async function meldOpzegging(userId: string): Promise<OpzeggingResultaat 
 
   let mollieDirectGestopt = false
   if (sub.mollie_subscription_id && moetMollieAbonnementNuStoppen(periodeEinde, ingaatOp)) {
-    await stopMollieAbonnement(sub)
-    mollieDirectGestopt = true
+    mollieDirectGestopt = await stopMollieAbonnement(sub)
   }
   return { ingaatOp, mollieDirectGestopt }
 }

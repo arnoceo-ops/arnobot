@@ -1,8 +1,10 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import {
+  haalAbonnement,
   haalBetaling,
   maakAbonnement,
+  MollieError,
   stopAbonnement,
   type MolliePayment,
 } from './mollie'
@@ -325,18 +327,53 @@ export async function maakMollieAbonnementVoor(sub: SubRow, startVan: Date): Pro
   }
 }
 
-export async function stopMollieAbonnement(sub: SubRow): Promise<void> {
-  if (!sub.mollie_subscription_id || sub.mollie_sub_geannuleerd_at) return
+/**
+ * Stopt één Mollie-abonnement, vraagt Mollie of het echt gestopt is en legt het pas dan vast in
+ * de guardkolom. Zo betekent "guardkolom gezet" altijd "Mollie bevestigt: gestopt", en blijft
+ * een mislukte of onbevestigde stop opnieuw te proberen. Geeft true bij een bevestigde stop.
+ */
+async function stopEnBevestig(sub: SubRow, abonnementId: string, soort: 'huidig' | 'gepland'): Promise<boolean> {
+  const kolom = soort === 'huidig' ? 'mollie_sub_geannuleerd_at' : 'gepland_mollie_sub_geannuleerd_at'
+  const label = soort === 'huidig' ? 'Mollie-abonnement' : 'Gepland Mollie-abonnement'
   try {
-    await stopAbonnement(sub.mollie_customer_id, sub.mollie_subscription_id)
-    await billingDb
-      .from('arnobot_subscriptions')
-      .update({ mollie_sub_geannuleerd_at: iso(new Date()), updated_at: iso(new Date()) })
-      .eq('id', sub.id)
+    await stopAbonnement(sub.mollie_customer_id, abonnementId)
+    // Bevestigen: een abonnement dat Mollie niet meer kent (404, 410) telt als gestopt.
+    const ms = await haalAbonnement(sub.mollie_customer_id, abonnementId).catch(e => {
+      if (e instanceof MollieError && (e.status === 404 || e.status === 410)) return null
+      throw e
+    })
+    if (ms && ms.status !== 'canceled' && ms.status !== 'completed') {
+      throw new Error(`Mollie meldt na het stoppen nog status ${ms.status}`)
+    }
+    const nu = iso(new Date())
+    await billingDb.from('arnobot_subscriptions').update({ [kolom]: nu, updated_at: nu }).eq('id', sub.id)
+    return true
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-abonnement-stoppen' } })
-    await notifyTelegram(`Mollie-abonnement stoppen mislukt op arno.bot\n\nUser: ${sub.user_id}\nAbonnement: ${sub.mollie_subscription_id}\nStop het handmatig in het Mollie-dashboard.`)
+    await notifyTelegram(`${label} stoppen mislukt of niet bevestigd op arno.bot\n\nUser: ${sub.user_id}\nAbonnement: ${abonnementId}\nStop het handmatig in het Mollie-dashboard.`)
+    return false
   }
+}
+
+/**
+ * Stopt het huidige én het geplande Mollie-abonnement van een rij, elk onafhankelijk met een eigen
+ * guardkolom (een mislukte stop van het ene houdt de andere niet tegen). Geeft true als er niets
+ * meer openstaat; false als een stop mislukte of niet bevestigd is. Bestaande aanroepers mogen de
+ * waarde negeren.
+ */
+export async function stopMollieAbonnement(sub: SubRow): Promise<boolean> {
+  let alles = true
+  if (sub.mollie_subscription_id && !sub.mollie_sub_geannuleerd_at) {
+    alles = (await stopEnBevestig(sub, sub.mollie_subscription_id, 'huidig')) && alles
+  }
+  if (
+    sub.gepland_mollie_subscription_id &&
+    !sub.gepland_mollie_sub_geannuleerd_at &&
+    sub.gepland_mollie_subscription_id !== sub.mollie_subscription_id
+  ) {
+    alles = (await stopEnBevestig(sub, sub.gepland_mollie_subscription_id, 'gepland')) && alles
+  }
+  return alles
 }
 
 /** Toegang volgt de betaalde periode: approved_users.expires_at is het enige dat proxy.ts leest. */

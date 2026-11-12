@@ -61,6 +61,7 @@ export interface MolliePayment {
 export interface MollieSubscription {
   id: string
   status: 'pending' | 'active' | 'canceled' | 'suspended' | 'completed'
+  nextPaymentDate?: string | null
 }
 
 export interface MollieMandate {
@@ -185,6 +186,12 @@ export async function stopAbonnement(klantId: string, abonnementId: string): Pro
     if (e instanceof MollieError && (e.status === 404 || e.status === 410 || e.status === 422)) return
     throw e
   }
+}
+
+/** Haalt een abonnement bij Mollie op (status, volgende incassodatum). Alleen lezen. */
+export async function haalAbonnement(klantId: string, abonnementId: string): Promise<MollieSubscription> {
+  if (!/^sub_[A-Za-z0-9]+$/.test(abonnementId)) throw new MollieError(422, 'Ongeldig abonnement-id')
+  return mollie(`/customers/${klantId}/subscriptions/${abonnementId}`)
 }
 
 export async function heeftGeldigeMachtiging(klantId: string): Promise<boolean> {
