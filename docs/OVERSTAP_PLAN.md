@@ -63,7 +63,7 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 | Basic naar Pro | `/bot/upgrade` is een mailto, niet in het billing-systeem; een Mollie-abonnement houdt zijn bedrag | **Richting B (direct, naar rato), zie sectie hieronder; nog één besluit open** |
 | Prijswijziging bij bestaande abonnementen | Voorwaarden art. 4 belooft dit; `mollie()` kent geen PATCH | Besloten: bedrag via Mollie (PATCH op `amount`) aanpassen met een script met voorbeeldrun, pas bouwen wanneer Arno een prijswijziging aankondigt |
 | Pro naar Basic | Niet gezien | Bouwen (Arno, 2026-11-12): per einde betaalde periode, zonder terugbetaling, via dezelfde geplande-wijziging-machinerie |
-| Opzegging ongedaan maken | Niet mogelijk (checkout geeft 409 tot `periode_einde`) | Open |
+| Opzegging ongedaan maken | Niet mogelijk (checkout geeft 409 tot `periode_einde`) | Bouwen (Arno, 2026-11-12): knop "Opzegging intrekken" op de accountpagina; abonnement weer actief, nieuw Mollie-abonnement vanaf het einde van de betaalde periode |
 | Betaalmethode wijzigen (verlopen kaart, ander IBAN) | Alleen als de laatste herhaalbetaling mislukte | Open |
 | Team: cyclus wijzigen of Team naar solo | Admin kan `team.cyclus` zetten; effect midden in een periode en Team naar solo niet onderzocht | Open |
 | Zakelijk naar particulier | Niet gezien | Open |
