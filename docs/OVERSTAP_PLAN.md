@@ -2,10 +2,10 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-11-11
+- **Laatst bijgewerkt:** 2026-11-12
 - **Waar we staan:** plan goedgekeurd door Arno (11-11), nog niets gebouwd. Mollie staat sinds 11-11 weer op de `test_`-sleutel (status-pagina toont "testmodus, nog niet voor gebruikers open"); er zijn geen betalende klanten. De `live_`-sleutel heeft Arno apart opgeslagen, terugzetten bij livegang is een stap op de livegang-checklist. Het plan is aangevallen door een onafhankelijke reviewer (zonder voorgeschiedenis); de bevindingen zijn hieronder verwerkt.
 - **Eerstvolgende stap:** stap 1 t/m 4 en de tests (migratie, `stopMollieAbonnement` met twee id's en verificatie, webhook-conversie, opzeggen). Daarna de overstap-route en de knop (alleen eigenaar en testaccounts).
-- **Open besluit:** solo-jaarklant die halverwege het jaar naar Team wil: laten uitlopen of restant verrekenen (voorstel: laten uitlopen).
+- **Besloten 2026-11-12:** solo naar Team, zie de sectie hieronder. Open: vier Mollie- en Moneybird-vragen (niet in de docs te vinden), te beantwoorden via Mollie-support of een test.
 
 ## Uitgangspunt
 
@@ -29,9 +29,29 @@ Een maandklant (Basic of Pro, particulier of zakelijk) stapt over naar jaar per 
 - **UI en communicatie:** knop op de accountpagina met prijs, ingangsdatum, akkoord op de voorwaarden en (zakelijk) opzegtermijn; bevestigingsmail; Telegram bij elke overstap met referral-info en aantal betaalmaanden.
 - **Referral:** tegoed bij de eerste betaalde jaarperiode of na drie betaalmaanden, wat het eerst komt; bij particulieren pas na 14 dagen. Plafond blijft de maandprijs van de referrer op het moment van toekennen. Tegoed toekennen blijft handmatig.
 
-## Solo naar Team (open, nog niet ontworpen)
+## Solo naar Team (besloten 2026-11-12)
 
-Gat: Team zetten gaat met de hand (`command_manager = true`, `TEAM_ONBOARDING.md` stap 4) en raakt een lopend solo-abonnement niet. Het solo-Mollie-abonnement blijft dan incasseren naast de Team-factuur. Voorstel: één adminactie die `command_manager` zet en het solo-abonnement aan het einde van de betaalde periode stopt; Team-cyclus staat los van de solo-cyclus. Nog uit te zoeken: referral-tegoed en proefperiode bij zo'n overstap, solo-jaarklant halverwege het jaar (open besluit hierboven).
+**Gat:** Team zetten gaat met de hand (`command_manager = true`, `TEAM_ONBOARDING.md` stap 4) en raakt een lopend solo-abonnement niet. Het solo-Mollie-abonnement blijft dan incasseren naast de Team-factuur. Team wordt per periode gefactureerd met een Moneybird-factuur en Mollie-betaallink (cron `team-facturatie`, `teamFacturatie.ts`), niet met incasso of machtiging.
+
+**Besluiten (Arno):**
+1. **Solo maand:** het abonnement loopt uit tot het einde van de lopende betaalde maand. Het Mollie-abonnement wordt direct gestopt (geen nieuwe incasso), de toegang loopt door tot `periode_einde`, `volgende_factuurdatum` van het team wordt op die datum gezet; daarna start de Team-factuur via Moneybird. Ligt de volgende maandincasso binnen 4 dagen, dan loopt die maand nog en start Team een periode later.
+2. **Solo zakelijk jaar:** naar rato terugbetalen vanaf de datum waarop het Team ingaat, als deelterugbetaling in Mollie plus een creditnota in Moneybird, en een nieuwe Team-factuur. Het jaarabonnement bij Mollie stopt.
+3. **Eén adminactie met voorbeeldscherm:** toont het terug te betalen bedrag en de Team-factuur, voert pas uit na bevestiging (geld, niet terug te draaien). Zet `command_manager`, regelt het solo-abonnement en activeert het team (min. seats, cyclus, factuurdatum). Idempotent. De Team-cyclus staat los van de solo-cyclus.
+4. **Naar-rato-formule:** netto per dag maal de resterende dagen vanaf de Team-startdatum, plus 21% btw; terugbetaling bruto.
+5. **Alleen solo zakelijk.** Een particuliere solo-klant die Team wordt is een klanttype-wissel (btw-nummer en KvK nodig) en valt hier buiten.
+
+**Gekozen:** terugbetalen plus nieuwe factuur. **Verworpen:** het restant verrekenen op de eerste Team-factuur (simpeler, maar niet gekozen; terugvallen alleen als terugbetalen niet kan). **Verworpen:** het solo-jaar laten uitlopen (de Team-wens gaat meteen in).
+
+**Gecontroleerd in de code (2026-11-12):** `admin/refund` betaalt altijd volledig terug en beëindigt het hele abonnement (`refund/route.ts`); `creditnotaVoorBetaling` maakt de creditnota voor het volledige bedrag (`facturatie.ts`); een deelterugbetaling beëindigt het abonnement niet (`verwerking.ts`, grens bij volledig); de Team-factuur gebruikt de klantgegevens van de manager uit `arnobot_billing_customers`, die bij een solo-zakelijke klant al bestaan.
+
+**Gevonden gaten voor de bouw:**
+- De afscheidsmail "abonnement afgelopen" (cron billing stap 5) kijkt alleen naar andere solo-abonnementen; de manager zou hem krijgen terwijl het Team net start. Moet op team-dekking (`isTeamCovered`) controleren.
+- Een Mollie-terugbetaling komt in de wachtrij bij te laag saldo, tot er geld binnenkomt (docs.mollie.com/docs/refunds, 2026-11-12). Je uitbetalingen gaan naar Revolut, dus dit kan echt gebeuren: de adminactie toont de refund-status en de Team-factuur wacht er niet op.
+- Mollie weigert dezelfde bedragen binnen een uur op dezelfde betaling als dubbel; de idempotency-key van de deelterugbetaling moet daarbij passen.
+
+**Niet te verifiëren in de docs, nog open:** ondersteunen iDEAL, creditcard en Bancontact terugbetalen (docs: "most payment methods"); is er een maximale termijn na de betaling; worden de transactiekosten teruggegeven; staat Moneybird via `maakCreditnota` een deel-creditnota toe. Uitzoeken via Mollie-support of een test; testmodus bewijst de termijn en de kosten niet.
+
+**Nog uit te zoeken:** referral-tegoed en proefperiode bij zo'n overstap.
 
 ## Afvinklijst
 
@@ -43,5 +63,6 @@ Gat: Team zetten gaat met de hand (`command_manager = true`, `TEAM_ONBOARDING.md
 - [ ] Overstap-route
 - [ ] Knop plus bevestigingsmail (eerst alleen eigenaar en testaccounts)
 - [ ] Referral-copy en -regel, voorwaarden (art. 4, 7, 8), `appHelp.ts`, Q&A, `ABONNEMENTEN.md`
-- [ ] Solo naar Team: ontwerp en adminactie
+- [ ] Solo naar Team: deelterugbetaling (Mollie) en deel-creditnota (Moneybird), afscheidsmail-fix, adminactie met voorbeeldscherm
+- [ ] Solo naar Team: de vier open Mollie- en Moneybird-vragen beantwoorden (support of test)
 - [ ] Test in testmodus met eigen account; vlak voor livegang één echte betaling met terugbetaling
