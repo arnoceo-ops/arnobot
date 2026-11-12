@@ -354,7 +354,18 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
     : `Overstap gepland op arno.bot\n\nUser: ${userId}\n${planNaam(sub.plan)} ${sub.cyclus} naar ${planNaam(doel.plan)} ${doel.cyclus}, ${sub.klant_type}\nIngaand: ${datum}\nNieuw bedrag: €${(bedrag.brutoCent / 100).toFixed(2)}`
   await notifyTelegram(`${soortTekst}\n${await infoVoorTelegram(userId)}`).catch(() => {})
 
-  // Bevestiging aan de klant. Bij een upgrade volgt de betaalbevestiging na de bijbetaling, dus daar geen aparte mail.
+  // Bevestiging aan de klant. Bij een upgrade volgt de betaalbevestiging pas als de incasso is geslaagd (bij SEPA na
+  // enkele werkdagen), dus de klant krijgt meteen een eigen mail die uitlegt wat er is gebeurd en wat er wordt afgeschreven.
+  if (modus === 'upgrade' && direct && upgrade) {
+    const zakelijk = sub.klant_type === 'zakelijk'
+    await verstuurBillingMail(userId, 'upgrade_gelukt', {
+      bedragCent: zakelijk ? bedrag.nettoCent : bedrag.brutoCent,
+      bijbetalingCent: zakelijk ? upgrade.nettoCent : upgrade.brutoCent,
+      zakelijk,
+      datum: geplandIngang.toISOString(),
+      perPeriode: doel.cyclus === 'jaarlijks' ? 'per jaar' : 'per maand',
+    })
+  }
   if (modus === 'overstap') {
     await verstuurBillingMail(userId, 'overstap_ingepland', {
       van: `${planNaam(sub.plan)} ${sub.cyclus}`,

@@ -194,8 +194,19 @@ describe('plaatsUpgrade: maandabonnement (het Pro-abonnement start per einde per
     expect(h.stopEnBevestig).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'rij-1' }), 'sub_huidig', 'huidig')
     // De probe-rij voor de betaalsoort is weer weg.
     expect(h.tabellen.arnobot_payments.some(p => String(p.mollie_payment_id).startsWith('probe-'))).toBe(false)
-    // Geen "overstap ingepland"-mail: bij een upgrade volgt de betaalbevestiging na de bijbetaling.
-    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
+    // Meteen een eigen mail (de betaalbevestiging volgt pas na de incasso), met de bijbetaling en het Pro-bedrag.
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'upgrade_gelukt', {
+      bedragCent: pro.brutoCent, bijbetalingCent: bij.brutoCent, zakelijk: false, datum: ISO('2026-12-04'), perPeriode: 'per maand',
+    })
+  })
+
+  it('zakelijk: de upgrademail toont bedragen exclusief BTW', async () => {
+    zet(basisRij({ klant_type: 'zakelijk' }))
+    await plaatsUpgrade('user_1', NU)
+    const bij = berekenUpgradeBedrag('zakelijk', 'maandelijks', new Date(ISO('2026-11-04')), new Date(ISO('2026-12-04')), NU)
+    expect(h.verstuurBillingMail).toHaveBeenCalledExactlyOnceWith('user_1', 'upgrade_gelukt', expect.objectContaining({
+      zakelijk: true, bijbetalingCent: bij.nettoCent, bedragCent: berekenBedrag('premium', 'maandelijks', 'zakelijk').nettoCent,
+    }))
   })
 
   it('zakelijk jaar: doorlopend jaarabonnement voor Pro en een zakelijk bedrag', async () => {

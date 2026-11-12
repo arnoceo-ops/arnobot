@@ -72,6 +72,7 @@ export type EmailType =
   | 'terugbetaling_bevestiging'
   | 'overstap_ingepland'
   | 'opzegging_ingetrokken'
+  | 'upgrade_gelukt'
   | 'upgrade_bijbetaling_mislukt'
   | 'winback'
   | 'weekly_nudge'
@@ -114,6 +115,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   terugbetaling_bevestiging: { label: 'Terugbetaling',      description: 'Event:na terugbetaling binnen de bedenktijd',                       category: 'user' },
   overstap_ingepland:    { label: 'Overstap ingepland',     description: 'Event:na het inplannen van een overstap (maand naar jaar, Pro naar Basic)', category: 'user' },
   opzegging_ingetrokken: { label: 'Opzegging ingetrokken',  description: 'Event:na het intrekken van een opzegging via de accountpagina',     category: 'user' },
+  upgrade_gelukt:        { label: 'Upgrade naar Pro gelukt', description: 'Event:direct na een upgrade naar Pro, de bijbetaling volgt per incasso', category: 'user' },
   upgrade_bijbetaling_mislukt: { label: 'Upgrade-bijbetaling mislukt', description: 'Event:de bijbetaling bij een upgrade naar Pro is mislukt, plan terug naar Basic', category: 'user' },
   winback:               { label: 'Win-back',               description: 'Dag 45:15 dagen na einde trial, tweede kans aanbieding',            category: 'user' },
   weekly_nudge:          { label: 'Inactivity nudge',       description: 'Recurring:7 dagen geen activiteit',                                 category: 'user' },
@@ -162,6 +164,8 @@ export interface BillingMailOptions {
   perPeriode?: string
   /** Opzegging ingetrokken: false als er geen automatische betaling volgt (particulier jaarabonnement). */
   metBetaling?: boolean
+  /** Upgrade: de bijbetaling nu, in dezelfde vorm als `bedragCent` (zakelijk exclusief btw). */
+  bijbetalingCent?: number
   /** Overstap: zakelijk, dan is `bedragCent` exclusief btw en staat dat zo in de mail. */
   zakelijk?: boolean
   /** Terugbetaling: het ging om de bijbetaling van een upgrade, het abonnement loopt door. */
@@ -429,6 +433,20 @@ export function getEmailTemplate(
           b?.metBetaling === false
             ? `Je abonnement loopt gewoon door tot ${billingDatum(b?.datum)}.`
             : `Je abonnement loopt gewoon door. Je volgende betaling is op ${billingDatum(b?.datum)}.`,
+          'OPEN ARNOBOT →', 'https://arno.bot/bot'
+        ),
+      }
+    }
+    case 'upgrade_gelukt': {
+      const b = options?.billing
+      const btw = b?.zakelijk ? 'exclusief' : 'inclusief'
+      const bijbetaling = (b?.bijbetalingCent ?? 0) > 0
+        ? `De bijbetaling van ${billingEuro(b?.bijbetalingCent ?? 0)}${b?.zakelijk ? ' exclusief BTW' : ''} voor de rest van deze periode wordt de komende werkdagen automatisch afgeschreven.`
+        : 'Er is nu niets bij te betalen.'
+      return {
+        subject: `${prefix}Je upgrade naar Pro is gelukt`,
+        html: mail(
+          `Je hebt nu Pro. ${bijbetaling} Vanaf ${billingDatum(b?.datum)} betaal je ${billingEuro(b?.bedragCent ?? 0)} ${b?.perPeriode ?? 'per maand'}, ${btw} BTW.<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'OPEN ARNOBOT →', 'https://arno.bot/bot'
         ),
       }

@@ -59,6 +59,34 @@ describe('opzegging_ingetrokken', () => {
   })
 })
 
+describe('upgrade_gelukt', () => {
+  const basis = { datum: DATUM, perPeriode: 'per maand', bedragCent: 5900, bijbetalingCent: 3000 }
+
+  it('particulier: Pro nu, bijbetaling per incasso, daarna het Pro-bedrag inclusief BTW', () => {
+    const m = getEmailTemplate('upgrade_gelukt', 'Test', false, { billing: basis })
+    expect(m.subject).toBe('Je upgrade naar Pro is gelukt')
+    expect(m.html).toContain('Je hebt nu Pro.')
+    expect(m.html).toContain('De bijbetaling van €30,00 voor de rest van deze periode wordt de komende werkdagen automatisch afgeschreven.')
+    expect(m.html).toContain('Vanaf 4 december 2026 betaal je €59,00 per maand, inclusief BTW.')
+    expect(m.html).toContain('admin@arno.bot')
+    expect(heeftStreepje(m.subject)).toBe(false)
+    expect(heeftStreepje(m.html)).toBe(false)
+  })
+
+  it('zakelijk: beide bedragen exclusief BTW', () => {
+    const m = getEmailTemplate('upgrade_gelukt', 'Test', false, { billing: { ...basis, zakelijk: true, bedragCent: 4876, bijbetalingCent: 2479 } })
+    expect(m.html).toContain('€24,79 exclusief BTW')
+    expect(m.html).toContain('betaal je €48,76 per maand, exclusief BTW')
+    expect(m.html).not.toContain('inclusief BTW')
+  })
+
+  it('niets bij te betalen: zegt dat, en noemt geen afschrijving', () => {
+    const m = getEmailTemplate('upgrade_gelukt', 'Test', false, { billing: { ...basis, bijbetalingCent: 0 } })
+    expect(m.html).toContain('Er is nu niets bij te betalen.')
+    expect(m.html).not.toContain('automatisch afgeschreven')
+  })
+})
+
 describe('upgrade_bijbetaling_mislukt', () => {
   it('met een geplande overstap: verwijst naar de datum en zegt "eerder Pro"', () => {
     const m = getEmailTemplate('upgrade_bijbetaling_mislukt', 'Test', false, { billing: { datum: DATUM } })
@@ -92,7 +120,7 @@ describe('terugbetaling_bevestiging', () => {
 })
 
 describe('registratie', () => {
-  it.each(['overstap_ingepland', 'opzegging_ingetrokken', 'upgrade_bijbetaling_mislukt'] as const)('%s staat in EMAIL_META', type => {
+  it.each(['overstap_ingepland', 'opzegging_ingetrokken', 'upgrade_gelukt', 'upgrade_bijbetaling_mislukt'] as const)('%s staat in EMAIL_META', type => {
     expect(EMAIL_META[type]).toMatchObject({ category: 'user' })
     expect(EMAIL_META[type].label.length).toBeGreaterThan(0)
   })
