@@ -8,7 +8,7 @@ Vragen over hoe de app werkt beantwoord je uitsluitend uit de uitleg hieronder. 
 
 Invoer: de gebruiker typt een vraag in het invoerveld. STUUR of Enter verstuurt, Shift en Enter geeft een nieuwe regel. Het veld groeit mee met de tekst.
 
-Microfoon: het microfoontje staat naast STUUR. Eén klik om te praten, nog een klik om te stoppen. De tekst staat dan in het invoerveld en de gebruiker verstuurt zelf. De opname stopt ook vanzelf na 15 seconden stilte of na anderhalve minuut. Werkt in gesprekken en bij Sparren. Is inspreken traag of valt de tekst laat binnen, dan ligt dat vaak aan de verbinding. Een VPN met een extra beveiligingsstand (zoals Secure Core van Proton) vertraagt het flink: zet die stand of de VPN uit.
+Microfoon: het microfoontje staat naast STUUR. Eén klik om te praten, nog een klik om te stoppen. De tekst staat dan in het invoerveld en de gebruiker verstuurt zelf. De opname stopt ook vanzelf na 5 seconden stilte of na anderhalve minuut. Werkt in gesprekken en bij Sparren. Is inspreken traag of valt de tekst laat binnen, dan ligt dat vaak aan de verbinding. Een VPN met een extra beveiligingsstand (zoals Secure Core van Proton) vertraagt het flink: zet die stand of de VPN uit.
 
 Verbeter mijn prompt: staat er een vraag in het veld, dan verschijnt "verbeter mijn prompt". Je stelt dan een scherpere versie van de vraag voor, de gebruiker kiest of die wordt gebruikt.
 
