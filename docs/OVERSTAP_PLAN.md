@@ -3,8 +3,8 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-11-12
-- **Waar we staan:** plan goedgekeurd door Arno (11-11), nog niets gebouwd. Mollie staat sinds 11-11 weer op de `test_`-sleutel (status-pagina toont "testmodus, nog niet voor gebruikers open"); er zijn geen betalende klanten. De `live_`-sleutel heeft Arno apart opgeslagen, terugzetten bij livegang is een stap op de livegang-checklist. Het plan is aangevallen door een onafhankelijke reviewer (zonder voorgeschiedenis); de bevindingen zijn hieronder verwerkt.
-- **Eerstvolgende stap:** de migratie is klaar (2026-11-12, kolommen live, niets leest ze). Daarna in deze volgorde, elk onderdeel met een eigen melding vooraf: `stopMollieAbonnement` met twee id's en verificatie, de Mollie-wrapper (GET abonnement, lijst betalingen), webhook-conversie plus tests, cron stap 5, dan de overstap-route en de knop (alleen eigenaar en testaccounts).
+- **Waar we staan (2026-11-12, einde sessie):** de hele achterkant is gebouwd, getest en gepusht, maar nog niet zichtbaar voor klanten (dark launch: alleen de eigenaar en de interne testaccounts, `OVERSTAP_OPEN` staat uit, er zijn geen knoppen). Gebouwd: migratie met de gepland-kolommen (uitgevoerd), `stopMollieAbonnement` voor huidig en gepland abonnement met bevestiging bij Mollie, webhook-omzetting van een geplande wijziging, opzeggen met een geplande overstap, cron stap 5 wacht op een betaling die onderweg is, overstap-route (maand naar jaar, Pro naar Basic), intrekken van een overstap en van een opzegging, en de upgrade van Basic naar Pro met bijbetaling naar rato (route, webhook, rekenregel). 452 tests groen, geen typefouten, lint en CI-controlescripts schoon. Mollie staat sinds 11-11 op de `test_`-sleutel (er zijn geen betalende klanten); de `live_`-sleutel heeft Arno apart opgeslagen, terugzetten bij livegang is een stap op de livegang-checklist. Het plan is aangevallen door een onafhankelijke reviewer; de bevindingen zijn verwerkt.
+- **Eerstvolgende stap (wacht op Arno):** (1) `docs/sql/2026-11-12-betaalsoort-upgrade.sql` uitvoeren in Supabase, anders weigert de upgrade met 503; (2) de voorstelteksten hieronder lezen en goedkeuren of aanpassen; (3) daarna bouwen: de drie mails, de knoppen en kaarten op de accountpagina, voorwaarden, `appHelp.ts` en Q&A, en de drie regels uit `KNOWN_MANUAL_ROUTES` halen (`overstappen`, `overstap-intrekken`, `opzegging-intrekken`, `upgrade`); (4) testen in testmodus met een testaccount en vlak voor livegang één echte betaling met terugbetaling.
 - **Besloten 2026-11-12:** (a) maand naar jaar en solo-maand naar Team worden gebouwd; (b) **solo-jaar naar Team wordt NIET gebouwd** maar pas opgelost als het zich voordoet, volgens de checklist in `docs/SOLO_JAAR_NAAR_TEAM.md` (Arno verwacht dit niet snel); (c) **jaar naar maand bestaat niet**: aan het einde van het jaar opzeggen en daarna opnieuw afrekenen met maand, er komt geen andere route; (d) de scenario-matrix is doorlopen (2026-11-12) en elke rij heeft een keuze.
 
 ## Uitgangspunt
@@ -91,6 +91,37 @@ Opgesteld omdat de voorbereiding niet alle situaties dekte. Status per rij; kolo
 **Besloten (Arno, 2026-11-12):** Pro-toegang direct bij de klik, terugzetten naar Basic als de betaling mislukt. **Verworpen:** pas toegang na een geslaagde betaling (SEPA kan dagen pending zijn; de SaaS-praktijk geeft ook direct toegang).
 
 **Pro naar Basic:** nog niet besloten. Volgens de SaaS-praktijk (Stripe) gaat een downgrade aan het einde van de periode of levert een credit op zonder terugbetaling; voorstel: aan het einde van de betaalde periode, zonder verrekening.
+
+## Teksten ter beoordeling (voorstel, NIET gebouwd; Arno leest eerst, daarna pas bouwen)
+
+Geen streepjes, geen bedragen in `appHelp.ts` (de bedragen op de kaarten komen uit `lib/kostenTarieven.ts`, nooit hardcoded).
+
+**1. Kaart op de accountpagina voor maandklanten, boven "Abonnement opzeggen"**
+- Titel: PER JAAR BETALEN
+- Tekst: "Betaal per jaar en je bespaart €[besparing] per jaar." (Basic €120, Pro €240 uit de prijsbron; zakelijk dezelfde bedragen excl. btw.) Knop: STAP OVER OP JAAR
+- Bevestigingsvenster: "Vanaf [datum] betaal je €[jaarbedrag] per jaar in plaats van €[maandbedrag] per maand. Tot die datum verandert er niets. Je kunt dit tot een dag van tevoren intrekken." Daaronder het vinkje voor de algemene voorwaarden. Zakelijk extra: "Een jaarabonnement heeft een opzegtermijn van één maand voor het einde van het jaar."
+- Na het plannen: "Je stapt over op [datum]." met de link INTREKKEN.
+- Open: de kaart altijd tonen of pas na de tweede betaalmaand.
+
+**2. Kaart voor Basic-klanten: upgrade naar Pro**
+- Titel: PRO NU. Tekst: "Upgrade naar Pro en je hebt Pro meteen. Je betaalt nu €[bijbetaling] bij voor de rest van deze periode, daarna het Pro-bedrag." Knop: UPGRADE NAAR PRO. Het bevestigingsvenster toont het exacte bedrag (door de server berekend) en het vinkje voor de voorwaarden.
+
+**3. Mail na het plannen van een overstap (nieuw sjabloon)**
+- Onderwerp: "Je overstap is ingepland". Tekst: "Je stapt op [datum] over van [oud abonnement] naar [nieuw abonnement]. Vanaf die datum betaal je €[bedrag] [per maand of per jaar]. Tot dan blijft alles zoals het is. Wil je dit toch niet, trek de overstap dan in via je account, uiterlijk een dag voor [datum]. Vragen? Mail naar admin@arno.bot."
+
+**4. Mail na het intrekken van een opzegging**
+- Onderwerp: "Je opzegging is ingetrokken". Tekst: "Je abonnement loopt gewoon door. Je volgende betaling is op [datum]."
+
+**5. Mail bij een mislukte of teruggedraaide bijbetaling van een upgrade**
+- Onderwerp: "De bijbetaling voor je upgrade is niet gelukt". Tekst: "Daarom heb je weer Basic. Je overstap naar Pro per [datum] blijft staan. Wil je eerder Pro, probeer de upgrade dan opnieuw via je account of mail naar admin@arno.bot."
+
+**6. Voorwaarden (eerst door Arno te lezen, geen jurist)**
+- Artikel 4: "Je kunt een maandabonnement per einde van je betaalperiode omzetten naar een jaarabonnement, en Pro naar Basic. Upgraden van Basic naar Pro kan direct: je betaalt het prijsverschil naar rato van de rest van je periode. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en kies daarna een maandabonnement."
+- Artikel 7: "Zeg je op terwijl een overstap gepland staat, dan vervalt de overstap en eindigt je abonnement aan het einde van je betaalde periode."
+- Artikel 8: "Herroep je de bijbetaling van een upgrade, dan gaat alleen de upgrade terug en loopt je abonnement door."
+
+**7. `lib/appHelp.ts` en de Q&A** (verplicht in dezelfde commit als de knoppen)
+- "Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar en Pro kan naar Basic. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken."
 
 ## Afvinklijst
 
