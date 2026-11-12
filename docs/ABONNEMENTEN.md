@@ -174,6 +174,20 @@ Volledige onderbouwing en de discussie die tot deze regel leidde staat in het ge
 
 ---
 
+## Overstappen tussen abonnementen (2026-11-12)
+
+Volledige uitwerking, besluiten en verworpen alternatieven: `docs/OVERSTAP_PLAN.md`. Hier alleen de regels:
+
+- **Maand naar jaar** (zelfde plan) en **Pro naar Basic** (zelfde cyclus): per einde van de betaalde periode, zonder verrekening, intrekbaar tot een dag vóór de ingangsdatum. Minimaal 4 dagen vóór de volgende incasso.
+- **Basic naar Pro** (upgrade): direct. Pro-toegang meteen, het prijsverschil naar rato van de rest van de periode wordt direct bijbetaald met de bestaande machtiging; het Pro-abonnement gaat per einde van de periode in. Mislukt de bijbetaling, dan gaat het plan terug naar Basic.
+- **Jaar naar maand** bestaat niet: aan het einde van het jaar opzeggen en daarna een maandabonnement nemen.
+- **Opzeggen terwijl een overstap gepland staat:** de overstap vervalt, het abonnement eindigt aan het einde van de betaalde periode (ook zakelijk, zonder de extra maand uit artikel 7). **Opzegging intrekken** kan zolang het abonnement nog loopt.
+- **Solo-jaar naar Team** en **Team naar solo:** handmatig, zie `docs/SOLO_JAAR_NAAR_TEAM.md`. **Team maand naar jaar:** Arno zet de cyclus in `/bot/admin/teams` vóór de volgende factuurdatum.
+- **Prijswijziging bij bestaande abonnementen:** pas bouwen bij een aankondiging (Mollie-bedrag per abonnement aanpassen met een script met voorbeeldrun). **Betaalmethode wijzigen:** via de bestaande route na een mislukte incasso.
+- Voorwaarden versie 3.0 (artikel 4, 7 en 8). Alleen voor de eigenaar en de interne testaccounts tot `OVERSTAP_OPEN=true`.
+
+---
+
 ## Technische implementatie
 
 - Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. `elite` verwijderd uit de CHECK-constraint (2026-08-25, migratie hieronder). **Blijft intern `basis`/`premium`/`team`, geen migratie naar `basic`/`pro`** (besloten 2026-08-02): alleen de naar buiten getoonde tekst op `/prijzen` is Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Command/Team.
