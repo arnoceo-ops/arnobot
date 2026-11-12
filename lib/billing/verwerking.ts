@@ -224,6 +224,14 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     await notifyTelegram(`Betaling op beëindigd abonnement (${sub.status}) ontvangen op arno.bot\nBetaling: ${mp.id}\nUser: ${sub.user_id}\nBeoordeel handmatig of terugbetalen nodig is.`)
     return
   }
+  // Een betaling van een gepland abonnement op een inmiddels OPGEZEGD abonnement (de stop kwam te
+  // laat of mislukte): niet omzetten en niet verlengen, de klant heeft opgezegd. Melden, zodat
+  // Arno beslist over terugbetalen.
+  if (sub.status === 'cancelled' && isGeplandeBetaling(sub, mp)) {
+    await notifyTelegram(`Betaling van een geplande wijziging ontvangen na opzegging op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${mp.id}\nDe periode is NIET verlengd. Beoordeel of terugbetalen nodig is.`)
+    return
+  }
+
   // Eerste betaling van een gepland abonnement: eerst de rij omzetten (plan, cyclus, bedrag, btw,
   // Mollie-id), pas daarna de periode verlengen. Anders telt de verkeerde periodelengte mee.
   let huidig = sub

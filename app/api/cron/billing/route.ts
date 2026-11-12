@@ -97,7 +97,9 @@ export async function GET(req: NextRequest) {
 
         // 3. Opgezegd en alles wat verschuldigd was is betaald: Mollie-abonnement stoppen.
         if (
-          s.status === 'cancelled' && s.mollie_subscription_id && !s.mollie_sub_geannuleerd_at &&
+          s.status === 'cancelled' &&
+          ((s.mollie_subscription_id && !s.mollie_sub_geannuleerd_at) ||
+            (s.gepland_mollie_subscription_id && !s.gepland_mollie_sub_geannuleerd_at)) &&
           s.periode_einde && s.opzegging_ingaat_at &&
           moetMollieAbonnementNuStoppen(new Date(s.periode_einde), new Date(s.opzegging_ingaat_at))
         ) {

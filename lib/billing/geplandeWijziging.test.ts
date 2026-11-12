@@ -235,6 +235,16 @@ describe('geplande wijziging: andere gevallen', () => {
     expect(h.notifyTelegram).not.toHaveBeenCalled()
   })
 
+  it('zet niet om en verlengt niet als de klant inmiddels heeft opgezegd, en meldt het', async () => {
+    zet(basisRij({ ...naarJaar, status: 'cancelled', opzegging_ingaat_at: ISO('2026-12-04') }))
+    h.haalBetaling.mockResolvedValue(betaling())
+    await verwerkMolliebetaling('tr_nieuw1')
+    expect(sub()).toMatchObject({ status: 'cancelled', cyclus: 'maandelijks', periode_einde: ISO('2026-12-04'), gepland_cyclus: 'jaarlijks' })
+    expect(h.notifyTelegram).toHaveBeenCalledTimes(1)
+    expect(h.verstuurBillingMail).not.toHaveBeenCalled()
+    expect(h.factureerBetaling).not.toHaveBeenCalled()
+  })
+
   it('negeert een betaling van een geplande wijziging op een al beëindigd abonnement', async () => {
     zet(basisRij({ ...naarJaar, status: 'ended' }))
     h.haalBetaling.mockResolvedValue(betaling())
