@@ -21,6 +21,8 @@ const VERVOLGVRAAG_KANS_BASIS = 1 / 3
 // gebruiker: Bel je ..."). Weghalen bij opslaan (session-end) én bij tonen (actieopvolging), want
 // er staan al opgeslagen acties met dit voorvoegsel.
 export function schoonUitdaging(tekst: string): string {
+  // "GEEN" = het gesprek ging niet over sales, dus er is geen actie om later aan te herinneren.
+  if (/^\s*geen\.?\s*$/i.test(tekst)) return ''
   const zonder = tekst.replace(/^\s*(concrete\s+)?(actie|uitdaging)(\s+voor\s+(de\s+gebruiker|jou))?\s*:\s*/i, '').trim()
   return zonder ? zonder.charAt(0).toUpperCase() + zonder.slice(1) : tekst.trim()
 }
