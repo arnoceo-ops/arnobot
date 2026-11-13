@@ -1,0 +1,78 @@
+name: Dependabot-alert-melding
+
+# Waarom dit bestaat: een nieuwe kwetsbaarheid in een afhankelijkheid werd tot nu toe pas
+# bij de maandcheck gezien (ooit bleven 2 CRITICAL CVE's onopgemerkt). Deze workflow
+# vraagt dagelijks de open Dependabot-alerts op en stuurt een Telegram-bericht voor elke
+# alert die in de afgelopen 25 uur is aangemaakt (1 uur overlap tegen randgevallen).
+#
+# Bewust een dagelijkse poll en geen event-trigger: GitHub Actions heeft geen
+# trigger voor Dependabot-alerts.
+#
+# Vereist: TELEGRAM_BOT_TOKEN en TELEGRAM_CHAT_ID (zelfde repo-secrets als notify-issue)
+# en, omdat de standaard GITHUB_TOKEN geen Dependabot-alerts mag lezen, het secret
+# DEPENDABOT_ALERTS_TOKEN: een fine-grained token voor alleen deze repo met
+# "Dependabot alerts: Read-only". Zonder dat secret faalt de run zichtbaar (rood),
+# zodat een stille storing opvalt.
+#
+# Veiligheid: alleen metadata, geen checkout, geen PR-code. Alerttekst gaat via
+# env-variabelen en jq, niet geinterpoleerd in het script.
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      uren:
+        description: 'Aantal uren terugkijken (voor een test, bv. 720)'
+        required: false
+        default: '25'
+
+permissions:
+  contents: read
+
+jobs:
+  melding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Haal alerts op en meld nieuwe
+        env:
+          GH_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || github.token }}
+          HEEFT_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN != '' }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPO: ${{ github.repository }}
+          UREN: ${{ github.event.inputs.uren || '25' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
+            echo "Secrets TELEGRAM_BOT_TOKEN en/of TELEGRAM_CHAT_ID ontbreken."; exit 1
+          fi
+          if [ "$HEEFT_TOKEN" != "true" ]; then
+            echo "Secret DEPENDABOT_ALERTS_TOKEN ontbreekt; de standaard token mag geen alerts lezen."; exit 1
+          fi
+          TG_TOKEN=$(printf '%s' "$TG_TOKEN" | tr -d '[:space:]"'"'")
+          TG_CHAT=$(printf '%s' "$TG_CHAT" | tr -d '[:space:]"'"'")
+
+          SINDS=$(date -u -d "${UREN} hours ago" +%Y-%m-%dT%H:%M:%SZ)
+          gh api --paginate "repos/${REPO}/dependabot/alerts?state=open&per_page=100" > alerts.json
+          jq -s --arg sinds "$SINDS" '
+            add // [] | map(select(.created_at >= $sinds))
+            | sort_by(.security_advisory.severity)' alerts.json > nieuw.json
+
+          N=$(jq 'length' nieuw.json)
+          echo "Nieuwe alerts sinds ${SINDS}: ${N}"
+          [ "$N" -eq 0 ] && exit 0
+
+          TEXT=$(jq -r '
+            "Nieuwe Dependabot-alerts: \(length)\n\n" +
+            (map("\(.security_advisory.severity | ascii_upcase): \(.dependency.package.name) (\(.security_advisory.cve_id // "geen CVE"))\n\(.html_url)") | join("\n\n"))
+          ' nieuw.json)
+
+          RESP=$(curl -sS -w '\n%{http_code}' "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "text=${TEXT}")
+          CODE=$(tail -n1 <<<"$RESP")
+          if [ "$CODE" != "200" ]; then
+            echo "Telegram gaf HTTP $CODE: $(head -n -1 <<<"$RESP")"; exit 1
+          fi
+          echo "Telegram-bericht verstuurd."
