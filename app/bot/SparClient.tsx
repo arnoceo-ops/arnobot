@@ -292,14 +292,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     const timer = setTimeout(() => setTranscribeFout(false), 5000)
     return () => clearTimeout(timer)
   }, [transcribeFout])
-  // Melding als de opname stopte omdat het scherm uitging of de pagina naar de achtergrond ging
-  // (iOS Safari pauzeert een webpagina dan, en daarmee de microfoon).
-  const [opnameOnderbroken, setOpnameOnderbroken] = useState(false)
-  useEffect(() => {
-    if (!opnameOnderbroken) return
-    const timer = setTimeout(() => setOpnameOnderbroken(false), 8000)
-    return () => clearTimeout(timer)
-  }, [opnameOnderbroken])
   const [verfijnAlGoed, setVerfijnAlGoed] = useState(false)
   const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
@@ -762,7 +754,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     const onHidden = () => {
       if (document.visibilityState === 'hidden' && recordingRef.current) {
         stopRecording()
-        setOpnameOnderbroken(true)
       }
     }
     document.addEventListener('visibilitychange', onHidden)
@@ -2838,11 +2829,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {transcribeFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Ik kon je opname niet omzetten naar tekst. Probeer het opnieuw.
-            </p>
-          )}
-          {opnameOnderbroken && (
-            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
-              De opname is gestopt omdat je scherm uitging. Houd het scherm aan tijdens het inspreken.
             </p>
           )}
           {verfijnFout && (
