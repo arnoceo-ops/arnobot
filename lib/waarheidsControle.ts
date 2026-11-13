@@ -71,3 +71,23 @@ export async function beoordeelAntwoord(invoer: ControleInvoer, client?: Anthrop
   const tekst = res.content.map(b => (b.type === 'text' ? b.text : '')).join('')
   return parseOordeel(tekst)
 }
+
+// ---- Taalcontrole: alleen echte fouten in het Nederlands ----
+// Engelse woorden en uitdrukkingen zijn bewust toegestaan (zolang ze niet half vertaald zijn), gangbare
+// Nederlandse uitdrukkingen en stijlkeuzes tellen niet. Zie docs/CLAUDE_HISTORY.md, 2026-11-13.
+
+export type Taalfout = { zin: string; soort: 'grammatica' | 'woord' | 'onbegrijpelijk' | 'vertaald'; waarom: string }
+
+export const TAAL_PROMPT = `Je controleert Nederlandse tekst van een AI-coach op echte taalfouten. Markeer alleen: grammaticale fouten (lidwoord, verbuiging, werkwoordsvorm, woordvolgorde), niet-bestaande woorden en zinnen die niet te volgen zijn. Markeer NIET: Engelse woorden, Engelse zinnen of Engelse uitdrukkingen (die zijn bewust toegestaan, zolang ze niet half vertaald zijn), gangbare Nederlandse uitdrukkingen, spreektaal en stijlkeuzes. Markeer wel een Engelse uitdrukking die letterlijk en onhandig in het Nederlands is vertaald. Antwoord alleen met JSON: {"fouten":[{"zin":"letterlijk uit de tekst","soort":"grammatica|woord|onbegrijpelijk|vertaald","waarom":"kort"}]}. Is er geen fout: een lege lijst.`
+
+export async function beoordeelNederlands(antwoord: string, client?: Anthropic): Promise<{ fouten: Taalfout[]; fout?: string }> {
+  const c = client ?? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const res = await c.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: TAAL_PROMPT, messages: [{ role: 'user', content: antwoord }] })
+  const tekst = res.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+  try {
+    const o = JSON.parse(tekst.slice(tekst.indexOf('{'), tekst.lastIndexOf('}') + 1)) as { fouten?: Taalfout[] }
+    return { fouten: Array.isArray(o.fouten) ? o.fouten : [] }
+  } catch {
+    return { fouten: [], fout: 'JSON niet leesbaar' }
+  }
+}

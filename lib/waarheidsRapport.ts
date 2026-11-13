@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { ARNO_ERVARING } from '@/lib/arnoFeiten'
-import { beoordeelAntwoord, type Bewering, type Oordeel } from '@/lib/waarheidsControle'
+import { beoordeelAntwoord, beoordeelNederlands, type Bewering, type Oordeel, type Taalfout } from '@/lib/waarheidsControle'
 
 // Wekelijkse steekproef voor Arno: alle antwoorden van de afgelopen week met een bewaarde bron
 // (arnobot_rds_logs.bron_context) gaan door de waarheidscontrole. Arno krijgt een mail met de
@@ -18,7 +18,7 @@ export const MAX_LAAG = 5
 export const AANTAL_CONTROLE = 5
 
 type Rij = { id: string; user_id: string | null; session_id: string; question: string; answer: string; created_at: string; bron_context: string | null }
-export type Beoordeeld = { rij: Rij; eerder: string[]; oordeel: Oordeel; ongedekt: Bewering[]; hoogste: 'hoog' | 'middel' | 'laag' | null }
+export type Beoordeeld = { rij: Rij; eerder: string[]; oordeel: Oordeel; ongedekt: Bewering[]; hoogste: 'hoog' | 'middel' | 'laag' | null; taalfouten: Taalfout[] }
 
 export type Rapport = {
   gecontroleerd: number
@@ -28,6 +28,7 @@ export type Rapport = {
   middel: number
   laag: number
   schoon: number
+  taalfouten: { aantal: number; antwoorden: number; voorbeelden: { datum: string; fout: Taalfout }[] }
   geselecteerd: { hoog: Beoordeeld[]; middel: Beoordeeld[]; laag: Beoordeeld[]; controle: Beoordeeld[] }
 }
 
@@ -98,7 +99,9 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
       })
       if (oordeel.fout) { mislukt++; return null }
       const ongedekt = oordeel.beweringen.filter(b => !b.gedekt)
-      return { rij, eerder, oordeel, ongedekt, hoogste: hoogsteErnst(ongedekt) } as Beoordeeld
+      // Taalcontrole mag de waarheidscontrole nooit laten mislukken.
+      const taal = await beoordeelNederlands(rij.answer).catch(() => ({ fouten: [] as Taalfout[] }))
+      return { rij, eerder, oordeel, ongedekt, hoogste: hoogsteErnst(ongedekt), taalfouten: taal.fouten } as Beoordeeld
     } catch {
       mislukt++
       return null
@@ -116,6 +119,11 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
     middel: op('middel').length,
     laag: op('laag').length,
     schoon: schoon.length,
+    taalfouten: {
+      aantal: beoordeeld.reduce((n, b) => n + b.taalfouten.length, 0),
+      antwoorden: beoordeeld.filter(b => b.taalfouten.length > 0).length,
+      voorbeelden: beoordeeld.flatMap(b => b.taalfouten.map(fout => ({ datum: b.rij.created_at.slice(0, 10), fout }))).slice(0, 10),
+    },
     geselecteerd: {
       hoog: op('hoog').slice(0, MAX_HOOG),
       middel: op('middel').slice(0, MAX_MIDDEL),
@@ -159,6 +167,12 @@ ${claims ? `<ul style="margin:8px 0;padding-left:18px">${claims}</ul>` : ''}
 </div>`
 }
 
+function taalSectie(r: Rapport): string {
+  if (r.taalfouten.aantal === 0) return ''
+  const regels = r.taalfouten.voorbeelden.map(v => `<li>${esc(v.fout.zin.slice(0, 240))}<br><i style="color:#6b7280">${esc(v.fout.soort)}: ${esc(v.fout.waarom.slice(0, 160))} (${v.datum})</i></li>`).join('')
+  return `<h3 style="margin:24px 0 4px">Taalfouten in het Nederlands (${r.taalfouten.aantal} in ${r.taalfouten.antwoorden} antwoorden)</h3><p style="color:#6b7280;margin:4px 0">Alleen echte fouten: grammatica, niet-bestaande woorden, onbegrijpelijke of half vertaalde zinnen. Engelse woorden en uitdrukkingen tellen niet.</p><ul style="padding-left:18px">${regels}</ul>`
+}
+
 export function maakRapportMail(r: Rapport): { onderwerp: string; html: string } {
   const g = r.geselecteerd
   const sectie = (titel: string, lijst: Beoordeeld[], label: string) =>
@@ -169,7 +183,7 @@ export function maakRapportMail(r: Rapport): { onderwerp: string; html: string }
 <b>${r.hoog}</b> met hoge ernst (cijfers, feiten, Arno of ArnoBot), <b>${r.middel}</b> middel (over de gebruiker), <b>${r.laag}</b> algemene kennis. ${r.schoon} antwoorden zonder vlag.
 ${r.zonderBron ? `<br>${r.zonderBron} antwoorden zonder bewaarde bron zijn niet gecontroleerd.` : ''}${r.mislukt ? `<br>${r.mislukt} controles zijn mislukt.` : ''}</p>
 <p style="color:#6b7280">Per antwoord: zet je het eens met wat hier in jouw naam staat? Wat niet klopt, geef je door, dan wordt het een testgeval en een gerichte aanpassing.</p>
-${sectie('Hoge ernst', g.hoog, 'HOOG')}${sectie('Middel', g.middel, 'MIDDEL')}${sectie('Algemene kennis (zijn dit jouw woorden?)', g.laag, 'ALGEMEEN')}${sectie('Controle: zonder vlag, kijk of de beoordelaar iets mist', g.controle, 'CONTROLE')}
+${taalSectie(r)}${sectie('Hoge ernst', g.hoog, 'HOOG')}${sectie('Middel', g.middel, 'MIDDEL')}${sectie('Algemene kennis (zijn dit jouw woorden?)', g.laag, 'ALGEMEEN')}${sectie('Controle: zonder vlag, kijk of de beoordelaar iets mist', g.controle, 'CONTROLE')}
 </div>`
   return { onderwerp: `ArnoBot waarheidscontrole: ${r.hoog} hoog, ${r.middel} middel (${r.gecontroleerd} gecontroleerd)`, html }
 }
