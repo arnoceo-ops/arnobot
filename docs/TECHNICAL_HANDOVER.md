@@ -552,9 +552,6 @@ Generieke boolean feature-flag key/value-store.
 ### `arnobot_kosten_tracking`
 Maandelijkse kosten/omzet-tracking (Abacus Trackrecord-tab).
 
-### `arno_blog_widget_logs` / `arno_blog_widget_blocked`
-Log resp. IP-blocklist van de anonieme blog-chatwidget. De widget is op 2026-11-13 verwijderd (ArnoBot is er alleen voor ingelogde gebruikers); de tabellen bevatten alleen nog historie en worden door geen code meer gelezen of beschreven.
-
 ### `inactivity_nudge_log`
 Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per gebruiker.
 
