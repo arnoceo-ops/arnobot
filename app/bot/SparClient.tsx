@@ -292,6 +292,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     const timer = setTimeout(() => setTranscribeFout(false), 5000)
     return () => clearTimeout(timer)
   }, [transcribeFout])
+  // Melding als de opname stopte omdat het scherm uitging of de pagina naar de achtergrond ging
+  // (iOS Safari pauzeert een webpagina dan, en daarmee de microfoon).
+  const [opnameOnderbroken, setOpnameOnderbroken] = useState(false)
+  useEffect(() => {
+    if (!opnameOnderbroken) return
+    const timer = setTimeout(() => setOpnameOnderbroken(false), 8000)
+    return () => clearTimeout(timer)
+  }, [opnameOnderbroken])
   const [verfijnAlGoed, setVerfijnAlGoed] = useState(false)
   const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
@@ -578,7 +586,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     } catch {}
     let silenceTimer: ReturnType<typeof setInterval> | null = null
     let maxTimer: ReturnType<typeof setTimeout> | null = null
+    // Scherm aan houden tijdens het inspreken: zodra het scherm uitgaat pauzeert iOS Safari de
+    // pagina en stopt de microfoon. Niet overal ondersteund, dan gaat alles zoals voorheen.
+    let wakeLock: { release: () => Promise<void> } | null = null
     const stopWatching = () => {
+      if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null }
       if (silenceTimer) { clearInterval(silenceTimer); silenceTimer = null }
       if (maxTimer) { clearTimeout(maxTimer); maxTimer = null }
       if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null }
@@ -689,6 +701,15 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
+      try {
+        const wl = (navigator as unknown as { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
+        if (wl) {
+          const lock = await wl.request('screen')
+          // Opname was in de tussentijd al afgelopen: meteen weer loslaten.
+          if (recordingRef.current) wakeLock = lock
+          else lock.release().catch(() => {})
+        }
+      } catch {}
       maxTimer = setTimeout(() => stopRecording(), OPNAME_MAX_MS)
       // Stilte-detectie. Alleen actief als de AudioContext echt draait: een 'suspended' context
       // levert alleen nullen, en dat zou iemand die wel praat na 10 seconden afkappen.
@@ -733,6 +754,20 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (recorder && recorder.state === 'recording') recorder.stop()
     else stopRequestedRef.current = true
   }
+
+  // Zodra de pagina verborgen raakt tijdens het inspreken: netjes stoppen en bewaren wat er al is.
+  // Zonder dit stopt de microfoon stilletjes terwijl de gebruiker doorpraat.
+  useEffect(() => {
+    if (!recording) return
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden' && recordingRef.current) {
+        stopRecording()
+        setOpnameOnderbroken(true)
+      }
+    }
+    document.addEventListener('visibilitychange', onHidden)
+    return () => document.removeEventListener('visibilitychange', onHidden)
+  }, [recording])
 
   function handleNavAttempt(dest: string) {
     if (started && messages.length > 0 && !showSluiten) {
@@ -2803,6 +2838,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           {transcribeFout && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
               Ik kon je opname niet omzetten naar tekst. Probeer het opnieuw.
+            </p>
+          )}
+          {opnameOnderbroken && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#cc4444', textAlign: 'center', marginTop: 8 }}>
+              De opname is gestopt omdat je scherm uitging. Houd het scherm aan tijdens het inspreken.
             </p>
           )}
           {verfijnFout && (
