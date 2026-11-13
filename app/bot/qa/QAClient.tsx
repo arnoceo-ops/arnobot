@@ -23,7 +23,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Wat is ArnoBot precies?',
-        a: 'ArnoBot is een AI-salescoach, half man, half machine, die uitsluitend antwoord geeft vanuit de expertise en content van Arno Diepeveen. Meer dan 40 jaar sales ervaring uit de voorhoede, 20 jaar sales blogs met inzichten, cases en coaching. Er komt geen generieke AI aan te pas. Just Arno.',
+        a: 'ArnoBot is een AI-salescoach, half man, half machine, die uitsluitend antwoord geeft vanuit de expertise en content van Arno Diepeveen. 44 jaar saleservaring uit de voorhoede, 20 jaar sales blogs met inzichten, cases en coaching. Er komt geen generieke AI aan te pas. Just Arno.',
       },
       {
         q: 'Waarom geen ChatGPT o.i.d.?',

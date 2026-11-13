@@ -12,7 +12,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.arno.bot'),
   title: 'ArnoBot: Jouw Personal Sales Coach',
-  description: 'ArnoBot is jouw persoonlijke salescoach. Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. 24/7 beschikbaar.',
+  description: 'ArnoBot is jouw persoonlijke salescoach. Gebaseerd op 44 jaar saleservaring, 35 jaar ondernemerschap en 17 jaar business coaching. 24/7 beschikbaar.',
   robots: { index: false, follow: false },
 };
 
@@ -28,7 +28,7 @@ const organizationJsonLd = {
   name: 'ArnoBot',
   url: 'https://www.arno.bot',
   logo: 'https://www.arno.bot/arnobot-logo.png',
-  description: 'ArnoBot is een AI-salescoach, gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching.',
+  description: 'ArnoBot is een AI-salescoach, gebaseerd op 44 jaar saleservaring, 35 jaar ondernemerschap en 17 jaar business coaching.',
   founder: {
     '@type': 'Person',
     name: 'Arno Diepeveen',

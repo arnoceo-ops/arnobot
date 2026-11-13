@@ -95,7 +95,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       profiel={profileRes.data.profiel}
       voiceEnabled={voiceEnabled}
       taglineTitle="Ik ben ARNOBOT: Jouw 24/7 salescoach."
-      taglineSub="Gebaseerd op 40 jaar sales executie, 30 jaar bedrijven bouwen, 20 jaar blogs schrijven en 15 jaar scaling up coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
+      taglineSub="Gebaseerd op 44 jaar saleservaring, 35 jaar ondernemerschap en 17 jaar business coaching. Jouw vragen worden beantwoord uit mijn bibliotheek van 369.000 woorden."
       resumeSessionId={resume}
       voornaam={firstNameOf(userRes.data?.voornaam as string | null | undefined, userRes.data?.full_name as string | null | undefined)}
       groeibalans={groeibalans}
