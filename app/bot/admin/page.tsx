@@ -6,6 +6,10 @@ import DownloadPdfButton from './DownloadPdfButton'
 import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
 import CopyButton from './CopyButton'
+import {
+  fetchAnalyses, fetchCoachingVersies, analyseAsText, coachingAsText, ontwikkelpuntTekst,
+  type AnalyseRij, type CoachingVersie,
+} from '@/lib/adminGesprekkenTabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,18 +58,23 @@ function parseDate(input: string): string {
 export default async function ArnoBotAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string }>
+  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string; tab?: string }>
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
 
   const params = await searchParams
+  const tab: 'gesprekken' | 'analyses' | 'coaching' =
+    params.tab === 'analyses' || params.tab === 'coaching' ? params.tab : 'gesprekken'
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const from = parseDate(params.from || '') || yesterday
-  const to = parseDate(params.to || '') || today
-  const sort = params.sort || 'date_desc'
+  // Gesprekken: standaard gisteren t/m vandaag. Analyses en Coaching komen traag binnen, dus
+  // daar is leeg = geen datumbegrenzing (een rapportage van vorige maand blijft zichtbaar).
+  const from = parseDate(params.from || '') || (tab === 'gesprekken' ? yesterday : '')
+  const to = parseDate(params.to || '') || (tab === 'gesprekken' ? today : '')
+  // Sorteren op aantal vragen kan alleen bij gesprekken.
+  const sort = tab !== 'gesprekken' && (params.sort === 'count_desc' || params.sort === 'count_asc') ? 'date_desc' : (params.sort || 'date_desc')
   const naamParam = params.naam || ''
   let userFilter = params.user || ''
 
@@ -88,16 +97,23 @@ export default async function ArnoBotAdminPage({
     if (match) userFilter = match.userId
   }
 
-  const { data } = await supabase
-    .from('arnobot_rds_logs')
-    .select('*')
-    .gte('created_at', `${from}T00:00:00`)
-    .lte('created_at', `${to}T23:59:59`)
-    .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
-    .order('created_at', { ascending: true })
-    .limit(2000)
+  const { data } = tab === 'gesprekken'
+    ? await supabase
+        .from('arnobot_rds_logs')
+        .select('*')
+        .gte('created_at', `${from}T00:00:00`)
+        .lte('created_at', `${to}T23:59:59`)
+        .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('created_at', { ascending: true })
+        .limit(2000)
+    : { data: null }
 
   const rows: LogRow[] = data || []
+
+  const tabFilter = { from: from || undefined, to: to || undefined, userFilter: userFilter || undefined }
+  const analyses: AnalyseRij[] = tab === 'analyses' ? await fetchAnalyses(tabFilter) : []
+  const coachingVersies: CoachingVersie[] = tab === 'coaching' ? await fetchCoachingVersies(tabFilter) : []
+  if (sort === 'date_asc') { analyses.reverse(); coachingVersies.reverse() }
 
   // alleGebruikers is already fetched above — build naamMap from it directly
   // (avoids a large .in() query that breaks PostgREST URL limits with many users)
@@ -158,7 +174,11 @@ export default async function ArnoBotAdminPage({
   if (sort === 'count_asc')  sessionList.sort((a, b) => a[1].length - b[1].length)
 
   const filterNaam = userFilter ? (naamMap[userFilter] || alleNamen.find(u => u.userId === userFilter)?.naam || '') : ''
-  const dateRange = from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`
+  const dateRange = !from && !to ? 'alle data'
+    : from && to ? (from === to ? fmtDate(from) : `${fmtDate(from)} t/m ${fmtDate(to)}`)
+    : from ? `vanaf ${fmtDate(from)}` : `t/m ${fmtDate(to)}`
+  const aantalResultaten = tab === 'analyses' ? analyses.length : tab === 'coaching' ? coachingVersies.length : sessionList.length
+  const tabHref = (t: string) => `/bot/admin?tab=${t}${userFilter ? `&user=${userFilter}` : ''}`
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -167,9 +187,23 @@ export default async function ArnoBotAdminPage({
 
       <div style={{ marginBottom: '40px' }}>
         <p style={{ color: '#f59e0b', fontSize: '12px', letterSpacing: '4px', marginBottom: '8px' }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 32px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
+        <h1 style={{ fontSize: '48px', fontWeight: 700, margin: '0 0 24px 0', letterSpacing: '-1px' }}>Gesprekken</h1>
 
-        {flagged.length > 0 && (
+        <div style={{ display: 'flex', gap: '28px', marginBottom: '32px', borderBottom: '1px solid #374151' }}>
+          {([['gesprekken', 'GESPREKKEN'], ['analyses', 'ANALYSES'], ['coaching', 'COACHING']] as const).map(([t, label]) => (
+            <a key={t} href={tabHref(t)}
+              style={{
+                fontSize: '12px', letterSpacing: '3px', fontWeight: 700, textDecoration: 'none', paddingBottom: '12px',
+                color: tab === t ? '#f59e0b' : '#6b7280',
+                borderBottom: tab === t ? '2px solid #f59e0b' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}>
+              {label}
+            </a>
+          ))}
+        </div>
+
+        {tab === 'gesprekken' && flagged.length > 0 && (
           <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 32 }}>
             <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>GEMARKEERD: OFF-TOPIC</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -193,6 +227,7 @@ export default async function ArnoBotAdminPage({
         )}
 
         <form method="GET" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input type="hidden" name="tab" value={tab} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
             <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>GEBRUIKER</label>
             <input
@@ -222,8 +257,8 @@ export default async function ArnoBotAdminPage({
               style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
               <option value="date_desc">Nieuwste eerst</option>
               <option value="date_asc">Oudste eerst</option>
-              <option value="count_desc">Meeste vragen eerst</option>
-              <option value="count_asc">Minste vragen eerst</option>
+              {tab === 'gesprekken' && <option value="count_desc">Meeste vragen eerst</option>}
+              {tab === 'gesprekken' && <option value="count_asc">Minste vragen eerst</option>}
             </select>
           </div>
           <div className="admin-form-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
@@ -231,22 +266,156 @@ export default async function ArnoBotAdminPage({
               style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px' }}>
               LAAD
             </button>
-            {sessionList.length > 0 && (
+            {aantalResultaten > 0 && (
               <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
-                  href={`/api/admin/export-csv?from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
+                  href={`/api/admin/export-csv?tab=${tab}&from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
                   style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                   ↓ DOWNLOAD CSV
                 </a>
-                <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />
+                {tab === 'gesprekken' && <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />}
               </div>
             )}
           </div>
         </form>
       </div>
 
-      {sessionList.length === 0 ? (
+      {tab === 'analyses' ? (
+        analyses.length === 0 ? (
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>Geen analyses gevonden ({dateRange}).</p>
+        ) : (
+          <div>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>
+              {analyses.length} analyse{analyses.length !== 1 ? 's' : ''}
+            </p>
+            {analyses.map(a => {
+              const naam = naamMap[a.user_id]
+              return (
+                <div key={a.id} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', margin: 0 }}>
+                      ANALYSE{a.session_count ? ` · ${a.session_count} GESPREKKEN` : ''}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      {naam && (
+                        <a href={`/bot/admin?tab=analyses&from=${from}&to=${to}&sort=${sort}&user=${a.user_id}`}
+                          style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>{naam}</a>
+                      )}
+                      <CopyButton text={analyseAsText(a, naam)} label="ANALYSE" />
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
+                    {fmtDate(a.created_at.slice(0, 10))} · {new Date(a.created_at).toLocaleTimeString('nl-NL')}
+                  </p>
+                  <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
+                    dangerouslySetInnerHTML={{ __html: renderAnswer(a.analyse_text) }} />
+                </div>
+              )
+            })}
+          </div>
+        )
+      ) : tab === 'coaching' ? (
+        coachingVersies.length === 0 ? (
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>Geen coachingrapportages gevonden ({dateRange}).</p>
+        ) : (
+          <div>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>
+              {coachingVersies.length} rapportage{coachingVersies.length !== 1 ? 's' : ''}
+            </p>
+            {coachingVersies.map(v => {
+              const naam = naamMap[v.user_id]
+              const pijlers: [string, number | null, string | null, string | null][] = [
+                ['MINDSET', v.mindset_score, v.mindset_richting, v.mindset_diagnose],
+                ['SYSTEEM', v.systeem_score, v.systeem_richting, v.systeem_diagnose],
+                ['ACTIE', v.actie_score, v.actie_richting, v.actie_diagnose],
+              ]
+              return (
+                <div key={v.id} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b', margin: 0 }}>
+                      COACHING{v.conversation_count ? ` · ${v.conversation_count} GESPREKKEN` : ''}
+                      {v.stagnatie ? ' · STAGNATIE' : v.weinig_voortgang ? ' · WEINIG VOORTGANG' : ''}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      {naam && (
+                        <a href={`/bot/admin?tab=coaching&from=${from}&to=${to}&sort=${sort}&user=${v.user_id}`}
+                          style={{ fontSize: '14px', color: '#f1f5f9', margin: 0, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>{naam}</a>
+                      )}
+                      <CopyButton text={coachingAsText(v, naam)} label="COACHING" />
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
+                    {fmtDate(v.created_at.slice(0, 10))} · {new Date(v.created_at).toLocaleTimeString('nl-NL')}
+                  </p>
+
+                  {pijlers.map(([label, score, richting, diagnose]) => (
+                    <div key={label} style={{ marginBottom: '20px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: '#f1f5f9' }}>
+                        {label} <span style={{ color: '#f59e0b' }}>{score ?? '-'}</span>
+                        {richting && <span style={{ color: '#6b7280', fontWeight: 400 }}> · {richting}</span>}
+                      </p>
+                      {diagnose && (
+                        <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
+                          dangerouslySetInnerHTML={{ __html: renderAnswer(diagnose) }} />
+                      )}
+                    </div>
+                  ))}
+
+                  {v.voortgang && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: '#f1f5f9' }}>VOORTGANG</p>
+                      <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
+                        dangerouslySetInnerHTML={{ __html: renderAnswer(v.voortgang) }} />
+                    </div>
+                  )}
+
+                  {v.ontwikkelpunten && v.ontwikkelpunten.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: '#f1f5f9' }}>ONTWIKKELPUNTEN</p>
+                      {v.ontwikkelpunten.map((p, i) => {
+                        const { tekst, pijlar } = ontwikkelpuntTekst(p)
+                        return (
+                          <p key={i} style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af', marginBottom: '8px' }}>
+                            {i + 1}. {pijlar && <span style={{ color: '#6b7280' }}>[{pijlar}] </span>}
+                            <span dangerouslySetInnerHTML={{ __html: renderAnswer(tekst) }} />
+                          </p>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {v.signalen && v.signalen.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: '#f1f5f9' }}>SIGNALEN</p>
+                      {v.signalen.map((s, i) => (
+                        <p key={i} style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af', marginBottom: '4px' }}>{s}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {v.blogs && v.blogs.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: '#f1f5f9' }}>BLOGTIPS</p>
+                      {v.blogs.map((b, i) => (
+                        <p key={i} style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af', marginBottom: '4px' }}>
+                          {b.title}{b.reden ? ` : ${b.reden}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {!v.volledig && (
+                    <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      Van deze rapportage zijn alleen scores, diagnoses en voortgang bewaard.
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )
+      ) : sessionList.length === 0 ? (
         <p style={{ color: '#6b7280', fontSize: '14px' }}>Geen gesprekken gevonden voor {dateRange}.</p>
       ) : (
         <div>

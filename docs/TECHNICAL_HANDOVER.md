@@ -145,7 +145,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 
 | Pagina | Functie |
 |---|---|
-| `/bot/admin` | Overzicht alle vraag/antwoord-logs, filters, PDF-download |
+| `/bot/admin` | Overzicht alle vraag/antwoord-logs, filters, PDF-download. Sinds 2026-11-13 drie tabs met hetzelfde filter (gebruiker, van/tot, sortering): Gesprekken, Analyses (`arnobot_analyses`) en Coaching (`arnobot_coaching_history`, volledige rapportages). CSV-download per tab (`/api/admin/export-csv?tab=...`), PDF alleen bij Gesprekken. Bij Analyses en Coaching is een leeg datumveld = geen begrenzing. Data en tekstopmaak in `lib/adminGesprekkenTabs.ts` |
 | `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling |
 | `/bot/admin/emails` | E-mail templates + crons testen |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar) |
@@ -470,7 +470,7 @@ Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot
 Meest recente coachingprofiel per gebruiker (upsert, niet append): scores + diagnoses op mindset, systeem, actie, plus voortgangstekst.
 
 ### `arnobot_coaching_history`
-Insert-only geschiedenis van eerdere coachingrapporten (naast `arnobot_coaching`, dat 1 rij per gebruiker blijft).
+Insert-only geschiedenis van eerdere coachingrapporten (naast `arnobot_coaching`, dat 1 rij per gebruiker blijft). Sinds 2026-11-13 (`docs/sql/2026-11-13-coaching-history-volledig.sql`) bewaart elke nieuwe rapportage ook ontwikkelpunten, signalen, blogtips, richtingen, stagnatie-vlaggen, aantal gesprekken en de gebruikte sessie- en analyse-id's. Rapportages van vóór die datum hebben alleen scores, diagnoses en voortgang; de laatste ervan wordt in de admin-tab Coaching aangevuld uit de live rij van `arnobot_coaching` (alleen als die binnen 2 minuten hoort bij dezelfde rapportage). De oude velden `focus`, `blinde_vlekken` en `opdracht` bestaan in de historietabel maar worden niet meer gevuld, nieuwe rapportages hebben ze niet.
 
 ### `arnobot_coaching_scores`
 Historische coachingscores voor trendanalyse.
