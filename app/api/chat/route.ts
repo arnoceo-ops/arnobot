@@ -635,11 +635,22 @@ export async function POST(req: NextRequest) {
           }
 
           let logId: string | null = null
-          const { data: logRow } = await supabase
+          // De volledige context die het model kreeg (fragmenten, geheugen, profiel, bijlagetekst) wordt
+          // mee bewaard voor de waarheidscontrole (lib/waarheidsControle.ts): zonder dit is achteraf niet
+          // vast te stellen wat "uit de bibliotheek" kwam. PDF's en afbeeldingen zijn geen tekst en staan er niet in.
+          const bronContext = [context, geheugentekst, profielContext, coachingContext, documentText ? `BIJLAGE:\n${documentText}` : '']
+            .filter(Boolean).join('\n\n---\n\n').slice(0, 60000)
+          const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }
+          let { data: logRow, error: logFout } = await supabase
             .from('arnobot_rds_logs')
-            .insert({ question, answer, ip, session_id: sessionId, user_id: userId })
+            .insert({ ...basisLog, bron_context: bronContext })
             .select('id')
             .single()
+          if (logFout) {
+            // Nooit een gespreksregel kwijtraken omdat de extra kolom ontbreekt of de context te groot is.
+            console.error('[chat] log met bron_context mislukt, opnieuw zonder:', logFout.message)
+            ;({ data: logRow } = await supabase.from('arnobot_rds_logs').insert(basisLog).select('id').single())
+          }
           logId = logRow?.id ?? null
 
           controller.enqueue(encoder.encode(`\n<<<ARNOBOT_META>>>${JSON.stringify({ log_id: logId })}`))
