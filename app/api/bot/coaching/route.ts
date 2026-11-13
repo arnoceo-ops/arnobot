@@ -632,6 +632,19 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     actie_score: doc.actie_score,
     actie_diagnose: doc.actie_diagnose,
     voortgang: doc.voortgang,
+    // Volledige rapportage bewaren (kolommen toegevoegd 2026-11-13, docs/sql/2026-11-13-coaching-history-volledig.sql):
+    // de live rij in arnobot_coaching wordt overschreven, dus alleen hier blijft de rest bestaan.
+    ontwikkelpunten: doc.ontwikkelpunten,
+    blogs: doc.blogs,
+    signalen: doc.signalen,
+    mindset_richting: doc.mindset_richting,
+    systeem_richting: doc.systeem_richting,
+    actie_richting: doc.actie_richting,
+    weinig_voortgang: doc.weinig_voortgang,
+    stagnatie: doc.stagnatie,
+    conversation_count: doc.conversation_count,
+    used_session_ids: payload.used_session_ids,
+    used_analyse_ids: payload.used_analyse_ids,
   })
   if (historyErr) console.error('[coaching history insert]', historyErr.message)
   // Bewust geen opruiming/cap op arnobot_coaching_history: coachingsrapporten komen traag
