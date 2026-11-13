@@ -33,6 +33,10 @@
       "schedule": "45 6 * * *"
     },
     {
+      "path": "/api/cron/waarheidscontrole",
+      "schedule": "15 7 * * 1"
+    },
+    {
       "path": "/api/cron/uitdaging-herinnering",
       "schedule": "10 3 * * *"
     },

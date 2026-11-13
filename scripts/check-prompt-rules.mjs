@@ -49,6 +49,7 @@ const KNOWN_NO_SANITIZER = new Set([
   'app/api/bot/search-linkedin-profile/route.ts', // opzoektaak, gestructureerd resultaat
   'app/api/admin/test-email/route.ts',       // admin-testtool, geen gebruikersoutput
   'app/api/admin/feedback-analyse/route.ts', // interne analyse voor Arno in /bot/admin
+  'lib/waarheidsControle.ts',                // JSON met beweringen, alleen voor Arno's wekelijkse steekproef
 ])
 
 // ── Check 2: regelmarkers in de prompt ───────────────────────────────────────
@@ -76,6 +77,7 @@ const KNOWN_NOT_USER_FACING = new Set([
   'app/api/admin/analyse/route.ts',                  // ANALYSE-tab briefing voor Arno in /bot/admin
   'app/api/admin/analyse-chat/route.ts',             // doorvraag-chat op die briefing, alleen Arno
   'lib/metaAnalyse.ts',                              // meta-analyse voor Arno (admin/meta-analyse + cron-mail)
+  'lib/waarheidsControle.ts',                        // waarheidscontrole voor Arno, JSON
   'app/api/bot/verfijn/route.ts',                    // promptverbeteraar: schrijft in de ik-vorm van de gebruiker zelf, dus bewust niet "jij/jou"; heeft wel RULE_NO_DASH
 ])
 
