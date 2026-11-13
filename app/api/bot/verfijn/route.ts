@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
-import { RULE_NO_DASH, RULE_JIJ_JOU } from '@/lib/systemPrompt'
+import { RULE_NO_DASH } from '@/lib/systemPrompt'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -13,34 +13,28 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { vraag, profiel, context } = await req.json()
+    // Het profiel van de gebruiker wordt bewust NIET meer meegegeven (besluit Arno 2026-11-13): het
+    // model maakte er aannames van ("CFO van een ziekenhuis") die de gebruiker niet bedoelde.
+    const { vraag, context } = await req.json()
     if (!vraag?.trim()) return NextResponse.json({ verfijnd: vraag })
     if (typeof vraag !== 'string' || vraag.length > 2000) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
     }
-
-    const profielHint = profiel ? `
-Profiel van de gebruiker:
-- Rol: ${profiel.rol || 'onbekend'}
-- Markt: ${Array.isArray(profiel.markt) ? profiel.markt.join(', ') : profiel.markt || 'onbekend'}
-- Wat hij/zij verkoopt: ${profiel.wat_verkoop_je || 'onbekend'}
-- Ideale klant: ${profiel.ideale_klant || 'onbekend'}
-- Grootste uitdaging: ${profiel.uitdaging || 'onbekend'}` : ''
 
     const contextHint = context ? `\n\nVorig antwoord van ArnoBot in dit gesprek:\n"${context.slice(0, 800)}"` : ''
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
-      system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${profielHint}${contextHint}
+      system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${contextHint}
 
 Als er een vorig antwoord van ArnoBot aanwezig is, is de input een vervolg op dat gesprek. Een statement, antwoord of aanvulling is dan net zo geldig als een vraag.
 
 Beoordeel eerst of de input herkenbare inhoud bevat. Als de input onzin, wartaal, willekeurige tekens of volledig onbegrijpelijk is zonder enige context: reageer dan uitsluitend met het woord: ONBEGRIJPELIJK
 
-Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar behoud de kern. Gebruik het profiel en de gesprekscontext om de reactie relevanter te maken. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde versie. Geen uitleg, geen inleiding, geen aanhalingstekens.
+Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar behoud de kern en de bedoeling van de gebruiker. Voeg geen details, aannames of onderwerpen toe die de gebruiker niet noemde. Een algemene vraag blijft algemeen: noem geen branche, functie, klanttype of situatie die niet in de input staat. Een kort antwoord of bevestiging op een vraag van ArnoBot (zoals "ja" of "nee") geef je ongewijzigd terug. Schrijf platte tekst zonder opmaak. Herschrijf niet voor het herschrijven. Geef alleen de verbeterde versie. Geen uitleg, geen inleiding, geen aanhalingstekens.
 
-${RULE_JIJ_JOU}
+Schrijf vanuit de gebruiker zelf, in de ik-vorm, als de vraag of reactie die hij zelf zou sturen. Nooit als antwoord of tegenvraag aan de gebruiker.
 ${RULE_NO_DASH}`,
       messages: [{ role: 'user', content: vraag }]
     })

@@ -76,6 +76,7 @@ const KNOWN_NOT_USER_FACING = new Set([
   'app/api/admin/analyse/route.ts',                  // ANALYSE-tab briefing voor Arno in /bot/admin
   'app/api/admin/analyse-chat/route.ts',             // doorvraag-chat op die briefing, alleen Arno
   'lib/metaAnalyse.ts',                              // meta-analyse voor Arno (admin/meta-analyse + cron-mail)
+  'app/api/bot/verfijn/route.ts',                    // promptverbeteraar: schrijft in de ik-vorm van de gebruiker zelf, dus bewust niet "jij/jou"; heeft wel RULE_NO_DASH
 ])
 
 // Routes waar de "geen tijdgebonden aanwijzingen"-regel niet van toepassing is omdat de
