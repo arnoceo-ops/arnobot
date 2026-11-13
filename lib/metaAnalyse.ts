@@ -78,7 +78,7 @@ export async function runMetaAnalyse(
 
   if (!alleSessies?.length) return { status: 'geen_gesprekken' }
 
-  // Filter op goedgekeurde ArnoBot-gebruikers: sluit arno.blog widget en Sales Canvas uit
+  // Filter op goedgekeurde ArnoBot-gebruikers: sluit Sales Canvas en overige accounts uit
   const kandidaatUserIds = [...new Set(alleSessies.map(s => s.user_id).filter(Boolean) as string[])]
   const { data: goedgekeurdeGebruikers } = kandidaatUserIds.length > 0
     ? await supabase.from('approved_users').select('user_id, voornaam, achternaam').in('user_id', kandidaatUserIds)

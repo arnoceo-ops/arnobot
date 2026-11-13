@@ -157,7 +157,6 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
 | `/bot/admin/voice-test` | Testomgeving voor de ElevenLabs voice/TTS-integratie |
-| `/bot/admin/widget` | Losse log-viewer voor de publieke embed-widget |
 | `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel) |
 | `/bot/admin/kennisbank` | Kennisbank-beheer: RSS-bronnen, chunks per bron |
 
@@ -554,7 +553,7 @@ Generieke boolean feature-flag key/value-store.
 Maandelijkse kosten/omzet-tracking (Abacus Trackrecord-tab).
 
 ### `arno_blog_widget_logs` / `arno_blog_widget_blocked`
-Log resp. IP-blocklist voor de anonieme publieke blog-chatwidget.
+Log resp. IP-blocklist van de anonieme blog-chatwidget. De widget is op 2026-11-13 verwijderd (ArnoBot is er alleen voor ingelogde gebruikers); de tabellen bevatten alleen nog historie en worden door geen code meer gelezen of beschreven.
 
 ### `inactivity_nudge_log`
 Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per gebruiker.

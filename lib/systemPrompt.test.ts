@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from './systemPrompt'
+import { buildRdsSystemPrompt, buildVoiceSystemPrompt } from './systemPrompt'
 
 function joinBlocks(blocks: { text: string }[]) {
   return blocks.map(b => b.text).join('')
@@ -39,23 +39,17 @@ describe('buildRdsSystemPrompt', () => {
     const blocks = buildRdsSystemPrompt(profielContextSample, contextSample, 3, 'normaal', 0)
     expect(joinBlocks(blocks)).toContain('Gebruik NOOIT een streepje als leesteken')
   })
+
+  it('bevat de regel die persoonlijke uitspraken over Arno verbiedt', () => {
+    const blocks = buildRdsSystemPrompt(profielContextSample, contextSample, 3, 'normaal', 0)
+    expect(joinBlocks(blocks)).toContain('Doe nooit uitspraken over Arno Diepeveen als persoon')
+  })
 })
 
-describe('buildWidgetSystemPrompt', () => {
-  const contextSample = 'Voorbeeld kennisbank-context met wat inhoud.'
-
-  it.each([
-    [true],
-    [false],
-  ])('produceert de verwachte tekst (isLastAnswer=%s)', (isLastAnswer) => {
-    const blocks = buildWidgetSystemPrompt(contextSample, isLastAnswer)
-    expect(joinBlocks(blocks)).toMatchSnapshot()
-  })
-
-  it('markeert alleen het statische blok als cachebaar', () => {
-    const blocks = buildWidgetSystemPrompt(contextSample, false)
-    expect(blocks).toHaveLength(2)
-    expect(blocks[0].cache_control).toEqual({ type: 'ephemeral' })
-    expect(blocks[1].cache_control).toBeUndefined()
+// De spraakroute heeft geen moderatiepoort (een extra aanroep kost latency), dus deze regel is
+// daar de enige bescherming tegen verzonnen persoonlijke feiten.
+describe('buildVoiceSystemPrompt', () => {
+  it('bevat de regel die persoonlijke uitspraken over Arno verbiedt', () => {
+    expect(joinBlocks(buildVoiceSystemPrompt())).toContain('Doe nooit uitspraken over Arno Diepeveen als persoon')
   })
 })

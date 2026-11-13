@@ -50,8 +50,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
-      // Zelf gehoste lettertypen. Cross-origin toestaan, want de embed-widget
-      // (public/arnobot-widget.js) laadt ze op andere sites vanaf arno.bot. De woff2-bestanden
+      // Zelf gehoste lettertypen. Cross-origin toestaan (historisch: de embed-widget
+      // laadde ze op andere sites, sinds 2026-11-13 verwijderd). De woff2-bestanden
       // lang cachen (bestandsnamen veranderen alleen via scripts/fetch-fonts.mjs); fonts.css
       // heeft een vaste naam en cachet daarom maar een dag.
       {

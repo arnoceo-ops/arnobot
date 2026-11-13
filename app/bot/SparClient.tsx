@@ -1533,12 +1533,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           }
           setAttachedFile(null)
 
-          if (data.blocked) {
-            setBlocked(true)
-            setMessages(prev => [...prev, { role: 'arno', content: '', hint: 'blocked' }])
-            return
-          }
-
           if (data.forceLogout) {
             setBlocked(true)
             setMessages(prev => [...prev, { role: 'arno', content: data.answer || 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.', hint: null }])
@@ -1556,7 +1550,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
         // Streaming hoofdantwoord: tekst komt in brokjes binnen, direct op het scherm bijgewerkt.
         setAttachedFile(null)
-        const hintHeader = res.headers.get('X-Hint')
 
         if (!res.body) {
           setMessages(prev => [...prev, { role: 'arno', content: 'Geen antwoord ontvangen.' }])
@@ -1568,7 +1561,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         // banner geen functie meer en verdwijnt hij, in plaats van voor altijd te blijven staan.
         setMessages(prev => [
           ...prev.map(m => m.hint === 'dual_session' ? { ...m, hint: null } : m),
-          { role: 'arno', content: '', hint: hintHeader ?? null, log_id: null, feedback: null }
+          { role: 'arno', content: '', hint: null, log_id: null, feedback: null }
         ])
         setStreamingStarted(true)
 
@@ -3193,11 +3186,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     </div>
                   </div>
                 )}
-                {msg.hint === 'last_chance' && (
-                  <div className="msg-hint">
-                    Lekker bezig. Je hebt nog één kans om echt tot de kern te komen.
-                  </div>
-                )}
                 {msg.hint === 'dual_session' && (
                   <div className="msg-cta">
                     <p>Je hebt al een actief gesprek open op een ander venster of apparaat.</p>
@@ -3208,14 +3196,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     >
                       DIT BEN IK, GA HIER VERDER
                     </button>
-                  </div>
-                )}
-                {(msg.hint === 'salescanvas' || msg.hint === 'blocked') && !isNativeApp && (
-                  <div className="msg-cta">
-                    <p>{msg.hint === 'blocked' ? 'Toch proberen, hè? 😂' : <>Als je echt de diepte in wilt, doe dan een free trial op <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer" style={{color:'#f59e0b'}}>salescanvas.app</a></>}</p>
-                    <a href="https://salescanvas.app" target="_blank" rel="noopener noreferrer" className="msg-cta-btn">
-                      SALESCANVAS
-                    </a>
                   </div>
                 )}
               </div>

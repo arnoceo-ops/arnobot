@@ -27,11 +27,12 @@ function detectPromptInjection(text: string): boolean {
 }
 
 
+// Alleen arno.bot. De anonieme embed-widget op arno.blog is op 2026-11-13 verwijderd: ArnoBot
+// is er alleen voor ingelogde gebruikers. Een Origin-header zegt niets over wie een verzoek
+// stuurt (curl kan hem zetten), dus hij mag nooit meer bepalen of auth overgeslagen wordt.
 const ALLOWED_ORIGINS = [
   'https://arno.bot',
   'https://www.arno.bot',
-  'https://arno.blog',
-  'https://www.arno.blog',
 ]
 
 function corsHeaders(origin: string | null): Record<string, string> {
@@ -40,26 +41,13 @@ function corsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Expose-Headers': 'X-Hint',
+    'Access-Control-Expose-Headers': 'X-Dagelijks-Gebruikt',
   }
 }
 
 export async function OPTIONS(req: NextRequest) {
   const origin = req.headers.get('origin')
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) })
-}
-
-export async function GET(req: NextRequest) {
-  const origin = req.headers.get('origin')
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
-  if (!ip) return new NextResponse(null, { status: 204, headers: corsHeaders(origin) })
-  const { data } = await supabase
-    .from('arno_blog_widget_blocked')
-    .select('ip')
-    .eq('ip', ip)
-    .limit(1)
-    .single()
-  return NextResponse.json({ blocked: !!data }, { headers: corsHeaders(origin) })
 }
 
 import { telAnthropicLimiet } from '@/lib/capaciteit'
@@ -70,7 +58,9 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@/lib/geheugenContext'
-import { buildRdsSystemPrompt, buildWidgetSystemPrompt } from '@/lib/systemPrompt'
+import { buildRdsSystemPrompt } from '@/lib/systemPrompt'
+import { PERSOONLIJK_ANTWOORD } from '@/lib/persoonlijkeVragen'
+import { bouwAppModeratiePrompt } from '@/lib/moderatie'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
 import { limietVeilig } from '@/lib/limietVeilig'
@@ -139,14 +129,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-// Per-IP: max 5 requests per minuut (widget + bot)
-const ipRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'),
-  prefix: 'arnobot:ip',
-})
-
-// Per-user: max 30 berichten per uur (bot only)
+// Per-user: max 30 berichten per uur
 const userRateLimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(30, '1 h'),
@@ -200,7 +183,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { question, history: rawHistory, userId: bodyUserId, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
+    const { question, history: rawHistory, profiel, sessionId: clientSessionId, antwoordLengte: rawLengte, document: rawDocument, forceSession } = body
     let antwoordLengte = (['kort', 'normaal', 'uitgebreid'] as const).includes(rawLengte) ? rawLengte as 'kort' | 'normaal' | 'uitgebreid' : 'normaal'
     const origin = req.headers.get('origin')
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
@@ -221,29 +204,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400, headers: corsHeaders(origin) })
     }
 
-    const isWidget = origin?.includes('arno.blog') ?? false
-
-    // Eerst de goedkope poorten, pas daarna de RAG-pipeline starten. De pipeline hieronder start
-    // meteen een Haiku- en Voyage-aanroep: stond hij vóór de auth- en IP-controle, dan kostte elk
-    // anoniem verzoek geld terwijl het daarna toch een 401 of 429 kreeg (gevonden 2026-11-04).
-    // De IP-limiet geldt alleen voor de anonieme widget. Ingelogde gebruikers hebben hun eigen
-    // limiet per gebruiker hieronder: een IP-limiet raakte een heel team op één kantoornetwerk,
-    // want die 5 per minuut werd gedeeld.
-    // Test-IP's overgeslagen: dezelfde reden als isTestIdentifier hieronder, localhost draait bij
-    // lokale E2E-runs meerdere testbestanden kort na elkaar tegen dezelfde production-Redis-instantie.
-    let sessionUserId: string | null = null
-    if (isWidget) {
-      if (ip && !isTestIdentifier(ip)) {
-        const { success: ipOk } = await limietVeilig(ipRateLimit, ip)
-        if (!ipOk) {
-          await notifyRateLimit(ip, 'IP-limiet (5/min)', `arnobot:notify:ip:${ip}`)
-          return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
-        }
-      }
-    } else {
-      sessionUserId = (await auth()).userId
-      if (!sessionUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
-    }
+    // Eerst de goedkope poort (auth), pas daarna de RAG-pipeline starten. De pipeline hieronder
+    // start meteen een Haiku- en Voyage-aanroep: stond hij vóór de auth-controle, dan kostte elk
+    // anoniem verzoek geld terwijl het daarna toch een 401 kreeg (gevonden 2026-11-04). Elke
+    // gebruiker heeft zijn eigen limiet per gebruiker hieronder: een IP-limiet raakte een heel
+    // team op één kantoornetwerk.
+    const userId = (await auth()).userId
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
 
     // Start de VOLLEDIGE RAG-pipeline (queryherschrijving + opzoeking + rerank) meteen,
     // parallel aan de moderatie-check en de rest hierna, in plaats van pas te beginnen ná
@@ -255,8 +222,7 @@ export async function POST(req: NextRequest) {
     // samengevoegd vóórdat er wordt herrangschikt. Vangt het geval op waarin één enkele
     // herschrijving de vraag verkeerd inschat en daardoor relevante stof mist (kosten zijn
     // hier bewust geen overweging, kwaliteit staat voorop).
-    const ragContextPromise: Promise<string> = (!isWidget
-      ? Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
+    const ragContextPromise: Promise<string> = Sentry.startSpan({ name: 'chat.rag-query-expansion', op: 'ai.claude' }, () =>
           client.messages.create({
             model: 'claude-haiku-4-5-20251001',
             max_tokens: 150,
@@ -269,85 +235,76 @@ export async function POST(req: NextRequest) {
             return lines.length > 0 ? [question, ...lines] : [question]
           })
           .catch(() => [question])
-      : Promise.resolve([question])
-    ).then(searchQueries =>
+          .then(searchQueries =>
       Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunksMultiQuery(searchQueries, question, 20))
     ).then(relevant => formatChunksForPrompt(relevant))
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
 
-    // Voor ArnoBot-gebruikers (niet-widget): altijd de Clerk session gebruiken, nooit de body-waarde vertrouwen
-    let userId: string | null = bodyUserId ?? null
-    if (!isWidget) {
-      userId = sessionUserId
-      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders(origin) })
-
-      // Document-upload alleen voor ingelogde gebruikers, nooit voor de anonieme widget.
-      // Bewust ná de auth-check: dit voorkomt dat een niet-ingelogde aanvrager (Origin
-      // vervalst/weggelaten) de server download/mammoth-verwerkingswerk laat doen vóórdat er
-      // ooit een 401 wordt teruggegeven.
-      //
-      // storagePath (niet meer data/base64 in de body): een document ging tot 2026-09-17 als
-      // base64 in deze JSON-body mee, wat boven ~3,3MB ruwe bestandsgrootte al de harde 4,5MB
-      // request-bodylimiet van een Vercel-functie raakte, ook al claimde de UI een limiet van
-      // 10MB. SparClient.tsx uploadt nu net als een audiobijlage rechtstreeks naar Supabase
-      // Storage en stuurt hier alleen het pad mee.
-      if (rawDocument && typeof rawDocument === 'object'
-        && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
-        && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
-        const { buffer, error: downloadError } = await downloadAndDeleteAttachment(userId, rawDocument.storagePath)
-        if (downloadError || !buffer) {
-          return NextResponse.json({ error: downloadError ?? 'bestand_niet_leesbaar' }, { status: 400, headers: corsHeaders(origin) })
-        }
-        if (buffer.length > MAX_DOCUMENT_BYTES) {
-          return NextResponse.json({ error: 'bestand_te_groot' }, { status: 400, headers: corsHeaders(origin) })
-        }
-        const result = await buildDocumentContentBlock({ name: rawDocument.name, mediaType: rawDocument.mediaType, data: buffer.toString('base64') })
-        if (result.error) {
-          return NextResponse.json({ error: result.error }, { status: 400, headers: corsHeaders(origin) })
-        }
-        documentBlock = result.block
-        documentText = result.extractedText
+    // userId komt altijd uit de Clerk-sessie, nooit uit de body.
+    // Document-upload staat bewust ná de auth-check hierboven: dit voorkomt dat een niet-ingelogde
+    // aanvrager de server download/mammoth-verwerkingswerk laat doen vóórdat er een 401 komt.
+    //
+    // storagePath (niet meer data/base64 in de body): een document ging tot 2026-09-17 als
+    // base64 in deze JSON-body mee, wat boven ~3,3MB ruwe bestandsgrootte al de harde 4,5MB
+    // request-bodylimiet van een Vercel-functie raakte, ook al claimde de UI een limiet van
+    // 10MB. SparClient.tsx uploadt nu net als een audiobijlage rechtstreeks naar Supabase
+    // Storage en stuurt hier alleen het pad mee.
+    if (rawDocument && typeof rawDocument === 'object'
+      && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
+      && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+      const { buffer, error: downloadError } = await downloadAndDeleteAttachment(userId, rawDocument.storagePath)
+      if (downloadError || !buffer) {
+        return NextResponse.json({ error: downloadError ?? 'bestand_niet_leesbaar' }, { status: 400, headers: corsHeaders(origin) })
       }
-
-      // Per-user rate limit: max 30 berichten per uur. Test-accounts overgeslagen (besloten
-      // 2026-08-24): de dubbele-sessie-E2E-test verstuurt binnen één run al meerdere berichten
-      // op hetzelfde test-account tegen de echte production-Redis-instantie, en liep daardoor
-      // vast op ditzelfde quotum dat voor echte klanten bedoeld is, ook al testte die test iets
-      // heel anders (sessie-lock-herstel). isTestIdentifier bestond al om Telegram-ruis te
-      // onderdrukken (2026-08-12), maar de blokkade zelf bleef toen onbedoeld staan.
-      if (!isTestIdentifier(userId)) {
-        const { success: userOk } = await limietVeilig(userRateLimit, userId)
-        if (!userOk) {
-          await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
-          return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
-        }
+      if (buffer.length > MAX_DOCUMENT_BYTES) {
+        return NextResponse.json({ error: 'bestand_te_groot' }, { status: 400, headers: corsHeaders(origin) })
       }
+      const result = await buildDocumentContentBlock({ name: rawDocument.name, mediaType: rawDocument.mediaType, data: buffer.toString('base64') })
+      if (result.error) {
+        return NextResponse.json({ error: result.error }, { status: 400, headers: corsHeaders(origin) })
+      }
+      documentBlock = result.block
+      documentText = result.extractedText
+    }
 
-      // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd).
-      // TTL bewust kort (120s, was 600s): de lock ververst toch bij elk bericht van dezelfde
-      // sessie, dus een kortere TTL beperkt alleen hoe lang een verlaten/vervangen sessie
-      // (tabblad gesloten, cache geleegd waardoor het lokale sessie-ID verandert) een nieuwe
-      // sessie kan blokkeren, zonder de daadwerkelijke dubbel-gebruik-bescherming te verzwakken.
-      // forceSession (client stuurt dit na expliciete "dit ben ik"-bevestiging) overschrijft de
-      // lock altijd, blijft achter Clerk-auth dus alleen de accounteigenaar zelf kan dit.
-      if (userId !== process.env.ARNOBOT_OWNER_USER_ID && typeof clientSessionId === 'string' && clientSessionId.length > 0) {
-        const lockKey = `arnobot:active:${userId}`
-        // Fail-open: een Upstash-storing mag geen chat blokkeren, dan vervalt alleen de
-        // dubbele-sessiebescherming voor even.
-        let dubbeleSessie = false
-        try {
-          const activeSid = await redis.get<string>(lockKey)
-          if (activeSid && activeSid !== clientSessionId && !forceSession) dubbeleSessie = true
-          else await redis.set(lockKey, clientSessionId, { ex: 120 })
-        } catch (e) {
-          Sentry.captureException(e, { tags: { onderdeel: 'sessie-lock-upstash' }, level: 'warning' })
-        }
-        if (dubbeleSessie) {
-          await notifyRateLimit(userId, 'dubbele sessie (twee vensters/apparaten)', `arnobot:notify:dual:${userId}`)
-          return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
-        }
+    // Per-user rate limit: max 30 berichten per uur. Test-accounts overgeslagen (besloten
+    // 2026-08-24): de dubbele-sessie-E2E-test verstuurt binnen één run al meerdere berichten
+    // op hetzelfde test-account tegen de echte production-Redis-instantie, en liep daardoor
+    // vast op ditzelfde quotum dat voor echte klanten bedoeld is, ook al testte die test iets
+    // heel anders (sessie-lock-herstel). isTestIdentifier bestond al om Telegram-ruis te
+    // onderdrukken (2026-08-12), maar de blokkade zelf bleef toen onbedoeld staan.
+    if (!isTestIdentifier(userId)) {
+      const { success: userOk } = await limietVeilig(userRateLimit, userId)
+      if (!userOk) {
+        await notifyRateLimit(userId, 'uur-limiet (30 berichten)')
+        return NextResponse.json({ error: 'rate_limit' }, { status: 429, headers: corsHeaders(origin) })
+      }
+    }
+
+    // Enkelvoudige sessie: max 1 actief gesprek per gebruiker (beheerder uitgezonderd).
+    // TTL bewust kort (120s, was 600s): de lock ververst toch bij elk bericht van dezelfde
+    // sessie, dus een kortere TTL beperkt alleen hoe lang een verlaten/vervangen sessie
+    // (tabblad gesloten, cache geleegd waardoor het lokale sessie-ID verandert) een nieuwe
+    // sessie kan blokkeren, zonder de daadwerkelijke dubbel-gebruik-bescherming te verzwakken.
+    // forceSession (client stuurt dit na expliciete "dit ben ik"-bevestiging) overschrijft de
+    // lock altijd, blijft achter Clerk-auth dus alleen de accounteigenaar zelf kan dit.
+    if (userId !== process.env.ARNOBOT_OWNER_USER_ID && typeof clientSessionId === 'string' && clientSessionId.length > 0) {
+      const lockKey = `arnobot:active:${userId}`
+      // Fail-open: een Upstash-storing mag geen chat blokkeren, dan vervalt alleen de
+      // dubbele-sessiebescherming voor even.
+      let dubbeleSessie = false
+      try {
+        const activeSid = await redis.get<string>(lockKey)
+        if (activeSid && activeSid !== clientSessionId && !forceSession) dubbeleSessie = true
+        else await redis.set(lockKey, clientSessionId, { ex: 120 })
+      } catch (e) {
+        Sentry.captureException(e, { tags: { onderdeel: 'sessie-lock-upstash' }, level: 'warning' })
+      }
+      if (dubbeleSessie) {
+        await notifyRateLimit(userId, 'dubbele sessie (twee vensters/apparaten)', `arnobot:notify:dual:${userId}`)
+        return NextResponse.json({ error: 'dual_session' }, { status: 429, headers: corsHeaders(origin) })
       }
     }
 
@@ -355,22 +312,20 @@ export async function POST(req: NextRequest) {
     let plan: 'basis' | 'premium' | 'team' = 'basis'
     let todayUsage = 0
     let voornaamGebruiker = ''
-    if (!isWidget) {
-      const [planRes, todayRes] = await Promise.all([
-        supabase.from('approved_users').select('plan, voornaam').eq('user_id', userId!).single(),
-        supabase
-          .from('arnobot_rds_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId!)
-          .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
-      ])
-      plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
-      voornaamGebruiker = (planRes.data?.voornaam ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, 40)
-      todayUsage = todayRes.count ?? 0
-      const dagelijksMax = plan !== 'basis' ? 100 : 25
-      if (todayUsage >= dagelijksMax) {
-        return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
-      }
+    const [planRes, todayRes] = await Promise.all([
+      supabase.from('approved_users').select('plan, voornaam').eq('user_id', userId).single(),
+      supabase
+        .from('arnobot_rds_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
+    ])
+    plan = (planRes.data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'
+    voornaamGebruiker = (planRes.data?.voornaam ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, 40)
+    todayUsage = todayRes.count ?? 0
+    const dagelijksMax = plan !== 'basis' ? 100 : 25
+    if (todayUsage >= dagelijksMax) {
+      return NextResponse.json({ error: 'dagelijks_limiet', dagelijks_gebruikt: todayUsage }, { status: 429, headers: corsHeaders(origin) })
     }
 
     // Uitgebreide antwoorden zijn Pro-only. Client-side is dit al zo (PRO-label + upsell-tekst
@@ -385,13 +340,13 @@ export async function POST(req: NextRequest) {
     // Vercel-functielimiet (4,5MB) staat de bytes zelf niet toe in deze JSON-body. Zelfde
     // gate als /api/bot/audio-upload-url, hier herhaald omdat de client die eerdere check zou
     // kunnen omzeilen door direct tegen deze route te posten.
-    if (!isWidget && rawDocument && typeof rawDocument === 'object'
+    if (rawDocument && typeof rawDocument === 'object'
       && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
       && typeof rawDocument.storagePath === 'string' && AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
       if (plan === 'basis') {
         return NextResponse.json({ error: 'audio_alleen_betaald' }, { status: 403, headers: corsHeaders(origin) })
       }
-      const { text, error } = await transcribeAudioAttachment(userId!, rawDocument.storagePath)
+      const { text, error } = await transcribeAudioAttachment(userId, rawDocument.storagePath)
       if (error || !text) {
         return NextResponse.json({ error: error ?? 'audio_transcriptie_mislukt' }, { status: 502, headers: corsHeaders(origin) })
       }
@@ -405,16 +360,13 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')
-    const LOST_URL = 'https://arno.blog/lost'
 
     // Gespreksgeheugen en coachingsdiagnose starten nu al, parallel aan de moderatie-check en
     // de RAG-pipeline hierboven, in plaats van pas na de RAG-context te beginnen. Beide hangen
     // alleen af van userId/plan/sessionId, niet van het RAG- of moderatie-resultaat.
-    const memoryContextPromise: Promise<GeheugenContext> = (userId && !isWidget)
-      ? haalGeheugenContext(supabase, { userId, sessionId, question, history, plan })
-      : Promise.resolve({ geheugentekst: '', prevSessionCount: 0, verouderd: false })
+    const memoryContextPromise: Promise<GeheugenContext> = haalGeheugenContext(supabase, { userId, sessionId, question, history, plan })
 
-    const coachingContextPromise: Promise<string> = (!isWidget && plan !== 'basis' && userId)
+    const coachingContextPromise: Promise<string> = (plan !== 'basis')
       ? Promise.resolve(
           supabase
             .from('arnobot_coaching')
@@ -432,61 +384,6 @@ export async function POST(req: NextRequest) {
           })
       : Promise.resolve('')
 
-    // Geblokkeerde IPs direct doorsturen
-    if (isWidget && ip) {
-      const { data: blockedRow } = await supabase
-        .from('arno_blog_widget_blocked')
-        .select('ip')
-        .eq('ip', ip)
-        .limit(1)
-        .single()
-      if (blockedRow) {
-        return NextResponse.json({ redirect: LOST_URL }, { headers: corsHeaders(origin) })
-      }
-    }
-
-    // Content moderatie voor widget
-    if (isWidget && ip) {
-      const lastArnoMessage = history && history.length > 0
-        ? history.filter((m: { role: string }) => m.role === 'assistant').slice(-1)[0]?.content
-        : null
-
-      const moderatiePrompt = lastArnoMessage
-        ? `Je beoordeelt een widget-gesprek over sales en business.
-
-Vorige vraag/opmerking van ArnoBot: "${lastArnoMessage}"
-Reactie van de gebruiker: "${question}"
-
-Antwoord met precies één woord:
-ONGEPAST: duidelijk seksueel, beledigend of trollen
-OFFTOPIC: heeft overduidelijk geen enkele samenhang met het gesprek en gaat niet over sales/business
-OK: logisch vervolg op het gesprek of relevant voor sales/business, of een reactie die kritiek geeft op het gesprek zelf (bijvoorbeeld dat ArnoBot alleen maar terugvraagt in plaats van antwoord geeft). Dat is geen afdwalen, dat is een terechte reactie op de bot.
-
-Een kort antwoord op een vraag of opdracht van ArnoBot is ALTIJD OK, ook als het heel kort, slordig of in een andere taal is (bijvoorbeeld "ja", "nee", "all positive", "beide", een getal, "weet ik niet"). Het gaat om de samenhang met wat ArnoBot net vroeg, niet om lengte of taal. Bij twijfel: OK.`
-        : `Categoriseer het bericht. Antwoord met precies één woord: ONGEPAST (seksueel, beledigend, trollen), OFFTOPIC (niet over sales/business/Arno, maar niet beledigend), of OK.`
-
-      const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check', op: 'ai.claude' }, () =>
-        client.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 10,
-          system: moderatiePrompt,
-          messages: [{ role: 'user', content: lastArnoMessage ? 'Beoordeel deze reactie.' : `Categoriseer: "${question}"` }]
-        })
-      )
-      const check = getText(checkRes.content, 'OK').trim().toUpperCase()
-
-      if (check.includes('ONGEPAST')) {
-        await supabase.from('arno_blog_widget_blocked').upsert({ ip }, { onConflict: 'ip' })
-        return NextResponse.json({ redirect: LOST_URL }, { headers: corsHeaders(origin) })
-      }
-
-      // OFFTOPIC blokkeert nooit permanent (een kort, slordig antwoord of een gedeeld kantoor-IP
-      // mag niet tot een blokkade leiden). Alleen ONGEPAST blokkeert.
-      if (check.includes('OFFTOPIC')) {
-        return NextResponse.json({ answer: 'Interessant, maar laten we het over jouw sales hebben.', hint: null }, { headers: corsHeaders(origin) })
-      }
-    }
-
     // Content moderatie voor ingelogde gebruikers: nudgen, nooit direct blokkeren.
     // Herhaald off-topic of iets ongepasts wordt gemarkeerd voor handmatige beoordeling
     // in de admin (een betalende gebruiker direct buitensluiten is te zwaar middel), en
@@ -499,104 +396,70 @@ Een kort antwoord op een vraag of opdracht van ArnoBot is ALTIJD OK, ook als het
     ]
     const OFFTOPIC_LOGOUT_FALLBACK = 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.'
 
-    if (!isWidget && userId) {
-      // Telt alleen sinds de laatste keer dat deze gebruiker is uitgelogd, niet levenslang:
-      // na een uitlog-cyclus krijgt iemand weer een schone lei (nudge, nudge, uitloggen).
-      const { data: lastLogoutRow } = await supabase
-        .from('arnobot_offtopic_flags')
-        .select('created_at')
-        .eq('user_id', userId)
-        .eq('caused_logout', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    // Telt alleen sinds de laatste keer dat deze gebruiker is uitgelogd, niet levenslang:
+    // na een uitlog-cyclus krijgt iemand weer een schone lei (nudge, nudge, uitloggen).
+    const { data: lastLogoutRow } = await supabase
+      .from('arnobot_offtopic_flags')
+      .select('created_at')
+      .eq('user_id', userId)
+      .eq('caused_logout', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-      let countQuery = supabase
-        .from('arnobot_offtopic_flags')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-      if (lastLogoutRow) countQuery = countQuery.gt('created_at', lastLogoutRow.created_at)
-      const { count: priorCount } = await countQuery
-      const occurrence = (priorCount ?? 0) + 1 // deze poging meegeteld
+    let countQuery = supabase
+      .from('arnobot_offtopic_flags')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (lastLogoutRow) countQuery = countQuery.gt('created_at', lastLogoutRow.created_at)
+    const { count: priorCount } = await countQuery
+    const occurrence = (priorCount ?? 0) + 1 // deze poging meegeteld
 
-      const historyExcerpt = (history || []).slice(-6)
-        .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${m.content}`)
-        .join('\n')
+    const historyExcerpt = (history || []).slice(-6)
+      .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${m.content}`)
+      .join('\n')
 
-      const offtopicToon = occurrence >= 3
-        ? 'Dit is al de derde keer dat deze gebruiker afdwaalt, het gesprek wordt na dit bericht automatisch beëindigd. Schrijf een korte, duidelijke maar niet onaardige mededeling dat het gesprek hierdoor stopt, en dat diegene welkom is terug te komen zodra er een zakelijke vraag is.'
-        : occurrence >= 2
-        ? 'Dit is niet de eerste keer. Wees directer en korter dan een uitnodigende vraag, bijvoorbeeld in de trant van "Kom terug als je weer bij zakelijke zinnen bent."'
-        : 'Dit is de eerste keer. Reageer zoals een mens dat in de praktijk zou doen: met een kwinkslag of luchtige humor die het onderwerp zelf gebruikt om terug te koppelen naar zaken of naar de klant van de gebruiker (bijvoorbeeld bij een vraag over een appeltaartrecept: "Wil je daarmee je klant verrassen?"). Alleen als een speelse invalshoek echt niet logisch past bij dit specifieke bericht, val terug op een directe, uitnodigende vraag die verwijst naar het laatste zakelijke onderwerp uit het gesprek hieronder. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
-      const ongepastToon = 'Geen humor, geen kwinkslag, dit is bewust aanstootgevend, seksueel ongepast of vergelijkbaar. Wees kort, serieus en duidelijk dat dit niet in het gesprek past, zonder te preken.'
+    const offtopicToon = occurrence >= 3
+      ? 'Dit is al de derde keer dat deze gebruiker afdwaalt, het gesprek wordt na dit bericht automatisch beëindigd. Schrijf een korte, duidelijke maar niet onaardige mededeling dat het gesprek hierdoor stopt, en dat diegene welkom is terug te komen zodra er een zakelijke vraag is.'
+      : occurrence >= 2
+      ? 'Dit is niet de eerste keer. Wees directer en korter dan een uitnodigende vraag, bijvoorbeeld in de trant van "Kom terug als je weer bij zakelijke zinnen bent."'
+      : 'Dit is de eerste keer. Reageer zoals een mens dat in de praktijk zou doen: met een kwinkslag of luchtige humor die het onderwerp zelf gebruikt om terug te koppelen naar zaken of naar de klant van de gebruiker (bijvoorbeeld bij een vraag over een appeltaartrecept: "Wil je daarmee je klant verrassen?"). Alleen als een speelse invalshoek echt niet logisch past bij dit specifieke bericht, val terug op een directe, uitnodigende vraag die verwijst naar het laatste zakelijke onderwerp uit het gesprek hieronder. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
+    const ongepastToon = 'Geen humor, geen kwinkslag, dit is bewust aanstootgevend, seksueel ongepast of vergelijkbaar. Wees kort, serieus en duidelijk dat dit niet in het gesprek past, zonder te preken.'
 
-      const moderatiePrompt = `Je beoordeelt een gesprek over sales en business met een ingelogde ArnoBot-gebruiker.
+    const moderatiePrompt = bouwAppModeratiePrompt(historyExcerpt, question, offtopicToon, ongepastToon)
 
-Gesprek tot nu toe:
-${historyExcerpt || '(nog geen eerdere berichten)'}
+    const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check-app', op: 'ai.claude' }, () =>
+      client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 150,
+        system: moderatiePrompt,
+        messages: [{ role: 'user', content: 'Beoordeel dit bericht.' }]
+      })
+    )
+    const rawCheck = getText(checkRes.content, 'OK').trim()
+    const [firstLine, ...rest] = rawCheck.split('\n')
+    const check = firstLine.trim().toUpperCase()
+    const generatedReply = rest.join('\n').trim()
 
-Nieuwste bericht van de gebruiker: "${question}"
-
-Stap 1: categoriseer dit nieuwste bericht. Schrijf op de EERSTE regel precies één woord:
-ONGEPAST: seksueel, beledigend, verontrustend of duidelijk kwaadwillig
-OFFTOPIC: heeft geen logische samenhang met het gesprek, gaat niet over sales/business, en de gebruiker gaat niet mee in een eerdere luchtige terugkoppeling
-OK: logisch vervolg op het gesprek, relevant voor sales/business, OF onschuldige humor/luchtigheid die goed meegaat met een eerdere speelse terugkoppeling van ArnoBot
-
-Belangrijk: als het vorige antwoord van ArnoBot hierboven een luchtige, humoristische terugkoppeling naar zaken was, en de gebruiker reageert daar speels en onschuldig op, ook al gaat die reactie zelf niet letterlijk over sales, beoordeel dat dan als OK. De humor heeft dan zijn werk gedaan, dat hoeft niet te tellen als afdwalen. Beoordeel pas als OFFTOPIC als de gebruiker die terugkoppeling negeert en zelf weer een nieuw, ongerelateerd onderwerp aansnijdt. Wees bij ONGEPAST alleen streng bij content die echt verontrustend, seksueel of kwaadwillig is, niet bij onschuldige grappen.
-
-Stap 2: alleen als het niet OK is, schrijf op de TWEEDE regel een korte reactie (1-2 zinnen) in de stijl van Arno Diepeveen die het gesprek terugbrengt naar zakelijk.
-Als je categoriseerde als ONGEPAST: ${ongepastToon}
-Als je categoriseerde als OFFTOPIC: ${offtopicToon}
-
-Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Schrijf platte tekst.
-Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
-Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
-
-      const checkRes = await Sentry.startSpan({ name: 'chat.moderation-check-app', op: 'ai.claude' }, () =>
-        client.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 150,
-          system: moderatiePrompt,
-          messages: [{ role: 'user', content: 'Beoordeel dit bericht.' }]
-        })
-      )
-      const rawCheck = getText(checkRes.content, 'OK').trim()
-      const [firstLine, ...rest] = rawCheck.split('\n')
-      const check = firstLine.trim().toUpperCase()
-      const generatedReply = rest.join('\n').trim()
-
-      if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
-        const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
-        // ONGEPAST is altijd meteen zichtbaar voor beoordeling, ook de eerste keer. Alleen
-        // OFFTOPIC mag de eerste keer stil blijven (onschuldig uitstapje, geen review nodig).
-        const reviewed = category === 'offtopic' && occurrence === 1
-        await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed, caused_logout: occurrence >= 3 })
-
-        if (occurrence >= 3) {
-          return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
-        }
-        const fallback = OFFTOPIC_FALLBACKS[Math.min(occurrence - 1, OFFTOPIC_FALLBACKS.length - 1)]
-        return NextResponse.json({ answer: generatedReply || fallback, hint: null }, { headers: corsHeaders(origin) })
-      }
+    // Persoonlijke vragen over Arno zelf: vast, kort antwoord zonder inhoud, zonder flag en
+    // zonder uitlog-teller (de gebruiker deed niets fout) en zonder log-regel in de analyses.
+    // ONGEPAST gaat voor: de eerste regel is één woord, dus een dubbele label kan niet voorkomen.
+    if (check.includes('PERSOONLIJK') && !check.includes('ONGEPAST')) {
+      return NextResponse.json({ answer: PERSOONLIJK_ANTWOORD, hint: null }, { headers: corsHeaders(origin) })
     }
 
-    // Limiet alleen voor widget-bezoekers zonder account
-    let hint: string | null = null
-    const limitEnabled = process.env.ARNOBOT_LIMIT_ENABLED === 'true'
-    if (limitEnabled && ip && !userId) {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { count } = await supabase
-        .from('arno_blog_widget_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('ip', ip)
-        .gte('created_at', since)
+    if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
+      const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
+      // ONGEPAST is altijd meteen zichtbaar voor beoordeling, ook de eerste keer. Alleen
+      // OFFTOPIC mag de eerste keer stil blijven (onschuldig uitstapje, geen review nodig).
+      const reviewed = category === 'offtopic' && occurrence === 1
+      await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed, caused_logout: occurrence >= 3 })
 
-      const n = count ?? 0
-      if (n >= 5) {
-        return NextResponse.json({ blocked: true }, { headers: corsHeaders(origin) })
+      if (occurrence >= 3) {
+        return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
       }
-      if (n === 3) hint = 'last_chance'
-      if (n === 4) hint = 'salescanvas'
+      const fallback = OFFTOPIC_FALLBACKS[Math.min(occurrence - 1, OFFTOPIC_FALLBACKS.length - 1)]
+      return NextResponse.json({ answer: generatedReply || fallback, hint: null }, { headers: corsHeaders(origin) })
     }
 
     // ragContextPromise draait al sinds het begin van dit verzoek, parallel aan de moderatie-
@@ -627,27 +490,25 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
 
     const profielContext = bouwProfielContext(profiel, voornaamGebruiker)
 
-    const systemPrompt = isWidget
-      ? buildWidgetSystemPrompt(context, hint === 'salescanvas')
-      : buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount)
+    const systemPrompt = buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount)
 
     // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
     // Claude hem genereert, in plaats van pas na het volledige antwoord. StreamingDashSanitizer
     // stuurt tekst pas door zodra vaststaat dat een streepje niet meer kan volgen (een vaste
     // lookback-buffer bleek bij live tests niet voldoende: die verstuurt de spatie vóór een
     // streepje soms al vóórdat bekend is of er een streepje komt). Metadata die al vooraf
-    // bekend is (hint, daglimiet-teller) gaat in de headers, log_id (pas bekend na het
+    // bekend is (daglimiet-teller) gaat in de headers, log_id (pas bekend na het
     // wegschrijven) komt als klein blokje ná het einde van de tekst-stream.
     const encoder = new TextEncoder()
     // Kleine buffer boven de bedoelde lengte per tier, zodat een antwoord dat net over de
     // grens dreigt te gaan niet midden in een woord afkapt. Dit verruimt de bedoelde
     // beknoptheid niet structureel, het voorkomt alleen dat de rand de zin doorsnijdt.
-    const chatMaxTokens = isWidget ? 1800 : antwoordLengte === 'kort' ? 750 : antwoordLengte === 'uitgebreid' ? 2500 : 1450
+    const chatMaxTokens = antwoordLengte === 'kort' ? 750 : antwoordLengte === 'uitgebreid' ? 2500 : 1450
     // Rekentool (lib/rekenTool.ts): alleen als het gesprek getallen bevat, zodat gewone vragen
     // ongemoeid blijven. De tool-beschrijving zelf bevat de instructie, de vaste persona blijft
     // ongewijzigd (verwatering).
     const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
-    const rekenTools: Anthropic.Tool[] | undefined = !isWidget && /\d/.test(gesprekTekst) ? [REKEN_TOOL] : undefined
+    const rekenTools: Anthropic.Tool[] | undefined = /\d/.test(gesprekTekst) ? [REKEN_TOOL] : undefined
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: chatMaxTokens,
@@ -776,22 +637,18 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
               console.error('[chat] antwoord afgekapt op max_tokens, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)', 'antwoordLengte:', antwoordLengte)
               Sentry.captureMessage('[chat] antwoord afgekapt op max_tokens', {
                 level: 'warning',
-                extra: { sessionId, userId: userId ?? null, antwoordLengte, isWidget, chatMaxTokens },
+                extra: { sessionId, userId: userId ?? null, antwoordLengte, chatMaxTokens },
               })
             }
           }
 
           let logId: string | null = null
-          if (isWidget) {
-            await supabase.from('arno_blog_widget_logs').insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
-          } else {
-            const { data: logRow } = await supabase
-              .from('arnobot_rds_logs')
-              .insert({ question, answer, ip, session_id: sessionId, user_id: userId ?? null })
-              .select('id')
-              .single()
-            logId = logRow?.id ?? null
-          }
+          const { data: logRow } = await supabase
+            .from('arnobot_rds_logs')
+            .insert({ question, answer, ip, session_id: sessionId, user_id: userId })
+            .select('id')
+            .single()
+          logId = logRow?.id ?? null
 
           controller.enqueue(encoder.encode(`\n<<<ARNOBOT_META>>>${JSON.stringify({ log_id: logId })}`))
         } catch (err) {
@@ -805,8 +662,7 @@ Spreek de gebruiker ALTIJD aan met "jij" en "jou". Nooit "u".`
     })
 
     const responseHeaders: Record<string, string> = { ...corsHeaders(origin), 'Content-Type': 'text/plain; charset=utf-8' }
-    if (hint) responseHeaders['X-Hint'] = hint
-    if (!isWidget && plan === 'basis') responseHeaders['X-Dagelijks-Gebruikt'] = String(todayUsage + 1)
+    if (plan === 'basis') responseHeaders['X-Dagelijks-Gebruikt'] = String(todayUsage + 1)
 
     return new Response(readable, { headers: responseHeaders })
   } catch (err) {

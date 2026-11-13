@@ -15,7 +15,6 @@ const NAV_LINKS = [
   { href: '/bot/admin/idee', label: 'BLOGS' },
   { href: '/bot/admin/blog', label: 'POSTS' },
   { href: '/bot/admin/stats', label: 'STATS' },
-  { href: '/bot/admin/widget', label: 'ARNO.BLOG' },
 
   { href: '/api/admin/logout', label: 'UITLOGGEN' },
 ]

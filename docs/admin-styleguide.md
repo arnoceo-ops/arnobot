@@ -43,7 +43,7 @@ padding:      0 40px
 - actief: kleur `#f59e0b`, achtergrond `#1e293b`, border-radius: 4px
 - padding: 6px 20px
 
-**Volgorde links (links → rechts):** USERS · CRONS · ARNOBOT · BLOGS · META · FEEDBACK | ARNO.BLOG · UITLOGGEN
+**Volgorde links (links → rechts):** USERS · CRONS · ARNOBOT · BLOGS · META · FEEDBACK | UITLOGGEN
 
 ---
 

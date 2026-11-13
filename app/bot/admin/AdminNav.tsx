@@ -41,7 +41,6 @@ export default function AdminNav({ active }: { active: string }) {
           ))}
         </div>
         <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
-          <a href="/bot/admin/widget" style={navLinkStyle(active === '/bot/admin/widget')}>ARNO.BLOG</a>
           <a href="/api/admin/logout" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '12px', letterSpacing: '3px', fontWeight: 700, padding: '6px 12px' }}>UITLOGGEN</a>
         </div>
       </nav>

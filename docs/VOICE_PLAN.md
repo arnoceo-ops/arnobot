@@ -186,7 +186,7 @@ Er bestaat nog geen generiek feature-flag-mechanisme in de codebase (geverifieer
 - **Clerk auth-patroon**: `const { userId } = await auth()` + 401-check, zie `app/api/transcribe/route.ts:2-6`. Voor ingelogde gebruikers wordt `userId` nooit uit de request body vertrouwd (`app/api/chat/route.ts:237-242`).
 - **STT**: `app/api/transcribe/route.ts` (Whisper, ruwe fetch, geen SDK). Frontend-opname in `app/bot/SparClient.tsx` (state rond regel 179-180, 251-252; `startRecording`/`stopRecording` rond 270-306; mic-knop UI rond 1652-1666).
 - **TTS**: was `app/api/tts/route.ts` (OpenAI `tts-1-hd`/`onyx`), verwijderd op 2026-08-12 (zie besluit 2026-07-19 hierboven). `speak()` in `SparClient.tsx` roept nu uitsluitend `/api/tts-voice` (ElevenLabs) aan, ongeacht plan.
-- **CORS**: alleen in `app/api/chat/route.ts:33-52` (`ALLOWED_ORIGINS`: arno.bot, www.arno.bot, arno.blog, www.arno.blog). `transcribe` en `tts` hebben geen CORS-headers, alleen same-origin gebruik vanuit `arno.bot`.
+- **CORS**: alleen in `app/api/chat/route.ts:33-52` (`ALLOWED_ORIGINS`: arno.bot, www.arno.bot; arno.blog is sinds 2026-11-13 verwijderd met de widget). `transcribe` en `tts` hebben geen CORS-headers, alleen same-origin gebruik vanuit `arno.bot`.
 - **Abonnement**: alles zit plat in de Supabase-tabel `approved_users` (geen aparte subscriptions-tabel, geen Clerk publicMetadata voor abonnementsstatus). Relevante kolommen: `tier` ('basis'/'pro'), `is_active`, `paid_at`, `expires_at`, `trial_start`.
 - **Rate limiting**: Upstash-instanties direct in `app/api/chat/route.ts:130-147`, geen gedeelde `lib/ratelimit.ts`. `transcribe` en `tts` hebben momenteel geen eigen rate limiting.
 - **Package.json**: geen ElevenLabs-SDK of andere voice-SDK aanwezig. Moet worden toegevoegd in fase 1.
