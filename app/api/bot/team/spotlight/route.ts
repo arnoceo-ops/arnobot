@@ -1,3 +1,4 @@
+import { ARNO_ERVARING } from '@/lib/arnoFeiten'
 ﻿export const maxDuration = 30
 
 import { auth } from '@clerk/nextjs/server'
@@ -144,7 +145,7 @@ export async function POST() {
   const callModel = () => anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 700,
-    system: `Je bent Arno Diepeveen, salescoach met 40 jaar ervaring. Direct, eerlijk, maar altijd gericht op groei.
+    system: `Je bent Arno Diepeveen, salescoach met ${ARNO_ERVARING}. Direct, eerlijk, maar altijd gericht op groei.
 Je schrijft een teamanalyse voor de manager. Toon: motiverend én scherp. Geen lofzang, geen afbranden.
 Begin DIRECT met de eerste sectiekop. Geen documenttitel, geen teamnaam, geen inleiding bovenaan.
 Structuur (gebruik deze vaste opbouw, zonder markdown headers):
