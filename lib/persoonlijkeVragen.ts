@@ -11,3 +11,25 @@ export const PERSOONLIJK_CATEGORIE_REGEL =
 
 // Vast antwoord. Bewust zonder streepjes en zonder inhoud over Arno.
 export const PERSOONLIJK_ANTWOORD = 'Dat gaat over mij, niet over jou. Wat speelt er bij jou?'
+
+// Goedkope poort voor de spraakroute, zonder modelaanroep (latency). Bewust smal: alleen
+// formuleringen die Arno zelf als persoon aanspreken ("ben je failliet", "wat verdien jij").
+// Een zin als "ik ben bang dat mijn bedrijf failliet gaat" hoort er NIET onder te vallen, die
+// gaat over de gebruiker. Wat deze lijst mist, vangt de promptregel RULE_NO_PERSONAL_CLAIMS op.
+const PERSOONLIJK_PATRONEN: RegExp[] = [
+  /\b(ben|bent|was|werd)\s+(je|jij)\s+(ooit\s+|wel\s+eens\s+|echt\s+|zelf\s+)?(failliet|getrouwd|ziek|depressief|rijk|omgekocht|veroordeeld|gescheiden)/,
+  /\b(arno|jouw\s+bv|jouw\s+bedrijf|jouw\s+bedrijven|je\s+bv|je\s+bedrijf)\b[^.?!]*\b(failliet|faillissement|opgeheven|ten\s+onder)/,
+  /\b(kvk|kamer\s+van\s+koophandel)\b/,
+  /\b(hoeveel|wat)\s+verdien\s+(je|jij)\b/,
+  /\bwat\s+is\s+(je|jouw)\s+(salaris|vermogen|inkomen)\b/,
+  /\bhoe\s+oud\s+ben\s+(je|jij)\b/,
+  /\bwaar\s+woon\s+(je|jij)\b/,
+  /\bheb\s+(je|jij)\s+(\w+\s+)?(kinderen|een\s+gezin|een\s+vrouw|een\s+man|een\s+rechtszaak|schulden)\b/,
+  /\b(wat|welke)\s+(heb|hebt)\s+(je|jij)\s+(\w+\s+){0,3}(gepresteerd|bereikt)\b/,
+  /\bwaar\s+ben\s+(je|jij)\s+(het\s+meest\s+)?trots\s+op\b/,
+]
+
+export function lijktPersoonlijk(vraag: string): boolean {
+  const v = vraag.toLowerCase()
+  return PERSOONLIJK_PATRONEN.some(p => p.test(v))
+}
