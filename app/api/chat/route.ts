@@ -639,7 +639,7 @@ export async function POST(req: NextRequest) {
           // mee bewaard voor de waarheidscontrole (lib/waarheidsControle.ts): zonder dit is achteraf niet
           // vast te stellen wat "uit de bibliotheek" kwam. PDF's en afbeeldingen zijn geen tekst en staan er niet in.
           const bronContext = [context, geheugentekst, profielContext, coachingContext, documentText ? `BIJLAGE:\n${documentText}` : '']
-            .filter(Boolean).join('\n\n---\n\n').slice(0, 60000)
+            .filter(Boolean).join('\n\n---\n\n').slice(0, 250000)
           const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }
           let { data: logRow, error: logFout } = await supabase
             .from('arnobot_rds_logs')
