@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildRdsSystemPrompt, buildVoiceSystemPrompt } from './systemPrompt'
+import { buildRdsSystemPrompt } from './systemPrompt'
 
 function joinBlocks(blocks: { text: string }[]) {
   return blocks.map(b => b.text).join('')
@@ -38,18 +38,5 @@ describe('buildRdsSystemPrompt', () => {
   it('bevat altijd de streepjes-instructie, ongeacht de parameters', () => {
     const blocks = buildRdsSystemPrompt(profielContextSample, contextSample, 3, 'normaal', 0)
     expect(joinBlocks(blocks)).toContain('Gebruik NOOIT een streepje als leesteken')
-  })
-
-  it('bevat de regel die persoonlijke uitspraken over Arno verbiedt', () => {
-    const blocks = buildRdsSystemPrompt(profielContextSample, contextSample, 3, 'normaal', 0)
-    expect(joinBlocks(blocks)).toContain('Doe nooit uitspraken over Arno Diepeveen als persoon')
-  })
-})
-
-// De spraakroute heeft geen moderatiepoort (een extra aanroep kost latency), dus deze regel is
-// daar de enige bescherming tegen verzonnen persoonlijke feiten.
-describe('buildVoiceSystemPrompt', () => {
-  it('bevat de regel die persoonlijke uitspraken over Arno verbiedt', () => {
-    expect(joinBlocks(buildVoiceSystemPrompt())).toContain('Doe nooit uitspraken over Arno Diepeveen als persoon')
   })
 })

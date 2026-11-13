@@ -3,7 +3,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { buildVoiceSystemPrompt } from '@/lib/systemPrompt'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
-import { lijktPersoonlijk, PERSOONLIJK_ANTWOORD } from '@/lib/persoonlijkeVragen'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -36,8 +35,6 @@ export function isVoiceLaunchAllowed(userId: string): boolean {
  */
 export async function getVoiceAnswer(question: string): Promise<string> {
   const q = question.slice(0, 2000)
-  // Persoonlijke vragen over Arno: vast antwoord zonder modelaanroep (zie lib/persoonlijkeVragen.ts).
-  if (lijktPersoonlijk(q)) return PERSOONLIJK_ANTWOORD
   const system = buildVoiceSystemPrompt()
   const messages: Anthropic.Messages.MessageParam[] = [{ role: 'user', content: q }]
 

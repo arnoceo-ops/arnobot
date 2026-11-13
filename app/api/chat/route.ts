@@ -59,7 +59,6 @@ import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@/lib/geheugenContext'
 import { buildRdsSystemPrompt } from '@/lib/systemPrompt'
-import { PERSOONLIJK_ANTWOORD } from '@/lib/persoonlijkeVragen'
 import { bouwAppModeratiePrompt } from '@/lib/moderatie'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
@@ -440,13 +439,6 @@ export async function POST(req: NextRequest) {
     const [firstLine, ...rest] = rawCheck.split('\n')
     const check = firstLine.trim().toUpperCase()
     const generatedReply = rest.join('\n').trim()
-
-    // Persoonlijke vragen over Arno zelf: vast, kort antwoord zonder inhoud, zonder flag en
-    // zonder uitlog-teller (de gebruiker deed niets fout) en zonder log-regel in de analyses.
-    // ONGEPAST gaat voor: de eerste regel is één woord, dus een dubbele label kan niet voorkomen.
-    if (check.includes('PERSOONLIJK') && !check.includes('ONGEPAST')) {
-      return NextResponse.json({ answer: PERSOONLIJK_ANTWOORD, hint: null }, { headers: corsHeaders(origin) })
-    }
 
     if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
       const category = check.includes('ONGEPAST') ? 'ongepast' : 'offtopic'
