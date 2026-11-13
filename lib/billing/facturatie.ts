@@ -10,6 +10,7 @@ import {
   verstuurFactuur,
   zoekOfMaakContact,
 } from './moneybird'
+import { haalBetaling, MollieError } from './mollie'
 import { planNaam } from './prijzen'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -20,6 +21,8 @@ import { notifyTelegram } from '@/lib/cron-notify'
 // VOORBEREIDING (fase 2): staat uit zolang Moneybird niet is geconfigureerd.
 
 const BEZIG = 'bezig'
+/** Markering voor een betaling uit een andere Mollie-modus (test): nooit factureren, nooit opnieuw proberen. */
+const TESTMODUS = 'testmodus'
 
 /** Maakt voor een betaling een factuur, als die er nog niet is. Idempotent via moneybird_factuur_id. */
 /**
@@ -46,6 +49,27 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
     .returns<PayRow[]>()
   const rij = geclaimd?.[0]
   if (!rij || !rij.subscription_id) return
+
+  // Een betaling die de huidige Mollie-sleutel niet kent, is een testbetaling uit de tijd van de test_-sleutel (of
+  // andersom): die krijgt nooit een echte factuur. Zonder deze controle kreeg een testbetaling na het omzetten
+  // naar de live_-sleutel alsnog een factuur in de echte administratie (gebeurd op 2026-11-13, facturen
+  // 2026-0027 en 2026-0028). Mollie geeft voor een betaling uit de andere modus een 404.
+  try {
+    const mp = await haalBetaling(rij.mollie_payment_id)
+    if (mp.mode === 'test' && process.env.MOLLIE_API_KEY?.startsWith('live_')) {
+      await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: TESTMODUS }).eq('id', rij.id)
+      return
+    }
+  } catch (e) {
+    if (e instanceof MollieError && e.status === 404) {
+      await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: TESTMODUS }).eq('id', rij.id)
+      return
+    }
+    // Mollie nu niet te bereiken: de claim loslaten, de dagelijkse cron probeert het opnieuw.
+    await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: null }).eq('id', rij.id).eq('moneybird_factuur_id', BEZIG)
+    Sentry.captureException(e, { tags: { onderdeel: 'moneybird-factuur-modus' } })
+    return
+  }
 
   try {
     const { data: sub } = await billingDb

@@ -45,6 +45,8 @@ export type MolliePaymentStatus = 'open' | 'canceled' | 'pending' | 'authorized'
 
 export interface MolliePayment {
   id: string
+  /** Modus waarin de betaling is gedaan; Mollie toont met een live_-sleutel alleen live-betalingen. */
+  mode?: 'live' | 'test'
   status: MolliePaymentStatus
   amount: MollieAmount
   amountRefunded?: MollieAmount
