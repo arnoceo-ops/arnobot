@@ -392,7 +392,7 @@ export default async function ArnoBotLandingPage() {
         <p className="waarom-intro">Elk advies in ArnoBot komt uit één bron: veertig jaar verkopen op topniveau. Duizenden deals, gewonnen en verloren, en alles wat daarvan is geleerd. Geen mening van iedereen, maar de aanpak van iemand.</p>
 
         <div className="waarom-bron">
-          <p className="waarom-bron-stelling">Alsof je veertig jaar naast <span>één topverkoper</span> hebt gezeten.</p>
+          <p className="waarom-bron-stelling">Alsof je veertig jaar naast <span>een topverkoper</span> hebt gezeten.</p>
           <p className="waarom-bron-toelichting">Je krijgt zijn manier van kijken, zijn afwegingen en zijn eerlijkheid. Hoe hij een gesprek opent, wanneer hij zwijgt, waarom hij een deal laat lopen. Dat leer je normaal alleen door jaren mee te lopen. Nu zit het in elk antwoord.</p>
         </div>
 
