@@ -175,6 +175,16 @@ export default async function AdminStatsPage() {
     if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
     ledenPerTeam[l.team_id] = (ledenPerTeam[l.team_id] ?? 0) + 1
   }
+  // Antwoordbeoordelingen (duimpje): alleen tellen. De negatieve antwoorden zelf staan op
+  // Gesprekken, filter DUIMPJE "alleen negatief" (hier stond eerder de pagina FEEDBACK).
+  const beoordeeld = () => supabase.from('arnobot_rds_logs').select('*', { count: 'exact', head: true }).not('feedback', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+  const [{ count: aantalBeoordeeld }, { count: aantalPositief }] = await Promise.all([
+    beoordeeld(),
+    beoordeeld().eq('feedback', 'pos'),
+  ])
+  const beoordeeldTotaal = aantalBeoordeeld ?? 0
+  const positiefTotaal = aantalPositief ?? 0
+
   const mrr =
     berekenMrrEuro(abonnementen ?? []) +
     berekenTeamMrrEuro(teamRijen ?? [], ledenPerTeam, new Set((betaaldeFacturen ?? []).map(f => f.team_id as string)))
@@ -244,6 +254,12 @@ export default async function AdminStatsPage() {
         { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
         { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
       ]} />
+      <StatCard label="ANTWOORDBEOORDELINGEN" stats={beoordeeldTotaal === 0
+        ? [{ sublabel: 'POSITIEF', value: 'n.v.t.', note: 'nog geen beoordelingen' }]
+        : [
+            { sublabel: 'POSITIEF', value: `${Math.round((positiefTotaal / beoordeeldTotaal) * 100)}%`, note: `${beoordeeldTotaal} beoordelingen` },
+            { sublabel: 'NEGATIEF', value: String(beoordeeldTotaal - positiefTotaal), warn: beoordeeldTotaal - positiefTotaal > 0, note: 'zie Gesprekken, filter DUIMPJE' },
+          ]} />
     </TileGrid>
   )
 

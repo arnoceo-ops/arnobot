@@ -13,6 +13,9 @@ import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { huidigePersona } from '@/lib/testPersona'
+import TestPersonaButtons from '../test-persona/TestPersonaButtons'
+import TestPlanButtons from '../test-persona/TestPlanButtons'
 import { ACTIE_LABEL, beschrijfDetails, type AdminActie, type AdminLogDetails } from '@/lib/adminLog'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
@@ -365,6 +368,8 @@ export default async function GebruikersPage({
     abonnementPerUser.set(s.user_id, `${s.plan === 'premium' ? 'Pro' : 'Basic'} ${s.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}, ${ABO_STATUS[s.status] ?? s.status}${s.status === 'active' && s.opzegging_aangevraagd_at ? ' (opgezegd)' : ''}`)
   }
 
+  const testPersona = await huidigePersona()
+
   // Logboek van adminacties (arnobot_admin_log), nieuwste eerst.
   const naamVoorId = new Map(enriched.map(u => [u.user_id, u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id]))
   const adminLog = (adminLogRes.data ?? []) as { id: string; created_at: string; actie: AdminActie; doel_user_id: string | null; doel_team_id: string | null; details: AdminLogDetails | null }[]
@@ -562,6 +567,19 @@ export default async function GebruikersPage({
         </div>
         </div>{/* /minWidth wrapper */}
         </div>{/* /admin-table-wrap */}
+
+        <div style={{ marginTop: 56 }}>
+          <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 8 }}>TESTACCOUNT (test@arno.bot): ROL</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+            Zet het handmatige testaccount in één klik om naar een andere rol, door de echte onderliggende data te wijzigen (teamlidmaatschap, command_manager, profiel.rol).
+          </p>
+          <TestPersonaButtons initial={testPersona.persona} />
+          <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', margin: '32px 0 8px' }}>TESTACCOUNT: PLAN</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+            Los van de rol: zet hetzelfde testaccount op Basic, Pro of Team om te zien hoe de app er met dat abonnement uitziet.
+          </p>
+          <TestPlanButtons initial={testPersona.plan} />
+        </div>
 
         <div style={{ marginTop: 56 }}>
           <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>LAATSTE ADMINACTIES</p>

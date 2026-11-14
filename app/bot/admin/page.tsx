@@ -76,8 +76,11 @@ export default async function ArnoBotAdminPage({
   const yesterday = nlGisteren()
   // Gesprekken: standaard gisteren t/m vandaag. Analyses en Coaching komen traag binnen, dus
   // daar is leeg = geen datumbegrenzing (een rapportage van vorige maand blijft zichtbaar).
-  const from = parseDate(params.from || '') || (tab === 'gesprekken' ? yesterday : '')
-  const to = parseDate(params.to || '') || (tab === 'gesprekken' ? today : '')
+  // Met het duimpje-filter aan is leeg ook "alle data": de negatief beoordeelde antwoorden van
+  // alle tijd zijn wat je wilt zien, niet alleen die van gisteren (zo werkt ook de oude FEEDBACK-link).
+  const fbActief = tab === 'gesprekken' && (params.fb === 'alle' || params.fb === 'neg')
+  const from = parseDate(params.from || '') || (tab === 'gesprekken' && !fbActief ? yesterday : '')
+  const to = parseDate(params.to || '') || (tab === 'gesprekken' && !fbActief ? today : '')
   // Sorteren op aantal vragen kan alleen bij gesprekken.
   const sort = tab !== 'gesprekken' && (params.sort === 'count_desc' || params.sort === 'count_asc') ? 'date_desc' : (params.sort || 'date_desc')
   // Duimpje-filter, alleen bij Gesprekken: alle berichten met een beoordeling, of alleen de negatieve.
@@ -111,9 +114,9 @@ export default async function ArnoBotAdminPage({
         let q = supabase
           .from('arnobot_rds_logs')
           .select('*')
-          .gte('created_at', nlDagStartIso(from))
-          .lt('created_at', nlDagEindeIso(to))
           .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        if (from) q = q.gte('created_at', nlDagStartIso(from))
+        if (to) q = q.lt('created_at', nlDagEindeIso(to))
         if (userFilter) q = q.eq('user_id', userFilter)
         if (fb === 'alle') q = q.not('feedback', 'is', null)
         if (fb === 'neg') q = q.eq('feedback', 'neg')

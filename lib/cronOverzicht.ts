@@ -4,7 +4,7 @@ import vercelConfig from '../vercel.json'
 // uit de pas), de beschrijving uit CRON_INFO hieronder. cronOverzicht.test.ts dwingt af dat elke
 // cron in vercel.json hier beschreven staat, en omgekeerd, en dat elke cron-route een schema
 // heeft. Een nieuwe cron zonder regel hier laat dus de test falen, in plaats van stil te ontbreken
-// op de CRONS-pagina.
+// op het totaaloverzicht (/bot/admin/emails/overzicht, het menu-item MAILS).
 
 export type CronSoort = 'gebruikers' | 'mij' | 'systeem'
 

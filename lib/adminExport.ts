@@ -35,8 +35,9 @@ export async function fetchLogsInRange(from: string, to: string, maxRijen: numbe
       supabase
         .from('arnobot_rds_logs')
         .select('*')
-        .gte('created_at', nlDagStartIso(from))
-        .lt('created_at', nlDagEindeIso(to))
+        // Leeg van of tot = onbegrensd (het duimpje-filter op Gesprekken werkt zonder datum).
+        .gte('created_at', from ? nlDagStartIso(from) : '1970-01-01T00:00:00.000Z')
+        .lt('created_at', to ? nlDagEindeIso(to) : '9999-12-31T00:00:00.000Z')
         // Zelfde uitsluiting als het scherm op /bot/admin: interne testaccounts en demo-gebruikers
         // horen niet in CSV of PDF (check-testaccount-filter.mjs ving dit niet).
         .not('user_id', 'in', INTERNAL_TEST_USERS_IN)

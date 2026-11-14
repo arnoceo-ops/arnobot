@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import AdminNav from '../AdminNav'
+import BlogTabs from './BlogTabs'
 import { getBlogDb } from '@/lib/blog'
 
 export const dynamic = 'force-dynamic'
@@ -36,7 +37,8 @@ export default async function AdminBlogPage() {
       <AdminNav active="/bot/admin/blog" />
       <div className="admin-content" style={{ maxWidth: 1000, margin: '0 auto', padding: '48px 40px 80px' }}>
         <p style={{ color: '#f59e0b', fontSize: 12, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT ADMIN</p>
-        <h1 style={{ fontSize: 48, fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-1px' }}>Posts</h1>
+        <h1 style={{ fontSize: 48, fontWeight: 700, margin: '0 0 24px 0', letterSpacing: '-1px' }}>Blog</h1>
+        <BlogTabs actief="posts" />
         <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 32 }}>
           De publieke blog op arno.bot/blog. Abonnees: {confirmed.count ?? 0} bevestigd, {pending.count ?? 0} wacht op bevestiging.
         </p>

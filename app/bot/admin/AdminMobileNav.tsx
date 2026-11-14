@@ -2,18 +2,18 @@
 
 import { useState } from 'react'
 
-const NAV_LINKS = [
+// Zelfde items en volgorde als AdminNav.tsx (dat heeft een eigen lijst: aparte nav-implementatie,
+// altijd samen bijwerken). TEAMS ontbrak hier.
+const NAV_LINKS: { href: string; label: string; ook?: string[] }[] = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
+  { href: '/bot/admin/teams', label: 'TEAMS' },
   { href: '/bot/admin', label: 'GESPREKKEN' },
   { href: '/bot/admin/analyse', label: 'ANALYSE' },
   { href: '/bot/admin/status', label: 'STATUS' },
   { href: '/bot/admin/meta-analyse', label: 'META' },
-  { href: '/bot/admin/voice-test', label: 'TEMP' },
-  { href: '/bot/admin/emails', label: 'CRONS' },
-  { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
+  { href: '/bot/admin/emails', label: 'MAILS' },
   { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
-  { href: '/bot/admin/idee', label: 'BLOGS' },
-  { href: '/bot/admin/blog', label: 'POSTS' },
+  { href: '/bot/admin/blog', label: 'BLOG', ook: ['/bot/admin/idee'] },
   { href: '/bot/admin/stats', label: 'STATS' },
 
   { href: '/api/admin/logout', label: 'UITLOGGEN' },
@@ -47,7 +47,7 @@ export default function AdminMobileNav({ active }: { active: string }) {
                 fontWeight: 700,
                 fontSize: 12,
                 letterSpacing: 3,
-                color: l.href === active ? '#f59e0b' : '#9ca3af',
+                color: l.href === active || l.ook?.includes(active) ? '#f59e0b' : '#9ca3af',
                 textDecoration: 'none',
               }}
             >

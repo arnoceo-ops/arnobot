@@ -1,18 +1,17 @@
 import AdminMobileNav from './AdminMobileNav'
 
-const CENTER_LINKS = [
+// `ook`: andere pagina's die bij dit menu-item horen en het ook oplichten. BLOG omvat de posts
+// en de blogideeën uit gesprekken (twee pagina's, één menu-item).
+const CENTER_LINKS: { href: string; label: string; ook?: string[] }[] = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
   { href: '/bot/admin/teams', label: 'TEAMS' },
   { href: '/bot/admin', label: 'GESPREKKEN' },
   { href: '/bot/admin/analyse', label: 'ANALYSE' },
   { href: '/bot/admin/status', label: 'STATUS' },
   { href: '/bot/admin/meta-analyse', label: 'META' },
-  { href: '/bot/admin/voice-test', label: 'TEMP' },
-  { href: '/bot/admin/emails', label: 'CRONS' },
-  { href: '/bot/admin/evaluaties', label: 'FEEDBACK' },
+  { href: '/bot/admin/emails', label: 'MAILS' },
   { href: '/bot/admin/kennisbank', label: 'KENNISBANK' },
-  { href: '/bot/admin/idee', label: 'BLOGS' },
-  { href: '/bot/admin/blog', label: 'POSTS' },
+  { href: '/bot/admin/blog', label: 'BLOG', ook: ['/bot/admin/idee'] },
   { href: '/bot/admin/stats', label: 'STATS' },
 ]
 
@@ -37,7 +36,7 @@ export default function AdminNav({ active }: { active: string }) {
         <div className="admin-nav-spacer" />
         <div className="admin-nav-center" style={{ display: 'flex', gap: '4px' }}>
           {CENTER_LINKS.map(l => (
-            <a key={l.href} href={l.href} style={navLinkStyle(active === l.href)}>{l.label}</a>
+            <a key={l.href} href={l.href} style={navLinkStyle(active === l.href || !!l.ook?.includes(active))}>{l.label}</a>
           ))}
         </div>
         <div className="admin-nav-right" style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, alignItems: 'center' }}>
