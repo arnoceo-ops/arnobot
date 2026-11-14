@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,14 +30,18 @@ export async function GET(req: NextRequest) {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: logs } = await supabase
-    .from('arnobot_rds_logs')
-    .select('user_id, created_at')
-    .gte('created_at', sevenDaysAgo)
-    .order('created_at', { ascending: false })
+  // De hele week in blokken (lib/haalAlleRijen.ts): boven 1000 vragen per week vielen de nieuwste weg.
+  const logs = await haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
+    supabase
+      .from('arnobot_rds_logs')
+      .select('user_id, created_at')
+      .gte('created_at', sevenDaysAgo)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(van, tot))
 
   const userMap: Record<string, { count: number; lastActive: string }> = {}
-  for (const log of logs ?? []) {
+  for (const log of logs) {
     if (isInternalTestUser(log.user_id)) continue
     if (!userMap[log.user_id]) {
       userMap[log.user_id] = { count: 0, lastActive: log.created_at }

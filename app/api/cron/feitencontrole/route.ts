@@ -5,6 +5,7 @@ import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { verdachteTellingen } from '@/lib/feitenControle'
 import { vindFouteSommen, vindUVorm } from '@/lib/rekenControle'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -71,30 +72,36 @@ export async function GET(req: NextRequest) {
 
   try {
     const sinds = new Date(Date.now() - VENSTER_MS).toISOString()
-    const { data: logs, error } = await excludeInternalTestUsers(
-      supabase
-        .from('arnobot_rds_logs')
-        .select('user_id, session_id, question, answer, created_at')
-        .gte('created_at', sinds)
-    )
-      .order('created_at', { ascending: true })
-      .limit(MAX_LOGS)
-    if (error) throw error
+    // Het venster in blokken (lib/haalAlleRijen.ts) en pas daarna begrenzen op MAX_LOGS: een .limit
+    // boven 1000 werkt niet, de database kapt dan toch af op 1000.
+    const logs = (await haalAlleRijen<{ user_id: string | null; session_id: string | null; question: string | null; answer: string | null; created_at: string }>((van, tot) =>
+      excludeInternalTestUsers(
+        supabase
+          .from('arnobot_rds_logs')
+          .select('user_id, session_id, question, answer, created_at')
+          .gte('created_at', sinds)
+      )
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(van, tot))).slice(0, MAX_LOGS)
 
-    const rijen = (logs ?? []).filter(l => typeof l.answer === 'string' && l.answer.length > 0 && typeof l.session_id === 'string')
+    const rijen = logs.filter(l => typeof l.answer === 'string' && l.answer.length > 0 && typeof l.session_id === 'string')
     if (rijen.length === 0) return NextResponse.json({ ok: true, gecontroleerd: 0, fouten: 0 })
 
     // Alle vragen van de betrokken sessies (ook van vóór het venster), want een gesprek kan dagen lopen.
     const sessieIds = [...new Set(rijen.map(r => r.session_id as string))]
     const vragenPerSessie = new Map<string, { t: string; v: string }[]>()
     for (let i = 0; i < sessieIds.length; i += 100) {
-      const { data: alle, error: e2 } = await supabase
-        .from('arnobot_rds_logs')
-        .select('session_id, question, created_at')
-        .in('session_id', sessieIds.slice(i, i + 100))
-        .order('created_at', { ascending: true })
-      if (e2) throw e2
-      for (const a of alle ?? []) {
+      // Per groep van 100 sessies kunnen er meer dan 1000 berichten zijn, dus ook in blokken.
+      const alle = await haalAlleRijen<{ session_id: string; question: string | null; created_at: string }>((van, tot) =>
+        supabase
+          .from('arnobot_rds_logs')
+          .select('session_id, question, created_at')
+          .in('session_id', sessieIds.slice(i, i + 100))
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(van, tot))
+      for (const a of alle) {
         const lijst = vragenPerSessie.get(a.session_id as string) ?? []
         lijst.push({ t: a.created_at as string, v: String(a.question ?? '').replace(ACTIE_PREFIX, '').trim() })
         vragenPerSessie.set(a.session_id as string, lijst)

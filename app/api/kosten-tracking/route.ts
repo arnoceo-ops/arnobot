@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand } from '@/lib/kostenTarieven'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,21 +57,28 @@ type Omzet = {
 async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
   const { start, eind } = maandRange(maand)
 
-  const [berichten, analyses, sparring, voice] = await Promise.all([
-    supabase.from('arnobot_rds_logs').select('user_id', { count: 'exact' }).not('user_id', 'is', null).gte('created_at', start).lt('created_at', eind),
+  // Berichten en sparringsessies van de hele maand in blokken (lib/haalAlleRijen.ts): een kale select
+  // kapt op 1000 rijen af, waarna het aantal unieke gebruikers (de basis van de kosten per
+  // gebruiker) en het aantal sparringberichten stilletjes te laag uitkwamen.
+  const [berichtenRows, analyses, sparringRows, voice] = await Promise.all([
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      supabase.from('arnobot_rds_logs').select('user_id').not('user_id', 'is', null).gte('created_at', start).lt('created_at', eind)
+        .order('id', { ascending: true }).range(van, tot)),
     supabase.from('arnobot_analyses').select('id', { count: 'exact', head: true }).gte('created_at', start).lt('created_at', eind),
-    supabase.from('arnobot_sparring_sessions').select('message_count').gte('created_at', start).lt('created_at', eind),
-    supabase.from('arnobot_elevenlabs_usage').select('char_count').neq('user_id', 'admin-voice-test').gte('created_at', start).lt('created_at', eind),
+    haalAlleRijen<{ message_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_sparring_sessions').select('message_count').gte('created_at', start).lt('created_at', eind)
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ char_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_elevenlabs_usage').select('char_count').neq('user_id', 'admin-voice-test').gte('created_at', start).lt('created_at', eind)
+        .order('id', { ascending: true }).range(van, tot)),
   ])
 
-  const berichtenRows = (berichten.data ?? []) as { user_id: string }[]
   const gebruikersUniek = new Set(berichtenRows.map(r => r.user_id)).size
-  const sparringRows = (sparring.data ?? []) as { message_count: number | null }[]
-  const voiceRows = (voice.data ?? []) as { char_count: number | null }[]
+  const voiceRows = voice
 
   return {
     gebruikers_count: gebruikersUniek,
-    berichten_count: berichten.count ?? berichtenRows.length,
+    berichten_count: berichtenRows.length,
     analyses_count: analyses.count ?? 0,
     sparring_sessies_count: sparringRows.length,
     sparring_berichten_count: sparringRows.reduce((s, r) => s + (r.message_count ?? 0), 0),

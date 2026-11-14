@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -134,13 +135,18 @@ const MAANDNAMEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep
 export async function computeThemaMaandTrend(memberIds: string[]): Promise<string> {
   if (memberIds.length === 0) return ''
 
-  const { data: sessions } = await supabase
-    .from('arnobot_blog_sessions')
-    .select('created_at, themas')
-    .in('user_id', memberIds)
-    .not('themas', 'is', null)
-    .eq('community_excluded', false)
-    .order('created_at', { ascending: true })
+  // Alle sessies van het team in blokken (lib/haalAlleRijen.ts): de trend loopt over maanden,
+  // dus dit komt bij een groter team boven de 1000 rijen die de database per vraag geeft.
+  const sessions = await haalAlleRijen<{ created_at: string; themas: string[] | null }>((van, tot) =>
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('created_at, themas')
+      .in('user_id', memberIds)
+      .not('themas', 'is', null)
+      .eq('community_excluded', false)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(van, tot))
 
   const byMonth = new Map<string, Map<string, number>>()
   for (const s of sessions ?? []) {

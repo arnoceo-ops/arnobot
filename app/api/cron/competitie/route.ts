@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { verstuurMailZacht } from '@/lib/mail'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -158,21 +159,28 @@ export async function GET(req: NextRequest) {
   }
 
   // Coaching-scores per gebruiker in de periode
-  const { data: alleScores } = await supabase
-    .from('arnobot_coaching_scores')
-    .select('user_id, msa_score, created_at')
-    .in('user_id', userIds)
-    .gte('created_at', van)
-    .lte('created_at', tot)
-    .order('created_at', { ascending: true })
+  const alleScores = await haalAlleRijen<{ user_id: string; msa_score: number; created_at: string }>((vanRij, totRij) =>
+    supabase
+      .from('arnobot_coaching_scores')
+      .select('user_id, msa_score, created_at')
+      .in('user_id', userIds)
+      .gte('created_at', van)
+      .lte('created_at', tot)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(vanRij, totRij))
 
   // Sessies per gebruiker in de periode
-  const { data: alleSessies } = await supabase
-    .from('arnobot_blog_sessions')
-    .select('user_id, created_at')
-    .in('user_id', userIds)
-    .gte('created_at', van)
-    .lte('created_at', tot)
+  // In blokken (lib/haalAlleRijen.ts): een maand sessies van alle deelnemers kan boven 1000 komen.
+  const alleSessies = await haalAlleRijen<{ user_id: string; created_at: string }>((vanRij, totRij) =>
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('user_id, created_at')
+      .in('user_id', userIds)
+      .gte('created_at', van)
+      .lte('created_at', tot)
+      .order('id', { ascending: true })
+      .range(vanRij, totRij))
 
   const kandidaten: Kandidaat[] = []
 

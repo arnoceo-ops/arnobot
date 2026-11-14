@@ -8,6 +8,7 @@ import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { RULE_ANALYSE_BUITEN_CHAT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,11 +24,16 @@ export async function GET(req: NextRequest) {
   try {
 
   // Alle gebruikers met sessies
-  const { data: userRows } = await supabase
-    .from('arnobot_blog_sessions')
-    .select('user_id')
+  // In blokken (lib/haalAlleRijen.ts): een kale select kapt op 1000 rijen af, waarna gebruikers
+  // wier sessies erbuiten vielen nooit meer een automatische analyse kregen.
+  const userRows = await haalAlleRijen<{ user_id: string }>((van, tot) =>
+    supabase
+      .from('arnobot_blog_sessions')
+      .select('user_id')
+      .order('id', { ascending: true })
+      .range(van, tot))
 
-  const userIds = [...new Set((userRows ?? []).map((r: { user_id: string }) => r.user_id))]
+  const userIds = [...new Set(userRows.map(r => r.user_id))]
     .filter(id => !isInternalTestUser(id))
 
   let analysed = 0

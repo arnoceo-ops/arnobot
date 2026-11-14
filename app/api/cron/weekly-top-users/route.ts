@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,15 +29,19 @@ export async function GET(req: NextRequest) {
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [logsRes, analysesRes, coachingRes] = await Promise.all([
-    excludeInternalTestUsers(supabase.from('arnobot_rds_logs').select('user_id, session_id').gte('created_at', sevenDaysAgo)),
-    excludeInternalTestUsers(supabase.from('arnobot_analyses').select('user_id').gte('created_at', sevenDaysAgo)),
-    excludeInternalTestUsers(supabase.from('arnobot_coaching_scores').select('user_id').gte('created_at', sevenDaysAgo)),
+  // Logs en analyses van de hele week in blokken (lib/haalAlleRijen.ts): boven 1000 rijen
+  // vielen de nieuwste weg en klopte de top 10 niet meer.
+  const [logs, analyses, coaching] = await Promise.all([
+    haalAlleRijen<{ user_id: string; session_id: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_rds_logs').select('user_id, session_id').gte('created_at', sevenDaysAgo))
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_analyses').select('user_id').gte('created_at', sevenDaysAgo))
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_coaching_scores').select('user_id').gte('created_at', sevenDaysAgo))
+        .order('id', { ascending: true }).range(van, tot)),
   ])
-
-  const logs = logsRes.data || []
-  const analyses = analysesRes.data || []
-  const coaching = coachingRes.data || []
 
   if (!logs.length) {
     return NextResponse.json({ ok: true, skipped: true, message: 'Geen activiteit deze week' })

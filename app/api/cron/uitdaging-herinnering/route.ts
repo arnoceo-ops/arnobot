@@ -4,6 +4,7 @@ import { verstuurMail } from '@/lib/mail'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,16 +33,20 @@ export async function GET(req: NextRequest) {
       const vanaf = new Date(doelMoment - VENSTER_UUR * 60 * 60 * 1000).toISOString()
       const tot = new Date(doelMoment + VENSTER_UUR * 60 * 60 * 1000).toISOString()
 
-      const { data: sessies } = await supabase
-        .from('arnobot_blog_sessions')
-        .select('session_id, user_id, uitdaging, created_at')
-        .not('uitdaging', 'is', null)
-        .is('actie_status', null)
-        .is('deleted_at', null)
-        .gte('created_at', vanaf)
-        .lte('created_at', tot)
+      // In blokken (lib/haalAlleRijen.ts): bij veel gebruikers kan één venster boven 1000 sessies komen.
+      const sessies = await haalAlleRijen<{ session_id: string; user_id: string; uitdaging: string; created_at: string }>((van, tot2) =>
+        supabase
+          .from('arnobot_blog_sessions')
+          .select('session_id, user_id, uitdaging, created_at')
+          .not('uitdaging', 'is', null)
+          .is('actie_status', null)
+          .is('deleted_at', null)
+          .gte('created_at', vanaf)
+          .lte('created_at', tot)
+          .order('id', { ascending: true })
+          .range(van, tot2))
 
-      if (!sessies?.length) continue
+      if (!sessies.length) continue
 
       for (const sessie of sessies) {
         if (sessie.user_id === E2E_TEST_USER_ID || sessie.user_id === MANUAL_TEST_USER_ID || sessie.user_id === APP_REVIEWER_ID) continue

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Redis } from '@upstash/redis'
 import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,19 +66,28 @@ export async function GET() {
 
   // Fetch stats for all members in parallel
   const [sessionsRes, logsRes, analysesRes, profilesRes, coachingRes, oneOnOneRes] = await Promise.all([
-    supabase
-      .from('arnobot_blog_sessions')
-      .select('user_id, created_at')
-      .in('user_id', memberIds),
-    supabase
-      .from('arnobot_rds_logs')
-      .select('user_id, created_at')
-      .in('user_id', memberIds)
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('arnobot_analyses')
-      .select('user_id')
-      .in('user_id', memberIds),
+    // Alle rijen van het team in blokken (lib/haalAlleRijen.ts): een team van tien met elk
+    // honderd vragen komt boven de 1000 rijen die de database per vraag geeft, en dan vielen
+    // de oudste weg en klopten de tellingen per teamlid niet meer. `{ data }` houdt de vorm.
+    haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_blog_sessions')
+        .select('user_id, created_at')
+        .in('user_id', memberIds)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
+    haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_rds_logs')
+        .select('user_id, created_at')
+        .in('user_id', memberIds)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      supabase
+        .from('arnobot_analyses')
+        .select('user_id')
+        .in('user_id', memberIds)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase
       .from('arnobot_blog_profiles')
       .select('user_id, profiel')
