@@ -5,7 +5,7 @@
 //
 // Gebruik:
 //   const logs = await haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
-//     supabase.from('arnobot_rds_logs').select('user_id, created_at')
+//     supabase.from('<tabel>').select('kolom1, kolom2')
 //       .order('created_at', { ascending: false }).order('id').range(van, tot))
 //
 // Belangrijk: de query moet een vaste volgorde hebben, liefst eindigend op een unieke kolom

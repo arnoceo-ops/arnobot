@@ -35,12 +35,19 @@ Alleen zakelijk maandelijks. Voor een jaarabonnement of particulier: `docs/SOLO_
 - **Jaarlijks team dat een seat toevoegt:** de cron maakt eenmalig een tussenfactuur naar rato voor de nieuwe seats (alleen als er al een eerdere factuur bestaat).
 - **Niet betaald:** 7 dagen na de vervaldatum een herinnering, 30 dagen na de vervaldatum wordt het team geblokkeerd (manager en leden verliezen toegang die alleen via het team loopt, hun eigen betaalde of trial-toegang blijft). Telegram-melding en een mail aan de teambaas.
 - **Deblokkeren:** automatisch bij betaling, of met de knop DEBLOKKEER op `/bot/admin/teams`.
-- **Handmatig blokkeren (sinds 2026-11-14):** de knop BLOKKEER op `/bot/admin/teams` (met een tweede klik ter bevestiging) zet de toegang van het hele team uit. Zo beëindig je ook een gratis proef die niet vanzelf stopt (zie hieronder). Elke wijziging komt in het adminlogboek.
+- **Handmatig blokkeren (sinds 2026-11-14):** de knop BLOKKEER op `/bot/admin/teams` (met een tweede klik ter bevestiging) zet de toegang van het hele team uit. Een gratis agent-proef eindigt vanzelf (zie hieronder). Elke wijziging komt in het adminlogboek.
 - **Stand per team (sinds 2026-11-14):** boven elk team op `/bot/admin/teams` staat het aantal leden, de seats waarop gefactureerd wordt, het bedrag excl. btw en de dagen tot de volgende factuur (rood als die te laat is, oranje onder 7 dagen).
 
 ### Gratis proef via een agent-link (`docs/SALES_DEVELOPMENT.md`)
 
-Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aanmaken van zijn account `command_manager = true` en `sd_agent` (de koppeling voor de commissie). Hij kan direct een team maken en leden uitnodigen (stap 5 en 6). **Die proef eindigt niet vanzelf:** de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, ook na de 30 dagen. Zolang bij stap 7 geen min. seats, cyclus en factuurdatum zijn ingevuld, slaat de factuurcron het team over, dus ook de automatische blokkade bij niet betalen werkt dan niet. Het einde van de proef is nu handmatig: BLOKKEER na de 30 dagen, of stap 7 doen zodra de klant akkoord is.
+Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aanmaken van zijn account `command_manager = true` en `sd_agent` (de koppeling voor de commissie). Hij kan direct een team maken en leden uitnodigen (stap 5 en 6). **Niet elk team is een proef:** alleen deze route heeft er een. Een team via het aanvraagformulier heeft geen proef en eindigt alleen via betaling.
+
+**De proef eindigt na 30 dagen vanzelf** (sinds 2026-11-14, `/api/cron/team-proef`, dagelijks). Zonder die cron zou hij nooit eindigen: de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers en teamleden over. De cron:
+- waarschuwt jou via Telegram 5 dagen van tevoren, voor het gesprek over een betaald Team;
+- blokkeert daarna het team (manager en leden verliezen de toegang die alleen via het team loopt, wat ze zelf betaald hebben blijft). Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in en gelden de gewone 30 dagen;
+- raakt een team nooit aan zodra de manager zelf betaalt, de facturatie is ingesteld (stap 7, min. seats gevuld) of de aanmelding niet via een agent-link kwam.
+
+**Verlengen kan altijd:** op `/bot/admin/teams` staat bij zo'n team de einddatum, met een datumveld en de knop VERLENG PROEF. Die zet de einddatum van de manager later en heft een blokkade door het einde van de proef op, ook na het einde. Een gezette einddatum gaat voor op de 30 dagen. Zodra de klant akkoord is: stap 7 invullen, dan is het geen proef meer.
 
 ## Let op
 
@@ -59,6 +66,6 @@ Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extr
 
 ## Open punten
 
-- Een gratis agent-proef die na 30 dagen automatisch eindigt, of een zichtbare einddatum per proefteam: nu alleen handmatig (BLOKKEER).
+- Een mail aan de manager bij het einde van de proef (tekst nog niet vastgesteld): nu krijgt alleen Arno een Telegram-melding, en de manager belandt na de blokkade op `/bot/doorgaan`.
 - Een koppeling tussen de aanvraag en het team op de adminpagina (nu "match zelf op e-mailadres").
 - Grens van 25 leden (zie Let op 3).

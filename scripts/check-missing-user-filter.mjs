@@ -92,6 +92,12 @@ const OWNERSHIP_EQ = /\.(eq|in)\(\s*['"][^'"]*(?:user_id|manager_id|member_id)[^
 // (referral-code, team_id) waarvan de output nooit terug naar de aanroeper lekt.
 // Formaat: 'relatief/pad.ts:tabelnaam'.
 const KNOWN_SAFE_QUERIES = new Set([
+  // Meta-analyse en waarheidsmail zijn bewust gebruikersoverstijgend: ze beoordelen de kwaliteit van
+  // ArnoBot over alle gebruikers heen (meta-analyse over de sessies van de laatste periode, de
+  // waarheidsmail een steekproef van de afgelopen week), met de interne testaccounts uitgesloten.
+  // Alleen via admin of cron aangeroepen, nooit door een gebruiker.
+  'lib/metaAnalyse.ts:arnobot_rds_logs',
+  'lib/waarheidsRapport.ts:arnobot_rds_logs',
   // Betaling van een abonnement dat in dezelfde functie al op user_id is opgehaald (s.id komt
   // uit een query met .eq('user_id', userId)).
   'app/api/bot/checkout/route.ts:arnobot_payments',

@@ -58,6 +58,10 @@ Alle bevindingen uit de audit en alle beloftes van deze sessie zijn naast de cod
 - **BlogStats doet ongeveer 40 telqueries** per paginalading en MISLUKT telt alle bezorgingen ooit. Niet aangepast: het zijn goedkope head-queries op een pagina die je zelden opent, en een permanente waarschuwing bij een eerdere mislukte bezorging is niet onjuist.
 - **META heeft een eigen duimpje-jurylid** dat overlapt met de duimpjes op Gesprekken en STATS: ontwerpkeuze van de meta-analyse, niet aangeraakt.
 
+## Teamproef (2026-11-14)
+
+Gebouwd op Arno's besluit: de gratis proef van 30 dagen voor een manager via een agent-link eindigt automatisch, en handmatig verlengen kan altijd (`/api/cron/team-proef`, `lib/teamProef.ts`, VERLENG PROEF op `/bot/admin/teams`). Aanleiding: die manager heeft `command_manager = true`, de toegangspoort laat hem dan binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers over, dus de proef eindigde nooit. Niet elk team is een proef, alleen de agent-link-route; teams via het aanvraagformulier of met facturatie worden nooit aangeraakt. **Nog niet gebouwd:** een mail aan de manager bij het einde (tekst eerst aan Arno voorleggen); nu alleen een Telegram-melding aan Arno. De agents en hun namen staan nog niet vast en Arno maakt zijn eigen team pas daarna, dus er zijn nu geen proefteams.
+
 ## Open vragen voor Arno
 
 Geen. De eerdere vier vragen zijn beslist (zie hierboven).
