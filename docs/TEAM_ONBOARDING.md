@@ -10,7 +10,7 @@
 | 1 | Klant | Vult het aanvraagformulier in: bedrijfsnaam, KvK, BTW-nummer, factuuradres, aanvrager, aantal gebruikers (minimaal 3), maandelijks of jaarlijks. | `/team/aanvragen` |
 | 2 | Automatisch | De aanvraag wordt opgeslagen in `arnobot_command_requests` (met het `user_id` als de aanvrager was ingelogd). Mail naar `arno@arno.bot` met knop naar de adminpagina, plus een Telegram-melding "Nieuwe Team-aanvraag". | `app/api/team-aanvraag/route.ts` |
 | 3 | Arno | Beoordeelt de aanvraag, gesprek of demo, akkoord op prijs. | buiten de app |
-| 4 | Arno | Zoekt de aanvrager op in `approved_users` (op e-mailadres), zet `command_manager = true` en het plan (zoals beschreven in `docs/ABONNEMENTEN.md`). Doe dit pas na akkoord, zie "Let op" hieronder. | Supabase |
+| 4 | Arno | Zoekt de aanvrager op (op e-mailadres), zet `command_manager = true` en het plan (zoals beschreven in `docs/ABONNEMENTEN.md`). Doe dit pas na akkoord, zie "Let op" hieronder. De schakelaars staan in de kolommen TEAM en PLAN op `/bot/admin/gebruikers` (elke wijziging komt in het logboek onderaan die pagina), Supabase is niet nodig. | `/bot/admin/gebruikers` |
 | 5 | Teambaas | Maakt het team aan met een teamnaam. Hij wordt automatisch manager en krijgt een uitnodigingscode. | app, route `/api/bot/team/create` |
 | 6 | Teambaas | Nodigt de teamleden uit met de uitnodigingslink. | `/bot/team/join?code=<uitnodigingscode>` |
 | 7 | Arno | Zodra het team bestaat verschijnt het op de adminpagina. Vul in: **min. seats**, **cyclus**, **volgende factuurdatum** (de startdatum) en de **bedrijfsgegevens** (naam, KvK, BTW-nummer, adres). Opslaan. | `/bot/admin/teams` |
@@ -35,6 +35,12 @@ Alleen zakelijk maandelijks. Voor een jaarabonnement of particulier: `docs/SOLO_
 - **Jaarlijks team dat een seat toevoegt:** de cron maakt eenmalig een tussenfactuur naar rato voor de nieuwe seats (alleen als er al een eerdere factuur bestaat).
 - **Niet betaald:** 7 dagen na de vervaldatum een herinnering, 30 dagen na de vervaldatum wordt het team geblokkeerd (manager en leden verliezen toegang die alleen via het team loopt, hun eigen betaalde of trial-toegang blijft). Telegram-melding en een mail aan de teambaas.
 - **Deblokkeren:** automatisch bij betaling, of met de knop DEBLOKKEER op `/bot/admin/teams`.
+- **Handmatig blokkeren (sinds 2026-11-14):** de knop BLOKKEER op `/bot/admin/teams` (met een tweede klik ter bevestiging) zet de toegang van het hele team uit. Zo beëindig je ook een gratis proef die niet vanzelf stopt (zie hieronder). Elke wijziging komt in het adminlogboek.
+- **Stand per team (sinds 2026-11-14):** boven elk team op `/bot/admin/teams` staat het aantal leden, de seats waarop gefactureerd wordt, het bedrag excl. btw en de dagen tot de volgende factuur (rood als die te laat is, oranje onder 7 dagen).
+
+### Gratis proef via een agent-link (`docs/SALES_DEVELOPMENT.md`)
+
+Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aanmaken van zijn account `command_manager = true` en `sd_agent` (de koppeling voor de commissie). Hij kan direct een team maken en leden uitnodigen (stap 5 en 6). **Die proef eindigt niet vanzelf:** de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, ook na de 30 dagen. Zolang bij stap 7 geen min. seats, cyclus en factuurdatum zijn ingevuld, slaat de factuurcron het team over, dus ook de automatische blokkade bij niet betalen werkt dan niet. Het einde van de proef is nu handmatig: BLOKKEER na de 30 dagen, of stap 7 doen zodra de klant akkoord is.
 
 ## Let op
 
@@ -53,6 +59,6 @@ Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extr
 
 ## Open punten
 
-- Een knop of tool op de adminpagina om stap 4 (command_manager zetten) te doen, in plaats van Supabase. Bewust nog niet gebouwd: het besluit is "handmatig, blijvend".
+- Een gratis agent-proef die na 30 dagen automatisch eindigt, of een zichtbare einddatum per proefteam: nu alleen handmatig (BLOKKEER).
 - Een koppeling tussen de aanvraag en het team op de adminpagina (nu "match zelf op e-mailadres").
 - Grens van 25 leden (zie Let op 3).
