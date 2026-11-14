@@ -111,6 +111,36 @@ describe('cron/team-proef', () => {
     expect(db.arnobot_teams[0].geblokkeerd_at).toBeNull()
   })
 
+  it('meldt aan Arno (zonder te blokkeren) dat een betalende manager een team zonder facturatie heeft', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(40), paid_at: dagenGeleden(5) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(db.arnobot_teams[0].geblokkeerd_at).toBeNull()
+    expect(notify).toHaveBeenCalledOnce()
+    expect(notify.mock.calls[0][0]).toContain('Controle nodig')
+  })
+
+  it('meldt niets over een betalende manager zolang de 30 dagen niet voorbij zijn, ook niet met een betaalperiode die later eindigt', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(10), paid_at: dagenGeleden(2), expires_at: new Date(Date.now() + 300 * 86_400_000).toISOString() })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('de betaalperiode van een betalende manager (expires_at) telt niet als einde van de proef', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(40), paid_at: dagenGeleden(5), expires_at: new Date(Date.now() + 300 * 86_400_000).toISOString() })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(notify).toHaveBeenCalledOnce()
+  })
+
+  it('meldt niets over een betalende manager met een team dat al facturatie heeft', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(90), paid_at: dagenGeleden(5) })]
+    db.arnobot_teams = [team('t1', 'm1', { min_seats: 5 })]
+    await aanroep()
+    expect(notify).not.toHaveBeenCalled()
+  })
+
   it('raakt een manager die niet via een agent-link kwam niet aan (handmatig of geen agent)', async () => {
     db.approved_users = [manager('m1', { trial_start: dagenGeleden(90), sd_attribution_method: 'manual' }), manager('m2', { trial_start: dagenGeleden(90), sd_attribution_method: null })]
     db.arnobot_teams = [team('t1', 'm1'), team('t2', 'm2')]

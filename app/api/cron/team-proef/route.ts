@@ -19,6 +19,8 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 // Wat telt als proef (lib/teamProef.ts, isAgentProef): de manager kwam via een agent-link (niet handmatig
 // toegewezen), betaalt niet zelf en het team heeft nog geen facturatie (min. seats leeg). Een team via
 // het aanvraagformulier of met facturatie valt erbuiten en wordt nooit door deze cron aangeraakt.
+// Een manager die zelf betaalt wordt ook nooit automatisch geblokkeerd, maar levert wel een melding
+// aan Arno op als zijn team geen facturatie heeft (het team loopt dan gratis mee).
 //  - Met een team: het team wordt geblokkeerd (manager en leden verliezen de toegang die alleen via het
 //    team loopt; wat ze zelf betaald hebben blijft). Dat is hetzelfde blokkeren als op de adminpagina.
 //  - Zonder team: command_manager gaat uit, daarna gelden de gewone 30 dagen van een proef.
@@ -35,8 +37,7 @@ async function cronHandler(req: NextRequest) {
         .from('approved_users')
         .select('user_id, email, voornaam, trial_start, expires_at, paid_at, sd_attribution_method')
         .eq('sd_attribution_method', 'link')
-        .eq('command_manager', true)
-        .is('paid_at', null),
+        .eq('command_manager', true),
     )
     if (error) throw new Error(error.message)
 
@@ -52,6 +53,18 @@ async function cronHandler(req: NextRequest) {
 
     for (const m of managers ?? []) {
       const team = teamPerManager.get(m.user_id as string)
+
+      // Een manager die zelf betaalt wordt nooit automatisch geblokkeerd: dat kan een klant zijn (ook via de oude
+      // handmatige weg, waar paid_at het teken van een betaald Team is). Maar zijn team heeft dan misschien geen
+      // facturatie en loopt gratis mee. Daarom alleen een melding aan Arno, die beslist.
+      if (m.paid_at && team && team.min_seats === null) {
+        // Bij een betalende manager is expires_at het einde van de betaalperiode, niet van de proef: alleen de 30 dagen tellen.
+        const eindeBetaald = proefEinde({ ...m, paid_at: null, expires_at: null })
+        if (eindeBetaald && proefStand(eindeBetaald, nu).staat === 'verlopen' && (await nieuwMelden(`teamproef:betaald:${m.user_id}`, 'waarschuwing'))) {
+          berichten.push(`Controle nodig: ${m.voornaam ?? 'onbekend'} (${m.email ?? 'geen e-mail'}) betaalt zelf, maar team "${team.name}" heeft geen facturatie ingesteld en de agent-proef is voorbij. Het team loopt gratis mee. Stel de facturatie in bij Teams, of blokkeer het team.`)
+        }
+        continue
+      }
       if (!isAgentProef(m, team?.min_seats ?? null)) continue
       const einde = proefEinde(m)
       if (!einde) continue

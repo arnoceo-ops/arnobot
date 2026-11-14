@@ -45,7 +45,8 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 **De proef eindigt na 30 dagen vanzelf** (sinds 2026-11-14, `/api/cron/team-proef`, dagelijks). Zonder die cron zou hij nooit eindigen: de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers en teamleden over. De cron:
 - waarschuwt jou via Telegram 5 dagen van tevoren, voor het gesprek over een betaald Team;
 - blokkeert daarna het team (manager en leden verliezen de toegang die alleen via het team loopt, wat ze zelf betaald hebben blijft). Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in en gelden de gewone 30 dagen;
-- raakt een team nooit aan zodra de manager zelf betaalt, de facturatie is ingesteld (stap 7, min. seats gevuld) of de aanmelding niet via een agent-link kwam.
+- raakt een team nooit aan zodra de facturatie is ingesteld (stap 7, min. seats gevuld) of de aanmelding niet via een agent-link kwam;
+- blokkeert ook nooit automatisch als de manager zelf betaalt (dat kan een klant zijn), maar meldt je dan wel dat het team geen facturatie heeft en gratis meeloopt. Dit is de valkuil: wie op `/bot/doorgaan` alleen voor zichzelf betaalt, houdt zijn eigen toegang, maar betaalt daarmee niet voor zijn team.
 
 **Verlengen kan altijd:** op `/bot/admin/teams` staat bij zo'n team de einddatum, met een datumveld en de knop VERLENG PROEF. Die zet de einddatum van de manager later en heft een blokkade door het einde van de proef op, ook na het einde. Een gezette einddatum gaat voor op de 30 dagen. Zodra de klant akkoord is: stap 7 invullen, dan is het geen proef meer.
 
