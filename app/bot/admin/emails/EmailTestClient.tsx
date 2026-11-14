@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-type Template = { type: string; label: string; description: string; category: 'user' | 'admin' }
+type Template = { type: string; label: string; description: string; category: 'user' | 'admin'; echteActie?: boolean }
 
 const sectionLabel: React.CSSProperties = {
   fontFamily: 'sans-serif',
@@ -17,6 +17,8 @@ const sectionLabel: React.CSSProperties = {
 export default function EmailTestClient() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [sending, setSending] = useState<string | null>(null)
+  // Bij een cron die echt iets doet (echteActie) bevestigt een tweede klik.
+  const [bevestig, setBevestig] = useState<string | null>(null)
   const [results, setResults] = useState<Record<string, 'ok' | 'skipped' | 'error'>>({})
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function EmailTestClient() {
   }, [])
 
   async function send(type: string) {
+    setBevestig(null)
     setSending(type)
     try {
       const res = await fetch('/api/admin/test-email', {
@@ -50,7 +53,7 @@ export default function EmailTestClient() {
   const userTemplates = templates.filter(t => t.category === 'user')
   const adminTemplates = templates.filter(t => t.category === 'admin')
 
-  function renderRow({ type, label, description }: Template) {
+  function renderRow({ type, label, description, echteActie }: Template) {
     return (
       <div key={type} className="email-test-row" style={{
         display: 'grid',
@@ -74,7 +77,7 @@ export default function EmailTestClient() {
             <span style={{ fontSize: 12, color: '#cc2200', letterSpacing: 2 }}>FOUT</span>
           )}
           <button
-            onClick={() => send(type)}
+            onClick={() => (echteActie && bevestig !== type ? setBevestig(type) : send(type))}
             disabled={sending === type}
             style={{
               fontFamily: 'sans-serif',
@@ -91,7 +94,7 @@ export default function EmailTestClient() {
               whiteSpace: 'nowrap',
             }}
           >
-            {sending === type ? 'BEZIG...' : 'STUUR TEST →'}
+            {sending === type ? 'BEZIG...' : bevestig === type ? 'WEET JE ZEKER?' : 'STUUR TEST →'}
           </button>
         </div>
       </div>

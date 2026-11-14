@@ -16,25 +16,30 @@ const TO = 'arno@arno.bot'
 // lib/cronOverzicht.ts (planning rechtstreeks uit vercel.json), zodat ze niet meer uit de pas
 // lopen. Het volledige overzicht van alle crons staat op /bot/admin/emails/overzicht.
 // Let op: de knop draait de echte cron, met live data en de echte actie.
-const CRON_MET_TESTKNOP: { type: string; cron: string }[] = [
+// `echteActie`: de cron doet meer dan een mail of Telegram-bericht (een volledige AI-run met een
+// opgeslagen resultaat, of de documenten aanpassen). De knop vraagt dan eerst om bevestiging.
+// Gekozen boven een droge-run-optie per cron: die zou per route gebouwd moeten worden, terwijl
+// het risico een per ongeluk gedraaide echte run is, en dat vangt een tweede klik af.
+const CRON_MET_TESTKNOP: { type: string; cron: string; echteActie?: boolean }[] = [
   { type: 'weekly_activity',       cron: '/api/cron/weekly-activity' },
   { type: 'weekly_top_users',      cron: '/api/cron/weekly-top-users' },
   { type: 'competitie',            cron: '/api/cron/competitie' },
-  { type: 'model_check',           cron: '/api/cron/model-check' },
+  { type: 'model_check',           cron: '/api/cron/model-check', echteActie: true },
   { type: 'data_cleanup',          cron: '/api/cron/data-cleanup' },
-  { type: 'update_handover',       cron: '/api/cron/update-handover' },
-  { type: 'meta_analyse',          cron: '/api/cron/meta-analyse' },
+  { type: 'update_handover',       cron: '/api/cron/update-handover', echteActie: true },
+  { type: 'meta_analyse',          cron: '/api/cron/meta-analyse', echteActie: true },
   { type: 'meta_analyse_reminder', cron: '/api/cron/meta-analyse-reminder' },
 ]
 
-const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string }[] = CRON_MET_TESTKNOP.map(({ type, cron }) => {
+const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string; echteActie: boolean }[] = CRON_MET_TESTKNOP.map(({ type, cron, echteActie }) => {
   const regel = leesCrons().find(c => c.pad === cron)
   return {
     type,
     label: regel?.naam ?? cron,
-    description: regel ? `${regel.schemaTekst}: ${regel.wat}` : cron,
+    description: (regel ? `${regel.schemaTekst}: ${regel.wat}` : cron) + (echteActie ? '. Draait de echte actie.' : ''),
     category: 'admin' as const,
     cron,
+    echteActie: !!echteActie,
   }
 })
 
