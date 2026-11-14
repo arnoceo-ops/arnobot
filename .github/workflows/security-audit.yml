@@ -304,6 +304,26 @@ jobs:
         # ongeldig adres), dus een kale `await resend.emails.send(...)` verliest mails stil.
         # Toegevoegd 2026-11-04 na de vondst in cron/trial-emails.
 
+  row-limit:
+    name: Groeitabellen zonder paginering of bovengrens (blokkeert)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Controleer dat queries op groeitabellen in blokken lopen of een bovengrens hebben
+        run: node scripts/check-row-limit.mjs
+        # Blokkeert bewust wel: de database geeft per vraag hooguit 1000 rijen, ook bij .limit(5000),
+        # en een telling over zo'n query klopt dan stilletjes niet meer (de nieuwste rijen vallen
+        # als eerste weg). Gemeten 2026-11-14 op blog_chunks (1540 rijen, antwoord 1000). Toegevoegd
+        # nadat de gebruikerslijst, STATS, het teamdashboard en de kosten-tracking zo bleken te werken.
+        # Fix: haalAlleRijen (lib/haalAlleRijen.ts). Bevestigde legitieme gevallen in KNOWN_SAFE.
+
   missing-loaded-gate:
     name: Client-fetch zonder loaded-gate (informatief, blokkeert niet)
     runs-on: ubuntu-latest
