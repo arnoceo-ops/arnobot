@@ -4,7 +4,7 @@
 
 **Waar we staan:** alle drie de rondes zijn af. Het menu is van 14 naar 10 items teruggebracht (USERS, TEAMS, GESPREKKEN, ANALYSE, STATUS, META, MAILS, KENNISBANK, BLOG, STATS). De admin kapt geen cijfers meer af op 1000 rijen, dagen lopen op Amsterdamse tijd, geld- en toegangsknoppen schrijven in een logboek en vragen bevestiging, USERS heeft een belijst en betaalgeschiedenis, ANALYSE kent de coachinghistorie, Gesprekken toont het duimpje, en STATUS toont per cron of hij gezond is. Er staat geen geplande stap meer open, alleen losse punten (zie onderaan).
 
-**Eerstvolgende stap:** geen. Na de eerste dagen draaien: kijken of STATUS de crons als gelukt toont, en beslissen of een Telegram-melding bij een te late cron nodig is.
+**Eerstvolgende stap:** geen. Na de eerste dagen draaien: kijken of STATUS de crons als gelukt toont, en of de Telegram-meldingen van `cron-wacht` en `storing-wacht` (storing en herstel) kloppen en niet te vaak komen. Nog niet gebouwd: een controle van de echte chatroute (de monitor kijkt naar één URL).
 
 ## Voortgang
 
@@ -29,7 +29,7 @@
 - **Logboek:** een mislukte log blokkeert de actie nooit (een betaling of intrekking moet doorgaan), maar komt in Sentry. **Verworpen: de actie laten falen als de log faalt.**
 - **Terugbetalen na 14 dagen:** een waarschuwing met een tweede bevestiging (`TOCH TERUGBETALEN`), geen blokkade, want terugbetalen na de bedenktijd kan bewust. **Verworpen: hard blokkeren.**
 - **STUUR TEST:** een tweede klik bij de crons die echt iets doen (meta-analyse, model-check, update-handover). **Verworpen: een droge-run-optie per cron**, want die moet per route gebouwd worden terwijl het risico een per ongeluk gedraaide echte run is, en dat vangt een tweede klik af.
-- **Cron-gezondheid:** elke cron registreert zich via `registreerCronRun` (`lib/cronRun.ts`), afgedwongen door `lib/cronOverzicht.test.ts`. "Te laat" is ruim twee tot drie keer het interval uit `vercel.json`, eenmalige crons hebben geen grens. **Nog niet gebouwd:** een Telegram-melding bij een te late cron (nu alleen zichtbaar op STATUS); alleen een mislukte run meldt al via `notifyCronFailure`.
+- **Cron-gezondheid:** elke cron registreert zich via `registreerCronRun` (`lib/cronRun.ts`), afgedwongen door `lib/cronOverzicht.test.ts`. "Te laat" is ruim twee tot drie keer het interval uit `vercel.json`, eenmalige crons hebben geen grens. Een te late of afgebroken cron meldt `cron-wacht` (dagelijks) via Telegram, ook een cron die sinds de registratie nog nooit draaide; een mislukte run meldt zichzelf via `notifyCronFailure`. De storingsmelding (`storing-wacht`) stuurt ook een herstelbericht met de duur zodra een gemelde storing een half uur voorbij is (staat in `arnobot_meta`, sleutel `storing_actief`).
 - **Voice-test onder TEMP (besluit 2026-11-14):** weghalen in ronde 3. Gemeten: 4 testaanroepen ooit, de laatste op 12 augustus, terwijl de echte voice wel draait (laatste gebruik 8 november). De persona-knoppen horen bij USERS. Het gebruikers-ID `admin-voice-test` blijft in `kosten-tracking` uitgesloten zodat oude rijen niet meetellen.
 - **`api/bot/uitdaging` niet aanpassen (besluit 2026-11-14):** dit is de gedachte van de dag, niet de actie-uitdaging na een gesprek. Het coachingprofiel (ontwikkelpunten) erin zetten riskeert de afgesproken toon (inspireren, nooit verhoor of kritiek, zie geheugen "passieve dagelijkse AI-prompt"), en de gedachte wordt al persoonlijk uit gesprekken en patroonanalyse. **Verworpen: ontwikkelpunten toevoegen.**
 

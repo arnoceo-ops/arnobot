@@ -64,3 +64,85 @@ export function bouwStoringBericht(meldingen: StoringMelding[]): string {
   const kritiek = meldingen.some(m => m.niveau === 'kritiek')
   return `${kritiek ? 'Storing op arno.bot: ACTIE NODIG' : 'Let op: arno.bot'}\n\n${meldingen.map(m => m.tekst).join('\n\n')}\n\nZie Status in de admin.`
 }
+
+// Herstelbericht: een storing is voorbij. De cron onthoudt welke storingen actief zijn (lib/storingStaat.ts)
+// en meldt het wanneer zo'n storing twee runs achter elkaar (dus een half uur) niet meer voorkomt, zodat
+// een kort wegvallen van de meting geen vals "hersteld" geeft.
+
+export type ActieveStoring = {
+  sleutel: string
+  /** Moment waarop de storing voor het eerst werd gezien (ISO). */
+  sinds: string
+  /** Is er voor deze storing een melding verstuurd? Alleen dan volgt een herstelbericht. */
+  gemeld: boolean
+  /** Aantal runs achter elkaar dat de storing niet meer voorkwam. */
+  schoneRuns: number
+}
+
+/** Aantal schone runs achter elkaar voordat een storing als voorbij geldt (2 runs van 15 minuten is een half uur). */
+export const HERSTEL_NA_SCHONE_RUNS = 2
+
+/**
+ * Werkt de lijst actieve storingen bij na een run.
+ *  - huidig: de storingen die nu spelen
+ *  - gemeldeSleutels: voor welke daarvan deze run een melding is verstuurd
+ *  - bronBeschikbaar: of de gegevensbron van een sleutel deze run te lezen was. Was die er niet (Instatus of
+ *    een statuspagina niet bereikbaar), dan zegt het ontbreken van een storing niets en blijft die storing zoals hij was.
+ * Geeft de nieuwe lijst terug en de storingen die voorbij zijn en waarvoor een herstelbericht hoort.
+ */
+export function werkStoringenBij(
+  vorige: ActieveStoring[],
+  huidig: StoringMelding[],
+  gemeldeSleutels: ReadonlySet<string>,
+  bronBeschikbaar: (sleutel: string) => boolean,
+  nu: Date = new Date(),
+): { actief: ActieveStoring[]; hersteld: ActieveStoring[] } {
+  const huidigeSleutels = new Set(huidig.map(m => m.sleutel))
+  const actief: ActieveStoring[] = []
+  const hersteld: ActieveStoring[] = []
+
+  for (const m of huidig) {
+    const eerder = vorige.find(v => v.sleutel === m.sleutel)
+    actief.push({
+      sleutel: m.sleutel,
+      sinds: eerder?.sinds ?? nu.toISOString(),
+      gemeld: (eerder?.gemeld ?? false) || gemeldeSleutels.has(m.sleutel),
+      schoneRuns: 0,
+    })
+  }
+
+  for (const v of vorige) {
+    if (huidigeSleutels.has(v.sleutel)) continue
+    if (!bronBeschikbaar(v.sleutel)) { actief.push(v); continue }
+    const schoneRuns = v.schoneRuns + 1
+    if (schoneRuns >= HERSTEL_NA_SCHONE_RUNS) {
+      if (v.gemeld) hersteld.push({ ...v, schoneRuns })
+    } else {
+      actief.push({ ...v, schoneRuns })
+    }
+  }
+
+  return { actief, hersteld }
+}
+
+/** Leesbare tekst bij een sleutel van een storing die voorbij is. */
+export function herstelTekst(sleutel: string): string {
+  if (sleutel === 'storing:arnobot:down') return 'arno.bot is weer bereikbaar.'
+  if (sleutel === 'storing:arnobot:degraded') return 'arno.bot is weer volledig bereikbaar.'
+  if (sleutel.startsWith('storing:snelheid:')) return 'arno.bot is weer snel genoeg.'
+  if (sleutel.startsWith('storing:extern:')) return `${sleutel.slice('storing:extern:'.length)} meldt geen grote storing meer.`
+  return `${sleutel} is hersteld.`
+}
+
+export function duurTekst(ms: number): string {
+  const minuten = Math.max(0, Math.round(ms / 60_000))
+  if (minuten < 60) return `${minuten} min`
+  const uren = Math.floor(minuten / 60)
+  const rest = minuten % 60
+  return rest === 0 ? `${uren} uur` : `${uren} uur ${rest} min`
+}
+
+export function bouwHerstelBericht(hersteld: ActieveStoring[], nu: Date = new Date()): string {
+  const regels = hersteld.map(h => `${herstelTekst(h.sleutel)} Storing duurde ${duurTekst(nu.getTime() - Date.parse(h.sinds))}.`)
+  return `Storing voorbij op arno.bot\n\n${regels.join('\n\n')}`
+}
