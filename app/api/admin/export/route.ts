@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAdminAuthorized, fetchLogsInRange, type AdminLogRow } from '@/lib/adminExport'
+import { isAdminAuthorized, fetchLogsInRange, filterLogs, type AdminLogRow } from '@/lib/adminExport'
 
 export async function GET(request: NextRequest) {
   if (!(await isAdminAuthorized())) {
@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get('sort') || 'date_desc'
 
   // PDF-bron: meer dan 20.000 berichten in één PDF is niet bruikbaar, dan een kleinere periode kiezen.
-  const { rows, naamMap } = await fetchLogsInRange(from, to, 20000)
+  const { rows: alleRijen, naamMap } = await fetchLogsInRange(from, to, 20000)
+  // Zelfde duimpje- en zoekfilter als het scherm.
+  const rows = filterLogs(alleRijen, { fb: searchParams.get('fb') || '', q: searchParams.get('q') || '' })
 
   const sessions: Record<string, AdminLogRow[]> = {}
   for (const row of rows) {

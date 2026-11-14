@@ -8,19 +8,24 @@ export default function DownloadPdfButton({
   userFilter,
   sort,
   dateRange,
+  fb = '',
+  zoek = '',
 }: {
   from: string
   to: string
   userFilter: string
   sort: string
   dateRange: string
+  // Dezelfde filters als het scherm: duimpje en zoekterm.
+  fb?: string
+  zoek?: string
 }) {
   const [loading, setLoading] = useState(false)
 
   async function handleDownload() {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ from, to, user: userFilter, sort })
+      const params = new URLSearchParams({ from, to, user: userFilter, sort, fb, q: zoek })
       const res = await fetch(`/api/admin/export?${params}`)
       if (!res.ok) throw new Error('Export mislukt')
       const { sessions } = await res.json()

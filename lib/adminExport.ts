@@ -60,3 +60,29 @@ export async function fetchLogsInRange(from: string, to: string, maxRijen: numbe
 
   return { rows, naamMap }
 }
+
+// Zoeken in gespreksinhoud (vraag en antwoord) en het duimpje-filter, gedeeld door het scherm op
+// /bot/admin, de CSV en de PDF zodat ze precies hetzelfde filteren.
+
+/**
+ * Maakt van invoer een veilige zoekterm. Tekens met een betekenis in een PostgREST-filter
+ * (komma, haakjes, aanhalingstekens, backslash) en de wildcards (% en *) worden spaties, zodat een
+ * zoekterm de filtersyntax nooit kan breken of verbreden. Maximaal 100 tekens.
+ */
+export function schoneZoekterm(invoer: string | null | undefined): string {
+  return (invoer ?? '').replace(/[%*,()"\\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100)
+}
+
+/** Filtert gesprekken in het geheugen op zoekterm (hoofdletterongevoelig, in vraag of antwoord) en duimpje. */
+export function filterLogs<T extends { question?: string | null; answer?: string | null; feedback?: string | null }>(
+  rows: T[],
+  { fb, q }: { fb?: string; q?: string },
+): T[] {
+  const zoek = schoneZoekterm(q).toLowerCase()
+  return rows.filter(r => {
+    if (fb === 'neg' && r.feedback !== 'neg') return false
+    if (fb === 'alle' && !r.feedback) return false
+    if (zoek && !`${r.question ?? ''}\n${r.answer ?? ''}`.toLowerCase().includes(zoek)) return false
+    return true
+  })
+}

@@ -11,6 +11,7 @@ import {
   type AnalyseRij, type CoachingVersie,
 } from '@/lib/adminGesprekkenTabs'
 import { ontwikkelpuntTekst } from '@/lib/coachingTekst'
+import { schoneZoekterm } from '@/lib/adminExport'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { nlDagStartIso, nlDagEindeIso, nlVandaag, nlGisteren, nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 
@@ -62,7 +63,7 @@ function parseDate(input: string): string {
 export default async function ArnoBotAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string; tab?: string; fb?: string }>
+  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string; tab?: string; fb?: string; q?: string }>
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -78,9 +79,11 @@ export default async function ArnoBotAdminPage({
   // daar is leeg = geen datumbegrenzing (een rapportage van vorige maand blijft zichtbaar).
   // Met het duimpje-filter aan is leeg ook "alle data": de negatief beoordeelde antwoorden van
   // alle tijd zijn wat je wilt zien, niet alleen die van gisteren (zo werkt ook de oude FEEDBACK-link).
+  // Hetzelfde geldt voor zoeken in gespreksinhoud: een zoekterm over alleen gisteren en vandaag zou verrassen.
   const fbActief = tab === 'gesprekken' && (params.fb === 'alle' || params.fb === 'neg')
-  const from = parseDate(params.from || '') || (tab === 'gesprekken' && !fbActief ? yesterday : '')
-  const to = parseDate(params.to || '') || (tab === 'gesprekken' && !fbActief ? today : '')
+  const zoekterm = tab === 'gesprekken' ? schoneZoekterm(params.q) : ''
+  const from = parseDate(params.from || '') || (tab === 'gesprekken' && !fbActief && !zoekterm ? yesterday : '')
+  const to = parseDate(params.to || '') || (tab === 'gesprekken' && !fbActief && !zoekterm ? today : '')
   // Sorteren op aantal vragen kan alleen bij gesprekken.
   const sort = tab !== 'gesprekken' && (params.sort === 'count_desc' || params.sort === 'count_asc') ? 'date_desc' : (params.sort || 'date_desc')
   // Duimpje-filter, alleen bij Gesprekken: alle berichten met een beoordeling, of alleen de negatieve.
@@ -120,6 +123,9 @@ export default async function ArnoBotAdminPage({
         if (userFilter) q = q.eq('user_id', userFilter)
         if (fb === 'alle') q = q.not('feedback', 'is', null)
         if (fb === 'neg') q = q.eq('feedback', 'neg')
+        // Zoeken in vraag en antwoord (ilike, hoofdletterongevoelig). De zoekterm is opgeschoond
+        // (schoneZoekterm), dus komma's, haakjes en wildcards kunnen het filter niet breken.
+        if (zoekterm) q = q.or(`question.ilike.*${zoekterm}*,answer.ilike.*${zoekterm}*`)
         return q.order('created_at', { ascending: true }).order('id', { ascending: true }).range(van, tot)
       })
     : []
@@ -276,6 +282,13 @@ export default async function ArnoBotAdminPage({
             </select>
           </div>
           {tab === 'gesprekken' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1, minWidth: 200 }}>
+              <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>ZOEK IN GESPREKKEN</label>
+              <input type="text" name="q" defaultValue={zoekterm} placeholder="Zoek in vraag en antwoord..." className="admin-input"
+                style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }} />
+            </div>
+          )}
+          {tab === 'gesprekken' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>DUIMPJE</label>
               <select name="fb" defaultValue={fb} className="admin-input"
@@ -294,12 +307,12 @@ export default async function ArnoBotAdminPage({
             {aantalResultaten > 0 && (
               <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
-                  href={`/api/admin/export-csv?tab=${tab}&from=${from}&to=${to}&user=${userFilter}&sort=${sort}&fb=${fb}`}
+                  href={`/api/admin/export-csv?tab=${tab}&from=${from}&to=${to}&user=${userFilter}&sort=${sort}&fb=${fb}&q=${encodeURIComponent(zoekterm)}`}
                   style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                   ↓ DOWNLOAD CSV
                 </a>
-                {tab === 'gesprekken' && <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} />}
+                {tab === 'gesprekken' && <DownloadPdfButton from={from} to={to} userFilter={userFilter} sort={sort} dateRange={dateRange} fb={fb} zoek={zoekterm} />}
               </div>
             )}
           </div>

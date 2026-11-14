@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
-import { isAdminAuthorized, fetchLogsInRange } from '@/lib/adminExport'
+import { isAdminAuthorized, fetchLogsInRange, filterLogs } from '@/lib/adminExport'
 import { fetchAnalyses, fetchCoachingVersies, analysesCsv, coachingCsv } from '@/lib/adminGesprekkenTabs'
 import { nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 
@@ -46,12 +46,9 @@ export async function GET(request: NextRequest) {
   }
 
   const { rows, naamMap } = await fetchLogsInRange(from, to, 100000)
-  // Zelfde duimpje-filter als het scherm: alle beoordeelde berichten, of alleen de negatieve.
-  const fb = searchParams.get('fb') || ''
+  // Zelfde duimpje- en zoekfilter als het scherm (lib/adminExport.ts, filterLogs).
   const perGebruiker = userFilter ? rows.filter(r => r.user_id === userFilter) : rows
-  const filtered = fb === 'neg' ? perGebruiker.filter(r => r.feedback === 'neg')
-    : fb === 'alle' ? perGebruiker.filter(r => !!r.feedback)
-    : perGebruiker
+  const filtered = filterLogs(perGebruiker, { fb: searchParams.get('fb') || '', q: searchParams.get('q') || '' })
 
   const lines: string[] = [
     ['datum', 'tijd', 'sessie_id', 'gebruiker', 'vraag', 'antwoord', 'duimpje'].join(','),
