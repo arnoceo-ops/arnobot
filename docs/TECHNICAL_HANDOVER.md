@@ -146,16 +146,16 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | Pagina | Functie |
 |---|---|
 | `/bot/admin` | Overzicht alle vraag/antwoord-logs, filters, PDF-download. Sinds 2026-11-13 drie tabs met hetzelfde filter (gebruiker, van/tot, sortering): Gesprekken, Analyses (`arnobot_analyses`) en Coaching (`arnobot_coaching_history`, volledige rapportages). CSV-download per tab (`/api/admin/export-csv?tab=...`), PDF alleen bij Gesprekken. Bij Analyses en Coaching is een leeg datumveld = geen begrenzing. Data en tekstopmaak in `lib/adminGesprekkenTabs.ts`. Dagfilters lopen op Nederlandse tijd (`lib/nlTijd.ts`), en alle queries die alle rijen van een groeitabel nodig hebben lopen in blokken van 1000 via `lib/haalAlleRijen.ts`, want de database geeft per vraag hooguit 1000 rijen (ook bij `.limit(5000)`). `scripts/check-row-limit.mjs` blokkeert dat in CI. Zie `docs/ADMIN_PLAN.md` voor het lopende traject |
-| `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling |
+| `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling. Sinds 2026-11-14: BELLIJST bovenaan (proef loopt binnen 7 dagen af en minder dan 3 vragen), het paneel achter BETALING toont de laatste online betalingen en het abonnement, en onderaan staat het logboek van adminacties (`arnobot_admin_log`). BETAALD en GRATIS-bij-betaald vragen een tweede klik (GRATIS zet `paid_at` op leeg), terugbetalen na 14 dagen geeft eerst een waarschuwing |
 | `/bot/admin/emails` | E-mail templates + crons testen |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar). De sectie "Alle geplande crons" en alle cron-tijden komen automatisch uit `vercel.json` (`lib/cronOverzicht.ts`, tijden in UTC). Elke nieuwe cron krijgt een regel in `CRON_INFO` in dat bestand: `lib/cronOverzicht.test.ts` faalt als een cron in `vercel.json` ontbreekt, als er een cron-route zonder schema bestaat, of omgekeerd. De mail-rijen blijven handmatig |
 | `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
-| `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
+| `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren. De context bevat sinds 2026-11-14 ook de laatste 4 coachingrapportages uit `arnobot_coaching_history`, en het scherm toont hoeveel nieuwe gesprekken er sinds de vorige briefing zijn |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
 | `/bot/admin/stats` (tab BLOG) | Blogstatistieken (`BlogStats.tsx`, gedeelde onderdelen in `StatsUi.tsx`): abonnees, conversie bevestigen/afmelden, groei per week, verzending en dagbudget, bezoek en klikken op Start gratis vanaf de blog, per artikel (verzonden, wachtrij, mislukt, geopend, geklikt, bezoeken), populariteit per blog (`BlogPopulariteit.tsx`: meest en minst geopend, schakelaar 30 dagen of totaal, alle blogs 10 per keer, CSV), "wie doet wat" met abonnees die klikken of openen en of ze al gebruiker zijn, en een aanmeldingenlijst met CSV. Blogtellingen tellen alleen echte blogpaden (één niveau onder `/blog`). Alles zijn exacte head-counts in de database |
 | `/bot/admin/blog` | POSTS: de publieke blog beheren. Lijst + editor (`/bot/admin/blog/[id]`, `nieuw` voor een nieuwe post) met live Markdown-voorbeeld, afbeeldingen plakken/slepen, hashtags met suggesties, concept/publiceren/inplannen, "verstuur naar abonnees" en testmail naar jezelf, lokale noodback-up |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
-| `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
+| `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle). Sinds 2026-11-14 ook GEPLANDE CRONS: per cron het laatste succes uit `cron_runs`, met een markering voor een cron die te laat, mislukt of afgebroken is (`lib/cronGezondheid.ts`) |
 | `/bot/admin/voice-test` | Testomgeving voor de ElevenLabs voice/TTS-integratie |
 | `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel). MRR komt sinds 2026-11-14 uit `arnobot_subscriptions` (`lib/mrr.ts`): alleen status `active`, zonder aangevraagde opzegging, exclusief btw, jaarlijks gedeeld door 12, alleen solo (Team niet meegeteld). Daarvoor las de pagina `approved_users.bedrag/interval`, die sinds Mollie door niets meer worden geschreven |
 | `/bot/admin/kennisbank` | Kennisbank-beheer: RSS-bronnen, chunks per bron |
@@ -473,6 +473,12 @@ Insert-only geschiedenis van eerdere coachingrapporten (naast `arnobot_coaching`
 
 ### `arnobot_coaching_scores`
 Historische coachingscores voor trendanalyse.
+
+### `arnobot_admin_log`
+Insert-only logboek van adminacties die geld of toegang wijzigen (BETAALD, terugbetaling, plan, teamrol, SD-agent, gratis toegang, aan/uit, Teams-instellingen), met `actie`, `doel_user_id` of `doel_team_id` en `details` (oud en nieuw). Geschreven via `lib/adminLog.ts` (een mislukte log blokkeert de actie nooit), zichtbaar onderaan `/bot/admin/gebruikers`. RLS aan zonder policies. SQL: `docs/sql/2026-11-14-admin-log-en-cron-runs.sql`.
+
+### `cron_runs`
+Eén rij per geplande cron (primaire sleutel is het pad): laatste start, laatste succes, laatste fout met reden en duur. Elke cron-route registreert zich via `registreerCronRun` (`lib/cronRun.ts`, afgedwongen door `lib/cronOverzicht.test.ts`); alleen geautoriseerde runs tellen, een droge run (`?dry`) niet. Gelezen door `/bot/admin/status` en `/bot/admin/emails/overzicht`. Een nieuwe cron moet in `vercel.json`, in `CRON_INFO` (`lib/cronOverzicht.ts`) en in `registreerCronRun` staan, anders faalt de test.
 
 ### `arnobot_1on1_log`
 Opgeslagen 1:1-gespreksnotities door managers (`manager_id`, `member_id`, `aandachtspunt`, scores, `notitie`).
