@@ -20,8 +20,34 @@ const AFGEBROKEN_NA_MS = 15 * 60_000
 const kort = (iso: string) => `${nlDatumTekst(iso).slice(0, 5)} ${nlTijdTekst(iso).slice(0, 5)}`
 const ms = (iso: string | null) => (iso ? Date.parse(iso) : NaN)
 
-export function beoordeelCron(run: CronRunRij | null | undefined, schema: string, nu: Date = new Date()): CronGezondheid {
-  if (!run) return { staat: 'onbekend', tekst: 'nog niet gedraaid sinds registratie' }
+/**
+ * Het moment waarop de registratie begon: de oudste start van welke cron dan ook. Daarmee weten we
+ * hoe lang een cron zonder enige run al had moeten draaien (zie beoordeelCron).
+ */
+export function registratieStartVan(runs: Record<string, CronRunRij>): number | null {
+  let eerste: number | null = null
+  for (const r of Object.values(runs)) {
+    const t = ms(r.laatste_start)
+    if (!Number.isNaN(t) && (eerste === null || t < eerste)) eerste = t
+  }
+  return eerste
+}
+
+/**
+ * `registratieStart` (zie registratieStartVan): een cron die sinds het begin van de registratie nog
+ * nooit gedraaid heeft maar langer dan zijn interval had moeten draaien, geldt als te laat. Dat is
+ * het geval dat tot nu toe onzichtbaar was (bijvoorbeeld door een fout in vercel.json). Zonder
+ * registratieStart, of bij een eenmalige cron zonder grens, blijft het 'onbekend'.
+ */
+export function beoordeelCron(run: CronRunRij | null | undefined, schema: string, nu: Date = new Date(), registratieStart: number | null = null): CronGezondheid {
+  const nooitGedraaid = (): CronGezondheid => {
+    const max = maxLeeftijdMs(schema)
+    if (registratieStart !== null && max !== null && nu.getTime() - registratieStart > max) {
+      return { staat: 'te_laat', tekst: 'nog nooit gedraaid, terwijl de registratie al langer loopt dan zijn interval' }
+    }
+    return { staat: 'onbekend', tekst: 'nog niet gedraaid sinds registratie' }
+  }
+  if (!run) return nooitGedraaid()
 
   const start = ms(run.laatste_start)
   const ok = ms(run.laatste_ok)
@@ -39,7 +65,14 @@ export function beoordeelCron(run: CronRunRij | null | undefined, schema: string
     if (max !== null && nu.getTime() - ok > max) return { staat: 'te_laat', tekst: `laatst gelukt ${kort(run.laatste_ok!)}, te lang geleden` }
     return { staat: 'ok', tekst: `gelukt ${kort(run.laatste_ok!)}` }
   }
-  return { staat: 'onbekend', tekst: 'nog niet gedraaid sinds registratie' }
+  return nooitGedraaid()
+}
+
+/** Welke staten een Telegram-melding waard zijn: een mislukte run meldt zichzelf al via notifyCronFailure. */
+export const ALARM_STATEN: readonly CronStaat[] = ['te_laat', 'afgebroken']
+
+export function bouwCronWachtBericht(problemen: { naam: string; staat: CronStaat; tekst: string }[]): string {
+  return `Cron-wacht op arno.bot\n\n${problemen.map(p => `${p.naam}: ${p.tekst}`).join('\n')}\n\nZie Status in de admin.`
 }
 
 export const STAAT_KLEUR: Record<CronStaat, string> = {

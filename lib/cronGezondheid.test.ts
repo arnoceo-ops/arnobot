@@ -59,3 +59,48 @@ describe('beoordeelCron', () => {
     expect(beoordeelCron(run({ laatste_start: uurGeleden(9000), laatste_ok: uurGeleden(9000) }), '0 8 16 10 *', nu).staat).toBe('ok')
   })
 })
+
+import { registratieStartVan, bouwCronWachtBericht, ALARM_STATEN } from './cronGezondheid'
+
+describe('nooit gedraaid sinds de registratie', () => {
+  const start = nu.getTime() - 48 * 3600_000 // de registratie loopt 48 uur
+  it('een dagelijkse cron zonder run is na 48 uur registratie te laat', () => {
+    expect(beoordeelCron(undefined, DAGELIJKS, nu, start).staat).toBe('te_laat')
+    expect(beoordeelCron(run(), DAGELIJKS, nu, start).staat).toBe('te_laat')
+  })
+  it('is nog onbekend zolang de registratie korter loopt dan het interval', () => {
+    expect(beoordeelCron(undefined, DAGELIJKS, nu, nu.getTime() - 10 * 3600_000).staat).toBe('onbekend')
+  })
+  it('een maandelijkse cron is na 48 uur nog onbekend', () => {
+    expect(beoordeelCron(undefined, '5 4 1 * *', nu, start).staat).toBe('onbekend')
+  })
+  it('een eenmalige cron zonder grens blijft onbekend', () => {
+    expect(beoordeelCron(undefined, '0 8 16 10 *', nu, start).staat).toBe('onbekend')
+  })
+  it('zonder registratiestart blijft het onbekend', () => {
+    expect(beoordeelCron(undefined, DAGELIJKS, nu, null).staat).toBe('onbekend')
+  })
+})
+
+describe('registratieStartVan', () => {
+  it('is de oudste start van welke cron dan ook', () => {
+    const a = run({ naam: 'a', laatste_start: uurGeleden(5) })
+    const b = run({ naam: 'b', laatste_start: uurGeleden(30) })
+    expect(registratieStartVan({ a, b })).toBe(Date.parse(uurGeleden(30)))
+  })
+  it('is null zonder enige start', () => {
+    expect(registratieStartVan({})).toBeNull()
+    expect(registratieStartVan({ a: run() })).toBeNull()
+  })
+})
+
+describe('cron-alarm', () => {
+  it('meldt alleen te late en afgebroken crons, een mislukte run meldt zichzelf al', () => {
+    expect([...ALARM_STATEN]).toEqual(['te_laat', 'afgebroken'])
+  })
+  it('bouwt een leesbaar bericht', () => {
+    const t = bouwCronWachtBericht([{ naam: 'Abonnementsonderhoud', staat: 'te_laat', tekst: 'laatst gelukt 12/11 05:00, te lang geleden' }])
+    expect(t).toContain('Abonnementsonderhoud: laatst gelukt 12/11 05:00, te lang geleden')
+    expect(t).toContain('Status')
+  })
+})

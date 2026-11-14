@@ -77,6 +77,14 @@
       "schedule": "30 7 * * *"
     },
     {
+      "path": "/api/cron/cron-wacht",
+      "schedule": "40 7 * * *"
+    },
+    {
+      "path": "/api/cron/storing-wacht",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/update-handover",
       "schedule": "10 4 1 * *"
     },

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 import { PrintButton } from './PrintButton'
 import { cronTrigger, leesCrons } from '@/lib/cronOverzicht'
 import { leesCronRuns } from '@/lib/cronRun'
-import { beoordeelCron, STAAT_KLEUR } from '@/lib/cronGezondheid'
+import { beoordeelCron, registratieStartVan, STAAT_KLEUR } from '@/lib/cronGezondheid'
 
 export default async function EmailsOverzichtPage() {
   const cookieStore = await cookies()
@@ -14,6 +14,7 @@ export default async function EmailsOverzichtPage() {
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
   const crons = leesCrons()
   const runs = await leesCronRuns()
+  const registratieStart = registratieStartVan(runs)
 
   return (
     <div style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9' }}>
@@ -69,7 +70,7 @@ export default async function EmailsOverzichtPage() {
 
         <Section title={`ALLE GEPLANDE CRONS (${crons.length})`} subtitle="Rechtstreeks uit vercel.json, dus altijd compleet. Tijden in UTC: Nederlandse tijd is 1 uur later in de winter en 2 uur later in de zomer.">
           <Table rows={crons.map(c => {
-            const g = beoordeelCron(runs[c.pad], c.schema)
+            const g = beoordeelCron(runs[c.pad], c.schema, new Date(), registratieStart)
             return {
               name: c.naam,
               trigger: `${c.pad.split('/').pop()}: ${c.schemaTekst}`,

@@ -6,7 +6,9 @@ import AdminNav from '../AdminNav'
 import LinkedInFallbackToggle from './LinkedInFallbackToggle'
 import { leesCronRuns } from '@/lib/cronRun'
 import { leesCrons } from '@/lib/cronOverzicht'
-import { beoordeelCron, STAAT_KLEUR } from '@/lib/cronGezondheid'
+import { beoordeelCron, registratieStartVan, STAAT_KLEUR } from '@/lib/cronGezondheid'
+import { beoordeelSnelheid, snelheidScore, SNELHEID_KLEUR } from '@/lib/performance'
+import { EXTERNE_DIENSTEN as SERVICES } from '@/lib/externeDiensten'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +34,8 @@ function Gauge({ value, color }: { value: number; color: string }) {
 function indicatorColor(ind: string) {
   if (ind === 'none' || ind === 'UP') return '#22c55e'
   if (ind === 'minor' || ind === 'DEGRADED') return '#f59e0b'
+  // Een statusfetch die mislukt is geen storing: grijs, niet rood (rood is voor een echte storing).
+  if (ind === 'unknown') return '#6b7280'
   return '#cc2200'
 }
 
@@ -59,13 +63,7 @@ type ServiceStatus = {
   lastIncident: { name: string; status: string; updatedAt: string } | null
 }
 
-const SERVICES = [
-  { name: 'Anthropic', link: 'https://status.claude.com', url: 'https://status.claude.com/api/v2/summary.json' },
-  { name: 'Vercel', link: 'https://www.vercel-status.com', url: 'https://www.vercel-status.com/api/v2/summary.json' },
-  { name: 'Supabase', link: 'https://status.supabase.com', url: 'https://status.supabase.com/api/v2/summary.json' },
-  { name: 'Clerk', link: 'https://status.clerk.com', url: 'https://status.clerk.com/api/v2/summary.json' },
-  { name: 'Resend', link: 'https://resend-status.com', url: 'https://resend-status.com/api/v2/summary.json' },
-]
+// SERVICES: de lijst staat in lib/externeDiensten.ts, gedeeld met de storingsmelding (storing-wacht).
 
 export default async function AdminStatusPage() {
   const cookieStore = await cookies()
@@ -131,7 +129,14 @@ export default async function AdminStatusPage() {
     }
   } catch { /* negeer */ }
 
-  const perfGauge = availWeek ?? (monitor?.status === 'UP' ? 100 : 0)
+  // PERFORMANCE gaat over snelheid, niet over uptime (die staat in BESCHIKBAARHEID ernaast). Eerder
+  // toonde deze gauge de uptime van de week in een vaste groene kleur, naast gemiddelde en p95 in
+  // milliseconden. De kleur komt nu van het niveau uit lib/performance.ts (groen, geel/oranje bij
+  // onder druk, rood bij laag, grijs zonder meting), met dezelfde grenzen als de Telegram-melding van
+  // /api/cron/storing-wacht. Het getal in de cirkel vult alleen, de kleur hangt aan het niveau.
+  const snelheidMeting = { gemiddeldMs: avgMs, p95Ms: p95 }
+  const perfGauge = snelheidScore(snelheidMeting)
+  const perfKleur = SNELHEID_KLEUR[beoordeelSnelheid(snelheidMeting)]
   const availGauge = availDay ?? (monitor?.status === 'UP' ? 100 : 0)
 
   // Externe services ophalen (parallel)
@@ -184,7 +189,9 @@ export default async function AdminStatusPage() {
   // een markering voor een cron die te laat is, mislukte of is afgebroken. Een cron die nooit
   // draait (bijvoorbeeld door een fout in vercel.json) was tot nu toe onzichtbaar.
   const cronRuns = await leesCronRuns().catch(() => ({}))
-  const cronRegels = leesCrons().map(c => ({ c, g: beoordeelCron((cronRuns as Record<string, import('@/lib/cronRun').CronRunRij>)[c.pad], c.schema) }))
+  const cronRunsTyped = cronRuns as Record<string, import('@/lib/cronRun').CronRunRij>
+  const registratieStart = registratieStartVan(cronRunsTyped)
+  const cronRegels = leesCrons().map(c => ({ c, g: beoordeelCron(cronRunsTyped[c.pad], c.schema, new Date(), registratieStart) }))
   const cronTelling = { ok: 0, probleem: 0, onbekend: 0 }
   for (const { g } of cronRegels) {
     if (g.staat === 'ok') cronTelling.ok++
@@ -262,7 +269,7 @@ export default async function AdminStatusPage() {
                 </div>
               </div>
             </div>
-            <Gauge value={perfGauge} color="#22c55e" />
+            <Gauge value={perfGauge} color={perfKleur} />
           </div>
           <div style={{ background: '#1f2937', borderRadius: 4, padding: '20px', display: 'flex', gap: 20, alignItems: 'center' }}>
             <div style={{ flex: 1 }}>
