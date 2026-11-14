@@ -5,6 +5,7 @@ import { billingDb, type PayRow } from '@/lib/billing/db'
 import { betaalTerug, MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { logAdminActie } from '@/lib/adminLog'
 
 // Volledige terugbetaling van de laatste online betaling van een gebruiker, bedoeld voor de
 // bedenktijd van 14 dagen (voorwaarden artikel 8). Het beëindigen van de toegang, het
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ error: 'Mollie is niet ingeschakeld' }, { status: 503 })
 
-  const { userId } = await req.json().catch(() => ({}))
+  const { userId, bevestigNaBedenktijd } = await req.json().catch(() => ({}))
   if (typeof userId !== 'string' || !userId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
 
   const { data: betaling } = await billingDb
@@ -32,6 +33,19 @@ export async function POST(req: NextRequest) {
     .maybeSingle<PayRow>()
   if (!betaling) return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
 
+  // De bedenktijd is 14 dagen na de betaling (voorwaarden artikel 8). Daarna terugbetalen kan
+  // bewust, maar nooit per ongeluk: zonder expliciete bevestiging geeft dit een 409 terug.
+  const dagenGeleden = betaling.betaald_at
+    ? Math.floor((Date.now() - new Date(betaling.betaald_at).getTime()) / 86_400_000)
+    : null
+  const buitenBedenktijd = dagenGeleden !== null && dagenGeleden > 14
+  if (buitenBedenktijd && bevestigNaBedenktijd !== true) {
+    return NextResponse.json(
+      { error: `Deze betaling is ${dagenGeleden} dagen oud, buiten de bedenktijd van 14 dagen`, buitenBedenktijd: true, dagen: dagenGeleden },
+      { status: 409 },
+    )
+  }
+
   try {
     const refund = await betaalTerug({
       betalingId: betaling.mollie_payment_id,
@@ -43,6 +57,10 @@ export async function POST(req: NextRequest) {
     // en dat kan uren tot dagen duren. De webhook later is dan een idempotente no-op.
     await markeerTerugbetaald(betaling.id)
     await verwerkMolliebetaling(betaling.mollie_payment_id)
+    await logAdminActie({
+      actie: 'terugbetaling', doelUserId: userId,
+      details: { extra: { bedrag_cent: betaling.bedrag_cent, mollie_payment_id: betaling.mollie_payment_id, dagen_na_betaling: dagenGeleden, buiten_bedenktijd: buitenBedenktijd, refund_id: refund.id } },
+    })
     return NextResponse.json({ ok: true, refundId: refund.id, bedragCent: betaling.bedrag_cent })
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-refund' } })

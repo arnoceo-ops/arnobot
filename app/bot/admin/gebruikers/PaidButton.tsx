@@ -15,11 +15,16 @@ export default function PaidButton({
   paidAt,
   expiresAt,
   isActive,
+  betalingen = [],
+  abonnement = null,
 }: {
   userId: string
   paidAt: string | null
   expiresAt: string | null
   isActive: boolean
+  // Laatste online betalingen (nieuwste eerst) en het laatste abonnement, alleen om te tonen.
+  betalingen?: { datum: string; bedrag: string; status: string }[]
+  abonnement?: string | null
 }) {
   const router = useRouter()
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -34,6 +39,11 @@ export default function PaidButton({
   const [loading, setLoading] = useState<Action | ''>('')
   const [refundStap, setRefundStap] = useState<0 | 1>(0)
   const [refundMsg, setRefundMsg] = useState('')
+  // Terugbetalen na de bedenktijd van 14 dagen kan bewust, maar nooit per ongeluk: de server
+  // weigert eerst (409), pas daarna verschijnt TOCH TERUGBETALEN.
+  const [refundBuiten, setRefundBuiten] = useState(false)
+  // Tweede klik bevestigt. BETAALD maakt geen betaalrij (geen omzet), GRATIS wist paid_at.
+  const [bevestig, setBevestig] = useState<'' | 'paid' | 'comp'>('')
   // Vaste positie i.p.v. absolute: de tabel zit in een overflow-container die het
   // paneel anders bij de onderste rijen afknipt.
   const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null)
@@ -42,7 +52,7 @@ export default function PaidButton({
     if (pos) { setPos(null); return }
     const r = wrapRef.current?.getBoundingClientRect()
     if (!r) return
-    const dropUp = window.innerHeight - r.bottom < 300
+    const dropUp = window.innerHeight - r.bottom < 460
     setPos({
       left: Math.max(8, Math.min(r.right - PANEL_W, window.innerWidth - PANEL_W - 8)),
       ...(dropUp ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
@@ -57,11 +67,17 @@ export default function PaidButton({
       if (action === 'refund') {
         res = await fetch('/api/admin/refund', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify(refundBuiten ? { userId, bevestigNaBedenktijd: true } : { userId }),
         })
         const data = await res.json().catch(() => ({}))
-        setRefundMsg(res.ok ? 'Terugbetaald, toegang beëindigd' : (data.error ?? 'Mislukt'))
         setRefundStap(0)
+        if (res.status === 409 && data.buitenBedenktijd) {
+          setRefundMsg(data.error)
+          setRefundBuiten(true)
+          return
+        }
+        setRefundBuiten(false)
+        setRefundMsg(res.ok ? 'Terugbetaald, toegang beëindigd' : (data.error ?? 'Mislukt'))
         if (res.ok) router.refresh()
         return
       }
@@ -87,6 +103,7 @@ export default function PaidButton({
       router.refresh()
     } finally {
       setLoading('')
+      setBevestig('')
     }
   }
 
@@ -139,25 +156,37 @@ export default function PaidButton({
             />
             <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>leeg = onbeperkt (alleen bij betaald)</p>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => run('comp')} disabled={!expires || loading !== ''}
+              <button onClick={() => (paid && bevestig !== 'comp' ? setBevestig('comp') : run('comp'))} disabled={!expires || loading !== ''}
                 style={{
                   flex: 1, fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
                   padding: '5px 0', borderRadius: 999, border: 'none',
                   cursor: !expires || loading !== '' ? 'not-allowed' : 'pointer',
                   background: expires ? '#22c55e' : '#374151', color: expires ? '#111827' : '#6b7280',
                 }}>
-                {loading === 'comp' ? '...' : 'GRATIS'}
+                {loading === 'comp' ? '...' : bevestig === 'comp' ? 'ZEKER?' : 'GRATIS'}
               </button>
-              <button onClick={() => run('paid')} disabled={loading !== ''}
+              <button onClick={() => (bevestig === 'paid' ? run('paid') : setBevestig('paid'))} disabled={loading !== ''}
                 style={{
                   flex: 1, fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
                   padding: '5px 0', borderRadius: 999, border: 'none',
                   cursor: loading !== '' ? 'not-allowed' : 'pointer',
                   background: '#f59e0b', color: '#111827',
                 }}>
-                {loading === 'paid' ? '...' : 'BETAALD'}
+                {loading === 'paid' ? '...' : bevestig === 'paid' ? 'ZEKER?' : 'BETAALD'}
               </button>
             </div>
+            {bevestig === 'comp' && <p style={{ fontSize: '12px', color: '#f59e0b', margin: 0 }}>GRATIS haalt de status BETAALD weg</p>}
+            {bevestig === 'paid' && <p style={{ fontSize: '12px', color: '#f59e0b', margin: 0 }}>Handmatig, geen omzet in de MRR</p>}
+
+            {(abonnement || betalingen.length > 0) && (
+              <div style={{ borderTop: '1px solid #374151', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: '12px', letterSpacing: '2px', color: '#6b7280' }}>ONLINE BETALINGEN</span>
+                {abonnement && <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{abonnement}</p>}
+                {betalingen.map((b, i) => (
+                  <p key={i} style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{b.datum} · {b.bedrag} · {b.status}</p>
+                ))}
+              </div>
+            )}
 
             <div style={{ borderTop: '1px solid #374151', paddingTop: 8 }}>
               <button onClick={() => run('active')} disabled={loading !== ''}
@@ -174,16 +203,16 @@ export default function PaidButton({
 
             <div style={{ borderTop: '1px solid #374151', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <button
-                onClick={() => (refundStap === 0 ? setRefundStap(1) : run('refund'))}
+                onClick={() => (refundStap === 0 && !refundBuiten ? setRefundStap(1) : run('refund'))}
                 disabled={loading !== ''}
                 style={{
                   width: '100%', fontSize: '12px', letterSpacing: '1px', fontWeight: 700,
                   padding: '5px 0', borderRadius: 999, border: '1px solid #cc2200',
-                  background: refundStap === 1 ? '#cc2200' : 'transparent',
-                  color: refundStap === 1 ? '#fff' : '#cc2200',
+                  background: refundStap === 1 || refundBuiten ? '#cc2200' : 'transparent',
+                  color: refundStap === 1 || refundBuiten ? '#fff' : '#cc2200',
                   cursor: loading !== '' ? 'not-allowed' : 'pointer',
                 }}>
-                {loading === 'refund' ? '...' : refundStap === 1 ? 'WEET JE ZEKER?' : 'ONLINE BETALING TERUG'}
+                {loading === 'refund' ? '...' : refundBuiten ? 'TOCH TERUGBETALEN' : refundStap === 1 ? 'WEET JE ZEKER?' : 'ONLINE BETALING TERUG'}
               </button>
               {refundMsg && <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{refundMsg}</p>}
             </div>

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { maakKlant } from '@/lib/billing/mollie'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { logAdminActie } from '@/lib/adminLog'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ongeldig aantal seats' }, { status: 400 })
   }
 
+  // Alles valideren vóór er iets wordt opgeslagen: eerder sloeg de route de teaminstellingen op
+  // en gaf daarna "Bedrijfsnaam is verplicht", waardoor de UI "Mislukt" toonde terwijl het al
+  // (deels) was doorgevoerd.
+  if (bedrijfsnaam !== undefined && !bedrijfsnaam?.trim()) {
+    return NextResponse.json({ error: 'Bedrijfsnaam is verplicht' }, { status: 400 })
+  }
+
   const teamUpdate: Record<string, unknown> = {}
   if (minSeats !== undefined) teamUpdate.min_seats = minSeats === null ? null : Number(minSeats)
   if (cyclus !== undefined) teamUpdate.cyclus = cyclus
@@ -38,12 +46,19 @@ export async function POST(req: NextRequest) {
   if (geblokkeerdAt !== undefined) teamUpdate.geblokkeerd_at = geblokkeerdAt
 
   if (Object.keys(teamUpdate).length) {
+    const { data: oudTeam } = await supabase
+      .from('arnobot_teams')
+      .select('min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
+      .eq('id', teamId)
+      .maybeSingle<Record<string, unknown>>()
     const { error } = await supabase.from('arnobot_teams').update(teamUpdate).eq('id', teamId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const oud: Record<string, unknown> = {}
+    for (const k of Object.keys(teamUpdate)) oud[k] = oudTeam?.[k] ?? null
+    await logAdminActie({ actie: 'team_instellingen', doelTeamId: String(teamId), details: { oud, nieuw: teamUpdate } })
   }
 
   if (bedrijfsnaam !== undefined) {
-    if (!bedrijfsnaam?.trim()) return NextResponse.json({ error: 'Bedrijfsnaam is verplicht' }, { status: 400 })
     const { data: team } = await supabase.from('arnobot_teams').select('manager_id').eq('id', teamId).maybeSingle<{ manager_id: string }>()
     if (!team) return NextResponse.json({ error: 'Team niet gevonden' }, { status: 404 })
     const { data: manager } = await supabase.from('approved_users').select('email').eq('user_id', team.manager_id).maybeSingle<{ email: string | null }>()
@@ -71,6 +86,7 @@ export async function POST(req: NextRequest) {
       { onConflict: 'user_id' },
     )
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await logAdminActie({ actie: 'team_bedrijfsgegevens', doelTeamId: String(teamId), doelUserId: team.manager_id, details: { nieuw: { bedrijfsnaam, kvk_nummer: kvkNummer || null, btw_nummer: btwNummer || null } } })
   }
 
   return NextResponse.json({ ok: true })

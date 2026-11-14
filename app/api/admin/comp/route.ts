@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { logAdminActie } from '@/lib/adminLog'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ongeldige datum' }, { status: 400 })
   }
 
+  const { data: oud } = await supabase.from('approved_users').select('expires_at, trial_start, paid_at').eq('user_id', userId).maybeSingle()
+
   const { error } = await supabase
     .from('approved_users')
     .update({
@@ -47,5 +50,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Bijwerken mislukt' }, { status: 500 })
   }
 
+  // paid_at gaat hier naar leeg: een betalende gebruiker die op GRATIS wordt gezet verliest BETAALD.
+  // Daarom staan de oude waarden in het logboek.
+  await logAdminActie({
+    actie: 'gratis_toegang', doelUserId: userId,
+    details: {
+      oud: { expires_at: oud?.expires_at ?? null, trial_start: oud?.trial_start ?? null, paid_at: oud?.paid_at ?? null },
+      nieuw: { expires_at: exp.toISOString(), trial_start: null, paid_at: null },
+    },
+  })
   return NextResponse.json({ ok: true })
 }

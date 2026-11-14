@@ -46,6 +46,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
   const [postcode, setPostcode] = useState(initial.postcode ?? '')
   const [plaats, setPlaats] = useState(initial.plaats ?? '')
   const [status, setStatus] = useState<'idle' | 'bezig' | 'opgeslagen' | 'fout'>('idle')
+  const [foutTekst, setFoutTekst] = useState('')
   const [geblokkeerd, setGeblokkeerd] = useState(!!initial.geblokkeerdAt)
   const [solo, setSolo] = useState<
     { stap: 'uit' } | { stap: 'bezig' } | { stap: 'voorbeeld'; voorbeeld: SoloVoorbeeld } | { stap: 'klaar'; voorbeeld: SoloVoorbeeld } | { stap: 'fout'; fout: string }
@@ -64,6 +65,10 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
         bedrijfsnaam, kvkNummer, btwNummer, straat, postcode, plaats,
       }),
     })
+    // De server valideert alles vóór het opslaat: bij een fout is er dus niets opgeslagen.
+    // De reden (bijvoorbeeld een lege bedrijfsnaam) staat naast "Mislukt".
+    if (!res.ok) setFoutTekst(String((await res.json().catch(() => ({}))).error ?? ''))
+    else setFoutTekst('')
     setStatus(res.ok ? 'opgeslagen' : 'fout')
   }
 
@@ -160,7 +165,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button onClick={opslaan} disabled={status === 'bezig'} style={btn}>{status === 'bezig' ? 'BEZIG...' : 'OPSLAAN'}</button>
         {status === 'opgeslagen' && <span style={{ fontSize: 12, color: '#22c55e' }}>Opgeslagen</span>}
-        {status === 'fout' && <span style={{ fontSize: 12, color: '#ef4444' }}>Mislukt</span>}
+        {status === 'fout' && <span style={{ fontSize: 12, color: '#ef4444' }}>Mislukt{foutTekst ? `: ${foutTekst}` : ''}</span>}
       </div>
 
       {/* Zakelijke solo-klant met een maandabonnement die Team wordt (docs/OVERSTAP_PLAN.md). Gebruikt de seats en

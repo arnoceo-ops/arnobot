@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { logAdminActie } from '@/lib/adminLog'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,11 +32,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const { data: oud } = await supabase.from('approved_users').select('sd_agent, sd_attribution_method').eq('user_id', userId).maybeSingle()
+  const nieuweMethode = sdAgent === null ? null : sdAttributionMethod
+
   const { error } = await supabase
     .from('approved_users')
     .update({
       sd_agent: sdAgent,
-      sd_attribution_method: sdAgent === null ? null : sdAttributionMethod,
+      sd_attribution_method: nieuweMethode,
     })
     .eq('user_id', userId)
 
@@ -43,5 +47,12 @@ export async function POST(req: NextRequest) {
     console.error('SD agent update error:', error.message)
     return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
   }
+  await logAdminActie({
+    actie: 'sd_agent_gewijzigd', doelUserId: userId,
+    details: {
+      oud: { sd_agent: oud?.sd_agent ?? null, sd_attribution_method: oud?.sd_attribution_method ?? null },
+      nieuw: { sd_agent: sdAgent, sd_attribution_method: nieuweMethode },
+    },
+  })
   return NextResponse.json({ ok: true })
 }

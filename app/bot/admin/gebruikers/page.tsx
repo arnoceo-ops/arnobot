@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 import { clerkClient } from '@clerk/nextjs/server'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { computeHealthScore, HEALTH_BUCKET_META, type HealthBucket } from '@/lib/healthScore'
 import SearchLinkedIn from './SearchLinkedIn'
 import PlanToggle from './PlanToggle'
@@ -13,6 +13,7 @@ import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { ACTIE_LABEL, beschrijfDetails, type AdminActie, type AdminLogDetails } from '@/lib/adminLog'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
 // wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
@@ -40,6 +41,19 @@ function trialStatus(row: { paid_at?: string | null; expires_at?: string | null;
   }
   return { label: 'ONBEKEND', color: '#6b7280' }
 }
+
+// Resterende dagen van de proef of comp van een actieve gebruiker die nog niet betaalt, zelfde
+// regels als trialStatus() hierboven. null = betaald, inactief of geen einddatum bekend.
+function proefDagenOver(row: { paid_at?: string | null; expires_at?: string | null; trial_start?: string | null; is_active?: boolean }): number | null {
+  if (!row.is_active || row.paid_at) return null
+  let end: number | null = null
+  if (row.expires_at) end = new Date(row.expires_at).getTime()
+  else if (row.trial_start) end = new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000
+  if (end === null) return null
+  return Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24))
+}
+
+const euro = (cent: number) => `€${(cent / 100).toFixed(2).replace('.', ',')}`
 
 // Sorteersleutel voor de STATUS-badge, spiegelt trialStatus() hierboven:
 // INACTIEF < VERLOPEN < loopt af (op resterende dagen, minst eerst) < BETAALD < onbekend.
@@ -129,7 +143,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen, adminLogRes] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
@@ -169,6 +183,25 @@ export default async function GebruikersPage({
     supabase
       .from('arnobot_team_members')
       .select('user_id, role'),
+    // Betaalgeschiedenis en abonnement per gebruiker (voor het paneel achter BETALING) en het
+    // logboek van adminacties (onderaan de pagina).
+    haalAlleRijen<{ user_id: string; soort: string | null; status: string; bedrag_cent: number; terugbetaald_cent: number | null; betaald_at: string | null; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_payments')
+        .select('user_id, soort, status, bedrag_cent, terugbetaald_cent, betaald_at, created_at')
+        .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string; plan: string; cyclus: string; status: string; opzegging_aangevraagd_at: string | null; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_subscriptions')
+        .select('user_id, plan, cyclus, status, opzegging_aangevraagd_at, created_at')
+        .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)),
+    supabase
+      .from('arnobot_admin_log')
+      .select('id, created_at, actie, doel_user_id, doel_team_id, details')
+      .order('created_at', { ascending: false })
+      .limit(30),
   ])
 
   // TEAM-kolom (2026-08-24): tot nu toe toonde COMMAND alleen command_manager (de Team-
@@ -304,6 +337,38 @@ export default async function GebruikersPage({
 
   const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 140px 60px 60px 90px 50px 80px'
 
+  // BELLIJST: wie loopt de proef binnen 7 dagen af en heeft minder dan 3 vragen gesteld. Dat zijn
+  // de mensen om zelf te bellen of te mailen voor het te laat is.
+  const bellijst = enriched
+    .map(u => ({ u, dagen: proefDagenOver(u) }))
+    .filter((x): x is { u: typeof x.u; dagen: number } => x.dagen !== null && x.dagen > 0 && x.dagen <= 7 && x.u.questions < 3)
+    .sort((a, b) => a.dagen - b.dagen)
+
+  // Betalingen (laatste 5, nieuwste eerst) en het laatste abonnement per gebruiker, voor het paneel achter BETALING.
+  const BETAAL_STATUS: Record<string, string> = { paid: 'betaald', open: 'open', pending: 'open', authorized: 'open', failed: 'mislukt', expired: 'verlopen', canceled: 'geannuleerd', refunded: 'terug' }
+  const ABO_STATUS: Record<string, string> = { active: 'actief', ended: 'beëindigd', refunded: 'terugbetaald', abandoned: 'niet afgerond', pending: 'wacht op betaling', cancelled: 'opgezegd', suspended: 'geschorst' }
+  const betalingenPerUser = new Map<string, { datum: string; bedrag: string; status: string }[]>()
+  for (const b of [...betalingRijen].sort((x, y) => (y.betaald_at ?? y.created_at).localeCompare(x.betaald_at ?? x.created_at))) {
+    const lijst = betalingenPerUser.get(b.user_id) ?? []
+    if (lijst.length >= 5) continue
+    const terug = (b.terugbetaald_cent ?? 0) > 0
+    lijst.push({
+      datum: new Date(b.betaald_at ?? b.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Amsterdam' }),
+      bedrag: euro(b.bedrag_cent),
+      status: terug ? 'terug' : (BETAAL_STATUS[b.status] ?? b.status),
+    })
+    betalingenPerUser.set(b.user_id, lijst)
+  }
+  const abonnementPerUser = new Map<string, string>()
+  for (const s of [...abonnementRijen].sort((x, y) => y.created_at.localeCompare(x.created_at))) {
+    if (abonnementPerUser.has(s.user_id)) continue
+    abonnementPerUser.set(s.user_id, `${s.plan === 'premium' ? 'Pro' : 'Basic'} ${s.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}, ${ABO_STATUS[s.status] ?? s.status}${s.status === 'active' && s.opzegging_aangevraagd_at ? ' (opgezegd)' : ''}`)
+  }
+
+  // Logboek van adminacties (arnobot_admin_log), nieuwste eerst.
+  const naamVoorId = new Map(enriched.map(u => [u.user_id, u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id]))
+  const adminLog = (adminLogRes.data ?? []) as { id: string; created_at: string; actie: AdminActie; doel_user_id: string | null; doel_team_id: string | null; details: AdminLogDetails | null }[]
+
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/gebruikers" />
@@ -315,6 +380,28 @@ export default async function GebruikersPage({
         <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '48px' }}>
           {sorted.length} gebruiker{sorted.length !== 1 ? 's' : ''}
         </p>
+
+        {bellijst.length > 0 && (
+          <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 40, borderLeft: '3px solid #f59e0b' }}>
+            <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>BELLIJST: PROEF LOOPT AF, WEINIG GEBRUIKT</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {bellijst.map(({ u, dagen }) => {
+                const naam = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
+                return (
+                  <div key={u.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '14px' }}>
+                      <a href={`/bot/admin/analyse?userId=${u.user_id}`} style={{ color: '#f1f5f9', fontWeight: 700, textDecoration: 'none' }}>{naam}</a>
+                      <span style={{ color: '#6b7280' }}> · {u.email || 'geen e-mail'}</span>
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#9ca3af', letterSpacing: '1px' }}>
+                      nog {dagen} dag{dagen !== 1 ? 'en' : ''} · {u.questions} vra{u.questions === 1 ? 'ag' : 'gen'} · laatste gesprek {u.lastSession ? new Date(u.lastSession).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Amsterdam' }) : 'nooit'}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: 'max-content' }}>
@@ -453,7 +540,8 @@ export default async function GebruikersPage({
                 {/* Betaling / toegang: PaidButton toont BETAALD, GRATIS t/m, of TOEGANG +,
                     en het paneel erachter regelt comp, betaling en aan/uit */}
                 <div style={{ textAlign: 'center' }}>
-                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} isActive={u.is_active ?? false} />
+                  <PaidButton userId={u.user_id} paidAt={u.paid_at ?? null} expiresAt={u.expires_at ?? null} isActive={u.is_active ?? false}
+                    betalingen={betalingenPerUser.get(u.user_id) ?? []} abonnement={abonnementPerUser.get(u.user_id) ?? null} />
                 </div>
                 {/* Mail opt-out */}
                 <div style={{ textAlign: 'center' }}>
@@ -474,6 +562,26 @@ export default async function GebruikersPage({
         </div>
         </div>{/* /minWidth wrapper */}
         </div>{/* /admin-table-wrap */}
+
+        <div style={{ marginTop: 56 }}>
+          <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>LAATSTE ADMINACTIES</p>
+          {adminLog.length === 0 ? (
+            <p style={{ fontSize: '14px', color: '#6b7280' }}>Nog geen adminacties vastgelegd.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {adminLog.map(r => (
+                <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 190px minmax(120px,220px) 1fr', gap: 12, alignItems: 'baseline', background: '#1f2937', padding: '10px 12px' }}>
+                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                    {new Date(r.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
+                  </span>
+                  <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: '#f1f5f9' }}>{ACTIE_LABEL[r.actie] ?? r.actie}</span>
+                  <span style={{ fontSize: '14px', color: '#9ca3af' }}>{r.doel_user_id ? (naamVoorId.get(r.doel_user_id) ?? r.doel_user_id) : r.doel_team_id ? 'team' : ''}</span>
+                  <span style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>{beschrijfDetails(r.details)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   )
