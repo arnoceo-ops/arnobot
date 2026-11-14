@@ -77,15 +77,26 @@ ${RULE_NEVER_BREAK_CHARACTER}`
     messages: [{ role: 'user', content: userContent }],
   })
 
-  const response = await callModel()
-  let antwoord = extractText(response, 'antwoord')
-  if (!antwoord) {
-    console.error('[admin/analyse-chat] leeg/refusal antwoord, retry')
-    antwoord = extractText(await callModel(), 'antwoord retry')
-  } else if (response.stop_reason === 'max_tokens') {
-    console.error('[admin/analyse-chat] antwoord afgekapt op max_tokens, retry met meer ruimte')
-    const retryTekst = extractText(await callModel(CHAT_RETRY_MAX_TOKENS), 'antwoord retry (meer ruimte)')
-    if (retryTekst) antwoord = retryTekst
+  // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
+  const genereer = async () => {
+    const response = await callModel()
+    let tekst = extractText(response, 'antwoord')
+    if (!tekst) {
+      console.error('[admin/analyse-chat] leeg/refusal antwoord, retry')
+      tekst = extractText(await callModel(), 'antwoord retry')
+    } else if (response.stop_reason === 'max_tokens') {
+      console.error('[admin/analyse-chat] antwoord afgekapt op max_tokens, retry met meer ruimte')
+      const retryTekst = extractText(await callModel(CHAT_RETRY_MAX_TOKENS), 'antwoord retry (meer ruimte)')
+      if (retryTekst) tekst = retryTekst
+    }
+    return tekst
+  }
+  let antwoord: Awaited<ReturnType<typeof genereer>>
+  try {
+    antwoord = await genereer()
+  } catch (e) {
+    console.error('[admin/analyse-chat] model-aanroep mislukt:', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
   if (!antwoord) {
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })

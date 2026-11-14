@@ -114,15 +114,26 @@ export async function POST(req: NextRequest) {
     messages: [{ role: 'user', content: `Analyseer deze gebruiker:\n\n${context.contextText}` }],
   })
 
-  const response = await callModel()
-  let analyse = extractText(response, 'analyse')
-  if (!analyse) {
-    console.error('[admin/analyse] lege/refusal analyse, retry')
-    analyse = extractText(await callModel(), 'analyse retry')
-  } else if (response.stop_reason === 'max_tokens') {
-    console.error('[admin/analyse] analyse afgekapt op max_tokens, retry met meer ruimte')
-    const retryText = extractText(await callModel(ANALYSE_RETRY_MAX_TOKENS), 'analyse retry (meer ruimte)')
-    if (retryText) analyse = retryText
+  // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
+  const genereer = async () => {
+    const response = await callModel()
+    let tekst = extractText(response, 'analyse')
+    if (!tekst) {
+      console.error('[admin/analyse] lege/refusal analyse, retry')
+      tekst = extractText(await callModel(), 'analyse retry')
+    } else if (response.stop_reason === 'max_tokens') {
+      console.error('[admin/analyse] analyse afgekapt op max_tokens, retry met meer ruimte')
+      const retryText = extractText(await callModel(ANALYSE_RETRY_MAX_TOKENS), 'analyse retry (meer ruimte)')
+      if (retryText) tekst = retryText
+    }
+    return tekst
+  }
+  let analyse: Awaited<ReturnType<typeof genereer>>
+  try {
+    analyse = await genereer()
+  } catch (e) {
+    console.error('[admin/analyse] model-aanroep mislukt, userId:', userId, e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
 
   if (!analyse) {

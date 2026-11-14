@@ -38,7 +38,10 @@ export async function POST(_req: NextRequest) {
 
   const client = new Anthropic()
 
-  const response = await client.messages.create({
+  // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
+  let response: Awaited<ReturnType<typeof client.messages.create>>
+  try {
+    response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1200,
     system: `Je analyseert negatief beoordeelde antwoorden van ArnoBot, een AI salescoach voor sales managers.
@@ -52,6 +55,10 @@ Schrijf de analyse zonder tijdslimiet: geen "vandaag", "morgen", "deze week".`,
       content: `Analyseer deze ${logs.length} negatief beoordeelde ArnoBot-antwoorden en identificeer structurele patronen:\n\n${content}`,
     }],
   })
+  } catch (e) {
+    console.error('[admin/feedback-analyse] model-aanroep mislukt:', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
+  }
 
   const text = (response.content.find(b => b.type === 'text') as { type: 'text'; text: string } | undefined)?.text ?? ''
 

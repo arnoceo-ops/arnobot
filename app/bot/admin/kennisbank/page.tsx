@@ -106,6 +106,10 @@ export default async function KennisbankPage() {
   const totalChunks = data?.length ?? 0
   const blogSources = sources.filter(s => s.type === 'blog')
   const videoSources = sources.filter(s => s.type === 'video')
+  // Kennisdocumenten (label "Kennisbank: <titel>", ingeladen met scripts/embed-single-doc.mjs) vielen
+  // onder blog en telden mee in BLOGS. Ze blijven in de tabel staan (te zien en te verwijderen), maar
+  // krijgen een eigen teller zodat BLOGS alleen echte blogs telt.
+  const documentSources = blogSources.filter(s => s.source.startsWith('Kennisbank:'))
 
   const blogRows: BlogRow[] = blogSources.map(s => {
     const { title, date, dateISO } = parseBlogSource(s.source)
@@ -131,12 +135,16 @@ export default async function KennisbankPage() {
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>CHUNKS</p>
           </div>
           <div>
-            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>{blogSources.length}</span>
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>{blogSources.length - documentSources.length}</span>
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>BLOGS</p>
           </div>
           <div>
             <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>{videoSources.length}</span>
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>VIDEO&apos;S</p>
+          </div>
+          <div>
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#f1f5f9', lineHeight: 1 }}>{documentSources.length}</span>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginTop: 6 }}>DOCUMENTEN</p>
           </div>
         </div>
 

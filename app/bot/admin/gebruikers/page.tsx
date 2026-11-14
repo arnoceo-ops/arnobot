@@ -281,21 +281,28 @@ export default async function GebruikersPage({
     }
   }
 
+  // Naam en foto uit Clerk in blokken van 100 gebruikers per aanroep. Eerder één aanroep per gebruiker
+  // met een lege catch: bij een Clerk-rate-limit verdwenen naam en foto stilletjes. Een fout wordt nu gelogd,
+  // en een gebruiker die in Clerk niet (meer) bestaat blijft zonder naam en foto, net als voorheen.
   const clerk = await clerkClient()
+  const clerkIds = (usersRes.data ?? []).map(u => u.user_id).filter((id): id is string => !!id && !id.startsWith('pending_'))
+  const clerkPerId = new Map<string, { imageUrl: string | null; naam: string | null }>()
+  for (let i = 0; i < clerkIds.length; i += 100) {
+    try {
+      const { data: clerkGebruikers } = await clerk.users.getUserList({ userId: clerkIds.slice(i, i + 100), limit: 100 })
+      for (const cu of clerkGebruikers) {
+        const naam = `${cu.firstName || ''} ${cu.lastName || ''}`.trim()
+        clerkPerId.set(cu.id, { imageUrl: cu.imageUrl ?? null, naam: naam || null })
+      }
+    } catch (e) {
+      console.error('[admin/gebruikers] Clerk-gebruikerslijst mislukt:', e instanceof Error ? e.message : e)
+    }
+  }
 
   const enriched = await Promise.all(
     (usersRes.data ?? []).map(async (u) => {
-      let imageUrl: string | null = null
-      let clerkName: string | null = null
-      if (u.user_id && !u.user_id.startsWith('pending_')) {
-        try {
-          const cu = await clerk.users.getUser(u.user_id)
-          imageUrl = cu.imageUrl ?? null
-          const fn = cu.firstName || ''
-          const ln = cu.lastName || ''
-          if (fn || ln) clerkName = `${fn} ${ln}`.trim()
-        } catch {}
-      }
+      const imageUrl = clerkPerId.get(u.user_id)?.imageUrl ?? null
+      const clerkName = clerkPerId.get(u.user_id)?.naam ?? null
       const activity = sessionMap[u.user_id] ?? { count: 0, questions: 0, lastSession: null, recentCount: 0 }
       const healthBucket = getHealthBucket(u.user_id, activity.lastSession)
       return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0, healthBucket }

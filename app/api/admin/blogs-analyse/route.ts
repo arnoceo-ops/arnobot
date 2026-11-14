@@ -103,20 +103,29 @@ export async function POST(req: NextRequest) {
     }],
   })
 
-  let analyse = getText(await callModel().then(r => r.content))
-  if (!analyse) {
+  // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
+  let analyse: ReturnType<typeof getText>
+  try {
     analyse = getText(await callModel().then(r => r.content))
+    if (!analyse) {
+      analyse = getText(await callModel().then(r => r.content))
+    }
+  } catch (e) {
+    console.error('[admin/blogs-analyse] model-aanroep mislukt:', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
   if (!analyse) {
     console.error('[admin/blogs-analyse] lege analyse na retry')
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })
   }
 
-  const { data: saved } = await supabase
+  const { data: saved, error: opslagFout } = await supabase
     .from('arnobot_idee_analyses')
     .insert({ period_days: days, session_count: sessions.length, analyse_text: analyse })
     .select('id')
     .single()
+  // De analyse blijft getoond, maar een mislukt archief (id leeg) hoort niet stil te gebeuren.
+  if (opslagFout) console.error('[admin/blogs-analyse] opslaan mislukt:', opslagFout.message)
 
   return NextResponse.json({ analyse, count: sessions.length, id: saved?.id ?? null })
 }

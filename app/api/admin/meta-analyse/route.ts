@@ -57,6 +57,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { days = 30 } = await req.json().catch(() => ({}))
+  // Een vreemde waarde (NaN, 0, 99999) ging rechtstreeks door naar de AI-run en de gespreksselectie.
+  if (typeof days !== 'number' || !Number.isInteger(days) || days < 1 || days > 365) {
+    return NextResponse.json({ error: 'Ongeldige periode' }, { status: 400 })
+  }
   const resultaat = await runMetaAnalyse(supabase, { days })
 
   if (resultaat.status === 'geen_gesprekken') {

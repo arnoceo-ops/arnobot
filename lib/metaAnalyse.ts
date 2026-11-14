@@ -5,6 +5,7 @@ import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import * as Sentry from '@sentry/nextjs'
 import {
   fetchVorigeAnalyse, vorigPanelBlok, vorigZelfBlok,
   TREND_PANEL_INSTRUCTIE, TREND_ZELF_INSTRUCTIE, BEVINDINGEN_INSTRUCTIE,
@@ -262,11 +263,17 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
     }
   }
 
-  const { data: saved } = await supabase
+  const { data: saved, error: opslagFout } = await supabase
     .from('arnobot_meta_analyses')
     .insert({ period_days: days, session_count: sessieCount, zelfbeoordeling_text: zelfbeoordeling, expertpanel_text: expertpanel, jouw_analyse_text: jouwAnalyse })
     .select('id')
     .single()
+  // De analyse zelf is de dure stap en blijft getoond en gemaild als het opslaan mislukt, maar een
+  // mislukt archief mag niet stil gebeuren: dan staat hij niet in de lijst en is `id` leeg.
+  if (opslagFout) {
+    console.error('[meta-analyse] opslaan in het archief mislukt:', opslagFout.message)
+    Sentry.captureException(new Error(`meta-analyse opslaan mislukt: ${opslagFout.message}`), { tags: { onderdeel: 'meta-analyse' } })
+  }
 
   return {
     status: 'ok',
