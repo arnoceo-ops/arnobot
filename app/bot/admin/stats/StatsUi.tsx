@@ -33,9 +33,11 @@ export function StatCard({ label, span, full, stats = [], footnote, children }: 
   )
 }
 
-export function TileGrid({ children }: { children: React.ReactNode }) {
+// `minKolom`: minimale breedte per kolom in px. Hoger = minder, bredere kolommen (400 geeft twee
+// gelijke kolommen op de gewone adminbreedte, en één kolom op een smal scherm).
+export function TileGrid({ children, minKolom = 280 }: { children: React.ReactNode; minKolom?: number }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'stretch' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${minKolom}px, 1fr))`, gap: 16, alignItems: 'stretch' }}>
       {children}
     </div>
   )

@@ -235,8 +235,19 @@ export default async function AdminStatsPage() {
   }
 
   const gezondheidTiles = (
-    <TileGrid>
-      <StatCard label="HEALTH SCORE" span={2}>
+    <TileGrid minKolom={400}>
+      <StatCard label="ACTIVITEIT (LAATSTE 7 DAGEN)" stats={[
+        { sublabel: 'AANDEEL ACTIEF', value: `${actiefPercentage}%`, warn: actiefPercentage < 50, note: `${actieveGebruikers.size} van ${actiefCount} actieve gebruikers` },
+        { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
+        { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
+      ]} />
+      <StatCard label="ANTWOORDBEOORDELINGEN" stats={beoordeeldTotaal === 0
+        ? [{ sublabel: 'POSITIEF', value: 'n.v.t.', note: 'nog geen beoordelingen' }]
+        : [
+            { sublabel: 'POSITIEF', value: `${Math.round((positiefTotaal / beoordeeldTotaal) * 100)}%`, note: `${beoordeeldTotaal} beoordelingen` },
+            { sublabel: 'NEGATIEF', value: String(beoordeeldTotaal - positiefTotaal), warn: beoordeeldTotaal - positiefTotaal > 0, note: 'zie Gesprekken, filter DUIMPJE' },
+          ]} />
+      <StatCard label="HEALTH SCORE" full>
         <SplitBar segments={[
           { label: HEALTH_BUCKET_META.gezond.label, value: gezondCount, color: HEALTH_BUCKET_META.gezond.color },
           { label: HEALTH_BUCKET_META.neutraal.label, value: neutraalCount, color: HEALTH_BUCKET_META.neutraal.color },
@@ -249,17 +260,6 @@ export default async function AdminStatsPage() {
           </p>
         )}
       </StatCard>
-      <StatCard label="ACTIVITEIT (LAATSTE 7 DAGEN)" stats={[
-        { sublabel: 'AANDEEL ACTIEF', value: `${actiefPercentage}%`, warn: actiefPercentage < 50, note: `${actieveGebruikers.size} van ${actiefCount} actieve gebruikers` },
-        { sublabel: 'GESPREKKEN', value: String(gesprekkenLaatste7Dagen), note: gesprekkenDeltaNote },
-        { sublabel: 'VRAGEN P/GESPREK', value: vragenPerGesprekLaatste7Dagen },
-      ]} />
-      <StatCard label="ANTWOORDBEOORDELINGEN" stats={beoordeeldTotaal === 0
-        ? [{ sublabel: 'POSITIEF', value: 'n.v.t.', note: 'nog geen beoordelingen' }]
-        : [
-            { sublabel: 'POSITIEF', value: `${Math.round((positiefTotaal / beoordeeldTotaal) * 100)}%`, note: `${beoordeeldTotaal} beoordelingen` },
-            { sublabel: 'NEGATIEF', value: String(beoordeeldTotaal - positiefTotaal), warn: beoordeeldTotaal - positiefTotaal > 0, note: 'zie Gesprekken, filter DUIMPJE' },
-          ]} />
     </TileGrid>
   )
 
