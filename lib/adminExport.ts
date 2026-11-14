@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 
 export type AdminLogRow = {
   id: string
@@ -29,11 +30,17 @@ export async function fetchLogsInRange(from: string, to: string, limit: number) 
       .select('*')
       .gte('created_at', `${from}T00:00:00`)
       .lte('created_at', `${to}T23:59:59`)
+      // Zelfde uitsluiting als het scherm op /bot/admin: interne testaccounts en demo-gebruikers
+      // horen niet in CSV of PDF (check-testaccount-filter.mjs ving dit niet).
+      .not('user_id', 'in', INTERNAL_TEST_USERS_IN)
+      .not('user_id', 'like', FAKE_DEMO_USER_LIKE)
       .order('created_at', { ascending: true })
       .limit(limit),
     supabase
       .from('approved_users')
-      .select('user_id, voornaam, achternaam'),
+      .select('user_id, voornaam, achternaam')
+      .not('user_id', 'in', INTERNAL_TEST_USERS_IN)
+      .not('user_id', 'like', FAKE_DEMO_USER_LIKE),
   ])
 
   const naamMap: Record<string, string> = {}

@@ -72,6 +72,7 @@ import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
 const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
+import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
 const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
@@ -376,7 +377,7 @@ export async function POST(req: NextRequest) {
           .then(({ data: coachingDoc }) => {
             if (coachingDoc?.mindset_score != null) {
               const msa = computeMsaScore(coachingDoc.mindset_score, coachingDoc.systeem_score, coachingDoc.actie_score)
-              const punten = (coachingDoc.ontwikkelpunten as {tekst:string;pijlar:string}[] | null)?.map(p => `[${p.pijlar}] ${p.tekst}`).join(' | ') ?? ''
+              const punten = ontwikkelpuntenAlsTekst(coachingDoc.ontwikkelpunten)
               return `\n\nCOACHINGSDIAGNOSE (MSA ${msa}/100):\nVoortgang: ${coachingDoc.voortgang}\nMindset (${coachingDoc.mindset_score}/5): ${coachingDoc.mindset_diagnose}\nSysteem (${coachingDoc.systeem_score}/5): ${coachingDoc.systeem_diagnose}\nActie (${coachingDoc.actie_score}/5): ${coachingDoc.actie_diagnose}${punten ? `\nOntwikkelpunten: ${punten}` : ''}`
             }
             return ''

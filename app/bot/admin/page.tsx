@@ -7,9 +7,10 @@ import AdminNav from './AdminNav'
 import MarkReviewedButton from './MarkReviewedButton'
 import CopyButton from './CopyButton'
 import {
-  fetchAnalyses, fetchCoachingVersies, analyseAsText, coachingAsText, ontwikkelpuntTekst,
+  fetchAnalyses, fetchCoachingVersies, analyseAsText, coachingAsText,
   type AnalyseRij, type CoachingVersie,
 } from '@/lib/adminGesprekkenTabs'
+import { ontwikkelpuntTekst } from '@/lib/coachingTekst'
 
 export const dynamic = 'force-dynamic'
 

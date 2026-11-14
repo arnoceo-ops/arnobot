@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
+import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -92,7 +93,7 @@ export async function gatherAdminAnalyseContext(targetUserId: string): Promise<A
 
   const coaching = coachingRes.data
   const coachingTekst = coaching
-    ? `Mindset: score ${coaching.mindset_score ?? 'n.v.t.'}, diagnose: ${coaching.mindset_diagnose ?? 'n.v.t.'}\nSysteem: score ${coaching.systeem_score ?? 'n.v.t.'}, diagnose: ${coaching.systeem_diagnose ?? 'n.v.t.'}\nActie: score ${coaching.actie_score ?? 'n.v.t.'}, diagnose: ${coaching.actie_diagnose ?? 'n.v.t.'}\nOntwikkelpunten: ${coaching.ontwikkelpunten ?? 'n.v.t.'}\nWeinig voortgang: ${coaching.weinig_voortgang ? 'ja' : 'nee'}, stagnatie: ${coaching.stagnatie ? 'ja' : 'nee'}`
+    ? `Mindset: score ${coaching.mindset_score ?? 'n.v.t.'}, diagnose: ${coaching.mindset_diagnose ?? 'n.v.t.'}\nSysteem: score ${coaching.systeem_score ?? 'n.v.t.'}, diagnose: ${coaching.systeem_diagnose ?? 'n.v.t.'}\nActie: score ${coaching.actie_score ?? 'n.v.t.'}, diagnose: ${coaching.actie_diagnose ?? 'n.v.t.'}\nOntwikkelpunten: ${ontwikkelpuntenAlsTekst(coaching.ontwikkelpunten) || 'n.v.t.'}\nWeinig voortgang: ${coaching.weinig_voortgang ? 'ja' : 'nee'}, stagnatie: ${coaching.stagnatie ? 'ja' : 'nee'}`
     : 'Nog geen coachingsynthese beschikbaar.'
 
   const analyses = analysesRes.data ?? []

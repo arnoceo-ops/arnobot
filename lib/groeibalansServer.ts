@@ -6,6 +6,7 @@ import { telGebruik } from '@/lib/gebruikTellers'
 import { computeSpiegelSignaal } from '@/lib/spiegel'
 import { PERSONA_BESCHRIJVINGEN, SPAR_WEERSTANDEN, isGeldigSparScenario, rolCategorieVoorRol } from '@/lib/sparringPersonas'
 import { RULE_JIJ_JOU, RULE_NO_DASH, RULE_NO_TIME_PRESSURE, RULE_NO_INVENTED_DETAILS, RULE_NATUURLIJK_NEDERLANDS } from '@/lib/systemPrompt'
+import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 
 // Herberekening van de "Gebruiksbalans"-classificatie (het kader op /bot, desktop-only, zie
 // lib/groeibalans.ts en geheugen project_gebruiksbalans_concept.md). Rolbewust: kijkt naar
@@ -87,8 +88,8 @@ async function haalGeschiedenis(supabase: SupabaseClient, userId: string): Promi
 
   const coaching = coachingRes.data
   if (coaching) {
-    const punten = (coaching.ontwikkelpunten as { tekst: string; pijlar: string }[] | null) ?? []
-    delen.push(`Coaching: mindset ${coaching.mindset_score}/5, systeem ${coaching.systeem_score}/5, actie ${coaching.actie_score}/5.${punten.length ? ' Ontwikkelpunten: ' + punten.map(p => `[${p.pijlar}] ${p.tekst}`).join(' | ') : ''}`)
+    const punten = ontwikkelpuntenAlsTekst(coaching.ontwikkelpunten)
+    delen.push(`Coaching: mindset ${coaching.mindset_score}/5, systeem ${coaching.systeem_score}/5, actie ${coaching.actie_score}/5.${punten ? ' Ontwikkelpunten: ' + punten : ''}`)
   }
 
   // Teamthema alleen voor een gewoon teamlid (geen manager): wat de rest van het team nu ook

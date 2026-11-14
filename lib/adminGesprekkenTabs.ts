@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
+import { ontwikkelpuntTekst, type Ontwikkelpunt } from '@/lib/coachingTekst'
 
 // Data voor de tabs Analyses en Coaching op /bot/admin (Gesprekken-pagina). Alleen lezen,
 // alleen voor de admin (de pagina en de CSV-route controleren de admin-cookie zelf).
@@ -11,8 +12,6 @@ export type AnalyseRij = {
   analyse_text: string | null
   session_count: number | null
 }
-
-export type Ontwikkelpunt = string | { tekst?: string; pijlar?: string }
 
 // Eén coachingrapportage. Komt uit arnobot_coaching_history. Rapportages van vóór 2026-11-13
 // hebben daar alleen scores, diagnoses en voortgang; de laatste ervan wordt aangevuld uit de
@@ -122,11 +121,6 @@ export async function fetchCoachingVersies({ from, to, userFilter }: DatumFilter
       volledig: v.ontwikkelpunten != null,
     }
   })
-}
-
-export function ontwikkelpuntTekst(p: Ontwikkelpunt): { tekst: string; pijlar: string } {
-  if (typeof p === 'string') return { tekst: p, pijlar: '' }
-  return { tekst: p.tekst ?? '', pijlar: p.pijlar ?? '' }
 }
 
 function datumTijd(iso: string): string {
