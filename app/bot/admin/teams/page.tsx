@@ -3,7 +3,9 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
-import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
+import { TEST_TEAM_ID, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
+import { berekenTeamPrijsPerMaand } from '@/lib/teamPricing'
+import { nlVandaag } from '@/lib/nlTijd'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,16 +46,46 @@ export default async function TeamsAdminPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const { data: facturenRaw } = await supabase
-    .from('arnobot_team_facturen')
-    .select('team_id, soort, seats_aantal, bedrag_cent, status, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50)
-  const facturenByTeam = new Map<string, typeof facturenRaw>()
-  for (const f of facturenRaw ?? []) {
-    const lijst = facturenByTeam.get(f.team_id) ?? []
-    lijst.push(f)
-    facturenByTeam.set(f.team_id, lijst)
+  // De laatste 20 facturen per team. Eerder één globale .limit(50): zodra er meer teams en facturen
+  // waren, verdwenen de oudere facturen van een team stilletjes uit de lijst.
+  const facturenPerTeam = await Promise.all((teams ?? []).map(async t => {
+    const { data } = await supabase
+      .from('arnobot_team_facturen')
+      .select('team_id, soort, seats_aantal, bedrag_cent, status, created_at')
+      .eq('team_id', t.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    return [t.id, data ?? []] as const
+  }))
+  const facturenByTeam = new Map(facturenPerTeam)
+
+  // Stand per team: echte leden (zonder test- en demo-accounts), de seats waarop gefactureerd wordt
+  // (actueel ledenaantal, nooit onder het minimum), het bedrag van de volgende factuur en de dagen ernaartoe.
+  const teamIds = (teams ?? []).map(t => t.id)
+  const { data: ledenRijen } = teamIds.length
+    ? await supabase.from('arnobot_team_members').select('team_id, user_id').in('team_id', teamIds)
+    : { data: [] as { team_id: string; user_id: string }[] }
+  const ledenPerTeam = new Map<string, number>()
+  for (const l of ledenRijen ?? []) {
+    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
+    ledenPerTeam.set(l.team_id, (ledenPerTeam.get(l.team_id) ?? 0) + 1)
+  }
+  const vandaag = nlVandaag()
+  function standVoor(team: { id: string; min_seats: number | null; cyclus: string | null; volgende_factuurdatum: string | null }) {
+    const leden = ledenPerTeam.get(team.id) ?? 0
+    if (team.min_seats == null) return { tekst: `${leden} leden, nog niet geactiveerd voor facturatie`, kleur: '#6b7280' }
+    const cyclus = team.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'
+    const seats = Math.max(leden, team.min_seats)
+    const perMaand = berekenTeamPrijsPerMaand(seats, cyclus)
+    const bedrag = perMaand === null ? 'bedrag onbekend' : `€${cyclus === 'jaarlijks' ? perMaand * 12 : perMaand} excl. btw per ${cyclus === 'jaarlijks' ? 'jaar' : 'maand'}`
+    let factuur = 'volgende factuurdatum nog niet ingesteld'
+    let kleur = '#9ca3af'
+    if (team.volgende_factuurdatum) {
+      const dagen = Math.round((Date.parse(team.volgende_factuurdatum.slice(0, 10)) - Date.parse(vandaag)) / 86_400_000)
+      factuur = dagen < 0 ? `volgende factuur ${Math.abs(dagen)} dagen te laat (${team.volgende_factuurdatum.slice(0, 10)})` : `volgende factuur ${team.volgende_factuurdatum.slice(0, 10)}, over ${dagen} dag${dagen === 1 ? '' : 'en'}`
+      kleur = dagen < 0 ? '#ef4444' : dagen < 7 ? '#f59e0b' : '#9ca3af'
+    }
+    return { tekst: `${leden} leden${leden < team.min_seats ? ` (minimum ${team.min_seats})` : ''}, gefactureerd op ${seats} seats, ${bedrag}, ${factuur}`, kleur }
   }
 
   return (
@@ -69,9 +101,11 @@ export default async function TeamsAdminPage() {
 
         {(teams ?? []).map(team => {
           const klant = klantByManager.get(team.manager_id)
+          const stand = standVoor(team)
           return (
+            <div key={team.id}>
+              <p style={{ fontSize: 13, color: stand.kleur, margin: '0 0 6px 2px' }}>{stand.tekst}</p>
             <TeamBillingForm
-              key={team.id}
               initial={{
                 teamId: team.id,
                 teamName: `${team.name} (${managerByIds.get(team.manager_id) ?? team.manager_id})`,
@@ -87,6 +121,7 @@ export default async function TeamsAdminPage() {
                 plaats: klant?.plaats ?? null,
               }}
             />
+            </div>
           )
         })}
 

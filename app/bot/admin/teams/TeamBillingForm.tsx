@@ -47,6 +47,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
   const [plaats, setPlaats] = useState(initial.plaats ?? '')
   const [status, setStatus] = useState<'idle' | 'bezig' | 'opgeslagen' | 'fout'>('idle')
   const [foutTekst, setFoutTekst] = useState('')
+  const [blokkeerStap, setBlokkeerStap] = useState<0 | 1>(0)
   const [geblokkeerd, setGeblokkeerd] = useState(!!initial.geblokkeerdAt)
   const [solo, setSolo] = useState<
     { stap: 'uit' } | { stap: 'bezig' } | { stap: 'voorbeeld'; voorbeeld: SoloVoorbeeld } | { stap: 'klaar'; voorbeeld: SoloVoorbeeld } | { stap: 'fout'; fout: string }
@@ -106,10 +107,32 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
     setStatus(res.ok ? 'opgeslagen' : 'fout')
   }
 
+  // Handmatig blokkeren, met een tweede klik ter bevestiging: een team blokkeren zet de toegang van
+  // alle leden uit. Tot nu toe kon je een team alleen deblokkeren (blokkeren deed alleen de
+  // betalingscron). De route logt de wijziging in het adminlogboek.
+  async function blokkeer() {
+    if (blokkeerStap === 0) { setBlokkeerStap(1); return }
+    setBlokkeerStap(0)
+    setStatus('bezig')
+    const res = await fetch('/api/admin/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamId: initial.teamId, geblokkeerdAt: new Date().toISOString() }),
+    })
+    if (res.ok) setGeblokkeerd(true)
+    setStatus(res.ok ? 'opgeslagen' : 'fout')
+  }
+
   return (
     <div style={{ border: '1px solid #1f2937', borderRadius: 8, padding: 16, marginBottom: 16, background: '#0f172a' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{initial.teamName}</span>
+        {!geblokkeerd && (
+          <button onClick={blokkeer} disabled={status === 'bezig'}
+            style={{ ...btn, background: blokkeerStap === 1 ? '#cc2200' : '#374151', color: '#f1f5f9' }}>
+            {blokkeerStap === 1 ? 'WEET JE ZEKER?' : 'BLOKKEER'}
+          </button>
+        )}
         {geblokkeerd && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 12, letterSpacing: 1, color: '#ef4444', fontWeight: 700 }}>GEBLOKKEERD</span>
