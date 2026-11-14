@@ -76,9 +76,21 @@ export async function GET(req: NextRequest) {
 
   if (!context) return NextResponse.json({ error: 'Gebruiker niet gevonden' }, { status: 404 })
 
+  // Nieuwe gesprekken sinds deze analyse: laat zien of VERNIEUW zin heeft.
+  let nieuweGesprekken = 0
+  if (savedRes.data?.updated_at) {
+    const { count } = await supabase
+      .from('arnobot_blog_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .gt('created_at', savedRes.data.updated_at)
+    nieuweGesprekken = count ?? 0
+  }
+
   return NextResponse.json({
     user: { naam: context.naam, email: context.email, plan: context.plan, isTeamManager: context.isTeamManager, isTeamLid: context.isTeamLid, teamNaam: context.teamNaam },
-    analyse: savedRes.data ? { text: savedRes.data.analyse_text, updatedAt: savedRes.data.updated_at } : null,
+    analyse: savedRes.data ? { text: savedRes.data.analyse_text, updatedAt: savedRes.data.updated_at, nieuweGesprekken } : null,
   })
 }
 
@@ -131,6 +143,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     user: { naam: context.naam, email: context.email, plan: context.plan, isTeamManager: context.isTeamManager, isTeamLid: context.isTeamLid, teamNaam: context.teamNaam },
-    analyse: { text: analyse, updatedAt: saved?.updated_at ?? new Date().toISOString(), count: saved?.generated_count ?? nieuweCount },
+    analyse: { text: analyse, updatedAt: saved?.updated_at ?? new Date().toISOString(), count: saved?.generated_count ?? nieuweCount, nieuweGesprekken: 0 },
   })
 }

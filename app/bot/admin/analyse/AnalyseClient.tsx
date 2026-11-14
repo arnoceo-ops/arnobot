@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 type UserRow = { userId: string; naam: string; email: string | null; analyseCount: number }
 type UserInfo = { naam: string; email: string | null; plan: string; isTeamManager: boolean; isTeamLid: boolean; teamNaam: string | null }
-type Analyse = { text: string; updatedAt: string; count?: number }
+type Analyse = { text: string; updatedAt: string; count?: number; nieuweGesprekken?: number }
 type ChatMessage = { role: 'admin' | 'arnobot'; content: string }
 
 function formatBijgewerkt(iso: string): string {
@@ -217,7 +217,12 @@ export default function AnalyseClient({ initialUserId }: { initialUserId: string
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#f59e0b', margin: 0 }}>ANALYSE</p>
-            {analyse && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>bijgewerkt {formatBijgewerkt(analyse.updatedAt)}</p>}
+            {analyse && (
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                bijgewerkt {formatBijgewerkt(analyse.updatedAt)}
+                {analyse.nieuweGesprekken ? ` · ${analyse.nieuweGesprekken} nieuw${analyse.nieuweGesprekken === 1 ? '' : 'e'} gesprek${analyse.nieuweGesprekken === 1 ? '' : 'ken'} sindsdien` : ''}
+              </p>
+            )}
           </div>
           {analyse && !loadingAnalyse && (
             <button onClick={() => generateAnalyse(selectedUserId, true)} disabled={regenerating} style={{ ...knopStyle, opacity: regenerating ? 0.5 : 1 }}>

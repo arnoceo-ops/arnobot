@@ -52,7 +52,7 @@ function formatProfiel(profiel: Record<string, ProfielVeld> | null): string {
 }
 
 export async function gatherAdminAnalyseContext(targetUserId: string): Promise<AdminAnalyseContext | null> {
-  const [userRes, profielRes, sessiesRes, logsRes, coachingRes, analysesRes, sparringRes, teamMemberRes] = await Promise.all([
+  const [userRes, profielRes, sessiesRes, logsRes, coachingRes, analysesRes, sparringRes, teamMemberRes, coachingHistorieRes] = await Promise.all([
     supabase.from('approved_users').select('user_id, email, full_name, voornaam, achternaam, plan, created_at').eq('user_id', targetUserId).maybeSingle(),
     supabase.from('arnobot_blog_profiles').select('profiel').eq('user_id', targetUserId).maybeSingle(),
     supabase.from('arnobot_blog_sessions').select('title, summary, feiten, uitdaging, themas, actie_status, excuustaal, created_at')
@@ -65,6 +65,11 @@ export async function gatherAdminAnalyseContext(targetUserId: string): Promise<A
     supabase.from('arnobot_sparring_sessions').select('debrief, persona, rol_categorie, created_at')
       .eq('user_id', targetUserId).order('created_at', { ascending: false }).limit(SPARRING_LIMIET),
     supabase.from('arnobot_team_members').select('team_id, role, display_name, arnobot_teams(name)').eq('user_id', targetUserId).maybeSingle(),
+    // Eerdere coachingrapportages (nieuwste eerst): de score- en voortgangsontwikkeling is dé
+    // voorbereiding op een gesprek. De live COACHINGSYNTHESE hieronder is alleen de laatste.
+    supabase.from('arnobot_coaching_history')
+      .select('created_at, mindset_score, systeem_score, actie_score, voortgang, ontwikkelpunten')
+      .eq('user_id', targetUserId).order('created_at', { ascending: false }).limit(4),
   ])
 
   const user = userRes.data
@@ -95,6 +100,14 @@ export async function gatherAdminAnalyseContext(targetUserId: string): Promise<A
   const coachingTekst = coaching
     ? `Mindset: score ${coaching.mindset_score ?? 'n.v.t.'}, diagnose: ${coaching.mindset_diagnose ?? 'n.v.t.'}\nSysteem: score ${coaching.systeem_score ?? 'n.v.t.'}, diagnose: ${coaching.systeem_diagnose ?? 'n.v.t.'}\nActie: score ${coaching.actie_score ?? 'n.v.t.'}, diagnose: ${coaching.actie_diagnose ?? 'n.v.t.'}\nOntwikkelpunten: ${ontwikkelpuntenAlsTekst(coaching.ontwikkelpunten) || 'n.v.t.'}\nWeinig voortgang: ${coaching.weinig_voortgang ? 'ja' : 'nee'}, stagnatie: ${coaching.stagnatie ? 'ja' : 'nee'}`
     : 'Nog geen coachingsynthese beschikbaar.'
+
+  const coachingHistorie = coachingHistorieRes.data ?? []
+  const coachingHistorieTekst = coachingHistorie.length
+    ? coachingHistorie.map(h => {
+        const punten = ontwikkelpuntenAlsTekst(h.ontwikkelpunten)
+        return `(${new Date(h.created_at).toLocaleDateString('nl-NL')}) Mindset ${h.mindset_score ?? 'n.v.t.'}, Systeem ${h.systeem_score ?? 'n.v.t.'}, Actie ${h.actie_score ?? 'n.v.t.'}.${h.voortgang ? ` Voortgang: ${h.voortgang}` : ''}${punten ? ` Ontwikkelpunten: ${punten}` : ' (van deze rapportage zijn alleen scores en voortgang bewaard)'}`
+      }).join('\n\n')
+    : 'Nog geen eerdere coachingrapportages.'
 
   const analyses = analysesRes.data ?? []
   const analysesTekst = analyses.length
@@ -152,6 +165,9 @@ ${teamTekst}
 
 COACHINGSYNTHESE
 ${coachingTekst}
+
+COACHINGHISTORIE (laatste ${coachingHistorie.length} rapportages, nieuwste eerst)
+${coachingHistorieTekst}
 
 EERDERE ZELF-ANALYSES (door de gebruiker zelf opgevraagd, over zichzelf)
 ${analysesTekst}
