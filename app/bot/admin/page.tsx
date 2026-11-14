@@ -11,6 +11,8 @@ import {
   type AnalyseRij, type CoachingVersie,
 } from '@/lib/adminGesprekkenTabs'
 import { ontwikkelpuntTekst } from '@/lib/coachingTekst'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { nlDagStartIso, nlDagEindeIso, nlVandaag, nlGisteren } from '@/lib/nlTijd'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,8 +70,9 @@ export default async function ArnoBotAdminPage({
   const params = await searchParams
   const tab: 'gesprekken' | 'analyses' | 'coaching' =
     params.tab === 'analyses' || params.tab === 'coaching' ? params.tab : 'gesprekken'
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  // Dagen lopen van middernacht tot middernacht Nederlandse tijd (lib/nlTijd.ts), niet UTC.
+  const today = nlVandaag()
+  const yesterday = nlGisteren()
   // Gesprekken: standaard gisteren t/m vandaag. Analyses en Coaching komen traag binnen, dus
   // daar is leeg = geen datumbegrenzing (een rapportage van vorige maand blijft zichtbaar).
   const from = parseDate(params.from || '') || (tab === 'gesprekken' ? yesterday : '')
@@ -98,18 +101,20 @@ export default async function ArnoBotAdminPage({
     if (match) userFilter = match.userId
   }
 
-  const { data } = tab === 'gesprekken'
-    ? await supabase
-        .from('arnobot_rds_logs')
-        .select('*')
-        .gte('created_at', `${from}T00:00:00`)
-        .lte('created_at', `${to}T23:59:59`)
-        .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
-        .order('created_at', { ascending: true })
-        .limit(2000)
-    : { data: null }
-
-  const rows: LogRow[] = data || []
+  // Alle rijen in de periode, in blokken (de database kapt anders stil af op 1000, waarbij de
+  // nieuwste gesprekken als eerste wegvielen). Bij een gekozen gebruiker filtert de database zelf.
+  const rows: LogRow[] = tab === 'gesprekken'
+    ? await haalAlleRijen<LogRow>((van, tot) => {
+        let q = supabase
+          .from('arnobot_rds_logs')
+          .select('*')
+          .gte('created_at', nlDagStartIso(from))
+          .lt('created_at', nlDagEindeIso(to))
+          .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        if (userFilter) q = q.eq('user_id', userFilter)
+        return q.order('created_at', { ascending: true }).order('id', { ascending: true }).range(van, tot)
+      })
+    : []
 
   const tabFilter = { from: from || undefined, to: to || undefined, userFilter: userFilter || undefined }
   const analyses: AnalyseRij[] = tab === 'analyses' ? await fetchAnalyses(tabFilter) : []

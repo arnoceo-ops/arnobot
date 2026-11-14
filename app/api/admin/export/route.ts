@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
   const userFilter = searchParams.get('user') || ''
   const sort = searchParams.get('sort') || 'date_desc'
 
-  const { rows, naamMap } = await fetchLogsInRange(from, to, 2000)
+  // PDF-bron: meer dan 20.000 berichten in één PDF is niet bruikbaar, dan een kleinere periode kiezen.
+  const { rows, naamMap } = await fetchLogsInRange(from, to, 20000)
 
   const sessions: Record<string, AdminLogRow[]> = {}
   for (const row of rows) {

@@ -6,6 +6,7 @@ import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestA
 export const dynamic = 'force-dynamic'
 import EvaluatiesClient from './EvaluatiesClient'
 import AdminNav from '../AdminNav'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 export default async function EvaluatiesPage() {
   const cookieStore = await cookies()
@@ -17,8 +18,11 @@ export default async function EvaluatiesPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const [{ data: ratingsRaw }, { data: negRaw }] = await Promise.all([
-    supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
+  const [ratingsRaw, { data: negRaw }] = await Promise.all([
+    // Alle beoordeelde rijen in blokken: boven 1000 beoordelingen klopte het percentage anders niet meer.
+    haalAlleRijen<{ feedback: string }>((van, tot) =>
+      supabase.from('arnobot_rds_logs').select('feedback').not('feedback', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)),
     supabase
       .from('arnobot_rds_logs')
       .select('question, answer, created_at, user_id')

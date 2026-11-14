@@ -12,6 +12,7 @@ import CommandManagerToggle from './CommandManagerToggle'
 import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
 // wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
@@ -135,25 +136,36 @@ export default async function GebruikersPage({
       .neq('email', E2E_TEST_USER_EMAIL)
       .neq('email', MANUAL_TEST_USER_EMAIL)
       .neq('email', APP_REVIEWER_EMAIL),
-    supabase
-      .from('arnobot_rds_logs')
-      .select('user_id, session_id, created_at')
-      .not('user_id', 'is', null),
+    // De vier groeitabellen in blokken (lib/haalAlleRijen.ts): een kale select kapt op 1000 rijen
+    // af, waarna GESPREKKEN, VRAGEN, LAATSTE GESPREK en de gezondheidsscore stilletjes onjuist
+    // werden. `{ data }` houdt de vorm van een gewone query, zodat de rest van de pagina gelijk blijft.
+    haalAlleRijen<{ user_id: string; session_id: string; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_rds_logs')
+        .select('user_id, session_id, created_at')
+        .not('user_id', 'is', null)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase
       .from('arnobot_coaching')
       .select('user_id, updated_at, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie'),
-    supabase
-      .from('arnobot_analyses')
-      .select('user_id'),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      supabase
+        .from('arnobot_analyses')
+        .select('user_id')
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase
       .from('arnobot_referrals')
       .select('referrer_user_id, status'),
-    supabase
-      .from('arnobot_blog_sessions')
-      .select('user_id, created_at, actie_status'),
-    supabase
-      .from('arnobot_sparring_sessions')
-      .select('user_id, created_at'),
+    haalAlleRijen<{ user_id: string; created_at: string; actie_status: string | null }>((van, tot) =>
+      supabase
+        .from('arnobot_blog_sessions')
+        .select('user_id, created_at, actie_status')
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
+    haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
+      supabase
+        .from('arnobot_sparring_sessions')
+        .select('user_id, created_at')
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase
       .from('arnobot_team_members')
       .select('user_id, role'),

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,7 @@ async function checkAuth() {
 export async function GET() {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [usersRes, logsRes, analysesRes] = await Promise.all([
+  const [usersRes, logRijen, analysesRes] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam')
@@ -33,11 +34,16 @@ export async function GET() {
       .neq('email', MANUAL_TEST_USER_EMAIL)
       .neq('email', APP_REVIEWER_EMAIL)
       .order('full_name', { ascending: true }),
-    supabase.from('arnobot_rds_logs').select('user_id').not('user_id', 'is', null),
+    // Alle logrijen in blokken: een kale select kapt op 1000 rijen af, waarna gebruikers
+    // wier gesprekken buiten die 1000 vielen stilletjes uit de zoeklijst verdwenen.
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      supabase.from('arnobot_rds_logs').select('user_id').not('user_id', 'is', null)
+        .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)),
     supabase.from('arnobot_admin_analyses').select('target_user_id, generated_count'),
   ])
 
-  const actieveGebruikers = new Set((logsRes.data ?? []).map(l => l.user_id))
+  const actieveGebruikers = new Set(logRijen.map(l => l.user_id))
   const countPerUser: Record<string, number> = {}
   for (const a of analysesRes.data ?? []) {
     countPerUser[a.target_user_id] = a.generated_count ?? 0

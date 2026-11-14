@@ -4,6 +4,7 @@ import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import {
   fetchVorigeAnalyse, vorigPanelBlok, vorigZelfBlok,
   TREND_PANEL_INSTRUCTIE, TREND_ZELF_INSTRUCTIE, BEVINDINGEN_INSTRUCTIE,
@@ -109,20 +110,27 @@ export async function runMetaAnalyse(
   const sessionIds = sessies.map(s => s.session_id).filter(Boolean) as string[]
 
   // Stap 2: gesprekken uit rds_logs + duimpjesbeoordelingen
-  let logsQuery = supabase
-    .from('arnobot_rds_logs')
-    .select('session_id, question, answer, created_at')
-    .in('session_id', sessionIds)
-    .order('created_at', { ascending: true })
-  if (ownerUserId) logsQuery = logsQuery.neq('user_id', ownerUserId)
-
-  const [{ data: logs }, { data: ratingsData }] = await Promise.all([
-    logsQuery,
-    supabase
-      .from('arnobot_rds_logs')
-      .select('question, answer, feedback')
-      .in('session_id', sessionIds)
-      .not('feedback', 'is', null),
+  // In blokken (lib/haalAlleRijen.ts): tot 60 sessies met elk tientallen berichten komt boven
+  // de 1000 rijen die de database per vraag teruggeeft, en de nieuwste berichten vielen dan weg.
+  const [logs, ratingsData] = await Promise.all([
+    haalAlleRijen<{ session_id: string; question: string; answer: string; created_at: string }>((van, tot) => {
+      let q = supabase
+        .from('arnobot_rds_logs')
+        .select('session_id, question, answer, created_at')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+      if (ownerUserId) q = q.neq('user_id', ownerUserId)
+      return q.range(van, tot)
+    }),
+    haalAlleRijen<{ question: string; answer: string; feedback: string }>((van, tot) =>
+      supabase
+        .from('arnobot_rds_logs')
+        .select('question, answer, feedback')
+        .in('session_id', sessionIds)
+        .not('feedback', 'is', null)
+        .order('id', { ascending: true })
+        .range(van, tot)),
   ])
 
   const allRatings = (ratingsData ?? []) as { question: string; answer: string; feedback: string }[]

@@ -8,6 +8,7 @@ import StatsTabs from './StatsTabs'
 import { StatCard, TileGrid, SubHeading, FunnelBar, HeroStat, SplitBar, RatioBar, TrendChart } from './StatsUi'
 import BlogStats from './BlogStats'
 import { berekenMrrEuro } from '@/lib/mrr'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +41,11 @@ export default async function AdminStatsPage() {
     { data: abonnementen },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
-    supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
+    // Groeitabellen in blokken (lib/haalAlleRijen.ts): een kale select kapt op 1000 rijen af en
+    // laat de nieuwste weg, waarmee ACTIEF 7D, vragen per week en de gezondheidsscore onjuist worden.
+    haalAlleRijen<{ user_id: string; created_at: string; message_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'qa_page_view').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).eq('event_name', 'coaching_page_view').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     // Telt zowel het oude event (vóór 2026-07-20, toen deze knop nog "BEKIJK ARNOLIVE" was
@@ -48,11 +53,16 @@ export default async function AdminStatsPage() {
     // /bot/gesprek), zodat de teller niet stil terugvalt naar 0 door de omzetting.
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).in('event_name', ['coaching_arnolive_click', 'coaching_gesprek_click']).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at').neq('email', E2E_TEST_USER_EMAIL).neq('email', MANUAL_TEST_USER_EMAIL).neq('email', APP_REVIEWER_EMAIL),
-    supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
+    haalAlleRijen<{ user_id: string; session_id: string; created_at: string }>((van, tot) =>
+      supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase.from('arnobot_referrals').select('status, referred_user_id').not('referrer_user_id', 'in', INTERNAL_TEST_USERS_IN).not('referrer_user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
-    supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
-    supabase.from('arnobot_cta_clicks').select('anon_id'),
+    haalAlleRijen<{ user_id: string; created_at: string; actie_status: string | null }>((van, tot) =>
+      supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+        .order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
+    haalAlleRijen<{ anon_id: string }>((van, tot) =>
+      supabase.from('arnobot_cta_clicks').select('anon_id').order('id', { ascending: true }).range(van, tot)).then(data => ({ data })),
     supabase.from('arnobot_subscriptions').select('status, cyclus, bedrag_cent, btw_cent, opzegging_aangevraagd_at').eq('status', 'active').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
   ])
 

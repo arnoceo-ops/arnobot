@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,18 +69,17 @@ export async function POST(req: NextRequest) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
   const ownerUserId = process.env.ARNOBOT_OWNER_USER_ID
 
-  let query = supabase
-    .from('arnobot_blog_sessions')
-    .select('title, summary, created_at')
-    .gte('created_at', since)
-    .order('created_at', { ascending: false })
-    .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
-
-  if (ownerUserId) {
-    query = query.neq('user_id', ownerUserId)
-  }
-
-  const { data: sessions } = await query
+  // Alle sessies in de periode, in blokken: een kale select kapt op 1000 rijen af en liet bij een
+  // kwartaal of langer de nieuwste gesprekken stilletjes uit de briefing vallen.
+  const sessions = await haalAlleRijen<{ title: string; summary: string | null; created_at: string }>((van, tot) => {
+    let q = supabase
+      .from('arnobot_blog_sessions')
+      .select('title, summary, created_at')
+      .gte('created_at', since)
+      .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
+    if (ownerUserId) q = q.neq('user_id', ownerUserId)
+    return q.order('created_at', { ascending: false }).order('id', { ascending: true }).range(van, tot)
+  })
 
   if (!sessions?.length) {
     return NextResponse.json({ analyse: null, count: 0, id: null })

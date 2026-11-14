@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { ontwikkelpuntTekst, type Ontwikkelpunt } from '@/lib/coachingTekst'
+import { nlDagStartIso, nlDagEindeIso } from '@/lib/nlTijd'
 
 // Data voor de tabs Analyses en Coaching op /bot/admin (Gesprekken-pagina). Alleen lezen,
 // alleen voor de admin (de pagina en de CSV-route controleren de admin-cookie zelf).
@@ -56,8 +57,8 @@ export async function fetchAnalyses({ from, to, userFilter }: DatumFilter): Prom
     .order('created_at', { ascending: false })
     .limit(MAX_RIJEN)
   if (userFilter) q = q.eq('user_id', userFilter)
-  if (from) q = q.gte('created_at', `${from}T00:00:00`)
-  if (to) q = q.lte('created_at', `${to}T23:59:59`)
+  if (from) q = q.gte('created_at', nlDagStartIso(from))
+  if (to) q = q.lt('created_at', nlDagEindeIso(to))
   const { data } = await q
   return (data ?? []) as AnalyseRij[]
 }
@@ -75,8 +76,8 @@ export async function fetchCoachingVersies({ from, to, userFilter }: DatumFilter
     .order('created_at', { ascending: false })
     .limit(MAX_RIJEN)
   if (userFilter) q = q.eq('user_id', userFilter)
-  if (from) q = q.gte('created_at', `${from}T00:00:00`)
-  if (to) q = q.lte('created_at', `${to}T23:59:59`)
+  if (from) q = q.gte('created_at', nlDagStartIso(from))
+  if (to) q = q.lt('created_at', nlDagEindeIso(to))
   const { data: historie } = await q
   const rijen = (historie ?? []) as Record<string, unknown>[]
 
