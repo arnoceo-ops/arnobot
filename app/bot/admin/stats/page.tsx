@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE, TEST_TEAM_ID, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { computeHealthScore, HEALTH_BUCKET_META } from '@/lib/healthScore'
 import AdminNav from '../AdminNav'
 import StatsTabs from './StatsTabs'
 import { StatCard, TileGrid, SubHeading, FunnelBar, HeroStat, SplitBar, RatioBar, TrendChart } from './StatsUi'
 import BlogStats from './BlogStats'
-import { berekenMrrEuro } from '@/lib/mrr'
+import { berekenMrrEuro, berekenTeamMrrEuro } from '@/lib/mrr'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 export const dynamic = 'force-dynamic'
@@ -159,7 +159,25 @@ export default async function AdminStatsPage() {
 
   // MRR uit de echte abonnementen (arnobot_subscriptions), zie lib/mrr.ts voor de definitie.
   // Geen fallback op planprijs of op de handmatige BETAALD-vlag: dat is geen omzet.
-  const mrr = berekenMrrEuro(abonnementen ?? [])
+  // Team telt mee via dezelfde formule als de facturen: teams met een betaalde reguliere factuur
+  // die nu loopt, zonder het demo-team (TEST_TEAM_ID).
+  const nuIso = new Date(now).toISOString()
+  const [{ data: teamRijen }, { data: betaaldeFacturen }] = await Promise.all([
+    supabase.from('arnobot_teams').select('id, min_seats, cyclus, geblokkeerd_at').neq('id', TEST_TEAM_ID),
+    supabase.from('arnobot_team_facturen').select('team_id').eq('status', 'paid').eq('soort', 'regulier').lte('periode_start', nuIso).gt('periode_einde', nuIso),
+  ])
+  const teamIds = (teamRijen ?? []).map(t => t.id as string)
+  const { data: teamLeden } = teamIds.length
+    ? await supabase.from('arnobot_team_members').select('team_id, user_id').in('team_id', teamIds)
+    : { data: [] as { team_id: string; user_id: string }[] }
+  const ledenPerTeam: Record<string, number> = {}
+  for (const l of teamLeden ?? []) {
+    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
+    ledenPerTeam[l.team_id] = (ledenPerTeam[l.team_id] ?? 0) + 1
+  }
+  const mrr =
+    berekenMrrEuro(abonnementen ?? []) +
+    berekenTeamMrrEuro(teamRijen ?? [], ledenPerTeam, new Set((betaaldeFacturen ?? []).map(f => f.team_id as string)))
 
   // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))

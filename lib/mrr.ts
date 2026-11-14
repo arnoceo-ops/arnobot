@@ -8,8 +8,14 @@
 //    einde van de periode, maar komt niet terug en telt dus niet meer mee;
 //  - exclusief btw (bedrag_cent is bruto, btw_cent zit erin);
 //  - jaarlijks gedeeld door 12, een onbekende cyclus wordt overgeslagen in plaats van gegokt.
-// Alleen solo-abonnementen. Team wordt gefactureerd per cyclus met naar-rato tussenfacturen
-// (arnobot_team_facturen), daar is geen vaste maandwaarde uit af te lezen: niet meegeteld.
+// Team (berekenTeamMrrEuro hieronder) telt mee met dezelfde formule als de facturen
+// (lib/teamPricing.ts: platformtarief + seats x prijs per seat, excl. btw, jaarlijks als
+// maand-equivalent): een team met een betaalde reguliere factuur die de huidige periode dekt,
+// niet geblokkeerd, seats = actuele ledenaantal maar nooit onder het afgesproken minimum. Het
+// demo-team (TEST_TEAM_ID) telt nooit mee. De Elite-surplus binnen een Team-offerte en de
+// naar-rato tussenfacturen zijn geen vaste maandwaarde en tellen niet mee.
+
+import { berekenTeamPrijsPerMaand, type Cyclus } from '@/lib/teamPricing'
 
 export type AbonnementRij = {
   status: string
@@ -30,4 +36,32 @@ export function berekenMrrEuro(rijen: AbonnementRij[]): number {
     else if (r.cyclus === 'jaarlijks') cent += netto / 12
   }
   return cent / 100
+}
+
+export type TeamRij = {
+  id: string
+  min_seats: number | null
+  cyclus: string | null
+  geblokkeerd_at: string | null
+}
+
+/**
+ * MRR van Team in euro, excl. btw. `betaaldeTeamIds`: teams met een betaalde reguliere factuur
+ * die de huidige periode dekt. `ledenPerTeam`: echte leden per team (zonder test- en demo-accounts).
+ */
+export function berekenTeamMrrEuro(
+  teams: TeamRij[],
+  ledenPerTeam: Record<string, number>,
+  betaaldeTeamIds: ReadonlySet<string>,
+): number {
+  let euro = 0
+  for (const t of teams) {
+    if (!betaaldeTeamIds.has(t.id)) continue
+    if (t.geblokkeerd_at) continue
+    if (t.min_seats == null) continue
+    if (t.cyclus !== 'maandelijks' && t.cyclus !== 'jaarlijks') continue
+    const seats = Math.max(ledenPerTeam[t.id] ?? 0, t.min_seats)
+    euro += berekenTeamPrijsPerMaand(seats, t.cyclus as Cyclus) ?? 0
+  }
+  return euro
 }
