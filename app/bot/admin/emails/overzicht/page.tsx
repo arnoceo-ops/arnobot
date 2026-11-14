@@ -4,11 +4,13 @@ import type { CSSProperties } from 'react'
 
 export const dynamic = 'force-dynamic'
 import { PrintButton } from './PrintButton'
+import { cronTrigger, leesCrons } from '@/lib/cronOverzicht'
 
 export default async function EmailsOverzichtPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
+  const crons = leesCrons()
 
   return (
     <div style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9' }}>
@@ -36,40 +38,40 @@ export default async function EmailsOverzichtPage() {
           Alle e-mails en crons die ArnoBot verstuurt, gesorteerd per categorie.
         </p>
         <p className="no-print" style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280', letterSpacing: 1, marginBottom: 48 }}>
-          Let op: het PDF-overzicht en de admin-crons zijn handmatig te onderhouden. De NAAR GEBRUIKERS sectie op de admin-pagina werkt automatisch via email-templates.ts.
+          Let op: de cronlijst en de cron-tijden in dit overzicht komen automatisch uit vercel.json. De mail-rijen zelf zijn handmatig te onderhouden. De NAAR GEBRUIKERS sectie op de admin-pagina werkt automatisch via email-templates.ts.
         </p>
 
         <Section title="NAAR GEBRUIKERS" subtitle="Lifecycle e-mails richting actieve en voormalige gebruikers">
           <Table rows={[
-            { name: 'Dag 1',                trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Direct na aanmelding',                                  type: 'Transactioneel' },
-            { name: 'Dag 4',                trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '4 dagen na aanmelding, nog geen gesprek',               type: 'Transactioneel' },
-            { name: 'Geen gesprek nudge',    trigger: 'Cron:inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: 'Dag 7, nooit een gesprek gestart',                      type: 'Marketing' },
-            { name: 'Eerste gesprek',        trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na het eerste gesprek',                                 type: 'Transactioneel' },
-            { name: 'Dag 14',               trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Halverwege de trial',                                   type: 'Transactioneel' },
-            { name: 'Inactivity nudge',      trigger: 'Cron:inactivity-nudge (dagelijks 05:00)',     ontvanger: 'Gebruiker',            wanneer: '7 dagen geen activiteit',                               type: 'Marketing' },
-            { name: 'Eerste coaching',       trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Na 5+ sessies, nog geen coaching aangevraagd',          type: 'Transactioneel' },
-            { name: 'Dag 25',               trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Trial loopt over 5 dagen af, opt-in CTA',               type: 'Transactioneel' },
-            { name: 'Betaalwaarschuwing',    trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '7 dagen na opt-in, geen betaling ontvangen',            type: 'Transactioneel' },
-            { name: 'Geblokkeerd',           trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: '24u na waarschuwing, nog geen betaling',                type: 'Transactioneel' },
-            { name: 'Trial afgelopen',       trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Dag 30, nooit opt-in gedaan',                          type: 'Transactioneel' },
+            { name: 'Dag 1',                trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Direct na aanmelding',                                  type: 'Transactioneel' },
+            { name: 'Dag 4',                trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: '4 dagen na aanmelding, nog geen gesprek',               type: 'Transactioneel' },
+            { name: 'Geen gesprek nudge',    trigger: cronTrigger('inactivity-nudge'),     ontvanger: 'Gebruiker',            wanneer: 'Dag 7, nooit een gesprek gestart',                      type: 'Marketing' },
+            { name: 'Eerste gesprek',        trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Na het eerste gesprek',                                 type: 'Transactioneel' },
+            { name: 'Dag 14',               trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Halverwege de trial',                                   type: 'Transactioneel' },
+            { name: 'Inactivity nudge',      trigger: cronTrigger('inactivity-nudge'),     ontvanger: 'Gebruiker',            wanneer: '7 dagen geen activiteit',                               type: 'Marketing' },
+            { name: 'Eerste coaching',       trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Na 5+ sessies, nog geen coaching aangevraagd',          type: 'Transactioneel' },
+            { name: 'Dag 25',               trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Trial loopt over 5 dagen af, opt-in CTA',               type: 'Transactioneel' },
+            { name: 'Betaalwaarschuwing',    trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: '7 dagen na opt-in, geen betaling ontvangen',            type: 'Transactioneel' },
+            { name: 'Geblokkeerd',           trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: '24u na waarschuwing, nog geen betaling',                type: 'Transactioneel' },
+            { name: 'Trial afgelopen',       trigger: cronTrigger('trial-emails'),          ontvanger: 'Gebruiker',            wanneer: 'Dag 30, nooit opt-in gedaan',                          type: 'Transactioneel' },
             { name: 'Opzegging bevestiging', trigger: 'Event: bot/cancel-subscription',               ontvanger: 'Gebruiker',            wanneer: 'Direct bij opzegging via account pagina',               type: 'Transactioneel' },
-            { name: 'Win-back',             trigger: 'Cron:trial-emails (dagelijks 06:05)',          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
+            { name: 'Win-back',             trigger: cronTrigger('trial-emails'),          ontvanger: 'Voormalig gebruiker',  wanneer: '15 dagen na einde trial',                               type: 'Marketing' },
             { name: 'Referral aanmelding',   trigger: 'Event: bot/referral (direct)',                 ontvanger: 'Referrer (gebruiker)', wanneer: 'Zodra iemand zich aanmeldt via de referral link',       type: 'Transactioneel' },
             { name: 'Blog bevestiging',     trigger: 'Event: api/blog/subscribe',                    ontvanger: 'Blogabonnee (aanmelder)', wanneer: 'Direct na aanmelden voor de blog, double opt-in',   type: 'Transactioneel' },
             { name: 'Blog al aangemeld',    trigger: 'Event: api/blog/subscribe',                    ontvanger: 'Blogabonnee (aanmelder)', wanneer: 'Opnieuw aangemeld terwijl het adres al bevestigd is', type: 'Transactioneel' },
             { name: 'Blog nieuw artikel',   trigger: 'Event/cron: admin/blog + cron/blog (elke 15 min)', ontvanger: 'Bevestigde blogabonnees', wanneer: 'Bij publicatie, binnen het dagbudget',          type: 'Marketing' },
-            { name: 'Analyses bijgewerkt',   trigger: 'Cron:auto-analyse (dagelijks 06:05)',          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
+            { name: 'Analyses bijgewerkt',   trigger: cronTrigger('auto-analyse'),          ontvanger: 'Gebruiker',            wanneer: 'Zodra 10+ nieuwe gesprekken beschikbaar voor analyse',  type: 'Transactioneel' },
           ]} />
         </Section>
 
-        <Section title="NAAR MIJZELF: GEPLANDE CRONS" subtitle="Automatische rapportages op vaste tijdstippen">
-          <Table rows={[
-            { name: 'Wekelijkse activiteit', trigger: 'Cron:weekly-activity (zaterdag 06:00)',       ontvanger: 'Telegram',                 wanneer: 'Elke zaterdagochtend, actieve gebruikers afgelopen 7 dagen', type: 'Admin' },
-            { name: 'Weekly top gebruikers', trigger: 'Cron:weekly-top-users (zaterdag 06:05)',      ontvanger: 'Telegram',                 wanneer: 'Elke zaterdag, top 10 actieve gebruikers',              type: 'Admin' },
-            { name: 'Competitie',            trigger: 'Cron:competitie (maandelijks, 1e)',           ontvanger: 'arno@arno.bot',            wanneer: 'Eerste van de maand, competitierapport',                type: 'Admin' },
-            { name: 'Model-check',           trigger: 'Cron:model-check (maandelijks, 1e)',         ontvanger: 'model@arno.bot',           wanneer: 'Eerste van de maand, modelkwaliteitscheck',             type: 'Admin' },
-            { name: 'Data-cleanup',          trigger: 'Cron:data-cleanup (maandelijks, 1e)',        ontvanger: 'hq@arno.bot',              wanneer: 'Eerste van de maand, gebruikers te verwerken',          type: 'Admin' },
-          ]} />
+        <Section title={`ALLE GEPLANDE CRONS (${crons.length})`} subtitle="Rechtstreeks uit vercel.json, dus altijd compleet. Tijden in UTC: Nederlandse tijd is 1 uur later in de winter en 2 uur later in de zomer.">
+          <Table rows={crons.map(c => ({
+            name: c.naam,
+            trigger: `${c.pad.split('/').pop()}: ${c.schemaTekst}`,
+            ontvanger: c.ontvanger,
+            wanneer: c.wat,
+            type: c.soort === 'gebruikers' ? 'Gebruiker' : c.soort === 'mij' ? 'Admin' : 'Systeem',
+          }))} />
         </Section>
 
         <Section title="NAAR MIJZELF: EVENT-NOTIFICATIES" subtitle="Vuren als een gebruiker iets doet, niet via een schema">

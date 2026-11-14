@@ -5,22 +5,38 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { leesCrons } from '@/lib/cronOverzicht'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const anthropic = new Anthropic()
 const TO = 'arno@arno.bot'
 
-const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string }[] = [
-  { type: 'weekly_activity',  label: 'Wekelijkse activiteit', description: 'Elke zaterdag 06:00:actieve gebruikers afgelopen 7 dagen', category: 'admin', cron: '/api/cron/weekly-activity' },
-  { type: 'weekly_top_users', label: 'Weekly top gebruikers', description: 'Elke zaterdag 06:05:top 10 actieve gebruikers',            category: 'admin', cron: '/api/cron/weekly-top-users' },
-  { type: 'competitie',       label: 'Competitie',            description: 'Maandelijks (1e):competitierapport naar arno@arno.bot',    category: 'admin', cron: '/api/cron/competitie' },
-  { type: 'model_check',      label: 'Model-check',           description: 'Maandelijks (1e):modelkwaliteitscheck naar model@arno.bot', category: 'admin', cron: '/api/cron/model-check' },
-  { type: 'data_cleanup',     label: 'Data-cleanup',          description: 'Maandelijks (1e):gebruikers te verwerken naar hq@arno.bot', category: 'admin', cron: '/api/cron/data-cleanup' },
-  { type: 'update_handover', label: 'Overdracht­docs update', description: 'Maandelijks (1e):bijwerkt TECHNICAL_ en BUSINESS_HANDOVER.md', category: 'admin', cron: '/api/cron/update-handover' },
-  { type: 'meta_analyse',         label: 'Meta-analyse',           description: 'Maandelijks (1e):zelfbeoordeling + expertpanel naar arno@arno.bot',     category: 'admin', cron: '/api/cron/meta-analyse' },
-  { type: 'meta_analyse_reminder', label: 'Meta-analyse reminder', description: 'Maandelijks (27e):herinnering om input in te vullen voor de analyse', category: 'admin', cron: '/api/cron/meta-analyse-reminder' },
+// Alleen deze crons hebben een STUUR TEST-knop. Label, planning en omschrijving komen uit
+// lib/cronOverzicht.ts (planning rechtstreeks uit vercel.json), zodat ze niet meer uit de pas
+// lopen. Het volledige overzicht van alle crons staat op /bot/admin/emails/overzicht.
+// Let op: de knop draait de echte cron, met live data en de echte actie.
+const CRON_MET_TESTKNOP: { type: string; cron: string }[] = [
+  { type: 'weekly_activity',       cron: '/api/cron/weekly-activity' },
+  { type: 'weekly_top_users',      cron: '/api/cron/weekly-top-users' },
+  { type: 'competitie',            cron: '/api/cron/competitie' },
+  { type: 'model_check',           cron: '/api/cron/model-check' },
+  { type: 'data_cleanup',          cron: '/api/cron/data-cleanup' },
+  { type: 'update_handover',       cron: '/api/cron/update-handover' },
+  { type: 'meta_analyse',          cron: '/api/cron/meta-analyse' },
+  { type: 'meta_analyse_reminder', cron: '/api/cron/meta-analyse-reminder' },
 ]
+
+const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string }[] = CRON_MET_TESTKNOP.map(({ type, cron }) => {
+  const regel = leesCrons().find(c => c.pad === cron)
+  return {
+    type,
+    label: regel?.naam ?? cron,
+    description: regel ? `${regel.schemaTekst}: ${regel.wat}` : cron,
+    category: 'admin' as const,
+    cron,
+  }
+})
 
 export async function GET() {
   const cookieStore = await cookies()
