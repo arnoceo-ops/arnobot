@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-14
 
-**Waar we staan:** ronde 1 en ronde 2 zijn af. De admin kapt geen cijfers meer af op 1000 rijen, dagen lopen op Amsterdamse tijd, geld- en toegangsknoppen schrijven in een logboek en vragen bevestiging, USERS heeft een belijst en betaalgeschiedenis, ANALYSE kent de coachinghistorie, Gesprekken toont het duimpje, en STATUS toont per cron of hij gezond is. Alleen ronde 3 (het menu opruimen) staat nog open.
+**Waar we staan:** alle drie de rondes zijn af. Het menu is van 14 naar 10 items teruggebracht (USERS, TEAMS, GESPREKKEN, ANALYSE, STATUS, META, MAILS, KENNISBANK, BLOG, STATS). De admin kapt geen cijfers meer af op 1000 rijen, dagen lopen op Amsterdamse tijd, geld- en toegangsknoppen schrijven in een logboek en vragen bevestiging, USERS heeft een belijst en betaalgeschiedenis, ANALYSE kent de coachinghistorie, Gesprekken toont het duimpje, en STATUS toont per cron of hij gezond is. Er staat geen geplande stap meer open, alleen losse punten (zie onderaan).
 
-**Eerstvolgende stap:** ronde 3 (D). Eerst het besluit over de voice-test uitvoeren (zie hieronder), dan het menu: FEEDBACK naar Gesprekken en STATS, BLOGS en POSTS samen, CRONS hernoemen.
+**Eerstvolgende stap:** geen. Na de eerste dagen draaien: kijken of STATUS de crons als gelukt toont, en beslissen of een Telegram-melding bij een te late cron nodig is.
 
 ## Voortgang
 
@@ -16,7 +16,7 @@
 - [x] **Ronde 2 (B):** logboek op BETAALD, terugbetalen, plan, teamrol, SD-agent, gratis toegang, aan/uit, Teams-instellingen; tweede klik bij BETAALD en bij GRATIS op een betalende gebruiker; waarschuwing bij terugbetalen na 14 dagen; Teams-formulier valideert vóór het opslaat en toont de reden
 - [x] **Ronde 2 (C):** belijst in USERS, betaalgeschiedenis en abonnement in het BETALING-paneel, ANALYSE met coachinghistorie en "nieuwe gesprekken sinds deze analyse", duimpje en duimpje-filter in Gesprekken (en CSV), cron-gezondheid op STATUS en in het totaaloverzicht
 - [x] Team telt mee in de MRR, STUUR TEST vraagt bevestiging bij crons die echt iets doen, tijden in Gesprekken, CSV en kopieertekst op Nederlandse tijd
-- [ ] **Ronde 3 (D):** voice-test en persona-knoppen onder TEMP, FEEDBACK naar Gesprekken en STATS, BLOGS en POSTS samen, CRONS hernoemen (bijvoorbeeld MAILS)
+- [x] **Ronde 3 (D):** TEMP weg (voice-test verwijderd, persona-knoppen naar USERS), FEEDBACK opgegaan in Gesprekken en STATS, BLOGS en POSTS samen als BLOG met twee tabs, CRONS heet MAILS, mobiele nav kreeg TEAMS erbij. De oude adressen /bot/admin/voice-test en /bot/admin/evaluaties sturen door.
 
 ## Besluiten en verworpen alternatieven
 
@@ -32,6 +32,8 @@
 - **Cron-gezondheid:** elke cron registreert zich via `registreerCronRun` (`lib/cronRun.ts`), afgedwongen door `lib/cronOverzicht.test.ts`. "Te laat" is ruim twee tot drie keer het interval uit `vercel.json`, eenmalige crons hebben geen grens. **Nog niet gebouwd:** een Telegram-melding bij een te late cron (nu alleen zichtbaar op STATUS); alleen een mislukte run meldt al via `notifyCronFailure`.
 - **Voice-test onder TEMP (besluit 2026-11-14):** weghalen in ronde 3. Gemeten: 4 testaanroepen ooit, de laatste op 12 augustus, terwijl de echte voice wel draait (laatste gebruik 8 november). De persona-knoppen horen bij USERS. Het gebruikers-ID `admin-voice-test` blijft in `kosten-tracking` uitgesloten zodat oude rijen niet meetellen.
 - **`api/bot/uitdaging` niet aanpassen (besluit 2026-11-14):** dit is de gedachte van de dag, niet de actie-uitdaging na een gesprek. Het coachingprofiel (ontwikkelpunten) erin zetten riskeert de afgesproken toon (inspireren, nooit verhoor of kritiek, zie geheugen "passieve dagelijkse AI-prompt"), en de gedachte wordt al persoonlijk uit gesprekken en patroonanalyse. **Verworpen: ontwikkelpunten toevoegen.**
+
+- **Menu (besluit 2026-11-14):** FEEDBACK weg, want het was een getal en een lijst: het getal staat nu op STATS, de negatieve antwoorden staan op Gesprekken (filter DUIMPJE, zonder datum zodat alle tijd zichtbaar is). **Verworpen: FEEDBACK als eigen tab houden**, want twee plekken voor dezelfde duimpjes. BLOGS en POSTS blijven twee pagina's maar zijn één menu-item met tabs (`BlogTabs`). **Verworpen: de blogideeën als knop in POSTS bouwen**, want dat is nieuwe functionaliteit terwijl er nog nooit een analyse is opgeslagen.
 
 ## Open vragen voor Arno
 

@@ -43,7 +43,7 @@ padding:      0 40px
 - actief: kleur `#f59e0b`, achtergrond `#1e293b`, border-radius: 4px
 - padding: 6px 20px
 
-**Volgorde links (links → rechts):** USERS · CRONS · ARNOBOT · BLOGS · META · FEEDBACK | UITLOGGEN
+**Volgorde links (links → rechts), sinds 2026-11-14:** USERS · TEAMS · GESPREKKEN · ANALYSE · STATUS · META · MAILS · KENNISBANK · BLOG · STATS | UITLOGGEN. AdminNav.tsx en AdminMobileNav.tsx hebben elk een eigen lijst, altijd samen bijwerken.
 
 ---
 
@@ -158,7 +158,7 @@ Elke nieuwe adminpagina vergelijken met de bestaande structuur:
 
 - **Hoofdpagina gesprekken:** `app/bot/admin/page.tsx`
 - **Gebruikersbeheer:** `app/bot/admin/gebruikers/page.tsx`
-- **E-mail crons:** `app/bot/admin/emails/EmailsClient.tsx`
+- **Mails (was CRONS):** `app/bot/admin/emails/EmailTestClient.tsx`
 - **Meta-analyse:** `app/bot/admin/meta-analyse/MetaAnalyseClient.tsx`
-- **Blog-ideeën:** `app/bot/admin/idee/page.tsx`
-- **Feedback (chatantwoord-beoordelingen):** `app/bot/admin/evaluaties/page.tsx`
+- **Blog (tabs POSTS en IDEEËN UIT GESPREKKEN):** `app/bot/admin/blog/page.tsx`, `app/bot/admin/idee/page.tsx`, tabs in `app/bot/admin/blog/BlogTabs.tsx`
+- **Feedback (chatantwoord-beoordelingen):** geen eigen pagina meer, het duimpje staat in `app/bot/admin/page.tsx` (Gesprekken) en de kaart ANTWOORDBEOORDELINGEN in `app/bot/admin/stats/page.tsx`
