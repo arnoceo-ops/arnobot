@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -122,7 +123,7 @@ async function markRssRun(): Promise<void> {
 }
 
 // ── Cron handler ──────────────────────────────────────────────────────────────
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -224,3 +225,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/rss-ingest', cronHandler)

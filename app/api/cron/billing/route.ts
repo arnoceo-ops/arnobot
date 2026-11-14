@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { billingDb, type PayRow, type SubRow } from '@/lib/billing/db'
 import { lijstRecenteTerugbetalingen, mollieIngeschakeld } from '@/lib/billing/mollie'
@@ -22,7 +23,7 @@ const MIN_MS = 60 * 1000
 //  3. opgezegde abonnementen stopzetten zodra er niets meer verschuldigd is
 //  4. verlengherinneringen (particulier, 30 en 7 dagen vóór het einde)
 //  5. verlopen abonnementen afsluiten en de afscheidsmail sturen
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -181,3 +182,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Billing-cron mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/billing', cronHandler)

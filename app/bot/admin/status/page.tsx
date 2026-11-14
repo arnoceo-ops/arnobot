@@ -4,6 +4,9 @@ import { getSetting } from '@/lib/settings'
 import { controleerKoppelingen, type KoppelingStatus } from '@/lib/billing/gezondheid'
 import AdminNav from '../AdminNav'
 import LinkedInFallbackToggle from './LinkedInFallbackToggle'
+import { leesCronRuns } from '@/lib/cronRun'
+import { leesCrons } from '@/lib/cronOverzicht'
+import { beoordeelCron, STAAT_KLEUR } from '@/lib/cronGezondheid'
 
 export const dynamic = 'force-dynamic'
 
@@ -177,6 +180,19 @@ export default async function AdminStatusPage() {
   const koppelingen = await controleerKoppelingen().catch((): KoppelingStatus[] => [])
   const koppelingKleur = (n: KoppelingStatus['niveau']) => n === 'ok' ? '#22c55e' : n === 'let-op' ? '#f59e0b' : '#cc2200'
 
+  // Cron-gezondheid: per geplande cron het laatste succes uit cron_runs (lib/cronRun.ts), met
+  // een markering voor een cron die te laat is, mislukte of is afgebroken. Een cron die nooit
+  // draait (bijvoorbeeld door een fout in vercel.json) was tot nu toe onzichtbaar.
+  const cronRuns = await leesCronRuns().catch(() => ({}))
+  const cronRegels = leesCrons().map(c => ({ c, g: beoordeelCron((cronRuns as Record<string, import('@/lib/cronRun').CronRunRij>)[c.pad], c.schema) }))
+  const cronTelling = { ok: 0, probleem: 0, onbekend: 0 }
+  for (const { g } of cronRegels) {
+    if (g.staat === 'ok') cronTelling.ok++
+    else if (g.staat === 'onbekend') cronTelling.onbekend++
+    else cronTelling.probleem++
+  }
+  const cronProblemen = cronRegels.filter(({ g }) => g.staat !== 'ok' && g.staat !== 'onbekend')
+
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
       <AdminNav active="/bot/admin/status" />
@@ -301,6 +317,29 @@ export default async function AdminStatusPage() {
             </div>
           </details>
         )}
+
+        {/* Geplande crons */}
+        <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>GEPLANDE CRONS</p>
+        <div style={{ background: '#1f2937', borderRadius: 4, padding: '16px 20px', marginBottom: 40, borderLeft: `3px solid ${cronTelling.probleem > 0 ? '#cc2200' : '#22c55e'}` }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9', margin: 0 }}>
+            {cronTelling.ok} gelukt
+            {cronTelling.probleem > 0 && <span style={{ color: '#cc2200' }}> · {cronTelling.probleem} te laat of mislukt</span>}
+            {cronTelling.onbekend > 0 && <span style={{ color: '#6b7280' }}> · {cronTelling.onbekend} nog niet gedraaid sinds registratie</span>}
+          </p>
+          {cronProblemen.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+              {cronProblemen.map(({ c, g }) => (
+                <div key={c.pad} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#f1f5f9' }}>{c.naam}</span>
+                  <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: STAAT_KLEUR[g.staat] }}>{g.tekst}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280', margin: '12px 0 0' }}>
+            Volledige lijst met tijden: <a href="/bot/admin/emails/overzicht" style={{ color: '#9ca3af' }}>totaaloverzicht</a>
+          </p>
+        </div>
 
         {/* Externe services */}
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>EXTERNE SERVICES</p>

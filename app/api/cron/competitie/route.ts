@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verstuurMailZacht } from '@/lib/mail'
@@ -115,7 +116,7 @@ function buildEmail(
   `
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -237,3 +238,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/competitie', cronHandler)

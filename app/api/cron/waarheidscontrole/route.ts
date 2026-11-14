@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { verstuurMailZacht } from '@/lib/mail'
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // Wekelijkse waarheidscontrole (maandag): zie lib/waarheidsRapport.ts. Stuurt Arno een mail met de
 // steekproef en een korte Telegram-melding zonder gebruikersinhoud. ?dry=1 (met CRON_SECRET) geeft
 // het rapport terug zonder iets te versturen.
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -32,3 +33,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/waarheidscontrole', cronHandler)

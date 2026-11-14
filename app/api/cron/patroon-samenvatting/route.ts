@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verstuurMail } from '@/lib/mail'
@@ -27,7 +28,7 @@ const HERHAAL_DAGEN = 25
 // één zin over wat dat in de gesprekken van deze gebruiker betekent (Sonnet) en een knop die Sparren
 // opent met een passend scenario. Geen patroon of geen geldig scenario: geen mail. Zie lib/patroonMail.ts.
 // ?dry=1 (met ?userId=...) toont wat er verstuurd zou worden zonder te mailen.
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -133,3 +134,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/patroon-samenvatting', cronHandler)

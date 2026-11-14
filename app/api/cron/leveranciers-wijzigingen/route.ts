@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -111,7 +112,7 @@ interface Rij {
 // Wekelijkse controle (maandag 06:50 UTC) op de DPA's en deprecations-pagina's van leveranciers die niet
 // in VisualPing staan. Eerste run legt alleen de basis vast. Meldt via Telegram bij een inhoudelijke
 // wijziging (Sonnet beoordeelt het verschil) en na 3 mislukte pogingen achter elkaar.
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -196,3 +197,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Controle mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/leveranciers-wijzigingen', cronHandler)

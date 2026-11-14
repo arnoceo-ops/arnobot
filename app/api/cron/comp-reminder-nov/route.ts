@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
@@ -22,7 +23,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const META_FLAG = 'comp_reminder_nov_sent'
 const DOEL_EMAIL = 'rtesfahuny@hotmail.com'
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -89,3 +90,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/comp-reminder-nov', cronHandler)

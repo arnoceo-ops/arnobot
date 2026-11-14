@@ -95,3 +95,26 @@ export function cronTrigger(slug: string): string {
   const regel = leesCrons().find(c => c.pad === `/api/cron/${slug}`)
   return `Cron:${slug} (${regel ? regel.schemaTekst : 'niet in vercel.json'})`
 }
+
+/**
+ * Hoe oud het laatste succes van een cron hooguit mag zijn voordat hij als "te laat" geldt, uit
+ * het schema: ruim twee tot drie keer het interval, zodat één gemiste of trage run nog niet alarmeert.
+ * null bij een schema dat niet periodiek is (een eenmalige datum in het jaar).
+ */
+export function maxLeeftijdMs(schema: string): number | null {
+  const d = schema.trim().split(/\s+/)
+  if (d.length !== 5) return null
+  const [min, uur, dag, maand, weekdag] = d
+  const getal = /^\d+$/
+  const MIN = 60_000
+  const UUR = 60 * MIN
+  const DAG = 24 * UUR
+
+  if (min.startsWith('*/') && uur === '*' && dag === '*' && maand === '*' && weekdag === '*') return Number(min.slice(2)) * 3 * MIN
+  if (maand !== '*') return null
+  if (getal.test(min) && uur === '*' && dag === '*' && weekdag === '*') return 3 * UUR
+  if (getal.test(min) && getal.test(uur) && dag === '*' && weekdag === '*') return 36 * UUR
+  if (getal.test(min) && getal.test(uur) && dag === '*' && getal.test(weekdag)) return 8 * DAG
+  if (getal.test(min) && getal.test(uur) && getal.test(dag) && weekdag === '*') return 35 * DAG
+  return null
+}

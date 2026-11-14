@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
@@ -11,7 +12,7 @@ import { beoordeelCapaciteit, type ResendPlan } from '@/lib/capaciteitDrempels'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -64,3 +65,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/capaciteitswacht', cronHandler)

@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 // Fable 5 draait individuele calls aantoonbaar trager dan Sonnet, dus meer ruimte dan de
 // oorspronkelijke 60s nodig sinds de modelwissel (2026-08-18).
 export const maxDuration = 300
@@ -35,7 +36,7 @@ function textToHtml(text: string): string {
   }).join('')
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -98,3 +99,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/meta-analyse', cronHandler)

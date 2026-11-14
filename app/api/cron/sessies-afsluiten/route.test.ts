@@ -18,6 +18,9 @@ const { mockRpc, mockFrom, mockNotify, state } = vi.hoisted(() => ({
 
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ rpc: mockRpc, from: mockFrom }) }))
 vi.mock('@/lib/cron-notify', () => ({ notifyCronFailure: mockNotify }))
+// Deze test toetst de cron zelf. De registratie in cron_runs (lib/cronRun.ts, eigen test) schrijft ook
+// via de gemockte database en zou de laatste upsert hieronder overschrijven.
+vi.mock('@/lib/cronRun', () => ({ registreerCronRun: (_pad: string, handler: unknown) => handler }))
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)

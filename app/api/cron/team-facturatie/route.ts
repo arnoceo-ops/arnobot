@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { billingDb } from '@/lib/billing/db'
 import { mollieIngeschakeld } from '@/lib/billing/mollie'
@@ -25,7 +26,7 @@ const dagenSinds = (iso: string, nu: Date) => Math.floor((dagVan(nu).getTime() -
 //  2. eenmalige naar-rato tussenfactuur bij een jaarlijks team dat seats heeft toegevoegd
 //  3. herinnering 7 dagen na de vervaldatum (betaaltermijn 14 dagen) van een onbetaalde factuur
 //  4. blokkade 30 dagen na de vervaldatum van een nog altijd onbetaalde factuur
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -126,3 +127,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Team-facturatie-cron mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/team-facturatie', cronHandler)

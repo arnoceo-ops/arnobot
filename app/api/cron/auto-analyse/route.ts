@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -16,7 +17,7 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -128,3 +129,5 @@ ${RULE_ANALYSE_BUITEN_CHAT}`,
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/auto-analyse', cronHandler)

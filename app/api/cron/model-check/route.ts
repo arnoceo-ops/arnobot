@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { verstuurMailZacht } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
@@ -199,7 +200,7 @@ function buildEmail(date: string, rows: ModelRow[], adviezen: AdviesMap, voorste
   `
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -249,3 +250,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'send_failed' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/model-check', cronHandler)

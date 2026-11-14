@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -72,7 +73,7 @@ async function sluitAf(k: Kandidaat): Promise<void> {
   if (!res.ok) throw new Error(`session-end ${res.status}`)
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -127,3 +128,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/sessies-afsluiten', cronHandler)

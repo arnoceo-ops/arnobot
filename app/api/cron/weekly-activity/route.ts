@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -20,7 +21,7 @@ async function sendTelegram(text: string) {
   })
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -103,3 +104,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/weekly-activity', cronHandler)

@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { getBlogDb, revalidateBlog } from '@/lib/blog'
 import { notifySubscribersOfPost, processBlogDeliveries } from '@/lib/blogMail'
@@ -9,7 +10,7 @@ export const maxDuration = 120
 // gepubliceerde posts met "verstuur naar abonnees" de wachtrij vullen, (3) wachtende mails
 // versturen binnen het dagbudget (lib/blogMail.ts). De wachtrij loopt zo ook door over dagen
 // heen als een post niet in één dag naar alle abonnees past.
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -62,3 +63,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/blog', cronHandler)

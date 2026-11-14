@@ -32,6 +32,14 @@ describe('cron-overzicht blijft gelijk aan vercel.json', () => {
     expect(nietGepland, `Route zonder schema in vercel.json: ${nietGepland.join(', ')}`).toEqual([])
   })
 
+  it('elke cron registreert zijn run in cron_runs (lib/cronRun.ts), anders kan de admin hem niet als te laat markeren', () => {
+    const zonder = padsInVercel.filter(p => {
+      const bron = fs.readFileSync(path.join(root, 'app', p, 'route.ts'), 'utf8')
+      return !bron.includes(`registreerCronRun('${p}'`)
+    })
+    expect(zonder, `Wikkel de handler in registreerCronRun: ${zonder.join(', ')}`).toEqual([])
+  })
+
   it('elk schema in vercel.json is door schemaTekst te lezen', () => {
     const onleesbaar = vercelConfig.crons.filter(c => schemaTekst(c.schedule) === c.schedule)
     expect(onleesbaar.map(c => c.schedule)).toEqual([])

@@ -1,3 +1,4 @@
+import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -65,7 +66,7 @@ async function beoordeel(bron: string, antwoord: string): Promise<Oordeel> {
   throw new Error('Geen geldig oordeel van het model bij de feitencontrole')
 }
 
-export async function GET(req: NextRequest) {
+async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -163,3 +164,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })
   }
 }
+
+export const GET = registreerCronRun('/api/cron/feitencontrole', cronHandler)

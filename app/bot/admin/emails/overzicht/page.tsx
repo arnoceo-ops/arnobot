@@ -5,12 +5,15 @@ import type { CSSProperties } from 'react'
 export const dynamic = 'force-dynamic'
 import { PrintButton } from './PrintButton'
 import { cronTrigger, leesCrons } from '@/lib/cronOverzicht'
+import { leesCronRuns } from '@/lib/cronRun'
+import { beoordeelCron, STAAT_KLEUR } from '@/lib/cronGezondheid'
 
 export default async function EmailsOverzichtPage() {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
   if (!token || token !== process.env.ARNOBOT_ADMIN_KEY) redirect('/bot/admin/login')
   const crons = leesCrons()
+  const runs = await leesCronRuns()
 
   return (
     <div style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9' }}>
@@ -65,13 +68,18 @@ export default async function EmailsOverzichtPage() {
         </Section>
 
         <Section title={`ALLE GEPLANDE CRONS (${crons.length})`} subtitle="Rechtstreeks uit vercel.json, dus altijd compleet. Tijden in UTC: Nederlandse tijd is 1 uur later in de winter en 2 uur later in de zomer.">
-          <Table rows={crons.map(c => ({
-            name: c.naam,
-            trigger: `${c.pad.split('/').pop()}: ${c.schemaTekst}`,
-            ontvanger: c.ontvanger,
-            wanneer: c.wat,
-            type: c.soort === 'gebruikers' ? 'Gebruiker' : c.soort === 'mij' ? 'Admin' : 'Systeem',
-          }))} />
+          <Table rows={crons.map(c => {
+            const g = beoordeelCron(runs[c.pad], c.schema)
+            return {
+              name: c.naam,
+              trigger: `${c.pad.split('/').pop()}: ${c.schemaTekst}`,
+              ontvanger: c.ontvanger,
+              wanneer: c.wat,
+              type: c.soort === 'gebruikers' ? 'Gebruiker' : c.soort === 'mij' ? 'Admin' : 'Systeem',
+              laatsteRun: g.tekst,
+              laatsteRunKleur: STAAT_KLEUR[g.staat],
+            }
+          })} />
         </Section>
 
         <Section title="NAAR MIJZELF: EVENT-NOTIFICATIES" subtitle="Vuren als een gebruiker iets doet, niet via een schema">
@@ -105,7 +113,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   )
 }
 
-type Row = { name: string; trigger: string; ontvanger: string; wanneer: string; type: string }
+type Row = { name: string; trigger: string; ontvanger: string; wanneer: string; type: string; laatsteRun?: string; laatsteRunKleur?: string }
 
 function Table({ rows }: { rows: Row[] }) {
   const th: CSSProperties = {
@@ -138,6 +146,7 @@ function Table({ rows }: { rows: Row[] }) {
           <th style={{ ...th, width: 200 }}>ONTVANGER</th>
           <th style={th}>WANNEER</th>
           <th style={{ ...th, width: 120 }}>TYPE</th>
+          {rows.some(r => r.laatsteRun) && <th style={{ ...th, width: 200 }}>LAATSTE RUN</th>}
         </tr>
       </thead>
       <tbody>
@@ -148,6 +157,7 @@ function Table({ rows }: { rows: Row[] }) {
             <td style={td}>{r.ontvanger}</td>
             <td style={td}>{r.wanneer}</td>
             <td style={{ ...td, color: r.type === 'Marketing' ? '#f59e0b' : r.type === 'Transactioneel' ? '#9ca3af' : '#6b7280' }}>{r.type}</td>
+            {rows.some(x => x.laatsteRun) && <td style={{ ...td, color: r.laatsteRunKleur ?? '#6b7280' }}>{r.laatsteRun ?? ''}</td>}
           </tr>
         ))}
       </tbody>
