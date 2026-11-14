@@ -16,6 +16,8 @@ export type AdminActie =
   | 'toegang_uit'
   | 'team_instellingen'
   | 'team_bedrijfsgegevens'
+  | 'team_proef_beeindigd'
+  | 'team_proef_verlengd'
 
 export const ACTIE_LABEL: Record<AdminActie, string> = {
   betaald_gezet: 'BETAALD GEZET',
@@ -28,6 +30,8 @@ export const ACTIE_LABEL: Record<AdminActie, string> = {
   toegang_uit: 'TOEGANG UIT',
   team_instellingen: 'TEAM-INSTELLINGEN',
   team_bedrijfsgegevens: 'TEAM-BEDRIJFSGEGEVENS',
+  team_proef_beeindigd: 'TEAMPROEF BEËINDIGD',
+  team_proef_verlengd: 'TEAMPROEF VERLENGD',
 }
 
 export type AdminLogDetails = {

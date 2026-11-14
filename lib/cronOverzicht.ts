@@ -37,6 +37,7 @@ export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/capaciteitswacht': { naam: 'Capaciteitswacht', wat: 'Vergelijkt verbruik met de planlimieten en gebruikersmijlpalen, meldt alleen bij 70% of 90%', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/cron-wacht': { naam: 'Cron-wacht', wat: 'Meldt een geplande cron die te laat is of is afgebroken, een mislukte run meldt zichzelf al, anders stil', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/storing-wacht': { naam: 'Storing-wacht', wat: 'Meldt arno.bot niet bereikbaar of te traag (responstijd van het laatste uur) en een grote storing bij Anthropic, Vercel, Supabase, Clerk of Resend, anders stil', ontvanger: 'Telegram', soort: 'mij' },
+  '/api/cron/team-proef': { naam: 'Teamproef', wat: 'Beëindigt de gratis proef van 30 dagen van een manager via een agent-link (team geblokkeerd) en waarschuwt 5 dagen van tevoren, verlengen kan handmatig', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/update-handover': { naam: 'Overdrachtdocs bijwerken', wat: 'Werkt de AI-modelinventaris en de package-versies in TECHNICAL_HANDOVER.md en BUSINESS_HANDOVER.md bij', ontvanger: 'Geen (systeem)', soort: 'systeem' },
   '/api/cron/meta-analyse': { naam: 'Meta-analyse', wat: 'Zelfbeoordeling en expertpanel over de afgelopen 30 dagen', ontvanger: 'arno@arno.bot', soort: 'mij' },
   '/api/cron/meta-analyse-reminder': { naam: 'Meta-analyse reminder', wat: 'Herinnering om je eigen input in te vullen voor de meta-analyse', ontvanger: 'Arno', soort: 'mij' },

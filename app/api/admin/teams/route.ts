@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { maakKlant } from '@/lib/billing/mollie'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
+import { isAgentProef } from '@/lib/teamProef'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +23,37 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null)
   if (!body?.teamId) return NextResponse.json({ error: 'Geen teamId' }, { status: 400 })
+
+  // Gratis agent-proef verlengen (docs/TEAM_ONBOARDING.md): zet de einddatum van de manager later en heft
+  // de blokkade op die het einde van de proef zette. Alleen voor een team dat echt een agent-proef heeft.
+  if (body.verlengProefTot !== undefined) {
+    const einde = new Date(body.verlengProefTot)
+    const nu = Date.now()
+    if (isNaN(einde.getTime()) || einde.getTime() <= nu || einde.getTime() > nu + 366 * 86_400_000) {
+      return NextResponse.json({ error: 'Kies een einddatum in de toekomst, hooguit een jaar vooruit' }, { status: 400 })
+    }
+    const { data: team } = await supabase.from('arnobot_teams').select('id, manager_id, min_seats, geblokkeerd_at').eq('id', body.teamId).maybeSingle()
+    if (!team) return NextResponse.json({ error: 'Team niet gevonden' }, { status: 404 })
+    const { data: manager } = await supabase
+      .from('approved_users')
+      .select('trial_start, expires_at, paid_at, sd_attribution_method')
+      .eq('user_id', team.manager_id)
+      .maybeSingle()
+    if (!manager || !isAgentProef(manager, team.min_seats)) {
+      return NextResponse.json({ error: 'Dit team heeft geen agent-proef (geen agent-link, al betaald of facturatie ingesteld)' }, { status: 400 })
+    }
+    const { error: managerFout } = await supabase.from('approved_users').update({ expires_at: einde.toISOString() }).eq('user_id', team.manager_id)
+    if (managerFout) return NextResponse.json({ error: managerFout.message }, { status: 500 })
+    if (team.geblokkeerd_at) {
+      const { error: teamFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', team.id)
+      if (teamFout) return NextResponse.json({ error: teamFout.message }, { status: 500 })
+    }
+    await logAdminActie({
+      actie: 'team_proef_verlengd', doelUserId: team.manager_id, doelTeamId: String(team.id),
+      details: { oud: { expires_at: manager.expires_at, geblokkeerd_at: team.geblokkeerd_at }, nieuw: { expires_at: einde.toISOString(), geblokkeerd_at: null } },
+    })
+    return NextResponse.json({ ok: true })
+  }
 
   const { teamId, minSeats, cyclus, volgendeFactuurdatum, geblokkeerdAt, bedrijfsnaam, kvkNummer, btwNummer, straat, postcode, plaats } = body
 

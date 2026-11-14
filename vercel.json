@@ -85,6 +85,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/team-proef",
+      "schedule": "50 7 * * *"
+    },
+    {
       "path": "/api/cron/update-handover",
       "schedule": "10 4 1 * *"
     },

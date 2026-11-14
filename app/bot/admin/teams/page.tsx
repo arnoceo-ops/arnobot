@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
+import TeamProefVerleng from './TeamProefVerleng'
+import { isAgentProef, proefEinde, proefStand, verlengStandaardDatum } from '@/lib/teamProef'
 import { TEST_TEAM_ID, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { berekenTeamPrijsPerMaand } from '@/lib/teamPricing'
 import { nlVandaag } from '@/lib/nlTijd'
@@ -31,9 +33,10 @@ export default async function TeamsAdminPage() {
   const managerIds = [...new Set((teams ?? []).map(t => t.manager_id))]
 
   const { data: managers } = managerIds.length
-    ? await supabase.from('approved_users').select('user_id, email').in('user_id', managerIds)
+    ? await supabase.from('approved_users').select('user_id, email, trial_start, expires_at, paid_at, sd_attribution_method').in('user_id', managerIds)
     : { data: [] }
   const managerByIds = new Map((managers ?? []).map(m => [m.user_id, m.email]))
+  const managerRijen = new Map((managers ?? []).map(m => [m.user_id, m]))
 
   const { data: klanten } = managerIds.length
     ? await supabase.from('arnobot_billing_customers').select('*').in('user_id', managerIds)
@@ -102,9 +105,24 @@ export default async function TeamsAdminPage() {
         {(teams ?? []).map(team => {
           const klant = klantByManager.get(team.manager_id)
           const stand = standVoor(team)
+          // Gratis agent-proef (lib/teamProef.ts): einde, resterende dagen en handmatig verlengen.
+          const proefManager = managerRijen.get(team.manager_id)
+          const proefEindDatum = proefManager && isAgentProef(proefManager, team.min_seats) ? proefEinde(proefManager) : null
+          const proef = proefEindDatum ? proefStand(proefEindDatum) : null
+          const proefTekst = !proefEindDatum || !proef ? null
+            : proef.staat === 'verlopen'
+              ? `Gratis agent-proef afgelopen op ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}${team.geblokkeerd_at ? ', team geblokkeerd' : ''}`
+              : `Gratis agent-proef t/m ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}, nog ${proef.dagen} dag${proef.dagen === 1 ? '' : 'en'}`
+          const verlengVanaf = verlengStandaardDatum(proefEindDatum)
           return (
             <div key={team.id}>
               <p style={{ fontSize: 13, color: stand.kleur, margin: '0 0 6px 2px' }}>{stand.tekst}</p>
+              {proefTekst && proef && (
+                <>
+                  <p style={{ fontSize: 13, color: proef.staat === 'verlopen' ? '#ef4444' : proef.staat === 'bijna' ? '#f59e0b' : '#9ca3af', margin: '0 0 6px 2px' }}>{proefTekst}</p>
+                  <TeamProefVerleng teamId={team.id} standaardDatum={verlengVanaf} />
+                </>
+              )}
             <TeamBillingForm
               initial={{
                 teamId: team.id,
