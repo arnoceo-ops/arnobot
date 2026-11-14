@@ -48,3 +48,20 @@ export function nlGisteren(nu: Date = new Date()): string {
   const [j, m, d] = nlVandaag(nu).split('-').map(Number)
   return new Date(Date.UTC(j, m - 1, d - 1)).toISOString().slice(0, 10)
 }
+
+// Weergave van een moment op Nederlandse tijd. toLocaleTimeString('nl-NL') zonder timeZone
+// gebruikt de tijdzone van de server (UTC op Vercel), waardoor een gesprek van 09:03 Nederlandse
+// tijd als 08:03 werd getoond. Alles wat de admin op de server opmaakt loopt via deze twee.
+const tijdFormat = new Intl.DateTimeFormat('nl-NL', { timeZone: ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+const datumDelen = new Intl.DateTimeFormat('en-CA', { timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
+
+/** "09:03:11" op Nederlandse tijd. */
+export function nlTijdTekst(iso: string): string {
+  return tijdFormat.format(new Date(iso))
+}
+
+/** "13/11/2026" op Nederlandse tijd (de datum van dat moment in Amsterdam, niet de UTC-datum). */
+export function nlDatumTekst(iso: string): string {
+  const [j, m, d] = datumDelen.format(new Date(iso)).split('-')
+  return `${d}/${m}/${j}`
+}

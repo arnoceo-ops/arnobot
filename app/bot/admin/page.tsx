@@ -12,7 +12,7 @@ import {
 } from '@/lib/adminGesprekkenTabs'
 import { ontwikkelpuntTekst } from '@/lib/coachingTekst'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
-import { nlDagStartIso, nlDagEindeIso, nlVandaag, nlGisteren } from '@/lib/nlTijd'
+import { nlDagStartIso, nlDagEindeIso, nlVandaag, nlGisteren, nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +24,7 @@ type LogRow = {
   ip: string
   session_id: string
   user_id?: string
+  feedback?: string | null
 }
 
 function fmtDate(iso: string): string {
@@ -44,8 +45,8 @@ function messageAsText(msg: LogRow): string {
 
 function sessionAsText(idx: number, messages: LogRow[], naam?: string): string {
   const header = `SESSIE ${idx + 1} · ${messages[0].ip}${naam ? ' · ' + naam : ''}`
-  const sessionDate = fmtDate(messages[0].created_at.slice(0, 10))
-  const tijden = `${sessionDate} · ${new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot ${new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}`
+  const sessionDate = nlDatumTekst(messages[0].created_at)
+  const tijden = `${sessionDate} · ${nlTijdTekst(messages[0].created_at)} tot ${nlTijdTekst(messages[messages.length - 1].created_at)}`
   const body = messages.map(messageAsText).join('\n\n')
   return `${header}\n${tijden}\n\n${body}`
 }
@@ -61,7 +62,7 @@ function parseDate(input: string): string {
 export default async function ArnoBotAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string; tab?: string }>
+  searchParams: Promise<{ from?: string; to?: string; sort?: string; user?: string; naam?: string; tab?: string; fb?: string }>
 }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('arnobot_admin')?.value
@@ -79,6 +80,8 @@ export default async function ArnoBotAdminPage({
   const to = parseDate(params.to || '') || (tab === 'gesprekken' ? today : '')
   // Sorteren op aantal vragen kan alleen bij gesprekken.
   const sort = tab !== 'gesprekken' && (params.sort === 'count_desc' || params.sort === 'count_asc') ? 'date_desc' : (params.sort || 'date_desc')
+  // Duimpje-filter, alleen bij Gesprekken: alle berichten met een beoordeling, of alleen de negatieve.
+  const fb: '' | 'alle' | 'neg' = tab === 'gesprekken' && (params.fb === 'alle' || params.fb === 'neg') ? params.fb : ''
   const naamParam = params.naam || ''
   let userFilter = params.user || ''
 
@@ -112,6 +115,8 @@ export default async function ArnoBotAdminPage({
           .lt('created_at', nlDagEindeIso(to))
           .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
         if (userFilter) q = q.eq('user_id', userFilter)
+        if (fb === 'alle') q = q.not('feedback', 'is', null)
+        if (fb === 'neg') q = q.eq('feedback', 'neg')
         return q.order('created_at', { ascending: true }).order('id', { ascending: true }).range(van, tot)
       })
     : []
@@ -267,6 +272,17 @@ export default async function ArnoBotAdminPage({
               {tab === 'gesprekken' && <option value="count_asc">Minste vragen eerst</option>}
             </select>
           </div>
+          {tab === 'gesprekken' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '12px', letterSpacing: '2px', color: '#f59e0b' }}>DUIMPJE</label>
+              <select name="fb" defaultValue={fb} className="admin-input"
+                style={{ background: '#1f2937', border: '1.5px solid #374151', color: '#f1f5f9', padding: '10px 14px', fontSize: '14px' }}>
+                <option value="">Alle berichten</option>
+                <option value="alle">Met beoordeling</option>
+                <option value="neg">Alleen negatief</option>
+              </select>
+            </div>
+          )}
           <div className="admin-form-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <button type="submit"
               style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 24px', fontWeight: 700, cursor: 'pointer', fontSize: '12px', letterSpacing: '1px' }}>
@@ -275,7 +291,7 @@ export default async function ArnoBotAdminPage({
             {aantalResultaten > 0 && (
               <div className="admin-download-hidden" style={{ display: 'flex', gap: 8 }}>
                 <a
-                  href={`/api/admin/export-csv?tab=${tab}&from=${from}&to=${to}&user=${userFilter}&sort=${sort}`}
+                  href={`/api/admin/export-csv?tab=${tab}&from=${from}&to=${to}&user=${userFilter}&sort=${sort}&fb=${fb}`}
                   style={{ background: '#f59e0b', color: '#111827', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 700, fontSize: '12px', letterSpacing: '1px', textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                   ↓ DOWNLOAD CSV
@@ -312,7 +328,7 @@ export default async function ArnoBotAdminPage({
                     </div>
                   </div>
                   <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
-                    {fmtDate(a.created_at.slice(0, 10))} · {new Date(a.created_at).toLocaleTimeString('nl-NL')}
+                    {nlDatumTekst(a.created_at)} · {nlTijdTekst(a.created_at)}
                   </p>
                   <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#9ca3af' }}
                     dangerouslySetInnerHTML={{ __html: renderAnswer(a.analyse_text) }} />
@@ -352,7 +368,7 @@ export default async function ArnoBotAdminPage({
                     </div>
                   </div>
                   <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
-                    {fmtDate(v.created_at.slice(0, 10))} · {new Date(v.created_at).toLocaleTimeString('nl-NL')}
+                    {nlDatumTekst(v.created_at)} · {nlTijdTekst(v.created_at)}
                   </p>
 
                   {pijlers.map(([label, score, richting, diagnose]) => (
@@ -431,7 +447,7 @@ export default async function ArnoBotAdminPage({
           {sessionList.map(([sessionId, messages], idx) => {
             const userId = messages[0].user_id
             const naam = userId ? naamMap[userId] : undefined
-            const sessionDate = fmtDate(messages[0].created_at.slice(0, 10))
+            const sessionDate = nlDatumTekst(messages[0].created_at)
             return (
               <div key={sessionId} style={{ marginBottom: '56px', borderTop: '2px solid #f59e0b', paddingTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
@@ -449,7 +465,7 @@ export default async function ArnoBotAdminPage({
                   </div>
                 </div>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px' }}>
-                  {sessionDate} · {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
+                  {sessionDate} · {nlTijdTekst(messages[0].created_at)} tot {nlTijdTekst(messages[messages.length - 1].created_at)}
                 </p>
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ marginBottom: '28px' }}>
@@ -460,8 +476,13 @@ export default async function ArnoBotAdminPage({
                       dangerouslySetInnerHTML={{ __html: renderAnswer(msg.answer) }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
-                        {new Date(msg.created_at).toLocaleTimeString('nl-NL')}
+                        {nlTijdTekst(msg.created_at)}
                       </p>
+                      {msg.feedback && (
+                        <p style={{ fontSize: '12px', letterSpacing: '2px', margin: 0, color: msg.feedback === 'neg' ? '#cc4444' : '#44cc88' }}>
+                          {msg.feedback === 'neg' ? '▼ NEGATIEF' : '▲ POSITIEF'}
+                        </p>
+                      )}
                       <CopyButton text={messageAsText(msg)} label="BERICHT" />
                     </div>
                   </div>

@@ -49,3 +49,21 @@ describe('nlVandaag en nlGisteren', () => {
     expect(nlGisteren(new Date('2026-12-01T10:00:00Z'))).toBe('2026-11-30')
   })
 })
+
+import { nlTijdTekst, nlDatumTekst } from './nlTijd'
+
+describe('nlTijdTekst en nlDatumTekst', () => {
+  it('toont een winterse UTC-tijd een uur later', () => {
+    expect(nlTijdTekst('2026-11-12T08:03:11Z')).toBe('09:03:11')
+  })
+  it('toont een zomerse UTC-tijd twee uur later', () => {
+    expect(nlTijdTekst('2026-07-14T08:03:11Z')).toBe('10:03:11')
+  })
+  it('geeft rond middernacht de Nederlandse datum, niet de UTC-datum', () => {
+    expect(nlDatumTekst('2026-11-12T23:30:00Z')).toBe('13/11/2026')
+    expect(nlTijdTekst('2026-11-12T23:30:00Z')).toBe('00:30:00')
+  })
+  it('houdt dezelfde datum aan overdag', () => {
+    expect(nlDatumTekst('2026-11-12T12:00:00Z')).toBe('12/11/2026')
+  })
+})

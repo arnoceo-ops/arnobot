@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { ontwikkelpuntTekst, type Ontwikkelpunt } from '@/lib/coachingTekst'
-import { nlDagStartIso, nlDagEindeIso } from '@/lib/nlTijd'
+import { nlDagStartIso, nlDagEindeIso, nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 
 // Data voor de tabs Analyses en Coaching op /bot/admin (Gesprekken-pagina). Alleen lezen,
 // alleen voor de admin (de pagina en de CSV-route controleren de admin-cookie zelf).
@@ -125,8 +125,7 @@ export async function fetchCoachingVersies({ from, to, userFilter }: DatumFilter
 }
 
 function datumTijd(iso: string): string {
-  const d = new Date(iso)
-  return `${d.toLocaleDateString('nl-NL')} ${d.toLocaleTimeString('nl-NL')}`
+  return `${nlDatumTekst(iso)} ${nlTijdTekst(iso)}`
 }
 
 export function analyseAsText(a: AnalyseRij, naam?: string): string {
@@ -171,8 +170,7 @@ function escapeCSV(val: string | number | null | undefined): string {
 export function analysesCsv(rijen: AnalyseRij[], naamMap: Record<string, string>): string {
   const regels = [['datum', 'tijd', 'gebruiker', 'aantal_gesprekken', 'analyse'].join(',')]
   for (const a of rijen) {
-    const d = new Date(a.created_at)
-    regels.push([d.toLocaleDateString('nl-NL'), d.toLocaleTimeString('nl-NL'), naamMap[a.user_id] || a.user_id, a.session_count, a.analyse_text].map(escapeCSV).join(','))
+    regels.push([nlDatumTekst(a.created_at), nlTijdTekst(a.created_at), naamMap[a.user_id] || a.user_id, a.session_count, a.analyse_text].map(escapeCSV).join(','))
   }
   return regels.join('\n')
 }
@@ -181,9 +179,8 @@ export function coachingCsv(rijen: CoachingVersie[], naamMap: Record<string, str
   const kop = ['datum', 'tijd', 'gebruiker', 'mindset_score', 'mindset_richting', 'mindset_diagnose', 'systeem_score', 'systeem_richting', 'systeem_diagnose', 'actie_score', 'actie_richting', 'actie_diagnose', 'voortgang', 'ontwikkelpunten', 'signalen', 'blogtips', 'weinig_voortgang', 'stagnatie', 'aantal_gesprekken']
   const regels = [kop.join(',')]
   for (const v of rijen) {
-    const d = new Date(v.created_at)
     regels.push([
-      d.toLocaleDateString('nl-NL'), d.toLocaleTimeString('nl-NL'), naamMap[v.user_id] || v.user_id,
+      nlDatumTekst(v.created_at), nlTijdTekst(v.created_at), naamMap[v.user_id] || v.user_id,
       v.mindset_score, v.mindset_richting, v.mindset_diagnose,
       v.systeem_score, v.systeem_richting, v.systeem_diagnose,
       v.actie_score, v.actie_richting, v.actie_diagnose,

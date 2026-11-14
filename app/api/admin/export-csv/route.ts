@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { isAdminAuthorized, fetchLogsInRange } from '@/lib/adminExport'
 import { fetchAnalyses, fetchCoachingVersies, analysesCsv, coachingCsv } from '@/lib/adminGesprekkenTabs'
+import { nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 
 function escapeCSV(val: string | null | undefined): string {
   if (!val) return ''
@@ -45,21 +46,26 @@ export async function GET(request: NextRequest) {
   }
 
   const { rows, naamMap } = await fetchLogsInRange(from, to, 100000)
-  const filtered = userFilter ? rows.filter(r => r.user_id === userFilter) : rows
+  // Zelfde duimpje-filter als het scherm: alle beoordeelde berichten, of alleen de negatieve.
+  const fb = searchParams.get('fb') || ''
+  const perGebruiker = userFilter ? rows.filter(r => r.user_id === userFilter) : rows
+  const filtered = fb === 'neg' ? perGebruiker.filter(r => r.feedback === 'neg')
+    : fb === 'alle' ? perGebruiker.filter(r => !!r.feedback)
+    : perGebruiker
 
   const lines: string[] = [
-    ['datum', 'tijd', 'sessie_id', 'gebruiker', 'vraag', 'antwoord'].join(','),
+    ['datum', 'tijd', 'sessie_id', 'gebruiker', 'vraag', 'antwoord', 'duimpje'].join(','),
   ]
 
   for (const row of filtered) {
-    const dt = new Date(row.created_at)
     lines.push([
-      escapeCSV(dt.toLocaleDateString('nl-NL')),
-      escapeCSV(dt.toLocaleTimeString('nl-NL')),
+      escapeCSV(nlDatumTekst(row.created_at)),
+      escapeCSV(nlTijdTekst(row.created_at)),
       escapeCSV(row.session_id),
       escapeCSV(row.user_id ? (naamMap[row.user_id] || row.user_id) : row.ip),
       escapeCSV(row.question),
       escapeCSV(row.answer),
+      escapeCSV(row.feedback === 'neg' ? 'negatief' : row.feedback === 'pos' ? 'positief' : ''),
     ].join(','))
   }
 

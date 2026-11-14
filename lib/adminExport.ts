@@ -12,6 +12,7 @@ export type AdminLogRow = {
   ip: string
   session_id: string
   user_id?: string
+  feedback?: string | null
 }
 
 export async function isAdminAuthorized(): Promise<boolean> {
