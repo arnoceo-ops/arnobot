@@ -7,6 +7,7 @@ import AdminNav from '../AdminNav'
 import StatsTabs from './StatsTabs'
 import { StatCard, TileGrid, SubHeading, FunnelBar, HeroStat, SplitBar, RatioBar, TrendChart } from './StatsUi'
 import BlogStats from './BlogStats'
+import { berekenMrrEuro } from '@/lib/mrr'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,7 @@ export default async function AdminStatsPage() {
     { data: coachingDocs },
     { data: blogSessies },
     { data: ctaClickRows },
+    { data: abonnementen },
   ] = await Promise.all([
     supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_sparring_sessions').select('user_id, created_at, message_count').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
@@ -45,12 +47,13 @@ export default async function AdminStatsPage() {
     // en naar /upgrade linkte) als het nieuwe (sindsdien "PLAN GESPREK", linkt naar
     // /bot/gesprek), zodat de teller niet stil terugvalt naar 0 door de omzetting.
     supabase.from('arnobot_events').select('*', { count: 'exact', head: true }).in('event_name', ['coaching_arnolive_click', 'coaching_gesprek_click']).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
-    supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at, bedrag, interval').neq('email', E2E_TEST_USER_EMAIL).neq('email', MANUAL_TEST_USER_EMAIL).neq('email', APP_REVIEWER_EMAIL),
+    supabase.from('approved_users').select('user_id, created_at, paid_at, is_active, cancelled_at').neq('email', E2E_TEST_USER_EMAIL).neq('email', MANUAL_TEST_USER_EMAIL).neq('email', APP_REVIEWER_EMAIL),
     supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').not('user_id', 'is', null).not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_referrals').select('status, referred_user_id').not('referrer_user_id', 'in', INTERNAL_TEST_USERS_IN).not('referrer_user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_coaching').select('user_id, mindset_richting, systeem_richting, actie_richting, weinig_voortgang, stagnatie').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_blog_sessions').select('user_id, created_at, actie_status').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
     supabase.from('arnobot_cta_clicks').select('anon_id'),
+    supabase.from('arnobot_subscriptions').select('status, cyclus, bedrag_cent, btw_cent, opzegging_aangevraagd_at').eq('status', 'active').not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE),
   ])
 
   const sparringGesprekken = sparringSessies?.length ?? 0
@@ -144,15 +147,9 @@ export default async function AdminStatsPage() {
     ? `${gesprekkenLaatste7Dagen >= gesprekkenDaarvoor7Dagen ? '+' : ''}${Math.round(((gesprekkenLaatste7Dagen - gesprekkenDaarvoor7Dagen) / gesprekkenDaarvoor7Dagen) * 100)}% vs vorige week (${gesprekkenDaarvoor7Dagen})`
     : undefined
 
-  // MRR: alleen betrouwbaar zodra bedrag + interval bekend zijn (handmatig of via betaalprovider).
-  // Geen fallback op planprijs: MRR wordt pas echt gevuld zodra er een betaalprovider actief is
-  // die bedrag/interval automatisch zet, dat is de eigenlijke fix, niet een schatting hier.
-  const betaaldeGebruikers = users?.filter(u => u.paid_at) ?? []
-  const betaaldeGebruikersMetBedrag = betaaldeGebruikers.filter(u => u.bedrag != null && u.interval)
-  const mrr = betaaldeGebruikersMetBedrag.reduce((sum, u) => {
-    const maandBedrag = u.interval === 'jaar' ? (u.bedrag as number) / 12 : (u.bedrag as number)
-    return sum + maandBedrag
-  }, 0)
+  // MRR uit de echte abonnementen (arnobot_subscriptions), zie lib/mrr.ts voor de definitie.
+  // Geen fallback op planprijs of op de handmatige BETAALD-vlag: dat is geen omzet.
+  const mrr = berekenMrrEuro(abonnementen ?? [])
 
   // Gezondheidsscore per gebruiker: gedragssignalen uit coaching, actieopvolging en sparring
   const coachingByUser = new Map((coachingDocs ?? []).map(c => [c.user_id, c]))

@@ -148,7 +148,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin` | Overzicht alle vraag/antwoord-logs, filters, PDF-download. Sinds 2026-11-13 drie tabs met hetzelfde filter (gebruiker, van/tot, sortering): Gesprekken, Analyses (`arnobot_analyses`) en Coaching (`arnobot_coaching_history`, volledige rapportages). CSV-download per tab (`/api/admin/export-csv?tab=...`), PDF alleen bij Gesprekken. Bij Analyses en Coaching is een leeg datumveld = geen begrenzing. Data en tekstopmaak in `lib/adminGesprekkenTabs.ts` |
 | `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling |
 | `/bot/admin/emails` | E-mail templates + crons testen |
-| `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar) |
+| `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar). De sectie "Alle geplande crons" en alle cron-tijden komen automatisch uit `vercel.json` (`lib/cronOverzicht.ts`, tijden in UTC). Elke nieuwe cron krijgt een regel in `CRON_INFO` in dat bestand: `lib/cronOverzicht.test.ts` faalt als een cron in `vercel.json` ontbreekt, als er een cron-route zonder schema bestaat, of omgekeerd. De mail-rijen blijven handmatig |
 | `/bot/admin/evaluaties` | Negatieve chatantwoord-beoordelingen bekijken |
 | `/bot/admin/analyse` | AI-briefing per gebruiker (individueel of teambaas) op basis van alle beschikbare data, met doorvraagchat. Ter voorbereiding op een gesprek dat Arno met die persoon gaat voeren |
 | `/bot/admin/idee` | Redactionele blogbriefing op basis van gesprekken |
@@ -157,7 +157,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle) |
 | `/bot/admin/voice-test` | Testomgeving voor de ElevenLabs voice/TTS-integratie |
-| `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel) |
+| `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel). MRR komt sinds 2026-11-14 uit `arnobot_subscriptions` (`lib/mrr.ts`): alleen status `active`, zonder aangevraagde opzegging, exclusief btw, jaarlijks gedeeld door 12, alleen solo (Team niet meegeteld). Daarvoor las de pagina `approved_users.bedrag/interval`, die sinds Mollie door niets meer worden geschreven |
 | `/bot/admin/kennisbank` | Kennisbank-beheer: RSS-bronnen, chunks per bron |
 
 ### Abacus (kostencalculator, cookie-gated via `arnobot_kosten`)
