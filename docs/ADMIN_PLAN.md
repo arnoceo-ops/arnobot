@@ -35,6 +35,29 @@
 
 - **Menu (besluit 2026-11-14):** FEEDBACK weg, want het was een getal en een lijst: het getal staat nu op STATS, de negatieve antwoorden staan op Gesprekken (filter DUIMPJE, zonder datum zodat alle tijd zichtbaar is). **Verworpen: FEEDBACK als eigen tab houden**, want twee plekken voor dezelfde duimpjes. BLOGS en POSTS blijven twee pagina's maar zijn één menu-item met tabs (`BlogTabs`). **Verworpen: de blogideeën als knop in POSTS bouwen**, want dat is nieuwe functionaliteit terwijl er nog nooit een analyse is opgeslagen.
 
+## Eindcontrole 2026-11-14 (na de vraag "is dit echt alles")
+
+Alle bevindingen uit de audit en alle beloftes van deze sessie zijn naast de code gelegd. Wat daarbij nog open bleek is gebouwd:
+
+- **Zoeken in gespreksinhoud** (ZOEK IN GESPREKKEN op Gesprekken, ook in CSV en PDF): was geadviseerd maar nooit gebouwd. De zoekterm wordt opgeschoond (`schoneZoekterm`), getest op de echte database en met een aanvalsterm.
+- **TEAMS:** ledenaantal, seats waarop gefactureerd wordt, bedrag en dagen tot de volgende factuur per team (rood bij te laat, oranje onder 7 dagen), de facturenlijst per team in plaats van één globale grens van 50, en een BLOKKEER-knop met bevestiging (er was alleen DEBLOKKEER).
+- **Cron-alarm** (`/api/cron/cron-wacht`, dagelijks): Telegram bij een cron die te laat is of is afgebroken, ook een cron die sinds de registratie nog nooit draaide. Een mislukte run meldt zichzelf al.
+- **STATUS, PERFORMANCE:** de cirkel toonde de uptime van de week in een vaste groene kleur, naast gemiddelde en p95 in milliseconden (gemeten 668 ms en 1657 ms, de kleur zei dus niets over snelheid). Nu hangt de kleur aan een niveau uit `lib/performance.ts`: groen, geel/oranje bij **onder druk** (gemiddeld boven 1200 ms of p95 boven 2500 ms), rood bij **laag** (gemiddeld boven 2500 ms of p95 boven 4000 ms), grijs zonder meting. De grenzen liggen ruim boven de gemeten basis zodat een normale week groen blijft, en staan op één plek. Het getal in de cirkel vult alleen, de kleur hangt aan het niveau. Een mislukte statusfetch bij de externe diensten is grijs in plaats van rood.
+- **Storingsmelding** (`/api/cron/storing-wacht`, elk kwartier, Telegram): arno.bot niet bereikbaar of verminderd (Instatus), te traag (gemiddelde van het laatste uur, minimaal 3 metingen, dezelfde grenzen als de kleur), en een **grote of kritieke** storing bij Anthropic, Vercel, Supabase, Clerk of Resend. Een kritieke melding komt hooguit één keer per dag terug, een waarschuwing één keer per week (`nieuwMelden`). **Verworpen: ook kleine incidenten (`minor`) melden**, want op het moment van bouwen stond Anthropic op `minor` (Partially Degraded Service) voor een onderdeel waar arno.bot waarschijnlijk niet van afhangt: dat zou ruis geven. Die staan wel op STATUS.
+- **META:** een mislukte opslag in het archief wordt gelogd (Sentry), `days` wordt gevalideerd (1 tot 365).
+- **Alle vier de AI-routes** (analyse, analyse-chat, blogs-analyse, feedback-analyse) vangen een API-fout nu af met een nette foutmelding.
+- **KENNISBANK:** kennisdocumenten tellen niet meer mee als blog (nieuwe teller DOCUMENTEN).
+- **USERS:** naam en foto uit Clerk in blokken van 100 in plaats van één aanroep per gebruiker; een fout wordt gelogd. Gemeten: 12 van 12 gelijk aan de oude manier.
+
+**Bewust niet gewijzigd, met reden:**
+
+- **Basis-URL uit de Host-header** (`test-email`, `trigger-rss-ingest`): het lijkt een risico voor het CRON_SECRET, maar je hebt een geldig admin-cookie nodig en dat gaat alleen naar jouw domein. De testroute doet dit bewust: een redirect tussen apex en www laat de Authorization-header vallen. Een vaste URL zou dat terugbrengen.
+- **Kop REF € in USERS** toont het aantal geconverteerde referrals, geen euro's. Niet aangepast: geen ongevraagde copy-wijzigingen (geheugenregel). Voorstel: hernoem naar REF BETAALD.
+- **ANALYSE genereert automatisch bij het openen** van een gebruiker zonder opgeslagen briefing. Laten staan: het is de bedoelde werking, kosten zijn een losse waarschuwing en geen reden om te schrappen.
+- **Drie definities van actieve gebruiker** (STATS-hero telt gesprekken in 7 dagen, mijlpalen en capaciteitswacht tellen `is_active`): niet samengevoegd, want de mijlpalen zijn zo afgesproken.
+- **BlogStats doet ongeveer 40 telqueries** per paginalading en MISLUKT telt alle bezorgingen ooit. Niet aangepast: het zijn goedkope head-queries op een pagina die je zelden opent, en een permanente waarschuwing bij een eerdere mislukte bezorging is niet onjuist.
+- **META heeft een eigen duimpje-jurylid** dat overlapt met de duimpjes op Gesprekken en STATS: ontwerpkeuze van de meta-analyse, niet aangeraakt.
+
 ## Open vragen voor Arno
 
 Geen. De eerdere vier vragen zijn beslist (zie hierboven).
