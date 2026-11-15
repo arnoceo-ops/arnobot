@@ -41,7 +41,7 @@ async function cronHandler(req: NextRequest) {
 
   // inactivity_dag45/dag60 dreigen expliciet met "abonnement wordt opgezegd", feitelijk
   // onjuist voor een teamlid/-manager die niet zelf betaalt (2026-08-24-fix, zie
-  // docs/TEAM_PLAN.md). Alleen die twee typen worden overgeslagen hieronder, de gewone
+  // docs/archief/TEAM_PLAN.md). Alleen die twee typen worden overgeslagen hieronder, de gewone
   // activiteits-nudges (weekly_nudge/geen_gesprek_nudge/dag21) blijven wel gewoon gelden:
   // een teamlid mag best aangespoord worden om ArnoBot te gebruiken, alleen niet met een
   // valse opzeg-dreiging.

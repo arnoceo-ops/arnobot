@@ -79,7 +79,7 @@ const MANAGEMENT_ROLLEN = [...HEEFT_TEAM, 'Solopreneur']
 // Rollen voor wie al als command_manager staat geregistreerd (het Team-segment, gezet bij
 // trial-aanmaak via een Sales Agent-link, zie proxy.ts): een eigen, vaste lijst i.p.v. een
 // filter op ROL_OPTIONS, want CCO staat niet in die algemene lijst
-// (2026-08-24, teamprofiel-herziening, zie docs/TEAM_PLAN.md).
+// (2026-08-24, teamprofiel-herziening, zie docs/archief/TEAM_PLAN.md).
 const TEAM_VERSIE_ROL_OPTIONS = ['Sales Manager', 'Sales Director', 'VP of Sales', 'CCO', 'Anders']
 const JAREN_SALES_OPTIONS = ['< 2 jaar', '2-5 jaar', '5-10 jaar', '10-20 jaar', '> 20 jaar']
 const JAREN_FUNCTIE_OPTIONS = ['< 1 jaar', '1-3 jaar', '3-7 jaar', '> 7 jaar']
@@ -104,7 +104,7 @@ const PROFIEL_VELDEN: Record<'team' | 'individueel' | 'solo', (keyof Answers)[]>
 
 // Solopreneur-versie (rol === 'Solopreneur', geen team, geen command_manager): een eigen
 // intake omdat een zelfstandige geen team heeft, maar wel een positionering, een
-// acquisitiekanaal en een spanning tussen acquireren en leveren. Zie docs/TEAM_PLAN.md,
+// acquisitiekanaal en een spanning tussen acquireren en leveren. Zie docs/archief/TEAM_PLAN.md,
 // "Punt 2 vervangen", stap 3.
 const KLANTENBRON_OPTIONS = ['Aanbeveling', 'Netwerk', 'Outbound', 'Content/inbound', 'Terugkerende klanten', 'Toeval']
 const KANAAL_AFHANKELIJKHEID_OPTIONS = ['Sterk van één kanaal', 'Deels gespreid', 'Goed gespreid']

@@ -35,7 +35,7 @@ async function cronHandler(req: NextRequest) {
 
   // Team-toegang is niet tijdgebonden aan de eigen trial_start: een teamlid/-manager
   // betaalt niet zelf, dus mag nooit door deze cron als "trial verlopen" behandeld
-  // worden (2026-08-24-fix, zie docs/TEAM_PLAN.md). Zelfde uitzondering als in proxy.ts.
+  // worden (2026-08-24-fix, zie docs/archief/TEAM_PLAN.md). Zelfde uitzondering als in proxy.ts.
   const { data: teamMemberRows } = await supabase
     .from('arnobot_team_members')
     .select('user_id')

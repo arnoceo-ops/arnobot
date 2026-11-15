@@ -1,4 +1,4 @@
--- Admin-logboek en cron-gezondheid (2026-11-14), voor ronde 2 van docs/ADMIN_PLAN.md.
+-- Admin-logboek en cron-gezondheid (2026-11-14), voor ronde 2 van docs/archief/ADMIN_PLAN.md.
 --
 -- 1. arnobot_admin_log: elke adminknop die geld of toegang wijzigt (BETAALD, terugbetalen,
 --    plan, teamrol, SD-agent, gratis toegang, aan/uit, Teams-instellingen) schrijft hier een

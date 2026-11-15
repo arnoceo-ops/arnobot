@@ -1,7 +1,7 @@
 // Beoordeling van de gezondheid van de kennisbank (blog_chunks). Puur, zodat het testbaar is.
 // Aanleiding: op 2026-11-01 bleek een ivfflat-index (standaard probes=1) de zoekstap te beperken
 // tot ongeveer 1% van de fragmenten (4 tot 34 kandidaten in plaats van 100), zonder dat iemand het
-// merkte omdat er altijd wel iets terugkwam. Zie docs/OPENSTAANDE_PUNTEN.md.
+// merkte omdat er altijd wel iets terugkwam. Zie BACKLOG.md.
 
 // Ondergrens aan het totaal aantal fragmenten (nu ongeveer 1540). Valt het ver daaronder, dan is er
 // waarschijnlijk iets gewist.

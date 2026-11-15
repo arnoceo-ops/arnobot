@@ -9,7 +9,7 @@ export const RITME_DREMPEL_DAGEN = 14
 
 export type LagendLid = { user_id: string; daysSince: number; referentie: string }
 
-// Gedeelde detectie voor de 1:1-cadans-notificatieflow (docs/TEAM_PLAN.md), gebruikt door
+// Gedeelde detectie voor de 1:1-cadans-notificatieflow (docs/archief/TEAM_PLAN.md), gebruikt door
 // team-1on1-ritme/route.ts voor zowel het aanmaken van het belletje als de escalatie-check.
 // Team-breed (niet manager-gescoped), zelfde principe als de 1:1 MEETINGS-tegels in
 // dashboard/route.ts (Arno's expliciete verzoek 2026-08-22: een teamoverzicht moet hetzelfde

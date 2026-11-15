@@ -180,4 +180,4 @@ Niet uitputtend, de belangrijkste bekende vervolgstappen:
 
 ## 9. Bronnen binnen dit project
 
-Voor wie dieper wil: `docs/SALES_BIJBEL.md` (verkoopargumenten), `docs/PRICING_DECISIONS.md` (volledige onderbouwing van elk prijsbesluit), `docs/ABONNEMENTEN.md` (actuele status van de abonnementsstructuur), `docs/TECHNICAL_HANDOVER.md` (volledige technische documentatie), `docs/BUSINESS_HANDOVER.md` (bedrijfsoverdracht-documentatie), `docs/TEAM_PLAN.md` (volledige bouwgeschiedenis en openstaande besluiten van de teammodule, met de reden achter elke keuze).
+Voor wie dieper wil: `docs/SALES_BIJBEL.md` (verkoopargumenten), `docs/PRICING_DECISIONS.md` (volledige onderbouwing van elk prijsbesluit), `docs/ABONNEMENTEN.md` (actuele status van de abonnementsstructuur), `docs/TECHNICAL_HANDOVER.md` (volledige technische documentatie), `docs/BUSINESS_HANDOVER.md` (bedrijfsoverdracht-documentatie), `docs/archief/TEAM_PLAN.md` (volledige bouwgeschiedenis en openstaande besluiten van de teammodule, met de reden achter elke keuze).

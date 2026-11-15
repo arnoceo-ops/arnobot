@@ -302,7 +302,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Team-toegang is nooit tijdgebonden aan de eigen trial_start: een teamlid/-manager
     // betaalt niet zelf, dus mag nooit automatisch verlopen na 30 dagen (2026-08-24-fix,
-    // zie docs/TEAM_PLAN.md). Toegang eindigt alleen via zelf-verwijdering (ACCOUNT
+    // zie docs/archief/TEAM_PLAN.md). Toegang eindigt alleen via zelf-verwijdering (ACCOUNT
     // VERWIJDEREN) of doordat de manager 'm uit het team haalt (VERWIJDER UIT TEAM,
     // verwijdert de arnobot_team_members-rij), dus altijd live gecheckt, nooit een
     // eenmalig gezette vlag die na verwijdering zou blijven hangen.

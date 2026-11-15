@@ -139,7 +139,7 @@ export async function POST() {
   const trendContext = trendRegels ? `\n\nTEAMSCORES OVER TIJD (gemiddeld per maand):\n${trendRegels}` : ''
 
   // Punt 2B "De Tijdlijn": maandelijkse thema-geschiedenis als extra duidingscontext, geen
-  // los weergaveblok. Zie docs/TEAM_PLAN.md voor de volledige afweging.
+  // los weergaveblok. Zie docs/archief/TEAM_PLAN.md voor de volledige afweging.
   const themaTrend = await computeThemaMaandTrend(memberIds)
   const themaTrendContext = themaTrend ? `\n\nDOMINANT GESPREKSTHEMA PER MAAND:\n${themaTrend}` : ''
 

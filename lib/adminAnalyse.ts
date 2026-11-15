@@ -9,7 +9,7 @@ const supabase = createClient(
 
 // Volledige, ongefilterde databundel over één gebruiker voor de admin-ANALYSE-tab
 // (`/bot/admin/analyse`). Arno is hier de enige uitzondering op "nooit ruwe gesprekken
-// tonen aan een manager" (docs/TEAM_PLAN.md): hij is geen manager, hij is de enige admin,
+// tonen aan een manager" (docs/archief/TEAM_PLAN.md): hij is geen manager, hij is de enige admin,
 // en niets hiervan verlaat de admin-omgeving. Gedeeld tussen de analyse-generatie en de
 // doorvraag-chat zodat beide exact dezelfde grondslag gebruiken.
 const SESSIES_LIMIET = 40

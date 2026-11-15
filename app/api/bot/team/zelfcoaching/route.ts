@@ -252,7 +252,7 @@ export async function POST() {
   // (arnobot_video_kennisbank.txt, al doorzoekbaar via blog_chunks) om de diagnose te gronden
   // in de bron, niet alleen op de hardgecodeerde parafrase hieronder te laten leunen. Video-
   // chunks zijn te herkennen aan source die met "Video:" begint (embed-chunks.mjs). Zie
-  // docs/TEAM_PLAN.md "Ontwerpkeuze synthese-prompt".
+  // docs/archief/TEAM_PLAN.md "Ontwerpkeuze synthese-prompt".
   const pillarQueries = {
     strategy: 'strategie vertalen naar salesteam, onderscheidend vermogen bepalen, one-page strategic plan, prioriteiten stellen',
     people: 'de juiste mensen op de juiste plek, A-players B-players C-players aannemen en ontwikkelen, verkopers coachen',

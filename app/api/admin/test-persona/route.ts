@@ -12,7 +12,7 @@ const supabase = createClient(
 // Zet Arno's handmatige testaccount om naar één van vijf persona's, door de ECHTE
 // onderliggende data te wijzigen (arnobot_team_members, command_manager, profiel.rol),
 // niet via een query-param-bypass die op elke pagina apart zou moeten worden meegebouwd
-// (zie docs/TEAM_PLAN.md, 2026-08-24). Elke pagina gedraagt zich daardoor exact zoals bij
+// (zie docs/archief/TEAM_PLAN.md, 2026-08-24). Elke pagina gedraagt zich daardoor exact zoals bij
 // een echte gebruiker. Hardcoded naar MANUAL_TEST_USER_ID, accepteert nooit een andere
 // userId, als veiligheidsrail tegen per ongeluk een echt account wijzigen.
 const PERSONAS = ['verkoper', 'teammanager', 'teamlid', 'ceo', 'solopreneur'] as const
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
   const huidigProfiel = (existing?.profiel as Record<string, unknown>) ?? {}
   // 'individueel' zet /api/bot/team/status expliciet op hasTeam: false, ongeacht een
-  // eventuele echte arnobot_team_members-rij (zie CLAUDE.md/docs/TEAM_PLAN.md). Een echt
+  // eventuele echte arnobot_team_members-rij (zie CLAUDE.md/docs/archief/TEAM_PLAN.md). Een echt
   // uitgenodigd teamlid doorloopt de individueel/team-vraag nooit (die geldt alleen voor
   // managementrollen), dus 'gebruik' blijft voor 'teamlid' onbeslist (null), niet
   // 'individueel' — anders denkt de rest van de app ten onrechte dat er geen team is.

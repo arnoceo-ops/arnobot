@@ -27,7 +27,7 @@ export type BotEvent =
   | 'deel_link_aangemaakt'
   // Conversie
   | 'upgrade_cta_geklikt'
-  | 'abonnement_gestart' // nog niet gevuurd: geen betaalprovider (zie OPENSTAANDE_PUNTEN.md)
+  | 'abonnement_gestart' // nog niet gevuurd: geen betaalprovider (zie BACKLOG.md)
   | 'opzegging_gestart'
   // Team
   | 'teamlid_uitgenodigd'

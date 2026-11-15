@@ -9,7 +9,7 @@ import { getLagendeLeden } from '@/lib/team1on1Ritme'
 import { TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
-// 1:1-cadans-notificatie/escalatieflow (docs/TEAM_PLAN.md): een teamlid zonder 1:1 langer dan
+// 1:1-cadans-notificatie/escalatieflow (docs/archief/TEAM_PLAN.md): een teamlid zonder 1:1 langer dan
 // 2 weken triggert eerst een in-app belletje, dan (als dat 48u ongelezen blijft) mail 1, dan
 // (5 dagen na het eerste leessignaal, nog steeds onopgelost) mail 2. Geen nieuwe databasekolommen:
 // het belletje hergebruikt het bestaande arnobot_team_notifications (read_at bestond al), de

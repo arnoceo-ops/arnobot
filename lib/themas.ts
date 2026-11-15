@@ -32,7 +32,7 @@ export function parseThemas(raw: string): ThemaLabel[] {
   }
 }
 
-// Karakter-laag ("De Zes Succesfactoren", zie docs/TEAM_PLAN.md): naast de thema's classificeert
+// Karakter-laag ("De Zes Succesfactoren", zie docs/archief/TEAM_PLAN.md): naast de thema's classificeert
 // dezelfde call ook of het gesprek excuustaal bevat (uitkomst toeschrijven aan iets buiten de
 // gebruiker zelf, i.p.v. eigenaarschap nemen). Gedeelde call met parseThemas hierboven, geen
 // eigen Haiku-aanroep: laag risico/optioneel signaal, geen extra kosten rechtvaardigen dat.

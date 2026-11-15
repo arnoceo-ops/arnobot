@@ -8,7 +8,7 @@ const supabase = createClient(
 // Bepaalt of iemand daadwerkelijk als teambaas geldt, gebaseerd op de drie bestaande
 // gates (command_manager entitlement, echte manager-rol in een team, gebruik niet op
 // individueel gezet), nooit op profiel.rol (het onboarding-chipje): dat bleek onbetrouwbaar,
-// zie docs/TEAM_PLAN.md sectie "Raamwerk: rollen x disciplines".
+// zie docs/archief/TEAM_PLAN.md sectie "Raamwerk: rollen x disciplines".
 export async function isConfirmedTeambaas(userId: string): Promise<boolean> {
   const [memberRes, profileRes, approvedRes] = await Promise.all([
     supabase
@@ -43,7 +43,7 @@ export async function isConfirmedTeambaas(userId: string): Promise<boolean> {
 // hoort te tonen aan wie al in een team zit. Gebruikt door /bot/upgrade en
 // cancel-subscription; proxy.ts/trial-emails/inactivity-nudge hebben een eigen inline
 // kopie van dezelfde logica (bewust niet hierheen gerefactored, dat zijn al geteste,
-// kritieke toegangspaden, zie docs/TEAM_PLAN.md).
+// kritieke toegangspaden, zie docs/archief/TEAM_PLAN.md).
 // Reset een stale 'individueel'-keuze op het moment dat iemand daadwerkelijk teamlid of
 // -manager wordt (team/join, team/create). Zonder dit blijft een vóór het joinen ingevulde
 // 'individueel' voor altijd de teamlid/teambaas-checks hierboven (en de losse kopie in

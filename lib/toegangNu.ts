@@ -5,7 +5,7 @@ import { datumToegang } from '@/lib/toegang'
 // datumToegang en het team), voor API-routes die zelf geld kosten. De poort bewaakt alleen de pagina's: zonder deze
 // controle kan een verlopen of geblokkeerde gebruiker met een zelf samengesteld verzoek blijven chatten.
 //
-// Bewust niet in proxy.ts samengevoegd: dat is een kritiek toegangspad dat apart getest wordt (docs/TEAM_PLAN.md). Wijzigt
+// Bewust niet in proxy.ts samengevoegd: dat is een kritiek toegangspad dat apart getest wordt (docs/archief/TEAM_PLAN.md). Wijzigt
 // de regel in proxy.ts, pas dan ook dit bestand aan; lib/toegangNu.test.ts legt de gevallen vast.
 //
 // Faalt open bij een databasefout: liever een verlopen gebruiker tijdelijk doorlaten dan betalende gebruikers buitensluiten.

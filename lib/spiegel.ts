@@ -24,7 +24,7 @@ export type SpiegelSignaal = {
 
 // Gedeelde berekening voor "De Spiegel" (punt 2A): teambrede thema-frequentie over de laatste
 // 3 weken t.o.v. de 3 weken daarvoor. Puur deterministisch, geen LLM-call, om hallucinatie op
-// cijfers uit te sluiten (zie docs/TEAM_PLAN.md). Gebruikt door zowel team/spiegel/route.ts
+// cijfers uit te sluiten (zie docs/archief/TEAM_PLAN.md). Gebruikt door zowel team/spiegel/route.ts
 // (UI-kaart) als team/zelfcoaching/route.ts (input voor de Strategy People Execution-synthese).
 export async function computeSpiegelSignaal(memberIds: string[]): Promise<SpiegelSignaal> {
   if (memberIds.length === 0) return { onvoldoende: true }
@@ -127,7 +127,7 @@ export function formatVroegSignaal(spiegel: SpiegelSignaal): string | null {
 
 const MAANDNAMEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
-// Punt 2B "De Tijdlijn", herzien ontwerp (2026-08-21, zie docs/TEAM_PLAN.md): geen eigen
+// Punt 2B "De Tijdlijn", herzien ontwerp (2026-08-21, zie docs/archief/TEAM_PLAN.md): geen eigen
 // weergaveblok, alleen extra context voor bestaande AI-syntheses (Team Spotlight) die het
 // patroon kunnen duiden, in plaats van het rauw te tonen. Live berekend uit dezelfde
 // arnobot_blog_sessions.themas-data als computeSpiegelSignaal, gegroepeerd op kalendermaand

@@ -25,7 +25,7 @@ function extractText(response: Message, label: string): string {
   return getText(response.content)
 }
 
-// Doorvragen op de ANALYSE-tab. Bewust niet opgeslagen (zie docs/TEAM_PLAN.md-gesprek van
+// Doorvragen op de ANALYSE-tab. Bewust niet opgeslagen (zie docs/archief/TEAM_PLAN.md-gesprek van
 // 25 aug 2026): het gesprek bestaat alleen voor het huidige bezoek, alleen de analyse zelf
 // (het openingsbericht) blijft bewaard in arnobot_admin_analyses.
 // Stond op 1200 met maxDuration 60: Fable 5.1 gebruikt een deel van het budget voor denkwerk, dus

@@ -24,9 +24,9 @@ export default async function CoachingPage({ searchParams }: { searchParams: Pro
   logEvent(userId, 'coaching_page_view')
 
   // Rolbewust, vóór de plan-gate hieronder: een bevestigde teambaas verkoopt zelf niet (zie
-  // docs/TEAM_PLAN.md, "either/or"-besluit), krijgt dus nooit de Mindset/Systeem/Actie-versie,
+  // docs/archief/TEAM_PLAN.md, "either/or"-besluit), krijgt dus nooit de Mindset/Systeem/Actie-versie,
   // maar zijn eigen Strategy People Execution-coaching. CEO/solopreneur vallen hier bewust nog
-  // niet onder, zie TEAM_PLAN.md "TO DO, apart traject".
+  // niet onder, zie docs/archief/TEAM_PLAN.md "TO DO, apart traject".
   let teambaas = await isConfirmedTeambaas(userId)
 
   // Testoverride, alleen voor BEKIJK_ALS_TOEGESTAAN hierboven: ?bekijkAls=verkoper of

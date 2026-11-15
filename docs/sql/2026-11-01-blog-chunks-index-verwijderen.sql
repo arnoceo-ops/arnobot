@@ -1,4 +1,4 @@
--- Kennisbank-zoekkwaliteit (2026-11-01, zie docs/OPENSTAANDE_PUNTEN.md).
+-- Kennisbank-zoekkwaliteit (2026-11-01, zie BACKLOG.md).
 -- blog_chunks (1529 fragmenten) heeft een ivfflat-index met lists=100 en de standaard probes=1:
 -- elke zoekopdracht doorzoekt maar 1 van de 100 groepjes (circa 1% van de tabel), waardoor
 -- match_blog_chunks ondanks match_count 100 maar 4 tot 34 fragmenten teruggaf, ongeacht de
