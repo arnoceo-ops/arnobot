@@ -77,7 +77,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geheugen</td><td>Samenvattingen en feiten uit je gesprekken, zodat ArnoBot je beter kan coachen</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Teams</td><td>Bij een teamabonnement ziet je manager je scores en het verloop, nooit de inhoud van je gesprekken met ArnoBot</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Teams</td><td>Bij een teamabonnement ziet je manager je scores en het verloop. Je gesprekken met ArnoBot ziet hij alleen als jij er zelf een deelt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Zakelijk ook bedrijfsnaam, KvK, BTW-nummer en adres.</td></tr>
               </tbody>
