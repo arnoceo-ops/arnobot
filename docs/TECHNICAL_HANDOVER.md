@@ -472,7 +472,7 @@ Sales-sparringsessie-log: persona, weerstand, debrief, message_count, favoriet, 
 Voorkomt dubbele herinneringsmails: één rij per verstuurde herinnering (`session_id` + `interval_dagen`, `UNIQUE`).
 
 ### `arnobot_analyses`
-Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`). De kolommen `aanvulling_context`, `aanvulling_tekst` en `aanvulling_at` (migratie `docs/sql/2026-10-22-analyse-aanvulling.sql`) worden sinds 2026-10-24 niet meer gebruikt: de aanvulling-functie is verwijderd. De kolommen staan nog in de database.
+Analyses van `/bot/analyses` (voorheen "BIEB"). Elke analyse dekt de afgelopen gesprekken (`user_id`, `analyse_text`, `created_at`). De aanvulling-functie (kolommen `aanvulling_context`, `aanvulling_tekst` en `aanvulling_at`) is op 2026-10-24 verwijderd, uit de code en uit de database.
 
 ### `arnobot_admin_analyses`
 Eén rij per gebruiker (upsert op `target_user_id`), de admin-briefing van `/bot/admin/analyse`. Nooit zichtbaar voor de gebruiker zelf, alleen voor Arno. `generated_count` telt hoe vaak de briefing (opnieuw) gegenereerd is.

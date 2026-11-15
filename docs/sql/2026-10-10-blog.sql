@@ -31,13 +31,12 @@ create index if not exists arnobot_blog_posts_scheduled_idx
 
 alter table arnobot_blog_posts enable row level security;
 
--- 2. Abonnees. Double opt-in: pas status 'confirmed' ontvangt mail. topics leeg = alle posts.
+-- 2. Abonnees. Double opt-in: pas status 'confirmed' ontvangt mail.
 --    Geen IP-opslag; de bevestigingsklik (confirmed_at) is het toestemmingsbewijs.
 create table if not exists arnobot_blog_subscribers (
   id uuid primary key default gen_random_uuid(),
   email text not null,
   status text not null default 'pending' check (status in ('pending', 'confirmed', 'unsubscribed')),
-  topics text[] not null default '{}',
   confirm_token text not null unique,
   unsubscribe_token text not null unique,
   created_at timestamptz not null default now(),
