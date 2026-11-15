@@ -18,7 +18,7 @@ export type CronInfo = {
 export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/blog': { naam: 'Blogpublicatie en blogmails', wat: 'Publiceert ingeplande posts, vult de mailwachtrij en verstuurt binnen het dagbudget', ontvanger: 'Blogabonnees', soort: 'gebruikers' },
   '/api/cron/billing': { naam: 'Abonnementsonderhoud', wat: 'Haalt gemiste Mollie-webhooks in, maakt ontbrekende abonnementen aan en stopt opgezegde abonnementen', ontvanger: 'Geen (systeem)', soort: 'systeem' },
-  '/api/cron/team-facturatie': { naam: 'Team-facturatie', wat: 'Cyclusfactuur, tussenfactuur bij extra seats en herinnering 7 dagen na de vervaldatum', ontvanger: 'Teammanager', soort: 'gebruikers' },
+  '/api/cron/team-facturatie': { naam: 'Team-facturatie', wat: 'Cyclusfactuur, tussenfactuur bij extra seats, herinnering 7 dagen na de vervaldatum, en het stoppen van opgezegde teams op hun einddatum', ontvanger: 'Teammanager', soort: 'gebruikers' },
   '/api/cron/trial-emails': { naam: 'Trial-mails', wat: 'Lifecycle-mails van dag 1 tot en met win-back, en het sluiten van verlopen trials', ontvanger: 'Gebruiker', soort: 'gebruikers' },
   '/api/cron/inactivity-nudge': { naam: 'Inactiviteitsmails', wat: 'Nudges bij geen gesprek, een rustige week en inactiviteit na 21, 45 en 60 dagen', ontvanger: 'Gebruiker', soort: 'gebruikers' },
   '/api/cron/weekly-activity': { naam: 'Wekelijkse activiteit', wat: 'Actieve gebruikers van de afgelopen 7 dagen', ontvanger: 'Telegram', soort: 'mij' },

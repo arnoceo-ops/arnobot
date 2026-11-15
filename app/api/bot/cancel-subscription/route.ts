@@ -6,6 +6,7 @@ import { emailHtml, getEmailTemplate, isValidEmail } from '@/lib/email-templates
 import { meldOpzegging } from '@/lib/billing/opzeggen'
 import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
 import { heeftEigenAbonnement } from '@/lib/teamLid'
+import { zegTeamOp } from '@/lib/teamOpzegging'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +60,15 @@ export async function POST() {
     teamMemberCount = count ?? null
   }
 
+  // Een manager van een team met facturatie: de einddatum van het team volgt artikel 7 (lib/teamOpzegging.ts). Vóór het
+  // vastleggen van de opzegging, zodat een weigering (bijvoorbeeld al opgezegd) niets half laat staan.
+  let teamStopt: string | null = null
+  if (isManager) {
+    const uitkomst = await zegTeamOp(userId)
+    if (!uitkomst.ok) return NextResponse.json({ error: uitkomst.fout }, { status: uitkomst.status })
+    teamStopt = uitkomst.stoptOp
+  }
+
   const now = new Date().toISOString()
 
   await supabase
@@ -91,12 +101,16 @@ export async function POST() {
     to: 'arno@arno.bot',
     subject: `Opzegging${isManager ? ' (TEAM)' : ''}: ${user.voornaam || user.email || userId}`,
     html: emailHtml(
-      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het ${isManager ? 'team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>${automatisch ? `Automatisch verwerkt: het abonnement eindigt op ${automatisch.ingaatOp.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}, geen actie nodig.` : 'Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.'}`,
+      `<strong style="color:#f1f5f9;">${user.voornaam || 'Gebruiker'}</strong> (${user.email || userId}) heeft het ${isManager ? 'team' : ''}abonnement opgezegd op ${datum}.${teamWaarschuwing}<br><br>${teamStopt ? `Automatisch verwerkt: het team stopt op ${new Date(`${teamStopt}T00:00:00.000Z`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Tot die dag houden manager en leden toegang, op die dag blokkeert het team en stopt de facturatie. Geen actie nodig.` : automatisch ? `Automatisch verwerkt: het abonnement eindigt op ${automatisch.ingaatOp.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}, geen actie nodig.` : 'Actie vereist: zet <code style="color:#f59e0b;background:#1f2937;padding:2px 6px;border-radius:3px;">is_active = false</code> op het moment dat de lopende periode afloopt.'}`,
       'BEKIJK IN ADMIN →', 'https://arno.bot/bot/admin/gebruikers'
     ),
   }).catch(() => {})
 
-  return NextResponse.json({ ok: true, cancelled_at: now, isManager, teamMemberCount, eindigt_op: automatisch?.ingaatOp.toISOString() ?? null })
+  return NextResponse.json({
+    ok: true, cancelled_at: now, isManager, teamMemberCount,
+    eindigt_op: teamStopt ? new Date(`${teamStopt}T00:00:00.000Z`).toISOString() : automatisch?.ingaatOp.toISOString() ?? null,
+    team_stopt_op: teamStopt,
+  })
 }
 
 export async function GET() {
@@ -119,7 +133,17 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // De einddatum van een opgezegd team (alleen voor de manager), zie lib/teamOpzegging.ts.
+  const { data: lid } = await supabase.from('arnobot_team_members').select('team_id').eq('user_id', userId).eq('role', 'manager').maybeSingle()
+  const { data: team } = lid ? await supabase.from('arnobot_teams').select('stopt_op').eq('id', lid.team_id).maybeSingle() : { data: null }
+  const teamStoptOp = (team?.stopt_op as string | null | undefined) ?? null
+
   // Gestopt omdat de klant Team wordt: de pagina toont dan een uitleg in plaats van de opzegknop.
   const soloNaarTeamOp = await soloStoptVoorTeam(userId)
-  return NextResponse.json({ cancelled_at: data?.cancelled_at ?? null, eindigt_op: sub?.opzegging_ingaat_at ?? null, solo_naar_team_op: soloNaarTeamOp })
+  return NextResponse.json({
+    cancelled_at: data?.cancelled_at ?? null,
+    eindigt_op: sub?.opzegging_ingaat_at ?? (teamStoptOp ? new Date(`${teamStoptOp}T00:00:00.000Z`).toISOString() : null),
+    team_stopt_op: teamStoptOp,
+    solo_naar_team_op: soloNaarTeamOp,
+  })
 }

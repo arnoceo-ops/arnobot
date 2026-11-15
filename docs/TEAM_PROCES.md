@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-15
 
-**Waar we staan:** het proces van binnenkomst tot en met leden is gebouwd en op prod getest met het testaccount (activeren, factuur, betaallink). Besloten maar nog niet gebouwd: de opzegregel voor Team (einddatum, blokkade en stop van de facturatie). De SQL-kolom `arnobot_teams.stopt_op` daarvoor staat klaar in `docs/sql/2026-11-15-team-stopt-op.sql` en moet door Arno worden uitgevoerd vóór de code erop schrijft.
+**Waar we staan:** het hele proces is gebouwd: van binnenkomst, proef en coulance, zelf activeren en leden tot en met de opzegregel voor Team (einddatum volgens artikel 7, blokkade en stop van de facturatie op die dag, intrekken tot de dag ervoor). Zelf activeren is op prod getest met het testaccount (activeren, factuur, betaallink). De opzegregel is gebouwd en met tests gedekt maar nog niet op prod doorlopen. De SQL-kolom `arnobot_teams.stopt_op` is op 2026-11-15 door Arno uitgevoerd.
 
-**Eerstvolgende stap:** na het uitvoeren van die SQL de opzegregel Team bouwen (fase 6).
+**Eerstvolgende stap:** de opzegregel Team een keer doorlopen met het testaccount (opzeggen, einddatum zien, intrekken), en een besluit over restitutie voor een solo-lid met een jaarabonnement (zie Open punten).
 
 Dit document beschrijft het hele leven van een team, van de eerste aanmelding tot het einde, en wat er in elk scenario gebeurt. Het begon als een checklist voor het onboarden van een klant (`TEAM_ONBOARDING.md`) en een overzicht van scenario's (`TEAM_LEVENSCYCLUS.md`); beide zijn hierin opgegaan. Waar het niet over gaat: wat een team kan en de coaching zelf staat in `docs/TEAM_PLAN.md` en `docs/ARNOBOT_OVERZICHT.md` (3.7 Teammodule), de tarieven en voorwaarden in `docs/ABONNEMENTEN.md`, de sales agents in `docs/SALES_DEVELOPMENT.md`, een jaarabonnement dat Team wordt in `docs/SOLO_JAAR_NAAR_TEAM.md`, de betaalprovider in `docs/MOLLIE_PLAN.md`.
 
@@ -104,12 +104,14 @@ Activeren kan op elk moment, ook na de blokkade.
 
 **De manager zegt het team op** (accountpagina, TEAMABONNEMENT OPZEGGEN). Nu: alleen een opzegdatum op het account en een mail aan jou, met de waarschuwing dat je de toegang van de leden zelf moet beëindigen. De facturatiecron kijkt niet naar opzeggen, dus er blijven facturen komen, ook voor een geblokkeerd team.
 
-**Besloten, nog te bouwen: de opzegregel voor Team.** Dezelfde regel als bij zakelijke Basic en Pro (artikel 7 van de voorwaarden: opzegtermijn één maand vóór het einde van de lopende betaalperiode, anders loopt het een periode door; de berekening bestaat al in `opzeggingIngaat`):
-- de server berekent de einddatum en zet die in `arnobot_teams.stopt_op` (SQL: `docs/sql/2026-11-15-team-stopt-op.sql`); de manager ziet de datum op zijn accountpagina;
+**De opzegregel voor Team (gebouwd 2026-11-15, `lib/teamOpzegging.ts`).** Dezelfde regel als bij zakelijke Basic en Pro (artikel 7 van de voorwaarden: opzegtermijn één maand vóór het einde van de lopende betaalperiode, anders loopt het een periode door; de berekening is `opzeggingIngaat`):
+- de manager klikt TEAMABONNEMENT OPZEGGEN; de server berekent de einddatum uit de volgende factuurdatum en zet die in `arnobot_teams.stopt_op` (SQL: `docs/sql/2026-11-15-team-stopt-op.sql`). De einddatum telt tot het einde van die dag: opzeggen precies een maand ervoor is nog op tijd. De manager ziet "Je team stopt op [datum]" op zijn accountpagina; jij krijgt een mail met de einddatum en een regel in het adminlogboek (TEAM OPGEZEGD);
 - tot die datum houden manager en leden toegang;
-- op die dag blokkeert het team en stopt de facturatie (geen nieuwe facturen meer); jij krijgt een Telegram;
-- dit is meteen het opheffen van een team: er komt geen losse verwijderfunctie. Team en leden blijven in de database staan.
-Open: mag de manager de opzegging intrekken tot de dag ervoor, zoals bij een solo-abonnement? Nog niet besloten.
+- de manager kan de opzegging intrekken tot en met de dag vóór de einddatum (knop OPZEGGING INTREKKEN, `POST /api/bot/team/opzegging-intrekken`); de server controleert de datum;
+- op de einddatum stopt de cron `team-facturatie` het team: blokkeren en de volgende factuurdatum leegmaken, dus geen nieuwe factuur meer. Tussenfacturen voor extra seats komen ook niet meer. Jij krijgt een Telegram en een regel (TEAM GESTOPT). `stopt_op` blijft bewaard als spoor;
+- een late betaling van een oude factuur zet een gestopt team niet weer open (`ontblokkeerNaBetaling`); alleen DEBLOKKEER in de admin doet dat;
+- een team zonder facturatie (handmatig beheerd) heeft geen automatische einddatum: dan blijft het bij de mail aan jou;
+- dit is meteen het opheffen van een team: er komt geen losse verwijderfunctie. Team en leden blijven in de database staan; op `/bot/admin/teams` staat "Opgezegd door de manager: stopt op [datum]".
 
 **Account van de manager wordt verwijderd:** alleen een mail aan jou. Het team blijft staan en blijft factureren. **Manager verlaat het bedrijf:** er is geen overdracht naar een nieuwe manager, alleen met SQL.
 
@@ -125,8 +127,8 @@ Open: mag de manager de opzegging intrekken tot de dag ervoor, zoals bij een sol
 | Lid van geblokkeerd team neemt zelf een abonnement | Behandeld als gewone gebruiker, kan zelf opzeggen. | Gebouwd |
 | Lid wordt verwijderd | Lidmaatschap weg, plan gelijk aan eigen lopend abonnement, historie blijft van hem. | Gebouwd |
 | Eigen abonnement of proef, uitnodiging geaccepteerd | Incasso stopt (geen restitutie), proef vervalt, historie blijft. | Gebouwd |
-| Manager zegt het team op | Nu alleen een mail aan jou. Besloten: einddatum volgens artikel 7, blokkade en stop facturatie op die dag. | Besloten, nog te bouwen |
-| Team opheffen | Hetzelfde als de opzegregel. | Besloten |
+| Manager zegt het team op | Einddatum volgens artikel 7, toegang tot die dag, blokkade en stop facturatie op die dag. Intrekken kan tot de dag ervoor. | Gebouwd, nog niet op prod doorlopen |
+| Team opheffen | Hetzelfde als de opzegregel. | Gebouwd |
 | Meer dan 25 leden | Join weigert, jij krijgt een Telegram. | Gebouwd |
 | Seats erbij | Maandelijks automatisch, jaarlijks een tussenfactuur. | Gebouwd |
 | Account van de manager verwijderd | Alleen een mail aan jou. | Open, handmatig |
@@ -150,6 +152,7 @@ Open: mag de manager de opzegging intrekken tot de dag ervoor, zoals bij een sol
 - **Iemand met een eigen abonnement of proef die een team joint** (2026-11-15, besluit Arno). Gekozen: bij accepteren van de uitnodiging stopt de volgende betaling automatisch (geen restitutie, de lopende betaalperiode loopt uit) en vervalt een lopende proef met de resterende dagen. De toestemming is de knop om te joinen, met de uitleg erboven. Verworpen: alleen een Telegram aan jou plus een kader voor het lid (eerder gekozen), want dan betaalt hij dubbel tot iemand ingrijpt. Gevolg: wordt het team later geblokkeerd of verwijdert de manager hem, dan heeft hij geen eigen abonnement of proefdagen meer en moet hij zelf een abonnement nemen.
 - **Plan bij het verwijderen van een lid** (2026-11-15). Gekozen: het plan wordt gelijk aan een eigen abonnement dat nog loopt, anders niets. Reden: bij het joinen kreeg hij het plan van het team, zonder deze stap houdt hij Pro-functies voor een lagere prijs.
 - **Team opheffen** (2026-11-15). Gekozen: geen losse verwijderfunctie, het is de opzegregel (einddatum, blokkade, stop facturatie).
+- **Opzegging intrekken** (2026-11-15, op advies). Gekozen: de manager kan tot en met de dag vóór de einddatum intrekken, zoals bij een solo-abonnement. Redenen: er is tot die dag niets gestopt en de facturatie loopt door, en een manager die zich vergist kan het herstellen. Na de einddatum niet meer.
 - **Mail aan leden bij blokkeren of heractiveren:** bewust niet gebouwd. Besluit bij het eerste echte team.
 - **Mail aan de manager bij het einde van de proef:** gebouwd als de coulance-mail op dag 30, na goedkeuring van de tekst.
 
@@ -160,6 +163,7 @@ Open: mag de manager de opzegging intrekken tot de dag ervoor, zoals bij een sol
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
 - De manager ziet de proefstatus alleen op zijn accountpagina (en krijgt de mail op dag 30), niet in een balk in de app.
 - Een koppeling tussen de aanvraag en het team op de adminpagina ontbreekt (nu "match zelf op e-mailadres").
+- **Restitutie voor een solo-lid met een jaarabonnement** (open, besluit Arno). Wie een jaarabonnement heeft en lid wordt van een team, verliest de resterende looptijd zonder restitutie (voorwaarden). Dat voelt oneerlijk als hij het team zelf heeft binnengehaald, bijvoorbeeld doordat hij zijn manager overtuigde. Er is geen deelrestitutie in de code: de bestaande terugbetaalknop in de admin (`/api/admin/refund`) betaalt de volledige laatste betaling terug en beëindigt de toegang. Voor nu: handmatig uit coulance, door jou, via het Mollie-dashboard.
 
 ## Test en bewijs
 
@@ -175,7 +179,8 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Eigen abonnement stopt en proef vervalt bij het accepteren van een teamuitnodiging
 - [x] Leden van een geblokkeerd team mogen zelf een abonnement nemen en opzeggen
 - [x] Plan gelijk aan het eigen abonnement bij het verwijderen van een lid
-- [ ] SQL `stopt_op` uitvoeren (Arno)
-- [ ] Opzegregel Team: einddatum, blokkade en stop van de facturatie
-- [ ] Besluiten: opzegging intrekken mogelijk?
+- [x] SQL `stopt_op` uitgevoerd (Arno, 2026-11-15)
+- [x] Opzegregel Team: einddatum, blokkade en stop van de facturatie, intrekken tot de dag ervoor
+- [ ] Opzegregel Team een keer doorlopen op prod met het testaccount
+- [ ] Besluit restitutie solo-lid met jaarabonnement
 - [ ] Melding aan de manager buiten de accountpagina (balk in de app)

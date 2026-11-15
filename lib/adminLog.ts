@@ -19,6 +19,9 @@ export type AdminActie =
   | 'team_proef_beeindigd'
   | 'team_proef_verlengd'
   | 'team_geactiveerd'
+  | 'team_opgezegd'
+  | 'team_opzegging_ingetrokken'
+  | 'team_gestopt'
 
 export const ACTIE_LABEL: Record<AdminActie, string> = {
   betaald_gezet: 'BETAALD GEZET',
@@ -34,6 +37,9 @@ export const ACTIE_LABEL: Record<AdminActie, string> = {
   team_proef_beeindigd: 'TEAMPROEF BEËINDIGD',
   team_proef_verlengd: 'TEAMPROEF VERLENGD',
   team_geactiveerd: 'TEAM GEACTIVEERD',
+  team_opgezegd: 'TEAM OPGEZEGD',
+  team_opzegging_ingetrokken: 'OPZEGGING INGETROKKEN',
+  team_gestopt: 'TEAM GESTOPT',
 }
 
 export type AdminLogDetails = {

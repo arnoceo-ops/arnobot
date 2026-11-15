@@ -15,6 +15,7 @@ import {
 import { verstuurTeamMail } from './teamMails'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
+import { ontblokkeerNaBetaling } from '@/lib/teamOpzegging'
 import {
   berekenTeamPrijsPerMaand,
   TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS,
@@ -46,6 +47,8 @@ export interface TeamRow {
   cyclus: Cyclus | null
   volgende_factuurdatum: string | null
   geblokkeerd_at: string | null
+  /** Einddatum van een opgezegd team (lib/teamOpzegging.ts), leeg als het team niet is opgezegd. */
+  stopt_op?: string | null
 }
 
 export interface TeamFactuurRow {
@@ -318,8 +321,9 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
     }
   }
 
-  // Betaling ontvangen: een eventuele blokkade van dit team meteen opheffen.
-  await billingDb.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', rij.team_id)
+  // Betaling ontvangen: een eventuele blokkade van dit team meteen opheffen, behalve bij een team dat is gestopt na opzegging
+  // (een late betaling van een oude factuur zet het niet weer open).
+  await ontblokkeerNaBetaling(rij.team_id, new Date().toISOString().slice(0, 10))
 
   await notifyTelegram(`Team-factuur betaald op arno.bot\n\nFactuur: ${rij.id}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}`)
 }

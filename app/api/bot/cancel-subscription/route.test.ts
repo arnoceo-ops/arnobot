@@ -4,12 +4,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // (bijvoorbeeld omdat zijn team geblokkeerd was). Een manager en een gewone gebruiker blijven kunnen opzeggen.
 
 type Rij = Record<string, unknown>
-const { db, auth, eigen, mail, meld } = vi.hoisted(() => ({
+const { db, auth, eigen, mail, meld, zeg } = vi.hoisted(() => ({
   db: { approved_users: [] as Rij[], arnobot_team_members: [] as Rij[] },
   auth: vi.fn(),
   eigen: vi.fn(),
   mail: vi.fn(),
   meld: vi.fn(),
+  zeg: vi.fn(),
 }))
 
 type Tabel = keyof typeof db
@@ -38,13 +39,15 @@ vi.mock('@/lib/mail', () => ({ verstuurMailZacht: mail }))
 vi.mock('@/lib/billing/opzeggen', () => ({ meldOpzegging: meld }))
 vi.mock('@/lib/billing/soloNaarTeam', () => ({ soloStoptVoorTeam: vi.fn(async () => null) }))
 vi.mock('@/lib/teamLid', () => ({ heeftEigenAbonnement: eigen }))
+vi.mock('@/lib/teamOpzegging', () => ({ zegTeamOp: zeg }))
 
 const { POST } = await import('./route')
 
 beforeEach(() => {
   db.approved_users = [{ user_id: 'u1', voornaam: 'Jan', email: 'jan@x.nl', cancelled_at: null }]
   db.arnobot_team_members = []
-  auth.mockReset(); eigen.mockReset(); mail.mockReset(); meld.mockReset()
+  auth.mockReset(); eigen.mockReset(); mail.mockReset(); meld.mockReset(); zeg.mockReset()
+  zeg.mockResolvedValue({ ok: true, teamNaam: 'Team Een', stoptOp: '2026-12-15' })
   auth.mockResolvedValue({ userId: 'u1' })
   eigen.mockResolvedValue(false)
   meld.mockResolvedValue(null)
@@ -75,6 +78,35 @@ describe('opzeggen', () => {
     expect(res.status).toBe(200)
     expect((await res.json()).isManager).toBe(true)
     expect(eigen).not.toHaveBeenCalled()
+  })
+
+  it('geeft een manager de einddatum van zijn team terug en meldt die aan Arno', async () => {
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }]
+    const res = await POST()
+    const d = await res.json()
+    expect(zeg).toHaveBeenCalledWith('u1')
+    expect(d.team_stopt_op).toBe('2026-12-15')
+    expect(d.eindigt_op).toBe('2026-12-15T00:00:00.000Z')
+    const arnoMail = mail.mock.calls.map(c => c[0]).find(m => m.to === 'arno@arno.bot')
+    expect(arnoMail.html).toContain('het team stopt op')
+  })
+
+  it('legt niets vast als de opzegregel van het team weigert (bijvoorbeeld al opgezegd)', async () => {
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }]
+    zeg.mockResolvedValue({ ok: false, status: 409, fout: 'Dit team is al opgezegd' })
+    const res = await POST()
+    expect(res.status).toBe(409)
+    expect(db.approved_users[0].cancelled_at).toBeNull()
+    expect(mail).not.toHaveBeenCalled()
+  })
+
+  it('raakt de teamopzegging niet aan voor een gewone gebruiker of een lid met een eigen abonnement', async () => {
+    await POST()
+    db.approved_users[0].cancelled_at = null
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'member' }]
+    eigen.mockResolvedValue(true)
+    await POST()
+    expect(zeg).not.toHaveBeenCalled()
   })
 
   it('laat een gewone gebruiker opzeggen', async () => {

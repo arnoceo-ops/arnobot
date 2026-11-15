@@ -12,6 +12,7 @@ import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import TeamActiverenSectie, { useActivatieStand } from './TeamActiverenSectie'
 import TeamLidKader from './TeamLidKader'
+import TeamOpzeggingIntrekken from './TeamOpzeggingIntrekken'
 import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
@@ -30,6 +31,8 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null)
   const [cancelledAt, setCancelledAt] = useState<string | null>(null)
   const [eindigtOp, setEindigtOp] = useState<string | null>(null)
+  // Einddatum van een opgezegd team (alleen voor de manager), zie lib/teamOpzegging.ts.
+  const [teamStoptOp, setTeamStoptOp] = useState<string | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelDone, setCancelDone] = useState(false)
@@ -71,7 +74,7 @@ export default function AccountPage() {
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
-      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op); if (d.solo_naar_team_op) setSoloNaarTeamOp(d.solo_naar_team_op) })
+      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op); if (d.team_stopt_op) setTeamStoptOp(d.team_stopt_op); if (d.solo_naar_team_op) setSoloNaarTeamOp(d.solo_naar_team_op) })
       .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
@@ -106,7 +109,7 @@ export default function AccountPage() {
       const res = await fetch('/api/bot/cancel-subscription', { method: 'POST' })
       if (!res.ok) throw new Error('Opzegging mislukt')
       const data = await res.json()
-      setCancelledAt(data.cancelled_at); if (data.eindigt_op) setEindigtOp(data.eindigt_op)
+      setCancelledAt(data.cancelled_at); if (data.eindigt_op) setEindigtOp(data.eindigt_op); if (data.team_stopt_op) setTeamStoptOp(data.team_stopt_op)
       setCancelConfirm(false)
       setCancelDone(true)
       setOverstapVersie(v => v + 1)
@@ -435,6 +438,13 @@ export default function AccountPage() {
             <p style={body}>
               Je solo-abonnement stopt op {new Date(soloNaarTeamOp).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })} omdat je naar Team gaat. Tot die datum blijft alles werken, daarna loopt je Team.
             </p>
+          ) : cancelledAt && isManager && teamStoptOp ? (
+            <>
+              <p style={body}>
+                Je opzegging is ontvangen op {new Date(cancelledAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}. Je team stopt op {new Date(`${teamStoptOp.slice(0, 10)}T12:00:00Z`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })}. Tot die dag blijft alles werken voor jou en je team. Je data blijft bewaard totdat je account wordt afgesloten.
+              </p>
+              <TeamOpzeggingIntrekken stoptOp={teamStoptOp} onIngetrokken={() => { setCancelledAt(null); setEindigtOp(null); setTeamStoptOp(null); setCancelDone(false) }} />
+            </>
           ) : cancelledAt ? (
             <>
               <p style={body}>

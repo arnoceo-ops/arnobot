@@ -14,6 +14,7 @@ import {
 import { verstuurTeamMail } from '@/lib/billing/teamMails'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
+import { stopOpgezegdeTeams } from '@/lib/teamOpzegging'
 
 const DAG_MS = 24 * 60 * 60 * 1000
 const BETAALTERMIJN_DAGEN = 14
@@ -33,15 +34,19 @@ async function cronHandler(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
 
-  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, fouten: 0 }
+  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, gestopt: 0, fouten: 0 }
   try {
     const nu = new Date()
     const vandaag = dagVan(nu).toISOString().slice(0, 10)
 
+    // Eerst de opgezegde teams waarvan de einddatum is bereikt: blokkeren en de facturatie uitzetten (docs/TEAM_PROCES.md, fase 6).
+    // Daarna staat hun volgende factuurdatum leeg, dus de selectie hieronder slaat ze over en er komt geen factuur meer.
+    samenvatting.gestopt = (await stopOpgezegdeTeams(vandaag, nu)).length
+
     // Alleen teams die zijn "geactiveerd" voor automatische facturatie (zie /bot/admin/teams).
     const { data: teamsRaw } = await billingDb
       .from('arnobot_teams')
-      .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
+      .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op')
       .not('min_seats', 'is', null)
       .not('cyclus', 'is', null)
       .not('volgende_factuurdatum', 'is', null)
@@ -61,7 +66,7 @@ async function cronHandler(req: NextRequest) {
           const { nettoCent, btwCent } = berekenReguliereBedrag(seats, team.cyclus!)
           await maakTeamFactuur(team, { soort: 'regulier', periodeStart, periodeEinde, seats, nettoCent, btwCent })
           samenvatting.reguliereFacturen++
-        } else if (team.cyclus === 'jaarlijks') {
+        } else if (team.cyclus === 'jaarlijks' && !team.stopt_op) {
           // 2. Tussentijdse uitbreiding: alleen zinvol te vergelijken als er al een eerdere
           // factuur was (anders is er niets om tegen af te zetten, en komt de eerste factuur
           // hierboven vanzelf aan de beurt op volgende_factuurdatum).

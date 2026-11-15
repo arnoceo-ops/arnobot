@@ -27,7 +27,7 @@ export default async function TeamsAdminPage() {
 
   const { data: teams } = await supabase
     .from('arnobot_teams')
-    .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
+    .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op')
     .not('id', 'in', TEST_TEAM_IDS_IN)
     .order('name')
   const managerIds = [...new Set((teams ?? []).map(t => t.manager_id))]
@@ -119,6 +119,11 @@ export default async function TeamsAdminPage() {
           return (
             <div key={team.id}>
               <p style={{ fontSize: 13, color: stand.kleur, margin: '0 0 6px 2px' }}>{stand.tekst}</p>
+              {team.stopt_op && (
+                <p style={{ fontSize: 13, color: '#f59e0b', margin: '0 0 6px 2px' }}>
+                  Opgezegd door de manager: {team.stopt_op <= new Date().toISOString().slice(0, 10) ? 'gestopt op' : 'stopt op'} {new Date(`${team.stopt_op}T12:00:00Z`).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}
+                </p>
+              )}
               {proefTekst && proef && (
                 <>
                   <p style={{ fontSize: 13, color: proef.staat === 'verlopen' ? '#ef4444' : proef.staat === 'bijna' || proef.staat === 'coulance' ? '#f59e0b' : '#9ca3af', margin: '0 0 6px 2px' }}>{proefTekst}</p>
