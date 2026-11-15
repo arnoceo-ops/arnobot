@@ -7,18 +7,34 @@ import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 // Balk onderin: de proefperiode loopt bijna af. Zelfde opzet en stijl als VersionBanner. Alleen
 // voor wie nog in de proefperiode zit zonder betaling (server bepaalt dat in /api/bot/trial-status),
 // vanaf 5 dagen ervoor. Alleen zichtbaar op de hoofdpagina /bot.
-// Bekijken zonder op dag 25 te zitten: voeg ?trialbalk=5 (1 tot en met 5) aan een /bot-adres toe.
+// Dezelfde balk voor de manager van een gratis teamproef, in de laatste 5 dagen en in de coulance van 10 dagen daarna
+// (docs/TEAM_PROCES.md, fase 2), met een knop naar zijn accountpagina om het team te activeren.
+// Bekijken zonder op dag 25 te zitten: voeg ?trialbalk=5 (1 tot en met 5) aan een /bot-adres toe. Voor de teambalk:
+// ?teambalk=bijna of ?teambalk=coulance.
 // Dat is puur visueel, het geeft niemand iets en wijzigt niets, en toont de balk ook als je hem
 // eerder weggeklikt had.
 const SLUIT_KEY = 'arnobot_trialbalk_gesloten'
 
+type TeamProef = { staat: 'bijna' | 'coulance'; dagen: number; toegangTot: string }
+
+const datumNl = (iso: string) => new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
+
 export default function TrialBalk() {
   const pathname = usePathname()
   const [dagenOver, setDagenOver] = useState<number | null>(null)
+  const [teamProef, setTeamProef] = useState<TeamProef | null>(null)
   const [gesloten, setGesloten] = useState(false)
   const balkRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const teamPreview = new URLSearchParams(window.location.search).get('teambalk')
+    if (teamPreview === 'bijna' || teamPreview === 'coulance') {
+      try { sessionStorage.removeItem(SLUIT_KEY) } catch { /* opslag geblokkeerd */ }
+      setGesloten(false)
+      setTeamProef({ staat: teamPreview, dagen: teamPreview === 'bijna' ? 3 : 7, toegangTot: new Date(Date.now() + 7 * 86_400_000).toISOString() })
+      return
+    }
+
     const preview = Number(new URLSearchParams(window.location.search).get('trialbalk'))
     if (Number.isInteger(preview) && preview >= 1 && preview <= 5) {
       try { sessionStorage.removeItem(SLUIT_KEY) } catch { /* opslag geblokkeerd */ }
@@ -32,7 +48,11 @@ export default function TrialBalk() {
     let cancelled = false
     fetch('/api/bot/trial-status')
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!cancelled && d && typeof d.dagenOver === 'number') setDagenOver(d.dagenOver) })
+      .then(d => {
+        if (cancelled || !d) return
+        if (typeof d.dagenOver === 'number') setDagenOver(d.dagenOver)
+        else if (d.teamProef && (d.teamProef.staat === 'bijna' || d.teamProef.staat === 'coulance')) setTeamProef(d.teamProef)
+      })
       .catch(() => {})
     return () => { cancelled = true }
   }, [])
@@ -41,7 +61,7 @@ export default function TrialBalk() {
   // balk voor iemand die hem niet hoort te zien.
   // Niet in de Android-app: de balk verwijst naar een abonnement kiezen (Google Play-betalingsbeleid).
   const isNativeApp = useIsNativeApp()
-  const zichtbaar = dagenOver !== null && !gesloten && pathname === '/bot' && !isNativeApp
+  const zichtbaar = (dagenOver !== null || teamProef !== null) && !gesloten && pathname === '/bot' && !isNativeApp
 
   // Geef de pagina onderaan evenveel ruimte als de balk hoog is, zodat de laatste regel inhoud
   // niet achter de vaste balk verdwijnt. Weer ongedaan zodra de balk weg is.
@@ -50,13 +70,17 @@ export default function TrialBalk() {
     const oud = document.body.style.paddingBottom
     document.body.style.paddingBottom = `${balkRef.current?.offsetHeight ?? 0}px`
     return () => { document.body.style.paddingBottom = oud }
-  }, [zichtbaar, dagenOver])
+  }, [zichtbaar, dagenOver, teamProef])
 
   if (!zichtbaar) return null
 
-  const regel1 = dagenOver === 1
-    ? 'Je gratis proefperiode loopt vandaag af.'
-    : `Je gratis proefperiode loopt over ${dagenOver} dagen af.`
+  const regel1 = teamProef
+    ? (teamProef.staat === 'coulance'
+      ? `Je gratis teamproef is afgelopen. Je team heeft nog toegang tot ${datumNl(teamProef.toegangTot)}.`
+      : teamProef.dagen <= 1 ? 'Je gratis teamproef loopt vandaag af.' : `Je gratis teamproef loopt over ${teamProef.dagen} dagen af.`)
+    : dagenOver === 1
+      ? 'Je gratis proefperiode loopt vandaag af.'
+      : `Je gratis proefperiode loopt over ${dagenOver} dagen af.`
 
   return (
     <>
@@ -76,9 +100,11 @@ export default function TrialBalk() {
         <div className="trialbalk-tekst" style={{ maxWidth: 812, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af' }}>{regel1}</span>
           <a
-            href="/bot/doorgaan"
+            href={teamProef ? '/bot/account' : '/bot/doorgaan'}
             style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color: '#9ca3af', textDecoration: 'none' }}
-          ><span style={{ color: '#f59e0b' }}>Kies je abonnement</span> om door te gaan →</a>
+          >{teamProef
+            ? <><span style={{ color: '#f59e0b' }}>Activeer je team</span> om door te gaan →</>
+            : <><span style={{ color: '#f59e0b' }}>Kies je abonnement</span> om door te gaan →</>}</a>
         </div>
       </div>
     </>

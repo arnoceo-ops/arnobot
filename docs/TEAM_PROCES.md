@@ -4,7 +4,7 @@
 
 **Waar we staan:** het hele proces is gebouwd: van binnenkomst, proef en coulance, zelf activeren en leden tot en met de opzegregel voor Team (einddatum volgens artikel 7, blokkade en stop van de facturatie op die dag, intrekken tot de dag ervoor). Zelf activeren en de opzegregel zijn op 2026-11-15 op prod doorlopen met het testaccount (activeren, factuur, betaallink; opzeggen op tijd en te laat, intrekken, beide mails). De SQL-kolom `arnobot_teams.stopt_op` is op 2026-11-15 door Arno uitgevoerd. Een onafhankelijke controle van dit document tegen de code (2026-11-15) vond de beweringen correct op een paar verouderde regels na, die zijn hersteld, en een gat bij het joinen van een geblokkeerd team, dat is gedicht.
 
-**Eerstvolgende stap:** geen openstaande bouwstappen. Open: een melding aan de manager buiten de accountpagina (zie de afvinklijst).
+**Eerstvolgende stap:** geen openstaande bouwstappen.
 
 Dit document beschrijft het hele leven van een team, van de eerste aanmelding tot het einde, en wat er in elk scenario gebeurt. Het begon als een checklist voor het onboarden van een klant (`TEAM_ONBOARDING.md`) en een overzicht van scenario's (`TEAM_LEVENSCYCLUS.md`); beide zijn hierin opgegaan. Waar het niet over gaat: wat een team kan en de coaching zelf staat in `docs/TEAM_PLAN.md` en `docs/ARNOBOT_OVERZICHT.md` (3.7 Teammodule), de tarieven en voorwaarden in `docs/ABONNEMENTEN.md`, de sales agents in `docs/SALES_DEVELOPMENT.md`, een jaarabonnement dat Team wordt in `docs/SOLO_JAAR_NAAR_TEAM.md`, de betaalprovider in `docs/MOLLIE_PLAN.md`.
 
@@ -52,8 +52,8 @@ Alleen zakelijk maandelijks. Voor een jaarabonnement of particulier: `docs/SOLO_
 | Dag | Wat er gebeurt |
 |---|---|
 | 0 tot 25 | Gewone proef. Op de accountpagina van de manager staat bovenaan het kader TEAMPROEF met de resterende dagen en de knop TEAM ACTIVEREN. |
-| 25 | Telegram aan jou: de proef loopt bijna af, tijd voor het gesprek. |
-| 30 | De gratis proef is voorbij. De manager krijgt een mail "Activeer je team binnen 10 dagen" met een knop naar zijn accountpagina. Het kader toont "TEAMPROEF AFGELOPEN, NOG X DAGEN". Het team houdt toegang. Telegram aan jou. |
+| 25 | Telegram aan jou: de proef loopt bijna af, tijd voor het gesprek. Vanaf nu staat er voor de manager onderin de app (op `/bot`) een balk: "Je gratis teamproef loopt over X dagen af" met een knop naar zijn accountpagina om te activeren. |
+| 30 | De gratis proef is voorbij. De balk onderin de app zegt nu "Je gratis teamproef is afgelopen. Je team heeft nog toegang tot [datum]". De manager krijgt een mail "Activeer je team binnen 10 dagen" met een knop naar zijn accountpagina. Het kader toont "TEAMPROEF AFGELOPEN, NOG X DAGEN". Het team houdt toegang. Telegram aan jou. |
 | 40 | Het team blokkeert (manager en leden). Het kader wordt rood: "PROEF AFGELOPEN". Telegram aan jou. |
 
 Activeren kan op elk moment, ook na de blokkade.
@@ -159,11 +159,10 @@ Activeren kan op elk moment, ook na de blokkade.
 
 ## Bekende gaten
 
-- `/api/chat` controleert de einddatum of blokkade niet zelf, alleen de pagina's doen dat. Wie een verzoek zelf samenstelt, kan doorchatten. Geldt voor elke verlopen gebruiker, niet alleen teamleden.
+- `/api/chat` controleert sinds 2026-11-15 zelf de toegang (`lib/toegangNu.ts`, dezelfde regels als de toegangspoort; 403 `geen_toegang`, de chatpagina stuurt dan naar `/bot/doorgaan`). Andere AI-routes, zoals `/api/chat-voice` en de sparroute, hebben die controle nog niet: een verlopen of geblokkeerde gebruiker kan daar met een zelf samengesteld verzoek nog gebruik van maken. De dagelijkse limieten begrenzen dat. Op afspraak is alleen de chatroute aangepakt.
 - Of een verlenging van een eigen abonnement het plan van een verwijderd lid later opnieuw zet, is niet nagelopen.
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
 - Het stoppen van een opgezegd team hangt aan de cron `team-facturatie`: draait die niet (bijvoorbeeld als Mollie is uitgeschakeld), dan blijft het team een dag langer open. De stap is idempotent en haalt dat de volgende run in. Een nog open factuur van een gestopt team blijft staan zonder gevolg: er komt geen nieuwe bij en een late betaling zet het team niet weer open.
-- De manager ziet de proefstatus alleen op zijn accountpagina (en krijgt de mail op dag 30), niet in een balk in de app.
 - Een koppeling tussen de aanvraag en het team op de adminpagina ontbreekt (nu "match zelf op e-mailadres").
 
 ## Test en bewijs
@@ -185,4 +184,5 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Opzegregel Team: einddatum, blokkade en stop van de facturatie, intrekken tot de dag ervoor
 - [x] Opzegregel Team doorlopen op prod met het testaccount (op tijd en te laat, intrekken, beide mails)
 - [x] Restitutie solo-lid met jaarabonnement: handmatig uit coulance, de Telegram toont de looptijd en het bedrag naar rato
-- [ ] Melding aan de manager buiten de accountpagina (balk in de app)
+- [x] Melding aan de manager buiten de accountpagina: balk onderin de app in de laatste 5 dagen en in de coulance
+- [x] `/api/chat` controleert zelf de toegang

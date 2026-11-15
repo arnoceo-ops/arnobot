@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isTeamCovered } from '@/lib/teamAccess'
 import { trialDagenOver } from '@/lib/toegang'
+import { leesActivatieStand } from '@/lib/teamActivatie'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,8 +22,18 @@ export async function GET() {
     .eq('user_id', userId)
     .maybeSingle()
 
-  // Teams betalen niet zelf en hebben geen eigen proefperiode die afloopt.
-  if (!data || data.is_active === false || data.command_manager === true) {
+  if (!data || data.is_active === false) return NextResponse.json({ dagenOver: null })
+
+  // Een manager van een gratis agent-proef heeft geen eigen proefperiode, maar wel een team dat moet worden geactiveerd. In de
+  // laatste 5 dagen en in de coulance krijgt hij daarvoor een balk (docs/TEAM_PROCES.md, fase 2). Alleen die twee standen:
+  // eerder is er niets te melden en daarna sluit de toegangspoort hem buiten en landt hij op zijn accountpagina.
+  if (data.command_manager === true) {
+    const stand = await leesActivatieStand(userId)
+    const proef = stand?.kanActiveren ? stand.proef : null
+    if (proef && (proef.staat === 'bijna' || proef.staat === 'coulance')) {
+      return NextResponse.json({ dagenOver: null, teamProef: { staat: proef.staat, dagen: proef.dagen, toegangTot: proef.toegangTot } })
+    }
+    // Teams betalen niet zelf en hebben geen eigen proefperiode die afloopt.
     return NextResponse.json({ dagenOver: null })
   }
   const dagenOver = trialDagenOver(data)

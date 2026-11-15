@@ -1542,6 +1542,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
             } else if (res.status === 429 && data.error === 'dual_session') {
               setMessages(prev => [...prev, { role: 'arno', content: '', hint: 'dual_session', retryQuestion: question }])
+            } else if (res.status === 403 && data.error === 'geen_toegang') {
+              // Geen toegang meer (verlopen proef, geblokkeerd team): naar de pagina die uitlegt wat er kan.
+              window.location.href = '/bot/doorgaan'
             } else if (data.error === 'bestandstype_niet_ondersteund') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_te_groot') {
