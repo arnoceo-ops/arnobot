@@ -191,7 +191,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>PostHog</td>
                   <td>Bezoekers- en gebruiksanalyse (pseudoniem), EU-hosting (Frankfurt)</td>
-                  <td>DPA op aanvraag</td>
+                  <td>Verwerkersovereenkomst afgesloten</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Resend</td>
@@ -211,7 +211,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Upstash</td>
                   <td>Rate limiting (verwerkt IP-adressen)</td>
-                  <td>Geen publieke DPA, op aanvraag</td>
+                  <td><a href="https://upstash.com/trust/dpa.pdf" target="_blank" rel="noopener noreferrer">upstash.com/trust/dpa</a></td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Vercel</td>
@@ -221,7 +221,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Voyage AI</td>
                   <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen</td>
-                  <td>SOC 2 · HIPAA, DPA op aanvraag</td>
+                  <td><a href="https://www.voyageai.com/dpa" target="_blank" rel="noopener noreferrer">voyageai.com/dpa</a></td>
                 </tr>
               </tbody>
             </table>
