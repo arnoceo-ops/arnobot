@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.7  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 1.8  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -221,7 +221,6 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
     Sec('SOFTWAREKWALITEIT', 'Afhankelijkheden en updates',
       el(Text, { style: s.p }, 'Moderne webapplicaties zijn opgebouwd uit externe softwarepakketten. Kwetsbaarheden daarin kunnen ook jouw data raken. ArnoBot houdt dit actief bij.'),
       Item('Regelmatige audit', 'Alle pakketten worden gecontroleerd op bekende kwetsbaarheden. Kwetsbaarheden in runtime-code worden direct verholpen.'),
-      Item('Nul bekende runtime-kwetsbaarheden', 'Na de laatste securitysessie zijn alle kwetsbaarheden in code die in productie draait verholpen.'),
       Item('Tijdslimiet op AI-aanroepen', 'Alle verbindingen met het AI-model hebben een maximale looptijd om ongecontroleerd resourcegebruik te voorkomen.'),
       Item('Automatische monitoring', 'Dependabot controleert wekelijks alle pakketten op nieuwe kwetsbaarheden en meldt dit direct.'),
     ),
