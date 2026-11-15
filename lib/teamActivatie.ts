@@ -56,10 +56,14 @@ export type ActivatieStand = {
 
 /** De teamstand van een manager, of null als deze gebruiker geen team beheert. */
 export async function leesActivatieStand(userId: string): Promise<ActivatieStand | null> {
+  // Via het lidmaatschap, net als /api/bot/team/status: een account hoort bij één team. Zoeken op manager_id kan twee
+  // teams opleveren (het testaccount is manager van Team Apex en van het testproefteam) en dan komt er niets terug.
+  const { data: lid } = await supabase.from('arnobot_team_members').select('team_id').eq('user_id', userId).eq('role', 'manager').maybeSingle<{ team_id: string }>()
+  if (!lid) return null
   const { data: team } = await supabase
     .from('arnobot_teams')
     .select('id, name, min_seats, cyclus, geblokkeerd_at')
-    .eq('manager_id', userId)
+    .eq('id', lid.team_id)
     .maybeSingle<{ id: string; name: string; min_seats: number | null; cyclus: Cyclus | null; geblokkeerd_at: string | null }>()
   if (!team) return null
 

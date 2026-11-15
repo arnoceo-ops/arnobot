@@ -47,7 +47,11 @@ function bouwer(tabel: string) {
   b.update = (w: Rij) => { op = 'update'; waarden = w; return b }
   b.upsert = (w: Rij) => { op = 'upsert'; waarden = w; return b }
   b.delete = () => { op = 'delete'; return b }
-  b.maybeSingle = () => { const u = uitvoer(); return Promise.resolve({ data: (u.data as Rij[] | null)?.[0] ?? null, error: null }) }
+  // Zoals PostgREST: bij meer dan één rij geeft maybeSingle een fout en geen data.
+  b.maybeSingle = () => {
+    const rijen = (uitvoer().data as Rij[] | null) ?? []
+    return Promise.resolve(rijen.length > 1 ? { data: null, error: { message: 'meerdere rijen' } } : { data: rijen[0] ?? null, error: null })
+  }
   b.then = (ok: (v: unknown) => unknown) => Promise.resolve(uitvoer()).then(ok)
   return b
 }
@@ -108,6 +112,12 @@ describe('leesActivatieStand', () => {
   it('geeft null voor iemand die geen team beheert', async () => {
     zet()
     expect(await leesActivatieStand('l1')).toBeNull()
+  })
+  it('vindt het juiste team ook als de manager op twee teams als manager_id staat (testaccount met Team Apex)', async () => {
+    zet()
+    db.arnobot_teams.push({ id: 't-apex', name: 'Team Apex', manager_id: 'm1', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: null })
+    const s = await leesActivatieStand('m1')
+    expect(s).toMatchObject({ teamId: 't1', teamNaam: 'Team Een', kanActiveren: true })
   })
   it('toont een lopende agent-proef als activeerbaar met de resterende dagen', async () => {
     zet()
