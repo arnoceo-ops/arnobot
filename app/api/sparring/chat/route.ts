@@ -6,12 +6,17 @@ import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE } from '@/lib/sparringPersonas'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const body = await req.json()
   const { message, history, rolCategorie, persona, weerstand, context } = body

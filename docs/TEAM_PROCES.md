@@ -159,7 +159,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 ## Bekende gaten
 
-- `/api/chat` controleert sinds 2026-11-15 zelf de toegang (`lib/toegangNu.ts`, dezelfde regels als de toegangspoort; 403 `geen_toegang`, de chatpagina stuurt dan naar `/bot/doorgaan`). Andere AI-routes, zoals `/api/chat-voice` en de sparroute, hebben die controle nog niet: een verlopen of geblokkeerde gebruiker kan daar met een zelf samengesteld verzoek nog gebruik van maken. De dagelijkse limieten begrenzen dat. Op afspraak is alleen de chatroute aangepakt.
+- `/api/chat`, `/api/chat-voice` en de drie sparroutes (`/api/sparring/open`, `chat` en `debrief`) controleren sinds 2026-11-15 zelf de toegang (`lib/toegangsPoort.ts` met de regels uit `lib/toegangNu.ts`, gelijk aan de toegangspoort; 403 `geen_toegang`). De chatpagina stuurt dan naar `/bot/doorgaan`; bij stem-chat en sparren toont de pagina een gewone foutmelding. Andere AI-routes zijn niet nagelopen: wie een nieuwe route maakt die geld kost, zet de poort er direct na de controle op inloggen.
 - Of een verlenging van een eigen abonnement het plan van een verwijderd lid later opnieuw zet, is niet nagelopen.
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
 - Het stoppen van een opgezegd team hangt aan de cron `team-facturatie`: draait die niet (bijvoorbeeld als Mollie is uitgeschakeld), dan blijft het team een dag langer open. De stap is idempotent en haalt dat de volgende run in. Een nog open factuur van een gestopt team blijft staan zonder gevolg: er komt geen nieuwe bij en een late betaling zet het team niet weer open.
@@ -185,4 +185,4 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Opzegregel Team doorlopen op prod met het testaccount (op tijd en te laat, intrekken, beide mails)
 - [x] Restitutie solo-lid met jaarabonnement: handmatig uit coulance, de Telegram toont de looptijd en het bedrag naar rato
 - [x] Melding aan de manager buiten de accountpagina: balk onderin de app in de laatste 5 dagen en in de coulance
-- [x] `/api/chat` controleert zelf de toegang
+- [x] `/api/chat`, `/api/chat-voice` en de sparroutes controleren zelf de toegang

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bestanden die de Android-app zelf maakt (gekopieerde webbestanden en build-uitvoer): geen eigen code.
+    "android/**",
   ]),
 ]);
 

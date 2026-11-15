@@ -7,6 +7,7 @@ import { getText } from '@/lib/ai'
 import { RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { createClient } from '@supabase/supabase-js'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const supabase = createClient(
@@ -24,6 +25,10 @@ const PERSONA_LABELS: Record<string, Record<string, string>> = {
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const body = await req.json()
   const { messages, profiel, persona, weerstand, rolCategorie, sessionId } = body

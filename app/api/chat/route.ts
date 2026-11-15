@@ -73,7 +73,7 @@ import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
 const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
-import { heeftToegangNu } from '@/lib/toegangNu'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
 const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
@@ -215,10 +215,9 @@ export async function POST(req: NextRequest) {
 
     // Toegang: proxy.ts bewaakt alleen de pagina's, deze route moet het zelf doen. Zonder deze controle kan een verlopen of
     // geblokkeerde gebruiker met een zelf samengesteld verzoek blijven chatten. Vóór de RAG-pipeline hieronder, zodat het niets
-    // kost. De eigenaar en interne testaccounts slaan dit over (hun toegang loopt niet via datums).
-    if (userId !== process.env.ARNOBOT_OWNER_USER_ID && !isTestIdentifier(userId) && !(await heeftToegangNu(userId))) {
-      return NextResponse.json({ error: 'geen_toegang' }, { status: 403, headers: corsHeaders(origin) })
-    }
+    // kost. De eigenaar en interne testaccounts slaan dit over (hun toegang loopt niet via datums), zie lib/toegangsPoort.ts.
+    const geenToegang = await toegangsWeigering(userId, corsHeaders(origin))
+    if (geenToegang) return geenToegang
 
     // Start de VOLLEDIGE RAG-pipeline (queryherschrijving + opzoeking + rerank) meteen,
     // parallel aan de moderatie-check en de rest hierna, in plaats van pas te beginnen ná

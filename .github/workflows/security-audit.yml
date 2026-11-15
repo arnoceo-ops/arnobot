@@ -205,8 +205,8 @@ jobs:
       - name: Lint (volledige codebase)
         run: npm run lint
         continue-on-error: true
-        # Blokkeert bewust niet: er staan nog 66 bestaande lint-fouten in
-        # oudere code (2026-07-10 gemeten). Twee pogingen om alleen nieuwe/
+        # Blokkeert bewust niet: er staan nog 78 bestaande lint-fouten in
+        # oudere code (2026-11-15 gemeten, na het uitsluiten van de map android; 66 op 2026-07-10). Twee pogingen om alleen nieuwe/
         # gewijzigde regels te laten falen (eigen git-diff-script, daarna
         # reviewdog/action-eslint met filter_mode: added) faalden allebei in
         # de praktijk op deze repo, filter_mode: added bleek de hele codebase

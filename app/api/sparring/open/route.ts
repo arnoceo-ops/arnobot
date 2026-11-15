@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE, WEERSTAND_OPENING_TOON } from '@/lib/sparringPersonas'
 import { logEvent } from '@/lib/events'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const supabase = createClient(
@@ -18,6 +19,10 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   // Basic krijgt 1 sparsessie per dag (zie /prijzen: "Dagelijks sparren" vs Pro's "Onbeperkt
   // chatten en oefenen"), Pro/Team onbeperkt. Vóór 2026-08-26 had deze route geen enkele

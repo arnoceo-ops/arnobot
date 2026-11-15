@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { getVoiceAnswer, hasVoiceAccess } from '@/lib/voice'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,6 +28,10 @@ const voiceChatRateLimit = new Ratelimit({
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const { success } = await voiceChatRateLimit.limit(userId)
   if (!success) return NextResponse.json({ error: 'rate_limit' }, { status: 429 })
