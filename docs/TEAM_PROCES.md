@@ -4,7 +4,7 @@
 
 **Waar we staan:** het hele proces is gebouwd: van binnenkomst, proef en coulance, zelf activeren en leden tot en met de opzegregel voor Team (einddatum volgens artikel 7, blokkade en stop van de facturatie op die dag, intrekken tot de dag ervoor). Zelf activeren is op prod getest met het testaccount (activeren, factuur, betaallink). De opzegregel is gebouwd en met tests gedekt maar nog niet op prod doorlopen. De SQL-kolom `arnobot_teams.stopt_op` is op 2026-11-15 door Arno uitgevoerd.
 
-**Eerstvolgende stap:** de opzegregel Team een keer doorlopen met het testaccount (opzeggen, einddatum zien, intrekken), en een besluit over restitutie voor een solo-lid met een jaarabonnement (zie Open punten).
+**Eerstvolgende stap:** de opzegregel Team een keer doorlopen met het testaccount (opzeggen, einddatum zien, intrekken).
 
 Dit document beschrijft het hele leven van een team, van de eerste aanmelding tot het einde, en wat er in elk scenario gebeurt. Het begon als een checklist voor het onboarden van een klant (`TEAM_ONBOARDING.md`) en een overzicht van scenario's (`TEAM_LEVENSCYCLUS.md`); beide zijn hierin opgegaan. Waar het niet over gaat: wat een team kan en de coaching zelf staat in `docs/TEAM_PLAN.md` en `docs/ARNOBOT_OVERZICHT.md` (3.7 Teammodule), de tarieven en voorwaarden in `docs/ABONNEMENTEN.md`, de sales agents in `docs/SALES_DEVELOPMENT.md`, een jaarabonnement dat Team wordt in `docs/SOLO_JAAR_NAAR_TEAM.md`, de betaalprovider in `docs/MOLLIE_PLAN.md`.
 
@@ -94,7 +94,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 **Joinen.** Een lid komt binnen via `/bot/team/join?code=...` en krijgt het plan van het team (Pro). Maximaal 25 leden per team: de join weigert daarna, en jij krijgt een Telegram bij 20 leden (eenmalig per team) en als iemand wordt geweigerd (hooguit één keer per week per team). Testteams melden niet. Het aanvraagformulier laat meer seats toe (bijvoorbeeld 140 medewerkers): bij een grotere klant is een aanpassing nodig vóór de uitnodigingen.
 
-**Iemand met een eigen abonnement of proef accepteert de uitnodiging.** Op de uitnodigingspagina staat vooraf: "Je gesprekken en historie blijven van jou, ook als je lid wordt en als je het team later verlaat. Vanaf nu betaalt je team: een eigen abonnement loopt uit tot het einde van je betaalperiode (geen restitutie) en een lopende proef vervalt." Bij accepteren stopt de Mollie-incasso en vervalt de proef automatisch (`lib/billing/teamlidSolo.ts`), en jij krijgt een Telegram, ook als het stoppen mislukt. Hij blijft hetzelfde account, dus de gesprekshistorie blijft. Een handmatig betaald lid (BETAALD gezet, zonder online abonnement) heeft geen incasso om te stoppen: dat meldt de Telegram.
+**Iemand met een eigen abonnement of proef accepteert de uitnodiging.** Op de uitnodigingspagina staat vooraf: "Je gesprekken en historie blijven van jou, ook als je lid wordt en als je het team later verlaat. Vanaf nu betaalt je team: een eigen abonnement loopt uit tot het einde van je betaalperiode (geen restitutie) en een lopende proef vervalt." Bij accepteren stopt de Mollie-incasso en vervalt de proef automatisch (`lib/billing/teamlidSolo.ts`), en jij krijgt een Telegram, ook als het stoppen mislukt. Hij blijft hetzelfde account, dus de gesprekshistorie blijft. Een handmatig betaald lid (BETAALD gezet, zonder online abonnement) heeft geen incasso om te stoppen: dat meldt de Telegram. Heeft hij een jaarabonnement met nog minstens twee maanden looptijd, dan noemt de Telegram ook de resterende looptijd en het bedrag naar rato incl. btw, zodat jij kunt beslissen over een deelrestitutie uit coulance (zie Besluiten).
 
 **Lid wordt verwijderd door de manager** (VERWIJDER UIT TEAM). Het lidmaatschap verdwijnt direct en zonder bericht. Zijn plan wordt gelijk aan een eigen abonnement dat nog loopt (`lib/teamLid.ts`, ook een opgezegd abonnement met een betaalperiode in de toekomst, bijvoorbeeld dat dat bij het joinen is gestopt), en blijft anders zoals het is. Heeft hij geen eigen abonnement en geen proefdagen meer (die vervielen bij het joinen), dan moet hij zelf een abonnement nemen. Zijn gesprekken en historie blijven van hem. Een lid kan niet zelf uit het team stappen, behalve door zijn account te laten verwijderen.
 
@@ -153,6 +153,7 @@ Activeren kan op elk moment, ook na de blokkade.
 - **Plan bij het verwijderen van een lid** (2026-11-15). Gekozen: het plan wordt gelijk aan een eigen abonnement dat nog loopt, anders niets. Reden: bij het joinen kreeg hij het plan van het team, zonder deze stap houdt hij Pro-functies voor een lagere prijs.
 - **Team opheffen** (2026-11-15). Gekozen: geen losse verwijderfunctie, het is de opzegregel (einddatum, blokkade, stop facturatie).
 - **Opzegging intrekken** (2026-11-15, op advies). Gekozen: de manager kan tot en met de dag vóór de einddatum intrekken, zoals bij een solo-abonnement. Redenen: er is tot die dag niets gestopt en de facturatie loopt door, en een manager die zich vergist kan het herstellen. Na de einddatum niet meer.
+- **Restitutie voor een solo-lid met een jaarabonnement** (2026-11-15, besluit Arno). Wie een jaarabonnement heeft en lid wordt van een team, verliest de resterende looptijd zonder restitutie (voorwaarden). Dat kan oneerlijk voelen als hij het team zelf heeft binnengehaald, bijvoorbeeld doordat hij zijn manager overtuigde. Gekozen: handmatig uit coulance, per geval door Arno, via het Mollie-dashboard, als het zich voordoet. De Telegram bij het joinen noemt daarvoor de resterende looptijd en het bedrag naar rato (`restantNaarRato` in `lib/billing/teamlidSolo.ts`). Verworpen: automatisch naar rato terugbetalen (nieuwe functie: deelrestitutie bij Mollie en een deel-creditnota in Moneybird, en het besluit zou dan voor altijd vastliggen). De bestaande terugbetaalknop in de admin (`/api/admin/refund`) is er niet voor: die betaalt de volledige laatste betaling terug en beëindigt de toegang.
 - **Mail aan leden bij blokkeren of heractiveren:** bewust niet gebouwd. Besluit bij het eerste echte team.
 - **Mail aan de manager bij het einde van de proef:** gebouwd als de coulance-mail op dag 30, na goedkeuring van de tekst.
 
@@ -163,7 +164,6 @@ Activeren kan op elk moment, ook na de blokkade.
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
 - De manager ziet de proefstatus alleen op zijn accountpagina (en krijgt de mail op dag 30), niet in een balk in de app.
 - Een koppeling tussen de aanvraag en het team op de adminpagina ontbreekt (nu "match zelf op e-mailadres").
-- **Restitutie voor een solo-lid met een jaarabonnement** (open, besluit Arno). Wie een jaarabonnement heeft en lid wordt van een team, verliest de resterende looptijd zonder restitutie (voorwaarden). Dat voelt oneerlijk als hij het team zelf heeft binnengehaald, bijvoorbeeld doordat hij zijn manager overtuigde. Er is geen deelrestitutie in de code: de bestaande terugbetaalknop in de admin (`/api/admin/refund`) betaalt de volledige laatste betaling terug en beëindigt de toegang. Voor nu: handmatig uit coulance, door jou, via het Mollie-dashboard.
 
 ## Test en bewijs
 
@@ -182,5 +182,5 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] SQL `stopt_op` uitgevoerd (Arno, 2026-11-15)
 - [x] Opzegregel Team: einddatum, blokkade en stop van de facturatie, intrekken tot de dag ervoor
 - [ ] Opzegregel Team een keer doorlopen op prod met het testaccount
-- [ ] Besluit restitutie solo-lid met jaarabonnement
+- [x] Restitutie solo-lid met jaarabonnement: handmatig uit coulance, de Telegram toont de looptijd en het bedrag naar rato
 - [ ] Melding aan de manager buiten de accountpagina (balk in de app)

@@ -13,6 +13,31 @@ import { trialEinde } from '@/lib/toegang'
 // Verworpen: alleen een melding aan Arno (de solo-klant betaalt dan dubbel tot iemand ingrijpt).
 // De toestemming staat op de uitnodigingspagina vóór het joinen (app/bot/team/join/page.tsx).
 
+const DAG_MS = 86_400_000
+/** Onder dit aantal resterende dagen is er geen aanleiding om een deelrestitutie te overwegen. */
+const MIN_DAGEN_VOOR_RESTITUTIE = 60
+
+export type NaarRato = { dagen: number; maanden: number; bedragCent: number }
+
+/**
+ * Wat is er nog betaald van een jaarabonnement dat stopt doordat het lid een team joint? Een indicatie voor Arno, geen
+ * automatische restitutie: die beslist hij zelf uit coulance (besluit 2026-11-15, docs/TEAM_PROCES.md, fase 5). null bij een
+ * maandabonnement of als er minder dan twee maanden over zijn.
+ */
+export function restantNaarRato(
+  sub: Pick<SubRow, 'cyclus' | 'bedrag_cent' | 'periode_start' | 'periode_einde'>,
+  nu: Date,
+): NaarRato | null {
+  if (sub.cyclus !== 'jaarlijks' || !sub.periode_start || !sub.periode_einde) return null
+  const start = new Date(sub.periode_start).getTime()
+  const einde = new Date(sub.periode_einde).getTime()
+  const rest = einde - nu.getTime()
+  if (!(einde > start) || rest <= 0) return null
+  const dagen = Math.ceil(rest / DAG_MS)
+  if (dagen < MIN_DAGEN_VOOR_RESTITUTIE) return null
+  return { dagen, maanden: Math.round(dagen / 30.4), bedragCent: Math.round((sub.bedrag_cent * rest) / (einde - start)) }
+}
+
 export type SoloBijJoin = {
   /** gestopt: de incasso is gestopt. mislukt: Arno heeft een Telegram en stopt hem zelf. geen: er liep niets. */
   abonnement: 'geen' | 'gestopt' | 'mislukt'
@@ -20,6 +45,8 @@ export type SoloBijJoin = {
   omschrijving?: string
   /** Tot wanneer het eigen abonnement is betaald (ISO). */
   loptTot?: string
+  /** Alleen bij een jaarabonnement met nog minstens twee maanden looptijd: wat er nog betaald is, naar rato incl. btw. */
+  naarRato?: NaarRato
   proefBeeindigd: boolean
   /** Betaald zonder online abonnement (handmatig BETAALD gezet): geen incasso om te stoppen, wel iets om te weten. */
   handmatigBetaald: boolean
@@ -51,6 +78,7 @@ export async function stopSoloBijJoin(userId: string, teamNaam: string, nu: Date
     if (sub) {
       resultaat.omschrijving = `${planNaam(sub.plan)} ${sub.cyclus}`
       resultaat.loptTot = sub.periode_einde ?? undefined
+      resultaat.naarRato = restantNaarRato(sub, nu) ?? undefined
       const gestopt = await stopMollieAbonnement(sub)
       if (gestopt) {
         const { error } = await billingDb
@@ -77,7 +105,7 @@ export async function stopSoloBijJoin(userId: string, teamNaam: string, nu: Date
     if (resultaat.abonnement !== 'geen' || resultaat.proefBeeindigd || resultaat.handmatigBetaald) {
       const wie = `${u.voornaam ?? 'onbekend'} (${u.email ?? 'geen e-mail'})`
       const delen = [
-        resultaat.abonnement === 'gestopt' ? `Eigen abonnement ${resultaat.omschrijving} gestopt, loopt t/m ${resultaat.loptTot ? new Date(resultaat.loptTot).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : 'onbekend'}, geen restitutie.`
+        resultaat.abonnement === 'gestopt' ? `Eigen abonnement ${resultaat.omschrijving} gestopt, loopt t/m ${resultaat.loptTot ? new Date(resultaat.loptTot).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : 'onbekend'}, geen restitutie.${resultaat.naarRato ? ` Nog ${resultaat.naarRato.maanden} maanden betaald (${resultaat.naarRato.dagen} dagen), naar rato ongeveer €${(resultaat.naarRato.bedragCent / 100).toFixed(2)} incl. btw. Overweeg een deelrestitutie uit coulance, zeker als hij het team heeft aangebracht (bijvoorbeeld via zijn referral-link). Doe dat in het Mollie-dashboard.` : ''}`
           : resultaat.abonnement === 'mislukt' ? `Eigen abonnement ${resultaat.omschrijving} STOPPEN MISLUKT: stop het zelf in het Mollie-dashboard.`
           : null,
         resultaat.handmatigBetaald ? 'Heeft handmatig betaald (BETAALD gezet) zonder online abonnement: er is niets gestopt, zijn eigen toegang loopt door.' : null,

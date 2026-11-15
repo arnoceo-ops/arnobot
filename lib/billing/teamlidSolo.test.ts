@@ -34,7 +34,7 @@ vi.mock('./db', () => ({ billingDb: { from: bouwer } }))
 vi.mock('./verwerking', () => ({ stopMollieAbonnement: stopMollie }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify }))
 
-const { stopSoloBijJoin } = await import('./teamlidSolo')
+const { stopSoloBijJoin, restantNaarRato } = await import('./teamlidSolo')
 
 const nu = new Date('2026-11-15T12:00:00Z')
 const dagenGeleden = (d: number) => new Date(nu.getTime() - d * 86_400_000).toISOString()
@@ -116,5 +116,45 @@ describe('stopSoloBijJoin', () => {
     stopMollie.mockRejectedValue(new Error('mollie down'))
     const r = await stopSoloBijJoin('u1', 'Team Een', nu)
     expect(r.abonnement).toBe('mislukt')
+  })
+})
+
+describe('restantNaarRato (indicatie voor een eventuele deelrestitutie)', () => {
+  const jaar = { cyclus: 'jaarlijks' as const, bedrag_cent: 36_000, periode_start: dagenGeleden(90), periode_einde: dagenVooruit(275) }
+
+  it('rekent de resterende looptijd van een jaarabonnement naar rato uit', () => {
+    const r = restantNaarRato(jaar, nu)!
+    expect(r.dagen).toBe(275)
+    expect(r.maanden).toBe(9)
+    expect(r.bedragCent).toBe(Math.round(36_000 * (275 / 365)))
+  })
+  it('geeft niets voor een maandabonnement', () => {
+    expect(restantNaarRato({ ...jaar, cyclus: 'maandelijks' }, nu)).toBeNull()
+  })
+  it('geeft niets als er minder dan twee maanden over zijn of de periode al voorbij is', () => {
+    expect(restantNaarRato({ ...jaar, periode_einde: dagenVooruit(40) }, nu)).toBeNull()
+    expect(restantNaarRato({ ...jaar, periode_einde: dagenGeleden(1) }, nu)).toBeNull()
+  })
+  it('geeft niets zonder periodedatums', () => {
+    expect(restantNaarRato({ ...jaar, periode_start: null }, nu)).toBeNull()
+    expect(restantNaarRato({ ...jaar, periode_einde: null }, nu)).toBeNull()
+  })
+})
+
+describe('de Telegram bij een jaarabonnement', () => {
+  it('noemt de resterende looptijd en het bedrag naar rato en suggereert een deelrestitutie', async () => {
+    zet({ user: { paid_at: dagenGeleden(90), expires_at: dagenVooruit(275), trial_start: dagenGeleden(200) }, sub: { cyclus: 'jaarlijks', bedrag_cent: 36_000, periode_start: dagenGeleden(90), periode_einde: dagenVooruit(275) } })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r.naarRato).toMatchObject({ maanden: 9, dagen: 275 })
+    const tekst = notify.mock.calls[0][0] as string
+    expect(tekst).toContain('Nog 9 maanden betaald')
+    expect(tekst).toContain('deelrestitutie')
+    expect(tekst).toContain('€')
+  })
+  it('laat dat weg bij een maandabonnement', async () => {
+    zet({ user: { paid_at: dagenGeleden(18), expires_at: dagenVooruit(12), trial_start: dagenGeleden(60) }, sub: {} })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r.naarRato).toBeUndefined()
+    expect(notify.mock.calls[0][0]).not.toContain('deelrestitutie')
   })
 })
