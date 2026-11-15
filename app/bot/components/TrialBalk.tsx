@@ -61,7 +61,7 @@ export default function TrialBalk() {
   // balk voor iemand die hem niet hoort te zien.
   // Niet in de Android-app: de balk verwijst naar een abonnement kiezen (Google Play-betalingsbeleid).
   const isNativeApp = useIsNativeApp()
-  const zichtbaar = (dagenOver !== null || teamProef !== null) && !gesloten && pathname === '/bot' && !isNativeApp
+  const zichtbaar = (dagenOver !== null || teamProef !== null) && !gesloten && (pathname === '/bot' || pathname === '/bot/') && !isNativeApp
 
   // Geef de pagina onderaan evenveel ruimte als de balk hoog is, zodat de laatste regel inhoud
   // niet achter de vaste balk verdwijnt. Weer ongedaan zodra de balk weg is.
