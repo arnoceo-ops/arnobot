@@ -6,7 +6,7 @@ import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { trialEinde } from '@/lib/toegang'
 
-// Iemand met een eigen abonnement of proef accepteert de uitnodiging van een teammanager (docs/TEAM_LEVENSCYCLUS.md).
+// Iemand met een eigen abonnement of proef accepteert de uitnodiging van een teammanager (docs/TEAM_PROCES.md).
 // Besluit Arno (2026-11-15): vanaf dat moment betaalt het team. De volgende betaling van het eigen abonnement stopt
 // (de lopende betaalperiode loopt uit, geen restitutie) en een lopende proef vervalt, ook de resterende dagen. De
 // gesprekshistorie blijft: het is hetzelfde account, er wordt alleen een lidmaatschap toegevoegd.

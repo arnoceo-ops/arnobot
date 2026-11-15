@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import type { ActivatieStand } from '@/lib/teamActivatie'
 
-// Teamproef omzetten naar een betaald Team, bovenaan de accountpagina van de manager (docs/TEAM_ONBOARDING.md,
+// Teamproef omzetten naar een betaald Team, bovenaan de accountpagina van de manager (docs/TEAM_PROCES.md,
 // "Zelf activeren"). De server bepaalt wat er kan en wat het kost (GET /api/bot/team/activeren); deze
 // component toont alleen. In de Android-app verborgen, net als andere koopverwijzingen (Google Play-beleid).
 // Opmaak volgt de kaders op de accountpagina ("Jouw data is van jou"): donkere kaart, oranje rand links.

@@ -7,7 +7,7 @@ import { stopSoloBijJoin } from '@/lib/billing/teamlidSolo'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 
-// Maximaal aantal leden per team, en vanaf hoeveel leden Arno een melding krijgt (een groter team vraagt een aanpassing, zie docs/TEAM_ONBOARDING.md).
+// Maximaal aantal leden per team, en vanaf hoeveel leden Arno een melding krijgt (een groter team vraagt een aanpassing, zie docs/TEAM_PROCES.md).
 const MAX_LEDEN = 25
 const MELD_VANAF_LEDEN = 20
 
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   }
 
   // Vanaf nu betaalt het team: een eigen abonnement stopt (betaalperiode loopt uit, geen restitutie) en een lopende proef
-  // vervalt. Gooit nooit een fout door, joinen mag hier niet op mislukken. Zie docs/TEAM_LEVENSCYCLUS.md.
+  // vervalt. Gooit nooit een fout door, joinen mag hier niet op mislukken. Zie docs/TEAM_PROCES.md.
   await stopSoloBijJoin(userId, team.name)
 
   // Een al ingelogde bestaande gebruiker (was al individuele Basic/Pro-klant) kan hier

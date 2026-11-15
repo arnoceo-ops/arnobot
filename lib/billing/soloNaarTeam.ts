@@ -119,7 +119,7 @@ export async function bekijkSoloNaarTeam(teamId: string, invoer: SoloNaarTeamInv
     .eq('user_id', team.manager_id)
     .maybeSingle<{ command_manager: boolean | null }>()
   if (lid?.role !== 'manager' || gebruiker?.command_manager !== true) {
-    return weiger(409, 'De teambaas is nog geen manager van dit team met command_manager. Regel dat eerst (TEAM_ONBOARDING.md, stap 4 en 5).')
+    return weiger(409, 'De teambaas is nog geen manager van dit team met command_manager. Regel dat eerst (TEAM_PROCES.md, fase 1, stap 4 en 5).')
   }
 
   const { data: sub } = await billingDb

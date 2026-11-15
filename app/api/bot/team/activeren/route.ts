@@ -6,7 +6,7 @@ import { mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { activatieBedrag, activeerTeam, leesActivatieStand, MAX_SEATS, valideerActivatie } from '@/lib/teamActivatie'
 import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
 
-// Een manager activeert zelf zijn team na de gratis agent-proef (docs/TEAM_ONBOARDING.md).
+// Een manager activeert zelf zijn team na de gratis agent-proef (docs/TEAM_PROCES.md).
 // GET: de teamstand (en met ?seats&cyclus het bedrag van de eerste factuur voor het voorbeeld).
 // POST: bevestigen. De server controleert alles opnieuw; het scherm toont alleen.
 

@@ -30,7 +30,7 @@ Een **zakelijke** klant met een lopend solo-jaarabonnement (`arnobot_subscriptio
 5. **Mollie-dashboard:** annuleer het doorlopende jaarabonnement van deze klant (`mollie_subscription_id`), anders incasseert Mollie over een jaar opnieuw.
 6. **Supabase:** zet de solo-rij op `ended` en `mollie_sub_geannuleerd_at` op nu (handmatige SQL, alleen die ene rij). Daarmee slaat de billing-cron de rij over en komt de foutieve afscheidsmail (cron stap 5, kijkt niet naar team-dekking) niet.
 7. **Moneybird:** maak een creditnota voor het deelbedrag (netto plus 21% btw, bruto gelijk aan de terugbetaling) tegen de originele jaarfactuur, en registreer de terugbetaling met het Mollie-id.
-8. **Team activeren:** volg `docs/TEAM_ONBOARDING.md` (stap 4 en 7): `command_manager = true` op D, en op `/bot/admin/teams` het team activeren met min. seats, cyclus en `volgende_factuurdatum` = D. De cron maakt dan op D de Team-factuur (Moneybird plus Mollie-betaallink).
+8. **Team activeren:** volg `docs/TEAM_PROCES.md` (fase 1, stap 4 en 7): `command_manager = true` op D, en op `/bot/admin/teams` het team activeren met min. seats, cyclus en `volgende_factuurdatum` = D. De cron maakt dan op D de Team-factuur (Moneybird plus Mollie-betaallink).
 
 **Controle achteraf**
 9. Refund-status `refunded` in Mollie; in `arnobot_payments` staat `terugbetaald_cent` op het deelbedrag en de rij is NIET als geheel terugbetaald verwerkt.

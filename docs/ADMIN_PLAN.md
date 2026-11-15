@@ -64,7 +64,7 @@ Gebouwd op Arno's besluit: de gratis proef van 30 dagen voor een manager via een
 
 ### Zelf activeren en testknoppen (2026-11-15)
 
-De manager van een agent-proef activeert zijn team zelf (zie `docs/TEAM_ONBOARDING.md`, "Zelf activeren na een agent-proef"). In de admin: de knoppen TEAMPROEF onder PLAN op `/bot/admin/gebruikers` om dit met het testaccount te doorlopen. Het logboek LAATSTE ADMINACTIES staat sinds dezelfde dag op `/bot/admin/status` (onder de geplande crons), omdat het ook Teams-acties bevat. Besluit: seats volgen automatisch het ledenaantal, alleen agent-proeven activeren zelf.
+De manager van een agent-proef activeert zijn team zelf (zie `docs/TEAM_PROCES.md`, fase 3). In de admin: de knoppen TEAMPROEF onder PLAN op `/bot/admin/gebruikers` om dit met het testaccount te doorlopen. Het logboek LAATSTE ADMINACTIES staat sinds dezelfde dag op `/bot/admin/status` (onder de geplande crons), omdat het ook Teams-acties bevat. Besluit: seats volgen automatisch het ledenaantal, alleen agent-proeven activeren zelf.
 
 ## Open vragen voor Arno
 

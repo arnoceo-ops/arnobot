@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
   if (!body?.teamId) return NextResponse.json({ error: 'Geen teamId' }, { status: 400 })
 
-  // Gratis agent-proef verlengen (docs/TEAM_ONBOARDING.md): zet de einddatum van de manager later en heft
+  // Gratis agent-proef verlengen (docs/TEAM_PROCES.md): zet de einddatum van de manager later en heft
   // de blokkade op die het einde van de proef zette. Alleen voor een team dat echt een agent-proef heeft.
   if (body.verlengProefTot !== undefined) {
     const einde = new Date(body.verlengProefTot)

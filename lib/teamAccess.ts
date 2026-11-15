@@ -85,7 +85,7 @@ export async function isTeamCovered(userId: string): Promise<boolean> {
 
 /**
  * Dekt een team iemands toegang op dit moment? Zoals isTeamCovered, maar een gewoon lid van een geblokkeerd team is niet
- * gedekt: de toegangspoort (proxy.ts) laat hem niet binnen en hij mag zelf een abonnement nemen (docs/TEAM_LEVENSCYCLUS.md).
+ * gedekt: de toegangspoort (proxy.ts) laat hem niet binnen en hij mag zelf een abonnement nemen (docs/TEAM_PROCES.md).
  * Een manager (ook van een geblokkeerd team) blijft gedekt: hij activeert op zijn accountpagina.
  */
 export async function isTeamDekkingActief(userId: string): Promise<boolean> {

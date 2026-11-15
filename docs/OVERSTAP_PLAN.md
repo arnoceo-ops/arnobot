@@ -36,7 +36,7 @@ Een maandklant (Basic of Pro, particulier of zakelijk) stapt over naar jaar per 
 
 ## Solo-maand naar Team (gebouwd 2026-11-12)
 
-**Gat:** Team zetten gaat met de hand (`command_manager = true`, `TEAM_ONBOARDING.md` stap 4) en raakt een lopend solo-abonnement niet. Het solo-Mollie-abonnement blijft dan incasseren naast de Team-factuur. Team wordt per periode gefactureerd met een Moneybird-factuur en Mollie-betaallink (cron `team-facturatie`, `teamFacturatie.ts`), niet met incasso of machtiging.
+**Gat:** Team zetten gaat met de hand (`command_manager = true`, `TEAM_PROCES.md` fase 1, stap 4) en raakt een lopend solo-abonnement niet. Het solo-Mollie-abonnement blijft dan incasseren naast de Team-factuur. Team wordt per periode gefactureerd met een Moneybird-factuur en Mollie-betaallink (cron `team-facturatie`, `teamFacturatie.ts`), niet met incasso of machtiging.
 
 **Besluit (Arno, 2026-11-12):** het solo-abonnement loopt uit tot het einde van de lopende betaalde maand. Het Mollie-abonnement wordt direct gestopt (geen nieuwe incasso), de toegang loopt door tot `periode_einde`, `volgende_factuurdatum` van het team wordt op die datum gezet; daarna start de Team-factuur via Moneybird. Ligt de volgende maandincasso binnen 4 dagen, dan loopt die maand nog en start Team een periode later. De Team-cyclus staat los van de solo-cyclus.
 

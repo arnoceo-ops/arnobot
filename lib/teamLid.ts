@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Hulpfuncties rond een teamlid en zijn eigen abonnement (docs/TEAM_LEVENSCYCLUS.md).
+// Hulpfuncties rond een teamlid en zijn eigen abonnement (docs/TEAM_PROCES.md).
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 

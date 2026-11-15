@@ -7,7 +7,7 @@ import HideInNativeApp from '@/app/components/HideInNativeApp'
 
 export default async function DoorgaanPage() {
   // De manager van een team activeert op zijn accountpagina (TEAM ACTIVEREN of de openstaande factuur). Een lid van een
-  // geblokkeerd team mag zelf een abonnement nemen en ziet daarboven waarom. Zie docs/TEAM_LEVENSCYCLUS.md.
+  // geblokkeerd team mag zelf een abonnement nemen en ziet daarboven waarom. Zie docs/TEAM_PROCES.md.
   const { userId } = await auth()
   let lidVan: { teamNaam: string } | null = null
   if (userId) {

@@ -2,7 +2,7 @@
 
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 
-// Kader bovenaan de accountpagina van een teamlid wiens team geblokkeerd is (docs/TEAM_LEVENSCYCLUS.md): wat er
+// Kader bovenaan de accountpagina van een teamlid wiens team geblokkeerd is (docs/TEAM_PROCES.md): wat er
 // aan de hand is en wat hij kan doen. Een lid mag dan zelf een abonnement nemen. In de Android-app verborgen,
 // net als andere koopverwijzingen (Google Play-beleid). Opmaak gelijk aan het kader TEAMPROEF (TeamActiverenSectie).
 

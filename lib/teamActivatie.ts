@@ -9,7 +9,7 @@ import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
 
-// Zelf een teamproef omzetten naar een betaald Team (docs/TEAM_ONBOARDING.md, "Zelf activeren").
+// Zelf een teamproef omzetten naar een betaald Team (docs/TEAM_PROCES.md, "Zelf activeren").
 // Alleen voor een manager van een agent-proef (isAgentProef). Het doet hetzelfde als stap 7 van de
 // handmatige route op /bot/admin/teams (min. seats, cyclus, factuurdatum, bedrijfsgegevens), plus de
 // eerste factuur direct. De betaling loopt via de bestaande factuur, betaallink en webhook.
