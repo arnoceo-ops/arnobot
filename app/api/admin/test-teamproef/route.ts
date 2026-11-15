@@ -4,7 +4,7 @@ import { adminKeyMatches } from '@/lib/adminAuth'
 import { herstelTestaccount, zetTeamproef, type TeamproefStand } from '@/lib/testTeamproef'
 
 // Testknoppen TEAMPROEF (lib/testTeamproef.ts). Hardcoded naar het handmatige testaccount, accepteert nooit een userId.
-const STANDEN: TeamproefStand[] = ['lopend', 'bijna', 'voorbij']
+const STANDEN: TeamproefStand[] = ['lopend', 'bijna', 'coulance', 'voorbij']
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()

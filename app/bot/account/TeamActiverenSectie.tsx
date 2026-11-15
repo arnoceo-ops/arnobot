@@ -124,10 +124,11 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
   if (!stand.kanActiveren) return null
 
   const verlopen = stand.proef?.staat === 'verlopen'
+  const coulance = stand.proef?.staat === 'coulance'
   return (
     <div style={kaart(verlopen ? '#cc2200' : '#f59e0b')}>
       <style>{`.ta-veld:focus { outline: none; border-color: #f59e0b !important; } .ta-veld::placeholder { color: #4b5563; }`}</style>
-      <p style={label}>TEAMPROEF</p>
+      <p style={label}>{coulance ? 'TEAMPROEF AFGELOPEN' : 'TEAMPROEF'}</p>
       {stand.proef && (
         <>
           <h2 style={kop}>
@@ -136,7 +137,9 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
           <p style={tekst}>
             {verlopen
               ? `Je gratis teamproef is afgelopen op ${datumNl(stand.proef.einde)}. Je team heeft geen toegang tot ArnoBot totdat je het activeert.`
-              : `Je gratis teamproef loopt tot ${datumNl(stand.proef.einde)}.`}
+              : coulance
+                ? `Je team heeft nog toegang tot ${datumNl(stand.proef.toegangTot)}. Activeer je team vóór die datum, dan loopt alles door zonder onderbreking.`
+                : `Je gratis teamproef loopt tot ${datumNl(stand.proef.einde)}.`}
           </p>
         </>
       )}

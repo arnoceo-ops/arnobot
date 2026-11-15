@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isAgentProef, proefEinde, proefStand, PROEF_DAGEN, type ProefManager } from './teamProef'
+import { isAgentProef, proefEinde, proefStand, toegangTot, PROEF_DAGEN, PROEF_COULANCE_DAGEN, type ProefManager } from './teamProef'
 
 const nu = new Date('2026-11-14T12:00:00Z')
 const dagenGeleden = (d: number) => new Date(nu.getTime() - d * 86_400_000).toISOString()
@@ -48,9 +48,14 @@ describe('proefStand', () => {
     expect(proefStand(over(5), nu)).toEqual({ staat: 'bijna', dagen: 5 })
     expect(proefStand(over(0.5), nu)).toEqual({ staat: 'bijna', dagen: 1 })
   })
-  it('is verlopen op en na het einde', () => {
-    expect(proefStand(nu, nu).staat).toBe('verlopen')
-    expect(proefStand(over(-3), nu)).toEqual({ staat: 'verlopen', dagen: -3 })
+  it('is coulance vanaf het einde van de gratis proef, met de dagen tot de toegang stopt', () => {
+    expect(proefStand(nu, nu)).toEqual({ staat: 'coulance', dagen: PROEF_COULANCE_DAGEN })
+    expect(proefStand(over(-3), nu)).toEqual({ staat: 'coulance', dagen: PROEF_COULANCE_DAGEN - 3 })
+    expect(proefStand(over(-9.5), nu)).toEqual({ staat: 'coulance', dagen: 1 })
+  })
+  it('is verlopen als ook de coulance voorbij is', () => {
+    expect(proefStand(over(-PROEF_COULANCE_DAGEN), nu)).toEqual({ staat: 'verlopen', dagen: 0 })
+    expect(proefStand(over(-12), nu)).toEqual({ staat: 'verlopen', dagen: -2 })
   })
 })
 
@@ -65,5 +70,13 @@ describe('verlengStandaardDatum', () => {
   })
   it('is 30 dagen na vandaag zonder einde', () => {
     expect(verlengStandaardDatum(null, nu)).toBe('2026-12-14')
+  })
+})
+
+describe('toegangTot', () => {
+  it('is het einde van de gratis proef plus de coulance van 10 dagen', () => {
+    const einde = new Date('2026-12-01T09:00:00Z')
+    expect(toegangTot(einde).toISOString()).toBe('2026-12-11T09:00:00.000Z')
+    expect(PROEF_COULANCE_DAGEN).toBe(10)
   })
 })

@@ -1,18 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import { MANUAL_TEST_USER_ID, TEST_PROEF_TEAM_ID, TEST_TEAM_ID } from '@/lib/internalTestAccounts'
+import { proefEinde, proefStand } from '@/lib/teamProef'
 
 // Testknoppen TEAMPROEF op /bot/admin/gebruikers: zet het handmatige testaccount (test@arno.bot) in een
 // echte agent-proef, in een eigen testteam (nooit Team Apex, anders raakt een blokkade ook Thijs). Net als
 // de persona-knoppen verandert dit de ECHTE data, zodat elke pagina zich gedraagt als bij een echte manager.
 // De oorspronkelijke waarden van het account worden bewaard en komen terug met UIT of een persona-knop.
 
-export type TeamproefStand = 'lopend' | 'bijna' | 'voorbij'
+export type TeamproefStand = 'lopend' | 'bijna' | 'coulance' | 'voorbij'
 export type TeamproefHuidig = TeamproefStand | 'geactiveerd' | 'uit'
 
 const SLEUTEL = 'test_teamproef_backup'
 const DAG = 86_400_000
 // Dagen geleden dat de proef begon, bij een proef van 30 dagen.
-const START_DAGEN_GELEDEN: Record<TeamproefStand, number> = { lopend: 10, bijna: 27, voorbij: 31 }
+// coulance: de 30 dagen waren 3 dagen geleden om, nog 7 dagen toegang. voorbij: ook de coulance van 10 dagen is op.
+const START_DAGEN_GELEDEN: Record<TeamproefStand, number> = { lopend: 10, bijna: 27, coulance: 33, voorbij: 41 }
 
 type Backup = { expires_at: string | null; paid_at: string | null; trial_start: string | null; sd_attribution_method: string | null; command_manager: boolean | null; plan?: string | null }
 
@@ -33,8 +35,9 @@ export async function huidigeTeamproef(): Promise<TeamproefHuidig> {
   if (team.min_seats !== null) return 'geactiveerd'
   if (team.geblokkeerd_at) return 'voorbij'
   const { data: u } = await supabase.from('approved_users').select('trial_start').eq('user_id', MANUAL_TEST_USER_ID).maybeSingle<{ trial_start: string | null }>()
-  const over = u?.trial_start ? 30 - (Date.now() - new Date(u.trial_start).getTime()) / DAG : 30
-  return over <= 5 ? 'bijna' : 'lopend'
+  const einde = proefEinde({ trial_start: u?.trial_start ?? null, expires_at: null, paid_at: null, sd_attribution_method: 'link' })
+  const staat = einde ? proefStand(einde).staat : 'lopend'
+  return staat === 'verlopen' ? 'voorbij' : staat === 'bijna' ? 'bijna' : staat === 'coulance' ? 'coulance' : 'lopend'
 }
 
 /** Zet het testaccount als manager in een agent-proef in de gevraagde stand. Alles van een eerdere testronde wordt eerst gewist. */
@@ -51,7 +54,7 @@ export async function zetTeamproef(stand: TeamproefStand): Promise<void> {
 
   await supabase.from('arnobot_team_members').delete().eq('user_id', userId)
   await supabase.from('arnobot_team_facturen').delete().eq('team_id', TEST_PROEF_TEAM_ID)
-  const voorbij = stand === 'voorbij'
+  const voorbij = stand === 'voorbij' // pas na de coulance is het team geblokkeerd
   const { error: teamFout } = await supabase.from('arnobot_teams').upsert(
     { id: TEST_PROEF_TEAM_ID, name: 'Proefteam (test)', manager_id: userId, niveau: 'premium', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: voorbij ? new Date().toISOString() : null },
     { onConflict: 'id' },

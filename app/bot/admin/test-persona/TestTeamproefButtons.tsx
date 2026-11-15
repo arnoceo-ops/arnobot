@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { TeamproefHuidig } from '@/lib/testTeamproef'
 
-const STANDEN: { value: 'lopend' | 'bijna' | 'voorbij' | 'uit'; label: string }[] = [
+const STANDEN: { value: 'lopend' | 'bijna' | 'coulance' | 'voorbij' | 'uit'; label: string }[] = [
   { value: 'lopend', label: 'LOPEND (NOG 20 DAGEN)' },
   { value: 'bijna', label: 'BIJNA VOORBIJ (NOG 3 DAGEN)' },
+  { value: 'coulance', label: 'COULANCE (NOG 7 DAGEN)' },
   { value: 'voorbij', label: 'VOORBIJ EN GEBLOKKEERD' },
   { value: 'uit', label: 'UIT' },
 ]

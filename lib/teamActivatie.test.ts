@@ -126,10 +126,17 @@ describe('leesActivatieStand', () => {
     expect(s?.proef).toMatchObject({ staat: 'loopt', dagen: 20 })
   })
   it('toont een afgelopen proef als verlopen en geblokkeerd', async () => {
-    zet({ manager: { trial_start: dagenGeleden(35) }, team: { geblokkeerd_at: dagenGeleden(5) } })
+    zet({ manager: { trial_start: dagenGeleden(45) }, team: { geblokkeerd_at: dagenGeleden(5) } })
     const s = await leesActivatieStand('m1')
     expect(s).toMatchObject({ kanActiveren: true, geblokkeerd: true })
     expect(s?.proef?.staat).toBe('verlopen')
+  })
+  it('toont dag 30 tot 40 als coulance: het team heeft nog toegang en weet tot wanneer', async () => {
+    zet({ manager: { trial_start: dagenGeleden(33) } })
+    const s = await leesActivatieStand('m1')
+    expect(s).toMatchObject({ kanActiveren: true, geblokkeerd: false })
+    expect(s?.proef).toMatchObject({ staat: 'coulance', dagen: 7 })
+    expect(Math.round((new Date(s!.proef!.toegangTot).getTime() - new Date(s!.proef!.einde).getTime()) / 86_400_000)).toBe(10)
   })
   it('laat een manager zonder agent-link niet zelf activeren (handmatige route)', async () => {
     zet({ manager: { sd_attribution_method: null } })
@@ -151,7 +158,7 @@ describe('activeerTeam', () => {
   const invoer = async () => { const r = await valideerActivatie(formulier); if (!r.ok) throw new Error(r.fout); return r.waarde }
 
   it('zet facturatie aan, deblokkeert, bewaart bedrijfsgegevens en maakt één factuur met betaallink', async () => {
-    zet({ manager: { trial_start: dagenGeleden(35) }, team: { geblokkeerd_at: dagenGeleden(5) } })
+    zet({ manager: { trial_start: dagenGeleden(45) }, team: { geblokkeerd_at: dagenGeleden(5) } })
     const r = await activeerTeam('m1', await invoer())
     expect(r).toMatchObject({ ok: true, seats: 5, betaalLink: 'https://pay.test/abc' })
     expect(db.arnobot_teams[0]).toMatchObject({ min_seats: 5, cyclus: 'jaarlijks', geblokkeerd_at: null })

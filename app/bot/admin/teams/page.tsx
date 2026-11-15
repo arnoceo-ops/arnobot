@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
 import TeamProefVerleng from './TeamProefVerleng'
-import { isAgentProef, proefEinde, proefStand, verlengStandaardDatum } from '@/lib/teamProef'
+import { isAgentProef, proefEinde, proefStand, toegangTot, verlengStandaardDatum } from '@/lib/teamProef'
 import { TEST_TEAM_IDS_IN, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { berekenTeamPrijsPerMaand } from '@/lib/teamPricing'
 import { nlVandaag } from '@/lib/nlTijd'
@@ -112,14 +112,16 @@ export default async function TeamsAdminPage() {
           const proefTekst = !proefEindDatum || !proef ? null
             : proef.staat === 'verlopen'
               ? `Gratis agent-proef afgelopen op ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}${team.geblokkeerd_at ? ', team geblokkeerd' : ''}`
-              : `Gratis agent-proef t/m ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}, nog ${proef.dagen} dag${proef.dagen === 1 ? '' : 'en'}`
+              : proef.staat === 'coulance'
+                ? `Gratis agent-proef afgelopen op ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}, coulance: toegang t/m ${toegangTot(proefEindDatum).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}, nog ${proef.dagen} dag${proef.dagen === 1 ? '' : 'en'}`
+                : `Gratis agent-proef t/m ${proefEindDatum.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}, nog ${proef.dagen} dag${proef.dagen === 1 ? '' : 'en'}`
           const verlengVanaf = verlengStandaardDatum(proefEindDatum)
           return (
             <div key={team.id}>
               <p style={{ fontSize: 13, color: stand.kleur, margin: '0 0 6px 2px' }}>{stand.tekst}</p>
               {proefTekst && proef && (
                 <>
-                  <p style={{ fontSize: 13, color: proef.staat === 'verlopen' ? '#ef4444' : proef.staat === 'bijna' ? '#f59e0b' : '#9ca3af', margin: '0 0 6px 2px' }}>{proefTekst}</p>
+                  <p style={{ fontSize: 13, color: proef.staat === 'verlopen' ? '#ef4444' : proef.staat === 'bijna' || proef.staat === 'coulance' ? '#f59e0b' : '#9ca3af', margin: '0 0 6px 2px' }}>{proefTekst}</p>
                   <TeamProefVerleng teamId={team.id} standaardDatum={verlengVanaf} />
                 </>
               )}

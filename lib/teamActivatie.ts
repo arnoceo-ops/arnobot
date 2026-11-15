@@ -4,7 +4,7 @@ import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk
 import { berekenReguliereBedrag, huidigSeats, maakTeamFactuur, type TeamRow } from '@/lib/billing/teamFacturatie'
 import { voegMaandenToe } from '@/lib/billing/perioden'
 import { TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
-import { isAgentProef, proefEinde, proefStand, type ProefStaat } from '@/lib/teamProef'
+import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } from '@/lib/teamProef'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
@@ -46,7 +46,8 @@ export type ActivatieStand = {
   geblokkeerd: boolean
   /** De manager mag zelf activeren (agent-proef, nog geen facturatie). */
   kanActiveren: boolean
-  proef: { einde: string; dagen: number; staat: ProefStaat } | null
+  /** einde: einde van de gratis proef. toegangTot: einde plus coulance. dagen: tot einde (loopt, bijna) of tot toegangTot (coulance). */
+  proef: { einde: string; toegangTot: string; dagen: number; staat: ProefStaat } | null
   /** Openstaande teamfactuur, voor een geactiveerd team dat nog moet betalen. */
   openFactuur: { bedragCent: number; betaalLink: string | null; status: string } | null
   voorinvulling: { bedrijfsnaam: string; kvkNummer: string; btwNummer: string; straat: string; postcode: string; plaats: string } | null
@@ -89,7 +90,7 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
     geactiveerd: team.min_seats !== null,
     geblokkeerd: !!team.geblokkeerd_at,
     kanActiveren,
-    proef: einde && stand ? { einde: einde.toISOString(), dagen: stand.dagen, staat: stand.staat } : null,
+    proef: einde && stand ? { einde: einde.toISOString(), toegangTot: toegangTot(einde).toISOString(), dagen: stand.dagen, staat: stand.staat } : null,
     openFactuur: team.min_seats !== null && open ? { bedragCent: open.bedrag_cent, betaalLink: open.mollie_payment_link_url, status: open.status } : null,
     voorinvulling: klant
       ? { bedrijfsnaam: klant.bedrijfsnaam ?? '', kvkNummer: klant.kvk_nummer ?? '', btwNummer: klant.btw_nummer ?? '', straat: klant.straat ?? '', postcode: klant.postcode ?? '', plaats: klant.plaats ?? '' }

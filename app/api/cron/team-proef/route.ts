@@ -5,12 +5,14 @@ import { nieuwMelden } from '@/lib/capaciteit'
 import { registreerCronRun } from '@/lib/cronRun'
 import { excludeInternalTestUsers, TEST_TEAM_IDS_IN } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
-import { isAgentProef, proefEinde, proefStand } from '@/lib/teamProef'
+import { isAgentProef, proefEinde, proefStand, toegangTot, PROEF_COULANCE_DAGEN } from '@/lib/teamProef'
+import { verstuurTeamMail } from '@/lib/billing/teamMails'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 // Dagelijks 07:50 UTC. Beëindigt de gratis proef van 30 dagen van een manager die via de link van een
-// sales agent binnenkwam (docs/SALES_DEVELOPMENT.md), en waarschuwt Arno 5 dagen van tevoren.
+// sales agent binnenkwam (docs/SALES_DEVELOPMENT.md), en waarschuwt Arno 5 dagen van tevoren. Na de 30 dagen volgt een
+// coulance van 10 dagen: de manager krijgt een mail dat hij kan activeren en het team houdt toegang. Pas op dag 40 blokkeert het.
 //
 // Waarom een eigen cron: zo'n manager heeft command_manager = true, en de toegangspoort (proxy.ts) laat
 // hem dan binnen zolang zijn team niet geblokkeerd is. trial-emails slaat managers en teamleden over.
@@ -50,6 +52,7 @@ async function cronHandler(req: NextRequest) {
     const berichten: string[] = []
     const beeindigd: string[] = []
     const gewaarschuwd: string[] = []
+    const coulance: string[] = []
 
     for (const m of managers ?? []) {
       const team = teamPerManager.get(m.user_id as string)
@@ -71,13 +74,21 @@ async function cronHandler(req: NextRequest) {
       const stand = proefStand(einde, nu)
       const wie = `${m.voornaam ?? 'onbekend'} (${m.email ?? 'geen e-mail'})`
 
-      if (stand.staat === 'verlopen') {
+      if (stand.staat === 'coulance') {
+        // Dag 30 tot 40: het team houdt toegang. Eenmalig per proef (per einddatum) krijgt de manager een mail dat hij kan activeren.
+        if (team && !team.geblokkeerd_at && (await nieuwMelden(`teamproef:coulance:${m.user_id}:${einde.toISOString().slice(0, 10)}`, 'mijlpaal'))) {
+          const tot = toegangTot(einde)
+          const verstuurd = await verstuurTeamMail(m.user_id as string, 'team_proef_coulance', { teamNaam: team.name, bedragCent: 0, seats: 0, einde: tot.toISOString() })
+          berichten.push(`Agent-proef van ${wie} is afgelopen (team "${team.name}"). ${verstuurd ? 'De manager heeft een mail gekregen.' : 'De mail aan de manager is NIET verstuurd, neem zelf contact op.'} Het team houdt toegang tot ${tot.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })}.`)
+          coulance.push(m.user_id as string)
+        }
+      } else if (stand.staat === 'verlopen') {
         if (team) {
           if (team.geblokkeerd_at) continue // al beëindigd
           const { error: fout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: nu.toISOString() }).eq('id', team.id)
           if (fout) throw new Error(`team blokkeren mislukt: ${fout.message}`)
           await logAdminActie({ actie: 'team_proef_beeindigd', doelUserId: m.user_id, doelTeamId: team.id, details: { extra: { proef_einde: einde.toISOString().slice(0, 10), actie: 'team geblokkeerd' } } })
-          berichten.push(`Agent-proef afgelopen: team "${team.name}" van ${wie} is geblokkeerd. Verlengen kan met VERLENG PROEF bij Teams in de admin.`)
+          berichten.push(`Agent-proef afgelopen: team "${team.name}" van ${wie} is geblokkeerd, na ${PROEF_COULANCE_DAGEN} dagen coulance. Verlengen kan met VERLENG PROEF bij Teams in de admin.`)
         } else {
           const { error: fout } = await supabase.from('approved_users').update({ command_manager: false }).eq('user_id', m.user_id)
           if (fout) throw new Error(`command_manager intrekken mislukt: ${fout.message}`)
@@ -92,7 +103,7 @@ async function cronHandler(req: NextRequest) {
     }
 
     if (berichten.length > 0) await notifyTelegram(`Teamproef op arno.bot\n\n${berichten.join('\n\n')}`)
-    return NextResponse.json({ ok: true, beeindigd, gewaarschuwd })
+    return NextResponse.json({ ok: true, beeindigd, gewaarschuwd, coulance })
   } catch (err) {
     await notifyCronFailure('team-proef', err)
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })

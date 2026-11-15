@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto'
 import { BEDRIJF_MAIL_REGEL } from '@/lib/bedrijf'
+import { PROEF_COULANCE_DAGEN } from '@/lib/teamProef'
 import { BLOG_COPY } from '@/lib/blogCopy'
 
 export function isValidEmail(email: unknown): email is string {
@@ -92,6 +93,7 @@ export type EmailType =
   | 'team_factuur'
   | 'team_factuur_herinnering'
   | 'team_geblokkeerd'
+  | 'team_proef_coulance'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
   dag1:                  { label: 'Dag 1',                  description: 'Dag 1:welkom, waar begin je?',                                       category: 'user' },
@@ -136,6 +138,7 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   team_factuur:               { label: 'Team-factuur',               description: 'Event:nieuwe Team-factuur, met betaallink',                        category: 'user' },
   team_factuur_herinnering:   { label: 'Team-factuur herinnering',   description: 'Recurring:7 dagen na de vervaldatum, nog niet betaald',           category: 'user' },
   team_geblokkeerd:           { label: 'Team geblokkeerd',           description: 'Recurring:30 dagen na de vervaldatum, toegang geblokkeerd',       category: 'user' },
+  team_proef_coulance:        { label: 'Teamproef afgelopen',        description: 'Event:dag 30 van de gratis agent-proef, nog 10 dagen om te activeren', category: 'user' },
 }
 
 export interface BlogMailOptions {
@@ -180,6 +183,8 @@ export interface TeamMailOptions {
   seats: number
   betaalLink?: string
   tussentijds?: boolean
+  /** Alleen voor team_proef_coulance: tot wanneer het team nog toegang heeft (ISO-datum). */
+  einde?: string
 }
 
 function billingEuro(cent: number): string {
@@ -396,6 +401,16 @@ export function getEmailTemplate(
         html: mail(
           `De factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''} van ${billingEuro(t?.bedragCent ?? 0)} is nog steeds niet betaald. De toegang van het hele team is nu geblokkeerd.<br><br>Betaal de factuur om de toegang direct te herstellen.`,
           'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
+        ),
+      }
+    }
+    case 'team_proef_coulance': {
+      const t = options?.team
+      return {
+        subject: `${prefix}Activeer je team binnen ${PROEF_COULANCE_DAGEN} dagen`,
+        html: mail(
+          `Je gratis proef van ArnoBot Team is afgelopen. Je team heeft nog toegang tot ${billingDatum(t?.einde)}. Activeer je team vóór die datum, dan loopt alles door zonder onderbreking.`,
+          'TEAM ACTIVEREN →', 'https://arno.bot/bot/account'
         ),
       }
     }

@@ -10,6 +10,11 @@
 export const PROEF_DAGEN = 30
 /** Zoveel dagen voor het einde krijgt Arno een melding, zodat er tijd is voor het gesprek over een betaald Team. */
 export const PROEF_WAARSCHUWING_DAGEN = 5
+/**
+ * Coulance na het einde van de gratis proef: het team houdt nog zoveel dagen toegang, zodat de manager rustig kan activeren
+ * zonder gat. Op dag 30 krijgt de manager een mail, op dag 40 (30 + dit aantal) blokkeert het team.
+ */
+export const PROEF_COULANCE_DAGEN = 10
 
 export type ProefManager = {
   trial_start: string | null
@@ -41,13 +46,25 @@ export function proefEinde(manager: ProefManager): Date | null {
   return null
 }
 
-export type ProefStaat = 'loopt' | 'bijna' | 'verlopen'
+/** Tot wanneer het team toegang houdt: het einde van de gratis proef plus de coulance. */
+export function toegangTot(einde: Date): Date {
+  return new Date(einde.getTime() + PROEF_COULANCE_DAGEN * 86_400_000)
+}
 
-/** Staat van de proef op dit moment, met de resterende dagen naar boven afgerond (0 of lager bij verlopen). */
+/** loopt en bijna: de gratis proef. coulance: de proef is voorbij maar het team heeft nog toegang. verlopen: de toegang is voorbij. */
+export type ProefStaat = 'loopt' | 'bijna' | 'coulance' | 'verlopen'
+
+/**
+ * Staat van de proef op dit moment, met de resterende dagen naar boven afgerond. Bij loopt en bijna zijn het de dagen tot
+ * het einde van de gratis proef, bij coulance de dagen tot de toegang stopt, bij verlopen 0 of lager.
+ */
 export function proefStand(einde: Date, nu: Date = new Date()): { staat: ProefStaat; dagen: number } {
   const dagen = Math.ceil((einde.getTime() - nu.getTime()) / 86_400_000)
-  if (einde.getTime() <= nu.getTime()) return { staat: 'verlopen', dagen }
-  return { staat: dagen <= PROEF_WAARSCHUWING_DAGEN ? 'bijna' : 'loopt', dagen }
+  if (einde.getTime() > nu.getTime()) return { staat: dagen <= PROEF_WAARSCHUWING_DAGEN ? 'bijna' : 'loopt', dagen }
+  const tot = toegangTot(einde)
+  const dagenToegang = Math.ceil((tot.getTime() - nu.getTime()) / 86_400_000)
+  if (tot.getTime() > nu.getTime()) return { staat: 'coulance', dagen: dagenToegang }
+  return { staat: 'verlopen', dagen: dagenToegang }
 }
 
 /** Voorgestelde nieuwe einddatum (JJJJ-MM-DD) bij VERLENG PROEF: 30 dagen na het einde, of na vandaag als dat al voorbij is. */

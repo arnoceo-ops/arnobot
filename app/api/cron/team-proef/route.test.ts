@@ -5,10 +5,11 @@ import { NextRequest } from 'next/server'
 // kwam, niet betaalt en nog geen facturatie heeft wordt aangeraakt. Alles anders blijft ongemoeid.
 
 type Rij = Record<string, unknown>
-const { db, notify, nieuwMelden } = vi.hoisted(() => ({
+const { db, notify, nieuwMelden, stuurMail } = vi.hoisted(() => ({
   db: { approved_users: [] as Rij[], arnobot_teams: [] as Rij[] },
   notify: vi.fn(),
   nieuwMelden: vi.fn(),
+  stuurMail: vi.fn(),
 }))
 
 // Minimale in-memory database met precies de ketenmethodes die de cron gebruikt.
@@ -34,6 +35,7 @@ function bouwer(tabel: 'approved_users' | 'arnobot_teams') {
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ from: bouwer }) }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify, notifyCronFailure: vi.fn() }))
 vi.mock('@/lib/capaciteit', () => ({ nieuwMelden }))
+vi.mock('@/lib/billing/teamMails', () => ({ verstuurTeamMail: stuurMail }))
 vi.mock('@/lib/adminLog', () => ({ logAdminActie: vi.fn() }))
 vi.mock('@/lib/cronRun', () => ({ registreerCronRun: (_pad: string, handler: unknown) => handler }))
 process.env.CRON_SECRET = 'geheim'
@@ -54,6 +56,69 @@ beforeEach(() => {
   notify.mockReset()
   nieuwMelden.mockReset()
   nieuwMelden.mockResolvedValue(true)
+  stuurMail.mockReset()
+  stuurMail.mockResolvedValue(true)
+})
+
+describe('cron/team-proef coulance (dag 30 tot 40)', () => {
+  it('blokkeert nog niet op dag 31: het team houdt toegang, de manager krijgt één mail en Arno een melding', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(31) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    const res = await (await aanroep()).json()
+    expect(res.beeindigd).toEqual([])
+    expect(res.coulance).toEqual(['m1'])
+    expect(db.arnobot_teams[0].geblokkeerd_at).toBeNull()
+    expect(stuurMail).toHaveBeenCalledOnce()
+    expect(stuurMail.mock.calls[0][0]).toBe('m1')
+    expect(stuurMail.mock.calls[0][1]).toBe('team_proef_coulance')
+    expect(notify.mock.calls[0][0]).toContain('De manager heeft een mail gekregen')
+  })
+
+  it('stuurt de mail niet opnieuw als die al is verstuurd (dubbele-verzendbeveiliging)', async () => {
+    nieuwMelden.mockResolvedValue(false)
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(35) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(stuurMail).not.toHaveBeenCalled()
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('geeft de dedupe-sleutel de einddatum mee, zodat een verlengde proef opnieuw een mail kan krijgen', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(31) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(nieuwMelden.mock.calls[0][0]).toMatch(/^teamproef:coulance:m1:\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('meldt aan Arno dat de mail niet is verstuurd als het versturen mislukt', async () => {
+    stuurMail.mockResolvedValue(false)
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(31) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    await aanroep()
+    expect(notify.mock.calls[0][0]).toContain('NIET verstuurd')
+  })
+
+  it('stuurt geen mail aan een manager zonder team (er valt niets te activeren)', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(31) })]
+    await aanroep()
+    expect(stuurMail).not.toHaveBeenCalled()
+  })
+
+  it('blokkeert op dag 40 en stuurt de coulance-mail dan niet meer', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(41) })]
+    db.arnobot_teams = [team('t1', 'm1')]
+    const res = await (await aanroep()).json()
+    expect(res.beeindigd).toEqual(['m1'])
+    expect(stuurMail).not.toHaveBeenCalled()
+    expect(notify.mock.calls[0][0]).toContain('coulance')
+  })
+
+  it('stuurt geen mail voor een team dat al geblokkeerd is of een manager die niet via een agent-link kwam', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(33) }), manager('m2', { trial_start: dagenGeleden(33), sd_attribution_method: 'manual' })]
+    db.arnobot_teams = [team('t1', 'm1', { geblokkeerd_at: dagenGeleden(1) }), team('t2', 'm2')]
+    await aanroep()
+    expect(stuurMail).not.toHaveBeenCalled()
+  })
 })
 
 describe('cron/team-proef', () => {
@@ -61,8 +126,8 @@ describe('cron/team-proef', () => {
     expect((await aanroep('fout')).status).toBe(401)
   })
 
-  it('blokkeert het team als de proef van 30 dagen voorbij is', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(31) })]
+  it('blokkeert het team als de proef en de coulance van 10 dagen voorbij zijn', async () => {
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(41) })]
     db.arnobot_teams = [team('t1', 'm1')]
     const res = await (await aanroep()).json()
     expect(res.beeindigd).toEqual(['m1'])
@@ -112,7 +177,7 @@ describe('cron/team-proef', () => {
   })
 
   it('meldt aan Arno (zonder te blokkeren) dat een betalende manager een team zonder facturatie heeft', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(40), paid_at: dagenGeleden(5) })]
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(45), paid_at: dagenGeleden(5) })]
     db.arnobot_teams = [team('t1', 'm1')]
     await aanroep()
     expect(db.arnobot_teams[0].geblokkeerd_at).toBeNull()
@@ -128,7 +193,7 @@ describe('cron/team-proef', () => {
   })
 
   it('de betaalperiode van een betalende manager (expires_at) telt niet als einde van de proef', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(40), paid_at: dagenGeleden(5), expires_at: new Date(Date.now() + 300 * 86_400_000).toISOString() })]
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(45), paid_at: dagenGeleden(5), expires_at: new Date(Date.now() + 300 * 86_400_000).toISOString() })]
     db.arnobot_teams = [team('t1', 'm1')]
     await aanroep()
     expect(notify).toHaveBeenCalledOnce()
@@ -157,7 +222,7 @@ describe('cron/team-proef', () => {
   })
 
   it('een team dat al geblokkeerd is wordt niet opnieuw gemeld', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(40) })]
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(45) })]
     db.arnobot_teams = [team('t1', 'm1', { geblokkeerd_at: dagenGeleden(2) })]
     const res = await (await aanroep()).json()
     expect(res.beeindigd).toEqual([])
@@ -165,7 +230,7 @@ describe('cron/team-proef', () => {
   })
 
   it('trekt command_manager in bij een verlopen proef zonder team', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(35) })]
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(45) })]
     const res = await (await aanroep()).json()
     expect(res.beeindigd).toEqual(['m1'])
     expect(db.approved_users[0].command_manager).toBe(false)
@@ -173,7 +238,7 @@ describe('cron/team-proef', () => {
   })
 
   it('draait de volgende dag niet opnieuw voor dezelfde manager zonder team', async () => {
-    db.approved_users = [manager('m1', { trial_start: dagenGeleden(35) })]
+    db.approved_users = [manager('m1', { trial_start: dagenGeleden(45) })]
     await aanroep()
     notify.mockReset()
     await aanroep()

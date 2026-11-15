@@ -1,6 +1,6 @@
 # Team-klant onboarden: checklist
 
-**Laatst bijgewerkt:** 2026-11-15 (sectie "Zelf activeren na een agent-proef")
+**Laatst bijgewerkt:** 2026-11-15 (coulance van 10 dagen; het volledige verloop staat in `docs/TEAM_LEVENSCYCLUS.md`)
 **Doel:** de stappen van een Team-aanvraag tot de eerste betaalde factuur, zodat bij de eerste echte klant niets vergeten wordt. Het inrichten na een aanvraag via het formulier is een bewust besluit: handmatig, blijvend (zie `docs/ABONNEMENTEN.md`, "Team-aanvraagflow"). Alleen een manager van een gratis agent-proef activeert zijn team zelf (sinds 2026-11-15, zie "Zelf activeren na een agent-proef"). Dit document legt vast wat daarbij gebeurt, wat automatisch loopt en waar je op moet letten.
 
 ## De stappen
@@ -42,9 +42,9 @@ Alleen zakelijk maandelijks. Voor een jaarabonnement of particulier: `docs/SOLO_
 
 Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aanmaken van zijn account `command_manager = true` en `sd_agent` (de koppeling voor de commissie). Hij kan direct een team maken en leden uitnodigen (stap 5 en 6). **Niet elk team is een proef:** alleen deze route heeft er een. Een team via het aanvraagformulier heeft geen proef en eindigt alleen via betaling.
 
-**De proef eindigt na 30 dagen vanzelf** (sinds 2026-11-14, `/api/cron/team-proef`, dagelijks). Zonder die cron zou hij nooit eindigen: de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers en teamleden over. De cron:
+**De proef eindigt na 30 dagen, het team blokkeert na 10 dagen coulance** (sinds 2026-11-14, coulance sinds 2026-11-15, `/api/cron/team-proef`, dagelijks). Dag 30: de manager krijgt een mail "Activeer je team binnen 10 dagen" en het team houdt toegang. Dag 40: blokkade. Het hele verloop staat in `docs/TEAM_LEVENSCYCLUS.md`. Zonder die cron zou hij nooit eindigen: de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers en teamleden over. De cron:
 - waarschuwt jou via Telegram 5 dagen van tevoren, voor het gesprek over een betaald Team;
-- blokkeert daarna het team (manager en leden verliezen de toegang die alleen via het team loopt, wat ze zelf betaald hebben blijft). Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in en gelden de gewone 30 dagen;
+- blokkeert op dag 40 het team (manager en leden verliezen de toegang die alleen via het team loopt, wat ze zelf betaald hebben blijft). Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in en gelden de gewone 30 dagen;
 - raakt een team nooit aan zodra de facturatie is ingesteld (stap 7, min. seats gevuld) of de aanmelding niet via een agent-link kwam;
 - blokkeert ook nooit automatisch als de manager zelf betaalt (dat kan een klant zijn), maar meldt je dan wel dat het team geen facturatie heeft en gratis meeloopt. Dit is de valkuil: wie op `/bot/doorgaan` alleen voor zichzelf betaalt, houdt zijn eigen toegang, maar betaalt daarmee niet voor zijn team.
 
@@ -64,7 +64,7 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 
 **Niet gedekt:** een manager met een agent-link die zelf al betaalt (`paid_at`) kan hier niet activeren (het blok verschijnt niet). Dat is de "Controle nodig"-melding hierboven, die loopt nog handmatig.
 
-**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, VOORBIJ EN GEBLOKKEERD, UIT. Het plan gaat op Pro, zoals bij een echte proef. De oorspronkelijke waarden van het account (ook het plan) worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet.
+**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, COULANCE, VOORBIJ EN GEBLOKKEERD, UIT. Het plan gaat op Pro, zoals bij een echte proef. De oorspronkelijke waarden van het account (ook het plan) worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet.
 
 ## Let op
 
