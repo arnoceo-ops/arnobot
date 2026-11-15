@@ -1,6 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { herstelPlanNaVerwijderen } from '@/lib/teamLid'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,14 +27,19 @@ export async function DELETE(req: NextRequest) {
   // Verifieer dat het lid in hetzelfde team zit en niet de manager zelf is
   if (targetUserId === managerId) return NextResponse.json({ error: 'Je kunt jezelf niet verwijderen' }, { status: 400 })
 
-  const { error } = await supabase
+  const { data: verwijderd, error } = await supabase
     .from('arnobot_team_members')
     .delete()
     .eq('user_id', targetUserId)
     .eq('team_id', managerMember.team_id)
     .neq('role', 'manager')
+    .select('user_id')
 
   if (error) return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+
+  // Zijn plan was dat van het team (Pro): gelijk zetten aan een eigen abonnement dat nog loopt. Alleen als hij echt uit dit team is
+  // verwijderd, anders kan een manager het plan van iemand van een ander team aanraken. Mislukt dit, dan blijft verwijderen gelukt.
+  if (verwijderd && verwijderd.length > 0) await herstelPlanNaVerwijderen(targetUserId).catch(() => {})
   return NextResponse.json({ ok: true })
 }
 

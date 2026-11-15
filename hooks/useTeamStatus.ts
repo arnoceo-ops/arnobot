@@ -8,6 +8,10 @@ export type TeamStatus = {
   isManager: boolean
   // Alleen gevuld als isManager true is (zie /api/bot/team/status), anders null.
   memberCount: number | null
+  // Alleen voor een gewoon teamlid: naam van het team, of het geblokkeerd is, en of hij zelf een abonnement heeft.
+  teamNaam: string | null
+  teamGeblokkeerd: boolean
+  heeftEigenAbonnement: boolean
   loaded: boolean
   failed: boolean
 }
@@ -20,7 +24,7 @@ export type TeamStatus = {
 // bedoeld was. Consumers moeten daarom altijd `loaded && !failed` checken vóór ze op
 // isTeamMember/isManager afgaan, nooit alleen op de boolean zelf.
 export function useTeamStatus(): TeamStatus {
-  const [state, setState] = useState<TeamStatus>({ isTeamMember: false, isManager: false, memberCount: null, loaded: false, failed: false })
+  const [state, setState] = useState<TeamStatus>({ isTeamMember: false, isManager: false, memberCount: null, teamNaam: null, teamGeblokkeerd: false, heeftEigenAbonnement: false, loaded: false, failed: false })
 
   useEffect(() => {
     let cancelled = false
@@ -35,6 +39,9 @@ export function useTeamStatus(): TeamStatus {
           isTeamMember: !!d.hasTeam && !d.isManager,
           isManager: !!d.isManager,
           memberCount: typeof d.memberCount === 'number' ? d.memberCount : null,
+          teamNaam: typeof d.teamNaam === 'string' ? d.teamNaam : null,
+          teamGeblokkeerd: !!d.teamGeblokkeerd,
+          heeftEigenAbonnement: !!d.heeftEigenAbonnement,
           loaded: true,
           failed: false,
         })

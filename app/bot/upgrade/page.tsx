@@ -5,7 +5,7 @@ import BotNav from '../BotNav'
 import HideInNativeApp from '@/app/components/HideInNativeApp'
 import UpgradeButton from './UpgradeButton'
 import { SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
-import { isTeamCovered } from '@/lib/teamAccess'
+import { isTeamDekkingActief } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +26,7 @@ export default async function UpgradePage() {
       .select('plan')
       .eq('user_id', userId)
       .single(),
-    isTeamCovered(userId),
+    isTeamDekkingActief(userId),
   ])
 
   const plan = (data?.plan as 'basis' | 'premium' | 'team') ?? 'basis'

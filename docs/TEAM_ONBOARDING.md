@@ -60,7 +60,7 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 
 **Bewuste keuze, let op:** het team wordt gedeblokkeerd bij het activeren, niet pas bij betalen. Wie activeert maar nooit betaalt, heeft dus ongeveer 44 dagen toegang voordat de bestaande blokkade hem raakt. Dat is gelijk aan elke andere teamfactuur. Wil je dat anders, dan is de aanpassing: de blokkade laten staan tot de webhook een betaling meldt.
 
-**Teamleden** van een geblokkeerd team zien op `/bot/doorgaan` "Je team heeft geen toegang, vraag je teammanager" in plaats van afrekenopties die voor hen toch niet werken (de checkout weigert teamleden).
+**Teamleden** van een geblokkeerd team zien op `/bot/doorgaan` een regel dat het team niet actief is, met daaronder de gewone Basic- en Pro-keuze: zij mogen zelf een abonnement nemen (aangepast 2026-11-15, zie `docs/TEAM_LEVENSCYCLUS.md`).
 
 **Niet gedekt:** een manager met een agent-link die zelf al betaalt (`paid_at`) kan hier niet activeren (het blok verschijnt niet). Dat is de "Controle nodig"-melding hierboven, die loopt nog handmatig.
 

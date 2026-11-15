@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import TeamActiverenSectie, { useActivatieStand } from './TeamActiverenSectie'
+import TeamLidKader from './TeamLidKader'
 import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
@@ -39,7 +40,9 @@ export default function AccountPage() {
   // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
-  const { isTeamMember, isManager, memberCount, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
+  const { isTeamMember, isManager, memberCount, teamNaam, teamGeblokkeerd, heeftEigenAbonnement: lidEigenAbonnement, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
+  // Een lid van een geblokkeerd team, of met een eigen abonnement, ziet de abonnementssecties wel (zelf afnemen of opzeggen).
+  const lidMagAbonnement = isTeamMember && (teamGeblokkeerd || lidEigenAbonnement)
   // Manager van een gratis agent-proef: geen individueel abonnement (plan, overstap, opzeggen) maar TEAM ACTIVEREN.
   const { stand: activatieStand, loaded: activatieLoaded, laad: laadActivatie } = useActivatieStand()
   const teamProefManager = !!activatieStand?.kanActiveren
@@ -204,6 +207,7 @@ export default function AccountPage() {
 
         {/* Teamproef omzetten naar betaald (alleen voor de manager van een agent-proef, of met een openstaande teamfactuur). Bovenaan: het enige wat hij nog moet doen. */}
         <TeamActiverenSectie stand={activatieStand} laad={laadActivatie} />
+        {teamStatusLoaded && !teamStatusFailed && isTeamMember && teamGeblokkeerd && <TeamLidKader teamNaam={teamNaam} />}
 
         {/* Support sectie */}
         <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>HERE TO HELP</p>
@@ -420,7 +424,7 @@ export default function AccountPage() {
             teamabonnement), met aangepaste tekst die het teambrede effect benoemt.
             ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een AVG-recht
             op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
-        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && activatieLoaded && !teamProefManager && (
+        {teamStatusLoaded && !teamStatusFailed && (!isTeamMember || lidMagAbonnement) && activatieLoaded && !teamProefManager && (
         <>
         {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
             mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}

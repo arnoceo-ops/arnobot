@@ -23,7 +23,7 @@ type Abonnement = {
 const fmtDatum = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
-export default function DoorgaanClient({ demoLink }: { demoLink: string | null }) {
+export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink: string | null; teamNaam?: string | null }) {
   const { isLoaded } = useUser()
   const previewIdle = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'idle'
   const [status, setStatus] = useState<'loading' | 'idle' | 'already_paid'>(previewIdle ? 'idle' : 'loading')
@@ -216,6 +216,12 @@ export default function DoorgaanClient({ demoLink }: { demoLink: string | null }
         <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 600, textTransform: 'uppercase', lineHeight: 1.1, color: '#f8fafc', marginBottom: 16 }}>
           {eerderBetaald || abonnement ? 'Verlengen.' : 'Ga door met ArnoBot.'}
         </h1>
+
+        {teamNaam && (
+          <div style={{ background: '#1e293b', border: '1px solid #374151', borderLeft: '3px solid #f59e0b', borderRadius: 8, padding: '20px 24px', marginBottom: 32 }}>
+            <p style={{ ...body, marginBottom: 0 }}>Het teamabonnement van {teamNaam} is niet actief. Vraag je teammanager het team te activeren, of kies hieronder zelf een abonnement.</p>
+          </div>
+        )}
 
         {status === 'already_paid' && (
           <>

@@ -7,7 +7,7 @@ import { billingDb, type SubRow } from '@/lib/billing/db'
 import { MollieError, SITE_URL, klantBestaat, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
 import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
-import { isTeamCovered } from '@/lib/teamAccess'
+import { isTeamDekkingActief } from '@/lib/teamAccess'
 
 const ratelimit = new Ratelimit({
   redis: new Redis({
@@ -36,8 +36,9 @@ export async function POST(req: NextRequest) {
   if (!isPlan(plan) || !isCyclus(cyclus) || !isKlantType(klantType)) return fout(400, 'Ongeldige keuze')
   if (akkoordVoorwaarden !== true) return fout(400, 'Ga akkoord met de algemene voorwaarden om door te gaan')
 
-  // Een teamlid of teammanager heeft geen eigen abonnement (vangnet: teamgedekte accounts rekenen niet zelf af).
-  if (await isTeamCovered(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
+  // Een teamlid of teammanager heeft geen eigen abonnement (vangnet: teamgedekte accounts rekenen niet zelf af). Een lid van
+  // een geblokkeerd team is niet gedekt en mag wel zelf een abonnement nemen.
+  if (await isTeamDekkingActief(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
 
   let zakelijk: ZakelijkeGegevens | null = null
   if (klantType === 'zakelijk') {

@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { heeftEigenAbonnement } from '@/lib/teamLid'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +15,7 @@ export async function GET() {
   const [memberRes, profileRes] = await Promise.all([
     supabase
       .from('arnobot_team_members')
-      .select('role, arnobot_teams(id, name, invite_code)')
+      .select('role, arnobot_teams(id, name, invite_code, geblokkeerd_at)')
       .eq('user_id', userId)
       .single(),
     supabase
@@ -48,10 +49,19 @@ export async function GET() {
     }
   }
 
+  // Voor een gewoon lid: is het team geblokkeerd, en heeft hij zelf een abonnement (afgenomen toen het team geblokkeerd was)?
+  // Daar hangt af of zijn accountpagina het kader TEAM NIET ACTIEF en de abonnementssecties toont.
+  const teamRij = (Array.isArray(member.arnobot_teams) ? member.arnobot_teams[0] : member.arnobot_teams) as { name?: string; geblokkeerd_at?: string | null } | null
+  const teamGeblokkeerd = !isManager && !!teamRij?.geblokkeerd_at
+  const eigenAbonnement = isManager ? false : await heeftEigenAbonnement(userId)
+
   return NextResponse.json({
     hasTeam: true,
     isManager,
     memberCount,
     team: member.arnobot_teams,
+    teamNaam: teamRij?.name ?? null,
+    teamGeblokkeerd,
+    heeftEigenAbonnement: eigenAbonnement,
   })
 }

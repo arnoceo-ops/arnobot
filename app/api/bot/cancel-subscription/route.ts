@@ -5,6 +5,7 @@ import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml, getEmailTemplate, isValidEmail } from '@/lib/email-templates'
 import { meldOpzegging } from '@/lib/billing/opzeggen'
 import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
+import { heeftEigenAbonnement } from '@/lib/teamLid'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +36,8 @@ export async function POST() {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (teamMember && teamMember.role !== 'manager') {
+  // Een lid dat zelf een abonnement heeft afgenomen (bijvoorbeeld omdat zijn team geblokkeerd was) mag dat wel opzeggen.
+  if (teamMember && teamMember.role !== 'manager' && !(await heeftEigenAbonnement(userId))) {
     return NextResponse.json({ error: 'Teamleden hebben geen eigen abonnement om op te zeggen' }, { status: 400 })
   }
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { billingDb, type SubRow } from '@/lib/billing/db'
-import { isTeamCovered } from '@/lib/teamAccess'
+import { isTeamDekkingActief } from '@/lib/teamAccess'
 import { datumToegang, trialEinde } from '@/lib/toegang'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
 import { haalAbonnement } from '@/lib/billing/mollie'
@@ -42,7 +42,7 @@ export async function GET() {
 
   // Voor de tekst op /bot/doorgaan: loopt de proefperiode nog, of is de toegang al afgelopen. Zelfde
   // regels als proxy.ts: actief, en eigen datums of teamtoegang.
-  const toegangActief = !!gebruiker && gebruiker.is_active !== false && (datumToegang(gebruiker) || await isTeamCovered(userId))
+  const toegangActief = !!gebruiker && gebruiker.is_active !== false && (datumToegang(gebruiker) || await isTeamDekkingActief(userId))
   const status = {
     eerderBetaald: !!gebruiker?.paid_at,
     // Alleen "betaald en actief" als de toegang niet is verlopen (afgelopen of terugbetaald): zo kan

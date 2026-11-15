@@ -82,3 +82,21 @@ export async function isTeamCovered(userId: string): Promise<boolean> {
 
   return !!memberRes.data || approvedRes.data?.command_manager === true
 }
+
+/**
+ * Dekt een team iemands toegang op dit moment? Zoals isTeamCovered, maar een gewoon lid van een geblokkeerd team is niet
+ * gedekt: de toegangspoort (proxy.ts) laat hem niet binnen en hij mag zelf een abonnement nemen (docs/TEAM_LEVENSCYCLUS.md).
+ * Een manager (ook van een geblokkeerd team) blijft gedekt: hij activeert op zijn accountpagina.
+ */
+export async function isTeamDekkingActief(userId: string): Promise<boolean> {
+  const [memberRes, approvedRes] = await Promise.all([
+    supabase.from('arnobot_team_members').select('role, arnobot_teams(geblokkeerd_at)').eq('user_id', userId).maybeSingle(),
+    supabase.from('approved_users').select('command_manager').eq('user_id', userId).maybeSingle(),
+  ])
+  if (approvedRes.data?.command_manager === true) return true
+  const lid = memberRes.data as { role: string; arnobot_teams: { geblokkeerd_at: string | null } | { geblokkeerd_at: string | null }[] | null } | null
+  if (!lid) return false
+  if (lid.role === 'manager') return true
+  const team = Array.isArray(lid.arnobot_teams) ? lid.arnobot_teams[0] : lid.arnobot_teams
+  return !team?.geblokkeerd_at
+}
