@@ -126,6 +126,11 @@ function JoinContent() {
                     Je gesprekken zijn van jou. Alleen jij ziet ze en worden in jouw beveiligde omgeving bewaard. Geen quotes, geen situaties, geen klantnamen. Niets van dat alles.
                   </p>
                 </div>
+                <div style={{ background: colors.card, borderLeft: `3px solid ${colors.amber}`, padding: '16px 20px' }}>
+                  <p style={{ ...text.body, color: colors.textBright }}>
+                    Je gesprekken en historie gaan mee als je lid wordt, ook als je ArnoBot al eerder gebruikte, en blijven van jou als je het team ooit verlaat. Vanaf het moment dat je lid wordt, betaalt je team. Een eigen abonnement stopt dan: je betaalperiode loopt uit en er wordt niets meer afgeschreven, maar je krijgt geen geld terug. Een lopende proef vervalt, ook de resterende dagen.
+                  </p>
+                </div>
                 <p style={text.body}>
                   Weet wel dat kwetsbaarheid in coaching nooit een risico is of mag zijn. Het is wat je verder brengt in jouw groei als sales pro.
                 </p>

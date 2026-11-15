@@ -1,0 +1,120 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Bewijst wat er gebeurt als iemand met een eigen abonnement of proef een teamuitnodiging accepteert:
+// de incasso stopt zonder restitutie, een lopende proef vervalt, en een mislukte stop breekt niets.
+
+type Rij = Record<string, unknown>
+const { db, notify, stopMollie } = vi.hoisted(() => ({
+  db: { approved_users: [] as Rij[], arnobot_subscriptions: [] as Rij[] },
+  notify: vi.fn(),
+  stopMollie: vi.fn(),
+}))
+
+function bouwer(tabel: 'approved_users' | 'arnobot_subscriptions') {
+  const filters: ((r: Rij) => boolean)[] = []
+  let op: 'select' | 'update' = 'select'
+  let waarden: Rij = {}
+  const b: Record<string, unknown> = {}
+  const uitvoer = () => {
+    const raak = db[tabel].filter(r => filters.every(f => f(r)))
+    if (op === 'update') { raak.forEach(r => Object.assign(r, waarden)); return { data: raak, error: null } }
+    return { data: raak, error: null }
+  }
+  b.select = () => b
+  b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
+  b.order = () => b
+  b.limit = () => b
+  b.update = (w: Rij) => { op = 'update'; waarden = w; return b }
+  b.maybeSingle = () => Promise.resolve({ data: (uitvoer().data as Rij[])[0] ?? null, error: null })
+  b.then = (ok: (v: unknown) => unknown) => Promise.resolve(uitvoer()).then(ok)
+  return b
+}
+
+vi.mock('./db', () => ({ billingDb: { from: bouwer } }))
+vi.mock('./verwerking', () => ({ stopMollieAbonnement: stopMollie }))
+vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify }))
+
+const { stopSoloBijJoin } = await import('./teamlidSolo')
+
+const nu = new Date('2026-11-15T12:00:00Z')
+const dagenGeleden = (d: number) => new Date(nu.getTime() - d * 86_400_000).toISOString()
+const dagenVooruit = (d: number) => new Date(nu.getTime() + d * 86_400_000).toISOString()
+
+function zet(o: { user?: Rij; sub?: Rij | null } = {}) {
+  db.approved_users = [{ user_id: 'u1', voornaam: 'Jan', email: 'jan@x.nl', paid_at: null, expires_at: null, trial_start: dagenGeleden(5), ...o.user }]
+  db.arnobot_subscriptions = o.sub === null ? [] : o.sub ? [{ id: 's1', user_id: 'u1', status: 'active', plan: 'basis', cyclus: 'maandelijks', periode_einde: dagenVooruit(12), mollie_subscription_id: 'sub_1', ...o.sub }] : []
+}
+
+beforeEach(() => {
+  notify.mockReset(); stopMollie.mockReset()
+  stopMollie.mockResolvedValue(true)
+})
+
+describe('stopSoloBijJoin', () => {
+  it('stopt de incasso van een betalend lid, laat de betaalperiode uitlopen en meldt Arno', async () => {
+    zet({ user: { paid_at: dagenGeleden(18), expires_at: dagenVooruit(12), trial_start: dagenGeleden(60) }, sub: {} })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r).toMatchObject({ abonnement: 'gestopt', omschrijving: 'Basic maandelijks', proefBeeindigd: false })
+    expect(stopMollie).toHaveBeenCalledOnce()
+    expect(db.arnobot_subscriptions[0]).toMatchObject({ status: 'cancelled', opzegging_ingaat_at: db.arnobot_subscriptions[0].periode_einde })
+    // geen restitutie en de toegang blijft zoals de betaalperiode: expires_at wordt niet aangeraakt
+    expect(db.approved_users[0].expires_at).toBe(dagenVooruit(12))
+    expect(notify.mock.calls[0][0]).toContain('geen restitutie')
+    expect(notify.mock.calls[0][0]).toContain('Team Een')
+  })
+
+  it('laat een lopende proef vervallen, ook de resterende dagen', async () => {
+    zet({ sub: null })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r).toMatchObject({ abonnement: 'geen', proefBeeindigd: true })
+    expect(db.approved_users[0].expires_at).toBe(nu.toISOString())
+    expect(notify.mock.calls[0][0]).toContain('resterende dagen vervallen')
+  })
+
+  it('doet niets en meldt niets bij iemand zonder abonnement en met een afgelopen proef', async () => {
+    zet({ user: { trial_start: dagenGeleden(45) }, sub: null })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r).toEqual({ abonnement: 'geen', proefBeeindigd: false, handmatigBetaald: false })
+    expect(notify).not.toHaveBeenCalled()
+    expect(db.approved_users[0].expires_at).toBeNull()
+  })
+
+  it('markeert het abonnement niet als gestopt als Mollie de stop niet bevestigt, en meldt dat', async () => {
+    stopMollie.mockResolvedValue(false)
+    zet({ user: { paid_at: dagenGeleden(18), expires_at: dagenVooruit(12), trial_start: dagenGeleden(60) }, sub: {} })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r.abonnement).toBe('mislukt')
+    expect(db.arnobot_subscriptions[0].status).toBe('active')
+    expect(notify.mock.calls[0][0]).toContain('STOPPEN MISLUKT')
+  })
+
+  it('beëindigt een gezette einddatum niet (alleen een proef zonder betaling of einddatum)', async () => {
+    zet({ user: { expires_at: dagenVooruit(20) }, sub: null })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r.proefBeeindigd).toBe(false)
+    expect(db.approved_users[0].expires_at).toBe(dagenVooruit(20))
+  })
+
+  it('meldt een handmatig betaald lid zonder online abonnement, zonder iets te stoppen', async () => {
+    zet({ user: { paid_at: dagenGeleden(100), trial_start: dagenGeleden(200) }, sub: null })
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r).toMatchObject({ abonnement: 'geen', handmatigBetaald: true })
+    expect(stopMollie).not.toHaveBeenCalled()
+    expect(notify.mock.calls[0][0]).toContain('handmatig betaald')
+  })
+
+  it('raakt een intern testaccount nooit aan', async () => {
+    const { MANUAL_TEST_USER_ID } = await import('@/lib/internalTestAccounts')
+    db.approved_users = [{ user_id: MANUAL_TEST_USER_ID, trial_start: dagenGeleden(5) }]
+    const r = await stopSoloBijJoin(MANUAL_TEST_USER_ID, 'Team Een', nu)
+    expect(r.proefBeeindigd).toBe(false)
+    expect(db.approved_users[0].expires_at).toBeUndefined()
+  })
+
+  it('gooit nooit een fout door: joinen mag hier niet op mislukken', async () => {
+    zet({ user: { paid_at: dagenGeleden(18), expires_at: dagenVooruit(12), trial_start: dagenGeleden(60) }, sub: {} })
+    stopMollie.mockRejectedValue(new Error('mollie down'))
+    const r = await stopSoloBijJoin('u1', 'Team Een', nu)
+    expect(r.abonnement).toBe('mislukt')
+  })
+})

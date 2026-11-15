@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { clearIndividueelGebruik } from '@/lib/teamAccess'
 import { nieuwMelden } from '@/lib/capaciteit'
+import { stopSoloBijJoin } from '@/lib/billing/teamlidSolo'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 
@@ -81,6 +82,10 @@ export async function POST(req: Request) {
       .update({ plan: team.niveau })
       .eq('user_id', userId)
   }
+
+  // Vanaf nu betaalt het team: een eigen abonnement stopt (betaalperiode loopt uit, geen restitutie) en een lopende proef
+  // vervalt. Gooit nooit een fout door, joinen mag hier niet op mislukken. Zie docs/TEAM_LEVENSCYCLUS.md.
+  await stopSoloBijJoin(userId, team.name)
 
   // Een al ingelogde bestaande gebruiker (was al individuele Basic/Pro-klant) kan hier
   // rechtstreeks joinen zonder opnieuw aan te melden, zie app/bot/team/join/page.tsx. Zijn

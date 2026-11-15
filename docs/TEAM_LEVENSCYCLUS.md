@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-15
 
-**Waar we staan:** het traject van agent-proef tot betaald team is gebouwd en op prod getest met het testaccount (activeren, factuur, betaallink). De coulance van 10 dagen na de proef is gebouwd. Besloten maar nog niet gebouwd: leden van een geblokkeerd team mogen zelf een abonnement nemen, de opzegregel voor Team (einddatum, blokkade en stop van de facturatie), en de melding aan jou bij een lid met een lopend solo-abonnement.
+**Waar we staan:** het traject van agent-proef tot betaald team is gebouwd en op prod getest met het testaccount (activeren, factuur, betaallink). De coulance van 10 dagen na de proef is gebouwd. Gebouwd: een lid met een eigen abonnement of proef verliest die bij het accepteren van de uitnodiging (uitleg vooraf, Telegram aan jou). Besloten maar nog niet gebouwd: leden van een geblokkeerd team mogen zelf een abonnement nemen en opzeggen, en de opzegregel voor Team (einddatum, blokkade en stop van de facturatie).
 
-**Eerstvolgende stap:** de besloten onderdelen hieronder bouwen, in deze volgorde: leden-optie, solo-lid melding en kader, opzegregel Team (vraagt een SQL-kolom `arnobot_teams.stopt_op`).
+**Eerstvolgende stap:** de besloten onderdelen hieronder bouwen, in deze volgorde: leden-optie (zelf een abonnement nemen en opzeggen bij een geblokkeerd team), plan terugzetten bij verwijderen, opzegregel Team (vraagt een SQL-kolom `arnobot_teams.stopt_op`).
 
 Dit document beschrijft het hele leven van een team, van binnenkomst tot einde, en wat er in elk scenario gebeurt. De stappen van aanvraag tot eerste factuur staan in `docs/TEAM_ONBOARDING.md`, de producteisen en het coachingdeel in `docs/TEAM_PLAN.md`, de tarieven en voorwaarden in `docs/ABONNEMENTEN.md`. Dit document verwijst daarnaartoe en herhaalt het niet.
 
@@ -38,7 +38,7 @@ Activeren kan op elk moment, ook na de blokkade. Jij kunt altijd verlengen met V
 | Lid van geblokkeerd team | Ziet op `/bot/doorgaan` dat het team geen toegang heeft. Kan nog niets zelf afnemen. | Gebouwd, uitbreiding hieronder |
 | Lid van geblokkeerd team neemt zelf een abonnement | Mag, en kan dat abonnement ook zelf opzeggen. Op zijn accountpagina staat een kader met de keuze. | Besloten, nog te bouwen |
 | Lid wordt verwijderd door de manager | Lidmaatschap weg, direct. Eigen proef (eerste 30 dagen na aanmelding) of verlopen status. Zijn plan blijft Pro. | Gebouwd, plan terugzetten is open |
-| Bestaand solo-klant joint een team | Zijn account en gesprekshistorie blijven. Zijn solo-abonnement loopt door, hij betaalt dubbel. Je krijgt een Telegram en hij ziet een kader met de keuze zijn eigen abonnement op te zeggen. Geen automatische stop. | Besloten, nog te bouwen |
+| Iemand met een eigen abonnement of proef accepteert een teamuitnodiging | Op de uitnodigingspagina staat vooraf: gesprekken en historie gaan mee en blijven van hem, een eigen abonnement stopt (betaalperiode loopt uit, geen restitutie) en een proef vervalt, ook de resterende dagen. Bij accepteren stopt de Mollie-incasso en vervalt de proef automatisch (`lib/billing/teamlidSolo.ts`). Hij blijft hetzelfde account, dus de historie blijft. Jij krijgt een Telegram, ook als het stoppen mislukt. | Gebouwd |
 | Manager zegt het team op | Nu: alleen een opzegdatum en een mail aan jou, de cron blijft factureren. Besloten: dezelfde regel als bij zakelijke Basic en Pro (opzegtermijn één maand voor het einde van de betaalperiode, artikel 7 van de voorwaarden), einddatum voor de manager, leden houden toegang tot die datum, op die dag blokkeert het team en stopt de facturatie. | Besloten, nog te bouwen |
 | Team opheffen | Is hetzelfde als de opzegregel hierboven. Er komt geen losse verwijderfunctie. | Besloten |
 | Team met meer dan 25 leden | Join weigert, jij krijgt een Telegram. | Gebouwd |
@@ -52,7 +52,7 @@ Activeren kan op elk moment, ook na de blokkade. Jij kunt altijd verlengen met V
 - **Zelf activeren door de manager** (2026-11-15). Gekozen: knop TEAM ACTIVEREN op de accountpagina, alleen voor een agent-proef, seats volgen automatisch het ledenaantal. Verworpen: een mail met een offerte, en `/bot/doorgaan` ombouwen voor teams. Deblokkeren gebeurt bij het activeren, niet pas bij betalen.
 - **Coulance van 10 dagen** (2026-11-15). Gekozen: dag 30 mail en kader, dag 40 blokkade. Verworpen: blokkeren op dag 30, want de manager heeft dan geen gat nodig terwijl hij nog niets gehoord heeft.
 - **Leden van een geblokkeerd team** (2026-11-15). Gekozen: een lid mag zelf een abonnement nemen en opzeggen. Verworpen: een lid laten wachten op de manager, of een lid zelf uit het team laten stappen (grote wijziging, raakt teamdata en rapporten).
-- **Solo-klant die een team joint** (2026-11-15). Gekozen: Telegram aan jou en een kader voor het lid, geen automatische stop. Verworpen: de solo-incasso automatisch stoppen. Redenen: een jaarabonnement is al betaald en niet terug te draaien, het botst met de leden-optie (bij een geblokkeerd team heeft hij zijn eigen abonnement nodig) en het raakt iemands geld zonder zijn toestemming.
+- **Iemand met een eigen abonnement of proef die een team joint** (2026-11-15, besluit Arno). Gekozen: bij accepteren van de uitnodiging stopt de volgende betaling automatisch (geen restitutie, de lopende betaalperiode loopt uit) en vervalt een lopende proef met de resterende dagen. Gesprekshistorie gaat mee en blijft van hem. De toestemming is de knop om te joinen, met de uitleg erboven op de uitnodigingspagina. Verworpen: alleen een Telegram aan jou plus een kader voor het lid (eerder dit gesprek gekozen), want dan betaalt hij dubbel tot iemand ingrijpt. Gevolg: wordt het team later geblokkeerd of verwijdert de manager hem, dan heeft hij geen eigen abonnement of proefdagen meer en moet hij zelf een abonnement nemen, wat de leden-optie toestaat. Een handmatig betaald lid (BETAALD gezet, zonder online abonnement) heeft geen incasso om te stoppen: dat meldt de Telegram.
 - **Mail aan leden bij blokkeren of heractiveren:** bewust niet gebouwd. Besluit bij het eerste echte team.
 
 ## Bekende gaten
@@ -69,7 +69,7 @@ Activeren kan op elk moment, ook na de blokkade. Jij kunt altijd verlengen met V
 - [x] Telegram bij 20 leden en bij een geweigerde join
 - [x] Blok TEAM bovenaan de accountpagina, testknoppen TEAMPROEF
 - [ ] Leden van een geblokkeerd team mogen zelf een abonnement nemen en opzeggen
-- [ ] Solo-klant die een team joint: Telegram aan jou en kader voor het lid
+- [x] Eigen abonnement stopt en proef vervalt bij het accepteren van een teamuitnodiging, met uitleg vooraf en een Telegram aan jou
 - [ ] Opzegregel Team: einddatum, blokkade en stop van de facturatie (SQL `stopt_op`)
 - [ ] Plan terugzetten bij het verwijderen van een lid (nog te beslissen)
 - [ ] Melding aan de manager buiten de accountpagina (balk in de app)

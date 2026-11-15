@@ -4,11 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // voor Arno: eenmalig vanaf 20 leden, en als iemand wordt geweigerd omdat het team vol is.
 
 type Rij = Record<string, unknown>
-const { db, notify, nieuwMelden, auth } = vi.hoisted(() => ({
+const { db, notify, nieuwMelden, auth, stopSolo } = vi.hoisted(() => ({
   db: { arnobot_teams: [] as Rij[], arnobot_team_members: [] as Rij[], approved_users: [] as Rij[] },
   notify: vi.fn(),
   nieuwMelden: vi.fn(),
   auth: vi.fn(),
+  stopSolo: vi.fn(),
 }))
 
 function bouwer(tabel: 'arnobot_teams' | 'arnobot_team_members' | 'approved_users') {
@@ -36,6 +37,7 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ from: bouwer })
 vi.mock('@clerk/nextjs/server', () => ({ auth }))
 vi.mock('@/lib/teamAccess', () => ({ clearIndividueelGebruik: vi.fn(async () => {}) }))
 vi.mock('@/lib/capaciteit', () => ({ nieuwMelden }))
+vi.mock('@/lib/billing/teamlidSolo', () => ({ stopSoloBijJoin: stopSolo }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify }))
 
 const { POST } = await import('./route')
@@ -49,7 +51,8 @@ const vulTeam = (aantal: number, id = 't1') => {
 
 beforeEach(() => {
   db.arnobot_teams = []; db.arnobot_team_members = []; db.approved_users = [{ user_id: 'nieuw', plan: 'basis' }]
-  notify.mockReset(); nieuwMelden.mockReset(); auth.mockReset()
+  notify.mockReset(); nieuwMelden.mockReset(); auth.mockReset(); stopSolo.mockReset()
+  stopSolo.mockResolvedValue({ abonnement: 'geen', proefBeeindigd: false, handmatigBetaald: false })
   nieuwMelden.mockResolvedValue(true)
   auth.mockResolvedValue({ userId: 'nieuw' })
 })
@@ -61,6 +64,23 @@ describe('team joinen', () => {
     expect(res.status).toBe(200)
     expect(db.arnobot_team_members.some(m => m.user_id === 'nieuw' && m.role === 'member')).toBe(true)
     expect(db.approved_users[0].plan).toBe('premium')
+  })
+
+  it('stopt na het joinen het eigen abonnement en de eigen proef van het nieuwe lid', async () => {
+    vulTeam(3)
+    await aanroep()
+    expect(stopSolo).toHaveBeenCalledOnce()
+    expect(stopSolo).toHaveBeenCalledWith('nieuw', 'Team Een')
+  })
+
+  it('stopt niets als joinen niet lukt (team vol, ongeldige code of al lid)', async () => {
+    vulTeam(25)
+    await aanroep()
+    vulTeam(3)
+    await aanroep('fout')
+    db.arnobot_team_members.push({ team_id: 't1', user_id: 'nieuw', role: 'member' })
+    await aanroep()
+    expect(stopSolo).not.toHaveBeenCalled()
   })
 
   it('geeft geen melding onder de 20 leden', async () => {
