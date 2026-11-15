@@ -1,7 +1,7 @@
 # Team-klant onboarden: checklist
 
-**Laatst bijgewerkt:** 2026-11-12 (sectie "Teambaas met een zakelijk solo-maandabonnement")
-**Doel:** de stappen van een Team-aanvraag tot de eerste betaalde factuur, zodat bij de eerste echte klant niets vergeten wordt. Het inrichten na akkoord is een bewust besluit: volledig handmatig, blijvend (zie `docs/ABONNEMENTEN.md`, "Team-aanvraagflow"). Dit document legt vast wat daarbij gebeurt, wat automatisch loopt en waar je op moet letten.
+**Laatst bijgewerkt:** 2026-11-15 (sectie "Zelf activeren na een agent-proef")
+**Doel:** de stappen van een Team-aanvraag tot de eerste betaalde factuur, zodat bij de eerste echte klant niets vergeten wordt. Het inrichten na een aanvraag via het formulier is een bewust besluit: handmatig, blijvend (zie `docs/ABONNEMENTEN.md`, "Team-aanvraagflow"). Alleen een manager van een gratis agent-proef activeert zijn team zelf (sinds 2026-11-15, zie "Zelf activeren na een agent-proef"). Dit document legt vast wat daarbij gebeurt, wat automatisch loopt en waar je op moet letten.
 
 ## De stappen
 
@@ -50,6 +50,22 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 
 **Verlengen kan altijd:** op `/bot/admin/teams` staat bij zo'n team de einddatum, met een datumveld en de knop VERLENG PROEF. Die zet de einddatum van de manager later en heft een blokkade door het einde van de proef op, ook na het einde. Een gezette einddatum gaat voor op de 30 dagen. Zodra de klant akkoord is: stap 7 invullen, dan is het geen proef meer.
 
+### Zelf activeren na een agent-proef (sinds 2026-11-15)
+
+**Besluit (Arno, 2026-11-15):** de manager van een agent-proef zet zijn team zelf om naar betaald; de tarieven zijn bekend, dus er is geen offerte of gesprek nodig. Gekozen: zelf activeren op de accountpagina. Verworpen: een mail aan de manager met een offerte (de tekst klopte niet en het proces ook niet) en `/bot/doorgaan` ombouwen voor teams (die pagina is voor losse Basic of Pro). Gekozen: alleen voor een agent-proef (B), seats volgen daarna automatisch het ledenaantal zoals bij elk team (C).
+
+**Wat de manager ziet** (`/bot/account`, blok TEAM, `app/bot/account/TeamActiverenSectie.tsx`): de proefstatus (nog X dagen, of afgelopen) en de knop **TEAM ACTIVEREN**. Het individuele abonnement (plan, overstappen, opzeggen) verdwijnt voor zo'n manager. Het formulier vraagt het aantal gebruikers (minimaal 3, standaard het ledenaantal), maandelijks of jaarlijks, en de bedrijfsgegevens met dezelfde regels als afrekenen (`lib/billing/zakelijk.ts`: KvK 8 cijfers, Nederlands btw-nummer, adres). Het toont de eerste factuur en vraagt akkoord op de voorwaarden. Een geblokkeerde manager komt via `/bot/doorgaan` vanzelf op deze pagina (die stuurt door), want `/bot/account` is een pagina die ook zonder toegang bereikbaar is. In de Android-app is het blok verborgen (betalingsbeleid Google Play).
+
+**Wat BEVESTIG doet** (`lib/teamActivatie.ts`, `POST /api/bot/team/activeren`): bewaart de bedrijfsgegevens, zet min. seats, cyclus en volgende factuurdatum (vandaag), **heft de blokkade op**, maakt de eerste factuur met Mollie-betaallink en Moneybird-factuur (dezelfde als de cron, `maakTeamFactuur`) en meldt jou via Telegram "Team geactiveerd door de manager zelf", met een regel in het adminlogboek (TEAM GEACTIVEERD). Het team wordt atomair geclaimd (min. seats moet nog leeg zijn): twee klikken tegelijk maken één factuur. Daarna is het geen proef meer (`isAgentProef` is onwaar) en loopt alles als bij elk team: 14 dagen betaaltermijn, herinnering na 7 dagen, blokkade 30 dagen na de vervaldatum.
+
+**Bewuste keuze, let op:** het team wordt gedeblokkeerd bij het activeren, niet pas bij betalen. Wie activeert maar nooit betaalt, heeft dus ongeveer 44 dagen toegang voordat de bestaande blokkade hem raakt. Dat is gelijk aan elke andere teamfactuur. Wil je dat anders, dan is de aanpassing: de blokkade laten staan tot de webhook een betaling meldt.
+
+**Teamleden** van een geblokkeerd team zien op `/bot/doorgaan` "Je team heeft geen toegang, vraag je teammanager" in plaats van afrekenopties die voor hen toch niet werken (de checkout weigert teamleden).
+
+**Niet gedekt:** een manager met een agent-link die zelf al betaalt (`paid_at`) kan hier niet activeren (het blok verschijnt niet). Dat is de "Controle nodig"-melding hierboven, die loopt nog handmatig.
+
+**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, VOORBIJ EN GEBLOKKEERD, UIT. De oorspronkelijke waarden van het account worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet.
+
 ## Let op
 
 1. **`command_manager = true` geeft al toegang**, ook zonder dat er een team of een betaling is (`proxy.ts`). Zet het dus pas na akkoord.
@@ -67,6 +83,6 @@ Getest en goedgekeurd: reguliere factuur, tussentijdse jaarfactuur voor een extr
 
 ## Open punten
 
-- Een mail aan de manager bij het einde van de proef (tekst nog niet vastgesteld): nu krijgt alleen Arno een Telegram-melding, en de manager belandt na de blokkade op `/bot/doorgaan`.
+- Een mail aan de manager bij het einde van de proef: bewust nog niet gebouwd (tekst eerst voorleggen aan Arno). De manager ziet de proefstatus alleen op zijn accountpagina en krijgt geen melding in de app of per mail. Overweeg een balk of mail zodra de eerste echte agent-proef loopt.
 - Een koppeling tussen de aanvraag en het team op de adminpagina (nu "match zelf op e-mailadres").
 - Grens van 25 leden (zie Let op 3).

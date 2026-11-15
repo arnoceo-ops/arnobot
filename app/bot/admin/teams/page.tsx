@@ -5,7 +5,7 @@ import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
 import TeamProefVerleng from './TeamProefVerleng'
 import { isAgentProef, proefEinde, proefStand, verlengStandaardDatum } from '@/lib/teamProef'
-import { TEST_TEAM_ID, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
+import { TEST_TEAM_IDS_IN, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { berekenTeamPrijsPerMaand } from '@/lib/teamPricing'
 import { nlVandaag } from '@/lib/nlTijd'
 
@@ -28,7 +28,7 @@ export default async function TeamsAdminPage() {
   const { data: teams } = await supabase
     .from('arnobot_teams')
     .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
-    .neq('id', TEST_TEAM_ID)
+    .not('id', 'in', TEST_TEAM_IDS_IN)
     .order('name')
   const managerIds = [...new Set((teams ?? []).map(t => t.manager_id))]
 

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { nieuwMelden } from '@/lib/capaciteit'
 import { registreerCronRun } from '@/lib/cronRun'
-import { excludeInternalTestUsers, TEST_TEAM_ID } from '@/lib/internalTestAccounts'
+import { excludeInternalTestUsers, TEST_TEAM_IDS_IN } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { isAgentProef, proefEinde, proefStand } from '@/lib/teamProef'
 
@@ -43,7 +43,7 @@ async function cronHandler(req: NextRequest) {
 
     const managerIds = (managers ?? []).map(m => m.user_id as string)
     const { data: teams } = managerIds.length
-      ? await supabase.from('arnobot_teams').select('id, name, manager_id, min_seats, geblokkeerd_at').in('manager_id', managerIds).neq('id', TEST_TEAM_ID)
+      ? await supabase.from('arnobot_teams').select('id, name, manager_id, min_seats, geblokkeerd_at').in('manager_id', managerIds).not('id', 'in', TEST_TEAM_IDS_IN)
       : { data: [] as { id: string; name: string; manager_id: string; min_seats: number | null; geblokkeerd_at: string | null }[] }
     const teamPerManager = new Map((teams ?? []).map(t => [t.manager_id, t]))
 

@@ -175,6 +175,8 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   seats: number
   nettoCent: number
   btwCent: number
+  /** Testteam: wel de Mollie-betaallink, geen Moneybird-factuur (geen nepfactuur in de echte administratie). */
+  zonderBoekhouding?: boolean
 }): Promise<void> {
   const brutoCent = input.nettoCent + input.btwCent
   const cyclus = team.cyclus ?? 'maandelijks'
@@ -216,7 +218,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       .update({ mollie_payment_link_id: link.id, mollie_payment_link_url: link.url })
       .eq('id', rij.id)
 
-    if (factureringToegestaan()) {
+    if (factureringToegestaan() && !input.zonderBoekhouding) {
       const { contactId, voornaam } = await verkrijgMollieEnMoneybirdKlant(team)
       const factuur = await maakConceptFactuur({
         contactId,

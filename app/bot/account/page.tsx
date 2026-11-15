@@ -10,6 +10,7 @@ import OverstapSectie, { OpzeggingIntrekken } from './OverstapSectie'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
+import TeamActiverenSectie, { useActivatieStand } from './TeamActiverenSectie'
 import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
@@ -39,6 +40,9 @@ export default function AccountPage() {
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
   const { isTeamMember, isManager, memberCount, loaded: teamStatusLoaded, failed: teamStatusFailed } = useTeamStatus()
+  // Manager van een gratis agent-proef: geen individueel abonnement (plan, overstap, opzeggen) maar TEAM ACTIVEREN.
+  const { stand: activatieStand, loaded: activatieLoaded, laad: laadActivatie } = useActivatieStand()
+  const teamProefManager = !!activatieStand?.kanActiveren
   const [appPassword, setAppPassword] = useState('')
   const [appPasswordConfirm, setAppPasswordConfirm] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
@@ -399,18 +403,22 @@ export default function AccountPage() {
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
         </div>
 
-        {/* Nieuwe sectie: Genoeg geweest */}
+        <TeamActiverenSectie stand={activatieStand} laad={laadActivatie} />
+
+        {/* Nieuwe sectie: Genoeg geweest. Niet voor de manager van een agent-proef, die activeert zijn team hierboven. */}
+        {activatieLoaded && !teamProefManager && (
         <div style={{ borderTop: '1px solid #374151', paddingTop: 48, marginBottom: 0 }}>
           <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ABONNEMENT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 40px 0', color: '#f1f5f9', lineHeight: 1 }}>GENOEG GEWEEST?</h1>
         </div>
+        )}
 
         {/* Abonnement opzeggen — verborgen voor gewone teamleden, dat is de manager's
             abonnement, niet het hunne. Voor de manager zelf wél zichtbaar (hij betaalt het
             teamabonnement), met aangepaste tekst die het teambrede effect benoemt.
             ACCOUNT VERWIJDEREN eronder blijft voor iedereen zichtbaar, dat is een AVG-recht
             op verwijdering van eigen persoonsgegevens, los van wie betaalt. */}
-        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && (
+        {teamStatusLoaded && !teamStatusFailed && !isTeamMember && activatieLoaded && !teamProefManager && (
         <>
         {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
             mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}

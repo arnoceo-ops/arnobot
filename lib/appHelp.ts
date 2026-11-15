@@ -35,6 +35,8 @@ Gesprek voortzetten: alle gesprekken staan in Analyses. Open een gesprek, scroll
 
 Sparren: bij Coaching beschrijft de gebruiker een situatie en geef je advies. Bij Sparren speel je de uitdager (een prospect, de CEO, een underperformer) en oefent de gebruiker het gesprek live. De weerstandsinstelling bepaalt hoe hard je terugduwt: Licht beweegt mee als de argumenten kloppen, Stevig stelt harde vragen, Zwaar is sceptisch en geeft vrijwel nooit toe zonder bewijs. Na een sessie volgt een debrief: wat ging goed, het kritieke moment, een patroon uit eerdere coaching en één tip. Bij Sparren kiest de gebruiker geen antwoordlengte, die bepaal je zelf zoals een echte tegenpartij.
 
+Teamproef: een manager die via een verkoopagent binnenkwam heeft 30 dagen gratis een team. Op de accountpagina staat het blok TEAM met de resterende dagen en de knop TEAM ACTIVEREN: de manager kiest het aantal gebruikers en maandelijks of jaarlijks, vult de bedrijfsgegevens in en krijgt de factuur met een betaallink. Is de proef voorbij en het team niet geactiveerd, dan heeft het hele team geen toegang; een teamlid ziet dan dat de teammanager het team moet activeren.
+
 Proefperiode: 30 dagen gratis. Op dag 25 wordt gevraagd of de gebruiker wil doorgaan. Doet die niets, dan stopt de toegang automatisch op dag 30. Vanaf 5 dagen voor het einde staat onderin het scherm een balk met een knop om door te gaan.
 
 Opzeggen: via de accountpagina met één klik. De toegang blijft actief tot het einde van de lopende betaalperiode. De data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.

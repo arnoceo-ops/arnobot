@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE, TEST_TEAM_ID, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
+import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL, INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE, TEST_TEAM_IDS_IN, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { computeHealthScore, HEALTH_BUCKET_META } from '@/lib/healthScore'
 import AdminNav from '../AdminNav'
 import StatsTabs from './StatsTabs'
@@ -160,10 +160,10 @@ export default async function AdminStatsPage() {
   // MRR uit de echte abonnementen (arnobot_subscriptions), zie lib/mrr.ts voor de definitie.
   // Geen fallback op planprijs of op de handmatige BETAALD-vlag: dat is geen omzet.
   // Team telt mee via dezelfde formule als de facturen: teams met een betaalde reguliere factuur
-  // die nu loopt, zonder het demo-team (TEST_TEAM_ID).
+  // die nu loopt, zonder de interne testteams (TEST_TEAM_IDS).
   const nuIso = new Date(now).toISOString()
   const [{ data: teamRijen }, { data: betaaldeFacturen }] = await Promise.all([
-    supabase.from('arnobot_teams').select('id, min_seats, cyclus, geblokkeerd_at').neq('id', TEST_TEAM_ID),
+    supabase.from('arnobot_teams').select('id, min_seats, cyclus, geblokkeerd_at').not('id', 'in', TEST_TEAM_IDS_IN),
     supabase.from('arnobot_team_facturen').select('team_id').eq('status', 'paid').eq('soort', 'regulier').lte('periode_start', nuIso).gt('periode_einde', nuIso),
   ])
   const teamIds = (teamRijen ?? []).map(t => t.id as string)

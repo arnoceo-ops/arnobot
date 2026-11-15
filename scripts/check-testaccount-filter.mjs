@@ -69,6 +69,12 @@ const KNOWN_SAFE = new Set([
   // Facturatie-oppervlak per team: Team Apex (TEST_TEAM_ID) is uit de teamlijst gefilterd,
   // de managerlookups hangen daaraan; de POST-route werkt op een expliciet teamId.
   'app/bot/admin/teams/page.tsx:approved_users',
+  // Logboek van adminacties: zoekt alleen de namen op van de gebruikers die in de log voorkomen (.in op die ids).
+  // Een testaccount in het logboek (persona- en planknoppen) hoort juist met naam zichtbaar te zijn.
+  'app/bot/admin/AdminLogboek.tsx:approved_users',
+  // Teamactivering: leest en schrijft alleen de rij van de ingelogde manager (.eq user_id).
+  'lib/teamActivatie.ts:approved_users',
+  'lib/teamActivatie.ts:arnobot_billing_customers',
   'app/bot/admin/teams/page.tsx:arnobot_billing_customers',
   'app/api/admin/teams/route.ts:arnobot_billing_customers',
   // AVG-opruimlijst van 30+ dagen geleden beëindigde accounts (is_active=false). De

@@ -13,6 +13,7 @@ import {
 } from '@/lib/billing/teamFacturatie'
 import { verstuurTeamMail } from '@/lib/billing/teamMails'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
+import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 
 const DAG_MS = 24 * 60 * 60 * 1000
 const BETAALTERMIJN_DAGEN = 14
@@ -44,6 +45,7 @@ async function cronHandler(req: NextRequest) {
       .not('min_seats', 'is', null)
       .not('cyclus', 'is', null)
       .not('volgende_factuurdatum', 'is', null)
+      .neq('id', TEST_PROEF_TEAM_ID)
       .returns<TeamRow[]>()
     const teams = teamsRaw ?? []
 
