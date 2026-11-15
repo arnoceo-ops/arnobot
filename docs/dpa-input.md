@@ -45,7 +45,7 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | Clerk | Authenticatie en gebruikersbeheer | SOC 2 Type II | clerk.com/legal/dpa |
 | Vercel | Hosting en deployment | — | vercel.com/legal/dpa |
 | Anthropic | AI-verwerking voor coaching (geen training op klantdata) | — | anthropic.com/legal/dpa |
-| OpenAI | Spraakherkenning (Whisper) voor voice-invoer (geen training op klantdata) | — | openai.com/policies/dpa |
+| OpenAI | Spraakherkenning (live en achteraf) voor voice-invoer (geen training op klantdata) | — | openai.com/policies/dpa |
 | Resend | Transactionele e-mails | — | resend.com/legal/dpa |
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA | Op aanvraag, geen publieke link |
 | Sentry | Foutmonitoring en performance-tracing | — | sentry.io/legal/dpa |
@@ -53,6 +53,9 @@ Geen bijzondere categorieën persoonsgegevens (AVG artikel 9) worden verwerkt.
 | ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees (geen training op klantdata) | — | elevenlabs.io/dpa |
 | PostHog | Bezoekers- en productgebruiksanalyse. Anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving. Geen gespreks-, coaching- of analyse-inhoud. Session replay staat aan, beperkt tot 6 shell-pagina's, alle tekst en invoer gemaskeerd, bewaartermijn 30 dagen. | EU (Frankfurt) | Op aanvraag |
 | Calendly | Boeken van een kennismakingsgesprek met Arno | — | calendly.com/legal/data-processing-addendum |
+| AssemblyAI | Transcriptie van audiobijlagen in de chat (direct verwijderd, geen training op klantdata) | — | assemblyai.com/legal/data-processing-addendum |
+| Mollie | Online betalingen (iDEAL, Bancontact, creditcard) | EU | mollie.com/legal/data-processing-agreement |
+| Moneybird | Facturen en boekhouding | Opslag binnen de EER | Verwerkersovereenkomst afgesloten door Arno op 2026-10-09 |
 
 **Let op**: voor Voyage AI, Upstash en PostHog is er geen publiek self-service DPA-document gevonden. Vóór ondertekening met een corporate klant moet actief bij deze partijen een DPA worden opgevraagd, of moet worden bevestigd dat een DPA niet noodzakelijk is gezien de aard van de verwerking.
 

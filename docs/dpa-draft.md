@@ -1,6 +1,6 @@
-# Verwerkersovereenkomst — CONCEPT v0.6
+# Verwerkersovereenkomst — CONCEPT v0.7
 
-> **NIET-OFFICIEEL CONCEPT.** Startpunt voor juridische beoordeling, geen ondertekenbaar document. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Alle eerdere voorstellen zijn door Arno akkoord bevonden en als definitieve tekst verwerkt. Nieuw in v0.6: OpenAI toegevoegd als sub-verwerker (Artikel 5), naar aanleiding van een 2026-07-audit die vaststelde dat de Whisper/TTS-integratie nog nergens in de leverancierslijsten stond. Bijgewerkt 2026-08-01 (kwartaalcheck van 1 augustus): ElevenLabs, PostHog en Calendly toegevoegd aan Artikel 5, stonden hier nog niet terwijl ze al wel op de live privacypagina staan. Nog openstaand: het vestigingsadres en KVK-nummer van de BV (zie preambule). Niet versturen naar een klant of laten ondertekenen vóór volledige beoordeling door een bedrijfsjurist.
+> **CONCEPT, door Arno vastgesteld, niet juridisch getoetst.** Arno heeft geen jurist en stelt de tekst zelf vast; dit is geen ondertekenbaar document totdat Arno het expliciet zo bestempelt. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Artikel 11 (aansprakelijkheid) blijft bewust zoals het is (besluit Arno, 2026-11-15: hij is als eenmanszaak persoonlijk aansprakelijk, dus één uniform maximum). Bijgewerkt in v0.7 (2026-11-15): AssemblyAI, Mollie en Moneybird toegevoegd als sub-verwerkers (Artikel 5), de beschrijving van OpenAI aangepast, en een verkeerde verwijzing in Artikel 1 hersteld (beëindiging staat in Artikel 13). Eerdere wijzigingen: v0.6 OpenAI, 2026-08-01 ElevenLabs, PostHog en Calendly. Nog te doen vóór ondertekening met een klant: een DPA opvragen bij Voyage AI, Upstash en PostHog.
 
 ---
 
@@ -16,7 +16,7 @@
 
 Deze overeenkomst regelt de verwerking van persoonsgegevens door ArnoBot namens de Klant, ten behoeve van het leveren van de ArnoBot-coachingdienst aan medewerkers van de Klant.
 
-Duur: voor de looptijd van de onderliggende dienstverleningsovereenkomst tussen Klant en ArnoBot, tenzij eerder beëindigd conform Artikel 10.
+Duur: voor de looptijd van de onderliggende dienstverleningsovereenkomst tussen Klant en ArnoBot, tenzij eerder beëindigd conform Artikel 13.
 
 ## Artikel 2 — Aard en doel van de verwerking
 
@@ -68,7 +68,7 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | Clerk | Authenticatie en gebruikersbeheer | SOC 2 Type II |
 | Vercel | Hosting en deployment | — |
 | Anthropic | AI-verwerking voor coaching | — |
-| OpenAI | Spraakherkenning (Whisper) voor voice-invoer | — |
+| OpenAI | Spraakherkenning (live en achteraf) voor voice-invoer | — |
 | Resend | Transactionele e-mails | — |
 | Voyage AI | Embeddings en herrangschikking (kennisbank, sessiegeheugen) | SOC 2, HIPAA |
 | Sentry | Foutmonitoring en performance-tracing | — |
@@ -76,6 +76,9 @@ ArnoBot maakt gebruik van de volgende sub-verwerkers:
 | ElevenLabs | Tekst-naar-spraak voor ArnoBot Voice-abonnees | — |
 | PostHog | Bezoekers- en productgebruiksanalyse (anoniem publiek, pseudoniem ingelogd; geen gespreks-/coachinginhoud) | EU (Frankfurt) |
 | Calendly | Boeken van een kennismakingsgesprek met Arno | — |
+| AssemblyAI | Transcriptie van audiobijlagen in de chat (direct verwijderd, geen training op klantdata) | — |
+| Mollie | Online betalingen (iDEAL, Bancontact, creditcard) | EU |
+| Moneybird | Facturen en boekhouding | Opslag binnen de EER |
 
 ArnoBot informeert de Klant schriftelijk (e-mail volstaat) over voorgenomen wijzigingen in deze lijst. De Klant kan binnen 30 dagen na kennisgeving schriftelijk bezwaar maken op redelijke, gedocumenteerde gronden. Partijen overleggen te goeder trouw over een oplossing; bij het uitblijven daarvan kan de Klant de overeenkomst beëindigen conform Artikel 13.
 

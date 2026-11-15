@@ -10,7 +10,7 @@ Momentopname 2026-11-15, samengesteld uit het oude `docs/OPENSTAANDE_PUNTEN.md` 
 ## Privacy en juridisch
 - **Session replay staat AAN** (`SESSION_REPLAY_ENABLED = true`, `lib/posthog.ts`) en de maskering is sinds 2026-08-30 nooit visueel bevestigd. Eén echte gebruikersopname openen en controleren dat alle tekst gemaskeerd is; zo niet, de vlag op `false`.
 - **PostHog:** in het dashboard "Discard client IP data" aanzetten (Arno, status onbekend).
-- **DPA:** nog te doen vóór een corporate klant tekent, zie `docs/dpa-input.md` en `docs/dpa-draft-v0.6.md`. DPA's opvragen bij Voyage AI, Upstash en PostHog.
+- **DPA:** nog te doen vóór een corporate klant tekent, zie `docs/dpa-input.md` en `docs/dpa-draft.md`. DPA's opvragen bij Voyage AI, Upstash en PostHog.
 - **Telegram als niet-gedocumenteerde sub-verwerker:** bewust geaccepteerd (besluit Arno 2026-09-16), geen actie.
 - **OSS (btw):** zodra de omzet aan particulieren buiten Nederland samen boven €10.000 per kalenderjaar komt, btw van het land van de klant rekenen en aangeven via OSS. Er wordt nog niet bijgehouden hoeveel dat is; Mollie toont het land per betaling. Controleer de actuele regels op belastingdienst.nl.
 
