@@ -1,6 +1,6 @@
 # Admin opruimen en versterken
 
-**Laatst bijgewerkt:** 2026-11-14
+**Laatst bijgewerkt:** 2026-11-15 (het logboek van adminacties staat nu op STATUS onder de geplande crons; PDF van Gesprekken toont Amsterdamse tijd; het teamproces staat in `docs/TEAM_PROCES.md`)
 
 **Waar we staan:** alle drie de rondes zijn af. Het menu is van 14 naar 10 items teruggebracht (USERS, TEAMS, GESPREKKEN, ANALYSE, STATUS, META, MAILS, KENNISBANK, BLOG, STATS). De admin kapt geen cijfers meer af op 1000 rijen, dagen lopen op Amsterdamse tijd, geld- en toegangsknoppen schrijven in een logboek en vragen bevestiging, USERS heeft een belijst en betaalgeschiedenis, ANALYSE kent de coachinghistorie, Gesprekken toont het duimpje, en STATUS toont per cron of hij gezond is. Er staat geen geplande stap meer open, alleen losse punten (zie onderaan).
 
