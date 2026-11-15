@@ -162,7 +162,7 @@ describe('activeerTeam', () => {
     expect(factuur).toMatchObject({ soort: 'regulier', seats: 5, zonderBoekhouding: false })
     // jaarlijks: de periode loopt een jaar
     expect(Math.round((factuur.periodeEinde.getTime() - factuur.periodeStart.getTime()) / 86_400_000)).toBeGreaterThanOrEqual(365)
-    expect(logActie).toHaveBeenCalledWith(expect.objectContaining({ actie: 'team_geactiveerd', doelTeamId: 't1' }))
+    expect(logActie).toHaveBeenCalledWith(expect.objectContaining({ actie: 'team_geactiveerd', doelTeamId: 't1', details: { nieuw: { cyclus: 'jaarlijks', gebruikers: 5, bedrijf: 'Voorbeeld BV' } } }))
     expect(notify).toHaveBeenCalledOnce()
   })
 

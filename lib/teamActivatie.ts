@@ -164,7 +164,8 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
 
   await logAdminActie({
     actie: 'team_geactiveerd', doelUserId: userId, doelTeamId: team.id,
-    details: { nieuw: { min_seats: invoer.seats, cyclus: invoer.cyclus, bedrijfsnaam: z.bedrijfsnaam }, extra: { door: 'manager zelf', bedrag_cent: brutoCent } },
+    // Kort gehouden voor het logboek op Status: cyclus, aantal gebruikers en bedrijf (het bedrag staat in Telegram en op de factuur).
+    details: { nieuw: { cyclus: invoer.cyclus, gebruikers: invoer.seats, bedrijf: z.bedrijfsnaam } },
   })
   await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nSeats: ${seats} (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\nDe factuur en betaallink zijn verstuurd.`)
 
