@@ -46,7 +46,7 @@ export function ArnoBotPdfDocument({ sessions, dateRange }: Props) {
                 SESSIE {idx + 1} · {messages[0].ip} · {messages.length} {messages.length === 1 ? 'vraag & antwoord' : 'vragen & antwoorden'}
               </Text>
               <Text style={styles.sessionMeta}>
-                {new Date(messages[0].created_at).toLocaleTimeString('nl-NL')} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL')}
+                {new Date(messages[0].created_at).toLocaleTimeString('nl-NL', { timeZone: 'Europe/Amsterdam' })} tot {new Date(messages[messages.length - 1].created_at).toLocaleTimeString('nl-NL', { timeZone: 'Europe/Amsterdam' })}
               </Text>
             </View>
             {messages.map((msg) => (

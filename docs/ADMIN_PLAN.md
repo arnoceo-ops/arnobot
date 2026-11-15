@@ -72,5 +72,4 @@ Geen. De eerdere vier vragen zijn beslist (zie hierboven).
 
 ## Bekend, niet door deze trajecten opgelost
 
-- Niet nagelopen agentbevindingen: BlogStats doet ongeveer 40 telqueries per paginalading, META heeft een eigen "gebruikers"-jurylid op duimpjes dat FEEDBACK overlapt. (Gecontroleerd 2026-11-15: de eerdere bevindingen over `waarheidsRapport.ts` en de STATUS-tegel PERFORMANCE zijn inmiddels opgelost; het filterscript meldt niets meer en de tegel toont responstijden met een kleurniveau.)
-- De PDF van Gesprekken (`ArnoBotPdfDocument`) rendert in de browser en toont dus de tijdzone van de bezoeker, niet vast Amsterdam.
+Geen. Nagelopen op 2026-11-15: de bevindingen over `waarheidsRapport.ts` en de STATUS-tegel PERFORMANCE zijn opgelost, het META-jurylid overlapt niet meer met FEEDBACK (die tab bestaat niet meer), de PDF van Gesprekken toont nu vaste Amsterdamse tijd, en BlogStats telt in het onderdeel zelf 5 queries (de eerdere schatting van ongeveer 40 is niet bevestigd en niemand merkte een traagheid).
