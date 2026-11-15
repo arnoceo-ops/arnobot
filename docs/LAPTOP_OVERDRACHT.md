@@ -1,34 +1,43 @@
-# ArnoBot — overdracht naar een tweede werkplek (laptop)
+# ArnoBot: werken vanaf een tweede werkplek (laptop, buitenland)
 
-Dit document is het stappenplan om vanaf een laptop hetzelfde werk aan ArnoBot te kunnen doen als vanaf het vaste bureau-apparaat: code wijzigen, testen, committen en pushen. Bedoeld voor gebruik tijdens reizen. Volg de stappen in volgorde bij het eerste keer inrichten van de laptop; daarna is alleen het gedeelte "Bij elke sessie" nog relevant.
+## Statusblok
 
-Voor de volledige lijst van externe diensten, env vars en waar sleutels vandaan komen: zie `docs/TECHNICAL_HANDOVER.md`, sectie "Externe diensten". Dit document dupliceert die lijst niet, maar verwijst ernaar.
+- **Laatst bijgewerkt:** 2026-11-15
+- **Waar we staan:** volledig herschreven op 2026-11-15, na de eerdere versie van juli. Verwijderd: de macOS-stappen (Arno gebruikt geen Apple), de Markdown PDF-extensie (PDF's maakt nu `npm run docs:pdf`) en de lijst met "openstaande bestanden" (de werkmap is schoon en op master). Toegevoegd: het Claude Code-geheugen en de gebruikersinstellingen (staan niet in git), de Android-keystore, tweestapsverificatie in het buitenland en een proefrun vóór vertrek.
+- **Eerstvolgende stap:** de proefrun uit het onderdeel "Vóór vertrek" doen op de laptop, nog in Nederland, en de vinkjes daar afvinken.
+- **Vertrekdatum:** nog niet bekend (Arno verwacht binnen enkele maanden te vertrekken).
+- **Gekozen:** geheugen en keystore vlak vóór vertrek kopiëren; de overige configuratie uit Vercel en GitHub halen. **Verworpen:** een losse kopie van alle sleutels via mail of cloud-schijf, want dat is een extra plek waar alles tegelijk staat.
+
+Voor de volledige lijst van externe diensten, env vars en waar sleutels vandaan komen: `docs/TECHNICAL_HANDOVER.md`, sectie "Externe diensten". Dit document dupliceert die lijst niet.
+
+---
+
+## Wat staat wel en wat staat niet in git
+
+| Zit in git (komt mee met `git clone`) | Zit NIET in git (zelf meenemen of opnieuw ophalen) |
+|---|---|
+| Alle code, docs, `CLAUDE.md`, `.claude/commands/` | `.env.local` (secrets): ophalen via `vercel env pull` |
+| De Android-projectmap `android/` | De Android-keystore `arnobot-release.jks`: kopiëren, zie hieronder |
+| | Claude Code-geheugen (153 bestanden, ruim 700 KB): kopiëren |
+| | Claude Code-gebruikersinstellingen: `~/.claude/settings.json` (met de GEDRAGSCHECK-hook) en `~/.claude/hooks/stop-lengte.js` |
+| | `.claude/settings.json` en `.claude/settings.local.json` in de projectmap (toestemmingen, staan in `.gitignore`) |
+| | `.vercel/` (de koppeling met het Vercel-project): opnieuw `vercel link` |
 
 ---
 
 ## Eenmalig op de laptop inrichten
 
-### 1. Vóór je vertrekt: dit bureau-apparaat opschonen
+### 1. Basistools
 
-Controleer op het bureau-apparaat of alle werk vastligt, zodat er niets tussen wal en schip valt:
-
-```
-git status
-```
-
-- Alles wat gewijzigd of nieuw is en behouden moet blijven: committen en pushen (`git push origin master`), of expliciet beslissen dat het lokaal blijft staan.
-- Op het moment van schrijven staan er bewust nog een paar dingen open op het bureau-apparaat (zie sectie "Bekende openstaande punten" onderaan). Neem die mee in de afweging.
-
-### 2. Basistools installeren op de laptop
-
-- [Node.js](https://nodejs.org) (LTS-versie, zelfde major-versie als op het bureau-apparaat)
+- [Node.js](https://nodejs.org) met dezelfde major-versie als op het bureau-apparaat (nu 24, check met `node -v`)
 - [Git](https://git-scm.com)
-- [GitHub CLI](https://cli.github.com) (`winget install GitHub.cli` op Windows, `brew install gh` op macOS)
-- [Vercel CLI](https://vercel.com/docs/cli) hoeft niet apart geïnstalleerd te worden, `npx vercel` volstaat
-- Een code-editor (VS Code, met dezelfde extensies als op het bureau-apparaat: Markdown PDF is er in elk geval één, zie `feedback_docs_markdown`)
-- [Claude Code](https://claude.com/claude-code)
+- [GitHub CLI](https://cli.github.com): `winget install GitHub.cli`
+- Vercel CLI hoeft niet geïnstalleerd te worden: `npx vercel` volstaat
+- VS Code
+- [Claude Code](https://claude.com/claude-code) (de VS Code-extensie of de CLI)
+- Alleen als je tijdens het reizen een Android-release wilt bouwen: Android Studio (zie "Android-app")
 
-### 3. Code ophalen
+### 2. Code ophalen
 
 ```
 git clone https://github.com/arnoceo-ops/arnobot.git
@@ -36,65 +45,98 @@ cd arnobot
 npm install
 ```
 
-### 4. Eigen GitHub-login op de laptop
+Houd de hoofdmap op `master`. Werk aan een andere tak in een aparte worktree (regel uit `CLAUDE.md`).
 
-Geen tokens of SSH-keys kopiëren vanaf het bureau-apparaat. Gewoon opnieuw, apart, met je eigen account inloggen:
+### 3. Eigen GitHub-login
+
+Geen tokens of SSH-keys kopiëren vanaf het bureau-apparaat. Op de laptop apart inloggen:
 
 ```
 gh auth login
 ```
 
-Volg de browser-gebaseerde flow (device login). Dit apparaat krijgt zijn eigen toegangstoken, los van het bureau-apparaat, dat is de bedoeling: bij verlies van de laptop kan dit ene token ingetrokken worden zonder dat het bureau-apparaat geraakt wordt.
+Zo krijgt de laptop een eigen token. Bij verlies van de laptop trek je alleen dat ene token in.
 
-### 5. Environment variables (secrets) ophalen
+### 4. Secrets ophalen
 
-**Aanbevolen aanpak:** haal ze rechtstreeks van Vercel op, zodat er geen losse kopie van alle API-sleutels ontstaat die apart beheerd moet worden.
+Rechtstreeks van Vercel, zodat Vercel de enige bron blijft:
 
 ```
 npx vercel login
 npx vercel link
-```
-Bij `vercel link`: kies het bestaande project `arnobot` onder het account `arnoceo-ops`, niet een nieuw project aanmaken.
-
-```
 npx vercel env pull .env.local
 ```
 
-Dit zet alle environment variables (Supabase, Clerk, Anthropic, Voyage AI, Resend, Calendly, Sentry, Upstash, OpenAI, ElevenLabs, zie `docs/TECHNICAL_HANDOVER.md`) rechtstreeks in `.env.local`. Dit bestand staat al in `.gitignore` en wordt dus nooit meegecommit.
+Bij `vercel link`: kies het bestaande project `arnobot` (het Vercel-team waar de deploys onder staan), geen nieuw project. `.env.local` staat in `.gitignore` en wordt nooit meegecommit.
 
-**Waarom niet handmatig kopiëren:** een handmatige kopie (via mail, een cloud-schijf of zelfs een password manager-item) is een extra, permanente plek waar alle sleutels tegelijk staan. Bij `vercel env pull` blijft Vercel de enige bron; er hoeft nooit apart iets ingetrokken te worden op de laptop zelf, alleen het gh- en vercel-inlogtoken van dát apparaat.
+Waarom niet handmatig kopiëren: een kopie via mail, cloud-schijf of een los wachtwoordmanager-item is een extra plek waar alle sleutels tegelijk staan. Met `vercel env pull` hoef je op de laptop alleen het gh- en vercel-token in te trekken.
 
-### 6. Beveiliging van de laptop zelf
+### 5. Beveiliging van de laptop zelf
 
-Nu er straks een volledige kopie van alle productie-API-sleutels lokaal op de laptop staat (`.env.local`), is dit de belangrijkste stap tegen "laptop kwijt/gestolen tijdens het reizen = alle sleutels op straat":
+Er staat straks een kopie van alle productiesleutels op de laptop. Dit is de belangrijkste stap tegen "laptop kwijt of gestolen onderweg":
 
-- **Windows:** zet BitLocker aan (Instellingen → Privacy en beveiliging → Apparaatversleuteling)
-- **macOS:** zet FileVault aan (Systeeminstellingen → Privacy en beveiliging → FileVault)
-- Zorg voor een schermvergrendeling met wachtwoord/pincode, niet alleen biometrisch, voor het geval de laptop uitstaat bij verlies
+- BitLocker aan (Instellingen, Privacy en beveiliging, Apparaatversleuteling)
+- Schermvergrendeling met wachtwoord of pincode, niet alleen biometrisch
+- Geen sleutels in een notitie, mail of chat; alleen `.env.local`
 
-### 7. Claude Code geheugen (optioneel, geen secrets)
+### 6. Claude Code overzetten (geheugen en instellingen)
 
-De opgebouwde projectcontext (audits, modelkeuzes, stijlregels, eerdere beslissingen) staat lokaal op het bureau-apparaat onder `C:\Users\arno\.claude\projects\<projectslug>\memory\`. Dit bevat geen secrets, alleen context. Zonder actie start Claude Code op de laptop met een lege lei; veel van de kern staat al gedupliceerd in `CLAUDE.md` zelf, dus er gaat niet veel verloren, maar wel wat.
+Zonder deze stap start Claude Code op de laptop met een lege lei en zonder de gedragsregels die je nu gewend bent. Doe dit vlak vóór vertrek, anders loopt de kopie meteen weer achter. Het bevat geen secrets.
 
-Als je dit wilt meenemen: kopieer die map naar de laptop, naar het equivalente pad voor de laptop-checkout van deze repo. Dit is een losse actie die pas zin heeft vlak vóór vertrek (anders loopt de kopie meteen weer achter).
+1. **Geheugen.** Open het project één keer in Claude Code op de laptop. Er ontstaat dan een map onder `C:\Users\<laptopnaam>\.claude\projects\`, met een naam die van het pad van de checkout is afgeleid (op het bureau-apparaat: `c--Users-arno-arnobot`). Kopieer de inhoud van `memory\` van het bureau-apparaat naar de `memory\`-map van die nieuwe projectmap. Kies bij voorkeur op de laptop dezelfde padstructuur (`C:\Users\<naam>\arnobot`), dan is de mapnaam voorspelbaar.
+2. **Gebruikersinstellingen.** Kopieer `~/.claude/settings.json` (bevat de GEDRAGSCHECK-hook en de toestemmingen) en `~/.claude/hooks/stop-lengte.js` naar dezelfde plek op de laptop. Controleer daarna in `settings.json` of de paden in de hook-opdrachten op de laptop kloppen.
+3. **Projectinstellingen.** Optioneel: `.claude/settings.json` en `.claude/settings.local.json` uit de projectmap (browserdomeinen en toegestane commando's). Zonder deze vraagt Claude Code gewoon opnieuw om toestemming.
+
+### 7. Android-app (alleen nodig voor een nieuwe release)
+
+De app laadt `arno.bot` van afstand. Bijna elke wijziging gaat dus live via een gewone push naar Vercel, zonder nieuwe app-release. Alleen voor een wijziging in `android/` (versiecode, manifest, iconen) of een Capacitor-update is een nieuwe build nodig.
+
+- **De keystore `arnobot-release.jks`** staat buiten de repo en is nodig om een release te ondertekenen (alias `arnobot`, 25 jaar geldig, zie `docs/MOBILE_PLAN.md`). Zonder dit bestand kun je geen update van de bestaande app in de Play Store uitbrengen. Maak vóór vertrek een kopie op een tweede, versleutelde plek (wachtwoordmanager of versleutelde schijf), samen met het keystore-wachtwoord. Zet het bestand niet in git.
+- Bouwen: `npm run cap:sync`, dan in Android Studio via Build, Generate Signed App Bundle. Android-wijzigingen worden dezelfde dag op master gecommit.
+- Beslis vóór vertrek of je dit onderweg wilt kunnen. Zo niet, dan is de keystore-kopie nog steeds de verzekering.
+
+### 8. Tweestapsverificatie en inloggen in het buitenland
+
+Dit is de meest voorkomende oorzaak van "ik kom er niet meer in" tijdens reizen:
+
+- Dashboards (GitHub, Vercel, Supabase, Clerk, Mollie, Anthropic, Resend, Upstash) vragen bij een nieuw land of apparaat om extra verificatie. **Log daarom vóór vertrek, in Nederland, op de laptop in bij elk dashboard dat je onderweg nodig kunt hebben**, zodat er al een vertrouwd apparaat en een sessie bestaat.
+- Zorg dat je tweede factor onderweg bereikbaar is zonder je Nederlandse simkaart (authenticator-app in plaats van sms; bewaar herstelcodes versleuteld).
+- Mollie-, Supabase- en bankdashboards kunnen een login uit het buitenland blokkeren of extra bevestigen. Test dit zo nodig vooraf.
+- Meldingen (maandcheck, capaciteitswacht, Dependabot) komen via Telegram; zorg dat Telegram op je telefoon werkt met de buitenlandse verbinding.
 
 ---
 
-## Bij elke sessie (op elk apparaat)
+## Hoe je op de laptop werkt
 
-Dit voorkomt dat de twee apparaten uit elkaar gaan lopen:
+De werkwijze is dezelfde als thuis (regels in `CLAUDE.md` en het geheugen):
 
-1. **Aan het begin:** `git pull origin master`
-2. **Na elke afgeronde wijziging:** committen én meteen pushen (`git push origin master`), zoals al de standaardregel is in `CLAUDE.md`. Geen werk lang lokaal laten staan op één apparaat terwijl er op het andere apparaat verdergewerkt wordt.
-3. Als er op enig moment tóch een `git pull` faalt door lokale wijzigingen: eerst `git status` bekijken, nooit blind `git reset --hard` of `git checkout .`.
+- **Geen lokale dev-server of build.** Controleer met `npx tsc --noEmit` en `npm test` (Vitest), push, en controleer daarna op Vercel. Op Windows: gebruik een hoofdletter in de schijfletter (`C:\...`), met `c:/` geeft Vitest een valse fout.
+- **De Playwright E2E-tests** draaien in CI, niet lokaal; ze hebben testaccounts nodig.
+- **Scripts in `scripts/`** (embedden, controles) gebruiken `.env.local` en praten met de productiedatabase. Draai ze alleen bewust.
+- **PDF's van docs:** `npm run docs:pdf` werkt ook op de laptop (puppeteer wordt door `npm install` meegehaald).
+- **SQL voor de database** staat in `docs/sql/` en wordt in het Supabase-dashboard gedraaid.
+
+### Bij elke sessie (op elk apparaat)
+
+Dit voorkomt dat de twee apparaten uit elkaar lopen:
+
+1. Aan het begin: `git pull origin master`, en controleer `git status`.
+2. Na elke afgeronde wijziging: committen én meteen pushen (`git push origin master`).
+3. Faalt `git pull` door lokale wijzigingen: eerst `git status` bekijken, nooit blind `git reset --hard` of `git checkout .`.
+4. **Het geheugen is per apparaat.** Nieuwe geheugenbestanden die op de laptop ontstaan, komen niet vanzelf terug op het bureau-apparaat. Belangrijke besluiten horen daarom ook in een plandocument of `docs/CLAUDE_HISTORY.md` (dat staat wel in git).
 
 ---
 
-## Bekende openstaande punten (op het moment van schrijven)
+## Vóór vertrek: proefrun op de laptop (afvinklijst)
 
-Deze bestanden staan op het bureau-apparaat nog niet gecommit en komen dus niet automatisch mee met `git clone` op de laptop:
+Doe dit minstens een week vóór vertrek, in Nederland, zodat je problemen thuis oplost.
 
-- Gewijzigd: `docs/MOBILE_PLAN.md`, `public/cyborg.jpg`, `public/cyborg.png`
-- Nieuw: `data/rss_articles/`, `docs/ABONNEMENTEN.pdf`, `docs/MOBILE_PLAN.pdf`, `public/arno-home2.jpg`
-
-Beslis vóór vertrek of deze gecommit moeten worden, of dat ze bewust alleen op het bureau-apparaat blijven staan.
+- [ ] Laptop is versleuteld (BitLocker) en heeft een wachtwoordvergrendeling
+- [ ] `git clone`, `npm install` en `node -v` kloppen met het bureau-apparaat
+- [ ] `gh auth login` en `npx vercel login`, `vercel link`, `vercel env pull .env.local` gelukt
+- [ ] `npx tsc --noEmit` en `npm test` slagen
+- [ ] Claude Code start, het geheugen is zichtbaar (vraag het iets uit het geheugen) en de GEDRAGSCHECK-hook werkt
+- [ ] Een kleine testwijziging (bijvoorbeeld een spatie in een doc) gecommit en gepusht, en de Vercel-deploy is gelukt
+- [ ] Bij elk dashboard dat je onderweg nodig kunt hebben ingelogd op de laptop, tweede factor werkt zonder Nederlandse simkaart
+- [ ] Keystore `arnobot-release.jks` en wachtwoord op een tweede versleutelde plek bewaard
+- [ ] Vlak vóór vertrek: geheugen en `~/.claude`-instellingen opnieuw gekopieerd, `git status` op het bureau-apparaat schoon en alles gepusht
