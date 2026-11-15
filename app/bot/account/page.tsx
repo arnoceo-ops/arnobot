@@ -202,6 +202,9 @@ export default function AccountPage() {
 
       <div style={{ maxWidth: 812, margin: '0 auto', padding: 'clamp(80px,12vw,120px) clamp(16px,4vw,20px) 80px' }}>
 
+        {/* Teamproef omzetten naar betaald (alleen voor de manager van een agent-proef, of met een openstaande teamfactuur). Bovenaan: het enige wat hij nog moet doen. */}
+        <TeamActiverenSectie stand={activatieStand} laad={laadActivatie} />
+
         {/* Support sectie */}
         <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>HERE TO HELP</p>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>SUPPORT</h1>
@@ -403,8 +406,6 @@ export default function AccountPage() {
           </button>
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
         </div>
-
-        <TeamActiverenSectie stand={activatieStand} laad={laadActivatie} />
 
         {/* Nieuwe sectie: Genoeg geweest. Niet voor de manager van een agent-proef, die activeert zijn team hierboven. */}
         {activatieLoaded && !teamProefManager && (

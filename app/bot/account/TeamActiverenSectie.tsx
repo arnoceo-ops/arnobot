@@ -4,24 +4,30 @@ import { useCallback, useEffect, useState } from 'react'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import type { ActivatieStand } from '@/lib/teamActivatie'
 
-// Teamproef omzetten naar een betaald Team, op de accountpagina van de manager (docs/TEAM_ONBOARDING.md,
+// Teamproef omzetten naar een betaald Team, bovenaan de accountpagina van de manager (docs/TEAM_ONBOARDING.md,
 // "Zelf activeren"). De server bepaalt wat er kan en wat het kost (GET /api/bot/team/activeren); deze
 // component toont alleen. In de Android-app verborgen, net als andere koopverwijzingen (Google Play-beleid).
+// Opmaak volgt de kaders op de accountpagina ("Jouw data is van jou"): donkere kaart, oranje rand links.
 
 type Bedrag = { nettoCent: number; btwCent: number; brutoCent: number }
 type Antwoord = { stand: ActivatieStand | null; bedrag: Bedrag | null; betalenBeschikbaar: boolean }
 
-const section: React.CSSProperties = { borderTop: '1px solid #374151', paddingTop: '32px', marginBottom: '48px' }
-const label: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '16px', display: 'block' }
-const body: React.CSSProperties = { fontWeight: 400, color: '#9ca3af', fontSize: '15px', lineHeight: '1.9', marginBottom: '24px' }
-const btn: React.CSSProperties = { padding: '12px 36px', border: 'none', background: '#f59e0b', color: '#111827', fontFamily: "'Bebas Neue', sans-serif", fontSize: '18px', letterSpacing: '3px', cursor: 'pointer', borderRadius: 0, display: 'inline-block', textDecoration: 'none' }
-const btnUit: React.CSSProperties = { ...btn, background: 'transparent', color: '#9ca3af', border: '1px solid #374151' }
-const veld: React.CSSProperties = { width: '100%', maxWidth: 420, padding: '10px 12px', background: '#1f2937', border: '1px solid #374151', color: '#f1f5f9', fontSize: 15, fontFamily: 'inherit', borderRadius: 0, boxSizing: 'border-box' }
-const veldLabel: React.CSSProperties = { display: 'block', color: '#6b7280', fontSize: 12, letterSpacing: 2, margin: '16px 0 6px' }
-const foutStijl: React.CSSProperties = { color: '#cc2200', fontSize: '14px', letterSpacing: '1px', lineHeight: 1.6, marginTop: '16px' }
-
 const VELDEN = ['bedrijfsnaam', 'kvkNummer', 'btwNummer', 'straat', 'postcode', 'plaats'] as const
 type VeldNaam = typeof VELDEN[number]
+
+const mono = "'Space Mono', monospace"
+const bebas = "'Bebas Neue', sans-serif"
+
+const kaart = (kleur: string): React.CSSProperties => ({ background: '#1f2937', borderLeft: `4px solid ${kleur}`, padding: '24px 28px', marginBottom: 48 })
+const label: React.CSSProperties = { fontFamily: mono, fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }
+const kop: React.CSSProperties = { fontFamily: bebas, fontSize: 44, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', margin: '0 0 14px 0' }
+const tekst: React.CSSProperties = { fontWeight: 400, color: '#9ca3af', fontSize: 15, lineHeight: '1.9', margin: '0 0 24px 0' }
+const knop: React.CSSProperties = { padding: '12px 36px', border: 'none', background: '#f59e0b', color: '#111827', fontFamily: bebas, fontSize: 18, letterSpacing: 3, cursor: 'pointer', transition: 'background 0.2s', borderRadius: 999, display: 'inline-block', minWidth: 260, textAlign: 'center', textDecoration: 'none' }
+const knopUit: React.CSSProperties = { ...knop, background: 'transparent', color: '#9ca3af', border: '1px solid #374151' }
+const keuze = (aan: boolean): React.CSSProperties => ({ ...(aan ? knop : knopUit), minWidth: 0, padding: '9px 22px', fontSize: 16 })
+const veldLabel: React.CSSProperties = { display: 'block', fontFamily: mono, fontSize: 11, letterSpacing: 3, color: '#6b7280', margin: '0 0 8px 0' }
+const veld: React.CSSProperties = { width: '100%', padding: '12px 14px', background: '#111827', border: '1px solid #374151', color: '#f1f5f9', fontSize: 15, fontFamily: mono, borderRadius: 0, boxSizing: 'border-box' }
+const raster: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, marginBottom: 20 }
 
 const euro = (cent: number) => `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const datumNl = (iso: string) => new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
@@ -92,10 +98,10 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
   }
 
   const tekstVeld = (naam: VeldNaam, titel: string, plaatshouder?: string) => (
-    <>
+    <div>
       <label style={veldLabel} htmlFor={`ta-${naam}`}>{titel}</label>
-      <input id={`ta-${naam}`} style={veld} value={f[naam]} placeholder={plaatshouder} onChange={e => setBewerkt(h => ({ ...h, [naam]: e.target.value }))} />
-    </>
+      <input id={`ta-${naam}`} className="ta-veld" style={veld} value={f[naam]} placeholder={plaatshouder} onChange={e => setBewerkt(h => ({ ...h, [naam]: e.target.value }))} />
+    </div>
   )
 
   // Na het activeren, of voor een geactiveerd team met een openstaande factuur: alleen de betaalknop.
@@ -103,14 +109,14 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
   const betaalBedrag = klaar?.bedragCent ?? stand.openFactuur?.bedragCent ?? null
   if (klaar || (stand.geactiveerd && stand.openFactuur)) {
     return (
-      <div style={section}>
+      <div style={kaart('#f59e0b')}>
         <p style={label}>TEAM</p>
-        <p style={body}>
-          {klaar ? 'Je team is geactiveerd. ' : 'Er staat een factuur open voor je team. '}
+        <h2 style={kop}>{klaar ? 'TEAM GEACTIVEERD' : 'FACTUUR OPEN'}</h2>
+        <p style={tekst}>
           {betaalBedrag !== null ? `Bedrag: ${euro(betaalBedrag)} incl. btw. ` : ''}
           Je ontvangt de factuur per mail.
         </p>
-        {betaalLink && <a href={betaalLink} style={btn}>BETAAL NU</a>}
+        {betaalLink && <a href={betaalLink} style={knop}>BETAAL NU</a>}
       </div>
     )
   }
@@ -119,47 +125,75 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
 
   const verlopen = stand.proef?.staat === 'verlopen'
   return (
-    <div style={section}>
-      <p style={label}>TEAM</p>
+    <div style={kaart(verlopen ? '#cc2200' : '#f59e0b')}>
+      <style>{`.ta-veld:focus { outline: none; border-color: #f59e0b !important; } .ta-veld::placeholder { color: #4b5563; }`}</style>
+      <p style={label}>TEAMPROEF</p>
       {stand.proef && (
-        <p style={body}>
-          {verlopen
-            ? `Je gratis teamproef is afgelopen op ${datumNl(stand.proef.einde)}. Je team heeft geen toegang tot ArnoBot totdat je het activeert.`
-            : `Je gratis teamproef loopt tot ${datumNl(stand.proef.einde)}. Dat is nog ${stand.proef.dagen} ${stand.proef.dagen === 1 ? 'dag' : 'dagen'}.`}
-        </p>
+        <>
+          <h2 style={kop}>
+            {verlopen ? 'PROEF AFGELOPEN' : `NOG ${stand.proef.dagen} ${stand.proef.dagen === 1 ? 'DAG' : 'DAGEN'}`}
+          </h2>
+          <p style={tekst}>
+            {verlopen
+              ? `Je gratis teamproef is afgelopen op ${datumNl(stand.proef.einde)}. Je team heeft geen toegang tot ArnoBot totdat je het activeert.`
+              : `Je gratis teamproef loopt tot ${datumNl(stand.proef.einde)}.`}
+          </p>
+        </>
       )}
       {!open ? (
-        <button style={btn} onClick={() => setOpen(true)}>TEAM ACTIVEREN</button>
+        <button style={knop} onClick={() => setOpen(true)}>TEAM ACTIVEREN</button>
       ) : (
         <div>
-          <label style={veldLabel} htmlFor="ta-seats">AANTAL GEBRUIKERS (MINIMAAL 3)</label>
-          <input id="ta-seats" type="number" min={3} style={{ ...veld, maxWidth: 140 }} value={seats} onChange={e => setSeats(e.target.value)} />
-          <span style={veldLabel}>BETALING</span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button style={cyclus === 'maandelijks' ? btn : btnUit} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-            <button style={cyclus === 'jaarlijks' ? btn : btnUit} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+          <div style={raster}>
+            <div>
+              <label style={veldLabel} htmlFor="ta-seats">AANTAL GEBRUIKERS (MINIMAAL 3)</label>
+              <input id="ta-seats" className="ta-veld" type="number" min={3} style={{ ...veld, maxWidth: 160 }} value={seats} onChange={e => setSeats(e.target.value)} />
+            </div>
+            <div>
+              <span style={veldLabel}>BETALING</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button style={keuze(cyclus === 'maandelijks')} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
+                <button style={keuze(cyclus === 'jaarlijks')} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+              </div>
+            </div>
           </div>
-          {tekstVeld('bedrijfsnaam', 'BEDRIJFSNAAM')}
-          {tekstVeld('kvkNummer', 'KVK-NUMMER', '8 cijfers')}
-          {tekstVeld('btwNummer', 'BTW-NUMMER', 'NL123456789B01')}
-          {tekstVeld('straat', 'STRAAT EN HUISNUMMER')}
-          {tekstVeld('postcode', 'POSTCODE', '1234 AB')}
-          {tekstVeld('plaats', 'PLAATS')}
 
-          <p style={{ ...body, marginTop: 24, marginBottom: 12 }}>
-            {bedrag
-              ? `Eerste factuur: ${euro(bedrag.nettoCent)} excl. btw (${euro(bedrag.brutoCent)} incl. btw), ${cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'}.`
-              : 'Kies minimaal 3 gebruikers om het bedrag te zien.'}
-          </p>
-          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, color: '#94a3b8', lineHeight: 1.5, cursor: 'pointer', marginBottom: 20, maxWidth: 520 }}>
+          <div style={raster}>{tekstVeld('bedrijfsnaam', 'BEDRIJFSNAAM')}</div>
+          <div style={raster}>
+            {tekstVeld('kvkNummer', 'KVK-NUMMER', '8 cijfers')}
+            {tekstVeld('btwNummer', 'BTW-NUMMER', 'NL123456789B01')}
+          </div>
+          <div style={raster}>{tekstVeld('straat', 'STRAAT EN HUISNUMMER')}</div>
+          <div style={raster}>
+            {tekstVeld('postcode', 'POSTCODE', '1234 AB')}
+            {tekstVeld('plaats', 'PLAATS')}
+          </div>
+
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 20, marginBottom: 20 }}>
+            <span style={veldLabel}>EERSTE FACTUUR</span>
+            {bedrag ? (
+              <>
+                <p style={{ fontFamily: bebas, fontSize: 36, letterSpacing: 2, lineHeight: 1, color: '#f1f5f9', margin: '0 0 6px 0' }}>
+                  {euro(bedrag.nettoCent)} <span style={{ fontSize: 18, color: '#9ca3af', letterSpacing: 2 }}>EXCL. BTW</span>
+                </p>
+                <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>
+                  {euro(bedrag.brutoCent)} incl. btw, {cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'}.
+                </p>
+              </>
+            ) : (
+              <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>Kies minimaal 3 gebruikers om het bedrag te zien.</p>
+            )}
+          </div>
+
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, color: '#94a3b8', lineHeight: 1.5, cursor: 'pointer', marginBottom: 24, maxWidth: 560 }}>
             <input type="checkbox" checked={akkoord} onChange={e => setAkkoord(e.target.checked)} style={{ marginTop: 3, accentColor: '#f59e0b', width: 'auto', flex: 'none' }} />
             <span>Ik ga akkoord met de <a href="/voorwaarden" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>algemene voorwaarden</a> en heb de <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>privacyverklaring</a> gelezen.</span>
           </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button style={{ ...btn, opacity: !akkoord || !bedrag || bezig ? 0.5 : 1 }} disabled={!akkoord || !bedrag || bezig} onClick={bevestig}>{bezig ? 'BEZIG...' : 'BEVESTIG'}</button>
-            <button style={btnUit} disabled={bezig} onClick={() => { setOpen(false); setFout(null) }}>ANNULEER</button>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button style={{ ...knop, opacity: !akkoord || !bedrag || bezig ? 0.5 : 1, cursor: !akkoord || !bedrag || bezig ? 'not-allowed' : 'pointer' }} disabled={!akkoord || !bedrag || bezig} onClick={bevestig}>{bezig ? 'BEZIG...' : 'BEVESTIG'}</button>
+            <button style={knopUit} disabled={bezig} onClick={() => { setOpen(false); setFout(null) }}>ANNULEER</button>
           </div>
-          {fout && <p style={foutStijl}>{fout}</p>}
+          {fout && <p style={{ color: '#cc2200', fontSize: 14, lineHeight: 1.6, margin: '16px 0 0 0' }}>{fout}</p>}
         </div>
       )}
     </div>
