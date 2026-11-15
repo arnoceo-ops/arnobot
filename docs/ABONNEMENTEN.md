@@ -8,13 +8,11 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-08-13
-**Waar we staan:** `/prijzen`, `/bot/doorgaan` en `/team` (voorheen `/command`) tonen nu allemaal consistent Basic/Pro/Team met de nieuwe tarieven, inclusief een nieuwe jaaroptie voor Team (~20% korting, €77+€39/gebruiker maand-equivalent). Het referralprogramma (7 bestanden + FAQ) is bijgewerkt naar de nieuwe trigger- en plafondregel (zie "Referralprogramma" hieronder). Abacus (`/abacus`) is deze sessie grondig doorgelicht door twee onafhankelijke audit-agents (formules + UI-laag), 10 bevestigde bugs gefixed, incl. een kritieke: tab 3 (Business case) gebruikte altijd vaste standaardaannames i.p.v. tab 1's live ingestelde aannames, nu écht gedeeld. `/prijzen` haalt zijn bedragen uit `lib/kostenTarieven.ts` (zelfde bron als Abacus), niet meer los hardgecodeerd. **Besloten (2026-08-11):** Team Spotlight staat als 2e bullet op de `/prijzen`-Team-kaart; Elite blijft bewust alleen handmatig/op-aanvraag toekenbaar (geen publieke kaart), en is teruggebracht als optie binnen de `/team`-offerte-aanvraag met een vastgesteld surplus-tarief van €338/maand per Elite-teamlid (`lib/teamPricing.ts`, `TEAM_ELITE_SURPLUS_PER_MAAND`), inmiddels ook direct verwerkt in de getoonde prijs op `/team` zelf (niet alleen als toelichtende tekst). Uitvoering (het maandelijkse gesprek) kan door Arno zelf of een door hem aangewezen coach gebeuren, geen aparte publieke vermelding hiervan. **Elite-ervaring in de app (besloten 2026-08-11):** een Elite-gebruiker ziet in de app bewust hetzelfde als een Pro-gebruiker (geen aparte Elite-UI); Arno behandelt Elite-relaties zelf buiten de app om via losse afspraken. **Besloten (2026-08-13):** het eenmalige gesprek met Arno is nu expliciet Pro-only én alleen na betaling (`plan === 'premium' && paid`, naast de bestaande coachingdocument-drempel en team-uitsluiting; trials starten al standaard op `plan='premium'`, dus zonder de betaal-check zouden onbetaalde trials ook meetellen). Dezelfde vijf voorwaarden zijn in dezelfde ronde ook server-side afgedwongen op `/bot/gesprek` zelf (had voorheen geen enkele plan/betaalcheck, alleen een inlog-check, dus voor iedereen met de URL rechtstreeks bereikbaar). Calendly-agenda voor dit event ingesteld op een rolling 90-dagen-cap plus een schoon uur-ritme (60 min increments, 45 min gesprek, 15 min buffer); bij structurele volboeking binnen die 90 dagen is dat het signaal voor ArnoBot Coaches ABC, niet eerder. `/prijzen` heeft een nieuwe Pro-bullet ("Eén gesprek met Arno zelf"). Zie de nieuwe sectie "Gesprek met Arno (eenmalig, Pro)" verderop in dit document voor de volledige gating.
-**Gevonden bij de financiële doorlichting (2026-08-10):** `/bot/upgrade` (bestaande gebruikers die willen upgraden) verwees nog naar "Premium" i.p.v. "Pro", en zei bij Team "prijs op aanvraag" terwijl Team al een echte berekende prijs heeft. Naam gecorrigeerd, Team-knop linkt nu naar `/team` i.p.v. een kale mailto.
+**Laatst bijgewerkt:** 2026-11-15
+**Waar we staan:** de structuur Basic, Pro en Team staat en wordt via Mollie en Moneybird betaald (live sinds 2026-11-04, zie `docs/MOLLIE_PLAN.md`). Prijzen en onderbouwing: `docs/PRICING_DECISIONS.md`. Overstappen tussen abonnementen is live sinds 2026-11-12 (zie hieronder en `docs/OVERSTAP_PLAN.md`). Teams kunnen als agent-proef zichzelf activeren (`docs/TEAM_PROCES.md`). Elite als solo-plan is verwijderd (2026-08-25); alleen de Team-Elite-surplusoptie bestaat nog. Voice-uit staat tijdelijk uit voor iedereen buiten Arno's accounts (`lib/voice.ts`). Het gesprek met Arno is Pro-only en niet aan betaling gebonden (besluit 2026-08-25, zie "Gesprek met Arno").
 **Eerstvolgende stap:**
-- `[x]` **Opgelost (2026-08-25):** de betaal-eis (`paid_at`) op het gesprek-met-Arno is ingetrokken in plaats van de marketingcopy aan te passen, zie "Gesprek met Arno" hieronder voor de volledige toedracht. Geen openstaande actie meer.
-- `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow"). Puur interne naamgeving, geen zichtbaar "Command"-restje voor gebruikers.
-- `[ ]` **Openstaand bij Arno (niet code):** Supabase PITR nog niet aangezet ondanks Pro-upgrade op 2026-08-10, zie CLAUDE.md-milestone-sectie voor de restore-test die daarna hoort.
+- `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow"). Puur interne naamgeving.
+- `[ ]` Supabase PITR: bij 150 actieve gebruikers, zie de mijlpalen in `CLAUDE.md` (niet eerder).
 
 ---
 
@@ -26,7 +24,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 | Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel |
 | Trial | 30 dagen gratis | 30 dagen gratis | Via het aanvraagformulier geen trial. Via een agent-link 30 dagen gratis proef met 10 dagen coulance, zie `docs/TEAM_PROCES.md` |
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) |
-| Gesproken antwoorden | Nee | Ja | Ja |
+| Gesproken antwoorden | Nee (alleen spraakinvoer) | Ja | Ja |
 | Command/Team-managerdashboard | Nee | Nee | Ja |
 | Extra | ArnoBot-app (Android) met voice-in (mic, spraak naar tekst) | Volledig archief, uitgebreider geheugen, ArnoBot-app (Android) met voice-in én voice-uit, 1x gesprek met Arno (na coachingdocument, zie sectie hieronder) | Teamoverzicht, teamtrends, vroegsignalering, AI-voorbereiding 1:1's, leiderschapsaccount voor de manager |
 
@@ -50,7 +48,7 @@ De marketingcopy op `/prijzen` gebruikt bewust kwalificatieve taal ("onbeperkt",
 | Gespreksanalyses/dag | 1 | Onbeperkt | Onbeperkt |
 | Sessiegeheugen (vorige gesprekken als context) | 10 | 25 | 25 |
 | Coachingdocument (mindset/systeem/actie-scores) | **Nee, harde blokkade (403)** | Ja | Ja |
-| Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap, **tijdelijk uitgezet voor iedereen buiten Arno's eigen accounts, zie `docs/VOICE_PLAN.md`** | Ja, zelfde tijdelijke uitzetting |
+| Gesproken antwoorden (voice) | **Nee, geen toegang** | Ja, momenteel geen maandcap, **tijdelijk uitgezet voor iedereen buiten Arno's eigen accounts, zie `lib/voice.ts` (`VOICE_LAUNCH_RESTRICTED`)** | Ja, zelfde tijdelijke uitzetting |
 | Rollenspel/sparring | Ja, max. 1 sessie per dag | Ja, onbeperkt | Ja, onbeperkt |
 | Teamoverzicht, 1:1-voorbereiding, leiderschapsaccount | Nee | Nee | Ja, exclusief manager-laag |
 
@@ -120,13 +118,7 @@ Dashboardtoegang draait op een losse kolom **`command_manager`** (boolean op `ap
 
 **Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen als publieke keuze op deze pagina, zie open punt hieronder), geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49/gebruiker/maand, of €77 + €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, toegevoegd later dezelfde dag), vanaf 3 gebruikers. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
 
-**Elite-optie (besloten en gebouwd 2026-08-11, nog niet live):** `/team` heeft nu een checkbox "Ook Elite-niveau voor een deel van je team" plus een aantal-veld, met een vast surplus van €338/maand per Elite-teamlid (`TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, = verschil tussen solo Elite €397 en solo Pro €59, geen aparte jaarkorting op dit bedrag). De API-route (`app/api/team-aanvraag/route.ts`) valideert en slaat dit op in een nieuwe kolom `elite_aantal` op `arnobot_command_requests`, en vermeldt het in de offerte-notificatiemail.
-
-**Actie vereist van Arno vóór dit live gaat:** voer de volgende SQL uit in Supabase (SQL Editor, project wxrsmmzqbmoeackirsxc):
-```sql
-ALTER TABLE arnobot_command_requests ADD COLUMN elite_aantal integer;
-```
-Bevestig na uitvoering dat de kolom is aangemaakt (bijv. via Table Editor), pas daarna wordt deze wijziging gecommit en gepusht — zonder de kolom faalt elke `/team`-aanvraag stil op de insert.
+**Elite-optie (besloten en gebouwd 2026-08-11, kolom `elite_aantal` bestaat in productie, gecontroleerd 2026-11-15):** `/team` heeft nu een checkbox "Ook Elite-niveau voor een deel van je team" plus een aantal-veld, met een vast surplus van €338/maand per Elite-teamlid (`TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, = verschil tussen solo Elite €397 en solo Pro €59, geen aparte jaarkorting op dit bedrag). De API-route (`app/api/team-aanvraag/route.ts`) valideert en slaat dit op in een nieuwe kolom `elite_aantal` op `arnobot_command_requests`, en vermeldt het in de offerte-notificatiemail.
 
 Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, BTW-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. BTW.
 
@@ -191,12 +183,12 @@ Volledige uitwerking, besluiten en verworpen alternatieven: `docs/OVERSTAP_PLAN.
 ## Technische implementatie
 
 - Kolom `plan` (`text`, `NOT NULL`, `DEFAULT 'premium'`, `CHECK (plan IN ('basis','premium','team'))`) op Supabase-tabel `approved_users`. `elite` verwijderd uit de CHECK-constraint (2026-08-25, migratie hieronder). **Blijft intern `basis`/`premium`/`team`, geen migratie naar `basic`/`pro`** (besloten 2026-08-02): alleen de naar buiten getoonde tekst op `/prijzen` is Basic/Pro, dat staat los in de pagina's zelf. Zelfde patroon als Command/Team.
-- Admin-beheer: `/bot/admin/gebruikers`, toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`, waarden basis/premium, `team` niet meer actief toekenbaar via deze toggle).
+- Admin-beheer: `/bot/admin/gebruikers`, toggle-knop per gebruiker (`PlanToggle.tsx` → `POST /api/admin/plan`, waarden basis/premium, `team` niet meer actief toekenbaar via deze toggle). Teams: `/bot/admin/teams`.
 - Route `/api/bot/plan` (GET): geeft `plan` én `commandManager` van de ingelogde gebruiker terug, gebruikt door client-side navigatie (`BotNav`, `SparClient`).
 - Gating-logica: `app/api/chat/route.ts`, `app/api/bot/coaching*`, `lib/voice.ts` (`hasVoiceAccess`) — allemaal "alles behalve basis", geen aparte code nodig per plan.
-- Alle betalingen blijven handmatig geregistreerd, voor elke tier, geen payment provider aangesloten.
+- Betalingen lopen via Mollie en facturen via Moneybird (`lib/billing/`, zie `docs/MOLLIE_PLAN.md`). Teams via een offerte worden per factuur gefactureerd (cron `team-facturatie`); de Supabase-inrichting van zo'n team blijft handmatig, zie "Team-aanvraagflow".
 
-**Vereiste Supabase-migratie (elite uit `approved_users.plan` verwijderen, nog te bevestigen door Arno):**
+**Supabase-migratie (elite uit `approved_users.plan` verwijderen). Niet geverifieerd of dit is uitgevoerd (0 rijen met `plan='elite'` gecontroleerd 2026-11-15); check de constraint in het Supabase-dashboard:**
 ```sql
 alter table approved_users drop constraint approved_users_plan_check;
 alter table approved_users add constraint approved_users_plan_check check (plan in ('basis','premium','team'));
@@ -208,13 +200,10 @@ Veilig: 0 rijen hadden `plan='elite'` op het moment van verwijderen (geverifieer
 ## Openstaande vragen / nog niet besloten
 
 **Bewust uitgesteld, met reden:**
-- Seat-wijzigingen ná ondertekening (zie geheugen `project-team-pricing`)
-- Herhaalbare maandelijkse boeking voor Elite (nu maar één boeking ooit mogelijk): wacht op een betaald Calendly-account
+- Seat-wijzigingen ná ondertekening: zie `docs/TEAM_PROCES.md`
+- Herhaalbare maandelijkse boeking voor Team-Elite (nu maar één boeking ooit mogelijk): wacht op een betaald Calendly-account
 - Elite Member Community (Circle): bewust als allerlaatste in de bouwvolgorde
-- Betaalprovider/Stripe: bewust helemaal achteraan, na alle andere onderdelen
 
 **Nog te beoordelen:**
-- Of en wanneer bestaande betalende klanten geïnformeerd worden over prijswijzigingen die hen raken sinds de vorige migratie
-- Status van Elite nu de tier nergens meer publiek kiesbaar is (zie "Elite" hierboven)
-- Elite terugbrengen als keuze binnen de `/team`-aanvraagflow, incl. het surplus-tarief (zie "Team-aanvraagflow" hierboven)
-- Alle punten uit de "Eerstvolgende stap"-lijst bovenaan dit document
+- Of en wanneer bestaande betalende klanten geïnformeerd worden over prijswijzigingen die hen raken (bij een aankondiging een script met voorbeeldrun, zie "Overstappen tussen abonnementen")
+- De punten uit de "Eerstvolgende stap"-lijst bovenaan dit document

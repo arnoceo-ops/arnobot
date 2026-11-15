@@ -5,7 +5,7 @@
 // (/api/transcribe/live). Omdat het geluid vanaf de eerste milliseconde lokaal wordt gebufferd,
 // gaat er niets verloren terwijl de verbinding nog opstart (bij WebRTC viel de eerste seconde weg).
 // Elke fout of time-out geeft null of een lege tekst: de aanroeper valt dan terug op de gewone
-// transcriptie van de opname na het stoppen (/api/transcribe). Zie docs/VOICE_PLAN.md.
+// transcriptie van de opname na het stoppen (/api/transcribe). Zie docs/CLAUDE_HISTORY.md (voice-plan).
 
 export type LiveState = { tekst: string; definitief: string | null }
 

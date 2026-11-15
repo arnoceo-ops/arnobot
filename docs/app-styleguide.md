@@ -5,7 +5,7 @@ Referentiedocument voor alle app-pagina's (zowel publiek als achter login). Gebr
 **Referentiepagina's:**
 - `/bot`-pagina's (achter login): `app/bot/account/page.tsx`
 - Publieke pagina's: `app/privacy/page.tsx`
-- Gespreksstijl: `app/bot/spar/SparClient.tsx`
+- Gespreksstijl: `app/bot/SparClient.tsx`
 
 ---
 
@@ -107,7 +107,7 @@ focus: border-color #f59e0b
 
 ## Gespreksstijl (ArnoBot en Bieb)
 
-Referentie: `app/bot/spar/SparClient.tsx`
+Referentie: `app/bot/SparClient.tsx`
 
 ### Labels
 
@@ -181,4 +181,4 @@ Elke fetch naar een AI-route heeft een zichtbare loading-indicator. Gebruik `.ms
 |---|---|
 | /bot-pagina's (achter login) | `app/bot/account/page.tsx` |
 | Publieke pagina's | `app/privacy/page.tsx` |
-| Gespreksstijl | `app/bot/spar/SparClient.tsx` |
+| Gespreksstijl | `app/bot/SparClient.tsx` |

@@ -75,7 +75,7 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 - Credit werkt als korting op de volgende verlengingsbetaling, niet als cashback
 
 **Betalingsverwerking:**
-- **Bevestigd via codebase-onderzoek:** geen enkele betaalprovider is geïntegreerd (geen Stripe/Mollie-SDK, geen betaal-webhook). Betaling verloopt dus volledig extern aan de app. [ARNO: vul aan welk kanaal je zelf gebruikt om te innen, bijv. handmatige overschrijving, een los factuurprogramma]
+- **Betalingen (bijgewerkt 2026-11-15):** Mollie incasseert (iDEAL, creditcard, Bancontact; Team per factuur) en Moneybird maakt de facturen; beide staan live sinds 2026-11-04. Zie `docs/MOLLIE_PLAN.md`. [ARNO: vul aan hoe je uitbetalingen en de boekhouding zelf afhandelt]
 - Betaling registreren in het systeem: ga naar `/bot/admin/gebruikers` en gebruik de "Betaling registreren" functie, of roep `/api/admin/payment` aan
 - **Bewust pending:** geautomatiseerde betalingsverwerking bouwen binnen 30 dagen na de commerciële livegang (Arno's eigen toezegging 2026-08-21). Zie `docs/TECHNICAL_HANDOVER.md`, "Bekende beperkingen" punt 11.
 
@@ -179,7 +179,7 @@ Gepubliceerd op https://arno.bot/privacy. Beschrijft welke gegevens worden verwe
 Gepubliceerd op https://arno.bot/voorwaarden.
 
 ### Beveiligingsdocument
-Downloadbaar op https://arno.bot/api/beveiliging-pdf. Beschrijft de technische beveiligingsmaatregelen.
+Downloadbaar op https://arno.bot/arnobot-beveiliging.pdf. Beschrijft de technische beveiligingsmaatregelen.
 
 ### AVG / GDPR
 - Gebruikers kunnen hun data opvragen en laten verwijderen via het account-instellingenscherm (`/bot/account`)

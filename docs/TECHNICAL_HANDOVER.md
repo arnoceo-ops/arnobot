@@ -195,7 +195,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | ArnoLive | `/arnolive` | Marketingpagina "ARNOLIVE"/"ARNOPRIME"-lidmaatschap, eigen (crème/oranje) huisstijl |
 | Opt-out | `/optout/[token]` | Afmelden voor marketingmails |
 | Gedeeld gesprek | `/gesprek/[token]` | Publieke, view-only weergave van een gedeeld gesprek |
-| Beveiliging PDF | via `/api/beveiliging-pdf` | Downloadbaar beveiligingsdocument |
+| Beveiliging PDF | via `/arnobot-beveiliging.pdf` (statisch bestand in `public/`) | Downloadbaar beveiligingsdocument |
 | Blog overzicht | `/blog` | Publieke blog over ArnoBot (marketingstijl), met hashtagchips (naar de hashtagpagina's), doorzoekbaar archief (`BlogArchive`: zoeken op hashtag of trefwoord in de browser op de geladen lijst via `lib/blogSearch.ts`, 12 kaarten per keer met "Toon meer", zoekterm in de URL als `?q=`) en abonneerblok. Posts leven in Supabase (`arnobot_blog_posts`), beheerd via `/bot/admin/blog` |
 | Blog artikel | `/blog/[slug]` | Artikel met JSON-LD, deelknoppen (LinkedIn via de deelpagina van LinkedIn zelf, plus link kopiëren, `ShareButtons.tsx`), CTA naar de trial (via `SignupCTA`, dus in de funnel meegeteld), abonneerblok en gerelateerde posts. Deelkaart per post: `app/blog/[slug]/opengraph-image.tsx` (1200 x 630, merkkaart met titel en hashtags, zonder omslagfoto, zelfde lettertypen en bundeling als `app/opengraph-image.tsx`). Onbekende slug stuurt (tijdelijk) door naar arno.blog, oude jaar- en `.html`-URL's staan als redirect in `next.config.ts` |
 | Blog hashtag | `/blog/tag/[tag]` | Posts per hashtag. Minder dan 3 posts: `noindex` |
@@ -278,7 +278,6 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/referral` | Eigen referralcode ophalen/genereren |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/herstart` | Reactivatie-eligibility bepalen (regels in `lib/herstart.ts`: na twee proefperiodes zonder betalen pas na 12 maanden weer een gratis proefperiode, betalen kan altijd) |
-| `/api/bot/welcome-done` | Welkomstscherm als gezien markeren |
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
 | `/api/bot/events` | Whitelisted clientevents loggen |
@@ -369,6 +368,10 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/blog` | Elke 15 minuten | Blog: ingeplande posts publiceren, wachtrij vullen voor posts met "verstuur naar abonnees", wachtende blogmails versturen binnen het dagbudget (`BLOG_DAILY_MAIL_BUDGET`, standaard 50 per UTC-dag, rest van de Resend-daglimiet blijft voor betalings- en trialmails). Redis-slot tegen gelijktijdige runs |
 | `/api/cron/trial-emails` | Dagelijks 04:05 | Lifecycle e-mails: dag1, dag4, dag14, dag25, first_conversation, first_coaching |
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
+| `/api/cron/kennisbank-controle` | Dagelijks 06:55 | Controle van de kennisbank: drie vaste kernvragen moeten elk minimaal 60 kandidaten opleveren, geen fragment zonder embedding, minimaal 1400 fragmenten. Telegram alleen bij een probleem (`lib/kennisbankControle.ts`) |
+| `/api/cron/leveranciers-wijzigingen` | Maandag 06:50 | Wekelijkse controle op wijzigingen in DPA's en deprecations-pagina's van leveranciers |
+| `/api/cron/comp-heads-up-okt` | 16 oktober 08:00 (eenmalig) | Eenmalige mail aan de vier vroege testgebruikers dat hun gratis periode afloopt. Wegwerpcode, mag weg |
+| `/api/cron/comp-reminder-nov` | 25 t/m 29 november 08:00 (eenmalig) | Eenmalige mail aan één gebruiker met gratis toegang tot 1 december, alleen als Mollie live staat. Wegwerpcode na verzending |
 | `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
 | `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
 | `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is. Stuurt daarnaast de FAQ-zoektermen zonder treffer (tabel `faq_zoekmislukkingen`) en ruimt die na 30 dagen op |
@@ -399,7 +402,6 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerend De Spiegel-thema met één zin en een sparscenario als e-mail (`lib/patroonMail.ts`, flag `PATROON_MAIL`, standaard alleen oprichter) |
 | `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
 | `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/golf1-evaluatie-herinnering` | 16 september (eenmalig, jaar-guard) | Herinnering om systeemprompt-golf-1 te evalueren |
 | `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.

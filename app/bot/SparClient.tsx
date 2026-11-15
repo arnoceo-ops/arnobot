@@ -1144,7 +1144,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
 
   // Alleen voor voice-antwoorden (ElevenLabs, msg.voiceAnswer): de knop die dit aanroept
   // is verwijderd voor gewone tekstberichten (was de OpenAI-tts-1-hd-stem, kwaliteit niet
-  // goed genoeg bevonden, zie docs/VOICE_PLAN.md). Het volledige gesproken heen-en-weer-
+  // goed genoeg bevonden, zie docs/CLAUDE_HISTORY.md, voice-plan). Het volledige gesproken heen-en-weer-
   // gesprek loopt nu uitsluitend via de ElevenLabs-voice-mode-toggle.
   async function speak(text: string, idx: number) {
     if (speakingIdx === idx) {
@@ -1438,7 +1438,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     // Audio-element primen binnen dezelfde synchrone user-gesture (deze klik/Enter) die
     // ask() aanroept, vóór de eerste await hieronder. Zonder dit telt de latere, echte
     // audio.play() (na de awaited fetch) niet meer als user-gesture op mobiele
-    // Safari/webviews, die blokkeren dan het automatisch afspelen (VOICE_PLAN.md besluit 7).
+    // Safari/webviews, die blokkeren dan het automatisch afspelen (docs/CLAUDE_HISTORY.md, voice-plan: afspelen binnen een user gesture).
     if (voiceMode && sparModus !== 'sparren') {
       if (!voiceAudioRef.current) voiceAudioRef.current = new Audio()
       voiceAudioRef.current.play().catch(() => {})

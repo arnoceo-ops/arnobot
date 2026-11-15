@@ -18,7 +18,7 @@ const redis = new Redis({
 
 // Los van de bestaande arnobot:user-limiter van /api/chat, zodat voice-gebruik het
 // gewone chat-quotum niet raakt. Voorlopige drempel, later mogelijk losser zodra het
-// tekens-per-maand-plafond uit VOICE_PLAN.md fase 2 er is.
+// tekens-per-maand-plafond er is (zie docs/CLAUDE_HISTORY.md, voice-plan).
 const voiceChatRateLimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(30, '1 h'),
