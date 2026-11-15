@@ -6,7 +6,7 @@ import { Redis } from '@upstash/redis'
 import { billingDb, type SubRow } from '@/lib/billing/db'
 import { MollieError, SITE_URL, klantBestaat, maakEersteBetaling, maakKlant, mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
-import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from '@/lib/billing/btwNummer'
+import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
 import { isTeamCovered } from '@/lib/teamAccess'
 
 const ratelimit = new Ratelimit({
@@ -39,31 +39,11 @@ export async function POST(req: NextRequest) {
   // Een teamlid of teammanager heeft geen eigen abonnement (vangnet: teamgedekte accounts rekenen niet zelf af).
   if (await isTeamCovered(userId)) return fout(400, 'Teamgedekte accounts hebben geen eigen abonnement')
 
-  let zakelijk: { bedrijfsnaam: string; kvk: string; btw: string; btwGevalideerd: boolean; straat: string; postcode: string; plaats: string } | null = null
+  let zakelijk: ZakelijkeGegevens | null = null
   if (klantType === 'zakelijk') {
-    const naam = typeof bedrijfsnaam === 'string' ? bedrijfsnaam.trim() : ''
-    const kvkNr = typeof kvk === 'string' ? kvk.replace(/\s/g, '') : ''
-    const btwRaw = typeof btwNummer === 'string' ? btwNummer : ''
-    if (naam.length < 2 || naam.length > 120) return fout(400, 'Vul de bedrijfsnaam in')
-    if (!isKvkFormaat(kvkNr)) return fout(400, 'Een KvK-nummer heeft 8 cijfers')
-    if (/^BE/i.test(normaliseerBtwNummer(btwRaw))) {
-      return fout(400, 'Je hebt een Belgisch BTW-nummer. Voor Belgische bedrijven regelen we het afrekenen persoonlijk, omdat de BTW dan wordt verlegd. Mail naar admin@arno.bot, dan helpen we je snel verder.')
-    }
-    if (!isNlBtwFormaat(btwRaw)) {
-      return fout(400, 'Vul een Nederlands BTW-nummer in (NL123456789B01). Heb je een buitenlands nummer, mail dan admin@arno.bot')
-    }
-    // In testmodus (test_-sleutel, alleen eigenaar en testaccounts) slaan we de VIES-controle over,
-    // zodat zakelijk afrekenen te testen is zonder een echt btw-nummer.
-    const check = process.env.MOLLIE_API_KEY?.startsWith('test_') ? 'onbekend' : await controleerBtwBijVies(btwRaw)
-    if (check === 'ongeldig') return fout(400, 'Dit BTW-nummer is niet geldig')
-    // Een factuur aan een bedrijf moet het adres van het bedrijf bevatten.
-    const straatNaam = typeof straat === 'string' ? straat.trim() : ''
-    const plaatsNaam = typeof plaats === 'string' ? plaats.trim() : ''
-    const postcodeNorm = typeof postcode === 'string' ? normaliseerPostcode(postcode) : null
-    if (straatNaam.length < 3 || straatNaam.length > 100) return fout(400, 'Vul de straat en het huisnummer in')
-    if (!postcodeNorm) return fout(400, 'Vul een geldige postcode in (bijvoorbeeld 1234 AB)')
-    if (plaatsNaam.length < 2 || plaatsNaam.length > 80) return fout(400, 'Vul de plaats in')
-    zakelijk = { bedrijfsnaam: naam, kvk: kvkNr, btw: normaliseerBtwNummer(btwRaw), btwGevalideerd: check === 'geldig', straat: straatNaam, postcode: postcodeNorm, plaats: plaatsNaam }
+    const uitkomst = await valideerZakelijk({ bedrijfsnaam, kvk, btwNummer, straat, postcode, plaats })
+    if (!uitkomst.ok) return fout(400, uitkomst.fout)
+    zakelijk = uitkomst.gegevens
   }
 
   const { data: user } = await billingDb
