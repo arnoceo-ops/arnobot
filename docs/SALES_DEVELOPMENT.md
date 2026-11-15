@@ -81,7 +81,6 @@ Lidmaatschap alleen laat zien hoe het is om gecoacht te worden, niet hoe het is 
 
 **Technische reden voor een apart team, niet gecombineerd met bovenstaand lidmaatschap:** iemand kan maar in één team tegelijk zitten (`/api/bot/team/create` en `/team/join` blokkeren allebei expliciet een tweede lidmaatschap). Manager zijn op hetzelfde kleine team als waar ze zelf lid van zijn levert bovendien een bijna leeg dashboard op, managers worden zelf uitgesloten van de ledenlijst die ze te zien krijgen.
 
-Zie ook `docs/DEMO_VIDEO_SCRIPT.md`: het script voor de pre-demo video die de sales agents naar een prospect sturen vóór het live gesprek, staat al klaar en wordt opgenomen zodra dit demoteam er is (opnemen tegen fake data, nooit tegen echte klantdata).
 
 ---
 

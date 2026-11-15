@@ -109,7 +109,6 @@ Voortgang hier afvinken. Wie: **Arno** of **Claude**.
 - **Sales agents onboarden:** eigen team aanmaken op `/bot/team`, de sales agents als lid uitnodigen, de commissiestructuur bespreken, het wachtwoord voor `arno.bot/agents` delen. Daarna de sd-links met prospects delen.
 - **DPA afronden vóór ondertekening** (`docs/dpa-input.md`, sectie "Openstaand vóór ondertekening").
 - **SALES_BIJBEL aanvullen:** bezwaarafhandeling, prijsargumentatie, pitch-scripts; case studies wachten op input van Arno.
-- **Demo-video opnemen** (`docs/DEMO_VIDEO_SCRIPT.md`), wacht op het demoteam met fake teamleden.
 - **AGENTS_PITCH** via NotebookLM genereren en beoordelen vóór de kickoff met de sales agents.
 - **BUSINESS_HANDOVER-invulpunten** en **LAPTOP_OVERDRACHT-punten** afwerken.
 
