@@ -492,7 +492,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Opzegging ontvangen`,
         html: mail(
-          `Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          `${options?.team?.einde ? `Je opzegging is ontvangen. Je team stopt op ${billingDatum(options.team.einde)}. Tot die dag blijft alles werken voor jou en je team.` : 'Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.'}<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'MIJN DATA DOWNLOADEN →', 'https://arno.bot/bot/account'
         ),
       }

@@ -91,6 +91,40 @@ describe('opzeggen', () => {
     expect(arnoMail.html).toContain('het team stopt op')
   })
 
+  it('de mail aan Arno spreekt zichzelf niet tegen: bij een automatisch verwerkt team geen waarschuwing om de leden zelf te beëindigen', async () => {
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }]
+    await POST()
+    const html = mail.mock.calls.map(c => c[0]).find(m => m.to === 'arno@arno.bot').html as string
+    expect(html).toContain('Team met 1 lid.')
+    expect(html).toContain('Geen actie nodig')
+    expect(html).not.toContain('moet je ook hun toegang zelf beëindigen')
+  })
+
+  it('bij een team zonder facturatie (geen einddatum) blijft de waarschuwing voor Arno staan, met het goede meervoud', async () => {
+    zeg.mockResolvedValue({ ok: true, teamNaam: 'Team Een', stoptOp: null })
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }, { user_id: 'l1', team_id: 't1', role: 'member' }, { user_id: 'l2', team_id: 't1', role: 'member' }]
+    await POST()
+    const html = mail.mock.calls.map(c => c[0]).find(m => m.to === 'arno@arno.bot').html as string
+    expect(html).toContain('met 3 leden')
+    expect(html).toContain('moet je ook hun toegang zelf beëindigen')
+  })
+
+  it('de bevestiging aan de manager noemt de einddatum van het team, die aan een gewone gebruiker niet', async () => {
+    db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }]
+    await POST()
+    const teamMail = mail.mock.calls.map(c => c[0]).find(m => m.to === 'jan@x.nl').html as string
+    expect(teamMail).toContain('Je team stopt op 15 december 2026')
+    expect(teamMail).not.toContain('einde van de lopende betaalperiode')
+
+    mail.mockReset(); mail.mockResolvedValue(undefined); zeg.mockReset()
+    db.arnobot_team_members = []
+    db.approved_users[0].cancelled_at = null
+    await POST()
+    const soloMail = mail.mock.calls.map(c => c[0]).find(m => m.to === 'jan@x.nl').html as string
+    expect(soloMail).toContain('einde van de lopende betaalperiode')
+    expect(soloMail).not.toContain('Je team stopt')
+  })
+
   it('legt niets vast als de opzegregel van het team weigert (bijvoorbeeld al opgezegd)', async () => {
     db.arnobot_team_members = [{ user_id: 'u1', team_id: 't1', role: 'manager' }]
     zeg.mockResolvedValue({ ok: false, status: 409, fout: 'Dit team is al opgezegd' })

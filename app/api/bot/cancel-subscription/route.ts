@@ -88,13 +88,22 @@ export async function POST() {
 
   // Bevestiging aan de gebruiker, belofte uit de voorwaarden (artikel 7).
   if (isValidEmail(user.email)) {
-    const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, { userId })
+    const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, {
+      userId,
+      // Bij een team: de einddatum noemen (12:00 UTC, zodat de datum in elke tijdzone dezelfde dag blijft).
+      ...(teamStopt ? { team: { teamNaam: '', bedragCent: 0, seats: 0, einde: `${teamStopt}T12:00:00.000Z` } } : {}),
+    })
     await verstuurMailZacht({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html }).catch(() => {})
   }
 
   const datum = new Date(now).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+  const ledenTekst = teamMemberCount === null ? 'een onbekend aantal leden' : `${teamMemberCount} ${teamMemberCount === 1 ? 'lid' : 'leden'}`
+  // Een team met facturatie wordt automatisch verwerkt (einddatum, blokkade en stop facturatie op die dag), een team zonder
+  // facturatie niet: alleen dan moet Arno zelf de toegang van de leden beëindigen.
   const teamWaarschuwing = isManager
-    ? `<br><br><strong style="color:#cc2200;">Dit is een teamabonnement met ${teamMemberCount ?? 'onbekend aantal'} leden. Bij het verwerken van deze opzegging moet je ook hun toegang zelf beëindigen, niet alleen die van de manager.</strong>`
+    ? (teamStopt
+      ? `<br><br>Team met ${ledenTekst}.`
+      : `<br><br><strong style="color:#cc2200;">Dit is een teamabonnement met ${ledenTekst}. Bij het verwerken van deze opzegging moet je ook hun toegang zelf beëindigen, niet alleen die van de manager.</strong>`)
     : ''
   await verstuurMailZacht({
     from: 'ArnoBot <noreply@arno.bot>',
