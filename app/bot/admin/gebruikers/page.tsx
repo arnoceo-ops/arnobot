@@ -570,12 +570,12 @@ export default async function GebruikersPage({
         <div style={{ marginTop: 56 }}>
           <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 8 }}>TESTACCOUNT (test@arno.bot): ROL</p>
           <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-            Zet het handmatige testaccount in één klik om naar een andere rol, door de echte onderliggende data te wijzigen (teamlidmaatschap, command_manager, profiel.rol).
+            Zet het handmatige testaccount in één klik om naar een andere rol.
           </p>
           <TestPersonaButtons initial={testPersona.persona} />
           <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', margin: '32px 0 8px' }}>TESTACCOUNT: PLAN</p>
           <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-            Los van de rol: zet hetzelfde testaccount op Basic, Pro of Team om te zien hoe de app er met dat abonnement uitziet.
+            Zet het testaccount op Basic, Pro of Team om te zien hoe de app er met dat abonnement uitziet.
           </p>
           <TestPlanButtons initial={testPersona.plan} />
           <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', margin: '32px 0 8px' }}>TESTACCOUNT: TEAMPROEF</p>
