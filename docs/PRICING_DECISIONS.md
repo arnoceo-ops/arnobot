@@ -70,11 +70,11 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 
 **Eén regel per bullet (besloten 2026-08-02):** elke feature-bullet moet in de kaartlay-out op één regel passen, niet uitwrappen naar een tweede regel. Reden: bij ongelijke regelaantallen per bullet ontstaat een rommelig, ongelijkmatig ritme tussen de drie kaarten. Bij het herzien van te lange bullets altijd eerst proberen te verkorten zonder de kern te verliezen, pas als dat niet lukt de inhoud zelf aanpassen (zoals bij "onbeperkt" hierboven).
 
-**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/PAYMENTS_PLAN.md` besluitenblok.
+**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/MOLLIE_PLAN.md`.
 
 ## BTW-weergave (besloten 2026-09-03)
 
-Volledige onderbouwing en de Stripe-/checkout-consequenties in `docs/PAYMENTS_PLAN.md`, sectie "BTW-weergave". Kort:
+Het oorspronkelijke Stripe-plan met de volledige onderbouwing staat alleen nog in git (`docs/PAYMENTS_PLAN.md`, verwijderd 2026-11-15). Kort:
 
 - `/prijzen` toont kale bedragen, geen BTW-vermelding. Voor een consument geldt dat als het eindbedrag inclusief BTW.
 - Consument betaalt het getoonde bedrag all-in; netto voor ArnoBot = bedrag / 1,21 (Pro-jaar €39 → €32,23 netto). Checkout-totaal voor een consument moet exact het getoonde bedrag zijn.

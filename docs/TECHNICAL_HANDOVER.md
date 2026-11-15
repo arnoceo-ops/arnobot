@@ -657,7 +657,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `app/api/sparring/open/route.ts` (opening sparring) | `claude-sonnet-4-6` | Zelfde bug/fix als sparring/chat. | 2026-07 |
 | `app/api/cron/auto-analyse/route.ts` | `claude-sonnet-4-6` | Batch over max 20 gesprekken/gebruiker. Bij aanhoudend leeg: gebruiker overslaan. | 2026-07 |
 | `lib/rag.ts` (queryherschrijving RAG) | `claude-haiku-4-5-20251001` | 3 zoekzinnen per vraag, eenvoudige herschrijftaak. | 2026-07 |
-| `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). voyage-4-large onderzocht 2026-09-02, geen kwaliteitswinst, traject geparkeerd (`docs/VOYAGE_REEMBED_PLAN.md`). | 2026-09-02 |
+| `lib/rag.ts` (embedding, kennisbank RAG) | `voyage-3-large` | Legacy. NIET losstaand upgraden: breekt de kennisbank (vooraf ge-embed). voyage-4-large onderzocht 2026-09-02, geen kwaliteitswinst, traject geparkeerd (`docs/archief/VOYAGE_REEMBED_PLAN.md`). | 2026-09-02 |
 | `lib/rag.ts` (rerank, kennisbank RAG) | `rerank-2.5` | Geüpgraded van `rerank-2` (legacy), strikt beter, zelfde prijs. | 2026-07 |
 | `lib/rag.ts` (`embedSessionText`, sessie-geheugen) | `voyage-multilingual-2` | Model-mix-bug gefixt 2026-08-12, alle schrijvers geconsolideerd. Deprecated, NIET losstaand upgraden. voyage-4-migratie geparkeerd, zie kennisbank-rij hierboven. | 2026-09-02 |
 | `app/api/bot/coaching-precheck/route.ts` | `claude-sonnet-4-6` | Losse ja/nee-check, expliciete fallback (`'nee'`). | 2026-07 |

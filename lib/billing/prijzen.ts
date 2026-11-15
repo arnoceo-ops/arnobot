@@ -3,7 +3,7 @@ import { SCENARIO_PRIJZEN } from '@/lib/kostenTarieven'
 // De server berekent elk bedrag zelf uit dezelfde bron als /prijzen en Abacus
 // (lib/kostenTarieven.ts). Een bedrag van de client wordt nooit vertrouwd.
 //
-// Btw (besloten 2026-10-10, zie docs/PAYMENTS_PLAN.md): alleen Nederland, 21%.
+// Btw (besloten 2026-10-10, zie docs/MOLLIE_PLAN.md en docs/PRICING_DECISIONS.md): alleen Nederland, 21%.
 //  - Particulier betaalt het getoonde bedrag, de btw zit daar al in.
 //  - Zakelijk betaalt het getoonde bedrag plus 21%.
 

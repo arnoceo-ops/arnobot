@@ -1,5 +1,5 @@
 /**
- * Fase 1-verificatie van de voyage-4 her-embedding (docs/VOYAGE_REEMBED_PLAN.md).
+ * Fase 1-verificatie van de voyage-4 her-embedding (docs/archief/VOYAGE_REEMBED_PLAN.md).
  *
  * 1. Consistentiecheck: pak een steekproef bestaande chunks, embed hun exacte
  *    brontekst opnieuw met voyage-4-large, vergelijk cosine met de opgeslagen

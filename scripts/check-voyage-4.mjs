@@ -1,5 +1,5 @@
 /**
- * Fase 0-check voor de voyage-4 her-embedding (docs/VOYAGE_REEMBED_PLAN.md).
+ * Fase 0-check voor de voyage-4 her-embedding (docs/archief/VOYAGE_REEMBED_PLAN.md).
  * Bevestigt dat de huidige VOYAGE_API_KEY toegang heeft tot voyage-4-large en dat
  * het model 1024 dimensies teruggeeft (zodat de bestaande vector(1024)-kolommen passen).
  * Doet ook een mini cosine-check tussen voyage-3-large en voyage-4-large op dezelfde

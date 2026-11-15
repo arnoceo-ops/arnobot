@@ -1,5 +1,5 @@
 /**
- * Fase 1 van de voyage-4 her-embedding (docs/VOYAGE_REEMBED_PLAN.md).
+ * Fase 1 van de voyage-4 her-embedding (docs/archief/VOYAGE_REEMBED_PLAN.md).
  * Vult blog_chunks.embedding_v4 met voyage-4-large voor elke rij die 'm nog mist.
  * Niet-destructief: raakt embedding, content, context niet aan. Hervatbaar: draai
  * opnieuw en het pakt alleen de resterende null-rijen op.

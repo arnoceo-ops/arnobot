@@ -315,3 +315,24 @@ Gekozen: wekelijkse cron (maandag 07:15 UTC) met een mail aan arno@arno.bot (hoo
 Natuurlijk Nederlands: de bestaande regel RULE_NATUURLIJK_NEDERLANDS in de hoofdchat zetten gaf geen verbetering (8 onnatuurlijke zinnen met en zonder regel, over 8 vragen). Gekozen: geen extra regel in de prompt (85 woorden zonder effect), wel een taalcontrole in de wekelijkse waarheidsmail (`beoordeelNederlands`, alleen echte fouten: grammatica, niet-bestaande woorden, onbegrijpelijke of half vertaalde zinnen). Engelse woorden en uitdrukkingen tellen bewust niet (Arno vindt ze goed zolang ze niet vertaald worden), ook gangbare uitdrukkingen als "waar hij wakker van ligt" niet. Een eerste versie van die beoordelaar markeerde dat laatste ten onrechte.
 
 Verwatering van de systeemprompt: vandaag +117 woorden (4550 naar 4667), vooral in de regel over voorbeelden (53 naar 131 woorden, doordat de persoonsregel erin zit). Een poging om die in te korten (131 naar 106) bleek de naleving te breken: lange versie 18 van 18 keer de vaste verwijzing bij persoonlijke vragen, korte versie 12 van 18 (faalde op "Ben je failliet?" en "Hoe lang doe je dit al?"). Besloten: de lange versie blijft. Les: een prompttekst die een gedrag draagt eerst meten, dan pas inkorten; woordtelling alleen is geen reden.
+
+## Systeemprompt-upgrade hoofdchat afgerond en document opgeruimd (2026-08 t/m 2026-10, samengevat 2026-11-15)
+
+`docs/SYSTEEMPROMPT_UPGRADE.md` (46 KB, laatste wijziging 2026-10-02) is verwijderd; de volledige tekst staat in git (`git log --follow -- docs/SYSTEEMPROMPT_UPGRADE.md`). Wat blijft gelden:
+
+- **De drie wortels uit de meta-analyses van augustus en september:** te snel en te veel leveren zonder de situatie te kennen, te aardig bij externe excuses, en geen keten van inzicht naar actie naar terugkoppeling. Alleen de eerste twee zijn een promptprobleem. De follow-up loop en slordig rekenwerk zijn architectuur- of modelvragen en horen niet in prompttekst.
+- **Gekozen (1-9): consolideren in plaats van stapelen.** Elke onderscheiden instructie één keer, in de scherpste vorm; golf 2 is ingevouwen in de bestaande regels. Daarna per meta-analyse een bestaande regel aanscherpen of vervangen, nooit toevoegen. Een bevinding als "het model volgt een regel niet die er al staat" is geen promptedit. **Verworpen:** golf 2 als losse laag erbovenop, want dat verwatert de prompt.
+- **De panelscore is geen KPI** (zes fictieve critici, kleine steekproef). Het signaal is de terugkerendheid van bevindingen over analyses heen plus Arno's eigen steekproef. **Verworpen:** een apart evaluatiemoment voor golf 1.
+- **Regel 1 (kwalificeren vóór uitgebreid leveren), herzien 26-9 en 2-10:** het verzoektype is de trigger, niet de aanleiding. Bij schrijf- en afmaakverzoeken: niet meteen uitschrijven, maar ook niet botweg weigeren (een weigering als "scripts ga ik je niet geven" schoot door), en eerst naar de echte vertrekreden vragen. Warme lijn (bellen of kort persoonlijk bericht) boven een formele mail aan meerdere mensen.
+- **`RULE_NO_DASH`** verbiedt ook streepjeslijnen als scheiding boven en onder een voorbeeldtekst; staat in `SHARED_RULES` en geldt voor alle routes.
+- **Kennisdiepte via RAG, niet via promptbulk:** `docs/kennisbank/winback-bij-opzegging.md`, plus de filosofielaag van "ruimte in plaats van obstakel" (`verifieer-eerst-ruimte-niet-obstakel.md`).
+- **Verworpen na de meta-analyse van 1-10:** commitment met tijdstip aan het eind van elk gesprek (botst met het verbod op tijdgebonden aanwijzingen); een aparte regel "benoem wat de wijziging doet" (één incident in een pre-fix gesprek); een klantprofiel per terugkerende gebruiker (doet `arnobot_memory_entities` al).
+- De eenmalige cron `golf1-evaluatie-herinnering` is op 2026-09-16 verwijderd; evaluatie loopt alleen via de reguliere meta-analyse.
+
+## PAYMENTS_PLAN verwijderd (2026-11-15)
+
+`docs/PAYMENTS_PLAN.md` was het Stripe/Paddle-plan van 2026-09 en is vervangen door `docs/MOLLIE_PLAN.md` en `docs/PRICING_DECISIONS.md` (sectie "BTW-weergave", die de besluiten zelf bevat). Het oorspronkelijke plan staat in git. Het noemde nog een juristen- en boekhoudercheckpoint; dat is niet meer van toepassing (zie het geheugen: Arno heeft ze niet en zoekt het zelf uit).
+
+## Voyage her-embedding gearchiveerd (2026-11-15)
+
+`docs/VOYAGE_REEMBED_PLAN.md` staat nu in `docs/archief/`. Geparkeerd sinds 2026-09-02: `voyage-4-large` haalde de kwaliteitslat niet. De scripts (`scripts/backfill-chunks-v4.mjs`, `check-voyage-4.mjs`, `verify-chunks-v4.mjs`) verwijzen naar het nieuwe pad.
