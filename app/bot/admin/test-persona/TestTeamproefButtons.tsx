@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { TeamproefHuidig } from '@/lib/testTeamproef'
 
 const STANDEN: { value: 'lopend' | 'bijna' | 'voorbij' | 'uit'; label: string }[] = [
@@ -12,6 +13,7 @@ const STANDEN: { value: 'lopend' | 'bijna' | 'voorbij' | 'uit'; label: string }[
 
 export default function TestTeamproefButtons({ initial }: { initial: TeamproefHuidig }) {
   const [active, setActive] = useState<TeamproefHuidig>(initial)
+  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
 
@@ -30,6 +32,7 @@ export default function TestTeamproefButtons({ initial }: { initial: TeamproefHu
         throw new Error(d.error || 'Omzetten mislukt')
       }
       setActive(stand as TeamproefHuidig)
+      router.refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Omzetten mislukt')
     } finally {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const PERSONAS: { value: string; label: string }[] = [
   { value: 'verkoper', label: 'VERKOPER' },
@@ -12,6 +13,7 @@ const PERSONAS: { value: string; label: string }[] = [
 
 export default function TestPersonaButtons({ initial }: { initial: string }) {
   const [active, setActive] = useState(initial)
+  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
 
@@ -30,6 +32,7 @@ export default function TestPersonaButtons({ initial }: { initial: string }) {
         throw new Error(d.error || 'Omzetten mislukt')
       }
       setActive(persona)
+      router.refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Omzetten mislukt')
     } finally {

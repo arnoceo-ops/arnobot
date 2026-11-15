@@ -53,7 +53,9 @@ export async function POST(req: NextRequest) {
   await supabase.from('arnobot_team_members').delete().eq('user_id', userId)
 
   const commandManager = persona === 'teammanager'
-  await supabase.from('approved_users').update({ command_manager: commandManager }).eq('user_id', userId)
+  // Team-rollen horen bij een betalend team (Team Apex): plan Team. Andere rollen laten het plan staan, zodat Basic en Pro apart te testen blijven.
+  const teamRol = persona === 'teammanager' || persona === 'teamlid'
+  await supabase.from('approved_users').update({ command_manager: commandManager, ...(teamRol ? { plan: 'team' } : {}) }).eq('user_id', userId)
 
   if (persona === 'teammanager') {
     await supabase.from('arnobot_team_members').insert({ team_id: TEST_TEAM_ID, user_id: userId, role: 'manager' })

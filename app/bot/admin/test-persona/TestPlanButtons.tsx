@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
 // Databasewaarde blijft basis/premium/team, alleen het label volgt de marketingnaam
@@ -13,6 +14,7 @@ const PLANS: { value: 'basis' | 'premium' | 'team'; label: string }[] = [
 
 export default function TestPlanButtons({ initial }: { initial: 'basis' | 'premium' | 'team' }) {
   const [active, setActive] = useState(initial)
+  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
 
@@ -31,6 +33,7 @@ export default function TestPlanButtons({ initial }: { initial: 'basis' | 'premi
         throw new Error(d.error || 'Omzetten mislukt')
       }
       setActive(plan)
+      router.refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Omzetten mislukt')
     } finally {
