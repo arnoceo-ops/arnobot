@@ -24,7 +24,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 |---|---|---|---|
 | Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77/mnd-equiv. + €39/gebruiker/mnd-equiv. bij jaarbetaling (~20% korting), vanaf 3 gebruikers |
 | Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel |
-| Trial | 30 dagen gratis | 30 dagen gratis | Geen aparte trial: manager start zelf als Pro (zie hieronder) |
+| Trial | 30 dagen gratis | 30 dagen gratis | Via het aanvraagformulier geen trial. Via een agent-link 30 dagen gratis proef met 10 dagen coulance, zie `docs/TEAM_PROCES.md` |
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) |
 | Gesproken antwoorden | Nee | Ja | Ja |
 | Command/Team-managerdashboard | Nee | Nee | Ja |

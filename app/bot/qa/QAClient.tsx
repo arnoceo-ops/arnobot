@@ -190,6 +190,8 @@ export default function QAClient() {
   const isTeamMember = isPreviewMember || liveTeamStatus.isTeamMember
   const teamStatusLoaded = isPreviewMember || liveTeamStatus.loaded
   const teamStatusFailed = !isPreviewMember && liveTeamStatus.failed
+  // Een lid van een geblokkeerd team, of met een eigen abonnement, ziet de abonnementsvragen wel (zoals zijn accountpagina).
+  const lidMagAbonnement = !isPreviewMember && liveTeamStatus.isTeamMember && (liveTeamStatus.teamGeblokkeerd || liveTeamStatus.heeftEigenAbonnement)
 
   const zichtbareGroepen = FAQ_GROUPS.filter(g => {
     // Bij een mislukte status-check weten we niet zeker of iemand teamlid is,
@@ -198,7 +200,7 @@ export default function QAClient() {
     if (isNativeApp && ['REFERRAL', 'ABONNEMENT'].includes(g.label)) return false
     if (teamStatusFailed) return !['REFERRAL', 'ABONNEMENT', 'JOUW TEAM'].includes(g.label)
     if (isTeamMember && g.label === 'REFERRAL') return false
-    if (isTeamMember && g.label === 'ABONNEMENT') return false
+    if (isTeamMember && !lidMagAbonnement && g.label === 'ABONNEMENT') return false
     if (!isTeamMember && g.label === 'JOUW TEAM') return false
     return true
   })
