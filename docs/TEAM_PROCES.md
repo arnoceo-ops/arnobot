@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-15
 
-**Waar we staan:** het hele proces is gebouwd: van binnenkomst, proef en coulance, zelf activeren en leden tot en met de opzegregel voor Team (einddatum volgens artikel 7, blokkade en stop van de facturatie op die dag, intrekken tot de dag ervoor). Zelf activeren is op prod getest met het testaccount (activeren, factuur, betaallink). De opzegregel is gebouwd en met tests gedekt maar nog niet op prod doorlopen. De SQL-kolom `arnobot_teams.stopt_op` is op 2026-11-15 door Arno uitgevoerd.
+**Waar we staan:** het hele proces is gebouwd: van binnenkomst, proef en coulance, zelf activeren en leden tot en met de opzegregel voor Team (einddatum volgens artikel 7, blokkade en stop van de facturatie op die dag, intrekken tot de dag ervoor). Zelf activeren en de opzegregel zijn op 2026-11-15 op prod doorlopen met het testaccount (activeren, factuur, betaallink; opzeggen op tijd en te laat, intrekken, beide mails). Alleen het echte stoppen van een opgezegd team op de einddatum door de cron en het stoppen van een eigen abonnement bij het accepteren van een uitnodiging zijn nooit op prod gezien (alleen met tests gedekt). De SQL-kolom `arnobot_teams.stopt_op` is op 2026-11-15 door Arno uitgevoerd. Een onafhankelijke controle van dit document tegen de code (2026-11-15) vond de beweringen correct op een paar verouderde regels na, die zijn hersteld, en een gat bij het joinen van een geblokkeerd team, dat is gedicht.
 
-**Eerstvolgende stap:** de opzegregel Team een keer doorlopen met het testaccount (opzeggen, einddatum zien, intrekken).
+**Eerstvolgende stap:** geen openstaande bouwstappen. Open: een melding aan de manager buiten de accountpagina (zie de afvinklijst).
 
 Dit document beschrijft het hele leven van een team, van de eerste aanmelding tot het einde, en wat er in elk scenario gebeurt. Het begon als een checklist voor het onboarden van een klant (`TEAM_ONBOARDING.md`) en een overzicht van scenario's (`TEAM_LEVENSCYCLUS.md`); beide zijn hierin opgegaan. Waar het niet over gaat: wat een team kan en de coaching zelf staat in `docs/TEAM_PLAN.md` en `docs/ARNOBOT_OVERZICHT.md` (3.7 Teammodule), de tarieven en voorwaarden in `docs/ABONNEMENTEN.md`, de sales agents in `docs/SALES_DEVELOPMENT.md`, een jaarabonnement dat Team wordt in `docs/SOLO_JAAR_NAAR_TEAM.md`, de betaalprovider in `docs/MOLLIE_PLAN.md`.
 
@@ -60,7 +60,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 **Waarom een eigen cron** (`/api/cron/team-proef`, dagelijks 07:50 UTC). Zonder die cron eindigt de proef nooit: de toegangspoort (`proxy.ts`) laat iemand met `command_manager = true` binnen zolang zijn team niet geblokkeerd is, en de proefmails slaan managers en teamleden over. De cron:
 - waarschuwt jou via Telegram 5 dagen van tevoren;
-- stuurt op dag 30 eenmalig de mail `team_proef_coulance` (dedupe via `nieuwMelden`, met de einddatum in de sleutel) en blokkeert op dag 40 het team. Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in;
+- stuurt op dag 30 eenmalig de mail `team_proef_coulance` (alleen als de manager een team heeft dat niet geblokkeerd is; een manager zonder team krijgt geen mail en verliest op dag 40 alleen `command_manager`) (dedupe via `nieuwMelden`, met de einddatum in de sleutel) en blokkeert op dag 40 het team. Had de manager nog geen team gemaakt, dan trekt hij `command_manager` in;
 - raakt een team nooit aan zodra de facturatie is ingesteld (stap 7, min. seats gevuld) of de aanmelding niet via een agent-link kwam;
 - blokkeert nooit automatisch als de manager zelf betaalt (dat kan een klant zijn), maar meldt je dan wel dat het team geen facturatie heeft en gratis meeloopt. Dit is de valkuil: wie op `/bot/doorgaan` alleen voor zichzelf betaalt, houdt zijn eigen toegang, maar betaalt daarmee niet voor zijn team.
 
@@ -92,7 +92,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 ## Fase 5. Leden
 
-**Joinen.** Een lid komt binnen via `/bot/team/join?code=...` en krijgt het plan van het team (Pro). Maximaal 25 leden per team: de join weigert daarna, en jij krijgt een Telegram bij 20 leden (eenmalig per team) en als iemand wordt geweigerd (hooguit één keer per week per team). Testteams melden niet. Het aanvraagformulier laat meer seats toe (bijvoorbeeld 140 medewerkers): bij een grotere klant is een aanpassing nodig vóór de uitnodigingen.
+**Joinen.** Een lid komt binnen via `/bot/team/join?code=...` en krijgt het niveau van het team als plan (een gewoon team heeft niveau premium, dus Pro). Een team dat geblokkeerd of opgezegd is kan niet meer worden gejoind: de uitnodigingspagina meldt dat vooraf en de route weigert het, anders verliest het nieuwe lid zijn eigen abonnement en proef voor een team dat hem buitensluit of binnenkort stopt. Maximaal 25 leden per team: de join weigert daarna, en jij krijgt een Telegram bij 20 leden (eenmalig per team) en als iemand wordt geweigerd (hooguit één keer per week per team). Testteams melden niet. Het aanvraagformulier laat meer seats toe (bijvoorbeeld 140 medewerkers): bij een grotere klant is een aanpassing nodig vóór de uitnodigingen.
 
 **Iemand met een eigen abonnement of proef accepteert de uitnodiging.** Op de uitnodigingspagina staat vooraf: "Je gesprekken en historie blijven van jou, ook als je lid wordt en als je het team later verlaat. Vanaf nu betaalt je team: een eigen abonnement loopt uit tot het einde van je betaalperiode (geen restitutie) en een lopende proef vervalt." Bij accepteren stopt de Mollie-incasso en vervalt de proef automatisch (`lib/billing/teamlidSolo.ts`), en jij krijgt een Telegram, ook als het stoppen mislukt. Hij blijft hetzelfde account, dus de gesprekshistorie blijft. Een handmatig betaald lid (BETAALD gezet, zonder online abonnement) heeft geen incasso om te stoppen: dat meldt de Telegram. Heeft hij een jaarabonnement met nog minstens twee maanden looptijd, dan noemt de Telegram ook de resterende looptijd en het bedrag naar rato incl. btw, zodat jij kunt beslissen over een deelrestitutie uit coulance (zie Besluiten).
 
@@ -102,7 +102,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 ## Fase 6. Einde
 
-**De manager zegt het team op** (accountpagina, TEAMABONNEMENT OPZEGGEN). Nu: alleen een opzegdatum op het account en een mail aan jou, met de waarschuwing dat je de toegang van de leden zelf moet beëindigen. De facturatiecron kijkt niet naar opzeggen, dus er blijven facturen komen, ook voor een geblokkeerd team.
+**De manager zegt het team op** (accountpagina, TEAMABONNEMENT OPZEGGEN). Tot 2026-11-15 gebeurde er alleen een opzegdatum op het account en een mail aan jou, zonder dat iets de toegang of de facturatie stopte. Dat is vervangen door de opzegregel hieronder.
 
 **De opzegregel voor Team (gebouwd 2026-11-15, `lib/teamOpzegging.ts`).** Dezelfde regel als bij zakelijke Basic en Pro (artikel 7 van de voorwaarden: opzegtermijn één maand vóór het einde van de lopende betaalperiode, anders loopt het een periode door; de berekening is `opzeggingIngaat`):
 - de manager klikt TEAMABONNEMENT OPZEGGEN; de server berekent de einddatum uit de volgende factuurdatum en zet die in `arnobot_teams.stopt_op` (SQL: `docs/sql/2026-11-15-team-stopt-op.sql`). De einddatum telt tot het einde van die dag: opzeggen precies een maand ervoor is nog op tijd. De manager ziet "Je team stopt op [datum]" op zijn accountpagina en krijgt een bevestigingsmail met dezelfde datum; jij krijgt een mail met de einddatum (zonder de waarschuwing om de leden zelf te beëindigen, want dat gaat automatisch) en een regel in het adminlogboek (TEAM OPGEZEGD). De link "Per ongeluk particulier besteld" onder de opzegknop staat er alleen voor wie een te corrigeren particulier abonnement heeft (`KlanttypeCorrectieLink`), dus nooit voor een manager;
@@ -127,7 +127,7 @@ Activeren kan op elk moment, ook na de blokkade.
 | Lid van geblokkeerd team neemt zelf een abonnement | Behandeld als gewone gebruiker, kan zelf opzeggen. | Gebouwd |
 | Lid wordt verwijderd | Lidmaatschap weg, plan gelijk aan eigen lopend abonnement, historie blijft van hem. | Gebouwd |
 | Eigen abonnement of proef, uitnodiging geaccepteerd | Incasso stopt (geen restitutie), proef vervalt, historie blijft. | Gebouwd |
-| Manager zegt het team op | Einddatum volgens artikel 7, toegang tot die dag, blokkade en stop facturatie op die dag. Intrekken kan tot de dag ervoor. | Gebouwd, nog niet op prod doorlopen |
+| Manager zegt het team op | Einddatum volgens artikel 7, toegang tot die dag, blokkade en stop facturatie op die dag. Intrekken kan tot de dag ervoor. | Gebouwd en op prod doorlopen (het echte stoppen op de einddatum niet) |
 | Team opheffen | Hetzelfde als de opzegregel. | Gebouwd |
 | Meer dan 25 leden | Join weigert, jij krijgt een Telegram. | Gebouwd |
 | Seats erbij | Maandelijks automatisch, jaarlijks een tussenfactuur. | Gebouwd |
@@ -162,12 +162,13 @@ Activeren kan op elk moment, ook na de blokkade.
 - `/api/chat` controleert de einddatum of blokkade niet zelf, alleen de pagina's doen dat. Wie een verzoek zelf samenstelt, kan doorchatten. Geldt voor elke verlopen gebruiker, niet alleen teamleden.
 - Of een verlenging van een eigen abonnement het plan van een verwijderd lid later opnieuw zet, is niet nagelopen.
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
+- Het stoppen van een opgezegd team hangt aan de cron `team-facturatie`: draait die niet (bijvoorbeeld als Mollie is uitgeschakeld), dan blijft het team een dag langer open. De stap is idempotent en haalt dat de volgende run in. Een nog open factuur van een gestopt team blijft staan zonder gevolg: er komt geen nieuwe bij en een late betaling zet het team niet weer open.
 - De manager ziet de proefstatus alleen op zijn accountpagina (en krijgt de mail op dag 30), niet in een balk in de app.
 - Een koppeling tussen de aanvraag en het team op de adminpagina ontbreekt (nu "match zelf op e-mailadres").
 
 ## Test en bewijs
 
-Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuur, tussentijdse jaarfactuur voor een extra seat, betaling via de link (iDEAL), afletteren in Moneybird, herinnering, blokkade en deblokkade, alle bijbehorende mails en Telegram-meldingen. Gevonden en gefixt: zie `docs/MOLLIE_PLAN.md`. Op 2026-11-15 is zelf activeren met het testaccount doorlopen op prod (stand lopend, bijna voorbij, voorbij; activeren met factuur, betaallink, mail, Telegram en logboek). Niet getest met echt geld: een Team-factuur in live-modus, inclusief de Moneybird-mail met factuur als bijlage (het testteam maakt die bewust niet). De eerste echte activering is dus de eerste live teamfactuur: controleer dan of die mail aankomt. Ook de knop SOLO NAAR TEAM (2026-11-12) is alleen met tests gedekt en nog niet op een echte zakelijke solo-klant gedraaid: lees bij het eerste geval eerst het voorbeeld, en controleer daarna de Telegram-melding en in de database dat het solo-abonnement op `cancelled` staat met als einddatum `periode_einde` en dat het team als volgende factuurdatum dezelfde dag heeft.
+Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuur, tussentijdse jaarfactuur voor een extra seat, betaling via de link (iDEAL), afletteren in Moneybird, herinnering, blokkade en deblokkade, alle bijbehorende mails en Telegram-meldingen. Gevonden en gefixt: zie `docs/MOLLIE_PLAN.md`. Op 2026-11-15 is met het testaccount op prod doorlopen: zelf activeren (stand lopend, bijna voorbij, voorbij; activeren met factuur, betaallink, mail, Telegram en logboek) en de opzegregel (opzeggen op tijd en te laat, intrekken, beide mails). Niet getest met echt geld: een Team-factuur in live-modus, inclusief de Moneybird-mail met factuur als bijlage (het testteam maakt die bewust niet). De eerste echte activering is dus de eerste live teamfactuur: controleer dan of die mail aankomt. Ook de knop SOLO NAAR TEAM (2026-11-12) is alleen met tests gedekt en nog niet op een echte zakelijke solo-klant gedraaid: lees bij het eerste geval eerst het voorbeeld, en controleer daarna de Telegram-melding en in de database dat het solo-abonnement op `cancelled` staat met als einddatum `periode_einde` en dat het team als volgende factuurdatum dezelfde dag heeft.
 
 ## Afvinklijst
 
@@ -179,6 +180,7 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Eigen abonnement stopt en proef vervalt bij het accepteren van een teamuitnodiging
 - [x] Leden van een geblokkeerd team mogen zelf een abonnement nemen en opzeggen
 - [x] Plan gelijk aan het eigen abonnement bij het verwijderen van een lid
+- [x] Een geblokkeerd of opgezegd team kan niet meer worden gejoind (gevonden door de onafhankelijke controle)
 - [x] SQL `stopt_op` uitgevoerd (Arno, 2026-11-15)
 - [x] Opzegregel Team: einddatum, blokkade en stop van de facturatie, intrekken tot de dag ervoor
 - [x] Opzegregel Team doorlopen op prod met het testaccount (op tijd en te laat, intrekken, beide mails)

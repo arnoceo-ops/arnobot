@@ -11,6 +11,11 @@ import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 const MAX_LEDEN = 25
 const MELD_VANAF_LEDEN = 20
 
+// Een team dat geblokkeerd is of is opgezegd (stopt binnenkort) kan niet meer worden gejoind. Anders verliest het nieuwe lid zijn
+// eigen abonnement en proef (stopSoloBijJoin) en belandt hij in een team dat hem buitensluit of binnenkort stopt.
+const NIET_ACTIEF = 'Dit team is niet actief, daarom kun je er nu niet bij. Neem contact op met je teammanager.'
+const teamIsActief = (t: { geblokkeerd_at?: string | null; stopt_op?: string | null }) => !t.geblokkeerd_at && !t.stopt_op
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -50,11 +55,12 @@ export async function POST(req: Request) {
 
   const { data: team } = await supabase
     .from('arnobot_teams')
-    .select('id, name, niveau')
+    .select('id, name, niveau, geblokkeerd_at, stopt_op')
     .eq('invite_code', invite_code)
     .single()
 
   if (!team) return NextResponse.json({ error: 'Ongeldige uitnodigingscode' }, { status: 404 })
+  if (!teamIsActief(team)) return NextResponse.json({ error: NIET_ACTIEF }, { status: 409 })
 
   const { count: memberCount } = await supabase
     .from('arnobot_team_members')
@@ -106,10 +112,12 @@ export async function GET(req: Request) {
 
   const { data: team } = await supabase
     .from('arnobot_teams')
-    .select('name')
+    .select('name, geblokkeerd_at, stopt_op')
     .eq('invite_code', code)
     .single()
 
   if (!team) return NextResponse.json({ error: 'Ongeldig' }, { status: 404 })
+  // De pagina toont dan meteen dat het team niet actief is, vóór iemand de uitleg leest en op joinen klikt.
+  if (!teamIsActief(team)) return NextResponse.json({ teamName: team.name, nietActief: true, error: NIET_ACTIEF })
   return NextResponse.json({ teamName: team.name })
 }

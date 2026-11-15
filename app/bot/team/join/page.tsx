@@ -22,7 +22,8 @@ function JoinContent() {
     fetch(`/api/bot/team/join?code=${code}`)
       .then(r => r.json())
       .then(data => {
-        if (data.teamName) { setTeamName(data.teamName); setStatus('ready') }
+        if (data.nietActief) { setErrorMsg(data.error || 'Dit team is niet actief.'); setStatus('error') }
+        else if (data.teamName) { setTeamName(data.teamName); setStatus('ready') }
         else setStatus('invalid')
       })
       .catch(() => setStatus('invalid'))

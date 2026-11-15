@@ -1,4 +1,4 @@
--- Opzegregel voor Team (2026-11-15), zie docs/TEAM_PROCES.md, fase 5 "Einde".
+-- Opzegregel voor Team (2026-11-15), zie docs/TEAM_PROCES.md, fase 6 "Einde".
 --
 -- arnobot_teams.stopt_op: de dag waarop een opgezegd team stopt (JJJJ-MM-DD). De manager zegt het teamabonnement op,
 -- de server berekent met de regels van artikel 7 van de voorwaarden (zakelijk: opzegtermijn één maand vóór het einde van

@@ -40,12 +40,12 @@ vi.mock('@/lib/capaciteit', () => ({ nieuwMelden }))
 vi.mock('@/lib/billing/teamlidSolo', () => ({ stopSoloBijJoin: stopSolo }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify }))
 
-const { POST } = await import('./route')
+const { POST, GET } = await import('./route')
 const { TEST_TEAM_ID } = await import('@/lib/internalTestAccounts')
 
 const aanroep = (code = 'abc') => POST(new Request('https://www.arno.bot/api/bot/team/join', { method: 'POST', body: JSON.stringify({ invite_code: code }) }))
-const vulTeam = (aantal: number, id = 't1') => {
-  db.arnobot_teams = [{ id, name: 'Team Een', niveau: 'premium', invite_code: 'abc' }]
+const vulTeam = (aantal: number, id = 't1', extra: Rij = {}) => {
+  db.arnobot_teams = [{ id, name: 'Team Een', niveau: 'premium', invite_code: 'abc', ...extra }]
   db.arnobot_team_members = Array.from({ length: aantal }, (_, i) => ({ team_id: id, user_id: `u${i}`, role: i === 0 ? 'manager' : 'member' }))
 }
 
@@ -81,6 +81,30 @@ describe('team joinen', () => {
     db.arnobot_team_members.push({ team_id: 't1', user_id: 'nieuw', role: 'member' })
     await aanroep()
     expect(stopSolo).not.toHaveBeenCalled()
+  })
+
+  it('weigert een geblokkeerd team: het nieuwe lid raakt zijn eigen abonnement niet kwijt', async () => {
+    vulTeam(3, 't1', { geblokkeerd_at: '2026-11-10T00:00:00Z' })
+    const res = await aanroep()
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toContain('niet actief')
+    expect(stopSolo).not.toHaveBeenCalled()
+    expect(db.arnobot_team_members.some(m => m.user_id === 'nieuw')).toBe(false)
+    expect(db.approved_users[0].plan).toBe('basis')
+  })
+
+  it('weigert een opgezegd team dat binnenkort stopt, ook als het nog niet is geblokkeerd', async () => {
+    vulTeam(3, 't1', { stopt_op: '2026-12-25' })
+    expect((await aanroep()).status).toBe(409)
+    expect(stopSolo).not.toHaveBeenCalled()
+  })
+
+  it('laat de uitnodigingspagina vooraf weten dat het team niet actief is', async () => {
+    vulTeam(3, 't1', { geblokkeerd_at: '2026-11-10T00:00:00Z' })
+    const d = await (await GET(new Request('https://www.arno.bot/api/bot/team/join?code=abc'))).json()
+    expect(d).toMatchObject({ teamName: 'Team Een', nietActief: true })
+    vulTeam(3)
+    expect(await (await GET(new Request('https://www.arno.bot/api/bot/team/join?code=abc'))).json()).toEqual({ teamName: 'Team Een' })
   })
 
   it('geeft geen melding onder de 20 leden', async () => {
