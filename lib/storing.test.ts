@@ -68,7 +68,7 @@ const altijd = () => true
 describe('werkStoringenBij', () => {
   it('neemt een nieuwe storing op met het moment van zien en of er is gemeld', () => {
     const r = werkStoringenBij([], [melding('a')], new Set(['a']), altijd, nu)
-    expect(r.actief).toEqual([{ sleutel: 'a', sinds: nu.toISOString(), gemeld: true, schoneRuns: 0 }])
+    expect(r.actief).toEqual([{ sleutel: 'a', sinds: nu.toISOString(), laatstGezien: nu.toISOString(), tekst: 'x', gemeld: true, schoneRuns: 0 }])
     expect(r.hersteld).toEqual([])
   })
   it('houdt het oorspronkelijke begin en onthoudt dat er eerder gemeld is', () => {
@@ -120,10 +120,17 @@ describe('herstelbericht', () => {
     expect(duurTekst(60 * 60_000)).toBe('1 uur')
     expect(duurTekst(135 * 60_000)).toBe('2 uur 15 min')
   })
-  it('bouwt een bericht met de duur sinds het begin', () => {
-    const t = bouwHerstelBericht([actief('storing:arnobot:down', { sinds: new Date(nu.getTime() - 135 * 60_000).toISOString() })], nu)
+  it('rekent de duur tot de laatste run met storing, niet tot het herstelbericht', () => {
+    const sinds = new Date(nu.getTime() - 75 * 60_000).toISOString()
+    const laatst = new Date(nu.getTime() - 30 * 60_000).toISOString()
+    const t = bouwHerstelBericht([actief('storing:snelheid:onder_druk', { sinds, laatstGezien: laatst, tekst: 'arno.bot staat onder druk: gemiddeld 1340 ms' })])
     expect(t).toContain('Storing voorbij')
-    expect(t).toContain('arno.bot is weer bereikbaar.')
-    expect(t).toContain('2 uur 15 min')
+    expect(t).toContain('arno.bot staat niet meer onder druk.')
+    expect(t).toContain('Storing duurde 45 min.')
+    expect(t).toContain('Was: arno.bot staat onder druk: gemiddeld 1340 ms')
+  })
+  it('zegt "korter dan 15 min" bij een storing van één run en werkt zonder de nieuwe velden', () => {
+    expect(bouwHerstelBericht([actief('storing:arnobot:down', { laatstGezien: '2026-11-14T10:00:00.000Z' })])).toContain('korter dan 15 min')
+    expect(bouwHerstelBericht([actief('storing:arnobot:down')])).not.toContain('Was:')
   })
 })

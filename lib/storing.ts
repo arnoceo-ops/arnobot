@@ -73,6 +73,10 @@ export type ActieveStoring = {
   sleutel: string
   /** Moment waarop de storing voor het eerst werd gezien (ISO). */
   sinds: string
+  /** Laatste run waarin de storing nog speelde (ISO). Het einde van de storing, niet het moment van het herstelbericht (dat komt een half uur later). */
+  laatstGezien?: string
+  /** De oorspronkelijke melding, zodat het herstelbericht kan zeggen wat er speelde. */
+  tekst?: string
   /** Is er voor deze storing een melding verstuurd? Alleen dan volgt een herstelbericht. */
   gemeld: boolean
   /** Aantal runs achter elkaar dat de storing niet meer voorkwam. */
@@ -106,6 +110,8 @@ export function werkStoringenBij(
     actief.push({
       sleutel: m.sleutel,
       sinds: eerder?.sinds ?? nu.toISOString(),
+      laatstGezien: nu.toISOString(),
+      tekst: m.tekst,
       gemeld: (eerder?.gemeld ?? false) || gemeldeSleutels.has(m.sleutel),
       schoneRuns: 0,
     })
@@ -129,6 +135,7 @@ export function werkStoringenBij(
 export function herstelTekst(sleutel: string): string {
   if (sleutel === 'storing:arnobot:down') return 'arno.bot is weer bereikbaar.'
   if (sleutel === 'storing:arnobot:degraded') return 'arno.bot is weer volledig bereikbaar.'
+  if (sleutel === 'storing:snelheid:onder_druk') return 'arno.bot staat niet meer onder druk.'
   if (sleutel.startsWith('storing:snelheid:')) return 'arno.bot is weer snel genoeg.'
   if (sleutel.startsWith('storing:extern:')) return `${sleutel.slice('storing:extern:'.length)} meldt geen grote storing meer.`
   return `${sleutel} is hersteld.`
@@ -142,7 +149,13 @@ export function duurTekst(ms: number): string {
   return rest === 0 ? `${uren} uur` : `${uren} uur ${rest} min`
 }
 
-export function bouwHerstelBericht(hersteld: ActieveStoring[], nu: Date = new Date()): string {
-  const regels = hersteld.map(h => `${herstelTekst(h.sleutel)} Storing duurde ${duurTekst(nu.getTime() - Date.parse(h.sinds))}.`)
+/** Duur van een storing: van het eerste zien tot de laatste run waarin hij nog speelde. */
+export function storingDuur(h: ActieveStoring): string {
+  const ms = Date.parse(h.laatstGezien ?? h.sinds) - Date.parse(h.sinds)
+  return ms < 15 * 60_000 ? 'korter dan 15 min' : duurTekst(ms)
+}
+
+export function bouwHerstelBericht(hersteld: ActieveStoring[]): string {
+  const regels = hersteld.map(h => `${herstelTekst(h.sleutel)} Storing duurde ${storingDuur(h)}.${h.tekst ? `\nWas: ${h.tekst}` : ''}`)
   return `Storing voorbij op arno.bot\n\n${regels.join('\n\n')}`
 }

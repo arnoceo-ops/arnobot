@@ -54,7 +54,7 @@ async function cronHandler(req: NextRequest) {
     const vorige = await leesActieveStoringen()
     const { actief, hersteld } = werkStoringenBij(vorige, meldingen, new Set(nieuw.map(m => m.sleutel)), bronBeschikbaar, nu)
     await schrijfActieveStoringen(actief)
-    if (hersteld.length > 0) await notifyTelegram(bouwHerstelBericht(hersteld, nu))
+    if (hersteld.length > 0) await notifyTelegram(bouwHerstelBericht(hersteld))
 
     return NextResponse.json({ ok: true, instatus: instatus !== null, storingen: meldingen.length, gemeld: nieuw.map(m => m.sleutel), hersteld: hersteld.map(h => h.sleutel) })
   } catch (err) {
