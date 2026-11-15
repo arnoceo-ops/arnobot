@@ -13,6 +13,7 @@ import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import TeamActiverenSectie, { useActivatieStand } from './TeamActiverenSectie'
 import TeamLidKader from './TeamLidKader'
 import TeamOpzeggingIntrekken from './TeamOpzeggingIntrekken'
+import KlanttypeCorrectieLink from './KlanttypeCorrectieLink'
 import { track } from '@/lib/posthog'
 
 export default function AccountPage() {
@@ -492,13 +493,8 @@ export default function AccountPage() {
               </div>
             </div>
           )}
-          {!isNativeApp && !isManager && (
-            <p style={{ marginTop: 24 }}>
-              <Link href="/bot/account/zakelijk-corrigeren" style={{ color: '#6b7280', fontSize: 13, letterSpacing: 1, textDecoration: 'underline' }}>
-                Per ongeluk particulier besteld in plaats van zakelijk?
-              </Link>
-            </p>
-          )}
+          {/* Alleen voor wie een particulier abonnement heeft dat te corrigeren valt; voor een manager nooit. */}
+          {!isNativeApp && !isManager && <KlanttypeCorrectieLink />}
         </div>
         </>
         )}
