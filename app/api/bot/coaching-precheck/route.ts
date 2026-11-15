@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,6 +25,10 @@ async function checkPremiumAccess(userId: string): Promise<boolean> {
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
   if (!await checkPremiumAccess(userId)) return NextResponse.json({ hasProgress: false })
 
   const [sessionsRes, analysesRes, prevCoachingRes] = await Promise.all([

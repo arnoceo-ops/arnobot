@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { buildEenOpEenSystemPrompt, agendaVerwijstGoed } from '@/lib/teamEenOpEenPrompt'
 import { stripEmphasisAccents } from '@/lib/accenten'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,6 +33,10 @@ function extractAandachtspunt(agenda: string): string {
 export async function POST(req: NextRequest) {
   const { userId: managerId } = await auth()
   if (!managerId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(managerId)
+  if (geenToegang) return geenToegang
 
   const { targetUserId, name: rawName } = await req.json()
   if (!targetUserId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })

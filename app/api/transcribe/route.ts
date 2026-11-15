@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 // gpt-transcribe (2026-11-01 gewisseld van gpt-4o-transcribe, dat net als whisper-1 per 26-2-2027 uit
 // de API gaat, zie CLAUDE.md-modelinventaris). Dit is de gewone transcriptie na het stoppen en de
@@ -11,6 +12,10 @@ import { auth } from '@clerk/nextjs/server'
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return new NextResponse(null, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const formData = await req.formData()
   const audio = formData.get('audio') as File | null

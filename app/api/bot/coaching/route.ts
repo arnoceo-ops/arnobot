@@ -15,6 +15,7 @@ import { berekenActiePatroon } from '@/lib/actiePatroon'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 import { mailCoachingBlok } from '@/lib/mailPatroon'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +35,10 @@ async function checkPremiumAccess(userId: string): Promise<boolean> {
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
   if (!await checkPremiumAccess(userId)) return NextResponse.json({ error: 'Premium vereist' }, { status: 403 })
 
   const { data, error } = await supabase
@@ -57,6 +62,10 @@ export async function POST() {
   const meet = (naam: string) => { const nu = Date.now(); stappen[naam] = (stappen[naam] ?? 0) + (nu - tLaatste); tLaatste = nu }
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
   if (!await checkPremiumAccess(userId)) return NextResponse.json({ error: 'Premium vereist' }, { status: 403 })
 
   const [sessionsRes, sessionCountRes, analysesRes, profielRes, prevScoreRes, prevCoachingRes, actieStatRes, sparringRes, scoreHistoryRes] = await Promise.all([

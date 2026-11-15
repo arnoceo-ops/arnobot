@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
 import { mailAnalyseBlok } from '@/lib/mailPatroon'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +18,10 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const body = await req.json().catch(() => ({}))
   const sessionIds: string[] | undefined = body.sessionIds

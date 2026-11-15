@@ -159,7 +159,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 ## Bekende gaten
 
-- `/api/chat`, `/api/chat-voice` en de drie sparroutes (`/api/sparring/open`, `chat` en `debrief`) controleren sinds 2026-11-15 zelf de toegang (`lib/toegangsPoort.ts` met de regels uit `lib/toegangNu.ts`, gelijk aan de toegangspoort; 403 `geen_toegang`). De chatpagina stuurt dan naar `/bot/doorgaan`; bij stem-chat en sparren toont de pagina een gewone foutmelding. Andere AI-routes zijn niet nagelopen: wie een nieuwe route maakt die geld kost, zet de poort er direct na de controle op inloggen.
+- Alle routes die een AI- of spraakdienst aanroepen controleren sinds 2026-11-15 zelf de toegang (`lib/toegangsPoort.ts` met de regels uit `lib/toegangNu.ts`, gelijk aan de toegangspoort; 403 `geen_toegang`): chat, stem-chat, sparren (open, chat, debrief), coaching (analyse, precheck, hoofdroute), team 1:1, spotlight en zelfcoaching, dagelijkse gedachte, verfijn, spraak naar tekst (gewoon en live), voorlezen, en zoeken in eigen gesprekken (lege lijst). De chatpagina stuurt dan naar `/bot/doorgaan`, de rest toont een gewone foutmelding. Bewust zonder poort: `session-end` en `sessions` (slaan gespreksgeheugen op, een afwijzing zou data kwijtmaken, de kosten zijn klein), `sparring-history`, `chat-upload-url`, `kosten-tracking` en `search-linkedin-profile` (alleen voor de beheerder). Wie een nieuwe route maakt die geld kost, zet de poort er direct na de controle op inloggen en voegt hem toe aan `app/api/toegang-ai-routes.test.ts`.
 - Of een verlenging van een eigen abonnement het plan van een verwijderd lid later opnieuw zet, is niet nagelopen.
 - Een lid wordt niet op de hoogte gebracht van een blokkade of verwijdering, behalve door het scherm bij zijn volgende klik.
 - Het stoppen van een opgezegd team hangt aan de cron `team-facturatie`: draait die niet (bijvoorbeeld als Mollie is uitgeschakeld), dan blijft het team een dag langer open. De stap is idempotent en haalt dat de volgende run in. Een nog open factuur van een gestopt team blijft staan zonder gevolg: er komt geen nieuwe bij en een late betaling zet het team niet weer open.
@@ -185,4 +185,4 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Opzegregel Team doorlopen op prod met het testaccount (op tijd en te laat, intrekken, beide mails)
 - [x] Restitutie solo-lid met jaarabonnement: handmatig uit coulance, de Telegram toont de looptijd en het bedrag naar rato
 - [x] Melding aan de manager buiten de accountpagina: balk onderin de app in de laatste 5 dagen en in de coulance
-- [x] `/api/chat`, `/api/chat-voice` en de sparroutes controleren zelf de toegang
+- [x] Alle AI-routes (chat, stem-chat, sparren, coaching, teamfuncties, spraak, verfijn, gedachte) controleren zelf de toegang

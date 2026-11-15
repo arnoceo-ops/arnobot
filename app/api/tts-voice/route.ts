@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { fetchElevenLabsSpeechWithAlignment, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,6 +31,10 @@ const voiceTtsRateLimit = new Ratelimit({
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return new NextResponse(null, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const { success } = await voiceTtsRateLimit.limit(userId)
   if (!success) return new NextResponse(null, { status: 429 })

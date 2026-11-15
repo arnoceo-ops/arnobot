@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+    const geenToegang = await toegangsWeigering(userId)
+    if (geenToegang) return geenToegang
 
     // Het profiel van de gebruiker wordt bewust NIET meer meegegeven (besluit Arno 2026-11-13): het
     // model maakte er aannames van ("CFO van een ziekenhuis") die de gebruiker niet bedoelde.

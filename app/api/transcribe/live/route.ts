@@ -4,6 +4,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import * as Sentry from '@sentry/nextjs'
 import { liveTranscribeBeschikbaarVoor } from '@/lib/liveTranscribeToegang'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 // Geeft de browser een kortlevende sessiecode (ek_...) voor live transcriptie met
 // gpt-live-transcribe over WebRTC: de browser stuurt de microfoon rechtstreeks naar OpenAI en
@@ -26,6 +27,10 @@ const liveRateLimit = new Ratelimit({
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return new NextResponse(null, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
   if (!liveTranscribeBeschikbaarVoor(userId)) return NextResponse.json({ error: 'not_available' }, { status: 404 })
 
   const { success } = await liveRateLimit.limit(userId)

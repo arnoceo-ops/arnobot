@@ -11,6 +11,7 @@ import { computeSpeScore } from '@/lib/msa'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { computeSpiegelSignaal, formatSystemischSignaal, formatVroegSignaal } from '@/lib/spiegel'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,6 +25,10 @@ const MIN_NIEUWE_1ON1S = 3
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
 
   const [{ data, error }, { data: history, error: historyError }, { data: acties, error: actiesError }] = await Promise.all([
     supabase
@@ -61,6 +66,10 @@ export async function GET() {
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  // Geen toegang meer (verlopen proef, geblokkeerd team): geen AI-aanroep. Zie lib/toegangsPoort.ts.
+  const geenToegang = await toegangsWeigering(userId)
+  if (geenToegang) return geenToegang
   if (!await isConfirmedTeambaas(userId)) return NextResponse.json({ error: 'geen_teambaas_toegang' }, { status: 403 })
 
   const { data: managerMember } = await supabase

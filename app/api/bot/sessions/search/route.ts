@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,8 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ sessions: [] })
+  // Geen toegang meer: geen AI-aanroep, een lege lijst. Zie lib/toegangsPoort.ts.
+  if (await toegangsWeigering(userId)) return NextResponse.json({ sessions: [] })
 
   const q = req.nextUrl.searchParams.get('q') ?? ''
   if (q.length < 2) return NextResponse.json({ sessions: [] })
