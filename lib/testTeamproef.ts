@@ -7,14 +7,17 @@ import { proefEinde, proefStand } from '@/lib/teamProef'
 // de persona-knoppen verandert dit de ECHTE data, zodat elke pagina zich gedraagt als bij een echte manager.
 // De oorspronkelijke waarden van het account worden bewaard en komen terug met UIT of een persona-knop.
 
-export type TeamproefStand = 'lopend' | 'bijna' | 'coulance' | 'voorbij'
+// betaald40 en betaald10: een betaald team met facturatie, waarvan de lopende periode over 40 of over 10 dagen eindigt. Om de
+// opzegregel te zien (docs/TEAM_PROCES.md, fase 6): bij 40 dagen is opzeggen op tijd (einde van de periode), bij 10 dagen te laat
+// (een periode later). De cron stopt een testteam nooit, dus het echte stoppen op de einddatum is alleen met tests gedekt.
+export type TeamproefStand = 'lopend' | 'bijna' | 'coulance' | 'voorbij' | 'betaald40' | 'betaald10'
 export type TeamproefHuidig = TeamproefStand | 'geactiveerd' | 'uit'
 
 const SLEUTEL = 'test_teamproef_backup'
 const DAG = 86_400_000
 // Dagen geleden dat de proef begon, bij een proef van 30 dagen.
 // coulance: de 30 dagen waren 3 dagen geleden om, nog 7 dagen toegang. voorbij: ook de coulance van 10 dagen is op.
-const START_DAGEN_GELEDEN: Record<TeamproefStand, number> = { lopend: 10, bijna: 27, coulance: 33, voorbij: 41 }
+const START_DAGEN_GELEDEN: Record<TeamproefStand, number> = { lopend: 10, bijna: 27, coulance: 33, voorbij: 41, betaald40: 60, betaald10: 60 }
 
 type Backup = { expires_at: string | null; paid_at: string | null; trial_start: string | null; sd_attribution_method: string | null; command_manager: boolean | null; plan?: string | null }
 
@@ -30,9 +33,14 @@ async function leesBackup(): Promise<Backup | null> {
 export async function huidigeTeamproef(): Promise<TeamproefHuidig> {
   if (!(await leesBackup())) return 'uit'
   const supabase = db()
-  const { data: team } = await supabase.from('arnobot_teams').select('min_seats, geblokkeerd_at').eq('id', TEST_PROEF_TEAM_ID).maybeSingle<{ min_seats: number | null; geblokkeerd_at: string | null }>()
+  const { data: team } = await supabase.from('arnobot_teams').select('min_seats, geblokkeerd_at, volgende_factuurdatum').eq('id', TEST_PROEF_TEAM_ID).maybeSingle<{ min_seats: number | null; geblokkeerd_at: string | null; volgende_factuurdatum: string | null }>()
   if (!team) return 'uit'
-  if (team.min_seats !== null) return 'geactiveerd'
+  if (team.min_seats !== null) {
+    const dagenTotEinde = team.volgende_factuurdatum ? Math.round((new Date(`${team.volgende_factuurdatum}T12:00:00Z`).getTime() - Date.now()) / DAG) : null
+    if (dagenTotEinde !== null && dagenTotEinde >= 35) return 'betaald40'
+    if (dagenTotEinde !== null && dagenTotEinde >= 5 && dagenTotEinde <= 15) return 'betaald10'
+    return 'geactiveerd'
+  }
   if (team.geblokkeerd_at) return 'voorbij'
   const { data: u } = await supabase.from('approved_users').select('trial_start').eq('user_id', MANUAL_TEST_USER_ID).maybeSingle<{ trial_start: string | null }>()
   const einde = proefEinde({ trial_start: u?.trial_start ?? null, expires_at: null, paid_at: null, sd_attribution_method: 'link' })
@@ -55,8 +63,10 @@ export async function zetTeamproef(stand: TeamproefStand): Promise<void> {
   await supabase.from('arnobot_team_members').delete().eq('user_id', userId)
   await supabase.from('arnobot_team_facturen').delete().eq('team_id', TEST_PROEF_TEAM_ID)
   const voorbij = stand === 'voorbij' // pas na de coulance is het team geblokkeerd
+  const betaald = stand === 'betaald40' || stand === 'betaald10'
+  const eindeperiode = betaald ? new Date(Date.now() + (stand === 'betaald40' ? 40 : 10) * DAG).toISOString().slice(0, 10) : null
   const { error: teamFout } = await supabase.from('arnobot_teams').upsert(
-    { id: TEST_PROEF_TEAM_ID, name: 'Proefteam (test)', manager_id: userId, niveau: 'premium', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: voorbij ? new Date().toISOString() : null },
+    { id: TEST_PROEF_TEAM_ID, name: 'Proefteam (test)', manager_id: userId, niveau: 'premium', min_seats: betaald ? 3 : null, cyclus: betaald ? 'maandelijks' : null, volgende_factuurdatum: eindeperiode, geblokkeerd_at: voorbij ? new Date().toISOString() : null, stopt_op: null },
     { onConflict: 'id' },
   )
   if (teamFout) throw new Error(`testteam aanmaken mislukt: ${teamFout.message}`)
