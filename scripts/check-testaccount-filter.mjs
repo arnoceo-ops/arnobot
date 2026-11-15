@@ -81,9 +81,6 @@ const KNOWN_SAFE = new Set([
   // testaccounts zijn actief en verschijnen nooit; als er ooit toch een tussen staat
   // hoort die juist zichtbaar te zijn.
   'app/api/cron/data-cleanup/route.ts:approved_users',
-  // Wegwerpcron, verwijderd na 2026-10-17. Query is .in('email', [4 vaste adressen]):
-  // kan per definitie alleen die vier bekende testers raken, geen testaccountpollutie.
-  'app/api/cron/comp-heads-up-okt/route.ts:approved_users',
   // Wegwerpcron, verwijderd na 2026-12-01. Query is .eq('email', 1 vast adres): raakt alleen
   // die ene bekende testgebruiker, geen testaccountpollutie.
   'app/api/cron/comp-reminder-nov/route.ts:approved_users',

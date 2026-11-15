@@ -370,7 +370,6 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
 | `/api/cron/kennisbank-controle` | Dagelijks 06:55 | Controle van de kennisbank: drie vaste kernvragen moeten elk minimaal 60 kandidaten opleveren, geen fragment zonder embedding, minimaal 1400 fragmenten. Telegram alleen bij een probleem (`lib/kennisbankControle.ts`) |
 | `/api/cron/leveranciers-wijzigingen` | Maandag 06:50 | Wekelijkse controle op wijzigingen in DPA's en deprecations-pagina's van leveranciers |
-| `/api/cron/comp-heads-up-okt` | 16 oktober 08:00 (eenmalig) | Eenmalige mail aan de vier vroege testgebruikers dat hun gratis periode afloopt. Wegwerpcode, mag weg |
 | `/api/cron/comp-reminder-nov` | 25 t/m 29 november 08:00 (eenmalig) | Eenmalige mail aan één gebruiker met gratis toegang tot 1 december, alleen als Mollie live staat. Wegwerpcode na verzending |
 | `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
 | `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |

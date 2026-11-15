@@ -44,7 +44,6 @@ export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/patroon-samenvatting': { naam: 'Patroonmail', wat: 'Een thema dat in 8 weken in minstens 3 gesprekken terugkwam, met een knop naar Sparren, geen patroon geen mail', ontvanger: 'Gebruiker', soort: 'gebruikers' },
   '/api/cron/rss-ingest': { naam: 'RSS-inname', wat: 'Leest de RSS-bronnen in de kennisbank in', ontvanger: 'Geen (systeem)', soort: 'systeem' },
   '/api/cron/team-1on1-ritme': { naam: 'Team 1:1-ritme', wat: 'Belletje en daarna twee mails als een teamlid langer dan 2 weken geen 1:1 heeft gehad', ontvanger: 'Teammanager', soort: 'gebruikers' },
-  '/api/cron/comp-heads-up-okt': { naam: 'Comp heads-up oktober', wat: 'Eenmalig: de gratis toegang van de vroege testgebruikers loopt op 1 november af', ontvanger: 'Vroege testgebruikers', soort: 'gebruikers' },
   '/api/cron/comp-reminder-nov': { naam: 'Comp reminder november', wat: 'Eenmalig: reminder om een abonnement te kiezen, alleen als Mollie live staat', ontvanger: 'Gebruiker met comp-toegang', soort: 'gebruikers' },
   '/api/cron/sessies-afsluiten': { naam: 'Sessies afsluiten', wat: 'Rondt gesprekken af die de gebruiker nooit heeft gesloten, zodat ze een samenvatting krijgen', ontvanger: 'Geen (systeem)', soort: 'systeem' },
   '/api/cron/kennisbank-controle': { naam: 'Kennisbank-controle', wat: 'Kernvragen leveren genoeg kandidaten, geen fragmenten zonder vector, niets gewist, meldt alleen bij een probleem', ontvanger: 'Telegram', soort: 'mij' },
