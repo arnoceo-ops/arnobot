@@ -6,7 +6,7 @@ import { Browser } from '@capacitor/browser'
 
 // Losse, simpele inlogflow voor binnen de Capacitor-app: e-mail/wachtwoord in plaats van
 // LinkedIn-OAuth, want OAuth-via-systeembrowser-met-terugkeer-naar-de-app is (nog) niet
-// betrouwbaar gebleken (zie docs/MOBILE_PLAN.md). Aanmelden blijft alleen via LinkedIn op
+// betrouwbaar gebleken (zie docs/TECHNICAL_HANDOVER.md (sectie Mobiele app)). Aanmelden blijft alleen via LinkedIn op
 // de webapp; hier alleen inloggen met een account dat daar al een wachtwoord heeft ingesteld
 // (app/bot/account/page.tsx).
 export default function AppSignIn() {

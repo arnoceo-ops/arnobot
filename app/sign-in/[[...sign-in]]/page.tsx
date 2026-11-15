@@ -88,7 +88,7 @@ export default function SignInPage() {
 
   // Binnen de Capacitor-app tonen we een apart wachtwoord-inlogscherm i.p.v. de LinkedIn-flow
   // hieronder (die springt naar de systeembrowser en keert niet terug naar de app, zie
-  // docs/MOBILE_PLAN.md). Start op false (zelfde als een gewone webbezoeker) om een
+  // docs/TECHNICAL_HANDOVER.md (sectie Mobiele app)). Start op false (zelfde als een gewone webbezoeker) om een
   // hydration-mismatch te voorkomen, en wordt pas na de eerste client-render gezet.
   const [isNativeApp, setIsNativeApp] = useState(false)
   const [nativeChecked, setNativeChecked] = useState(false)

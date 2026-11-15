@@ -37,7 +37,7 @@ export const MANUAL_TEST_USER_EMAIL = 'test@arno.bot'
 export const MANUAL_TEST_USER_ID = 'user_3HFvMfJ8ztQxatkJg3SWdSJPz4D'
 
 // Google Play-reviewer-account, aangemaakt 2026-07-26 rechtstreeks in Clerk Dashboard voor
-// app-store-toegang (geen echte gebruiker). Zie docs/MOBILE_PLAN.md voor de volledige
+// app-store-toegang (geen echte gebruiker). Zie docs/TECHNICAL_HANDOVER.md (sectie Mobiele app) voor de volledige
 // toedracht.
 export const APP_REVIEWER_EMAIL = 'reviewer@arno.bot'
 export const APP_REVIEWER_ID = 'user_3H5QqLMsGDjwk1mFQYRCLuJbdBk'

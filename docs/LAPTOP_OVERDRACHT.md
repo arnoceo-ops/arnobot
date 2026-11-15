@@ -91,7 +91,7 @@ Zonder deze stap start Claude Code op de laptop met een lege lei en zonder de ge
 
 De app laadt `arno.bot` van afstand. Bijna elke wijziging gaat dus live via een gewone push naar Vercel, zonder nieuwe app-release. Alleen voor een wijziging in `android/` (versiecode, manifest, iconen) of een Capacitor-update is een nieuwe build nodig.
 
-- **De keystore `arnobot-release.jks`** staat buiten de repo en is nodig om een release te ondertekenen (alias `arnobot`, 25 jaar geldig, zie `docs/MOBILE_PLAN.md`). Zonder dit bestand kun je geen update van de bestaande app in de Play Store uitbrengen. Maak vóór vertrek een kopie op een tweede, versleutelde plek (wachtwoordmanager of versleutelde schijf), samen met het keystore-wachtwoord. Zet het bestand niet in git.
+- **De keystore `arnobot-release.jks`** staat buiten de repo en is nodig om een release te ondertekenen (alias `arnobot`, 25 jaar geldig, zie `docs/TECHNICAL_HANDOVER.md (sectie Mobiele app)`). Zonder dit bestand kun je geen update van de bestaande app in de Play Store uitbrengen. Maak vóór vertrek een kopie op een tweede, versleutelde plek (wachtwoordmanager of versleutelde schijf), samen met het keystore-wachtwoord. Zet het bestand niet in git.
 - Bouwen: `npm run cap:sync`, dan in Android Studio via Build, Generate Signed App Bundle. Android-wijzigingen worden dezelfde dag op master gecommit.
 - Beslis vóór vertrek of je dit onderweg wilt kunnen. Zo niet, dan is de keystore-kopie nog steeds de verzekering.
 

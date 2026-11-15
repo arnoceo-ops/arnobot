@@ -6,7 +6,7 @@
 
 Voortgang op meerdaagse trajecten leeft niet in het gesprek, maar in bestanden en git. Een sessie houdt geen geheugen over de vorige; alleen wat in bestanden en git staat, bestaat nog bij de volgende sessie.
 
-Meerdaagse plandocumenten (bv. `docs/OVERSTAP_PLAN.md`, `docs/MOBILE_PLAN.md`) hebben bovenaan een statusblok: **Laatst bijgewerkt**, **Waar we staan**, **Eerstvolgende stap**, plus een afvinklijst per fase.
+Meerdaagse plandocumenten (bv. `docs/OVERSTAP_PLAN.md`, `docs/IOS_INDIENEN.md`) hebben bovenaan een statusblok: **Laatst bijgewerkt**, **Waar we staan**, **Eerstvolgende stap**, plus een afvinklijst per fase.
 
 **Bij de start van elke sessie waarin aan zo'n traject wordt gewerkt:** lees de statusblokken van de relevante documenten, vat in twee zinnen samen waar het traject staat en wat de eerstvolgende stap is, en wacht op akkoord voordat je verdergaat.
 

@@ -40,7 +40,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Admin/ops-notificaties | Telegram Bot API | directe fetch |
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
-| Mobiele wrapper (in ontwikkeling) | Capacitor (Android) | ^8 |
+| Mobiele wrapper (Android live, iOS gepland) | Capacitor | ^8 |
 
 **Verwijderd (2026-08-01):** Sanity, next-sanity en @portabletext/react zijn volledig verwijderd. De kennisbank draait sindsdien uitsluitend op de eigen `blog_chunks`-tabel (RAG via VoyageAI), niet meer op een CMS.
 
@@ -861,6 +861,35 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Geen payment-provider geïntegreerd:** bewust pending, zie "Bekende beperkingen" punt 11 voor het triggercriterium.
 
 ---
+
+## Mobiele app (Capacitor: Android live, iOS gepland)
+
+De app is een Capacitor-schil die de live website laadt (`capacitor.config.ts`: appId `arno.bot`, appName ArnoBot, `server.url` is `https://www.arno.bot/bot`, `server.allowNavigation`). Er is geen aparte mobiele codebase. De iOS-app (`docs/IOS_INDIENEN.md`) en pushmeldingen (`docs/PUSH_PLAN.md`) bouwen hierop voort. De volledige bouwgeschiedenis staat in git: `git log --follow -- docs/MOBILE_PLAN.md` (verwijderd 2026-11-15).
+
+**Stand (2026-11-15):** Android 1.0.4, `versionCode 5` (`android/app/build.gradle`), ingediend 2026-11-07; controleer de actuele Store-versie in Play Console. Het Google Play-account is een Organisatie-account (eenmanszaak ArnoBot) met handelaarsstatus afgerond. Open: controleren of de splash en de brede verspringing in 1.0.4 goed zijn (zo niet, de telefoonindeling server-side bepalen, `useIsTouch` in `SparClient.tsx` start op desktop); `app/testlogin/page.tsx` gebruikt nog `signIn.create()`; of accountverwijdering aan Google's eis voldoet (route `/api/bot/delete-account`) is niet geverifieerd.
+
+### Besluiten die voor Android én iOS gelden
+
+- **Remote laden, niet statisch bundelen.** Gekozen omdat `proxy.ts` op elke `/bot/*`-aanvraag een live Clerk-sessiecheck en een Supabase-lookup doet (inclusief auto-trial en redirects), meerdere route-entrypoints async server components zijn die vóór het renderen auth en data ophalen, en `next.config.ts` `async redirects()` gebruikt (niet te combineren met `output: 'export'`). **Verworpen:** statisch bundelen (herbouw van de hele auth-, trial- en onboardingpoort). Gevolg: elke webwijziging is direct live in de app, en de CORS-lijst hoefde niet uitgebreid.
+- **Inloggen met e-mail en wachtwoord, niet met LinkedIn.** LinkedIn-OAuth gaat via de systeembrowser en keert niet terug naar de app-sessie; de deep-link-terugkoppeling is bewust niet gebouwd. `app/sign-in/AppSignIn.tsx` gebruikt `signIn.password()` (met `signIn.create()` werd het wachtwoord genegeerd). De gebruiker stelt het wachtwoord in op `arno.bot/bot/account` (via Clerk's backend, `updateUser`). Clerk-instellingen: minimaal 8 tekens, "Reject compromised passwords" aan, geen sterkteregels. Een ingesteld wachtwoord kan nooit worden teruggezien. Aanmelden in de app bestaat niet. De app opent direct op het inlogscherm (`NativeAppRedirect` slaat de homepage over).
+- **Geen koop-, upgrade- of prijsverwijzingen in de app** (Google Play-betalingsbeleid, bij Apple vergelijkbaar): `hooks/useIsNativeApp.ts` en `app/components/HideInNativeApp.tsx` verbergen Analyses, Coaching, de proefperiodebalk, referral, de upgrade- en doorgaanpagina en de Q&A-groepen ABONNEMENT en REFERRAL. Bewust niet verborgen: ABONNEMENT OPZEGGEN op de accountpagina. De app is inloggen en gebruiken; alles rond betalen leeft op de website.
+- **De app is er voor Basic, Pro en Team.** Basic alleen met spraakinvoer, Pro en Team ook spraakuitvoer (zie `docs/ABONNEMENTEN.md`). **Verworpen:** alleen Pro en Team.
+- **Geen uitlogknop** (bewust). De versiebalk "Er is een nieuwe versie" is verborgen (`VersionBanner.tsx`): de app laadt altijd live.
+- **Twee kopimplementaties:** `BotNav.tsx` en de kop in `SparClient.tsx`. Wijzig altijd beide (statusbalk, safe-area).
+
+### Geleerd tijdens de Android-bouw (let op bij iOS)
+
+- **Microfoon:** Capacitor's `BridgeWebChromeClient` vraagt voor `getUserMedia({audio})` zowel `RECORD_AUDIO` als `MODIFY_AUDIO_SETTINGS`; ontbrak de tweede, dan hing de opname stil zonder permissievraag. Beide staan nu in `AndroidManifest.xml`. Op iOS is `NSMicrophoneUsageDescription` verplicht en of `getUserMedia` in een WKWebView werkt is niet geverifieerd (zie `docs/IOS_INDIENEN.md`).
+- **Autoplay:** mobiele webviews blokkeren `audio.play()` zonder directe gebruikersactie. Het afspelen van voice-antwoorden start daarom binnen de tik die het antwoord vraagt, met een afspeelknop als vangnet (`docs/CLAUDE_HISTORY.md`, voice-plan). Mobiele Safari en iOS-webviews zijn hierin strenger.
+- **Statusbalk:** targetSdk 36 is edge-to-edge; `env(safe-area-inset-top)` is in de app 32px. Op iOS geldt een eigen safe-area (notch), controleer beide kopimplementaties.
+- **Splash (alleen Android):** op Android 12 en hoger toont het systeem tijdens het opstarten alleen het icoon op de achtergrondkleur; `splash.png` en de plugin-opties gelden daar niet. Gekozen: `windowSplashScreenAnimatedIcon` is `drawable-xxxhdpi/splash_icon.png` (AB in een lichte cirkel `#1f2937` op `#111827`). **Verworpen:** een eigen native overlay met woordmerk (meer code, nog een build). App-icoon: een zwaar, breed AB (Arial Black), A wit en B amber. **Verworpen:** Bebas Neue, witte cirkel, amber rand. Het Store-icoon (`public/arnobot-app-icon-512.png`) moet apart in Play Console worden geüpload.
+- **Google Play-account:** omgezet van Privé naar Organisatie (2026-11-05), zodat het publieke adres het zakelijke adres is en de testersvoorwaarde voor productie vervalt. **Verworpen:** privéaccount houden. Het 12-testers-traject is vervallen. Beheerd publiceren staat uit: na goedkeuring staat de app meteen in de Store.
+
+### Release en werkwijze (Android)
+
+- **Webcode** (menu, layout, teksten, chat): push naar master, direct live in de app, geen Play-update.
+- **Native schil** (permissies, icoon, plugins, `versionCode`, `capacitor.config.ts`): `npm run cap:sync`, in Android Studio Build, Generate Signed App Bundle, uploaden in Play Console, wachten op de beoordeling. Ondertekenen vraagt de keystore `arnobot-release.jks` (buiten de repo, zie `docs/LAPTOP_OVERDRACHT.md`). Android-wijzigingen worden dezelfde dag op master gecommit.
+- Wisselen van account in de app: Android Instellingen, Apps, ArnoBot, Opslag, Gegevens wissen.
 
 ## Veelvoorkomende operaties
 
