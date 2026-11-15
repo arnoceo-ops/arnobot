@@ -45,6 +45,7 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>ArnoBot:</strong> de eenmanszaak ArnoBot (KvK-nummer 42184446, bezoekadres Verdunplein 17, 5627 SZ Eindhoven, Nederland, bereikbaar via <a href="mailto:hq@arno.bot">hq@arno.bot</a>), en het digitale AI-coachingsplatform dat via arno.bot wordt aangeboden.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Gebruiker:</strong> de natuurlijke of rechtspersoon die zich aanmeldt voor en gebruik maakt van ArnoBot.</p>,
+                <p key="c2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}><strong style={{ color: '#f1f5f9' }}>Consument:</strong> een particulier die niet handelt voor beroep of bedrijf. <strong style={{ color: '#f1f5f9' }}>Zakelijke klant:</strong> ieder ander.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}><strong style={{ color: '#f1f5f9' }}>Abonnement:</strong> de overeenkomst tussen ArnoBot en de Gebruiker voor toegang tot ArnoBot tegen de overeengekomen vergoeding.</p>,
               ],
             },

@@ -314,7 +314,7 @@ export default function AccountPage() {
         <div style={{ background: '#1f2937', borderLeft: '4px solid #f59e0b', padding: '20px 24px', marginBottom: 20 }}>
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }}>JOUW DATA IS VAN JOU</p>
           <p style={{ fontSize: 15, lineHeight: '1.9', color: '#9ca3af' }}>
-            Alles wat je hier invoert en bespreekt met ArnoBot, is 100% veilig opgeslagen en wordt nooit gedeeld met derden, gebruikt voor marketing of ingezet voor andere doeleinden dan jouw persoonlijke coaching. Je kunt je gegevens op elk moment downloaden of je account volledig verwijderen.
+            Wat je hier invoert wordt zorgvuldig beveiligd opgeslagen en nooit verkocht of gebruikt voor marketing. Je kunt je gegevens altijd downloaden of je account verwijderen.
           </p>
         </div>
 

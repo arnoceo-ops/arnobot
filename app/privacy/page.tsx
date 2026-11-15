@@ -39,8 +39,11 @@ export default function PrivacyPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>PRIVACY.</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
             Jouw gegevens zijn van jou. Hier lees je precies wat we opslaan, waarom, hoe lang, en wie er verder bij betrokken is.
+          </p>
+          <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.9, marginBottom: 48 }}>
+            Laatst bijgewerkt: 15 november 2026
           </p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
@@ -73,6 +76,8 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die je deelt via een publieke link. Iedereen met de link kan ze lezen, zoekmachines kunnen ze indexeren.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Geheugen</td><td>Samenvattingen en feiten uit je gesprekken, zodat ArnoBot je beter kan coachen</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Teams</td><td>Bij een teamabonnement ziet je manager je scores en het verloop, nooit de inhoud van je gesprekken met ArnoBot</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade documenten</td><td>PDF, Word-document of afbeelding die je zelf toevoegt aan een gesprek</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Zakelijk ook bedrijfsnaam, KvK, BTW-nummer en adres.</td></tr>
               </tbody>
@@ -104,6 +109,9 @@ export default function PrivacyPage() {
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
               Als je je abonneert op de blogmails, meten we of je een mail opent en registreren we je klikgedrag.
             </p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
+              Grondslagen: overeenkomst, wettelijke plicht, gerechtvaardigd belang en toestemming (blogmails).
+            </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de hieronder genoemde sub-verwerkers.
             </p>
@@ -115,7 +123,7 @@ export default function PrivacyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
                 'Versleutelde verbindingen (HTTPS/TLS) voor al het datatransport',
-                'Row Level Security (RLS) in de database. Jij hebt uitsluitend toegang tot jouw eigen data.',
+                'Row Level Security staat aan. Toegang loopt via onze server, die alleen jouw eigen gegevens teruggeeft.',
                 'Authenticatie via Clerk (SOC 2 Type II gecertificeerd)',
                 'Toegangscontrole via JWT-tokens en server-side API routes',
                 'Geautomatiseerde monitoring voor foutdetectie',
@@ -302,6 +310,14 @@ export default function PrivacyPage() {
             </div>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Grondslag: gerechtvaardigd belang (artikel 6 lid 1 sub f AVG). Gezien de beperkte privacy-impact vragen we hiervoor geen aparte toestemming. Wil je hier bezwaar tegen maken, mail dan <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>.
+            </p>
+          </div>
+
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 10</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Klachten en bezwaar</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+              Je kunt bezwaar maken tegen verwerking op grond van gerechtvaardigd belang, via <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>. Komen we er niet uit, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens.
             </p>
           </div>
 
