@@ -39,7 +39,7 @@ const basis = {
 
 describe('Moneybird contact', () => {
   it('splitst naam in voor- en achternaam en zet de eigen id als customer_id', () => {
-    const { contact } = bouwContactBody({ userId: 'user_1', email: 'a@b.nl', naam: 'Anton Dirk Diepeveen' })
+    const { contact } = bouwContactBody({ userId: 'user_1', email: 'a@b.nl', naam: 'Test Gebruiker' })
     expect(contact.customer_id).toBe('user_1')
     expect(contact.firstname).toBe('Anton')
     expect(contact.lastname).toBe('Dirk Diepeveen')

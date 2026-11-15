@@ -4,7 +4,6 @@
 // /voorwaarden staat bewust los en wordt apart bijgehouden.
 export const BEDRIJF = {
   naam: 'ArnoBot',
-  eigenaar: 'Anton Dirk Diepeveen',
   kvk: '42184446',
   btw: 'NL005565123B13' as string,
   straat: 'Verdunplein 17',
