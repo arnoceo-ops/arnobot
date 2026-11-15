@@ -206,7 +206,7 @@ export default function PrivacyPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Supabase</td>
                   <td>Database en opslag van gesprekken en profiel</td>
-                  <td>EU · SOC 2 Type II</td>
+                  <td><a href="https://supabase.com/legal/dpa" target="_blank" rel="noopener noreferrer">supabase.com/legal/dpa</a></td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Upstash</td>
@@ -220,7 +220,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Voyage AI</td>
-                  <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen</td>
+                  <td>Embeddings en herrangschikking voor kennisbank en sessiegeheugen (geen training op jouw data)</td>
                   <td><a href="https://www.voyageai.com/dpa" target="_blank" rel="noopener noreferrer">voyageai.com/dpa</a></td>
                 </tr>
               </tbody>
@@ -291,6 +291,7 @@ export default function PrivacyPage() {
                 'plaatst geen advertentiecookies, volgt je niet over andere websites en verkoopt niets door',
                 'gebruikt lokale opslag in je browser voor een pseudonieme bezoeker-ID, geen tracking-cookie',
                 'bewaart je IP-adres niet: het wordt alleen kort gebruikt om je land te bepalen en daarna weggegooid',
+                'maakt in de ingelogde omgeving op een beperkt aantal pagina\'s schermopnames van klikgedrag en layout. Alle tekst en invoer is gemaskeerd, dus woorden uit je gesprekken worden nooit opgenomen. Opnames worden maximaal 30 dagen bewaard.',
                 "is op de publieke pagina's anoniem; in de ingelogde omgeving pseudoniem (gekoppeld aan je account-ID), nooit aan de inhoud van je gesprekken, coaching of analyses",
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>

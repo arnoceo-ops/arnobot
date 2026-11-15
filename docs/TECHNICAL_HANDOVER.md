@@ -759,7 +759,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk
 - `ANTHROPIC_API_KEY` — Anthropic API key
-- `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank)
+- `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank). Training-opt-out staat aan sinds 2026-11-15 (dashboard.voyageai.com/organization/tos, Organization, Terms of Service; niet terug te zetten in het dashboard, alleen via legal@voyageai.com). Zonder opt-out heeft Voyage standaard trainingsrechten op API-invoer.
 - `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog

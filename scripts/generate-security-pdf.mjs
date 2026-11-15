@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.6  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 1.7  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -158,7 +158,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('Audiobijlage-transcriptie', 'AssemblyAI: spraaktranscriptie bij een audiobijlage, opname direct verwijderd, geen training op jouw data'),
       TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
       TR('E-mail', 'Resend: transactionele e-mail en blogmails via DKIM-geverifieerde domeinen. Bij blogmails wordt gemeten of een mail wordt geopend en op welke links wordt geklikt'),
-      TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen'),
+      TR('AI-kennisbank', 'Voyage AI: embeddings en herrangschikking voor de kennisbank en sessiegeheugen, geen training op jouw data'),
       TR('Foutmonitoring', 'Sentry: foutmonitoring en performance-tracing'),
       TR('Snelheidslimieten', 'Upstash: rate limiting, verwerkt IP-adressen'),
       TR('Gebruiksanalyse', 'PostHog: bezoekers- en productgebruiksanalyse, pseudoniem voor ingelogde gebruikers, EU-hosting (Frankfurt)'),
@@ -213,7 +213,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       Item('X-Content-Type-Options: nosniff', 'Voorkomt dat de browser bestanden als een ander type interpreteert dan bedoeld.'),
       Item('Strict-Transport-Security', 'Dwingt de browser om altijd HTTPS te gebruiken, ook als je per ongeluk http:// typt.'),
       Item('Content-Security-Policy', 'Beperkt welke externe bronnen de browser mag laden.'),
-      Item('Permissions-Policy', 'Schakelt camera, microfoon en locatietoegang uit. ArnoBot gebruikt deze features niet.'),
+      Item('Permissions-Policy', 'Schakelt camera en locatietoegang uit. De microfoon staat alleen aan voor ArnoBot zelf (voor spraakinvoer) en niet voor andere sites.'),
       Item('X-Powered-By verborgen', 'De technologie achter ArnoBot wordt niet bekendgemaakt aan derden.'),
     ),
     HR(),
