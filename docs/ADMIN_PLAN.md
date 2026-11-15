@@ -72,6 +72,5 @@ Geen. De eerdere vier vragen zijn beslist (zie hierboven).
 
 ## Bekend, niet door deze trajecten opgelost
 
-- `scripts/check-missing-user-filter.mjs` meldt `lib/waarheidsRapport.ts:70`. Het is bedoeld gebruikersoverstijgend (steekproef), dus toevoegen aan `KNOWN_SAFE_QUERIES` of er een filter bij.
-- Niet nagelopen agentbevindingen: STATUS-tegel "PERFORMANCE" toont uptime, BlogStats doet ongeveer 40 telqueries per paginalading, META heeft een eigen "gebruikers"-jurylid op duimpjes dat FEEDBACK overlapt.
+- Niet nagelopen agentbevindingen: BlogStats doet ongeveer 40 telqueries per paginalading, META heeft een eigen "gebruikers"-jurylid op duimpjes dat FEEDBACK overlapt. (Gecontroleerd 2026-11-15: de eerdere bevindingen over `waarheidsRapport.ts` en de STATUS-tegel PERFORMANCE zijn inmiddels opgelost; het filterscript meldt niets meer en de tegel toont responstijden met een kleurniveau.)
 - De PDF van Gesprekken (`ArnoBotPdfDocument`) rendert in de browser en toont dus de tijdzone van de bezoeker, niet vast Amsterdam.
