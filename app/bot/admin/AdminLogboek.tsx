@@ -21,7 +21,7 @@ export default async function AdminLogboek() {
   const naamVoorId = new Map((gebruikers ?? []).map(u => [u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id]))
 
   return (
-    <div style={{ marginTop: 56 }}>
+    <div style={{ marginBottom: 40 }}>
       <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>LAATSTE ADMINACTIES</p>
       {log.length === 0 ? (
         <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen adminacties vastgelegd.</p>

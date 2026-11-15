@@ -476,7 +476,7 @@ Insert-only geschiedenis van eerdere coachingrapporten (naast `arnobot_coaching`
 Historische coachingscores voor trendanalyse.
 
 ### `arnobot_admin_log`
-Insert-only logboek van adminacties die geld of toegang wijzigen (BETAALD, terugbetaling, plan, teamrol, SD-agent, gratis toegang, aan/uit, Teams-instellingen), met `actie`, `doel_user_id` of `doel_team_id` en `details` (oud en nieuw). Geschreven via `lib/adminLog.ts` (een mislukte log blokkeert de actie nooit), zichtbaar onderaan `/bot/admin/status` (component `app/bot/admin/AdminLogboek.tsx`, verplaatst op 2026-11-15 omdat het ook Teams-acties bevat). RLS aan zonder policies. SQL: `docs/sql/2026-11-14-admin-log-en-cron-runs.sql`.
+Insert-only logboek van adminacties die geld of toegang wijzigen (BETAALD, terugbetaling, plan, teamrol, SD-agent, gratis toegang, aan/uit, Teams-instellingen), met `actie`, `doel_user_id` of `doel_team_id` en `details` (oud en nieuw). Geschreven via `lib/adminLog.ts` (een mislukte log blokkeert de actie nooit), zichtbaar op `/bot/admin/status` onder de geplande crons (component `app/bot/admin/AdminLogboek.tsx`, verplaatst op 2026-11-15 omdat het ook Teams-acties bevat). RLS aan zonder policies. SQL: `docs/sql/2026-11-14-admin-log-en-cron-runs.sql`.
 
 ### `cron_runs`
 Eén rij per geplande cron (primaire sleutel is het pad): laatste start, laatste succes, laatste fout met reden en duur. Elke cron-route registreert zich via `registreerCronRun` (`lib/cronRun.ts`, afgedwongen door `lib/cronOverzicht.test.ts`); alleen geautoriseerde runs tellen, een droge run (`?dry`) niet. Gelezen door `/bot/admin/status` en `/bot/admin/emails/overzicht`. Een nieuwe cron moet in `vercel.json`, in `CRON_INFO` (`lib/cronOverzicht.ts`) en in `registreerCronRun` staan, anders faalt de test.

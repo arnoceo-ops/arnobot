@@ -349,6 +349,8 @@ export default async function AdminStatusPage() {
           </p>
         </div>
 
+        <AdminLogboek />
+
         {/* Externe services */}
         <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>EXTERNE SERVICES</p>
 
@@ -395,8 +397,6 @@ export default async function AdminStatusPage() {
             </div>
           ))}
         </div>
-
-        <AdminLogboek />
       </div>
     </main>
   )
