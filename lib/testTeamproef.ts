@@ -14,7 +14,7 @@ const DAG = 86_400_000
 // Dagen geleden dat de proef begon, bij een proef van 30 dagen.
 const START_DAGEN_GELEDEN: Record<TeamproefStand, number> = { lopend: 10, bijna: 27, voorbij: 31 }
 
-type Backup = { expires_at: string | null; paid_at: string | null; trial_start: string | null; sd_attribution_method: string | null; command_manager: boolean | null }
+type Backup = { expires_at: string | null; paid_at: string | null; trial_start: string | null; sd_attribution_method: string | null; command_manager: boolean | null; plan?: string | null }
 
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -43,7 +43,7 @@ export async function zetTeamproef(stand: TeamproefStand): Promise<void> {
   const userId = MANUAL_TEST_USER_ID
 
   if (!(await leesBackup())) {
-    const { data: u } = await supabase.from('approved_users').select('expires_at, paid_at, trial_start, sd_attribution_method, command_manager').eq('user_id', userId).maybeSingle<Backup>()
+    const { data: u } = await supabase.from('approved_users').select('expires_at, paid_at, trial_start, sd_attribution_method, command_manager, plan').eq('user_id', userId).maybeSingle<Backup>()
     if (!u) throw new Error('testaccount niet gevonden')
     const { error } = await supabase.from('arnobot_meta').upsert({ key: SLEUTEL, value: JSON.stringify(u) }, { onConflict: 'key' })
     if (error) throw new Error(`backup opslaan mislukt: ${error.message}`)
@@ -62,6 +62,8 @@ export async function zetTeamproef(stand: TeamproefStand): Promise<void> {
   const { error } = await supabase.from('approved_users').update({
     command_manager: true,
     sd_attribution_method: 'link',
+    // Zoals een echte agent-proef: een nieuw account begint op Pro (proxy.ts), nooit op Basic.
+    plan: 'premium',
     paid_at: null,
     expires_at: null,
     trial_start: new Date(Date.now() - START_DAGEN_GELEDEN[stand] * DAG).toISOString(),

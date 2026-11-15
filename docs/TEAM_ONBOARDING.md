@@ -64,7 +64,7 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 
 **Niet gedekt:** een manager met een agent-link die zelf al betaalt (`paid_at`) kan hier niet activeren (het blok verschijnt niet). Dat is de "Controle nodig"-melding hierboven, die loopt nog handmatig.
 
-**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, VOORBIJ EN GEBLOKKEERD, UIT. De oorspronkelijke waarden van het account worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet.
+**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, VOORBIJ EN GEBLOKKEERD, UIT. Het plan gaat op Pro, zoals bij een echte proef. De oorspronkelijke waarden van het account (ook het plan) worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet.
 
 ## Let op
 
