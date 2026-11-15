@@ -31,7 +31,8 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Hosting | Vercel | Pro |
 | AI (chat/coaching) | Anthropic Claude | via SDK ^0.115 |
 | Embeddings + rerank (RAG) | VoyageAI | rauwe fetch, geen SDK |
-| Spraakherkenning | OpenAI Whisper | rauwe fetch, geen SDK |
+| Spraakherkenning | OpenAI (`gpt-transcribe`, live `gpt-live-transcribe`) | rauwe fetch, geen SDK |
+| Audiobijlagen transcriberen | AssemblyAI | `lib/assemblyai.ts`, rauwe fetch |
 | Tekst-naar-spraak (Voice) | ElevenLabs | rauwe fetch, geen SDK |
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |
@@ -41,8 +42,6 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
 | Mobiele wrapper (Android live, iOS gepland) | Capacitor | ^8 |
-
-**Verwijderd (2026-08-01):** Sanity, next-sanity en @portabletext/react zijn volledig verwijderd. De kennisbank draait sindsdien uitsluitend op de eigen `blog_chunks`-tabel (RAG via VoyageAI), niet meer op een CMS.
 
 ---
 
@@ -126,6 +125,8 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 | Hoofdchat | `/bot` | Centrale gesprekspagina met ArnoBot. Desktop-only linkje verwijst naar de community-vragenpagina |
 | Community vragen | `/bot/cgq` | Vragenraster (Strategy/People/Execution-toggle + community-vragen), sinds 28 augustus 2026 losgekoppeld van `/bot` zelf om die pagina kaler te houden, op 29 augustus 2026 hernoemd van `/bot/voorbeeldvragen` naar `/bot/cgq` ("community generated questions"). Zelfde component/chatlogica als `/bot`, alleen desktop bereikbaar. Gesprekken die hier starten tellen standaard niet mee in coachingsdiagnose/analyses, tenzij de gebruiker dat via een expliciete opt-in-toestemming aanvinkt |
 | Profiel / intake | `/bot/profiel` | Korte onboarding-intake bij eerste inlog (rol, markt, wat verkoop je, ideale klant, dealgrootte, salescyclus, ervaring, uitdaging; solo- en teamvariant iets afwijkend). Bij afronden wordt `trial_start` heraankerd op dat moment. Daarna dezelfde pagina om de salescontext te bekijken/aanpassen |
+| Vragen over de app | `/bot/qa` | Q&A over het gebruik van de app, met zoekveld; zoektermen zonder antwoord gaan naar `faq_zoekmislukkingen` |
+| Zakelijk corrigeren | `/bot/account/zakelijk-corrigeren` | Zelfbediening: particulier naar zakelijk met btw-factuur |
 | Coaching | `/bot/coaching` | Coachingrapport aanvragen en bekijken (Pro-only, upsell voor Basic) |
 | Analyses | `/bot/analyses` | Archief van gesprekken + AI-analyses + blogsuggesties |
 | Sparren | `/bot/sparren` | Live rollenspel/oefenmodus tegen een AI-tegenstander |
@@ -147,6 +148,7 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 |---|---|
 | `/bot/admin` | Overzicht alle vraag/antwoord-logs, filters, PDF-download. Sinds 2026-11-13 drie tabs met hetzelfde filter (gebruiker, van/tot, sortering): Gesprekken, Analyses (`arnobot_analyses`) en Coaching (`arnobot_coaching_history`, volledige rapportages). CSV-download per tab (`/api/admin/export-csv?tab=...`), PDF alleen bij Gesprekken. Bij Analyses en Coaching is een leeg datumveld = geen begrenzing. Data en tekstopmaak in `lib/adminGesprekkenTabs.ts`. Dagfilters lopen op Nederlandse tijd (`lib/nlTijd.ts`), en alle queries die alle rijen van een groeitabel nodig hebben lopen in blokken van 1000 via `lib/haalAlleRijen.ts`, want de database geeft per vraag hooguit 1000 rijen (ook bij `.limit(5000)`). `scripts/check-row-limit.mjs` blokkeert dat in CI. Zoeken in vraag en antwoord (ZOEK IN GESPREKKEN) en het duimpje-filter zijn gedeeld door scherm, CSV en PDF (`schoneZoekterm` en `filterLogs` in `lib/adminExport.ts`); met een zoekterm of duimpje-filter is een leeg datumveld "alle data". Zie `docs/archief/ADMIN_PLAN.md` voor het lopende traject |
 | `/bot/admin/gebruikers` | Gebruikersbeheer: health-score, trial/plan, command-manager-toggle, SD-agent-koppeling. Sinds 2026-11-14: BELLIJST bovenaan (proef loopt binnen 7 dagen af en minder dan 3 vragen), het paneel achter BETALING toont de laatste online betalingen en het abonnement, en onderaan staat het logboek van adminacties (`arnobot_admin_log`). BETAALD en GRATIS-bij-betaald vragen een tweede klik (GRATIS zet `paid_at` op leeg), terugbetalen na 14 dagen geeft eerst een waarschuwing |
+| `/bot/admin/teams` | Menu-item TEAMS: teams, Team-facturen, solo naar Team, instellingen per team |
 | `/bot/admin/emails` | Menu-item MAILS (was CRONS): e-mail templates en admin-crons testen. STUUR TEST vraagt een tweede klik bij crons die echt iets doen (meta-analyse, model-check, update-handover) |
 | `/bot/admin/emails/overzicht` | E-mail lifecycle overzicht (printbaar). De sectie "Alle geplande crons" en alle cron-tijden komen automatisch uit `vercel.json` (`lib/cronOverzicht.ts`, tijden in UTC). Elke nieuwe cron krijgt een regel in `CRON_INFO` in dat bestand: `lib/cronOverzicht.test.ts` faalt als een cron in `vercel.json` ontbreekt, als er een cron-route zonder schema bestaat, of omgekeerd. De mail-rijen blijven handmatig |
 | `/bot/admin/evaluaties` | Redirect naar Gesprekken met het filter DUIMPJE "alleen negatief". De pagina FEEDBACK is sinds 2026-11-14 opgegaan in Gesprekken (duimpje per bericht, filter, CSV-kolom) en STATS (kaart ANTWOORDBEOORDELINGEN) |
@@ -156,7 +158,6 @@ Login via `/bot/admin/login` (`ARNOBOT_ADMIN_KEY`).
 | `/bot/admin/blog` | Menu-item BLOG, tab POSTS: de publieke blog beheren. Lijst + editor (`/bot/admin/blog/[id]`, `nieuw` voor een nieuwe post) met live Markdown-voorbeeld, afbeeldingen plakken/slepen, hashtags met suggesties, concept/publiceren/inplannen, "verstuur naar abonnees" en testmail naar jezelf, lokale noodback-up |
 | `/bot/admin/meta-analyse` | Zelfbeoordeling ArnoBot + jurering door vijf fictieve sales-experts |
 | `/bot/admin/status` | Systeemstatus-dashboard (Instatus-uptime, LinkedIn-fallback toggle). De kleur van de PERFORMANCE-cirkel volgt het snelheidsniveau uit `lib/performance.ts` (groen, geel/oranje onder druk, rood laag, grijs zonder meting), met dezelfde grenzen als de Telegram-melding van `storing-wacht`. Sinds 2026-11-14 ook GEPLANDE CRONS: per cron het laatste succes uit `cron_runs`, met een markering voor een cron die te laat, mislukt of afgebroken is (`lib/cronGezondheid.ts`) |
-| `/bot/admin/voice-test` | Verwijderd 2026-11-14 (redirect naar USERS): 4 testaanroepen ooit, de laatste op 12 augustus. De test-persona-knoppen staan nu onderaan `/bot/admin/gebruikers` (`lib/testPersona.ts`) |
 | `/bot/admin/stats` | Statistiekendashboard (health-score, gebruikstrends, funnel). MRR komt sinds 2026-11-14 uit `arnobot_subscriptions` (`lib/mrr.ts`): alleen status `active`, zonder aangevraagde opzegging, exclusief btw, jaarlijks gedeeld door 12, solo uit `arnobot_subscriptions`, Team via `berekenTeamMrrEuro` (een betaalde reguliere teamfactuur die de huidige periode dekt, team niet geblokkeerd, zonder de interne testteams). Daarvoor las de pagina `approved_users.bedrag/interval`, die sinds Mollie door niets meer worden geschreven |
 | `/bot/admin/kennisbank` | Kennisbank-beheer: RSS-bronnen, chunks per bron. Tellers CHUNKS, BLOGS, VIDEO'S en DOCUMENTEN (de kennisdocumenten met label "Kennisbank: ..." tellen niet meer mee als blog) |
 
@@ -182,6 +183,8 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 |---|---|---|
 | Landingspagina | `/` | Marketingpagina, redirect naar `/bot` als al ingelogd |
 | Prijzen | `/prijzen` | Prijzenpagina (Basic/Pro/Team) |
+| Contact | `/contact` | Contactgegevens |
+| Team aanvragen | `/team/aanvragen` | Aanvraagformulier voor een Team-offerte met live berekende prijs |
 | Aanmelden | `/aanmelden` | Zet referral-/SD-attributiecookies, redirect naar `/sign-in` |
 | Sign in | `/sign-in` | Clerk sign-in (LinkedIn OIDC) |
 | Sign in (enterprise) | `/sign-in/enterprise` | Enterprise SSO via e-maildomein |
@@ -209,7 +212,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 
 ## API-routes
 
-Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, gegroepeerd per functiegebied.
+Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron is `git ls-files 'app/api/**/route.ts'`; deze lijst kan achterlopen.
 
 ### Kern-AI-routes
 
@@ -235,7 +238,9 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/openers` | Vaste set gespreksopeners ophalen |
 | `/api/bot/backfill-embeddings` | Ontbrekende embeddings aanvullen voor RAG |
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
-| `/api/transcribe` | Spraak naar tekst (OpenAI Whisper) |
+| `/api/transcribe` | Spraak naar tekst (OpenAI `gpt-transcribe`, streaming) |
+| `/api/transcribe/live` | Geeft de browser een kortlevende sessiecode voor live transcriptie met `gpt-live-transcribe`; de echte API-sleutel verlaat de server nooit |
+| `/api/bot/chat-upload-url` | Kortstondige signed upload-URL naar Supabase Storage, zodat een bijlage (document of audio) buiten de Vercel-functie om wordt geüpload (4,5 MB-limiet op de request body) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 
 ### Sparring
@@ -277,6 +282,11 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/bot/delete-account` | Verwijderverzoek account |
 | `/api/bot/referral` | Eigen referralcode ophalen/genereren |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
+| `/api/bot/billing/upgrade` | Upgrade van Basic naar Pro, direct met bijbetaling naar rato (zie "Online betalen (Mollie)") |
+| `/api/bot/billing/overstap-intrekken` | Trekt een geplande overstap in |
+| `/api/bot/billing/opzegging-intrekken` | Trekt een opzegging in zolang het abonnement nog loopt |
+| `/api/bot/klanttype-correctie` | Particulier naar zakelijk corrigeren met btw-factuur (`lib/billing/klanttypeCorrectie.ts`) |
+| `/api/bot/team-lead-signal` | Vroege lead-trigger zodra iemand tijdens de profiel-intake "voor mijn team" en een teamgrootte aanklikt |
 | `/api/bot/herstart` | Reactivatie-eligibility bepalen (regels in `lib/herstart.ts`: na twee proefperiodes zonder betalen pas na 12 maanden weer een gratis proefperiode, betalen kan altijd) |
 | `/api/bot/set-app-password` | Wachtwoord instellen via Clerk backend-API |
 | `/api/bot/share-session` | Gesprek deelbaar maken via token-URL |
@@ -301,7 +311,10 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 | `/api/blog/bevestig` | PUBLIEK. Doel van de link in de bevestigingsmail (GET). Echte klik van een mens (`Sec-Fetch-User: ?1` plus `Sec-Fetch-Mode: navigate`, `lib/blogConfirmGate.ts`) bevestigt direct en stuurt door naar `/blog?bevestigd=1` (of `0`). Scanners en browsers zonder die headers (Safari < 16.4) gaan naar `/blog/bevestig/[token]` met een knop, zonder iets te wijzigen |
 | `/api/blog/confirm` | PUBLIEK. Bevestigt een aanmelding (POST, token), gebruikt door de terugvalpagina |
 | `/api/blog/unsubscribe` | PUBLIEK. Afmelden, ook one-click (RFC 8058, `List-Unsubscribe-Post`) |
-| `/api/admin/payment` | Betaling handmatig registreren (geen payment-provider gekoppeld, puur admin-actie) |
+| `/api/admin/payment` | Betaling handmatig registreren (body `{ userId, expiresAt }`), een handmatige override naast Mollie |
+| `/api/admin/active` | Gebruiker aan of uit zetten; uitschakelen bounced direct uit `/bot`, los van de betaal- en comp-status |
+| `/api/admin/comp` | Gratis toegang tot een datum (zet `expires_at`, wist `trial_start`), los van de betaalstroom |
+| `/api/admin/test-persona` | Zet het handmatige testaccount om naar een van vijf persona's door de echte onderliggende data te wijzigen (`lib/testPersona.ts`) |
 | `/api/admin/plan` | Plan van gebruiker aanpassen |
 | `/api/admin/command-manager` | command_manager-vlag (teamaanmaak-recht) togglen |
 | `/api/admin/sd-agent` | Sales-development-agent + attributiemethode koppelen |
@@ -343,6 +356,8 @@ Ruim 110 routes in `app/api/**/route.ts`. Onderstaande lijst dekt ze allemaal, g
 |---|---|
 | `/api/webhooks/calendly` | Ontvangt boekingsevents (HMAC-signature + timestamp-verificatie) |
 | `/api/webhooks/mollie` | Ontvangt Mollie-betaalmeldingen (alleen een `id`, de betaling wordt altijd zelf bij Mollie opgehaald, idempotent via `verwerkt_at`). Actief zodra `MOLLIE_API_KEY` is gezet |
+| `/api/webhooks/mollie-team` | Losse webhook voor Team-betaallinks, bewust gescheiden van de solo-webhook |
+| `/api/webhooks/mollie-correctie` | Losse webhook voor de betaling bij een klanttypecorrectie (particulier naar zakelijk) |
 | `/api/webhooks/resend` | Resend-events voor de blogmails. `email.bounced` (alleen permanent) en `email.complained`: meldt het adres direct af. `email.opened` en `email.clicked`: opgeslagen per bezorging (`lib/blogEngagement.ts`, kolommen `opened_count`/`clicked_count` e.d. op `arnobot_blog_deliveries`, SQL `docs/sql/2026-10-10-blog-engagement.sql`), voor de lijst "wie doet wat" in de stats. Alleen actief als open- en kliktracking voor `mail.arno.bot` in Resend aanstaat. Signature-verificatie via `RESEND_WEBHOOK_SECRET`; zonder secret doet de route niets (503) |
 | `/api/webhooks/github-pr` | Stuurt een Telegram-melding bij een nieuw geopende PR op de repo (X-Hub-Signature-256-verificatie). PR's van de documentatie-versheidsroutine (titel begint met "Documentatie-versheidscheck") worden bewust overgeslagen, die worden in een Claude Code-sessie afgehandeld |
 
@@ -379,13 +394,24 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 10+ nieuwe gesprekken sinds de laatste analyse, plus mail "Je analyses zijn bijgewerkt" |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
 | `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output. Analyseert de 300 meest recente gesprekken + 50 meest recente analyses (over alle gebruikers samen, aantal-gebaseerd, geen datumvenster) |
-| `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met CLAUDE.md-inventaris |
+| `/api/cron/model-check` | 1e vd maand 04:05 | Modelkwaliteitscheck: live web_search + vergelijking met `docs/MODELINVENTARIS.md` |
 | `/api/cron/competitie` | 1e vd maand 04:05 | Competitierapport (meest actieve gebruikers) |
 | `/api/cron/data-cleanup` | 1e vd maand 04:05 | Verwijderde gesprekken opschonen, inactieve users flaggen |
 | `/api/cron/capaciteitswacht` | dagelijks 07:30 UTC | Telegram bij 70% of 90% van een limiet (Resend, database, Anthropic 429) en bij 50 en 150 actieve gebruikers |
 | `/api/cron/cron-wacht` | dagelijks 07:40 UTC | Telegram bij een geplande cron die te laat is (draait niet meer, of nooit sinds de registratie) of is afgebroken; een mislukte run meldt zichzelf al via `notifyCronFailure`. Eén melding per cron en staat per week |
 | `/api/cron/storing-wacht` | elk kwartier | Telegram bij arno.bot niet bereikbaar of verminderd (Instatus-monitor), te traag (gemiddelde responstijd van het laatste uur, minimaal 3 metingen, grenzen in `lib/performance.ts`) of een grote of kritieke storing bij Anthropic, Vercel, Supabase, Clerk of Resend (`lib/externeDiensten.ts`). Kleine incidenten (`minor`) melden niet. Kritiek hooguit dagelijks, waarschuwing wekelijks (`nieuwMelden`). Stuurt ook een herstelbericht met de duur zodra een gemelde storing twee runs (een half uur) niet meer speelt; de actieve storingen staan in `arnobot_meta` (sleutel `storing_actief`, `lib/storingStaat.ts`) |
 | `/api/cron/team-proef` | dagelijks 07:50 UTC | Beëindigt de gratis proef van 30 dagen van een manager die via een agent-link binnenkwam (`sd_attribution_method = 'link'`, geen eigen betaling, geen facturatie): team geblokkeerd, of `command_manager` ingetrokken als er geen team is. Telegram aan Arno op dag 25, op dag 30 (met een mail aan de manager: coulance van 10 dagen) en bij de blokkade op dag 40. Verlengen: VERLENG PROEF op `/bot/admin/teams` (zet `expires_at` van de manager en heft de blokkade op). Regels in `lib/teamProef.ts` |
+| `/api/cron/billing` | Dagelijks 05:00 | Abonnementenonderhoud: gemiste webhooks inhalen, ontbrekende Mollie-abonnementen herstellen, opzeggingen stopzetten, verlengherinneringen, verlopen abonnementen afsluiten (zie "Online betalen (Mollie)") |
+| `/api/cron/team-facturatie` | Dagelijks 05:10 | Team-facturatieronde: reguliere cyclusfactuur, eenmalige tussenfactuur bij toegevoegde seats, en het stoppen van opgezegde teams |
+| `/api/cron/database-wacht` | Elk uur | Geheugen en verbindingen van de databaseserver; Telegram bij 70% of 90% (zie `docs/CAPACITEIT.md`) |
+| `/api/cron/feitencontrole` | Dagelijks 06:45 | Controleert antwoorden van de afgelopen 24 uur op feiten van de gebruiker die verkeerd zijn teruggespeeld (`lib/feitenControle.ts`) |
+| `/api/cron/waarheidscontrole` | Maandag 07:15 | Mailt Arno een steekproef van beweringen die niet uit de bibliotheek komen (`lib/waarheidsRapport.ts`) |
+| `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachtsdocumenten bijwerken (dit bestand) |
+| `/api/cron/meta-analyse` | 1e vd maand 04:15 | Geautomatiseerde zelfbeoordeling + expertpanel + JOUW ANALYSE |
+| `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerend De Spiegel-thema met één zin en een sparscenario als e-mail (`lib/patroonMail.ts`, flag `PATROON_MAIL`, standaard alleen oprichter) |
+| `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
+| `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
+| `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
 
 **Team opzeggen (2026-11-15):** `lib/teamOpzegging.ts`. `zegTeamOp` zet `arnobot_teams.stopt_op` (einde van de lopende periode, een periode later bij een te late opzegging, artikel 7), `trekTeamOpzeggingIn` (`POST /api/bot/team/opzegging-intrekken`) tot de dag ervoor, `stopOpgezegdeTeams` wordt aan het begin van de cron `team-facturatie` aangeroepen en blokkeert het team en leegt `volgende_factuurdatum`, `ontblokkeerNaBetaling` laat een gestopt team dicht bij een late betaling. SQL: `docs/sql/2026-11-15-team-stopt-op.sql`.
 
@@ -395,13 +421,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 
 **Coulance (2026-11-15):** `PROEF_COULANCE_DAGEN = 10` in `lib/teamProef.ts`. `proefStand` kent de staat `coulance`; de cron `team-proef` stuurt op dag 30 eenmalig de mail `team_proef_coulance` (dedupe via `nieuwMelden` met de einddatum in de sleutel) en blokkeert pas op dag 40. Volledig verloop en scenario's: `docs/TEAM_PROCES.md`.
 
-**Team zelf activeren (2026-11-15):** `POST/GET /api/bot/team/activeren` (`lib/teamActivatie.ts`, UI `app/bot/account/TeamActiverenSectie.tsx`): de manager van een agent-proef zet min. seats, cyclus en factuurdatum, bewaart bedrijfsgegevens (`lib/billing/zakelijk.ts`, gedeeld met `/api/bot/checkout`), heft de blokkade op en laat `maakTeamFactuur` de eerste factuur maken. Atomair geclaimd via `min_seats IS NULL`. `/bot/doorgaan` stuurt zo'n manager naar `/bot/account` en toont leden van een geblokkeerd team een melding. Het testen ging met tijdelijke knoppen die daarna zijn verwijderd; `TEST_PROEF_TEAM_ID` en `TEST_TEAM_IDS` in `lib/internalTestAccounts.ts` blijven voor de uitsluitingen (omzet, statistieken, teamlijst, crons).
-| `/api/cron/update-handover` | 1e vd maand 04:10 | Overdrachtsdocumenten bijwerken (dit bestand) |
-| `/api/cron/meta-analyse` | 1e vd maand 04:15 | Geautomatiseerde zelfbeoordeling + expertpanel + JOUW ANALYSE |
-| `/api/cron/patroon-samenvatting` | 1e vd maand 04:20 | Terugkerend De Spiegel-thema met één zin en een sparscenario als e-mail (`lib/patroonMail.ts`, flag `PATROON_MAIL`, standaard alleen oprichter) |
-| `/api/cron/rss-ingest` | Zaterdag 00:00 | RSS-feeds inladen voor kennisbank-contentverrijking |
-| `/api/cron/meta-analyse-reminder` | 27e vd maand 08:00 | Herinnering om panel-input in te vullen vóór de meta-analyse-run |
-| `/api/cron/team-1on1-ritme` | Dagelijks 03:20 | 1:1-cadans-notificatie/escalatieflow: belletje bij 2+ weken geen 1:1, mail 1 na 48u ongelezen, mail 2 na 5 dagen zonder oplossing |
+**Team zelf activeren (2026-11-15):** `POST/GET /api/bot/team/activeren` (`lib/teamActivatie.ts`, UI `app/bot/account/TeamActiverenSectie.tsx`): de manager van een agent-proef zet min. seats, cyclus en factuurdatum, bewaart bedrijfsgegevens (`lib/billing/zakelijk.ts`, gedeeld met `/api/bot/checkout`), heft de blokkade op en laat `maakTeamFactuur` de eerste factuur maken. Atomair geclaimd via `min_seats IS NULL`. `/bot/doorgaan` stuurt zo'n manager naar `/bot/account` en toont leden van een geblokkeerd team een melding. `TEST_PROEF_TEAM_ID` en `TEST_TEAM_IDS` in `lib/internalTestAccounts.ts` blijven voor de uitsluitingen (omzet, statistieken, teamlijst, crons).
 
 **Niet-crons ter verduidelijking:** `/api/track-pageview` en `/api/track-cta-click` zijn geen crons maar event-routes die live vanuit marketingpagina's worden aangeroepen; staan daarom niet in `vercel.json`'s crons-array.
 
@@ -583,7 +603,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 1. Scanner-requests (`.env`, `wp-admin`, etc.) → direct 404
 2. Admin-routes (`/bot/admin/*`) → cookie-gebaseerd (`arnobot_admin`)
 3. Bot-routes (`/bot/*`) → Clerk auth vereist + `approved_users` check
-4. Toegangsstatus op basis van: `paid_at` aanwezig → altijd toegang; anders `expires_at` in toekomst; anders `trial_start` + 30 dagen niet verstreken
+4. Toegangsstatus: zie `datumToegang()` in `proxy.ts` en `lib/toegangNu.ts` (betaald, `expires_at`, proef van 30 dagen, `geblokkeerd_at` en de team-gates `command_manager` en `team_members`)
 5. `onboarding_done` niet waar → redirect `/bot/profiel`
 
 **Losse cookie-gates buiten `/bot`:** `/abacus/*` via `arnobot_kosten` (`ARNOBOT_KOSTEN_KEY`), `/agents/*` via `arnobot_sd_verdien` (`SD_VERDIEN_PASSWORD`, admin-key werkt ook). Geen Clerk-auth, zelfde patroon als de admin-cookie.
@@ -602,7 +622,7 @@ Bijhouden welke inactiviteitsmails (dag21/dag45/dag60) al verstuurd zijn per geb
 
 ## Beveiliging
 
-- **Row Level Security (RLS):** aan op alle ~41 tabellen (sinds 2026-08-20, geen policies). Veilig als achtervang tegen de publieke anon-key, maar géén echte multi-tenant isolatie: de app gebruikt overal de service-role-key (die RLS altijd omzeilt), niet de Clerk-JWT-Supabase-client die wel in `lib/supabase.ts` klaarstaat maar nergens geïmporteerd wordt. Isolatie tussen gebruikers hangt daardoor volledig af van een `.eq('user_id', userId)`-filter per route, zonder database-afgedwongen vangnet — precies het risico dat de check hieronder afdekt.
+- **Row Level Security (RLS):** aan op alle tabellen (sinds 2026-08-20, geen policies). Veilig als achtervang tegen de publieke anon-key, maar géén echte multi-tenant isolatie: de app gebruikt overal de service-role-key (die RLS altijd omzeilt), niet de Clerk-JWT-Supabase-client die wel in `lib/supabase.ts` klaarstaat maar nergens geïmporteerd wordt. Isolatie tussen gebruikers hangt daardoor volledig af van een `.eq('user_id', userId)`-filter per route, zonder database-afgedwongen vangnet — precies het risico dat de check hieronder afdekt.
 - **Ontbrekende-eigenaarschapsfilter-check:** `scripts/check-missing-user-filter.mjs` (sinds 2026-08-21, niet-blokkerende CI-stap). Scant `app/api/**`, `app/bot/**` en `lib/**` op `.from()`-aanroepen op gebruikersdata-tabellen zonder `.eq()`/`.in()` op `user_id`/`manager_id`/`member_id` binnen dezelfde functie (admin/cron/login-routes zijn bewust uitgesloten, die queryen terecht gebruikersoverstijgend). Statische tekstanalyse, geen dataflow-check — bevestigde legitieme uitzonderingen staan in `KNOWN_SAFE_QUERIES` in het script zelf.
 - **CSP (Content Security Policy):** Gegenereerd per request met nonce in `proxy.ts`. Blokkeert inline scripts zonder nonce. PostHog- en Sentry-verkeer lopen via same-origin proxy's (`/site-relay`, `/monitoring`), dus geen externe host-uitzonderingen nodig in de CSP.
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`.
@@ -623,12 +643,13 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 |---|---|---|---|
 | npm audit | elke push/PR + wekelijks | nee (alleen `--audit-level=critical`) | Kritieke runtime-kwetsbaarheden |
 | TypeScript typecheck | elke push/PR | ja (impliciet: Vercel build faalt anders ook) | `npx tsc --noEmit` |
-| Vitest | elke push/PR | ja | Regressietests kritieke paden (streepjes-sanitizer, systeemprompt-opbouw, RAG-dedupe). Geen externe aanroepen, Supabase/Voyage gemockt |
+| Vitest | elke push/PR | ja | Regressietests kritieke paden (zie de `*.test.ts`-bestanden). Geen externe aanroepen, Supabase/Voyage gemockt |
 | Playwright E2E (UI, gemockte AI) | elke push/PR | ja | Golden path + scenario's + a11y, `/api/chat` volledig gemockt op browserniveau |
 | Playwright E2E (echte backend) + contracttests | alleen wekelijks | n.v.t. | Niveau-3 met echte Supabase/Upstash-keten, plus contracttests met echte Anthropic/Voyage-aanroepen (`RUN_CONTRACT_TESTS=true`) |
 | ESLint | elke push/PR | nee | 66 bestaande lint-fouten in oudere code (gemeten 2026-07-10), opruimen is een apart project |
 | Wees-routes-check | elke push/PR | nee | `scripts/check-orphan-routes.mjs`, zie CLAUDE.md sectie 1 |
 | Ontbrekende-eigenaarschapsfilter-check | elke push/PR | nee | `scripts/check-missing-user-filter.mjs`, zie sectie Beveiliging hierboven |
+| Overige scriptchecks | elke push/PR (`check-kennisbank-sync` wekelijks) | nee | `check-testaccount-filter`, `check-cron-mail-dedupe`, `check-mail-send`, `check-row-limit`, `check-missing-loaded-gate`, `check-prompt-rules` en `check-kennisbank-sync` in `scripts/`; zie `.github/workflows/security-audit.yml` |
 
 **Lokaal draaien:** `npx tsc --noEmit`, `npm test` (Vitest), `npx playwright test` (vereist E2E_CLERK_PUBLISHABLE_KEY/E2E_CLERK_SECRET_KEY van een Clerk development-instance, zie `e2e/auth.setup.ts`).
 
@@ -717,7 +738,7 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | typescript | ^6 |
 <!-- /AUTO:VERSIONS -->
 
-**Nieuw sinds vorige versie van dit document:** `@sentry/nextjs`, `posthog-js`, `styled-components`, `mammoth`, `lucide-react`, `@capacitor/*` (Android-wrapper, in ontwikkeling). **Verwijderd:** `sanity`, `next-sanity`, `@portabletext/react` (2026-08-01, dode code na CMS-migratie).
+**Nieuw sinds vorige versie van dit document:** `@sentry/nextjs`, `posthog-js`, `styled-components`, `mammoth`, `lucide-react`, `@capacitor/*` (Android-wrapper). **Verwijderd:** `sanity`, `next-sanity`, `@portabletext/react` (2026-08-01, dode code na CMS-migratie).
 
 ---
 
@@ -799,9 +820,14 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** API-key beheren, gebruik bekijken.
 
 ### OpenAI
-**Doel:** Whisper (`whisper-1`) spraak-naar-tekst voor voice-input.
+**Doel:** spraak-naar-tekst voor voice-input: `gpt-transcribe` (achteraf, streaming) en `gpt-live-transcribe` (live, WebSocket).
 **Dashboard:** https://platform.openai.com
 **Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
+
+### AssemblyAI
+**Doel:** transcriptie van geüploade audiobijlagen in de hoofdchat (`universal-3-5-pro`), direct daarna verwijderd.
+**Dashboard:** https://www.assemblyai.com
+**Integratie:** rauwe fetch in `lib/assemblyai.ts`, sleutel in `ASSEMBLYAI_API_KEY`.
 
 ### ElevenLabs
 **Doel:** Tekst-naar-spraak voor ArnoBot Voice (premium-feature, `plan` premium/team).
@@ -858,8 +884,6 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Doel:** Ops-notificaties (nieuwe gebruikers, cron-failures, CSP-schendingen).
 **Setup:** Een Telegram-bot (`TELEGRAM_BOT_TOKEN`) stuurt berichten naar een chat (`TELEGRAM_CHAT_ID`). Beheren via @BotFather.
 
-**Geen payment-provider geïntegreerd:** bewust pending, zie "Bekende beperkingen" punt 11 voor het triggercriterium.
-
 ---
 
 ## Mobiele app (Capacitor: Android live, iOS gepland)
@@ -904,7 +928,7 @@ De gebruiker logt in via Clerk en het pending-record wordt automatisch bijgewerk
 Ga naar `/bot/admin/gebruikers`, zoek de gebruiker op, of gebruik de admin payment route:
 ```
 POST /api/admin/payment
-{ "userId": "user_xxx", "months": 1 }
+{ "userId": "user_xxx", "expiresAt": "2027-01-01T00:00:00Z" }
 ```
 
 ### Gebruiker deactiveren
@@ -935,13 +959,10 @@ Supabase dashboard > SQL Editor > schrijf je query. Let op: altijd een WHERE-cla
 ## Bekende beperkingen en openstaande punten
 
 1. **Sonnet 5 hoofdchat:** Teruggedraaid naar Sonnet 4.6 wegens thinking-mode truncatie. Sonnet 5's prijs is inmiddels permanent verlaagd, wat een hercheck aantrekkelijker maakt — check eerst de actuele livegang-datum bij Arno, test op staging.
-2. **RLS Supabase — bewust pending:** Ingeschakeld op alle ~41 tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend, geen database-afgedwongen garantie). **Triggercriterium om alsnog op te pakken:** een tweede developer die routinematig gebruikersdata-routes wijzigt (het huidige risico is grotendeels beheersbaar zolang Arno alle wijzigingen zelf overziet), een compliance-eis van een enterprise-klant, of een keer dat de CI-check daadwerkelijk iets vindt dat pas laat wordt opgemerkt. Echte multi-tenant RLS met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is dan een apart traject van meerdere dagen, raakt ~40 routes.
+2. **RLS Supabase — bewust pending:** Ingeschakeld op alle tabellen (2026-08-20), maar zonder policies dus geen echte multi-tenant isolatie. De service-role-key omzeilt RLS altijd, dus scheiding tussen gebruikers hangt in de praktijk af van een `.eq('user_id', userId)`-filter per route. Sinds 2026-08-21 bewaakt `scripts/check-missing-user-filter.mjs` dit automatisch (niet-blokkerend, geen database-afgedwongen garantie). **Triggercriterium om alsnog op te pakken:** een tweede developer die routinematig gebruikersdata-routes wijzigt (het huidige risico is grotendeels beheersbaar zolang Arno alle wijzigingen zelf overziet), een compliance-eis van een enterprise-klant, of een keer dat de CI-check daadwerkelijk iets vindt dat pas laat wordt opgemerkt. Echte multi-tenant RLS met Clerk-JWT-policies (de al-aanwezige, ongebruikte client in `lib/supabase.ts` daadwerkelijk inzetten) is dan een apart traject van meerdere dagen, raakt ~40 routes.
 3. **Embedding-modellen verouderd — bewust pending:** `voyage-3-large` (kennisbank) is legacy, `voyage-multilingual-2` (sessiegeheugen) is deprecated (nog geen aangekondigde einddatum). Upgrade naar de voyage-4-serie vereist een volledige her-embedding van de betreffende tabel zonder dat de live zoekfunctie breekt (dual-write of versiegescheiden migratie). **Triggercriterium:** Voyage kondigt een harde uitfaseerdatum aan voor een van beide modellen, of de kwaliteitswinst van voyage-4 wordt de moeite waard bevonden bij een gerichte test.
 4. **Share intrekken:** Gebouwd maar bewust uitgesteld. Kleine kans op probleem bij huidige doelgroep.
 5. **Pro-upgrade triggers bij 50 actieve gebruikers:** Vercel Firewall aanzetten, Clerk inactivity timeout + session limits aanscherpen. Supabase PITR heeft een eigen, hogere drempel (150 gebruikers), al automatisch bewaakt via de Abacus-kostencalculator.
 6. **Clerk `createRouteMatcher()`:** gedeprecate sinds 7.5.14 t.g.v. `auth.protect()` per route, nog niet gemigreerd in `proxy.ts`. Geen harde deadline.
 7. **Clerk TLS-cipher-deadline:** 18 januari 2027, vermoedelijk geen actie nodig, vlak vóór de deadline nog een keer bevestigen.
 8. **Anthropic API-key-rotatie:** harde deadline 6 januari 2027 voor zowel arnobot als salescanvas-app.
-9. **`/api/admin/export` vs `/api/admin/export-csv`:** opgelost (2026-08-21). Beide routes blijven bestaan (verschillend gebruik: JSON voor client-side PDF-opbouw vs. directe CSV-download), maar de gedupliceerde auth/fetch-logica is samengevoegd in `lib/adminExport.ts`.
-10. **`/api/test/email-preview`:** geen actie nodig. Heeft wel een auth-check en is een bewust behouden, admin-only diagnosetool (2026-08-12).
-11. **Geen betalingsprovider-koppeling — bewust pending:** `/api/admin/payment` zet alleen `paid_at`/`is_active`, facturatie zelf loopt volledig handmatig buiten deze codebase. Geen technisch gebrek maar een bewuste procesconditie bij de huidige schaal. **Triggercriterium:** binnen 30 dagen na de commerciële livegang (Arno's eigen toezegging 2026-08-21), niet gekoppeld aan een gebruikersaantal-drempel zoals de overige Pro-upgrade-triggers hierboven. Livegang-datum zelf staat elders in dit document als uitgesteld/onzeker genoteerd, dus deze deadline schuift daarmee automatisch mee.
