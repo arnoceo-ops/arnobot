@@ -78,7 +78,7 @@ Activeren kan op elk moment, ook na de blokkade.
 
 **Niet gedekt:** een manager met een agent-link die zelf al betaalt (`paid_at`) kan hier niet activeren (het blok verschijnt niet). Dat is de "Controle nodig"-melding, die loopt nog handmatig.
 
-**Testen** (`/bot/admin/gebruikers`, onder PLAN): de knoppen TEAMPROEF zetten het testaccount als manager in een agent-proef in een eigen testteam "Proefteam (test)" (nooit Team Apex): LOPEND, BIJNA VOORBIJ, COULANCE, VOORBIJ EN GEBLOKKEERD, UIT, en twee standen voor een betaald team om de opzegregel te zien: BETAALD (EINDE PERIODE OVER 40 DAGEN, opzeggen is op tijd) en BETAALD (EINDE PERIODE OVER 10 DAGEN, te laat, een periode later). De cron stopt een testteam nooit: het echte stoppen op de einddatum is alleen met tests gedekt. Het plan gaat op Pro, zoals bij een echte proef. De oorspronkelijke waarden van het account (ook het plan) worden bewaard en komen terug met UIT of met een persona-knop. Het testteam telt niet mee in omzet, statistieken, teamlijst en crons en krijgt geen Moneybird-factuur. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet. Wordt het niet meer gebruikt, dan kunnen de knoppen weg (`lib/testTeamproef.ts`, `/api/admin/test-teamproef`).
+**Testen:** op 2026-11-15 is dit met het testaccount op prod doorlopen, met tijdelijke knoppen TEAMPROEF onder PLAN op `/bot/admin/gebruikers` (stand lopend, bijna voorbij, coulance, voorbij en geblokkeerd, betaald met einde over 40 of 10 dagen, UIT). Die knoppen zijn daarna weggehaald. Wil je een stand opnieuw zien, dan kan dat met SQL: zet bij het testaccount `sd_attribution_method = 'link'`, `trial_start`, `expires_at` en `paid_at` op een geschikte waarde en maak een eigen testteam met `TEST_PROEF_TEAM_ID` (`lib/internalTestAccounts.ts`). Zet het testaccount daarna terug naar `expires_at = 2026-10-01`, `paid_at = 2026-11-12`, `sd_attribution_method = null` en lidmaatschap van Team Apex. Betalen kan alleen veilig met een `test_`-Mollie-sleutel; met een live-sleutel loop je tot en met de betaallink, maar betaal je niet. Het echte stoppen van een opgezegd team op de einddatum is nooit op prod gezien (de cron slaat testteams over), alleen met tests.
 
 ## Fase 4. Betaald
 
@@ -174,13 +174,13 @@ Getest en goedgekeurd op 2026-11-04 (testmodus, testteam Apex): reguliere factuu
 - [x] Agent-proef eindigt automatisch, verlengen kan altijd
 - [x] Coulance van 10 dagen met mail en kader
 - [x] Manager activeert zelf op de accountpagina
-- [x] Blok TEAM bovenaan de accountpagina, testknoppen TEAMPROEF
+- [x] Blok TEAM bovenaan de accountpagina; testknoppen TEAMPROEF gebruikt en daarna verwijderd
 - [x] Telegram bij 20 leden en bij een geweigerde join
 - [x] Eigen abonnement stopt en proef vervalt bij het accepteren van een teamuitnodiging
 - [x] Leden van een geblokkeerd team mogen zelf een abonnement nemen en opzeggen
 - [x] Plan gelijk aan het eigen abonnement bij het verwijderen van een lid
 - [x] SQL `stopt_op` uitgevoerd (Arno, 2026-11-15)
 - [x] Opzegregel Team: einddatum, blokkade en stop van de facturatie, intrekken tot de dag ervoor
-- [ ] Opzegregel Team een keer doorlopen op prod met het testaccount
+- [x] Opzegregel Team doorlopen op prod met het testaccount (op tijd en te laat, intrekken, beide mails)
 - [x] Restitutie solo-lid met jaarabonnement: handmatig uit coulance, de Telegram toont de looptijd en het bedrag naar rato
 - [ ] Melding aan de manager buiten de accountpagina (balk in de app)

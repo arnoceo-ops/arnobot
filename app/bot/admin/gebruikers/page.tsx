@@ -15,8 +15,6 @@ import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
-import TestTeamproefButtons from '../test-persona/TestTeamproefButtons'
-import { huidigeTeamproef } from '@/lib/testTeamproef'
 import TestPlanButtons from '../test-persona/TestPlanButtons'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
@@ -372,7 +370,6 @@ export default async function GebruikersPage({
   }
 
   const testPersona = await huidigePersona()
-  const teamproefStand = await huidigeTeamproef()
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -579,11 +576,6 @@ export default async function GebruikersPage({
             Zet het testaccount op Basic, Pro of Team om te zien hoe de app er met dat abonnement uitziet.
           </p>
           <TestPlanButtons key={testPersona.plan} initial={testPersona.plan} />
-          <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', margin: '32px 0 8px' }}>TESTACCOUNT: TEAMPROEF</p>
-          <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-            Zet het testaccount als manager in een gratis agent-proef, in een eigen testteam. Een persona-knop of UIT zet alles terug.
-          </p>
-          <TestTeamproefButtons key={teamproefStand} initial={teamproefStand} />
         </div>
       </div>
     </main>

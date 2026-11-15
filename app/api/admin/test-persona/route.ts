@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { MANUAL_TEST_USER_ID, TEST_TEAM_ID } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
-import { herstelTestaccount } from '@/lib/testTeamproef'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,9 +42,6 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = MANUAL_TEST_USER_ID
-
-  // Stond het account nog in een teamproef (knoppen TEAMPROEF), dan eerst terug naar de normale staat.
-  await herstelTestaccount()
 
   // Schone lei: één account kan maar bij één team/rol tegelijk horen (echte beperking
   // van het datamodel), dus eerst het bestaande lidmaatschap weg, daarna opnieuw

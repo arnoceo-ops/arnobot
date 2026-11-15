@@ -111,11 +111,10 @@ export function excludeInternalTestUsers<T extends { not(column: string, operato
 // content blijft staan. Zie de guard in team/1on1/save/route.ts en team/spotlight/route.ts.
 export const TEST_TEAM_ID = '5b29bd9b-762b-4834-a532-d40efa87a43f'
 
-// Testteam voor de teamproef-flow (activeren, geblokkeerd, leden). Aparte rij naast Team Apex, omdat
-// de testknoppen op /bot/admin/gebruikers dit team blokkeren en facturatie laten starten: dat mag
-// Team Apex (en daarmee Thijs) nooit raken. De knop TEAMPROEF maakt de rij zelf aan (idempotent).
-// Telt nooit mee in MRR, statistieken, de teamlijst in de admin, de proef-cron en de facturatie-cron,
-// en maakt bij activeren geen Moneybird-factuur.
+// Testteam voor de teamproef-flow (activeren, geblokkeerd, opzeggen). De testknoppen die dit team aanmaakten zijn op 2026-11-15
+// verwijderd na het testen (zie docs/TEAM_PROCES.md, fase 3), de rij bestaat niet meer. De id blijft gereserveerd: telt nooit mee in
+// omzet, statistieken, de teamlijst in de admin, de crons en een Moneybird-factuur, mocht er ooit weer een testteam onder dit id
+// worden aangemaakt. Het ligt los van Team Apex, dat nooit geblokkeerd of gefactureerd mag worden (Thijs is er ook manager van).
 export const TEST_PROEF_TEAM_ID = '5f61de0a-3555-4ba7-841d-c6ce7d357608'
 
 /** Alle interne testteams, om uit lijsten, omzet en crons te filteren. */
