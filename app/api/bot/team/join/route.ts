@@ -2,11 +2,35 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { clearIndividueelGebruik } from '@/lib/teamAccess'
+import { nieuwMelden } from '@/lib/capaciteit'
+import { notifyTelegram } from '@/lib/cron-notify'
+import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
+
+// Maximaal aantal leden per team, en vanaf hoeveel leden Arno een melding krijgt (een groter team vraagt een aanpassing, zie docs/TEAM_ONBOARDING.md).
+const MAX_LEDEN = 25
+const MELD_VANAF_LEDEN = 20
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+/**
+ * Telegram naar Arno als een team tegen de grens aan loopt (eenmalig vanaf 20 leden) of als iemand wordt geweigerd omdat het
+ * team vol is (hooguit één keer per week per team). Een mislukte melding mag het joinen nooit blokkeren. Testteams tellen niet.
+ */
+async function meldTeamGrens(team: { id: string; name: string }, soort: 'bijna' | 'vol', leden: number) {
+  if ((TEST_TEAM_IDS as readonly string[]).includes(team.id)) return
+  try {
+    const sleutel = soort === 'bijna' ? `teamgrens:bijna:${team.id}` : `teamgrens:vol:${team.id}`
+    if (!(await nieuwMelden(sleutel, soort === 'bijna' ? 'mijlpaal' : 'waarschuwing'))) return
+    await notifyTelegram(soort === 'bijna'
+      ? `Team "${team.name}" heeft nu ${leden} van maximaal ${MAX_LEDEN} leden. Een groter team vraagt een aanpassing van de grens.`
+      : `Iemand kon niet joinen: team "${team.name}" is vol (${MAX_LEDEN} leden). Pas de grens aan als dit team door moet groeien.`)
+  } catch {
+    // melding is bijzaak
+  }
+}
 
 export async function POST(req: Request) {
   const { userId } = await auth()
@@ -36,8 +60,9 @@ export async function POST(req: Request) {
     .select('*', { count: 'exact', head: true })
     .eq('team_id', team.id)
 
-  if ((memberCount ?? 0) >= 25) {
-    return NextResponse.json({ error: 'Team is vol (maximaal 25 leden)' }, { status: 400 })
+  if ((memberCount ?? 0) >= MAX_LEDEN) {
+    await meldTeamGrens(team, 'vol', memberCount ?? MAX_LEDEN)
+    return NextResponse.json({ error: `Team is vol (maximaal ${MAX_LEDEN} leden)` }, { status: 400 })
   }
 
   const { error } = await supabase
@@ -45,6 +70,8 @@ export async function POST(req: Request) {
     .insert({ team_id: team.id, user_id: userId, role: 'member' })
 
   if (error) return NextResponse.json({ error: 'Joinen mislukt' }, { status: 500 })
+
+  if ((memberCount ?? 0) + 1 >= MELD_VANAF_LEDEN) await meldTeamGrens(team, 'bijna', (memberCount ?? 0) + 1)
 
   // Teamlid krijgt het niveau van het team (premium of elite), zodat iedereen
   // in een Command-deal daadwerkelijk het niveau krijgt waarvoor betaald is.

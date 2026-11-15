@@ -70,7 +70,7 @@ Een manager die zich aanmeldt via de link van een sales agent krijgt bij het aan
 
 1. **`command_manager = true` geeft al toegang**, ook zonder dat er een team of een betaling is (`proxy.ts`). Zet het dus pas na akkoord.
 2. **Facturatie start pas bij stap 7.** Zonder min. seats, cyclus en factuurdatum slaat de cron het team over. Het team kan dan gewoon werken zonder dat er ooit een factuur komt. Vergeet stap 7 niet.
-3. **Maximaal 25 leden per team** (`/api/bot/team/join`). Het aanvraagformulier laat meer seats toe (bijvoorbeeld 140 medewerkers). Bij een grotere klant is een aanpassing nodig vóór de uitnodigingen.
+3. **Maximaal 25 leden per team** (`/api/bot/team/join`). Het aanvraagformulier laat meer seats toe (bijvoorbeeld 140 medewerkers). Bij een grotere klant is een aanpassing nodig vóór de uitnodigingen. Je krijgt een Telegram-melding zodra een team 20 leden bereikt (eenmalig per team) en als iemand wordt geweigerd omdat het team vol is (hooguit één keer per week per team). Testteams melden niet.
 4. **Teamtoegang hangt niet af van `paid_at`.** Toegang loopt via het lidmaatschap en `command_manager`, en stopt alleen bij een blokkade. Of `paid_at` bij een Team nog gezet moet worden voor de administratie is niet uitgezocht; het staat nog zo in `docs/ABONNEMENTEN.md`.
 5. **Teambaas moet een ArnoBot-account hebben** om `command_manager` te kunnen krijgen. De aanvraag koppelt het `user_id` alleen als de aanvrager ingelogd was. Anders zoek je hem op e-mailadres op.
 6. **Het mailadres van de teambaas** is waar de factuur, de betaallink, de herinnering en de blokkademail naartoe gaan (het adres in `approved_users`).
