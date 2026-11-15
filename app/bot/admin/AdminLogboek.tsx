@@ -21,14 +21,18 @@ export default async function AdminLogboek() {
   const naamVoorId = new Map((gebruikers ?? []).map(u => [u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id]))
 
   return (
-    <div style={{ marginBottom: 40 }}>
-      <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 12 }}>LAATSTE ADMINACTIES</p>
+    <details style={{ background: '#1f2937', borderRadius: 4, marginBottom: 40 }}>
+      <summary style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', padding: '14px 20px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>LAATSTE ADMINACTIES</span>
+        <span style={{ fontSize: 12 }}>▼</span>
+      </summary>
+      <div style={{ padding: '0 20px 16px' }}>
       {log.length === 0 ? (
         <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#6b7280' }}>Nog geen adminacties vastgelegd.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {log.map(r => (
-            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 190px minmax(120px,220px) 1fr', gap: 12, alignItems: 'baseline', background: '#1f2937', padding: '10px 12px' }}>
+            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 190px minmax(120px,220px) 1fr', gap: 12, alignItems: 'baseline', background: '#111827', padding: '10px 12px' }}>
               <span style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#6b7280' }}>
                 {new Date(r.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
               </span>
@@ -39,6 +43,7 @@ export default async function AdminLogboek() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </details>
   )
 }
