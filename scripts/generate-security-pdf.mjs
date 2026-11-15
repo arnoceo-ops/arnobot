@@ -122,7 +122,7 @@ function Item(bold, desc) {
 }
 function HR() { return el(View, { style: s.div }) }
 function TH(a, b) { return el(View, { style: s.th }, el(Text, { style: s.c1h }, a), el(Text, { style: s.c2h }, b)) }
-function TR(a, b) { return el(View, { style: s.tr }, el(Text, { style: s.c1 }, a), el(Text, { style: s.c2 }, b)) }
+function TR(a, b) { return el(View, { style: s.tr, wrap: false },el(Text, { style: s.c1 }, a), el(Text, { style: s.c2 }, b)) }
 // Doorlopende paginanummering: pageNumber/totalPages worden door react-pdf zelf berekend
 // (render-prop) i.p.v. een hardcoded totaal. Blijft kloppen ongeacht hoeveel fysieke pagina's
 // de inhoud straks nodig heeft.
