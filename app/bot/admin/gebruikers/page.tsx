@@ -16,7 +16,6 @@ import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
 import TestPlanButtons from '../test-persona/TestPlanButtons'
-import { ACTIE_LABEL, beschrijfDetails, type AdminActie, type AdminLogDetails } from '@/lib/adminLog'
 
 // Losse helper i.p.v. Date.now() rechtstreeks in de paginacomponent: die laatste
 // wordt door react-hooks/purity als impure aangemerkt, ook al is deze pagina
@@ -146,7 +145,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen, adminLogRes] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
@@ -200,11 +199,6 @@ export default async function GebruikersPage({
         .select('user_id, plan, cyclus, status, opzegging_aangevraagd_at, created_at')
         .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
         .order('id', { ascending: true }).range(van, tot)),
-    supabase
-      .from('arnobot_admin_log')
-      .select('id, created_at, actie, doel_user_id, doel_team_id, details')
-      .order('created_at', { ascending: false })
-      .limit(30),
   ])
 
   // TEAM-kolom (2026-08-24): tot nu toe toonde COMMAND alleen command_manager (de Team-
@@ -376,10 +370,6 @@ export default async function GebruikersPage({
   }
 
   const testPersona = await huidigePersona()
-
-  // Logboek van adminacties (arnobot_admin_log), nieuwste eerst.
-  const naamVoorId = new Map(enriched.map(u => [u.user_id, u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id]))
-  const adminLog = (adminLogRes.data ?? []) as { id: string; created_at: string; actie: AdminActie; doel_user_id: string | null; doel_team_id: string | null; details: AdminLogDetails | null }[]
 
   return (
     <main style={{ background: '#111827', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'sans-serif' }}>
@@ -586,26 +576,6 @@ export default async function GebruikersPage({
             Los van de rol: zet hetzelfde testaccount op Basic, Pro of Team om te zien hoe de app er met dat abonnement uitziet.
           </p>
           <TestPlanButtons initial={testPersona.plan} />
-        </div>
-
-        <div style={{ marginTop: 56 }}>
-          <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#f59e0b', marginBottom: 12 }}>LAATSTE ADMINACTIES</p>
-          {adminLog.length === 0 ? (
-            <p style={{ fontSize: '14px', color: '#6b7280' }}>Nog geen adminacties vastgelegd.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {adminLog.map(r => (
-                <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 190px minmax(120px,220px) 1fr', gap: 12, alignItems: 'baseline', background: '#1f2937', padding: '10px 12px' }}>
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                    {new Date(r.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })}
-                  </span>
-                  <span style={{ fontSize: '12px', letterSpacing: '2px', fontWeight: 700, color: '#f1f5f9' }}>{ACTIE_LABEL[r.actie] ?? r.actie}</span>
-                  <span style={{ fontSize: '14px', color: '#9ca3af' }}>{r.doel_user_id ? (naamVoorId.get(r.doel_user_id) ?? r.doel_user_id) : r.doel_team_id ? 'team' : ''}</span>
-                  <span style={{ fontSize: '12px', color: '#6b7280', lineHeight: 1.6 }}>{beschrijfDetails(r.details)}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </main>

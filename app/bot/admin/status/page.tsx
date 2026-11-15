@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { getSetting } from '@/lib/settings'
 import { controleerKoppelingen, type KoppelingStatus } from '@/lib/billing/gezondheid'
 import AdminNav from '../AdminNav'
+import AdminLogboek from '../AdminLogboek'
 import LinkedInFallbackToggle from './LinkedInFallbackToggle'
 import { leesCronRuns } from '@/lib/cronRun'
 import { leesCrons } from '@/lib/cronOverzicht'
@@ -395,6 +396,7 @@ export default async function AdminStatusPage() {
           ))}
         </div>
 
+        <AdminLogboek />
       </div>
     </main>
   )
