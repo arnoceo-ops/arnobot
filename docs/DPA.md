@@ -1,6 +1,6 @@
-# Verwerkersovereenkomst — CONCEPT v0.7
+# Verwerkersovereenkomst (concept)
 
-> **CONCEPT, door Arno vastgesteld, niet juridisch getoetst.** Arno heeft geen jurist en stelt de tekst zelf vast; dit is geen ondertekenbaar document totdat Arno het expliciet zo bestempelt. Gebaseerd op de standaardstructuur van AVG artikel 28(3) en de feiten uit `docs/dpa-input.md`. Artikel 11 (aansprakelijkheid) blijft bewust zoals het is (besluit Arno, 2026-11-15: hij is als eenmanszaak persoonlijk aansprakelijk, dus één uniform maximum). Bijgewerkt in v0.7 (2026-11-15): AssemblyAI, Mollie en Moneybird toegevoegd als sub-verwerkers (Artikel 5), de beschrijving van OpenAI aangepast, en een verkeerde verwijzing in Artikel 1 hersteld (beëindiging staat in Artikel 13). Eerdere wijzigingen: v0.6 OpenAI, 2026-08-01 ElevenLabs, PostHog en Calendly. Nog te doen vóór ondertekening met een klant: een DPA opvragen bij Voyage AI, Upstash en PostHog.
+> Concept: pas bindend na ondertekening door beide partijen. Onderaan staan de werkaantekeningen (status per leverancier en wat nog openstaat); die zijn geen onderdeel van de overeenkomst.
 
 ---
 
@@ -38,9 +38,10 @@ ArnoBot verwerkt gegevens uitsluitend op basis van gedocumenteerde instructies v
 
 | Categorie | Toelichting |
 |---|---|
-| Accountgegevens | Naam en e-mailadres |
+| Accountgegevens | Naam en e-mailadres, afkomstig uit het LinkedIn-profiel (of het bedrijfs-e-mailadres bij Enterprise SSO) via Clerk |
 | Profielgegevens | Salesrol, markt, uitdagingen, doelstellingen |
 | Gesprekslogs | AI-coachingsgesprekken |
+| Gedeelde gesprekken | Gesprekken die de gebruiker zelf deelt via een publieke link (optioneel, op initiatief van de gebruiker) |
 | Technische gegevens | IP-adres, sessiedata |
 | Geüploade documenten | Niet blijvend opgeslagen, alleen gebruikt om de vraag te beantwoorden |
 
@@ -136,7 +137,6 @@ Deze overeenkomst eindigt automatisch bij beëindiging van de onderliggende dien
 
 ---
 
-*Concept opgesteld als input voor juridische beoordeling. Bevat geen bindende afspraken totdat beide partijen een door een jurist gecontroleerde definitieve versie ondertekenen.*
 
 ---
 
@@ -161,3 +161,35 @@ Partijen verklaren bovenstaande te zijn overeengekomen en ondertekenen dit docum
 | Functie | Eigenaar, ArnoBot (eenmanszaak) |
 | Datum | ______________________ |
 | Handtekening | ______________________ |
+
+---
+
+## Werkaantekeningen (geen onderdeel van de overeenkomst)
+
+**Rechten van betrokkenen in de praktijk:** gebruikers kunnen deels zelf inzage, export en verwijdering regelen via hun account (data downloaden, account verwijderen, profiel aanpassen). Overige verzoeken lopen via privacy@arno.bot en worden binnen 10 werkdagen beantwoord. Op verzoek worden gegevens binnen 10 werkdagen verwijderd.
+
+**DPA-status per sub-verwerker** (de tabel in Artikel 5 bevat alleen partij, doel en locatie):
+
+| Partij | DPA |
+|---|---|
+| Supabase | Aanwezig |
+| Clerk | clerk.com/legal/dpa |
+| Vercel | vercel.com/legal/dpa |
+| Anthropic | anthropic.com/legal/dpa |
+| OpenAI | openai.com/policies/dpa |
+| Resend | resend.com/legal/dpa |
+| Voyage AI | Op aanvraag, geen publieke link |
+| Sentry | sentry.io/legal/dpa |
+| Upstash | Geen publieke DPA, op aanvraag |
+| ElevenLabs | elevenlabs.io/dpa |
+| PostHog | Op aanvraag |
+| Calendly | calendly.com/legal/data-processing-addendum |
+| AssemblyAI | assemblyai.com/legal/data-processing-addendum |
+| Mollie | mollie.com/legal/data-processing-agreement |
+| Moneybird | Verwerkersovereenkomst afgesloten door Arno op 2026-10-09 |
+
+**Aanvullende feiten per sub-verwerker:** Anthropic, OpenAI, ElevenLabs en AssemblyAI trainen niet op klantdata. Upstash verwerkt IP-adressen. PostHog: anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving, geen gespreks-, coaching- of analyse-inhoud; session replay staat aan, beperkt tot 6 shell-pagina's, alle tekst en invoer gemaskeerd, bewaartermijn 30 dagen.
+
+**Openstaand vóór ondertekening met een klant:**
+- Een DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom dat niet nodig is. Voor PostHog is dit het meest urgent sinds de pseudonieme productanalyse van ingelogde gebruikers (2026-08-30); bevestig bij de aanvraag ook de sub-verwerkersketen (onder meer AWS eu-central-1).
+- SOC 2 Type II of ISO 27001 van ArnoBot zelf is er niet; stelt een klant dat als harde eis, dan is dat een apart traject.
