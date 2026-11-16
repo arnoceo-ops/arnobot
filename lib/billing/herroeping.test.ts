@@ -151,6 +151,7 @@ describe('voerHerroepingUit', () => {
     expect(h.mail).toHaveBeenCalledWith(MANUAL_TEST_USER_ID, 'terugbetaling_bevestiging', { bedragCent: 7700, upgrade: false })
     expect(h.log).toHaveBeenCalledWith(expect.objectContaining({ actie: 'herroeping', details: { extra: expect.objectContaining({ proef: true }) } }))
     expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('PROEF'))
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('€77,00'))
   })
 
   it('proefmodus blijft proefmodus, ook als het testaccount een echte betaling heeft', async () => {

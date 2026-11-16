@@ -30,6 +30,8 @@ export type Herroepbaar = {
   gesimuleerd: boolean
 }
 
+const euro = (cent: number) => `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
 /** Kalenderdatum in Amsterdamse tijd, YYYY-MM-DD. */
 export function amsterdamDatum(d: Date): string {
   return d.toLocaleDateString('sv-SE', { timeZone: AMSTERDAM })
@@ -130,7 +132,7 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   if (herroepbaar.gesimuleerd) {
     await verstuurBillingMail(userId, 'terugbetaling_bevestiging', { bedragCent: herroepbaar.bedragCent, upgrade })
     await logAdminActie({ actie: 'herroeping', doelUserId: userId, details: { extra: { proef: true, soort: herroepbaar.soort, bedrag_cent: herroepbaar.bedragCent } } })
-    await notifyTelegram(`PROEF herroeping op arno.bot (er is niets terugbetaald)\n\nUser: ${userId}\nSoort: ${herroepbaar.soort}\nBedrag: ${herroepbaar.bedragCent} cent`)
+    await notifyTelegram(`PROEF herroeping op arno.bot (er is niets terugbetaald)\n\nUser: ${userId}\nSoort: ${upgrade ? 'upgrade' : 'eerste betaling'}\nBedrag: ${euro(herroepbaar.bedragCent)}`)
     return { ok: true, soort: herroepbaar.soort, bedragCent: herroepbaar.bedragCent, proef: true }
   }
 
