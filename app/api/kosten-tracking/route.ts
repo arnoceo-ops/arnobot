@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand } from '@/lib/kostenTarieven'
+import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, voyageKostenPerBericht } from '@/lib/kostenTarieven'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
@@ -123,6 +123,7 @@ async function meetOmzet(prijzen?: { basis?: number; premium?: number }): Promis
 
 function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
   const anthropicKosten = m.berichten_count * TARIEVEN.anthropicPerBericht
+  const voyageKosten = m.berichten_count * voyageKostenPerBericht()
   const analysesKosten = m.analyses_count * TARIEVEN.kostenPerAnalyse
   const fable5Kosten = m.gebruikers_count * (
     TARIEVEN.coachingPerGebruikerPerMaand * TARIEVEN.coachingKostenPerSynthese
@@ -140,7 +141,7 @@ function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
   const upstashOverage = Math.max(0, upstashCommands - TARIEVEN.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * TARIEVEN.upstashPricePer100k
 
-  return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + analysesKosten + fable5Kosten
+  return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + voyageKosten + analysesKosten + fable5Kosten
     + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
     + resendOverageUsd(m.gebruikers_count)
 }

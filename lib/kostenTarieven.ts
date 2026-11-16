@@ -47,6 +47,16 @@ export const TARIEVEN = {
   // hieronder (DEFAULT_INPUTS) zijn een voorzichtige placeholder, geen
   // gemeten data zoals bij de andere routes.
   assemblyaiPerMinuut: 0.23 / 60,
+  // Voyage AI rerank (rerank-2.5, lib/rag.ts) bij elke chatvraag: $0,05 per 1M tokens
+  // (docs.voyageai.com/docs/pricing, laatst gewijzigd 2026-09-29, gelezen 2026-11-16). Voyage telt
+  // (query-tokens x aantal documenten) + alle documenttokens. SCHATTING, niet gemeten: tot 130
+  // kandidaten (100 vector + 30 fulltext, meer bij de multi-query) van 300 woorden plus een contextzin
+  // = ongeveer 70.000 tokens per rerank. Vervang door het echte verbruik uit het Voyage-dashboard
+  // (Usage). Geen gratis tokens meegerekend: de pagina spreekt zichzelf tegen over de gratis 200M
+  // tokens voor rerank-2.5. Niet meegeteld: de reranks bij sessie-einde en coaching, en de
+  // embeddings (verwaarloosbaar: een zoekvraag is zo'n 30 tokens).
+  voyageRerankPerMiljoenUsd: 0.05,
+  rerankTokensPerBericht: 70000,
   tiers: [
     { name: 'Starter', credits: 30000, price: 6 },
     { name: 'Creator', credits: 121000, price: 22 },
@@ -221,6 +231,11 @@ export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = T
 // zodat beide daadwerkelijk exact dezelfde rekenregels gebruiken (besloten
 // 2026-08-11: stond hiervoor alleen lokaal in tab 1, tab 3 gebruikte altijd
 // DEFAULT_INPUTS ongeacht wat op tab 1 was aangepast, zie audit-bevindingen).
+// Voyage-rerankkosten per chatbericht in dollars, afgeleid van de twee tarieven in TARIEVEN.
+export function voyageKostenPerBericht(): number {
+  return (TARIEVEN.rerankTokensPerBericht / 1_000_000) * TARIEVEN.voyageRerankPerMiljoenUsd
+}
+
 export type Inputs = {
   berichten: number
   anthropicPerBericht: number
@@ -244,6 +259,7 @@ export type Inputs = {
   pctAudioAnalyse: number
   audioMinutenPerGebruiker: number
   assemblyaiPerMinuut: number
+  voyagePerBericht: number
   dicteerMinutenPerGebruiker: number
   pctDicteerLive: number
   dicteerPerMinuut: number
@@ -311,6 +327,7 @@ export const DEFAULT_INPUTS: Inputs = {
   pctAudioAnalyse: 5,
   audioMinutenPerGebruiker: 20,
   assemblyaiPerMinuut: TARIEVEN.assemblyaiPerMinuut,
+  voyagePerBericht: voyageKostenPerBericht(),
   // Dicteren: nog geen gemeten gebruik, voorzichtige startwaarde van 30 minuten per gebruiker per
   // maand (alle gebruikers, ook Basic). Live is de bedoelde standaard, dus 100%. Bijwerken zodra er
   // echte cijfers zijn.
@@ -365,6 +382,8 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const n = basicN + proEffectief
   const totaalBerichten = n * inputs.berichten
   const anthropicKosten = totaalBerichten * inputs.anthropicPerBericht
+
+  const voyageKosten = totaalBerichten * inputs.voyagePerBericht
 
   const analysesKosten = (proEffectief * inputs.analysesPerGebruiker + basicN * BASIC_ANALYSES_PER_MAAND) * inputs.kostenPerAnalyse
 
@@ -426,10 +445,10 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
+    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
 
   return {
-    vastKosten, anthropicKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
+    vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
     whisperKosten, dicteerKosten, audioAnalyseKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }

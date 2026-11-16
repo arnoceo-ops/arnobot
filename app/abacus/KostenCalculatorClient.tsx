@@ -185,6 +185,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={cardHeadStyle}><span style={dotStyle} />Hoofdchat &amp; gebruik</div>
               <NumberField label="Berichten per user per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
               <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat + Haiku-RAG-herschrijving" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
+              <NumberField label="Voyage rerank per bericht ($)" hint="rerank-2.5, $0,05 per 1M tokens, geschat op 70.000 tokens per vraag" value={inputs.voyagePerBericht} step={0.0001} onChange={v => set('voyagePerBericht', v)} />
             </div>
 
             <div style={cardStyle}>
@@ -332,6 +333,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={{ marginTop: 16 }}>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Vaste infrastructuur</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD0(result.vastKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Voyage AI (rerank)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.voyageKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Analyses</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.analysesKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
