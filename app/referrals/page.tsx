@@ -26,7 +26,7 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.4 · Augustus 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.5 · November 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
@@ -39,8 +39,7 @@ export default function ReferralSpelregelsPage() {
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 2</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Hoe het werkt</h2>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Jij deelt als referrer je persoonlijke link (bijv. <strong style={{ color: '#f1f5f9' }}>arno.bot/aanmelden?ref=NAAM-XXXX</strong>). De nieuwe gebruiker klikt op die link, doorloopt de standaard gratis trial en sluit daarna een abonnement af. Op dat moment worden de kortingen en het tegoed van toepassing.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral code wordt eenmalig per account gekoppeld, op het moment van de eerste inlog via de link.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Ben je manager van een team, dan krijg je ook een referral-link. Een team dat je aanbrengt telt als één betalende referral.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een referral code wordt eenmalig per account gekoppeld, op het moment van de eerste inlog via de link.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
@@ -70,7 +69,7 @@ export default function ReferralSpelregelsPage() {
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
                   <td>Nieuwe gebruiker kiest Pro of Team</td>
-                  <td>Tegoed, maximaal jouw eigen maandprijs (Basic €19-29, Pro €39-59, Team €49)</td>
+                  <td>Tegoed, maximaal jouw eigen maandprijs (Basic €19-29, Pro €39-59). Voor managers van een team is het plafond de totale maandprijs van het eigen team</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Referrer</td>
@@ -99,6 +98,7 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 6</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Mijlpalen</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een team dat je als manager aanbrengt telt als één betalende referral, ongeacht het aantal gebruikers.</p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 20 }}>Bij het bereiken van de volgende aantallen betalende referrals gelden de onderstaande beloningen:</p>
             <table style={{ tableLayout: 'fixed' }}>
               <colgroup>
@@ -131,7 +131,7 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 7</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Uitsluitingen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar. Teamleden hebben geen eigen referral link, de manager van een team heeft die wel.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
