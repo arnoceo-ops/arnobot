@@ -184,7 +184,7 @@ Downloadbaar op https://arno.bot/arnobot-beveiliging.pdf. Beschrijft de technisc
 ### AVG / GDPR
 - Gebruikers kunnen hun data opvragen en laten verwijderen via het account-instellingenscherm (`/bot/account`)
 - Verwijderverzoeken worden verwerkt via de "Account verwijderen" functie — dit wist alle gesprekken, analyses en het gebruikersrecord
-- [ARNO: is er een verwerkersovereenkomst (DPA) met alle sub-verwerkers? Volledige huidige lijst (zie ook `app/privacy/page.tsx` en `public/arnobot-beveiliging.pdf`): Anthropic, Supabase, Clerk, Voyage AI, OpenAI (spraak), ElevenLabs (Voice), Resend, Upstash, Sentry, PostHog, Vercel. Vul in per leverancier of dit geregeld is]
+- **Verwerkersovereenkomsten (stand 2026-11-16):** PostHog is getekend op 2026-11-15 (self-serve via PandaDoc, het getekende PDF staat in Arno's eigen bestanden). Upstash, Voyage AI en Supabase hebben een publieke DPA die geldt via hun gebruikersvoorwaarden (links in de tabel op `app/privacy/page.tsx`). Voor de overige leveranciers (Anthropic, Clerk, OpenAI, AssemblyAI, ElevenLabs, Resend, Sentry, Vercel, Mollie, Calendly, Meta) staat een DPA-link in diezelfde tabel; of die per account is geaccepteerd is nog niet nagelopen. Voyage-trainings-opt-out staat aan sinds 2026-11-15.
 
 ### Vestiging en belastingen
 - [ARNO: vul in: welk rechtsgebied, welk BTW-nummer, hoe worden abonnementen gefactureerd]

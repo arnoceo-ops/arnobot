@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { beoordeelExtern, beoordeelArnoBot, bouwStoringBericht, MIN_METINGEN_VOOR_SNELHEID } from './storing'
+import { beoordeelExtern, beoordeelArnoBot, bouwStoringBericht, mediaan, MIN_METINGEN_VOOR_SNELHEID } from './storing'
 
 const nu = new Date('2026-11-14T12:00:00Z')
 const log = (minutenGeleden: number, responseTime: number, status = 'UP') => ({
@@ -28,14 +28,23 @@ describe('beoordeelArnoBot', () => {
     expect(beoordeelArnoBot({ monitorStatus: 'DOWN', logs: [] }, nu)[0]).toMatchObject({ niveau: 'kritiek', sleutel: 'storing:arnobot:down' })
     expect(beoordeelArnoBot({ monitorStatus: 'DEGRADED', logs: [] }, nu)[0]).toMatchObject({ niveau: 'waarschuwing' })
   })
-  it('meldt onder druk als waarschuwing bij een gemiddelde boven 1200 ms in het laatste uur', () => {
+  it('meldt niets bij losse uitschieters: de meting van 15-11 (gemiddeld boven 1200 ms, mediaan 1200 ms)', () => {
+    const m = { monitorStatus: 'UP', logs: [log(5, 349), log(15, 2600), log(25, 871), log(35, 1400), log(45, 1200), log(55, 1200)] }
+    expect(beoordeelArnoBot(m, nu)).toEqual([])
+  })
+  it('rekent de mediaan van een even aantal metingen uit', () => {
+    expect(mediaan([100, 300, 200, 400])).toBe(250)
+    expect(mediaan([5, 1, 3])).toBe(3)
+    expect(mediaan([0, 0])).toBeNull()
+  })
+  it('meldt onder druk als waarschuwing bij een mediaan boven 1200 ms in het laatste uur', () => {
     const m = { monitorStatus: 'UP', logs: [log(5, 1400), log(15, 1500), log(25, 1600)] }
     const r = beoordeelArnoBot(m, nu)
     expect(r).toHaveLength(1)
     expect(r[0]).toMatchObject({ niveau: 'waarschuwing', sleutel: 'storing:snelheid:onder_druk' })
     expect(r[0].tekst).toContain('1500 ms')
   })
-  it('meldt laag als kritiek bij een gemiddelde boven 2500 ms', () => {
+  it('meldt laag als kritiek bij een mediaan boven 2500 ms', () => {
     const m = { monitorStatus: 'UP', logs: [log(5, 3000), log(15, 3200), log(25, 2900)] }
     expect(beoordeelArnoBot(m, nu)[0]).toMatchObject({ niveau: 'kritiek', sleutel: 'storing:snelheid:laag' })
   })

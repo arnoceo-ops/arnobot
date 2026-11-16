@@ -73,7 +73,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Accountgegevens</td><td>Naam en e-mailadres, afkomstig uit jouw LinkedIn-profiel via Clerk</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profielgegevens</td><td>Salesrol, markt, uitdagingen en doelstellingen die jij invult</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>AI-coachingsgesprekken die jij voert met ArnoBot</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die je deelt via een publieke link. Iedereen met de link kan ze lezen, zoekmachines kunnen ze indexeren.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die je deelt via een publieke link. Iedereen met de link kan ze lezen. Zoekmachines worden gevraagd ze niet te indexeren.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geheugen</td><td>Samenvattingen en feiten uit je gesprekken, zodat ArnoBot je beter kan coachen</td></tr>

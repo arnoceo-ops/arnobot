@@ -25,6 +25,14 @@ export function beoordeelExtern(naam: string, indicator: string | null): Storing
   return null
 }
 
+/** Middelste meting (bij een even aantal het gemiddelde van de twee middelste), alleen metingen boven 0. */
+export function mediaan(tijden: number[]): number | null {
+  const geldig = tijden.filter(t => t > 0).sort((a, b) => a - b)
+  if (geldig.length === 0) return null
+  const mid = Math.floor(geldig.length / 2)
+  return Math.round(geldig.length % 2 === 1 ? geldig[mid] : (geldig[mid - 1] + geldig[mid]) / 2)
+}
+
 /** arno.bot zelf, volgens de Instatus-monitor: bereikbaarheid en de gemiddelde responstijd van het laatste uur. */
 export function beoordeelArnoBot(meting: InstatusMeting, nu: Date = new Date()): StoringMelding[] {
   const meldingen: StoringMelding[] = []
@@ -39,20 +47,23 @@ export function beoordeelArnoBot(meting: InstatusMeting, nu: Date = new Date()):
   const tijden = meting.logs
     .filter(l => Date.parse(l.createdAt) > uurGeleden)
     .map(l => l.responseTime ?? 0)
+  // De mediaan, niet het gemiddelde: een paar losse uitschieters (een koude start van 2,6 s) mogen
+  // geen alarm geven, een uur dat echt traag is wel. Zelfde grenzen als de statuspagina.
   const m = meetSnelheid(tijden)
   if (m.aantal >= MIN_METINGEN_VOOR_SNELHEID) {
-    const niveau = beoordeelSnelheid({ gemiddeldMs: m.gemiddeldMs, p95Ms: null })
+    const mediaanMs = mediaan(tijden)
+    const niveau = beoordeelSnelheid({ gemiddeldMs: mediaanMs, p95Ms: null })
     if (niveau === 'laag') {
       meldingen.push({
         sleutel: 'storing:snelheid:laag',
         niveau: 'kritiek',
-        tekst: `arno.bot is erg traag: gemiddeld ${m.gemiddeldMs} ms over het laatste uur (grens voor laag: ${SNELHEID_GRENZEN.laag.gemiddeldMs} ms).`,
+        tekst: `arno.bot is erg traag: mediaan ${mediaanMs} ms over het laatste uur (grens voor laag: ${SNELHEID_GRENZEN.laag.gemiddeldMs} ms).`,
       })
     } else if (niveau === 'onder_druk') {
       meldingen.push({
         sleutel: 'storing:snelheid:onder_druk',
         niveau: 'waarschuwing',
-        tekst: `arno.bot staat onder druk: gemiddeld ${m.gemiddeldMs} ms over het laatste uur (grens: ${SNELHEID_GRENZEN.onderDruk.gemiddeldMs} ms).`,
+        tekst: `arno.bot staat onder druk: mediaan ${mediaanMs} ms over het laatste uur (grens: ${SNELHEID_GRENZEN.onderDruk.gemiddeldMs} ms).`,
       })
     }
   }

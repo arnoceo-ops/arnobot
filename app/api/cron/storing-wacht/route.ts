@@ -8,7 +8,7 @@ import { beoordeelArnoBot, beoordeelExtern, bouwHerstelBericht, bouwStoringBeric
 import { leesActieveStoringen, schrijfActieveStoringen } from '@/lib/storingStaat'
 
 // Elk kwartier. Meldt via Telegram wat de statuspagina alleen toont: arno.bot niet bereikbaar,
-// te traag (gemiddelde responstijd van het laatste uur boven de grenzen in lib/performance.ts) of
+// te traag (mediaan van de responstijd van het laatste uur boven de grenzen in lib/performance.ts) of
 // een grote storing bij Anthropic, Vercel, Supabase, Clerk of Resend. Anders stil.
 // Dubbele-meldingsbeveiliging zoals de capaciteitswacht: een kritieke melding komt hooguit één keer
 // per dag terug, een waarschuwing hooguit één keer per week. Een mislukte statusfetch is geen storing.
