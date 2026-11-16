@@ -351,7 +351,7 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
               <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5 }}>
                 {afspraak}{' '}
                 {klantType === 'particulier' && (
-                  <>Als particulier heb je 14 dagen bedenktijd. Je maakt de koop ongedaan met de knop &apos;Koop ongedaan maken&apos; op je accountpagina, of met het <a href="https://www.acm.nl/nl/publicaties/publicatie/12754/Modelformulier-ontbinding-of-herroeping" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>modelformulier</a>.</>
+                  <>Je hebt 14 dagen bedenktijd. Ongedaan maken kan op je accountpagina of met het <a href="https://www.acm.nl/nl/publicaties/publicatie/12754/Modelformulier-ontbinding-of-herroeping" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b' }}>modelformulier</a>.</>
                 )}
               </p>
 
