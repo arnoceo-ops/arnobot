@@ -424,6 +424,11 @@ export default function AccountPage() {
         </div>
         )}
 
+        {/* Koop ongedaan maken binnen de bedenktijd van 14 dagen (voorwaarden artikel 8). Bewust buiten de
+            teamvoorwaarde hieronder: de component verbergt zichzelf als er niets te herroepen valt (zakelijk, teamleden
+            en iedereen zonder recente betaling krijgen niets te zien). */}
+        <HerroepSectie />
+
         {/* Abonnement opzeggen — verborgen voor gewone teamleden, dat is de manager's
             abonnement, niet het hunne. Voor de manager zelf wél zichtbaar (hij betaalt het
             teamabonnement), met aangepaste tekst die het teambrede effect benoemt.
@@ -434,8 +439,6 @@ export default function AccountPage() {
         {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
             mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}
         <OverstapSectie versie={overstapVersie} />
-        {/* Koop ongedaan maken binnen de bedenktijd van 14 dagen (voorwaarden artikel 8), alleen voor particulieren. */}
-        <HerroepSectie />
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
           {soloNaarTeamOp ? (

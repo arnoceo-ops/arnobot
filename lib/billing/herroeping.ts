@@ -61,14 +61,21 @@ export function kiesHerroepbareBetaling(betalingen: PayRow[], nu: Date = new Dat
   return kandidaten[0] ?? null
 }
 
-/** Wie de knop ziet: iedereen na HERROEPING_OPEN=true, daarvoor alleen de interne testaccounts. */
+const isOpen = () => process.env.HERROEPING_OPEN === 'true'
+
+/** Wie de knop ziet: iedereen na HERROEPING_OPEN=true, daarvoor de interne testaccounts en de eigenaar (in proefmodus). */
 export function herroepingBeschikbaarVoor(userId: string): boolean {
-  return process.env.HERROEPING_OPEN === 'true' || isInternalTestUser(userId)
+  return isOpen() || isProefmodus(userId)
 }
 
-/** Interne testaccounts herroepen altijd in proefmodus. */
+/**
+ * Proefmodus: interne testaccounts altijd, de eigenaar alleen zolang de knop nog niet openstaat (daarna is
+ * de eigenaar gewoon een klant, met een echte betaling en een echte terugbetaling).
+ */
 export function isProefmodus(userId: string): boolean {
-  return isInternalTestUser(userId)
+  if (isInternalTestUser(userId)) return true
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return !isOpen() && !!eigenaar && eigenaar === userId
 }
 
 export async function zoekHerroepbaar(userId: string, nu: Date = new Date()): Promise<{ herroepbaar: Herroepbaar | null; betaling: PayRow | null }> {

@@ -33,7 +33,7 @@ vi.mock('@/lib/adminLog', () => ({ logAdminActie: h.log }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 
 import {
-  herroepingBeschikbaarVoor, isBinnenBedenktijd, kiesHerroepbareBetaling, laatsteDagBedenktijd, voerHerroepingUit,
+  herroepingBeschikbaarVoor, isBinnenBedenktijd, isProefmodus, kiesHerroepbareBetaling, laatsteDagBedenktijd, voerHerroepingUit,
 } from './herroeping'
 import type { PayRow } from './db'
 
@@ -88,6 +88,15 @@ describe('wie de knop ziet', () => {
     expect(herroepingBeschikbaarVoor(MANUAL_TEST_USER_ID)).toBe(true)
     vi.stubEnv('HERROEPING_OPEN', 'true')
     expect(herroepingBeschikbaarVoor('user_gewoon')).toBe(true)
+    vi.unstubAllEnvs()
+  })
+  it('de eigenaar ziet de knop in proefmodus zolang hij niet openstaat, daarna is de eigenaar een gewone klant', () => {
+    vi.stubEnv('ARNOBOT_OWNER_USER_ID', 'user_eigenaar')
+    vi.stubEnv('HERROEPING_OPEN', '')
+    expect(herroepingBeschikbaarVoor('user_eigenaar')).toBe(true)
+    expect(isProefmodus('user_eigenaar')).toBe(true)
+    vi.stubEnv('HERROEPING_OPEN', 'true')
+    expect(isProefmodus('user_eigenaar')).toBe(false)
     vi.unstubAllEnvs()
   })
 })
