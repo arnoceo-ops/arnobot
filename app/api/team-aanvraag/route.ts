@@ -94,13 +94,35 @@ export async function POST(req: Request) {
 
   const prijsTekst = teamPrijsWeergave(seats, cyclus as Cyclus)
 
+  // Via een referral binnengekomen? Een team via dit formulier heeft geen trial, dus de gratis
+  // eerste maand voor de nieuwe gebruiker en het tegoed voor de aanbrenger moet Arno handmatig
+  // regelen (docs/ABONNEMENTEN.md, referralprogramma). Alleen op te zoeken als de aanvrager
+  // ingelogd is; anders blijft de regel weg.
+  let referralRegel = ''
+  if (userId) {
+    const { data: verw } = await supabase
+      .from('arnobot_referrals')
+      .select('referrer_user_id, code_used')
+      .eq('referred_user_id', userId)
+      .maybeSingle()
+    if (verw) {
+      const { data: referrer } = await supabase
+        .from('approved_users')
+        .select('voornaam, full_name, email')
+        .eq('user_id', verw.referrer_user_id)
+        .maybeSingle()
+      const naam = referrer?.voornaam || (referrer?.full_name ?? '').split(' ')[0] || referrer?.email || 'onbekend'
+      referralRegel = `Via referral van ${naam} (code ${verw.code_used}): regel de gratis eerste maand en het tegoed voor de aanbrenger`
+    }
+  }
+
   await verstuurMailZacht({
     from: 'ArnoBot <noreply@arno.bot>',
     to: 'arno@arno.bot',
     subject: `Nieuwe Team-aanvraag: ${bedrijfsnaam}`,
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Team-abonnement aangevraagd.<br><br>` +
-      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}` +
+      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}${referralRegel ? `<strong style="color:#f59e0b;">${referralRegel}</strong><br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `BTW-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK TEAMS →', 'https://www.arno.bot/bot/admin/teams'
     ),
@@ -114,7 +136,7 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: tgChat,
-        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}`,
+        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? `\n\n${referralRegel}` : ''}`,
       }),
     }).catch(() => {})
   }
