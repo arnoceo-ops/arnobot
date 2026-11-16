@@ -80,9 +80,10 @@ export async function findSemanticallyRelevantOlderSessions(
       .map(m => m.session_id)
     if (candidateIds.length === 0) return []
 
-    // match_sessions filtert niet op deleted_at (bevestigd 2026-08-12, zie geheugen), dus hier
-    // alsnog uitsluiten: anders komt soft-deleted content (bijv. Basic-gebruikers boven de
-    // 25-sessie-grens) terug in het geheugen terwijl die voor de gebruiker verwijderd is.
+    // match_sessions filtert zelf wel op deleted_at (gemeten 2026-11-16: drie verwijderde sessies met
+    // eigen embedding kwamen niet terug; de oude bevinding van 2026-08-12 was niet meer waar, of
+    // verkeerd). Deze query blijft als vangnet voor deleted_at en is nodig voor community_excluded:
+    // anders kan verwijderde of uitgesloten content in het geheugen terugkomen.
     const { data: validRows } = await supabase
       .from('arnobot_blog_sessions')
       .select('session_id, title, summary, feiten, onderwerp, created_at')

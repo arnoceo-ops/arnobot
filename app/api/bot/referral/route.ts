@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
     referrer_user_id: referrer.user_id,
     referred_user_id: userId,
     code_used: code.toUpperCase(),
+    referred_naam: newUserName,
     status: 'signed_up',
   })
 

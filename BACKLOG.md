@@ -21,6 +21,7 @@ Momentopname 2026-11-15, samengesteld uit het oude `docs/OPENSTAANDE_PUNTEN.md` 
 - **Leeg-antwoord-bescherming ontbreekt** op `cron/refresh-openers`, `bot/sessions*` en `admin/feedback-analyse`. Herbeoordelen als een prompt groeit.
 - **Sessie-sluiter:** een echte run waarbij de cron zelf een verlaten gesprek afsluit is nog niet gezien (7 tests dekken de route). Controle: een rij in `arnobot_blog_sessions` met `onderwerp` en een geslaagde run van `/api/cron/sessies-afsluiten` in Vercel.
 - **Voice:** live dicteren nog testen op een echte iPhone (Safari) en Android (Chrome); een echte proefboeking om de Calendly-webhookmatching te bevestigen is bewust overgeslagen.
+- **Architectuuraudit 2026-09-01 (PR 67, getoetst 2026-11-16), twee laagrisico-restpunten:** (1) drie losse schrijvers van `blog_chunks.embedding` (`app/api/cron/rss-ingest/route.ts`, `scripts/embed-chunks.mjs`, `scripts/embed-single-doc.mjs`), nu allemaal `voyage-3-large`: afdwingen met één Vitest-test die de vier bestanden (die drie plus `lib/rag.ts`) op dezelfde modelstring controleert, of één gedeelde `embedKennisbankDocumenten()` in `lib/rag.ts` voor de TS-kant. (2) `app/api/bot/profiel/route.ts` slaat het profiel op zonder merge met het bestaande: alleen aanpassen (`{...bestaand, ...profiel}`) als er een profielveld bijkomt dat niet op de profielpagina staat.
 
 ## Product
 - **Manager-zelfcoaching, stuk B** (signaalgedreven handvatten en terugkoppellus) wacht op Arno's akkoord op vijf beslispunten, zie `docs/archief/TEAM_PLAN.md`. Stuk C (team-onboarding vertrouwenslagen) geparkeerd.
