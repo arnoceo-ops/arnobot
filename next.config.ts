@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       { source: '/bot/bieb/:path*', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief', destination: '/bot/analyses', permanent: true },
       { source: '/bot/archief/:path*', destination: '/bot/analyses', permanent: true },
+      // Bezoekers die de privacypagina met een taalprefix raden (Sentry ARNO-BOT-1C, 2026-11-17).
+      { source: '/:lang(en|nl)/privacy', destination: '/privacy', permanent: true },
       // /blog is sinds 2026-10-10 de eigen blog op arno.bot. Alleen de oude arno.blog-vormen
       // blijven doorgestuurd: jaar-URL's en .html-URL's uit het Squarespace-tijdperk (anders
       // 404-ruis van bots en gebroken oude links). Hier i.p.v. in proxy.ts: de proxy-matcher
