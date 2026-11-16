@@ -41,6 +41,8 @@ Proefperiode: 30 dagen gratis. Op dag 25 wordt gevraagd of de gebruiker wil door
 
 Opzeggen: via de accountpagina met één klik. De toegang blijft actief tot het einde van de lopende betaalperiode. De data blijft daarna nog 30 dagen beschikbaar om te downloaden of te verwijderen.
 
+Koop ongedaan maken: binnen 14 dagen na een aankoop of upgrade staat op de accountpagina het blok BEDENKTIJD met de knop KOOP ONGEDAAN MAKEN. Na een bevestiging krijgt de gebruiker het bedrag terug op de rekening waarmee is betaald en volgt een bevestiging per e-mail. Bij een eerste aankoop stopt het abonnement direct en eindigt de toegang. Bij een upgrade wordt alleen de upgrade teruggedraaid en loopt het abonnement door. Is er niets te herroepen, dan staat het blok er niet. In de Android-app staat de knop niet.
+
 Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar en Pro kan naar Basic. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken.
 
 Referral: de gebruiker deelt zijn persoonlijke referral-link vanuit het profiel. Ook de manager van een team heeft een referral-link; een team dat de manager aanbrengt telt als één betalende referral. Gewone teamleden hebben geen referral-link. Kiest de nieuwe gebruiker Pro of Team, dan ontvangt de gebruiker tegoed, verrekend op de factuur en niet uitbetaalbaar. Bij Basic ontstaat geen tegoed. Bij een maandabonnement komt het tegoed na drie voltooide betaalmaanden, bij een jaarabonnement direct na de eerste betaling.

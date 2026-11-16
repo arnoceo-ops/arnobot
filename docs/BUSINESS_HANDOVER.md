@@ -17,7 +17,7 @@ Alles hieronder is iets dat alleen Arno kan invullen (eigen facturen, wachtwoord
 - [ ] **Wachtwoordkluis:** welke tool (1Password, Bitwarden, iets anders), en wie heeft er in een noodsituatie toegang toe? Dekt in één keer alle rijen in "Accounttoegang en wachtwoorden".
 - [ ] **Vaste kosten per dienst:** Vercel, Supabase, Clerk, Resend, Upstash, Sentry, PostHog, Calendly, Instatus, VisualPing, GitHub, Porkbun, Telegram (tabel "Maandelijkse kosten (extern)"), plus het maandtotaal.
 - [ ] **Facturatiekanaal:** hoe int je nu daadwerkelijk (handmatige overschrijving, Moneybird, e-Boekhouden, iets anders)?
-- [ ] **DPA-status per sub-verwerker:** Anthropic, Supabase, Clerk, Voyage AI, OpenAI, ElevenLabs, Resend, Upstash, Sentry, PostHog, Vercel — welke zijn getekend/geregeld?
+- [ ] **DPA-status per sub-verwerker:** Anthropic, Supabase, Clerk, Voyage AI, OpenAI, ElevenLabs, AssemblyAI, Resend, Upstash, Sentry, PostHog, Vercel — welke zijn getekend/geregeld?
 - [ ] **Bedrijfs- en BTW-gegevens:** rechtsvorm, BTW-nummer, vestigingsdetails.
 - [ ] **Noodcontact:** een externe developer/freelancer als back-up naast Arno zelf, plus een vertrouwd persoon die weet waar de kluis staat (en eventueel een notarieel document).
 - [ ] **Statuscommunicatie:** is er een kanaal richting gebruikers bij een storing langer dan 30 minuten, naast losse e-mails via Resend?
@@ -91,9 +91,10 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | Supabase | Database | [ARNO: vul in] | supabase.com |
 | Clerk | Inloggen | [ARNO: vul in] | clerk.com |
 | Anthropic | AI (Claude) | Variabel, per gebruik | console.anthropic.com |
-| OpenAI | Spraak (Whisper transcriptie + TTS) | Variabel, per gebruik | platform.openai.com |
+| OpenAI | Spraakherkenning (transcriptie van voice-invoer en dicteren) | Variabel, per gebruik | platform.openai.com |
 | ElevenLabs | ArnoBot Voice (tekst-naar-spraak) | Variabel, per gebruik (Voice-abonnees) | elevenlabs.io |
 | VoyageAI | Embeddings (zoeken) | Variabel, per gebruik | voyageai.com |
+| AssemblyAI | Transcriptie van audiobijlagen in de chat | Variabel, per gebruik (betaald plan Pay as you go) | assemblyai.com |
 | Resend | E-mail | [ARNO: vul in] | resend.com |
 | Upstash | Rate limiting | [ARNO: vul in] | upstash.com |
 | Sentry | Foutmonitoring | [ARNO: vul in] | sentry.io |
@@ -105,7 +106,7 @@ Dit zijn de kosten voor het draaiende houden van de app, ongeacht het aantal geb
 | GitHub | Code-opslag | [ARNO: vul in of gratis] | github.com |
 | Telegram | Admin-notificaties | Gratis | — |
 
-**Anthropic, OpenAI, ElevenLabs en VoyageAI zijn variabele kosten** — ze groeien mee met het gebruik. Bij weinig gebruikers zijn ze laag; bij veel gebruikers kunnen ze significant oplopen. Houd de usage-dashboards bij.
+**Anthropic, OpenAI, ElevenLabs, VoyageAI en AssemblyAI zijn variabele kosten** — ze groeien mee met het gebruik. Bij weinig gebruikers zijn ze laag; bij veel gebruikers kunnen ze significant oplopen. Houd de usage-dashboards bij.
 
 **Totaal vaste kosten per maand:** [ARNO: vul in als je de bovenstaande items hebt ingevuld]
 
