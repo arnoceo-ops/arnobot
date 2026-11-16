@@ -41,8 +41,8 @@ describe('Moneybird contact', () => {
   it('splitst naam in voor- en achternaam en zet de eigen id als customer_id', () => {
     const { contact } = bouwContactBody({ userId: 'user_1', email: 'a@b.nl', naam: 'Test Gebruiker' })
     expect(contact.customer_id).toBe('user_1')
-    expect(contact.firstname).toBe('Anton')
-    expect(contact.lastname).toBe('Dirk Diepeveen')
+    expect(contact.firstname).toBe('Test')
+    expect(contact.lastname).toBe('Gebruiker')
     expect(contact.send_invoices_to_email).toBe('a@b.nl')
   })
   it('neemt bedrijfs-, btw- en KvK-gegevens alleen mee als ze er zijn', () => {

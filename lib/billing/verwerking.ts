@@ -8,7 +8,7 @@ import {
   stopAbonnement,
   type MolliePayment,
 } from './mollie'
-import { mollieNaarCenten } from './geld'
+import { formatEuro, mollieNaarCenten } from './geld'
 import { berekenBedrag, planNaam } from './prijzen'
 import {
   abonnementNaEerstebetaling,
@@ -22,6 +22,7 @@ import {
 } from './perioden'
 import { verstuurBillingMail } from './mails'
 import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
+import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { trialEinde } from '@/lib/toegang'
 
@@ -416,12 +417,12 @@ async function verwerkVolledigeTerugbetaling(
   if (rij.soort === 'upgrade') {
     await zetUpgradeTerug(sub)
     if (isChargeback) {
-      await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
+      await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
       return
     }
     await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent, upgrade: true })
     await creditnotaVoorBetaling(rij.id)
-    await notifyTelegram(`Upgradebetaling terugbetaald op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nHet abonnement loopt door; het plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
+    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(terugbetaaldCent || rij.bedrag_cent)}\nBetaling: ${rij.mollie_payment_id}`)
     return
   }
   await stopMollieAbonnement(sub)
@@ -436,12 +437,12 @@ async function verwerkVolledigeTerugbetaling(
     .eq('user_id', sub.user_id)
 
   if (isChargeback) {
-    await notifyTelegram(`CHARGEBACK op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
+    await notifyTelegram(`CHARGEBACK op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
     return
   }
   await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent })
   await creditnotaVoorBetaling(rij.id)
-  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}`)
+  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(terugbetaaldCent || rij.bedrag_cent)}\nBetaling: ${rij.mollie_payment_id}`)
 }
 
 /** Een nieuwe eerste betaling vervangt eventuele eerdere lopende abonnementen van dezelfde gebruiker. */

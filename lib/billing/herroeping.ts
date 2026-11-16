@@ -2,6 +2,7 @@ import { billingDb, type PayRow, type SubRow } from './db'
 import { betaalTerug, mollieIngeschakeld } from './mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from './verwerking'
 import { verstuurBillingMail } from './mails'
+import { wieIs } from './wie'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -136,7 +137,7 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   if (herroepbaar.gesimuleerd) {
     await verstuurBillingMail(userId, 'terugbetaling_bevestiging', { bedragCent: herroepbaar.bedragCent, upgrade })
     await logAdminActie({ actie: 'herroeping', doelUserId: userId, details: { extra: { proef: true, soort: herroepbaar.soort, bedrag_cent: herroepbaar.bedragCent } } })
-    await notifyTelegram(`PROEF herroeping op arno.bot (er is niets terugbetaald)\n\nUser: ${userId}\nSoort: ${upgrade ? 'upgrade' : 'eerste betaling'}\nBedrag: ${euro(herroepbaar.bedragCent)}`)
+    await notifyTelegram(`PROEF herroeping op arno.bot (er is niets terugbetaald)\n\nWie: ${await wieIs(userId)}\nWat: klant maakt ${upgrade ? 'een upgrade' : 'de eerste betaling'} ongedaan\nBedrag: ${euro(herroepbaar.bedragCent)}`)
     return { ok: true, soort: herroepbaar.soort, bedragCent: herroepbaar.bedragCent, proef: true }
   }
 
