@@ -761,7 +761,8 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk
 - `ANTHROPIC_API_KEY` — Anthropic API key
 - `VOYAGE_API_KEY` (+ optioneel `VOYAGE_BASE_URL`) — Voyage AI (embeddings/rerank). Training-opt-out staat aan sinds 2026-11-15 (dashboard.voyageai.com/organization/tos, Organization, Terms of Service; niet terug te zetten in het dashboard, alleen via legal@voyageai.com). Zonder opt-out heeft Voyage standaard trainingsrechten op API-invoer.
-- `OPENAI_API_KEY` — OpenAI Whisper (transcriptie)
+- `OPENAI_API_KEY` — OpenAI (transcriptie: `gpt-transcribe` achteraf, `gpt-live-transcribe` live)
+- `ASSEMBLYAI_API_KEY` — AssemblyAI (audiobijlage-transcriptie in de hoofdchat)
 - `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` — ElevenLabs (voice TTS)
 - `NEXT_PUBLIC_POSTHOG_KEY` — PostHog
 - `RESEND_API_KEY` — Resend
@@ -823,7 +824,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 ### OpenAI
 **Doel:** spraak-naar-tekst voor voice-input: `gpt-transcribe` (achteraf, streaming) en `gpt-live-transcribe` (live, WebSocket).
 **Dashboard:** https://platform.openai.com
-**Integratie:** rauwe fetch in `app/api/transcribe/route.ts`, geen SDK.
+**Integratie:** rauwe fetch in `app/api/transcribe/route.ts` en `app/api/transcribe/live/route.ts`, geen SDK.
 
 ### AssemblyAI
 **Doel:** transcriptie van geüploade audiobijlagen in de hoofdchat (`universal-3-5-pro`), direct daarna verwijderd.
