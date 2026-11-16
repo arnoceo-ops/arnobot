@@ -17,7 +17,8 @@ interface Antwoord {
 const section: React.CSSProperties = { borderTop: '1px solid #374151', paddingTop: '32px', marginBottom: '48px' }
 const label: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '16px', display: 'block' }
 const body: React.CSSProperties = { fontWeight: 400, color: '#9ca3af', fontSize: '15px', lineHeight: '1.9', marginBottom: '24px' }
-const btn: React.CSSProperties = { padding: '12px 36px', border: 'none', background: '#f59e0b', color: '#111827', fontFamily: "'Bebas Neue', sans-serif", fontSize: '18px', letterSpacing: '3px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: '999px', display: 'inline-block', minWidth: '260px', textAlign: 'center' }
+// Rand van 1px in dezelfde kleur, zodat de knop even breed is als de opzegknop (die heeft een rand van 1px).
+const btn: React.CSSProperties = { padding: '12px 36px', border: '1px solid #f59e0b', background: '#f59e0b', color: '#111827', fontFamily: "'Bebas Neue', sans-serif", fontSize: '18px', letterSpacing: '3px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: '999px', display: 'inline-block', minWidth: '260px', textAlign: 'center' }
 const btnUit: React.CSSProperties = { ...btn, background: 'transparent', color: '#9ca3af', border: '1px solid #374151' }
 const foutStijl: React.CSSProperties = { color: '#cc2200', fontSize: '14px', letterSpacing: '1px', lineHeight: 1.6, marginTop: '16px' }
 const klaarStijl: React.CSSProperties = { color: '#f59e0b', fontSize: '13px', letterSpacing: '2px', lineHeight: 1.8, marginBottom: '48px' }
@@ -48,6 +49,7 @@ export default function HerroepSectie() {
     return (
       <p style={klaarStijl}>
         ✓ Gelukt. Je krijgt een bevestiging per e-mail. Het bedrag komt terug op de rekening waarmee je betaalde.
+        {klaar.soort === 'eerste' && !klaar.proef && <><br />Je abonnement is gestopt en je toegang eindigt nu. Je gegevens kun je nog 30 dagen opvragen via hq@arno.bot.</>}
         {klaar.proef && <><br /><span style={{ color: '#6b7280' }}>PROEFMODUS: er is niets echt terugbetaald.</span></>}
       </p>
     )
