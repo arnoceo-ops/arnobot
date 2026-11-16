@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verstuurMailZacht } from '@/lib/mail'
 import { isValidEmail, emailHtml } from '@/lib/email-templates'
-import { isTeamCovered } from '@/lib/teamAccess'
+import { isGewoonTeamlid } from '@/lib/teamAccess'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,9 +23,9 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Server-side vangnet naast de client-side verborgen ReferralSection (verborgen voor
-  // teamleden): het referralprogramma is niet bedoeld voor teamgedekte accounts.
-  if (await isTeamCovered(userId)) {
-    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamgedekte accounts' }, { status: 400 })
+  // gewone teamleden): die hebben geen eigen abonnement. Managers mogen wel referren.
+  if (await isGewoonTeamlid(userId)) {
+    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamleden' }, { status: 400 })
   }
 
   const { data: user } = await supabase
@@ -74,10 +74,10 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Zelfde vangnet als de GET hierboven: een teamgedekt account hoort niet als referral
-  // geregistreerd te worden, dat programma is voor individuele Basic/Pro-signups.
-  if (await isTeamCovered(userId)) {
-    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamgedekte accounts' }, { status: 400 })
+  // Zelfde vangnet als de GET hierboven: een gewoon teamlid hoort niet als referral
+  // geregistreerd te worden. Een nieuwe manager (een geworven team) wel.
+  if (await isGewoonTeamlid(userId)) {
+    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamleden' }, { status: 400 })
   }
 
   const { code } = await req.json()

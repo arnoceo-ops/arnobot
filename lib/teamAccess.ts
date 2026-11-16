@@ -84,6 +84,20 @@ export async function isTeamCovered(userId: string): Promise<boolean> {
 }
 
 /**
+ * Is dit een gewoon teamlid (in arnobot_team_members, niet de manager)? Het referralprogramma is
+ * voor individuele accounts en voor managers (besloten 2026-11-16: de manager van een team mag
+ * referren, een geworven team telt als één betalende referral). Een gewoon lid heeft geen eigen
+ * abonnement en dus ook geen referralcode.
+ */
+export async function isGewoonTeamlid(userId: string): Promise<boolean> {
+  const [memberRes, approvedRes] = await Promise.all([
+    supabase.from('arnobot_team_members').select('user_id').eq('user_id', userId).maybeSingle(),
+    supabase.from('approved_users').select('command_manager').eq('user_id', userId).maybeSingle(),
+  ])
+  return !!memberRes.data && approvedRes.data?.command_manager !== true
+}
+
+/**
  * Dekt een team iemands toegang op dit moment? Zoals isTeamCovered, maar een gewoon lid van een geblokkeerd team is niet
  * gedekt: de toegangspoort (proxy.ts) laat hem niet binnen en hij mag zelf een abonnement nemen (docs/TEAM_PROCES.md).
  * Een manager (ook van een geblokkeerd team) blijft gedekt: hij activeert op zijn accountpagina.
