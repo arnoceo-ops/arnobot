@@ -13,7 +13,7 @@ Hersteld 2026-11-08 uit de code (de tabel was sinds de afslanking van 2026-08-29
 | Sessiegeheugen-embedding (`embedSessionText`) | `voyage-multilingual-2` | Eén gedeelde functie voor alle schrijvers (model-mix-incident 2026-08-12). Door Voyage als deprecated gemarkeerd. | 2026-11-08 |
 | Rerank kennisbank | `rerank-2.5` | Strikt beter dan rerank-2, zelfde prijs. | 2026-11-08 |
 | Transcriptie (`app/api/transcribe`, live) | `gpt-transcribe`, `gpt-live-transcribe` (OpenAI) | `whisper-1` en `gpt-4o-transcribe` vervallen per 26-2-2027. | 2026-11-08 |
-| Audiobijlage in de hoofdchat (`lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Transcriptie van geüploade audio. | 2026-11-08 |
+| Audiobijlage in de hoofdchat (`lib/assemblyai.ts`) | `universal-3-5-pro` (AssemblyAI) | Transcriptie van geüploade audio. Betaald plan (Pay as you go) sinds 2026-11-17: alleen daar kan de opt-out voor modeltraining aan (op Free staat training standaard aan en is de opt-out vergrendeld). Data Controls: opt-out aan, TTL 1 dag (vangnet naast ons eigen DELETE). Zie de privacyclaim "geen training" in `app/privacy/page.tsx`. | 2026-11-17 |
 | Stem uit (`lib/voice.ts`) | `eleven_flash_v2_5` (ElevenLabs) | Lage latency voor spraakuitvoer. | 2026-11-08 |
 | Offline: `scripts/translate-knowledge-base.mjs` | `claude-opus-5` | Eenmalig vertaalscript. | 2026-11-08 |
 
