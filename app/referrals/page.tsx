@@ -83,7 +83,7 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 4</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Geldigheid van een referral</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit binnen de 30-daagse trial of uiterlijk 15 dagen daarna. Wie na die periode converteert, ontvangt geen referralkorting meer.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit binnen de 30-daagse trial of uiterlijk 15 dagen daarna. Wie na die periode converteert, ontvangt geen referralkorting meer. Voor een team dat zich via de gratis proef aanmeldt is dat 10 dagen na het einde van de proef.</p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij een maandabonnement ontvangt de referrer zijn tegoed nadat de nieuwe gebruiker drie aaneengesloten betaalmaanden heeft voltooid. Dat is in de vijfde maand na aanmelding: één trialmaand, één gratis referralmaand en drie betaalmaanden. Bij een jaarabonnement wordt het tegoed direct na de eerste jaarlijkse betaling bijgeschreven. Dit geldt alleen als de nieuwe gebruiker voor Pro of Team heeft gekozen, bij Basic ontstaat geen tegoed.</p>
           </div>
 
