@@ -17,7 +17,7 @@ vi.mock('./db', () => {
   const keten = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const q: any = {
-      select: () => q, eq: () => q, in: () => q, order: () => q, limit: () => q,
+      select: () => q, eq: () => q, in: () => q, is: () => q, order: () => q, limit: () => q,
       maybeSingle: async () => ({ data: h.sub }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       then: (res: any) => res({ data: h.betalingen }),
@@ -75,6 +75,8 @@ describe('kiesHerroepbareBetaling', () => {
     expect(kiesHerroepbareBetaling([pay({ soort: 'herhaling' })], nu)).toBeNull()
     expect(kiesHerroepbareBetaling([pay({ soort: 'verlenging' })], nu)).toBeNull()
     expect(kiesHerroepbareBetaling([pay({ terugbetaald_cent: 7700 })], nu)).toBeNull()
+    // Terugbetaling aangevraagd maar door Mollie nog niet afgerond: terugbetaald_cent is nog 0, dit veld niet.
+    expect(kiesHerroepbareBetaling([pay({ terugbetaling_verwerkt_at: '2026-11-09T10:00:00Z' })], nu)).toBeNull()
     expect(kiesHerroepbareBetaling([pay({ status: 'open' })], nu)).toBeNull()
     expect(kiesHerroepbareBetaling([pay({ betaald_at: '2026-10-01T10:00:00Z' })], nu)).toBeNull()
     expect(kiesHerroepbareBetaling([pay({ betaald_at: null })], nu)).toBeNull()

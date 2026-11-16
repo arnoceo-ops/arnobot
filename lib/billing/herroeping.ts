@@ -56,6 +56,9 @@ export function kiesHerroepbareBetaling(betalingen: PayRow[], nu: Date = new Dat
     .filter(b =>
       b.status === 'paid' &&
       (b.terugbetaald_cent ?? 0) === 0 &&
+      // Mollie rondt een terugbetaling pas na uren tot dagen af (terugbetaald_cent blijft zo lang 0), maar
+      // terugbetaling_verwerkt_at wordt direct gezet. Zonder deze regel stond de knop na een klik nog even terug.
+      !b.terugbetaling_verwerkt_at &&
       (b.soort === 'eerste' || b.soort === 'upgrade') &&
       !!b.betaald_at &&
       isBinnenBedenktijd(b.betaald_at, nu))
@@ -98,6 +101,7 @@ export async function zoekHerroepbaar(userId: string, nu: Date = new Date()): Pr
       .eq('user_id', userId)
       .eq('status', 'paid')
       .eq('terugbetaald_cent', 0)
+      .is('terugbetaling_verwerkt_at', null)
       .in('soort', ['eerste', 'upgrade'])
       .order('betaald_at', { ascending: false })
       .limit(10)
