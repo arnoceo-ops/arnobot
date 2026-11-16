@@ -151,7 +151,7 @@ export default function OverstapSectie({ versie = 0 }: { versie?: number }) {
           <p style={label}>PRO NU</p>
           <p style={body}>
             {o.upgrade.bijbetalingCent > 0
-              ? `Upgrade naar Pro en je hebt Pro meteen. Je betaalt nu ${euro(o.upgrade.bijbetalingCent)}${btwTekst(o.upgrade.zakelijk)} bij voor de rest van deze periode, daarna het Pro-bedrag.`
+              ? `Upgrade naar Pro en je hebt Pro meteen. Je betaalt nu ${euro(o.upgrade.bijbetalingCent)}${btwTekst(o.upgrade.zakelijk)} bij voor de rest van deze periode, daarna het Pro-bedrag.${o.upgrade.zakelijk ? '' : " 14 dagen bedenktijd: de knop 'Koop ongedaan maken' staat op deze pagina."}`
               : 'Upgrade naar Pro en je hebt Pro meteen. Er is nu niets bij te betalen.'}
           </p>
           {open !== 'upgrade' ? (

@@ -36,7 +36,7 @@ export default function VoorwaardenPage() {
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>ALGEMENE VOORWAARDEN.</h1>
           <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>
-            Versie 3.0 · November 2026 · ArnoBot, Eindhoven, Nederland.
+            Versie 3.1 · November 2026 · ArnoBot, Eindhoven, Nederland.
           </p>
 
           {[
@@ -110,9 +110,10 @@ export default function VoorwaardenPage() {
             {
               num: 'ARTIKEL 8', title: 'Bedenktijd en terugbetaling',
               content: [
-                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Ben je consument, dan kun je binnen 14 dagen na je eerste betaling of na een upgrade zonder opgave van reden herroepen. Je krijgt het volledige bedrag terug binnen 14 dagen nadat je ons dat hebt laten weten.</p>,
-                <p key="a2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Herroep je de bijbetaling van een upgrade, dan gaat alleen de upgrade terug en loopt je abonnement door.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Stuur daarvoor een mail aan <a href="mailto:admin@arno.bot">admin@arno.bot</a> waarin je duidelijk aangeeft dat je herroept.</p>,
+                <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Ben je consument, dan kun je binnen 14 dagen na je eerste betaling of een upgrade zonder reden herroepen.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Gebruik de knop &apos;Koop ongedaan maken&apos; op je accountpagina, of mail <a href="mailto:admin@arno.bot">admin@arno.bot</a>. Je mag ook het <a href="https://www.acm.nl/nl/publicaties/publicatie/12754/Modelformulier-ontbinding-of-herroeping" target="_blank" rel="noopener noreferrer">modelformulier</a> gebruiken.</p>,
+                <p key="a3" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Je krijgt het volledige bedrag terug, uiterlijk binnen 14 dagen.</p>,
+                <p key="a2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Bij herroeping van de eerste betaling stopt je abonnement direct. Bij een upgrade gaat alleen de upgrade terug.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De gratis proefperiode kun je altijd stoppen zonder kosten.</p>,
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Het herroepingsrecht geldt alleen voor consumenten. Voor zakelijke klanten geldt geen herroepingsrecht en geen terugbetaling.</p>,
               ],
