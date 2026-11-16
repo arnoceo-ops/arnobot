@@ -8,6 +8,7 @@ import * as Sentry from '@sentry/nextjs'
 export type AdminActie =
   | 'betaald_gezet'
   | 'terugbetaling'
+  | 'herroeping'
   | 'plan_gewijzigd'
   | 'teamrol_gewijzigd'
   | 'sd_agent_gewijzigd'
@@ -26,6 +27,7 @@ export type AdminActie =
 export const ACTIE_LABEL: Record<AdminActie, string> = {
   betaald_gezet: 'BETAALD GEZET',
   terugbetaling: 'TERUGBETALING',
+  herroeping: 'HERROEPING DOOR KLANT',
   plan_gewijzigd: 'PLAN GEWIJZIGD',
   teamrol_gewijzigd: 'TEAMROL GEWIJZIGD',
   sd_agent_gewijzigd: 'SD-AGENT GEWIJZIGD',

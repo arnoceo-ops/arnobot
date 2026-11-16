@@ -19,15 +19,19 @@ export async function POST(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ error: 'Mollie is niet ingeschakeld' }, { status: 503 })
 
-  const { userId, bevestigNaBedenktijd } = await req.json().catch(() => ({}))
+  const { userId, bevestigNaBedenktijd, betalingId } = await req.json().catch(() => ({}))
   if (typeof userId !== 'string' || !userId) return NextResponse.json({ error: 'Geen userId' }, { status: 400 })
 
-  const { data: betaling } = await billingDb
+  // Zonder betalingId de nieuwste betaalde betaling (kan een upgrade of herhaling zijn). Met betalingId
+  // precies die betaling, zodat een gericht terug te draaien upgrade niet de verkeerde raakt.
+  let betalingQuery = billingDb
     .from('arnobot_payments')
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'paid')
     .eq('terugbetaald_cent', 0)
+  if (typeof betalingId === 'string' && betalingId) betalingQuery = betalingQuery.eq('id', betalingId)
+  const { data: betaling } = await betalingQuery
     .order('betaald_at', { ascending: false })
     .limit(1)
     .maybeSingle<PayRow>()

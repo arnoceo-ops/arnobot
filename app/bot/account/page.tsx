@@ -7,6 +7,7 @@ import Link from 'next/link'
 import BotNav from '../BotNav'
 import ReferralSection from '../profiel/ReferralSection'
 import OverstapSectie, { OpzeggingIntrekken } from './OverstapSectie'
+import HerroepSectie from './HerroepSectie'
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
@@ -433,6 +434,8 @@ export default function AccountPage() {
         {/* Overstappen (maand naar jaar, Basic naar Pro) en een geplande overstap intrekken: alleen voor wie het
             mag, zie docs/OVERSTAP_PLAN.md. Staat bewust boven het opzeggen. */}
         <OverstapSectie versie={overstapVersie} />
+        {/* Koop ongedaan maken binnen de bedenktijd van 14 dagen (voorwaarden artikel 8), alleen voor particulieren. */}
+        <HerroepSectie />
         <div style={section}>
           <p style={{ ...label, color: '#cc2200' }}>{cancelledAt || cancelDone ? 'ABONNEMENT OPGEZEGD' : 'ABONNEMENT OPZEGGEN'}</p>
           {soloNaarTeamOp ? (
