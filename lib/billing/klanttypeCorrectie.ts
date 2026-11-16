@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { mollieNaarCenten } from './geld'
-import { betaaldeBetalingVanLink, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { betaaldeBetalingVanLink, klantBestaat, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
   maakConceptFactuur,
@@ -132,8 +132,12 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     .eq('user_id', rij.user_id)
     .maybeSingle<{ voornaam: string | null; email: string | null }>()
 
-  const mollieKlantId = bestaandeKlant?.mollie_customer_id
-    ?? (gebruiker?.email ? (await maakKlant({ naam: rij.bedrijfsnaam, email: gebruiker.email, userId: rij.user_id })).id : null)
+  // Een bewaarde klant kan bij Mollie ontbreken (test en live door elkaar): dan een nieuwe aanmaken, zoals bij afrekenen.
+  const bewaardeKlant = bestaandeKlant?.mollie_customer_id
+  const bewaardeBestaat = bewaardeKlant ? await klantBestaat(bewaardeKlant) : false
+  const mollieKlantId = bewaardeKlant && bewaardeBestaat
+    ? bewaardeKlant
+    : (gebruiker?.email ? (await maakKlant({ naam: rij.bedrijfsnaam, email: gebruiker.email, userId: rij.user_id, vervangt: bewaardeKlant })).id : null)
 
   await billingDb.from('arnobot_billing_customers').upsert(
     {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { maakKlant } from '@/lib/billing/mollie'
+import { klantBestaat, maakKlant } from '@/lib/billing/mollie'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
 import { isAgentProef } from '@/lib/teamProef'
@@ -99,8 +99,12 @@ export async function POST(req: NextRequest) {
       .select('mollie_customer_id')
       .eq('user_id', team.manager_id)
       .maybeSingle<{ mollie_customer_id: string }>()
-    const mollieKlantId = bestaand?.mollie_customer_id
-      ?? (manager?.email ? (await maakKlant({ naam: bedrijfsnaam, email: manager.email, userId: team.manager_id })).id : null)
+    // Een bewaarde klant kan bij Mollie ontbreken (test en live door elkaar): dan een nieuwe aanmaken, zoals bij afrekenen.
+    const bewaardeKlant = bestaand?.mollie_customer_id
+    const bewaardeBestaat = bewaardeKlant ? await klantBestaat(bewaardeKlant) : false
+    const mollieKlantId = bewaardeKlant && bewaardeBestaat
+      ? bewaardeKlant
+      : (manager?.email ? (await maakKlant({ naam: bedrijfsnaam, email: manager.email, userId: team.manager_id, vervangt: bewaardeKlant })).id : null)
     if (!mollieKlantId) return NextResponse.json({ error: 'Geen e-mailadres bekend voor de teambaas, kan geen Mollie-klant aanmaken' }, { status: 400 })
     const { error } = await supabase.from('arnobot_billing_customers').upsert(
       {
