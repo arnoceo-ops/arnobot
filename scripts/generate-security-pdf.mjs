@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.8  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 1.9  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -197,8 +197,8 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.p }, 'Onderstaand overzicht laat zien welke aanvalstypen wij tegenkomen en welke maatregel precies wat afdekt.'),
       TH('Aanval', 'Hoe ArnoBot dit afdekt'),
       TR('Volumetrische aanvallen', 'Vercel Edge Network absorbeert grote hoeveelheden verkeer automatisch op netwerkniveau'),
-      TR('API-misbruik', 'Maximaal 5 chatverzoeken per IP per minuut; admin-login geblokkeerd na 10 mislukte pogingen per 15 minuten'),
-      TR('Prompt injection', '13 detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
+      TR('API-misbruik', 'Het aantal chatberichten per gebruiker per uur is beperkt; de admin-login wordt tijdelijk geblokkeerd na te veel mislukte pogingen'),
+      TR('Prompt injection', 'Detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
       TR('Bots en scanners', 'Middleware blokkeert automatisch bekende scannerpaden: .env, .git, wp-admin, phpMyAdmin en vergelijkbare paden'),
       TR('SQL-injectie', 'Supabase gebruikt geparametriseerde queries; Row Level Security begrenst bovendien wat elke gebruiker mag opvragen'),
       TR('Cross-site scripting', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
