@@ -49,11 +49,11 @@ test('rate limit (429) toont een foutmelding en blokkeert de UI niet blijvend', 
   await page.getByLabel('Je bericht').fill('Test rate limit')
   await page.locator('.spar-send').click()
 
-  // Huidig gedrag: de algemene rate limit (IP/uur-limiet) heeft geen eigen vriendelijke tekst,
-  // in tegenstelling tot de daglimiet en dual-session-gevallen. Deze test bevestigt het
-  // BESTAANDE gedrag (geen crash, wel een zichtbare foutmelding), geen oordeel over of dat de
-  // beste tekst is.
-  await expect(page.locator('.msg-arno-text').last()).toContainText('rate_limit')
+  // De algemene rate limit (IP/uur-limiet) heeft geen eigen tekst, in tegenstelling tot de daglimiet
+  // en dual-session. Elke onbekende foutcode krijgt dezelfde vriendelijke melding met WhatsApp-link
+  // (SparClient.tsx), de ruwe foutcode wordt nooit getoond.
+  await expect(page.locator('.msg-arno-text').last()).toContainText('Er ging iets mis')
+  await expect(page.locator('.msg-arno-text').last().locator('a[href*="wa.me"]')).toHaveAttribute('href', /wa.me/)
   await expect(page.getByLabel('Je bericht')).toBeEnabled()
 })
 
@@ -63,7 +63,8 @@ test('serverfout (500) toont een foutmelding en blokkeert de UI niet blijvend', 
   await page.getByLabel('Je bericht').fill('Test serverfout')
   await page.locator('.spar-send').click()
 
-  await expect(page.locator('.msg-arno-text').last()).toContainText('internal_error')
+  await expect(page.locator('.msg-arno-text').last()).toContainText('Er ging iets mis')
+  await expect(page.locator('.msg-arno-text').last().locator('a[href*="wa.me"]')).toHaveAttribute('href', /wa.me/)
   await expect(page.getByLabel('Je bericht')).toBeEnabled()
 })
 
