@@ -188,7 +188,7 @@ Partijen verklaren bovenstaande te zijn overeengekomen en ondertekenen dit docum
 | Mollie | mollie.com/legal/data-processing-agreement |
 | Moneybird | Verwerkersovereenkomst afgesloten door Arno op 2026-10-09 |
 
-**Aanvullende feiten per sub-verwerker:** Anthropic, OpenAI, ElevenLabs en AssemblyAI trainen niet op klantdata. Upstash verwerkt IP-adressen. PostHog: anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving, geen gespreks-, coaching- of analyse-inhoud; session replay staat aan, beperkt tot 6 shell-pagina's, alle tekst en invoer gemaskeerd, bewaartermijn 30 dagen.
+**Aanvullende feiten per sub-verwerker:** Anthropic, OpenAI, ElevenLabs en AssemblyAI trainen niet op klantdata. Bij AssemblyAI en ElevenLabs hebben wij de opt-out voor training in ons account aangezet en controleren we die maandelijks. Upstash verwerkt IP-adressen. PostHog: anoniem op publieke pagina's, pseudoniem (account-ID) in de ingelogde omgeving, geen gespreks-, coaching- of analyse-inhoud; session replay staat aan, beperkt tot 6 shell-pagina's, alle tekst en invoer gemaskeerd, bewaartermijn 30 dagen.
 
 **Openstaand vóór ondertekening met een klant:**
 - Een DPA opvragen bij Voyage AI, Upstash en PostHog, of expliciet motiveren waarom dat niet nodig is. Voor PostHog is dit het meest urgent sinds de pseudonieme productanalyse van ingelogde gebruikers (2026-08-30); bevestig bij de aanvraag ook de sub-verwerkersketen (onder meer AWS eu-central-1).
