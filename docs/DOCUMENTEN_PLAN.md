@@ -1,0 +1,55 @@
+# Plan: documenten bewaren en historie-import
+
+**Laatst bijgewerkt:** 2026-11-17
+**Waar we staan:** plan en aannamecontrole (subagent zonder voorgeschiedenis) zijn klaar. Er is niets gebouwd. Het idee komt uit de vraag of een geüpload document bewaard kan worden, en uit het verzoek van een gebruiker (Chris) om zijn claude.ai-historie mee te nemen.
+**Eerstvolgende stap:** Arno geeft akkoord op fase 0 (documenttekst niet meer loggen in `arnobot_rds_logs.bron_context`). Daarna fase 1 uitwerken.
+
+## Besluiten (met verworpen alternatieven)
+
+- **Bewaren is standaard aan.** Gekozen: het vinkje "Bewaar in Docs" staat bij elke upload standaard aan, is zichtbaar en kan met één klik uit. Het vinkje onthoudt de keuze niet: elke nieuwe upload begint weer aan (Arno, 2026-11-17). Verworpen: standaard uit (te weinig gebruik, het geheugen blijft leeg); altijd bewaren zonder vinkje (geen moment om "nee" te zeggen bij één gevoelig bestand, en bestaande gebruikers gingen uit van "niet opgeslagen"); de laatste keuze onthouden (overbodig volgens Arno).
+- **Wat er bewaard wordt.** Gekozen: het origineel in een aparte private Storage-bucket, plus een eigen tabel met metadata en een samenvatting met embedding voor het geheugen. Verworpen: alleen uitgepakte tekst bewaren, want voor PDF's en afbeeldingen verliest dat tabellen, grafieken en plaatjes (die gaan nu native naar Claude).
+- **Waar het zichtbaar wordt.** Gekozen: drie tabs bovenaan de pagina `app/bot/analyses`: Gesprekken, Analyses, Docs. Verworpen: een sectie onderaan de lange pagina (wordt niet gevonden). Daarnaast: een regel met aantal en "verwijder alles" op `/bot/account`, en "kies uit bewaarde documenten" bij het paperclip-icoon in de chat.
+
+## Open besluiten (Arno)
+
+1. `bron_context`: voorstel documenttekst niet meer loggen, en een bewaartermijn voor de rest van die kolom (bijvoorbeeld 30 dagen). Verworpen voorstel: alleen de privacytekst aanpassen.
+2. Lezen in een lopend gesprek: voorstel een bewaard document gaat native mee in de beurt waarin de gebruiker het kiest, daarna werkt het via samenvatting en zoeken. Verworpen voorstel: elke beurt opnieuw native (paginalimiet en geheugen).
+3. Quota per plan: aantal en totale MB.
+4. AVG art. 25 (privacy by default) tegenover standaard-aan: aanname van Claude, nog niet getoetst aan een bron. Arno zoekt dit zelf uit vóór livegang.
+
+## Bevindingen uit de aannamecontrole (2026-11-17)
+
+Zelf in de code gezien: documenttekst van docx/txt/csv staat in `arnobot_rds_logs.bron_context` (`app/api/chat/route.ts` rond 649-654, tot 250.000 tekens, zonder bewaartermijn); accountverwijdering is alleen een mail (`app/api/bot/delete-account/route.ts`).
+
+Door de subagent gemeld, bij de start van de bouw per punt te verifiëren:
+- Sessie verwijderen is een soft delete; `data-cleanup` is een mail met een handmatige checklist en raakt Storage niet.
+- Het kruisje bij een bijlage in `SparClient.tsx` verwijdert niets uit Storage; er is geen opruiming van achtergebleven uploads en geen rate limit op `app/api/bot/chat-upload-url`.
+- De history bevat geen document: `lib/appHelp.ts` ("een document dat in dit gesprek is toegevoegd, kun je lezen") klopt alleen voor de beurt van de upload.
+- Managerroutes (1:1, spotlight, zelfcoaching) lezen `summary`, `feiten` en `title` uit `arnobot_blog_sessions`; gedeelde analyses tonen de volledige tekst.
+- Bijlagetekst en bestandsnaam gaan niet langs moderatie of prompt-injectiecontrole; de bestandsnaam staat ongefilterd in de prompt.
+- Anthropic-limieten (pagina's per PDF, afbeeldingsgrootte) zijn niet geverifieerd.
+
+## Fase 0: los van de nieuwe functie, eerst
+
+- [ ] Documenttekst niet meer in `bron_context` loggen (één regel in `app/api/chat/route.ts`). Daarna is de huidige tekst "niet opgeslagen" weer waar voor docx/txt/csv.
+- [ ] Besluit nemen over bewaartermijn en opruimen van bestaande `bron_context`.
+
+## Fase 1: documenten bewaren
+
+Ontwerpregels:
+- Eigen tabel die geen team-, manager- of admin-route leest. Nooit documentinhoud of samenvatting in `arnobot_blog_sessions`, `arnobot_analyses` of `arnobot_memory_entities`.
+- De chatroute accepteert alleen een document-ID en zoekt het pad zelf op met een eigenaarsfilter; nooit een pad uit de request (dat pad loopt nu via download-en-verwijder).
+- Eigen endpoint voor openen en downloaden (CSP en de Android-app laten een Supabase-URL niet netjes toe), geen lange signed URL.
+- Quota per gebruiker en plan, server-side. Bestandsnaam beperken in lengte. Bijlagetekst langs moderatie en prompt-injectiecontrole.
+- Echte `verwijderGebruikersDocumenten(userId)` met tests, aangeroepen vanuit de verwijderknop, de cleanup-stap en de mailchecklist.
+- Opruiming van wees-uploads (kruisje, sweep) en rate limit op `chat-upload-url`.
+- Uploadlogica zit in `SparClient.tsx` (vinkje en keuzelijst komen daar). Client en server verschillen in toegestane typen (gif, txt, csv).
+- Tabs op de analyses-pagina: sticky balk alleen bij Gesprekken, ANALYSEER wisselt naar Analyses, de mail-link `?open=nieuwste` opent de tab Analyses.
+- Mee in dezelfde commit(s): `lib/appHelp.ts`, `app/bot/qa/QAClient.tsx`, `app/privacy/page.tsx`, `scripts/generate-security-pdf.mjs`, `docs/ARNOBOT_OVERZICHT.md`, `docs/TECHNICAL_HANDOVER.md`, export (`app/api/bot/export`), testaccount- en eigenaarschapscontroles, E2E-teardown. Alle teksten eerst als platte tekst aan Arno.
+
+## Fase 2: import van historie (Chris)
+
+- Eerst uitzoeken wat de claude.ai-export bevat (of projecten erin zitten).
+- Projectbestanden zijn gewone documenten en passen in fase 1.
+- Chatgeschiedenis: parsen, filteren op sales-inhoud, samenvatten en inladen in het geheugen met de oorspronkelijke datum en bron "import"; het ruwe bestand wordt niet bewaard.
+- Toestemmingstekst (klantdata van derden) en een eigen weging voor geïmporteerd geheugen.
