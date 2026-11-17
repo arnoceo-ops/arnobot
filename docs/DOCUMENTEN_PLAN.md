@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-11-17
 **Waar we staan:** plan en aannamecontrole (subagent zonder voorgeschiedenis) zijn klaar. Er is niets gebouwd. Het idee komt uit de vraag of een geüpload document bewaard kan worden, en uit het verzoek van een gebruiker (Chris) om zijn claude.ai-historie mee te nemen.
-**Eerstvolgende stap:** Arno geeft akkoord op fase 0 (documenttekst niet meer loggen in `arnobot_rds_logs.bron_context`). Daarna fase 1 uitwerken.
+**Eerstvolgende stap:** fase 1 uitwerken en bouwen. Besluit 2026-11-17: de logging (`bron_context`) en de bijbehorende AVG-teksten worden pas aangepast tijdens/na de bouw, niet apart vooraf. Voorwaarde: dat is klaar vóór het vinkje live gaat, anders bewaren we documenttekst ook voor wie het vinkje uitzet.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -29,9 +29,11 @@ Door de subagent gemeld, bij de start van de bouw per punt te verifiëren:
 - Bijlagetekst en bestandsnaam gaan niet langs moderatie of prompt-injectiecontrole; de bestandsnaam staat ongefilterd in de prompt.
 - Anthropic-limieten (pagina's per PDF, afbeeldingsgrootte) zijn niet geverifieerd.
 
-## Fase 0: los van de nieuwe functie, eerst
+## Fase 0: logging rechtzetten (verplaatst naar fase 1, besluit 2026-11-17)
 
-- [ ] Documenttekst niet meer in `bron_context` loggen (één regel in `app/api/chat/route.ts`). Daarna is de huidige tekst "niet opgeslagen" weer waar voor docx/txt/csv.
+Gekozen: niet apart vooraf, maar als eerste onderdeel van fase 1, uiterlijk vóór livegang van het vinkje. Verworpen: nu al apart doen (Arno: aanpassen wat betreft loggen en AVG pas na de bouw). Tot die tijd blijft de tekst "niet opgeslagen" voor docx/txt/csv onwaar; dat is bekend en geaccepteerd (kolom bestaat sinds 2026-11-13).
+
+- [ ] Documenttekst niet meer in `bron_context` loggen (één regel in `app/api/chat/route.ts`), vóór het vinkje live gaat.
 - [ ] Besluit nemen over bewaartermijn en opruimen van bestaande `bron_context`.
 
 ## Fase 1: documenten bewaren
