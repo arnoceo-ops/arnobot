@@ -27,7 +27,7 @@ export async function GET() {
   const [{ data: gebruiker }, { data: sub }] = await Promise.all([
     supabase
       .from('approved_users')
-      .select('paid_at, expires_at, trial_start, is_active')
+      .select('paid_at, expires_at, trial_start, is_active, plan')
       .eq('user_id', userId)
       .maybeSingle(),
     billingDb
@@ -75,6 +75,9 @@ export async function GET() {
     }
     const stoptVoorTeam = sub.status === 'cancelled' ? !!(await soloStoptVoorTeam(userId)) : false
     overstap = bepaalOverstapStatus(sub, new Date(), volgendeIncasso, stoptVoorTeam)
+    // Gratis Pro via het adminpaneel (plan Pro terwijl het abonnement Basic is): geen kaart PRO NU,
+    // anders start de gebruiker per ongeluk een betaalde upgrade voor iets dat hij al heeft.
+    if (gebruiker?.plan === 'premium' && sub.plan === 'basis' && overstap.upgrade) overstap = { ...overstap, upgrade: null }
   }
 
   const nu = Date.now()
