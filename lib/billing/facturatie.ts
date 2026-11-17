@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import {
   btwTariefId,
+  omzetGrootboekId,
   factuurMailTekst,
   maakCreditnota,
   maakConceptFactuur,
@@ -115,7 +116,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
       nettoCent: rij.bedrag_cent - rij.btw_cent,
       inclusiefBtw: sub.klant_type === 'particulier',
       taxRateId: await btwTariefId(),
-      ledgerAccountId: process.env.MONEYBIRD_LEDGER_ACCOUNT_ID,
+      ledgerAccountId: await omzetGrootboekId(),
       workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
     })
 

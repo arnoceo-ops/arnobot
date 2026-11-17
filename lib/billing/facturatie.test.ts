@@ -20,6 +20,7 @@ vi.mock('./mollie', async orig => ({ ...(await orig<typeof import('./mollie')>()
 vi.mock('./moneybird', () => ({
   moneybirdIngeschakeld: () => true,
   btwTariefId: async () => 'btw',
+  omzetGrootboekId: async () => 'omzet',
   factuurMailTekst: () => 'tekst',
   maakCreditnota: vi.fn(),
   registreerBetaling: vi.fn(),

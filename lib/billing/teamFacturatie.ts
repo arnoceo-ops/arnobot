@@ -4,6 +4,7 @@ import { mollieNaarCenten } from './geld'
 import { betaaldeBetalingVanLink, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
+  omzetGrootboekId,
   maakConceptFactuur,
   moneybirdIngeschakeld,
   registreerBetaling,
@@ -235,7 +236,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
         nettoCent: input.nettoCent,
         inclusiefBtw: false,
         taxRateId: await btwTariefId(),
-        ledgerAccountId: process.env.MONEYBIRD_LEDGER_ACCOUNT_ID,
+        ledgerAccountId: await omzetGrootboekId(),
         workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
         // Nog niet betaald: een betaaltermijn en eigen voorwaarden, niet de workflow-tekst "al betaald".
         betaaltermijnDagen: TEAM_BETAALTERMIJN_DAGEN,

@@ -4,6 +4,7 @@ import { mollieNaarCenten } from './geld'
 import { betaaldeBetalingVanLink, klantBestaat, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
+  omzetGrootboekId,
   maakConceptFactuur,
   maakCreditnota,
   moneybirdIngeschakeld,
@@ -204,7 +205,7 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
       nettoCent: nieuweBedrag.nettoCent,
       inclusiefBtw: false,
       taxRateId: await btwTariefId(),
-      ledgerAccountId: process.env.MONEYBIRD_LEDGER_ACCOUNT_ID,
+      ledgerAccountId: await omzetGrootboekId(),
       workflowId: process.env.MONEYBIRD_WORKFLOW_ID,
     })
     await billingDb.from('arnobot_klanttype_correcties').update({ moneybird_factuur_id: factuur.id }).eq('id', rij.id)

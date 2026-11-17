@@ -187,6 +187,26 @@ export async function btwTariefId(): Promise<string> {
   return gevonden.id
 }
 
+let omzetCache: string | null = null
+
+/**
+ * De omzetrekening voor verkoopfacturen, uit env of opgezocht bij Moneybird (rekening "Omzet").
+ * Zonder dit komt een factuur op "Ongecategoriseerde inkomsten" terecht. Lukt het zoeken niet,
+ * dan maken we de factuur toch aan (undefined): liever een ongecategoriseerde factuur dan geen.
+ */
+export async function omzetGrootboekId(): Promise<string | undefined> {
+  if (process.env.MONEYBIRD_LEDGER_ACCOUNT_ID) return process.env.MONEYBIRD_LEDGER_ACCOUNT_ID
+  if (omzetCache) return omzetCache
+  try {
+    const lijst = await mb<{ id: string; account_type: string; name: string }[]>('/ledger_accounts.json')
+    const gevonden = lijst.find(a => a.account_type === 'revenue' && a.name.trim().toLowerCase() === 'omzet')
+    if (gevonden) omzetCache = gevonden.id
+    return gevonden?.id
+  } catch {
+    return undefined
+  }
+}
+
 /** Maakt de factuur aan als concept. */
 export async function maakConceptFactuur(f: FactuurInput): Promise<{ id: string }> {
   const factuur = await mb<MbInvoice>('/sales_invoices.json', { method: 'POST', body: bouwFactuurBody(f) })
