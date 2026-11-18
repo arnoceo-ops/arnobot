@@ -33,6 +33,8 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Embeddings + rerank (RAG) | VoyageAI | rauwe fetch, geen SDK |
 | Spraakherkenning | OpenAI (`gpt-transcribe`, live `gpt-live-transcribe`) | rauwe fetch, geen SDK |
 | Audiobijlagen transcriberen | AssemblyAI | `lib/assemblyai.ts`, rauwe fetch |
+| Link lezen in de hoofdchat | Anthropic webfetch-tool (`web_fetch_20250910`, serverkant) | `lib/webFetchTool.ts`, alleen als de vraag een link bevat, `max_uses` 2, `max_content_tokens` 15000, geen websearch |
+| Link lezen in de hoofdchat | Anthropic webfetch-tool (`web_fetch_20250910`, serverkant) | `lib/webFetchTool.ts`, alleen als de vraag een link bevat, `max_uses` 2, `max_content_tokens` 15000, geen websearch |
 | Tekst-naar-spraak (Voice) | ElevenLabs | rauwe fetch, geen SDK |
 | E-mail | Resend | ^6 |
 | Rate limiting | Upstash Redis | ^1 / ^2 |

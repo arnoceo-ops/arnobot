@@ -53,7 +53,8 @@ export async function OPTIONS(req: NextRequest) {
 import { telAnthropicLimiet } from '@/lib/capaciteit'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
-import { getText, StreamingDashSanitizer } from '@/lib/ai'
+import { getText, getAllText, StreamingDashSanitizer } from '@/lib/ai'
+import { WEB_FETCH_TOOL, WEB_FETCH_PROMPT, bevatLink, opgehaaldePaginas } from '@/lib/webFetchTool'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
@@ -490,7 +491,14 @@ export async function POST(req: NextRequest) {
 
     const profielContext = bouwProfielContext(profiel, voornaamGebruiker)
 
+    // Link lezen (lib/webFetchTool.ts): alleen als de gebruiker zelf een link in het gesprek zette
+    // (de vraag of een van de laatste eigen berichten), zodat gewone vragen ongemoeid blijven.
+    const linkInGesprek = bevatLink(question + ' ' + effectieveHistory.slice(-6)
+      .map((h: { role?: string; content?: unknown }) => (h.role === 'user' && typeof h.content === 'string' ? h.content : ''))
+      .join(' '))
+
     const systemPrompt = buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount)
+      + (linkInGesprek ? '\n\n' + WEB_FETCH_PROMPT : '')
 
     // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
     // Claude hem genereert, in plaats van pas na het volledige antwoord. StreamingDashSanitizer
@@ -508,13 +516,16 @@ export async function POST(req: NextRequest) {
     // ongemoeid blijven. De tool-beschrijving zelf bevat de instructie, de vaste persona blijft
     // ongewijzigd (verwatering).
     const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
-    const rekenTools: Anthropic.Tool[] | undefined = /\d/.test(gesprekTekst) ? [REKEN_TOOL] : undefined
+    const toolLijst: Anthropic.ToolUnion[] = []
+    if (/\d/.test(gesprekTekst)) toolLijst.push(REKEN_TOOL)
+    if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)
+    const chatTools: Anthropic.ToolUnion[] | undefined = toolLijst.length > 0 ? toolLijst : undefined
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: chatMaxTokens,
       system: systemPrompt,
       messages,
-      ...(rekenTools ? { tools: rekenTools } : {}),
+      ...(chatTools ? { tools: chatTools } : {}),
     })
 
     const readable = new ReadableStream({
@@ -522,8 +533,17 @@ export async function POST(req: NextRequest) {
         const sanitizer = new StreamingDashSanitizer()
         try {
           await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, async () => {
+            // Met een link ophalen tussendoor bestaat een antwoord uit meerdere tekstblokken (voor en na
+            // het ophalen): een lege regel ertussen, anders plakt "ik kijk even" aan het antwoord vast.
+            let heeftTekst = false
             for await (const event of anthropicStream) {
+              if (event.type === 'content_block_start' && event.content_block.type === 'text' && heeftTekst) {
+                const rest = sanitizer.flush()
+                if (rest) controller.enqueue(encoder.encode(rest))
+                controller.enqueue(encoder.encode('\n\n'))
+              }
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                heeftTekst = true
                 const toSend = sanitizer.push(event.delta.text)
                 if (toSend) controller.enqueue(encoder.encode(toSend))
               }
@@ -534,23 +554,29 @@ export async function POST(req: NextRequest) {
           if (remainder) controller.enqueue(encoder.encode(remainder))
 
           let finalMessage = await anthropicStream.finalMessage()
-          // Rekenrondes: vraagt het model de rekentool, voer die uit en laat het model verdergaan.
-          // De tekst van eerdere rondes is al naar de gebruiker gestreamd en telt mee in het opgeslagen antwoord.
+          const opgehaald = opgehaaldePaginas(finalMessage.content)
+          // Vervolgrondes: vraagt het model de rekentool, voer die uit en laat het model verdergaan.
+          // Een serverkant-tool (link ophalen) kan het antwoord ook met pause_turn onderbreken: dan
+          // gewoon doorgaan zonder nieuw gebruikersbericht. De tekst van eerdere rondes is al naar de
+          // gebruiker gestreamd en telt mee in het opgeslagen antwoord.
           let werkBerichten = messages as Anthropic.MessageParam[]
           let eerdereTekst = ''
-          for (let ronde = 0; ronde < MAX_REKENRONDES && rekenTools && finalMessage.stop_reason === 'tool_use'; ronde++) {
+          const moetDoorgaan = () => finalMessage.stop_reason === 'tool_use' || finalMessage.stop_reason === 'pause_turn'
+          for (let ronde = 0; ronde < MAX_REKENRONDES && chatTools && moetDoorgaan(); ronde++) {
             const toolGebruik = finalMessage.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
-            eerdereTekst += getText(finalMessage.content)
+            eerdereTekst += getAllText(finalMessage.content)
             werkBerichten = [
               ...werkBerichten,
               { role: 'assistant', content: finalMessage.content },
-              {
-                role: 'user',
-                content: toolGebruik.map(tu => {
-                  const r = tu.name === 'bereken' ? voerRekenToolUit(tu.input) : { content: 'Onbekende tool.', isError: true }
-                  return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
-                }),
-              },
+              ...(finalMessage.stop_reason === 'tool_use'
+                ? [{
+                    role: 'user' as const,
+                    content: toolGebruik.map(tu => {
+                      const r = tu.name === 'bereken' ? voerRekenToolUit(tu.input) : { content: 'Onbekende tool.', isError: true }
+                      return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
+                    }),
+                  }]
+                : []),
             ]
             if (eerdereTekst && !/\s$/.test(eerdereTekst)) {
               controller.enqueue(encoder.encode('\n\n'))
@@ -561,11 +587,18 @@ export async function POST(req: NextRequest) {
               max_tokens: chatMaxTokens,
               system: systemPrompt,
               messages: werkBerichten,
-              tools: rekenTools,
+              tools: chatTools,
             })
             const rondeSanitizer = new StreamingDashSanitizer()
+            let rondeHeeftTekst = false
             for await (const event of rondeStream) {
+              if (event.type === 'content_block_start' && event.content_block.type === 'text' && rondeHeeftTekst) {
+                const rest = rondeSanitizer.flush()
+                if (rest) controller.enqueue(encoder.encode(rest))
+                controller.enqueue(encoder.encode('\n\n'))
+              }
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                rondeHeeftTekst = true
                 const toSend = rondeSanitizer.push(event.delta.text)
                 if (toSend) controller.enqueue(encoder.encode(toSend))
               }
@@ -573,12 +606,13 @@ export async function POST(req: NextRequest) {
             const rondeRest = rondeSanitizer.flush()
             if (rondeRest) controller.enqueue(encoder.encode(rondeRest))
             finalMessage = await rondeStream.finalMessage()
+            opgehaald.push(...opgehaaldePaginas(finalMessage.content))
           }
-          if (finalMessage.stop_reason === 'tool_use') {
-            console.error('[chat] rekenrondes op, antwoord zonder slot, sessionId:', sessionId)
-            Sentry.captureMessage('[chat] rekenrondes op', { level: 'warning', extra: { sessionId } })
+          if (moetDoorgaan()) {
+            console.error('[chat] toolrondes op, antwoord zonder slot, sessionId:', sessionId, 'stop_reason:', finalMessage.stop_reason)
+            Sentry.captureMessage('[chat] toolrondes op', { level: 'warning', extra: { sessionId, stopReason: finalMessage.stop_reason } })
           }
-          const laatsteTekst = getText(finalMessage.content)
+          const laatsteTekst = getAllText(finalMessage.content)
           let answer = eerdereTekst + laatsteTekst
 
           if (!answer) {
@@ -646,7 +680,8 @@ export async function POST(req: NextRequest) {
           // De volledige context die het model kreeg (fragmenten, geheugen, profiel, bijlagetekst) wordt
           // mee bewaard voor de waarheidscontrole (lib/waarheidsControle.ts): zonder dit is achteraf niet
           // vast te stellen wat "uit de bibliotheek" kwam. PDF's en afbeeldingen zijn geen tekst en staan er niet in.
-          const bronContext = [context, geheugentekst, profielContext, coachingContext, documentText ? `BIJLAGE:\n${documentText}` : '']
+          const bronContext = [context, geheugentekst, profielContext, coachingContext, documentText ? `BIJLAGE:\n${documentText}` : '',
+            ...opgehaald.map(p => `OPGEHAALDE PAGINA (${p.url}):\n${p.tekst}`)]
             .filter(Boolean).join('\n\n---\n\n').slice(0, 250000)
           const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }
           let { data: logRow, error: logFout } = await supabase

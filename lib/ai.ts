@@ -22,6 +22,14 @@ export function getText(content: Message['content'], fallback = ''): string {
   return block?.type === 'text' ? stripEmphasisAccents(stripDashPunctuation(block.text)) : fallback
 }
 
+// Alle tekstblokken van een antwoord, gescheiden door een lege regel. Nodig als er een tool tussendoor
+// draaide (bijvoorbeeld een link ophalen): dan staat er tekst voor en na het blok, en getText() leest
+// alleen het eerste tekstblok.
+export function getAllText(content: Message['content'], fallback = ''): string {
+  const delen = content.flatMap(b => (b.type === 'text' && b.text.trim() ? [stripEmphasisAccents(stripDashPunctuation(b.text))] : []))
+  return delen.length ? delen.join('\n\n') : fallback
+}
+
 // Sanitizer voor streaming tekst: dashPunctuation kan pas correct beoordeeld worden zodra
 // bekend is wat erna komt (bijv. of een spatie gevolgd wordt door een newline of niet). Een
 // vast aantal tekens "buffer" achterhouden is NIET voldoende (live geverifieerd): de tekst
