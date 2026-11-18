@@ -156,7 +156,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
   return (
-    <div style={{ borderTop: '1px solid #374151', paddingTop: 20, marginTop: 0 }}>
+    <div style={{ borderTop: '1px solid #374151', paddingTop: 20, marginTop: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <p style={label}>Neem je historie mee</p>
         {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
