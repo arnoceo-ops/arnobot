@@ -30,8 +30,18 @@ export const MAX_BLOK_TOTAAL = 12000
 // Vier kopjes van 1.500 tekens plus kop, labels en einde blijven onder MAX_BLOK_TEKENS.
 export const MAX_TEKENS_PER_KOPJE = 1500
 
-/** De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor de link én voor KOPIEER VRAAG. */
-export const HISTORIE_VRAAG = `Ik neem mijn werk als verkoper mee naar een andere assistent. Gebruik alleen wat je echt van me weet uit je geheugen of eerdere gesprekken. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets, schrijf geen vermoedens als feiten (zet "vermoeden:" ervoor) en laat een kopje leeg als je niets weet. Alleen werk, niets privés. Geen advies. Geen e-mailadressen of telefoonnummers van klanten.
+/** De rol uit het ArnoBot-profiel van de gebruiker, schoongemaakt voor in de vraag. Null als er geen bruikbare rol is. */
+export function schoneRol(rol: unknown): string | null {
+  if (typeof rol !== 'string') return null
+  const s = rol.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim()
+  if (s.length < 2 || /^(onbekend|n\.?v\.?t\.?|geen)$/i.test(s)) return null
+  return s
+}
+
+/** De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor de link én voor KOPIEER DE VRAAG. Met de rol uit het profiel als die bekend is. */
+export function bouwHistorieVraag(rol?: unknown): string {
+  const r = schoneRol(rol)
+  return `Ik neem mijn werk${r ? ` als ${r}` : ''} mee naar een andere assistent. Gebruik alleen wat je echt van me weet uit je geheugen of eerdere gesprekken. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets, schrijf geen vermoedens als feiten (zet "vermoeden:" ervoor) en laat een kopje leeg als je niets weet. Alleen werk, niets privés. Geen advies. Geen e-mailadressen of telefoonnummers van klanten.
 
 1. ${KOPJES[0].label}
 2. ${KOPJES[1].label} (met namen van bedrijven en cijfers waar je die kent)
@@ -39,12 +49,16 @@ export const HISTORIE_VRAAG = `Ik neem mijn werk als verkoper mee naar een ander
 4. ${KOPJES[3].label}
 
 Maximaal 600 woorden.`
+}
+
+/** De vraag zonder rol, voor tests en als er geen rol bekend is. */
+export const HISTORIE_VRAAG = bouwHistorieVraag(null)
 
 /**
  * Een link die de andere AI opent met de vraag al ingevuld. Of de vooraf ingevulde vraag werkt is nog niet in een echte browser
  * gecontroleerd (zie "Nog te testen" in het plan); de pagina kopieert de vraag daarom altijd ook naar het klembord.
  */
-export function bouwVraagLink(bron: 'chatgpt' | 'claude'): string {
-  const q = encodeURIComponent(HISTORIE_VRAAG)
+export function bouwVraagLink(bron: 'chatgpt' | 'claude', rol?: unknown): string {
+  const q = encodeURIComponent(bouwHistorieVraag(rol))
   return bron === 'chatgpt' ? `https://chatgpt.com/?q=${q}` : `https://claude.ai/new?q=${q}`
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
-import { BRON_NAAM, HISTORIE_VRAAG, IMPORT_BRONNEN, KOPJES, MAX_INVOER_TEKENS, bouwVraagLink, type ImportBron, type ImportProfiel } from '@/lib/historieImportVast'
+import { BRON_NAAM, IMPORT_BRONNEN, KOPJES, MAX_INVOER_TEKENS, bouwHistorieVraag, bouwVraagLink, type ImportBron, type ImportProfiel } from '@/lib/historieImportVast'
 
 // Het blok NEEM JE HISTORIE MEE onder de tab UPLOADS (docs/HISTORIE_IMPORT_PLAN.md). De gebruiker stuurt een vraag naar zijn andere
 // AI, plakt het antwoord, controleert het voorstel en slaat het op als "Profiel uit ChatGPT". Alleen zichtbaar voor wie de schakelaar
@@ -43,6 +43,8 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const [voorstel, setVoorstel] = useState<ImportProfiel | null>(null)
   const [fout, setFout] = useState<string | null>(null)
   const [gekopieerd, setGekopieerd] = useState(false)
+  const [rol, setRol] = useState<string | null>(null) // de rol uit het ArnoBot-profiel, voor in de vraag
+  const vraag = bouwHistorieVraag(rol)
   const [bevestig, setBevestig] = useState<ImportBron | null>(null) // het profiel dat de gebruiker wil verwijderen
   const [uitgeklapt, setUitgeklapt] = useState<ImportBron | null>(null) // het profiel waarvan de regels getoond worden
   const [bezig, setBezig] = useState(false)
@@ -53,6 +55,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
       if (!r.ok) throw new Error('laden mislukt')
       const d = await r.json()
       setOpgeslagen(Array.isArray(d.profielen) ? d.profielen : [])
+      setRol(typeof d.rol === 'string' ? d.rol : null)
     } catch {
       setOpgeslagen([])
     }
@@ -62,7 +65,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     let actueel = true
     fetch('/api/bot/import/profiel')
       .then(r => { if (!r.ok) throw new Error('laden mislukt'); return r.json() })
-      .then(d => { if (actueel) setOpgeslagen(Array.isArray(d.profielen) ? d.profielen : []) })
+      .then(d => { if (actueel) { setOpgeslagen(Array.isArray(d.profielen) ? d.profielen : []); setRol(typeof d.rol === 'string' ? d.rol : null) } })
       .catch(() => { if (actueel) setOpgeslagen([]) })
     return () => { actueel = false }
   }, [])
@@ -71,7 +74,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   // stille kopie op de achtergrond was niet te begrijpen). Voor een andere AI en voor als de vraag niet vanzelf in het veld staat.
   async function kopieerVraag() {
     try {
-      await navigator.clipboard.writeText(HISTORIE_VRAAG)
+      await navigator.clipboard.writeText(vraag)
       setGekopieerd(true)
       setTimeout(() => setGekopieerd(false), 3000)
     } catch {
@@ -229,19 +232,23 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
 
       {open && (stap === 'start' || stap === 'bezig') && (
         <div style={{ maxWidth: 620 }}>
-          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2 }}>1 Verstuur de vraag</p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
-            <a href={bouwVraagLink('chatgpt')} target="_blank" rel="noopener noreferrer" onClick={() => setBron('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
-            <a href={bouwVraagLink('claude')} target="_blank" rel="noopener noreferrer" onClick={() => setBron('claude')} style={pil}>OPEN IN CLAUDE</a>
+          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2 }}>1 Stuur deze vraag naar je andere AI</p>
+          <div style={{ marginTop: 12, background: '#1f2937', border: '1px solid #374151', borderRadius: 4, padding: '12px 16px' }}>
+            <p style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{vraag}</p>
           </div>
           <div style={{ marginTop: 12 }}>
             <button onClick={kopieerVraag} style={pil}>{gekopieerd ? '✓ GEKOPIEERD' : 'KOPIEER DE VRAAG'}</button>
           </div>
-          <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>Voor een andere AI, of als de vraag niet vanzelf in het veld staat.</p>
+          <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 20 }}>Of open direct met de vraag al ingevuld:</p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+            <a href={bouwVraagLink('chatgpt', rol)} target="_blank" rel="noopener noreferrer" onClick={() => setBron('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
+            <a href={bouwVraagLink('claude', rol)} target="_blank" rel="noopener noreferrer" onClick={() => setBron('claude')} style={pil}>OPEN IN CLAUDE</a>
+          </div>
 
-          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 28 }}>2 Kopieer het antwoord</p>
+          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 36 }}>2 Kopieer het antwoord van die AI</p>
+          <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>Gebruik het kopieerknopje onder het antwoord.</p>
 
-          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 28 }}>3 Plak het hier</p>
+          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 36 }}>3 Plak het antwoord hier</p>
           <textarea
             value={tekst}
             onChange={e => setTekst(e.target.value)}

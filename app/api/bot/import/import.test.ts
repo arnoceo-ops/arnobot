@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 // De import-routes: toegang (inloggen, schakelaar, toegangspoort), de lengtecontrole vóór limiter en model, de limiet, en dat het opslaan en
 // verwijderen alleen de eigen rij raakt.
 
-const { auth, toegang, limiet, zetOm, bewaar, lees, verwijder, verwijderAlles, intern } = vi.hoisted(() => ({
-  auth: vi.fn(), toegang: vi.fn(), limiet: vi.fn(), zetOm: vi.fn(), bewaar: vi.fn(), lees: vi.fn(), verwijder: vi.fn(), verwijderAlles: vi.fn(), intern: vi.fn(),
+const { auth, toegang, limiet, zetOm, bewaar, lees, leesRol, verwijder, verwijderAlles, intern } = vi.hoisted(() => ({
+  auth: vi.fn(), toegang: vi.fn(), limiet: vi.fn(), zetOm: vi.fn(), bewaar: vi.fn(), lees: vi.fn(), leesRol: vi.fn(), verwijder: vi.fn(), verwijderAlles: vi.fn(), intern: vi.fn(),
 }))
 
 vi.mock('@clerk/nextjs/server', () => ({ auth }))
@@ -16,7 +16,7 @@ vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: intern }))
 vi.mock('@upstash/ratelimit', () => ({ Ratelimit: class { static slidingWindow() { return {} } } }))
 vi.mock('@upstash/redis', () => ({ Redis: class {} }))
 vi.mock('@anthropic-ai/sdk', () => ({ default: class {} }))
-vi.mock('@/lib/historieImport', () => ({ zetOmInProfiel: zetOm, bewaarProfiel: bewaar, leesProfielen: lees, verwijderProfiel: verwijder, verwijderGebruikersImports: verwijderAlles }))
+vi.mock('@/lib/historieImport', () => ({ zetOmInProfiel: zetOm, bewaarProfiel: bewaar, leesProfielen: lees, leesRol, verwijderProfiel: verwijder, verwijderGebruikersImports: verwijderAlles }))
 
 const omzetten = await import('./omzetten/route')
 const profiel = await import('./profiel/route')
@@ -39,6 +39,7 @@ beforeEach(() => {
   zetOm.mockResolvedValue({ fout: null, profiel: { bedrijf: ['x'], klanten: [], plannen: [], uitdagingen: [] }, leeg: false })
   bewaar.mockResolvedValue({ error: null })
   lees.mockResolvedValue([])
+  leesRol.mockReset(); leesRol.mockResolvedValue(null)
   verwijder.mockResolvedValue({ error: false })
   verwijderAlles.mockResolvedValue({ error: false })
 })
@@ -140,6 +141,17 @@ describe('profiel', () => {
     await profiel.DELETE(del())
     expect(verwijder.mock.calls[0][1]).toBe('user_eigenaar')
     expect(verwijder.mock.calls[0][2]).toBe('claude')
+  })
+  it('geeft de rol uit het ArnoBot-profiel mee voor in de vraag, en niets als die ontbreekt of de opvraag faalt', async () => {
+    leesRol.mockResolvedValue('Sales Manager')
+    expect((await (await profiel.GET()).json()).rol).toBe('Sales Manager')
+    leesRol.mockResolvedValue(null)
+    expect((await (await profiel.GET()).json()).rol).toBeNull()
+    leesRol.mockRejectedValue(new Error('stuk'))
+    const r = await profiel.GET()
+    expect(r.status).toBe(200)
+    expect((await r.json()).rol).toBeNull()
+    expect(leesRol.mock.calls[0][1]).toBe('user_eigenaar')
   })
   it('verwijdert zonder bron alle profielen en weigert een onbekende bron', async () => {
     expect((await profiel.DELETE(del(''))).status).toBe(200)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { historieImportDb, historieImportGebruiker } from '@/lib/historieImportApi'
-import { bewaarProfiel, leesProfielen, verwijderGebruikersImports, verwijderProfiel } from '@/lib/historieImport'
+import { bewaarProfiel, leesProfielen, leesRol, verwijderGebruikersImports, verwijderProfiel } from '@/lib/historieImport'
 import { isImportBron } from '@/lib/historieImportRegels'
 
 // Het opgeslagen profiel uit een andere AI: lezen, het gecontroleerde voorstel opslaan (vervangt een eerder profiel) en verwijderen.
@@ -8,8 +8,8 @@ import { isImportBron } from '@/lib/historieImportRegels'
 export async function GET() {
   const g = await historieImportGebruiker({ metToegangscontrole: false })
   if ('fout' in g) return g.fout
-  const profielen = await leesProfielen(historieImportDb, g.userId)
-  return NextResponse.json({ profielen })
+  const [profielen, rol] = await Promise.all([leesProfielen(historieImportDb, g.userId), leesRol(historieImportDb, g.userId).catch(() => null)])
+  return NextResponse.json({ profielen, rol })
 }
 
 export async function PUT(req: NextRequest) {
