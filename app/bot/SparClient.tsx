@@ -1661,6 +1661,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             }, 100)
             return
           }
+          // Een vaste of korte gegenereerde reactie van de chat zelf (bijvoorbeeld bij een off-topic vraag, de eerste en tweede keer):
+          // die moet gewoon op het scherm komen. Eerder (sinds het streamen, 2026-07-11) viel hij hier stil weg en zag de gebruiker niets.
+          if (typeof data.answer === 'string' && data.answer.trim()) {
+            setMessages(prev => [...prev, { role: 'arno', content: data.answer, hint: null }])
+            if (!userScrolledRef.current) requestAnimationFrame(() => scrollToRef(lastMessageRef))
+          }
           return
         }
 
