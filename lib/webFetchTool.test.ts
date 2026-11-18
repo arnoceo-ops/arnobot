@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type Anthropic from '@anthropic-ai/sdk'
-import { bevatLink, opgehaaldePaginas, WEB_FETCH_TOOL, WEB_FETCH_PROMPT } from '@/lib/webFetchTool'
+import { bevatLink, opgehaaldePaginas, metWebFetchPrompt, WEB_FETCH_TOOL, WEB_FETCH_PROMPT } from '@/lib/webFetchTool'
 import { getAllText } from '@/lib/ai'
 
 const blok = (b: unknown) => b as Anthropic.Message['content'][number]
@@ -25,6 +25,23 @@ describe('WEB_FETCH_TOOL', () => {
   })
   it('de prompt bevat geen streepjes als leesteken', () => {
     expect(WEB_FETCH_PROMPT).not.toMatch(/[–—]/)
+  })
+})
+
+describe('metWebFetchPrompt', () => {
+  const blokken = [
+    { type: 'text' as const, text: 'PERSONA', cache_control: { type: 'ephemeral' as const } },
+    { type: 'text' as const, text: 'CONTEXT' },
+  ]
+  it('laat de blokken ongemoeid zonder link', () => {
+    expect(metWebFetchPrompt(blokken, false)).toBe(blokken)
+  })
+  it('voegt met een link de regels als eigen blok achteraan toe en behoudt de persona', () => {
+    const uit = metWebFetchPrompt(blokken, true)
+    expect(uit).toHaveLength(3)
+    expect(uit.slice(0, 2)).toEqual(blokken)
+    expect(uit[2].text).toBe(WEB_FETCH_PROMPT)
+    expect(JSON.stringify(uit)).not.toContain('[object Object]')
   })
 })
 

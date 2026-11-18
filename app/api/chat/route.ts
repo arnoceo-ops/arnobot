@@ -54,7 +54,7 @@ import { telAnthropicLimiet } from '@/lib/capaciteit'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { getText, getAllText, StreamingDashSanitizer } from '@/lib/ai'
-import { WEB_FETCH_TOOL, WEB_FETCH_PROMPT, bevatLink, opgehaaldePaginas } from '@/lib/webFetchTool'
+import { WEB_FETCH_TOOL, metWebFetchPrompt, bevatLink, opgehaaldePaginas } from '@/lib/webFetchTool'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
@@ -497,8 +497,10 @@ export async function POST(req: NextRequest) {
       .map((h: { role?: string; content?: unknown }) => (h.role === 'user' && typeof h.content === 'string' ? h.content : ''))
       .join(' '))
 
-    const systemPrompt = buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount)
-      + (linkInGesprek ? '\n\n' + WEB_FETCH_PROMPT : '')
+    const systemPrompt = metWebFetchPrompt(
+      buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount),
+      linkInGesprek,
+    )
 
     // Streaming i.p.v. één blokkerend antwoord: de tekst komt bij de gebruiker binnen terwijl
     // Claude hem genereert, in plaats van pas na het volledige antwoord. StreamingDashSanitizer
