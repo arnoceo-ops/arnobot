@@ -13,6 +13,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ['@react-pdf/renderer'],
+  // pdf-parse (paginatelling in lib/pdfPaginas.ts) laadt pdfjs en hoort niet in de bundel.
+  serverExternalPackages: ['pdf-parse'],
   // Wordt letterlijk ingebakken in de clientbundel op het moment van bouwen, zodat een
   // verouderde, al geladen pagina zijn eigen (oude) build-id kan vergelijken met wat de
   // live server nu meldt via /api/version. Zie hooks/useVersionCheck.ts.

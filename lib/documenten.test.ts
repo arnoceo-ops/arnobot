@@ -1,10 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   laadSessieDocumenten, lijstSessieDocumenten, lijstBewaardeDocumenten, bewaardGebruik, downloadDocument, verwerkNieuweUpload,
   laadBijlage, markeerGebruikt, hernoemDocument, verwijderDocument, verwijderGebruikersDocumenten, downloadBewaardDocument,
   koppelDocument, ontkoppelDocument, registreerTranscript, bewaardeRuimteOver, gesprekkenPerDocument, eerdereGesprekkenOverBestanden,
 } from './documenten'
+vi.mock('./pdfPaginas', () => ({ telPdfPaginas: vi.fn(async () => 5) }))
+beforeEach(() => { vi.mocked(telPdfPaginas).mockResolvedValue(5) })
+import { telPdfPaginas } from './pdfPaginas'
 import { DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_DOCUMENTEN } from './documentenRegels'
 
 type Aanroep = { methode: string; args: unknown[] }
@@ -275,6 +278,21 @@ describe('verwerkNieuweUpload', () => {
     const r = await verwerkNieuweUpload(db, upload, NU)
     expect(r.error).toBe('bestand_te_groot')
     expect(verwijderd).toEqual([PAD])
+  })
+  it('keurt een PDF van meer dan 100 pagina\'s af en ruimt het op', async () => {
+    vi.mocked(telPdfPaginas).mockResolvedValue(101)
+    const { db, verwijderd, queries } = maakDb({ bestanden: { [PAD]: tekstBytes('pdf') }, antwoord: geenReplay })
+    const r = await verwerkNieuweUpload(db, { ...upload, mediaType: 'application/pdf' }, NU)
+    expect(r.error).toBe('pdf_te_lang')
+    expect(verwijderd).toEqual([PAD])
+    expect(insertVan(queries)).toBeUndefined()
+  })
+  it('laat een PDF van precies 100 pagina\'s en een PDF waarvan het tellen mislukt door', async () => {
+    for (const aantal of [100, null]) {
+      vi.mocked(telPdfPaginas).mockResolvedValue(aantal)
+      const { db } = maakDb({ bestanden: { [PAD]: tekstBytes('pdf') }, antwoord: geenReplay })
+      expect((await verwerkNieuweUpload(db, { ...upload, mediaType: 'application/pdf' }, NU)).error).toBeNull()
+    }
   })
   it('keurt een niet-ondersteund bestandstype af en ruimt het op', async () => {
     const { db, verwijderd } = maakDb({ bestanden: { [PAD]: tekstBytes('x') }, antwoord: geenReplay })

@@ -20,7 +20,7 @@ export async function documentenGebruiker(): Promise<{ userId: string } | { fout
 /** Een foutcode uit lib/documenten.ts omzetten naar een HTTP-status. */
 export function statusVoorFout(code: string): number {
   if (code === 'niet_gevonden') return 404
-  if (code === 'ongeldig_id' || code === 'naam_leeg' || code === 'docs_vol' || code === 'bestand_te_groot'
+  if (code === 'ongeldig_id' || code === 'naam_leeg' || code === 'docs_vol' || code === 'bestand_te_groot' || code === 'pdf_te_lang'
     || code === 'bestandstype_niet_ondersteund' || code === 'bestand_niet_leesbaar') return 400
   return 500
 }

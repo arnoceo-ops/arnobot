@@ -1614,7 +1614,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           const data = await res.json()
 
           if (!res.ok) {
-            const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'bestand_niet_leesbaar'
+            const isBestandsfout = data.error === 'bestandstype_niet_ondersteund' || data.error === 'bestand_te_groot' || data.error === 'pdf_te_lang' || data.error === 'bestand_niet_leesbaar'
               || data.error === 'audio_alleen_betaald' || data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden'
             // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
             // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
@@ -1634,6 +1634,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_te_groot') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is te groot. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
+            } else if (data.error === 'pdf_te_lang') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Die PDF heeft meer dan 100 pagina\'s. Splits hem op, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_niet_leesbaar') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'audio_alleen_betaald') {

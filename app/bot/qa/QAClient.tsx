@@ -160,7 +160,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik een bestand uploaden in een gesprek?',
-        a: 'Ja, een PDF, Word-document of afbeelding (tot 20MB, afbeeldingen tot 10MB). Standaard bewaren we het in je Uploads bij ARCHIEF. Zet je het vinkje uit, dan verdwijnt het uiterlijk 48 uur na je laatste bericht.',
+        a: 'Ja, een PDF, Word-document of afbeelding (tot 20MB en 100 pagina\'s per PDF, afbeeldingen tot 10MB). Standaard bewaren we het in je Uploads bij ARCHIEF. Zet je het vinkje uit, dan verdwijnt het uiterlijk 48 uur na je laatste bericht.',
       },
       {
         q: 'Kan ik mijn account en data verwijderen?',

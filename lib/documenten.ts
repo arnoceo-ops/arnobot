@@ -3,9 +3,10 @@
 // gaat met een eigenaarsfilter (user_id); een document-ID, sessie-ID of pad uit de client wordt hier nooit zonder
 // dat filter en zonder controle op vorm gebruikt.
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { telPdfPaginas } from './pdfPaginas'
 import { buildDocumentContentBlock } from './documentInhoud'
 import {
-  DOCUMENTEN_BUCKET, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, maxBytesVoor,
+  DOCUMENTEN_BUCKET, MAX_PDF_PAGINAS, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, maxBytesVoor,
   hernoemMetBehoudExtensie, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, schoneBestandsnaam, verloopOp,
 } from './documentenRegels'
 import { bouwDocumentGeheugen, type GeladenBijlage, type SamenstelRij } from './documentenSamenstellen'
@@ -200,6 +201,14 @@ export async function verwerkNieuweUpload(
   if (inhoud.error) {
     await verwijderBestand(db, p.userId, p.storagePath)
     return { error: inhoud.error }
+  }
+
+  if (p.mediaType === 'application/pdf') {
+    const paginas = await telPdfPaginas(buffer)
+    if (paginas !== null && paginas > MAX_PDF_PAGINAS) {
+      await verwijderBestand(db, p.userId, p.storagePath)
+      return { error: 'pdf_te_lang' }
+    }
   }
 
   // Docs vol: het bestand blijft staan zodat de gebruiker het zonder bewaren nog kan versturen (de opruiming haalt het
