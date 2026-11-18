@@ -162,9 +162,20 @@ Tweede ronde (2026-11-18, "veel te druk"): in de tab het label BEWAARD, de datum
 - [ ] `docs/ARNOBOT_OVERZICHT.md` en `docs/TECHNICAL_HANDOVER.md` (functie, routes, bucket, tabellen) bijgewerkt, met PDF's.
 - [ ] Controle door Arno op zijn eigen account: vinkje aan en uit, kiezen uit Docs, BESPREEK, hernoemen, verwijderen, een audio-opname met transcript, en een gewone gebruiker (oude route).
 
-## Fase 2: import van historie (Chris)
+## Fase 2: import van gespreksgeschiedenis uit een andere AI (Chris), ontwerp (concept, nog niet gebouwd)
 
-- Eerst uitzoeken wat de claude.ai-export bevat (of projecten erin zitten).
-- Projectbestanden zijn gewone documenten en passen in fase 1.
-- Chatgeschiedenis: parsen, filteren op sales-inhoud, samenvatten en inladen in het geheugen met de oorspronkelijke datum en bron "import"; het ruwe bestand wordt niet bewaard.
-- Toestemmingstekst (klantdata van derden) en een eigen weging voor geïmporteerd geheugen.
+**Uitgangspunt:** de claude.ai-export bevat de gesprekken maar niet de originele bestanden (officieel, privacy.claude.com, gelezen 2026-11-18). De JSON-structuur staat nergens officieel beschreven; de ChatGPT-helppagina gaf een 403. Er wordt dus niets gebouwd voordat een echte export is bekeken. Het ontwerp hieronder is bewust een pijplijn met een aparte lezer per bron, zodat alleen die lezer van de echte structuur afhangt.
+
+**Besluit (Arno, 2026-11-18):** fase 1 gaat eerst live; fase 2 volgt daarna als eigen traject met een eigen goedkeuring (nieuwe verwerking van gegevens van derden). Het ontwerp van fase 2 gebeurt wel nu, zodat fase 1 er niets in dichtzet.
+
+**Onderdelen**
+1. **Upload:** de browser stuurt het exportbestand (een zip, vaak tientallen MB) via een signed URL rechtstreeks naar een eigen privé-bucket voor imports, niet via een Vercel-functie (grens 4,5 MB op de request). De grootte van die bucket is te kiezen; de Supabase-limiet voor ons plan is nog te controleren.
+2. **Bronnen:** claude.ai (gesprekken, mogelijk projecten) en ChatGPT (gesprekken). Per bron een lezer die de export omzet naar één gedeelde vorm: extern ID, titel, datum, berichten (rol en tekst). Alles daarna is bron-onafhankelijk.
+3. **Verwerking op de achtergrond, in kleine hervatbare stappen** (cron, zoals `documenten-opruimen`, maximaal N gesprekken per run, status per import): uitpakken en lezen, filteren op sales-inhoud (een goedkope classificatie op titel en eerste berichten), per gesprek een korte samenvatting met de belangrijkste feiten, embedding met hetzelfde model als de bestaande geheugen-embeddings, klaar. Het ruwe exportbestand wordt na het uitpakken verwijderd; er is geen reden het te bewaren.
+4. **Opslag:** eigen tabellen voor de import en de geïmporteerde gesprekken (titel, oorspronkelijke datum, samenvatting, feiten, embedding). Nooit in `arnobot_blog_sessions`, `arnobot_analyses` of `arnobot_memory_entities` (die lezen managerroutes en analyses), met eigenaarsfilter, RLS aan en de tabellen in de controlescripts.
+5. **Gebruik in het gesprek:** een eigen leesroute naast het gewone geheugen, met een eigen label ("uit je geïmporteerde historie, oorspronkelijk een gesprek met een andere AI op …") en een lagere weging dan eigen gesprekken, zodat ArnoBot het niet voor gesprekken met hem houdt. Geïmporteerde tekst is altijd gegevens, nooit instructie.
+6. **Interface:** een blok "HISTORIE IMPORTEREN" onder de tab Uploads (hoe exporteer je per bron, bestand kiezen, voortgang, resultaat zoals "214 gesprekken gelezen, 61 over sales meegenomen", VERWIJDER DEZE IMPORT). Geïmporteerde gesprekken staan niet bij Gesprekken en tellen niet mee in analyses.
+7. **Privacy en veiligheid:** een toestemmingstekst vóór de upload (de export kan gegevens van derden bevatten), grenzen op bestandsgrootte en aantal gesprekken, bescherming tegen prompt-injectie in geïmporteerde tekst, een import volledig verwijderbaar (met embeddings), opgenomen in de gegevensexport, in "verwijder alles" en in de checklist bij accountverwijdering. Sub-verwerkers: Anthropic (samenvatten) en Voyage (embedding) staan al in de tabellen; de privacytekst moet de import expliciet noemen.
+8. **Tests:** met gepseudonimiseerde voorbeelden uit echte exports (nooit echte data in de repo): lezers, filter, hervatten na een fout, dezelfde export twee keer uploaden, de grenzen.
+
+**Open (nodig vóór de bouw):** een echte export van claude.ai en van ChatGPT (structuur, projecten, berichtvorm, tijdstempels); de bucketgrens van ons Supabase-plan; welk model voor classificatie en samenvatting (uit `docs/MODELINVENTARIS.md`); een kostenschatting per 100 gesprekken; de drempel voor "sales-inhoud"; de weging in het geheugen; Arno's goedkeuring van de toestemmingstekst en de nieuwe verwerking.
