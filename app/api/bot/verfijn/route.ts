@@ -6,6 +6,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
+import { bijlageHint } from '@/lib/verfijnPrompt'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     // Het profiel van de gebruiker wordt bewust NIET meer meegegeven (besluit Arno 2026-11-13): het
     // model maakte er aannames van ("CFO van een ziekenhuis") die de gebruiker niet bedoelde.
-    const { vraag, context } = await req.json()
+    const { vraag, context, bijlage } = await req.json()
     if (!vraag?.trim()) return NextResponse.json({ verfijnd: vraag })
     if (typeof vraag !== 'string' || vraag.length > 2000) {
       return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 })
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
-      system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${contextHint}
+      system: `Je helpt mensen een scherpere reactie of vraag formuleren voor een gesprek met Arno Diepeveen, salesstrateeg.${contextHint}${bijlageHint(bijlage)}
 
 Als er een vorig antwoord van ArnoBot aanwezig is, is de input een vervolg op dat gesprek. Een statement, antwoord of aanvulling is dan net zo geldig als een vraag.
 
