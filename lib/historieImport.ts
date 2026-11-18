@@ -10,7 +10,7 @@ import { BRONDATA_REGEL, gesprekBlok } from '@/lib/sessieSamenvatting'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import {
   KOPJES, MAX_BLOK_TOTAAL, MAX_INVOER_TEKENS, MAX_REGELS_PER_KOPJE, MAX_TEKENS_REGEL, MAX_TEKENS_PER_KOPJE, bouwProfielBlok, isLeegProfiel, profielTekens,
-  schoneRol, valideerProfiel, voorbewerkInvoer, type ImportBron, type ImportProfiel,
+  valideerProfiel, voorbewerkInvoer, type ImportBron, type ImportProfiel,
 } from '@/lib/historieImportRegels'
 
 const TABEL = 'arnobot_import_profielen'
@@ -65,12 +65,6 @@ export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string): Promis
 }
 
 export type OpgeslagenProfiel = { bron: ImportBron; profiel: ImportProfiel; created_at: string }
-
-/** De rol uit het ArnoBot-profiel van de gebruiker (schoongemaakt), voor in de vraag. Null als er geen is. */
-export async function leesRol(db: SupabaseClient, userId: string): Promise<string | null> {
-  const { data } = await db.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).maybeSingle()
-  return schoneRol((data as { profiel?: { rol?: unknown } } | null)?.profiel?.rol)
-}
 
 /** Slaat het gecontroleerde profiel van deze bron op. Een eerder profiel van dezelfde bron wordt vervangen, profielen van andere bronnen blijven staan. Valideert opnieuw. */
 export async function bewaarProfiel(

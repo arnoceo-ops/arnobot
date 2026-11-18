@@ -30,18 +30,11 @@ export const MAX_BLOK_TOTAAL = 12000
 // Vier kopjes van 1.500 tekens plus kop, labels en einde blijven onder MAX_BLOK_TEKENS.
 export const MAX_TEKENS_PER_KOPJE = 1500
 
-/** De rol uit het ArnoBot-profiel van de gebruiker, schoongemaakt voor in de vraag. Null als er geen bruikbare rol is. */
-export function schoneRol(rol: unknown): string | null {
-  if (typeof rol !== 'string') return null
-  const s = rol.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim()
-  if (s.length < 2 || /^(onbekend|n\.?v\.?t\.?|geen)$/i.test(s)) return null
-  return s
-}
-
-/** De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor de link én voor KOPIEER DE VRAAG. Met de rol uit het profiel als die bekend is. */
-export function bouwHistorieVraag(rol?: unknown): string {
-  const r = schoneRol(rol)
-  return `Ik neem mijn werk${r ? ` als ${r}` : ''} mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet.
+/**
+ * De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor het kader, de link én voor KOPIEER DE VRAAG. Bewust zonder rol of functie:
+ * een label uit het profiel (bijvoorbeeld "Sales Manager") kan het antwoord sturen en past niet bij iedereen (Arno, 2026-11-18).
+ */
+export const HISTORIE_VRAAG = `Ik neem mijn werk mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet.
 
 Schrijf per kopje korte regels, één feit per regel, zonder inleiding of afsluiting. Noteer erbij van wanneer iets is, als je dat weet. Noem bedrijven met naam en personen alleen met hun functie. Geen e-mailadressen of telefoonnummers. Alleen werk: niets privés en niets over gezondheid, geloof of politiek. Geen advies en geen oordeel over mij, alleen feiten.
 
@@ -51,16 +44,12 @@ Schrijf per kopje korte regels, één feit per regel, zonder inleiding of afslui
 4. ${KOPJES[3].label}
 
 Maximaal 800 woorden.`
-}
-
-/** De vraag zonder rol, voor tests en als er geen rol bekend is. */
-export const HISTORIE_VRAAG = bouwHistorieVraag(null)
 
 /**
  * Een link die de andere AI opent met de vraag al ingevuld. Of de vooraf ingevulde vraag werkt is nog niet in een echte browser
  * gecontroleerd (zie "Nog te testen" in het plan); de pagina kopieert de vraag daarom altijd ook naar het klembord.
  */
-export function bouwVraagLink(bron: 'chatgpt' | 'claude', rol?: unknown): string {
-  const q = encodeURIComponent(bouwHistorieVraag(rol))
+export function bouwVraagLink(bron: 'chatgpt' | 'claude'): string {
+  const q = encodeURIComponent(HISTORIE_VRAAG)
   return bron === 'chatgpt' ? `https://chatgpt.com/?q=${q}` : `https://claude.ai/new?q=${q}`
 }

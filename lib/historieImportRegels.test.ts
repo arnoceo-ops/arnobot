@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   historieImportBeschikbaarVoor, voorbewerkInvoer, schoonRegel, valideerProfiel, isLeegProfiel, legeProfiel, bouwProfielBlok,
-  bouwVraagLink, bouwHistorieVraag, schoneRol, HISTORIE_VRAAG, MAX_BLOK_TEKENS, MAX_TEKENS_REGEL, MAX_REGELS_PER_KOPJE, MAX_TEKENS_PER_KOPJE, isImportBron,
+  bouwVraagLink, HISTORIE_VRAAG, MAX_BLOK_TEKENS, MAX_TEKENS_REGEL, MAX_REGELS_PER_KOPJE, MAX_TEKENS_PER_KOPJE, isImportBron,
 } from './historieImportRegels'
 
 afterEach(() => { vi.unstubAllEnvs() })
@@ -43,18 +43,9 @@ describe('de vraag en de links', () => {
     expect(decodeURIComponent(l.split('?q=')[1])).toBe(HISTORIE_VRAAG)
     expect(bouwVraagLink('claude').startsWith('https://claude.ai/new?q=')).toBe(true)
   })
-  it('noemt de rol uit het profiel in de vraag, en zonder rol alleen "mijn werk"', () => {
-    expect(bouwHistorieVraag('Sales Manager')).toContain('Ik neem mijn werk als Sales Manager mee naar een andere assistent.')
-    expect(bouwHistorieVraag(null)).toContain('Ik neem mijn werk mee naar een andere assistent.')
-    expect(bouwHistorieVraag(undefined)).not.toContain('verkoper')
-    expect(HISTORIE_VRAAG).not.toContain('als verkoper')
-    expect(decodeURIComponent(bouwVraagLink('claude', 'Ondernemer').split('?q=')[1])).toContain('als Ondernemer mee')
-  })
-  it('maakt een rol schoon en laat een onbruikbare rol vallen', () => {
-    expect(schoneRol('  Sales   Manager \n')).toBe('Sales Manager')
-    expect(schoneRol('x'.repeat(200))!.length).toBeLessThanOrEqual(60)
-    expect(schoneRol('<b>Eigenaar</b>')).toBe('b Eigenaar /b')
-    for (const r of ['onbekend', 'Onbekend', 'geen', 'n.v.t.', '', ' ', 'a', null, undefined, 5]) expect(schoneRol(r)).toBeNull()
+  it('noemt geen rol of functie in de vraag', () => {
+    expect(HISTORIE_VRAAG).toContain('Ik neem mijn werk mee naar een andere assistent.')
+    expect(HISTORIE_VRAAG).not.toMatch(/als (verkoper|Sales Manager)/i)
   })
   it('kent alleen drie bronnen', () => {
     expect(isImportBron('chatgpt')).toBe(true)
