@@ -1,8 +1,8 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** ontwerp klaar en door een onafhankelijke review gehaald (acht bevindingen verwerkt), wacht op Arno's akkoord. Niets gebouwd. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd; dit is de kleine, geautomatiseerde ingang ernaast.
-**Eerstvolgende stap:** Arno beoordeelt het plan, de bevindingen van de review (onderaan) en de keuzes; daarna bouwen in kleine, apart gepushte stappen achter een eigen schakelaar.
+**Waar we staan:** keuzes akkoord (Arno, 2026-11-18: eigen schakelaar, alle abonnementen, één profiel dat wordt vervangen, 2.500 tekens). Stap 1 gebouwd en gepusht, onzichtbaar (niets aangesloten). SQL voor de tabel moet Arno nog uitvoeren vóór stap 2 live wordt gebruikt. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
+**Eerstvolgende stap:** stap 2, de routes onder `app/api/bot/import/` met schakelaar, limiet en tests.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -56,7 +56,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 
 ## Bouwstappen (elk apart gepusht, alles achter de schakelaar)
 
-- [ ] 1. SQL, `lib/historieImport.ts` (vraag, omzetting, validatie, opslag, verwijderen) met tests (synthetische antwoorden, injectiegevallen, grenzen, herhaald opslaan).
+- [x] 1. SQL (`docs/sql/2026-11-18-historie-import.sql`, door Arno nog uit te voeren), `lib/historieImportRegels.ts` (schakelaar, vraag, voorbewerking, schoonmaken, validatie, profielblok) en `lib/historieImport.ts` (omzetting met Haiku, opslaan, lezen, verwijderen), met tests (synthetische antwoorden, injectie, grenzen). Nog nergens aangesloten.
 - [ ] 2. Routes, met tests.
 - [ ] 3. Blok in Uploads.
 - [ ] 4. Geheugenblok in de chat, met snapshot en een meting op een testaccount.
