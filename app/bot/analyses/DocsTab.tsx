@@ -53,8 +53,8 @@ function gebruiktTekst(n: number): string {
 }
 
 const knop: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
-// Secundaire links volgens docs/app-styleguide.md: Space Mono 13, letterspatiëring 4, gedempt, geen onderstreping.
-const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
+// Secundaire links naar docs/app-styleguide.md: Space Mono 13, gedempt, geen onderstreping. Letterspatiëring 2 in plaats van 4 (Arno, 2026-11-18): in kleine letters leest dat beter.
+const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
 const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af' }
 
 export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onAantal: (n: number) => void }) {
