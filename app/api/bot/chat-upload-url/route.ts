@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { AUDIO_MEDIA_TYPES, DOCUMENT_MEDIA_TYPES, createAttachmentUploadUrl } from '@/lib/chatAttachments'
+import { DOCUMENTEN_BUCKET, documentenBeschikbaarVoor } from '@/lib/documentenRegels'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +35,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { uploadUrl, path, error } = await createAttachmentUploadUrl(userId, mediaType)
+  // Een document gaat voor wie de documentenfunctie heeft naar de eigen documentenbucket (blijft bestaan
+  // zolang het gesprek loopt); audio en iedereen anders blijft bij de oude bucket.
+  const bucket = !AUDIO_MEDIA_TYPES.has(mediaType) && documentenBeschikbaarVoor(userId) ? DOCUMENTEN_BUCKET : undefined
+  const { uploadUrl, path, error } = await createAttachmentUploadUrl(userId, mediaType, bucket)
   if (error || !uploadUrl || !path) {
     return NextResponse.json({ error: error ?? 'upload_mislukt' }, { status: 500 })
   }

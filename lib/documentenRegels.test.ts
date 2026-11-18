@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
-  documentenBeschikbaarVoor, isGeldigDocumentId, schoneBestandsnaam, verloopOp, isVerlopen,
+  documentenBeschikbaarVoor, isGeldigDocumentId, isGeldigDocumentPad, schoneBestandsnaam, verloopOp, isVerlopen,
   kiesDocumentenVoorBeurt, DOCUMENT_LEVENSDUUR_MS, MAX_BESTANDSNAAM_TEKENS,
 } from './documentenRegels'
 import { MANUAL_TEST_USER_ID, E2E_TEST_USER_ID } from './internalTestAccounts'
@@ -58,6 +58,28 @@ describe('isGeldigDocumentId', () => {
     expect(isGeldigDocumentId(null)).toBe(false)
     expect(isGeldigDocumentId(42)).toBe(false)
     expect(isGeldigDocumentId({ id: 'x' })).toBe(false)
+  })
+})
+
+describe('isGeldigDocumentPad', () => {
+  const uuid = '3f2b8c1e-5a7d-4e9a-8b6c-1d2e3f4a5b6c'
+  it('accepteert alleen eigen map, uuid en bekende extensie', () => {
+    expect(isGeldigDocumentPad('user_abc', `user_abc/${uuid}.pdf`)).toBe(true)
+    expect(isGeldigDocumentPad('user_abc', `user_abc/${uuid}.DOCX`)).toBe(true)
+  })
+  it('weigert andermans map, padinjectie, extra mappen en vreemde extensies', () => {
+    expect(isGeldigDocumentPad('user_abc', `user_xyz/${uuid}.pdf`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', `user_abc/../user_xyz/${uuid}.pdf`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', `user_abc/map/${uuid}.pdf`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', `user_abc/${uuid}.exe`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', `user_abc/${uuid}`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', `user_abcd/${uuid}.pdf`)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', 'user_abc/geheim.pdf')).toBe(false)
+  })
+  it('weigert niet-tekst en een leeg userId', () => {
+    expect(isGeldigDocumentPad('user_abc', undefined)).toBe(false)
+    expect(isGeldigDocumentPad('user_abc', 42)).toBe(false)
+    expect(isGeldigDocumentPad('', `/${uuid}.pdf`)).toBe(false)
   })
 })
 

@@ -35,13 +35,13 @@ const EXTENSIONS: Record<string, string> = {
   'text/plain': 'txt', 'text/csv': 'csv',
 }
 
-export async function createAttachmentUploadUrl(userId: string, mediaType: string) {
+export async function createAttachmentUploadUrl(userId: string, mediaType: string, bucket: string = CHAT_ATTACHMENT_BUCKET) {
   const ext = EXTENSIONS[mediaType]
   if (!ext) return { uploadUrl: null, path: null, error: 'bestandstype_niet_ondersteund' as const }
 
   const path = `${userId}/${randomUUID()}.${ext}`
   const { data, error } = await supabase.storage
-    .from(CHAT_ATTACHMENT_BUCKET)
+    .from(bucket)
     .createSignedUploadUrl(path)
 
   if (error || !data) {

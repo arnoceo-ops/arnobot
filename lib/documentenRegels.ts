@@ -36,6 +36,18 @@ export function isGeldigDocumentId(id: unknown): id is string {
   return typeof id === 'string' && UUID_RE.test(id)
 }
 
+const PAD_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(pdf|png|jpg|webp|gif|docx|txt|csv)$/i
+
+/**
+ * Een opslagpad moet precies de vorm `<userId>/<uuid>.<extensie>` hebben, met het eigen userId. Een pad uit
+ * een request is nooit te vertrouwen: dit weigert ook `../`, extra mappen en andermans prefix.
+ */
+export function isGeldigDocumentPad(userId: string, pad: unknown): pad is string {
+  if (typeof pad !== 'string' || !userId) return false
+  if (!pad.startsWith(`${userId}/`)) return false
+  return PAD_RE.test(pad.slice(userId.length + 1))
+}
+
 /**
  * De bestandsnaam komt in de prompt en in de lijst met documenten. Stuurtekens en regeleinden weg
  * (anders kan een naam een nep-kop in de prompt zetten), haakjes die als markering kunnen dienen weg,

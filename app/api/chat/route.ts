@@ -65,7 +65,6 @@ import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
 import { limietVeilig } from '@/lib/limietVeilig'
 import { Redis } from '@upstash/redis'
-import mammoth from 'mammoth'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
@@ -73,58 +72,14 @@ import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
 const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
+import { buildDocumentContentBlock } from '@/lib/documentInhoud'
+import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
+import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt } from '@/lib/documenten'
+import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
-const NATIVE_DOCUMENT_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'])
-const TEXT_EXTRACT_TYPES = new Set([
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-  'text/csv',
-])
-
-type UploadedDocument = { name: string; mediaType: string; data: string }
-
-async function buildDocumentContentBlock(
-  doc: UploadedDocument
-): Promise<{ block: Anthropic.Messages.ContentBlockParam | null; extractedText: string | null; error: string | null }> {
-  if (!NATIVE_DOCUMENT_TYPES.has(doc.mediaType) && !TEXT_EXTRACT_TYPES.has(doc.mediaType)) {
-    return { block: null, extractedText: null, error: 'bestandstype_niet_ondersteund' }
-  }
-
-  // Grootte wordt al gecontroleerd door de aanroeper op het gedownloade buffer (vóór
-  // base64-encoderen), dat is nu de enige plek waar de ruwe bestandsgrootte nog bekend is.
-
-  if (doc.mediaType === 'application/pdf') {
-    return {
-      block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: doc.data } },
-      extractedText: null,
-      error: null,
-    }
-  }
-
-  if (doc.mediaType.startsWith('image/')) {
-    return {
-      block: { type: 'image', source: { type: 'base64', media_type: doc.mediaType as 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif', data: doc.data } },
-      extractedText: null,
-      error: null,
-    }
-  }
-
-  // .docx / .txt / .csv worden niet native ondersteund door de Messages API document-blocks,
-  // dus zelf omzetten naar platte tekst en meesturen als onderdeel van het tekstbericht.
-  const buffer = Buffer.from(doc.data, 'base64')
-  try {
-    if (doc.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      const { value } = await mammoth.extractRawText({ buffer })
-      return { block: null, extractedText: value, error: null }
-    }
-    return { block: null, extractedText: buffer.toString('utf-8'), error: null }
-  } catch {
-    return { block: null, extractedText: null, error: 'bestand_niet_leesbaar' }
-  }
-}
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -261,7 +216,8 @@ export async function POST(req: NextRequest) {
     // Storage en stuurt hier alleen het pad mee.
     if (rawDocument && typeof rawDocument === 'object'
       && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
-      && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+      && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)
+      && !documentenBeschikbaarVoor(userId)) {
       const { buffer, error: downloadError } = await downloadAndDeleteAttachment(userId, rawDocument.storagePath)
       if (downloadError || !buffer) {
         return NextResponse.json({ error: downloadError ?? 'bestand_niet_leesbaar' }, { status: 400, headers: corsHeaders(origin) })
@@ -467,9 +423,39 @@ export async function POST(req: NextRequest) {
     // check hierboven en de rest, in plaats van pas nu te starten.
     const context = await ragContextPromise
 
-    const questionWithDocument = documentText
+    let questionWithDocument = documentText
       ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`
       : question
+    let bijlageBlokken: Anthropic.Messages.ContentBlockParam[] = documentBlock ? [documentBlock] : []
+
+    // Nieuwe documentenfunctie (docs/DOCUMENTEN_PLAN.md), alleen voor wie documentenBeschikbaarVoor toestaat; voor
+    // iedereen anders blijft het oude gedrag hierboven ongewijzigd. Pas hier, na de inlog-, limiet-, dubbele-sessie-
+    // en moderatiecontroles, wordt een upload vastgelegd: een afgewezen verzoek kost de gebruiker zijn bijlage niet
+    // meer. Alle documenten van dit gesprek gaan bij elke beurt mee, één keer samengesteld voor alle vervolgpaden
+    // hieronder (stream, toolrondes, retry, max_tokens-vervolg), omdat die allemaal messages hergebruiken. Valt
+    // een document weg of gaat het laden mis, dan hoort het model dat expliciet te horen.
+    if (documentenBeschikbaarVoor(userId)) {
+      try {
+        if (rawDocument && typeof rawDocument === 'object'
+          && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
+          && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
+          const nieuw = await verwerkNieuweUpload(supabase, {
+            userId, sessionId, naam: rawDocument.name, mediaType: rawDocument.mediaType, storagePath: rawDocument.storagePath,
+          })
+          if (nieuw.error) {
+            return NextResponse.json({ error: nieuw.error }, { status: 400, headers: corsHeaders(origin) })
+          }
+        }
+        const rijen = await laadSessieDocumenten(supabase, userId, sessionId)
+        const samengesteld = await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))
+        bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
+        questionWithDocument += bouwBijlageTekst(samengesteld)
+        await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))
+      } catch (e) {
+        Sentry.captureException(e, { tags: { onderdeel: 'documenten-laden' }, level: 'error' })
+        questionWithDocument += BIJLAGEN_STORING_NOTITIE
+      }
+    }
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
     // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
@@ -483,8 +469,8 @@ export async function POST(req: NextRequest) {
       ...effectieveHistory,
       {
         role: 'user' as const,
-        content: documentBlock
-          ? [documentBlock, { type: 'text' as const, text: questionWithDocument }]
+        content: bijlageBlokken.length > 0
+          ? [...bijlageBlokken, { type: 'text' as const, text: questionWithDocument }]
           : questionWithDocument,
       },
     ]
