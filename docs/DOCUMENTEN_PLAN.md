@@ -218,3 +218,19 @@ Bronnen zijn vooral derde partijen; de officiële helppagina's gaven geen schema
 - Gesprekken met een andere AI bevatten vaak privézaken en gegevens van derden, en advies van een ander model dat ArnoBot niet als eigen kennis mag overnemen.
 
 **Eerste indruk:** weg A geeft het grootste deel van de "vliegende start" voor het kleinste deel van de bouw en de risico's; weg B voegt alleen de details uit afzonderlijke gesprekken toe. Besluit nog niet genomen.
+
+
+### Wat een echte claude.ai-export blijkt te zijn (2026-11-18, eigen testexport van Arno, 30 dagen, alleen structuur bekeken, geen inhoud in de repo)
+
+**Hoe de gebruiker eraan komt.** Settings > Privacy > Exporteer gegevens (keuze Alles, 30 dagen, 90 dagen of aangepast; de export bevat Chats, Gebruikers, Projecten). Het resultaat is geen zip maar een klein `manifest-….json` met zes downloadlinks (`light_metadata`, `projects`, `memories`, `frames`, `claude_code_cloud`, `conversations`). De links gelden 24 uur, kunnen na eerste gebruik al vervallen, en zitten achter een Cloudflare-controle (HTTP 403 voor een server): **ArnoBot kan ze niet zelf ophalen en het manifest uploaden werkt dus niet**. De gebruiker downloadt `conversations-000.zip` zelf in zijn browser en uploadt die zip; de browser pakt hem uit. Arno's eigen eerste reactie ("ik snap het niet") toont dat de uitleg heel kort en met een voorbeeld moet.
+
+**Inhoud van `conversations-000.zip`:** één `conversations.json` (18 MB voor 44 gesprekken in 30 dagen). Een array van gesprekken met `uuid`, `name` (bij 21 van 44 leeg), `summary` (door Claude zelf geschreven, bij 14 van 44 gevuld, gemiddeld ruim 3.600 tekens), `created_at`, `updated_at`, `account` en `chat_messages`. Elk bericht: `uuid`, `sender` (`human` of `assistant`), `text` (platte tekst), `content` (blokken: text, thinking, tool_use, tool_result, document, image, injected_prompt_block), `created_at`, `parent_message_uuid`, `attachments`, `files`.
+
+**Wat dat betekent**
+- Een lezer kan met `sender` en `text` volstaan; de blokken `thinking`, `tool_use` en `tool_result` maken het bestand groot en zijn voor ons waardeloos (467 van 1547 berichten hebben geen tekst, alleen zulke blokken).
+- Berichten staan in een lijst met `parent_message_uuid`; 17 plekken hebben meer dan één kind (opnieuw gegenereerd of bewerkt antwoord), dus de keten volgen vanaf het laatste bericht, niet de lijst plat lezen.
+- De eigen woorden van de gebruiker zijn maar ongeveer 9% van de tekst (93.000 van 1.010.000 tekens); de rest is antwoord van Claude. Samenvatten kan dus vooral op de gebruikersberichten, met het antwoord als context.
+- Bijlagen: alleen de bestandsnaam en een ID, de inhoud staat er niet in (bij 2 van 224 een `extracted_content`).
+- Omvang: 1.010.000 tekens is ruwweg 250.000 tot 300.000 tokens voor 30 dagen en 44 gesprekken; het langste gesprek is 184.000 tekens, te lang voor één samenvattingsaanroep zonder opdelen. Een kostenschatting met de prijzen uit `docs/MODELINVENTARIS.md` volgt bij de bouw.
+- De export is klein genoeg voor de browser: 18 MB uitgepakt. Een jaar aan gesprekken kan tien tot honderd keer zoveel zijn; de grens voor de upload moet dus bij de bouw worden gekozen.
+- ChatGPT blijft onbekend tot er een echte ChatGPT-export is bekeken.
