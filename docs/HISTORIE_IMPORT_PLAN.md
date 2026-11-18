@@ -1,8 +1,8 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 en 2 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`; de tabel bestaat (Arno voerde de SQL uit). Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
-**Eerstvolgende stap:** stap 3, het blok in Uploads.
+**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 3 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`; de tabel bestaat (Arno voerde de SQL uit). Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
+**Eerstvolgende stap:** stap 4, het geheugenblok in de chat.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -58,7 +58,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 
 - [x] 1. SQL (`docs/sql/2026-11-18-historie-import.sql`, door Arno nog uit te voeren), `lib/historieImportRegels.ts` (schakelaar, vraag, voorbewerking, schoonmaken, validatie, profielblok) en `lib/historieImport.ts` (omzetting met Haiku, opslaan, lezen, verwijderen), met tests (synthetische antwoorden, injectie, grenzen). Nog nergens aangesloten.
 - [x] 2. Routes `app/api/bot/import/omzetten` en `/profiel` (GET, PUT, DELETE) met schakelaar, toegangspoort (niet bij verwijderen), lengtecontrole vóór limiter en model, limiet 5 per uur, `historieImport` in `/api/bot/plan`, tests. De SQL is door Arno uitgevoerd (RLS aan).
-- [ ] 3. Blok in Uploads.
+- [x] 3. Blok NEEM JE HISTORIE MEE onder de tab Uploads (`app/bot/analyses/HistorieImportBlok.tsx`), alleen met `historieImport` uit `/api/bot/plan`. Gerenderd en bekeken (desktop en mobiel, vier toestanden). De vaste delen staan in `lib/historieImportVast.ts` omdat `lib/historieImportRegels.ts` de lijst met interne testaccounts importeert en die nooit in de browserbundel mag.
 - [ ] 4. Geheugenblok in de chat, met snapshot en een meting op een testaccount.
 - [ ] 5. Verwijderen, export, controlescripts, teardown.
 - [ ] 6. Teksten (na akkoord), `appHelp.ts`, `docs/ARNOBOT_OVERZICHT.md`, `docs/TECHNICAL_HANDOVER.md`, privacy, beveiligings-PDF, met PDF's.

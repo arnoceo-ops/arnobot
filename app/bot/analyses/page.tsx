@@ -11,6 +11,7 @@ import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { kortTitel } from '@/lib/kortTitel'
 import DocsTab from './DocsTab'
+import HistorieImportBlok from './HistorieImportBlok'
 
 interface Session {
   id: string
@@ -125,6 +126,7 @@ export default function GeschiedenisPage() {
   // Documenten (docs/DOCUMENTEN_PLAN.md): alleen wie de documentenfunctie heeft krijgt drie tabs en de tab UPLOADS; voor iedereen
   // anders blijft deze pagina precies zoals hij was.
   const [documentenAan, setDocumentenAan] = useState(false)
+  const [historieImportAan, setHistorieImportAan] = useState(false)
   const [tab, setTab] = useState<'gesprekken' | 'analyses' | 'docs'>(() => {
     if (typeof window === 'undefined') return 'gesprekken'
     const p = new URLSearchParams(window.location.search)
@@ -143,7 +145,7 @@ export default function GeschiedenisPage() {
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => { setPlan(d.plan ?? 'basis'); setDocumentenAan(d.documenten === true) })
+      .then(d => { setPlan(d.plan ?? 'basis'); setDocumentenAan(d.documenten === true); setHistorieImportAan(d.historieImport === true) })
       .catch(() => {})
       .finally(() => setPlanLoaded(true))
   }, [])
@@ -1050,6 +1052,10 @@ export default function GeschiedenisPage() {
 
         {documentenAan && tab === 'docs' && (
           <DocsTab isMobile={isMobile} onAantal={setDocsAantal} />
+        )}
+
+        {documentenAan && historieImportAan && tab === 'docs' && (
+          <HistorieImportBlok isMobile={isMobile} />
         )}
 
         {(sorted.length > 0 || documentenAan) && (
