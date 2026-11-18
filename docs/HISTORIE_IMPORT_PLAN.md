@@ -1,7 +1,7 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 3 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`; de tabel bestaat (Arno voerde de SQL uit). Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
+**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 3 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`, na een eerste proef met echte antwoorden aangepast (zie onderaan): een profiel per bron, ruimere grenzen. Arno moet `docs/sql/2026-11-18-historie-import-per-bron.sql` nog uitvoeren. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
 **Eerstvolgende stap:** stap 4, het geheugenblok in de chat.
 
 ## Besluiten (met verworpen alternatieven)
@@ -102,3 +102,9 @@ Arno plakte een antwoord van Claude en een van ChatGPT. Bevindingen en wat ermee
 - **Open besluit (Arno): is 2.500 tekens genoeg?** Het rijke Claude-antwoord werd teruggebracht tot ongeveer 1.900 tekens en verloor veel (prijzen, projecten, wat is gehaald). Voorstel: 4.000 tekens in de chat (ongeveer 1.000 tokens per bericht).
 - **Open besluit (Arno): één profiel per bron?** Arno heeft zowel een Claude- als een ChatGPT-profiel, en de twee vullen elkaar aan. Nu vervangt het ene het andere. Voorstel: één profiel per bron (hooguit drie), elk apart te zien en te verwijderen; het blok in de chat deelt de grens.
 - **Namen van derden:** het Claude-antwoord bevat namen van personen en bedrijven en contractdetails. De vraag verbiedt alleen contactgegevens. De gebruiker controleert het voorstel, en de privacytekst moet dit noemen.
+
+### Besluiten na de eerste proef (Arno, 2026-11-18)
+
+- **Gekozen: profielen vullen elkaar aan, een profiel per bron** (chatgpt, claude, anders; hooguit drie). Een nieuwe import van dezelfde bron vervangt alleen het profiel van die bron. **Verworpen: één profiel per gebruiker dat bij elke import wordt vervangen**, want een ChatGPT-profiel wiste dan het Claude-profiel terwijl de twee elkaar aanvullen. Tabelsleutel nu (`user_id`, `bron`); wie de tabel al had voert `docs/sql/2026-11-18-historie-import-per-bron.sql` uit. DELETE kent `?bron=` (zonder bron: alle profielen).
+- **Gekozen: ruimere grenzen, niet terugbrengen tot een willekeurig getal.** Per profiel hooguit 6.800 tekens in de chat (per kopje 1.500 tekens en 10 regels van 240), en 12.000 tekens in totaal voor alle profielen samen, het nieuwste profiel eerst. Het rijke Claude-antwoord past nu nagenoeg volledig (ongeveer 3.300 tekens na het omzetten). **Verworpen: 2.500 tekens**, een grens zonder meting; het Claude-antwoord verloor erdoor prijzen, projecten en wat is gehaald.
+- Het blok telt de kopjes nu zelf mee in de grens (het kon er 70 tot 100 tekens overheen komen).

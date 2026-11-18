@@ -136,11 +136,11 @@ describe('valideerProfiel', () => {
     expect(new Set(p.bedrijf).size).toBe(p.bedrijf.length)
   })
   it('houdt elk kopje binnen zijn tekenbudget zodat het blok altijd past', () => {
-    const regels = Array.from({ length: 6 }, (_, i) => `${'b'.repeat(180)} ${i}`)
+    const regels = Array.from({ length: 10 }, (_, i) => `${'b'.repeat(235)} ${i}`)
     const p = valideerProfiel({ bedrijf: regels, klanten: regels })!
     expect(p.bedrijf.join('').length).toBeLessThanOrEqual(MAX_TEKENS_PER_KOPJE)
-    expect(p.bedrijf.length).toBeLessThan(6)
-    const blok = bouwProfielBlok({ bedrijf: regels.slice(0, 2), klanten: regels.slice(0, 2), plannen: regels.slice(0, 2), uitdagingen: regels.slice(0, 2) }, 'claude', '2026-11-18T10:00:00.000Z')
+    expect(p.bedrijf.length).toBeLessThan(10)
+    const blok = bouwProfielBlok({ bedrijf: p.bedrijf, klanten: p.bedrijf, plannen: p.bedrijf, uitdagingen: p.bedrijf }, 'claude', '2026-11-18T10:00:00.000Z')
     expect(blok).toContain('WAAR IK MEE WORSTEL')
   })
   it('herkent een leeg profiel', () => {
@@ -169,7 +169,7 @@ describe('bouwProfielBlok', () => {
     expect(bouwProfielBlok(legeProfiel(), 'claude', '2026-11-18T10:00:00.000Z')).toBe('')
   })
   it('blijft binnen de grens en laat de laatste regels vallen', () => {
-    const lang = Array.from({ length: 8 }, (_, i) => `${'a'.repeat(230)} ${i}`)
+    const lang = Array.from({ length: 10 }, (_, i) => `${'a'.repeat(236)} ${i}`)
     const p = { bedrijf: lang, klanten: lang, plannen: lang, uitdagingen: lang }
     const b = bouwProfielBlok(p, 'claude', '2026-11-18T10:00:00.000Z')
     expect(b.length).toBeLessThanOrEqual(MAX_BLOK_TEKENS + 4)

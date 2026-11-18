@@ -9,7 +9,7 @@ import { getText } from '@/lib/ai'
 import { BRONDATA_REGEL, gesprekBlok } from '@/lib/sessieSamenvatting'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import {
-  KOPJES, MAX_INVOER_TEKENS, MAX_REGELS_PER_KOPJE, MAX_TEKENS_REGEL, MAX_TEKENS_PER_KOPJE, bouwProfielBlok, isLeegProfiel, profielTekens,
+  KOPJES, MAX_BLOK_TOTAAL, MAX_INVOER_TEKENS, MAX_REGELS_PER_KOPJE, MAX_TEKENS_REGEL, MAX_TEKENS_PER_KOPJE, bouwProfielBlok, isLeegProfiel, profielTekens,
   valideerProfiel, voorbewerkInvoer, type ImportBron, type ImportProfiel,
 } from '@/lib/historieImportRegels'
 
@@ -50,7 +50,7 @@ export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string): Promis
   try {
     const res = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2500,
+      max_tokens: 4500,
       system: OMZET_SYSTEEM,
       messages: [{ role: 'user', content: `${gesprekBlok(tekst)}\n\nGeef de JSON.` }],
     })
@@ -66,7 +66,7 @@ export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string): Promis
 
 export type OpgeslagenProfiel = { bron: ImportBron; profiel: ImportProfiel; created_at: string }
 
-/** Slaat het gecontroleerde profiel op en vervangt een eerder profiel van dezelfde gebruiker. Valideert opnieuw. */
+/** Slaat het gecontroleerde profiel van deze bron op. Een eerder profiel van dezelfde bron wordt vervangen, profielen van andere bronnen blijven staan. Valideert opnieuw. */
 export async function bewaarProfiel(
   db: SupabaseClient, userId: string, bron: ImportBron, invoer: unknown, nu: Date = new Date(),
 ): Promise<{ error: 'ongeldig' | 'leeg' | 'opslaan_mislukt' | null }> {
@@ -75,28 +75,46 @@ export async function bewaarProfiel(
   if (isLeegProfiel(profiel)) return { error: 'leeg' }
   const { error } = await db.from(TABEL).upsert({
     user_id: userId, bron, kopjes: profiel, tekens: profielTekens(profiel), created_at: nu.toISOString(),
-  }, { onConflict: 'user_id' })
+  }, { onConflict: 'user_id,bron' })
   return { error: error ? 'opslaan_mislukt' : null }
 }
 
-export async function leesProfiel(db: SupabaseClient, userId: string): Promise<OpgeslagenProfiel | null> {
-  const { data } = await db.from(TABEL).select('bron, kopjes, created_at').eq('user_id', userId).maybeSingle()
-  if (!data) return null
-  const profiel = valideerProfiel((data as { kopjes: unknown }).kopjes)
-  if (!profiel || isLeegProfiel(profiel)) return null
-  return { bron: (data as { bron: ImportBron }).bron, profiel, created_at: (data as { created_at: string }).created_at }
+/** Alle profielen van deze gebruiker, het nieuwste eerst. Alles wordt opnieuw geschoond, ook wat uit de database komt. */
+export async function leesProfielen(db: SupabaseClient, userId: string): Promise<OpgeslagenProfiel[]> {
+  const { data } = await db.from(TABEL).select('bron, kopjes, created_at').eq('user_id', userId)
+  const uit: OpgeslagenProfiel[] = []
+  for (const r of (data ?? []) as { bron: ImportBron; kopjes: unknown; created_at: string }[]) {
+    const profiel = valideerProfiel(r.kopjes)
+    if (profiel && !isLeegProfiel(profiel)) uit.push({ bron: r.bron, profiel, created_at: r.created_at })
+  }
+  return uit.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
 }
 
-export async function verwijderProfiel(db: SupabaseClient, userId: string): Promise<{ error: boolean }> {
+/** Verwijdert het profiel van één bron. */
+export async function verwijderProfiel(db: SupabaseClient, userId: string, bron: ImportBron): Promise<{ error: boolean }> {
+  const { error } = await db.from(TABEL).delete().eq('user_id', userId).eq('bron', bron)
+  return { error: !!error }
+}
+
+/** Verwijdert alle profielen van de gebruiker: voor "verwijder alles", de opruiming bij accountverwijdering en de gegevensexport-checklist. */
+export async function verwijderGebruikersImports(db: SupabaseClient, userId: string): Promise<{ error: boolean }> {
   const { error } = await db.from(TABEL).delete().eq('user_id', userId)
   return { error: !!error }
 }
 
-/** Voor "verwijder alles", de opruiming bij accountverwijdering en de gegevensexport-checklist. Zelfde als verwijderProfiel. */
-export const verwijderGebruikersImports = verwijderProfiel
-
-/** Het blok voor de chat. Leeg als de gebruiker geen profiel heeft. */
+/**
+ * Het blok voor de chat: de profielen achter elkaar, het nieuwste eerst, samen hooguit MAX_BLOK_TOTAAL tekens.
+ * Past een volgend profiel niet meer helemaal, dan krijgt het de ruimte die er nog is. Leeg als er geen profiel is.
+ */
 export async function laadProfielBlok(db: SupabaseClient, userId: string): Promise<string> {
-  const p = await leesProfiel(db, userId)
-  return p ? bouwProfielBlok(p.profiel, p.bron, p.created_at) : ''
+  const profielen = await leesProfielen(db, userId)
+  let ruimte = MAX_BLOK_TOTAAL
+  let tekst = ''
+  for (const p of profielen) {
+    const blok = bouwProfielBlok(p.profiel, p.bron, p.created_at, ruimte)
+    if (!blok) break
+    tekst += blok
+    ruimte -= blok.length
+  }
+  return tekst
 }

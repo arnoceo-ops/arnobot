@@ -27,7 +27,7 @@ const FOUTEN: Record<string, string> = {
 }
 
 export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) {
-  const [opgeslagen, setOpgeslagen] = useState<Opgeslagen | null | undefined>(undefined) // undefined = nog aan het laden
+  const [opgeslagen, setOpgeslagen] = useState<Opgeslagen[] | undefined>(undefined) // undefined = nog aan het laden
   const [stap, setStap] = useState<Stap>('start')
   const [open, setOpen] = useState(false) // de vragen en het plakveld
   const [bron, setBron] = useState<ImportBron>('anders')
@@ -35,7 +35,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const [voorstel, setVoorstel] = useState<ImportProfiel | null>(null)
   const [fout, setFout] = useState<string | null>(null)
   const [gekopieerd, setGekopieerd] = useState(false)
-  const [bevestig, setBevestig] = useState(false)
+  const [bevestig, setBevestig] = useState<ImportBron | null>(null) // het profiel dat de gebruiker wil verwijderen
   const [bezig, setBezig] = useState(false)
 
   const laad = useCallback(async () => {
@@ -43,9 +43,9 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
       const r = await fetch('/api/bot/import/profiel')
       if (!r.ok) throw new Error('laden mislukt')
       const d = await r.json()
-      setOpgeslagen(d.profiel ?? null)
+      setOpgeslagen(Array.isArray(d.profielen) ? d.profielen : [])
     } catch {
-      setOpgeslagen(null)
+      setOpgeslagen([])
     }
   }, [])
 
@@ -53,8 +53,8 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     let actueel = true
     fetch('/api/bot/import/profiel')
       .then(r => { if (!r.ok) throw new Error('laden mislukt'); return r.json() })
-      .then(d => { if (actueel) setOpgeslagen(d.profiel ?? null) })
-      .catch(() => { if (actueel) setOpgeslagen(null) })
+      .then(d => { if (actueel) setOpgeslagen(Array.isArray(d.profielen) ? d.profielen : []) })
+      .catch(() => { if (actueel) setOpgeslagen([]) })
     return () => { actueel = false }
   }, [])
 
@@ -120,14 +120,14 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     }
   }
 
-  async function verwijder() {
+  async function verwijder(bronVerwijder: ImportBron) {
     setFout(null)
     setBezig(true)
     try {
-      const r = await fetch('/api/bot/import/profiel', { method: 'DELETE' })
+      const r = await fetch(`/api/bot/import/profiel?bron=${bronVerwijder}`, { method: 'DELETE' })
       if (!r.ok) { setFout('Verwijderen mislukt. Probeer het opnieuw.'); return }
-      setBevestig(false)
-      setOpgeslagen(null)
+      setBevestig(null)
+      setOpgeslagen(v => (v ?? []).filter(p => p.bron !== bronVerwijder))
     } catch {
       setFout('Verwijderen mislukt. Probeer het opnieuw.')
     } finally {
@@ -151,39 +151,48 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40 }}>
       <p style={label}>Neem je historie mee</p>
 
-      {opgeslagen && stap === 'start' && !open && (
+      {opgeslagen.length > 0 && stap === 'start' && !open && (
         <div style={{ marginTop: 20 }}>
-          <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: isMobile ? 22 : 26, letterSpacing: 1, lineHeight: 1.3 }}>
-            Profiel uit {opgeslagen.bron === 'anders' ? 'een andere AI' : BRON_NAAM[opgeslagen.bron]}, {datum(opgeslagen.created_at)}
-          </p>
-          <div style={{ marginTop: 16 }}>
-            {KOPJES.filter(k => opgeslagen.profiel[k.sleutel].length > 0).map(k => (
-              <div key={k.sleutel} style={{ marginBottom: 16 }}>
-                <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 3, textTransform: 'uppercase' }}>{k.label}</p>
-                {opgeslagen.profiel[k.sleutel].map((r, i) => (
-                  <p key={i} style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.8 }}>{r}</p>
+          {opgeslagen.map((p, n) => (
+            <div key={p.bron} style={{ marginTop: n === 0 ? 0 : 36 }}>
+              <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: isMobile ? 22 : 26, letterSpacing: 1, lineHeight: 1.3 }}>
+                Profiel uit {BRON_NAAM[p.bron]}, {datum(p.created_at)}
+              </p>
+              <div style={{ marginTop: 16 }}>
+                {KOPJES.filter(k => p.profiel[k.sleutel].length > 0).map(k => (
+                  <div key={k.sleutel} style={{ marginBottom: 16 }}>
+                    <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 3, textTransform: 'uppercase' }}>{k.label}</p>
+                    {p.profiel[k.sleutel].map((r, i) => (
+                      <p key={i} style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.8 }}>{r}</p>
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
-          {bevestig ? (
-            <div style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
-              <span>Dit profiel verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
-              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button onClick={() => setBevestig(false)} style={pil}>ANNULEER</button>
-                <button onClick={verwijder} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER'}</button>
-              </div>
+              {bevestig === p.bron ? (
+                <div style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
+                  <span>Dit profiel verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                    <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
+                    <button onClick={() => verwijder(p.bron)} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER'}</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
+                  <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>
+                  <button onClick={() => setBevestig(p.bron)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
-              <button onClick={() => setOpen(true)} style={rustig}>vervang</button>
-              <button onClick={() => setBevestig(true)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
+          ))}
+          {opgeslagen.length < 3 && (
+            <div style={{ marginTop: 32 }}>
+              <button onClick={() => setOpen(true)} style={rustig}>voeg een andere AI toe</button>
             </div>
           )}
         </div>
       )}
 
-      {!opgeslagen && !open && (
+      {opgeslagen.length === 0 && !open && (
         <div style={{ marginTop: 16 }}>
           <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, maxWidth: 620 }}>
             Gebruik je al een andere AI? Haal eruit wat die van je weet, dan kent ArnoBot je vanaf het eerste gesprek.
