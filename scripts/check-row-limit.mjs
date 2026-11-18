@@ -32,6 +32,7 @@ const ROOT = join(import.meta.dirname, '..')
 // arnobot_coaching) staan er niet in: pas zinvol bij duizenden gebruikers.
 const GROEITABELLEN = new Set([
   'arnobot_rds_logs',
+  'arnobot_documenten',
   'arnobot_blog_sessions',
   'arnobot_sparring_sessions',
   'arnobot_analyses',

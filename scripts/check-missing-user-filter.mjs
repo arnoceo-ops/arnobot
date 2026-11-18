@@ -59,6 +59,7 @@ const GEBRUIKERSTABELLEN = new Set([
   'arnobot_subscriptions',
   'arnobot_payments',
   'arnobot_rds_logs',
+  'arnobot_documenten',
   'arnobot_blog_sessions',
   'arnobot_analyses',
   'arnobot_coaching',

@@ -110,6 +110,14 @@ Ontwerpregels:
 - Tabs op de analyses-pagina: sticky balk alleen bij Gesprekken, ANALYSEER wisselt naar Analyses, de mail-link `?open=nieuwste` opent de tab Analyses.
 - Mee in dezelfde commit(s): `lib/appHelp.ts`, `app/bot/qa/QAClient.tsx`, `app/privacy/page.tsx`, `scripts/generate-security-pdf.mjs`, `docs/ARNOBOT_OVERZICHT.md`, `docs/TECHNICAL_HANDOVER.md`, export (`app/api/bot/export`), testaccount- en eigenaarschapscontroles, E2E-teardown. Alle teksten eerst als platte tekst aan Arno.
 
+## Voortgang fase 1 (bouwstappen, elk apart gepusht, nieuwe gedrag alleen achter `documentenBeschikbaarVoor`)
+
+- [x] **Stap 1 (2026-11-18):** `docs/sql/2026-11-18-documenten.sql` (tabel `arnobot_documenten` en privé-bucket `arnobot-documenten`), `lib/documentenRegels.ts` met 23 unit-tests (schakelaar `DOCUMENTEN_OPEN` en eigenaar `ARNOBOT_OWNER_USER_ID` plus interne testaccounts, document-ID-validatie, bestandsnaam opschonen, 48 uur, maximum 20 blokken per beurt), en de nieuwe tabel in `check-missing-user-filter`, `check-testaccount-filter` en `check-row-limit`. Niets hiervan raakt een gebruiker of een bestaande route.
+- [ ] SQL uitgevoerd door Arno in de Supabase SQL-editor, met de drie controles onderaan het bestand (nodig vóór stap 2 live gaat).
+- [ ] **Stap 2:** `lib/documenten.ts` (databasecode, altijd met eigenaarsfilter), `downloadAndDeleteAttachment` splitsen in laden en verwijderen, laden ná de poorten in de chatroute, bijlage in alle beurten van een gesprek, melding aan het model als een document niet meer zichtbaar is. Eerst de tests (de sessie van 17-11 met nagemaakte tekst, herladen, twee tabbladen, 48 uur stilte, andermans document-ID, dubbele sessie met bijlage). Alleen voor wie `documentenBeschikbaarVoor` toestaat; voor iedereen anders blijft de oude route.
+- [ ] **Stap 3:** opruimsweep van tijdelijke kopieën (cron, alleen voorbij 48 uur na laatst gebruikt), opruimen bij een geslaagde SLUIT, uploadopruiming van wees-bestanden, rate limit op `chat-upload-url`, `e2e/global-teardown.ts` met opslag.
+- [ ] **Stap 4:** tab ARCHIEF met Docs, het vinkje, "kies uit Docs", BESPREEK, download en verwijderen, `verwijderGebruikersDocumenten`, export, transcript van audio; teksten (privacy, Q&A, `lib/appHelp.ts`, beveiligings-PDF) eerst als platte tekst aan Arno; documenttekst uit `bron_context` halen vóór het vinkje live gaat.
+
 ## Fase 2: import van historie (Chris)
 
 - Eerst uitzoeken wat de claude.ai-export bevat (of projecten erin zitten).
