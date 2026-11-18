@@ -156,7 +156,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
   return (
-    <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40 }}>
+    <div style={{ borderTop: '1px solid #374151', paddingTop: 28, marginTop: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <p style={label}>Neem je historie mee</p>
         {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
@@ -173,7 +173,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
               <div key={p.bron} style={{ borderTop: '1px solid #374151' }}>
                 <div
                   onClick={() => { setUitgeklapt(isOpen ? null : p.bron); setBevestig(null) }}
-                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '18px 0' : '22px 0', cursor: 'pointer' }}
+                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '14px 0' : '16px 0', cursor: 'pointer' }}
                 >
                   <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(p.created_at)}</span>
                   <div style={{ flex: 1 }}>
