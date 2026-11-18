@@ -13,7 +13,7 @@ type Stap = 'start' | 'bezig' | 'controle' | 'leeg'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
-const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af', textDecoration: 'none', display: 'inline-block' }
+const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af', textDecoration: 'none', display: 'inline-block', width: 170, boxSizing: 'border-box', textAlign: 'center' }
 const pilActief: React.CSSProperties = { ...pil, background: '#f59e0b', border: 'none', color: '#111827' }
 // Kop en knop van deze sectie zijn gelijk aan die van de sectie erboven (DocsTab.tsx): dezelfde maten en dezelfde vaste breedte (minWidth 280 in allebei), zodat het twee gelijkwaardige blokken zijn.
 const kopTekst: React.CSSProperties = { fontSize: 13, color: '#9ca3af', letterSpacing: 2, textTransform: 'uppercase' }
@@ -237,7 +237,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
           <div style={{ marginTop: 12 }}>
             <button onClick={() => kopieerVraag('anders')} style={rustig}>andere AI: kopieer de vraag</button>
           </div>
-          {gekopieerd && <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>De vraag staat op je klembord. Staat hij er niet vanzelf in, plak hem dan zelf.</p>}
+          {gekopieerd && <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>{bron === 'gemini' ? 'De vraag staat op je klembord. Plak hem in Gemini met Ctrl+V.' : 'De vraag staat op je klembord. Staat hij er niet vanzelf in, plak hem dan zelf.'}</p>}
 
           <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 28 }}>2 Kopieer het antwoord</p>
 
