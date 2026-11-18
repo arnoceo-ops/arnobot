@@ -1060,7 +1060,7 @@ export default function GeschiedenisPage() {
         )}
 
         {(sorted.length > 0 || documentenAan) && (
-          <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: tab === 'docs' ? 0 : 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <Link href="/bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               ← TERUG NAAR ARNOBOT
             </Link>
