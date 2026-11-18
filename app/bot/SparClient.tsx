@@ -326,6 +326,17 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
   const [attachedFile, setAttachedFile] = useState<{ name: string; mediaType: string; storagePath: string } | null>(null)
+  // Documenten (docs/DOCUMENTEN_PLAN.md): alleen voor wie de documentenfunctie heeft (lib/documentenRegels.ts, de schakelaar
+  // komt uit /api/bot/plan). Iedereen anders ziet en doet precies wat er altijd was.
+  const [documentenAan, setDocumentenAan] = useState(false)
+  const [bewaar, setBewaar] = useState(true)
+  // De lijst hoort bij één gesprek: bij een ander sessie-ID wordt hij pas getoond als de nieuwe lijst binnen is.
+  const [sessieDocsData, setSessieDocsData] = useState<{ sessie: string; docs: { id: string; naam: string; soort: string; bewaard: boolean; session_id: string | null }[] }>({ sessie: '', docs: [] })
+  const sessieDocs = documentenAan && sessieDocsData.sessie === sessionId ? sessieDocsData.docs : []
+  const [docsMenu, setDocsMenu] = useState<'dicht' | 'keuze' | 'lijst'>('dicht')
+  const [docsKeuze, setDocsKeuze] = useState<{ id: string; naam: string; created_at: string }[] | null>(null)
+  const [docsVersie, setDocsVersie] = useState(0)
+  const bespreekDocGedaan = useRef(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [pendingLogout, setPendingLogout] = useState(false)
@@ -384,6 +395,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         setFileError('Bestand kon niet worden geüpload.')
         return
       }
+      setBewaar(true)
       setAttachedFile({ name: file.name, mediaType: file.type, storagePath: urlData.path })
     } catch {
       setFileError('Bestand kon niet worden geüpload.')
@@ -429,7 +441,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => setHeeftTeamPlan(!!d.commandManager))
+      .then(d => { setHeeftTeamPlan(!!d.commandManager); setDocumentenAan(d.documenten === true) })
       .catch(() => {})
       .finally(() => setPlanLoaded(true))
   }, [])
@@ -438,6 +450,61 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       sessionStorage.setItem('arnobot_analyses_nudge_gezien', '1')
     }
   }, [showSluiten, showAnalysesHint])
+  // Wat ArnoBot in dit gesprek kan lezen (bijlagen boven het invoerveld): opnieuw ophalen bij een ander gesprek, na elk
+  // bericht en na het koppelen of ontkoppelen van een document uit Docs.
+  useEffect(() => {
+    if (!documentenAan || !sessionId) return
+    let actueel = true
+    const voorSessie = sessionId
+    fetch('/api/bot/documenten?sessie=' + encodeURIComponent(sessionId))
+      .then(r => r.json())
+      .then(d => { if (actueel) setSessieDocsData({ sessie: voorSessie, docs: Array.isArray(d.documenten) ? d.documenten : [] }) })
+      .catch(() => {})
+    return () => { actueel = false }
+  }, [documentenAan, sessionId, messages.length, docsVersie])
+
+  // BESPREEK in de tab Docs stuurt naar /bot?doc=<id>: een nieuw gesprek waarin dat document al gekoppeld is.
+  useEffect(() => {
+    if (bespreekDocGedaan.current || !documentenAan || !sessionId) return
+    const docId = new URLSearchParams(window.location.search).get('doc')
+    if (!docId) return
+    bespreekDocGedaan.current = true
+    window.history.replaceState(null, '', window.location.pathname)
+    reset({ focus: true })
+    const nieuwId = localStorage.getItem('arnobot_session')
+    if (!nieuwId) return
+    fetch('/api/bot/documenten/koppel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentId: docId, sessionId: nieuwId }),
+    }).then(() => setDocsVersie(v => v + 1)).catch(() => {})
+  }, [documentenAan, sessionId])
+
+  // "Kies uit Docs": de bewaarde documenten ophalen en een gekozen document aan dit gesprek koppelen.
+  function openDocsLijst() {
+    setDocsMenu('lijst')
+    if (docsKeuze !== null) return
+    fetch('/api/bot/documenten')
+      .then(r => r.json())
+      .then(d => setDocsKeuze(Array.isArray(d.documenten) ? d.documenten : []))
+      .catch(() => setDocsKeuze([]))
+  }
+  function koppelUitDocs(documentId: string) {
+    if (!sessionId) return
+    setDocsMenu('dicht')
+    fetch('/api/bot/documenten/koppel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentId, sessionId }),
+    }).then(() => setDocsVersie(v => v + 1)).catch(() => {})
+  }
+  function ontkoppelUitGesprek(documentId: string) {
+    if (!sessionId) return
+    fetch('/api/bot/documenten/koppel?documentId=' + encodeURIComponent(documentId) + '&sessionId=' + encodeURIComponent(sessionId), { method: 'DELETE' })
+      .then(() => setDocsVersie(v => v + 1))
+      .catch(() => {})
+  }
+
   const [actieOpvolging, setActieOpvolging] = useState<{ uitdaging: string; sessionId: string; vraagVervolg: boolean } | null>(null)
   const [actieGetoondOp, setActieGetoondOp] = useState<number | null>(null)
   const [actieBeantwoord, setActieBeantwoord] = useState(false)
@@ -1522,7 +1589,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile, forceSession })
+          body: JSON.stringify({ question: actieContext + question, history, userId, profiel, sessionId, antwoordLengte, document: attachedFile && documentenAan ? { ...attachedFile, bewaar } : attachedFile, forceSession })
         })
 
         // Blokkades/nudges/foutmeldingen komen nog steeds als JSON terug (early return op de
@@ -1536,7 +1603,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               || data.error === 'audio_alleen_betaald' || data.error === 'audio_transcriptie_mislukt' || data.error === 'audio_niet_gevonden'
             // Bij een bestandsfout de bijlage NIET wissen: anders lijkt "probeer opnieuw" een
             // retry te suggereren terwijl het bestand al onzichtbaar verdwenen is.
-            if (!isBestandsfout) setAttachedFile(null)
+            // Wie de documentenfunctie heeft houdt de bijlage bij elke fout: de server laadt het bestand nu pas na alle controles en verwijdert het niet.
+            if (!isBestandsfout && !documentenAan) setAttachedFile(null)
             if (res.status === 429 && data.error === 'dagelijks_limiet') {
               setBlocked(true)
               setMessages(prev => [...prev, { role: 'arno', content: 'Je dagelijkse limiet van 25 vragen is bereikt. Kom morgen terug.' }])
@@ -1545,6 +1613,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             } else if (res.status === 403 && data.error === 'geen_toegang') {
               // Geen toegang meer (verlopen proef, geblokkeerd team): naar de pagina die uitlegt wat er kan.
               window.location.href = '/bot/doorgaan'
+            } else if (data.error === 'docs_vol') {
+              setMessages(prev => [...prev, { role: 'arno', content: 'Je Docs zitten vol. Verwijder een document in ARCHIEF, of zet het vinkje BEWAAR IN DOCS uit en verstuur opnieuw.' }])
             } else if (data.error === 'bestandstype_niet_ondersteund') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_te_groot') {
@@ -2005,6 +2075,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           margin: 0 auto;
         }
         .spar-input-wrap {
+          position: relative;
           width: 100%;
           background: #1f2937;
           border: 2px solid #f59e0b;
@@ -2678,7 +2749,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           )}
 
           {sparModus !== 'sparren' && (attachedFile || fileError || uploadingFile) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, color: fileError ? '#cc4444' : '#9ca3af' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: documentenAan ? 'wrap' : undefined, gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, color: fileError ? '#cc4444' : '#9ca3af' }}>
               {fileError ? (
                 <span>{fileError}</span>
               ) : uploadingFile ? (
@@ -2691,8 +2762,37 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 0 }}
                     title="Bijlage verwijderen"
                   >✕</button>
+                  {documentenAan && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12, cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 3, color: bewaar ? '#f1f5f9' : '#6b7280' }}>
+                      <input type="checkbox" checked={bewaar} onChange={e => setBewaar(e.target.checked)} style={{ display: 'none' }} />
+                      <span style={{ width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: bewaar ? '2px solid #f59e0b' : '2px solid #374151', background: bewaar ? '#f59e0b' : 'none', color: '#111827', fontSize: 14 }}>{bewaar ? '✓' : ''}</span>
+                      {ALLOWED_AUDIO_TYPES.includes(attachedFile!.mediaType) ? 'BEWAAR TRANSCRIPT IN DOCS' : 'BEWAAR IN DOCS'}
+                    </label>
+                  )}
                 </>
               )}
+            </div>
+          )}
+          {documentenAan && sparModus !== 'sparren' && attachedFile && !fileError && !uploadingFile && !bewaar && (
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', lineHeight: 1.7, margin: '-2px 0 10px' }}>
+              {ALLOWED_AUDIO_TYPES.includes(attachedFile.mediaType) ? 'Het transcript wordt niet bewaard in Docs.' : 'Niet bewaard in Docs.'} ArnoBot kan het lezen zolang dit gesprek loopt. Uiterlijk 48 uur na je laatste bericht wordt het verwijderd.
+            </p>
+          )}
+          {documentenAan && sparModus !== 'sparren' && sessieDocs.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8, fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af' }}>
+              <span style={{ color: '#f59e0b', letterSpacing: 3, textTransform: 'uppercase' }}>ArnoBot leest in dit gesprek</span>
+              {sessieDocs.map(d => (
+                <span key={d.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #374151', borderRadius: 999, padding: '2px 12px' }}>
+                  📎 {d.naam}
+                  {d.session_id !== sessionId && (
+                    <button
+                      onClick={() => ontkoppelUitGesprek(d.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 0 }}
+                      title="Uit dit gesprek halen (het document blijft in Docs staan)"
+                    >✕</button>
+                  )}
+                </span>
+              ))}
             </div>
           )}
           <div className={`spar-input-row${started ? ' active-glow' : ''}`}>
@@ -2708,12 +2808,43 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   />
                   <button
                     className="spar-attach-btn"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => (documentenAan ? setDocsMenu(m => (m === 'dicht' ? 'keuze' : 'dicht')) : fileInputRef.current?.click())}
                     disabled={loading || blocked || uploadingFile}
                     title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
                   >
                     +
                   </button>
+                  {documentenAan && docsMenu !== 'dicht' && (
+                    <>
+                      <div onClick={() => setDocsMenu('dicht')} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                      <div style={{ position: 'absolute', left: -2, bottom: 'calc(100% + 8px)', background: '#111827', border: '1px solid #374151', minWidth: 300, maxWidth: '90vw', zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', maxHeight: 320, overflowY: 'auto' }}>
+                        <div
+                          onClick={() => { setDocsMenu('dicht'); fileInputRef.current?.click() }}
+                          style={{ padding: '14px 20px', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', cursor: 'pointer' }}
+                        >NIEUW BESTAND</div>
+                        <div
+                          onClick={openDocsLijst}
+                          style={{ padding: '14px 20px', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: docsMenu === 'lijst' ? '#f59e0b' : '#9ca3af', cursor: 'pointer', borderTop: '1px solid #374151' }}
+                        >KIES UIT DOCS</div>
+                        {docsMenu === 'lijst' && docsKeuze === null && (
+                          <div style={{ padding: '12px 20px', fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', borderTop: '1px solid #374151' }}>Laden...</div>
+                        )}
+                        {docsMenu === 'lijst' && docsKeuze !== null && docsKeuze.length === 0 && (
+                          <div style={{ padding: '12px 20px', fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', borderTop: '1px solid #374151' }}>Nog geen bewaarde documenten.</div>
+                        )}
+                        {docsMenu === 'lijst' && (docsKeuze ?? []).map(d => (
+                          <div
+                            key={d.id}
+                            onClick={() => koppelUitDocs(d.id)}
+                            style={{ padding: '12px 20px', fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#9ca3af', cursor: 'pointer', borderTop: '1px solid #374151', display: 'flex', justifyContent: 'space-between', gap: 16 }}
+                          >
+                            <span>{d.naam}</span>
+                            <span style={{ color: '#6b7280', whiteSpace: 'nowrap' }}>{new Date(d.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
               <textarea
