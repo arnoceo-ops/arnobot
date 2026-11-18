@@ -1,8 +1,8 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** keuzes akkoord (Arno, 2026-11-18: eigen schakelaar, alle abonnementen, één profiel dat wordt vervangen, 2.500 tekens). Stap 1 gebouwd en gepusht, onzichtbaar (niets aangesloten). SQL voor de tabel moet Arno nog uitvoeren vóór stap 2 live wordt gebruikt. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
-**Eerstvolgende stap:** stap 2, de routes onder `app/api/bot/import/` met schakelaar, limiet en tests.
+**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 en 2 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`; de tabel bestaat (Arno voerde de SQL uit). Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
+**Eerstvolgende stap:** stap 3, het blok in Uploads.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -57,7 +57,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 ## Bouwstappen (elk apart gepusht, alles achter de schakelaar)
 
 - [x] 1. SQL (`docs/sql/2026-11-18-historie-import.sql`, door Arno nog uit te voeren), `lib/historieImportRegels.ts` (schakelaar, vraag, voorbewerking, schoonmaken, validatie, profielblok) en `lib/historieImport.ts` (omzetting met Haiku, opslaan, lezen, verwijderen), met tests (synthetische antwoorden, injectie, grenzen). Nog nergens aangesloten.
-- [ ] 2. Routes, met tests.
+- [x] 2. Routes `app/api/bot/import/omzetten` en `/profiel` (GET, PUT, DELETE) met schakelaar, toegangspoort (niet bij verwijderen), lengtecontrole vóór limiter en model, limiet 5 per uur, `historieImport` in `/api/bot/plan`, tests. De SQL is door Arno uitgevoerd (RLS aan).
 - [ ] 3. Blok in Uploads.
 - [ ] 4. Geheugenblok in de chat, met snapshot en een meting op een testaccount.
 - [ ] 5. Verwijderen, export, controlescripts, teardown.

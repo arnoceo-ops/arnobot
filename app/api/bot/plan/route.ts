@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { datumToegang } from '@/lib/toegang'
 import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
+import { historieImportBeschikbaarVoor } from '@/lib/historieImportRegels'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,5 +39,5 @@ export async function GET() {
   }
 
   // documenten: wie de nieuwe documentenfunctie (tab Docs, vinkje, ARCHIEF) ziet, zie lib/documentenRegels.ts.
-  return NextResponse.json({ plan: data?.plan ?? null, commandManager: data?.command_manager ?? false, toegang: data ? toegang : null, documenten: documentenBeschikbaarVoor(userId) })
+  return NextResponse.json({ plan: data?.plan ?? null, commandManager: data?.command_manager ?? false, toegang: data ? toegang : null, documenten: documentenBeschikbaarVoor(userId), historieImport: historieImportBeschikbaarVoor(userId) })
 }
