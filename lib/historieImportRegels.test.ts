@@ -104,6 +104,9 @@ describe('schoonRegel', () => {
   it('laat een regel vallen die alleen zegt dat iets onbekend is, maar houdt "niet vastgelegd"', () => {
     expect(schoonRegel('Betalende klanten van Sales Canvas: niet bekend.')).toBeNull()
     expect(schoonRegel('Salescyclus: onbekend')).toBeNull()
+    expect(schoonRegel('Klanten: geen gegevens')).toBeNull()
+    expect(schoonRegel('Geen informatie.')).toBeNull()
+    expect(schoonRegel('Er zijn geen gegevens over omzet, wel over het aantal klanten')).not.toBeNull()
     expect(schoonRegel('Keuze voor een CRM is niet vastgelegd')).toBe('Keuze voor een CRM is niet vastgelegd')
     expect(schoonRegel('Bij Equiwave is de ondertekening niet bekend gemaakt aan derden')).not.toBeNull()
   })

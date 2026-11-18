@@ -76,7 +76,7 @@ export function schoonRegel(invoer: unknown): string | null {
   if (s.length < 3) return null
   if (INSTRUCTIE_RE.test(s) || OPDRACHT_AAN_ARNOBOT_RE.test(s)) return null
   // Een regel die alleen zegt dat iets onbekend is ("Betalende klanten: niet bekend") bevat geen feit.
-  if (/(?:^|[:;,]\s*)(?:dat is |is )?(?:niet bekend|onbekend|weet ik niet)\.?$/i.test(s)) return null
+  if (/(?:^|[:;,]\s*)(?:dat is |is )?(?:niet bekend|onbekend|weet ik niet|geen gegevens|geen informatie|geen data)\.?$/i.test(s)) return null
   return s
 }
 
