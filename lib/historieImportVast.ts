@@ -34,11 +34,11 @@ export const MAX_TEKENS_PER_KOPJE = 1500
  * De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor het kader, de link én voor KOPIEER DE VRAAG. Bewust zonder rol of functie:
  * een label uit het profiel (bijvoorbeeld "Sales Manager") kan het antwoord sturen en past niet bij iedereen (Arno, 2026-11-18).
  */
-export const HISTORIE_VRAAG = `Ik neem mijn werk mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet.
+export const HISTORIE_VRAAG = `Ik neem mijn werk mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet. Schrijf geen regels over wat je niet weet.
 
 Schrijf per kopje korte regels, één feit per regel, zonder inleiding of afsluiting. Noteer erbij van wanneer iets is, als je dat weet. Noem bedrijven met naam en personen alleen met hun functie. Geen e-mailadressen of telefoonnummers. Alleen werk: niets privés en niets over gezondheid, geloof of politiek. Geen advies en geen oordeel over mij, alleen feiten.
 
-1. ${KOPJES[0].label} (wat ik verkoop, aan wie, dealgrootte, salescyclus, teamgrootte)
+1. ${KOPJES[0].label} (wat ik verkoop en aan wie)
 2. ${KOPJES[1].label} (met cijfers waar je die kent)
 3. ${KOPJES[2].label} (ook of eerdere plannen zijn gehaald)
 4. ${KOPJES[3].label}
