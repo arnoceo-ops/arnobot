@@ -15,6 +15,7 @@ import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
 import { labelGesprek } from '@/lib/memoryLabels'
+import { schrijfBlogRedenen } from '@/lib/blogRedenen'
 import { herkenMailVerzoek } from '@/lib/mailPatroon'
 import { Redis } from '@upstash/redis'
 import * as Sentry from '@sentry/nextjs'
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
 
   // Blog-suggesties: eerst inline geciteerde blogs uit de berichten halen (synchroon, geen
   // netwerkcall nodig).
-  type BlogSuggestion = { title: string; url: string }
+  type BlogSuggestion = { title: string; url: string; reden?: string }
   const inlineBlogSuggestions: BlogSuggestion[] = []
   const seenBlogUrls = new Set<string>()
   const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
@@ -379,6 +380,12 @@ ${BRONDATA_REGEL}`,
         console.error('Blog suggestions error:', e)
       }
     }
+  }
+
+  // Korte reden per blog (waarom past dit bij dit gesprek). Mislukt het, dan blijven de blogs zonder reden staan.
+  if (blogSuggestions.length > 0 && summary && !summary.startsWith('Er kon geen terugblik')) {
+    const redenen = await schrijfBlogRedenen(anthropic, { samenvatting: summary, titels: blogSuggestions.map(b => b.title) })
+    redenen.forEach((r, i) => { if (r) blogSuggestions[i].reden = r })
   }
 
   const { error: upsertError } = await supabase

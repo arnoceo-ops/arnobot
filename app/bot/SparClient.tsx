@@ -296,7 +296,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [inputIsVerfijnd, setInputIsVerfijnd] = useState(false)
   const [resizeInput, setResizeInput] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
-  const [suggestedBlogs, setSuggestedBlogs] = useState<{title: string, url: string}[]>([])
+  const [suggestedBlogs, setSuggestedBlogs] = useState<{title: string, url: string, reden?: string}[]>([])
   const isStrategischProfiel = STRATEGISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isOrganisatorischProfiel = ORGANISATORISCH_ROLLEN.includes((profiel?.rol as string) ?? '')
   const isSalesOnlyProfiel = SALES_ONLY_ROLLEN.includes((profiel?.rol as string) ?? '')
@@ -2452,6 +2452,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           margin-bottom: 2px;
           transition: all 0.15s;
         }
+        .blog-suggestion-reden {
+          display: block; margin-top: 8px;
+          font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 0;
+          line-height: 1.6; color: #6b7280;
+        }
         .blog-suggestion-item:hover {
           color: #f1f5f9;
           border-left-color: #f59e0b;
@@ -3430,6 +3435,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               {suggestedBlogs.slice(0, 3).map((b, i) => (
                 <a key={i} href={b.url} target="_blank" rel="noopener noreferrer" className="blog-suggestion-item">
                   {b.title.replace(/\s*\([^)]+\)\s*$/, '')}
+                  {b.reden && <span className="blog-suggestion-reden">{b.reden}</span>}
                 </a>
               ))}
             </div>

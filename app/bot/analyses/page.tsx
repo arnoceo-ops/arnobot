@@ -19,7 +19,7 @@ interface Session {
   summary: string
   message_count: number
   created_at: string
-  blog_suggestions?: { title: string; url: string }[]
+  blog_suggestions?: { title: string; url: string; reden?: string }[]
 }
 
 interface ConvMessage {
@@ -784,6 +784,7 @@ export default function GeschiedenisPage() {
                             onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af'; (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = '#374151'; (e.currentTarget as HTMLAnchorElement).style.background = 'none' }}
                             >
                               {b.title}
+                              {b.reden && <span style={{ display: 'block', marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 0, lineHeight: 1.6, color: '#6b7280' }}>{b.reden}</span>}
                             </a>
                           ))}
                         </div>
