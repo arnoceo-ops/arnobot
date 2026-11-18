@@ -125,7 +125,7 @@ Ontwerpregels:
   - `chat-upload-url`: toegangscontrole en een limiet van 40 uploadverzoeken per uur per gebruiker (voor alle gebruikers, interne testaccounts uitgezonderd, fail-open bij een Upstash-storing).
   - `e2e/global-teardown.ts` ruimt de nieuwe tabel en de bestanden van het E2E-account op. De cron staat in `vercel.json`, `lib/cronOverzicht.ts` en `docs/TECHNICAL_HANDOVER.md` (met PDF).
   - Gekozen: alleen de 48-uursregel (plus hooguit een uur vertraging van de cron). Verworpen: opruimen bij een geslaagde SLUIT, want een gebruiker kan via "vervolg dit gesprek" een gesloten gesprek hervatten en verwacht dan zijn document. 11 nieuwe tests, de hele suite van 968 tests blijft groen.
-- [ ] **Stap 4:** tab ARCHIEF met Docs, het vinkje, "kies uit Docs", BESPREEK, download en verwijderen, `verwijderGebruikersDocumenten`, export, transcript van audio; teksten (privacy, Q&A, `lib/appHelp.ts`, beveiligings-PDF) eerst als platte tekst aan Arno; documenttekst uit `bron_context` halen vóór het vinkje live gaat.
+- [ ] **Stap 4:** tab ARCHIEF met Docs, het vinkje, "kies uit Docs", BESPREEK, download, hernoemen (HERNOEM in de uitgeklapte rij, Arno 2026-11-18: de nieuwe naam gaat door dezelfde opschoning als bij de upload, `schoneBestandsnaam`; de extensie blijft vast zodat naam en bestandstype niet uit elkaar lopen; een eigen endpoint met document-ID en eigenaarsfilter) en verwijderen, `verwijderGebruikersDocumenten`, export, transcript van audio; teksten (privacy, Q&A, `lib/appHelp.ts`, beveiligings-PDF) eerst als platte tekst aan Arno; documenttekst uit `bron_context` halen vóór het vinkje live gaat.
 
 ## Fase 2: import van historie (Chris)
 
