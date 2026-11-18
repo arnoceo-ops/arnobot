@@ -15,7 +15,7 @@ import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
 import { labelGesprek } from '@/lib/memoryLabels'
-import { schrijfBlogRedenen } from '@/lib/blogRedenen'
+import { schrijfBlogRedenen, beoordeelBlogs } from '@/lib/blogRedenen'
 import { herkenMailVerzoek } from '@/lib/mailPatroon'
 import { Redis } from '@upstash/redis'
 import * as Sentry from '@sentry/nextjs'
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
 
   // Blog-suggesties: eerst inline geciteerde blogs uit de berichten halen (synchroon, geen
   // netwerkcall nodig).
-  type BlogSuggestion = { title: string; url: string; reden?: string }
+  type BlogSuggestion = { title: string; url: string; reden?: string; uittreksel?: string; uitGesprek?: boolean }
   const inlineBlogSuggestions: BlogSuggestion[] = []
   const seenBlogUrls = new Set<string>()
   const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       if (url.includes('arno.blog') && !seenBlogUrls.has(url)) {
         seenBlogUrls.add(url)
         const title = text.length > 60 ? text.slice(0, 57) + '...' : text
-        inlineBlogSuggestions.push({ title, url })
+        inlineBlogSuggestions.push({ title, url, uitGesprek: true })
         if (inlineBlogSuggestions.length >= 3) break
       }
     }
@@ -358,7 +358,7 @@ ${BRONDATA_REGEL}`,
     for (const c of userQuestionsChunks) {
       if (c.url && c.source && c.url.includes('arno.blog') && !seenBlogUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
         seenBlogUrls.add(c.url)
-        blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url })
+        blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url, uittreksel: c.content.slice(0, 600) })
         if (blogSuggestions.length >= 2) break
       }
     }
@@ -372,7 +372,7 @@ ${BRONDATA_REGEL}`,
         for (const c of chunks) {
           if (c.url && c.source && c.url.includes('arno.blog') && !seenBlogUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
             seenBlogUrls.add(c.url)
-            blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url })
+            blogSuggestions.push({ title: c.source.replace(/\s*\([^)]+\)\s*$/, ''), url: c.url, uittreksel: c.content.slice(0, 600) })
             if (blogSuggestions.length >= 2) break
           }
         }
@@ -382,11 +382,22 @@ ${BRONDATA_REGEL}`,
     }
   }
 
-  // Korte reden per blog (waarom past dit bij dit gesprek). Mislukt het, dan blijven de blogs zonder reden staan.
-  if (blogSuggestions.length > 0 && summary && !summary.startsWith('Er kon geen terugblik')) {
-    const redenen = await schrijfBlogRedenen(anthropic, { samenvatting: summary, titels: blogSuggestions.map(b => b.title) })
-    redenen.forEach((r, i) => { if (r) blogSuggestions[i].reden = r })
+  // Per blog een korte reden, en tegelijk een toets of het echt aansluit bij het gesprek (besluit Arno 2026-11-18: liever geen blog dan een los blog).
+  // Een blog uit de zoekopdracht zonder reden valt af, ook als de aanroep mislukt. Een blog dat ArnoBot zelf in het gesprek noemde blijft altijd staan.
+  if (blogSuggestions.length > 0) {
+    const heeftTerugblik = Boolean(summary) && !summary.startsWith('Er kon geen terugblik')
+    const redenen = heeftTerugblik
+      ? await schrijfBlogRedenen(anthropic, {
+          samenvatting: summary,
+          blogs: blogSuggestions.map(b => ({ titel: b.title, uittreksel: b.uittreksel ?? null, uitGesprek: b.uitGesprek === true })),
+        })
+      : []
+    const behouden = beoordeelBlogs(blogSuggestions, redenen)
+    blogSuggestions.length = 0
+    blogSuggestions.push(...behouden)
   }
+  // Het uittreksel en de herkomst zijn alleen voor de beoordeling, ze worden niet bewaard.
+  for (const b of blogSuggestions) { delete b.uittreksel; delete b.uitGesprek }
 
   const { error: upsertError } = await supabase
     .from('arnobot_blog_sessions')

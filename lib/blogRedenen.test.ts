@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { leesRedenen } from './blogRedenen'
+import { leesRedenen, beoordeelBlogs } from './blogRedenen'
+
+describe('beoordeelBlogs', () => {
+  const zoek = { url: 'a' }
+  const genoemd = { url: 'b', uitGesprek: true }
+  it('houdt een zoekblog alleen met een reden', () => {
+    expect(beoordeelBlogs([zoek, { ...zoek, url: 'c' }], ['Past bij je vraag.', ''])).toEqual([{ url: 'a', reden: 'Past bij je vraag.' }])
+  })
+  it('laat een door ArnoBot genoemd blog altijd staan, met of zonder reden', () => {
+    expect(beoordeelBlogs([genoemd, { ...genoemd, url: 'd' }], ['Reden.', ''])).toEqual([
+      { url: 'b', uitGesprek: true, reden: 'Reden.' }, { url: 'd', uitGesprek: true },
+    ])
+  })
+  it('laat zoekblogs vallen als de aanroep mislukte (geen redenen), genoemde blogs niet', () => {
+    expect(beoordeelBlogs([zoek, genoemd], [])).toEqual([{ url: 'b', uitGesprek: true }])
+  })
+})
 
 describe('leesRedenen', () => {
   it('leest een JSON-lijst met het juiste aantal regels', () => {
