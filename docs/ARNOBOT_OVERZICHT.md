@@ -68,6 +68,8 @@ Overzicht van alle eerdere gesprekken, doorzoekbaar, met AI-gegenereerde analyse
 
 Sinds 18 november 2026 heet de pagina ARCHIEF en heeft hij drie tabs: Gesprekken, Analyses en Uploads. In Uploads staan de bestanden die de gebruiker bij een gesprek toevoegt (PDF, Word, afbeelding, en het transcript van een audio-opname; het audiobestand zelf wordt nooit bewaard). Een bestand dat in een gesprek is toegevoegd blijft voor ArnoBot zichtbaar in alle berichten van dat gesprek. Standaard wordt het bewaard (het vinkje BEWAAR IN UPLOADS staat aan); zet de gebruiker het uit, dan verdwijnt het uiterlijk 48 uur na het laatste bericht. In Uploads kan de gebruiker een bestand hernoemen, downloaden, verwijderen, er een nieuw gesprek mee beginnen of een eerder gesprek over het bestand vervolgen. Kiest hij een bewaard bestand in een nieuw gesprek (KIES UIT UPLOADS), dan krijgt ArnoBot ook de samenvattingen van eerdere gesprekken over dat bestand mee. Grens: 50 bestanden en 500 MB per gebruiker.
 
+Onder de tab Uploads staat ook NEEM JE HISTORIE MEE (alleen via de computer, niet in de app of op een telefoon): de gebruiker stuurt een vraag naar zijn andere AI (ChatGPT, Claude of een andere), plakt het antwoord, controleert zelf wat ArnoBot onthoudt en slaat het op als "Profiel uit ChatGPT" (of Claude, of een andere AI). Per bron één profiel, die elkaar aanvullen. ArnoBot gebruikt de profielen in elk gesprek als bewering van de gebruiker, niet als vaststaand feit. De gebruiker kan ze altijd bekijken en verwijderen.
+
 Sinds 22 oktober 2026: de analyse ziet alleen wat in de gesprekken staat en beweert niets over wat de gebruiker daarbuiten doet. Een gebruiker beïnvloedt de analyse via de opvolgvragen in ArnoBot (is de vorige actie gedaan), niet via een eigen invoerveld. De analyse gebruikt ( de eigen antwoorden op "is de vorige actie gedaan" en wat de gebruiker over eigen plannen vertelde. De mail "Je analyses zijn bijgewerkt" opent direct de nieuwste analyse, ook na inloggen.
 
 ### 3.6 Gesproken antwoorden (ArnoBot Voice)
@@ -163,7 +165,7 @@ Voor een eerlijke, geloofwaardige presentatie, geen enkele van deze als bestaand
 - **Nog geen iOS-app.** Een Android-app (Capacitor) is in aanbouw en al aangekondigd op de prijzenpagina, iPhone nog niet.
 - **Nog geen herhaalbare maandelijkse boeking voor Team-Elite-teamleden** (momenteel technisch maar één boeking ooit mogelijk).
 - **Elite Member Community** (later mogelijk via Circle): nog niet gebouwd, bewust achteraan gepland.
-- **ArnoBot haalt bewaarde uploads niet zelf terug.** De gebruiker kiest een bewaard bestand zelf (KIES UIT UPLOADS, of via Uploads een nieuw gesprek beginnen). Er is nog geen samenvatting per bestand en geen automatisch terugvinden in andere gesprekken. Ook de import van gespreksgeschiedenis uit een andere AI is nog niet gebouwd (het ontwerp is klaar).
+- **ArnoBot haalt bewaarde uploads niet zelf terug.** De gebruiker kiest een bewaard bestand zelf (KIES UIT UPLOADS, of via Uploads een nieuw gesprek beginnen). Er is nog geen samenvatting per bestand en geen automatisch terugvinden in andere gesprekken. De import van de volledige gespreksgeschiedenis uit een andere AI (de export van claude.ai of ChatGPT) is nog niet gebouwd (het ontwerp is klaar); het profiel uit een andere AI wel.
 - **"Man & Machine"-positionering** (gecertificeerde menselijke coaches naast de AI): puur een toekomstplan, geen bestaand aanbod, geen publieke vermelding.
 
 ---
@@ -179,7 +181,7 @@ ArnoBot bevindt zich in de vroege commerciële fase. De livegang was oorspronkel
 Niet uitputtend, de belangrijkste bekende vervolgstappen:
 - Verdere uitbouw van het patroongeheugen en de vergeetcurve-herinnering (sectie 3.2) naarmate er meer gebruiksdata is om op te bouwen: de mechanismen zijn live, het effect wordt pas goed zichtbaar bij meer gebruiksgeschiedenis
 - Android-app afronden, iOS op termijn
-- Bewaarde uploads zelf laten terugvinden in andere gesprekken (samenvatting per bestand), en de import van gespreksgeschiedenis uit een andere AI
+- Bewaarde uploads zelf laten terugvinden in andere gesprekken (samenvatting per bestand), en de volledige import van gespreksgeschiedenis uit een andere AI
 - Betaalprovider aansluiten voor geautomatiseerde facturatie op alle tiers
 - Herhaalbare Team-Elite-boekingen, Elite Member Community
 - Mogelijk: gecertificeerde menselijke coaches naast de AI ("Man & Machine")

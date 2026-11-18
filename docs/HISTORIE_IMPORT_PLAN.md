@@ -1,8 +1,8 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 5 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`, na een eerste proef met echte antwoorden aangepast (zie onderaan): een profiel per bron, ruimere grenzen. Arno moet `docs/sql/2026-11-18-historie-import-per-bron.sql` nog uitvoeren. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
-**Eerstvolgende stap:** stap 7, livegang: Arno zet `HISTORIE_IMPORT_OPEN=true` in Vercel (Production), daarna push ik de wachtende commits (teksten) en werk ik `ARNOBOT_OVERZICHT.md` bij.
+**Waar we staan:** LIVE voor iedereen sinds 2026-11-18: Arno zette `HISTORIE_IMPORT_OPEN=true` in Vercel (Production), de teksten (privacy, Q&A, `appHelp`, beveiligings-PDF 2.1) en het overzichtsdocument zijn gepusht. Alle stappen 1 tot en met 7 klaar. De volledige import van de export (fase 2 in `docs/DOCUMENTEN_PLAN.md`) blijft geparkeerd.
+**Eerstvolgende stap:** Arno controleert na de deploy met een tweede, gewoon account dat het blok onder Uploads klopt en dat de teksten op /privacy en de beveiligings-PDF (versie 2.1) staan.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -70,7 +70,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 - [x] 4. Het profiel (alle bronnen samen, nieuwste eerst, hooguit 12.000 tekens) staat in de systeemprompt van de hoofdchat, achter het gewone geheugen en alleen voor wie `HISTORIE_IMPORT_OPEN` heeft (`importProfielPromise` in `app/api/chat/route.ts`, parallel aan het geheugen, een fout kost nooit een antwoord). Niet in `bronContext` (log, waarheidsmail, export); een bewakingstest (`app/api/chat/historieImportAansluiting.test.ts`) dwingt dat af. Ook zichtbaar in `/api/admin/geheugen-preview`. Sparren krijgt het profiel bewust niet. Nog te doen bij de eerste echte proef: controleren of de waarheidscontrole beweringen uit het profiel als "niet uit de bibliotheek" aanmerkt.
 - [x] 5. De profielen zitten in de gegevensexport (`profielen_uit_andere_ai`, via `leesProfielen`) en in de checklists van `data-cleanup` en `delete-account`; de tabel staat in `check-missing-user-filter`, `check-testaccount-filter` en `e2e/global-teardown.ts` (niet in `check-row-limit`: een tabel met hooguit drie rijen per gebruiker is geen groeitabel); een test (`lib/historieImportAfscherming.test.ts`) faalt als de tabelnaam buiten `lib/historieImport.ts` voorkomt; `docs/MODELINVENTARIS.md` en `docs/TECHNICAL_HANDOVER.md` bijgewerkt. VERWIJDER ALLE UPLOADS op de accountpagina raakt de profielen bewust niet (het zijn geen uploads); een profiel verwijder je in het blok zelf.
 - [x] 6. Teksten goedgekeurd door Arno (2026-11-18, in korte vorm) en doorgevoerd: `app/privacy/page.tsx` (rij bij gegevens, rij bij bewaartermijnen, één alinea onder de verwerkerstabel), `app/bot/qa/QAClient.tsx`, `lib/appHelp.ts` (snapshots bijgewerkt, alleen deze regel), `scripts/generate-security-pdf.mjs` (versie 2.1, PDF opnieuw gegenereerd en gecontroleerd). Lokaal gecommit en bewust NIET gepusht: deze teksten zijn publiek en horen tegelijk met de schakelaar live. Arno liet de zin over doorstroming naar het gewone geheugen en de zin "bewering van de gebruiker" in `appHelp` bewust weg. `docs/ARNOBOT_OVERZICHT.md` (één zin onder ARCHIEF en de regel over de import van gespreksgeschiedenis) volgt bij de livegang.
-- [ ] 7. Livegang: schakelaar aan voor Arno, proef met een echt ChatGPT- en Claude-antwoord, dan voor iedereen.
+- [x] 7. Livegang (2026-11-18): schakelaar aan voor Arno, proef met een echt ChatGPT- en Claude-antwoord, dan voor iedereen.
 
 ## Nog te testen voordat het af is
 
