@@ -16,7 +16,7 @@
 1. **Kop NEEM JE HISTORIE MEE** en een zin uitleg. Knoppen OPEN IN CHATGPT en OPEN IN CLAUDE (de vraag zit al in de link) en een rustige link "andere AI: kopieer de vraag".
 2. **Plakveld** "Plak het antwoord hier" met PLAK ANTWOORD (leest het klembord als de browser dat toestaat, anders gewoon plakken in het veld) en CONTROLEER.
 3. **Controle:** het resultaat per kopje, per regel een kruisje om weg te halen, OPSLAAN en ANNULEER. Staat er niets in ("je andere AI had niets van je opgeslagen"), dan een korte melding en niets om op te slaan.
-4. **Opgeslagen:** een kaart "Meegenomen uit ChatGPT, 18 november" met het profiel, VERVANG en VERWIJDER. Eén profiel per gebruiker; een nieuw profiel vervangt het oude na bevestiging.
+4. **Opgeslagen:** een kaart "Profiel uit ChatGPT, 18 november" met het profiel, VERVANG en VERWIJDER. Eén profiel per gebruiker; een nieuw profiel vervangt het oude na bevestiging.
 
 Gemini en andere AI's: alleen de link "kopieer de vraag" (geen knop met merknaam; Google-eliminatie loopt nog, en Gemini kent geen vooraf ingevulde vraag).
 
@@ -51,7 +51,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 - Controle: "Dit gaat naar ArnoBot. Haal weg wat niet klopt."
 - Melding bij niets: "Je andere AI had niets van je opgeslagen."
 - Melding bij geplakte onzin: "Dat lijkt geen antwoord op de vraag. Plak het hele antwoord."
-- Opgeslagen: "Meegenomen uit ChatGPT, 18 november."
+- Opgeslagen: "Profiel uit ChatGPT, 18 november."
 - Privacytekst (artikel 5, en de beveiligings-PDF): een nieuwe regel "Overgenomen profiel uit een andere AI": wat het is, dat de gebruiker het zelf plakt en controleert, dat het in de chat wordt gebruikt, dat het volledig verwijderbaar is, en dat een feit dat in een gesprek wordt gebruikt via de samenvatting van dat gesprek in het gewone geheugen kan komen. **Pas als voorstel tonen, nooit direct doorvoeren.**
 
 ## Bouwstappen (elk apart gepusht, alles achter de schakelaar)
