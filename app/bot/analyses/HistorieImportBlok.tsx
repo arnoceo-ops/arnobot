@@ -15,7 +15,9 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
 const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af', textDecoration: 'none', display: 'inline-block' }
 const pilActief: React.CSSProperties = { ...pil, background: '#f59e0b', border: 'none', color: '#111827' }
-const label: React.CSSProperties = { color: '#f59e0b', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }
+// Kop en knop van deze sectie zijn gelijk aan die van de sectie erboven (DocsTab.tsx): dezelfde maten, zodat het twee gelijkwaardige blokken zijn.
+const kopTekst: React.CSSProperties = { fontSize: 13, color: '#9ca3af', letterSpacing: 2, textTransform: 'uppercase' }
+const groteKnop: React.CSSProperties = { background: '#f59e0b', border: 'none', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#111827', padding: '12px 36px', borderRadius: 999 }
 
 function datum(iso: string): string {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', timeZone: 'Europe/Amsterdam' })
@@ -156,16 +158,16 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
   return (
-    <div style={{ borderTop: '1px solid #374151', paddingTop: 20, marginTop: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-        <p style={label}>Neem je historie mee</p>
+    <div style={{ marginTop: 48 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
+        <span style={kopTekst}>Neem je historie mee</span>
         {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
-          <button onClick={() => { setBron('anders'); setOpen(true) }} style={pilActief}>+ ANDERE AI TOEVOEGEN</button>
+          <button onClick={() => { setBron('anders'); setOpen(true) }} style={groteKnop}>+ ANDERE AI TOEVOEGEN</button>
         )}
       </div>
 
       {opgeslagen.length > 0 && stap === 'start' && !open && (
-        <div style={{ marginTop: 20 }}>
+        <div>
           {opgeslagen.map(p => {
             const isOpen = uitgeklapt === p.bron
             const aantal = KOPJES.reduce((som, k) => som + p.profiel[k.sleutel].length, 0)
@@ -216,16 +218,16 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
       )}
 
       {opgeslagen.length === 0 && !open && (
-        <div style={{ marginTop: 16 }}>
+        <div>
           <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, maxWidth: 620 }}>
             Gebruik je al een andere AI? Haal eruit wat die van je weet, dan kent ArnoBot je vanaf het eerste gesprek.
           </p>
-          <button onClick={() => setOpen(true)} style={{ ...pilActief, marginTop: 20 }}>BEGIN</button>
+          <button onClick={() => setOpen(true)} style={{ ...groteKnop, marginTop: 20 }}>BEGIN</button>
         </div>
       )}
 
       {open && (stap === 'start' || stap === 'bezig') && (
-        <div style={{ marginTop: 20, maxWidth: 620 }}>
+        <div style={{ maxWidth: 620 }}>
           <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2 }}>1 Verstuur de vraag</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
             <a href={bouwVraagLink('chatgpt')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
@@ -258,7 +260,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
       )}
 
       {open && stap === 'leeg' && (
-        <div style={{ marginTop: 20, maxWidth: 620 }}>
+        <div style={{ maxWidth: 620 }}>
           <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9 }}>Je andere AI had niets van je opgeslagen.</p>
           <div style={{ marginTop: 16 }}>
             <button onClick={() => { setStap('start'); setVoorstel(null) }} style={pil}>TERUG</button>
@@ -267,7 +269,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
       )}
 
       {open && stap === 'controle' && voorstel && (
-        <div style={{ marginTop: 20, maxWidth: 620 }}>
+        <div style={{ maxWidth: 620 }}>
           <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9 }}>Dit gaat naar ArnoBot. Haal weg wat niet klopt.</p>
           <div style={{ marginTop: 16 }}>
             {KOPJES.filter(k => voorstel[k.sleutel].length > 0).map(k => (
