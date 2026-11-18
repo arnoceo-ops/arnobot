@@ -28,9 +28,11 @@ const FOUTEN: Record<string, string> = {
 }
 
 export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) {
-  // In de Android-app (Arno, 2026-11-18) kan niets worden toegevoegd of vervangen: de link naar de andere AI opent buiten de app en het
+  // In de Android-app en op een telefoon (Arno, 2026-11-18) kan niets worden toegevoegd of vervangen: de link naar de andere AI opent buiten de app en het
   // klembord is daar onbetrouwbaar. Opgeslagen profielen blijven zichtbaar en te verwijderen.
   const isNativeApp = useIsNativeApp()
+  // Alleen via de computer (Arno, 2026-11-18): ook een telefoonbrowser kan niets toevoegen of vervangen.
+  const alleenBekijken = isNativeApp || isMobile
   const [opgeslagen, setOpgeslagen] = useState<Opgeslagen[] | undefined>(undefined) // undefined = nog aan het laden
   const [stap, setStap] = useState<Stap>('start')
   const [open, setOpen] = useState(false) // de vragen en het plakveld
@@ -149,7 +151,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   }
 
   if (opgeslagen === undefined) return null
-  if (isNativeApp && opgeslagen.length === 0) return null
+  if (alleenBekijken && opgeslagen.length === 0) return null
   const teLang = tekst.length > MAX_INVOER_TEKENS
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
@@ -157,7 +159,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <p style={label}>Neem je historie mee</p>
-        {!isNativeApp && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
+        {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
           <button onClick={() => { setBron('anders'); setOpen(true) }} style={pilActief}>+ ANDERE AI TOEVOEGEN</button>
         )}
       </div>
@@ -171,7 +173,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
               <div key={p.bron} style={{ borderTop: '1px solid #374151' }}>
                 <div
                   onClick={() => { setUitgeklapt(isOpen ? null : p.bron); setBevestig(null) }}
-                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '24px 0' : '32px 0', cursor: 'pointer' }}
+                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '18px 0' : '22px 0', cursor: 'pointer' }}
                 >
                   <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(p.created_at)}</span>
                   <div style={{ flex: 1 }}>
@@ -201,7 +203,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
-                        {!isNativeApp && <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>}
+                        {!alleenBekijken && <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>}
                         <button onClick={() => setBevestig(p.bron)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
                       </div>
                     )}
