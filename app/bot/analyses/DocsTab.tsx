@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { kortTitel } from '@/lib/kortTitel'
 
-// De tab Docs op de ARCHIEF-pagina (docs/DOCUMENTEN_PLAN.md): de bewaarde documenten van de gebruiker. Alleen zichtbaar
-// voor wie de documentenfunctie heeft (de pagina bepaalt dat). Stijl en indeling volgen de gespreksrijen op dezelfde pagina.
+// De tab UPLOADS op de ARCHIEF-pagina (docs/DOCUMENTEN_PLAN.md): de bewaarde bestanden van de gebruiker. Alleen zichtbaar
+// voor wie de documentenfunctie heeft (de pagina bepaalt dat). Stijl en indeling volgen de gespreksrijen op dezelfde pagina
+// en docs/app-styleguide.md.
 
+type DocGesprek = { sessie: string; datum: string; titel: string | null }
 type Doc = {
   id: string
   naam: string
@@ -15,7 +18,7 @@ type Doc = {
   session_id: string | null
   created_at: string
   laatst_gebruikt: string
-  gesprek: string | null
+  gesprekken: DocGesprek[]
 }
 
 const TOEGESTAAN = [
@@ -39,10 +42,14 @@ function grootte(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
 }
 function datum(iso: string, kort = false): string {
-  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: kort ? 'short' : 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
+  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: kort ? 'short' : 'long', year: kort ? undefined : 'numeric', timeZone: 'Europe/Amsterdam' })
 }
 function zonderExtensie(naam: string): string {
   return naam.replace(/\.[A-Za-z0-9]{1,7}$/, '')
+}
+function gebruiktTekst(n: number): string {
+  if (n === 0) return 'Nog in geen gesprek gebruikt'
+  return n === 1 ? 'In 1 gesprek gebruikt' : `In ${n} gesprekken gebruikt`
 }
 
 const knop: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
@@ -106,7 +113,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
       const res = await fetch('/api/bot/documenten', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ storagePath: urlData.path, name: file.name, mediaType: file.type }) })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setFout(data.error === 'docs_vol' ? 'Je Docs zitten vol. Verwijder eerst een document.'
+        setFout(data.error === 'docs_vol' ? 'Je Uploads zitten vol. Verwijder eerst een bestand.'
           : data.error === 'bestand_niet_leesbaar' ? 'Dat bestand kon niet worden gelezen. Probeer een ander bestand.'
           : 'Bestand kon niet worden toegevoegd.')
         return
@@ -131,7 +138,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
         setDocs(prev => (prev ? prev.map(x => (x.id === id ? { ...x, naam: d.naam } : x)) : prev))
         setHernoem(null)
       } else {
-        setFout(d.error === 'naam_leeg' ? 'Geef het document een naam.' : 'Hernoemen mislukt. Probeer het opnieuw.')
+        setFout(d.error === 'naam_leeg' ? 'Geef het bestand een naam.' : 'Hernoemen mislukt. Probeer het opnieuw.')
       }
     } catch {
       setFout('Hernoemen mislukt. Probeer het opnieuw.')
@@ -164,14 +171,14 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <span style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 2, textTransform: 'uppercase' }}>
-          {docs === null ? 'Laden...' : `${gebruik.aantal} ${gebruik.aantal === 1 ? 'document' : 'documenten'} · ${grootte(gebruik.bytes)}${grenzen ? ` van ${Math.round(grenzen.maxBytes / (1024 * 1024))} MB` : ''}`}
+          {docs === null ? 'Laden...' : `${gebruik.aantal} ${gebruik.aantal === 1 ? 'upload' : 'uploads'} · ${grootte(gebruik.bytes)}${grenzen ? ` van ${Math.round(grenzen.maxBytes / (1024 * 1024))} MB` : ''}`}
         </span>
         <button
           onClick={() => bestandRef.current?.click()}
           disabled={uploaden}
-          style={{ background: uploaden ? '#374151' : '#f59e0b', border: 'none', cursor: uploaden ? 'not-allowed' : 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: uploaden ? '#6b7280' : '#111827', padding: '12px 28px', borderRadius: 999 }}
+          style={{ background: uploaden ? '#374151' : '#f59e0b', border: 'none', cursor: uploaden ? 'not-allowed' : 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: uploaden ? '#6b7280' : '#111827', padding: '12px 36px', borderRadius: 999 }}
         >
-          {uploaden ? 'BEZIG...' : '+ DOCUMENT TOEVOEGEN'}
+          {uploaden ? 'BEZIG...' : '+ BESTAND TOEVOEGEN'}
         </button>
       </div>
 
@@ -181,14 +188,14 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
 
       {docs !== null && aantal === 0 && !fout && (
         <div style={{ borderTop: '1px solid #374151', padding: '48px 0', textAlign: 'center' }}>
-          <p style={{ color: '#6b7280', fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>Nog geen documenten</p>
-          <p style={{ color: '#9ca3af', fontSize: 14, lineHeight: 1.8 }}>Voeg er een toe, of laat het vinkje BEWAAR IN DOCS aan staan als je in een gesprek een bestand toevoegt.</p>
+          <p style={{ color: '#6b7280', fontSize: 13, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>Nog geen uploads</p>
+          <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9 }}>Voeg er een toe, of laat het vinkje BEWAAR IN UPLOADS aan staan als je in een gesprek een bestand toevoegt.</p>
         </div>
       )}
 
       {(docs ?? []).map(d => {
         const isOpen = open === d.id
-        const sub = d.gesprek ? `Toegevoegd in het gesprek "${d.gesprek}"` : d.session_id ? 'Toegevoegd in een gesprek' : 'Direct toegevoegd, buiten een gesprek om'
+        const hernoemt = hernoem?.id === d.id
         const meta = `${typeLabel(d)} · ${grootte(d.bytes)}`
         return (
           <div key={d.id} style={{ borderTop: '1px solid #374151' }}>
@@ -198,8 +205,23 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
             >
               <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(d.created_at, isMobile)}</span>
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>{d.naam}</p>
-                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{sub}</p>
+                {hernoemt ? (
+                  <input
+                    value={hernoem.waarde}
+                    onChange={e => setHernoem({ id: d.id, waarde: e.target.value })}
+                    onClick={e => e.stopPropagation()}
+                    onKeyDown={e => { if (e.key === 'Enter') slaNaamOp(); if (e.key === 'Escape') setHernoem(null) }}
+                    onFocus={e => { e.currentTarget.style.borderColor = '#f59e0b' }}
+                    onBlur={e => { e.currentTarget.style.borderColor = '#374151' }}
+                    maxLength={120}
+                    autoFocus
+                    aria-label="Nieuwe naam"
+                    style={{ width: '100%', background: '#1f2937', border: '1.5px solid #f59e0b', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', outline: 'none' }}
+                  />
+                ) : (
+                  <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>{d.naam}</p>
+                )}
+                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{gebruiktTekst(d.gesprekken.length)}</p>
                 <span style={{ display: 'inline-block', marginTop: 6, fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '2px 12px', borderRadius: 999, border: '1px solid #44cc88', color: '#44cc88' }}>BEWAARD</span>
               </div>
               <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: 6, flexShrink: 0 }}>
@@ -209,50 +231,50 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
             </div>
 
             {isOpen && (
-              <div style={{ paddingBottom: 40 }}>
-                <div style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.9, background: '#1f2937', borderLeft: '3px solid #f59e0b', padding: isMobile ? '16px' : '20px 24px' }}>
-                  {hernoem?.id === d.id ? (
-                    <>
-                      <span style={{ display: 'block', color: '#f59e0b', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>NIEUWE NAAM</span>
-                      <input
-                        value={hernoem.waarde}
-                        onChange={e => setHernoem({ id: d.id, waarde: e.target.value })}
-                        onKeyDown={e => { if (e.key === 'Enter') slaNaamOp(); if (e.key === 'Escape') setHernoem(null) }}
-                        maxLength={120}
-                        autoFocus
-                        style={{ width: '100%', background: '#111827', border: '1.5px solid #374151', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', outline: 'none', marginBottom: 12 }}
-                      />
-                      <div style={{ display: 'flex', gap: 12 }}>
-                        <button onClick={slaNaamOp} disabled={bezig} style={{ ...pil, background: '#f59e0b', border: 'none', color: '#111827' }}>{bezig ? 'BEZIG...' : 'OPSLAAN'}</button>
-                        <button onClick={() => setHernoem(null)} style={pil}>ANNULEER</button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ display: 'block' }}>{typeLabel(d)} · {grootte(d.bytes)}</span>
-                      <span style={{ display: 'block' }}>Toegevoegd op {datum(d.created_at)}</span>
-                      <span style={{ display: 'block' }}>Laatst gebruikt op {datum(d.laatst_gebruikt)}</span>
-                    </>
-                  )}
-                </div>
+              <div style={{ paddingBottom: 36 }}>
+                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginBottom: 20 }}>
+                  Toegevoegd op {datum(d.created_at)} · laatst gebruikt op {datum(d.laatst_gebruikt)}
+                </p>
 
-                {bevestig === d.id ? (
-                  <div style={{ marginTop: 20, fontSize: 14, color: '#f1f5f9', lineHeight: 1.8 }}>
-                    <span>Dit document verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
+                {hernoemt ? (
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button onClick={slaNaamOp} disabled={bezig} style={{ ...pil, background: '#f59e0b', border: 'none', color: '#111827' }}>{bezig ? 'BEZIG...' : 'OPSLAAN'}</button>
+                    <button onClick={() => setHernoem(null)} style={pil}>ANNULEER</button>
+                  </div>
+                ) : bevestig === d.id ? (
+                  <div style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
+                    <span>Dit bestand verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
                     <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                       <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
                       <button onClick={() => verwijder(d.id)} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER'}</button>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginTop: 20 }}>
-                    <Link href={`/bot?doc=${d.id}`} style={knop}>BESPREEK DIT DOCUMENT <span style={{ color: '#f59e0b' }}>→</span></Link>
-                    <span style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-                      <button onClick={() => setHernoem({ id: d.id, waarde: zonderExtensie(d.naam) })} style={knop}>HERNOEM</button>
-                      <a href={`/api/bot/documenten/${d.id}/download`} download style={knop}>DOWNLOAD</a>
-                      <button onClick={() => setBevestig(d.id)} style={{ ...knop, color: '#cc2200' }}>VERWIJDER</button>
-                    </span>
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                      <Link href={`/bot?doc=${d.id}`} style={knop}>NIEUW GESPREK MET DIT BESTAND <span style={{ color: '#f59e0b' }}>→</span></Link>
+                      <span style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+                        <button onClick={() => setHernoem({ id: d.id, waarde: zonderExtensie(d.naam) })} style={knop}>HERNOEM</button>
+                        <a href={`/api/bot/documenten/${d.id}/download`} download style={knop}>DOWNLOAD</a>
+                        <button onClick={() => setBevestig(d.id)} style={{ ...knop, color: '#cc2200' }}>VERWIJDER</button>
+                      </span>
+                    </div>
+
+                    {d.gesprekken.length > 0 && (
+                      <div style={{ marginTop: 32 }}>
+                        <span style={{ display: 'block', color: '#f59e0b', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 }}>GESPREKKEN MET DIT BESTAND</span>
+                        {d.gesprekken.map(g => (
+                          <div key={g.sessie} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24, padding: '14px 0', borderTop: '1px solid #374151' }}>
+                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 56 : 90, flexShrink: 0 }}>{datum(g.datum, true)}</span>
+                            <span style={{ flex: 1, color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>
+                              {g.titel ? kortTitel(g.titel) : `Gesprek van ${datum(g.datum, true)}`}
+                            </span>
+                            <Link href={`/bot?resume=${g.sessie}`} style={{ ...knop, whiteSpace: 'nowrap' }}>VERVOLG <span style={{ color: '#f59e0b' }}>→</span></Link>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -264,7 +286,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
         <div style={{ borderTop: '1px solid #374151', paddingTop: 28, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
           {bevestig === 'alles' ? (
             <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
-              <span style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.8 }}>Alle {aantal} {aantal === 1 ? 'document' : 'documenten'} verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
+              <span style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>Alle {aantal} {aantal === 1 ? 'upload' : 'uploads'} verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
               <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
                 <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
                 <button onClick={() => verwijder('alles')} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER ALLES'}</button>

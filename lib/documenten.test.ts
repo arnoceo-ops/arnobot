@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   laadSessieDocumenten, lijstSessieDocumenten, lijstBewaardeDocumenten, bewaardGebruik, downloadDocument, verwerkNieuweUpload,
   laadBijlage, markeerGebruikt, hernoemDocument, verwijderDocument, verwijderGebruikersDocumenten, downloadBewaardDocument,
-  koppelDocument, ontkoppelDocument, registreerTranscript, bewaardeRuimteOver,
+  koppelDocument, ontkoppelDocument, registreerTranscript, bewaardeRuimteOver, gesprekkenPerDocument,
 } from './documenten'
 import { DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_DOCUMENTEN } from './documentenRegels'
 
@@ -551,5 +551,70 @@ describe('registreerTranscript en bewaardeRuimteOver', () => {
     expect(await bewaardeRuimteOver(bytesVol.db, USER, 1)).toBe(false)
     const aantalVol = maakDb({ antwoord: () => ({ data: Array.from({ length: QUOTA_MAX_DOCUMENTEN }, () => ({ bytes: 1 })) }) })
     expect(await bewaardeRuimteOver(aantalVol.db, USER)).toBe(false)
+  })
+})
+
+describe('gesprekkenPerDocument', () => {
+  const dag = (n: number) => `2026-11-${String(n).padStart(2, '0')}T09:00:00.000Z`
+  const SA = 'c08ea6fd-0a80-42f3-93fe-8e82a60bfdd4'
+  const SB = 'd1111111-0a80-42f3-93fe-8e82a60bfdd4'
+  const SC = 'e2222222-0a80-42f3-93fe-8e82a60bfdd4'
+
+  it('geeft niets en raakt de database niet aan zonder documenten', async () => {
+    const { db, queries } = maakDb()
+    expect(await gesprekkenPerDocument(db, USER, [])).toEqual({})
+    expect(queries).toEqual([])
+  })
+  it('geeft een lege lijst voor een bestand dat direct is toegevoegd en nergens is gebruikt', async () => {
+    const { db } = maakDb({ antwoord: () => ({ data: [] }) })
+    expect(await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: null, created_at: dag(10) }])).toEqual({ d1: [] })
+  })
+  it('combineert het gesprek van toevoegen met de gekoppelde gesprekken, nieuwste eerst, met titels', async () => {
+    const { db } = maakDb({
+      antwoord: (tabel) => {
+        if (tabel === 'arnobot_document_koppelingen') return { data: [{ document_id: 'd1', session_id: SB, created_at: dag(14) }] }
+        if (tabel === 'arnobot_blog_sessions') return { data: [{ session_id: SA, title: 'Eerste blik op de deck', deleted_at: null }, { session_id: SB, title: 'Pitch deck voor Qatar', deleted_at: null }] }
+        return { data: [] }
+      },
+    })
+    const r = await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])
+    expect(r.d1).toEqual([
+      { sessie: SB, datum: dag(14), titel: 'Pitch deck voor Qatar' },
+      { sessie: SA, datum: dag(12), titel: 'Eerste blik op de deck' },
+    ])
+  })
+  it('telt een gesprek niet dubbel als het zowel de herkomst als een koppeling is', async () => {
+    const { db } = maakDb({ antwoord: (tabel) => (tabel === 'arnobot_document_koppelingen' ? { data: [{ document_id: 'd1', session_id: SA, created_at: dag(15) }] } : { data: [] }) })
+    const r = await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])
+    expect(r.d1).toEqual([{ sessie: SA, datum: dag(12), titel: null }])
+  })
+  it('laat een gesprek zonder titel (nog niet afgesloten) staan met titel null', async () => {
+    const { db } = maakDb({ antwoord: () => ({ data: [] }) })
+    const r = await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SC, created_at: dag(16) }])
+    expect(r.d1).toEqual([{ sessie: SC, datum: dag(16), titel: null }])
+  })
+  it('laat verwijderde gesprekken weg', async () => {
+    const { db } = maakDb({
+      antwoord: (tabel) => (tabel === 'arnobot_blog_sessions'
+        ? { data: [{ session_id: SA, title: 'Weg', deleted_at: dag(17) }, { session_id: SB, title: 'Blijft', deleted_at: null }] }
+        : { data: [{ document_id: 'd1', session_id: SB, created_at: dag(13) }] }),
+    })
+    const r = await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])
+    expect(r.d1.map(g => g.sessie)).toEqual([SB])
+  })
+  it('negeert ongeldige sessie-ID’s', async () => {
+    const { db } = maakDb({ antwoord: () => ({ data: [] }) })
+    const r = await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: "x'; drop--", created_at: dag(12) }])
+    expect(r.d1).toEqual([])
+  })
+  it('filtert alle queries op de gebruiker', async () => {
+    const { db, queries } = maakDb({ antwoord: (tabel) => (tabel === 'arnobot_blog_sessions' ? { data: [] } : { data: [{ document_id: 'd1', session_id: SB, created_at: dag(13) }] }) })
+    await gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])
+    expect(queries.length).toBe(2)
+    for (const q of queries) expect(heeftEq(q.ketting, 'user_id', USER)).toBe(true)
+  })
+  it('gooit een fout als een query faalt, zodat de route het kan melden', async () => {
+    const { db } = maakDb({ antwoord: () => ({ data: null, error: { message: 'kapot' } }) })
+    await expect(gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])).rejects.toThrow('koppelingen laden mislukt')
   })
 })

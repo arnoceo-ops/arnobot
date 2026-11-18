@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-// Het blok DOCUMENTEN op de accountpagina (docs/DOCUMENTEN_PLAN.md): het aantal bewaarde documenten en "verwijder alles".
+// Het blok UPLOADS op de accountpagina (docs/DOCUMENTEN_PLAN.md): het aantal bewaarde documenten en "verwijder alles".
 // Alleen voor wie de documentenfunctie heeft: voor iedereen anders geeft de server een 404 en toont dit niets.
 
 const section: React.CSSProperties = { borderTop: '1px solid #374151', paddingTop: '32px', marginBottom: '48px' }
@@ -45,23 +45,23 @@ export default function DocumentenBlok() {
 
   return (
     <div style={section}>
-      <p style={label}>JOUW DOCUMENTEN</p>
+      <p style={label}>JOUW UPLOADS</p>
       <p style={body}>
         {aantal === 0
-          ? 'Je hebt geen bewaarde documenten.'
-          : `Je hebt ${aantal} ${aantal === 1 ? 'bewaard document' : 'bewaarde documenten'} in Docs.`}
-        {' '}Je beheert ze in je <Link href="/bot/analyses?tab=docs" style={{ color: '#f59e0b' }}>archief</Link>.
+          ? 'Je hebt geen bewaarde uploads.'
+          : `Je hebt ${aantal} ${aantal === 1 ? 'bewaarde upload' : 'bewaarde uploads'}.`}
+        {' '}Je beheert ze in je <Link href="/bot/analyses?tab=uploads" style={{ color: '#f59e0b' }}>archief</Link>.
       </p>
       {aantal > 0 && (bevestig ? (
         <div>
-          <p style={{ ...body, color: '#f1f5f9', marginBottom: 12 }}>Alle documenten verwijderen? Dit kan niet ongedaan worden gemaakt.</p>
+          <p style={{ ...body, color: '#f1f5f9', marginBottom: 12 }}>Alle uploads verwijderen? Dit kan niet ongedaan worden gemaakt.</p>
           <div style={{ display: 'flex', gap: 12 }}>
             <button onClick={() => setBevestig(false)} style={pil}>ANNULEER</button>
             <button onClick={verwijderAlles} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER ALLES'}</button>
           </div>
         </div>
       ) : (
-        <button onClick={() => setBevestig(true)} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200', fontSize: 16, padding: '10px 28px' }}>VERWIJDER ALLE DOCUMENTEN</button>
+        <button onClick={() => setBevestig(true)} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200', fontSize: 16, padding: '10px 28px' }}>VERWIJDER ALLE UPLOADS</button>
       ))}
       {fout && <p style={{ color: '#cc4444', fontSize: 13, marginTop: 12 }}>{fout}</p>}
     </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { documentenDb, documentenGebruiker, statusVoorFout } from '@/lib/documentenApi'
-import { QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, isGeldigSessieId } from '@/lib/documentenRegels'
-import { bewaardGebruik, lijstBewaardeDocumenten, lijstSessieDocumenten, verwerkNieuweUpload } from '@/lib/documenten'
+import { QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN } from '@/lib/documentenRegels'
+import { bewaardGebruik, gesprekkenPerDocument, lijstBewaardeDocumenten, lijstSessieDocumenten, verwerkNieuweUpload } from '@/lib/documenten'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
 // GET zonder parameters: de bewaarde documenten van de gebruiker (de tab Docs), met het gebruik en de grenzen.
@@ -20,20 +20,11 @@ export async function GET(req: NextRequest) {
       bewaardGebruik(documentenDb, g.userId),
     ])
 
-    // De titel van het gesprek waarin een document is toegevoegd, alleen van de eigen gesprekken.
-    const sessieIds = [...new Set(documenten.map(d => d.session_id).filter(isGeldigSessieId))]
-    const titels: Record<string, string> = {}
-    if (sessieIds.length > 0) {
-      const { data } = await documentenDb
-        .from('arnobot_blog_sessions')
-        .select('session_id, title')
-        .eq('user_id', g.userId)
-        .in('session_id', sessieIds)
-      for (const s of (data ?? []) as { session_id: string; title: string | null }[]) if (s.title) titels[s.session_id] = s.title
-    }
+    // De gesprekken waarin elk bestand is gebruikt (herkomst en gekoppelde gesprekken), met titel uit het archief.
+    const gesprekken = await gesprekkenPerDocument(documentenDb, g.userId, documenten)
 
     return NextResponse.json({
-      documenten: documenten.map(d => ({ ...d, gesprek: d.session_id ? (titels[d.session_id] ?? null) : null })),
+      documenten: documenten.map(d => ({ ...d, gesprekken: gesprekken[d.id] ?? [] })),
       gebruik,
       grenzen: { maxDocumenten: QUOTA_MAX_DOCUMENTEN, maxBytes: QUOTA_MAX_BYTES },
     })

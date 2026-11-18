@@ -122,13 +122,13 @@ export default function GeschiedenisPage() {
   // Bepaalt of de coaching-hint/link hieronder "naar coaching" of "upgrade naar Pro" zegt.
   const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
-  // Documenten (docs/DOCUMENTEN_PLAN.md): alleen wie de documentenfunctie heeft krijgt drie tabs en de tab Docs; voor iedereen
+  // Documenten (docs/DOCUMENTEN_PLAN.md): alleen wie de documentenfunctie heeft krijgt drie tabs en de tab UPLOADS; voor iedereen
   // anders blijft deze pagina precies zoals hij was.
   const [documentenAan, setDocumentenAan] = useState(false)
   const [tab, setTab] = useState<'gesprekken' | 'analyses' | 'docs'>(() => {
     if (typeof window === 'undefined') return 'gesprekken'
     const p = new URLSearchParams(window.location.search)
-    if (p.get('tab') === 'docs') return 'docs'
+    if (p.get('tab') === 'uploads' || p.get('tab') === 'docs') return 'docs'
     if (p.get('tab') === 'analyses' || p.get('open') === 'nieuwste') return 'analyses'
     return 'gesprekken'
   })
@@ -546,7 +546,7 @@ export default function GeschiedenisPage() {
             {([
               { sleutel: 'gesprekken', label: 'GESPREKKEN', value: sessions.length },
               { sleutel: 'analyses', label: 'ANALYSES', value: savedAnalyses.length },
-              { sleutel: 'docs', label: 'DOCS', value: docsAantal ?? '' },
+              { sleutel: 'docs', label: 'UPLOADS', value: docsAantal ?? '' },
             ] as const).map(({ sleutel, label, value }) => {
               const actief = tab === sleutel
               return (

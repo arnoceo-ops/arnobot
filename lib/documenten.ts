@@ -375,3 +375,63 @@ export async function ontkoppelDocument(db: SupabaseClient, userId: string, docu
   if (error) return { error: 'ontkoppelen_mislukt' }
   return { error: null }
 }
+
+// ---- Gesprekken met een bestand ----
+
+export type DocGesprek = { sessie: string; datum: string; titel: string | null }
+
+/**
+ * Per document de gesprekken waarin het is gebruikt: het gesprek waarin het is toegevoegd plus elk gesprek waarin de gebruiker het
+ * later koos uit Uploads of via BESPREEK, nieuwste eerst. De titel is die uit het archief; een gesprek dat nog niet is afgesloten
+ * heeft nog geen titel (null). Een gesprek dat de gebruiker heeft verwijderd staat er niet in, want daar kan hij niet meer naartoe.
+ * Alle queries met eigenaarsfilter, sessie-ID's eerst op vorm gecontroleerd.
+ */
+export async function gesprekkenPerDocument(
+  db: SupabaseClient,
+  userId: string,
+  docs: { id: string; session_id: string | null; created_at: string }[],
+): Promise<Record<string, DocGesprek[]>> {
+  const uit: Record<string, DocGesprek[]> = {}
+  if (docs.length === 0) return uit
+  for (const d of docs) uit[d.id] = []
+
+  const koppelingen = await db
+    .from('arnobot_document_koppelingen')
+    .select('document_id, session_id, created_at')
+    .eq('user_id', userId)
+    .in('document_id', docs.map(d => d.id))
+  if (koppelingen.error) throw new Error(`koppelingen laden mislukt: ${koppelingen.error.message}`)
+
+  const toevoegen = (docId: string, sessie: string | null, datum: string) => {
+    if (!isGeldigSessieId(sessie) || !uit[docId] || uit[docId].some(g => g.sessie === sessie)) return
+    uit[docId].push({ sessie, datum, titel: null })
+  }
+  for (const d of docs) toevoegen(d.id, d.session_id, d.created_at)
+  for (const k of (koppelingen.data ?? []) as { document_id: string; session_id: string; created_at: string }[]) {
+    toevoegen(k.document_id, k.session_id, k.created_at)
+  }
+
+  const sessieIds = [...new Set(Object.values(uit).flat().map(g => g.sessie))]
+  const verwijderd = new Set<string>()
+  const titels: Record<string, string> = {}
+  if (sessieIds.length > 0) {
+    const { data, error } = await db
+      .from('arnobot_blog_sessions')
+      .select('session_id, title, deleted_at')
+      .eq('user_id', userId)
+      .in('session_id', sessieIds)
+    if (error) throw new Error(`gesprekstitels laden mislukt: ${error.message}`)
+    for (const s of (data ?? []) as { session_id: string; title: string | null; deleted_at: string | null }[]) {
+      if (s.deleted_at) verwijderd.add(s.session_id)
+      else if (s.title) titels[s.session_id] = s.title
+    }
+  }
+
+  for (const id of Object.keys(uit)) {
+    uit[id] = uit[id]
+      .filter(g => !verwijderd.has(g.sessie))
+      .map(g => ({ ...g, titel: titels[g.sessie] ?? null }))
+      .sort((a, b) => Date.parse(b.datum) - Date.parse(a.datum))
+  }
+  return uit
+}
