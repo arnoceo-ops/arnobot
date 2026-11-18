@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-11-18
 **Waar we staan:** plan, twee aannamecontroles (subagent zonder voorgeschiedenis) en een capability-sweep op de actuele Anthropic-documentatie zijn klaar; een mockup staat in `docs/mockups/documenten-archief.html`. Er is niets gebouwd. Het idee komt uit de vraag of een geüpload document bewaard kan worden, en uit het verzoek van een gebruiker (Chris) om zijn claude.ai-historie mee te nemen.
-**Eerstvolgende stap:** Arno beoordeelt de mockup en beslist de open punten onder "Open besluiten"; daarna fase 1 bouwen (achter een accountlijst, zodat alleen Arno en de testaccounts de nieuwe pagina zien). Besluit 2026-11-17: de logging (`bron_context`) en de bijbehorende AVG-teksten worden pas aangepast tijdens/na de bouw, niet apart vooraf. Voorwaarde: dat is klaar vóór het vinkje live gaat, anders bewaren we documenttekst ook voor wie het vinkje uitzet.
+**Eerstvolgende stap:** fase 1 bouwen, achter een accountlijst zodat alleen Arno en de testaccounts de nieuwe pagina zien. Beginnen met het fundament: documententabel, laden na de poorten, bijlage zichtbaar in het hele gesprek, opruimsweep. Nog open bij Arno: quota per plan (open besluit 3), AVG art. 25 (open besluit 4), en de bewaartermijn van `bron_context` (open besluit 1). Besloten op 2026-11-18: tegels, naam ARCHIEF, transcript wel en audiobestand niet in Docs, 48 uur. Besluit 2026-11-17: de logging (`bron_context`) en de bijbehorende AVG-teksten worden pas aangepast tijdens/na de bouw, niet apart vooraf. Voorwaarde: dat is klaar vóór het vinkje live gaat, anders bewaren we documenttekst ook voor wie het vinkje uitzet.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -33,6 +33,12 @@ Gevolgen voor het ontwerp (voorstel, wacht op Arno):
 6. Tabstijl: tegels (zoals de huidige tellers, de VRAGEN-teller verhuist naar een regel onder de lijst) of pillen (zoals de sorteerknoppen). De mockup toont beide.
 7. Audiobijlagen (opnames van echte gesprekken, alleen betaald, AssemblyAI) delen dezelfde bijlageknop: wel of niet bewaarbaar in Docs? Voorstel: niet in fase 1, het vinkje verschijnt dan alleen bij documenten.
 8. Tekst bij het uitgezette vinkje: "uiterlijk 48 uur na je laatste bericht" (volgt uit de levensduurkeuze). Eerst als platte tekst aan Arno.
+
+**Besloten door Arno op 2026-11-18 (punten 5 tot en met 8):**
+- Tabs als **tegels** (verworpen: pillen). De losse VRAGEN-teller verhuist naar een regel onder de lijst bij Gesprekken.
+- Paginanaam en nav-label **ARCHIEF** (verworpen: ANALYSES behouden, want een gebruiker zoekt zijn documenten niet onder "Analyses"). Dit keert bewust een eerdere hernoeming (BIEB, Archief, ANALYSES) om; bij de bouw sitebrede tekstzoekopdracht op "ANALYSES" als paginanaam en op "GESPREKKEN" als paginakop (UI-copy, `lib/email-templates.ts`, `lib/systemPrompt.ts`, `lib/appHelp.ts`, `QAClient.tsx`, alle docs), en mail-links naar `/bot/analyses` blijven werken.
+- **Audio:** het transcript (met sprekerlabels) is bewaarbaar in Docs als tekstdocument, vinkje "BEWAAR TRANSCRIPT IN DOCS"; het audiobestand wordt niet bewaard (verworpen: audiobestand bewaren, want het bevat de stem van derden, kan tot 150 MB zijn en ArnoBot leest alleen de tekst). Alleen betaalde plannen kunnen audio uploaden, dat blijft zo.
+- **48 uur** levensduur van een tijdelijke kopie, gerekend vanaf het laatste bericht (verworpen: 24 uur, want de app behandelt een gesprek tot 48 uur stilte als hetzelfde gesprek, `SparClient.tsx` regel 820 en `lib/geheugenContext.ts` regel 292; bij 24 uur verdwijnt een document midden in een nog lopend gesprek). Tekst onder het uitgezette vinkje: "Niet bewaard in Docs. ArnoBot kan het lezen zolang dit gesprek loopt. Uiterlijk 48 uur na je laatste bericht wordt het verwijderd."
 
 ## Bevindingen uit de aannamecontrole (2026-11-17)
 
