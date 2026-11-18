@@ -893,7 +893,7 @@ export default function GeschiedenisPage() {
         )}
 
         {!loading && (sorted.length > 0 || documentenAan) && (
-          <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
+          <div ref={analysesSectionRef} style={documentenAan ? undefined : { borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
             {!documentenAan && (
             <>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>

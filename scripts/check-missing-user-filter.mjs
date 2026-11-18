@@ -98,6 +98,8 @@ const KNOWN_SAFE_QUERIES = new Set([
   // oude grafstenen en de controle of een upload nog een rij heeft. Het werkt per rij met het eigen user_id en raakt nooit
   // een bewaard document. Alleen via de cron aangeroepen, nooit door een gebruiker.
   'lib/documentenOpruimen.ts:arnobot_documenten',
+  // De opruiming van bron_context (cron) maakt voor alle gebruikers de oude volledige context leeg; raakt alleen die ene kolom.
+  'lib/bronContextOpruimen.ts:arnobot_rds_logs',
   // Meta-analyse en waarheidsmail zijn bewust gebruikersoverstijgend: ze beoordelen de kwaliteit van
   // ArnoBot over alle gebruikers heen (meta-analyse over de sessies van de laatste periode, de
   // waarheidsmail een steekproef van de afgelopen week), met de interne testaccounts uitgesloten.

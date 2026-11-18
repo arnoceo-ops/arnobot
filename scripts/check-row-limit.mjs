@@ -64,7 +64,8 @@ const KNOWN_SAFE = new Set([
   'lib/metaAnalyse.ts:arnobot_blog_sessions',          // .limit(cap * 3), cap is hooguit 60, dus hooguit 180
   'app/api/cron/productvragen/route.ts:arnobot_rds_logs', // .limit(MAX_VRAGEN) met MAX_VRAGEN = 1000
   'lib/waarheidsRapport.ts:arnobot_rds_logs',          // .limit(MAX_ANTWOORDEN * 2), 240: bron_context is zwaar, bewust een kleine steekproef
-  'lib/documentenOpruimen.ts:arnobot_documenten',      // .limit(MAX_PER_RUN) met MAX_PER_RUN = 300, en .in('storage_path', ...) met hooguit 1000 unieke paden uit één map
+  'lib/documentenOpruimen.ts:arnobot_documenten',
+  'lib/bronContextOpruimen.ts:arnobot_rds_logs',        // .limit(GROEP) met GROEP = 200, per run hooguit 25 groepen      // .limit(MAX_PER_RUN) met MAX_PER_RUN = 300, en .in('storage_path', ...) met hooguit 1000 unieke paden uit één map
   // Begrensd op een bekende, kleine verzameling:
   'app/api/admin/kennisbank-chunks/route.ts:blog_chunks', // .eq('url', ...): de fragmenten van één blog
   'app/api/bot/team/lid/route.ts:arnobot_analyses',    // .in('id', analyseIds): alleen de gedeelde analyses die al bekend zijn

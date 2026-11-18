@@ -136,7 +136,7 @@ const FAQ_GROUPS = [
             <br /><br />
             Wat de manager niet ziet: de inhoud van je gesprekken, je analyses, klantnamen of specifieke situaties.
             <br /><br />
-            Wil je zelf iets delen? Dat kan. In ANALYSES kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
+            Wil je zelf iets delen? Dat kan. In ARCHIEF, tab ANALYSES, kun je bij elke analyse op &ldquo;Deel met manager&rdquo; klikken. Die verschijnt dan 1 op 1 in het overzicht van je manager.
           </>
         ),
       },
@@ -159,8 +159,8 @@ const FAQ_GROUPS = [
         a: 'Alleen jijzelf. Arno Diepeveen heeft als verwerkingsverantwoordelijke toegang tot de systemen, maar leest geen individuele gesprekken. Je gesprekken worden verwerkt door Anthropic voor de AI-analyse en opgeslagen bij Supabase. Beide partijen zijn GDPR-compliant.',
       },
       {
-        q: 'Kan ik een document uploaden in een gesprek?',
-        a: 'Ja, in de hoofdchat kun je een PDF, Word-document of afbeelding toevoegen, bijvoorbeeld om je salesplan te laten checken. Dat bestand wordt niet opgeslagen, alleen gebruikt om die ene vraag te beantwoorden en daarna direct weggegooid. Maximaal 10MB per bestand.',
+        q: 'Kan ik een bestand uploaden in een gesprek?',
+        a: 'Ja, een PDF, Word-document of afbeelding (maximaal 10MB). Standaard bewaren we het in je Uploads bij ARCHIEF. Zet je het vinkje uit, dan verdwijnt het uiterlijk 48 uur na je laatste bericht.',
       },
       {
         q: 'Kan ik mijn account en data verwijderen?',

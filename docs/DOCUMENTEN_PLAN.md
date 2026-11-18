@@ -151,16 +151,19 @@ Aangepast na Arno's eerste kijk op zijn account (2026-11-18): compacter menu in 
 
 Tweede ronde (2026-11-18, "veel te druk"): in de tab het label BEWAARD, de datumregel, het amberkleurige kopje boven de gesprekkenlijst en VERWIJDER ALLES verwijderd; type, grootte en gebruik staan in één regel onder de titel; de uitgeklapte inhoud staat onder de titel in plaats van links en rechts verdeeld; hernoemen, downloaden en verwijderen zijn rustige links (Space Mono, gedempt, zoals de stijlgids voor secundaire links voorschrijft); meer witruimte tussen de rijen; bij meer dan drie gesprekken over één bestand de nieuwste drie en daaronder TOON ALLE N GESPREKKEN (en TOON MINDER); letterafstand van de rustige links 2 in plaats van 4 (Arno).
 
-## Voor livegang (DOCUMENTEN_OPEN=true), in deze volgorde
+## Voor livegang (DOCUMENTEN_OPEN=true)
 
-- [ ] SQL `docs/sql/2026-11-18-documenten-koppelingen.sql` uitgevoerd (vóór de push van stap 4).
-- [ ] Teksten hierboven goedgekeurd door Arno.
-- [ ] Documenttekst uit `arnobot_rds_logs.bron_context` halen (open besluit 1, ook de bewaartermijn voor de rest van die kolom). Voor wie de functie heeft staat de documenttekst daar al niet meer in; voor iedereen anders nog wel.
-- [ ] Privacytekst (`app/privacy/page.tsx`), beveiligings-PDF (`scripts/generate-security-pdf.mjs`) en `lib/appHelp.ts` kloppend maken ("niet opgeslagen" geldt niet meer), eerst als platte tekst aan Arno. Geen Q&A-tekst over deze flow (alleen algemene Q&A).
-- [ ] AVG art. 25 getoetst door Arno (open besluit 4) en de quota per plan besloten (open besluit 3).
-- [ ] Hernoeming van het menu en de paginanaam (ARCHIEF) en van Docs naar UPLOADS: sitebrede zoekopdracht op "ANALYSES" als paginanaam, "GESPREKKEN" als paginakop en "Docs" als naam van de functie in UI-copy, `lib/email-templates.ts`, `lib/systemPrompt.ts`, `lib/appHelp.ts`, `QAClient.tsx` en alle docs; mail-links naar `/bot/analyses` blijven werken. De zichtbare teksten in de nieuwe bestanden zijn al hernoemd.
-- [ ] `docs/ARNOBOT_OVERZICHT.md` en `docs/TECHNICAL_HANDOVER.md` (functie, routes, bucket, tabellen) bijgewerkt, met PDF's.
-- [ ] Controle door Arno op zijn eigen account: vinkje aan en uit, kiezen uit Docs, BESPREEK, hernoemen, verwijderen, een audio-opname met transcript, en een gewone gebruiker (oude route).
+Stand 2026-11-18: alles is klaar en lokaal gecommit; er wordt bewust nog niet gepusht, want de teksten (privacy, Q&A, `appHelp`) gelden voor iedereen zodra ze live staan en moeten tegelijk met de schakelaar live gaan.
+
+- [x] SQL voor de koppelingen uitgevoerd (Arno).
+- [x] Teksten goedgekeurd door Arno (2026-11-18, in korte vorm) en doorgevoerd in `app/privacy/page.tsx`, `app/bot/qa/QAClient.tsx`, `lib/appHelp.ts` (ook de paginanaam ARCHIEF op vijf plekken), `scripts/generate-security-pdf.mjs` (versie 2.0, PDF opnieuw gegenereerd en gecontroleerd) en de helptekst onder het vinkje; snapshots van de systeemprompt bijgewerkt (alleen deze wijziging).
+- [x] `bron_context` (besluit Arno): de documenttekst komt voor wie de functie heeft niet meer in de log; de SQL `docs/sql/2026-11-18-bron-context-documenttekst-wissen.sql` is door Arno uitgevoerd (opnieuw uitvoeren na livegang voor rijen van gewone gebruikers tot dat moment); de cron `/api/cron/bron-context-opruimen` maakt de kolom na 30 dagen leeg.
+- [x] Grens in Uploads 50 bestanden en 500 MB voor elk plan (Arno, 2026-11-18).
+- [x] Hernoeming: paginanaam ARCHIEF (menu en chat-nav volgen de schakelaar), Q&A en `appHelp` bijgewerkt; de overige treffers (mailknop OPEN MIJN ANALYSES, ANALYSEER-knoppen, adminpagina's) gaan over analyses zelf en blijven.
+- [x] `docs/ARNOBOT_OVERZICHT.md` en `docs/TECHNICAL_HANDOVER.md` bijgewerkt, met PDF's.
+- [ ] AVG art. 25 (privacy by default) getoetst door Arno.
+- [ ] Livegang in deze volgorde: (1) Arno zet `DOCUMENTEN_OPEN=true` in Vercel (Production); (2) ik push de bundel, dat is de enige deploy en neemt de schakelaar en de teksten tegelijk mee; (3) na READY draait Arno de SQL voor `bron_context` nog één keer; (4) Arno controleert met een tweede, gewoon account dat de oude route weg is en de nieuwe werkt.
+- [ ] Na livegang: Arno loopt een audio-opname met transcript na (nog niet live uitgeprobeerd) en kijkt of de ARCHIEF-pagina voor een gewone gebruiker klopt.
 
 ## Fase 2: import van gespreksgeschiedenis uit een andere AI (Chris), ontwerp (concept, nog niet gebouwd)
 

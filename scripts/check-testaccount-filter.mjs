@@ -66,6 +66,8 @@ const OWNERSHIP_EQ = /\.eq\(\s*['"]user_id['"]/
 const KNOWN_SAFE = new Set([
   // Opruiming van documenten (cron): ruimt voor alle accounts op, ook de testaccounts, dus juist niet uitsluiten.
   'lib/documentenOpruimen.ts:arnobot_documenten',
+  // Opruiming van bron_context (cron): ruimt voor alle accounts op, ook de testaccounts, dus juist niet uitsluiten.
+  'lib/bronContextOpruimen.ts:arnobot_rds_logs',
   // Draait per gebruiker, sluit testaccounts al op e-mailadres uit.
   'app/api/cron/trial-emails/route.ts:approved_users',
   'app/api/cron/inactivity-nudge/route.ts:approved_users',

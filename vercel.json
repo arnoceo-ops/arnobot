@@ -129,6 +129,10 @@
       "schedule": "20 * * * *"
     },
     {
+      "path": "/api/cron/bron-context-opruimen",
+      "schedule": "30 4 * * *"
+    },
+    {
       "path": "/api/cron/leveranciers-wijzigingen",
       "schedule": "50 6 * * 1"
     }

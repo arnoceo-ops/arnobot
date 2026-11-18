@@ -2788,7 +2788,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           )}
           {documentenAan && sparModus !== 'sparren' && attachedFile && !fileError && !uploadingFile && !bewaar && (
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#6b7280', lineHeight: 1.7, margin: '-2px 0 10px' }}>
-              {ALLOWED_AUDIO_TYPES.includes(attachedFile.mediaType) ? 'Het transcript wordt niet bewaard in Uploads.' : 'Niet bewaard in Uploads.'} ArnoBot kan het lezen zolang dit gesprek loopt. Uiterlijk 48 uur na je laatste bericht wordt het verwijderd.
+              {ALLOWED_AUDIO_TYPES.includes(attachedFile.mediaType) ? 'Het transcript wordt niet bewaard, verdwijnt' : 'Wordt niet bewaard, verdwijnt'} uiterlijk 48 uur na je laatste bericht.
             </p>
           )}
           {documentenAan && sparModus !== 'sparren' && sessieDocs.length > 0 && (

@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 1.9  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 2.0  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -155,6 +155,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('Authenticatie', 'Clerk: SOC 2 Type II gecertificeerd, LinkedIn OAuth'),
       TR('AI-verwerking', 'Anthropic: jouw berichten worden verwerkt om een antwoord te genereren en daarna niet permanent opgeslagen'),
       TR('Spraakverwerking', 'OpenAI: spraakherkenning, verwerkt audio van voice-invoer, geen training op jouw data'),
+      TR('Geüploade bestanden', 'Supabase: privé-opslag, alleen via ArnoBot bereikbaar. Bewaard tot je ze verwijdert, tijdelijke bestanden uiterlijk 48 uur na je laatste bericht'),
       TR('Audiobijlage-transcriptie', 'AssemblyAI: spraaktranscriptie bij een audiobijlage, opname direct verwijderd, geen training op jouw data'),
       TR('Spraaksynthese (ArnoBot Voice)', 'ElevenLabs: tekst-naar-spraak voor ArnoBot Voice-abonnees, verwerkt gesproken antwoorden, geen training op jouw data'),
       TR('E-mail', 'Resend: transactionele e-mail en blogmails via DKIM-geverifieerde domeinen. Bij blogmails wordt gemeten of een mail wordt geopend en op welke links wordt geklikt'),

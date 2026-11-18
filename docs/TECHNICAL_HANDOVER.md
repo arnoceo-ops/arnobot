@@ -130,7 +130,7 @@ Manager eigen zelfcoaching (Strategy People Execution) → /api/bot/team/zelfcoa
 | Vragen over de app | `/bot/qa` | Q&A over het gebruik van de app, met zoekveld; zoektermen zonder antwoord gaan naar `faq_zoekmislukkingen` |
 | Zakelijk corrigeren | `/bot/account/zakelijk-corrigeren` | Zelfbediening: particulier naar zakelijk met btw-factuur |
 | Coaching | `/bot/coaching` | Coachingrapport aanvragen en bekijken (Pro-only, upsell voor Basic) |
-| Analyses | `/bot/analyses` | Archief van gesprekken + AI-analyses + blogsuggesties |
+| Archief | `/bot/analyses` | Drie tabs: Gesprekken, Analyses en Uploads (de URL bleef `/bot/analyses`; `?tab=uploads` opent Uploads, `?open=nieuwste` opent Analyses). Gesprekken, AI-analyses, blogsuggesties en de bewaarde uploads (`app/bot/analyses/DocsTab.tsx`) |
 | Sparren | `/bot/sparren` | Live rollenspel/oefenmodus tegen een AI-tegenstander |
 | Gesprek boeken | `/bot/gesprek` | Gate/CTA om een 1-op-1 gesprek met Arno te boeken |
 | Doorgaan | `/bot/doorgaan` | Doorstroompagina naar de boekingslink |
@@ -243,7 +243,12 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 | `/api/bot/search-linkedin-profile` | AI + web_search zoekt LinkedIn-profiel (admin-only ondanks `/bot`-pad) |
 | `/api/transcribe` | Spraak naar tekst (OpenAI `gpt-transcribe`, streaming) |
 | `/api/transcribe/live` | Geeft de browser een kortlevende sessiecode voor live transcriptie met `gpt-live-transcribe`; de echte API-sleutel verlaat de server nooit |
-| `/api/bot/chat-upload-url` | Kortstondige signed upload-URL naar Supabase Storage, zodat een bijlage (document of audio) buiten de Vercel-functie om wordt geüpload (4,5 MB-limiet op de request body) |
+| `/api/bot/chat-upload-url` | Kortstondige signed upload-URL naar Supabase Storage, zodat een bijlage (document of audio) buiten de Vercel-functie om wordt geüpload (4,5 MB-limiet op de request body). Een document gaat voor wie de uploads-functie heeft naar de privé-bucket `arnobot-documenten`, audio en de rest naar `chat-audio-uploads`. Toegangscontrole en 40 verzoeken per uur per gebruiker (interne testaccounts uitgezonderd) |
+| `/api/bot/documenten` | Uploads (alleen met de uploads-functie, anders 404). GET: de bewaarde bestanden met gebruik, grenzen en de gesprekken per bestand; `?sessie=<id>`: wat ArnoBot in dat gesprek kan lezen. POST: een bestand direct in Uploads toevoegen. Logica in `lib/documenten.ts` |
+| `/api/bot/documenten/[id]` | PATCH hernoemt (extensie blijft), DELETE verwijdert het bestand en de rij |
+| `/api/bot/documenten/[id]/download` | Levert het bestand altijd als download (`Content-Disposition: attachment`, `nosniff`), met eigenaarscheck |
+| `/api/bot/documenten/koppel` | POST koppelt een bewaard bestand aan het huidige gesprek (KIES UIT UPLOADS, BESPREEK), DELETE haalt de koppeling weg |
+| `/api/bot/documenten/alles` | DELETE: alle uploads van de gebruiker (VERWIJDER ALLE UPLOADS op de accountpagina) |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 
 ### Sparring
@@ -387,6 +392,7 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/trial-emails` | Dagelijks 04:05 | Lifecycle e-mails: dag1, dag4, dag14, dag25, first_conversation, first_coaching |
 | `/api/cron/inactivity-nudge` | Dagelijks 03:00 | Inactiviteitsmails: 7d (gepersonaliseerd), 21d, 45d, 60d |
 | `/api/cron/kennisbank-controle` | Dagelijks 06:55 | Controle van de kennisbank: drie vaste kernvragen moeten elk minimaal 60 kandidaten opleveren, geen fragment zonder embedding, minimaal 1400 fragmenten. Telegram alleen bij een probleem (`lib/kennisbankControle.ts`) |
+| `/api/cron/bron-context-opruimen` | Dagelijks 04:30 | Maakt de volledige bronnentekst van antwoorden (`arnobot_rds_logs.bron_context`) na 30 dagen leeg, tot 5000 rijen per run; de antwoorden zelf blijven staan. Telegram alleen bij een fout (`lib/bronContextOpruimen.ts`) |
 | `/api/cron/documenten-opruimen` | Elk uur (:20) | Ruimt tijdelijke documenten op 48 uur na het laatste bericht op (bestand en inhoud weg, de rij blijft 30 dagen als lege grafsteen met alleen de naam, zodat ArnoBot kan melden dat een document verlopen is), wist grafstenen na 30 dagen en haalt uploads weg die langer dan een etmaal ongebruikt in de uploadbuckets staan. Raakt nooit een bewaard document. Telegram alleen bij een fout (`lib/documentenOpruimen.ts`) |
 | `/api/cron/leveranciers-wijzigingen` | Maandag 06:50 | Wekelijkse controle op wijzigingen in DPA's en deprecations-pagina's van leveranciers |
 | `/api/cron/comp-reminder-nov` | 25 t/m 29 november 08:00 (eenmalig) | Eenmalige mail aan één gebruiker met gratis toegang tot 1 december, alleen als Mollie live staat. Wegwerpcode na verzending |
@@ -551,6 +557,12 @@ Referraltracking: wie heeft wie uitgenodigd.
 
 ### `arnobot_shared_sessions`
 Publieke share-tokens voor individuele gesprekken (`/gesprek/[token]`).
+
+### `arnobot_documenten`
+De uploads van een gebruiker en de tijdelijke bijlagen van een gesprek (SQL: `docs/sql/2026-11-18-documenten.sql` en `-documenten-opruiming.sql`, RLS aan zonder policies). Eén rij per bijlage: `session_id` (het gesprek waarin het is toegevoegd, leeg bij een direct toegevoegd bestand), `soort` (`document` of `transcript`, een transcript heeft alleen tekst), `storage_path` in de privé-bucket `arnobot-documenten`, `tekst_cache` (uitgepakte tekst van docx/txt/csv/transcript), `bewaard` (standaard in Uploads) of tijdelijk (`verloopt_op` = laatst gebruikt + 48 uur, bij elke beurt vernieuwd). De server laadt per beurt alle documenten van het gesprek en zet ze één keer in `messages`. De cron `documenten-opruimen` ruimt verlopen tijdelijke bestanden op (de rij blijft 30 dagen als "grafsteen" met alleen de naam, `verwijderd_op`, zodat ArnoBot kan melden dat een bestand verlopen is) en haalt uploads van meer dan een etmaal zonder rij weg. Nooit een bewaard bestand. Verwijderen: `verwijderDocument` en `verwijderGebruikersDocumenten` in `lib/documenten.ts`. Grens 50 bestanden en 500 MB per gebruiker (`lib/documentenRegels.ts`). Wie de functie heeft: `documentenBeschikbaarVoor`, zie de env `DOCUMENTEN_OPEN`.
+
+### `arnobot_document_koppelingen`
+Koppelt een bewaard bestand aan een gesprek waarin het is gekozen (SQL: `docs/sql/2026-11-18-documenten-koppelingen.sql`, RLS aan, `on delete cascade` vanuit `arnobot_documenten`). Dit is ook de bron voor "gesprekken met dit bestand" in Uploads. Een bewaard bestand in een ander gesprek brengt de samenvattingen van de hooguit drie nieuwste eerdere gesprekken over dat bestand mee in het geheugen van ArnoBot (`eerdereGesprekkenOverBestanden`, nergens zichtbaar).
 
 ### `arnobot_offtopic_flags`
 Vlaggen off-topic/ongepaste berichten per gebruiker; bij herhaling geforceerde uitlog.
@@ -780,6 +792,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `CALENDLY_WEBHOOK_SIGNING_KEY` — Calendly-webhookverificatie
 - `INSTATUS_API_KEY` — statuspagina-data
 - `ARNOBOT_OWNER_USER_ID` — Clerk user ID van Arno (voor admin-functies)
+- `DOCUMENTEN_OPEN` — `true` zet de uploads-functie (bewaren, tab Uploads, de naam ARCHIEF, een bijlage zichtbaar in het hele gesprek) open voor iedereen; zonder deze waarde alleen de interne testaccounts en `ARNOBOT_OWNER_USER_ID`
 - `GITHUB_TOKEN` — GitHub PAT voor de update-handover cron
 - `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` — Telegram notificaties
 
