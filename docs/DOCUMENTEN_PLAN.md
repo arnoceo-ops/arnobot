@@ -17,7 +17,7 @@ Bij een echte sessie (salesplan als pdf) zag ArnoBot het document alleen in het 
 **Eis:** een bijlage blijft zichtbaar in alle vervolgberichten van hetzelfde gesprek. Is dat ergens niet het geval, dan krijgt ArnoBot expliciet te horen dat het document niet meer zichtbaar is, en zegt hij dat tegen de gebruiker in plaats van voort te bouwen op zijn herinnering.
 
 Gevolgen voor het ontwerp (voorstel, wacht op Arno):
-- Ook een upload met het vinkje uit moet tot het einde van het gesprek beschikbaar blijven. Voorstel: "meteen verwijderd" wordt "verwijderd na dit gesprek" (bij sluiten, met een opruimsweep na een vast aantal uur als vangnet). Alternatief zonder tijdelijke kopie: vinkje uit betekent alleen zichtbaar in de beurt van de upload, met de expliciete melding erna. Nog niet besloten.
+- Ook een upload met het vinkje uit moet tot het einde van het gesprek beschikbaar blijven. Voorstel: "meteen verwijderd" wordt "verwijderd na dit gesprek" (bij sluiten, met een opruimsweep na een vast aantal uur als vangnet). Gekozen (Arno, 2026-11-18): tijdelijke kopie tot het gesprek eindigt. Verworpen: alleen zichtbaar in de uploadbeurt met een melding erna (maakt het probleem eerlijk, maar lost het niet op).
 - De history krijgt per bericht een marker met het document-ID (nu staat er niets); de server laadt de documentblokken één keer vóór de tool-, retry- en vervolglus.
 - Valt een document af (limiet, verwijderd, verlopen), dan krijgt het model een expliciete melding.
 - Testgeval: de sessie van 17-11 nabouwen met pseudonieme tekst in het testbestand (geen echte namen of cijfers in de repo).
@@ -26,7 +26,7 @@ Gevolgen voor het ontwerp (voorstel, wacht op Arno):
 
 1. `bron_context`: voorstel documenttekst niet meer loggen, en een bewaartermijn voor de rest van die kolom (bijvoorbeeld 30 dagen). Verworpen voorstel: alleen de privacytekst aanpassen.
 2. Lezen van documenten (herzien 2026-11-18, vervangt het eerdere voorstel "alleen native in de beurt van kiezen"): binnen hetzelfde gesprek blijft elke bijlage native zichtbaar (zie de eis hierboven). In een nieuw gesprek gaat een document native mee als de gebruiker het kiest of via BESPREEK, anders werkt het via samenvatting en zoeken. Te controleren bij de bouw: paginalimiet per PDF en het maximum aantal documenten per beurt.
-2b. Vinkje uit: tijdelijke kopie tot het gesprek eindigt (voorstel) of alleen zichtbaar in de uploadbeurt met expliciete melding.
+2b. Besloten 2026-11-18: vinkje uit betekent een tijdelijke kopie tot het gesprek eindigt, met een opruimsweep na een vast aantal uur als vangnet (aantal uren nog vast te stellen; de sweep ruimt ook de bestaande wees-uploads op). De teksten "direct weggegooid" (privacy, Q&A, appHelp) worden "weggegooid na dit gesprek", eerst als platte tekst aan Arno.
 3. Quota per plan: aantal en totale MB.
 4. AVG art. 25 (privacy by default) tegenover standaard-aan: aanname van Claude, nog niet getoetst aan een bron. Arno zoekt dit zelf uit vóór livegang.
 
@@ -41,6 +41,15 @@ Door de subagent gemeld, bij de start van de bouw per punt te verifiëren:
 - Managerroutes (1:1, spotlight, zelfcoaching) lezen `summary`, `feiten` en `title` uit `arnobot_blog_sessions`; gedeelde analyses tonen de volledige tekst.
 - Bijlagetekst en bestandsnaam gaan niet langs moderatie of prompt-injectiecontrole; de bestandsnaam staat ongefilterd in de prompt.
 - Anthropic-limieten (pagina's per PDF, afbeeldingsgrootte) zijn niet geverifieerd.
+
+## Nog te onderzoeken vóór de bouw (2026-11-18)
+
+Het ontwerp is na de eerste aannamecontrole inhoudelijk veranderd (tijdelijke kopie, marker in de history, native in het hele gesprek). Die nieuwe delen zijn nog niet door een onafhankelijke controle gegaan. Open:
+- Tweede aannamecontrole (subagent zonder voorgeschiedenis) op het herziene ontwerp.
+- Capability-sweep op de actuele Anthropic-documentatie, met bronlink en datum: PDF-limieten, afbeeldingslimieten, Files API (eenmalig uploaden en per beurt verwijzen), prompt caching.
+- Bestandstypen: PowerPoint en Excel worden nu niet ondersteund (`DOCUMENT_MEDIA_TYPES` in `lib/chatAttachments.ts`); sales-gebruikers uploaden die waarschijnlijk wel.
+- Meerdere bijlagen per bericht: de chat heeft één `attachedFile`; voor historie en dossiers is meer dan één nodig.
+- Gescande of zeer grote PDF's; gebruik in Sparren en bij spraak.
 
 ## Fase 0: logging rechtzetten (verplaatst naar fase 1, besluit 2026-11-17)
 
