@@ -164,7 +164,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik meenemen wat mijn andere AI van me weet?',
-        a: 'Ja, via de computer, bij ARCHIEF, tab UPLOADS.',
+        a: 'Ja, via de computer, bij ARCHIEF, tab UPLOADS, onder NEEM JE HISTORIE MEE. Je stuurt een vraag naar je andere AI (ChatGPT, Claude of een andere) en plakt het antwoord. Jij kiest wat ArnoBot onthoudt en je kunt het altijd verwijderen.',
       },
       {
         q: 'Kan ik mijn account en data verwijderen?',

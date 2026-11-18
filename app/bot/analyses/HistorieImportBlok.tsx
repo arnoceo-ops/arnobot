@@ -159,7 +159,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
   return (
-    <div style={{ marginTop: 48 }}>
+    <div style={{ marginTop: 48, marginBottom: open || opgeslagen.length === 0 ? 24 : 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <span style={kopTekst}>Neem je historie mee</span>
         {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < IMPORT_BRONNEN.length && !open && (
