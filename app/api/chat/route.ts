@@ -74,7 +74,7 @@ const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { buildDocumentContentBlock } from '@/lib/documentInhoud'
 import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
-import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript } from '@/lib/documenten'
+import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript, eerdereGesprekkenOverBestanden } from '@/lib/documenten'
 import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
@@ -440,6 +440,8 @@ export async function POST(req: NextRequest) {
       ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`
       : question
     let bijlageBlokken: Anthropic.Messages.ContentBlockParam[] = documentBlock ? [documentBlock] : []
+    // Wat er eerder over de gekozen bewaarde bestanden is besproken (samenvattingen, alleen voor ArnoBot en nergens zichtbaar), onderdeel van het geheugen hieronder.
+    let documentGeheugen = ''
 
     // Nieuwe documentenfunctie (docs/DOCUMENTEN_PLAN.md), alleen voor wie documentenBeschikbaarVoor toestaat; voor
     // iedereen anders blijft het oude gedrag hierboven ongewijzigd. Pas hier, na de inlog-, limiet-, dubbele-sessie-
@@ -468,6 +470,7 @@ export async function POST(req: NextRequest) {
         }
         const rijen = await laadSessieDocumenten(supabase, userId, sessionId)
         const samengesteld = await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))
+        documentGeheugen = await eerdereGesprekkenOverBestanden(supabase, userId, sessionId, rijen)
         bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
         questionWithDocument += bouwBijlageTekst(samengesteld)
         await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))
@@ -479,7 +482,8 @@ export async function POST(req: NextRequest) {
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
     // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
-    const { geheugentekst, prevSessionCount, verouderd } = await memoryContextPromise
+    const { geheugentekst: basisGeheugentekst, prevSessionCount, verouderd } = await memoryContextPromise
+    const geheugentekst = basisGeheugentekst + documentGeheugen
     const coachingContext = await coachingContextPromise
 
     // Bij een verouderd gesprek zit de oude geschiedenis als gedateerd geheugen in geheugentekst.

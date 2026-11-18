@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   laadSessieDocumenten, lijstSessieDocumenten, lijstBewaardeDocumenten, bewaardGebruik, downloadDocument, verwerkNieuweUpload,
   laadBijlage, markeerGebruikt, hernoemDocument, verwijderDocument, verwijderGebruikersDocumenten, downloadBewaardDocument,
-  koppelDocument, ontkoppelDocument, registreerTranscript, bewaardeRuimteOver, gesprekkenPerDocument,
+  koppelDocument, ontkoppelDocument, registreerTranscript, bewaardeRuimteOver, gesprekkenPerDocument, eerdereGesprekkenOverBestanden,
 } from './documenten'
 import { DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_DOCUMENTEN } from './documentenRegels'
 
@@ -616,5 +616,56 @@ describe('gesprekkenPerDocument', () => {
   it('gooit een fout als een query faalt, zodat de route het kan melden', async () => {
     const { db } = maakDb({ antwoord: () => ({ data: null, error: { message: 'kapot' } }) })
     await expect(gesprekkenPerDocument(db, USER, [{ id: 'd1', session_id: SA, created_at: dag(12) }])).rejects.toThrow('koppelingen laden mislukt')
+  })
+})
+
+describe('eerdereGesprekkenOverBestanden', () => {
+  const dag = (n: number) => `2026-11-${String(n).padStart(2, '0')}T09:00:00.000Z`
+  const SA = 'c08ea6fd-0a80-42f3-93fe-8e82a60bfdd4'
+  const SB = 'd1111111-0a80-42f3-93fe-8e82a60bfdd4'
+  const SNU = 'e2222222-0a80-42f3-93fe-8e82a60bfdd4'
+  const rij = (over: object = {}) => ({ id: 'd1', naam: 'Plan.pdf', bewaard: true, verwijderd_op: null, session_id: SA, created_at: dag(10), ...over }) as unknown as Parameters<typeof eerdereGesprekkenOverBestanden>[3][number]
+  const eersteKolommen = (k: Aanroep[]) => String(k.find(a => a.methode === 'select')?.args[0] ?? '')
+  const antwoord = (tabel: string, k: Aanroep[]): Resultaat => {
+    if (tabel === 'arnobot_document_koppelingen') return { data: [{ document_id: 'd1', session_id: SB, created_at: dag(14) }, { document_id: 'd1', session_id: SNU, created_at: dag(18) }] }
+    if (eersteKolommen(k).includes('summary')) return { data: [{ session_id: SA, summary: 'Samenvatting van het eerste gesprek.' }, { session_id: SB, summary: 'Samenvatting van het tweede gesprek.' }] }
+    return { data: [{ session_id: SA, title: 'Eerste blik', deleted_at: null }, { session_id: SB, title: 'Tweede ronde', deleted_at: null }] }
+  }
+
+  it('geeft niets en raakt de database niet aan zonder bestanden uit andere gesprekken', async () => {
+    const { db, queries } = maakDb()
+    expect(await eerdereGesprekkenOverBestanden(db, USER, SNU, [rij({ session_id: SNU }), rij({ bewaard: false }), rij({ verwijderd_op: dag(11) })])).toBe('')
+    expect(queries).toEqual([])
+  })
+  it('geeft de samenvattingen van de eerdere gesprekken over het bestand, zonder het huidige gesprek', async () => {
+    const { db } = maakDb({ antwoord })
+    const t = await eerdereGesprekkenOverBestanden(db, USER, SNU, [rij()])
+    expect(t).toContain('Eerdere gesprekken over het bestand "Plan.pdf"')
+    expect(t).toContain('Samenvatting van het eerste gesprek.')
+    expect(t).toContain('Samenvatting van het tweede gesprek.')
+    expect(t).toContain('"Tweede ronde"')
+  })
+  it('vraagt de samenvattingen alleen van de eigen, niet verwijderde en niet buiten de analyses gehouden gesprekken', async () => {
+    const { db, queries } = maakDb({ antwoord })
+    await eerdereGesprekkenOverBestanden(db, USER, SNU, [rij()])
+    const samenvattingen = queries.find(q => q.tabel === 'arnobot_blog_sessions' && eersteKolommen(q.ketting).includes('summary'))!
+    expect(heeftEq(samenvattingen.ketting, 'user_id', USER)).toBe(true)
+    expect(heeftIs(samenvattingen.ketting, 'deleted_at', null)).toBe(true)
+    expect(heeftEq(samenvattingen.ketting, 'community_excluded', false)).toBe(true)
+    const ids = samenvattingen.ketting.find(a => a.methode === 'in')?.args[1] as string[]
+    expect(ids).not.toContain(SNU)
+    for (const q of queries) expect(heeftEq(q.ketting, 'user_id', USER)).toBe(true)
+  })
+  it('slaat gesprekken zonder samenvatting over', async () => {
+    const { db } = maakDb({ antwoord: (t, k) => (eersteKolommen(k).includes('summary') ? { data: [{ session_id: SB, summary: 'Alleen deze.' }] } : antwoord(t, k)) })
+    const t = await eerdereGesprekkenOverBestanden(db, USER, SNU, [rij()])
+    expect(t).toContain('Alleen deze.')
+    expect(t).not.toContain('Samenvatting van het eerste gesprek.')
+  })
+  it('geeft niets als er niets te melden is of als een query faalt', async () => {
+    const leeg = maakDb({ antwoord: () => ({ data: [] }) })
+    expect(await eerdereGesprekkenOverBestanden(leeg.db, USER, SNU, [rij({ session_id: SNU })])).toBe('')
+    const stuk = maakDb({ antwoord: () => ({ data: null, error: { message: 'kapot' } }) })
+    expect(await eerdereGesprekkenOverBestanden(stuk.db, USER, SNU, [rij()])).toBe('')
   })
 })

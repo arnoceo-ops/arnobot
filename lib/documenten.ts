@@ -8,7 +8,7 @@ import {
   DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN,
   hernoemMetBehoudExtensie, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, schoneBestandsnaam, verloopOp,
 } from './documentenRegels'
-import type { GeladenBijlage, SamenstelRij } from './documentenSamenstellen'
+import { bouwDocumentGeheugen, type GeladenBijlage, type SamenstelRij } from './documentenSamenstellen'
 
 export type DocumentRij = SamenstelRij & {
   user_id: string
@@ -434,4 +434,54 @@ export async function gesprekkenPerDocument(
       .sort((a, b) => Date.parse(b.datum) - Date.parse(a.datum))
   }
   return uit
+}
+
+// ---- Geheugen over eerdere gesprekken met een bestand ----
+
+const MAX_BESTANDEN_IN_GEHEUGEN = 3
+const MAX_GESPREKKEN_PER_BESTAND = 3
+
+/**
+ * Voor een gesprek waarin bewaarde bestanden uit andere gesprekken zijn gekozen: de samenvattingen van de (hooguit drie nieuwste) eerdere
+ * gesprekken over elk bestand, als tekst voor het geheugen van ArnoBot. Zoals het gewone geheugen alleen gesprekken van deze gebruiker die niet
+ * zijn verwijderd en niet buiten de analyses zijn gehouden. Mislukt iets, dan komt er niets en gaat het gesprek gewoon door.
+ */
+export async function eerdereGesprekkenOverBestanden(db: SupabaseClient, userId: string, huidigeSessie: string, rijen: DocumentRij[]): Promise<string> {
+  try {
+    const kandidaten = rijen
+      .filter(r => r.bewaard && !r.verwijderd_op && r.session_id !== huidigeSessie)
+      .slice(0, MAX_BESTANDEN_IN_GEHEUGEN)
+    if (kandidaten.length === 0) return ''
+
+    const perDoc = await gesprekkenPerDocument(db, userId, kandidaten)
+    const gekozen: Record<string, DocGesprek[]> = {}
+    const ids = new Set<string>()
+    for (const d of kandidaten) {
+      const lijst = (perDoc[d.id] ?? []).filter(g => g.sessie !== huidigeSessie).slice(0, MAX_GESPREKKEN_PER_BESTAND)
+      gekozen[d.id] = lijst
+      for (const g of lijst) ids.add(g.sessie)
+    }
+    if (ids.size === 0) return ''
+
+    const { data, error } = await db
+      .from('arnobot_blog_sessions')
+      .select('session_id, summary')
+      .eq('user_id', userId)
+      .in('session_id', [...ids])
+      .is('deleted_at', null)
+      .eq('community_excluded', false)
+    if (error) return ''
+    const samenvatting: Record<string, string> = {}
+    for (const s of (data ?? []) as { session_id: string; summary: string | null }[]) if (s.summary) samenvatting[s.session_id] = s.summary
+
+    return bouwDocumentGeheugen(kandidaten.map(d => ({
+      naam: d.naam,
+      gesprekken: (gekozen[d.id] ?? [])
+        .filter(g => samenvatting[g.sessie])
+        .map(g => ({ datum: g.datum, titel: g.titel, samenvatting: samenvatting[g.sessie] })),
+    })))
+  } catch (e) {
+    console.error('[documenten] geheugen over eerdere gesprekken mislukt:', e instanceof Error ? e.message : String(e))
+    return ''
+  }
 }

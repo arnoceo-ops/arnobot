@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE, type SamenstelRij, type GeladenBijlage } from './documentenSamenstellen'
+import { stelBijlagenSamen, bouwBijlageTekst, bouwDocumentGeheugen, BIJLAGEN_STORING_NOTITIE, type SamenstelRij, type GeladenBijlage } from './documentenSamenstellen'
 
 const NU = new Date('2026-11-18T12:00:00.000Z')
 const uur = (n: number) => new Date(NU.getTime() + n * 3600 * 1000).toISOString()
@@ -124,5 +124,38 @@ describe('bouwBijlageTekst', () => {
   it('heeft een vaste melding voor een storing bij het laden', () => {
     expect(BIJLAGEN_STORING_NOTITIE).toContain('konden nu niet worden geladen')
     expect(BIJLAGEN_STORING_NOTITIE).toContain('bouw niet voort')
+  })
+})
+
+describe('bouwDocumentGeheugen', () => {
+  it('geeft niets als er geen eerdere gesprekken zijn', () => {
+    expect(bouwDocumentGeheugen([])).toBe('')
+    expect(bouwDocumentGeheugen([{ naam: 'Plan.pdf', gesprekken: [] }])).toBe('')
+  })
+  it('noemt het bestand, de datum, de titel en de samenvatting, en zegt dat het uit het geheugen komt', () => {
+    const t = bouwDocumentGeheugen([{ naam: 'Plan.pdf', gesprekken: [{ datum: '2026-11-17T09:00:00.000Z', titel: 'Eerste blik op het plan', samenvatting: 'De gebruiker wil de prijs durven noemen.' }] }])
+    expect(t).toContain('Eerdere gesprekken over het bestand "Plan.pdf" (uit je geheugen, niet uit dit gesprek):')
+    expect(t).toContain('17 nov')
+    expect(t).toContain('"Eerste blik op het plan"')
+    expect(t).toContain('De gebruiker wil de prijs durven noemen.')
+  })
+  it('laat de titel weg als die er niet is en maakt aanhalingstekens in een titel veilig', () => {
+    const zonder = bouwDocumentGeheugen([{ naam: 'A.pdf', gesprekken: [{ datum: '2026-11-17T09:00:00.000Z', titel: null, samenvatting: 'Korte samenvatting.' }] }])
+    expect(zonder).toContain('- 17 nov: Korte samenvatting.')
+    const met = bouwDocumentGeheugen([{ naam: 'A.pdf', gesprekken: [{ datum: '2026-11-17T09:00:00.000Z', titel: 'Hij zei "nee"', samenvatting: 'x' }] }])
+    expect(met).toContain(`"Hij zei 'nee'"`)
+  })
+  it('kapt een lange samenvatting af', () => {
+    const t = bouwDocumentGeheugen([{ naam: 'A.pdf', gesprekken: [{ datum: '2026-11-17T09:00:00.000Z', titel: null, samenvatting: 'woord '.repeat(300) }] }])
+    expect(t.length).toBeLessThan(900)
+    expect(t.endsWith('...')).toBe(true)
+  })
+  it('slaat een bestand zonder eerdere gesprekken over en houdt de rest', () => {
+    const t = bouwDocumentGeheugen([
+      { naam: 'Leeg.pdf', gesprekken: [] },
+      { naam: 'Vol.pdf', gesprekken: [{ datum: '2026-11-17T09:00:00.000Z', titel: null, samenvatting: 'Iets.' }] },
+    ])
+    expect(t).not.toContain('Leeg.pdf')
+    expect(t).toContain('Vol.pdf')
   })
 })

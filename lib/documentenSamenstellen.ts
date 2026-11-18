@@ -105,3 +105,31 @@ export function bouwBijlageTekst(s: Samengesteld): string {
 /** Als het laden van de documenten zelf misgaat: eerlijk melden in plaats van stil doorgaan. */
 export const BIJLAGEN_STORING_NOTITIE =
   '\n\n[Let op: de bijlagen van dit gesprek konden nu niet worden geladen. Zeg dat tegen de gebruiker en bouw niet voort op wat je eerder over een document zei of dacht te weten.]'
+
+// ---- Eerdere gesprekken over een bestand (alleen voor ArnoBot, nergens zichtbaar) ----
+
+export type EerderGesprek = { datum: string; titel: string | null; samenvatting: string }
+
+const kort = (tekst: string, max: number): string => {
+  const schoon = tekst.replace(/\s+/g, ' ').trim()
+  return schoon.length > max ? schoon.slice(0, max).trimEnd() + '...' : schoon
+}
+
+/**
+ * Tekst voor het geheugen van ArnoBot in een gesprek waarin een bewaard bestand uit Uploads is gekozen: wat er eerder over dat bestand
+ * is besproken, uit de samenvattingen van die gesprekken. Leeg als er niets is. De gebruiker ziet dit niet; het hoort bij het gewone
+ * geheugen en wordt als zodanig gelabeld, zodat ArnoBot het niet voor dit gesprek houdt.
+ */
+export function bouwDocumentGeheugen(items: { naam: string; gesprekken: EerderGesprek[] }[]): string {
+  const delen = items
+    .filter(i => i.gesprekken.length > 0)
+    .map(i => {
+      const regels = i.gesprekken.map(g => {
+        const datum = new Date(g.datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' })
+        const titel = g.titel ? `, "${g.titel.replace(/"/g, "'")}"` : ''
+        return `- ${datum}${titel}: ${kort(g.samenvatting, 600)}`
+      })
+      return `Eerdere gesprekken over het bestand "${i.naam}" (uit je geheugen, niet uit dit gesprek):\n${regels.join('\n')}`
+    })
+  return delen.length > 0 ? '\n\n' + delen.join('\n\n') : ''
+}
