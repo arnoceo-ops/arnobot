@@ -27,7 +27,11 @@ const TABELLEN = [
   'arnobot_sparring_sessions',
   'arnobot_events',
   'arnobot_blog_sessions',
+  'arnobot_documenten',
 ]
+
+// Buckets waarin het E2E-account bestanden kan achterlaten (documenten en oude uploads), per gebruiker een map.
+const BUCKETS = ['arnobot-documenten', 'chat-audio-uploads']
 
 export default async function globalTeardown() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -41,5 +45,13 @@ export default async function globalTeardown() {
   for (const tabel of TABELLEN) {
     const { error } = await supabase.from(tabel).delete().eq('user_id', E2E_TEST_USER_ID)
     if (error) console.warn(`[e2e teardown] ${tabel}: ${error.message}`)
+  }
+  for (const bucket of BUCKETS) {
+    const { data, error } = await supabase.storage.from(bucket).list(E2E_TEST_USER_ID, { limit: 1000 })
+    if (error) { console.warn(`[e2e teardown] ${bucket}: ${error.message}`); continue }
+    const paden = (data ?? []).filter(f => f.id).map(f => `${E2E_TEST_USER_ID}/${f.name}`)
+    if (paden.length === 0) continue
+    const { error: rmFout } = await supabase.storage.from(bucket).remove(paden)
+    if (rmFout) console.warn(`[e2e teardown] ${bucket} opruimen: ${rmFout.message}`)
   }
 }

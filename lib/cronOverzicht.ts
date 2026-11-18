@@ -47,6 +47,7 @@ export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/comp-reminder-nov': { naam: 'Comp reminder november', wat: 'Eenmalig: reminder om een abonnement te kiezen, alleen als Mollie live staat', ontvanger: 'Gebruiker met comp-toegang', soort: 'gebruikers' },
   '/api/cron/sessies-afsluiten': { naam: 'Sessies afsluiten', wat: 'Rondt gesprekken af die de gebruiker nooit heeft gesloten, zodat ze een samenvatting krijgen', ontvanger: 'Geen (systeem)', soort: 'systeem' },
   '/api/cron/kennisbank-controle': { naam: 'Kennisbank-controle', wat: 'Kernvragen leveren genoeg kandidaten, geen fragmenten zonder vector, niets gewist, meldt alleen bij een probleem', ontvanger: 'Telegram', soort: 'mij' },
+  '/api/cron/documenten-opruimen': { naam: 'Documenten opruimen', wat: 'Ruimt tijdelijke documenten op 48 uur na het laatste bericht op, wist oude sporen na 30 dagen en haalt achtergebleven uploads weg, meldt alleen bij een fout', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/leveranciers-wijzigingen': { naam: 'Leveranciers-wijzigingen', wat: 'Controleert DPA- en deprecation-pagina\'s van leveranciers, meldt bij een inhoudelijke wijziging', ontvanger: 'Telegram', soort: 'mij' },
 }
 

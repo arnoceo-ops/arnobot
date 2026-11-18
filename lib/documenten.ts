@@ -17,10 +17,11 @@ export type DocumentRij = SamenstelRij & {
   storage_path: string | null
   samenvatting: string | null
   laatst_gebruikt: string
+  verwijderd_op: string | null
 }
 
 const KOLOMMEN =
-  'id, user_id, session_id, naam, soort, media_type, bytes, storage_path, tekst_cache, samenvatting, bewaard, created_at, laatst_gebruikt, verloopt_op'
+  'id, user_id, session_id, naam, soort, media_type, bytes, storage_path, tekst_cache, samenvatting, bewaard, created_at, laatst_gebruikt, verloopt_op, verwijderd_op'
 
 /** Alle documenten van één gesprek van één gebruiker, in uploadvolgorde. */
 export async function laadSessieDocumenten(db: SupabaseClient, userId: string, sessionId: string): Promise<DocumentRij[]> {

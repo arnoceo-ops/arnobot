@@ -11,6 +11,8 @@ export type SamenstelRij = {
   bewaard: boolean
   verloopt_op: string | null
   tekst_cache: string | null
+  /** Gevuld als de opruiming het document al heeft verwijderd: alleen de naam is dan nog over (een "grafsteen"). */
+  verwijderd_op?: string | null
 }
 
 export type GeladenBijlage = {
@@ -44,9 +46,10 @@ export async function stelBijlagenSamen<T extends SamenstelRij>(
 
   const levend: T[] = []
   for (const rij of rijen) {
-    // Een tijdelijke kopie voorbij zijn verloopmoment hoort er niet meer te zijn, ook als de opruiming hem
-    // nog niet heeft weggehaald. Een bewaard document verloopt nooit.
-    if (!rij.bewaard && isVerlopen(rij.verloopt_op, nu)) uit.nietZichtbaar.push({ naam: rij.naam, reden: 'verlopen' })
+    // Een document dat de opruiming al heeft verwijderd (grafsteen), of een tijdelijke kopie voorbij zijn
+    // verloopmoment die nog niet is opgeruimd, is er niet meer. Een bewaard document verloopt nooit.
+    if (rij.verwijderd_op) uit.nietZichtbaar.push({ naam: rij.naam, reden: 'verlopen' })
+    else if (!rij.bewaard && isVerlopen(rij.verloopt_op, nu)) uit.nietZichtbaar.push({ naam: rij.naam, reden: 'verlopen' })
     else levend.push(rij)
   }
 

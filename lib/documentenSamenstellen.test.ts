@@ -50,6 +50,19 @@ describe('een document dat niet meer te zien is', () => {
     expect(s.nietZichtbaar).toEqual([{ naam: 'Oud.pdf', reden: 'verlopen' }])
     expect(bouwBijlageTekst(s)).toContain('verlopen')
   })
+  it('meldt een document dat de opruiming al heeft verwijderd (grafsteen) als verlopen, zonder te laden', async () => {
+    const laad = vi.fn(async () => pdfBlock('x'))
+    const grafsteen = rij({ naam: 'Pitch deck.pdf', verwijderd_op: uur(-3), verloopt_op: uur(-30), tekst_cache: null })
+    const s = await stelBijlagenSamen([grafsteen], laad, NU)
+    expect(laad).not.toHaveBeenCalled()
+    expect(s.nietZichtbaar).toEqual([{ naam: 'Pitch deck.pdf', reden: 'verlopen' }])
+    expect(bouwBijlageTekst(s)).toContain('"Pitch deck.pdf" is in dit gesprek niet meer zichtbaar (verlopen)')
+  })
+  it('laat een grafsteen voorgaan op een eventueel overgebleven opgeslagen tekst', async () => {
+    const s = await stelBijlagenSamen([rij({ naam: 'Oud.txt', verwijderd_op: uur(-1), tekst_cache: 'zou weg moeten zijn' })], async () => null, NU)
+    expect(s.tekstDelen).toEqual([])
+    expect(s.nietZichtbaar).toHaveLength(1)
+  })
   it('laat een bewaard document nooit verlopen', async () => {
     const s = await stelBijlagenSamen([rij({ naam: 'Docs.pdf', bewaard: true, verloopt_op: null })], async r => pdfBlock(r.naam), NU)
     expect(s.blokNamen).toEqual(['Docs.pdf'])

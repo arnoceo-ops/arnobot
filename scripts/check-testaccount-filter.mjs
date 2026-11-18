@@ -63,6 +63,8 @@ const OWNERSHIP_EQ = /\.eq\(\s*['"]user_id['"]/
 //   veilig; zet ze hier neer.
 // - onderhoud/opruiming die juist ALLE rijen moet zien (data-cleanup, delete-account).
 const KNOWN_SAFE = new Set([
+  // Opruiming van documenten (cron): ruimt voor alle accounts op, ook de testaccounts, dus juist niet uitsluiten.
+  'lib/documentenOpruimen.ts:arnobot_documenten',
   // Draait per gebruiker, sluit testaccounts al op e-mailadres uit.
   'app/api/cron/trial-emails/route.ts:approved_users',
   'app/api/cron/inactivity-nudge/route.ts:approved_users',

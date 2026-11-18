@@ -125,6 +125,10 @@
       "schedule": "55 6 * * *"
     },
     {
+      "path": "/api/cron/documenten-opruimen",
+      "schedule": "20 * * * *"
+    },
+    {
       "path": "/api/cron/leveranciers-wijzigingen",
       "schedule": "50 6 * * 1"
     }
