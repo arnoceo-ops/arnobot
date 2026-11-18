@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOCKUP Archief met tabs en Docs (niet de echte pagina)</title>
+<style>
+/* Lettertypen en kleuren komen uit de echte app: public/fonts, app/bot/analyses/page.tsx, app/bot/SparClient.tsx, app/bot/BotNav.tsx */
+@font-face { font-family:'Bebas Neue'; font-weight:400; src:url('../../public/fonts/BebasNeue-normal-400-latin.woff2') format('woff2'); }
+@font-face { font-family:'Space Mono'; font-weight:400; src:url('../../public/fonts/SpaceMono-normal-400-latin.woff2') format('woff2'); }
+@font-face { font-family:'Space Mono'; font-weight:700; src:url('../../public/fonts/SpaceMono-normal-700-latin.woff2') format('woff2'); }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:#111827; color:#f1f5f9; font-family:'Space Mono',monospace; }
+@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ---- mockup-balk (hoort niet bij de echte pagina) ---- */
+.mockbar { position:fixed; left:0; right:0; bottom:0; z-index:300; background:#000; border-top:1px solid #f59e0b; padding:8px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1px; color:#9ca3af; }
+.mockbar button { background:none; border:1px solid #374151; color:#9ca3af; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1px; padding:5px 10px; cursor:pointer; border-radius:999px; }
+.mockbar button.on { border-color:#f59e0b; color:#f59e0b; }
+
+/* ---- nav (zoals BotNav) ---- */
+.nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 40px; height:64px; display:flex; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(17,24,39,0.95); }
+.nav .mid { display:flex; gap:48px; align-items:center; }
+.nav .side { flex:1; display:flex; justify-content:flex-end; gap:32px; align-items:center; }
+.nav .l { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#9ca3af; text-decoration:none; }
+.nav .l.fl { text-decoration:underline; text-decoration-color:#f59e0b; text-decoration-thickness:2px; text-underline-offset:6px; }
+.nav .l.act { color:#f59e0b; text-decoration:none; }
+.nav .sp { flex:1; }
+.mobnav { display:none; position:fixed; top:0; left:0; right:0; z-index:100; height:56px; padding:0 20px; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(17,24,39,0.97); }
+.mobnav .logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#f1f5f9; }
+.mobnav .logo span { color:#f59e0b; }
+.burger { display:flex; flex-direction:column; gap:5px; padding:8px; } .burger i { display:block; width:22px; height:2px; background:#f1f5f9; }
+
+/* ---- pagina ---- */
+.page { max-width:812px; margin:0 auto; padding:clamp(80px,12vw,120px) clamp(16px,4vw,20px) 120px; }
+.eyebrow { font-family:'Space Mono',monospace; color:#f59e0b; font-size:13px; letter-spacing:4px; margin-bottom:8px; }
+h1 { font-family:'Bebas Neue',sans-serif; font-size:64px; letter-spacing:3px; line-height:1; color:#f1f5f9; margin-bottom:32px; font-weight:400; }
+
+/* tabs: variant TEGELS (zoals de huidige tellers) en variant PILLEN (zoals de sorteerknoppen) */
+.tabs { margin-bottom:48px; }
+.tab { cursor:pointer; border:none; color:inherit; font:inherit; }
+.tabs.tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+.tabs.tiles .tab { background:#1f2937; padding:clamp(16px,3vw,28px) clamp(8px,2vw,20px); text-align:center; border-bottom:3px solid transparent; }
+.tabs.tiles .tab .tl { display:block; font-family:'Space Mono',monospace; font-size:clamp(9px,2vw,13px); letter-spacing:clamp(1px,0.5vw,4px); color:#6b7280; margin-bottom:8px; }
+.tabs.tiles .tab .tn { display:block; font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,9vw,64px); color:#6b7280; line-height:1; }
+.tabs.tiles .tab.on { border-bottom-color:#f59e0b; }
+.tabs.tiles .tab.on .tl { color:#f59e0b; }
+.tabs.tiles .tab.on .tn { color:#f1f5f9; }
+.tabs.tiles .tab:hover .tn { color:#f1f5f9; }
+.tabs.pills { display:flex; gap:8px; flex-wrap:wrap; }
+.tabs.pills .tab { background:#1f2937; box-shadow:inset 0 0 0 1px #f59e0b; color:#9ca3af; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 28px; border-radius:999px; transition:all .15s; }
+.tabs.pills .tab:hover { color:#f1f5f9; }
+.tabs.pills .tab.on { background:#f59e0b; box-shadow:none; color:#111827; }
+.tabs.pills .tab .tl, .tabs.pills .tab .tn { display:inline; font:inherit; letter-spacing:inherit; color:inherit; margin:0; }
+.tabs.pills .tab .tn { margin-left:10px; opacity:.8; }
+@media (max-width:768px){ .tabs.pills .tab { flex:1 1 0; padding:12px 8px; font-size:15px; letter-spacing:1.5px; } .tabs.pills .tab .tn { margin-left:6px; } }
+
+.panel { display:none; } .panel.on { display:block; animation:fadein .3s ease; }
+
+/* gedeelde onderdelen uit de analyses-pagina */
+.search { width:100%; background:#1f2937; border:1.5px solid #374151; border-radius:4px; color:#f1f5f9; font-family:'Space Mono',monospace; font-size:15px; padding:12px 16px; letter-spacing:1px; outline:none; margin-bottom:16px; }
+.search::placeholder { color:#6b7280; }
+.sortbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:32px; padding:4px 0; }
+.sortgrp { display:flex; gap:4px; }
+.sort-btn { background:#1f2937; border:none; box-shadow:inset 0 0 0 1px #f59e0b; color:#9ca3af; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; cursor:pointer; border-radius:8px; }
+.sort-btn.active { background:#f59e0b; box-shadow:none; color:#111827; }
+.note { font-family:'Space Mono',monospace; font-size:15px; color:#9ca3af; border:1px solid #374151; border-left:3px solid #f59e0b; padding:10px 16px; display:inline-block; margin-bottom:24px; }
+.row { border-top:1px solid #374151; animation:fadein .3s ease; }
+.row .head { display:flex; align-items:center; gap:16px; padding:28px 0; cursor:pointer; }
+.cb { flex-shrink:0; width:22px; height:22px; border:2px solid #374151; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:14px; color:transparent; }
+.cb.checked { border-color:#f59e0b; background:#f59e0b; color:#111827; }
+.date { color:#9ca3af; font-size:11px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; width:165px; flex-shrink:0; }
+.mid2 { flex:1; display:flex; align-items:center; gap:24px; }
+.ttl { color:#f1f5f9; font-size:20px; font-family:'Bebas Neue',sans-serif; letter-spacing:1px; line-height:1.4; }
+.sub { color:#6b7280; font-size:13px; line-height:1.8; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.rt { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+.rt .m { color:#9ca3af; font-size:11px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; }
+.rt .o { color:#9ca3af; font-size:18px; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+.row.open .rt .o { color:#f59e0b; }
+.body { display:none; padding-bottom:40px; }
+.row.open .body { display:block; animation:fadein .3s ease; }
+.full { color:#9ca3af; font-size:15px; line-height:1.9; background:#1f2937; border-left:3px solid #f59e0b; padding:20px 24px; margin-bottom:8px; }
+.full .lab { color:#f59e0b; font-size:13px; letter-spacing:4px; text-transform:uppercase; margin-bottom:12px; display:block; }
+.acts { display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; margin:20px 0 4px; }
+.act { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; color:#9ca3af; background:none; border:none; cursor:pointer; padding:0; }
+.act:hover { color:#f1f5f9; } .act b { color:#f59e0b; font-weight:400; }
+.act.red { color:#cc2200; } .act.red:hover { color:#ff3300; }
+.confirm { display:none; align-items:center; gap:24px; flex-wrap:wrap; margin-top:16px; font-size:14px; color:#f1f5f9; line-height:1.8; }
+.row.confirming .acts { display:none; } .row.confirming .confirm { display:flex; }
+.pillbtn { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:7px 20px; border-radius:999px; background:none; cursor:pointer; border:1px solid #374151; color:#9ca3af; }
+.pillbtn.green { border-color:#44cc88; color:#44cc88; }
+.chip { display:inline-block; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; padding:2px 12px; border-radius:999px; border:1px solid #44cc88; color:#44cc88; margin-top:6px; }
+.more { border-top:1px solid #374151; padding:28px 0; text-align:center; }
+.more button { background:none; border:1px solid #374151; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; color:#9ca3af; padding:12px 32px; border-radius:999px; }
+.foot { font-size:13px; color:#6b7280; letter-spacing:2px; text-transform:uppercase; border-top:1px solid #374151; padding-top:20px; }
+
+/* Docs-tab */
+.docshead { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+.quota { font-size:13px; color:#9ca3af; letter-spacing:2px; text-transform:uppercase; }
+.add { background:#f59e0b; border:none; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; color:#111827; padding:12px 28px; border-radius:999px; }
+.import { border-top:1px solid #374151; margin-top:40px; padding-top:40px; }
+.import h2 { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:3px; line-height:1; font-weight:400; margin-bottom:16px; }
+.import p { font-size:15px; color:#9ca3af; line-height:1.9; margin-bottom:20px; }
+.imp-row { border-top:1px solid #374151; padding:20px 0; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.imp-row .t { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; } .imp-row .s { font-size:13px; color:#6b7280; margin-top:4px; }
+
+/* Chat-invoer (SparClient) */
+.chatwrap { max-width:650px; margin:0 auto; padding-top:20px; }
+.chat-intro { font-size:13px; letter-spacing:4px; color:#f59e0b; text-transform:uppercase; text-align:center; margin-bottom:20px; }
+.chip-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px; color:#9ca3af; flex-wrap:wrap; }
+.chip-row .x { color:#6b7280; cursor:pointer; }
+.keep { display:flex; align-items:center; gap:10px; margin-left:12px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:3px; color:#f1f5f9; cursor:pointer; }
+.keep.off { color:#6b7280; } .keep.off .cb { color:transparent; background:none; border-color:#374151; }
+.keephelp { font-size:12px; color:#6b7280; margin:-2px 0 10px; line-height:1.7; }
+.input-wrap { width:100%; background:#1f2937; border:2px solid #f59e0b; display:flex; align-items:center; gap:6px; padding:0 10px 0 6px; position:relative; }
+.attach { flex-shrink:0; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:none; border:none; color:#f1f5f9; font-size:22px; cursor:pointer; }
+.ta { flex:1; background:transparent; border:none; color:#f1f5f9; font-family:'Space Mono',monospace; font-size:15px; padding:13px 8px; min-height:55px; line-height:29px; outline:none; }
+.ta::placeholder { color:#4b5563; }
+.menu { position:absolute; left:-2px; bottom:calc(100% + 8px); background:#111827; border:1px solid #374151; min-width:300px; z-index:5; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.menu div { padding:14px 20px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; color:#9ca3af; cursor:pointer; border-top:1px solid #374151; }
+.menu div:first-child { border-top:none; } .menu div:hover { color:#f1f5f9; background:#1f2937; }
+.menu .docitem { font-family:'Space Mono',monospace; font-size:13px; letter-spacing:0; color:#9ca3af; display:flex; justify-content:space-between; gap:16px; }
+.menu .docitem span:last-child { color:#6b7280; white-space:nowrap; }
+.btnrow { display:flex; justify-content:center; gap:8px; margin-top:10px; }
+.send { background:#f59e0b; color:#111827; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; padding:0 32px; border:none; height:55px; min-width:120px; }
+.reset { background:#1f2937; color:#f1f5f9; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; padding:0 32px; border:none; height:55px; min-width:120px; }
+.warn { margin-top:36px; border:1px solid #cc4444; border-left:3px solid #cc4444; padding:14px 18px; font-size:13px; color:#9ca3af; line-height:1.8; }
+.msg-u { padding:20px 24px; border-top:1px solid #374151; display:flex; gap:32px; }
+.msg-a { padding:20px 24px; border-top:1px solid #374151; display:flex; gap:32px; background:#1f2937; }
+.who { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; min-width:48px; }
+.note2 { margin:28px 0 8px; font-size:12px; color:#6b7280; letter-spacing:1px; }
+
+@media (max-width:768px){
+  .nav { display:none; } .mobnav { display:flex; }
+  h1 { font-size:48px; }
+  .sort-btn { padding:12px 12px; font-size:15px; letter-spacing:2px; }
+  .row .head { flex-direction:column; align-items:stretch; gap:8px; padding:20px 0; }
+  .mid2 { flex-direction:column; align-items:flex-start; gap:6px; }
+  .date { width:auto; } .rt { flex-direction:row; align-items:center; justify-content:space-between; }
+  .ttl { font-size:18px; }
+  .full { padding:16px; }
+  .msg-u,.msg-a { flex-direction:column; gap:4px; padding:16px; }
+  .menu { min-width:260px; }
+}
+.screen { display:none; } .screen.on { display:block; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="sp"></div>
+  <div class="mid">
+    <span class="l fl">ARNOBOT</span>
+    <span class="l act">ANALYSES</span>
+    <span class="l fl">COACHING</span>
+    <span class="l">Q&amp;A</span>
+    <span class="l">ACCOUNT</span>
+  </div>
+  <div class="side"><span class="l">SUPPORT</span><span class="l">UITLOGGEN</span></div>
+</nav>
+<nav class="mobnav"><span class="logo">ARNO<span>BOT.</span></span><span class="burger"><i></i><i></i><i></i></span></nav>
+
+<!-- ===================== SCHERM 1: pagina met tabs ===================== -->
+<div class="screen on" id="s-pagina">
+<div class="page">
+  <p class="eyebrow">ARNOBOT</p>
+  <h1>ARCHIEF</h1>
+
+  <div class="tabs tiles" id="tabs">
+    <button class="tab on" data-p="gesprekken"><span class="tl">GESPREKKEN</span><span class="tn">12</span></button>
+    <button class="tab" data-p="analyses"><span class="tl">ANALYSES</span><span class="tn">3</span></button>
+    <button class="tab" data-p="docs"><span class="tl">DOCS</span><span class="tn">4</span></button>
+  </div>
+
+  <!-- TAB GESPREKKEN (bestaande inhoud, ongewijzigd) -->
+  <div class="panel on" id="p-gesprekken">
+    <input class="search" placeholder="Zoek in gesprekken..." />
+    <div class="sortbar">
+      <div class="sortgrp"><button class="sort-btn">SELECTEER ALLES</button></div>
+      <div class="sortgrp"><button class="sort-btn active">DATUM ↓</button><button class="sort-btn">VRAGEN ↓</button></div>
+    </div>
+    <p class="note">Selecteer minimaal 3 gesprekken voor een analyse.</p>
+
+    <div class="row"><div class="head"><span class="cb"></span><div class="mid2"><span class="date">17 november 2026</span><div style="flex:1"><p class="ttl">Prijsonderhandeling Q4</p><p class="sub">Je wilt een korting weigeren zonder de klant te verliezen. We hebben de drie scenario's doorgelopen.</p></div></div><div class="rt"><span class="m">8 vragen</span><span class="o">↓ OPEN</span></div></div></div>
+    <div class="row"><div class="head"><span class="cb checked">✓</span><div class="mid2"><span class="date">14 november 2026</span><div style="flex:1"><p class="ttl">Opvolging na de demo</p><p class="sub">De beslisser reageert niet meer. Welke opvolging past en wanneer stop je?</p></div></div><div class="rt"><span class="m">5 vragen</span><span class="o">↓ OPEN</span></div></div></div>
+    <div class="row"><div class="head"><span class="cb"></span><div class="mid2"><span class="date">11 november 2026</span><div style="flex:1"><p class="ttl">Salesplan eerste kwartaal</p><p class="sub">Doelen, pijplijn en de eerste drie acties voor januari.</p></div></div><div class="rt"><span class="m">11 vragen</span><span class="o">↓ OPEN</span></div></div></div>
+    <div class="more"><button>TOON ALLE 12 GESPREKKEN ↓</button></div>
+    <p class="foot">112 vragen in totaal</p>
+  </div>
+
+  <!-- TAB ANALYSES (bestaande lijst, zonder eigen kopje) -->
+  <div class="panel" id="p-analyses">
+    <p class="note">Selecteer 3 of meer gesprekken bij GESPREKKEN voor een nieuwe analyse.</p>
+    <div class="row open"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">16 november 2026</span><div style="flex:1"><p class="ttl">Je vermijdt het moeilijke gesprek over de prijs</p></div></div><div class="rt"><span class="m">6 gesprekken</span><span class="o">↑ SLUITEN</span></div></div>
+      <div class="body"><div class="full">Over zes gesprekken terug komt hetzelfde patroon: je bereidt de prijsvraag uitgebreid voor en stelt hem dan uit tot de klant erover begint.<br><br><b style="color:#f1f5f9">Wat je kunt doen:</b> zet de prijs in het eerstvolgende gesprek zelf op tafel, in de eerste tien minuten.</div>
+      <button class="pillbtn" style="margin-top:16px">DEEL MET MANAGER</button></div></div>
+    <div class="row"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">2 november 2026</span><div style="flex:1"><p class="ttl">Je stelt goede vragen maar vat te weinig samen</p></div></div><div class="rt"><span class="m">4 gesprekken</span><span class="o">↓ OPEN</span></div></div><div class="body"><div class="full">(uitgeklapte analyse, zoals nu)</div></div></div>
+    <div class="row"><div class="head"><div class="mid2"><span class="date">19 oktober 2026</span><div style="flex:1"><p class="ttl">Eerste analyse: waar je energie lekt</p></div></div><div class="rt"><span class="m">3 gesprekken</span><span class="o">↓ OPEN</span></div></div></div>
+  </div>
+
+  <!-- TAB DOCS (nieuw) -->
+  <div class="panel" id="p-docs">
+    <div class="docshead">
+      <span class="quota">4 documenten · 7 MB van 500 MB</span>
+      <button class="add">+ DOCUMENT TOEVOEGEN</button>
+    </div>
+
+    <div class="row open" id="doc1"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">17 november 2026</span><div style="flex:1"><p class="ttl">Salesplan 2027.pdf</p><p class="sub">Toegevoegd in het gesprek "Prijsonderhandeling Q4"</p><span class="chip">IN HET GEHEUGEN</span></div></div><div class="rt"><span class="m">PDF · 2,1 MB</span><span class="o">↑ SLUITEN</span></div></div>
+      <div class="body">
+        <div class="full"><span class="lab">SAMENVATTING</span>Jaarplan met drie doelen, een pijplijn van twaalf deals en een actielijst per kwartaal. De prijsparagraaf op pagina 4 noemt twee korting-scenario's.</div>
+        <div class="acts"><button class="act">BESPREEK DIT DOCUMENT <b>→</b></button><span style="display:flex;gap:28px"><button class="act">DOWNLOAD</button><button class="act red" onclick="this.closest('.row').classList.add('confirming')">VERWIJDER</button></span></div>
+        <div class="confirm"><span>Dit document verwijderen? Het verdwijnt ook uit het geheugen van ArnoBot.</span><button class="pillbtn" onclick="this.closest('.row').classList.remove('confirming')">ANNULEER</button><button class="pillbtn" style="border-color:#cc2200;color:#cc2200">JA, VERWIJDER</button></div>
+      </div></div>
+    <div class="row"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">12 november 2026</span><div style="flex:1"><p class="ttl">Prijsvoorstel Klant A.docx</p><p class="sub">Toegevoegd in het gesprek "Opvolging na de demo"</p><span class="chip">IN HET GEHEUGEN</span></div></div><div class="rt"><span class="m">WORD · 0,3 MB</span><span class="o">↓ OPEN</span></div></div><div class="body"><div class="full"><span class="lab">SAMENVATTING</span>(korte samenvatting)</div></div></div>
+    <div class="row"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">4 november 2026</span><div style="flex:1"><p class="ttl">Notities kickoff.txt</p><p class="sub">Direct toegevoegd, buiten een gesprek om</p><span class="chip">IN HET GEHEUGEN</span></div></div><div class="rt"><span class="m">TEKST · 12 KB</span><span class="o">↓ OPEN</span></div></div><div class="body"><div class="full"><span class="lab">SAMENVATTING</span>(korte samenvatting)</div></div></div>
+    <div class="row"><div class="head" onclick="this.parentElement.classList.toggle('open')"><div class="mid2"><span class="date">28 oktober 2026</span><div style="flex:1"><p class="ttl">Scan contract.png</p><p class="sub">Toegevoegd in het gesprek "Contractvoorwaarden"</p><span class="chip">IN HET GEHEUGEN</span></div></div><div class="rt"><span class="m">AFBEELDING · 4,6 MB</span><span class="o">↓ OPEN</span></div></div><div class="body"><div class="full"><span class="lab">SAMENVATTING</span>(korte samenvatting)</div></div></div>
+
+    <div class="import">
+      <h2>HISTORIE IMPORTEREN</h2>
+      <p>Heb je gesprekken bij een andere AI? Upload je export en ArnoBot neemt de gesprekken over sales mee in zijn geheugen.</p>
+      <button class="sort-btn" style="border-radius:999px">KIES EXPORTBESTAND</button>
+      <div style="margin-top:28px">
+        <div class="imp-row"><div><div class="t">Geïmporteerd uit claude.ai</div><div class="s">214 gesprekken gelezen, 61 over sales meegenomen · 3 november 2026</div></div><button class="act red">VERWIJDER DEZE IMPORT</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===================== SCHERM 2: chat-invoer ===================== -->
+<div class="screen" id="s-chat">
+<div class="page">
+  <p class="eyebrow">ARNOBOT</p>
+  <div class="chatwrap">
+    <div class="msg-u"><span class="who" style="color:#6b7280">JIJ</span><span style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.5px">Kijk even naar mijn salesplan, wat mis ik?</span></div>
+    <div class="msg-a"><span class="who" style="color:#f59e0b">ARNO</span><span style="font-size:15px;line-height:1.9;color:#9ca3af">Pagina 4 noemt twee korting-scenario's, maar je plan zegt nergens wanneer je nee zegt. Dat is het gat.</span></div>
+
+    <p class="note2">TOESTAND A: bestand gekozen, vinkje staat standaard aan</p>
+    <div class="chip-row"><span>📎 Salesplan 2027.pdf</span><span class="x">✕</span>
+      <span class="keep"><span class="cb checked">✓</span>BEWAAR IN DOCS</span></div>
+    <div class="input-wrap"><button class="attach">+</button><span class="ta" style="color:#4b5563">Stel je vraag over het document...</span></div>
+
+    <p class="note2">TOESTAND B: gebruiker zet het vinkje uit (volgende upload begint weer aan)</p>
+    <div class="chip-row"><span>📎 Offerte Klant A.pdf</span><span class="x">✕</span>
+      <span class="keep off"><span class="cb"></span>BEWAAR IN DOCS</span></div>
+    <p class="keephelp">Niet bewaard in Docs. ArnoBot kan het lezen zolang dit gesprek loopt. Uiterlijk 48 uur na je laatste bericht wordt het verwijderd.</p>
+    <div class="input-wrap"><button class="attach">+</button><span class="ta" style="color:#4b5563">Stel je vraag over het document...</span></div>
+
+    <p class="note2">TOESTAND C: plusknop open, keuze tussen nieuw en bewaard</p>
+    <div style="height:330px;position:relative"><div class="input-wrap" style="position:absolute;bottom:0"><div class="menu"><div>NIEUW BESTAND</div><div>KIES UIT DOCS</div><div class="docitem"><span>Salesplan 2027.pdf</span><span>17 nov</span></div><div class="docitem"><span>Prijsvoorstel Klant A.docx</span><span>12 nov</span></div></div><button class="attach">+</button><span class="ta" style="color:#4b5563">Je bericht...</span></div></div>
+
+    <p class="note2">TOESTAND D: een document is niet meer zichtbaar in dit gesprek (bijvoorbeeld verwijderd)</p>
+    <div class="warn">ArnoBot ziet "Offerte Klant A.pdf" niet meer en zegt dat tegen je, in plaats van door te gaan op zijn herinnering. Voeg het bestand opnieuw toe of plak de tekst.</div>
+  </div>
+</div>
+</div>
+
+<div class="mockbar">
+  <span>MOCKUP, niet de echte pagina · scherm:</span>
+  <button class="on" data-s="s-pagina">Pagina met tabs</button>
+  <button data-s="s-chat">Chat-invoer</button>
+  <span style="margin-left:12px">tabstijl:</span>
+  <button class="on" data-t="tiles">Tegels</button>
+  <button data-t="pills">Pillen</button>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(function(b){ b.addEventListener('click', function(){
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on') }); b.classList.add('on');
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on') });
+  document.getElementById('p-'+b.dataset.p).classList.add('on'); }) });
+document.querySelectorAll('.mockbar [data-s]').forEach(function(b){ b.addEventListener('click', function(){
+  document.querySelectorAll('.mockbar [data-s]').forEach(function(x){ x.classList.remove('on') }); b.classList.add('on');
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on') });
+  document.getElementById(b.dataset.s).classList.add('on'); window.scrollTo(0,0); }) });
+document.querySelectorAll('.mockbar [data-t]').forEach(function(b){ b.addEventListener('click', function(){
+  document.querySelectorAll('.mockbar [data-t]').forEach(function(x){ x.classList.remove('on') }); b.classList.add('on');
+  var t=document.getElementById('tabs'); t.classList.remove('tiles','pills'); t.classList.add(b.dataset.t); }) });
+// hash voor schermafbeeldingen: #docs, #analyses, #chat, #pills
+(function(){ var h=location.hash.replace('#',''); if(!h) return;
+  h.split(',').forEach(function(k){
+    if(k==='chat') document.querySelector('.mockbar [data-s="s-chat"]').click();
+    if(k==='pills') document.querySelector('.mockbar [data-t="pills"]').click();
+    if(k==='docs'||k==='analyses') document.querySelector('.tab[data-p="'+k+'"]').click(); }); })();
+</script>
+</body>
+</html>
