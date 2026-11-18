@@ -10,6 +10,7 @@ import { useProgressHints } from '@/hooks/useProgressHints'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import { kortTitel } from '@/lib/kortTitel'
+import DocsTab from './DocsTab'
 
 interface Session {
   id: string
@@ -121,6 +122,17 @@ export default function GeschiedenisPage() {
   // Bepaalt of de coaching-hint/link hieronder "naar coaching" of "upgrade naar Pro" zegt.
   const [plan, setPlan] = useState<'basis' | 'premium' | 'team' | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
+  // Documenten (docs/DOCUMENTEN_PLAN.md): alleen wie de documentenfunctie heeft krijgt drie tabs en de tab Docs; voor iedereen
+  // anders blijft deze pagina precies zoals hij was.
+  const [documentenAan, setDocumentenAan] = useState(false)
+  const [tab, setTab] = useState<'gesprekken' | 'analyses' | 'docs'>(() => {
+    if (typeof window === 'undefined') return 'gesprekken'
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('tab') === 'docs') return 'docs'
+    if (p.get('tab') === 'analyses' || p.get('open') === 'nieuwste') return 'analyses'
+    return 'gesprekken'
+  })
+  const [docsAantal, setDocsAantal] = useState<number | null>(null)
   // In de Android-app geen upgrade-verwijzingen (Google Play-betalingsbeleid).
   const isNativeApp = useIsNativeApp()
 
@@ -131,10 +143,18 @@ export default function GeschiedenisPage() {
   useEffect(() => {
     fetch('/api/bot/plan')
       .then(r => r.json())
-      .then(d => setPlan(d.plan ?? 'basis'))
+      .then(d => { setPlan(d.plan ?? 'basis'); setDocumentenAan(d.documenten === true) })
       .catch(() => {})
       .finally(() => setPlanLoaded(true))
   }, [])
+
+  useEffect(() => {
+    if (!documentenAan) return
+    fetch('/api/bot/documenten')
+      .then(r => r.json())
+      .then(d => setDocsAantal(Array.isArray(d.documenten) ? d.documenten.length : 0))
+      .catch(() => {})
+  }, [documentenAan])
 
   useEffect(() => {
     fetch('/api/bot/sessions')
@@ -346,6 +366,7 @@ export default function GeschiedenisPage() {
   }
 
   async function runAnalyse(sessionIds?: string[]) {
+    if (documentenAan) setTab('analyses')
     setAnalyseLoading(true)
     setActiveAnalyse(null)
     setIsDuplicateAnalyse(false)
@@ -518,9 +539,32 @@ export default function GeschiedenisPage() {
       <div style={{ maxWidth: 812, margin: '0 auto', padding: `clamp(80px,12vw,120px) clamp(16px,4vw,20px) ${hasSelected ? 100 : 80}px` }}>
 
         <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
-        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>GESPREKKEN</h1>
+        <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, color: '#f1f5f9', marginBottom: 32 }}>{documentenAan ? 'ARCHIEF' : 'GESPREKKEN'}</h1>
 
-        {!loading && sessions.length > 0 && (
+        {documentenAan && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 48 }}>
+            {([
+              { sleutel: 'gesprekken', label: 'GESPREKKEN', value: sessions.length },
+              { sleutel: 'analyses', label: 'ANALYSES', value: savedAnalyses.length },
+              { sleutel: 'docs', label: 'DOCS', value: docsAantal ?? '' },
+            ] as const).map(({ sleutel, label, value }) => {
+              const actief = tab === sleutel
+              return (
+                <button
+                  key={sleutel}
+                  onClick={() => setTab(sleutel)}
+                  aria-pressed={actief}
+                  style={{ background: '#1f2937', border: 'none', borderBottom: actief ? '3px solid #f59e0b' : '3px solid transparent', padding: 'clamp(16px,3vw,28px) clamp(8px,2vw,20px)', textAlign: 'center', cursor: 'pointer' }}
+                >
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 'clamp(9px,2vw,13px)', letterSpacing: 'clamp(1px,0.5vw,4px)', color: actief ? '#f59e0b' : '#6b7280', marginBottom: 8 }}>{label}</div>
+                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(36px,9vw,64px)', color: actief ? '#f1f5f9' : '#6b7280', lineHeight: 1 }}>{value}</div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {!documentenAan && !loading && sessions.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 48 }}>
             {[
               { label: 'GESPREKKEN', value: sessions.length },
@@ -535,6 +579,8 @@ export default function GeschiedenisPage() {
           </div>
         )}
 
+        {(!documentenAan || tab === 'gesprekken') && (
+        <>
         {/* Zoekbalk */}
         <div style={{ marginBottom: 16, position: 'relative' }}>
           <input
@@ -827,6 +873,16 @@ export default function GeschiedenisPage() {
           </div>
         )}
 
+        {documentenAan && !loading && sessions.length > 0 && (
+          <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6b7280', letterSpacing: 2, textTransform: 'uppercase', borderTop: '1px solid #374151', paddingTop: 20, marginBottom: 8 }}>
+            {sessions.reduce((sum, s) => sum + (s.message_count || 0), 0)} vragen in totaal
+          </p>
+        )}
+        </>
+        )}
+
+        {(!documentenAan || tab === 'analyses') && (
+        <>
         {/* Analyses sectie */}
         {analyseLimiet && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 32, marginTop: 16 }}>
@@ -836,10 +892,14 @@ export default function GeschiedenisPage() {
           </div>
         )}
 
-        {!loading && sorted.length > 0 && (
+        {!loading && (sorted.length > 0 || documentenAan) && (
           <div ref={analysesSectionRef} style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 16 }}>
+            {!documentenAan && (
+            <>
             <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>ARNOBOT</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1, marginBottom: showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && !analysesNudgeGezien ? 24 : 48 }}>ANALYSES</h2>
+            </>
+            )}
 
             {showCoachingHint && savedAnalyses.length > 0 && !activeAnalyse && !analysesNudgeGezien && (
               <div style={{ background: '#1f2937', border: '1px solid #374151', padding: '14px 20px', marginBottom: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -870,7 +930,7 @@ export default function GeschiedenisPage() {
 
             {!activeAnalyse && savedAnalyses.length === 0 && !analyseLimiet && (
               <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 15, color: '#9ca3af', lineHeight: 1.9, border: '1px solid #374151', borderLeft: '3px solid #374151', padding: '16px 20px', marginBottom: 32 }}>
-                Selecteer 3 of meer gesprekken hierboven voor je eerste analyse.
+                {documentenAan ? 'Selecteer 3 of meer gesprekken bij GESPREKKEN voor je eerste analyse.' : 'Selecteer 3 of meer gesprekken hierboven voor je eerste analyse.'}
               </p>
             )}
 
@@ -984,7 +1044,14 @@ export default function GeschiedenisPage() {
           </div>
         )}
 
-        {sorted.length > 0 && (
+        </>
+        )}
+
+        {documentenAan && tab === 'docs' && (
+          <DocsTab isMobile={isMobile} onAantal={setDocsAantal} />
+        )}
+
+        {(sorted.length > 0 || documentenAan) && (
           <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <Link href="/bot" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#f59e0b', textDecoration: 'none' }}>
               ← TERUG NAAR ARNOBOT
@@ -1007,7 +1074,7 @@ export default function GeschiedenisPage() {
       )}
 
       {/* Sticky balk */}
-      {hasSelected && !analyseLoading && (
+      {hasSelected && !analyseLoading && (!documentenAan || tab === 'gesprekken') && (
         <div className="delete-bar">
           <span className="delete-bar-count">
             {selected.size} {selected.size === 1 ? 'GESPREK' : 'GESPREKKEN'} GESELECTEERD

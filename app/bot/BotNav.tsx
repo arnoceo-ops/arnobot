@@ -47,6 +47,8 @@ export default function BotNav({ active }: Props) {
   // UITLOGGEN: de andere pagina's sturen toch terug naar /bot/doorgaan. Start op true; het laatst bekende
   // antwoord staat in sessionStorage zodat het menu bij een volgende pagina niet eerst vol en dan kort verschijnt.
   const [toegang, setToegang] = useState(true)
+  // Wie de documentenfunctie heeft ziet in het menu ARCHIEF (de pagina met gesprekken, analyses en docs) in plaats van ANALYSES.
+  const [documentenAan, setDocumentenAan] = useState(false)
 
   useEffect(() => {
     try { if (sessionStorage.getItem('arnobot_toegang') === 'false') setToegang(false) } catch {}
@@ -54,6 +56,7 @@ export default function BotNav({ active }: Props) {
       .then(r => r.json())
       .then(d => {
         setHeeftTeamPlan(!!d.commandManager)
+        setDocumentenAan(d.documenten === true)
         if (typeof d.toegang === 'boolean') {
           setToegang(d.toegang)
           try { sessionStorage.setItem('arnobot_toegang', String(d.toegang)) } catch {}
@@ -67,6 +70,8 @@ export default function BotNav({ active }: Props) {
   // TEAM altijd, ongeacht command_manager, verwijderd 2026-08-24 op zijn verzoek): zijn
   // account gedraagt zich nu identiek aan elk ander account, precies zoals bedoeld.
   const isBouwer = planLoaded && heeftTeamPlan
+
+  const archiefLabel = documentenAan ? 'ARCHIEF' : 'ANALYSES'
 
   if (isMobile) {
     return (
@@ -100,7 +105,7 @@ export default function BotNav({ active }: Props) {
           <div className="mob-menu" onClick={() => setMenuOpen(false)}>
             {toegang && <>
             {active === 'bot'      ? <span className="mob-active">ARNOBOT</span>   : <Link href="/bot" className="mob-flow">ARNOBOT</Link>}
-            {active === 'archief'  ? <span className="mob-active">ANALYSES</span>  : <Link href="/bot/analyses" className="mob-flow">ANALYSES</Link>}
+            {active === 'archief'  ? <span className="mob-active">{archiefLabel}</span>  : <Link href="/bot/analyses" className="mob-flow">{archiefLabel}</Link>}
             {active === 'coaching' ? <span className="mob-active">COACHING</span> : <Link href="/bot/coaching" className="mob-flow">COACHING</Link>}
             {isBouwer && <Link href="/bot/team" className={active === 'team' ? 'mob-active' : 'mob-flow'}>TEAM</Link>}
             {active === 'qa'       ? <span className="mob-active">Q&A</span>      : <Link href="/bot/qa">Q&A</Link>}
@@ -124,8 +129,8 @@ export default function BotNav({ active }: Props) {
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>ARNOBOT</span>
             : <Link href="/bot" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ARNOBOT</Link>}
           {active === 'archief'
-            ? <span style={{ ...linkBase, color: '#f59e0b' }}>ANALYSES</span>
-            : <Link href="/bot/analyses" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>ANALYSES</Link>}
+            ? <span style={{ ...linkBase, color: '#f59e0b' }}>{archiefLabel}</span>
+            : <Link href="/bot/analyses" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>{archiefLabel}</Link>}
           {active === 'coaching'
             ? <span style={{ ...linkBase, color: '#f59e0b' }}>COACHING</span>
             : <Link href="/bot/coaching" style={{ ...linkBase, textDecoration: 'underline', textDecorationColor: '#f59e0b', textDecorationThickness: '2px', textUnderlineOffset: '6px' }}>COACHING</Link>}
