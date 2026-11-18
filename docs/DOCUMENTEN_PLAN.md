@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-11-18
 **Waar we staan:** plan, twee aannamecontroles (subagent zonder voorgeschiedenis) en een capability-sweep op de actuele Anthropic-documentatie zijn klaar; een mockup staat in `docs/mockups/documenten-archief.html`. Er is niets gebouwd. Het idee komt uit de vraag of een geüpload document bewaard kan worden, en uit het verzoek van een gebruiker (Chris) om zijn claude.ai-historie mee te nemen.
-**Eerstvolgende stap:** Arno voert `docs/sql/2026-11-18-documenten-koppelingen.sql` uit, daarna push ik stap 4 (alles achter de accountlijst) en beoordeelt Arno de pagina en de chat op zijn eigen account en de lijst "Nieuwe teksten ter beoordeling". Daarna de punten onder "Voor livegang". Stap 5 (samenvatting en zelf terugvinden) en fase 2 (import van historie) zijn nog niet gebouwd en worden apart goedgekeurd.
+**Eerstvolgende stap:** fase 1 live zetten (de lijst onder "Voor livegang"). **Fase 2 (import van historie) is geparkeerd op 2026-11-18 (Arno)**: het ontwerp en de aannamecontrole staan onderaan dit document, er wordt niets gebouwd tot Arno het weer oppakt en er een echte export is. Stap 5 (samenvatting per bestand, zelf terugvinden) staat ook nog open.
 
 ## Besluiten (met verworpen alternatieven)
 
