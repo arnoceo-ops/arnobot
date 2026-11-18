@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { BRON_NAAM, HISTORIE_VRAAG, KOPJES, MAX_INVOER_TEKENS, bouwVraagLink, type ImportBron, type ImportProfiel } from '@/lib/historieImportVast'
 
 // Het blok NEEM JE HISTORIE MEE onder de tab UPLOADS (docs/HISTORIE_IMPORT_PLAN.md). De gebruiker stuurt een vraag naar zijn andere
@@ -27,6 +28,9 @@ const FOUTEN: Record<string, string> = {
 }
 
 export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) {
+  // In de Android-app (Arno, 2026-11-18) kan niets worden toegevoegd of vervangen: de link naar de andere AI opent buiten de app en het
+  // klembord is daar onbetrouwbaar. Opgeslagen profielen blijven zichtbaar en te verwijderen.
+  const isNativeApp = useIsNativeApp()
   const [opgeslagen, setOpgeslagen] = useState<Opgeslagen[] | undefined>(undefined) // undefined = nog aan het laden
   const [stap, setStap] = useState<Stap>('start')
   const [open, setOpen] = useState(false) // de vragen en het plakveld
@@ -145,6 +149,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   }
 
   if (opgeslagen === undefined) return null
+  if (isNativeApp && opgeslagen.length === 0) return null
   const teLang = tekst.length > MAX_INVOER_TEKENS
   const nogRegels = voorstel ? KOPJES.some(k => voorstel[k.sleutel].length > 0) : false
 
@@ -152,7 +157,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <p style={label}>Neem je historie mee</p>
-        {opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
+        {!isNativeApp && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
           <button onClick={() => { setBron('anders'); setOpen(true) }} style={pilActief}>+ ANDERE AI TOEVOEGEN</button>
         )}
       </div>
@@ -196,7 +201,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
-                        <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>
+                        {!isNativeApp && <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>}
                         <button onClick={() => setBevestig(p.bron)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
                       </div>
                     )}
