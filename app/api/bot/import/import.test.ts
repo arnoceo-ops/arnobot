@@ -121,7 +121,7 @@ describe('profiel', () => {
     expect(bewaar.mock.calls[0][2]).toBe('chatgpt')
   })
   it('weigert een onbekende bron of een kapotte body zonder iets op te slaan', async () => {
-    expect((await profiel.PUT(put({ bron: 'gemini', profiel: {} }))).status).toBe(400)
+    expect((await profiel.PUT(put({ bron: 'copilot', profiel: {} }))).status).toBe(400)
     expect((await profiel.PUT(put({ profiel: {} }))).status).toBe(400)
     expect((await profiel.PUT(new NextRequest('https://www.arno.bot/api/bot/import/profiel', { method: 'PUT', body: 'kapot' }))).status).toBe(400)
     expect(bewaar).not.toHaveBeenCalled()
@@ -145,7 +145,7 @@ describe('profiel', () => {
     expect((await profiel.DELETE(del(''))).status).toBe(200)
     expect(verwijderAlles.mock.calls[0][1]).toBe('user_eigenaar')
     expect(verwijder).not.toHaveBeenCalled()
-    expect((await profiel.DELETE(del('?bron=gemini'))).status).toBe(400)
+    expect((await profiel.DELETE(del('?bron=copilot'))).status).toBe(400)
   })
   it('meldt een mislukte verwijdering', async () => {
     verwijder.mockResolvedValue({ error: true })

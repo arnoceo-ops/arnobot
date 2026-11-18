@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
-import { BRON_NAAM, HISTORIE_VRAAG, KOPJES, MAX_INVOER_TEKENS, bouwVraagLink, type ImportBron, type ImportProfiel } from '@/lib/historieImportVast'
+import { BRON_NAAM, HISTORIE_VRAAG, IMPORT_BRONNEN, KOPJES, MAX_INVOER_TEKENS, bouwVraagLink, type ImportBron, type ImportProfiel } from '@/lib/historieImportVast'
 
 // Het blok NEEM JE HISTORIE MEE onder de tab UPLOADS (docs/HISTORIE_IMPORT_PLAN.md). De gebruiker stuurt een vraag naar zijn andere
 // AI, plakt het antwoord, controleert het voorstel en slaat het op als "Profiel uit ChatGPT". Alleen zichtbaar voor wie de schakelaar
@@ -15,9 +15,9 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 2, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
 const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af', textDecoration: 'none', display: 'inline-block' }
 const pilActief: React.CSSProperties = { ...pil, background: '#f59e0b', border: 'none', color: '#111827' }
-// Kop en knop van deze sectie zijn gelijk aan die van de sectie erboven (DocsTab.tsx): dezelfde maten, zodat het twee gelijkwaardige blokken zijn.
+// Kop en knop van deze sectie zijn gelijk aan die van de sectie erboven (DocsTab.tsx): dezelfde maten en dezelfde vaste breedte (minWidth 280 in allebei), zodat het twee gelijkwaardige blokken zijn.
 const kopTekst: React.CSSProperties = { fontSize: 13, color: '#9ca3af', letterSpacing: 2, textTransform: 'uppercase' }
-const groteKnop: React.CSSProperties = { background: '#f59e0b', border: 'none', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#111827', padding: '12px 36px', borderRadius: 999 }
+const groteKnop: React.CSSProperties = { background: '#f59e0b', border: 'none', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#111827', padding: '12px 36px', minWidth: 280, borderRadius: 999 }
 
 function datum(iso: string): string {
   return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', timeZone: 'Europe/Amsterdam' })
@@ -161,7 +161,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     <div style={{ marginTop: 48 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <span style={kopTekst}>Neem je historie mee</span>
-        {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
+        {!alleenBekijken && opgeslagen.length > 0 && opgeslagen.length < IMPORT_BRONNEN.length && !open && (
           <button onClick={() => { setBron('anders'); setOpen(true) }} style={groteKnop}>+ ANDERE AI TOEVOEGEN</button>
         )}
       </div>
@@ -232,6 +232,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
             <a href={bouwVraagLink('chatgpt')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
             <a href={bouwVraagLink('claude')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('claude')} style={pil}>OPEN IN CLAUDE</a>
+            <a href={bouwVraagLink('gemini')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('gemini')} style={pil}>OPEN IN GEMINI</a>
           </div>
           <div style={{ marginTop: 12 }}>
             <button onClick={() => kopieerVraag('anders')} style={rustig}>andere AI: kopieer de vraag</button>

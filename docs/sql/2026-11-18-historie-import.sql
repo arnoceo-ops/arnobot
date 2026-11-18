@@ -11,7 +11,7 @@
 
 create table if not exists public.arnobot_import_profielen (
   user_id text not null,
-  bron text not null check (bron in ('chatgpt', 'claude', 'anders')),
+  bron text not null check (bron in ('chatgpt', 'claude', 'gemini', 'anders')),
   kopjes jsonb not null,
   tekens integer not null default 0,
   created_at timestamptz not null default now(),

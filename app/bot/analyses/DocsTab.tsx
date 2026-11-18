@@ -184,7 +184,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
         <button
           onClick={() => bestandRef.current?.click()}
           disabled={uploaden}
-          style={{ background: uploaden ? '#374151' : '#f59e0b', border: 'none', cursor: uploaden ? 'not-allowed' : 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: uploaden ? '#6b7280' : '#111827', padding: '12px 36px', borderRadius: 999 }}
+          style={{ background: uploaden ? '#374151' : '#f59e0b', border: 'none', cursor: uploaden ? 'not-allowed' : 'pointer', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: uploaden ? '#6b7280' : '#111827', padding: '12px 36px', minWidth: 280, borderRadius: 999 }}
         >
           {uploaden ? 'BEZIG...' : '+ BESTAND TOEVOEGEN'}
         </button>
