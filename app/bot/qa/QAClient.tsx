@@ -163,6 +163,10 @@ const FAQ_GROUPS = [
         a: 'Ja, een PDF, Word-document of afbeelding (tot 20MB en 100 pagina\'s per PDF, afbeeldingen tot 10MB). Standaard bewaren we het in je Uploads bij ARCHIEF. Zet je het vinkje uit, dan verdwijnt het uiterlijk 48 uur na je laatste bericht.',
       },
       {
+        q: 'Kan ik meenemen wat mijn andere AI van me weet?',
+        a: 'Ja, via de computer, bij ARCHIEF, tab UPLOADS.',
+      },
+      {
         q: 'Kan ik mijn account en data verwijderen?',
         a: 'Ja. Via de accountpagina kun je je account verwijderen. Al je gesprekken, je profiel en je analyseresultaten worden dan direct gewist.',
       },

@@ -79,6 +79,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Geheugen</td><td>Samenvattingen en feiten uit je gesprekken, zodat ArnoBot je beter kan coachen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Teams</td><td>Bij een teamabonnement ziet je manager je scores en het verloop. Je gesprekken met ArnoBot ziet hij alleen als jij er zelf een deelt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade bestanden</td><td>PDF, Word, afbeelding en audiotranscripten die je toevoegt</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Profiel uit een andere AI</td><td>Wat je zelf uit ChatGPT, Claude of een andere AI overneemt en goedkeurt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Zakelijk ook bedrijfsnaam, KvK, BTW-nummer en adres.</td></tr>
               </tbody>
             </table>
@@ -114,6 +115,9 @@ export default function PrivacyPage() {
             </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de hieronder genoemde sub-verwerkers.
+            </p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+              Het antwoord dat je plakt, zet Anthropic eenmalig om en bewaren we niet. Alleen wat jij goedkeurt, wordt opgeslagen.
             </p>
           </div>
 
@@ -251,6 +255,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade bestanden</td><td>Bewaard tot jij ze verwijdert. Zet je het vinkje uit, dan uiterlijk 48 uur na je laatste bericht. Van een opname bewaren we alleen het transcript.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Profiel uit een andere AI</td><td>Tot jij het verwijdert of vervangt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd (wettelijke bewaarplicht)</td></tr>
               </tbody>
             </table>

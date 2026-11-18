@@ -2,7 +2,7 @@
 
 **Laatst bijgewerkt:** 2026-11-18
 **Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 5 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`, na een eerste proef met echte antwoorden aangepast (zie onderaan): een profiel per bron, ruimere grenzen. Arno moet `docs/sql/2026-11-18-historie-import-per-bron.sql` nog uitvoeren. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
-**Eerstvolgende stap:** Arno test een gesprek met de profielen; daarna stap 6 (teksten ter goedkeuring, `appHelp`, overzicht, privacy, beveiligings-PDF) en stap 7 (livegang).
+**Eerstvolgende stap:** stap 7, livegang: Arno zet `HISTORIE_IMPORT_OPEN=true` in Vercel (Production), daarna push ik de wachtende commits (teksten) en werk ik `ARNOBOT_OVERZICHT.md` bij.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -22,14 +22,22 @@ Gemini en andere AI's: alleen de link "kopieer de vraag" (geen knop met merknaam
 
 ## De vraag die de gebruiker in zijn andere AI stuurt
 
-> Ik neem mijn werk als verkoper mee naar een andere assistent. Gebruik alleen wat je echt van me weet uit je geheugen of eerdere gesprekken. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets, schrijf geen vermoedens als feiten (zet "vermoeden:" ervoor) en laat een kopje leeg als je niets weet. Alleen werk, niets privés. Geen advies. Geen e-mailadressen of telefoonnummers van klanten.
+> Ik neem mijn werk mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet. Schrijf geen regels over wat je niet weet.
 >
-> 1. MIJN BEDRIJF, PRODUCT EN MARKT
-> 2. MIJN KLANTEN EN LOPENDE SITUATIES (met namen van bedrijven en cijfers waar je die kent)
+> Schrijf per kopje korte regels, één feit per regel, zonder inleiding of afsluiting. Noteer erbij van wanneer iets is, als je dat weet. Noem bedrijven met naam en personen alleen met hun functie. Geen e-mailadressen of telefoonnummers. Alleen werk: niets privés en niets over gezondheid, geloof of politiek. Geen advies en geen oordeel over mij, alleen feiten.
+>
+> 1. MIJN BEDRIJF, PRODUCT EN MARKT (wat ik verkoop en aan wie)
+> 2. MIJN KLANTEN EN LOPENDE SITUATIES (met cijfers waar je die kent)
 > 3. MIJN PLANNEN EN DOELEN (ook of eerdere plannen zijn gehaald)
-> 4. WAAR IK MEE WORSTEL
+> 4. WAT MIJN GROOTSTE UITDAGINGEN ZIJN
 >
-> Maximaal 600 woorden.
+> Maximaal 800 woorden.
+
+(Bijgewerkt 2026-11-18 op verzoek van Arno na de eerste proef: kopje 4 heet nu "WAT MIJN GROOTSTE UITDAGINGEN ZIJN"; nieuw zijn de opdracht om het geheugen en alle eerdere gesprekken te doorzoeken, korte regels zonder inleiding, de datum erbij, personen alleen met functie, geen gezondheid, geloof of politiek, geen oordeel, en 800 in plaats van 600 woorden. Het kopje in het scherm en in het blok in de chat volgt de nieuwe naam.)
+
+**Kopje 1 korter en geen regels over wat onbekend is (Arno, 2026-11-18).** Na een vergelijking van twee echte antwoorden: de aanduiding "dealgrootte, salescyclus, teamgrootte" gaf regels als "Salescyclus: niet bekend" zonder inhoud. Gekozen: "(wat ik verkoop en aan wie)" en de zin "Schrijf geen regels over wat je niet weet." De omzetting laat productspecificaties en regels die alleen "niet bekend" zeggen ook weg.
+
+**Rol weer uit de vraag (Arno, 2026-11-18).** Een tijdelijke versie noemde de rol uit het ArnoBot-profiel ("als Sales Manager"). Een AI die beide versies beoordeelde merkte op dat dat label afweek van wat hij van Arno wist (oprichter) en het antwoord stuurt. Gekozen: de vraag noemt geen rol of functie, ook omdat niet elke gebruiker verkoper is. Verworpen: de rol uit het profiel halen. De route geeft de rol dus niet meer mee en `leesRol` bestaat niet meer.
 
 De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link als in KOPIEER VRAAG gebruikt.
 
@@ -61,7 +69,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 - [x] 3. Blok NEEM JE HISTORIE MEE onder de tab Uploads (`app/bot/analyses/HistorieImportBlok.tsx`), alleen met `historieImport` uit `/api/bot/plan`. Gerenderd en bekeken (desktop en mobiel, vier toestanden). De vaste delen staan in `lib/historieImportVast.ts` omdat `lib/historieImportRegels.ts` de lijst met interne testaccounts importeert en die nooit in de browserbundel mag.
 - [x] 4. Het profiel (alle bronnen samen, nieuwste eerst, hooguit 12.000 tekens) staat in de systeemprompt van de hoofdchat, achter het gewone geheugen en alleen voor wie `HISTORIE_IMPORT_OPEN` heeft (`importProfielPromise` in `app/api/chat/route.ts`, parallel aan het geheugen, een fout kost nooit een antwoord). Niet in `bronContext` (log, waarheidsmail, export); een bewakingstest (`app/api/chat/historieImportAansluiting.test.ts`) dwingt dat af. Ook zichtbaar in `/api/admin/geheugen-preview`. Sparren krijgt het profiel bewust niet. Nog te doen bij de eerste echte proef: controleren of de waarheidscontrole beweringen uit het profiel als "niet uit de bibliotheek" aanmerkt.
 - [x] 5. De profielen zitten in de gegevensexport (`profielen_uit_andere_ai`, via `leesProfielen`) en in de checklists van `data-cleanup` en `delete-account`; de tabel staat in `check-missing-user-filter`, `check-testaccount-filter` en `e2e/global-teardown.ts` (niet in `check-row-limit`: een tabel met hooguit drie rijen per gebruiker is geen groeitabel); een test (`lib/historieImportAfscherming.test.ts`) faalt als de tabelnaam buiten `lib/historieImport.ts` voorkomt; `docs/MODELINVENTARIS.md` en `docs/TECHNICAL_HANDOVER.md` bijgewerkt. VERWIJDER ALLE UPLOADS op de accountpagina raakt de profielen bewust niet (het zijn geen uploads); een profiel verwijder je in het blok zelf.
-- [ ] 6. Teksten (na akkoord), `appHelp.ts`, `docs/ARNOBOT_OVERZICHT.md`, `docs/TECHNICAL_HANDOVER.md`, privacy, beveiligings-PDF, met PDF's.
+- [x] 6. Teksten goedgekeurd door Arno (2026-11-18, in korte vorm) en doorgevoerd: `app/privacy/page.tsx` (rij bij gegevens, rij bij bewaartermijnen, één alinea onder de verwerkerstabel), `app/bot/qa/QAClient.tsx`, `lib/appHelp.ts` (snapshots bijgewerkt, alleen deze regel), `scripts/generate-security-pdf.mjs` (versie 2.1, PDF opnieuw gegenereerd en gecontroleerd). Lokaal gecommit en bewust NIET gepusht: deze teksten zijn publiek en horen tegelijk met de schakelaar live. Arno liet de zin over doorstroming naar het gewone geheugen en de zin "bewering van de gebruiker" in `appHelp` bewust weg. `docs/ARNOBOT_OVERZICHT.md` (één zin onder ARCHIEF en de regel over de import van gespreksgeschiedenis) volgt bij de livegang.
 - [ ] 7. Livegang: schakelaar aan voor Arno, proef met een echt ChatGPT- en Claude-antwoord, dan voor iedereen.
 
 ## Nog te testen voordat het af is
@@ -110,3 +118,6 @@ Arno plakte een antwoord van Claude en een van ChatGPT. Bevindingen en wat ermee
 - Het blok telt de kopjes nu zelf mee in de grens (het kon er 70 tot 100 tekens overheen komen).
 
 - **Besluit (Arno, 2026-11-18): toevoegen en vervangen kan niet vanuit de Android-app, alleen via de computer.** In de app (herkend met `useIsNativeApp`) is het blok alleen zichtbaar als er al een profiel is, met openen en verwijderen maar zonder toevoegen of vervangen. Reden: de link naar de andere AI opent buiten de app, het klembord is er onbetrouwbaar, en de gebruiker raakt de pagina kwijt. Dit is alleen een afscherming in het scherm; de routes zelf blijven hetzelfde. Ook telefoonbrowsers zijn uitgesloten (Arno, 2026-11-18): in het blok geldt "alleen bekijken" voor de app en voor elk smal scherm.
+
+- **Gemini toegevoegd en weer verwijderd (Arno, 2026-11-18).** Gemini vult de vraag niet in via een link (Arno testte `?q=` en `?prompt=`, beide leeg), dus de gebruiker moest zelf plakken en dat was niet duidelijk. Verworpen: Gemini als bron houden met alleen een klembordmelding. Gevolg: het kopiëren is nu een zichtbare knop KOPIEER DE VRAAG met bevestiging (voor een andere AI, of als de vraag niet vanzelf in het veld staat); de knoppen naar ChatGPT en Claude kopiëren niet meer stilletjes. Voor een andere AI blijft bron `anders`. De database laat `gemini` nog wel toe (`docs/sql/2026-11-18-historie-import-gemini.sql` is uitgevoerd); dat is onschadelijk en hoeft niet terug.
+- **Knoppen (Arno, 2026-11-18): beide knoppen in Uploads en in NEEM JE HISTORIE MEE hebben dezelfde vaste breedte** (`minWidth` 280) en dezelfde maten; de tweede sectie heeft dezelfde kop, knop en ruimtes als de eerste (48 pixels ervoor, 24 tussen kop en eerste rij, rijen 20 pixels).
