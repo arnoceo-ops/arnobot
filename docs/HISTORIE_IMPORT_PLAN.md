@@ -87,3 +87,18 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 6. **De schakelaar is eenvoudig na te bouwen** (zeven regels, zoals `documentenBeschikbaarVoor`). Client-gating via `/api/bot/plan` met een eigen veld, gelezen in `BotNav.tsx` en de tabpagina; de poort blijft in elke route.
 7. **Vergeten plekken voor een nieuwe tabel en route:** `scripts/check-orphan-routes.mjs`, `docs/MODELINVENTARIS.md` (nieuwe aanroepplek van Haiku), `app/privacy/page.tsx`, en de mailtekst met handmatige stappen in `app/api/cron/data-cleanup/route.ts` en `app/api/bot/delete-account/route.ts`.
 8. **Mobiele app en kopieerbare tekst.** De Capacitor-app laat alleen arno.bot in de WebView (`capacitor.config.ts`); een knop naar ChatGPT of Claude opent de systeembrowser of de app, en de gebruiker moet dan terug. Daarom wordt de vraag altijd eerst naar het klembord gekopieerd (met een zichtbare bevestiging), zodat het ook werkt zonder vooraf ingevulde vraag. Het antwoord van een andere AI bevat vaak streepjes en em dashes; die worden uit de opgeslagen kopjes gefilterd zodat ze niet in een prompt of in de UI belanden.
+
+## Eerste proef met echte antwoorden (2026-11-18, Arno op zijn eigen account)
+
+Arno plakte een antwoord van Claude en een van ChatGPT. Bevindingen en wat ermee is gedaan:
+
+- **De link met de vraag erin werkt bij Claude.** Claude toont er wel een waarschuwing boven ("Wees voorzichtig voordat je deze prompt uitvoert. Kwaadaardige inhoud kan Claude ertoe verleiden…"). Dat is Claudes standaardmelding bij een vooraf ingevulde vraag via een link, en kan een gewone gebruiker afschrikken. Open: laten staan, of bij Claude alleen kopiëren en geen link.
+- **Het Claude-antwoord liet de omzetting mislukken:** te weinig ruimte voor de uitvoer (`max_tokens` 1.200). Opgelost: 2.500 en kortere regels.
+- **"vermoeden:" werd "Jij vermoedde…"**, wat iets anders zegt (de andere AI vermoedt, niet de gebruiker). De omzetting bewaart nu "Vermoeden:" letterlijk.
+- **Bereiken werden stuk gemaakt** ("5–50" werd "5, 50"). Nu "5 tot 50".
+- **Markdown** (`**vet**`, kopjes) komt niet meer in de regels.
+- **Regels over ArnoBot zelf vielen weg** omdat het woord "arnobot" in de opdrachtfilter stond. Nu alleen als er een opdracht bij staat ("moet", "altijd", "nooit", enzovoort).
+- **Elk kopje heeft een eigen tekenbudget** (440 tekens, maximaal 6 regels van 200), zodat elk kopje in het blok van 2.500 tekens past en de gebruiker bij het controleren precies ziet wat ArnoBot krijgt. Zonder dat konden achterste kopjes onzichtbaar wegvallen.
+- **Open besluit (Arno): is 2.500 tekens genoeg?** Het rijke Claude-antwoord werd teruggebracht tot ongeveer 1.900 tekens en verloor veel (prijzen, projecten, wat is gehaald). Voorstel: 4.000 tekens in de chat (ongeveer 1.000 tokens per bericht).
+- **Open besluit (Arno): één profiel per bron?** Arno heeft zowel een Claude- als een ChatGPT-profiel, en de twee vullen elkaar aan. Nu vervangt het ene het andere. Voorstel: één profiel per bron (hooguit drie), elk apart te zien en te verwijderen; het blok in de chat deelt de grens.
+- **Namen van derden:** het Claude-antwoord bevat namen van personen en bedrijven en contractdetails. De vraag verbiedt alleen contactgegevens. De gebruiker controleert het voorstel, en de privacytekst moet dit noemen.

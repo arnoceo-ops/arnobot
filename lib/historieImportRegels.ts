@@ -15,7 +15,7 @@ export function historieImportBeschikbaarVoor(userId: string | null | undefined)
 }
 
 import {
-  KOPJES, MAX_BLOK_TEKENS, MAX_REGELS_PER_KOPJE, MAX_TEKENS_REGEL, BRON_NAAM,
+  KOPJES, MAX_BLOK_TEKENS, MAX_REGELS_PER_KOPJE, MAX_TEKENS_REGEL, MAX_TEKENS_PER_KOPJE, BRON_NAAM,
   type ImportBron, type ImportProfiel,
 } from './historieImportVast'
 export * from './historieImportVast'
@@ -51,9 +51,11 @@ export function voorbewerkInvoer(tekst: string): string {
 
 // Regels die op een opdracht aan ArnoBot of aan een model lijken, of die naar het systeem zelf verwijzen. Zo'n regel is nooit een feit
 // over de gebruiker en valt weg, ook als het model hem als "feit" heeft overgenomen.
-const INSTRUCTIE_RE = /\b(negeer|negeren|ignore|disregard|forget|vergeet|systeemprompt|system prompt|instructie|instructies|instruction|instructions|arnobot|je moet|jij moet|you must|vanaf nu|from now on|antwoord altijd|answer always|act as|gedraag je|doe alsof|pretend)\b/i
+const INSTRUCTIE_RE = /\b(negeer|negeren|ignore|disregard|forget|vergeet|systeemprompt|system prompt|instructie|instructies|instruction|instructions|je moet|jij moet|you must|vanaf nu|from now on|antwoord altijd|answer always|act as|gedraag je|doe alsof|pretend)\b/i
 
 /** Eén regel van een kopje schoonmaken. Geeft null als er niets bruikbaars overblijft. */
+const OPDRACHT_AAN_ARNOBOT_RE = /\b(arnobot|systeem)\b.*\b(moet|moeten|altijd|nooit|geef|doe|zeg|mag niet|mag geen)\b/i
+
 export function schoonRegel(invoer: unknown): string | null {
   if (typeof invoer !== 'string') return null
   const s = zonderStuurtekens(invoer)
@@ -61,15 +63,18 @@ export function schoonRegel(invoer: unknown): string | null {
     .replace(EMAIL_RE, '')
     .replace(URL_RE, '')
     .replace(TELEFOON_RE, '')
+    .replace(/(\d)\s*[—–-]\s*(\d)/g, '$1 tot $2')
     .replace(/\s*[—–]\s*/g, ', ')
     .replace(/\s+-\s+/g, ', ')
     .replace(/^(?:[-*•]\s+|\d{1,2}[.)]\s+)/, '')
+    .replace(/[*`]+/g, '')
+    .replace(/^#+\s*/, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_TEKENS_REGEL)
     .trim()
   if (s.length < 3) return null
-  if (INSTRUCTIE_RE.test(s)) return null
+  if (INSTRUCTIE_RE.test(s) || OPDRACHT_AAN_ARNOBOT_RE.test(s)) return null
   return s
 }
 
@@ -87,9 +92,13 @@ export function valideerProfiel(invoer: unknown): ImportProfiel | null {
     if (lijst === undefined) continue
     if (!Array.isArray(lijst)) return null
     const regels: string[] = []
+    let gebruikt = 0
     for (const r of lijst) {
       const s = schoonRegel(r)
-      if (s && !regels.includes(s)) regels.push(s)
+      if (!s || regels.includes(s)) continue
+      if (gebruikt + s.length > MAX_TEKENS_PER_KOPJE) break
+      regels.push(s)
+      gebruikt += s.length
       if (regels.length >= MAX_REGELS_PER_KOPJE) break
     }
     uit[sleutel] = regels

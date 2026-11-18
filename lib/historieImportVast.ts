@@ -20,9 +20,12 @@ export type ImportProfiel = Record<KopjeSleutel, string[]>
 
 // Grenzen. De invoergrens wordt gecontroleerd vóór de limiter en vóór het model (de limiter is fail-open bij een Upstash-storing).
 export const MAX_INVOER_TEKENS = 20000
-export const MAX_REGELS_PER_KOPJE = 8
-export const MAX_TEKENS_REGEL = 240
+export const MAX_REGELS_PER_KOPJE = 6
+export const MAX_TEKENS_REGEL = 200
 export const MAX_BLOK_TEKENS = 2500
+// Per kopje een eigen tekenbudget, zodat elk kopje in het blok past en de gebruiker bij het controleren precies ziet wat ArnoBot krijgt.
+// Vier kopjes van 440 tekens plus kop, labels en einde blijven onder MAX_BLOK_TEKENS.
+export const MAX_TEKENS_PER_KOPJE = 440
 
 /** De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor de link én voor KOPIEER VRAAG. */
 export const HISTORIE_VRAAG = `Ik neem mijn werk als verkoper mee naar een andere assistent. Gebruik alleen wat je echt van me weet uit je geheugen of eerdere gesprekken. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets, schrijf geen vermoedens als feiten (zet "vermoeden:" ervoor) en laat een kopje leeg als je niets weet. Alleen werk, niets privés. Geen advies. Geen e-mailadressen of telefoonnummers van klanten.
