@@ -67,14 +67,15 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
     return () => { actueel = false }
   }, [])
 
-  // De vraag gaat altijd ook naar het klembord: de vooraf ingevulde vraag in de link werkt niet overal (en niet in de app).
-  async function kopieerVraag(b: ImportBron) {
-    setBron(b)
+  // De vraag naar het klembord, alleen op een klik op KOPIEER DE VRAAG, met een zichtbare bevestiging op de knop zelf (Arno, 2026-11-18: een
+  // stille kopie op de achtergrond was niet te begrijpen). Voor een andere AI en voor als de vraag niet vanzelf in het veld staat.
+  async function kopieerVraag() {
     try {
       await navigator.clipboard.writeText(HISTORIE_VRAAG)
       setGekopieerd(true)
+      setTimeout(() => setGekopieerd(false), 3000)
     } catch {
-      setGekopieerd(false)
+      setFout('Kopiëren lukt niet in deze browser. Selecteer de vraag in je andere AI zelf.')
     }
   }
 
@@ -230,14 +231,13 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
         <div style={{ maxWidth: 620 }}>
           <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2 }}>1 Verstuur de vraag</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
-            <a href={bouwVraagLink('chatgpt')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
-            <a href={bouwVraagLink('claude')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('claude')} style={pil}>OPEN IN CLAUDE</a>
-            <a href={bouwVraagLink('gemini')} target="_blank" rel="noopener noreferrer" onClick={() => kopieerVraag('gemini')} style={pil}>OPEN IN GEMINI</a>
+            <a href={bouwVraagLink('chatgpt')} target="_blank" rel="noopener noreferrer" onClick={() => setBron('chatgpt')} style={pil}>OPEN IN CHATGPT</a>
+            <a href={bouwVraagLink('claude')} target="_blank" rel="noopener noreferrer" onClick={() => setBron('claude')} style={pil}>OPEN IN CLAUDE</a>
           </div>
           <div style={{ marginTop: 12 }}>
-            <button onClick={() => kopieerVraag('anders')} style={rustig}>andere AI: kopieer de vraag</button>
+            <button onClick={kopieerVraag} style={pil}>{gekopieerd ? '✓ GEKOPIEERD' : 'KOPIEER DE VRAAG'}</button>
           </div>
-          {gekopieerd && <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>{bron === 'gemini' ? 'De vraag staat op je klembord. Plak hem in Gemini met Ctrl+V.' : 'De vraag staat op je klembord. Staat hij er niet vanzelf in, plak hem dan zelf.'}</p>}
+          <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginTop: 8 }}>Voor een andere AI, of als de vraag niet vanzelf in het veld staat.</p>
 
           <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, marginTop: 28 }}>2 Kopieer het antwoord</p>
 

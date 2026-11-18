@@ -42,11 +42,10 @@ describe('de vraag en de links', () => {
     expect(l.startsWith('https://chatgpt.com/?q=')).toBe(true)
     expect(decodeURIComponent(l.split('?q=')[1])).toBe(HISTORIE_VRAAG)
     expect(bouwVraagLink('claude').startsWith('https://claude.ai/new?q=')).toBe(true)
-    expect(bouwVraagLink('gemini')).toBe('https://gemini.google.com/app')
   })
   it('kent alleen drie bronnen', () => {
     expect(isImportBron('chatgpt')).toBe(true)
-    expect(isImportBron('gemini')).toBe(true)
+    expect(isImportBron('gemini')).toBe(false)
     expect(isImportBron('copilot')).toBe(false)
     expect(isImportBron(undefined)).toBe(false)
   })

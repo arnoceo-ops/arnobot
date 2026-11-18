@@ -2,12 +2,12 @@
 // enige serverimport: dit bestand wordt ook in de browser gebruikt (app/bot/analyses/HistorieImportBlok.tsx), en lib/historieImportRegels.ts
 // haalt de lijst met interne testaccounts binnen, die nooit in een clientbundel mag komen.
 
-export type ImportBron = 'chatgpt' | 'claude' | 'gemini' | 'anders'
-export const IMPORT_BRONNEN: readonly ImportBron[] = ['chatgpt', 'claude', 'gemini', 'anders']
+export type ImportBron = 'chatgpt' | 'claude' | 'anders'
+export const IMPORT_BRONNEN: readonly ImportBron[] = ['chatgpt', 'claude', 'anders']
 export function isImportBron(x: unknown): x is ImportBron {
   return typeof x === 'string' && (IMPORT_BRONNEN as readonly string[]).includes(x)
 }
-export const BRON_NAAM: Record<ImportBron, string> = { chatgpt: 'ChatGPT', claude: 'Claude', gemini: 'Gemini', anders: 'een andere AI' }
+export const BRON_NAAM: Record<ImportBron, string> = { chatgpt: 'ChatGPT', claude: 'Claude', anders: 'een andere AI' }
 
 export const KOPJES = [
   { sleutel: 'bedrijf', label: 'MIJN BEDRIJF, PRODUCT EN MARKT' },
@@ -44,9 +44,7 @@ Maximaal 600 woorden.`
  * Een link die de andere AI opent met de vraag al ingevuld. Of de vooraf ingevulde vraag werkt is nog niet in een echte browser
  * gecontroleerd (zie "Nog te testen" in het plan); de pagina kopieert de vraag daarom altijd ook naar het klembord.
  */
-export function bouwVraagLink(bron: 'chatgpt' | 'claude' | 'gemini'): string {
-  // Gemini kent geen vooraf ingevulde vraag via een link (geen officiële bron gevonden): de knop opent alleen Gemini en de vraag staat op het klembord.
-  if (bron === 'gemini') return 'https://gemini.google.com/app'
+export function bouwVraagLink(bron: 'chatgpt' | 'claude'): string {
   const q = encodeURIComponent(HISTORIE_VRAAG)
   return bron === 'chatgpt' ? `https://chatgpt.com/?q=${q}` : `https://claude.ai/new?q=${q}`
 }
