@@ -249,6 +249,8 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 | `/api/bot/documenten/[id]/download` | Levert het bestand altijd als download (`Content-Disposition: attachment`, `nosniff`), met eigenaarscheck |
 | `/api/bot/documenten/koppel` | POST koppelt een bewaard bestand aan het huidige gesprek (KIES UIT UPLOADS, BESPREEK), DELETE haalt de koppeling weg |
 | `/api/bot/documenten/alles` | DELETE: alle uploads van de gebruiker (VERWIJDER ALLE UPLOADS op de accountpagina) |
+| `/api/bot/import/omzetten` | POST: zet een geplakt antwoord van een andere AI om in een voorstel met vier vaste kopjes (Haiku 4.5, bewaart niets). Alleen met `HISTORIE_IMPORT_OPEN` (anders 404), toegangspoort, lengte maximaal 20.000 tekens gecontroleerd vóór de limiet, 5 per uur per gebruiker |
+| `/api/bot/import/profiel` | GET de profielen van de gebruiker, PUT slaat het gecontroleerde voorstel op (een profiel per bron, vervangt alleen dat van dezelfde bron), DELETE verwijdert er een (`?bron=`) of alle. Verwijderen kan ook zonder toegang. Logica in `lib/historieImport.ts` |
 | `/api/tts-voice` | Tekst naar spraak (ElevenLabs, rate-limited, plancheck) |
 
 ### Sparring
@@ -564,6 +566,9 @@ De uploads van een gebruiker en de tijdelijke bijlagen van een gesprek (SQL: `do
 ### `arnobot_document_koppelingen`
 Koppelt een bewaard bestand aan een gesprek waarin het is gekozen (SQL: `docs/sql/2026-11-18-documenten-koppelingen.sql`, RLS aan, `on delete cascade` vanuit `arnobot_documenten`). Dit is ook de bron voor "gesprekken met dit bestand" in Uploads. Een bewaard bestand in een ander gesprek brengt de samenvattingen van de hooguit drie nieuwste eerdere gesprekken over dat bestand mee in het geheugen van ArnoBot (`eerdereGesprekkenOverBestanden`, nergens zichtbaar).
 
+### `arnobot_import_profielen`
+Het profiel dat de gebruiker uit een andere AI heeft overgenomen en zelf gecontroleerd heeft (SQL: `docs/sql/2026-11-18-historie-import.sql`, voor wie de tabel al had `-per-bron.sql`, RLS aan zonder policies). Sleutel (`user_id`, `bron`) met bron chatgpt, claude of anders, `kopjes` (json met vier vaste kopjes), `tekens`, `created_at`. De geplakte ruwe tekst wordt nooit bewaard. Alleen `lib/historieImport.ts` leest en schrijft de tabel (een test dwingt dat af, `lib/historieImportAfscherming.test.ts`): nooit in analyses, managerroutes, blijvende feiten of `arnobot_memory_entities`. In de chat staat het profiel achter het gewone geheugen (`importProfielPromise` in `app/api/chat/route.ts`, hooguit 12.000 tekens) en bewust niet in `bron_context`. Verwijderen: `verwijderProfiel` en `verwijderGebruikersImports`, opgenomen in de gegevensexport en in de checklists van `data-cleanup` en `delete-account`. Wie de functie heeft: `historieImportBeschikbaarVoor`, zie de env `HISTORIE_IMPORT_OPEN`.
+
 ### `arnobot_offtopic_flags`
 Vlaggen off-topic/ongepaste berichten per gebruiker; bij herhaling geforceerde uitlog.
 
@@ -792,6 +797,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `CALENDLY_WEBHOOK_SIGNING_KEY` — Calendly-webhookverificatie
 - `INSTATUS_API_KEY` — statuspagina-data
 - `ARNOBOT_OWNER_USER_ID` — Clerk user ID van Arno (voor admin-functies)
+- `HISTORIE_IMPORT_OPEN` — `true` zet het meenemen van een profiel uit een andere AI (blok onder Uploads, alleen toevoegen via de computer) open voor iedereen; zonder deze waarde alleen de interne testaccounts en `ARNOBOT_OWNER_USER_ID`
 - `DOCUMENTEN_OPEN` — `true` zet de uploads-functie (bewaren, tab Uploads, de naam ARCHIEF, een bijlage zichtbaar in het hele gesprek) open voor iedereen; zonder deze waarde alleen de interne testaccounts en `ARNOBOT_OWNER_USER_ID`
 - `GITHUB_TOKEN` — GitHub PAT voor de update-handover cron
 - `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` — Telegram notificaties

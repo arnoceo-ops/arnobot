@@ -28,6 +28,7 @@ const TABELLEN = [
   'arnobot_events',
   'arnobot_blog_sessions',
   'arnobot_documenten',
+  'arnobot_import_profielen',
 ]
 
 // Buckets waarin het E2E-account bestanden kan achterlaten (documenten en oude uploads), per gebruiker een map.

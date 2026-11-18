@@ -5,7 +5,7 @@ Hersteld 2026-11-08 uit de code (de tabel was sinds de afslanking van 2026-08-29
 | Route | Model | Reden | Laatste check |
 |---|---|---|---|
 | Hoofdchat (`app/api/chat/route.ts`, `lib/voice.ts`) | `claude-sonnet-4-6` | Sonnet 5 gaf bij lange vragen geen tekstblok (thinking zonder output). Chat gebruikt `.messages.stream(`, met retry bij leeg antwoord. | 2026-11-08 |
-| Chat RAG-herschrijving, sessie-end, sessie-zoek, 1:1-agenda, entiteiten, labels, sessiesamenvatting, nudge, rss-ingest, productvragen, feedback-analyse, kennisbank-scripts | `claude-haiku-4-5-20251001` | Korte classificatie-, herschrijf- en extractietaken, met fallbacks. | 2026-11-08 |
+| Chat RAG-herschrijving, sessie-end, sessie-zoek, 1:1-agenda, entiteiten, labels, sessiesamenvatting, nudge, rss-ingest, productvragen, feedback-analyse, kennisbank-scripts, omzetting van een antwoord van een andere AI in een profiel (lib/historieImport.ts, achter HISTORIE_IMPORT_OPEN) | `claude-haiku-4-5-20251001` | Korte classificatie-, herschrijf- en extractietaken, met fallbacks. | 2026-11-08 |
 | Uitdaging, coaching-hoofdsynthese, team-zelfcoaching, meta-analyse (JOUW ANALYSE), admin-analyse | `claude-fable-5-1` | Belangrijkste syntheses, hoogste kwaliteit. Opus 5 eerder getest en verworpen (`scripts/test-opus5-vs-fable5.mjs`). | 2026-11-08 |
 | Coaching-analyse, spotlight, auto-analyse, openers, sparring (chat, open, debrief), precheck-routes, verfijn, LinkedIn-zoek, blogs-analyse, feitencontrole, geheugentoets, groeibalans, patroonmails, model-check | `claude-sonnet-4-6` | Lange prompts of batchwerk waar Sonnet 5 stil een leeg antwoord kon geven. | 2026-11-08 |
 | Coaching-precheck in `app/api/bot/coaching/route.ts` | `claude-sonnet-5` | Alleen een ja/nee-vraag. | 2026-11-08 |
