@@ -13,7 +13,7 @@ export const KOPJES = [
   { sleutel: 'bedrijf', label: 'MIJN BEDRIJF, PRODUCT EN MARKT' },
   { sleutel: 'klanten', label: 'MIJN KLANTEN EN LOPENDE SITUATIES' },
   { sleutel: 'plannen', label: 'MIJN PLANNEN EN DOELEN' },
-  { sleutel: 'uitdagingen', label: 'WAAR IK MEE WORSTEL' },
+  { sleutel: 'uitdagingen', label: 'WAT MIJN GROOTSTE UITDAGINGEN ZIJN' },
 ] as const
 export type KopjeSleutel = typeof KOPJES[number]['sleutel']
 export type ImportProfiel = Record<KopjeSleutel, string[]>
@@ -41,14 +41,16 @@ export function schoneRol(rol: unknown): string | null {
 /** De vraag die de gebruiker in zijn andere AI stuurt. Eén bron, voor de link én voor KOPIEER DE VRAAG. Met de rol uit het profiel als die bekend is. */
 export function bouwHistorieVraag(rol?: unknown): string {
   const r = schoneRol(rol)
-  return `Ik neem mijn werk${r ? ` als ${r}` : ''} mee naar een andere assistent. Gebruik alleen wat je echt van me weet uit je geheugen of eerdere gesprekken. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets, schrijf geen vermoedens als feiten (zet "vermoeden:" ervoor) en laat een kopje leeg als je niets weet. Alleen werk, niets privés. Geen advies. Geen e-mailadressen of telefoonnummers van klanten.
+  return `Ik neem mijn werk${r ? ` als ${r}` : ''} mee naar een andere assistent. Doorzoek je geheugen en al je eerdere gesprekken met mij en vat samen wat je van me weet. Gebruik alleen wat je echt weet. Heb je niets van me opgeslagen, zeg dat dan in één zin en stop. Verzin niets en schrijf een vermoeden nooit als feit (zet "vermoeden:" ervoor). Laat een kopje leeg als je niets weet.
 
-1. ${KOPJES[0].label}
-2. ${KOPJES[1].label} (met namen van bedrijven en cijfers waar je die kent)
+Schrijf per kopje korte regels, één feit per regel, zonder inleiding of afsluiting. Noteer erbij van wanneer iets is, als je dat weet. Noem bedrijven met naam en personen alleen met hun functie. Geen e-mailadressen of telefoonnummers. Alleen werk: niets privés en niets over gezondheid, geloof of politiek. Geen advies en geen oordeel over mij, alleen feiten.
+
+1. ${KOPJES[0].label} (wat ik verkoop, aan wie, dealgrootte, salescyclus, teamgrootte)
+2. ${KOPJES[1].label} (met cijfers waar je die kent)
 3. ${KOPJES[2].label} (ook of eerdere plannen zijn gehaald)
 4. ${KOPJES[3].label}
 
-Maximaal 600 woorden.`
+Maximaal 800 woorden.`
 }
 
 /** De vraag zonder rol, voor tests en als er geen rol bekend is. */

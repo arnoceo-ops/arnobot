@@ -24,7 +24,7 @@ const OMZET_SYSTEEM = `Je zet het antwoord van een andere AI om in een vast prof
 
 Regels:
 - Zet alleen over wat er echt staat. Verzin niets, vul niets aan en trek geen conclusies.
-- Sorteer onder vier sleutels: bedrijf (bedrijf, product, markt), klanten (klanten en lopende situaties), plannen (plannen en doelen, ook of eerdere plannen zijn gehaald), uitdagingen (waar de gebruiker mee worstelt).
+- Sorteer onder vier sleutels: bedrijf (bedrijf, product, markt), klanten (klanten en lopende situaties), plannen (plannen en doelen, ook of eerdere plannen zijn gehaald), uitdagingen (de grootste uitdagingen van de gebruiker).
 - Per sleutel maximaal ${MAX_REGELS_PER_KOPJE} regels van maximaal ${MAX_TEKENS_REGEL} tekens, samen hooguit ${MAX_TEKENS_PER_KOPJE} tekens per sleutel. Kies de belangrijkste en meest concrete feiten: namen van bedrijven, cijfers, jaartallen, wat is gehaald en wat niet.
 - Schrijf bereiken als "5 tot 50" en nooit met een streepje.
 - Schrijf elke regel compact als een los feit, zonder "ik" of "jij" aan het begin. Voorbeeld: "Oprichter van een B2B-platform voor kwartaalplanning."

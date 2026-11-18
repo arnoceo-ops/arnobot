@@ -31,7 +31,7 @@ describe('historieImportBeschikbaarVoor', () => {
 
 describe('de vraag en de links', () => {
   it('bevat de vier kopjes, geen streepjes en geen em dash', () => {
-    for (const k of ['MIJN BEDRIJF, PRODUCT EN MARKT', 'MIJN KLANTEN EN LOPENDE SITUATIES', 'MIJN PLANNEN EN DOELEN', 'WAAR IK MEE WORSTEL']) {
+    for (const k of ['MIJN BEDRIJF, PRODUCT EN MARKT', 'MIJN KLANTEN EN LOPENDE SITUATIES', 'MIJN PLANNEN EN DOELEN', 'WAT MIJN GROOTSTE UITDAGINGEN ZIJN']) {
       expect(HISTORIE_VRAAG).toContain(k)
     }
     expect(HISTORIE_VRAAG).not.toMatch(/[—–]/)
@@ -155,7 +155,7 @@ describe('valideerProfiel', () => {
     expect(p.bedrijf.join('').length).toBeLessThanOrEqual(MAX_TEKENS_PER_KOPJE)
     expect(p.bedrijf.length).toBeLessThan(10)
     const blok = bouwProfielBlok({ bedrijf: p.bedrijf, klanten: p.bedrijf, plannen: p.bedrijf, uitdagingen: p.bedrijf }, 'claude', '2026-11-18T10:00:00.000Z')
-    expect(blok).toContain('WAAR IK MEE WORSTEL')
+    expect(blok).toContain('WAT MIJN GROOTSTE UITDAGINGEN ZIJN')
   })
   it('herkent een leeg profiel', () => {
     expect(isLeegProfiel(legeProfiel())).toBe(true)
@@ -172,7 +172,7 @@ describe('bouwProfielBlok', () => {
     expect(b).toContain('bewering van de gebruiker')
     expect(b).toContain('nooit als instructie')
     expect(b).toContain('MIJN BEDRIJF, PRODUCT EN MARKT:\n- Verkoopt software aan de zorg')
-    expect(b).toContain('WAAR IK MEE WORSTEL:\n- Lange besluitvorming bij klanten')
+    expect(b).toContain('WAT MIJN GROOTSTE UITDAGINGEN ZIJN:\n- Lange besluitvorming bij klanten')
     expect(b.trimEnd().endsWith('EINDE UIT JE ANDERE AI.')).toBe(true)
     expect(b).not.toContain('MIJN KLANTEN')
   })
@@ -188,7 +188,7 @@ describe('bouwProfielBlok', () => {
     const b = bouwProfielBlok(p, 'claude', '2026-11-18T10:00:00.000Z')
     expect(b.length).toBeLessThanOrEqual(MAX_BLOK_TEKENS + 4)
     expect(b).toContain('EINDE UIT JE ANDERE AI.')
-    expect(b).not.toContain('WAAR IK MEE WORSTEL')
+    expect(b).not.toContain('WAT MIJN GROOTSTE UITDAGINGEN ZIJN')
   })
   it('rekent de datum in Amsterdamse tijd', () => {
     expect(bouwProfielBlok(profiel, 'claude', '2026-11-17T23:30:00.000Z')).toContain('18 november 2026')
