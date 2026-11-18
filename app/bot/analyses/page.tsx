@@ -150,13 +150,14 @@ export default function GeschiedenisPage() {
       .finally(() => setPlanLoaded(true))
   }, [])
 
+  // Het aantal uploads start meteen, parallel aan het plan en de gesprekken, in plaats van pas als het plan bekend is. Wie de functie niet
+  // heeft krijgt een 404 en ziet de tegel toch niet.
   useEffect(() => {
-    if (!documentenAan) return
     fetch('/api/bot/documenten')
-      .then(r => r.json())
-      .then(d => setDocsAantal(Array.isArray(d.documenten) ? d.documenten.length : 0))
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d && Array.isArray(d.documenten)) setDocsAantal(d.documenten.length) })
       .catch(() => {})
-  }, [documentenAan])
+  }, [])
 
   useEffect(() => {
     fetch('/api/bot/sessions')
@@ -548,7 +549,7 @@ export default function GeschiedenisPage() {
             {([
               { sleutel: 'gesprekken', label: 'GESPREKKEN', value: sessions.length },
               { sleutel: 'analyses', label: 'ANALYSES', value: savedAnalyses.length },
-              { sleutel: 'docs', label: 'UPLOADS', value: docsAantal ?? '' },
+              { sleutel: 'docs', label: 'UPLOADS', value: docsAantal ?? 0 },
             ] as const).map(({ sleutel, label, value }) => {
               const actief = tab === sleutel
               return (

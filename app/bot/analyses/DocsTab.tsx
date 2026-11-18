@@ -209,7 +209,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
           <div key={d.id} style={{ borderTop: '1px solid #374151' }}>
             <div
               onClick={() => { setOpen(isOpen ? null : d.id); setBevestig(null); setHernoem(null) }}
-              style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '14px 0' : '16px 0', cursor: 'pointer' }}
+              style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: '20px 0', cursor: 'pointer' }}
             >
               <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(d.created_at, isMobile)}</span>
               <div style={{ flex: 1 }}>
@@ -227,7 +227,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
                     style={{ width: '100%', background: '#1f2937', border: '1.5px solid #f59e0b', borderRadius: 4, color: '#f1f5f9', fontFamily: "'Space Mono', monospace", fontSize: 15, padding: '12px 16px', outline: 'none' }}
                   />
                 ) : (
-                  <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>{d.naam}</p>
+                  <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, marginBottom: 6, wordBreak: 'break-word' }}>{d.naam}</p>
                 )}
                 <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{sub}</p>
               </div>

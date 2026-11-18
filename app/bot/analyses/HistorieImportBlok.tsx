@@ -173,11 +173,11 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
               <div key={p.bron} style={{ borderTop: '1px solid #374151' }}>
                 <div
                   onClick={() => { setUitgeklapt(isOpen ? null : p.bron); setBevestig(null) }}
-                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '14px 0' : '16px 0', cursor: 'pointer' }}
+                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: '20px 0', cursor: 'pointer' }}
                 >
                   <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(p.created_at)}</span>
                   <div style={{ flex: 1 }}>
-                    <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>Profiel uit {BRON_NAAM[p.bron]}</p>
+                    <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, marginBottom: 6 }}>Profiel uit {BRON_NAAM[p.bron]}</p>
                     <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{aantal} {aantal === 1 ? 'regel' : 'regels'}</p>
                   </div>
                   <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>{isOpen ? '↑ SLUITEN' : '↓ OPEN'}</span>
