@@ -74,7 +74,7 @@ const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { buildDocumentContentBlock } from '@/lib/documentInhoud'
 import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
-import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt } from '@/lib/documenten'
+import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript } from '@/lib/documenten'
 import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
@@ -204,6 +204,8 @@ export async function POST(req: NextRequest) {
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null
     let documentText: string | null = null
+    // Het transcript van een audiobijlage voor wie de documentenfunctie heeft: wordt na de controles vastgelegd als document van dit gesprek.
+    let transcriptVoorDocs: { naam: string; mediaType: string; tekst: string; bewaard: boolean } | null = null
 
     // userId komt altijd uit de Clerk-sessie, nooit uit de body.
     // Document-upload staat bewust ná de auth-check hierboven: dit voorkomt dat een niet-ingelogde
@@ -310,6 +312,11 @@ export async function POST(req: NextRequest) {
       if (plan === 'basis') {
         return NextResponse.json({ error: 'audio_alleen_betaald' }, { status: 403, headers: corsHeaders(origin) })
       }
+      // Docs vol en de gebruiker wil het transcript bewaren: dat melden vóórdat de opname wordt verwerkt en verwijderd, anders
+      // moet de gebruiker de opname opnieuw uploaden.
+      if (documentenBeschikbaarVoor(userId) && rawDocument.bewaar === true && !(await bewaardeRuimteOver(supabase, userId))) {
+        return NextResponse.json({ error: 'docs_vol' }, { status: 400, headers: corsHeaders(origin) })
+      }
       const { text, error } = await transcribeAudioAttachment(userId, rawDocument.storagePath)
       if (error || !text) {
         return NextResponse.json({ error: error ?? 'audio_transcriptie_mislukt' }, { status: 502, headers: corsHeaders(origin) })
@@ -321,6 +328,12 @@ export async function POST(req: NextRequest) {
       // want dat verschilt wezenlijk van een geüpload document waarbij het doel al uit de vraag
       // van de gebruiker blijkt.
       documentText = `(Dit is een automatisch getranscribeerd gesprek met sprekerslabels, geen document. Vraag eerst wat de gebruiker hiermee wil als dat niet al duidelijk is uit zijn vraag, geef niet meteen een inhoudelijke beoordeling.)\n\n${text}`
+      if (documentenBeschikbaarVoor(userId)) {
+        // Het transcript wordt een document van dit gesprek (tijdelijk, of bewaard in Docs met het vinkje), zodat ArnoBot het ook
+        // in de vervolgberichten leest. In de vraag zelf blijft alleen de instructie hierboven staan (alles tot de eerste lege regel).
+        transcriptVoorDocs = { naam: rawDocument.name, mediaType: rawDocument.mediaType, tekst: text, bewaard: rawDocument.bewaar === true }
+        documentText = documentText.split('\n\n')[0]
+      }
     }
 
     const sessionId = clientSessionId ?? userId ?? (ip ? `${ip}-${new Date().toISOString().slice(0, 10)}` : 'unknown')
@@ -436,6 +449,12 @@ export async function POST(req: NextRequest) {
     // een document weg of gaat het laden mis, dan hoort het model dat expliciet te horen.
     if (documentenBeschikbaarVoor(userId)) {
       try {
+        if (transcriptVoorDocs) {
+          const t = await registreerTranscript(supabase, { userId, sessionId, ...transcriptVoorDocs })
+          if (t.error) {
+            return NextResponse.json({ error: t.error }, { status: 400, headers: corsHeaders(origin) })
+          }
+        }
         if (rawDocument && typeof rawDocument === 'object'
           && typeof rawDocument.name === 'string' && typeof rawDocument.mediaType === 'string'
           && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {

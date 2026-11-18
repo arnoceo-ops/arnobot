@@ -16,6 +16,7 @@ import TeamLidKader from './TeamLidKader'
 import TeamOpzeggingIntrekken from './TeamOpzeggingIntrekken'
 import KlanttypeCorrectieLink from './KlanttypeCorrectieLink'
 import { track } from '@/lib/posthog'
+import DocumentenBlok from './DocumentenBlok'
 
 export default function AccountPage() {
   const { user, isLoaded } = useUser()
@@ -414,6 +415,9 @@ export default function AccountPage() {
           </button>
           {exportDone && <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 2, marginTop: 12 }}>✓ Download gestart</p>}
         </div>
+
+        {/* Documenten (docs/DOCUMENTEN_PLAN.md): toont zichzelf alleen voor wie de documentenfunctie heeft */}
+        <DocumentenBlok />
 
         {/* Nieuwe sectie: Genoeg geweest. Niet voor de manager van een agent-proef, die activeert zijn team hierboven. */}
         {activatieLoaded && !teamProefManager && (

@@ -111,6 +111,43 @@ export async function bewaardGebruik(db: SupabaseClient, userId: string): Promis
   return { aantal: rijen.length, bytes: rijen.reduce((som, r) => som + (r.bytes ?? 0), 0) }
 }
 
+/** Is er in Docs nog ruimte voor een bewaard document van deze grootte? */
+export async function bewaardeRuimteOver(db: SupabaseClient, userId: string, extraBytes = 0): Promise<boolean> {
+  const gebruik = await bewaardGebruik(db, userId)
+  return gebruik.aantal < QUOTA_MAX_DOCUMENTEN && gebruik.bytes + extraBytes <= QUOTA_MAX_BYTES
+}
+
+/**
+ * Het transcript van een audio-opname vastleggen als document van dit gesprek: alleen tekst, het audiobestand wordt nooit
+ * bewaard. Tijdelijk (48 uur na het laatste bericht) of, met het vinkje, bewaard in Docs. Zo kan ArnoBot het transcript
+ * ook in de vervolgberichten lezen.
+ */
+export async function registreerTranscript(
+  db: SupabaseClient,
+  p: { userId: string; sessionId: string; naam: string; mediaType: string; tekst: string; bewaard: boolean },
+  nu: Date = new Date(),
+): Promise<{ error: string | null }> {
+  const basis = p.naam.replace(/\.[A-Za-z0-9]{1,7}$/, '')
+  const naam = schoneBestandsnaam(`Transcript ${basis}`)
+  const bytes = Buffer.byteLength(p.tekst, 'utf8')
+  if (p.bewaard && !(await bewaardeRuimteOver(db, p.userId, bytes))) return { error: 'docs_vol' }
+  const { error } = await db.from('arnobot_documenten').insert({
+    user_id: p.userId,
+    session_id: p.sessionId,
+    naam,
+    soort: 'transcript',
+    media_type: p.mediaType,
+    bytes,
+    storage_path: null,
+    tekst_cache: p.tekst,
+    bewaard: p.bewaard,
+    laatst_gebruikt: nu.toISOString(),
+    verloopt_op: p.bewaard ? null : verloopOp(nu).toISOString(),
+  })
+  if (error) return { error: 'document_opslaan_mislukt' }
+  return { error: null }
+}
+
 /** Bytes uit de documentenbucket. Weigert elk pad dat niet precies `<eigen userId>/<uuid>.<ext>` is. */
 export async function downloadDocument(db: SupabaseClient, userId: string, pad: string): Promise<Buffer | null> {
   if (!isGeldigDocumentPad(userId, pad)) return null
@@ -167,10 +204,7 @@ export async function verwerkNieuweUpload(
 
   // Docs vol: het bestand blijft staan zodat de gebruiker het zonder bewaren nog kan versturen (de opruiming haalt het
   // anders na een etmaal weg).
-  if (bewaard) {
-    const gebruik = await bewaardGebruik(db, p.userId)
-    if (gebruik.aantal >= QUOTA_MAX_DOCUMENTEN || gebruik.bytes + buffer.length > QUOTA_MAX_BYTES) return { error: 'docs_vol' }
-  }
+  if (bewaard && !(await bewaardeRuimteOver(db, p.userId, buffer.length))) return { error: 'docs_vol' }
 
   const { error } = await db.from('arnobot_documenten').insert({
     user_id: p.userId,
