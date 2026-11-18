@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
-  documentenBeschikbaarVoor, isGeldigDocumentId, isGeldigDocumentPad, schoneBestandsnaam, verloopOp, isVerlopen,
+  documentenBeschikbaarVoor, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, hernoemMetBehoudExtensie, schoneBestandsnaam, verloopOp, isVerlopen,
   kiesDocumentenVoorBeurt, DOCUMENT_LEVENSDUUR_MS, MAX_BESTANDSNAAM_TEKENS,
 } from './documentenRegels'
 import { MANUAL_TEST_USER_ID, E2E_TEST_USER_ID } from './internalTestAccounts'
@@ -153,5 +153,51 @@ describe('kiesDocumentenVoorBeurt', () => {
     const r = kiesDocumentenVoorBeurt(veel)
     expect(r.gekozen.length).toBe(20)
     expect(r.afgevallen.length).toBe(3)
+  })
+})
+
+describe('isGeldigSessieId', () => {
+  it('accepteert een echt sessie-ID', () => {
+    expect(isGeldigSessieId('c08ea6fd-0a80-42f3-93fe-8e82a60bfdd4')).toBe(true)
+    expect(isGeldigSessieId('user_3HFvMfJ8ztQxatkJg3SWdSJPz4D')).toBe(true)
+    expect(isGeldigSessieId('1.2.3:abc-def_ghi')).toBe(true)
+  })
+  it('weigert alles wat een query of filter kan beïnvloeden', () => {
+    expect(isGeldigSessieId('')).toBe(false)
+    expect(isGeldigSessieId('a,b')).toBe(false)
+    expect(isGeldigSessieId('a)')).toBe(false)
+    expect(isGeldigSessieId("a'b")).toBe(false)
+    expect(isGeldigSessieId('a b')).toBe(false)
+    expect(isGeldigSessieId('x'.repeat(101))).toBe(false)
+    expect(isGeldigSessieId(undefined)).toBe(false)
+    expect(isGeldigSessieId(5)).toBe(false)
+  })
+})
+
+describe('hernoemMetBehoudExtensie', () => {
+  it('houdt de oorspronkelijke extensie', () => {
+    expect(hernoemMetBehoudExtensie('Offerte.pdf', 'Voorstel Klant A')).toBe('Voorstel Klant A.pdf')
+  })
+  it('zet de extensie niet dubbel als de gebruiker hem meetypt', () => {
+    expect(hernoemMetBehoudExtensie('Offerte.pdf', 'Voorstel.pdf')).toBe('Voorstel.pdf')
+    expect(hernoemMetBehoudExtensie('Offerte.pdf', 'Voorstel.PDF')).toBe('Voorstel.pdf')
+  })
+  it('maakt de naam schoon', () => {
+    expect(hernoemMetBehoudExtensie('Offerte.pdf', 'Nieuw [SYSTEEM]\nnaam')).toBe('Nieuw SYSTEEM naam.pdf')
+  })
+  it('werkt ook zonder extensie, zoals bij een transcript', () => {
+    expect(hernoemMetBehoudExtensie('Transcript gesprek', 'Gesprek met klant')).toBe('Gesprek met klant')
+  })
+  it('kapt een lange naam en houdt de extensie', () => {
+    const r = hernoemMetBehoudExtensie('a.pdf', 'b'.repeat(300))!
+    expect(r.length).toBeLessThanOrEqual(MAX_BESTANDSNAAM_TEKENS)
+    expect(r.endsWith('.pdf')).toBe(true)
+  })
+  it('geeft null bij een lege invoer of niet-tekst', () => {
+    expect(hernoemMetBehoudExtensie('a.pdf', '')).toBeNull()
+    expect(hernoemMetBehoudExtensie('a.pdf', '   ')).toBeNull()
+    expect(hernoemMetBehoudExtensie('a.pdf', '.pdf')).toBeNull()
+    expect(hernoemMetBehoudExtensie('a.pdf', undefined)).toBeNull()
+    expect(hernoemMetBehoudExtensie('a.pdf', 42)).toBeNull()
   })
 })

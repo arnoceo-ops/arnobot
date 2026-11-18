@@ -96,3 +96,29 @@ export function kiesDocumentenVoorBeurt<T extends { naam: string; created_at: st
   const grens = opVolgorde.length - max
   return { gekozen: opVolgorde.slice(grens), afgevallen: opVolgorde.slice(0, grens) }
 }
+
+// Voorlopige grenzen voor bewaarde documenten per gebruiker (alleen wat in Docs staat; tijdelijke kopieën verlopen vanzelf).
+// De cijfers zijn plaatshouders uit de mockup: het besluit over de echte grenzen per plan ligt bij Arno
+// (docs/DOCUMENTEN_PLAN.md, open besluit 3).
+export const QUOTA_MAX_DOCUMENTEN = 50
+export const QUOTA_MAX_BYTES = 500 * 1024 * 1024
+
+/** Een sessie-ID komt uit de client; alleen tekens die in een echt ID voorkomen, nooit iets dat een query kan beïnvloeden. */
+export function isGeldigSessieId(id: unknown): id is string {
+  return typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,100}$/.test(id)
+}
+
+/**
+ * De nieuwe naam van een document: dezelfde opschoning als bij de upload, met behoud van de oorspronkelijke extensie
+ * (zodat naam en bestandstype niet uit elkaar lopen). Typt de gebruiker de extensie zelf mee, dan komt die niet dubbel.
+ * Geeft null bij een lege invoer.
+ */
+export function hernoemMetBehoudExtensie(oudeNaam: string, invoer: unknown): string | null {
+  if (typeof invoer !== 'string' || invoer.trim() === '') return null
+  const punt = oudeNaam.lastIndexOf('.')
+  const ext = punt > 0 && oudeNaam.length - punt <= 8 ? oudeNaam.slice(punt) : ''
+  let basis = invoer.trim()
+  if (ext && basis.toLowerCase().endsWith(ext.toLowerCase())) basis = basis.slice(0, basis.length - ext.length).trimEnd()
+  if (basis === '') return null
+  return schoneBestandsnaam(basis + ext)
+}

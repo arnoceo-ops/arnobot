@@ -1,10 +1,12 @@
 // Databasecode voor documenten (docs/DOCUMENTEN_PLAN.md). De Supabase-client komt als parameter binnen, zodat
-// de tests een nagemaakte client kunnen meegeven. Elke query op arnobot_documenten gaat met een
-// eigenaarsfilter (user_id); een document-ID of pad uit de client wordt hier nooit zonder dat filter gebruikt.
+// de tests een nagemaakte client kunnen meegeven. Elke query op arnobot_documenten en arnobot_document_koppelingen
+// gaat met een eigenaarsfilter (user_id); een document-ID, sessie-ID of pad uit de client wordt hier nooit zonder
+// dat filter en zonder controle op vorm gebruikt.
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildDocumentContentBlock } from './documentInhoud'
 import {
-  DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, isGeldigDocumentPad, schoneBestandsnaam, verloopOp,
+  DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN,
+  hernoemMetBehoudExtensie, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, schoneBestandsnaam, verloopOp,
 } from './documentenRegels'
 import type { GeladenBijlage, SamenstelRij } from './documentenSamenstellen'
 
@@ -23,16 +25,90 @@ export type DocumentRij = SamenstelRij & {
 const KOLOMMEN =
   'id, user_id, session_id, naam, soort, media_type, bytes, storage_path, tekst_cache, samenvatting, bewaard, created_at, laatst_gebruikt, verloopt_op, verwijderd_op'
 
-/** Alle documenten van één gesprek van één gebruiker, in uploadvolgorde. */
+/** Alleen wat de lijst in Docs en de chips nodig hebben: nooit de (zware) tekst of het opslagpad. */
+export type DocsLijstRij = {
+  id: string
+  naam: string
+  soort: 'document' | 'transcript'
+  media_type: string
+  bytes: number
+  session_id: string | null
+  bewaard: boolean
+  created_at: string
+  laatst_gebruikt: string
+  verloopt_op: string | null
+}
+const LIJST_KOLOMMEN = 'id, naam, soort, media_type, bytes, session_id, bewaard, created_at, laatst_gebruikt, verloopt_op'
+
+/**
+ * Alle documenten die in dit gesprek zichtbaar zijn: die in dit gesprek zijn toegevoegd plus de bewaarde documenten die de
+ * gebruiker er uit Docs aan heeft gekoppeld, in volgorde van toevoegen. Twee gewone queries in plaats van een samengesteld
+ * filter, zodat het sessie-ID nooit in een filtertekst terechtkomt.
+ */
 export async function laadSessieDocumenten(db: SupabaseClient, userId: string, sessionId: string): Promise<DocumentRij[]> {
-  const { data, error } = await db
+  const eigen = await db
     .from('arnobot_documenten')
     .select(KOLOMMEN)
     .eq('user_id', userId)
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true })
+  if (eigen.error) throw new Error(`documenten laden mislukt: ${eigen.error.message}`)
+  const rijen = [...((eigen.data ?? []) as DocumentRij[])]
+
+  const koppelingen = await db
+    .from('arnobot_document_koppelingen')
+    .select('document_id')
+    .eq('user_id', userId)
+    .eq('session_id', sessionId)
+  if (koppelingen.error) throw new Error(`koppelingen laden mislukt: ${koppelingen.error.message}`)
+  const ids = ((koppelingen.data ?? []) as { document_id: string }[]).map(k => k.document_id).filter(id => !rijen.some(r => r.id === id))
+  if (ids.length > 0) {
+    const gekoppeld = await db.from('arnobot_documenten').select(KOLOMMEN).eq('user_id', userId).in('id', ids)
+    if (gekoppeld.error) throw new Error(`gekoppelde documenten laden mislukt: ${gekoppeld.error.message}`)
+    rijen.push(...((gekoppeld.data ?? []) as DocumentRij[]))
+  }
+  return rijen.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
+}
+
+/** Wat ArnoBot in dit gesprek kan lezen, voor de weergave (chips): zonder grafstenen en zonder inhoud. */
+export async function lijstSessieDocumenten(db: SupabaseClient, userId: string, sessionId: string): Promise<DocsLijstRij[]> {
+  if (!isGeldigSessieId(sessionId)) return []
+  const rijen = await laadSessieDocumenten(db, userId, sessionId)
+  const nu = Date.now()
+  return rijen
+    .filter(r => !r.verwijderd_op && (r.bewaard || !r.verloopt_op || Date.parse(r.verloopt_op) > nu))
+    .map(r => ({
+      id: r.id, naam: r.naam, soort: r.soort, media_type: r.media_type, bytes: r.bytes, session_id: r.session_id,
+      bewaard: r.bewaard, created_at: r.created_at, laatst_gebruikt: r.laatst_gebruikt, verloopt_op: r.verloopt_op,
+    }))
+}
+
+/** De bewaarde documenten van een gebruiker (de lijst in de tab Docs), nieuwste eerst. */
+export async function lijstBewaardeDocumenten(db: SupabaseClient, userId: string): Promise<DocsLijstRij[]> {
+  const { data, error } = await db
+    .from('arnobot_documenten')
+    .select(LIJST_KOLOMMEN)
+    .eq('user_id', userId)
+    .eq('bewaard', true)
+    .is('verwijderd_op', null)
+    .order('created_at', { ascending: false })
+    .limit(500)
   if (error) throw new Error(`documenten laden mislukt: ${error.message}`)
-  return (data ?? []) as DocumentRij[]
+  return (data ?? []) as DocsLijstRij[]
+}
+
+/** Hoeveel een gebruiker nu in Docs bewaart (voor de grens en de regel boven de lijst). */
+export async function bewaardGebruik(db: SupabaseClient, userId: string): Promise<{ aantal: number; bytes: number }> {
+  const { data, error } = await db
+    .from('arnobot_documenten')
+    .select('bytes')
+    .eq('user_id', userId)
+    .eq('bewaard', true)
+    .is('verwijderd_op', null)
+    .limit(1000)
+  if (error) throw new Error(`gebruik tellen mislukt: ${error.message}`)
+  const rijen = (data ?? []) as { bytes: number }[]
+  return { aantal: rijen.length, bytes: rijen.reduce((som, r) => som + (r.bytes ?? 0), 0) }
 }
 
 /** Bytes uit de documentenbucket. Weigert elk pad dat niet precies `<eigen userId>/<uuid>.<ext>` is. */
@@ -53,18 +129,20 @@ async function verwijderBestand(db: SupabaseClient, userId: string, pad: string)
 }
 
 /**
- * Een nieuwe upload in dit gesprek vastleggen als tijdelijk document. Het bestand blijft in de bucket
- * (wordt hier nooit verwijderd, behalve als het afgekeurd wordt). Een tweede aanroep met hetzelfde pad
- * (bijvoorbeeld een herhaald verzoek) maakt geen tweede rij.
+ * Een nieuwe upload vastleggen. Standaard als tijdelijk document van dit gesprek; met bewaard = true als bewaard
+ * document in Docs (zonder verloopmoment, binnen de grens per gebruiker). Het bestand blijft in de bucket (wordt hier
+ * nooit verwijderd, behalve als het afgekeurd wordt). Een tweede aanroep met hetzelfde pad (bijvoorbeeld een herhaald
+ * verzoek) maakt geen tweede rij. Zonder sessionId (direct in Docs toegevoegd) hoort het document bij geen enkel gesprek.
  */
 export async function verwerkNieuweUpload(
   db: SupabaseClient,
-  p: { userId: string; sessionId: string; naam: string; mediaType: string; storagePath: string },
+  p: { userId: string; sessionId: string | null; naam: string; mediaType: string; storagePath: string; bewaard?: boolean },
   nu: Date = new Date(),
 ): Promise<{ error: string | null }> {
   if (!isGeldigDocumentPad(p.userId, p.storagePath)) return { error: 'bestand_niet_leesbaar' }
+  const bewaard = p.bewaard === true
 
-  // Een herhaald verzoek: dit pad staat al op naam van deze gebruiker in dit gesprek.
+  // Een herhaald verzoek: dit pad staat al op naam van deze gebruiker.
   const { data: bestaand } = await db
     .from('arnobot_documenten')
     .select('id')
@@ -87,6 +165,13 @@ export async function verwerkNieuweUpload(
     return { error: inhoud.error }
   }
 
+  // Docs vol: het bestand blijft staan zodat de gebruiker het zonder bewaren nog kan versturen (de opruiming haalt het
+  // anders na een etmaal weg).
+  if (bewaard) {
+    const gebruik = await bewaardGebruik(db, p.userId)
+    if (gebruik.aantal >= QUOTA_MAX_DOCUMENTEN || gebruik.bytes + buffer.length > QUOTA_MAX_BYTES) return { error: 'docs_vol' }
+  }
+
   const { error } = await db.from('arnobot_documenten').insert({
     user_id: p.userId,
     session_id: p.sessionId,
@@ -96,9 +181,9 @@ export async function verwerkNieuweUpload(
     bytes: buffer.length,
     storage_path: p.storagePath,
     tekst_cache: inhoud.extractedText,
-    bewaard: false,
+    bewaard,
     laatst_gebruikt: nu.toISOString(),
-    verloopt_op: verloopOp(nu).toISOString(),
+    verloopt_op: bewaard ? null : verloopOp(nu).toISOString(),
   })
   if (error && error.code !== '23505') return { error: 'document_opslaan_mislukt' }
   return { error: null }
@@ -135,4 +220,124 @@ export async function markeerGebruikt(db: SupabaseClient, userId: string, rijen:
   } catch (e) {
     console.error('[documenten] markeerGebruikt mislukt:', e instanceof Error ? e.message : String(e))
   }
+}
+
+// ---- Beheer vanuit de tab Docs ----
+
+type Uitkomst = { error: string | null }
+
+/** Hernoemt een bewaard document; de extensie blijft staan. */
+export async function hernoemDocument(db: SupabaseClient, userId: string, id: unknown, invoer: unknown): Promise<Uitkomst & { naam?: string }> {
+  if (!isGeldigDocumentId(id)) return { error: 'ongeldig_id' }
+  const { data } = await db
+    .from('arnobot_documenten')
+    .select('naam')
+    .eq('user_id', userId)
+    .eq('id', id)
+    .eq('bewaard', true)
+    .is('verwijderd_op', null)
+    .maybeSingle()
+  if (!data) return { error: 'niet_gevonden' }
+  const nieuw = hernoemMetBehoudExtensie((data as { naam: string }).naam, invoer)
+  if (!nieuw) return { error: 'naam_leeg' }
+  const { error } = await db.from('arnobot_documenten').update({ naam: nieuw }).eq('id', id).eq('user_id', userId)
+  if (error) return { error: 'opslaan_mislukt' }
+  return { error: null, naam: nieuw }
+}
+
+/** Verwijdert één document van de gebruiker: eerst het bestand, dan de rij (koppelingen gaan vanzelf mee). */
+export async function verwijderDocument(db: SupabaseClient, userId: string, id: unknown): Promise<Uitkomst> {
+  if (!isGeldigDocumentId(id)) return { error: 'ongeldig_id' }
+  const { data } = await db
+    .from('arnobot_documenten')
+    .select('storage_path')
+    .eq('user_id', userId)
+    .eq('id', id)
+    .maybeSingle()
+  if (!data) return { error: 'niet_gevonden' }
+  const pad = (data as { storage_path: string | null }).storage_path
+  if (pad) {
+    if (!isGeldigDocumentPad(userId, pad)) return { error: 'ongeldig_pad' }
+    const { error: rmFout } = await db.storage.from(DOCUMENTEN_BUCKET).remove([pad])
+    if (rmFout) return { error: 'bestand_verwijderen_mislukt' }
+  }
+  const { error } = await db.from('arnobot_documenten').delete().eq('id', id).eq('user_id', userId)
+  if (error) return { error: 'verwijderen_mislukt' }
+  return { error: null }
+}
+
+/**
+ * Alles van één gebruiker weg: bewaarde en tijdelijke documenten, bestanden en koppelingen. Voor "verwijder alles" in het account
+ * en voor accountverwijdering. Faalt het verwijderen van bestanden, dan blijven de rijen staan zodat het opnieuw kan.
+ */
+export async function verwijderGebruikersDocumenten(db: SupabaseClient, userId: string): Promise<Uitkomst & { aantal: number }> {
+  const { data, error } = await db
+    .from('arnobot_documenten')
+    .select('id, storage_path')
+    .eq('user_id', userId)
+    .limit(1000)
+  if (error) return { error: 'laden_mislukt', aantal: 0 }
+  const rijen = (data ?? []) as { id: string; storage_path: string | null }[]
+  const paden = rijen.map(r => r.storage_path).filter((p): p is string => !!p && isGeldigDocumentPad(userId, p))
+  for (let i = 0; i < paden.length; i += 100) {
+    const { error: rmFout } = await db.storage.from(DOCUMENTEN_BUCKET).remove(paden.slice(i, i + 100))
+    if (rmFout) return { error: 'bestand_verwijderen_mislukt', aantal: 0 }
+  }
+  const { error: delFout } = await db.from('arnobot_documenten').delete().eq('user_id', userId)
+  if (delFout) return { error: 'verwijderen_mislukt', aantal: 0 }
+  return { error: null, aantal: rijen.length }
+}
+
+/** Het bestand van een bewaard document om te downloaden. Een transcript heeft geen bestand en wordt een tekstbestand. */
+export async function downloadBewaardDocument(db: SupabaseClient, userId: string, id: unknown): Promise<{ naam: string; mediaType: string; buffer: Buffer } | null> {
+  if (!isGeldigDocumentId(id)) return null
+  const { data } = await db
+    .from('arnobot_documenten')
+    .select(KOLOMMEN)
+    .eq('user_id', userId)
+    .eq('id', id)
+    .eq('bewaard', true)
+    .is('verwijderd_op', null)
+    .maybeSingle()
+  const rij = data as DocumentRij | null
+  if (!rij) return null
+  if (rij.storage_path) {
+    const buffer = await downloadDocument(db, userId, rij.storage_path)
+    return buffer ? { naam: rij.naam, mediaType: rij.media_type, buffer } : null
+  }
+  if (rij.tekst_cache === null || rij.tekst_cache === undefined) return null
+  return { naam: rij.naam.endsWith('.txt') ? rij.naam : `${rij.naam}.txt`, mediaType: 'text/plain', buffer: Buffer.from(rij.tekst_cache, 'utf-8') }
+}
+
+// ---- Documenten uit Docs in een gesprek ----
+
+/** Koppelt een bewaard document aan een gesprek, zodat ArnoBot het daar leest. Alleen eigen, bewaarde, niet verwijderde documenten. */
+export async function koppelDocument(db: SupabaseClient, userId: string, documentId: unknown, sessionId: unknown): Promise<Uitkomst & { document?: { id: string; naam: string; soort: string } }> {
+  if (!isGeldigDocumentId(documentId) || !isGeldigSessieId(sessionId)) return { error: 'ongeldig_id' }
+  const { data } = await db
+    .from('arnobot_documenten')
+    .select('id, naam, soort')
+    .eq('user_id', userId)
+    .eq('id', documentId)
+    .eq('bewaard', true)
+    .is('verwijderd_op', null)
+    .maybeSingle()
+  if (!data) return { error: 'niet_gevonden' }
+  const { error } = await db
+    .from('arnobot_document_koppelingen')
+    .upsert({ document_id: documentId, user_id: userId, session_id: sessionId }, { onConflict: 'document_id,session_id', ignoreDuplicates: true })
+  if (error) return { error: 'koppelen_mislukt' }
+  return { error: null, document: data as { id: string; naam: string; soort: string } }
+}
+
+export async function ontkoppelDocument(db: SupabaseClient, userId: string, documentId: unknown, sessionId: unknown): Promise<Uitkomst> {
+  if (!isGeldigDocumentId(documentId) || !isGeldigSessieId(sessionId)) return { error: 'ongeldig_id' }
+  const { error } = await db
+    .from('arnobot_document_koppelingen')
+    .delete()
+    .eq('user_id', userId)
+    .eq('document_id', documentId)
+    .eq('session_id', sessionId)
+  if (error) return { error: 'ontkoppelen_mislukt' }
+  return { error: null }
 }

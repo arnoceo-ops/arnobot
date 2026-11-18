@@ -12,7 +12,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   try {
-    const [profile, logs, account, coaching, referrals, teamlidmaatschap, sessieanalyses] = await Promise.all([
+    const [profile, logs, account, coaching, referrals, teamlidmaatschap, sessieanalyses, documenten] = await Promise.all([
       supabaseAdmin.from('arnobot_blog_profiles').select('*').eq('user_id', userId),
       supabaseAdmin.from('arnobot_rds_logs').select('*').eq('user_id', userId),
       supabaseAdmin.from('approved_users').select('*').eq('user_id', userId),
@@ -20,6 +20,13 @@ export async function GET() {
       supabaseAdmin.from('arnobot_referrals').select('*').or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`),
       supabaseAdmin.from('arnobot_team_members').select('*').eq('user_id', userId),
       supabaseAdmin.from('arnobot_blog_sessions').select('id, title, summary, created_at').eq('user_id', userId),
+      // Alleen de gegevens over de documenten (naam, soort, grootte, datum, bewaard of tijdelijk), niet de inhoud: de
+      // bestanden zelf haalt de gebruiker met DOWNLOAD uit de tab Docs. Grafstenen (al verwijderd) horen er niet in.
+      supabaseAdmin.from('arnobot_documenten')
+        .select('naam, soort, media_type, bytes, bewaard, created_at, laatst_gebruikt, verloopt_op')
+        .eq('user_id', userId)
+        .is('verwijderd_op', null)
+        .limit(1000),
     ])
 
     return NextResponse.json({
@@ -32,6 +39,7 @@ export async function GET() {
       referrals: referrals.data ?? [],
       team: teamlidmaatschap.data ?? [],
       sessie_analyses: sessieanalyses.data ?? [],
+      documenten: documenten.data ?? [],
     })
   } catch (e: unknown) {
     console.error('Export error:', e)

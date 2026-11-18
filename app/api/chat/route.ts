@@ -441,6 +441,7 @@ export async function POST(req: NextRequest) {
           && typeof rawDocument.storagePath === 'string' && !AUDIO_MEDIA_TYPES.has(rawDocument.mediaType)) {
           const nieuw = await verwerkNieuweUpload(supabase, {
             userId, sessionId, naam: rawDocument.name, mediaType: rawDocument.mediaType, storagePath: rawDocument.storagePath,
+            bewaard: rawDocument.bewaar === true,
           })
           if (nieuw.error) {
             return NextResponse.json({ error: nieuw.error }, { status: 400, headers: corsHeaders(origin) })

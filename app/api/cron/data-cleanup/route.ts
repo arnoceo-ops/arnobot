@@ -62,6 +62,7 @@ async function cronHandler(req: NextRequest) {
     <ol style="font-family:sans-serif">
       <li>Supabase: voornaam, achternaam, email, linkedin → null in <code>approved_users</code></li>
       <li>Supabase: <code>arnobot_rds_logs</code> → user_id ontkoppelen (user_id → null)</li>
+      <li>Supabase: <code>arnobot_documenten</code> van deze gebruiker en de bestanden onder zijn map in de bucket <code>arnobot-documenten</code> verwijderen (functie <code>verwijderGebruikersDocumenten</code> in <code>lib/documenten.ts</code>)</li>
       <li>Clerk: gebruiker verwijderen via het Clerk dashboard</li>
     </ol>
   `
