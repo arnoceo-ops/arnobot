@@ -201,3 +201,20 @@ Het eerste ontwerp was te dun op de zwaarste punten. Wat verandert, als voorstel
 12. **Nog te beslissen:** welke abonnementen de import krijgen en of een teammanager hem mag zien; of `documentenBeschikbaarVoor` als schakelaar herbruikbaar is; hoe geplakte tekst van derden in de export wordt behandeld.
 
 **Eerste onderzoek zodra een echte export er is:** (1) structuur en grootte: één bestand of meer, projecten en bijlagen erin, berichten als boom of lijst, tijdstempels en rollen; (2) aantal gesprekken en tekens voor een typische gebruiker, voor de kostenschatting; (3) hoeveel privé- of niet-sales gesprekken erin zitten, om de classificatie en de keuzelijst te toetsen; (4) of tekst van derden en geplakte documenten erin staan; (5) of een streaming-parse van de JSON volstaat of dat het bestand te groot is voor het geheugen.
+
+### Capability-sweep fase 2 (2026-11-18, webzoekopdrachten, nog geen echte export bekeken)
+
+Bronnen zijn vooral derde partijen; de officiële helppagina's gaven geen schema. Alles hieronder is dus een aanname tot Arno's eigen export is bekeken.
+
+**Wat er kan**
+- **Weg A, geheugenprompt (geen export nodig):** de gebruiker plakt een door ons geschreven prompt in zijn eigen AI ("vat samen wat je weet over mijn werk, klanten, deals en aanpak") en plakt het antwoord terug. Dit is het gangbare patroon: Anthropic biedt zelf een "import memory"-functie met dezelfde werking (claude.com/import-memory; de menupaden verschillen per bron) en die voert geheugen over, geen gesprekken. Klein, snel, goedkoop, geen zip, nauwelijks gegevens van derden.
+- **Weg B, volledige export:** claude.ai: Settings > Privacy > Export data, een zip met onder meer conversations.json, volgens sommige bronnen ook projects.json, memories.json en users.json (bronnen spreken elkaar tegen). ChatGPT: zip met conversations.json (bij grote accounts in delen, conversations-000.json enzovoort), elk gesprek als boom (`mapping`) met vertakkingen van bewerkte of opnieuw gegenereerde antwoorden, dus een lezer moet de boom aflopen.
+
+**Wat niet kan of onzeker is**
+- De ChatGPT-export bevat de opgeslagen geheugenregels niet (alleen gesprekken); die komen alleen via weg A.
+- De claude.ai-export bevat de originele bijlagen niet (privacy.claude.com, eerder gelezen); gesprekken zijn niet zeker aan projecten gekoppeld (een tool-auteur meldt dat het project-ID ontbreekt); verwijderde gesprekken en tijdelijke chats ontbreken.
+- Het schema is nergens officieel beschreven en kan wijzigen; de lezers breken dan stil. Onbekend blijft of memories.json in de claude.ai-export zit.
+- Een zip van tientallen of honderden MB past niet door een Vercel-functie; uitpakken moet in de browser of gestreamd (zie het herziene ontwerp).
+- Gesprekken met een andere AI bevatten vaak privézaken en gegevens van derden, en advies van een ander model dat ArnoBot niet als eigen kennis mag overnemen.
+
+**Eerste indruk:** weg A geeft het grootste deel van de "vliegende start" voor het kleinste deel van de bouw en de risico's; weg B voegt alleen de details uit afzonderlijke gesprekken toe. Besluit nog niet genomen.
