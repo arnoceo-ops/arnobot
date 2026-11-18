@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   documentenBeschikbaarVoor, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, hernoemMetBehoudExtensie, schoneBestandsnaam, verloopOp, isVerlopen,
-  kiesDocumentenVoorBeurt, DOCUMENT_LEVENSDUUR_MS, MAX_BESTANDSNAAM_TEKENS,
+  kiesDocumentenVoorBeurt, maxBytesVoor, DOCUMENT_LEVENSDUUR_MS, MAX_BESTANDSNAAM_TEKENS,
 } from './documentenRegels'
 import { MANUAL_TEST_USER_ID, E2E_TEST_USER_ID } from './internalTestAccounts'
 
@@ -142,6 +142,18 @@ describe('kiesDocumentenVoorBeurt', () => {
     const r = kiesDocumentenVoorBeurt([doc('d', 15), doc('a', 10), doc('c', 14), doc('b', 12)], 3)
     expect(r.gekozen.map(d => d.naam)).toEqual(['b', 'c', 'd'])
     expect(r.afgevallen.map(d => d.naam)).toEqual(['a'])
+  })
+  it('laat bij een te zwaar totaal het oudste vallen, het nieuwste blijft altijd', () => {
+    const gewicht = (d: { naam: string }) => 30
+    const r = kiesDocumentenVoorBeurt([doc('a', 10), doc('b', 11), doc('c', 12)], 20, { gewicht, maxGewicht: 70 })
+    expect(r.gekozen.map(d => d.naam)).toEqual(['b', 'c'])
+    expect(r.afgevallen.map(d => d.naam)).toEqual(['a'])
+    const een = kiesDocumentenVoorBeurt([doc('x', 10)], 20, { gewicht: () => 999, maxGewicht: 1 })
+    expect(een.gekozen.map(d => d.naam)).toEqual(['x'])
+  })
+  it('geeft een afbeelding een lagere grens dan een PDF', () => {
+    expect(maxBytesVoor('image/png')).toBe(10 * 1024 * 1024)
+    expect(maxBytesVoor('application/pdf')).toBe(20 * 1024 * 1024)
   })
   it('verandert de invoer niet', () => {
     const invoer = [doc('b', 12), doc('a', 10)]

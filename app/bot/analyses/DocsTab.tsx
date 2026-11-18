@@ -25,7 +25,8 @@ const TOEGESTAAN = [
   'application/pdf', 'image/png', 'image/jpeg', 'image/webp',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]
-const MAX_BYTES = 10 * 1024 * 1024
+const MAX_BYTES = 20 * 1024 * 1024
+const MAX_AFBEELDING_BYTES = 10 * 1024 * 1024 // een afbeelding mag bij Anthropic niet groter zijn
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 // Bij veel gesprekken over één bestand blijft de open rij rustig: de nieuwste drie, de rest achter een knop.
 const MAX_GESPREKKEN = 3
@@ -107,7 +108,8 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
     if (!file) return
     setFout(null)
     if (!TOEGESTAAN.includes(file.type)) { setFout('Alleen PDF, Word of een afbeelding wordt ondersteund.'); return }
-    if (file.size > MAX_BYTES) { setFout('Bestand is groter dan 10MB.'); return }
+    const maxBytes = file.type.startsWith('image/') ? MAX_AFBEELDING_BYTES : MAX_BYTES
+    if (file.size > maxBytes) { setFout(`Bestand is groter dan ${maxBytes / (1024 * 1024)}MB.`); return }
     setUploaden(true)
     try {
       const urlRes = await fetch('/api/bot/chat-upload-url', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ mediaType: file.type }) })

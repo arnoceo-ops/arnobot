@@ -5,7 +5,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildDocumentContentBlock } from './documentInhoud'
 import {
-  DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN,
+  DOCUMENTEN_BUCKET, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, maxBytesVoor,
   hernoemMetBehoudExtensie, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, schoneBestandsnaam, verloopOp,
 } from './documentenRegels'
 import { bouwDocumentGeheugen, type GeladenBijlage, type SamenstelRij } from './documentenSamenstellen'
@@ -190,7 +190,7 @@ export async function verwerkNieuweUpload(
 
   const buffer = await downloadDocument(db, p.userId, p.storagePath)
   if (!buffer) return { error: 'bestand_niet_leesbaar' }
-  if (buffer.length > MAX_DOCUMENT_BYTES) {
+  if (buffer.length > maxBytesVoor(p.mediaType)) {
     await verwijderBestand(db, p.userId, p.storagePath)
     return { error: 'bestand_te_groot' }
   }

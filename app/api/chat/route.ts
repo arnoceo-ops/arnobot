@@ -79,7 +79,7 @@ import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
-const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024 // 10MB
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024 // 20MB (alleen het oude pad; de nieuwe route gebruikt maxBytesVoor in lib/documentenRegels.ts)
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,

@@ -345,7 +345,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const [streamingStarted, setStreamingStarted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const MAX_FILE_BYTES = 10 * 1024 * 1024
+  const MAX_FILE_BYTES = 20 * 1024 * 1024
+  const MAX_AFBEELDING_BYTES = 10 * 1024 * 1024 // een afbeelding mag bij Anthropic niet groter zijn
   const MAX_AUDIO_BYTES = 150 * 1024 * 1024
   const ALLOWED_FILE_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
   const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/webm']
@@ -369,8 +370,9 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       setFileError('Audiobestand is groter dan 150MB.')
       return
     }
-    if (!isAudio && file.size > MAX_FILE_BYTES) {
-      setFileError('Bestand is groter dan 10MB.')
+    const maxBytes = file.type.startsWith('image/') ? MAX_AFBEELDING_BYTES : MAX_FILE_BYTES
+    if (!isAudio && file.size > maxBytes) {
+      setFileError(`Bestand is groter dan ${maxBytes / (1024 * 1024)}MB.`)
       return
     }
 
@@ -1631,7 +1633,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
             } else if (data.error === 'bestandstype_niet_ondersteund') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestandstype wordt niet ondersteund. Probeer een PDF, Word-document of afbeelding, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_te_groot') {
-              setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is groter dan 10MB. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
+              setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand is te groot. Kies een kleiner bestand, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'bestand_niet_leesbaar') {
               setMessages(prev => [...prev, { role: 'arno', content: 'Dat bestand kon niet worden gelezen. Probeer een ander formaat, of verwijder de bijlage om zonder verder te gaan.' }])
             } else if (data.error === 'audio_alleen_betaald') {
@@ -2823,7 +2825,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                     className="spar-attach-btn"
                     onClick={() => (documentenAan ? setDocsMenu(m => (m === 'dicht' ? 'keuze' : 'dicht')) : fileInputRef.current?.click())}
                     disabled={loading || blocked || uploadingFile}
-                    title="Document toevoegen (PDF, Word of afbeelding, max 10MB)"
+                    title="Bestand toevoegen (PDF, Word of afbeelding, max 20MB)"
                   >
                     +
                   </button>

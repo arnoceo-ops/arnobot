@@ -10,7 +10,16 @@ export const DOCUMENTEN_BUCKET = 'arnobot-documenten'
 // levensduur verdwijnt een document midden in een gesprek dat de app nog als lopend ziet.
 export const DOCUMENT_LEVENSDUUR_MS = 48 * 60 * 60 * 1000
 
-export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
+// Per type een grens. Een afbeelding mag bij Anthropic niet groter zijn dan 10 MB (bron: platform.claude.com/docs/en/build-with-claude/vision,
+// gelezen 2026-11-18); PDF, Word en tekst mogen tot 20 MB. De bucket arnobot-documenten heeft dezelfde bovengrens (docs/sql/2026-11-18-documenten-bucket-20mb.sql).
+export const MAX_AFBEELDING_BYTES = 10 * 1024 * 1024
+export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
+export function maxBytesVoor(mediaType: string): number {
+  return mediaType.startsWith('image/') ? MAX_AFBEELDING_BYTES : MAX_DOCUMENT_BYTES
+}
+// Totaal aan bestanden per beurt: elk bestand gaat als base64 mee (een derde groter) en een Anthropic-aanvraag mag 128 MB zijn
+// (bron: platform.claude.com/docs/en/build-with-claude/pdf-support, gelezen 2026-11-18). 60 MB aan bestanden blijft daar ruim onder.
+export const MAX_BYTES_PER_BEURT = 60 * 1024 * 1024
 // Meer dan 20 afbeeldings- en documentblokken per verzoek valt onder strengere limieten bij Anthropic
 // (bron: platform.claude.com/docs/en/build-with-claude/vision, gelezen 2026-11-18).
 export const MAX_DOCUMENTEN_PER_BEURT = 20
@@ -90,11 +99,16 @@ export function isVerlopen(verlooptOp: string | Date | null | undefined, nu: Dat
 export function kiesDocumentenVoorBeurt<T extends { naam: string; created_at: string }>(
   documenten: T[],
   max: number = MAX_DOCUMENTEN_PER_BEURT,
+  opties?: { gewicht: (d: T) => number; maxGewicht: number },
 ): { gekozen: T[]; afgevallen: T[] } {
-  const opVolgorde = [...documenten].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
-  if (opVolgorde.length <= max) return { gekozen: opVolgorde, afgevallen: [] }
-  const grens = opVolgorde.length - max
-  return { gekozen: opVolgorde.slice(grens), afgevallen: opVolgorde.slice(0, grens) }
+  const gekozen = [...documenten].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
+  const afgevallen: T[] = []
+  const som = () => (opties ? gekozen.reduce((t, d) => t + opties.gewicht(d), 0) : 0)
+  // Het oudste valt eerst af; het nieuwste document blijft altijd staan (elk afzonderlijk bestand blijft binnen zijn eigen grens).
+  while (gekozen.length > 1 && (gekozen.length > max || (opties !== undefined && som() > opties.maxGewicht))) {
+    afgevallen.push(gekozen.shift() as T)
+  }
+  return { gekozen, afgevallen }
 }
 
 // Voorlopige grenzen voor bewaarde documenten per gebruiker (alleen wat in Docs staat; tijdelijke kopieën verlopen vanzelf).

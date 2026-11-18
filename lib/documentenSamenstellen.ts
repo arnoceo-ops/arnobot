@@ -2,7 +2,7 @@
 // moet horen als een document niet (meer) te zien is. Bewust zonder databasetoegang: de laadfunctie komt
 // van buiten, zodat dit met gewone unit-tests te toetsen is (docs/DOCUMENTEN_PLAN.md).
 import type Anthropic from '@anthropic-ai/sdk'
-import { isVerlopen, kiesDocumentenVoorBeurt, MAX_DOCUMENTEN_PER_BEURT } from './documentenRegels'
+import { isVerlopen, kiesDocumentenVoorBeurt, MAX_BYTES_PER_BEURT, MAX_DOCUMENTEN_PER_BEURT } from './documentenRegels'
 
 export type SamenstelRij = {
   id: string
@@ -11,6 +11,8 @@ export type SamenstelRij = {
   bewaard: boolean
   verloopt_op: string | null
   tekst_cache: string | null
+  /** Grootte van het bestand in bytes, voor de grens op het totaal per beurt. */
+  bytes?: number
   /** Gevuld als de opruiming het document al heeft verwijderd: alleen de naam is dan nog over (een "grafsteen"). */
   verwijderd_op?: string | null
 }
@@ -53,7 +55,9 @@ export async function stelBijlagenSamen<T extends SamenstelRij>(
     else levend.push(rij)
   }
 
-  const { gekozen, afgevallen } = kiesDocumentenVoorBeurt(levend, max)
+  // Een tekstdocument telt met zijn tekst, een PDF of afbeelding met zijn bestandsgrootte (die gaat als base64 mee).
+  const gewicht = (r: T) => (r.tekst_cache !== null && r.tekst_cache !== undefined ? r.tekst_cache.length : (r.bytes ?? 0))
+  const { gekozen, afgevallen } = kiesDocumentenVoorBeurt(levend, max, { gewicht, maxGewicht: MAX_BYTES_PER_BEURT })
   uit.afgevallen = afgevallen.map(r => r.naam)
 
   for (const rij of gekozen) {
@@ -97,7 +101,7 @@ export function bouwBijlageTekst(s: Samengesteld): string {
     delen.push(`[Let op: de bijlage "${n.naam}" is in dit gesprek niet meer zichtbaar (${REDEN_TEKST[n.reden]}). Je kunt hem niet lezen. Zeg dat tegen de gebruiker, vraag of hij het bestand opnieuw toevoegt of de tekst plakt, en bouw niet voort op wat je eerder over dit document zei of dacht te weten.]`)
   }
   if (s.afgevallen.length > 0) {
-    delen.push(`[Let op: er zijn te veel bijlagen om ze allemaal mee te sturen. Niet meegestuurd en dus niet zichtbaar: ${s.afgevallen.join(', ')}. Zeg dat tegen de gebruiker als dit voor de vraag uitmaakt.]`)
+    delen.push(`[Let op: er zijn te veel of te grote bijlagen om ze allemaal mee te sturen. Niet meegestuurd en dus niet zichtbaar: ${s.afgevallen.join(', ')}. Zeg dat tegen de gebruiker als dit voor de vraag uitmaakt.]`)
   }
   return delen.length > 0 ? '\n\n' + delen.join('\n\n') : ''
 }
