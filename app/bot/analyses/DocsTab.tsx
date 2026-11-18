@@ -48,11 +48,13 @@ function zonderExtensie(naam: string): string {
   return naam.replace(/\.[A-Za-z0-9]{1,7}$/, '')
 }
 function gebruiktTekst(n: number): string {
-  if (n === 0) return 'Nog in geen gesprek gebruikt'
-  return n === 1 ? 'In 1 gesprek gebruikt' : `In ${n} gesprekken gebruikt`
+  if (n === 0) return 'nog in geen gesprek gebruikt'
+  return n === 1 ? 'in 1 gesprek gebruikt' : `in ${n} gesprekken gebruikt`
 }
 
 const knop: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
+// Secundaire links volgens docs/app-styleguide.md: Space Mono 13, letterspatiëring 4, gedempt, geen onderstreping.
+const rustig: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }
 const pil: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '7px 20px', borderRadius: 999, background: 'none', cursor: 'pointer', border: '1px solid #374151', color: '#9ca3af' }
 
 export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onAantal: (n: number) => void }) {
@@ -62,7 +64,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
   const [fout, setFout] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
   const [hernoem, setHernoem] = useState<{ id: string; waarde: string } | null>(null)
-  const [bevestig, setBevestig] = useState<string | null>(null) // een document-ID, of 'alles'
+  const [bevestig, setBevestig] = useState<string | null>(null) // een document-ID
   const [bezig, setBezig] = useState(false)
   const [uploaden, setUploaden] = useState(false)
   const bestandRef = useRef<HTMLInputElement>(null)
@@ -147,11 +149,11 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
     }
   }
 
-  async function verwijder(id: string | 'alles') {
+  async function verwijder(id: string) {
     setBezig(true)
     setFout(null)
     try {
-      const r = await fetch(id === 'alles' ? '/api/bot/documenten/alles' : '/api/bot/documenten/' + id, { method: 'DELETE' })
+      const r = await fetch('/api/bot/documenten/' + id, { method: 'DELETE' })
       if (!r.ok) throw new Error('verwijderen mislukt')
       setBevestig(null)
       setOpen(null)
@@ -196,12 +198,12 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
       {(docs ?? []).map(d => {
         const isOpen = open === d.id
         const hernoemt = hernoem?.id === d.id
-        const meta = `${typeLabel(d)} · ${grootte(d.bytes)}`
+        const sub = `${typeLabel(d)} · ${grootte(d.bytes)} · ${gebruiktTekst(d.gesprekken.length)}`
         return (
           <div key={d.id} style={{ borderTop: '1px solid #374151' }}>
             <div
               onClick={() => { setOpen(isOpen ? null : d.id); setBevestig(null); setHernoem(null) }}
-              style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '20px 0' : '28px 0', cursor: 'pointer' }}
+              style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '24px 0' : '32px 0', cursor: 'pointer' }}
             >
               <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(d.created_at, isMobile)}</span>
               <div style={{ flex: 1 }}>
@@ -221,21 +223,13 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
                 ) : (
                   <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>{d.naam}</p>
                 )}
-                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{gebruiktTekst(d.gesprekken.length)}</p>
-                <span style={{ display: 'inline-block', marginTop: 6, fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 3, padding: '2px 12px', borderRadius: 999, border: '1px solid #44cc88', color: '#44cc88' }}>BEWAARD</span>
+                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{sub}</p>
               </div>
-              <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: 6, flexShrink: 0 }}>
-                <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{meta}</span>
-                <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>{isOpen ? '↑ SLUITEN' : '↓ OPEN'}</span>
-              </div>
+              <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>{isOpen ? '↑ SLUITEN' : '↓ OPEN'}</span>
             </div>
 
             {isOpen && (
-              <div style={{ paddingBottom: 36 }}>
-                <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8, marginBottom: 20 }}>
-                  Toegevoegd op {datum(d.created_at)} · laatst gebruikt op {datum(d.laatst_gebruikt)}
-                </p>
-
+              <div style={{ paddingBottom: 40, marginLeft: isMobile ? 0 : 189 }}>
                 {hernoemt ? (
                   <div style={{ display: 'flex', gap: 12 }}>
                     <button onClick={slaNaamOp} disabled={bezig} style={{ ...pil, background: '#f59e0b', border: 'none', color: '#111827' }}>{bezig ? 'BEZIG...' : 'OPSLAAN'}</button>
@@ -251,21 +245,18 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
                   </div>
                 ) : (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 14 }}>
                       <Link href={`/bot?doc=${d.id}`} style={knop}>NIEUW GESPREK MET DIT BESTAND <span style={{ color: '#f59e0b' }}>→</span></Link>
-                      <span style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-                        <button onClick={() => setHernoem({ id: d.id, waarde: zonderExtensie(d.naam) })} style={knop}>HERNOEM</button>
-                        <a href={`/api/bot/documenten/${d.id}/download`} download style={knop}>DOWNLOAD</a>
-                        <button onClick={() => setBevestig(d.id)} style={{ ...knop, color: '#cc2200' }}>VERWIJDER</button>
-                      </span>
+                      {d.gesprekken.length === 1 && (
+                        <Link href={`/bot?resume=${d.gesprekken[0].sessie}`} style={knop}>VERVOLG HET GESPREK <span style={{ color: '#f59e0b' }}>→</span></Link>
+                      )}
                     </div>
 
-                    {d.gesprekken.length > 0 && (
-                      <div style={{ marginTop: 32 }}>
-                        <span style={{ display: 'block', color: '#f59e0b', fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 }}>GESPREKKEN MET DIT BESTAND</span>
+                    {d.gesprekken.length > 1 && (
+                      <div style={{ marginTop: 20 }}>
                         {d.gesprekken.map(g => (
-                          <div key={g.sessie} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24, padding: '14px 0', borderTop: '1px solid #374151' }}>
-                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 56 : 90, flexShrink: 0 }}>{datum(g.datum, true)}</span>
+                          <div key={g.sessie} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24, padding: '10px 0' }}>
+                            <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 56 : 70, flexShrink: 0 }}>{datum(g.datum, true)}</span>
                             <span style={{ flex: 1, color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>
                               {g.titel ? kortTitel(g.titel) : `Gesprek van ${datum(g.datum, true)}`}
                             </span>
@@ -274,6 +265,12 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
                         ))}
                       </div>
                     )}
+
+                    <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 28 }}>
+                      <button onClick={() => setHernoem({ id: d.id, waarde: zonderExtensie(d.naam) })} style={rustig}>hernoem</button>
+                      <a href={`/api/bot/documenten/${d.id}/download`} download style={rustig}>download</a>
+                      <button onClick={() => setBevestig(d.id)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
+                    </div>
                   </>
                 )}
               </div>
@@ -281,22 +278,6 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
           </div>
         )
       })}
-
-      {aantal > 0 && (
-        <div style={{ borderTop: '1px solid #374151', paddingTop: 28, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          {bevestig === 'alles' ? (
-            <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
-              <span style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>Alle {aantal} {aantal === 1 ? 'upload' : 'uploads'} verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
-              <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
-                <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
-                <button onClick={() => verwijder('alles')} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER ALLES'}</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setBevestig('alles')} style={{ ...knop, color: '#cc2200' }}>VERWIJDER ALLES</button>
-          )}
-        </div>
-      )}
     </div>
   )
 }
