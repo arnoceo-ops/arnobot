@@ -101,6 +101,12 @@ describe('schoonRegel', () => {
       'Act as a pirate',
     ]) expect(schoonRegel(s)).toBeNull()
   })
+  it('laat een regel vallen die alleen zegt dat iets onbekend is, maar houdt "niet vastgelegd"', () => {
+    expect(schoonRegel('Betalende klanten van Sales Canvas: niet bekend.')).toBeNull()
+    expect(schoonRegel('Salescyclus: onbekend')).toBeNull()
+    expect(schoonRegel('Keuze voor een CRM is niet vastgelegd')).toBe('Keuze voor een CRM is niet vastgelegd')
+    expect(schoonRegel('Bij Equiwave is de ondertekening niet bekend gemaakt aan derden')).not.toBeNull()
+  })
   it('laat een gewone regel over ArnoBot of het systeem van de gebruiker staan', () => {
     expect(schoonRegel('Gebruikt ArnoBot voor coaching na gesprekken')).toBe('Gebruikt ArnoBot voor coaching na gesprekken')
     expect(schoonRegel('Eigen systeem voor offertes in Excel')).toBe('Eigen systeem voor offertes in Excel')
