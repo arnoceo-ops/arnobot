@@ -36,6 +36,7 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
   const [fout, setFout] = useState<string | null>(null)
   const [gekopieerd, setGekopieerd] = useState(false)
   const [bevestig, setBevestig] = useState<ImportBron | null>(null) // het profiel dat de gebruiker wil verwijderen
+  const [uitgeklapt, setUitgeklapt] = useState<ImportBron | null>(null) // het profiel waarvan de regels getoond worden
   const [bezig, setBezig] = useState(false)
 
   const laad = useCallback(async () => {
@@ -149,46 +150,61 @@ export default function HistorieImportBlok({ isMobile }: { isMobile: boolean }) 
 
   return (
     <div style={{ borderTop: '1px solid #374151', paddingTop: 40, marginTop: 40 }}>
-      <p style={label}>Neem je historie mee</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <p style={label}>Neem je historie mee</p>
+        {opgeslagen.length > 0 && opgeslagen.length < 3 && !open && (
+          <button onClick={() => { setBron('anders'); setOpen(true) }} style={pilActief}>+ ANDERE AI TOEVOEGEN</button>
+        )}
+      </div>
 
       {opgeslagen.length > 0 && stap === 'start' && !open && (
         <div style={{ marginTop: 20 }}>
-          {opgeslagen.map((p, n) => (
-            <div key={p.bron} style={{ marginTop: n === 0 ? 0 : 36 }}>
-              <p style={{ color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: isMobile ? 22 : 26, letterSpacing: 1, lineHeight: 1.3 }}>
-                Profiel uit {BRON_NAAM[p.bron]}, {datum(p.created_at)}
-              </p>
-              <div style={{ marginTop: 16 }}>
-                {KOPJES.filter(k => p.profiel[k.sleutel].length > 0).map(k => (
-                  <div key={k.sleutel} style={{ marginBottom: 16 }}>
-                    <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 3, textTransform: 'uppercase' }}>{k.label}</p>
-                    {p.profiel[k.sleutel].map((r, i) => (
-                      <p key={i} style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.8 }}>{r}</p>
+          {opgeslagen.map(p => {
+            const isOpen = uitgeklapt === p.bron
+            const aantal = KOPJES.reduce((som, k) => som + p.profiel[k.sleutel].length, 0)
+            return (
+              <div key={p.bron} style={{ borderTop: '1px solid #374151' }}>
+                <div
+                  onClick={() => { setUitgeklapt(isOpen ? null : p.bron); setBevestig(null) }}
+                  style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 24, padding: isMobile ? '24px 0' : '32px 0', cursor: 'pointer' }}
+                >
+                  <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 'auto' : 165, flexShrink: 0 }}>{datum(p.created_at)}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: '#f1f5f9', fontSize: isMobile ? 18 : 20, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1.4 }}>Profiel uit {BRON_NAAM[p.bron]}</p>
+                    <p style={{ color: '#6b7280', fontSize: 13, lineHeight: 1.8 }}>{aantal} {aantal === 1 ? 'regel' : 'regels'}</p>
+                  </div>
+                  <span style={{ color: isOpen ? '#f59e0b' : '#9ca3af', fontSize: 18, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, flexShrink: 0 }}>{isOpen ? '↑ SLUITEN' : '↓ OPEN'}</span>
+                </div>
+
+                {isOpen && (
+                  <div style={{ paddingBottom: 40, marginLeft: isMobile ? 0 : 189 }}>
+                    {KOPJES.filter(k => p.profiel[k.sleutel].length > 0).map(k => (
+                      <div key={k.sleutel} style={{ marginBottom: 16 }}>
+                        <p style={{ color: '#6b7280', fontSize: 11, letterSpacing: 3, textTransform: 'uppercase' }}>{k.label}</p>
+                        {p.profiel[k.sleutel].map((r, i) => (
+                          <p key={i} style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.8 }}>{r}</p>
+                        ))}
+                      </div>
                     ))}
+                    {bevestig === p.bron ? (
+                      <div style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
+                        <span>Dit profiel verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
+                        <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                          <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
+                          <button onClick={() => verwijder(p.bron)} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER'}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
+                        <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>
+                        <button onClick={() => setBevestig(p.bron)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
-              {bevestig === p.bron ? (
-                <div style={{ fontSize: 15, color: '#f1f5f9', lineHeight: 1.9 }}>
-                  <span>Dit profiel verwijderen? Dit kan niet ongedaan worden gemaakt.</span>
-                  <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                    <button onClick={() => setBevestig(null)} style={pil}>ANNULEER</button>
-                    <button onClick={() => verwijder(p.bron)} disabled={bezig} style={{ ...pil, borderColor: '#cc2200', color: '#cc2200' }}>{bezig ? 'BEZIG...' : 'JA, VERWIJDER'}</button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 8 }}>
-                  <button onClick={() => { setBron(p.bron); setOpen(true) }} style={rustig}>vervang</button>
-                  <button onClick={() => setBevestig(p.bron)} style={{ ...rustig, color: '#cc2200' }}>verwijder</button>
-                </div>
-              )}
-            </div>
-          ))}
-          {opgeslagen.length < 3 && (
-            <div style={{ marginTop: 32 }}>
-              <button onClick={() => setOpen(true)} style={rustig}>voeg een andere AI toe</button>
-            </div>
-          )}
+            )
+          })}
         </div>
       )}
 
