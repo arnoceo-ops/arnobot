@@ -60,7 +60,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@/lib/geheugenContext'
 import { buildRdsSystemPrompt } from '@/lib/systemPrompt'
-import { bouwAppModeratiePrompt } from '@/lib/moderatie'
+import { bouwAppModeratiePrompt, GRENSGEVAL_INSTRUCTIE } from '@/lib/moderatie'
 import { computeMsaScore } from '@/lib/msa'
 import { Ratelimit } from '@upstash/ratelimit'
 import { limietVeilig } from '@/lib/limietVeilig'
@@ -424,6 +424,9 @@ export async function POST(req: NextRequest) {
     const rawCheck = getText(checkRes.content, 'OK').trim()
     const [firstLine, ...rest] = rawCheck.split('\n')
     const check = firstLine.trim().toUpperCase()
+    // GRENSGEVAL: een niet-zakelijk onderwerp dat de gebruiker aan zijn eigen werk koppelt. Wordt niet geblokkeerd en telt niet mee voor off-topic;
+    // de hoofdchat krijgt een extra instructie om er serieus en eerlijk op in te gaan.
+    const grensGeval = check.includes('GRENSGEVAL')
     const generatedReply = rest.join('\n').trim()
 
     if (check.includes('ONGEPAST') || check.includes('OFFTOPIC')) {
@@ -517,7 +520,7 @@ export async function POST(req: NextRequest) {
       .join(' '))
 
     const systemPrompt = metWebFetchPrompt(
-      buildRdsSystemPrompt(profielContext + geheugentekst + importProfiel + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount),
+      buildRdsSystemPrompt(profielContext + geheugentekst + importProfiel + coachingContext + (grensGeval ? GRENSGEVAL_INSTRUCTIE : ''), context, effectieveHistory.length, antwoordLengte, prevSessionCount),
       linkInGesprek,
     )
 
