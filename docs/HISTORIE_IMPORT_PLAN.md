@@ -1,8 +1,8 @@
 # Plan: neem je historie mee uit een andere AI (optie 1)
 
 **Laatst bijgewerkt:** 2026-11-18
-**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 3 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`, na een eerste proef met echte antwoorden aangepast (zie onderaan): een profiel per bron, ruimere grenzen. Arno moet `docs/sql/2026-11-18-historie-import-per-bron.sql` nog uitvoeren. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
-**Eerstvolgende stap:** stap 4, het geheugenblok in de chat.
+**Waar we staan:** keuzes akkoord (Arno, 2026-11-18). Stap 1 tot en met 4 gebouwd en gepusht, onzichtbaar achter `HISTORIE_IMPORT_OPEN`, na een eerste proef met echte antwoorden aangepast (zie onderaan): een profiel per bron, ruimere grenzen. Arno moet `docs/sql/2026-11-18-historie-import-per-bron.sql` nog uitvoeren. Fase 2 uit `docs/DOCUMENTEN_PLAN.md` (volledige export) blijft geparkeerd.
+**Eerstvolgende stap:** Arno probeert het in de chat (zie de vraag in het bericht van 2026-11-18); daarna stap 5, verwijderen, export en controlescripts.
 
 ## Besluiten (met verworpen alternatieven)
 
@@ -59,7 +59,7 @@ De tekst staat op één plek (`lib/historieImport.ts`) en wordt zowel in de link
 - [x] 1. SQL (`docs/sql/2026-11-18-historie-import.sql`, door Arno nog uit te voeren), `lib/historieImportRegels.ts` (schakelaar, vraag, voorbewerking, schoonmaken, validatie, profielblok) en `lib/historieImport.ts` (omzetting met Haiku, opslaan, lezen, verwijderen), met tests (synthetische antwoorden, injectie, grenzen). Nog nergens aangesloten.
 - [x] 2. Routes `app/api/bot/import/omzetten` en `/profiel` (GET, PUT, DELETE) met schakelaar, toegangspoort (niet bij verwijderen), lengtecontrole vóór limiter en model, limiet 5 per uur, `historieImport` in `/api/bot/plan`, tests. De SQL is door Arno uitgevoerd (RLS aan).
 - [x] 3. Blok NEEM JE HISTORIE MEE onder de tab Uploads (`app/bot/analyses/HistorieImportBlok.tsx`), alleen met `historieImport` uit `/api/bot/plan`. Gerenderd en bekeken (desktop en mobiel, vier toestanden). De vaste delen staan in `lib/historieImportVast.ts` omdat `lib/historieImportRegels.ts` de lijst met interne testaccounts importeert en die nooit in de browserbundel mag.
-- [ ] 4. Geheugenblok in de chat, met snapshot en een meting op een testaccount.
+- [x] 4. Het profiel (alle bronnen samen, nieuwste eerst, hooguit 12.000 tekens) staat in de systeemprompt van de hoofdchat, achter het gewone geheugen en alleen voor wie `HISTORIE_IMPORT_OPEN` heeft (`importProfielPromise` in `app/api/chat/route.ts`, parallel aan het geheugen, een fout kost nooit een antwoord). Niet in `bronContext` (log, waarheidsmail, export); een bewakingstest (`app/api/chat/historieImportAansluiting.test.ts`) dwingt dat af. Ook zichtbaar in `/api/admin/geheugen-preview`. Sparren krijgt het profiel bewust niet. Nog te doen bij de eerste echte proef: controleren of de waarheidscontrole beweringen uit het profiel als "niet uit de bibliotheek" aanmerkt.
 - [ ] 5. Verwijderen, export, controlescripts, teardown.
 - [ ] 6. Teksten (na akkoord), `appHelp.ts`, `docs/ARNOBOT_OVERZICHT.md`, `docs/TECHNICAL_HANDOVER.md`, privacy, beveiligings-PDF, met PDF's.
 - [ ] 7. Livegang: schakelaar aan voor Arno, proef met een echt ChatGPT- en Claude-antwoord, dan voor iedereen.

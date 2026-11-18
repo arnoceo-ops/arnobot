@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { haalGeheugenContext, bouwProfielContext } from '@/lib/geheugenContext'
+import { laadProfielBlok } from '@/lib/historieImport'
 import { adminKeyMatches } from '@/lib/adminAuth'
 
 // Toont EXACT welke geheugen- en gebruikerscontext de hoofdchat voor een gebruiker in de prompt zet
@@ -54,6 +55,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     plan,
     profielContext: bouwProfielContext(profielRij?.profiel ?? null, voornaam),
+    // Het profiel uit een andere AI, zoals de chat het achter het geheugen zet (alleen als de gebruiker er een heeft).
+    importProfiel: await laadProfielBlok(supabase, userId).catch(() => ''),
     ...geheugen,
   })
 }

@@ -74,6 +74,8 @@ const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { buildDocumentContentBlock } from '@/lib/documentInhoud'
 import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
+import { historieImportBeschikbaarVoor } from '@/lib/historieImportRegels'
+import { laadProfielBlok } from '@/lib/historieImport'
 import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript, eerdereGesprekkenOverBestanden } from '@/lib/documenten'
 import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
@@ -343,6 +345,12 @@ export async function POST(req: NextRequest) {
     // alleen af van userId/plan/sessionId, niet van het RAG- of moderatie-resultaat.
     const memoryContextPromise: Promise<GeheugenContext> = haalGeheugenContext(supabase, { userId, sessionId, question, history, plan })
 
+    // Profiel(en) die de gebruiker uit een andere AI heeft overgenomen (docs/HISTORIE_IMPORT_PLAN.md): alleen voor wie de functie heeft, parallel
+    // aan de rest, en een fout of een ontbrekend profiel kost nooit een antwoord. Staat bewust NIET in bronContext (de log voor de waarheidscontrole).
+    const importProfielPromise: Promise<string> = historieImportBeschikbaarVoor(userId)
+      ? laadProfielBlok(supabase, userId).catch(() => '')
+      : Promise.resolve('')
+
     const coachingContextPromise: Promise<string> = (plan !== 'basis')
       ? Promise.resolve(
           supabase
@@ -484,6 +492,7 @@ export async function POST(req: NextRequest) {
     // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
     const { geheugentekst: basisGeheugentekst, prevSessionCount, verouderd } = await memoryContextPromise
     const geheugentekst = basisGeheugentekst + documentGeheugen
+    const importProfiel = await importProfielPromise
     const coachingContext = await coachingContextPromise
 
     // Bij een verouderd gesprek zit de oude geschiedenis als gedateerd geheugen in geheugentekst.
@@ -508,7 +517,7 @@ export async function POST(req: NextRequest) {
       .join(' '))
 
     const systemPrompt = metWebFetchPrompt(
-      buildRdsSystemPrompt(profielContext + geheugentekst + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount),
+      buildRdsSystemPrompt(profielContext + geheugentekst + importProfiel + coachingContext, context, effectieveHistory.length, antwoordLengte, prevSessionCount),
       linkInGesprek,
     )
 
