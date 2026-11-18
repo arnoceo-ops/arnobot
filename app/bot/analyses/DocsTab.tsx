@@ -27,6 +27,8 @@ const TOEGESTAAN = [
 ]
 const MAX_BYTES = 10 * 1024 * 1024
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
+// Bij veel gesprekken over één bestand blijft de open rij rustig: de nieuwste drie, de rest achter een knop.
+const MAX_GESPREKKEN = 3
 
 function typeLabel(d: Doc): string {
   if (d.soort === 'transcript') return 'TRANSCRIPT'
@@ -65,6 +67,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
   const [open, setOpen] = useState<string | null>(null)
   const [hernoem, setHernoem] = useState<{ id: string; waarde: string } | null>(null)
   const [bevestig, setBevestig] = useState<string | null>(null) // een document-ID
+  const [alleGesprekken, setAlleGesprekken] = useState<string | null>(null) // het document waarvan alle gesprekken getoond worden
   const [bezig, setBezig] = useState(false)
   const [uploaden, setUploaden] = useState(false)
   const bestandRef = useRef<HTMLInputElement>(null)
@@ -254,7 +257,7 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
 
                     {d.gesprekken.length > 1 && (
                       <div style={{ marginTop: 20 }}>
-                        {d.gesprekken.map(g => (
+                        {(alleGesprekken === d.id ? d.gesprekken : d.gesprekken.slice(0, MAX_GESPREKKEN)).map(g => (
                           <div key={g.sessie} style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24, padding: '10px 0' }}>
                             <span style={{ color: '#9ca3af', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', whiteSpace: 'nowrap', width: isMobile ? 56 : 70, flexShrink: 0 }}>{datum(g.datum, true)}</span>
                             <span style={{ flex: 1, color: '#f1f5f9', fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>
@@ -263,6 +266,11 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
                             <Link href={`/bot?resume=${g.sessie}`} style={{ ...knop, whiteSpace: 'nowrap' }}>VERVOLG <span style={{ color: '#f59e0b' }}>→</span></Link>
                           </div>
                         ))}
+                        {d.gesprekken.length > MAX_GESPREKKEN && (
+                          <button onClick={() => setAlleGesprekken(alleGesprekken === d.id ? null : d.id)} style={{ ...knop, fontSize: 16, marginTop: 8 }}>
+                            {alleGesprekken === d.id ? 'TOON MINDER ↑' : `TOON ALLE ${d.gesprekken.length} GESPREKKEN ↓`}
+                          </button>
+                        )}
                       </div>
                     )}
 

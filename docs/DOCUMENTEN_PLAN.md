@@ -148,7 +148,7 @@ Account: JOUW UPLOADS; "Je hebt geen bewaarde uploads."; "Je hebt N bewaarde upl
 
 Aangepast na Arno's eerste kijk op zijn account (2026-11-18): compacter menu in de chat, de uitgeklapte rij zonder grijs kader (één dempte regel, hernoemen op de plek van de titel), het omschrijvende "toegevoegd in het gesprek …" vervangen door "In N gesprekken gebruikt" met een lijst gesprekken (VERVOLG per gesprek) en NIEUW GESPREK MET DIT BESTAND, de ruimte onder de berichten die meegroeit met de invoerbalk, en vier kleine lettertypeafwijkingen hersteld volgens `docs/app-styleguide.md`.
 
-Tweede ronde (2026-11-18, "veel te druk"): in de tab het label BEWAARD, de datumregel, het amberkleurige kopje boven de gesprekkenlijst en VERWIJDER ALLES verwijderd; type, grootte en gebruik staan in één regel onder de titel; de uitgeklapte inhoud staat onder de titel in plaats van links en rechts verdeeld; hernoemen, downloaden en verwijderen zijn rustige links (Space Mono, gedempt, zoals de stijlgids voor secundaire links voorschrijft); meer witruimte tussen de rijen.
+Tweede ronde (2026-11-18, "veel te druk"): in de tab het label BEWAARD, de datumregel, het amberkleurige kopje boven de gesprekkenlijst en VERWIJDER ALLES verwijderd; type, grootte en gebruik staan in één regel onder de titel; de uitgeklapte inhoud staat onder de titel in plaats van links en rechts verdeeld; hernoemen, downloaden en verwijderen zijn rustige links (Space Mono, gedempt, zoals de stijlgids voor secundaire links voorschrijft); meer witruimte tussen de rijen; bij meer dan drie gesprekken over één bestand de nieuwste drie en daaronder TOON ALLE N GESPREKKEN (en TOON MINDER); letterafstand van de rustige links 2 in plaats van 4 (Arno).
 
 ## Voor livegang (DOCUMENTEN_OPEN=true), in deze volgorde
 
