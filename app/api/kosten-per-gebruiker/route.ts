@@ -80,11 +80,13 @@ export async function GET(req: NextRequest) {
     const naarLijst = (m: Map<string, { usd: number; aanroepen: number }>) =>
       [...m.entries()].map(([bron, v]) => ({ bron, usd: v.usd, aanroepen: v.aanroepen })).sort((a, b) => b.usd - a.usd)
 
-    const ids = [...new Set([...perGebruiker.keys(), ...berichtenPerGebruiker.keys()])]
-    const { data: profielen } = ids.length
-      ? await supabase.from('approved_users').select('user_id, voornaam, achternaam, full_name, email, plan, paid_at, is_active, trial_start, expires_at').in('user_id', ids)
-      : { data: [] as { user_id: string; voornaam: string | null; achternaam: string | null; full_name: string | null; email: string | null; plan: string | null; paid_at: string | null; is_active: boolean | null; trial_start: string | null; expires_at: string | null }[] }
+    // Alle actieve gebruikers staan in de lijst, ook zonder activiteit deze maand (een gebruiker in zijn proef of met gratis toegang kost dan
+    // niets, maar hoort wel in het beeld), plus iedereen met gemeten kosten of berichten.
+    const { data: profielen } = await supabase.from('approved_users')
+      .select('user_id, voornaam, achternaam, full_name, email, plan, paid_at, is_active, trial_start, expires_at').limit(5000)
     const profielPerId = new Map((profielen ?? []).map(p => [p.user_id, p]))
+    const actieveIds = (profielen ?? []).filter(p => p.is_active && !p.user_id.startsWith('pending_')).map(p => p.user_id)
+    const ids = [...new Set([...perGebruiker.keys(), ...berichtenPerGebruiker.keys(), ...actieveIds])]
 
     // Echte omzet in plaats van een aangenomen prijs (lib/maandOmzet.ts): netto zonder btw, een jaarbetaling gespreid over 12 maanden vanaf de
     // maand van betalen, en het laatste abonnement. Een gebruiker in zijn proef heeft geen omzet en laat dat ook zo zien.
@@ -125,11 +127,13 @@ export async function GET(req: NextRequest) {
     const geenAboStatus = (p: { paid_at: string | null; is_active: boolean | null; trial_start: string | null; expires_at: string | null } | undefined): string => {
       if (!p) return 'onbekend'
       if (p.paid_at) return 'gratis of handmatig, geen abonnement'
+      const datum = (d: Date) => d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Amsterdam' })
       if (p.trial_start) {
         const einde = p.expires_at ? new Date(p.expires_at) : new Date(new Date(p.trial_start).getTime() + 30 * 86_400_000)
-        const dd = einde.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' })
-        return einde.getTime() < Date.now() ? `proef verlopen (${dd})` : `proef tot ${dd}`
+        return einde.getTime() < Date.now() ? `proef verlopen (${datum(einde)})` : `proef tot ${datum(einde)}`
       }
+      // Een einddatum zonder proefstart is een handmatig gezette gratis toegang (zelfde regel als trialStatus in de admin).
+      if (p.expires_at) return new Date(p.expires_at).getTime() < Date.now() ? `gratis toegang verlopen (${datum(new Date(p.expires_at))})` : `gratis toegang tot ${datum(new Date(p.expires_at))}`
       return p.is_active ? 'gratis toegang' : 'inactief'
     }
 
