@@ -6,9 +6,10 @@
 // tekst-naar-spraakdienst meer voor iemand die zelf een URL samenstelt.
 export const VOICE_MAX_TEKENS_PER_AANROEP = 1500
 
-// Per gebruiker per kalendermaand (Amsterdamse tijd). 300.000 tekens is ongeveer $50 bij $0,166 per
-// 1.000 tekens (aanname uit het ElevenLabs-tarief, niet uit het dashboard).
-export const VOICE_MAAND_PLAFOND_TEKENS = 300_000
+// Per gebruiker per kalendermaand (Amsterdamse tijd). 60.000 tekens is ongeveer $10 bij $0,166 per
+// 1.000 tekens (aanname uit het ElevenLabs-tarief, niet uit het dashboard), ruim 100 voice-antwoorden.
+// Besluit Arno: docs en voice samen niet meer dan $10 per Pro-gebruiker per maand.
+export const VOICE_MAAND_PLAFOND_TEKENS = 60_000
 
 // Eerste moment van de huidige kalendermaand in Amsterdam als ISO-tijdstip. Sommertijd wisselt
 // pas eind maart en eind oktober, dus op de 1e van een maand is de offset vast per maand.
