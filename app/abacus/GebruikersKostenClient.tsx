@@ -13,6 +13,8 @@ type Gebruiker = {
   plan: string | null
   testaccount: boolean
   berichten: number
+  /** Berichten vanaf het begin van de meting: alleen daarvoor zijn kosten bekend. */
+  gemetenBerichten: number
   totaalUsd: number
   anthropicUsd: number
   voyageUsd: number
@@ -22,6 +24,7 @@ type Gebruiker = {
   perBron: BronRij[]
 }
 type Antwoord = {
+  meetStart: string | null
   maand: string
   maanden: string[]
   fxEurUsd: number
@@ -72,6 +75,9 @@ export default function GebruikersKostenClient() {
   const gebruiker = data.gebruikers.find(g => g.userId === gekozen) ?? null
   const totaalUsd = data.gebruikers.reduce((s, g) => s + g.totaalUsd, 0)
   const prijs = (g: Gebruiker) => data.referentiePrijsEur[g.plan ?? 'basis'] ?? 19
+  const meetStartTekst = data.meetStart
+    ? new Date(data.meetStart).toLocaleString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
+    : 'nog niet'
 
   return (
     <div style={{ opacity: laden ? 0.6 : 1 }}>
@@ -91,13 +97,13 @@ export default function GebruikersKostenClient() {
         <div style={cardStyle}>
           <div style={cardHeadStyle}><span style={dotStyle} />{gebruiker.naam}{gebruiker.testaccount ? ' (testaccount)' : ''}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in {fmtMaand(data.maand)}
+            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in {fmtMaand(data.maand)}, waarvan {gebruiker.gemetenBerichten} vanaf het begin van de meting ({meetStartTekst})
           </p>
           <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap', marginBottom: 18 }}>
             <div><div style={statLabel}>Totaal</div><div style={{ ...statValue, color: '#f59e0b' }}>{fmtUsd(gebruiker.totaalUsd)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{fmtEur(eur(gebruiker.totaalUsd))}</div></div>
-            <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.berichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.berichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend</div></div>
+            <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.gemetenBerichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.gemetenBerichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend, over {gebruiker.gemetenBerichten} gemeten berichten</div></div>
             <div><div style={statLabel}>Referentieomzet</div><div style={statValue}>{fmtEur(prijs(gebruiker))}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>jaarprijs per maand</div></div>
-            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: prijs(gebruiker) - eur(gebruiker.totaalUsd) < 0 ? '#cc4444' : '#44cc88' }}>{fmtEur(prijs(gebruiker) - eur(gebruiker.totaalUsd))}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>na AI en spraak</div></div>
+            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: prijs(gebruiker) - eur(gebruiker.totaalUsd) < 0 ? '#cc4444' : '#44cc88' }}>{gebruiker.gemetenBerichten > 0 || gebruiker.totaalUsd > 0 ? fmtEur(prijs(gebruiker) - eur(gebruiker.totaalUsd)) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>na AI en spraak, alleen gemeten deel</div></div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead><tr><th style={{ ...th, textAlign: 'left' }}>Soort</th><th style={th}>Dollars</th><th style={th}>Euro</th></tr></thead>
@@ -122,13 +128,13 @@ export default function GebruikersKostenClient() {
           <div style={cardHeadStyle}><span style={dotStyle} />Alle gebruikers, {fmtMaand(data.maand)}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
             Totaal gemeten: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
-            Alleen wat gemeten wordt sinds 19 november, dus eerdere dagen ontbreken.
+            De meting loopt sinds {meetStartTekst}: berichten van daarvoor tellen mee in Berichten, maar niet in de kosten. Kolom Gemeten telt alleen berichten vanaf dat moment.
           </p>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
               <thead>
                 <tr>
-                  <th style={{ ...th, textAlign: 'left' }}>Gebruiker</th><th style={th}>Plan</th><th style={th}>Berichten</th>
+                  <th style={{ ...th, textAlign: 'left' }}>Gebruiker</th><th style={th}>Plan</th><th style={th}>Berichten</th><th style={th}>Gemeten</th>
                   <th style={th}>Anthropic</th><th style={th}>Voyage</th><th style={th}>Audio</th><th style={th}>Voice</th><th style={th}>Totaal</th><th style={th}>Marge ref.</th>
                 </tr>
               </thead>
@@ -140,16 +146,17 @@ export default function GebruikersKostenClient() {
                       <td style={{ ...td, textAlign: 'left' }}>{g.naam}{g.testaccount ? <span style={{ color: '#6b7280' }}> (test)</span> : null}</td>
                       <td style={td}>{PLAN_LABEL[g.plan ?? ''] ?? '-'}</td>
                       <td style={td}>{g.berichten}</td>
+                      <td style={td}>{g.gemetenBerichten}</td>
                       <td style={td}>{fmtUsd(g.anthropicUsd)}</td>
                       <td style={td}>{fmtUsd(g.voyageUsd)}</td>
                       <td style={td}>{fmtUsd(g.audioUsd)}</td>
                       <td style={td}>{fmtUsd(g.voiceUsd)}</td>
                       <td style={{ ...td, fontWeight: 700 }}>{fmtUsd(g.totaalUsd)}</td>
-                      <td style={{ ...td, color: marge < 0 ? '#cc4444' : '#94a3b8' }}>{g.plan ? fmtEur(marge) : '-'}</td>
+                      <td style={{ ...td, color: marge < 0 ? '#cc4444' : '#94a3b8' }}>{g.plan && (g.gemetenBerichten > 0 || g.totaalUsd > 0) ? fmtEur(marge) : '-'}</td>
                     </tr>
                   )
                 })}
-                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={9}>Nog niets gemeten in deze maand.</td></tr>}
+                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={10}>Nog niets gemeten in deze maand.</td></tr>}
               </tbody>
             </table>
           </div>

@@ -46,15 +46,25 @@ export async function GET(req: NextRequest) {
       haalAlleRijen<{ user_id: string | null; char_count: number | null }>((van, tot) =>
         supabase.from('arnobot_elevenlabs_usage').select('user_id, char_count')
           .gte('created_at', start).lt('created_at', eind).order('id', { ascending: true }).range(van, tot)),
-      haalAlleRijen<{ user_id: string | null }>((van, tot) =>
-        supabase.from('arnobot_rds_logs').select('user_id')
+      haalAlleRijen<{ user_id: string | null; created_at: string }>((van, tot) =>
+        supabase.from('arnobot_rds_logs').select('user_id, created_at')
           .gte('created_at', start).lt('created_at', eind).not('user_id', 'is', null).order('id', { ascending: true }).range(van, tot)),
       getLiveFxRateEurUsd(),
     ])
 
+    // De meting loopt pas sinds de eerste rij in arnobot_ai_gebruik. Berichten van daarvoor hebben geen gemeten kosten, dus die tellen we apart:
+    // anders lijkt het alsof ze niets hebben gekost.
+    const { data: eerste } = await supabase.from('arnobot_ai_gebruik').select('created_at').order('created_at', { ascending: true }).limit(1)
+    const meetStart: string | null = eerste?.[0]?.created_at ?? null
+
     const perGebruiker = somKostenPerGebruiker(rijen, voice)
     const berichtenPerGebruiker = new Map<string, number>()
-    for (const b of berichten) if (b.user_id) berichtenPerGebruiker.set(b.user_id, (berichtenPerGebruiker.get(b.user_id) ?? 0) + 1)
+    const gemetenBerichtenPerGebruiker = new Map<string, number>()
+    for (const b of berichten) {
+      if (!b.user_id) continue
+      berichtenPerGebruiker.set(b.user_id, (berichtenPerGebruiker.get(b.user_id) ?? 0) + 1)
+      if (meetStart && b.created_at >= meetStart) gemetenBerichtenPerGebruiker.set(b.user_id, (gemetenBerichtenPerGebruiker.get(b.user_id) ?? 0) + 1)
+    }
 
     // Per gebruiker en per bron, en het platformwerk zonder gebruiker (crons, admin) apart.
     const perBronPerGebruiker = new Map<string, Map<string, { usd: number; aanroepen: number }>>()
@@ -86,6 +96,7 @@ export async function GET(req: NextRequest) {
         plan: p?.plan ?? null,
         testaccount: isInternalTestUser(id),
         berichten: berichtenPerGebruiker.get(id) ?? 0,
+        gemetenBerichten: gemetenBerichtenPerGebruiker.get(id) ?? 0,
         totaalUsd: k?.totaalUsd ?? 0,
         anthropicUsd: k?.anthropicUsd ?? 0,
         voyageUsd: k?.voyageUsd ?? 0,
@@ -99,6 +110,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       maand,
       maanden: laatsteMaanden(6),
+      meetStart,
       fxEurUsd: fx.rate,
       referentiePrijsEur: REFERENTIE_PRIJS_EUR,
       gebruikers,
