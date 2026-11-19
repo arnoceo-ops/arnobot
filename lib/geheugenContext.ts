@@ -65,7 +65,7 @@ export async function findSemanticallyRelevantOlderSessions(
   negeerSessieIds: string[] = [],
 ): Promise<OudereSessie[]> {
   try {
-    const queryEmbedding = await embedSessionQuery(vraag)
+    const queryEmbedding = await embedSessionQuery(vraag, targetUserId)
     const { data: matches, error } = await supabase.rpc('match_sessions', {
       query_embedding: queryEmbedding,
       match_user_id: targetUserId,

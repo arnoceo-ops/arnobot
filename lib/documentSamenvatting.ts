@@ -147,7 +147,7 @@ export async function samenvatOpenDocumenten(
         uit.mislukt++
         continue
       }
-      const embedding = await embedSessionText(rij.naam, samenvatting, null)
+      const embedding = await embedSessionText(rij.naam, samenvatting, null, rij.user_id)
       const { error: opslagFout } = await db.from('arnobot_documenten')
         .update({ samenvatting, embedding, samenvatting_status: 'klaar', samenvatting_bijgewerkt_op: new Date().toISOString() })
         .eq('id', rij.id).eq('user_id', rij.user_id).is('verwijderd_op', null)
@@ -188,7 +188,7 @@ export async function haalDocumentSamenvattingen(
       .order('created_at', { ascending: false }).limit(AANTAL_ALLE + negeerIds.length)
     treffers = ((data ?? []) as DocumentTreffer[]).filter(t => t.samenvatting)
   } else {
-    const embedding = await embedSessionQuery(vraag)
+    const embedding = await embedSessionQuery(vraag, userId)
     const { data, error } = await db.rpc('match_documenten', { match_user_id: userId, query_embedding: embedding, match_count: AANTAL_STANDAARD + negeerIds.length })
     if (error) throw new Error(`match_documenten: ${error.message}`)
     treffers = ((data ?? []) as DocumentTreffer[]).filter(t => t.samenvatting && (t.similarity ?? 0) >= MIN_SIMILARITY)

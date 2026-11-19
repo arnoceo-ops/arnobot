@@ -269,7 +269,7 @@ export async function POST() {
     execution: 'uitvoeringsritme, dagelijkse en wekelijkse vergaderingen, accountability, bottlenecks bespreken en oplossen',
   }
   const [strategyChunks, peopleChunks, executionChunks] = await Promise.all(
-    Object.values(pillarQueries).map(q => getRelevantChunks(q, 8).catch(() => []))
+    Object.values(pillarQueries).map(q => getRelevantChunks(q, 8, false, userId).catch(() => []))
   )
   const bronFragment = (chunks: typeof strategyChunks) =>
     chunks.filter(c => c.source?.startsWith('Video:')).slice(0, 2)

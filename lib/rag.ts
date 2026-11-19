@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
+import { meldVoyage } from '@/lib/externGebruik'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +35,7 @@ async function expandQuery(query: string, gebruiker?: string | null): Promise<st
 // hieronder mogen dit rechtstreeks aanroepen. Een route die zelf een embedding-model kiest
 // is precies hoe de model-mix van 10-12 augustus 2026 ontstond, zie geheugen. Nu een
 // TypeScript-compile-fout in plaats van een conventie die iemand kan missen.
-async function getVoyageEmbedding(text: string): Promise<number[]> {
+async function getVoyageEmbedding(text: string, gebruiker?: string | null, bron = 'rag-embedding'): Promise<number[]> {
   const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {
@@ -48,12 +49,13 @@ async function getVoyageEmbedding(text: string): Promise<number[]> {
     throw new Error(`Voyage API error: ${err}`)
   }
   const json = await res.json()
+  meldVoyage(json, 'voyage-3-large', gebruiker, bron)
   return json.data[0].embedding
 }
 
 // Voor Nederlandse gesprekken en cross-language zoekopdrachten. Niet exporteren, zelfde
 // reden als getVoyageEmbedding hierboven: alleen embedSessionText() mag dit aanroepen.
-async function getMultilingualEmbedding(text: string): Promise<number[]> {
+async function getMultilingualEmbedding(text: string, gebruiker?: string | null, bron = 'embedding-sessie'): Promise<number[]> {
   const res = await fetch(`${VOYAGE_BASE_URL}/v1/embeddings`, {
     method: 'POST',
     headers: {
@@ -67,11 +69,12 @@ async function getMultilingualEmbedding(text: string): Promise<number[]> {
     throw new Error(`Voyage multilingual API error: ${err}`)
   }
   const json = await res.json()
+  meldVoyage(json, 'voyage-multilingual-2', gebruiker, bron)
   return json.data[0].embedding
 }
 
-async function getEmbedding(text: string): Promise<number[]> {
-  return getVoyageEmbedding(text)
+async function getEmbedding(text: string, gebruiker?: string | null): Promise<number[]> {
+  return getVoyageEmbedding(text, gebruiker)
 }
 
 // Enige plek die een sessie-samenvatting embedt voor arnobot_blog_sessions.embedding.
@@ -83,22 +86,23 @@ async function getEmbedding(text: string): Promise<number[]> {
 // iemand het merkt (gebeurde 10-11 juni 2026 met voyage-3-large vs voyage-multilingual-2,
 // pas op 12 augustus ontdekt en hersteld, en een vierde schrijver met hetzelfde probleem
 // bleek toen aanvankelijk ook nog gemist).
-export async function embedSessionText(title: string | null, summary: string | null, feiten: string | null): Promise<number[]> {
+export async function embedSessionText(title: string | null, summary: string | null, feiten: string | null, gebruiker?: string | null): Promise<number[]> {
   const text = [title, summary, feiten].filter(Boolean).join('\n')
-  return getMultilingualEmbedding(text)
+  return getMultilingualEmbedding(text, gebruiker, 'embedding-sessie')
 }
 
 // Embedt een chatvraag om tegen arnobot_blog_sessions.embedding te matchen (match_sessions
 // RPC). Moet hetzelfde model zijn als embedSessionText hierboven, anders vergelijk je twee
 // incompatibele vectorruimtes.
-export async function embedSessionQuery(text: string): Promise<number[]> {
-  return getMultilingualEmbedding(text)
+export async function embedSessionQuery(text: string, gebruiker?: string | null): Promise<number[]> {
+  return getMultilingualEmbedding(text, gebruiker, 'embedding-zoekvraag')
 }
 
 async function rerankChunks(
   query: string,
   chunks: { content: string; context: string | null; source: string | null; url: string | null }[],
-  topN: number
+  topN: number,
+  gebruiker?: string | null
 ): Promise<{ content: string; context: string | null; source: string | null; url: string | null; relevance_score: number }[]> {
   try {
     const res = await fetch(`${VOYAGE_BASE_URL}/v1/rerank`, {
@@ -116,6 +120,7 @@ async function rerankChunks(
     })
     if (!res.ok) throw new Error(`Rerank API error: ${await res.text()}`)
     const data = await res.json()
+    meldVoyage(data, 'rerank-2.5', gebruiker, 'rag-rerank')
     const results = data?.results ?? data?.data
     if (!Array.isArray(results)) {
       console.error('[RAG] Rerank onverwacht formaat:', JSON.stringify(data).slice(0, 200))
@@ -151,8 +156,8 @@ type Candidate = { content: string; context: string | null; source: string | nul
 // Vector: 100 kandidaten voor maximale semantische dekking van het archief.
 // Fulltext: 30 kandidaten op exacte woorden, vangt namen/methodes/cijfers die
 // semantisch niet dicht genoeg bij de vraag liggen om in de vector-top-100 te komen.
-async function searchCandidates(searchQuery: string): Promise<Candidate[]> {
-  const queryEmbedding = await getEmbedding(searchQuery)
+async function searchCandidates(searchQuery: string, gebruiker?: string | null): Promise<Candidate[]> {
+  const queryEmbedding = await getEmbedding(searchQuery, gebruiker)
 
   const [{ data, error }, { data: ftData, error: ftError }] = await Promise.all([
     supabase.rpc('match_blog_chunks', {
@@ -206,12 +211,12 @@ export async function meetKennisbankKandidaten(vragen: string[]): Promise<number
 
 export async function getRelevantChunks(query: string, topN = 20, expand = false, gebruiker?: string | null): Promise<RagChunk[]> {
   const searchQuery = expand ? await expandQuery(query, gebruiker) : query
-  const candidates = await searchCandidates(searchQuery)
+  const candidates = await searchCandidates(searchQuery, gebruiker)
 
   if (candidates.length === 0) return []
 
   // Rerank op originele query voor precisie (niet de uitgebreide versie)
-  const reranked = await rerankChunks(query, candidates, Math.min(50, candidates.length))
+  const reranked = await rerankChunks(query, candidates, Math.min(50, candidates.length), gebruiker)
   return diversifyChunks(reranked, topN)
 }
 
@@ -219,13 +224,13 @@ export async function getRelevantChunks(query: string, topN = 20, expand = false
 // vraag) en voegt de resultaten samen vóór het herrangschikken. Vangt het geval op waarin
 // één enkele queryherschrijving de vraag verkeerd inschat en daardoor relevante kennisbank-
 // stof mist, ongeacht hoe goed de rerank daarna is.
-export async function getRelevantChunksMultiQuery(searchQueries: string[], rerankQuery: string, topN = 20): Promise<RagChunk[]> {
-  const perQueryResults = await Promise.all(searchQueries.map(q => searchCandidates(q)))
+export async function getRelevantChunksMultiQuery(searchQueries: string[], rerankQuery: string, topN = 20, gebruiker?: string | null): Promise<RagChunk[]> {
+  const perQueryResults = await Promise.all(searchQueries.map(q => searchCandidates(q, gebruiker)))
   const candidates = dedupeCandidates(perQueryResults)
 
   if (candidates.length === 0) return []
 
-  const reranked = await rerankChunks(rerankQuery, candidates, Math.min(50, candidates.length))
+  const reranked = await rerankChunks(rerankQuery, candidates, Math.min(50, candidates.length), gebruiker)
   return diversifyChunks(reranked, topN)
 }
 

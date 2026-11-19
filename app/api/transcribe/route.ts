@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
+import { meldGebruikLater, openAiTranscriptieRij } from '@/lib/externGebruik'
 
 // gpt-transcribe (2026-11-01 gewisseld van gpt-4o-transcribe, dat net als whisper-1 per 26-2-2027 uit
 // de API gaat, zie CLAUDE.md-modelinventaris). Dit is de gewone transcriptie na het stoppen en de
@@ -43,7 +44,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Transcriptie mislukt' }, { status: 502 })
   }
 
-  return new Response(res.body, {
+  // De bytes gaan ongewijzigd naar de client; een tweede kopie van de stroom lezen we mee voor het usage-blok aan het eind (duur of tokens),
+  // zodat dicteren per gebruiker gemeten wordt (lib/externGebruik.ts). Een fout in de meting raakt de stroom naar de client niet.
+  const [naarClient, naarMeting] = res.body.tee()
+  meldGebruikLater((async () => {
+    try {
+      const tekst = await new Response(naarMeting).text()
+      return openAiTranscriptieRij(tekst, userId, 'dicteren')
+    } catch {
+      return null
+    }
+  })())
+
+  return new Response(naarClient, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-store',

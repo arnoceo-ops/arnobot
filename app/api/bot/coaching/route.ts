@@ -513,7 +513,7 @@ ${RULE_NO_INVENTED_DETAILS}`
   try {
     // 3 parallelle RAG-queries — één per ontwikkelpunt voor precieze matching
     const ragResults = await Sentry.startSpan({ name: 'coaching.rag-lookup', op: 'db.rag' }, () =>
-      Promise.all(parsed.ontwikkelpunten.map(p => getRelevantChunks(p.tekst, 8)))
+      Promise.all(parsed.ontwikkelpunten.map(p => getRelevantChunks(p.tekst, 8, false, userId)))
     )
 
     // Bouw een map van url → { title, chunks, punten }

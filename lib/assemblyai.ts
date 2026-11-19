@@ -1,4 +1,5 @@
 import { AUDIO_MEDIA_TYPES, createAttachmentReadUrl, deleteAttachment } from '@/lib/chatAttachments'
+import { assemblyAiRij, meldGebruik } from '@/lib/externGebruik'
 
 export { AUDIO_MEDIA_TYPES }
 
@@ -63,6 +64,7 @@ export async function transcribeAudioAttachment(
       if (!pollRes.ok) continue
       const pollData = await pollRes.json()
       if (pollData.status === 'completed') {
+        meldGebruik(assemblyAiRij(Number(pollData.audio_duration), userId, 'audio-bijlage'))
         const utterances = (pollData.utterances ?? []) as { speaker: string; text: string }[]
         const text = utterances.length > 0
           ? utterances.map(u => `SPREKER ${u.speaker}: ${u.text}`).join('\n')

@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
   // op het scherm zag). Alleen gestart als er geen inline blogs zijn, zelfde voorwaarde als
   // de oorspronkelijke fallback hieronder.
   const userQuestionsBlogPromise = inlineBlogSuggestions.length === 0 && userQuestions
-    ? getRelevantChunks(userQuestions, 15).catch(() => [])
+    ? getRelevantChunks(userQuestions, 15, false, userId).catch(() => [])
     : Promise.resolve([])
 
   // Synthese, feiten en uitdaging parallel genereren
@@ -293,7 +293,7 @@ ${BRONDATA_REGEL}`,
     if (updError) return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
     after(async () => {
       try {
-        const embedding = await embedSessionText(bestaand.title ?? title, nieuweSamenvatting, bestaand.feiten ?? '')
+        const embedding = await embedSessionText(bestaand.title ?? title, nieuweSamenvatting, bestaand.feiten ?? '', userId)
         await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('user_id', userId).eq('session_id', sessionId)
       } catch (e) {
         console.error('[session-end] Embedding (herstel) error:', e)
@@ -368,7 +368,7 @@ ${BRONDATA_REGEL}`,
     // zoekopdracht die vrijwel altijd raak is en daarom hierboven al parallel liep.
     if (blogSuggestions.length < 2 && summary) {
       try {
-        const chunks = await getRelevantChunks(summary, 15)
+        const chunks = await getRelevantChunks(summary, 15, false, userId)
         for (const c of chunks) {
           if (c.url && c.source && c.url.includes('arno.blog') && !seenBlogUrls.has(c.url) && (c.relevance_score ?? 0) >= 0.6) {
             seenBlogUrls.add(c.url)
@@ -461,7 +461,7 @@ ${BRONDATA_REGEL}`,
       console.error('[session-end] Geheugentoets error:', e)
     }
     try {
-      const embedding = await embedSessionText(title, samenvattingDef, feitenDef)
+      const embedding = await embedSessionText(title, samenvattingDef, feitenDef, userId)
       await supabase.from('arnobot_blog_sessions').update({ embedding }).eq('session_id', sessionId)
     } catch (e) {
       console.error('[session-end] Embedding error:', e)

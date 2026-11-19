@@ -21,6 +21,11 @@ export type AiGebruikRij = AiTokens & {
   kosten_usd: number | null
   /** De stroom brak af voordat het einde kwam: de aantallen zijn dan wat tot dat moment bekend was. */
   afgebroken: boolean
+  /** Alleen invullen voor een andere leverancier dan Anthropic (lib/externGebruik.ts); weglaten betekent 'anthropic' (kolomstandaard). */
+  leverancier?: string
+  /** Voor audio de duur, met eenheid 'seconden'. */
+  hoeveelheid?: number | null
+  eenheid?: string | null
 }
 
 // Dollars per miljoen tokens (invoer, uitvoer). Sonnet 4.6 en Haiku 4.5 staan in lib/kostenTarieven.ts en lib/maandKosten.ts; Fable 5.1 in

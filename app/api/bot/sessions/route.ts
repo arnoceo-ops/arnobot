@@ -86,7 +86,7 @@ export async function GET() {
 
         let embedding: number[] | null = null
         try {
-          embedding = await embedSessionText(title, summary, feiten)
+          embedding = await embedSessionText(title, summary, feiten, userId)
         } catch {}
 
         await supabase.from('arnobot_blog_sessions').upsert({
@@ -146,7 +146,7 @@ export async function GET() {
     const BATCH = 5
     for (let i = 0; i < Math.min(noEmbedding.length, 20); i += BATCH) {
       await Promise.allSettled(noEmbedding.slice(i, i + BATCH).map(async s => {
-        const emb = await embedSessionText(s.title, s.summary, s.feiten)
+        const emb = await embedSessionText(s.title, s.summary, s.feiten, userId)
         await supabase.from('arnobot_blog_sessions').update({ embedding: emb }).eq('session_id', s.session_id)
       }))
     }
