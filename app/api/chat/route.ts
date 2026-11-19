@@ -68,7 +68,8 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { maakVerbruik, telOp } from '@/lib/chatVerbruik'
+import { maakVerbruik, telOp, telOpLezer } from '@/lib/chatVerbruik'
+import { LEES_DOCUMENT_TOOL, LEES_DOCUMENT_TOOL_NAAM, bijlageRegelVoorLezer, kiesLezer, leesDocumenten, lezerBeschikbaarVoor, type LezerBron } from '@/lib/documentLezer'
 import { maakTabelStaat } from '@/lib/tabelTool'
 
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
@@ -80,7 +81,7 @@ import { haalDocumentSamenvattingen } from '@/lib/documentSamenvatting'
 import { historieImportBeschikbaarVoor } from '@/lib/historieImportRegels'
 import { laadProfielBlok } from '@/lib/historieImport'
 import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript, eerdereGesprekkenOverBestanden } from '@/lib/documenten'
-import { stelBijlagenSamen, bouwBijlageTekst, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
+import { stelBijlagenSamen, bouwBijlageTekst, bouwLezerMeldingen, BIJLAGEN_STORING_NOTITIE } from '@/lib/documentenSamenstellen'
 import { ontwikkelpuntenAlsTekst } from '@/lib/coachingTekst'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
@@ -450,6 +451,9 @@ export async function POST(req: NextRequest) {
       ? `${question}\n\n[Bijlage: ${rawDocument?.name ?? 'document'}]\n${documentText}`
       : question
     let bijlageBlokken: Anthropic.Messages.ContentBlockParam[] = documentBlock ? [documentBlock] : []
+    // Bijlagen die niet in het bericht gaan maar via de lezer (lib/documentLezer.ts, docs/DOCUMENTEN_PLAN.md): alleen achter
+    // DOCUMENT_LEZER_OPEN en alleen voor PDF's en grotere Word-bestanden; het model leest ze per vraag met het hulpmiddel lees_document.
+    let lezerBron: LezerBron | null = null
     // Wat er eerder over de gekozen bewaarde bestanden is besproken (samenvattingen, alleen voor ArnoBot en nergens zichtbaar), onderdeel van het geheugen hieronder.
     let documentGeheugen = ''
 
@@ -490,8 +494,14 @@ export async function POST(req: NextRequest) {
             Sentry.captureException(e, { tags: { onderdeel: 'document-samenvattingen' }, level: 'warning' })
           }
         }
-        bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
-        questionWithDocument += bouwBijlageTekst(samengesteld)
+        if (lezerBeschikbaarVoor(userId) && kiesLezer(samengesteld)) {
+          lezerBron = { blokken: samengesteld.blokken, blokNamen: samengesteld.blokNamen, tekstDelen: samengesteld.tekstDelen }
+          // Het document zelf gaat niet mee, de meldingen over wat er niet (meer) bij is wel.
+          questionWithDocument += bouwLezerMeldingen(samengesteld)
+        } else {
+          bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
+          questionWithDocument += bouwBijlageTekst(samengesteld)
+        }
         await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))
       } catch (e) {
         Sentry.captureException(e, { tags: { onderdeel: 'documenten-laden' }, level: 'error' })
@@ -527,8 +537,11 @@ export async function POST(req: NextRequest) {
       .map((h: { role?: string; content?: unknown }) => (h.role === 'user' && typeof h.content === 'string' ? h.content : ''))
       .join(' '))
 
+    // Elke beurt vast in het wisselende blok: zonder deze regel denkt het model bij een vervolgvraag dat het het document eerder niet had.
+    const lezerRegel = lezerBron ? bijlageRegelVoorLezer([...lezerBron.blokNamen, ...lezerBron.tekstDelen.map(d => d.naam)]) : ''
+
     const systemPrompt = metWebFetchPrompt(
-      buildRdsSystemPrompt(profielContext + geheugentekst + importProfiel + coachingContext + (grensGeval ? GRENSGEVAL_INSTRUCTIE : ''), context, effectieveHistory.length, antwoordLengte, prevSessionCount),
+      buildRdsSystemPrompt(profielContext + geheugentekst + importProfiel + coachingContext + lezerRegel + (grensGeval ? GRENSGEVAL_INSTRUCTIE : ''), context, effectieveHistory.length, antwoordLengte, prevSessionCount),
       linkInGesprek,
     )
 
@@ -559,6 +572,7 @@ export async function POST(req: NextRequest) {
     }
     const tabelStaat = maakTabelStaat()
     if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)
+    if (lezerBron) toolLijst.push(LEES_DOCUMENT_TOOL)
     const chatTools: Anthropic.ToolUnion[] | undefined = toolLijst.length > 0 ? toolLijst : undefined
     const anthropicStream = client.messages.stream({
       model: 'claude-sonnet-4-6',
@@ -566,6 +580,9 @@ export async function POST(req: NextRequest) {
       system: systemPrompt,
       messages,
       ...(chatTools ? { tools: chatTools } : {}),
+      // Zolang er een bijlage via de lezer in het gesprek zit is het hulpmiddel in de eerste ronde verplicht (gemeten: zonder
+      // dwang sloeg het model het in 1 van 15 beurten over en antwoordde uit zijn eigen instructies). Vervolgrondes zijn vrij.
+      ...(lezerBron ? { tool_choice: { type: 'tool' as const, name: LEES_DOCUMENT_TOOL_NAAM } } : {}),
     })
 
     const readable = new ReadableStream({
@@ -595,8 +612,32 @@ export async function POST(req: NextRequest) {
 
           let finalMessage = await anthropicStream.finalMessage()
           // Tokenverbruik van de hele beurt (lib/chatVerbruik.ts): dit antwoord, alle toolrondes en een eventueel vervolg.
-          const verbruik = maakVerbruik(bijlageBlokken.length)
+          const lezer = lezerBron
+          const verbruik = maakVerbruik(bijlageBlokken.length + (lezer ? lezer.blokken.length + lezer.tekstDelen.length : 0))
           telOp(verbruik, finalMessage.usage)
+          // Het hulpmiddel lees_document: één aparte, goedkopere aanroep (Haiku) over de documenten van dit gesprek, met de eerdere
+          // vragen van de gebruiker erbij. Een fout kost nooit de beurt: het model hoort dat het lezen niet lukte en zegt dat eerlijk.
+          const lezerUitvoeren: string[] = []
+          const eerdereVragen = (effectieveHistory as { role?: string; content?: unknown }[])
+            .filter(h => h.role === 'user' && typeof h.content === 'string')
+            .map(h => h.content as string)
+          const voerLeesDocumentUit = async (input: unknown): Promise<{ content: string; isError: boolean }> => {
+            if (!lezer) return { content: 'Er is geen bijlage in dit gesprek.', isError: true }
+            const gevraagd = typeof (input as { vraag?: unknown } | null)?.vraag === 'string' ? (input as { vraag: string }).vraag.trim() : ''
+            try {
+              const r = await Sentry.startSpan({ name: 'chat.document-lezer', op: 'ai.claude' }, () =>
+                leesDocumenten(client, lezer, (gevraagd || question).slice(0, 2000), eerdereVragen))
+              telOpLezer(verbruik, r.usage)
+              lezerUitvoeren.push(r.tekst)
+              return { content: r.tekst, isError: false }
+            } catch (e) {
+              Sentry.captureException(e, { tags: { onderdeel: 'document-lezer' }, level: 'error' })
+              return {
+                content: 'Het lezen van het document is nu niet gelukt. Zeg dat eerlijk tegen de gebruiker en vraag of hij het zo meteen opnieuw probeert. Antwoord niet op basis van wat je zonder het document zou raden.',
+                isError: true,
+              }
+            }
+          }
           const opgehaald = opgehaaldePaginas(finalMessage.content)
           // Vervolgrondes: vraagt het model de rekentool, voer die uit en laat het model verdergaan.
           // Een serverkant-tool (link ophalen) kan het antwoord ook met pause_turn onderbreken: dan
@@ -614,10 +655,12 @@ export async function POST(req: NextRequest) {
               ...(finalMessage.stop_reason === 'tool_use'
                 ? [{
                     role: 'user' as const,
-                    content: toolGebruik.map(tu => {
-                      const r = voerToolUit(tu.name, tu.input, tabelStaat)
+                    content: await Promise.all(toolGebruik.map(async tu => {
+                      const r = tu.name === LEES_DOCUMENT_TOOL_NAAM
+                        ? await voerLeesDocumentUit(tu.input)
+                        : voerToolUit(tu.name, tu.input, tabelStaat)
                       return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
-                    }),
+                    })),
                   }]
                 : []),
             ]
@@ -726,6 +769,7 @@ export async function POST(req: NextRequest) {
           // mee bewaard voor de waarheidscontrole (lib/waarheidsControle.ts): zonder dit is achteraf niet
           // vast te stellen wat "uit de bibliotheek" kwam. PDF's en afbeeldingen zijn geen tekst en staan er niet in.
           const bronContext = [context, geheugentekst, profielContext, coachingContext, documentText ? `BIJLAGE:\n${documentText}` : '',
+            ...lezerUitvoeren.map(t => `UIT HET DOCUMENT (leesstap):\n${t}`),
             ...opgehaald.map(p => `OPGEHAALDE PAGINA (${p.url}):\n${p.tekst}`)]
             .filter(Boolean).join('\n\n---\n\n').slice(0, 250000)
           const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }

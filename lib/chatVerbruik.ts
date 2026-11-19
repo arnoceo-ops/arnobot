@@ -13,6 +13,8 @@ export type ChatVerbruik = {
   aanroepen: number
   /** Aantal bijlageblokken (PDF, afbeelding) dat in deze beurt meeging. */
   bijlagen: number
+  /** Alleen bij een beurt via de lezer (lib/documentLezer.ts): het verbruik van die aparte, goedkopere aanroepen (ander model, ander tarief). */
+  lezer?: { invoer: number; cache_schrijven: number; cache_lezen: number; uitvoer: number; aanroepen: number }
 }
 
 type UsageDeel = {
@@ -34,6 +36,17 @@ export function telOp(totaal: ChatVerbruik, usage: UsageDeel | null | undefined)
   totaal.cache_schrijven += usage.cache_creation_input_tokens ?? 0
   totaal.cache_lezen += usage.cache_read_input_tokens ?? 0
   totaal.uitvoer += usage.output_tokens ?? 0
+}
+
+/** Telt één aanroep van de lezer op, apart van het hoofdverbruik. Werkt het veld `lezer` pas bij op de eerste aanroep bij. */
+export function telOpLezer(totaal: ChatVerbruik, usage: UsageDeel | null | undefined): void {
+  const l = (totaal.lezer ??= { invoer: 0, cache_schrijven: 0, cache_lezen: 0, uitvoer: 0, aanroepen: 0 })
+  l.aanroepen += 1
+  if (!usage) return
+  l.invoer += usage.input_tokens ?? 0
+  l.cache_schrijven += usage.cache_creation_input_tokens ?? 0
+  l.cache_lezen += usage.cache_read_input_tokens ?? 0
+  l.uitvoer += usage.output_tokens ?? 0
 }
 
 /** Kosten in dollars bij de gegeven prijzen per 1M tokens (cache schrijven 1,25 keer, cache lezen 0,1 keer de invoerprijs). */
