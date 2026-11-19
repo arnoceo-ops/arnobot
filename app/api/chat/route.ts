@@ -68,6 +68,7 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
+import { maakVerbruik, telOp } from '@/lib/chatVerbruik'
 
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
 const MAX_REKENRONDES = 4
@@ -584,6 +585,9 @@ export async function POST(req: NextRequest) {
           if (remainder) controller.enqueue(encoder.encode(remainder))
 
           let finalMessage = await anthropicStream.finalMessage()
+          // Tokenverbruik van de hele beurt (lib/chatVerbruik.ts): dit antwoord, alle toolrondes en een eventueel vervolg.
+          const verbruik = maakVerbruik(bijlageBlokken.length)
+          telOp(verbruik, finalMessage.usage)
           const opgehaald = opgehaaldePaginas(finalMessage.content)
           // Vervolgrondes: vraagt het model de rekentool, voer die uit en laat het model verdergaan.
           // Een serverkant-tool (link ophalen) kan het antwoord ook met pause_turn onderbreken: dan
@@ -636,6 +640,7 @@ export async function POST(req: NextRequest) {
             const rondeRest = rondeSanitizer.flush()
             if (rondeRest) controller.enqueue(encoder.encode(rondeRest))
             finalMessage = await rondeStream.finalMessage()
+            telOp(verbruik, finalMessage.usage)
             opgehaald.push(...opgehaaldePaginas(finalMessage.content))
           }
           if (moetDoorgaan()) {
@@ -686,6 +691,7 @@ export async function POST(req: NextRequest) {
               const vervolgRest = vervolgSanitizer.flush()
               if (vervolgRest) controller.enqueue(encoder.encode(vervolgRest))
               const vervolgFinal = await vervolgStream.finalMessage()
+              telOp(verbruik, vervolgFinal.usage)
               const vervolgTekst = getText(vervolgFinal.content)
               if (vervolgTekst) {
                 answer = answer + vervolgTekst
@@ -716,13 +722,18 @@ export async function POST(req: NextRequest) {
           const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }
           let { data: logRow, error: logFout } = await supabase
             .from('arnobot_rds_logs')
-            .insert({ ...basisLog, bron_context: bronContext })
+            .insert({ ...basisLog, bron_context: bronContext, verbruik })
             .select('id')
             .single()
           if (logFout) {
-            // Nooit een gespreksregel kwijtraken omdat de extra kolom ontbreekt of de context te groot is.
-            console.error('[chat] log met bron_context mislukt, opnieuw zonder:', logFout.message)
-            ;({ data: logRow } = await supabase.from('arnobot_rds_logs').insert(basisLog).select('id').single())
+            // Nooit een gespreksregel kwijtraken omdat een extra kolom (verbruik, docs/sql/2026-11-19-chat-verbruik.sql) ontbreekt
+            // of de context te groot is: eerst zonder verbruik (bron_context blijft behouden), dan pas zonder beide.
+            console.error('[chat] log met verbruik mislukt, opnieuw zonder verbruik:', logFout.message)
+            ;({ data: logRow, error: logFout } = await supabase.from('arnobot_rds_logs').insert({ ...basisLog, bron_context: bronContext }).select('id').single())
+            if (logFout) {
+              console.error('[chat] log met bron_context mislukt, opnieuw zonder:', logFout.message)
+              ;({ data: logRow } = await supabase.from('arnobot_rds_logs').insert(basisLog).select('id').single())
+            }
           }
           logId = logRow?.id ?? null
 
