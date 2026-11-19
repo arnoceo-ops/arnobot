@@ -10,8 +10,12 @@
 export type Tier = { name: string; credits: number; price: number }
 
 export const TARIEVEN = {
-  // Hoofdchat (Sonnet 4.6 + Haiku-RAG-herschrijving), $ per bericht
-  anthropicPerBericht: 0.015,
+  // Hoofdchat (Sonnet 4.6 + Haiku-RAG-herschrijving), $ per bericht. Was 0,015 (herkomst onbekend, niet in de docs);
+  // 0,10 sinds 2026-11-19 op eigen opdracht van Arno. Onderbouwing: gemeten uit arnobot_rds_logs.verbruik (3 berichten zonder bijlage:
+  // gemiddeld $0,102, 26.000 ongecachete invoertokens waarvan ongeveer de helft blogfragmenten) en bevestigd tegen de Anthropic-Console
+  // (Sonnet-dagkosten gedeeld door berichten per dag op 17, 18 en 19 nov: ongeveer $0,10 tot $0,14, een bovengrens omdat analyses en
+  // sparring erin zitten). Bijwerken zodra scripts/kosten-per-gebruiker.mjs genoeg metingen heeft.
+  anthropicPerBericht: 0.10,
   // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
   kostenPerAnalyse: 0.007,
   // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
