@@ -38,7 +38,20 @@ Piet Pieters | 3.000.000 | 3.600.000 | -600.000 | 3.300.000 | -300.000 | 41,0% |
 Klaas Kuiper | 1.500.000 | 1.400.000 | 100.000 | 1.250.000 | 250.000 | 43,6% | 43,6%
 Totaal | 6.500.000 | 6.900.000 | -400.000 | 6.250.000 | 250.000 | 43,0% | 43,8%`
 
-const OPEN = `[Bijlage: dashboard.png]\n${TABEL}\n\nIk ben Jan Jansen. Analyseer mijn omzet en de omzet van het team. Ik wil 10% groei op vorig jaar halen nog dit jaar. Hoe ver ben ik?`
+// Grotere verzonnen tabel voor rangorde- en kolomvragen (de fouten van 19 november: "grootste daler" en
+// "groeit samen met X en Y" terwijl dat alleen in de YTD-kolom klopte).
+const TABEL2 = `Account Manager | This Year | Last Year | Δ TY-LY | Last Year YTD | Δ TY-LY YTD
+Anna Bakker | 1.800.000 | 1.700.000 | 100.000 | 1.500.000 | 300.000
+Bram Smit | 2.500.000 | 3.100.000 | -600.000 | 2.800.000 | -300.000
+Carla Vos | 3.900.000 | 5.000.000 | -1.100.000 | 4.750.000 | -850.000
+Dirk Mulder | 1.200.000 | 1.250.000 | -50.000 | 1.000.000 | 200.000
+Eva Peters | 2.100.000 | 2.400.000 | -300.000 | 2.050.000 | 50.000
+Frans Kok | 900.000 | 1.500.000 | -600.000 | 1.300.000 | -400.000
+Totaal | 12.400.000 | 14.950.000 | -2.550.000 | 13.400.000 | -1.000.000`
+
+const KOLOM_GENOEMD = ['ytd', 'tot nu toe', 'dezelfde periode', 'heel vorig jaar', 'hele vorige jaar', 'volledig vorig jaar', 'heel jaar', 'hele jaar', 'volledige jaar']
+
+const OPEN =`[Bijlage: dashboard.png]\n${TABEL}\n\nIk ben Jan Jansen. Analyseer mijn omzet en de omzet van het team. Ik wil 10% groei op vorig jaar halen nog dit jaar. Hoe ver ben ik?`
 const ANTWOORD_OPEN = 'Je staat op 2.000.000 en vorig jaar was het 1.900.000. Je doel voor 10% groei is 1.900.000 x 1,1 = 2.090.000. Je tekort is dus 90.000. Waar komt dat vandaan?'
 
 const CASES: Case[] = [
@@ -59,6 +72,27 @@ const CASES: Case[] = [
     ],
     moet: [['2080000'], ['10000']],
     nooit: ['2200000', '2280000', '2380000'],
+  },
+  {
+    id: 'tabel-dalers-ytd',
+    omschrijving: 'Rangorde: de twee grootste dalers in de YTD-kolom',
+    gesprek: [{ role: 'user', content: `[Bijlage: dashboard.png]\n${TABEL2}\n\nWie zijn de twee grootste dalers YTD?` }],
+    moet: [['carla'], ['frans']],
+    nooit: [],
+  },
+  {
+    id: 'tabel-groeiers-jaar',
+    omschrijving: 'Wie groeit ten opzichte van heel vorig jaar (alleen Anna)',
+    gesprek: [{ role: 'user', content: `[Bijlage: dashboard.png]\n${TABEL2}\n\nWie in het team groeit ten opzichte van heel vorig jaar?` }],
+    moet: [['anna']],
+    nooit: ['dirk groeit', 'eva groeit', 'dirk mulder groeit', 'eva peters groeit', 'samen met dirk', 'samen met eva'],
+  },
+  {
+    id: 'tabel-mix',
+    omschrijving: 'Open vraag over het team: antwoord noemt welke kolom, en Carla is de grootste daler',
+    gesprek: [{ role: 'user', content: `[Bijlage: dashboard.png]\n${TABEL2}\n\nHoe staat het team ervoor, groeit of krimpt het, en wie is de grootste daler?` }],
+    moet: [['carla'], KOLOM_GENOEMD],
+    nooit: ['grootste daler is frans', 'grootste daler is bram'],
   },
   {
     id: 'ytd',
@@ -137,25 +171,34 @@ const CASES: Case[] = [
 ]
 
 // Privé-cases (EVAL_PRIVE=pad naar json): het echte gesprek van 18 november met de echte schermafbeelding.
-// Het bestand en de afbeelding staan buiten de repo, want het zijn gegevens van een echte gebruiker.
+// Het bestand en de afbeelding staan buiten de repo, want het zijn gegevens van een echte gebruiker (namen,
+// omzetten). Ook de verwachte antwoorden staan daar, zodat er geen echte namen of cijfers in de repo komen.
+// Formaat: { afbeelding, beurten: [{q, a, ctx}], cases: [{ id, omschrijving, tot?, vraag?, moet, nooit }] }
+//   tot = index van de beurt in het echte gesprek (met de eerdere beurten als geschiedenis), of
+//   vraag = een losse vraag op alleen de afbeelding. In moet staat "@kolom" voor "de kolom is genoemd".
 function laadPrive(): Case[] {
   const pad = process.env.EVAL_PRIVE
   if (!pad) return []
-  const f = JSON.parse(readFileSync(pad, 'utf-8')) as { afbeelding: string; beurten: { q: string; a: string; ctx: string }[] }
+  const f = JSON.parse(readFileSync(pad, 'utf-8')) as {
+    afbeelding: string
+    beurten: { q: string; a: string; ctx: string }[]
+    cases: { id: string; omschrijving: string; tot?: number; vraag?: string; moet: string[][]; nooit: string[] }[]
+  }
   const bouw = (tot: number): Beurt[] => {
     const g: Beurt[] = []
     for (let i = 0; i < tot; i++) { g.push({ role: 'user', content: f.beurten[i].q }, { role: 'assistant', content: f.beurten[i].a }) }
     g.push({ role: 'user', content: f.beurten[tot].q })
     return g
   }
-  const mk = (id: string, omschrijving: string, tot: number, moet: string[][], nooit: string[]): Case =>
-    ({ id, omschrijving, gesprek: bouw(tot), moet, nooit, afbeeldingPad: f.afbeelding, context: f.beurten[tot].ctx })
-  return [
-    // "al gehaald" is fout: de gebruiker bedoelt 10% op het hele vorige jaar, en dat is nog niet gehaald.
-    mk('echt-1-hoe-ver', 'Echt gesprek, beurt 1: hoe ver ben ik van 10%', 0, [['2361326'], ['89522']], ['2498984', '147180', 'al gehaald', 'al behaald']),
-    mk('echt-3-doel', 'Echt gesprek, beurt 3: waar het in productie fout ging (doel 2.498.984)', 2, [['2361326', '9522', '9500', '89522', '10000']], ['2498984', '147180']),
-    mk('echt-4-correctie', 'Echt gesprek, beurt 4: gebruiker corrigeert', 3, [['2361326'], ['89522', '9522']], ['2498984', '147180']),
-  ]
+  return f.cases.map(c => ({
+    id: c.id,
+    omschrijving: c.omschrijving,
+    gesprek: c.tot !== undefined ? bouw(c.tot) : [{ role: 'user' as const, content: c.vraag ?? '' }],
+    moet: c.moet.map(g => g.flatMap(x => (x === '@kolom' ? KOLOM_GENOEMD : [x]))),
+    nooit: c.nooit,
+    afbeeldingPad: f.afbeelding,
+    context: c.tot !== undefined ? f.beurten[c.tot].ctx : undefined,
+  }))
 }
 
 function normaliseer(tekst: string): string {
@@ -183,6 +226,7 @@ async function main() {
   // EVAL_BASIS=1: alleen de oorspronkelijke rekentool, voor de vergelijking vóór de wijziging.
   const toolLijst = process.env.EVAL_BASIS ? [tools.REKEN_TOOL] : (tools as any).CHAT_REKENTOOLS ?? [tools.REKEN_TOOL]
   const voerUit = (tools as any).voerToolUit ?? ((naam: string, input: unknown) => (naam === 'bereken' ? tools.voerRekenToolUit(input) : { content: 'Onbekende tool.', isError: true }))
+  const { maakTabelStaat } = await import('../lib/tabelTool')
 
   const resultaten: any[] = []
   // EVAL_ALLEEN=echt: alleen cases waarvan het id met deze tekst begint (sneller).
@@ -198,6 +242,7 @@ async function main() {
       let antwoord = ''
       let toolAanroepen = 0
       const expressies: string[] = []
+      const tabelStaat = maakTabelStaat() // per beurt een nieuwe, zoals in de chatroute
       for (let ronde = 0; ronde < 5; ronde++) {
         const res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 1450, system, messages: berichten, tools: toolLijst })
         antwoord += res.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n\n') + '\n\n'
@@ -207,7 +252,7 @@ async function main() {
         for (const g of gebruik) expressies.push(JSON.stringify((g as any).input))
         berichten = [...berichten, { role: 'assistant', content: res.content }, {
           role: 'user',
-          content: gebruik.map((g: any) => { const r = voerUit(g.name, g.input); return { type: 'tool_result', tool_use_id: g.id, content: r.content, is_error: r.isError } }),
+          content: gebruik.map((g: any) => { const r = voerUit(g.name, g.input, tabelStaat); return { type: 'tool_result', tool_use_id: g.id, content: r.content, is_error: r.isError } }),
         }]
       }
       const b = beoordeelCase(c, antwoord)

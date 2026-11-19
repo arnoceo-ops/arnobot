@@ -69,9 +69,10 @@ import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/in
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
 import { maakVerbruik, telOp } from '@/lib/chatVerbruik'
+import { maakTabelStaat } from '@/lib/tabelTool'
 
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
-const MAX_REKENRONDES = 4
+const MAX_REKENRONDES = 6 // overschrijven, vragen stellen en eventueel herstellen na een kruiscontrole
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { buildDocumentContentBlock } from '@/lib/documentInhoud'
 import { documentenBeschikbaarVoor, samenvattenBeschikbaarVoor } from '@/lib/documentenRegels'
@@ -548,7 +549,15 @@ export async function POST(req: NextRequest) {
     // ongewijzigd (verwatering).
     const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
     const toolLijst: Anthropic.ToolUnion[] = []
-    if (/\d/.test(gesprekTekst)) toolLijst.push(...CHAT_REKENTOOLS)
+    // Met een bijlage (screenshot, PDF) staan de getallen niet in de tekst: dan ook zonder cijfers in de tekst
+    // de tools meegeven, anders krijgt "wie is de grootste daler?" bij een dashboard-screenshot geen tools.
+    // De tabeltools (lib/tabelTool.ts) alleen bij een bijlage of een tabel in de tekst.
+    const heeftBijlage = bijlageBlokken.length > 0
+    const tabelInTekst = /[|\t]/.test(questionWithDocument)
+    if (/\d/.test(gesprekTekst) || heeftBijlage) {
+      toolLijst.push(...CHAT_REKENTOOLS.filter(t => heeftBijlage || tabelInTekst || (t.name !== 'schrijf_tabel_over' && t.name !== 'tabel_vraag')))
+    }
+    const tabelStaat = maakTabelStaat()
     if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)
     const chatTools: Anthropic.ToolUnion[] | undefined = toolLijst.length > 0 ? toolLijst : undefined
     const anthropicStream = client.messages.stream({
@@ -606,7 +615,7 @@ export async function POST(req: NextRequest) {
                 ? [{
                     role: 'user' as const,
                     content: toolGebruik.map(tu => {
-                      const r = voerToolUit(tu.name, tu.input)
+                      const r = voerToolUit(tu.name, tu.input, tabelStaat)
                       return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
                     }),
                   }]
