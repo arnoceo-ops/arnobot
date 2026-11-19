@@ -35,3 +35,33 @@ describe('Voyage rerank in Abacus', () => {
     expect(r.totaal - nul.totaal).toBeCloseTo(r.voyageKosten, 6)
   })
 })
+
+describe('Documenten en profielimport in Abacus', () => {
+  it('een document kost per beurt het hele bestand opnieuw: 40.000 tokens x 5 beurten x 1,3 x $3 per 1M', () => {
+    const i = { ...DEFAULT_INPUTS, pctDocumentGebruikers: 100, documentenPerGebruiker: 1, pctDocumentenBewaard: 0, pctHistorieImport: 0 }
+    const r = computeScenarioKosten(i, 5, 5)
+    expect(r.documentBeurtKosten).toBeCloseTo(10 * 40000 * 5 * 1.3 * 3 / 1e6, 6)
+    expect(r.samenvattingKosten).toBe(0)
+  })
+
+  it('samenvatting per bewaard document: invoer van het document plus 600 uitvoertokens', () => {
+    const i = { ...DEFAULT_INPUTS, pctDocumentGebruikers: 100, documentenPerGebruiker: 1, pctDocumentenBewaard: 100 }
+    const r = computeScenarioKosten(i, 5, 5)
+    expect(r.samenvattingKosten).toBeCloseTo(10 * (40000 * 3 + 600 * 15) / 1e6, 6)
+  })
+
+  it('telt mee in het totaal en staat op nul als niemand het gebruikt', () => {
+    const uit = { ...DEFAULT_INPUTS, pctDocumentGebruikers: 0, pctHistorieImport: 0 }
+    const r0 = computeScenarioKosten(uit, 10, 10)
+    expect(r0.documentKosten).toBe(0)
+    expect(r0.historieImportKosten).toBe(0)
+    const r = computeScenarioKosten(DEFAULT_INPUTS, 10, 10)
+    expect(r.totaal - r0.totaal).toBeCloseTo(r.documentKosten + r.historieImportKosten, 6)
+  })
+
+  it('profielimport: eenmalige omzetting plus 2.000 tokens bij elk bericht', () => {
+    const i = { ...DEFAULT_INPUTS, pctDocumentGebruikers: 0, pctHistorieImport: 100 }
+    const r = computeScenarioKosten(i, 5, 5)
+    expect(r.historieImportKosten).toBeCloseTo(10 * (0.02 + 60 * 2000 * 3 / 1e6), 6)
+  })
+})

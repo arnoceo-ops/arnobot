@@ -27,7 +27,10 @@ export const TARIEVEN = {
   kostenPerDebrief: 0.015,
   // Vangnet voor kleinere Anthropic-routes (session-end, coaching-precheck,
   // blog-synthese, verfijn, sessies-zoeken), $ per gebruiker/maand
-  overigeAnthropicPerGebruikerPerMaand: 0.05,
+  // Verhoogd van 0,05 naar 0,07 op 2026-11-19: de blogreden bij SLUIT (Haiku, ongeveer 1.200 tokens in en 200 uit,
+  // ruim 0,2 cent per afgesloten gesprek, ongeveer 10 gesprekken per maand) en de iets langere moderatieprompt
+  // (GRENSGEVAL, ongeveer 300 extra Haiku-tokens per bericht) zitten hierin.
+  overigeAnthropicPerGebruikerPerMaand: 0.07,
   // ElevenLabs: credits per teken (Flash v2.5). ElevenLabs zelf bevestigt alleen
   // een bereik van 0,5-1, dit is de veilige kant van dat bereik.
   creditPerTeken: 1.0,
@@ -47,6 +50,34 @@ export const TARIEVEN = {
   // hieronder (DEFAULT_INPUTS) zijn een voorzichtige placeholder, geen
   // gemeten data zoals bij de andere routes.
   assemblyaiPerMinuut: 0.23 / 60,
+  // Anthropic-tarieven Sonnet 4.6 per 1M tokens (lijst in de claude-api-skill, cache van 2026-11-03, gelezen 2026-11-19).
+  // Een cache-lezing kost 0,1 keer de invoerprijs, een cache-schrijving 1,25 keer. De chat gebruikt voor bijlagen
+  // GEEN prompt caching (de systeemprompt verandert per beurt, dus de bijlage kan niet voor de wisselende context staan).
+  sonnetInvoerPerMiljoenUsd: 3,
+  sonnetUitvoerPerMiljoenUsd: 15,
+  // Documenten in de chat (docs/DOCUMENTEN_PLAN.md, live sinds 2026-11-18). Het hele bestand gaat bij ELKE beurt van
+  // het gesprek opnieuw als invoer mee (tot 48 uur na het laatste bericht). Een PDF kost ruwweg 1.500 tot 3.000 tokens
+  // per pagina (bron: Anthropic pdf-support, in DOCUMENTEN_PLAN gelezen 2026-11-18), harde grens 100 pagina's per PDF
+  // en 20 MB. ALLES HIERONDER IS AANNAME: gemeten zijn alleen 10 documenten van 4 gebruikers in twee dagen
+  // (mediaan 4 MB, 7 pdf, 1 afbeelding, 2 audio). Bijwerken zodra er een maand echt gebruik is (arnobot_documenten).
+  pctDocumentGebruikers: 30,
+  documentenPerGebruikerPerMaand: 3,
+  tokensPerDocument: 40000,
+  beurtenPerDocument: 5,
+  // Vervolgrondes in een beurt (rekentool, tabeltool, groeidoel) sturen de bijlage opnieuw mee.
+  toolRondeFactor: 1.3,
+  pctDocumentenBewaard: 100,
+  // Samenvatting per bewaard document (lib/documentSamenvatting.ts, Sonnet 4.6, max 1.200 uitvoertokens).
+  samenvattingUitvoerTokens: 600,
+  // Samenvattingen terugbrengen in het geheugen (3 stuks van ongeveer 400 tokens) bij een deel van de berichten van wie documenten bewaart.
+  samenvattingBerichtenPerGebruiker: 20,
+  samenvattingTokensPerBericht: 1200,
+  // Profiel uit een andere AI (lib/historieImport.ts, achter HISTORIE_IMPORT_OPEN): omzetting eenmalig met Haiku
+  // (maximaal 20.000 tekens in, 4.500 tokens uit, ruim 2 cent), en het profiel gaat daarna bij elk bericht mee in het
+  // niet-gecachete deel van de systeemprompt (maximaal 6.800 tekens per profiel, ongeveer 2.000 tokens).
+  pctHistorieImport: 20,
+  kostenPerHistorieImport: 0.02,
+  tokensHistorieProfiel: 2000,
   // Voyage AI rerank (rerank-2.5, lib/rag.ts) bij elke chatvraag: $0,05 per 1M tokens
   // (docs.voyageai.com/docs/pricing, laatst gewijzigd 2026-09-29, gelezen 2026-11-16). Voyage telt
   // (query-tokens x aantal documenten) + alle documenttokens. SCHATTING, niet gemeten: tot 130
@@ -260,6 +291,20 @@ export type Inputs = {
   audioMinutenPerGebruiker: number
   assemblyaiPerMinuut: number
   voyagePerBericht: number
+  sonnetInvoerPerMiljoen: number
+  sonnetUitvoerPerMiljoen: number
+  pctDocumentGebruikers: number
+  documentenPerGebruiker: number
+  tokensPerDocument: number
+  beurtenPerDocument: number
+  toolRondeFactor: number
+  pctDocumentenBewaard: number
+  samenvattingUitvoerTokens: number
+  samenvattingBerichtenPerGebruiker: number
+  samenvattingTokensPerBericht: number
+  pctHistorieImport: number
+  kostenPerHistorieImport: number
+  tokensHistorieProfiel: number
   dicteerMinutenPerGebruiker: number
   pctDicteerLive: number
   dicteerPerMinuut: number
@@ -328,6 +373,20 @@ export const DEFAULT_INPUTS: Inputs = {
   audioMinutenPerGebruiker: 20,
   assemblyaiPerMinuut: TARIEVEN.assemblyaiPerMinuut,
   voyagePerBericht: voyageKostenPerBericht(),
+  sonnetInvoerPerMiljoen: TARIEVEN.sonnetInvoerPerMiljoenUsd,
+  sonnetUitvoerPerMiljoen: TARIEVEN.sonnetUitvoerPerMiljoenUsd,
+  pctDocumentGebruikers: TARIEVEN.pctDocumentGebruikers,
+  documentenPerGebruiker: TARIEVEN.documentenPerGebruikerPerMaand,
+  tokensPerDocument: TARIEVEN.tokensPerDocument,
+  beurtenPerDocument: TARIEVEN.beurtenPerDocument,
+  toolRondeFactor: TARIEVEN.toolRondeFactor,
+  pctDocumentenBewaard: TARIEVEN.pctDocumentenBewaard,
+  samenvattingUitvoerTokens: TARIEVEN.samenvattingUitvoerTokens,
+  samenvattingBerichtenPerGebruiker: TARIEVEN.samenvattingBerichtenPerGebruiker,
+  samenvattingTokensPerBericht: TARIEVEN.samenvattingTokensPerBericht,
+  pctHistorieImport: TARIEVEN.pctHistorieImport,
+  kostenPerHistorieImport: TARIEVEN.kostenPerHistorieImport,
+  tokensHistorieProfiel: TARIEVEN.tokensHistorieProfiel,
   // Dicteren: nog geen gemeten gebruik, voorzichtige startwaarde van 30 minuten per gebruiker per
   // maand (alle gebruikers, ook Basic). Live is de bedoelde standaard, dus 100%. Bijwerken zodra er
   // echte cijfers zijn.
@@ -423,6 +482,25 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const audioAnalyseGebruikers = proEffectief * (inputs.pctAudioAnalyse / 100)
   const audioAnalyseKosten = audioAnalyseGebruikers * inputs.audioMinutenPerGebruiker * inputs.assemblyaiPerMinuut
 
+  // Documenten in de chat: elke beurt van een gesprek met een bijlage stuurt het hele bestand opnieuw als (niet gecachete) invoer,
+  // plus een samenvatting per bewaard bestand en die samenvattingen in het geheugen. Geldt voor alle gebruikers (ook Basic).
+  const invoerPerToken = inputs.sonnetInvoerPerMiljoen / 1_000_000
+  const uitvoerPerToken = inputs.sonnetUitvoerPerMiljoen / 1_000_000
+  const documentGebruikers = n * (inputs.pctDocumentGebruikers / 100)
+  const aantalDocumenten = documentGebruikers * inputs.documentenPerGebruiker
+  const bewaardDeel = inputs.pctDocumentenBewaard / 100
+  const documentBeurtKosten = aantalDocumenten * inputs.tokensPerDocument * inputs.beurtenPerDocument * inputs.toolRondeFactor * invoerPerToken
+  const samenvattingKosten = aantalDocumenten * bewaardDeel
+    * (inputs.tokensPerDocument * invoerPerToken + inputs.samenvattingUitvoerTokens * uitvoerPerToken)
+  const samenvattingGeheugenKosten = documentGebruikers * bewaardDeel
+    * inputs.samenvattingBerichtenPerGebruiker * inputs.samenvattingTokensPerBericht * invoerPerToken
+  const documentKosten = documentBeurtKosten + samenvattingKosten + samenvattingGeheugenKosten
+
+  // Profiel uit een andere AI: eenmalige omzetting (Haiku) plus het profiel in elk chatbericht.
+  const historieGebruikers = n * (inputs.pctHistorieImport / 100)
+  const historieImportKosten = historieGebruikers
+    * (inputs.kostenPerHistorieImport + inputs.berichten * inputs.tokensHistorieProfiel * invoerPerToken)
+
   const upstashCommands = totaalBerichten * inputs.upstashPerBericht
   const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
@@ -445,12 +523,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
+    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
 
   return {
     vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, dicteerKosten, audioAnalyseKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 
