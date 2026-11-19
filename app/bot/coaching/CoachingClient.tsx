@@ -9,6 +9,7 @@ import { ProgressieChart } from '@/app/bot/components/ProgressieChart'
 import { computeMsaScore } from '@/lib/msa'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import WeggaanWaarschuwing from './WeggaanWaarschuwing'
 import { track } from '@/lib/posthog'
 import { SUPPORT_WHATSAPP_VASTGELOPEN } from '@/lib/support'
 
@@ -447,7 +448,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
               ) : 'COACH ME →'}
             </button>
             {doc && (
-              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading || !scoresLoaded} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
+              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading || !scoresLoaded || generating} title="Download dit coachingsadvies als PDF">DOWNLOAD PDF ↓</button>
             )}
             {isUpToDate && (
               <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: '#9ca3af', letterSpacing: 1 }}>✓ Advies is actueel</p>
@@ -509,8 +510,13 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
           </div>
         )}
 
+        <WeggaanWaarschuwing actief={generating} soort="coaching" />
+
         {doc && (
-          <div style={{ animation: 'fadein 0.5s ease' }}>
+          <div
+            aria-busy={generating}
+            style={{ animation: 'fadein 0.5s ease', transition: 'opacity 0.3s', ...(generating ? { opacity: 0.3, pointerEvents: 'none', userSelect: 'none' } : {}) }}
+          >
 
             {doc.stagnatie && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 32 }}>

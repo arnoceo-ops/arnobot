@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
 import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
+import WeggaanWaarschuwing from './WeggaanWaarschuwing'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { ProgressieChart, SPE_SERIES } from '@/app/bot/components/ProgressieChart'
@@ -245,7 +246,7 @@ export default function SpeCoachingClient() {
               ) : doc ? 'NIEUWE ANALYSE →' : 'GENEREER ANALYSE →'}
             </button>
             {doc && (
-              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading} title="Download deze analyse als PDF">DOWNLOAD PDF ↓</button>
+              <button className="pdf-btn no-print" onClick={() => window.print()} disabled={loading || generating} title="Download deze analyse als PDF">DOWNLOAD PDF ↓</button>
             )}
           </div>
           {!doc && !loading && !error && (
@@ -272,8 +273,13 @@ export default function SpeCoachingClient() {
           </div>
         )}
 
+        <WeggaanWaarschuwing actief={generating} soort="analyse" />
+
         {doc && (
-          <div style={{ animation: 'fadein 0.5s ease' }}>
+          <div
+            aria-busy={generating}
+            style={{ animation: 'fadein 0.5s ease', transition: 'opacity 0.3s', ...(generating ? { opacity: 0.3, pointerEvents: 'none', userSelect: 'none' } : {}) }}
+          >
 
             <div style={{ textAlign: 'center', marginBottom: 8 }}>
               <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', display: 'block', marginBottom: 8 }}>SPE-SCORE</span>
