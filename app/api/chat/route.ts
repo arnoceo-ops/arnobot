@@ -397,6 +397,8 @@ export async function POST(req: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
     if (lastLogoutRow) countQuery = countQuery.gt('created_at', lastLogoutRow.created_at)
+    // Ook een tijdsvenster: een afdwaling van weken geleden telt niet mee (Chris kwam op 19-11 op "3e keer" door een markering van 23-10).
+    countQuery = countQuery.gt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
     const { count: priorCount } = await countQuery
     const occurrence = (priorCount ?? 0) + 1 // deze poging meegeteld
 

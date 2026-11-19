@@ -14,6 +14,11 @@ describe('bouwAppModeratiePrompt', () => {
   it('rekent gewone coachingsvragen over energie, planning en gewoontes tot OK', () => {
     expect(prompt).toMatch(/OK: logisch vervolg[^\n]*energie, planning, gewoontes of prestaties/)
   })
+  it('rekent vragen over ArnoBot zelf, uploads, archief en links tot OK en kiest bij twijfel OK', () => {
+    expect(prompt).toMatch(/OK: logisch vervolg[^\n]*ArnoBot zelf[^\n]*uploads, bestanden, archief[^\n]*gedeelde link/)
+    expect(prompt).toContain('NOOIT OFFTOPIC en NOOIT ONGEPAST')
+    expect(prompt).toContain('kies dan OK')
+  })
   it('zet de vraag en het gesprek erin', () => {
     expect(bouwAppModeratiePrompt('GEBRUIKER: hoi', 'Mijn vraag', 't', 'o')).toContain('Nieuwste bericht van de gebruiker: "Mijn vraag"')
   })
