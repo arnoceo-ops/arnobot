@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
-import { amsterdamMaandStart } from '@/lib/voiceLimiet'
-import { maandSleutel } from '@/lib/maandKosten'
+import { amsterdamDagStart, amsterdamDatum, dagenTussen, datumPlusDagen, isDatum } from '@/lib/amsterdamTijd'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { isTesterVoorAbacus, somKostenPerGebruiker, type KostenRij } from '@/lib/gebruikerKosten'
-import { nettoOmzetCentInMaand, type BetalingVoorOmzet } from '@/lib/maandOmzet'
+import { nettoOmzetCentInPeriode, type BetalingVoorOmzet } from '@/lib/maandOmzet'
 
-// Kosten per gebruiker per kalendermaand (Amsterdamse tijd) voor de Abacus-tab Gebruikers. Zelfde paginatoegang als de rest van Abacus.
+// Kosten per gebruiker over een periode (van en tot en met, Amsterdamse kalenderdagen, hooguit een jaar) voor de Abacus-tab Gebruikers.
+// Zelfde paginatoegang als de rest van Abacus.
 // Bron: arnobot_ai_gebruik (Anthropic, Voyage, OpenAI-dicteren, AssemblyAI) en arnobot_elevenlabs_usage. Met namen (besluit Arno 2026-11-19: geen pseudoniem).
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -20,24 +20,19 @@ async function checkAuth(): Promise<boolean> {
   return !!token && token === process.env.ARNOBOT_KOSTEN_KEY
 }
 
-// Begin en einde van een kalendermaand in Amsterdam; het midden van de maand als anker omdat de zomertijd pas eind maart en eind oktober wisselt.
-function maandGrenzen(maand: string): { start: string; eind: string } {
-  const [j, m] = maand.split('-').map(Number)
-  return { start: amsterdamMaandStart(new Date(Date.UTC(j, m - 1, 15, 12))), eind: amsterdamMaandStart(new Date(Date.UTC(j, m, 15, 12))) }
-}
-
-function laatsteMaanden(aantal: number, nu = new Date()): string[] {
-  const uit: string[] = []
-  for (let i = 0; i < aantal; i++) uit.push(maandSleutel(new Date(Date.UTC(nu.getUTCFullYear(), nu.getUTCMonth() - i, 15, 12))))
-  return uit
-}
-
 export async function GET(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const gevraagd = req.nextUrl.searchParams.get('maand') ?? ''
-  const maand = /^\d{4}-(0[1-9]|1[0-2])$/.test(gevraagd) ? gevraagd : maandSleutel()
-  const { start, eind } = maandGrenzen(maand)
+  // Standaard: van de eerste van deze maand tot en met vandaag. Een omgekeerde periode wordt omgedraaid, meer dan een jaar wordt ingekort.
+  const vandaag = amsterdamDatum()
+  const vraagVan = req.nextUrl.searchParams.get('van')
+  const vraagTot = req.nextUrl.searchParams.get('tot')
+  let van = isDatum(vraagVan) ? vraagVan : `${vandaag.slice(0, 8)}01`
+  let tot = isDatum(vraagTot) ? vraagTot : vandaag
+  if (tot < van) [van, tot] = [tot, van]
+  if (dagenTussen(van, tot) > 366) van = datumPlusDagen(tot, -365)
+  const start = amsterdamDagStart(van)
+  const eind = amsterdamDagStart(datumPlusDagen(tot, 1))
 
   try {
     const [rijen, voice, berichten, fx] = await Promise.all([
@@ -93,9 +88,8 @@ export async function GET(req: NextRequest) {
     const omzetCent = new Map<string, number>()
     const abonnement = new Map<string, string>()
     if (ids.length) {
-      // Een jaarbetaling van tot 12 maanden terug draagt nog bij aan deze maand.
-      const [jaarMaand, maandNummer] = maand.split('-').map(Number)
-      const betaaldVanaf = new Date(Date.UTC(jaarMaand, maandNummer - 1 - 12, 1)).toISOString()
+      // Een jaarbetaling van tot 12 maanden voor het begin van de periode draagt er nog aan bij.
+      const betaaldVanaf = amsterdamDagStart(datumPlusDagen(van, -366))
       const [betalingen, abonnementen] = await Promise.all([
         haalAlleRijen<{ user_id: string } & BetalingVoorOmzet>((van, tot) =>
           supabase.from('arnobot_payments').select('user_id, bedrag_cent, btw_cent, terugbetaald_cent, betaald_at, subscription_id')
@@ -109,7 +103,7 @@ export async function GET(req: NextRequest) {
         // Betalingen van de interne testaccounts zijn testbetalingen (Mollie-proeven van Arno), geen omzet.
         if (isInternalTestUser(b.user_id)) continue
         const abo = b.subscription_id ? aboPerId.get(b.subscription_id) : undefined
-        const bedrag = nettoOmzetCentInMaand(b, abo, maand)
+        const bedrag = nettoOmzetCentInPeriode(b, abo, van, tot)
         if (bedrag > 0) omzetCent.set(b.user_id, (omzetCent.get(b.user_id) ?? 0) + bedrag)
       }
       const ABO_STATUS: Record<string, string> = { active: 'actief', ended: 'beëindigd', refunded: 'terugbetaald', abandoned: 'niet afgerond', pending: 'wacht op betaling', cancelled: 'opgezegd', suspended: 'geschorst' }
@@ -168,11 +162,12 @@ export async function GET(req: NextRequest) {
     const testers = alleGebruikers.filter(g => isTesterVoorAbacus(g.userId))
 
     return NextResponse.json({
-      maand,
-      maanden: laatsteMaanden(6),
+      van,
+      tot,
+      vandaag,
       meetStart,
-      // Marge alleen tonen als de hele maand gemeten is: anders staat er een volle maand omzet tegenover een half gemeten maand kosten.
-      maandVolledigGemeten: meetStart !== null && meetStart <= start,
+      // Marge alleen tonen als de hele periode gemeten is: anders staat er omzet over de hele periode tegenover kosten van een deel ervan.
+      periodeVolledigGemeten: meetStart !== null && meetStart <= start,
       fxEurUsd: fx.rate,
       gebruikers,
       testers: { aantal: testers.length, totaalUsd: testers.reduce((s, g) => s + g.totaalUsd, 0), berichten: testers.reduce((s, g) => s + g.berichten, 0) },

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { datumPlusDagen } from '@/lib/amsterdamTijd'
 
-// Tab Gebruikers: wat elke gebruiker in een kalendermaand (Amsterdamse tijd) aan AI en spraak kost, uit /api/kosten-per-gebruiker.
+// Tab Gebruikers: wat elke gebruiker over een periode (Amsterdamse kalenderdagen) aan AI en spraak kost, uit /api/kosten-per-gebruiker.
 // Alleen wat gemeten wordt (arnobot_ai_gebruik, sinds 2026-11-19, en ElevenLabs-tekens). Met namen, besluit Arno 2026-11-19.
 
 type BronRij = { bron: string; usd: number; aanroepen: number }
@@ -15,7 +16,7 @@ type Gebruiker = {
   actief: boolean
   /** Laatste abonnement uit arnobot_subscriptions, bijvoorbeeld "Pro jaarlijks, actief". Leeg bij een gebruiker in zijn proef. */
   abonnement: string | null
-  /** Netto omzet (zonder btw) in deze maand in centen, een jaarbetaling gespreid over 12 maanden. */
+  /** Netto omzet (zonder btw) over de periode in centen, een jaarbetaling gespreid over 12 maanden, naar rato van de dagen. */
   omzetCent: number
   testaccount: boolean
   berichten: number
@@ -30,11 +31,12 @@ type Gebruiker = {
   perBron: BronRij[]
 }
 type Antwoord = {
-  maandVolledigGemeten: boolean
+  periodeVolledigGemeten: boolean
   testers: { aantal: number; totaalUsd: number; berichten: number }
   meetStart: string | null
-  maand: string
-  maanden: string[]
+  van: string
+  tot: string
+  vandaag: string
   fxEurUsd: number
   gebruikers: Gebruiker[]
   platform: { totaalUsd: number; perBron: BronRij[] }
@@ -43,7 +45,30 @@ type Antwoord = {
 const fmtUsd = (n: number) => '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmtUsd3 = (n: number) => '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
 const fmtEur = (n: number) => '€' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const fmtMaand = (m: string) => new Date(m + '-15T12:00:00Z').toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const fmtDatum = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+type Snelkeuze = 'deze-maand' | 'vorige-maand' | '7-dagen' | '30-dagen' | 'sinds-meting' | 'eigen'
+const SNELKEUZES: { id: Snelkeuze; label: string }[] = [
+  { id: 'deze-maand', label: 'Deze maand' },
+  { id: 'vorige-maand', label: 'Vorige maand' },
+  { id: '7-dagen', label: 'Laatste 7 dagen' },
+  { id: '30-dagen', label: 'Laatste 30 dagen' },
+  { id: 'sinds-meting', label: 'Sinds begin meting' },
+  { id: 'eigen', label: 'Eigen periode' },
+]
+
+// Van en tot en met voor een snelkeuze, uit de datum van vandaag (Amsterdam, van de server) en het begin van de meting.
+function periodeVoorSnelkeuze(keuze: Snelkeuze, vandaag: string, meetStart: string | null): { van: string; tot: string } | null {
+  const eersteDezeMaand = `${vandaag.slice(0, 8)}01`
+  switch (keuze) {
+    case 'deze-maand': return { van: eersteDezeMaand, tot: vandaag }
+    case 'vorige-maand': { const laatste = datumPlusDagen(eersteDezeMaand, -1); return { van: `${laatste.slice(0, 8)}01`, tot: laatste } }
+    case '7-dagen': return { van: datumPlusDagen(vandaag, -6), tot: vandaag }
+    case '30-dagen': return { van: datumPlusDagen(vandaag, -29), tot: vandaag }
+    case 'sinds-meting': return meetStart ? { van: new Date(meetStart).toLocaleDateString('en-CA', { timeZone: 'Europe/Amsterdam' }), tot: vandaag } : null
+    default: return null
+  }
+}
 const PLAN_LABEL: Record<string, string> = { basis: 'Basic', premium: 'Pro', team: 'Team' }
 
 const cardStyle: React.CSSProperties = { background: '#1a2333', border: '1px solid #2d3a4f', borderRadius: 12, padding: '20px 22px', marginBottom: 18 }
@@ -56,7 +81,9 @@ const statLabel: React.CSSProperties = { fontSize: 11, color: '#6b7280', textTra
 const statValue: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: '#f1f5f9', fontVariantNumeric: 'tabular-nums' }
 
 export default function GebruikersKostenClient() {
-  const [maand, setMaand] = useState<string>('')
+  // Lege van en tot betekent: de standaard van de server (deze maand tot en met vandaag).
+  const [periode, setPeriode] = useState<{ van: string; tot: string }>({ van: '', tot: '' })
+  const [snelkeuze, setSnelkeuze] = useState<Snelkeuze>('deze-maand')
   const [data, setData] = useState<Antwoord | null>(null)
   const [fout, setFout] = useState('')
   const [laden, setLaden] = useState(true)
@@ -64,16 +91,30 @@ export default function GebruikersKostenClient() {
 
   useEffect(() => {
     let actueel = true
-    fetch(`/api/kosten-per-gebruiker${maand ? `?maand=${maand}` : ''}`)
+    const query = periode.van && periode.tot ? `?van=${periode.van}&tot=${periode.tot}` : ''
+    fetch(`/api/kosten-per-gebruiker${query}`)
       .then(async res => {
         if (res.status === 401) throw new Error('Sessie verlopen, log opnieuw in.')
         if (!res.ok) throw new Error('Ophalen mislukt.')
         return res.json() as Promise<Antwoord>
       })
-      .then(d => { if (actueel) { setData(d); setFout(''); setLaden(false); if (!maand) setMaand(d.maand) } })
+      .then(d => { if (actueel) { setData(d); setFout(''); setLaden(false) } })
       .catch(e => { if (actueel) { setFout((e as Error).message); setLaden(false) } })
     return () => { actueel = false }
-  }, [maand])
+  }, [periode])
+
+  function kiesSnelkeuze(keuze: Snelkeuze) {
+    setSnelkeuze(keuze)
+    if (keuze === 'eigen' || !data) return
+    const p = periodeVoorSnelkeuze(keuze, data.vandaag, data.meetStart)
+    if (p) { setLaden(true); setPeriode(p) }
+  }
+
+  function zetDatum(veld: 'van' | 'tot', waarde: string) {
+    setSnelkeuze('eigen')
+    const volgende = { ...(periode.van && periode.tot ? periode : { van: data?.van ?? '', tot: data?.tot ?? '' }), [veld]: waarde }
+    if (volgende.van && volgende.tot) { setLaden(true); setPeriode(volgende) }
+  }
 
   if (fout) return <p style={{ color: '#cc2200', fontSize: 13 }}>{fout}</p>
   if (!data) return <p style={{ color: '#94a3b8', fontSize: 14 }}>Laden...</p>
@@ -84,8 +125,9 @@ export default function GebruikersKostenClient() {
   // Geen aangenomen prijs: wat iemand betaalt hangt af van proef, cyclus, korting en tegoed. We tonen het echte abonnement en de echte betaling.
   const statusTekst = (g: Gebruiker) => g.abonnement ?? (g.actief ? 'gratis toegang' : 'inactief')
   const omzetTekst = (g: Gebruiker) => (g.omzetCent > 0 ? fmtEur(g.omzetCent / 100) : '-')
-  // Marge alleen als de hele maand gemeten is en er omzet is: anders staat er een volle maand omzet tegenover half gemeten kosten.
-  const margeEur = (g: Gebruiker): number | null => (data.maandVolledigGemeten && g.omzetCent > 0 ? g.omzetCent / 100 - eur(g.totaalUsd) : null)
+  // Marge alleen als de hele periode gemeten is en er omzet is: anders staat er omzet over de hele periode tegenover kosten van een deel ervan.
+  const margeEur = (g: Gebruiker): number | null => (data.periodeVolledigGemeten && g.omzetCent > 0 ? g.omzetCent / 100 - eur(g.totaalUsd) : null)
+  const periodeTekst = data.van === data.tot ? fmtDatum(data.van) : `${fmtDatum(data.van)} t/m ${fmtDatum(data.tot)}`
   const margeTekst = (g: Gebruiker) => { const m = margeEur(g); return m === null ? '-' : fmtEur(m) }
   const meetStartTekst = data.meetStart
     ? new Date(data.meetStart).toLocaleString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
@@ -94,10 +136,14 @@ export default function GebruikersKostenClient() {
   return (
     <div style={{ opacity: laden ? 0.6 : 1 }}>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
-        <label style={{ fontSize: 12, color: '#6b7280' }}>Maand</label>
-        <select value={maand || data.maand} onChange={e => { setLaden(true); setMaand(e.target.value) }} style={selectStyle}>
-          {data.maanden.map(m => <option key={m} value={m}>{fmtMaand(m)}</option>)}
+        <label style={{ fontSize: 12, color: '#6b7280' }}>Periode</label>
+        <select value={snelkeuze} onChange={e => kiesSnelkeuze(e.target.value as Snelkeuze)} style={selectStyle}>
+          {SNELKEUZES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
         </select>
+        <label style={{ fontSize: 12, color: '#6b7280' }}>Van</label>
+        <input type="date" value={data.van} max={data.tot} onChange={e => e.target.value && zetDatum('van', e.target.value)} style={selectStyle} />
+        <label style={{ fontSize: 12, color: '#6b7280' }}>Tot en met</label>
+        <input type="date" value={data.tot} min={data.van} max={data.vandaag} onChange={e => e.target.value && zetDatum('tot', e.target.value)} style={selectStyle} />
         <label style={{ fontSize: 12, color: '#6b7280' }}>Gebruiker</label>
         <select value={gekozen} onChange={e => setGekozen(e.target.value)} style={{ ...selectStyle, minWidth: 260 }}>
           <option value="">Alle gebruikers</option>
@@ -109,14 +155,14 @@ export default function GebruikersKostenClient() {
         <div style={cardStyle}>
           <div style={cardHeadStyle}><span style={dotStyle} />{gebruiker.naam}{gebruiker.testaccount ? ' (testaccount)' : ''}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in {fmtMaand(data.maand)}, waarvan {gebruiker.gemetenBerichten} vanaf het begin van de meting ({meetStartTekst})
+            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in de periode, waarvan {gebruiker.gemetenBerichten} vanaf het begin van de meting ({meetStartTekst})
           </p>
           <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap', marginBottom: 18 }}>
             <div><div style={statLabel}>Totaal</div><div style={{ ...statValue, color: '#f59e0b' }}>{fmtUsd(gebruiker.totaalUsd)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{fmtEur(eur(gebruiker.totaalUsd))}</div></div>
             <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.gemetenBerichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.gemetenBerichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend, over {gebruiker.gemetenBerichten} gemeten berichten</div></div>
             <div><div style={statLabel}>Abonnement</div><div style={{ ...statValue, fontSize: 16 }}>{statusTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>uit de betaaladministratie</div></div>
-            <div><div style={statLabel}>Omzet {fmtMaand(data.maand)}</div><div style={statValue}>{omzetTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>netto zonder btw, jaarbetaling gedeeld door 12</div></div>
-            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.maandVolledigGemeten ? 'omzet min gemeten kosten' : 'pas als de hele maand gemeten is'}</div></div>
+            <div><div style={statLabel}>Omzet in de periode</div><div style={statValue}>{omzetTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>netto zonder btw, jaarbetaling gedeeld door 12</div></div>
+            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.periodeVolledigGemeten ? 'omzet min gemeten kosten' : 'pas als de hele periode gemeten is'}</div></div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead><tr><th style={{ ...th, textAlign: 'left' }}>Soort</th><th style={th}>Dollars</th><th style={th}>Euro</th></tr></thead>
@@ -138,11 +184,11 @@ export default function GebruikersKostenClient() {
         </div>
       ) : (
         <div style={cardStyle}>
-          <div style={cardHeadStyle}><span style={dotStyle} />Alle gebruikers, {fmtMaand(data.maand)}</div>
+          <div style={cardHeadStyle}><span style={dotStyle} />Alle gebruikers, {periodeTekst}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
             Totaal gemeten: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
             De meting loopt sinds {meetStartTekst}: berichten van daarvoor tellen mee in Berichten, maar niet in de kosten. Kolom Gemeten telt alleen berichten vanaf dat moment.
-            Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden. Marge verschijnt pas als de hele maand gemeten is.
+            Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden en naar rato van de dagen in de periode. Marge verschijnt pas als de hele periode gemeten is.
           </p>
           {data.testers.aantal > 0 && (
             <p style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 14 }}>
