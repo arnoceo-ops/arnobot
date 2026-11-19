@@ -38,12 +38,14 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
 
 type Oordeel = { fout: boolean; citaat?: string; juist?: string }
 
-async function beoordeel(bron: string, antwoord: string): Promise<Oordeel> {
+// Geeft null als er na drie pogingen geen geldig oordeel kwam. Eén onleesbaar oordeel mag de rest van de
+// run niet laten mislukken; de aanroeper telt ze en meldt ze (nooit stil als "geen fout" lezen).
+async function beoordeel(bron: string, antwoord: string): Promise<Oordeel | null> {
   // Retry-bij-leeg: een leeg antwoord mag niet stil als "geen fout" gelezen worden.
-  for (let poging = 0; poging < 2; poging++) {
+  for (let poging = 0; poging < 3; poging++) {
     const res = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 400,
+      max_tokens: 800,
       system: SYSTEEM,
       messages: [{ role: 'user', content: `<gebruiker>\n${bron.slice(0, MAX_TEKENS_BRON)}\n</gebruiker>\n\n<antwoord>\n${antwoord.slice(0, MAX_TEKENS_ANTWOORD)}\n</antwoord>\n\nGeef de JSON.` }],
     })
@@ -63,7 +65,7 @@ async function beoordeel(bron: string, antwoord: string): Promise<Oordeel> {
       continue
     }
   }
-  throw new Error('Geen geldig oordeel van het model bij de feitencontrole')
+  return null
 }
 
 async function cronHandler(req: NextRequest) {
@@ -118,8 +120,11 @@ async function cronHandler(req: NextRequest) {
     }
 
     const fouten: { userId: string; citaat: string; juist: string }[] = []
-    for (const k of kandidaten.slice(0, MAX_KANDIDATEN)) {
+    let onbeoordeeld = 0
+    const beoordeeld = kandidaten.slice(0, MAX_KANDIDATEN)
+    for (const k of beoordeeld) {
       const o = await beoordeel(k.bron, k.antwoord)
+      if (!o) { onbeoordeeld++; continue }
       if (o.fout) fouten.push({ userId: k.userId, citaat: (o.citaat ?? k.woorden.join(', ')).slice(0, MAX_TEKENS_CITAAT), juist: (o.juist ?? '').slice(0, MAX_TEKENS_CITAAT) })
     }
 
@@ -158,7 +163,12 @@ async function cronHandler(req: NextRequest) {
       await notifyTelegram(`ARNOBOT FEITENCONTROLE · ${datum}\nVan ${rijen.length} gecontroleerd.\n\n${blokken.join('\n\n')}`)
     }
 
-    return NextResponse.json({ ok: true, gecontroleerd: rijen.length, kandidaten: kandidaten.length, fouten: fouten.length, rekenFouten: rekenFouten.length, uVormen: uVormen.length })
+    // Alleen melden als de controle zelf structureel uitvalt (meer dan een kwart), niet bij één losse uitschieter.
+    if (onbeoordeeld > 0 && onbeoordeeld / beoordeeld.length > 0.25) {
+      throw new Error(`Feitencontrole: ${onbeoordeeld} van ${beoordeeld.length} kandidaten kregen geen geldig oordeel van het model`)
+    }
+
+    return NextResponse.json({ ok: true, gecontroleerd: rijen.length, kandidaten: kandidaten.length, onbeoordeeld, fouten: fouten.length, rekenFouten: rekenFouten.length, uVormen: uVormen.length })
   } catch (err) {
     await notifyCronFailure('feitencontrole', err)
     return NextResponse.json({ error: 'Cron mislukt' }, { status: 500 })
