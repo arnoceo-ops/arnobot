@@ -274,3 +274,35 @@ Bronnen zijn vooral derde partijen; de officiële helppagina's gaven geen schema
 - Omvang: 1.010.000 tekens is ruwweg 250.000 tot 300.000 tokens voor 30 dagen en 44 gesprekken; het langste gesprek is 184.000 tekens, te lang voor één samenvattingsaanroep zonder opdelen. Een kostenschatting met de prijzen uit `docs/MODELINVENTARIS.md` volgt bij de bouw.
 - De export is klein genoeg voor de browser: 18 MB uitgepakt. Een jaar aan gesprekken kan tien tot honderd keer zoveel zijn; de grens voor de upload moet dus bij de bouw worden gekozen.
 - ChatGPT blijft onbekend tot er een echte ChatGPT-export is bekeken.
+
+## Kosten en prompt caching op bijlagen (2026-11-19)
+
+**Uitgangspunt (zelf getoetst met een meting, niet aangenomen):** de chat betaalt een bijlage nu bij elke beurt volledig opnieuw, omdat het verzoek zo is opgebouwd dat caching onmogelijk is.
+
+**Waarom het nu niet cachet.** De volgorde bij Anthropic is tools, systeemprompt, berichten, en caching is een prefix-match. In `buildRdsSystemPrompt` (`lib/systemPrompt.ts`) zijn blok 1 en 2 vast en gecachet, maar blok 3 (profiel, blogcontext, geheugen, profiel uit een andere AI, coachingcontext, de GRENSGEVAL-instructie) verandert elke beurt en staat vóór de berichten. De bijlage zit bovendien in het laatste bericht, dus achter een groeiende history. Daardoor kan geen enkele cache-breakpoint na blok 3 ooit raak zijn.
+
+**Meting (één korte echte proef, ongeveer 15 cent, `public/arnobot-beveiliging.pdf`, 6 pagina's, Sonnet 4.6):**
+
+| Opbouw | Beurt 1 | Beurt 2 | Beurt 3 |
+|---|---|---|---|
+| Huidig (variabel systeemblok vóór de berichten) | 12.476 invoer | 12.501 invoer | niet gemeten |
+| Voorstel (vast systeem, bijlage vooraan met breakpoint, variabele context erna) | 12.427 schrijven | 14.430 uit cache | 14.430 uit cache |
+
+Een PDF kost dus ongeveer 2.070 tokens per pagina (klopt met de 1.500 tot 3.000 uit de Anthropic-documentatie). Met caching kost een volgende beurt ongeveer 87% minder (bijlage tegen 0,1 keer de invoerprijs).
+
+**Ontwerp (voorstel, wacht op Arno):**
+- Alleen als het gesprek een bijlage heeft; zonder bijlage blijft alles zoals het is (geen risico voor het gewone verkeer).
+- Blok 3 gaat uit de systeemprompt en wordt tekst in het eerste berichtblok, ná de bijlageblokken. Systeem blijft dan alleen blok 1 en 2.
+- De bijlageblokken komen vooraan in het eerste bericht van het gesprek (de history blijft erna), met `cache_control` op het laatste bijlageblok. Een nieuwe of verwijderde bijlage schrijft de cache opnieuw (1,25 keer), dat is acceptabel.
+- Tools moeten per gesprek stabiel zijn (nu: rekentools plus tabeltools bij een bijlage; de link-tool wisselt per beurt en breekt de cache vanaf de tools).
+- TTL: standaard 5 minuten (schrijven 1,25 keer), of 1 uur (schrijven 2 keer). Zonder gebruiksdata nog niet te kiezen.
+- Bijlage pas cachen vanaf de tweede beurt waarin ze zit (`laatst_gebruikt` is al gevuld): een eenmalige vraag over een document kost dan precies wat het nu kost, en alleen echte gesprekken betalen de schrijfopslag.
+
+**Risico's die eerst getoetst moeten worden:**
+1. Kwaliteit en veiligheid: tekst die nu in de systeemprompt staat (geheugen, instructies, GRENSGEVAL) komt in een gebruikersbericht. Instructies in een gebruikersbericht wegen anders dan in het systeem, en prompt-injectie via documenttekst kan zich dichter bij die instructies bevinden. Eerst een meetset (zoals `scripts/eval-cijfers.ts`) met en zonder de nieuwe opbouw.
+2. Het verzoek bouwt `messages` op vier plekken opnieuw (stream, toolrondes, retry bij leeg antwoord, max_tokens-vervolg); alle vier moeten dezelfde opbouw gebruiken.
+3. Er is nergens logging van `usage` (invoer, cache schrijven, cache lezen) in `app/api/chat/route.ts`. Zonder die logging is het effect in productie niet te meten. Voorstel: eerst die logging (een kolom of een Sentry-meting), dan pas de ombouw.
+
+**Effect in Abacus:** in de calculator zijn de documentkosten nu zonder caching gerekend (bij 250 gebruikers ongeveer 175 dollar per maand voor de beurten). Met caching naar schatting 58 dollar (factor 0,33 bij 5 beurten binnen de TTL). Pas aanpassen na de meting in productie.
+
+**Besluit nodig (Arno):** bouwen in deze volgorde: (1) usage-logging, (2) meetset met en zonder de nieuwe opbouw, (3) ombouw achter een schakelaar, (4) Abacus bijwerken met gemeten cijfers. Eerst afwachten tot de niet-gecommitte tabeltool-wijzigingen in `app/api/chat/route.ts` en `lib/rekenTool.ts` zijn afgerond en gecommit, om botsingen te voorkomen.
