@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { telPdfPaginas } from './pdfPaginas'
 import { buildDocumentContentBlock } from './documentInhoud'
 import {
-  DOCUMENTEN_BUCKET, MAX_PDF_PAGINAS, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, maxBytesVoor,
+  DOCUMENTEN_BUCKET, MAX_PDF_PAGINAS, MAX_TEKENS_TEKST, QUOTA_MAX_BYTES, QUOTA_MAX_DOCUMENTEN, maxBytesVoor,
   hernoemMetBehoudExtensie, isGeldigDocumentId, isGeldigDocumentPad, isGeldigSessieId, schoneBestandsnaam, verloopOp,
 } from './documentenRegels'
 import { bouwDocumentGeheugen, type GeladenBijlage, type SamenstelRij } from './documentenSamenstellen'
@@ -209,6 +209,11 @@ export async function verwerkNieuweUpload(
       await verwijderBestand(db, p.userId, p.storagePath)
       return { error: 'pdf_te_lang' }
     }
+  }
+  // Word, tekst en CSV: dezelfde omvang als de PDF-grens, gemeten in tekens van de uitgelezen tekst.
+  if (inhoud.extractedText !== null && inhoud.extractedText.length > MAX_TEKENS_TEKST) {
+    await verwijderBestand(db, p.userId, p.storagePath)
+    return { error: 'tekst_te_lang' }
   }
 
   // Docs vol: het bestand blijft staan zodat de gebruiker het zonder bewaren nog kan versturen (de opruiming haalt het

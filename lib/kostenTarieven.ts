@@ -57,7 +57,7 @@ export const TARIEVEN = {
   sonnetUitvoerPerMiljoenUsd: 15,
   // Documenten in de chat (docs/DOCUMENTEN_PLAN.md, live sinds 2026-11-18). Het hele bestand gaat bij ELKE beurt van
   // het gesprek opnieuw als invoer mee (tot 48 uur na het laatste bericht). Een PDF kost ruwweg 1.500 tot 3.000 tokens
-  // per pagina (bron: Anthropic pdf-support, in DOCUMENTEN_PLAN gelezen 2026-11-18), harde grens 100 pagina's per PDF
+  // per pagina (bron: Anthropic pdf-support, in DOCUMENTEN_PLAN gelezen 2026-11-18), harde grens 50 pagina's per PDF (was 100, herzien 2026-11-19)
   // en 20 MB. ALLES HIERONDER IS AANNAME: gemeten zijn alleen 10 documenten van 4 gebruikers in twee dagen
   // (mediaan 4 MB, 7 pdf, 1 afbeelding, 2 audio). Bijwerken zodra er een maand echt gebruik is (arnobot_documenten).
   pctDocumentGebruikers: 30,

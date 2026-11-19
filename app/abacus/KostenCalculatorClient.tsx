@@ -264,7 +264,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={cardHeadStyle}><span style={dotStyle} />Documenten in de chat (Sonnet 4.6, live sinds 18 nov)</div>
               <NumberField label="% gebruikers dat documenten uploadt" hint="alle plannen, aanname: gemeten zijn 10 documenten van 4 gebruikers" value={inputs.pctDocumentGebruikers} max={100} onChange={v => set('pctDocumentGebruikers', v)} />
               <NumberField label="Documenten per uploader/maand" hint="aanname" value={inputs.documentenPerGebruiker} onChange={v => set('documentenPerGebruiker', v)} />
-              <NumberField label="Tokens per document" hint="PDF ongeveer 1.500 tot 3.000 per pagina, max 100 pagina's: 40.000 is ruim 20 pagina's" value={inputs.tokensPerDocument} step={1000} onChange={v => set('tokensPerDocument', v)} />
+              <NumberField label="Tokens per document" hint="PDF ongeveer 1.500 tot 3.000 per pagina, max 50 pagina's: 40.000 is ruim 20 pagina's" value={inputs.tokensPerDocument} step={1000} onChange={v => set('tokensPerDocument', v)} />
               <NumberField label="Beurten per document" hint="het hele bestand gaat bij elke beurt opnieuw mee, zonder caching" value={inputs.beurtenPerDocument} onChange={v => set('beurtenPerDocument', v)} />
               <NumberField label="Factor vervolgrondes (tools)" hint="rekentool, tabeltool en groeidoel sturen de bijlage opnieuw mee" value={inputs.toolRondeFactor} step={0.05} onChange={v => set('toolRondeFactor', v)} />
               <NumberField label="% documenten bewaard (samenvatting)" hint="het vinkje staat standaard aan" value={inputs.pctDocumentenBewaard} max={100} onChange={v => set('pctDocumentenBewaard', v)} />

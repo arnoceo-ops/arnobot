@@ -8,7 +8,7 @@ import {
 vi.mock('./pdfPaginas', () => ({ telPdfPaginas: vi.fn(async () => 5) }))
 beforeEach(() => { vi.mocked(telPdfPaginas).mockResolvedValue(5) })
 import { telPdfPaginas } from './pdfPaginas'
-import { DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, QUOTA_MAX_DOCUMENTEN } from './documentenRegels'
+import { DOCUMENTEN_BUCKET, MAX_DOCUMENT_BYTES, MAX_TEKENS_TEKST, QUOTA_MAX_DOCUMENTEN } from './documentenRegels'
 
 type Aanroep = { methode: string; args: unknown[] }
 type Resultaat = { data?: unknown; error?: { message: string; code?: string } | null }
@@ -279,16 +279,25 @@ describe('verwerkNieuweUpload', () => {
     expect(r.error).toBe('bestand_te_groot')
     expect(verwijderd).toEqual([PAD])
   })
-  it('keurt een PDF van meer dan 100 pagina\'s af en ruimt het op', async () => {
-    vi.mocked(telPdfPaginas).mockResolvedValue(101)
+  it('keurt een PDF van meer dan 50 pagina\'s af en ruimt het op', async () => {
+    vi.mocked(telPdfPaginas).mockResolvedValue(51)
     const { db, verwijderd, queries } = maakDb({ bestanden: { [PAD]: tekstBytes('pdf') }, antwoord: geenReplay })
     const r = await verwerkNieuweUpload(db, { ...upload, mediaType: 'application/pdf' }, NU)
     expect(r.error).toBe('pdf_te_lang')
     expect(verwijderd).toEqual([PAD])
     expect(insertVan(queries)).toBeUndefined()
   })
-  it('laat een PDF van precies 100 pagina\'s en een PDF waarvan het tellen mislukt door', async () => {
-    for (const aantal of [100, null]) {
+  it('keurt een tekstdocument boven de tekengrens af en ruimt het op, en laat precies de grens door', async () => {
+    const te_lang = maakDb({ bestanden: { [PAD]: tekstBytes('a'.repeat(MAX_TEKENS_TEKST + 1)) }, antwoord: geenReplay })
+    const r = await verwerkNieuweUpload(te_lang.db, upload, NU)
+    expect(r.error).toBe('tekst_te_lang')
+    expect(te_lang.verwijderd).toEqual([PAD])
+    expect(insertVan(te_lang.queries)).toBeUndefined()
+    const precies = maakDb({ bestanden: { [PAD]: tekstBytes('a'.repeat(MAX_TEKENS_TEKST)) }, antwoord: geenReplay })
+    expect((await verwerkNieuweUpload(precies.db, upload, NU)).error).toBeNull()
+  })
+  it('laat een PDF van precies 50 pagina\'s en een PDF waarvan het tellen mislukt door', async () => {
+    for (const aantal of [50, null]) {
       vi.mocked(telPdfPaginas).mockResolvedValue(aantal)
       const { db } = maakDb({ bestanden: { [PAD]: tekstBytes('pdf') }, antwoord: geenReplay })
       expect((await verwerkNieuweUpload(db, { ...upload, mediaType: 'application/pdf' }, NU)).error).toBeNull()

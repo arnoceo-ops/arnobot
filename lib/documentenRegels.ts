@@ -20,9 +20,13 @@ export function maxBytesVoor(mediaType: string): number {
 // Totaal aan bestanden per beurt: elk bestand gaat als base64 mee (een derde groter) en een Anthropic-aanvraag mag 128 MB zijn
 // (bron: platform.claude.com/docs/en/build-with-claude/pdf-support, gelezen 2026-11-18). 60 MB aan bestanden blijft daar ruim onder.
 export const MAX_BYTES_PER_BEURT = 60 * 1024 * 1024
-// Een PDF kost ruwweg 1.500 tot 3.000 tokens per pagina (tekst en paginabeeld). Bij elke beurt gaat het hele bestand opnieuw mee, dus een boek zou het
-// contextvenster van 1 miljoen tokens vullen en het gesprek vastzetten. Besluit Arno 2026-11-18: 100 pagina's per PDF.
-export const MAX_PDF_PAGINAS = 100
+// Een PDF kost ruwweg 1.500 tot 3.000 tokens per pagina (tekst en paginabeeld). Besluit Arno 2026-11-18: 100 pagina's per PDF; herzien 2026-11-19
+// naar 50 voor iedereen. Reden: de lezer (lib/documentLezer.ts) leest de PDF met Haiku, dat 200.000 tokens aankan; bij 3.000 tokens per pagina in het
+// ergste geval is dat ongeveer 65 pagina's, dus 50 laat marge. Het oude pad (hele PDF bij elke beurt mee) kost bij 50 pagina's ongeveer $0,31 per beurt
+// in plaats van $0,62. Eerder voorgesteld was 50 voor Pro en 25 voor Basic; met de lezer is dat onderscheid niet meer nodig.
+export const MAX_PDF_PAGINAS = 50
+// Word en tekst: een grens in tekens, want de paginatelling geldt alleen voor PDF's. 350.000 tekens is ongeveer 100.000 tokens, gelijk aan 50 pagina's.
+export const MAX_TEKENS_TEKST = 350_000
 // Meer dan 20 afbeeldings- en documentblokken per verzoek valt onder strengere limieten bij Anthropic
 // (bron: platform.claude.com/docs/en/build-with-claude/vision, gelezen 2026-11-18).
 export const MAX_DOCUMENTEN_PER_BEURT = 20

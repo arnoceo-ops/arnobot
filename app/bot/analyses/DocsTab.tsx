@@ -121,7 +121,8 @@ export default function DocsTab({ isMobile, onAantal }: { isMobile: boolean; onA
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setFout(data.error === 'docs_vol' ? 'Je Uploads zitten vol. Verwijder eerst een bestand.'
-          : data.error === 'pdf_te_lang' ? 'Een PDF mag hooguit 100 pagina\'s hebben.'
+          : data.error === 'pdf_te_lang' ? 'Een PDF mag hooguit 50 pagina\'s hebben. Splits hem op.'
+          : data.error === 'tekst_te_lang' ? 'Dat document is te lang. Splits het op in kleinere delen.'
           : data.error === 'bestand_niet_leesbaar' ? 'Dat bestand kon niet worden gelezen. Probeer een ander bestand.'
           : 'Bestand kon niet worden toegevoegd.')
         return
