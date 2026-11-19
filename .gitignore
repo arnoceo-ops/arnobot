@@ -71,3 +71,4 @@ next-env.d.ts
 /.vscode/
 # Tresorit: lokale synchronisatie-instellingen van deze computer.
 /.tresorit/
+data/eval-cijfers-*.json

@@ -94,6 +94,7 @@ export const REKEN_TOOL: Anthropic.Tool = {
     'Exacte rekenmachine. Gebruik deze voor ELKE berekening met getallen: vermenigvuldigen, optellen, percentages, totalen, verhoudingen, gemiddelden, ook voor een tussenstap. ' +
     'Reken nooit zelf uit het hoofd en schrijf nooit een uitkomst op die je niet van deze tool kreeg. Geef alle berekeningen die je nodig hebt tegelijk mee. ' +
     'Schrijf getallen met een punt als decimaalteken en zonder duizendtalpunt (0.75 of 10350), gebruik de tekens + * / en het minteken, en haakjes. ' +
+    'Staan de getallen in een tabel met meerdere kolommen (heel jaar, tot nu toe, YTD), noem in je antwoord altijd welke kolom je gebruikte. Een groeidoel op vorig jaar reken je met de tool groeidoel. ' +
     'Een korting van 25% op 120 is 120 * 0.75. Een jaarbedrag van 115 m2 tegen 90 euro per m2 is 115 * 90.',
   input_schema: {
     type: 'object',
@@ -108,6 +109,64 @@ export const REKEN_TOOL: Anthropic.Tool = {
     },
     required: ['expressies'],
   },
+}
+
+// Groeidoel (2026-11-19). Aanleiding: ArnoBot gebruikte voor "10% groei op vorig jaar" de huidige stand
+// als basis (2.271.804 x 1,1 i.p.v. 2.146.660 x 1,1) en noemde "nog 147.180 over" terwijl het 89.522 was.
+// De rekentool rekende goed, het model gaf de verkeerde basis mee. Deze tool neemt alleen de twee omzetten
+// en het percentage, zodat de basis niet meer kan verwisselen: het doel is altijd vorig_jaar x (1 + p/100).
+export const GROEIDOEL_TOOL: Anthropic.Tool = {
+  name: 'groeidoel',
+  description:
+    'Groeidoel op basis van vorig jaar. Gebruik dit ALTIJD als iemand een groeipercentage wil halen ("ik wil 10% groei", "hoe ver ben ik van mijn doel"), in plaats van zelf te rekenen met bereken. ' +
+    'vorig_jaar is de basis waarop het percentage geldt: bij een jaardoel de omzet van HEEL vorig jaar, nooit de huidige stand. nu is de omzet tot nu toe dit jaar. ' +
+    'Staan in een tabel meerdere kolommen (heel vorig jaar, vorig jaar tot dezelfde datum, YTD), kies dan de kolom die bij de vraag hoort en noem in je antwoord altijd welke kolom je gebruikte. ' +
+    'Is onduidelijk welke je moet nemen, geef beide uitkomsten en zeg welke welke is. Schrijf getallen zonder duizendtalpunt en met een punt als decimaalteken.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      vorig_jaar: { type: 'number', description: 'Omzet van de basisperiode van vorig jaar, bijvoorbeeld 2146660' },
+      nu: { type: 'number', description: 'Omzet tot nu toe dit jaar, bijvoorbeeld 2271804' },
+      percentage: { type: 'number', description: 'Gewenste groei in procenten, bijvoorbeeld 10' },
+      erbij: { type: 'number', description: 'Optioneel: verwachte extra omzet (bevestigde of verwachte orders) die nog bij nu komt' },
+    },
+    required: ['vorig_jaar', 'nu', 'percentage'],
+  },
+}
+
+const euro = (n: number) => String(Number(n.toPrecision(12)))
+
+export function voerGroeidoelUit(input: unknown): { content: string; isError: boolean } {
+  const i = (input ?? {}) as Record<string, unknown>
+  const vorig = Number(i.vorig_jaar)
+  const nu = Number(i.nu)
+  const p = Number(i.percentage)
+  const erbij = i.erbij === undefined || i.erbij === null ? 0 : Number(i.erbij)
+  if (![vorig, nu, p, erbij].every(Number.isFinite) || vorig <= 0 || nu < 0) {
+    return { content: 'Geef vorig_jaar (groter dan 0), nu en percentage als getallen mee.', isError: true }
+  }
+  const doel = vorig * (1 + p / 100)
+  const verschil = nu - vorig
+  const regels = [
+    `Doel (${p}% groei op vorig_jaar ${euro(vorig)}): ${euro(vorig)} * ${euro(1 + p / 100)} = ${euro(doel)}`,
+    `Stand nu: ${euro(nu)}, dat is ${verschil >= 0 ? '+' : ''}${euro(verschil)} (${euro(Number(((verschil / vorig) * 100).toFixed(2)))}%) ten opzichte van vorig_jaar`,
+    `Tekort tot het doel: ${euro(Math.max(0, doel - nu))}${nu >= doel ? ' (doel al gehaald)' : ''}`,
+  ]
+  if (erbij !== 0) {
+    const straks = nu + erbij
+    regels.push(`Met ${euro(erbij)} erbij: ${euro(straks)}, dat is ${straks >= doel ? euro(straks - doel) + ' boven' : euro(doel - straks) + ' onder'} het doel (${euro(Number((((straks - vorig) / vorig) * 100).toFixed(2)))}% groei)`)
+  }
+  return { content: regels.join('\n'), isError: false }
+}
+
+// Alle tools van de hoofdchat voor getallen, en de uitvoering per naam (gebruikt door app/api/chat/route.ts
+// en scripts/eval-cijfers.ts, zodat de meetset precies dezelfde tools gebruikt als productie).
+export const CHAT_REKENTOOLS: Anthropic.Tool[] = [REKEN_TOOL, GROEIDOEL_TOOL]
+
+export function voerToolUit(naam: string, input: unknown): { content: string; isError: boolean } {
+  if (naam === 'bereken') return voerRekenToolUit(input)
+  if (naam === 'groeidoel') return voerGroeidoelUit(input)
+  return { content: 'Onbekende tool.', isError: true }
 }
 
 export function voerRekenToolUit(input: unknown): { content: string; isError: boolean } {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bereken, voerRekenToolUit } from '@/lib/rekenTool'
+import { bereken, voerRekenToolUit, voerToolUit } from '@/lib/rekenTool'
 import { vindFouteSommen, vindUVorm } from '@/lib/rekenControle'
 
 describe('rekenTool', () => {
@@ -24,6 +24,23 @@ describe('rekenTool', () => {
     expect(voerRekenToolUit({ expressies: ['1 / 0'] }).isError).toBe(true)
     expect(voerRekenToolUit(null).isError).toBe(true)
     expect(voerRekenToolUit({ expressies: [5] }).isError).toBe(true)
+  })
+})
+
+describe('groeidoel', () => {
+  it('rekent het doel op vorig jaar, niet op de huidige stand (de fout van 18 november)', () => {
+    const r = voerToolUit('groeidoel', { vorig_jaar: 2146660, nu: 2271804, percentage: 10, erbij: 80000 })
+    expect(r.isError).toBe(false)
+    expect(r.content).toContain('= 2361326')
+    expect(r.content).toContain('Tekort tot het doel: 89522')
+    expect(r.content).toContain('9522 onder')
+    expect(r.content).not.toContain('2498984')
+  })
+  it('meldt een gehaald doel en weigert ongeldige invoer', () => {
+    expect(voerToolUit('groeidoel', { vorig_jaar: 100, nu: 120, percentage: 10 }).content).toContain('doel al gehaald')
+    expect(voerToolUit('groeidoel', { vorig_jaar: 0, nu: 5, percentage: 10 }).isError).toBe(true)
+    expect(voerToolUit('groeidoel', { vorig_jaar: 'x', nu: 5, percentage: 10 }).isError).toBe(true)
+    expect(voerToolUit('onbekend', {}).isError).toBe(true)
   })
 })
 

@@ -67,7 +67,7 @@ import { limietVeilig } from '@/lib/limietVeilig'
 import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
-import { REKEN_TOOL, voerRekenToolUit } from '@/lib/rekenTool'
+import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
 
 // Maximaal aantal keren dat het model in één antwoord de rekentool mag aanroepen.
 const MAX_REKENRONDES = 4
@@ -537,7 +537,7 @@ export async function POST(req: NextRequest) {
     // ongewijzigd (verwatering).
     const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
     const toolLijst: Anthropic.ToolUnion[] = []
-    if (/\d/.test(gesprekTekst)) toolLijst.push(REKEN_TOOL)
+    if (/\d/.test(gesprekTekst)) toolLijst.push(...CHAT_REKENTOOLS)
     if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)
     const chatTools: Anthropic.ToolUnion[] | undefined = toolLijst.length > 0 ? toolLijst : undefined
     const anthropicStream = client.messages.stream({
@@ -592,7 +592,7 @@ export async function POST(req: NextRequest) {
                 ? [{
                     role: 'user' as const,
                     content: toolGebruik.map(tu => {
-                      const r = tu.name === 'bereken' ? voerRekenToolUit(tu.input) : { content: 'Onbekende tool.', isError: true }
+                      const r = voerToolUit(tu.name, tu.input)
                       return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
                     }),
                   }]
