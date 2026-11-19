@@ -13,7 +13,7 @@ import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
-import { haalGebruikerKosten, type GebruikerKosten } from '@/lib/gebruikerKosten'
+import { haalGebruikerKosten, REFERENTIE_PRIJS_EUR, type GebruikerKosten } from '@/lib/gebruikerKosten'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
@@ -351,9 +351,8 @@ export default async function GebruikersPage({
 
   const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 75px 80px 140px 60px 60px 90px 50px 80px'
 
-  // Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md), alleen om de kostenkolom te kleuren: de echte factuur kan
-  // afwijken (proefperiode, maandbetaling, korting). Boven de helft van de prijs is oranje, boven de hele prijs rood.
-  const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 39, team: 49 }
+  // Referentieprijs per plan (REFERENTIE_PRIJS_EUR) alleen om de kostenkolom te kleuren: de echte factuur kan afwijken (proefperiode,
+  // maandbetaling, korting). Boven de helft van de prijs is oranje, boven de hele prijs rood.
   const usdNaarEur = (usd: number) => usd / fx.rate
 
   // BELLIJST: wie loopt de proef binnen 7 dagen af en heeft minder dan 3 vragen gesteld. Dat zijn

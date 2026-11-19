@@ -10,12 +10,14 @@
 export type Tier = { name: string; credits: number; price: number }
 
 export const TARIEVEN = {
-  // Hoofdchat (Sonnet 4.6 + Haiku-RAG-herschrijving), $ per bericht. Was 0,015 (herkomst onbekend, niet in de docs);
-  // 0,10 sinds 2026-11-19 op eigen opdracht van Arno. Onderbouwing: gemeten uit arnobot_rds_logs.verbruik (3 berichten zonder bijlage:
-  // gemiddeld $0,102, 26.000 ongecachete invoertokens waarvan ongeveer de helft blogfragmenten) en bevestigd tegen de Anthropic-Console
-  // (Sonnet-dagkosten gedeeld door berichten per dag op 17, 18 en 19 nov: ongeveer $0,10 tot $0,14, een bovengrens omdat analyses en
-  // sparring erin zitten). Bijwerken zodra scripts/kosten-per-gebruiker.mjs genoeg metingen heeft.
-  anthropicPerBericht: 0.10,
+  // Hoofdchat (Sonnet 4.6 + Haiku-herschrijving en moderatie), $ per bericht. Was 0,015 (herkomst onbekend, niet in de docs), daarna 0,10
+  // (2026-11-19, gemeten met 20 kennisbankfragmenten), nu 0,07 met 10 fragmenten (de chat gebruikt sinds 2026-11-19 10, zie CLAUDE_HISTORY).
+  // Onderbouwing: één echt gemeten productiebericht, koud (vaste deel van de systeemprompt nog niet in de cache): $0,0884 antwoord plus
+  // $0,0016 Haiku = $0,090, waarvan de 20 fragmenten ongeveer 12.000 tokens. Met 10 fragmenten ongeveer $0,018 minder: koud $0,072, in een
+  // lopend gesprek (cache gelezen) ongeveer $0,038, bij het huidige verkeer gemengd ongeveer $0,05. Bewust het koude bericht als richtprijs,
+  // zodat de pagina niet te optimistisch is. Dit is dus gemeten maal een gemeten besparing, geen gemiddelde uit veel berichten: bijwerken met
+  // het gemiddelde van bron chat-antwoord uit arnobot_ai_gebruik (zie de tab Gebruikers) zodra er een paar weken data zijn.
+  anthropicPerBericht: 0.07,
   // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
   kostenPerAnalyse: 0.007,
   // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
@@ -31,10 +33,11 @@ export const TARIEVEN = {
   kostenPerDebrief: 0.015,
   // Vangnet voor kleinere Anthropic-routes (session-end, coaching-precheck,
   // blog-synthese, verfijn, sessies-zoeken), $ per gebruiker/maand
-  // Verhoogd van 0,05 naar 0,07 op 2026-11-19: de blogreden bij SLUIT (Haiku, ongeveer 1.200 tokens in en 200 uit,
-  // ruim 0,2 cent per afgesloten gesprek, ongeveer 10 gesprekken per maand) en de iets langere moderatieprompt
-  // (GRENSGEVAL, ongeveer 300 extra Haiku-tokens per bericht) zitten hierin.
-  overigeAnthropicPerGebruikerPerMaand: 0.07,
+  // Was 0,05, toen 0,07; 0,21 sinds 2026-11-19 op de gemeten kosten van het afsluiten van een gesprek (SLUIT): $0,0208 per keer, gemeten over
+  // twee afsluitingen (groeibalans $0,0095, geheugentoets $0,003, samenvatting $0,0022, mailpatroon $0,0016, feiten $0,0016, labels $0,0011,
+  // thema's $0,0009, entiteiten $0,0009) maal ongeveer 10 gesprekken per maand. Twee metingen is weinig: bijwerken met de bronnen sessie-*,
+  // geheugen-*, groeibalans en mail-patroon uit arnobot_ai_gebruik zodra er meer data is.
+  overigeAnthropicPerGebruikerPerMaand: 0.21,
   // ElevenLabs: credits per teken (Flash v2.5). ElevenLabs zelf bevestigt alleen
   // een bereik van 0,5-1, dit is de veilige kant van dat bereik.
   creditPerTeken: 1.0,

@@ -8,6 +8,9 @@ import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { amsterdamMaandStart } from '@/lib/voiceLimiet'
 import { VOICE_USD_PER_1000_TEKENS } from '@/lib/maandKosten'
 
+/** Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md): alleen om kosten af te zetten tegen de omzet, niet de echte factuur. */
+export const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 39, team: 49 }
+
 export type GebruikerKosten = {
   totaalUsd: number
   anthropicUsd: number

@@ -4,14 +4,16 @@ import { useState } from 'react'
 import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
+import GebruikersKostenClient from './GebruikersKostenClient'
 import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, DEFAULT_INPUTS, type Inputs } from '@/lib/kostenTarieven'
 import type { FxRateResult } from '@/lib/fxRate'
 
-type Tab = 'calculator' | 'trackrecord' | 'businesscase'
+type Tab = 'calculator' | 'trackrecord' | 'gebruikers' | 'businesscase'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'calculator', label: 'Calculator' },
   { id: 'trackrecord', label: 'Trackrecord' },
+  { id: 'gebruikers', label: 'Gebruikers' },
   { id: 'businesscase', label: 'Business case' },
 ]
 
@@ -100,6 +102,19 @@ export default function KostenPageClient({ fxRate }: Props) {
             </p>
           </div>
           <TrackrecordClient />
+        </div>
+      )}
+
+      {tab === 'gebruikers' && (
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: 'clamp(28px,4vw,48px) clamp(16px,3vw,32px) 64px' }}>
+          <div style={{ marginBottom: 24 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
+            <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kosten per gebruiker</h1>
+            <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
+              Wat elke gebruiker per maand aan AI en spraak kost, gemeten per aanroep. Kies een gebruiker voor de uitsplitsing per bron.
+            </p>
+          </div>
+          <GebruikersKostenClient />
         </div>
       )}
 
