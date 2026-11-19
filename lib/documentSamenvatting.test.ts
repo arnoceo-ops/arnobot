@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 
 vi.mock('./rag', () => ({ embedSessionQuery: vi.fn(), embedSessionText: vi.fn() }))
 vi.mock('./documenten', () => ({ laadBijlage: vi.fn() }))
-import { parseSamenvatting, vraagtOmAlleBestanden, bouwSamenvattingenBlok, samenvattingSysteem } from './documentSamenvatting'
+import { parseSamenvatting, vraagtOmAlleBestanden, bouwSamenvattingenBlok, bouwWachtBlok, samenvattingSysteem } from './documentSamenvatting'
 import { samenvattenBeschikbaarVoor } from './documentenRegels'
 
 const GOED = 'SOORT: Jaarplan voor een salesafdeling\nKERN: Het plan zet drie doelen voor 2027.\nDETAILS: Omzetdoel 1,2 miljoen (pagina 2)\nTeamgrootte 6 (pagina 3)'
@@ -70,6 +70,19 @@ describe('bouwSamenvattingenBlok', () => {
   })
   it('bevat geen streepjes als leesteken in de instructie', () => {
     expect(bouwSamenvattingenBlok(treffers, true).split('UIT DE BEWAARDE')[1].split('Zo werk')[1]).not.toMatch(/[–—]/)
+  })
+})
+
+describe('bouwWachtBlok', () => {
+  it('is leeg zonder wachtende bestanden', () => {
+    expect(bouwWachtBlok([])).toBe('')
+  })
+  it('noemt de wachtende bestanden en zegt dat je ze nog niet kent', () => {
+    const b = bouwWachtBlok(['Building a Sales Kingdom.pdf'])
+    expect(b).toContain('NOG NIET SAMENGEVAT')
+    expect(b).toContain('"Building a Sales Kingdom.pdf"')
+    expect(b).toContain('Je kent ze dus nog niet')
+    expect(b).not.toMatch(/[–—]/)
   })
 })
 

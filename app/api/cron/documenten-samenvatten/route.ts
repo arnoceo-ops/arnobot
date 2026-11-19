@@ -14,7 +14,7 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// Elke 10 minuten: bewaarde documenten zonder samenvatting samenvatten (max 5 per run, max 3 pogingen per document,
+// Elke 5 minuten: bewaarde documenten zonder samenvatting samenvatten (max 10 per run, max 3 pogingen per document,
 // max 20 per gebruiker per etmaal), alleen voor wie samenvattenBeschikbaarVoor toestaat. Meldt alleen als er iets mislukt
 // is, zonder namen of inhoud.
 async function cronHandler(req: NextRequest) {
