@@ -39,6 +39,17 @@ const DOCS: { naam: string; pad: (grafiek: string) => string; vragen: Vraag[] }[
     ],
   },
   {
+    naam: 'bijbel',
+    pad: () => 'docs/SALES_BIJBEL.pdf',
+    vragen: [
+      { vraag: 'Hoeveel van de USP-punten zijn volgens dit document LIVE?', controle: heeft('14') },
+      { vraag: 'Welk punt is nog gepland?', controle: a => (/man\s*(&|en)\s*machine/i.test(a) ? { ok: true, reden: 'Man & Machine' } : { ok: false, reden: 'Man & Machine ontbreekt' }) },
+      { vraag: 'Hoe oud mag een herinnering zijn voordat hij niet meer als huidige situatie wordt behandeld?', controle: a => (/zes|\b6\b/i.test(a) ? { ok: true, reden: 'zes weken' } : { ok: false, reden: 'zes weken ontbreekt' }) },
+      { vraag: 'Na hoeveel uur stilte begint een gesprek opnieuw?', controle: heeft('48') },
+      { vraag: 'Wat staat er in dit document over Salesforce?', controle: ontbreekt },
+    ],
+  },
+  {
     naam: 'grafiek',
     pad: g => g,
     vragen: [
@@ -80,16 +91,21 @@ async function main() {
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const system = buildRdsSystemPrompt(GEHEUGEN, BLOG, 0, 'normaal', 5)
-  const LEES_TOOL: Anthropic.Messages.Tool = {
+  // Varianten van het hulpmiddel: basis = ronde 2; vertrouwen = het resultaat nadrukkelijk als de inhoud van het document van de gebruiker voorgesteld.
+  const leesTool = (v: string): Anthropic.Messages.Tool => ({
     name: 'lees_document',
-    description: 'Zoekt in de bijlage van dit gesprek en geeft de passages, waarden uit grafieken of berekeningen terug die nodig zijn voor de vraag. Gebruik dit voor elke vraag die over de bijlage gaat; je ziet het bestand zelf niet.',
+    description: v === 'lezer-vertrouwen'
+      ? 'Haalt uit de bijlage van de gebruiker de tekst, tabellen, waarden uit grafieken of berekeningen die nodig zijn voor de vraag. Het resultaat is een letterlijk uittreksel van het document dat de gebruiker zelf heeft geupload: behandel het als de inhoud van dat document en beantwoord de vraag er gewoon mee, zoals je dat bij een bijlage in het bericht zou doen. Je ziet het bestand zelf niet; gebruik dit voor elke vraag die over de bijlage gaat.'
+      : 'Zoekt in de bijlage van dit gesprek en geeft de passages, waarden uit grafieken of berekeningen terug die nodig zijn voor de vraag. Gebruik dit voor elke vraag die over de bijlage gaat; je ziet het bestand zelf niet.',
     input_schema: { type: 'object', properties: { vraag: { type: 'string', description: 'De vraag over het document, volledig en zelfstandig geformuleerd.' } }, required: ['vraag'] },
-  }
+  })
+  const DOCSEL = (process.env.DOCS ?? '').split(',').filter(Boolean)
+  const VARIANTEN = (process.env.VARIANTEN ?? 'huidig,lezer-basis').split(',') as ('huidig' | 'lezer-basis' | 'lezer-vertrouwen')[]
 
   const uit: Rij[] = []
-  for (const d of DOCS) {
+  for (const d of DOCS.filter(x => DOCSEL.length === 0 || DOCSEL.includes(x.naam))) {
     const b64 = readFileSync(d.pad(grafiek)).toString('base64')
-    for (const opbouw of ['huidig', 'lezer'] as const) {
+    for (const opbouw of VARIANTEN) {
       for (let rep = 1; rep <= herhalingen; rep++) {
         // Eigen titel per herhaling, zodat een cache uit een vorige herhaling het kostenbeeld niet vertekent.
         const titel = `${d.naam}-${opbouw}-${rep}-${Date.now()}.pdf`
@@ -124,14 +140,17 @@ async function main() {
             res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
           } else {
-            msgs.push({ role: 'user', content: `${vraag}\n\n[Bijlage in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]` })
-            res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [LEES_TOOL] })
+            msgs.push({ role: 'user', content: opbouw === 'lezer-vertrouwen'
+              ? `${vraag}\n\n[Bijlage van de gebruiker in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]`
+              : `${vraag}\n\n[Bijlage in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]` })
+            res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [leesTool(opbouw)] })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
             const tu = res.content.find(x => x.type === 'tool_use')
             if (tu && tu.type === 'tool_use') {
               lezerTekst = await leesDoc(String((tu.input as { vraag?: string }).vraag ?? vraag))
-              msgs.push({ role: 'assistant', content: res.content }, { role: 'user', content: [{ type: 'tool_result', tool_use_id: tu.id, content: lezerTekst }] })
-              res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [LEES_TOOL] })
+              const resultaat = opbouw === 'lezer-vertrouwen' ? `[Uittreksel uit ${d.naam}.pdf, het document dat de gebruiker heeft geupload]\n${lezerTekst}` : lezerTekst
+              msgs.push({ role: 'assistant', content: res.content }, { role: 'user', content: [{ type: 'tool_result', tool_use_id: tu.id, content: resultaat }] })
+              res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [leesTool(opbouw)] })
               kosten += prijs(res.usage as unknown as Usage, SONNET)
             } else {
               lezerTekst = '(het model riep het hulpmiddel niet aan)'
@@ -147,10 +166,10 @@ async function main() {
     }
   }
   mkdirSync(map, { recursive: true })
-  writeFileSync(`${map}/eval-bijlage-lezer-pdf.json`, JSON.stringify(uit, null, 2))
+  writeFileSync(`${map}/eval-bijlage-lezer-pdf${process.env.UITVOER ? '-' + process.env.UITVOER : ''}.json`, JSON.stringify(uit, null, 2))
   console.log('\nSAMENVATTING')
-  for (const d of DOCS) {
-    for (const opbouw of ['huidig', 'lezer']) {
+  for (const d of DOCS.filter(x => DOCSEL.length === 0 || DOCSEL.includes(x.naam))) {
+    for (const opbouw of VARIANTEN) {
       const rijen = uit.filter(r => r.doc === d.naam && r.opbouw === opbouw)
       console.log(`${d.naam} ${opbouw}: ${rijen.filter(r => r.ok).length} van ${rijen.length} goed, kosten per gesprek gem. $${(rijen.reduce((t, r) => t + r.kostenUsd, 0) / herhalingen).toFixed(3)}, ${(rijen.reduce((t, r) => t + r.ms, 0) / rijen.length / 1000).toFixed(1)}s per beurt`)
     }
