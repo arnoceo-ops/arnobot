@@ -2,12 +2,13 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { verstuurMailZacht } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { stripDashPunctuation } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 export const maxDuration = 300
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 const REPO = 'arnoceo-ops/arnobot'
 const BRANCH = 'master'

@@ -53,6 +53,7 @@ export async function OPTIONS(req: NextRequest) {
 import { telAnthropicLimiet } from '@/lib/capaciteit'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText, getAllText, StreamingDashSanitizer } from '@/lib/ai'
 import { WEB_FETCH_TOOL, metWebFetchPrompt, bevatLink, opgehaaldePaginas } from '@/lib/webFetchTool'
 import { auth } from '@clerk/nextjs/server'
@@ -137,7 +138,7 @@ async function notifyRateLimit(identifier: string, reden: string, dedupKey?: str
   }).catch(() => {})
 }
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = maakAnthropic()
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

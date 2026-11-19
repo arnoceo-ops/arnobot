@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
 
@@ -36,7 +36,7 @@ export async function POST(_req: NextRequest) {
     `--- Gesprek ${i + 1} (${new Date(l.created_at).toLocaleDateString('nl-NL')}) ---\nVRAAG: ${l.question}\nARNO: ${l.answer}`
   ).join('\n\n')
 
-  const client = new Anthropic()
+  const client = maakAnthropic()
 
   // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
   let response: Awaited<ReturnType<typeof client.messages.create>>

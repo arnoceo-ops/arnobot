@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
@@ -13,7 +13,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 async function checkAuth() {
   const cookieStore = await cookies()

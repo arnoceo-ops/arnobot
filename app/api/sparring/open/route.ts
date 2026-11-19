@@ -3,14 +3,14 @@ export const maxDuration = 30
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { createClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE, WEERSTAND_OPENING_TOON } from '@/lib/sparringPersonas'
 import { logEvent } from '@/lib/events'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = maakAnthropic()
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!

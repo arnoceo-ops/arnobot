@@ -3,12 +3,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE } from '@/lib/sparringPersonas'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = maakAnthropic()
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()

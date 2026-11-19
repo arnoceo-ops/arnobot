@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
@@ -18,7 +18,7 @@ import {
 // periodekeuze, de cron-versie niet. Dit is nu de ene bron; de cron geeft alleen days=30 mee
 // en stuurt een e-mail, de admin geeft de periode uit het verzoek mee en geeft JSON terug.
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 // Basiswaarden voor max_tokens per call. Bij afkapping (stop_reason 'max_tokens') wordt
 // eenmalig geretryt met het dubbele budget, ver binnen Fable 5's 128K-outputplafond.

@@ -4,7 +4,7 @@ import { ARNO_ERVARING } from '@/lib/arnoFeiten'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { computeThemaMaandTrend, computeSpiegelSignaal } from '@/lib/spiegel'
@@ -15,7 +15,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 export async function GET() {
   const { userId } = await auth()

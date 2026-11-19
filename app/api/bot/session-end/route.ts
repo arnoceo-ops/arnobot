@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities } from '@/lib/memoryEntities'
@@ -24,7 +24,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,

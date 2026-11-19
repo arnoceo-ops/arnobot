@@ -280,6 +280,23 @@ jobs:
         # weekly-top-users, competitie, refresh-openers en auto-analyse. Bevestigde
         # false positives toevoegen aan KNOWN_SAFE in het script zelf.
 
+  ai-meter:
+    name: Elke Anthropic-aanroep gemeten (blokkeert)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Controleer dat geen client buiten maakAnthropic() om wordt gemaakt
+        run: node scripts/check-ai-meter.mjs
+        # Blokkeert wel: letterlijke tekstzoekopdracht, dus geen false positives. Toegevoegd
+        # 2026-11-19 bij de centrale kostenmeting per gebruiker (lib/aiGebruik.ts).
+
   cron-mail-dedupe:
     name: Mail-crons met dubbele-verzendbeveiliging (blokkeert)
     runs-on: ubuntu-latest

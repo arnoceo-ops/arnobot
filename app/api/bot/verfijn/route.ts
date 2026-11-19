@@ -2,13 +2,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 import { bijlageHint } from '@/lib/verfijnPrompt'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = maakAnthropic()
 
 export async function POST(req: NextRequest) {
   try {

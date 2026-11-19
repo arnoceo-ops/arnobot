@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { samenvatOpenDocumenten } from '@/lib/documentSamenvatting'
 import { samenvattenBeschikbaarVoor } from '@/lib/documentenRegels'
@@ -12,7 +12,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = maakAnthropic()
 
 // Elke 5 minuten: bewaarde documenten zonder samenvatting samenvatten (max 10 per run, max 3 pogingen per document,
 // max 20 per gebruiker per etmaal), alleen voor wie samenvattenBeschikbaarVoor toestaat. Meldt alleen als er iets mislukt

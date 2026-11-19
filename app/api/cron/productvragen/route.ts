@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
@@ -12,7 +12,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const client = new Anthropic()
+const client = maakAnthropic()
 
 // Vragen van de afgelopen 24 uur over het gebruik van ArnoBot zelf (knoppen, functies, abonnement,
 // account), niet over sales of business. Eén Telegram-bericht per dag, en alleen als er iets is.

@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
@@ -10,7 +10,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')

@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { leesCrons } from '@/lib/cronOverzicht'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-const anthropic = new Anthropic()
+const anthropic = maakAnthropic()
 const TO = 'arno@arno.bot'
 
 // Alleen deze crons hebben een STUUR TEST-knop. Label, planning en omschrijving komen uit

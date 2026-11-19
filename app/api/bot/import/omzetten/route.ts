@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { historieImportGebruiker } from '@/lib/historieImportApi'
@@ -10,7 +10,7 @@ import { limietVeilig } from '@/lib/limietVeilig'
 
 export const maxDuration = 30
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 // Per gebruiker 5 omzettingen per uur. Fail-open bij een Upstash-storing (lib/limietVeilig.ts), daarom wordt de lengte van de
 // invoer al vóór de limiter en vóór het model gecontroleerd.

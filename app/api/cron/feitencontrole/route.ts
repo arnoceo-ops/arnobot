@@ -2,6 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { verdachteTellingen } from '@/lib/feitenControle'
@@ -17,7 +18,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const client = new Anthropic()
+const client = maakAnthropic()
 
 // Feitencontrole (zie lib/feitenControle.ts): dagelijks over de antwoorden van de afgelopen 24 uur. ArnoBot
 // mag een feit van de gebruiker nooit verkeerd terugspelen ("vier bronnen" terwijl er twee genoemd waren).

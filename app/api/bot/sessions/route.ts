@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { samenvattingParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
@@ -14,7 +14,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 export async function GET() {
   const { userId } = await auth()

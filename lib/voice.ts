@@ -1,10 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { buildVoiceSystemPrompt } from '@/lib/systemPrompt'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 const VOICE_MODEL = 'claude-sonnet-4-6'
 const VOICE_MAX_TOKENS = 500

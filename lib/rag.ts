@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { maakAnthropic } from '@/lib/anthropicClient'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = maakAnthropic()
 
 // Instelbaar zodat E2E-integratietests (niveau 3) dit naar een lokale mock-server kunnen
 // omleiden, net als ANTHROPIC_BASE_URL dat al standaard bij de Anthropic SDK kan. Voyage
