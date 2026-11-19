@@ -56,12 +56,7 @@ const numberInputStyle: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 }
 
-type Props = {
-  schrijfWachtwoord: string
-  setSchrijfWachtwoord: (v: string) => void
-}
-
-export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwoord }: Props) {
+export default function TrackrecordClient() {
   const [geschiedenis, setGeschiedenis] = useState<Meting[]>([])
   const [liveHuidigeMaand, setLiveHuidigeMaand] = useState<Meting | null>(null)
   const [loading, setLoading] = useState(true)
@@ -98,11 +93,10 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
           action: 'afsluiten',
           prijsBasis: DEFAULT_PRIJZEN.basis,
           prijsPremium: DEFAULT_PRIJZEN.premium,
-          schrijfWachtwoord,
         }),
       })
       if (res.ok) await laadData()
-      else if (res.status === 401) setError('Onjuist schrijfwachtwoord.')
+      else if (res.status === 401) setError('Sessie verlopen, log opnieuw in.')
       else setError('Afsluiten mislukt.')
     } catch {
       setError('Afsluiten mislukt.')
@@ -119,10 +113,10 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
       const res = await fetch('/api/kosten-tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'werkelijk', maand, werkelijkeKosten: bedrag, schrijfWachtwoord }),
+        body: JSON.stringify({ action: 'werkelijk', maand, werkelijkeKosten: bedrag }),
       })
       if (res.ok) await laadData()
-      else if (res.status === 401) setError('Onjuist schrijfwachtwoord.')
+      else if (res.status === 401) setError('Sessie verlopen, log opnieuw in.')
       else setError('Opslaan mislukt.')
     } catch {
       setError('Opslaan mislukt.')
@@ -136,17 +130,6 @@ export default function TrackrecordClient({ schrijfWachtwoord, setSchrijfWachtwo
   return (
     <div>
       {error && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>{error}</p>}
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-        <label style={{ fontSize: 12, color: '#6b7280' }}>Schrijfwachtwoord</label>
-        <input
-          type="password"
-          placeholder="voor afsluiten / werkelijke cijfers"
-          value={schrijfWachtwoord}
-          onChange={e => setSchrijfWachtwoord(e.target.value)}
-          style={{ ...numberInputStyle, width: 220, textAlign: 'left' }}
-        />
-      </div>
 
       {liveHuidigeMaand && (
         <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>

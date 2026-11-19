@@ -792,7 +792,7 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis
 - `CRON_SECRET` — Geheime token voor cron autorisatie
 - `ARNOBOT_ADMIN_KEY` — Admin paneel wachtwoord
-- `ARNOBOT_KOSTEN_KEY` + `ARNOBOT_KOSTEN_WRITE_KEY` — Abacus-toegang
+- `ARNOBOT_KOSTEN_KEY` — Abacus-toegang (één wachtwoord; het eerdere `ARNOBOT_KOSTEN_WRITE_KEY` voor afsluiten en werkelijke cijfers is op 2026-11-19 vervallen en kan uit Vercel)
 - `SD_VERDIEN_PASSWORD` — Agents-portaal wachtwoord
 - `SD_TOKEN_STEFANIE` / `SD_TOKEN_ANNIEK` — sales-development-attributielinks
 - `CALENDLY_WEBHOOK_SIGNING_KEY` — Calendly-webhookverificatie

@@ -16,14 +16,8 @@ async function checkAuth(): Promise<boolean> {
   return !!token && token === process.env.ARNOBOT_KOSTEN_KEY
 }
 
-// Los, tweede wachtwoord voor de schrijfacties (afsluiten, werkelijke cijfers
-// invullen). Los van de paginatoegang: iedereen met het paginawachtwoord mag
-// kijken en met scenario's spelen, alleen wie dit tweede wachtwoord kent mag
-// echte cijfers vastleggen. Voorkomt tegelijk dat twee mensen zonder overleg
-// dezelfde maand afsluiten of overschrijven.
-function checkSchrijfWachtwoord(schrijfWachtwoord: unknown): boolean {
-  return typeof schrijfWachtwoord === 'string' && !!schrijfWachtwoord && schrijfWachtwoord === process.env.ARNOBOT_KOSTEN_WRITE_KEY
-}
+// Geen tweede (schrijf)wachtwoord: afsluiten en werkelijke cijfers invullen vallen onder dezelfde paginatoegang als kijken (besluit Arno
+// 2026-11-19: dat extra wachtwoord was nooit gevraagd). ARNOBOT_KOSTEN_WRITE_KEY wordt niet meer gelezen en kan uit Vercel.
 
 function maandRange(maand: string): { start: string; eind: string } {
   // maand is 'YYYY-MM-DD' (altijd de eerste van de maand)
@@ -183,15 +177,9 @@ export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium, schrijfWachtwoord } = body as {
+  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium } = body as {
     action?: string; maand?: string; werkelijkeKosten?: number; werkelijkeOmzet?: number
-    prijsBasis?: number; prijsPremium?: number; schrijfWachtwoord?: string
-  }
-
-  if (action === 'afsluiten' || action === 'werkelijk' || action === 'werkelijkOmzet') {
-    if (!checkSchrijfWachtwoord(schrijfWachtwoord)) {
-      return NextResponse.json({ error: 'Onjuist schrijfwachtwoord.' }, { status: 401 })
-    }
+    prijsBasis?: number; prijsPremium?: number
   }
 
   if (action === 'afsluiten') {

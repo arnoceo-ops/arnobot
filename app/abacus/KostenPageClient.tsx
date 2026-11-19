@@ -49,10 +49,6 @@ export default function KostenPageClient({ fxRate }: Props) {
   // TARIEVEN.fxRateEurUsd als de live aanroep mislukt, dus hier geen aparte
   // fallback-logica nodig.
   const [inputs, setInputs] = useState<Inputs>({ ...DEFAULT_INPUTS, fxRate: fxRate.rate })
-  // Tweede wachtwoord voor schrijfacties (maand afsluiten, werkelijke cijfers
-  // invullen). Eén keer intypen per sessie, gedeeld tussen Trackrecord en
-  // Business case, verder alleen in geheugen (niet opgeslagen).
-  const [schrijfWachtwoord, setSchrijfWachtwoord] = useState('')
 
   return (
     <>
@@ -103,7 +99,7 @@ export default function KostenPageClient({ fxRate }: Props) {
               Prognose wordt berekend uit écht gemeten gebruik die maand, niet uit de instelbare aannames van de calculator hiernaast. Zo toetst dit of de tarieven zelf kloppen.
             </p>
           </div>
-          <TrackrecordClient schrijfWachtwoord={schrijfWachtwoord} setSchrijfWachtwoord={setSchrijfWachtwoord} />
+          <TrackrecordClient />
         </div>
       )}
 
