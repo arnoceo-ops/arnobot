@@ -372,14 +372,13 @@ export async function POST(req: NextRequest) {
     // Content moderatie voor ingelogde gebruikers: nudgen, nooit direct blokkeren.
     // Herhaald off-topic of iets ongepasts wordt gemarkeerd voor handmatige beoordeling
     // in de admin (een betalende gebruiker direct buitensluiten is te zwaar middel), en
-    // na de derde keer in totaal wordt de gebruiker automatisch uitgelogd, niet geblokkeerd:
-    // die kan altijd gewoon opnieuw inloggen zodra er weer een zakelijke vraag is.
+    // Nooit automatisch uitloggen of afkappen (besluit Arno 2026-11-19, na drie onterechte markeringen
+    // bij een betalende gebruiker): de gebruiker houdt gewoon zijn gesprek, wij beoordelen achteraf.
     const OFFTOPIC_FALLBACKS = [
       'Zullen we het zakelijk houden?',
       'Interessant, maar laten we het over jouw sales hebben.',
       'Kom terug als je weer bij zakelijke zinnen bent.',
     ]
-    const OFFTOPIC_LOGOUT_FALLBACK = 'Dit gesprek stopt hier. Kom terug zodra je een zakelijke vraag hebt.'
 
     // Telt alleen sinds de laatste keer dat deze gebruiker is uitgelogd, niet levenslang:
     // na een uitlog-cyclus krijgt iemand weer een schone lei (nudge, nudge, uitloggen).
@@ -406,9 +405,7 @@ export async function POST(req: NextRequest) {
       .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Gebruiker' : 'ArnoBot'}: ${m.content}`)
       .join('\n')
 
-    const offtopicToon = occurrence >= 3
-      ? 'Dit is al de derde keer dat deze gebruiker afdwaalt, het gesprek wordt na dit bericht automatisch beëindigd. Schrijf een korte, duidelijke maar niet onaardige mededeling dat het gesprek hierdoor stopt, en dat diegene welkom is terug te komen zodra er een zakelijke vraag is.'
-      : occurrence >= 2
+    const offtopicToon = occurrence >= 2
       ? 'Dit is niet de eerste keer. Wees directer en korter dan een uitnodigende vraag, bijvoorbeeld in de trant van "Kom terug als je weer bij zakelijke zinnen bent."'
       : 'Dit is de eerste keer. Reageer zoals een mens dat in de praktijk zou doen: met een kwinkslag of luchtige humor die het onderwerp zelf gebruikt om terug te koppelen naar zaken of naar de klant van de gebruiker (bijvoorbeeld bij een vraag over een appeltaartrecept: "Wil je daarmee je klant verrassen?"). Alleen als een speelse invalshoek echt niet logisch past bij dit specifieke bericht, val terug op een directe, uitnodigende vraag die verwijst naar het laatste zakelijke onderwerp uit het gesprek hieronder. Varieer, gebruik niet bij elk gesprek dezelfde opening.'
     const ongepastToon = 'Geen humor, geen kwinkslag, dit is bewust aanstootgevend, seksueel ongepast of vergelijkbaar. Wees kort, serieus en duidelijk dat dit niet in het gesprek past, zonder te preken.'
@@ -436,11 +433,8 @@ export async function POST(req: NextRequest) {
       // ONGEPAST is altijd meteen zichtbaar voor beoordeling, ook de eerste keer. Alleen
       // OFFTOPIC mag de eerste keer stil blijven (onschuldig uitstapje, geen review nodig).
       const reviewed = category === 'offtopic' && occurrence === 1
-      await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed, caused_logout: occurrence >= 3 })
+      await supabase.from('arnobot_offtopic_flags').insert({ user_id: userId, category, message: question, reviewed, caused_logout: false })
 
-      if (occurrence >= 3) {
-        return NextResponse.json({ answer: generatedReply || OFFTOPIC_LOGOUT_FALLBACK, forceLogout: true, hint: null }, { headers: corsHeaders(origin) })
-      }
       const fallback = OFFTOPIC_FALLBACKS[Math.min(occurrence - 1, OFFTOPIC_FALLBACKS.length - 1)]
       return NextResponse.json({ answer: generatedReply || fallback, hint: null }, { headers: corsHeaders(origin) })
     }
