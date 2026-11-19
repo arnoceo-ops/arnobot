@@ -24,7 +24,7 @@ export async function GET() {
       // Alleen de gegevens over de documenten (naam, soort, grootte, datum, bewaard of tijdelijk), niet de inhoud: de
       // bestanden zelf haalt de gebruiker met DOWNLOAD uit de tab Docs. Grafstenen (al verwijderd) horen er niet in.
       supabaseAdmin.from('arnobot_documenten')
-        .select('naam, soort, media_type, bytes, bewaard, created_at, laatst_gebruikt, verloopt_op')
+        .select('naam, soort, media_type, bytes, bewaard, created_at, laatst_gebruikt, verloopt_op, samenvatting')
         .eq('user_id', userId)
         .is('verwijderd_op', null)
         .limit(1000),

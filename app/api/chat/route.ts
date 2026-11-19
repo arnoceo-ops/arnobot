@@ -73,7 +73,8 @@ import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
 const MAX_REKENRONDES = 4
 import { downloadAndDeleteAttachment } from '@/lib/chatAttachments'
 import { buildDocumentContentBlock } from '@/lib/documentInhoud'
-import { documentenBeschikbaarVoor } from '@/lib/documentenRegels'
+import { documentenBeschikbaarVoor, samenvattenBeschikbaarVoor } from '@/lib/documentenRegels'
+import { haalDocumentSamenvattingen } from '@/lib/documentSamenvatting'
 import { historieImportBeschikbaarVoor } from '@/lib/historieImportRegels'
 import { laadProfielBlok } from '@/lib/historieImport'
 import { laadSessieDocumenten, verwerkNieuweUpload, laadBijlage, markeerGebruikt, bewaardeRuimteOver, registreerTranscript, eerdereGesprekkenOverBestanden } from '@/lib/documenten'
@@ -478,6 +479,15 @@ export async function POST(req: NextRequest) {
         const rijen = await laadSessieDocumenten(supabase, userId, sessionId)
         const samengesteld = await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))
         documentGeheugen = await eerdereGesprekkenOverBestanden(supabase, userId, sessionId, rijen)
+        // Samenvattingen van andere bewaarde bestanden (eigen schakelaar, nooit fataal voor de beurt): de vraag zelf bepaalt
+        // welke passen, documenten die al in dit gesprek staan lees je volledig en blijven hier buiten.
+        if (samenvattenBeschikbaarVoor(userId)) {
+          try {
+            documentGeheugen += await haalDocumentSamenvattingen(supabase, userId, question, rijen.map(r => r.id))
+          } catch (e) {
+            Sentry.captureException(e, { tags: { onderdeel: 'document-samenvattingen' }, level: 'warning' })
+          }
+        }
         bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
         questionWithDocument += bouwBijlageTekst(samengesteld)
         await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))

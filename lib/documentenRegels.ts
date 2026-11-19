@@ -33,6 +33,20 @@ export const MAX_BESTANDSNAAM_TEKENS = 120
  * interne testaccounts en de eigenaar (zelfde patroon als herroepingBeschikbaarVoor). Geldt voor de pagina
  * én voor het gedrag van de chatroute: wie hier false krijgt, houdt het oude gedrag.
  */
+/**
+ * Samenvatten van bewaarde documenten en die samenvattingen in het geheugen terugbrengen (docs/DOCUMENTEN_PLAN.md,
+ * "Bouwplan stap 5"). Eigen schakelaar naast documentenBeschikbaarVoor: documentinhoud naar een Claude-aanroep voor
+ * samenvatten is een eigen goedkeuringsoppervlak, dus DOCUMENTEN_OPEN zet dit niet aan. Open voor iedereen met
+ * DOCUMENT_SAMENVATTING_OPEN=true, anders alleen de eigenaar en de interne testaccounts.
+ */
+export function samenvattenBeschikbaarVoor(userId: string | null | undefined): boolean {
+  if (!userId) return false
+  if (process.env.DOCUMENT_SAMENVATTING_OPEN === 'true') return true
+  if (isInternalTestUser(userId)) return true
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return !!eigenaar && eigenaar === userId
+}
+
 export function documentenBeschikbaarVoor(userId: string | null | undefined): boolean {
   if (!userId) return false
   if (process.env.DOCUMENTEN_OPEN === 'true') return true

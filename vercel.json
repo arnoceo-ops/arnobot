@@ -125,6 +125,10 @@
       "schedule": "55 6 * * *"
     },
     {
+      "path": "/api/cron/documenten-samenvatten",
+      "schedule": "*/10 * * * *"
+    },
+    {
       "path": "/api/cron/documenten-opruimen",
       "schedule": "20 * * * *"
     },
