@@ -82,8 +82,8 @@ export async function GET(req: NextRequest) {
 
     const ids = [...new Set([...perGebruiker.keys(), ...berichtenPerGebruiker.keys()])]
     const { data: profielen } = ids.length
-      ? await supabase.from('approved_users').select('user_id, voornaam, achternaam, full_name, email, plan, paid_at, is_active').in('user_id', ids)
-      : { data: [] as { user_id: string; voornaam: string | null; achternaam: string | null; full_name: string | null; email: string | null; plan: string | null; paid_at: string | null; is_active: boolean | null }[] }
+      ? await supabase.from('approved_users').select('user_id, voornaam, achternaam, full_name, email, plan, paid_at, is_active, trial_start, expires_at').in('user_id', ids)
+      : { data: [] as { user_id: string; voornaam: string | null; achternaam: string | null; full_name: string | null; email: string | null; plan: string | null; paid_at: string | null; is_active: boolean | null; trial_start: string | null; expires_at: string | null }[] }
     const profielPerId = new Map((profielen ?? []).map(p => [p.user_id, p]))
 
     // Echte omzet in plaats van een aangenomen prijs (lib/maandOmzet.ts): netto zonder btw, een jaarbetaling gespreid over 12 maanden vanaf de
@@ -104,15 +104,33 @@ export async function GET(req: NextRequest) {
       ])
       const aboPerId = new Map(abonnementen.map(a => [a.id, a]))
       for (const b of betalingen) {
+        // Betalingen van de interne testaccounts zijn testbetalingen (Mollie-proeven van Arno), geen omzet.
+        if (isInternalTestUser(b.user_id)) continue
         const abo = b.subscription_id ? aboPerId.get(b.subscription_id) : undefined
         const bedrag = nettoOmzetCentInMaand(b, abo, maand)
         if (bedrag > 0) omzetCent.set(b.user_id, (omzetCent.get(b.user_id) ?? 0) + bedrag)
       }
       const ABO_STATUS: Record<string, string> = { active: 'actief', ended: 'beëindigd', refunded: 'terugbetaald', abandoned: 'niet afgerond', pending: 'wacht op betaling', cancelled: 'opgezegd', suspended: 'geschorst' }
+      const PLAN_NAAM: Record<string, string> = { basis: 'Basic', premium: 'Pro', team: 'Team' }
       for (const s of [...abonnementen].sort((x, y) => y.created_at.localeCompare(x.created_at))) {
         if (abonnement.has(s.user_id)) continue
-        abonnement.set(s.user_id, `${s.plan === 'premium' ? 'Pro' : s.plan === 'team' ? 'Team' : 'Basic'} ${s.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}, ${ABO_STATUS[s.status] ?? s.status}`)
+        // Wijkt het betaalde abonnement af van het plan waarmee iemand nu toegang heeft (bijvoorbeeld een gegeven upgrade), dan staat dat erbij.
+        const toegang = profielPerId.get(s.user_id)?.plan
+        const afwijking = toegang && toegang !== s.plan ? `, toegang nu ${PLAN_NAAM[toegang] ?? toegang}` : ''
+        abonnement.set(s.user_id, `${PLAN_NAAM[s.plan] ?? 'Basic'} ${s.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}, ${ABO_STATUS[s.status] ?? s.status}${afwijking}`)
       }
+    }
+
+    // Status voor wie geen abonnement heeft: een proef, een handmatig gezette toegang zonder betaling, of inactief.
+    const geenAboStatus = (p: { paid_at: string | null; is_active: boolean | null; trial_start: string | null; expires_at: string | null } | undefined): string => {
+      if (!p) return 'onbekend'
+      if (p.paid_at) return 'gratis of handmatig, geen abonnement'
+      if (p.trial_start) {
+        const einde = p.expires_at ? new Date(p.expires_at) : new Date(new Date(p.trial_start).getTime() + 30 * 86_400_000)
+        const dd = einde.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' })
+        return einde.getTime() < Date.now() ? `proef verlopen (${dd})` : `proef tot ${dd}`
+      }
+      return p.is_active ? 'gratis toegang' : 'inactief'
     }
 
     const alleGebruikers = ids.map(id => {
@@ -126,7 +144,7 @@ export async function GET(req: NextRequest) {
         plan: p?.plan ?? null,
         betaald: !!p?.paid_at,
         actief: p?.is_active ?? false,
-        abonnement: abonnement.get(id) ?? null,
+        abonnement: abonnement.get(id) ?? geenAboStatus(p),
         omzetCent: Math.round(omzetCent.get(id) ?? 0),
         testaccount: isInternalTestUser(id),
         berichten: berichtenPerGebruiker.get(id) ?? 0,

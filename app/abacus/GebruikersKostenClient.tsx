@@ -82,7 +82,7 @@ export default function GebruikersKostenClient() {
   const gebruiker = data.gebruikers.find(g => g.userId === gekozen) ?? null
   const totaalUsd = data.gebruikers.reduce((s, g) => s + g.totaalUsd, 0)
   // Geen aangenomen prijs: wat iemand betaalt hangt af van proef, cyclus, korting en tegoed. We tonen het echte abonnement en de echte betaling.
-  const statusTekst = (g: Gebruiker) => g.abonnement ?? (g.betaald ? 'betaald (geen abonnement gevonden)' : g.actief ? 'proef of gratis' : 'inactief')
+  const statusTekst = (g: Gebruiker) => g.abonnement ?? (g.actief ? 'gratis toegang' : 'inactief')
   const omzetTekst = (g: Gebruiker) => (g.omzetCent > 0 ? fmtEur(g.omzetCent / 100) : '-')
   // Marge alleen als de hele maand gemeten is en er omzet is: anders staat er een volle maand omzet tegenover half gemeten kosten.
   const margeEur = (g: Gebruiker): number | null => (data.maandVolledigGemeten && g.omzetCent > 0 ? g.omzetCent / 100 - eur(g.totaalUsd) : null)
