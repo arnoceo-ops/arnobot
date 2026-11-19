@@ -282,6 +282,19 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
 
   const isUpToDate = coachingIsActueel(doc?.updated_at, stats?.lastSessionDate, analyses[0]?.created_at)
 
+  // Leesmoment (lib/coachingGelezen.ts): pas als het advies echt zichtbaar is, dus geladen uit de
+  // database en niet tijdens het genereren (dan staat het oude advies gedimd). Per versie van het
+  // document één keer. Verlaat de gebruiker de pagina tijdens het schrijven, dan blijft het nieuwe
+  // advies ongelezen en wijst de NIEUW-kaart op /bot hem erop.
+  const gelezenGemeld = useRef<string | null>(null)
+  useEffect(() => {
+    if (loading || generating || doc?.mindset_score == null) return
+    const versie = doc.updated_at ?? 'onbekend'
+    if (gelezenGemeld.current === versie) return
+    gelezenGemeld.current = versie
+    fetch('/api/bot/coaching', { method: 'PATCH' }).catch(() => {})
+  }, [loading, generating, doc])
+
   // Doorschakeling vanaf COACH ME op /bot (?start=1): de generatie start hier direct, zodat de
   // gebruiker niet nog eens hoeft te klikken. Pas als alles geladen is (anders is "actueel" nog niet
   // te bepalen), één keer, de parameter gaat uit de URL zodat een refresh niet opnieuw genereert,

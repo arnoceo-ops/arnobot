@@ -62,6 +62,18 @@ export async function GET() {
   return NextResponse.json({ coaching: data ?? null, history: history ?? [], followThroughPct })
 }
 
+// Leesmoment: de SPE-pagina meldt dat de analyse zichtbaar is (lib/coachingGelezen.ts).
+export async function PATCH() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+  const { error } = await supabase.from('arnobot_salesbaas_coaching').update({ gelezen_op: new Date().toISOString() }).eq('user_id', userId)
+  if (error) {
+    console.error('[zelfcoaching PATCH gelezen]', error.message)
+    return NextResponse.json({ error: 'opslaan_mislukt' }, { status: 500 })
+  }
+  return NextResponse.json({ ok: true })
+}
+
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })

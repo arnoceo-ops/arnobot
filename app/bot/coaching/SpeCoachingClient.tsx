@@ -79,6 +79,19 @@ export default function SpeCoachingClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Leesmoment (lib/coachingGelezen.ts): pas als de analyse echt zichtbaar is, dus geladen uit de
+  // database en niet tijdens het genereren (dan staat het oude document gedimd). Per versie van het
+  // document één keer. Verlaat de gebruiker de pagina tijdens het schrijven, dan blijft de nieuwe
+  // analyse ongelezen en wijst de NIEUW-kaart op /bot hem erop.
+  const gelezenGemeld = useRef<string | null>(null)
+  useEffect(() => {
+    if (loading || generating || !doc) return
+    const versie = doc.updated_at ?? 'onbekend'
+    if (gelezenGemeld.current === versie) return
+    gelezenGemeld.current = versie
+    fetch('/api/bot/team/zelfcoaching', { method: 'PATCH' }).catch(() => {})
+  }, [loading, generating, doc])
+
   // Doorschakeling vanaf COACH ME op /bot (?start=1), zelfde patroon als CoachingClient: pas als
   // alles geladen is, één keer, de parameter gaat uit de URL zodat een refresh niet opnieuw
   // genereert. Mag het nog niet, dan weigert de server (te_vroeg/te_weinig) zonder AI-aanroep en

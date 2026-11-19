@@ -49,8 +49,11 @@ function totaalAantalGetoond(): number {
  *  geblokkeerde opslag: false (liever niet tonen). */
 export function groeiNudgeMagTonen(clerkSessionId: string | null | undefined, signatuur: string): boolean {
   if (!clerkSessionId || groeiNudgeGezien(clerkSessionId)) return false
+  // De NIEUW-kaart (een klaarstaand, ongelezen document) valt buiten de grens van twee vertoningen
+  // en telt niet mee: hij komt elke login terug tot het document is geopend. Wel nog steeds
+  // maximaal één keer per login (de 'gezien'-controle hierboven).
+  if (signatuur === 'ongelezen') return true
   try {
-    void signatuur
     const geteldKey = `arnobot_groeinudge_geteld_${clerkSessionId}`
     if (sessionStorage.getItem(geteldKey) !== null) return true
     const aantal = totaalAantalGetoond()

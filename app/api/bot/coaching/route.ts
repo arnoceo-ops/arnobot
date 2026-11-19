@@ -53,6 +53,18 @@ export async function GET() {
   return NextResponse.json({ coaching: data ?? null })
 }
 
+// Leesmoment: de coachingpagina meldt dat het advies zichtbaar is (lib/coachingGelezen.ts).
+export async function PATCH() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+  const { error } = await supabase.from('arnobot_coaching').update({ gelezen_op: new Date().toISOString() }).eq('user_id', userId)
+  if (error) {
+    console.error('[coaching PATCH gelezen]', error.message)
+    return NextResponse.json({ error: 'opslaan_mislukt' }, { status: 500 })
+  }
+  return NextResponse.json({ ok: true })
+}
+
 export async function POST() {
   // Tijd per stap, voor het zoeken naar waar een coaching zijn tijd verliest. Alleen tijden, geen
   // gebruikersdata: één logregel en een Server-Timing-header (zichtbaar in F12, tabblad Network).

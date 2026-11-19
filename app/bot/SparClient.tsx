@@ -131,6 +131,8 @@ interface Props {
     tellers: { gesprekken: number; sparsessies: number; analyses: number; coaching: number }
     // LEIDERSCHAP-kaart voor een teambaas (lib/speKaart.ts): eigen label en tellerregel
     spe?: { label: string; aantal1on1s: number; nieuw: number | null }
+    // NIEUW-kaart (lib/ongelezenKaart.ts): een document dat klaarstaat maar nog niet is geopend
+    ongelezen?: { label: string; regel: string }
   } | null
 }
 
@@ -947,7 +949,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // zichtbaar, gaat pas weg bij een echte activiteit. Hier dekken we "gesprek" en "sparsessie"
   // af (beide zetten `started`); analyse en coaching markeren zelf vanaf hun eigen pagina.
   // Daarbovenop: dezelfde boodschap (state + bouwsteen) maximaal twee keer, zie groeiNudgeMagTonen.
-  const groeibalansSignatuur = groeibalans ? `${groeibalans.state}|${groeibalans.bouwsteen}` : null
+  const groeibalansSignatuur = groeibalans ? (groeibalans.ongelezen ? 'ongelezen' : `${groeibalans.state}|${groeibalans.bouwsteen}`) : null
   useEffect(() => {
     if (!clerkSessionId || !groeibalansSignatuur || mode !== 'gesprek') return
     if (groeiNudgeMagTonen(clerkSessionId, groeibalansSignatuur)) setToonGroeibalans(true)
@@ -3215,8 +3217,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               className="groeibalans-kader"
               style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
             >
-              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{groeibalans.spe?.label ?? GROEIBALANS_LABELS[groeibalans.state]}</p>
-              {groeibalans.spe ? (
+              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{groeibalans.ongelezen?.label ?? groeibalans.spe?.label ?? GROEIBALANS_LABELS[groeibalans.state]}</p>
+              {groeibalans.ongelezen ? (
+                <p className="groeibalans-tellers">{groeibalans.ongelezen.regel}</p>
+              ) : groeibalans.spe ? (
                 <p className="groeibalans-tellers">
                   <b>{groeibalans.spe.aantal1on1s}</b> 1:1&apos;s
                   <span className="sep">·</span>

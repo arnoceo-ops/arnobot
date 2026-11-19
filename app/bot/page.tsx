@@ -8,6 +8,7 @@ import { corrigeerBouwsteen, computeFallbackGroeibalans, getGroeibalansCopy, adv
 import { telGebruik } from '@/lib/gebruikTellers'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { bepaalSpeKaart, type SpeKaart } from '@/lib/speKaart'
+import { bepaalOngelezenKaart } from '@/lib/ongelezenKaart'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,7 +52,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   // fallback uit lib/groeibalans.ts. Zie project_gebruiksbalans_concept.md voor de volledige
   // ontwerpgeschiedenis. `tellers` komt uit lib/gebruikTellers.ts, dat verwijderde en
   // community-uitgesloten gesprekken al wegfiltert (zelfde filters als de Bieb).
-  let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers; spe?: SpeKaart } | null = null
+  let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers; spe?: SpeKaart; ongelezen?: { label: string; regel: string } } | null = null
   if (tellers.gesprekken >= 5) {
     const classificatieRuw = userRes.data?.groeibalans_tonen === null || userRes.data?.groeibalans_tonen === undefined
       ? computeFallbackGroeibalans(tellers)
@@ -107,6 +108,15 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
     if (spe) {
       groeibalans = { state: 'groeikans', bouwsteen: 'coaching', tekst: spe.tekst, knop: spe.knop, href: spe.href, kleur: GROEIBALANS_KLEUREN.groeikans, tellers, spe }
     }
+  }
+
+  // NIEUW-kaart (lib/ongelezenKaart.ts): een coaching of analyse die klaarstaat maar nog niet is
+  // geopend, bijvoorbeeld omdat de gebruiker wegging terwijl er werd geschreven. Gaat voor elke
+  // andere kaart en valt buiten de grens van twee vertoningen (zie groeiNudgeMagTonen): hij blijft
+  // elke login terugkomen tot het document is geopend.
+  const ongelezen = await bepaalOngelezenKaart(serviceDb, userId, teambaas)
+  if (ongelezen) {
+    groeibalans = { state: 'groeikans', bouwsteen: 'coaching', tekst: ongelezen.tekst, knop: ongelezen.knop, href: ongelezen.href, kleur: GROEIBALANS_KLEUREN.groeikans, tellers, ongelezen: { label: ongelezen.label, regel: ongelezen.regel } }
   }
 
   return (
