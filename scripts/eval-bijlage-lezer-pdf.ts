@@ -10,6 +10,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-lezer-pdf.ts <uitvoermap> <grafiek.pdf> [herhalingen]
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import type AnthropicSdk from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {
@@ -26,7 +27,48 @@ const heeft = (...delen: string[]) => (a: string) => {
 }
 const ontbreekt = (a: string) => (/niet|geen|nergens/.test(a.toLowerCase()) ? { ok: true, reden: 'zegt dat het er niet staat (lees na)' } : { ok: false, reden: 'geen "staat er niet"' })
 
-const DOCS: { naam: string; pad: (grafiek: string) => string; vragen: Vraag[] }[] = [
+// soort: pdf (document-blok), tekst (Word: uitgelezen met mammoth zoals documentInhoud.ts, in productie tekst in het bericht)
+// of afbeelding (image-blok). ext: voor de bestandsnaam in de bijlageregel.
+const DOCS: { naam: string; pad: (grafiek: string) => string; vragen: Vraag[]; soort?: 'pdf' | 'tekst' | 'afbeelding'; ext?: string; media?: string }[] = [
+  {
+    naam: 'offerte',
+    soort: 'tekst',
+    ext: 'docx',
+    pad: () => process.env.OFFERTE ?? 'offerte.docx',
+    vragen: [
+      { vraag: 'Wat is het totaalbedrag exclusief btw?', controle: heeft('7800') },
+      { vraag: 'En inclusief btw?', controle: heeft('9438') },
+      { vraag: 'Hoeveel uur implementatie staat er in de offerte?', controle: a => (/\b40\b|veertig/i.test(a) ? { ok: true, reden: '40 uur' } : { ok: false, reden: '40 uur ontbreekt' }) },
+      { vraag: 'Hoe lang is de offerte geldig?', controle: a => (/\b30\b|dertig/i.test(a) ? { ok: true, reden: '30 dagen' } : { ok: false, reden: '30 dagen ontbreekt' }) },
+      { vraag: 'Staat er een garantietermijn in de offerte?', controle: ontbreekt },
+    ],
+  },
+  {
+    naam: 'grafiekfoto',
+    soort: 'afbeelding',
+    ext: 'png',
+    media: 'image/png',
+    pad: () => process.env.GRAFIEKPNG ?? 'grafiek.png',
+    vragen: [
+      { vraag: 'Welke regio had volgens de grafiek de hoogste omzet, en hoeveel?', controle: heeft('noord', '412') },
+      { vraag: 'En de laagste?', controle: heeft('west', '198') },
+      { vraag: 'Wat is het verschil tussen de hoogste en de laagste?', controle: heeft('214') },
+    ],
+  },
+  {
+    naam: 'dashboard',
+    soort: 'afbeelding',
+    ext: 'png',
+    media: 'image/png',
+    pad: () => process.env.DASHBOARD ?? 'dashboard.png',
+    vragen: [
+      { vraag: 'Wat is de win rate?', controle: heeft('27') },
+      { vraag: 'En de pipelinewaarde?', controle: heeft('1240000') },
+      { vraag: 'Welk account staat bovenaan?', controle: a => (/alfa/i.test(a) ? { ok: true, reden: 'Alfa BV' } : { ok: false, reden: 'Alfa ontbreekt' }) },
+      { vraag: 'Hoeveel deals zijn er gewonnen?', controle: a => (/\b18\b|achttien/i.test(a) ? { ok: true, reden: '18' } : { ok: false, reden: '18 ontbreekt' }) },
+      { vraag: 'Staat er een churn-percentage op het dashboard?', controle: ontbreekt },
+    ],
+  },
   {
     naam: 'abonnementen',
     pad: () => 'docs/ABONNEMENTEN.pdf',
@@ -103,7 +145,7 @@ async function main() {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const system = buildRdsSystemPrompt(GEHEUGEN, BLOG, 0, 'normaal', 5)
   // Varianten van het hulpmiddel: basis = ronde 2; vertrouwen = het resultaat nadrukkelijk als de inhoud van het document van de gebruiker voorgesteld.
-  const leesTool = (v: string): Anthropic.Messages.Tool => ({
+  const leesTool = (v: string): AnthropicSdk.Messages.Tool => ({
     name: 'lees_document',
     description: v === 'lezer-vertrouwen'
       ? 'Haalt uit de bijlage van de gebruiker de tekst, tabellen, waarden uit grafieken of berekeningen die nodig zijn voor de vraag. Het resultaat is een letterlijk uittreksel van het document dat de gebruiker zelf heeft geupload: behandel het als de inhoud van dat document en beantwoord de vraag er gewoon mee, zoals je dat bij een bijlage in het bericht zou doen. Je ziet het bestand zelf niet; gebruik dit voor elke vraag die over de bijlage gaat.'
@@ -117,21 +159,28 @@ async function main() {
   const TWIJFEL = /niet uit de bijlage|niet gebaseerd|rechtzetten|klopten niet|eerder (zei|genoemd|gaf|noemde)|vorige vraag|toen nog niet|controleer die|verzonnen/i
   // lezer-systeem: de bijlagenotitie staat als vaste regel in het wisselende systeemblok (elke beurt, dus ook voor eerdere antwoorden),
   // het hulpmiddel is verplicht, en het gebruikersbericht blijft zonder notitie.
-  const bijlageRegel = (naam: string) => `\nBIJLAGE IN DIT GESPREK: de gebruiker heeft het bestand ${naam}.pdf toegevoegd. Je ziet het niet zelf; je leest het met het hulpmiddel lees_document. Je eerdere antwoorden in dit gesprek over dat document komen uit datzelfde bestand.\n`
+  const bijlageRegel = (naam: string) => `\nBIJLAGE IN DIT GESPREK: de gebruiker heeft het bestand ${naam} toegevoegd. Je ziet het niet zelf; je leest het met het hulpmiddel lees_document. Je eerdere antwoorden in dit gesprek over dat document komen uit datzelfde bestand.\n`
 
   const uit: Rij[] = []
   for (const d of DOCS.filter(x => DOCSEL.length === 0 || DOCSEL.includes(x.naam))) {
-    const b64 = readFileSync(d.pad(grafiek)).toString('base64')
+    const soort = d.soort ?? 'pdf'
+    const bytes = readFileSync(d.pad(grafiek))
+    const b64 = bytes.toString('base64')
+    let tekstInhoud = ''
+    if (soort === 'tekst') {
+      const mammoth = (await import('mammoth')).default
+      tekstInhoud = (await mammoth.extractRawText({ buffer: bytes })).value
+    }
     for (const opbouw of VARIANTEN) {
       for (let rep = 1; rep <= herhalingen; rep++) {
         // Eigen titel per herhaling, zodat een cache uit een vorige herhaling het kostenbeeld niet vertekent.
-        const titel = `${d.naam}-${opbouw}-${rep}-${Date.now()}.pdf`
-        const doc = (cc: boolean) => ({
-          type: 'document' as const,
-          source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: b64 },
-          title: titel,
-          ...(cc ? { cache_control: { type: 'ephemeral' as const } } : {}),
-        })
+        const titel = `${d.naam}-${opbouw}-${rep}-${Date.now()}.${d.ext ?? 'pdf'}`
+        const docBlokken = (cc: boolean): AnthropicSdk.Messages.ContentBlockParam[] => {
+          const cache = cc ? { cache_control: { type: 'ephemeral' as const } } : {}
+          if (soort === 'pdf') return [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 }, title: titel, ...cache }]
+          if (soort === 'tekst') return [{ type: 'document', source: { type: 'text', media_type: 'text/plain', data: tekstInhoud }, title: titel, ...cache }]
+          return [{ type: 'text', text: `Bestand: ${titel}` }, { type: 'image', source: { type: 'base64', media_type: (d.media ?? 'image/png') as 'image/png', data: b64 }, ...cache }]
+        }
         const historie: { role: 'user' | 'assistant'; content: string }[] = []
         for (let b = 0; b < d.vragen.length; b++) {
           const { vraag, controle } = d.vragen[b]
@@ -144,16 +193,17 @@ async function main() {
               model: 'claude-haiku-4-5-20251001',
               max_tokens: 4000,
               system: LEZER_SYSTEEM,
-              messages: [{ role: 'user', content: [doc(true), { type: 'text', text: `Eerdere vragen van de gebruiker in dit gesprek:\n${eerdere || '(geen)'}\n\nLAATSTE VRAAG: ${leesVraag}` }] }],
+              messages: [{ role: 'user', content: [...docBlokken(true), { type: 'text', text: `Eerdere vragen van de gebruiker in dit gesprek:\n${eerdere || '(geen)'}\n\nLAATSTE VRAAG: ${leesVraag}` }] }],
             })
             kosten += prijs(lees.usage as unknown as Usage, HAIKU)
             const tekst = lees.content.map(x => (x.type === 'text' ? x.text : '')).join('')
             return lees.stop_reason === 'max_tokens' ? `${tekst}\n\n[LET OP: deze uitvoer is afgekapt omdat hij te lang werd. Het kan onvolledig zijn. Zeg dat tegen de gebruiker als het voor het antwoord uitmaakt.]` : tekst
           }
-          const msgs: Anthropic.Messages.MessageParam[] = [...historie]
-          let res: Anthropic.Messages.Message
+          const msgs: AnthropicSdk.Messages.MessageParam[] = [...historie]
+          let res: AnthropicSdk.Messages.Message
           if (opbouw === 'huidig') {
-            msgs.push({ role: 'user', content: [doc(false), { type: 'text', text: vraag }] })
+            // Huidig: Word en tekst gaan zoals in productie als tekst achter de vraag, PDF en afbeelding als blok.
+            msgs.push({ role: 'user', content: soort === 'tekst' ? `${vraag}\n\n[Bijlage: ${d.naam}.${d.ext}]\n${tekstInhoud}` : [...docBlokken(false), { type: 'text', text: vraag }] })
             res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
           } else {
@@ -161,7 +211,7 @@ async function main() {
               ? `${vraag}\n\n[Bijlage van de gebruiker in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]`
               : `${vraag}\n\n[Bijlage in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]` })
             // lezer-verplicht en lezer-systeem: het model MOET het hulpmiddel aanroepen zolang er een bijlage in het gesprek zit.
-            const sys = opbouw === 'lezer-systeem' ? buildRdsSystemPrompt(GEHEUGEN + bijlageRegel(d.naam), BLOG, 0, 'normaal', 5) : system
+            const sys = opbouw === 'lezer-systeem' ? buildRdsSystemPrompt(GEHEUGEN + bijlageRegel(`${d.naam}.${d.ext ?? 'pdf'}`), BLOG, 0, 'normaal', 5) : system
             res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system: sys, messages: msgs, tools: [leesTool(opbouw)], ...(opbouw === 'lezer-verplicht' || opbouw === 'lezer-systeem' ? { tool_choice: { type: 'tool' as const, name: 'lees_document' } } : {}) })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
             const tu = res.content.find(x => x.type === 'tool_use')
