@@ -39,6 +39,17 @@ const DOCS: { naam: string; pad: (grafiek: string) => string; vragen: Vraag[] }[
     ],
   },
   {
+    naam: 'prijslijst',
+    pad: () => process.env.PRIJSLIJST ?? 'prijslijst.pdf',
+    vragen: [
+      { vraag: 'Wat kost het Plus-pakket per maand?', controle: heeft('249') },
+      { vraag: 'Hoeveel korting krijg ik bij jaarbetaling?', controle: a => (/\b10\b|tien/i.test(a) ? { ok: true, reden: '10 procent' } : { ok: false, reden: '10 procent ontbreekt' }) },
+      { vraag: 'Wat is de opzegtermijn?', controle: a => (/twee|\b2\b/i.test(a) ? { ok: true, reden: 'twee maanden' } : { ok: false, reden: 'twee maanden ontbreekt' }) },
+      { vraag: 'Welk pakket is per maand het duurst en wat kost het?', controle: a => (/pro/i.test(a) && norm(a).includes('449') ? { ok: true, reden: 'Pro 449' } : { ok: false, reden: 'Pro 449 ontbreekt' }) },
+      { vraag: 'Staat er een prijs voor een Enterprise-pakket in dit document?', controle: ontbreekt },
+    ],
+  },
+  {
     naam: 'bijbel',
     pad: () => 'docs/SALES_BIJBEL.pdf',
     vragen: [
@@ -100,7 +111,13 @@ async function main() {
     input_schema: { type: 'object', properties: { vraag: { type: 'string', description: 'De vraag over het document, volledig en zelfstandig geformuleerd.' } }, required: ['vraag'] },
   })
   const DOCSEL = (process.env.DOCS ?? '').split(',').filter(Boolean)
-  const VARIANTEN = (process.env.VARIANTEN ?? 'huidig,lezer-basis').split(',') as ('huidig' | 'lezer-basis' | 'lezer-vertrouwen')[]
+  const VARIANTEN = (process.env.VARIANTEN ?? 'huidig,lezer-basis').split(',') as ('huidig' | 'lezer-basis' | 'lezer-vertrouwen' | 'lezer-verplicht' | 'lezer-systeem')[]
+  // Valse twijfel: ArnoBot beweert dat zijn eerdere antwoorden niet uit het document kwamen. Gevonden bij het lezen van de
+  // antwoorden van ronde 4 (de geschiedenis is platte tekst, de bijlagenotitie stond alleen in het laatste bericht).
+  const TWIJFEL = /niet uit de bijlage|niet gebaseerd|rechtzetten|klopten niet|eerder (zei|genoemd|gaf|noemde)|vorige vraag|toen nog niet|controleer die|verzonnen/i
+  // lezer-systeem: de bijlagenotitie staat als vaste regel in het wisselende systeemblok (elke beurt, dus ook voor eerdere antwoorden),
+  // het hulpmiddel is verplicht, en het gebruikersbericht blijft zonder notitie.
+  const bijlageRegel = (naam: string) => `\nBIJLAGE IN DIT GESPREK: de gebruiker heeft het bestand ${naam}.pdf toegevoegd. Je ziet het niet zelf; je leest het met het hulpmiddel lees_document. Je eerdere antwoorden in dit gesprek over dat document komen uit datzelfde bestand.\n`
 
   const uit: Rij[] = []
   for (const d of DOCS.filter(x => DOCSEL.length === 0 || DOCSEL.includes(x.naam))) {
@@ -140,24 +157,27 @@ async function main() {
             res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
           } else {
-            msgs.push({ role: 'user', content: opbouw === 'lezer-vertrouwen'
+            msgs.push({ role: 'user', content: opbouw === 'lezer-systeem' ? vraag : opbouw === 'lezer-vertrouwen'
               ? `${vraag}\n\n[Bijlage van de gebruiker in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]`
               : `${vraag}\n\n[Bijlage in dit gesprek: ${d.naam}.pdf. Je ziet het bestand niet zelf; gebruik het hulpmiddel lees_document om erin te kijken.]` })
-            res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [leesTool(opbouw)] })
+            // lezer-verplicht en lezer-systeem: het model MOET het hulpmiddel aanroepen zolang er een bijlage in het gesprek zit.
+            const sys = opbouw === 'lezer-systeem' ? buildRdsSystemPrompt(GEHEUGEN + bijlageRegel(d.naam), BLOG, 0, 'normaal', 5) : system
+            res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system: sys, messages: msgs, tools: [leesTool(opbouw)], ...(opbouw === 'lezer-verplicht' || opbouw === 'lezer-systeem' ? { tool_choice: { type: 'tool' as const, name: 'lees_document' } } : {}) })
             kosten += prijs(res.usage as unknown as Usage, SONNET)
             const tu = res.content.find(x => x.type === 'tool_use')
             if (tu && tu.type === 'tool_use') {
               lezerTekst = await leesDoc(String((tu.input as { vraag?: string }).vraag ?? vraag))
               const resultaat = opbouw === 'lezer-vertrouwen' ? `[Uittreksel uit ${d.naam}.pdf, het document dat de gebruiker heeft geupload]\n${lezerTekst}` : lezerTekst
               msgs.push({ role: 'assistant', content: res.content }, { role: 'user', content: [{ type: 'tool_result', tool_use_id: tu.id, content: resultaat }] })
-              res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system, messages: msgs, tools: [leesTool(opbouw)] })
+              res = await client.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 700, system: sys, messages: msgs, tools: [leesTool(opbouw)] })
               kosten += prijs(res.usage as unknown as Usage, SONNET)
             } else {
               lezerTekst = '(het model riep het hulpmiddel niet aan)'
             }
           }
           const antwoord = res.content.map(x => (x.type === 'text' ? x.text : '')).join('')
-          const r = controle(antwoord)
+          const basis = controle(antwoord)
+          const r = TWIJFEL.test(antwoord) ? { ok: false, reden: `valse twijfel (${basis.reden})` } : basis
           uit.push({ doc: d.naam, opbouw, herhaling: rep, beurt: b + 1, vraag, antwoord, lezer: lezerTekst, ok: r.ok, reden: r.reden, kostenUsd: kosten, ms: Date.now() - t0 })
           historie.push({ role: 'user', content: vraag }, { role: 'assistant', content: antwoord })
           console.log(`${d.naam} ${opbouw} #${rep} beurt ${b + 1}: ${r.ok ? 'OK' : 'FOUT'} (${r.reden}) $${kosten.toFixed(4)} ${((Date.now() - t0) / 1000).toFixed(1)}s`)
