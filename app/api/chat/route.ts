@@ -69,6 +69,8 @@ import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/in
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
 import { maakVerbruik, telOp, telOpLezer } from '@/lib/chatVerbruik'
+import { haalMaandKosten, beoordeelMaandKosten, bouwRemTekst, maandKostenUitgezonderd, meldEenmaligPerMaand, type MaandStand } from '@/lib/maandKosten'
+import { notifyTelegram } from '@/lib/cron-notify'
 import { LEES_DOCUMENT_TOOL, LEES_DOCUMENT_TOOL_NAAM, bijlageRegelVoorLezer, kiesLezer, leesDocumenten, lezerBeschikbaarVoor, type LezerBron } from '@/lib/documentLezer'
 import { maakTabelStaat } from '@/lib/tabelTool'
 
@@ -483,7 +485,18 @@ export async function POST(req: NextRequest) {
           }
         }
         const rijen = await laadSessieDocumenten(supabase, userId, sessionId)
-        const samengesteld = await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))
+        // Maandteller (lib/maandKosten.ts): documenten en voice samen. Een fout in de telling laat de beurt gewoon doorgaan.
+        let maandStand: MaandStand = 'ok'
+        if (rijen.length > 0 && !maandKostenUitgezonderd(userId)) {
+          try {
+            const maandKosten = await haalMaandKosten(supabase, userId)
+            maandStand = beoordeelMaandKosten(maandKosten.totaalUsd, plan)
+            if (maandStand !== 'ok') await meldEenmaligPerMaand(redis, notifyTelegram, userId, plan, maandKosten)
+          } catch (e) {
+            Sentry.captureException(e, { tags: { onderdeel: 'maandkosten' }, level: 'warning' })
+          }
+        }
+        const samengesteld = maandStand === 'rem' ? null : await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))
         documentGeheugen = await eerdereGesprekkenOverBestanden(supabase, userId, sessionId, rijen)
         // Samenvattingen van andere bewaarde bestanden (eigen schakelaar, nooit fataal voor de beurt): de vraag zelf bepaalt
         // welke passen, documenten die al in dit gesprek staan lees je volledig en blijven hier buiten.
@@ -494,15 +507,20 @@ export async function POST(req: NextRequest) {
             Sentry.captureException(e, { tags: { onderdeel: 'document-samenvattingen' }, level: 'warning' })
           }
         }
-        if (lezerBeschikbaarVoor(userId) && kiesLezer(samengesteld)) {
-          lezerBron = { blokken: samengesteld.blokken, blokNamen: samengesteld.blokNamen, tekstDelen: samengesteld.tekstDelen }
-          // Het document zelf gaat niet mee, de meldingen over wat er niet (meer) bij is wel.
-          questionWithDocument += bouwLezerMeldingen(samengesteld)
+        if (!samengesteld) {
+          // Zachte rem (maandkosten): de bijlagen worden niet gelezen, het model hoort dat en zegt het eerlijk.
+          questionWithDocument += bouwRemTekst(rijen)
         } else {
-          bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
-          questionWithDocument += bouwBijlageTekst(samengesteld)
+          if (lezerBeschikbaarVoor(userId) && kiesLezer(samengesteld)) {
+            lezerBron = { blokken: samengesteld.blokken, blokNamen: samengesteld.blokNamen, tekstDelen: samengesteld.tekstDelen }
+            // Het document zelf gaat niet mee, de meldingen over wat er niet (meer) bij is wel.
+            questionWithDocument += bouwLezerMeldingen(samengesteld)
+          } else {
+            bijlageBlokken = [...bijlageBlokken, ...samengesteld.blokken]
+            questionWithDocument += bouwBijlageTekst(samengesteld)
+          }
+          await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))
         }
-        await markeerGebruikt(supabase, userId, rijen.filter(r => samengesteld.gebruiktIds.includes(r.id)))
       } catch (e) {
         Sentry.captureException(e, { tags: { onderdeel: 'documenten-laden' }, level: 'error' })
         questionWithDocument += BIJLAGEN_STORING_NOTITIE

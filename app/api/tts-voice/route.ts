@@ -5,8 +5,9 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { fetchElevenLabsSpeechWithAlignment, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
-import { haalAlleRijen } from '@/lib/haalAlleRijen'
-import { VOICE_MAX_TEKENS_PER_AANROEP, amsterdamMaandStart, overMaandPlafond } from '@/lib/voiceLimiet'
+import { VOICE_MAX_TEKENS_PER_AANROEP, overMaandPlafond } from '@/lib/voiceLimiet'
+import { haalMaandKosten, beoordeelMaandKosten, maandKostenUitgezonderd, meldEenmaligPerMaand, voiceKostenUsd, type MaandPlan } from '@/lib/maandKosten'
+import { notifyTelegram } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,15 +62,19 @@ export async function GET(req: NextRequest) {
   }
 
   // Maandplafond per gebruiker: zacht, de client valt terug op tekst. Bij een fout in de telling
-  // laten we de aanroep door: een haperende database mag voice niet stilleggen.
+  // laten we de aanroep door: een haperende database mag voice niet stilleggen. Twee grenzen: het
+  // aantal tekens voor voice alleen, en het totaal van voice en documenten samen (lib/maandKosten.ts,
+  // besluit Arno 2026-11-19); de eigenaar en de interne testaccounts vallen buiten het totaal.
   try {
-    const rijen = await haalAlleRijen<{ char_count: number | null }>((van, tot) =>
-      supabase.from('arnobot_elevenlabs_usage').select('char_count')
-        .eq('user_id', userId).gte('created_at', amsterdamMaandStart())
-        .order('id', { ascending: true }).range(van, tot))
-    const dezeMaand = rijen.reduce((som, r) => som + (r.char_count ?? 0), 0)
-    if (overMaandPlafond(dezeMaand, text.length)) {
+    const kosten = await haalMaandKosten(supabase, userId)
+    if (overMaandPlafond(kosten.voiceTekens, text.length)) {
       return NextResponse.json({ error: 'voice_maandplafond' }, { status: 429 })
+    }
+    if (!maandKostenUitgezonderd(userId)) {
+      const plan = (approved?.plan as MaandPlan | undefined) ?? 'basis'
+      const stand = beoordeelMaandKosten(kosten.totaalUsd + voiceKostenUsd(text.length), plan)
+      if (stand !== 'ok') await meldEenmaligPerMaand(redis, notifyTelegram, userId, plan, kosten)
+      if (stand === 'rem') return NextResponse.json({ error: 'voice_maandplafond' }, { status: 429 })
     }
   } catch (err) {
     console.error('[tts-voice] maandtelling mislukt:', err instanceof Error ? err.message : err)
