@@ -6,6 +6,7 @@ import { isElevenLabsConfigured, isVoiceLaunchAllowed } from '@/lib/voice'
 import { coachingIsActueel } from '@/lib/coachingActueel'
 import { corrigeerBouwsteen, computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
+import { isConfirmedTeambaas } from '@/lib/teamAccess'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -77,7 +78,12 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
     }
     // Harde controle: nooit coaching aanbevelen als het advies al actueel is. De AI-classificatie
     // kent die stand niet (alleen tellers en geschiedenis), de coachingspagina wel.
-    if (groeibalans?.bouwsteen === 'coaching') {
+    if (groeibalans?.bouwsteen === 'coaching' && await isConfirmedTeambaas(userId)) {
+      // Een bevestigde teambaas krijgt op /bot/coaching de SPE-pagina (eigen tabel, eigen regels,
+      // geen ?start=1), niet de Mindset/Systeem/Actie-coaching waar deze kaart op meet. De kaart
+      // zou COACH ME aanbieden zonder dat de knop iets genereert (gevonden 2026-11-19).
+      groeibalans = null
+    } else if (groeibalans?.bouwsteen === 'coaching') {
       const [coachingRes, sessieRes, analyseRes] = await Promise.all([
         serviceDb.from('arnobot_coaching').select('updated_at').eq('user_id', userId).maybeSingle(),
         serviceDb.from('arnobot_blog_sessions').select('created_at').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
