@@ -5,6 +5,8 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { fetchElevenLabsSpeechWithAlignment, isElevenLabsConfigured, hasVoiceAccess } from '@/lib/voice'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { VOICE_MAX_TEKENS_PER_AANROEP, amsterdamMaandStart, overMaandPlafond } from '@/lib/voiceLimiet'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,8 +53,27 @@ export async function GET(req: NextRequest) {
   if (!access.access) return new NextResponse(null, { status: 403 })
 
   const { searchParams } = new URL(req.url)
-  const text = (searchParams.get('text') || '').slice(0, 5000).trim()
+  const text = (searchParams.get('text') || '').trim()
   if (!text) return new NextResponse(null, { status: 400 })
+  // Te lang voor een echt antwoord: geen spraak, de chat toont de tekst al (zie lib/voiceLimiet.ts).
+  if (text.length > VOICE_MAX_TEKENS_PER_AANROEP) {
+    return NextResponse.json({ error: 'voice_tekst_te_lang' }, { status: 413 })
+  }
+
+  // Maandplafond per gebruiker: zacht, de client valt terug op tekst. Bij een fout in de telling
+  // laten we de aanroep door: een haperende database mag voice niet stilleggen.
+  try {
+    const rijen = await haalAlleRijen<{ char_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_elevenlabs_usage').select('char_count')
+        .eq('user_id', userId).gte('created_at', amsterdamMaandStart())
+        .order('id', { ascending: true }).range(van, tot))
+    const dezeMaand = rijen.reduce((som, r) => som + (r.char_count ?? 0), 0)
+    if (overMaandPlafond(dezeMaand, text.length)) {
+      return NextResponse.json({ error: 'voice_maandplafond' }, { status: 429 })
+    }
+  } catch (err) {
+    console.error('[tts-voice] maandtelling mislukt:', err instanceof Error ? err.message : err)
+  }
 
   if (!isElevenLabsConfigured()) {
     console.error('[tts-voice] ELEVENLABS_API_KEY of ELEVENLABS_VOICE_ID ontbreekt')
