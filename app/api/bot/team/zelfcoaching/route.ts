@@ -12,6 +12,7 @@ import { isConfirmedTeambaas } from '@/lib/teamAccess'
 import { computeSpiegelSignaal, formatSystemischSignaal, formatVroegSignaal } from '@/lib/spiegel'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
+import { speAnalyseStatus, MIN_NIEUWE_1ON1S } from '@/lib/speAnalyse'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,8 +20,6 @@ const supabase = createClient(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const COOLDOWN_DAGEN = 14
-const MIN_NIEUWE_1ON1S = 3
 
 export async function GET() {
   const { userId } = await auth()
@@ -109,23 +108,22 @@ export async function POST() {
   const logs = logsRes.data ?? []
   const prev = prevRes.data
 
-  if (logs.length < MIN_NIEUWE_1ON1S) {
-    return NextResponse.json({ error: 'te_weinig', count: logs.length, benodigd: MIN_NIEUWE_1ON1S }, { status: 400 })
+  // Dezelfde regel als de LEIDERSCHAP-kaart op /bot (lib/speAnalyse.ts).
+  const status = speAnalyseStatus({
+    heeftTeamleden: true,
+    logIds: logs.map(l => l.id),
+    vorige: prev ? { updatedAt: prev.updated_at, usedIds: (prev.used_1on1_ids as string[] | null) ?? [] } : null,
+  })
+  if (!status.mogelijk && status.reden === 'te_weinig') {
+    return NextResponse.json({ error: 'te_weinig', count: status.totaal, benodigd: MIN_NIEUWE_1ON1S }, { status: 400 })
   }
-
-  const prevUsedIds = new Set<string>((prev?.used_1on1_ids as string[] | null) ?? [])
-  const newLogs = logs.filter(l => !prevUsedIds.has(l.id))
-
-  if (prev) {
-    const daysSince = (Date.now() - new Date(prev.updated_at).getTime()) / 86400000
-    if (daysSince < COOLDOWN_DAGEN || newLogs.length < MIN_NIEUWE_1ON1S) {
-      return NextResponse.json({
-        error: 'te_vroeg',
-        dagenResterend: Math.max(0, Math.ceil(COOLDOWN_DAGEN - daysSince)),
-        nieuweEenOpEens: newLogs.length,
-        benodigd: MIN_NIEUWE_1ON1S,
-      }, { status: 429 })
-    }
+  if (!status.mogelijk && status.reden === 'te_vroeg') {
+    return NextResponse.json({
+      error: 'te_vroeg',
+      dagenResterend: status.dagenResterend,
+      nieuweEenOpEens: status.nieuw,
+      benodigd: MIN_NIEUWE_1ON1S,
+    }, { status: 429 })
   }
 
   const [sessionsRes, scoresRes, coachingRes, spotlightRes, spiegel, eigenSessiesRes] = await Promise.all([

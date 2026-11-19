@@ -7,6 +7,7 @@ import { coachingIsActueel } from '@/lib/coachingActueel'
 import { corrigeerBouwsteen, computeFallbackGroeibalans, getGroeibalansCopy, adviesIsKortGenoeg, GROEIBALANS_KLEUREN, GroeibalansState, GroeibalansBouwsteen } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
 import { isConfirmedTeambaas } from '@/lib/teamAccess'
+import { bepaalSpeKaart, type SpeKaart } from '@/lib/speKaart'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,10 +28,11 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const [profileRes, userRes, tellers] = await Promise.all([
+  const [profileRes, userRes, tellers, teambaas] = await Promise.all([
     serviceDb.from('arnobot_blog_profiles').select('profiel').eq('user_id', userId).single(),
     serviceDb.from('approved_users').select('plan, voornaam, full_name, groeibalans_tonen, groeibalans_state, groeibalans_bouwsteen, groeibalans_advies, groeibalans_scenario').eq('user_id', userId).single(),
     telGebruik(serviceDb, userId),
+    isConfirmedTeambaas(userId),
   ])
 
   if (!profileRes.data) redirect('/bot/profiel')
@@ -49,7 +51,7 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
   // fallback uit lib/groeibalans.ts. Zie project_gebruiksbalans_concept.md voor de volledige
   // ontwerpgeschiedenis. `tellers` komt uit lib/gebruikTellers.ts, dat verwijderde en
   // community-uitgesloten gesprekken al wegfiltert (zelfde filters als de Bieb).
-  let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers } | null = null
+  let groeibalans: { state: GroeibalansState; bouwsteen: GroeibalansBouwsteen; tekst: string; knop: string; href: string; kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]; tellers: typeof tellers; spe?: SpeKaart } | null = null
   if (tellers.gesprekken >= 5) {
     const classificatieRuw = userRes.data?.groeibalans_tonen === null || userRes.data?.groeibalans_tonen === undefined
       ? computeFallbackGroeibalans(tellers)
@@ -78,10 +80,11 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
     }
     // Harde controle: nooit coaching aanbevelen als het advies al actueel is. De AI-classificatie
     // kent die stand niet (alleen tellers en geschiedenis), de coachingspagina wel.
-    if (groeibalans?.bouwsteen === 'coaching' && await isConfirmedTeambaas(userId)) {
-      // Een bevestigde teambaas krijgt op /bot/coaching de SPE-pagina (eigen tabel, eigen regels,
-      // geen ?start=1), niet de Mindset/Systeem/Actie-coaching waar deze kaart op meet. De kaart
-      // zou COACH ME aanbieden zonder dat de knop iets genereert (gevonden 2026-11-19).
+    if (groeibalans?.bouwsteen === 'coaching' && teambaas) {
+      // Een bevestigde teambaas krijgt op /bot/coaching de SPE-pagina (eigen tabel, eigen regels),
+      // niet de Mindset/Systeem/Actie-coaching waar deze kaart op meet. De kaart zou COACH ME
+      // aanbieden zonder dat de knop iets genereert (gevonden 2026-11-19). Als de SPE-analyse
+      // mogelijk is, komt de LEIDERSCHAP-kaart hieronder in de plaats.
       groeibalans = null
     } else if (groeibalans?.bouwsteen === 'coaching') {
       const [coachingRes, sessieRes, analyseRes] = await Promise.all([
@@ -92,6 +95,17 @@ export default async function BotPage({ searchParams }: { searchParams: Promise<
       if (coachingIsActueel((coachingRes.data as { updated_at?: string } | null)?.updated_at, sessieRes.data?.created_at, analyseRes.data?.created_at)) {
         groeibalans = null
       }
+    }
+  }
+
+  // LEIDERSCHAP-kaart voor een bevestigde teambaas (lib/speKaart.ts): zodra de SPE-analyse volgens
+  // dezelfde regel als de server mogelijk is, gaat die voor elke andere kaart, ook zonder 5
+  // eigen gesprekken (de kaart meet 1:1's, niet gesprekken met ArnoBot). Frequentie blijft de
+  // bestaande groeiNudge-regel (één keer per login, maximaal twee keer per apparaat).
+  if (teambaas) {
+    const spe = await bepaalSpeKaart(serviceDb, userId)
+    if (spe) {
+      groeibalans = { state: 'groeikans', bouwsteen: 'coaching', tekst: spe.tekst, knop: spe.knop, href: spe.href, kleur: GROEIBALANS_KLEUREN.groeikans, tellers, spe }
     }
   }
 

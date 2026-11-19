@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useState, useEffect, useRef } from 'react'
+import { useUser, useAuth } from '@clerk/nextjs'
+import { markGroeiNudgeGezien } from '@/lib/groeiNudge'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { ProgressieChart, SPE_SERIES } from '@/app/bot/components/ProgressieChart'
@@ -55,6 +56,8 @@ const RICHTING_CONFIG: Record<string, { arrow: string; color: string }> = {
 
 export default function SpeCoachingClient() {
   const { user } = useUser()
+  const { sessionId: clerkSessionId } = useAuth()
+  const autoStartGedaan = useRef(false)
   const firstName = user?.firstName ?? ''
   const [doc, setDoc] = useState<CoachingDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -75,6 +78,22 @@ export default function SpeCoachingClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Doorschakeling vanaf COACH ME op /bot (?start=1), zelfde patroon als CoachingClient: pas als
+  // alles geladen is, één keer, de parameter gaat uit de URL zodat een refresh niet opnieuw
+  // genereert. Mag het nog niet, dan weigert de server (te_vroeg/te_weinig) zonder AI-aanroep en
+  // toont de pagina de bestaande melding.
+  useEffect(() => {
+    if (autoStartGedaan.current || loading) return
+    if (new URLSearchParams(window.location.search).get('start') !== '1') return
+    autoStartGedaan.current = true
+    const url = new URL(window.location.href)
+    url.searchParams.delete('start')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+    if (!generating) setTimeout(() => { void generate() }, 0)
+    // generate is een functie in dezelfde render en leest alleen setters; bewust niet in de deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, generating])
+
   async function generate() {
     setGenerating(true)
     setError(null)
@@ -93,6 +112,7 @@ export default function SpeCoachingClient() {
         }
       } else {
         setDoc(data.coaching)
+        markGroeiNudgeGezien(clerkSessionId)
         fetch('/api/bot/team/zelfcoaching')
           .then(r => r.json())
           .then(d => setHistory(d.history ?? []))

@@ -129,6 +129,8 @@ interface Props {
     href: string
     kleur: typeof GROEIBALANS_KLEUREN[GroeibalansState]
     tellers: { gesprekken: number; sparsessies: number; analyses: number; coaching: number }
+    // LEIDERSCHAP-kaart voor een teambaas (lib/speKaart.ts): eigen label en tellerregel
+    spe?: { label: string; aantal1on1s: number; nieuw: number | null }
   } | null
 }
 
@@ -3213,7 +3215,16 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               className="groeibalans-kader"
               style={{ background: groeibalans.kleur.bg, borderColor: groeibalans.kleur.border }}
             >
-              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{GROEIBALANS_LABELS[groeibalans.state]}</p>
+              <p className="groeibalans-label" style={{ color: groeibalans.kleur.border }}>{groeibalans.spe?.label ?? GROEIBALANS_LABELS[groeibalans.state]}</p>
+              {groeibalans.spe ? (
+                <p className="groeibalans-tellers">
+                  <b>{groeibalans.spe.aantal1on1s}</b> 1:1&apos;s
+                  <span className="sep">·</span>
+                  {groeibalans.spe.nieuw === null
+                    ? 'nog geen analyse'
+                    : <><b style={{ color: groeibalans.kleur.border }}>{groeibalans.spe.nieuw}</b> nieuw sinds je laatste analyse</>}
+                </p>
+              ) : (
               <p className="groeibalans-tellers">
                 <b>{groeibalans.tellers.gesprekken}</b> gesprekken
                 <span className="sep">·</span>
@@ -3223,6 +3234,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 <span className="sep">·</span>
                 <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> coachings
               </p>
+              )}
               <div className="groeibalans-onder">
                 <p className="groeibalans-tekst" style={{ color: groeibalans.kleur.tekst }}>{groeibalans.tekst}</p>
                 <Link href={groeibalans.href} className="groeibalans-knop">{groeibalans.knop}</Link>
