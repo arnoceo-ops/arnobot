@@ -59,6 +59,11 @@ import { WEB_FETCH_TOOL, metWebFetchPrompt, bevatLink, opgehaaldePaginas } from 
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
+
+// Aantal kennisbankfragmenten per chatvraag (was 20). Op 2026-11-19 gemeten met scripts/eval-chat-fragmenten.ts, blind beoordeeld door Fable 5.1:
+// 10 fragmenten waren niet slechter dan 20, ook niet op toon en eigen begrippen (twee rondes, 46 vergelijkingen, 20 won 39%; zonder fragmenten
+// verloor het antwoord duidelijk). Scheelt ongeveer 6.000 invoertokens, zo'n $0,018 per bericht. Terugzetten naar 20 kan met dit ene getal.
+const CHAT_KENNISBANK_FRAGMENTEN = 10
 import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@/lib/geheugenContext'
 import { buildRdsSystemPrompt } from '@/lib/systemPrompt'
 import { bouwAppModeratiePrompt, GRENSGEVAL_INSTRUCTIE } from '@/lib/moderatie'
@@ -208,7 +213,7 @@ export async function POST(req: NextRequest) {
           })
           .catch(() => [question])
           .then(searchQueries =>
-      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunksMultiQuery(searchQueries, question, 20, userId))
+      Sentry.startSpan({ name: 'chat.rag-lookup', op: 'db.rag' }, () => getRelevantChunksMultiQuery(searchQueries, question, CHAT_KENNISBANK_FRAGMENTEN, userId))
     ).then(relevant => formatChunksForPrompt(relevant))
 
     let documentBlock: Anthropic.Messages.ContentBlockParam | null = null

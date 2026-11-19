@@ -41,8 +41,8 @@ type Vergelijking = { winnaar: 'A' | 'B' | 'gelijk'; kennisbank: 'A' | 'B' | 'ge
 type Rij = {
   nr: number
   lengte: { v20: number; v10: number; v0: number }
-  tegen10: { score20: number; kennisbank20: number; reden: string } | null
-  tegen0: { score20: number; kennisbank20: number; reden: string } | null
+  tegen10: { score20: number; kennisbank20: number; toon20: number; reden: string } | null
+  tegen0: { score20: number; kennisbank20: number; toon20: number; reden: string } | null
 }
 
 const JUDGE_SYSTEEM = `Je beoordeelt twee antwoorden van een AI-coach voor B2B-sales op dezelfde vraag. Je weet niet welk antwoord uit welke opzet komt. Beoordeel inhoudelijk, niet op lengte of opmaak.
@@ -56,7 +56,19 @@ Criteria, in deze volgorde van gewicht:
 Geef alleen JSON, zonder uitleg eromheen: {"winnaar":"A"|"B"|"gelijk","kennisbank":"A"|"B"|"gelijk","reden":"één zin"}.
 "winnaar" is het algehele oordeel. "kennisbank" gaat alleen over criterium 4. Kies "gelijk" alleen als je echt geen verschil ziet.`
 
+// Tweede ronde (derde argument "stem"): alleen 20 tegen 10, met als eigen criteria of het antwoord klinkt als de schrijver van de kennisbank
+// (toon) en diens eigen begrippen gebruikt. Bij de eerste ronde zat toon niet in de beoordeling (besluit Arno 2026-11-19: "wordt het dan niet
+// minder arno-like?").
+const JUDGE_SYSTEEM_STEM = `Je beoordeelt twee antwoorden van een AI-coach op dezelfde vraag. De coach hoort te klinken als de schrijver van de meegegeven STIJLREFERENTIE (fragmenten uit diens eigen teksten): direct, concreet, in spreektaal, zonder managementjargon of opsommingen, met diens eigen begrippen en voorbeelden. Je weet niet welk antwoord uit welke opzet komt. Beoordeel niet op lengte.
+
+Geef alleen JSON, zonder uitleg eromheen: {"toon":"A"|"B"|"gelijk","begrippen":"A"|"B"|"gelijk","winnaar":"A"|"B"|"gelijk","reden":"één zin"}.
+"toon": welk antwoord klinkt meer als de schrijver van de stijlreferentie (woordkeuze, directheid, ritme)?
+"begrippen": welk antwoord gebruikt meer van de eigen begrippen, methodes en voorbeelden uit de stijlreferentie, in plaats van algemeen salesadvies?
+"winnaar": welk antwoord is overall het beste als coach in de stijl van die schrijver, ook op juistheid en bruikbaarheid?
+Kies "gelijk" alleen als je echt geen verschil ziet.`
+
 async function main() {
+  const stemModus = process.argv[4] === 'stem'
   const aantal = Number(process.argv[2]) || 30
   const uitvoerPad = process.argv[3] ?? 'eval-chat-fragmenten-resultaat.json'
   const { createClient } = await import('@supabase/supabase-js')
@@ -118,20 +130,22 @@ async function main() {
     return tekstUit(res.content)
   }
 
-  async function beoordeel(vraag: string, a20: string, ander: string, fragmenten: string): Promise<{ score20: number; kennisbank20: number; reden: string }> {
+  async function beoordeel(vraag: string, a20: string, ander: string, fragmenten: string): Promise<{ score20: number; kennisbank20: number; toon20: number; reden: string }> {
     const twintigIsA = Math.random() < 0.5
     const A = twintigIsA ? a20 : ander
     const B = twintigIsA ? ander : a20
-    const prompt = `VRAAG:\n${vraag}\n\nKENNISBANKFRAGMENTEN (ingekort, alleen om criterium 4 te beoordelen):\n${fragmenten}\n\nANTWOORD A:\n${A}\n\nANTWOORD B:\n${B}`
+    const prompt = stemModus
+      ? `VRAAG:\n${vraag}\n\nSTIJLREFERENTIE (fragmenten uit de eigen teksten van de schrijver):\n${fragmenten}\n\nANTWOORD A:\n${A}\n\nANTWOORD B:\n${B}`
+      : `VRAAG:\n${vraag}\n\nKENNISBANKFRAGMENTEN (ingekort, alleen om criterium 4 te beoordelen):\n${fragmenten}\n\nANTWOORD A:\n${A}\n\nANTWOORD B:\n${B}`
     // Thinking uitzetten kan niet bij Fable 5.1 (API-fout), en met 400 tokens ging alles op aan nadenken: ruim budget zodat er tekst overblijft.
-    const res = await anthropic.messages.create({ model: JUDGE_MODEL, max_tokens: 1500, system: JUDGE_SYSTEEM, messages: [{ role: 'user', content: prompt }] })
+    const res = await anthropic.messages.create({ model: JUDGE_MODEL, max_tokens: 2500, system: stemModus ? JUDGE_SYSTEEM_STEM : JUDGE_SYSTEEM, messages: [{ role: 'user', content: prompt }] })
     tel(JUDGE_MODEL, res.usage)
     const tekst = tekstUit(res.content)
     const json = tekst.match(/\{[\s\S]*\}/)?.[0]
     if (!json) throw new Error(`beoordelaar gaf geen JSON (stop_reason ${res.stop_reason}, blokken ${res.content.map(b => b.type).join('+')}, tekst: ${tekst.slice(0, 160)})`)
-    const v = JSON.parse(json) as Vergelijking
-    const naarScore = (w: string) => (w === 'gelijk' ? 0.5 : (w === 'A') === twintigIsA ? 1 : 0)
-    return { score20: naarScore(v.winnaar), kennisbank20: naarScore(v.kennisbank), reden: String(v.reden ?? '').slice(0, 240) }
+    const v = JSON.parse(json) as Vergelijking & { toon?: string; begrippen?: string }
+    const naarScore = (w: string | undefined) => (w === undefined ? 0.5 : w === 'gelijk' ? 0.5 : (w === 'A') === twintigIsA ? 1 : 0)
+    return { score20: naarScore(v.winnaar), kennisbank20: naarScore(stemModus ? v.begrippen : v.kennisbank), toon20: naarScore(v.toon), reden: String(v.reden ?? '').slice(0, 240) }
   }
 
   const rijen: Rij[] = []
@@ -139,14 +153,14 @@ async function main() {
     try {
       const chunks = await getRelevantChunksMultiQuery([vraag], vraag, 20)
       if (chunks.length < 15) { console.log(`vraag ${nr}: slechts ${chunks.length} fragmenten, overgeslagen`); return }
-      const [a20, a10, a0] = await Promise.all([antwoord(vraag, chunks), antwoord(vraag, chunks.slice(0, 10)), antwoord(vraag, [])])
+      const [a20, a10, a0] = await Promise.all([antwoord(vraag, chunks), antwoord(vraag, chunks.slice(0, 10)), stemModus ? Promise.resolve('') : antwoord(vraag, [])])
       // Een antwoord van een paar zinnen is meestal een wwedervraag ("welk boek bedoel je?"): de vraag was dan toch niet zelfstandig.
       if (Math.max(a20.length, a10.length, a0.length) < 250) { console.log(`vraag ${nr}: alle antwoorden zijn kort (wedervraag), overgeslagen`); return }
       if (process.env.EVAL_DEBUG) console.log(`vraag ${nr} antwoordlengtes ${a20.length}/${a10.length}/${a0.length}; begin 20: ${JSON.stringify(a20.slice(0, 160))}; begin 0: ${JSON.stringify(a0.slice(0, 160))}`)
-      const fragmenten = chunks.slice(0, 6).map(c => `[${c.source ?? 'bron'}] ${c.content.slice(0, 600)}`).join('\n---\n')
-      const [t10, t0] = await Promise.all([beoordeel(vraag, a20, a10, fragmenten), beoordeel(vraag, a20, a0, fragmenten)])
+      const fragmenten = (stemModus ? chunks.slice(0, 4) : chunks.slice(0, 6)).map(c => `[${c.source ?? 'bron'}] ${c.content.slice(0, stemModus ? 900 : 600)}`).join('\n---\n')
+      const [t10, t0] = await Promise.all([beoordeel(vraag, a20, a10, fragmenten), stemModus ? Promise.resolve(null) : beoordeel(vraag, a20, a0, fragmenten)])
       rijen.push({ nr, lengte: { v20: a20.length, v10: a10.length, v0: a0.length }, tegen10: t10, tegen0: t0 })
-      console.log(`vraag ${nr}: 20 tegen 10 = ${t10.score20}, 20 tegen 0 = ${t0.score20}  (kosten tot nu $${kosten.toFixed(2)})`)
+      console.log(`vraag ${nr}: 20 tegen 10 = ${t10.score20} (toon ${t10.toon20})${t0 ? `, 20 tegen 0 = ${t0.score20}` : ''}  (kosten tot nu $${kosten.toFixed(2)})`)
     } catch (e) {
       console.log(`vraag ${nr} mislukt:`, (e as Error).message.slice(0, 120))
       if ((e as Error).message.startsWith('Kostenplafond')) throw e
@@ -173,7 +187,7 @@ async function main() {
     vragenBeoordeeld: n,
     echtEnNagemaakt: { echt: splits('echt'), nagemaakt: splits('nagemaakt') },
     kostenUsd: Number(kosten.toFixed(2)),
-    '20 tegen 10': { aandeelWinst20: gem(som(r => r.tegen10?.score20 ?? 0)), kennisbankWinst20: gem(som(r => r.tegen10?.kennisbank20 ?? 0)) },
+    '20 tegen 10': { aandeelWinst20: gem(som(r => r.tegen10?.score20 ?? 0)), kennisbankWinst20: gem(som(r => r.tegen10?.kennisbank20 ?? 0)), toonWinst20: gem(som(r => r.tegen10?.toon20 ?? 0)) },
     '20 tegen 0': { aandeelWinst20: gem(som(r => r.tegen0?.score20 ?? 0)), kennisbankWinst20: gem(som(r => r.tegen0?.kennisbank20 ?? 0)) },
     gemLengteTekens: { v20: Math.round(som(r => r.lengte.v20) / (n || 1)), v10: Math.round(som(r => r.lengte.v10) / (n || 1)), v0: Math.round(som(r => r.lengte.v0) / (n || 1)) },
   }
