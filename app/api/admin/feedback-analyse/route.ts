@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
 
@@ -54,7 +54,7 @@ Schrijf de analyse zonder tijdslimiet: geen "vandaag", "morgen", "deze week".`,
       role: 'user',
       content: `Analyseer deze ${logs.length} negatief beoordeelde ArnoBot-antwoorden en identificeer structurele patronen:\n\n${content}`,
     }],
-  })
+  }, aiContext(null, 'admin-feedback-analyse'))
   } catch (e) {
     console.error('[admin/feedback-analyse] model-aanroep mislukt:', e instanceof Error ? e.message : e)
     return NextResponse.json({ error: 'genereren_mislukt' }, { status: 500 })

@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
+import { aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { isGeldigSparScenario, SPAR_WEERSTANDEN } from '@/lib/sparringPersonas'
 import { THEMA_LABELS, type ThemaLabel } from '@/lib/themas'
@@ -137,7 +138,7 @@ function datumMetJaar(d: Date | string): string {
   return new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export async function schrijfPatroon(anthropic: Anthropic, i: PatroonInvoer): Promise<PatroonUitvoer | null> {
+export async function schrijfPatroon(anthropic: Anthropic, i: PatroonInvoer, gebruiker?: string | null): Promise<PatroonUitvoer | null> {
   const samenvattingGrens = i.vandaag.getTime() - PATROON_SAMENVATTING_DAGEN * 24 * 60 * 60 * 1000
   const regels = i.sessies.map(s => {
     const metSamenvatting = s.summary && Date.parse(s.created_at) >= samenvattingGrens
@@ -164,6 +165,6 @@ ${regels}${analyse}
 
 Geef de JSON.`,
     }],
-  })
+  }, aiContext(gebruiker ?? null, 'patroon-mail'))
   return parsePatroonUitvoer(getText(res.content, '{}'), i.rolCategorie)
 }

@@ -53,7 +53,7 @@ export async function OPTIONS(req: NextRequest) {
 import { telAnthropicLimiet } from '@/lib/capaciteit'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText, getAllText, StreamingDashSanitizer } from '@/lib/ai'
 import { WEB_FETCH_TOOL, metWebFetchPrompt, bevatLink, opgehaaldePaginas } from '@/lib/webFetchTool'
 import { auth } from '@clerk/nextjs/server'
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
             max_tokens: 150,
             system: 'Je bent een zoekhulp voor een sales-kennisbank. Schrijf 3 verschillende zoekzinnen (elk max 20 woorden) die samen de vraag vanuit verschillende invalshoeken dekken: een die dicht bij de letterlijke vraag blijft, een met bredere sales-context en synoniemen, en een gericht op het onderliggende thema of probleem. Geef exact 3 regels, één zoekzin per regel, geen nummering, geen uitleg.',
             messages: [{ role: 'user', content: question }]
-          })
+          }, aiContext(userId, 'chat-herschrijving'))
         )
           .then(ragRes => {
             const lines = getText(ragRes.content, '').split('\n').map(l => l.trim()).filter(l => l.length > 10)
@@ -425,7 +425,7 @@ export async function POST(req: NextRequest) {
         max_tokens: 150,
         system: moderatiePrompt,
         messages: [{ role: 'user', content: 'Beoordeel dit bericht.' }]
-      })
+      }, aiContext(userId, 'chat-moderatie'))
     )
     const rawCheck = getText(checkRes.content, 'OK').trim()
     const [firstLine, ...rest] = rawCheck.split('\n')
@@ -602,7 +602,7 @@ export async function POST(req: NextRequest) {
       // Zolang er een bijlage via de lezer in het gesprek zit is het hulpmiddel in de eerste ronde verplicht (gemeten: zonder
       // dwang sloeg het model het in 1 van 15 beurten over en antwoordde uit zijn eigen instructies). Vervolgrondes zijn vrij.
       ...(lezerBron ? { tool_choice: { type: 'tool' as const, name: LEES_DOCUMENT_TOOL_NAAM } } : {}),
-    })
+    }, aiContext(userId, 'chat-antwoord'))
 
     const readable = new ReadableStream({
       async start(controller) {
@@ -645,7 +645,7 @@ export async function POST(req: NextRequest) {
             const gevraagd = typeof (input as { vraag?: unknown } | null)?.vraag === 'string' ? (input as { vraag: string }).vraag.trim() : ''
             try {
               const r = await Sentry.startSpan({ name: 'chat.document-lezer', op: 'ai.claude' }, () =>
-                leesDocumenten(client, lezer, (gevraagd || question).slice(0, 2000), eerdereVragen))
+                leesDocumenten(client, lezer, (gevraagd || question).slice(0, 2000), eerdereVragen, userId))
               telOpLezer(verbruik, r.usage)
               lezerUitvoeren.push(r.tekst)
               return { content: r.tekst, isError: false }
@@ -693,7 +693,7 @@ export async function POST(req: NextRequest) {
               system: systemPrompt,
               messages: werkBerichten,
               tools: chatTools,
-            })
+            }, aiContext(userId, 'chat-toolronde'))
             const rondeSanitizer = new StreamingDashSanitizer()
             let rondeHeeftTekst = false
             for await (const event of rondeStream) {
@@ -728,7 +728,7 @@ export async function POST(req: NextRequest) {
               max_tokens: chatMaxTokens,
               system: systemPrompt,
               messages,
-            })
+            }, aiContext(userId, 'chat-herhaling'))
             answer = getText(retryMessage.content)
             if (!answer) {
               console.error('[chat] leeg antwoord na retry, sessionId:', sessionId, 'userId:', userId ?? '(anoniem)')
@@ -751,7 +751,7 @@ export async function POST(req: NextRequest) {
                   { role: 'assistant' as const, content: answer },
                   { role: 'user' as const, content: 'Je antwoord werd afgekapt. Ga verder precies waar je stopte, zonder iets te herhalen en zonder inleiding of opmerking over het afkappen. Begin gewoon met het volgende woord.' },
                 ],
-              })
+              }, aiContext(userId, 'chat-vervolg'))
               const vervolgSanitizer = new StreamingDashSanitizer()
               for await (const event of vervolgStream) {
                 if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,7 +13,7 @@ const anthropic = maakAnthropic()
 // heeft geen SDK-optie hiervoor (rauwe fetch-aanroepen), dus hier zelf instelbaar gemaakt.
 const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL ?? 'https://api.voyageai.com'
 
-async function expandQuery(query: string): Promise<string> {
+async function expandQuery(query: string, gebruiker?: string | null): Promise<string> {
   try {
     const res = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -22,7 +22,7 @@ async function expandQuery(query: string): Promise<string> {
         role: 'user',
         content: `Herschrijf de volgende zoekvraag naar een rijkere zoekopdracht van maximaal 2 zinnen. Voeg relevante salescontext, synoniemen en concrete begrippen toe zodat de zoekopdracht beter aansluit bij een kennisbank over B2B sales, acquisitie en commercieel leiderschap. Geef alleen de herschreven zoekvraag terug, niets anders.\n\nVraag: ${query}`,
       }],
-    })
+    }, aiContext(gebruiker, 'rag-herschrijving'))
     const expanded = res.content[0].type === 'text' ? res.content[0].text.trim() : query
     return expanded.length > 20 ? expanded : query
   } catch {
@@ -204,8 +204,8 @@ export async function meetKennisbankKandidaten(vragen: string[]): Promise<number
   return uit
 }
 
-export async function getRelevantChunks(query: string, topN = 20, expand = false): Promise<RagChunk[]> {
-  const searchQuery = expand ? await expandQuery(query) : query
+export async function getRelevantChunks(query: string, topN = 20, expand = false, gebruiker?: string | null): Promise<RagChunk[]> {
+  const searchQuery = expand ? await expandQuery(query, gebruiker) : query
   const candidates = await searchCandidates(searchQuery)
 
   if (candidates.length === 0) return []

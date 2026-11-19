@@ -6,6 +6,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
+import { aiContext } from '@/lib/anthropicClient'
 import { BRONDATA_REGEL, gesprekBlok } from '@/lib/sessieSamenvatting'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import {
@@ -44,7 +45,7 @@ Geef ALLEEN JSON in precies deze vorm, zonder andere tekst:
  * Zet het geplakte antwoord om in een voorstel. Bewaart niets: de gebruiker controleert het eerst en slaat het daarna zelf op.
  * Alles uit het model wordt opnieuw gevalideerd en geschoond (valideerProfiel), ook al vroegen we om een vast schema.
  */
-export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string): Promise<OmzetResultaat> {
+export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string, gebruiker?: string | null): Promise<OmzetResultaat> {
   if (typeof ruwe !== 'string' || ruwe.trim().length === 0) return { fout: 'invoer_leeg' }
   if (ruwe.length > MAX_INVOER_TEKENS) return { fout: 'invoer_te_lang' }
   const tekst = voorbewerkInvoer(ruwe)
@@ -55,7 +56,7 @@ export async function zetOmInProfiel(anthropic: Anthropic, ruwe: string): Promis
       max_tokens: 4500,
       system: OMZET_SYSTEEM,
       messages: [{ role: 'user', content: `${gesprekBlok(tekst)}\n\nGeef de JSON.` }],
-    })
+    }, aiContext(gebruiker, 'historie-import'))
     const uit = getText(res.content)
     const json = JSON.parse(uit.slice(uit.indexOf('{'), uit.lastIndexOf('}') + 1)) as Record<string, unknown>
     const profiel = valideerProfiel(KOPJES.reduce<Record<string, unknown>>((o, k) => { o[k.sleutel] = json[k.sleutel] ?? []; return o }, {}))

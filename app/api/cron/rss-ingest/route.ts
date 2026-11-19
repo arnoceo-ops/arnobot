@@ -3,7 +3,7 @@ export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
 const supabase = createClient(
@@ -92,7 +92,7 @@ async function addContext(chunk: { content: string; source: string; url: string;
         role: 'user',
         content: `<document>\n${docSnippet}\n</document>\n\n<chunk>\n${chunk.content}\n</chunk>\n\nGeef in 1-2 zinnen de context van dit fragment: uit welk artikel het komt en wat het specifiek bespreekt. Antwoord alleen met die context, niets anders.`,
       }],
-    })
+    }, aiContext(null, 'cron-rss'))
     const context = res.content[0].type === 'text' ? res.content[0].text.trim() : `Fragment uit: ${chunk.source}`
     return { content: chunk.content, context, source: chunk.source, url: chunk.url }
   } catch {

@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
@@ -44,7 +44,7 @@ async function kiesProductvragen(vragen: string[]): Promise<number[]> {
       max_tokens: 400,
       system: SYSTEEM,
       messages: [{ role: 'user', content: lijst }],
-    })
+    }, aiContext(null, 'cron-productvragen'))
     const block = res.content.find(b => b.type === 'text')
     const tekst = block && block.type === 'text' ? block.text : ''
     const match = tekst.match(/\{[\s\S]*\}/)

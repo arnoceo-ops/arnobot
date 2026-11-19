@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (!success) return NextResponse.json({ error: 'rate_limit' }, { status: 429 })
   }
 
-  const r = await zetOmInProfiel(anthropic, tekst)
+  const r = await zetOmInProfiel(anthropic, tekst, g.userId)
   if (r.fout) return NextResponse.json({ error: r.fout }, { status: r.fout === 'omzetten_mislukt' ? 502 : 400 })
   return NextResponse.json({ profiel: r.profiel, leeg: r.leeg })
 }

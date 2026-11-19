@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
@@ -76,7 +76,7 @@ ${analysesText}`
     model: 'claude-sonnet-4-6',
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
-  })
+  }, aiContext(null, 'cron-openers'))
 
   const text = getText(res.content).trim()
   const start = text.indexOf('{')

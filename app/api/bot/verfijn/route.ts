@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
@@ -43,7 +43,7 @@ Als de input wel herkenbare inhoud heeft: maak hem concreter en scherper, maar b
 Schrijf vanuit de gebruiker zelf, in de ik-vorm, als de vraag of reactie die hij zelf zou sturen. Nooit als antwoord of tegenvraag aan de gebruiker.
 ${RULE_NO_DASH}`,
       messages: [{ role: 'user', content: vraag }]
-    })
+    }, aiContext(userId, 'verfijn'))
 
     const text = getText(response.content, vraag).trim()
     if (text === 'ONBEGRIJPELIJK') return NextResponse.json({ onbegrijpelijk: true })

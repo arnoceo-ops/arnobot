@@ -1,7 +1,7 @@
 ﻿import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         role: 'user',
         content: `Hieronder staan gesprekssessies in het formaat "ID:xxx | titel | samenvatting".\n\nGeef een JSON-array terug met alleen de session-IDs die inhoudelijk relevant zijn voor de zoekopdracht: "${q}"\n\nWees ruimhartig: als het gesprek ook maar raakvlak heeft met het onderwerp, neem het mee. Geef alleen de JSON-array terug, niets anders.\n\nSessies:\n${sessionList}`,
       }],
-    })
+    }, aiContext(userId, 'sessie-zoeken'))
     const text = getText(res.content, '[]').trim()
     const start = text.indexOf('[')
     const end = text.lastIndexOf(']')

@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
+import { aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 
@@ -50,7 +51,7 @@ ${RULE_JIJ_JOU}
 ${RULE_NO_TIME_PRESSURE}
 Geef ALLEEN JSON: {"mail": true} of {"mail": false}.`
 
-export async function herkenMailVerzoek(anthropic: Anthropic, gebruikersVragen: string[]): Promise<boolean> {
+export async function herkenMailVerzoek(anthropic: Anthropic, gebruikersVragen: string[], gebruiker?: string | null): Promise<boolean> {
   const vragen = gebruikersVragen.filter(Boolean).slice(0, 12).map(v => `- ${v.replace(/\s+/g, ' ').slice(0, 400)}`).join('\n')
   if (!vragen) return false
   const res = await anthropic.messages.create({
@@ -58,7 +59,7 @@ export async function herkenMailVerzoek(anthropic: Anthropic, gebruikersVragen: 
     max_tokens: 60,
     system: MAIL_SYSTEEM,
     messages: [{ role: 'user', content: `<gesprek>\nWat de gebruiker vroeg:\n${vragen}\n</gesprek>\n\nGeef de JSON.` }],
-  })
+  }, aiContext(gebruiker ?? null, 'mail-patroon'))
   const tekst = getText(res.content)
   const json = JSON.parse(tekst.slice(tekst.indexOf('{'), tekst.lastIndexOf('}') + 1)) as { mail?: unknown }
   return json.mail === true

@@ -2,7 +2,7 @@ export const maxDuration = 300
 
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT, RULE_NO_DASH, RULE_NO_ACCENTS, RULE_NO_MOETEN, RULE_NO_TIME_PRESSURE, RULE_NO_INVENTED_DETAILS, RULE_NEVER_BREAK_CHARACTER } from '@/lib/systemPrompt'
@@ -75,7 +75,7 @@ ${RULE_NEVER_BREAK_CHARACTER}`
     max_tokens: maxTokens,
     system: systeem,
     messages: [{ role: 'user', content: userContent }],
-  })
+  }, aiContext(userId, 'admin-analyse-chat'))
 
   // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
   const genereer = async () => {

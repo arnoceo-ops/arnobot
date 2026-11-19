@@ -2,7 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { verdachteTellingen } from '@/lib/feitenControle'
@@ -60,7 +60,7 @@ async function laadBijlageVoorSessie(userId: string, sessieId: string): Promise<
   }
 }
 
-async function beoordeel(bron: string, antwoord: string, bijlage: Bijlage | null): Promise<Oordeel | null> {
+async function beoordeel(bron: string, antwoord: string, bijlage: Bijlage | null, gebruiker: string | null): Promise<Oordeel | null> {
   // Retry-bij-leeg: een leeg antwoord mag niet stil als "geen fout" gelezen worden.
   for (let poging = 0; poging < 3; poging++) {
     const res = await client.messages.create({
@@ -74,7 +74,7 @@ async function beoordeel(bron: string, antwoord: string, bijlage: Bijlage | null
           { type: 'text' as const, text: `<gebruiker>\n${bron.slice(0, MAX_TEKENS_BRON)}${bijlage?.tekst ?? ''}\n</gebruiker>\n\n<antwoord>\n${antwoord.slice(0, MAX_TEKENS_ANTWOORD)}\n</antwoord>\n\nGeef de JSON.` },
         ],
       }],
-    })
+    }, aiContext(gebruiker, 'cron-feitencontrole'))
     const block = res.content.find(b => b.type === 'text')
     const tekst = block && block.type === 'text' ? block.text : ''
     const match = tekst.match(/\{[\s\S]*\}/)
@@ -152,7 +152,7 @@ async function cronHandler(req: NextRequest) {
     for (const k of beoordeeld) {
       const sleutel = `${k.userId}|${k.sessieId}`
       if (!bijlagePerSessie.has(sleutel)) bijlagePerSessie.set(sleutel, k.userId && k.sessieId ? await laadBijlageVoorSessie(k.userId, k.sessieId) : null)
-      const o = await beoordeel(k.bron, k.antwoord, bijlagePerSessie.get(sleutel) ?? null)
+      const o = await beoordeel(k.bron, k.antwoord, bijlagePerSessie.get(sleutel) ?? null, k.userId || null)
       if (!o) { onbeoordeeld++; continue }
       if (o.fout) fouten.push({ userId: k.userId, citaat: (o.citaat ?? k.woorden.join(', ')).slice(0, MAX_TEKENS_CITAAT), juist: (o.juist ?? '').slice(0, MAX_TEKENS_CITAAT) })
     }

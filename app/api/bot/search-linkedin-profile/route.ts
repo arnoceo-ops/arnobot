@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { adminKeyMatches } from '@/lib/adminAuth'
 
 const supabase = createClient(
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       role: 'user',
       content: `Zoek het LinkedIn-profiel van "${name}". Gebruik web_search met de query: site:linkedin.com/in "${name}"${domainHint}. Geef alleen de volledige linkedin.com/in/... URL terug, niets anders. Als je geen resultaat vindt, geef dan terug: NIET_GEVONDEN.`,
     }],
-  })
+  }, aiContext(null, 'admin-linkedin-zoeken'))
 
   let linkedinUrl: string | null = null
   for (const block of response.content) {

@@ -3,7 +3,7 @@ export const maxDuration = 30
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 import { MAX_WOORDEN, isTeLang, knipOpZin } from '@/lib/uitdagingTekst'
@@ -133,7 +133,7 @@ export async function GET() {
     messages: [{ role: 'user', content: extra ? `${prompt}
 
 ${extra}` : prompt }],
-  })
+  }, aiContext(userId, 'uitdaging'))
 
   let response
   try {

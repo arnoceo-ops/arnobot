@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT } from '@/lib/systemPrompt'
@@ -184,7 +184,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
       role: 'user',
       content: `Hieronder staan ${sessieCount} echte gesprekken van de ${periodeLabel}. Analyseer jezelf kritisch.\n\n${transcripts}${vorigZelfBlok(vorigeAnalyse)}\n\nGeef een zelfbeoordeling in vier blokken. Begin elk blok met de naam in hoofdletters op een aparte regel:\n\nWAAR IK STERK WAS\n[concreet, met verwijzing naar de gesprekken. Minimaal 3 observaties.]\n\nWAAR IK TEKORT SCHOOT\n[eerlijk, specifiek. Geen algemeenheden. Minimaal 3 observaties.]\n\nKENNISHIATEN\n[welke vragen kwamen op terrein waar je onvoldoende diepgang had? Wees specifiek.]\n\nWAT IK ZOU VERBETEREN\n[concrete aanbevelingen voor de systeemprompt of kennisbasis. Minimaal 3 punten.]${vorigeAnalyse ? TREND_ZELF_INSTRUCTIE : ''}`,
     }],
-  })
+  }, aiContext(null, 'meta-analyse-zelf'))
 
   const callPanelModel = (maxTokens = PANEL_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5-1',
@@ -201,7 +201,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   : `\n\nARNO DIEPEVEEN\n(Oprichter Royal Dutch Sales. Geen eigen input deze maand. Beoordeel op basis van de gesprekken: herkent de echte Arno zichzelf hierin? Is dit zijn stem, zijn directheid, zijn timing van confronteren?)\nScore: [X]/10\n[Concreet oordeel op toon, aanpak en authenticiteit van de stem]\nKritisch punt: [één concrete aanbeveling om ArnoBot dichter bij de echte Arno te brengen]`
 }${gebruikersJurorSection}${vorigeAnalyse ? TREND_PANEL_INSTRUCTIE : ''}\n\nOVERALL SCORE: [gemiddelde van zeven scores, of zes als gebruikers n.v.t. is]/10\nPANEL CONSENSUS: [één zin die de kern van het gezamenlijke oordeel samenvat]\nPRIORITEIT 1: [het meest impactvolle verbeterpunt waarover het panel het eens is]${BEVINDINGEN_INSTRUCTIE}`,
     }],
-  })
+  }, aiContext(null, 'meta-analyse-panel'))
 
   const callJouwAnalyseModel = (maxTokens = JOUW_ANALYSE_MAX_TOKENS) => anthropic.messages.create({
     model: 'claude-fable-5-1',
@@ -216,7 +216,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
       role: 'user',
       content: `Dit zijn Arno's eigen aantekeningen over ArnoBot:\n\n"${arnoInputTekst}"\n\nSplits dit op in losse, afzonderlijke punten, zoveel als hij daadwerkelijk noemt, geen vast aantal. Voor elk punt exact dit format:\n\nPUNT [n]: [korte titel, max 6 woorden]\n[zijn observatie, opgeschoond tot een heldere alinea, niet ingekort tot één zin als hij meer schreef]\nKritisch punt: [concrete, direct implementeerbare aanbeveling in de stijl "doe X wanneer Y"]\n\nBehandel elk punt apart, laat niets weg. Voeg twee opmerkingen alleen samen als ze overduidelijk hetzelfde onderwerp raken.`,
     }],
-  })
+  }, aiContext(null, 'meta-analyse-jouw'))
 
   const jouwAnalysePromise = arnoInputTekst ? callJouwAnalyseModel() : null
 

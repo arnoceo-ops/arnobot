@@ -3,6 +3,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import * as Sentry from '@sentry/nextjs'
 import { getText } from '@/lib/ai'
+import { aiContext } from '@/lib/anthropicClient'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 import { BRONDATA_REGEL, gesprekBlok } from '@/lib/sessieSamenvatting'
 
@@ -41,6 +42,7 @@ export function beoordeelBlogs<T extends object>(blogs: T[], redenen: string[]):
 export async function schrijfBlogRedenen(
   anthropic: Anthropic,
   p: { samenvatting: string; blogs: BlogKandidaat[] },
+  gebruiker?: string | null,
 ): Promise<string[]> {
   if (p.blogs.length === 0 || !p.samenvatting) return []
   try {
@@ -62,7 +64,7 @@ ${BRONDATA_REGEL}`,
         role: 'user',
         content: `${gesprekBlok(p.samenvatting.slice(0, 3000))}\n\nBlogs:\n${p.blogs.map((b, i) => `${i + 1}. Titel: ${b.titel}${b.uittreksel ? `\nBegin: ${b.uittreksel}` : ''}${b.uitGesprek ? '\n(ArnoBot noemde dit blog zelf in het gesprek)' : ''}`).join('\n\n')}`,
       }],
-    })
+    }, aiContext(gebruiker, 'blog-redenen'))
     const res = await Promise.race([
       aanroep,
       new Promise<null>(resolve => setTimeout(() => resolve(null), TIJDSLIMIET_MS)),

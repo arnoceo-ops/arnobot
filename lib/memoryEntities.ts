@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from './ai'
 
 const supabase = createClient(
@@ -10,14 +10,14 @@ const anthropic = maakAnthropic()
 
 type ExtractedEntity = { name: string; type: string }
 
-async function extractEntities(conversationText: string): Promise<ExtractedEntity[]> {
+async function extractEntities(conversationText: string, gebruiker?: string | null): Promise<ExtractedEntity[]> {
   try {
     const res = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       system: 'Extraheer belangrijke, herbruikbare entiteiten uit een salesgesprek: namen van personen, bedrijven, en concrete terugkerende thema\'s die de gebruiker waarschijnlijk vaker zal noemen. Alleen entiteiten die de gebruiker zelf noemt (regels GEBRUIKER), regels ARNO zijn alleen context. Geen algemene sales-termen. Geef een JSON-array van objecten {"name": string, "type": "persoon"|"bedrijf"|"thema"} terug, maximaal 5. Geef alleen de JSON-array terug, niets anders.',
       messages: [{ role: 'user', content: conversationText.slice(0, 8000) }],
-    })
+    }, aiContext(gebruiker, 'geheugen-entiteiten'))
     const text = getText(res.content, '[]').trim()
     const start = text.indexOf('[')
     const end = text.lastIndexOf(']')
@@ -39,7 +39,7 @@ async function extractEntities(conversationText: string): Promise<ExtractedEntit
 // lib/rag.ts, één plek voorkomt dat losse aanroeppaden elkaar uit de pas laten lopen (zie de
 // embedding-model-mix van 2026-08-12 voor wat er misgaat als dat niet gebeurt).
 export async function extractAndStoreEntities(userId: string, sessionId: string, conversationText: string): Promise<void> {
-  const entities = await extractEntities(conversationText)
+  const entities = await extractEntities(conversationText, userId)
   if (entities.length === 0) return
 
   const names = entities.map(e => e.name)

@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { aiContext } from '@/lib/anthropicClient'
 import { RULE_JIJ_JOU } from '@/lib/systemPrompt'
 
 // Controlestap op de feiten en samenvatting van een afgerond gesprek (2026-11-01, "vijftig gratis
@@ -32,11 +33,12 @@ export async function herstelSamenvatting(
     vermijd: string[]
     schrijf: (gesprek: string, vermijd: string[]) => Promise<string>
   },
+  gebruiker?: string | null,
 ): Promise<string> {
   const eerste = await p.schrijf(p.volledigGesprek, p.vermijd)
   if (!eerste) return ''
   try {
-    const t = await toetsGeheugen(anthropic, { bron: p.bron, summary: eerste, feiten: '' })
+    const t = await toetsGeheugen(anthropic, { bron: p.bron, summary: eerste, feiten: '' }, gebruiker)
     if (!t.vermijd.length) return eerste
     return (await p.schrijf(p.bron, [...p.vermijd, ...t.vermijd])) || eerste
   } catch {
@@ -47,6 +49,7 @@ export async function herstelSamenvatting(
 export async function toetsGeheugen(
   anthropic: Anthropic,
   gesprek: { bron: string; summary: string; feiten: string },
+  gebruiker?: string | null,
 ): Promise<ToetsUitslag> {
   const regels = gesprek.feiten.split('\n').map(r => r.trim()).filter(Boolean)
   if (!regels.length && !gesprek.summary) return { feiten: gesprek.feiten, vermijd: [], ingegrepen: false }
@@ -59,7 +62,7 @@ export async function toetsGeheugen(
       role: 'user',
       content: `<gesprek>\n${gesprek.bron.slice(0, 12000)}\n</gesprek>\n\nSamenvatting: ${gesprek.summary}\n\nFeiten:\n${lijst}\n\nGeef de JSON.`,
     }],
-  })
+  }, aiContext(gebruiker, 'geheugen-toets'))
   const tekst = getText(res.content)
   const json = JSON.parse(tekst.slice(tekst.indexOf('{'), tekst.lastIndexOf('}') + 1)) as { ongedekt?: unknown; samenvatting?: unknown }
   const weg = new Set(Array.isArray(json.ongedekt) ? json.ongedekt.filter((n): n is number => Number.isInteger(n)) : [])

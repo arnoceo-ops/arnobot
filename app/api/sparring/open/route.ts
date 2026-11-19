@@ -3,7 +3,7 @@ export const maxDuration = 30
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { createClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE, WEERSTAND_OPENING_TOON } from '@/lib/sparringPersonas'
@@ -92,7 +92,7 @@ REGELS:
       max_tokens: 300,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Open het gesprek.' }],
-    })
+    }, aiContext(userId, 'sparring-open'))
   )
 
   let answer = ''

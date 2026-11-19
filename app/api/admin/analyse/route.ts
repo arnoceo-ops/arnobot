@@ -3,7 +3,7 @@ export const maxDuration = 300
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import type { Message } from '@anthropic-ai/sdk/resources'
 import { getText } from '@/lib/ai'
 import { ARNOBOT_MANDAAT, RULE_NO_DASH, RULE_NO_ACCENTS, RULE_NO_MOETEN, RULE_NO_TIME_PRESSURE, RULE_NO_INVENTED_DETAILS, RULE_NEVER_BREAK_CHARACTER } from '@/lib/systemPrompt'
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     max_tokens: maxTokens,
     system: buildSystemPrompt(),
     messages: [{ role: 'user', content: `Analyseer deze gebruiker:\n\n${context.contextText}` }],
-  })
+  }, aiContext(userId, 'admin-analyse'))
 
   // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
   const genereer = async () => {

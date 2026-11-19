@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getText } from '@/lib/ai'
 import { buildVoiceSystemPrompt } from '@/lib/systemPrompt'
@@ -34,17 +34,17 @@ export function isVoiceLaunchAllowed(userId: string): boolean {
  * Retry-bij-leeg-antwoord (zelfde patroon als de rest van de codebase), plus een
  * tekstuele fallback als ook de retry leeg blijft. Geeft platte, spreekbare tekst terug.
  */
-export async function getVoiceAnswer(question: string): Promise<string> {
+export async function getVoiceAnswer(question: string, gebruiker?: string | null): Promise<string> {
   const q = question.slice(0, 2000)
   const system = buildVoiceSystemPrompt()
   const messages: Anthropic.Messages.MessageParam[] = [{ role: 'user', content: q }]
 
-  const res = await anthropic.messages.create({ model: VOICE_MODEL, max_tokens: VOICE_MAX_TOKENS, system, messages })
+  const res = await anthropic.messages.create({ model: VOICE_MODEL, max_tokens: VOICE_MAX_TOKENS, system, messages }, aiContext(gebruiker, 'voice-antwoord'))
   let answer = getText(res.content)
 
   if (!answer) {
     console.error('[voice] leeg antwoord, retry')
-    const retryRes = await anthropic.messages.create({ model: VOICE_MODEL, max_tokens: VOICE_MAX_TOKENS, system, messages })
+    const retryRes = await anthropic.messages.create({ model: VOICE_MODEL, max_tokens: VOICE_MAX_TOKENS, system, messages }, aiContext(gebruiker, 'voice-antwoord'))
     answer = getText(retryRes.content)
     if (!answer) {
       console.error('[voice] leeg antwoord na retry')

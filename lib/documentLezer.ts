@@ -6,6 +6,7 @@
 //
 // Bewust zonder databasetoegang en zonder eigen Anthropic-client: die komt van buiten, zodat dit met gewone unit-tests te toetsen is.
 import type Anthropic from '@anthropic-ai/sdk'
+import { aiContext } from '@/lib/anthropicClient'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import type { Samengesteld } from '@/lib/documentenSamenstellen'
 
@@ -100,7 +101,7 @@ export function bouwLezerBlokken(bron: LezerBron): Anthropic.Messages.ContentBlo
 }
 
 export type LezerClient = {
-  messages: { create(body: Anthropic.Messages.MessageCreateParamsNonStreaming): Promise<Anthropic.Messages.Message> }
+  messages: { create(body: Anthropic.Messages.MessageCreateParamsNonStreaming, options?: { headers?: Record<string, string> }): Promise<Anthropic.Messages.Message> }
 }
 
 export type LezerUitvoer = {
@@ -116,6 +117,7 @@ export async function leesDocumenten(
   bron: LezerBron,
   vraag: string,
   eerdereVragen: string[] = [],
+  gebruiker?: string | null,
 ): Promise<LezerUitvoer> {
   const eerdere = eerdereVragen.slice(-LEZER_MAX_EERDERE_VRAGEN).map(v => `- ${v.replace(/\s+/g, ' ').slice(0, 500)}`).join('\n')
   const res = await client.messages.create({
@@ -129,7 +131,7 @@ export async function leesDocumenten(
         { type: 'text', text: `Eerdere vragen van de gebruiker in dit gesprek:\n${eerdere || '(geen)'}\n\nLAATSTE VRAAG: ${vraag}` },
       ],
     }],
-  })
+  }, aiContext(gebruiker, 'document-lezer'))
   const tekst = res.content.map(b => (b.type === 'text' ? b.text : '')).join('')
   const afgekapt = res.stop_reason === 'max_tokens'
   return { tekst: afgekapt ? `${tekst}\n\n${AFGEKAPT_WAARSCHUWING}` : tekst, afgekapt, usage: res.usage ?? null }

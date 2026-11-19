@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import * as Sentry from '@sentry/nextjs'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getPersonaBeschrijving, WEERSTAND_INSTRUCTIE } from '@/lib/sparringPersonas'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
@@ -77,7 +77,7 @@ REGELS:
       max_tokens: 512,
       system: systemPrompt,
       messages,
-    })
+    }, aiContext(userId, 'sparring-chat'))
   )
 
   let answer = ''

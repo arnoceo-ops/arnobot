@@ -3,7 +3,7 @@ export const maxDuration = 30
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { toegangsWeigering } from '@/lib/toegangsPoort'
 
@@ -87,7 +87,7 @@ export async function GET() {
         role: 'user',
         content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}\n\nIs er kwalitatief iets veranderd in het patroon?`,
       }],
-    })
+    }, aiContext(userId, 'coaching-precheck'))
     const verdict = getText(precheck.content, 'nee').trim().toLowerCase()
     return NextResponse.json({ hasProgress: verdict.startsWith('ja') })
   } catch {

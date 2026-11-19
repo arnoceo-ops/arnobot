@@ -95,7 +95,7 @@ async function cronHandler(req: NextRequest) {
       const uitvoer = await schrijfPatroon(anthropic, {
         voornaam: naam, rol: profiel.rol, rolCategorie, personaLijst, thema: keuze.thema,
         sessies: sessies.filter(s => s.themas?.includes(keuze.thema)), laatsteAnalyse: analyseRes.data ?? null, vandaag: nu,
-      })
+      }, user.user_id)
       if (!uitvoer) return sla('geen_patroon_of_ongeldig')
 
       const template = getEmailTemplate('patroon_samenvatting', naam, false, {

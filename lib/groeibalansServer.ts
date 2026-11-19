@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { parseGroeibalansClassificatie } from '@/lib/groeibalans'
 import { telGebruik } from '@/lib/gebruikTellers'
@@ -147,7 +148,7 @@ ${geschiedenis}
 
 ${activiteit}`,
     }],
-  })
+  }, aiContext(userId, 'groeibalans'))
 
   const classificatie = parseGroeibalansClassificatie(getText(res.content, '{}'))
   if (!classificatie) return

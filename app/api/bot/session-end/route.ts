@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks, embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities } from '@/lib/memoryEntities'
@@ -177,10 +177,10 @@ export async function POST(req: NextRequest) {
   let excuustaal = false
 
 
-  const callSummaryModel = () => anthropic.messages.create(samenvattingParams(conversationText))
+  const callSummaryModel = () => anthropic.messages.create(samenvattingParams(conversationText), aiContext(userId, 'sessie-samenvatting'))
   // Feiten en entiteiten komen alleen uit wat de gebruiker zelf zegt (ARNO ingekort als context).
   const bronTekst = gebruikersBron(messages as { role: string; content: string }[])
-  const callFeitenModel = () => anthropic.messages.create(feitenParams(bronTekst))
+  const callFeitenModel = () => anthropic.messages.create(feitenParams(bronTekst), aiContext(userId, 'sessie-feiten'))
   const callThemasModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 60,
@@ -196,7 +196,7 @@ ${BRONDATA_REGEL}`,
       role: 'user',
       content: `${gesprekBlok(conversationText.slice(0, 8000))}\n\nClassificeer het gesprek hierboven.`
     }]
-  })
+  }, aiContext(userId, 'sessie-themas'))
   const callUitdagingModel = () => anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 150,
@@ -215,7 +215,7 @@ ${BRONDATA_REGEL}`,
       role: 'user',
       content: `${gesprekBlok(conversationText)}\n\nWat is de concrete uitdaging of actie voor de gebruiker na het gesprek hierboven?`
     }]
-  })
+  }, aiContext(userId, 'sessie-uitdaging'))
 
   // Een uitdaging/actie wordt alleen nog gegenereerd bij een gesprek met minimaal 2 beurten.
   // Bij 1 beurt (preformatted vraag, los éénmalig vraagje) is er geen inhoudelijke basis voor
@@ -234,7 +234,7 @@ ${BRONDATA_REGEL}`,
   // een mail aan een klant laten schrijven (lib/mailPatroon.ts). Raakt verder niets.
   if (viaCron && alleenMailVerzoek === true) {
     try {
-      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content))
+      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content), userId)
       const { error: mailError } = await supabase
         .from('arnobot_blog_sessions')
         .update({ mail_verzoek: mail })
@@ -259,7 +259,7 @@ ${BRONDATA_REGEL}`,
       .maybeSingle()
     if (!rij) return NextResponse.json({ error: 'Sessie niet gevonden' }, { status: 404 })
     try {
-      const l = await labelGesprek(anthropic, rij)
+      const l = await labelGesprek(anthropic, rij, userId)
       const { error: labelError } = await supabase
         .from('arnobot_blog_sessions')
         .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
@@ -390,7 +390,7 @@ ${BRONDATA_REGEL}`,
       ? await schrijfBlogRedenen(anthropic, {
           samenvatting: summary,
           blogs: blogSuggestions.map(b => ({ titel: b.title, uittreksel: b.uittreksel ?? null, uitGesprek: b.uitGesprek === true })),
-        })
+        }, userId)
       : []
     const behouden = beoordeelBlogs(blogSuggestions, redenen)
     blogSuggestions.length = 0
@@ -437,7 +437,7 @@ ${BRONDATA_REGEL}`,
     let samenvattingDef = summary
     let feitenDef = feiten
     try {
-      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten })
+      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten }, userId)
       if (t.ingegrepen) {
         console.warn(`[session-end] geheugentoets greep in (sessie ${sessionId}): ${t.vermijd.length} samenvattingsclaims, feiten ${feiten === t.feiten ? 'ongewijzigd' : 'aangepast'}`)
         feitenDef = t.feiten
@@ -445,10 +445,10 @@ ${BRONDATA_REGEL}`,
           const nieuw = await herstelSamenvatting(anthropic, {
             volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
             schrijf: async (gesprek, vermijd) => {
-              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd))
+              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd), aiContext(userId, 'sessie-samenvatting-herstel'))
               return schoonSamenvatting(getText(res.content), res.stop_reason)
             },
-          })
+          }, userId)
           if (nieuw) samenvattingDef = nieuw
         }
         await supabase
@@ -474,7 +474,7 @@ ${BRONDATA_REGEL}`,
     // Onderwerp en blijvende feiten voor het sessiegeheugen (lib/memoryLabels.ts). Mislukt dit, dan
     // blijven de kolommen leeg en valt de chat terug op alleen de titel: veilig, nooit situatiefeiten.
     try {
-      const l = await labelGesprek(anthropic, { title, summary: samenvattingDef, feiten: feitenDef })
+      const l = await labelGesprek(anthropic, { title, summary: samenvattingDef, feiten: feitenDef }, userId)
       await supabase
         .from('arnobot_blog_sessions')
         .update({ onderwerp: l.onderwerp || null, feiten_blijvend: l.blijvend.length ? l.blijvend.join('\n') : null })
@@ -485,7 +485,7 @@ ${BRONDATA_REGEL}`,
     }
     // Ging dit gesprek vooral om een mail aan een klant laten schrijven? (lib/mailPatroon.ts)
     try {
-      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content))
+      const mail = await herkenMailVerzoek(anthropic, (messages as { role: string; content: string }[]).filter(m => m.role === 'user').map(m => m.content), userId)
       await supabase
         .from('arnobot_blog_sessions')
         .update({ mail_verzoek: mail })

@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getText } from '@/lib/ai'
+import { aiContext } from '@/lib/anthropicClient'
 import { RULE_JIJ_JOU, RULE_NO_TIME_PRESSURE } from '@/lib/systemPrompt'
 
 // Labelt een afgerond gesprek voor het sessiegeheugen. Herinneringen ouder dan een paar weken gaan
@@ -28,6 +29,7 @@ export function feitenRegels(feiten: string | null | undefined): string[] {
 export async function labelGesprek(
   anthropic: Anthropic,
   gesprek: { title: string | null; summary: string | null; feiten: string | null },
+  gebruiker?: string | null,
 ): Promise<GesprekLabels> {
   const regels = feitenRegels(gesprek.feiten)
   const lijst = regels.map((r, i) => `${i + 1}. ${r}`).join('\n')
@@ -39,7 +41,7 @@ export async function labelGesprek(
       role: 'user',
       content: `<gesprek>\nTitel: ${String(gesprek.title ?? '').slice(0, 120)}\nSamenvatting: ${gesprek.summary ?? ''}\nFeiten:\n${lijst}\n</gesprek>\n\nGeef de JSON.`,
     }],
-  })
+  }, aiContext(gebruiker, 'geheugen-labels'))
   const tekst = getText(res.content)
   const json = JSON.parse(tekst.slice(tekst.indexOf('{'), tekst.lastIndexOf('}') + 1)) as { onderwerp?: unknown; blijvend?: unknown }
   const onderwerp = String(json.onderwerp ?? '').replace(/\s+/g, ' ').trim().slice(0, 80)

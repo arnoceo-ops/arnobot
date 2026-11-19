@@ -4,7 +4,7 @@ import { ARNO_ERVARING } from '@/lib/arnoFeiten'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_TIME_PRESSURE, RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { computeThemaMaandTrend, computeSpiegelSignaal } from '@/lib/spiegel'
@@ -200,7 +200,7 @@ ${RULE_NO_INVENTED_DETAILS}`,
 GESPREKKEN:
 ${teamData}${trendContext}${themaTrendContext}${spiegelContext}`
     }]
-  })
+  }, aiContext(userId, 'team-spotlight'))
 
   let analyse = getText(await callModel().then(r => r.content))
   if (!analyse) {

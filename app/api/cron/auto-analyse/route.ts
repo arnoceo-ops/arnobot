@@ -1,7 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { verstuurMailZacht } from '@/lib/mail'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
@@ -77,7 +77,7 @@ async function cronHandler(req: NextRequest) {
         role: 'user',
         content: `Analyseer deze ${batch.length} gesprekken en geef een patroonanalyse in Arno's stijl. Schrijf het in precies drie delen, elk met een eigen kopregel in hoofdletters op een aparte regel, gevolgd door één alinea gewone tekst: STERKE PUNTEN, GROEIKANS, COACHING FOCUS. Onder STERKE PUNTEN wat er goed gaat, onder GROEIKANS het patroon dat de gebruiker tegenhoudt en wat dat zegt, onder COACHING FOCUS één concrete uitdaging die de gebruiker zichzelf kan stellen. Geen andere kopjes, geen opsomming.${actieBlok}\n\nGESPREKKEN:\n${sessiesText}`
       }]
-    })
+    }, aiContext(userId, 'cron-auto-analyse'))
 
     let analyse = getText(await callModel().then(r => r.content))
     if (!analyse) {

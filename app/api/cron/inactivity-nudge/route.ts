@@ -2,7 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verstuurMail } from '@/lib/mail'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { isValidEmail, getEmailTemplate } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
@@ -158,7 +158,7 @@ async function cronHandler(req: NextRequest) {
               role: 'user',
               content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag.\n\n${RULE_JIJ_JOU}\n${RULE_NO_TIME_PRESSURE}\n${RULE_NO_DASH}`,
             }],
-          })
+          }, aiContext(user.user_id, 'cron-inactiviteit'))
           nudgeQuestion = getText(msg.content).trim()
         } catch {
           // val terug op generieke template

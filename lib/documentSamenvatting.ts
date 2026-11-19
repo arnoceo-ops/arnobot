@@ -5,6 +5,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { embedSessionQuery, embedSessionText } from './rag'
 import { laadBijlage } from './documenten'
+import { aiContext } from './anthropicClient'
 
 export const SAMENVATTING_MODEL = 'claude-sonnet-4-6'
 export const MAX_POGINGEN = 3
@@ -91,7 +92,7 @@ async function maakEenSamenvatting(db: SupabaseClient, anthropic: Anthropic, rij
     max_tokens: 1200,
     system: samenvattingSysteem,
     messages: [{ role: 'user', content: inhoud }],
-  })
+  }, aiContext(rij.user_id, 'document-samenvatting'))
   const tekst = res.content.map(b => (b.type === 'text' ? b.text : '')).join('')
   return parseSamenvatting(tekst)
 }

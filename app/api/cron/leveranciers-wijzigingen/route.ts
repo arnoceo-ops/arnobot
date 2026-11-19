@@ -2,7 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import {
   PAGINAS,
@@ -62,7 +62,7 @@ async function beoordeel(pagina: LeverancierPagina, verschil: string): Promise<B
         max_tokens: 600,
         system,
         messages: [{ role: 'user', content: `<verschil pagina="${pagina.label}">\n${verschil}\n</verschil>\nBeoordeel dit verschil volgens de opdracht.` }],
-      })
+      }, aiContext(null, 'cron-leveranciers'))
       const block = res.content.find(b => b.type === 'text')
       const tekst = block && block.type === 'text' ? block.text : ''
       const match = tekst.match(/\{[\s\S]*\}/)

@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { buildEenOpEenSystemPrompt, agendaVerwijstGoed } from '@/lib/teamEenOpEenPrompt'
 import { stripEmphasisAccents } from '@/lib/accenten'
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: 'user', content: context }],
-    })
+    }, aiContext(managerId, 'team-1on1'))
     const tekst = getText(response.content)
     if (tekst) agenda = tekst
     if (tekst && agendaVerwijstGoed(tekst)) break

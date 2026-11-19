@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { INTERNAL_TEST_USERS_IN, FAKE_DEMO_USER_LIKE } from '@/lib/internalTestAccounts'
 import { adminKeyMatches } from '@/lib/adminAuth'
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       role: 'user',
       content: `${sessions.length} gesprekken uit de ${periodeLabel}:\n\n${sessiesText}\n\nGeef de briefing in drie blokken:\n\nTHEMA'S DEZE PERIODE\n[Wat speelt er? Welke uitdagingen komen terug? Schrijf in alinea's. Max 200 woorden.]\n\nPATRONEN\n[Wat is structureel? Wat komt meerdere keren terug? Max 150 woorden.]\n\nBLOGINSPIRATIE\n[4-5 concrete artikel-suggesties. Per suggestie: een werktitel en één zin over de invalshoek. Specifiek genoeg om morgen mee te beginnen.]`,
     }],
-  })
+  }, aiContext(null, 'admin-blogs-analyse'))
 
   // Een API-fout of timeout van het model gaf een kale 500 zonder log; nu een nette fout.
   let analyse: ReturnType<typeof getText>

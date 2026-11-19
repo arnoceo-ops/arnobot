@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { RULE_JIJ_JOU } from '@/lib/systemPrompt'
 import { createClient } from '@supabase/supabase-js'
@@ -71,7 +71,7 @@ Schrijf een debrief van maximaal 200 woorden. Geen titel, geen 'Debrief' als kop
     model: 'claude-sonnet-4-6',
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
-  })
+  }, aiContext(userId, 'sparring-debrief'))
 
   let debrief = getText(await callModel().then(r => r.content))
   if (!debrief) {

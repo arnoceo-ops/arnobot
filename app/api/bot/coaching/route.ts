@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
@@ -228,7 +228,7 @@ export async function POST() {
             role: 'user',
             content: `Vorige coaching:\nMindset (${prevCoaching.mindset_score}/5): ${prevCoaching.mindset_diagnose}\nSysteem (${prevCoaching.systeem_score}/5): ${prevCoaching.systeem_diagnose}\nActie (${prevCoaching.actie_score}/5): ${prevCoaching.actie_diagnose}\n\nNieuwe gesprekken:\n${newSessiesText || '(geen)'}\n\nNieuwe analyses:\n${newAnalysesText || '(geen)'}${newSparringText}\n\nIs er kwalitatief iets veranderd in het patroon?`,
           }],
-        }))
+        }, aiContext(userId, 'coaching-precheck')))
         // Leeg antwoord behandelen we hetzelfde als een gegooide fout hieronder: fail-open
         // naar "ja", nooit fail-closed. Een technisch mankement in de precheck mag nooit een
         // gebruiker blokkeren die zelf niets fout heeft gedaan.
@@ -419,7 +419,7 @@ ${RULE_NO_INVENTED_DETAILS}`
       role: 'user',
       content: `Analyseer deze ${sessions.length} gesprekken${analyses.length > 0 ? ` en ${analyses.length} eerder gemaakte patroonanalyses` : ''}${sparringSessions.length > 0 ? ` en ${sparringSessions.length} sparring-oefensessies` : ''} en schrijf een coachingsdocument:${profielText}${deltaContext}\n\nGESPREKKEN:\n${sessiesText}${analysesText}${sparringText}`
     }]
-  }))
+  }, aiContext(userId, 'coaching-synthese')))
 
   meet('controle')
   let response
@@ -560,7 +560,7 @@ Return ALLEEN een JSON array, geen uitleg eromheen:
 [{ "url": "...", "reden": "..." }]
 Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken).`,
           messages: [{ role: 'user', content: synthContext }],
-        })
+        }, aiContext(userId, 'coaching-blogkeuze'))
       )
 
       const synthRaw = getText(synthResponse.content)

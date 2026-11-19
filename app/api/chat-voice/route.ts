@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const answer = await getVoiceAnswer(text)
+    const answer = await getVoiceAnswer(text, userId)
 
     // Zonder deze insert bevat arnobot_rds_logs geen enkele rij voor een voice-gesprek, en
     // telt session-end/route.ts (messageCount, "de echte telling uit de database") zo'n

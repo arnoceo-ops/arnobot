@@ -4,7 +4,7 @@ export const maxDuration = 300
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeSpeScore } from '@/lib/msa'
@@ -338,7 +338,7 @@ LAATSTE COACHINGPROFIEL PER TEAMLID:\n${ledenProfielText || '(nog geen coachingp
 
 RECENTE GESPREKSSAMENVATTINGEN VAN TEAMLEDEN:\n${sessieText || '(geen)'}${eigenSessiesContext}${trendContext}${spiegelContext}${systemischContext}${vroegSignaalContext}${accountabilityTeamContext}${spotlightContext}${deltaContext}${bronContext}`
     }]
-  })
+  }, aiContext(userId, 'team-zelfcoaching'))
 
   let response
   try {

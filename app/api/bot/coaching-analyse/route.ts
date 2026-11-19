@@ -3,7 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { ANALYSE_SYSTEM_PROMPT, actieOpvolgingBlok, planHistorieBlok, sessiesAlsTekst } from '@/lib/analyseContext'
 import { mailAnalyseBlok } from '@/lib/mailPatroon'
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     max_tokens: 1500,
     system: ANALYSE_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userContent }]
-  })
+  }, aiContext(userId, 'coaching-analyse'))
 
   let analyse = getText(await callModel().then(r => r.content))
   if (!analyse) {

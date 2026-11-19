@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { leesCrons } from '@/lib/cronOverzicht'
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
               model: 'claude-haiku-4-5-20251001',
               max_tokens: 100,
               messages: [{ role: 'user', content: `De actie uit het laatste gesprek: "${lastSession.uitdaging}"\n\nSchrijf één toekomstgerichte vraag (max 1 zin) die vraagt hoe het daarmee staat. Toon: nieuwsgierig, direct, zonder oordeel. Geen begroeting, geen afsluiting. Alleen de vraag. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.` }],
-            })
+            }, aiContext(null, 'admin-test-email'))
             nudgeQuestion = msg.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
           } catch { /* val terug op generieke template */ }
         }

@@ -2,7 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { verstuurMailZacht } from '@/lib/mail'
 import Anthropic from '@anthropic-ai/sdk'
-import { maakAnthropic } from '@/lib/anthropicClient'
+import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { stripDashPunctuation } from '@/lib/ai'
 import { notifyCronFailure } from '@/lib/cron-notify'
 
@@ -83,7 +83,7 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
       // tijdslimiet van 120s aan (Vercel Runtime Timeout), zonder maandmail als gevolg.
       tools: [{ type: 'web_search_20250305' as const, name: 'web_search', max_uses: 8 }],
       messages: [{ role: 'user', content: prompt }],
-    })
+    }, aiContext(null, 'cron-model-check'))
 
     const text = stripDashPunctuation(
       res.content.filter(b => b.type === 'text').map(b => b.text).join('\n')
