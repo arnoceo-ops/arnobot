@@ -1,8 +1,8 @@
 # Plan: documenten bewaren en historie-import
 
 **Laatst bijgewerkt:** 2026-11-19
-**Waar we staan:** plan, twee aannamecontroles (subagent zonder voorgeschiedenis) en een capability-sweep op de actuele Anthropic-documentatie zijn klaar; een mockup staat in `docs/mockups/documenten-archief.html`. Er is niets gebouwd. Het idee komt uit de vraag of een geüpload document bewaard kan worden, en uit het verzoek van een gebruiker (Chris) om zijn claude.ai-historie mee te nemen.
-**Eerstvolgende stap:** fase 1 live zetten (de lijst onder "Voor livegang"). **Fase 2 (import van historie) is geparkeerd op 2026-11-18 (Arno)**: het ontwerp en de aannamecontrole staan onderaan dit document, er wordt niets gebouwd tot Arno het weer oppakt en er een echte export is. Stap 5 (samenvatting per bestand, zelf terugvinden) staat ook nog open.
+**Waar we staan (2026-11-19):** fase 1 (documenten bewaren, tabs, vinkje) en stap 5 (samenvatting per bewaard document, zoeken in het geheugen, waarschuwing) zijn gebouwd en live. `DOCUMENT_SAMENVATTING_OPEN=true` staat in Vercel, de cron `documenten-samenvatten` draait elke 5 minuten en alle bewaarde bestanden hebben een samenvatting. Door Arno in de praktijk bevestigd op zijn testaccount (vraag over een eigen bestand levert een antwoord op basis van de samenvatting). Het antwoord aan Chris (prompt) is opgesteld. Fase 2 (import van historie) blijft geparkeerd.
+**Eerstvolgende stap:** `lib/appHelp.ts` bijwerken (de tussenversie "je blader niet door Uploads" past niet meer nu ArnoBot samenvattingen gebruikt), `DOCUMENTEN_OPEN` voor iedereen open en de lijst "Voor livegang" afwerken. Open: de vraag-embedding delen met het bestaande geheugen, een test met een echt kwaadaardig document, en de privacy-alinea (Arno besloot 2026-11-19 dat er geen extra tekst komt; de privacypagina noemt bewaarde uploads nu nergens, dat blijft een punt voor de maandcheck).
 
 ## Besluiten (met verworpen alternatieven)
 
