@@ -13,6 +13,8 @@ import PaidButton from './PaidButton'
 import SdAgentSelect from './SdAgentSelect'
 import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { haalGebruikerKosten, type GebruikerKosten } from '@/lib/gebruikerKosten'
+import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
 import TestPlanButtons from '../test-persona/TestPlanButtons'
@@ -145,7 +147,7 @@ export default async function GebruikersPage({
 
   const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen] = await Promise.all([
+  const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen, kostenPerUser, fx] = await Promise.all([
     supabase
       .from('approved_users')
       .select('user_id, email, full_name, voornaam, achternaam, linkedin, trial_start, expires_at, paid_at, is_active, created_at, plan, command_manager, trial_reactivated_at, nudge_opt_out, sd_agent, sd_attribution_method')
@@ -199,6 +201,12 @@ export default async function GebruikersPage({
         .select('user_id, plan, cyclus, status, opzegging_aangevraagd_at, created_at')
         .not('user_id', 'in', INTERNAL_TEST_USERS_IN).not('user_id', 'like', FAKE_DEMO_USER_LIKE)
         .order('id', { ascending: true }).range(van, tot)),
+    // Kosten van deze maand per gebruiker (lib/gebruikerKosten.ts). Een fout in de meting mag de pagina niet breken.
+    haalGebruikerKosten(supabase).catch((e): Map<string, GebruikerKosten> => {
+      console.error('[admin/gebruikers] kosten per gebruiker mislukt:', e instanceof Error ? e.message : e)
+      return new Map()
+    }),
+    getLiveFxRateEurUsd(),
   ])
 
   // TEAM-kolom (2026-08-24): tot nu toe toonde COMMAND alleen command_manager (de Team-
@@ -299,7 +307,8 @@ export default async function GebruikersPage({
       const clerkName = clerkPerId.get(u.user_id)?.naam ?? null
       const activity = sessionMap[u.user_id] ?? { count: 0, questions: 0, lastSession: null, recentCount: 0 }
       const healthBucket = getHealthBucket(u.user_id, activity.lastSession)
-      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0, healthBucket }
+      const kosten = kostenPerUser.get(u.user_id) ?? null
+      return { ...u, imageUrl, clerkName, ...activity, coachingCount: coachingMap[u.user_id] ?? 0, analysesCount: analysesMap[u.user_id] ?? 0, refSignups: referralSignups[u.user_id] ?? 0, refConverted: referralConverted[u.user_id] ?? 0, healthBucket, kosten }
     })
   )
 
@@ -319,6 +328,7 @@ export default async function GebruikersPage({
     if (sort === 'analyses') { av = a.analysesCount; bv = b.analysesCount }
     if (sort === 'actief') { av = a.recentCount; bv = b.recentCount }
     if (sort === 'plan') { av = a.plan || ''; bv = b.plan || '' }
+    if (sort === 'kosten') { av = a.kosten?.totaalUsd ?? 0; bv = b.kosten?.totaalUsd ?? 0 }
     if (sort === 'command_manager') {
       const teamRank = (u: typeof a) => u.command_manager ? 2 : (teamRoleMap.get(u.user_id) === 'member' ? 1 : 0)
       av = teamRank(a); bv = teamRank(b)
@@ -339,7 +349,12 @@ export default async function GebruikersPage({
     return 0
   })
 
-  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 80px 140px 60px 60px 90px 50px 80px'
+  const cols = '44px minmax(140px,1fr) 120px 80px 70px 100px 75px 75px 75px 85px 75px 80px 140px 60px 60px 90px 50px 80px'
+
+  // Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md), alleen om de kostenkolom te kleuren: de echte factuur kan
+  // afwijken (proefperiode, maandbetaling, korting). Boven de helft van de prijs is oranje, boven de hele prijs rood.
+  const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 39, team: 49 }
+  const usdNaarEur = (usd: number) => usd / fx.rate
 
   // BELLIJST: wie loopt de proef binnen 7 dagen af en heeft minder dan 3 vragen gesteld. Dat zijn
   // de mensen om zelf te bellen of te mailen voor het te laat is.
@@ -422,6 +437,7 @@ export default async function GebruikersPage({
           <SortHeader label="ANALYSES" field="analyses" sort={sort} dir={dir} vertical />
           <SortHeader label="GEZONDHEID" field="gezondheid" sort={sort} dir={dir} vertical />
           <SortHeader label="PLAN" field="plan" sort={sort} dir={dir} vertical />
+          <SortHeader label="KOSTEN MND" field="kosten" sort={sort} dir={dir} vertical />
           <SortHeader label="TEAM" field="command_manager" sort={sort} dir={dir} vertical />
           <SortHeader label="SD AGENT" field="sd_agent" sort={sort} dir={dir} vertical />
           <SortHeader label="REF IN" field="refsignups" sort={sort} dir={dir} vertical />
@@ -512,6 +528,18 @@ export default async function GebruikersPage({
                 {/* Plan */}
                 <div style={{ textAlign: 'center' }}>
                   <PlanToggle userId={u.user_id} currentPlan={(u.plan as 'basis' | 'premium' | 'team') ?? 'basis'} />
+                </div>
+                {/* Kosten van deze maand (AI en spraak, ondergrens): kleur t.o.v. de referentieprijs van het plan */}
+                <div style={{ textAlign: 'center' }}>
+                  {(() => {
+                    const k = u.kosten
+                    if (!k || k.totaalUsd <= 0) return <p style={{ fontSize: '14px', color: '#374151' }}>-</p>
+                    const eur = usdNaarEur(k.totaalUsd)
+                    const prijs = REFERENTIE_PRIJS_EUR[u.plan ?? 'basis'] ?? 19
+                    const kleur = eur >= prijs ? '#cc4444' : eur >= prijs / 2 ? '#f59e0b' : '#f1f5f9'
+                    const split = `Anthropic €${usdNaarEur(k.anthropicUsd).toFixed(2)}, Voyage €${usdNaarEur(k.voyageUsd).toFixed(2)}, audio €${usdNaarEur(k.audioUsd).toFixed(2)}, voice €${usdNaarEur(k.voiceUsd).toFixed(2)}${k.zonderPrijs ? `, ${k.zonderPrijs} aanroepen zonder prijs` : ''}`
+                    return <p title={split} style={{ fontSize: '14px', fontWeight: 700, color: kleur }}>{euro(Math.round(eur * 100))}</p>
+                  })()}
                 </div>
                 {/* Team-status: command_manager blijft togglebaar (Team-tier-entitlement,
                     vóór teamaanmaak); een gewoon teamlid (geen eigen entitlement, wél in
