@@ -11,6 +11,12 @@ type Gebruiker = {
   naam: string
   email: string | null
   plan: string | null
+  betaald: boolean
+  actief: boolean
+  /** Laatste abonnement uit arnobot_subscriptions, bijvoorbeeld "Pro jaarlijks, actief". Leeg bij een gebruiker in zijn proef. */
+  abonnement: string | null
+  /** Netto omzet (zonder btw) in deze maand in centen, een jaarbetaling gespreid over 12 maanden. */
+  omzetCent: number
   testaccount: boolean
   berichten: number
   /** Berichten vanaf het begin van de meting: alleen daarvoor zijn kosten bekend. */
@@ -24,11 +30,12 @@ type Gebruiker = {
   perBron: BronRij[]
 }
 type Antwoord = {
+  maandVolledigGemeten: boolean
+  testers: { aantal: number; totaalUsd: number; berichten: number }
   meetStart: string | null
   maand: string
   maanden: string[]
   fxEurUsd: number
-  referentiePrijsEur: Record<string, number>
   gebruikers: Gebruiker[]
   platform: { totaalUsd: number; perBron: BronRij[] }
 }
@@ -74,7 +81,12 @@ export default function GebruikersKostenClient() {
   const eur = (usd: number) => usd / data.fxEurUsd
   const gebruiker = data.gebruikers.find(g => g.userId === gekozen) ?? null
   const totaalUsd = data.gebruikers.reduce((s, g) => s + g.totaalUsd, 0)
-  const prijs = (g: Gebruiker) => data.referentiePrijsEur[g.plan ?? 'basis'] ?? 19
+  // Geen aangenomen prijs: wat iemand betaalt hangt af van proef, cyclus, korting en tegoed. We tonen het echte abonnement en de echte betaling.
+  const statusTekst = (g: Gebruiker) => g.abonnement ?? (g.betaald ? 'betaald (geen abonnement gevonden)' : g.actief ? 'proef of gratis' : 'inactief')
+  const omzetTekst = (g: Gebruiker) => (g.omzetCent > 0 ? fmtEur(g.omzetCent / 100) : '-')
+  // Marge alleen als de hele maand gemeten is en er omzet is: anders staat er een volle maand omzet tegenover half gemeten kosten.
+  const margeEur = (g: Gebruiker): number | null => (data.maandVolledigGemeten && g.omzetCent > 0 ? g.omzetCent / 100 - eur(g.totaalUsd) : null)
+  const margeTekst = (g: Gebruiker) => { const m = margeEur(g); return m === null ? '-' : fmtEur(m) }
   const meetStartTekst = data.meetStart
     ? new Date(data.meetStart).toLocaleString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
     : 'nog niet'
@@ -102,8 +114,9 @@ export default function GebruikersKostenClient() {
           <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap', marginBottom: 18 }}>
             <div><div style={statLabel}>Totaal</div><div style={{ ...statValue, color: '#f59e0b' }}>{fmtUsd(gebruiker.totaalUsd)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{fmtEur(eur(gebruiker.totaalUsd))}</div></div>
             <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.gemetenBerichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.gemetenBerichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend, over {gebruiker.gemetenBerichten} gemeten berichten</div></div>
-            <div><div style={statLabel}>Referentieomzet</div><div style={statValue}>{fmtEur(prijs(gebruiker))}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>jaarprijs per maand</div></div>
-            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: prijs(gebruiker) - eur(gebruiker.totaalUsd) < 0 ? '#cc4444' : '#44cc88' }}>{gebruiker.gemetenBerichten > 0 || gebruiker.totaalUsd > 0 ? fmtEur(prijs(gebruiker) - eur(gebruiker.totaalUsd)) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>na AI en spraak, alleen gemeten deel</div></div>
+            <div><div style={statLabel}>Abonnement</div><div style={{ ...statValue, fontSize: 16 }}>{statusTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>uit de betaaladministratie</div></div>
+            <div><div style={statLabel}>Omzet {fmtMaand(data.maand)}</div><div style={statValue}>{omzetTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>netto zonder btw, jaarbetaling gedeeld door 12</div></div>
+            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.maandVolledigGemeten ? 'omzet min gemeten kosten' : 'pas als de hele maand gemeten is'}</div></div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead><tr><th style={{ ...th, textAlign: 'left' }}>Soort</th><th style={th}>Dollars</th><th style={th}>Euro</th></tr></thead>
@@ -129,18 +142,23 @@ export default function GebruikersKostenClient() {
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
             Totaal gemeten: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
             De meting loopt sinds {meetStartTekst}: berichten van daarvoor tellen mee in Berichten, maar niet in de kosten. Kolom Gemeten telt alleen berichten vanaf dat moment.
+            Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden. Marge verschijnt pas als de hele maand gemeten is.
           </p>
+          {data.testers.aantal > 0 && (
+            <p style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 14 }}>
+              Niet getoond: {data.testers.aantal} testers en testaccounts ({data.testers.berichten} berichten), samen {fmtUsd(data.testers.totaalUsd)} aan gemeten kosten. Die tellen niet mee in het totaal hierboven, maar wel in de Anthropic-Console.
+            </p>
+          )}
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 960 }}>
               <thead>
                 <tr>
                   <th style={{ ...th, textAlign: 'left' }}>Gebruiker</th><th style={th}>Plan</th><th style={th}>Berichten</th><th style={th}>Gemeten</th>
-                  <th style={th}>Anthropic</th><th style={th}>Voyage</th><th style={th}>Audio</th><th style={th}>Voice</th><th style={th}>Totaal</th><th style={th}>Marge ref.</th>
+                  <th style={th}>Anthropic</th><th style={th}>Voyage</th><th style={th}>Audio</th><th style={th}>Voice</th><th style={th}>Totaal</th><th style={{ ...th, textAlign: 'left' }}>Abonnement</th><th style={th}>Omzet mnd</th><th style={th}>Marge</th>
                 </tr>
               </thead>
               <tbody>
                 {data.gebruikers.map(g => {
-                  const marge = prijs(g) - eur(g.totaalUsd)
                   return (
                     <tr key={g.userId} onClick={() => setGekozen(g.userId)} style={{ cursor: 'pointer' }}>
                       <td style={{ ...td, textAlign: 'left' }}>{g.naam}{g.testaccount ? <span style={{ color: '#6b7280' }}> (test)</span> : null}</td>
@@ -152,11 +170,13 @@ export default function GebruikersKostenClient() {
                       <td style={td}>{fmtUsd(g.audioUsd)}</td>
                       <td style={td}>{fmtUsd(g.voiceUsd)}</td>
                       <td style={{ ...td, fontWeight: 700 }}>{fmtUsd(g.totaalUsd)}</td>
-                      <td style={{ ...td, color: marge < 0 ? '#cc4444' : '#94a3b8' }}>{g.plan && (g.gemetenBerichten > 0 || g.totaalUsd > 0) ? fmtEur(marge) : '-'}</td>
+                      <td style={{ ...td, textAlign: 'left', color: '#94a3b8', fontSize: 12.5 }}>{statusTekst(g)}</td>
+                      <td style={td}>{omzetTekst(g)}</td>
+                      <td style={{ ...td, color: (margeEur(g) ?? 0) < 0 ? '#cc4444' : '#94a3b8' }}>{margeTekst(g)}</td>
                     </tr>
                   )
                 })}
-                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={10}>Nog niets gemeten in deze maand.</td></tr>}
+                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={13}>Nog niets gemeten in deze maand.</td></tr>}
               </tbody>
             </table>
           </div>

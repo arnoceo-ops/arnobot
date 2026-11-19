@@ -7,9 +7,23 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { amsterdamMaandStart } from '@/lib/voiceLimiet'
 import { VOICE_USD_PER_1000_TEKENS } from '@/lib/maandKosten'
+import { MANUAL_TEST_USER_ID, isInternalTestUser } from '@/lib/internalTestAccounts'
 
-/** Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md): alleen om kosten af te zetten tegen de omzet, niet de echte factuur. */
+/** Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md): alleen om de kostenkolom in de admin te kleuren, niet de echte factuur. */
 export const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 39, team: 49 }
+
+/**
+ * Gebruikers die de Abacus-tab Gebruikers niet toont (besluit Arno 2026-11-19: "haal alle testers eruit behalve mijn eigen account en mijn
+ * testaccount"): de interne testaccounts en de nepleden uit de demo, behalve Arno's handmatige testaccount, plus externe testers op user-ID.
+ * Hun kosten verdwijnen niet: de tab toont ze als één regel, zodat het totaal naar de Anthropic-Console te herleiden blijft.
+ */
+export const ABACUS_EXTERNE_TESTERS_USER_IDS: readonly string[] = [
+  'user_3EiyfRK85W4Vx4ebqbxbTys79LC', // externe tester, Team Hippios
+]
+export function isTesterVoorAbacus(userId: string): boolean {
+  if (ABACUS_EXTERNE_TESTERS_USER_IDS.includes(userId)) return true
+  return isInternalTestUser(userId) && userId !== MANUAL_TEST_USER_ID
+}
 
 export type GebruikerKosten = {
   totaalUsd: number

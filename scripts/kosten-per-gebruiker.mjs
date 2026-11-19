@@ -3,7 +3,8 @@
  * OpenAI-dicteren, AssemblyAI; sinds de meting van 2026-11-19) en arnobot_elevenlabs_usage (tekens). Dezelfde bron als de kolom KOSTEN MND
  * op /bot/admin/gebruikers. Onderaan staat het totaal van alle gemeten rijen, ook die zonder gebruiker (crons, admin), om te vergelijken met
  * de Anthropic-Console (Cost, workspace van productie). Rijen zonder prijs (nieuw model, embedding zonder geverifieerd tarief) worden geteld.
- * De omzet per maand is een referentie (jaarprijs: Basic 19, Pro 39, Team 49), niet de echte factuur.
+ * Geen marge: de omzet per gebruiker is niet te raden (proef, cyclus, korting, tegoed). De Abacus-tab Gebruikers toont het echte abonnement en de
+ * echte betaling per maand.
  * Uitvoeren: node scripts/kosten-per-gebruiker.mjs [JJJJ-MM, standaard deze maand]
  */
 import { readFileSync, existsSync } from 'fs'
@@ -21,7 +22,6 @@ if (existsSync(envPad)) {
 
 const USD_NAAR_EUR = 0.92 // aanname, geen live koers
 const VOICE_USD_PER_1000 = 0.166
-const REFERENTIE_OMZET_EUR = { basis: 19, premium: 39, team: 49 }
 
 const maand = process.argv[2] ?? new Date().toISOString().slice(0, 7)
 const [jaar, mnd] = maand.split('-').map(Number)
@@ -81,7 +81,6 @@ const tabel = ids.map(id => {
   const u = info.get(id)
   const totaalUsd = g.anthropic + g.voyage + g.audio + g.voice
   const totaalEur = totaalUsd * USD_NAAR_EUR
-  const omzet = REFERENTIE_OMZET_EUR[u?.plan] ?? null
   return {
     gebruiker: `${(u?.voornaam ?? '?').slice(0, 12)} (${id.slice(-6)})`,
     plan: u?.plan ?? '?',
@@ -91,7 +90,6 @@ const tabel = ids.map(id => {
     'audio $': +g.audio.toFixed(3),
     'voice $': +g.voice.toFixed(3),
     'totaal EUR': +totaalEur.toFixed(2),
-    'marge ref EUR': omzet === null ? '-' : +(omzet - totaalEur).toFixed(2),
     'zonder prijs': g.zonderPrijs,
   }
 }).sort((a, b) => b['totaal EUR'] - a['totaal EUR'])
@@ -103,4 +101,4 @@ console.log('Vergelijk dit met de Anthropic-Console (Cost, productie-workspace, 
 if (zonderPrijsTotaal) console.log(`${zonderPrijsTotaal} aanroepen zonder bekend tarief (staan op nul).`)
 console.log('\nPer bron (dollars):')
 console.table([...perBron.entries()].sort((a, b) => b[1] - a[1]).map(([bron, usd]) => ({ bron, '$': +usd.toFixed(3) })))
-console.log('Let op: alleen wat gemeten wordt (sinds 2026-11-19). Een proefperiode of korting maakt de omzetkolom onbetrouwbaar. Dollar naar euro tegen 0,92 (aanname).')
+console.log('Let op: alleen wat gemeten wordt (sinds 2026-11-19). Dollar naar euro tegen 0,92 (aanname).')

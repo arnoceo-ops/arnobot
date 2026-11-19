@@ -535,7 +535,8 @@ export default async function GebruikersPage({
                     if (!k || k.totaalUsd <= 0) return <p style={{ fontSize: '14px', color: '#374151' }}>-</p>
                     const eur = usdNaarEur(k.totaalUsd)
                     const prijs = REFERENTIE_PRIJS_EUR[u.plan ?? 'basis'] ?? 19
-                    const kleur = eur >= prijs ? '#cc4444' : eur >= prijs / 2 ? '#f59e0b' : '#f1f5f9'
+                    // Kleuren alleen voor wie betaalt: een gebruiker in zijn proef levert geen omzet, dan is er niets om tegen af te zetten.
+                    const kleur = !u.paid_at ? '#f1f5f9' : eur >= prijs ? '#cc4444' : eur >= prijs / 2 ? '#f59e0b' : '#f1f5f9'
                     const split = `Anthropic €${usdNaarEur(k.anthropicUsd).toFixed(2)}, Voyage €${usdNaarEur(k.voyageUsd).toFixed(2)}, audio €${usdNaarEur(k.audioUsd).toFixed(2)}, voice €${usdNaarEur(k.voiceUsd).toFixed(2)}${k.zonderPrijs ? `, ${k.zonderPrijs} aanroepen zonder prijs` : ''}`
                     return <p title={split} style={{ fontSize: '14px', fontWeight: 700, color: kleur }}>{euro(Math.round(eur * 100))}</p>
                   })()}

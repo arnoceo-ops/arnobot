@@ -6,7 +6,8 @@ import { amsterdamMaandStart } from '@/lib/voiceLimiet'
 import { maandSleutel } from '@/lib/maandKosten'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
-import { REFERENTIE_PRIJS_EUR, somKostenPerGebruiker, type KostenRij } from '@/lib/gebruikerKosten'
+import { isTesterVoorAbacus, somKostenPerGebruiker, type KostenRij } from '@/lib/gebruikerKosten'
+import { nettoOmzetCentInMaand, type BetalingVoorOmzet } from '@/lib/maandOmzet'
 
 // Kosten per gebruiker per kalendermaand (Amsterdamse tijd) voor de Abacus-tab Gebruikers. Zelfde paginatoegang als de rest van Abacus.
 // Bron: arnobot_ai_gebruik (Anthropic, Voyage, OpenAI-dicteren, AssemblyAI) en arnobot_elevenlabs_usage. Met namen (besluit Arno 2026-11-19: geen pseudoniem).
@@ -81,11 +82,40 @@ export async function GET(req: NextRequest) {
 
     const ids = [...new Set([...perGebruiker.keys(), ...berichtenPerGebruiker.keys()])]
     const { data: profielen } = ids.length
-      ? await supabase.from('approved_users').select('user_id, voornaam, achternaam, full_name, email, plan').in('user_id', ids)
-      : { data: [] as { user_id: string; voornaam: string | null; achternaam: string | null; full_name: string | null; email: string | null; plan: string | null }[] }
+      ? await supabase.from('approved_users').select('user_id, voornaam, achternaam, full_name, email, plan, paid_at, is_active').in('user_id', ids)
+      : { data: [] as { user_id: string; voornaam: string | null; achternaam: string | null; full_name: string | null; email: string | null; plan: string | null; paid_at: string | null; is_active: boolean | null }[] }
     const profielPerId = new Map((profielen ?? []).map(p => [p.user_id, p]))
 
-    const gebruikers = ids.map(id => {
+    // Echte omzet in plaats van een aangenomen prijs (lib/maandOmzet.ts): netto zonder btw, een jaarbetaling gespreid over 12 maanden vanaf de
+    // maand van betalen, en het laatste abonnement. Een gebruiker in zijn proef heeft geen omzet en laat dat ook zo zien.
+    const omzetCent = new Map<string, number>()
+    const abonnement = new Map<string, string>()
+    if (ids.length) {
+      // Een jaarbetaling van tot 12 maanden terug draagt nog bij aan deze maand.
+      const [jaarMaand, maandNummer] = maand.split('-').map(Number)
+      const betaaldVanaf = new Date(Date.UTC(jaarMaand, maandNummer - 1 - 12, 1)).toISOString()
+      const [betalingen, abonnementen] = await Promise.all([
+        haalAlleRijen<{ user_id: string } & BetalingVoorOmzet>((van, tot) =>
+          supabase.from('arnobot_payments').select('user_id, bedrag_cent, btw_cent, terugbetaald_cent, betaald_at, subscription_id')
+            .in('user_id', ids).eq('status', 'paid').gte('betaald_at', betaaldVanaf).lt('betaald_at', eind).order('id', { ascending: true }).range(van, tot)),
+        haalAlleRijen<{ id: string; user_id: string; plan: string; cyclus: string; status: string; created_at: string }>((van, tot) =>
+          supabase.from('arnobot_subscriptions').select('id, user_id, plan, cyclus, status, created_at')
+            .in('user_id', ids).order('id', { ascending: true }).range(van, tot)),
+      ])
+      const aboPerId = new Map(abonnementen.map(a => [a.id, a]))
+      for (const b of betalingen) {
+        const abo = b.subscription_id ? aboPerId.get(b.subscription_id) : undefined
+        const bedrag = nettoOmzetCentInMaand(b, abo, maand)
+        if (bedrag > 0) omzetCent.set(b.user_id, (omzetCent.get(b.user_id) ?? 0) + bedrag)
+      }
+      const ABO_STATUS: Record<string, string> = { active: 'actief', ended: 'beëindigd', refunded: 'terugbetaald', abandoned: 'niet afgerond', pending: 'wacht op betaling', cancelled: 'opgezegd', suspended: 'geschorst' }
+      for (const s of [...abonnementen].sort((x, y) => y.created_at.localeCompare(x.created_at))) {
+        if (abonnement.has(s.user_id)) continue
+        abonnement.set(s.user_id, `${s.plan === 'premium' ? 'Pro' : s.plan === 'team' ? 'Team' : 'Basic'} ${s.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'}, ${ABO_STATUS[s.status] ?? s.status}`)
+      }
+    }
+
+    const alleGebruikers = ids.map(id => {
       const p = profielPerId.get(id)
       const naam = [p?.voornaam, p?.achternaam].filter(Boolean).join(' ') || p?.full_name || p?.email || id.slice(-8)
       const k = perGebruiker.get(id)
@@ -94,6 +124,10 @@ export async function GET(req: NextRequest) {
         naam,
         email: p?.email ?? null,
         plan: p?.plan ?? null,
+        betaald: !!p?.paid_at,
+        actief: p?.is_active ?? false,
+        abonnement: abonnement.get(id) ?? null,
+        omzetCent: Math.round(omzetCent.get(id) ?? 0),
         testaccount: isInternalTestUser(id),
         berichten: berichtenPerGebruiker.get(id) ?? 0,
         gemetenBerichten: gemetenBerichtenPerGebruiker.get(id) ?? 0,
@@ -107,13 +141,19 @@ export async function GET(req: NextRequest) {
       }
     }).sort((a, b) => b.totaalUsd - a.totaalUsd)
 
+    // Testers verdwijnen uit de lijst maar hun kosten blijven zichtbaar als één regel (anders klopt het totaal niet meer met de Console).
+    const gebruikers = alleGebruikers.filter(g => !isTesterVoorAbacus(g.userId))
+    const testers = alleGebruikers.filter(g => isTesterVoorAbacus(g.userId))
+
     return NextResponse.json({
       maand,
       maanden: laatsteMaanden(6),
       meetStart,
+      // Marge alleen tonen als de hele maand gemeten is: anders staat er een volle maand omzet tegenover een half gemeten maand kosten.
+      maandVolledigGemeten: meetStart !== null && meetStart <= start,
       fxEurUsd: fx.rate,
-      referentiePrijsEur: REFERENTIE_PRIJS_EUR,
       gebruikers,
+      testers: { aantal: testers.length, totaalUsd: testers.reduce((s, g) => s + g.totaalUsd, 0), berichten: testers.reduce((s, g) => s + g.berichten, 0) },
       platform: { totaalUsd: [...platform.values()].reduce((s, v) => s + v.usd, 0), perBron: naarLijst(platform) },
     })
   } catch (err) {
