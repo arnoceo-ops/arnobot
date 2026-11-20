@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useIsTouch } from '@/hooks/useBreakpoint'
+import { useIsTouch, useIsTelefoonOfTablet } from '@/hooks/useBreakpoint'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { useAuth, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
@@ -251,6 +251,8 @@ const OPNAME_SPRAAK_DREMPEL = 8
 
 export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle, taglineSub, resumeSessionId, voornaam = null, mode = 'gesprek', plan = 'premium', groeibalans = null, voorinstelling = null }: Props) {
   const isMobile = useIsTouch()
+  // Voor het blokkeren van UITGEBREID: een touchscreen-laptop is geen telefoon (Chris, Edge, 20-11).
+  const isTelefoonOfTablet = useIsTelefoonOfTablet()
   // In de Android-app geen koop-, upgrade- of prijsverwijzingen (Google Play-betalingsbeleid).
   const isNativeApp = useIsNativeApp()
   const { signOut } = useClerk()
@@ -2728,7 +2730,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                       // een keer afgedwongen (app/api/chat/route.ts), dit is puur UI-gedrag.
                       // Op een aanraakscherm (telefoon, tablet) alleen KORT en NORMAAL: uitgebreid
                       // werk en de volledige samenvatting horen op de pc-versie.
-                      if (optie === 'uitgebreid' && isMobile) {
+                      if (optie === 'uitgebreid' && isTelefoonOfTablet) {
                         setToonPcMelding(true)
                         return
                       }
