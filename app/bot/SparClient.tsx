@@ -1853,7 +1853,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         }
 
         /* HERO — geen foto meer. Desktop/laptop: titel + subtekst naast elkaar, subtekst even
-           hoog als de titelletters. Mobiele app (pointer:coarse): gestapeld, ongewijzigd. */
+           hoog als de titelletters. Mobiele app (aanraakscherm onder 1024 px, zelfde grens als useIsTouch): gestapeld, ongewijzigd. */
         .spar-hero {
           display: flex;
           flex-direction: column;
@@ -1885,7 +1885,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           max-width: 100%;
           border-bottom: 2px solid #f59e0b;
         }
-        @media (pointer: coarse) {
+        @media (pointer: coarse) and (max-width: 1023.98px) {
           .spar-hero { text-align: center; }
           .hero-text { flex-direction: column; align-items: center; gap: clamp(10px, 1.5vw, 20px); }
           .spar-title { font-size: clamp(72px, 14vw, 140px); }
@@ -1942,7 +1942,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           text-decoration: none;
         }
         .voorbeeldvragen-link:hover { color: #f1f5f9; }
-        @media (pointer: coarse) {
+        @media (pointer: coarse) and (max-width: 1023.98px) {
           .voorbeeldvragen-link-wrap { display: none; }
         }
 
@@ -2015,7 +2015,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           white-space: nowrap;
           flex-shrink: 0;
         }
-        @media (pointer: coarse) {
+        @media (pointer: coarse) and (max-width: 1023.98px) {
           .groeibalans-wrap { display: none; }
         }
         @media (max-width: 700px) {
