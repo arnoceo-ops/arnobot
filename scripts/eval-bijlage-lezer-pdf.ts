@@ -10,7 +10,6 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-lezer-pdf.ts <uitvoermap> <grafiek.pdf> [herhalingen]
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
-import { begrens } from './evalBudget'
 import type AnthropicSdk from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
@@ -143,7 +142,7 @@ async function main() {
   const herhalingen = Number(process.argv[4] ?? 3)
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
-  const client = begrens(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }))
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const system = buildRdsSystemPrompt(GEHEUGEN, BLOG, 0, 'normaal', 5)
   // Varianten van het hulpmiddel: basis = ronde 2; vertrouwen = het resultaat nadrukkelijk als de inhoud van het document van de gebruiker voorgesteld.
   const leesTool = (v: string): AnthropicSdk.Messages.Tool => ({

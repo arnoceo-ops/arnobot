@@ -72,4 +72,3 @@ next-env.d.ts
 # Tresorit: lokale synchronisatie-instellingen van deze computer.
 /.tresorit/
 data/eval-cijfers-*.json
-scripts/.eval-kosten.json

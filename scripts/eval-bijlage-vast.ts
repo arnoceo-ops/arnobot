@@ -11,7 +11,6 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-vast.ts <uitvoermap>
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
-import { begrens } from './evalBudget'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {
@@ -63,7 +62,7 @@ async function main() {
   const map = process.argv[2] ?? 'data'
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
-  const client = begrens(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }))
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const tekst = groteTekst()
   const doc = (cc: boolean) => ({
     type: 'document' as const,

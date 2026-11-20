@@ -12,7 +12,6 @@
  * Weggeschreven resultaat bevat per vraag alleen een nummer, de scores en de korte redenen van de beoordelaar, geen vraagtekst.
  */
 import { readFileSync, writeFileSync } from 'fs'
-import { begrens } from './evalBudget'
 import Anthropic from '@anthropic-ai/sdk'
 
 for (const l of readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
@@ -76,7 +75,7 @@ async function main() {
   const { getRelevantChunksMultiQuery, formatChunksForPrompt } = await import('../lib/rag')
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const anthropic = begrens(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }))
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const { data, error } = await db.from('arnobot_rds_logs').select('question').gte('created_at', new Date(Date.now() - 45 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(400)
   if (error) throw new Error(`vragen ophalen mislukt: ${error.message}`)
