@@ -16,6 +16,7 @@
  * Env: ALINEAS=1100 (groter document), ALLEEN_LEZER=1 (alleen de lezer, geen duur vergelijk met het hele document).
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import { begrens } from './evalBudget'
 import type AnthropicSdk from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
@@ -83,7 +84,7 @@ async function main() {
   const map = process.argv[2] ?? 'data'
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = begrens(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }))
   const tekst = groteTekst()
   const doc = (cc: boolean) => ({
     type: 'document' as const,

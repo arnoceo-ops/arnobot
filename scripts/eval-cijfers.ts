@@ -13,6 +13,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-cijfers.ts <label> [herhalingen]
  * Schrijft data/eval-cijfers-<label>.json. Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import { begrens } from './evalBudget'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {
@@ -221,7 +222,7 @@ async function main() {
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
   const tools = await import('../lib/rekenTool')
-  const client = new Anthropic()
+  const client = begrens(new Anthropic())
 
   // EVAL_BASIS=1: alleen de oorspronkelijke rekentool, voor de vergelijking vóór de wijziging.
   const toolLijst = process.env.EVAL_BASIS ? [tools.REKEN_TOOL] : (tools as any).CHAT_REKENTOOLS ?? [tools.REKEN_TOOL]

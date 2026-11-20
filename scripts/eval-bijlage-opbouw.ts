@@ -16,6 +16,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-opbouw.ts <label> [herhalingen] [uitvoermap]
  * Roept alleen de Anthropic-API aan (ongeveer 20 aanroepen bij 2 herhalingen, orde 50 cent), schrijft niets naar Supabase.
  */
+import { begrens } from './evalBudget'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {
@@ -110,7 +111,7 @@ async function main() {
   const Anthropic = (await import('@anthropic-ai/sdk')).default
   const { buildRdsSystemPrompt } = await import('../lib/systemPrompt')
   const { GRENSGEVAL_INSTRUCTIE } = await import('../lib/moderatie')
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = begrens(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }))
 
   const uit: Uitslag[] = []
   const alleenCases = (process.env.CASES ?? "").split(",").filter(Boolean)
