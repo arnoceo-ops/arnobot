@@ -14,34 +14,24 @@ export function useIsMobile(breakpoint = 768) {
   return isMobile
 }
 
-// Detecteert touch-apparaten op invoertype, niet schermbreedte.
-// pointer: coarse = vinger/stylus als primair invoerapparaat (telefoon, tablet).
-export function useIsTouch() {
+// Telefoon of kleine tablet: aanraakscherm (pointer: coarse) ÉN een smal scherm (onder maxBreedte).
+// Alleen pointer: coarse is te grof: een touchscreen-laptop (2-in-1, Edge op Windows) meldt zich ook
+// als coarse pointer en kreeg daardoor de mobiele app (andere SLUIT-flow, lay-out, toetsenbord).
+// Een tablet in landscape (1024 px of breder) telt als desktop.
+export function useIsTouch(maxBreedte = 1024) {
   const [isTouch, setIsTouch] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(pointer: coarse)')
-    setIsTouch(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsTouch(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  return isTouch
-}
-
-// Telefoon of kleine tablet: aanraakscherm ÉN smal scherm. Alleen pointer: coarse is te grof,
-// want een touchscreen-laptop (2-in-1, Edge op Windows) meldt zich ook als coarse pointer.
-export function useIsTelefoonOfTablet(maxBreedte = 1024) {
-  const isTouch = useIsTouch()
-  const [smal, setSmal] = useState(false)
-
-  useEffect(() => {
-    const check = () => setSmal(window.innerWidth < maxBreedte)
+    const check = () => setIsTouch(mq.matches && window.innerWidth < maxBreedte)
     check()
+    mq.addEventListener('change', check)
     window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    return () => {
+      mq.removeEventListener('change', check)
+      window.removeEventListener('resize', check)
+    }
   }, [maxBreedte])
 
-  return isTouch && smal
+  return isTouch
 }
