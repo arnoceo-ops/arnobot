@@ -13,6 +13,10 @@ export type ChatVerbruik = {
   aanroepen: number
   /** Aantal bijlageblokken (PDF, afbeelding) dat in deze beurt meeging. */
   bijlagen: number
+  /** Antwoordlengte die de server toepaste (KORT, NORMAAL of UITGEBREID). Ontbreekt bij beurten van voor 2026-11-20. */
+  lengte?: 'kort' | 'normaal' | 'uitgebreid'
+  /** Alleen gezet als de gebruiker iets anders vroeg dan de server toepaste (UITGEBREID aangeklikt zonder Pro). */
+  gevraagd?: string
   /** Alleen bij een beurt via de lezer (lib/documentLezer.ts): het verbruik van die aparte, goedkopere aanroepen (ander model, ander tarief). */
   lezer?: { invoer: number; cache_schrijven: number; cache_lezen: number; uitvoer: number; aanroepen: number }
 }

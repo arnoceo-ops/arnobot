@@ -26,6 +26,7 @@ type LogRow = {
   session_id: string
   user_id?: string
   feedback?: string | null
+  verbruik?: { lengte?: 'kort' | 'normaal' | 'uitgebreid'; gevraagd?: string } | null
 }
 
 function fmtDate(iso: string): string {
@@ -493,6 +494,8 @@ export default async function ArnoBotAdminPage({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
                         {nlTijdTekst(msg.created_at)}
+                        {msg.verbruik?.lengte && ` · ${msg.verbruik.lengte.toUpperCase()}`}
+                        {msg.verbruik?.gevraagd && ` (gevraagd: ${msg.verbruik.gevraagd.toUpperCase()}, niet toegekend)`}
                       </p>
                       {msg.feedback && (
                         <p style={{ fontSize: '12px', letterSpacing: '2px', margin: 0, color: msg.feedback === 'neg' ? '#cc4444' : '#44cc88' }}>

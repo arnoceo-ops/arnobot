@@ -639,6 +639,9 @@ export async function POST(req: NextRequest) {
           const lezer = lezerBron
           const verbruik = maakVerbruik(bijlageBlokken.length + (lezer ? lezer.blokken.length + lezer.tekstDelen.length : 0))
           telOp(verbruik, finalMessage.usage)
+          // Welke lengte de gebruiker koos, zodat in de admin te zien is of UITGEBREID echt gebruikt wordt (geen aparte kolom nodig).
+          verbruik.lengte = antwoordLengte
+          if (rawLengte !== antwoordLengte) verbruik.gevraagd = typeof rawLengte === 'string' ? rawLengte.slice(0, 20) : 'onbekend'
           // Het hulpmiddel lees_document: één aparte, goedkopere aanroep (Haiku) over de documenten van dit gesprek, met de eerdere
           // vragen van de gebruiker erbij. Een fout kost nooit de beurt: het model hoort dat het lezen niet lukte en zegt dat eerlijk.
           const lezerUitvoeren: string[] = []
