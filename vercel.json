@@ -117,6 +117,10 @@
       "schedule": "0 8 25-29 11 *"
     },
     {
+      "path": "/api/cron/tabelgebruik-meting-nov",
+      "schedule": "0 7 27 11 *"
+    },
+    {
       "path": "/api/cron/sessies-afsluiten",
       "schedule": "40 * * * *"
     },
