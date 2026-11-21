@@ -499,7 +499,7 @@ export async function POST(req: NextRequest) {
             maandStand = beoordeelMaandKosten(maandKosten.totaalUsd, plan)
             if (maandStand !== 'ok') await meldEenmaligPerMaand(redis, notifyTelegram, userId, plan, maandKosten)
           } catch (e) {
-            Sentry.captureException(e, { tags: { onderdeel: 'maandkosten' }, level: 'warning' })
+            Sentry.captureException(e, { tags: { onderdeel: 'maandkosten' }, level: 'error' })
           }
         }
         const samengesteld = maandStand === 'rem' ? null : await stelBijlagenSamen(rijen, rij => laadBijlage(supabase, userId, rij))

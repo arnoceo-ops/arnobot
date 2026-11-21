@@ -19,7 +19,7 @@ export async function limietVeilig(limiter: Ratelimit, identifier: string): Prom
     // Hooguit één Sentry-melding per minuut, anders vult een storing de quota.
     if (Date.now() - laatsteMelding > 60_000) {
       laatsteMelding = Date.now()
-      Sentry.captureException(e, { tags: { onderdeel: 'ratelimit-upstash' }, level: 'warning' })
+      Sentry.captureException(e, { tags: { onderdeel: 'ratelimit-upstash' }, level: 'error' })
     }
     return { success: true }
   }

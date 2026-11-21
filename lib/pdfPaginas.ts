@@ -22,7 +22,7 @@ export async function telPdfPaginas(buffer: Buffer): Promise<number | null> {
       await parser.destroy().catch(() => {})
     }
   } catch (e) {
-    Sentry.captureException(e, { tags: { onderdeel: 'pdf-paginas-tellen' }, level: 'warning' })
+    Sentry.captureException(e, { tags: { onderdeel: 'pdf-paginas-tellen' }, level: 'error' })
     return null
   }
 }
