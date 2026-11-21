@@ -19,7 +19,9 @@ Sentry.init({
 
   // Zie sentry.server.config.ts: scanner-ruis op een gegokte Next-Action-header hier filteren
   // i.p.v. in proxy.ts blokkeren, dat brak eerder @clerk/nextjs's eigen signOut()-actie.
-  ignoreErrors: [/Failed to find Server Action/],
+  // 2026-11-21: ook twee Next.js-meldingen die uit scanners en afgebroken verbindingen komen (kapotte router-state-header, client die
+  // het RSC-verzoek afbreekt) en nooit door een gebruiker te verhelpen zijn: elk nieuw patroon was een nieuwe Sentry-mail.
+  ignoreErrors: [/Failed to find Server Action/, /The router state header was sent but could not be parsed/, /^Connection closed.?$/],
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
