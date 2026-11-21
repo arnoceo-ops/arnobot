@@ -49,6 +49,20 @@ Eva Peters | 2.100.000 | 2.400.000 | -300.000 | 2.050.000 | 50.000
 Frans Kok | 900.000 | 1.500.000 | -600.000 | 1.300.000 | -400.000
 Totaal | 12.400.000 | 14.950.000 | -2.550.000 | 13.400.000 | -1.000.000`
 
+// Twee bijlagen met dezelfde kolommen maar andere cijfers (20 november: een gebruiker plakte eerst een oudere en later
+// de actuele tabel, en ArnoBot noemde de heel-jaar-delta van de oude tabel als "groei YTD"). Verzonnen gegevens.
+const KOP2 = 'Account Manager | This Year | Last Year | Δ TY-LY | Last Year YTD | Δ TY-LY YTD | B Margin % TY | B Margin % LY'
+const TABEL_OUD = `${KOP2}
+Jan Jansen | 2.270.000 | 1.900.000 | 370.000 | 2.000.000 | 270.000 | 47,1% | 47,1%
+Piet Pieters | 3.000.000 | 3.600.000 | -600.000 | 3.300.000 | -300.000 | 41,0% | 40,7%
+Totaal | 5.270.000 | 5.500.000 | -230.000 | 5.300.000 | -30.000 | 43,6% | 43,5%`
+const TABEL_NIEUW = `${KOP2}
+Jan Jansen | 2.050.000 | 1.900.000 | 150.000 | 1.890.000 | 160.000 | 47,0% | 47,1%
+Piet Pieters | 3.100.000 | 3.600.000 | -500.000 | 3.250.000 | -150.000 | 41,2% | 40,7%
+Totaal | 5.150.000 | 5.500.000 | -350.000 | 5.140.000 | 10.000 | 43,4% | 43,5%`
+const VOLLEDIG_DOEL = 'Ik ben Jan Jansen. Ik wil 10% groei op vorig jaar halen nog dit jaar.'
+const ANTWOORD_OUD = 'Je staat op 2.270.000 en vorig jaar was het 1.900.000. Je zit al boven je doel van 2.090.000.'
+
 const KOLOM_GENOEMD = ['ytd', 'tot nu toe', 'dezelfde periode', 'heel vorig jaar', 'hele vorige jaar', 'volledig vorig jaar', 'heel jaar', 'hele jaar', 'volledige jaar']
 
 const OPEN =`[Bijlage: dashboard.png]\n${TABEL}\n\nIk ben Jan Jansen. Analyseer mijn omzet en de omzet van het team. Ik wil 10% groei op vorig jaar halen nog dit jaar. Hoe ver ben ik?`
@@ -93,6 +107,38 @@ const CASES: Case[] = [
     gesprek: [{ role: 'user', content: `[Bijlage: dashboard.png]\n${TABEL2}\n\nHoe staat het team ervoor, groeit of krimpt het, en wie is de grootste daler?` }],
     moet: [['carla'], KOLOM_GENOEMD],
     nooit: ['grootste daler is frans', 'grootste daler is bram'],
+  },
+  {
+    id: 'twee-bijlagen-ytd',
+    omschrijving: 'Twee bijlagen in een bericht (oud en actueel): groei YTD komt uit de actuele tabel, niet de heel-jaar-delta van de oude',
+    gesprek: [{ role: 'user', content: `[Bijlage: gisteren.png]\n${TABEL_OUD}\n\n[Bijlage: vandaag.png]\n${TABEL_NIEUW}\n\nDe eerste bijlage is van gisteren, de tweede zijn de actuele cijfers van vandaag. Hoeveel groei heb ik YTD, volgens de actuele cijfers?` }],
+    moet: [['160000']],
+    nooit: ['370000', '270000'],
+  },
+  {
+    id: 'twee-bijlagen-vervolg',
+    omschrijving: 'Eerst een tabel, later in het gesprek een actuele tabel: het antwoord gebruikt alleen de nieuwe cijfers',
+    gesprek: [
+      { role: 'user', content: `[Bijlage: gisteren.png]\n${TABEL_OUD}\n\n${VOLLEDIG_DOEL} Hoe sta ik ervoor?` },
+      { role: 'assistant', content: ANTWOORD_OUD },
+      { role: 'user', content: `[Bijlage: vandaag.png]\n${TABEL_NIEUW}\n\nHier zijn de actuele cijfers van vandaag. Wat is mijn groei YTD en hoe sta ik ten opzichte van mijn doel?` },
+    ],
+    moet: [['160000']],
+    nooit: ['370000', '270000', '2270000'],
+  },
+  {
+    id: 'twee-marge-richting',
+    omschrijving: 'Marge 47,0% tegenover 47,1%: dat is een lichte daling, geen stijging',
+    gesprek: [{ role: 'user', content: `[Bijlage: vandaag.png]\n${TABEL_NIEUW}\n\nHoe is mijn brutomarge veranderd ten opzichte van vorig jaar?` }],
+    moet: [['47.0', '47'], ['daling', 'gedaald', 'lager', 'gezakt', 'afgenomen', 'iets minder', 'teruggelopen']],
+    nooit: ['marge is gestegen', 'marge gestegen', 'marge steeg', 'jouw marge is verbeterd', 'je marge is verbeterd', 'je marge verbeterd', 'gestegen van 47.1', 'gestegen naar 47.0'],
+  },
+  {
+    id: 'twee-orders-doel',
+    omschrijving: 'Stand plus verwachte orders tegen een groeidoel op vorig jaar, met een actuele tabel',
+    gesprek: [{ role: 'user', content: `[Bijlage: vandaag.png]\n${TABEL_NIEUW}\n\n${VOLLEDIG_DOEL} Er komt nog een order van 50k aan en ik verwacht nog 30k. Waar kom ik dan uit, en hoe ver ben ik van mijn doel?` }],
+    moet: [['2130000'], ['2090000'], ['40000']],
+    nooit: ['2255000'],
   },
   {
     id: 'ytd',
