@@ -74,7 +74,7 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { maakVerbruik, telOp, telOpLezer } from '@/lib/chatVerbruik'
+import { maakVerbruik, telOp, telOpLezer, telTool } from '@/lib/chatVerbruik'
 import { haalMaandKosten, beoordeelMaandKosten, bouwRemTekst, maandKostenUitgezonderd, meldEenmaligPerMaand, type MaandStand } from '@/lib/maandKosten'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { LEES_DOCUMENT_TOOL, LEES_DOCUMENT_TOOL_NAAM, bijlageRegelVoorLezer, kiesLezer, leesDocumenten, lezerBeschikbaarVoor, type LezerBron } from '@/lib/documentLezer'
@@ -686,6 +686,7 @@ export async function POST(req: NextRequest) {
                       const r = tu.name === LEES_DOCUMENT_TOOL_NAAM
                         ? await voerLeesDocumentUit(tu.input)
                         : voerToolUit(tu.name, tu.input, tabelStaat)
+                      telTool(verbruik, tu.name, tu.input, r.isError)
                       return { type: 'tool_result' as const, tool_use_id: tu.id, content: r.content, is_error: r.isError }
                     })),
                   }]
