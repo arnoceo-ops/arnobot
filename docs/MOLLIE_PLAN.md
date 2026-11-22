@@ -110,6 +110,7 @@ Code staat klaar in `lib/billing/moneybird.ts` (client en pure bouwstenen, 7 uni
 | Prijs | Server berekent altijd uit `lib/kostenTarieven.ts`; nooit een bedrag van de client | n.v.t. |
 | BTW | Alleen NL (21%): particulier betaalt het getoonde bedrag, zakelijk bedrag plus 21% | EU-verlegging: pas als er buiten NL wordt verkocht |
 | Terugbetaling | Volledig binnen 14 dagen na eerste betaling (alleen consumenten), admin-actie | Automatisch via knop voor de gebruiker: eerst ervaring opdoen |
+| Uitbetaling (gezien 2026-11-22) | Automatisch elke vrijdag (Mollie, Balans, tandwiel, Uitbetaalfrequentie). Alleen de **beschikbare** balans wordt uitbetaald; een betaling staat eerst "in afwachting" tot de beschikbaarheidsdatum (per betaling te zien: Sales, de betaling, "Beschikbaar in balans op"). Creditcard: betaling van 17 november was pas beschikbaar op 23 november (6 dagen), dus niet uitbetaald op vrijdag 20 november maar op 27 november (€228,00 minus €5,27 kosten = €222,73). Wachttijden per methode: [Mollie-docs](https://docs.mollie.com/docs/balance), iDEAL direct, creditcard ongeveer 4 werkdagen, SEPA-incasso ongeveer 9. Een extra uitbetaling kan met "Betaal uit" op de balanspagina zodra het geld beschikbaar is (knop niet geprobeerd, kosten onbekend) | Frequentie verhogen om sneller geld te zien: de frequentie bepaalt alleen wanneer beschikbaar geld naar de bank gaat, niet wanneer het beschikbaar wordt. "Geld op vrijdag in afwachting maar niet uitbetaald" is dus normaal, geen fout |
 
 ## Datamodel
 
