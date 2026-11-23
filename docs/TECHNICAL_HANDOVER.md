@@ -221,7 +221,7 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 
 | Route | Doel |
 |---|---|
-| `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de regel voor eigen plannen: vragen eerst en onderdeel voor onderdeel, zonder weigering (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed |
+| `/api/chat` | Hoofdgesprek met ArnoBot (streaming). Bij `stop_reason: max_tokens` volgt automatisch één vervolgstream in dezelfde respons. Persona en regels in `lib/systemPrompt.ts`, o.a. de regel voor eigen plannen: vragen eerst en onderdeel voor onderdeel, zonder weigering (sectie EIGEN PLANNEN EN DOCUMENTEN) en "één richting, geen draaiboek". Plangegevens komen als feiten met voorvoegsel "Plan:" in `arnobot_blog_sessions.feiten` (gezet door `session-end`) en worden via `planHistorieBlok` in `lib/analyseContext.ts` aan analyses en coaching gevoed. PDF's en grotere Word-bestanden leest ArnoBot desgevraagd via het hulpmiddel `lees_document` (apart, verplicht Haiku-aanroep, `lib/documentLezer.ts`), sinds 19 november live voor alle gebruikers |
 | `/api/chat-voice` | Voice-variant van het hoofdgesprek (eigen rate limit + plancheck) |
 | `/api/bot/session-end` | Synthese aan einde gesprek (titel/samenvatting/feiten/uitdaging/entiteiten) |
 | `/api/admin/geheugen-preview` | Toont exact de geheugen- en gebruikerscontext die de hoofdchat voor een gebruiker in de prompt zet (zelfde code, `lib/geheugenContext.ts`), zonder model-aanroep en zonder writes. Alleen met admin-cookie. Optioneel `negeerSessieIds` om een eerder moment na te spelen. Gebruikt door `scripts/check-geheugen-oud.mjs` |
@@ -597,6 +597,9 @@ RAG-kennisbank-vectorstore (`content`, `context`, `url`, `embedding`), embed-mod
 ### `arnobot_elevenlabs_usage`
 Per-gebruiker character-count-verbruik voor ElevenLabs TTS (quota + kostenbewaking).
 
+### `arnobot_ai_gebruik`
+Eén rij per AI-aanroep: gebruiker, bron, model/leverancier en tokens of hoeveelheid, voor Anthropic (via `maakAnthropic()`) én Voyage, OpenAI-dicteren en AssemblyAI (`lib/aiGebruik.ts` / `lib/externGebruik.ts`). Basis voor de kosten per gebruiker op `/bot/admin/gebruikers` en de Abacus-tab Gebruikers.
+
 ### `arnobot_blog_posts` / `arnobot_blog_subscribers` / `arnobot_blog_deliveries`
 De publieke blog (SQL: `docs/sql/2026-10-10-blog.sql`, RLS aan zonder policies, alleen service-role). **Posts:** `slug` (uniek), `title`, `summary`, `body_md` (Markdown), `cover_image_url`, `tags` (array, genormaliseerd, GIN-index), `status` (`draft`/`scheduled`/`published`), `publish_at`, `published_at`, `notify_subscribers`, `notified_at` (eenmalig versturen). **Abonnees:** `email` (unieke index op `lower(email)`), `status` (`pending`/`confirmed`/`unsubscribed`), `topics` (ongebruikt sinds 10 oktober: abonneren is altijd op alle posts, de kolom is niet meer in gebruik), `voornaam` (verplicht bij nieuwe aanmeldingen, strikte allowlist van tekens want de waarde komt ongeescaped in de mail-HTML, voor de aanhef "Hey, {voornaam}."; SQL `docs/sql/2026-10-10-blog-voornaam.sql`), `confirm_token`, `unsubscribe_token`, geen IP-opslag, de bevestigingsklik (`confirmed_at`) is het toestemmingsbewijs. **Bezorgingen:** een rij per post per abonnee (`unique(post_id, subscriber_id)`), `queued`/`sent`/`failed`, `attempts`, `resend_id`. Dit maakt versturen idempotent en laat het dagbudget de wachtrij over dagen verdelen. Afbeeldingen in de publieke Storage-bucket `blog-images`. Publieke pagina's lezen via een gecachete Supabase-client (Next fetch-cache, tag `blog`, direct ververst via `revalidateBlog()` na elke adminwijziging), omdat de root layout `headers()` leest en dus elke pagina per verzoek rendert.
 
@@ -837,6 +840,8 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 - Workspaces en rate limits (Organization)
 
 **Harde deadline:** de huidige API-keys (arnobot + salescanvas-app) verlopen op 6 januari 2027, door Anthropic afgedwongen. Ruim van tevoren nieuwe keys aanmaken en uitrollen.
+
+**Meting per aanroep:** elke Anthropic-client komt uit `maakAnthropic()` (`lib/anthropicClient.ts`); een CI-controle (`scripts/check-ai-meter.mjs`) blokkeert `new Anthropic(` elders in `app/` en `lib/`. Een aanroep krijgt de gebruiker en de bron mee via `aiContext(userId, 'bron')` (`null` voor platformwerk), zodat de kosten per gebruiker uit `arnobot_ai_gebruik` komen.
 
 ### VoyageAI
 **Doel:** Embedding + rerank API voor semantisch zoeken in de kennisbank (`blog_chunks`) en gesprekken (`arnobot_blog_sessions`).
