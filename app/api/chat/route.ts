@@ -151,6 +151,50 @@ const supabase = createClient(
 )
 
 
+// Tekst vóór een hulpmiddel is werkruis ("laat me de tabel overschrijven", "ik lees hem opnieuw in") en hoort niet in het antwoord.
+// Heeft de beurt hulpmiddelen, dan wordt het begin van een ronde vastgehouden tot duidelijk is of de ronde in een toolaanroep eindigt:
+// dan wordt die tekst weggegooid. Wordt het een gewoon antwoord (of langer dan een aankondiging kan zijn), dan gaat het alsnog door.
+// Zonder hulpmiddelen streamt alles direct, zoals voorheen.
+const HOUD_VAST_TEKENS = 400
+async function streamRonde(
+  stream: AsyncIterable<Anthropic.MessageStreamEvent>,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  houdVast: boolean,
+): Promise<{ verborgen: boolean }> {
+  const sanitizer = new StreamingDashSanitizer()
+  let heeftTekst = false
+  let vrijgegeven = !houdVast
+  let verborgen = false
+  let wacht = ''
+  const stuur = (tekst: string) => {
+    if (!tekst || verborgen) return
+    if (vrijgegeven) { controller.enqueue(encoder.encode(tekst)); return }
+    wacht += tekst
+    if (wacht.length > HOUD_VAST_TEKENS) { vrijgegeven = true; controller.enqueue(encoder.encode(wacht)); wacht = '' }
+  }
+  for await (const event of stream) {
+    if (event.type === 'content_block_start' && event.content_block.type === 'tool_use' && !vrijgegeven) {
+      verborgen = true
+      wacht = ''
+    }
+    // Met een link ophalen tussendoor bestaat een antwoord uit meerdere tekstblokken (voor en na het ophalen):
+    // een lege regel ertussen, anders plakt "ik kijk even" aan het antwoord vast.
+    if (event.type === 'content_block_start' && event.content_block.type === 'text' && heeftTekst) {
+      stuur(sanitizer.flush())
+      stuur('\n\n')
+    }
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      heeftTekst = true
+      stuur(sanitizer.push(event.delta.text))
+    }
+  }
+  stuur(sanitizer.flush())
+  if (!vrijgegeven && !verborgen && wacht) controller.enqueue(encoder.encode(wacht))
+  return { verborgen }
+}
+
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -611,28 +655,12 @@ export async function POST(req: NextRequest) {
 
     const readable = new ReadableStream({
       async start(controller) {
-        const sanitizer = new StreamingDashSanitizer()
         try {
+          // Tekst vóór een hulpmiddel (bijvoorbeeld "laat me de tabel overschrijven") is werkruis en wordt niet getoond: zie streamRonde.
+          let laatsteRondeVerborgen = false
           await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, async () => {
-            // Met een link ophalen tussendoor bestaat een antwoord uit meerdere tekstblokken (voor en na
-            // het ophalen): een lege regel ertussen, anders plakt "ik kijk even" aan het antwoord vast.
-            let heeftTekst = false
-            for await (const event of anthropicStream) {
-              if (event.type === 'content_block_start' && event.content_block.type === 'text' && heeftTekst) {
-                const rest = sanitizer.flush()
-                if (rest) controller.enqueue(encoder.encode(rest))
-                controller.enqueue(encoder.encode('\n\n'))
-              }
-              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                heeftTekst = true
-                const toSend = sanitizer.push(event.delta.text)
-                if (toSend) controller.enqueue(encoder.encode(toSend))
-              }
-            }
+            laatsteRondeVerborgen = (await streamRonde(anthropicStream, controller, encoder, Boolean(chatTools))).verborgen
           })
-
-          const remainder = sanitizer.flush()
-          if (remainder) controller.enqueue(encoder.encode(remainder))
 
           let finalMessage = await anthropicStream.finalMessage()
           // Tokenverbruik van de hele beurt (lib/chatVerbruik.ts): dit antwoord, alle toolrondes en een eventueel vervolg.
@@ -675,7 +703,7 @@ export async function POST(req: NextRequest) {
           const moetDoorgaan = () => finalMessage.stop_reason === 'tool_use' || finalMessage.stop_reason === 'pause_turn'
           for (let ronde = 0; ronde < MAX_REKENRONDES && chatTools && moetDoorgaan(); ronde++) {
             const toolGebruik = finalMessage.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
-            eerdereTekst += getAllText(finalMessage.content)
+            eerdereTekst += laatsteRondeVerborgen ? '' : getAllText(finalMessage.content)
             werkBerichten = [
               ...werkBerichten,
               { role: 'assistant', content: finalMessage.content },
@@ -703,22 +731,7 @@ export async function POST(req: NextRequest) {
               messages: werkBerichten,
               tools: chatTools,
             }, aiContext(userId, 'chat-toolronde'))
-            const rondeSanitizer = new StreamingDashSanitizer()
-            let rondeHeeftTekst = false
-            for await (const event of rondeStream) {
-              if (event.type === 'content_block_start' && event.content_block.type === 'text' && rondeHeeftTekst) {
-                const rest = rondeSanitizer.flush()
-                if (rest) controller.enqueue(encoder.encode(rest))
-                controller.enqueue(encoder.encode('\n\n'))
-              }
-              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                rondeHeeftTekst = true
-                const toSend = rondeSanitizer.push(event.delta.text)
-                if (toSend) controller.enqueue(encoder.encode(toSend))
-              }
-            }
-            const rondeRest = rondeSanitizer.flush()
-            if (rondeRest) controller.enqueue(encoder.encode(rondeRest))
+            laatsteRondeVerborgen = (await streamRonde(rondeStream, controller, encoder, true)).verborgen
             finalMessage = await rondeStream.finalMessage()
             telOp(verbruik, finalMessage.usage)
             opgehaald.push(...opgehaaldePaginas(finalMessage.content))
@@ -727,7 +740,7 @@ export async function POST(req: NextRequest) {
             console.error('[chat] toolrondes op, antwoord zonder slot, sessionId:', sessionId, 'stop_reason:', finalMessage.stop_reason)
             Sentry.captureMessage('[chat] toolrondes op', { level: 'warning', extra: { sessionId, stopReason: finalMessage.stop_reason } })
           }
-          const laatsteTekst = getAllText(finalMessage.content)
+          const laatsteTekst = laatsteRondeVerborgen ? '' : getAllText(finalMessage.content)
           let answer = eerdereTekst + laatsteTekst
 
           if (!answer) {

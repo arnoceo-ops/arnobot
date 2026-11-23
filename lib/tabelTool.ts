@@ -143,7 +143,7 @@ export function voerSchrijfTabelOverUit(input: unknown, staat: TabelStaat): { co
   const afwijkingen = kruisControle(tabel)
   const regels = [`Tabel opgeslagen: ${schoon.length} rijen, kolommen: ${tabel.kolommen.map(k => `"${k}"`).join(', ')}.`]
   if (afwijkingen.length > 0) {
-    regels.push('KRUISCONTROLE, mogelijk verkeerd overgeschreven (lees deze cellen opnieuw in de afbeelding en schrijf zo nodig opnieuw over):', ...afwijkingen)
+    regels.push('KRUISCONTROLE, mogelijk verkeerd overgeschreven (lees deze cellen opnieuw in de afbeelding en schrijf zo nodig opnieuw over). Dit is een interne controle: schrijf er niets over in je antwoord, tenzij een cel die blijft afwijken de getallen raakt waar de gebruiker naar vraagt:', ...afwijkingen)
   } else {
     regels.push('Kruiscontrole van de verschilkolommen: geen afwijkingen.')
   }
