@@ -3,10 +3,13 @@
 // hier een 404 (gemeten 2026-11-23), waardoor Chrome alleen een gewone snelkoppeling maakte.
 // scope '/' i.p.v. '/bot/admin/mobiel': de inlog loopt via /sign-in en LinkedIn en moet in hetzelfde
 // appvenster blijven. Manifest en icoonroute bevatten geen gegevens, dus geen inlog nodig.
+// id: de identiteit van de app voor Chrome. Gewijzigd van '/bot/admin/mobiel' naar '/admin-mobiel-2' op 2026-11-23, omdat een
+// eerder geïnstalleerde versie met het oude icoon bleef hangen. Een nieuw id geeft een nieuwe installatie. Wijzig het alleen
+// bewust opnieuw: bestaande installaties zien dit dan als een andere app.
 export const dynamic = 'force-static'
 
 const MANIFEST = {
-  id: '/bot/admin/mobiel',
+  id: '/admin-mobiel-2',
   name: 'ArnoBot Admin',
   short_name: 'Admin',
   description: 'Privé-overzicht van ArnoBot',
