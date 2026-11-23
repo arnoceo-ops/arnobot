@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { ARNO_ERVARING } from '@/lib/arnoFeiten'
+import { telGedragspatronen, type PatroonTelling } from '@/lib/gedragspatronen'
 import { beoordeelAntwoord, beoordeelNederlands, type Bewering, type Oordeel, type Taalfout } from '@/lib/waarheidsControle'
 
 // Wekelijkse steekproef voor Arno: alle antwoorden van de afgelopen week met een bewaarde bron
@@ -28,6 +29,8 @@ export type Rapport = {
   middel: number
   laag: number
   schoon: number
+  // Terugkerende fouten in alle antwoorden van de week (ook zonder bron), met de week ervoor als vergelijking.
+  patronen: { nu: PatroonTelling[]; totaal: number; vorige: { sleutel: string; aantal: number }[]; totaalVorige: number }
   taalfouten: { aantal: number; antwoorden: number; voorbeelden: { datum: string; fout: Taalfout }[] }
   geselecteerd: { hoog: Beoordeeld[]; middel: Beoordeeld[]; laag: Beoordeeld[]; controle: Beoordeeld[] }
 }
@@ -77,6 +80,13 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
   // Arno's eigen testgesprekken horen niet in een steekproef over wat gebruikers te zien krijgen.
   if (!opties.ookEigenaar && eigenaar) rijen = rijen.filter(r => r.user_id !== eigenaar)
 
+  const vorigeStart = new Date(Date.now() - 2 * (opties.dagen ?? 7) * 864e5).toISOString()
+  const { data: vorigeData } = await excludeInternalTestUsers(
+    supabase.from('arnobot_rds_logs').select('user_id, answer').gte('created_at', vorigeStart).lt('created_at', sinds),
+  ).limit(MAX_ANTWOORDEN * 2)
+  const vorigeRijen = ((vorigeData ?? []) as { user_id: string | null; answer: string }[])
+    .filter(r => r.user_id && typeof r.answer === 'string' && r.answer.length > 0 && (opties.ookEigenaar || !eigenaar || r.user_id !== eigenaar))
+
   const zonderBron = rijen.filter(r => !r.bron_context).length
   const metBron = rijen.filter(r => r.bron_context).slice(-MAX_ANTWOORDEN)
 
@@ -119,6 +129,12 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
     middel: op('middel').length,
     laag: op('laag').length,
     schoon: schoon.length,
+    patronen: {
+      nu: telGedragspatronen(rijen),
+      totaal: rijen.length,
+      vorige: telGedragspatronen(vorigeRijen).map(t => ({ sleutel: t.sleutel, aantal: t.aantal })),
+      totaalVorige: vorigeRijen.length,
+    },
     taalfouten: {
       aantal: beoordeeld.reduce((n, b) => n + b.taalfouten.length, 0),
       antwoorden: beoordeeld.filter(b => b.taalfouten.length > 0).length,
@@ -167,6 +183,20 @@ ${claims ? `<ul style="margin:8px 0;padding-left:18px">${claims}</ul>` : ''}
 </div>`
 }
 
+function patroonSectie(r: Rapport): string {
+  const { nu, totaal, vorige, totaalVorige } = r.patronen
+  if (totaal === 0) return ''
+  const pct = (n: number, van: number) => (van > 0 ? `${Math.round((n / van) * 100)}%` : 'geen data')
+  const regels = nu.map(t => {
+    const eerder = vorige.find(v => v.sleutel === t.sleutel)?.aantal ?? 0
+    const trend = totaalVorige === 0 ? '' : t.aantal > eerder ? ' ▲' : t.aantal < eerder ? ' ▼' : ''
+    const kleur = t.aantal > 0 && eerder > 0 ? '#b91c1c' : '#111827'
+    const vb = t.voorbeelden.map(v => `<br><i style="color:#6b7280">${esc(v)}</i>`).join('')
+    return `<li style="color:${kleur}"><b>${esc(t.naam)}</b>: ${t.aantal} van ${totaal} (${pct(t.aantal, totaal)}), vorige week ${totaalVorige === 0 ? 'geen data' : `${eerder} van ${totaalVorige}`}${trend}${t.aantal > 0 && eerder > 0 ? ' <b>(twee weken op rij: de aanpassing werkt niet)</b>' : ''}<br><span style="color:#6b7280;font-size:12px">hoort bij: ${esc(t.regel)}</span>${vb}</li>`
+  }).join('')
+  return `<h3 style="margin:24px 0 4px">Terugkerende patronen (alle ${totaal} antwoorden van de week)</h3><p style="color:#6b7280;margin:4px 0">Tekstpatronen die eerder zijn aangepast. Staat een patroon twee weken op rij op meer dan nul, dan lost nog een zin in de prompt het niet op: dan gaat de aanpak naar de code.</p><ul style="padding-left:18px">${regels}</ul>`
+}
+
 function taalSectie(r: Rapport): string {
   if (r.taalfouten.aantal === 0) return ''
   const regels = r.taalfouten.voorbeelden.map(v => `<li>${esc(v.fout.zin.slice(0, 240))}<br><i style="color:#6b7280">${esc(v.fout.soort)}: ${esc(v.fout.waarom.slice(0, 160))} (${v.datum})</i></li>`).join('')
@@ -183,7 +213,7 @@ export function maakRapportMail(r: Rapport): { onderwerp: string; html: string }
 <b>${r.hoog}</b> met hoge ernst (cijfers, feiten, Arno of ArnoBot), <b>${r.middel}</b> middel (over de gebruiker), <b>${r.laag}</b> algemene kennis. ${r.schoon} antwoorden zonder vlag.
 ${r.zonderBron ? `<br>${r.zonderBron} antwoorden zonder bewaarde bron zijn niet gecontroleerd.` : ''}${r.mislukt ? `<br>${r.mislukt} controles zijn mislukt.` : ''}</p>
 <p style="color:#6b7280">Per antwoord: zet je het eens met wat hier in jouw naam staat? Wat niet klopt, geef je door, dan wordt het een testgeval en een gerichte aanpassing.</p>
-${taalSectie(r)}${sectie('Hoge ernst', g.hoog, 'HOOG')}${sectie('Middel', g.middel, 'MIDDEL')}${sectie('Algemene kennis (zijn dit jouw woorden?)', g.laag, 'ALGEMEEN')}${sectie('Controle: zonder vlag, kijk of de beoordelaar iets mist', g.controle, 'CONTROLE')}
+${patroonSectie(r)}${taalSectie(r)}${sectie('Hoge ernst', g.hoog, 'HOOG')}${sectie('Middel', g.middel, 'MIDDEL')}${sectie('Algemene kennis (zijn dit jouw woorden?)', g.laag, 'ALGEMEEN')}${sectie('Controle: zonder vlag, kijk of de beoordelaar iets mist', g.controle, 'CONTROLE')}
 </div>`
   return { onderwerp: `ArnoBot waarheidscontrole: ${r.hoog} hoog, ${r.middel} middel (${r.gecontroleerd} gecontroleerd)`, html }
 }
