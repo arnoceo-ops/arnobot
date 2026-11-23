@@ -35,6 +35,14 @@ describe('buildRdsSystemPrompt', () => {
     expect(blocks[2].cache_control).toBeUndefined()
   })
 
+  // Verwateringsbewaking: elke nieuwe regel maakt de andere regels minder zwaar. Zit je aan dit plafond, schrap of
+  // verscherp dan een bestaande regel in plaats van het plafond te verhogen. Gemeten 2026-11-23: ongeveer 33.500 tekens, na de aanscherping van 23-11.
+  it('blijft binnen het tekenbudget van de statische prompt (verwatering)', () => {
+    const blocks = buildRdsSystemPrompt('', '', 3, 'uitgebreid', 5)
+    const statisch = blocks.filter(b => b.cache_control).map(b => b.text).join('')
+    expect(statisch.length).toBeLessThan(35_000)
+  })
+
   it('bevat altijd de streepjes-instructie, ongeacht de parameters', () => {
     const blocks = buildRdsSystemPrompt(profielContextSample, contextSample, 3, 'normaal', 0)
     expect(joinBlocks(blocks)).toContain('Gebruik NOOIT een streepje als leesteken')
