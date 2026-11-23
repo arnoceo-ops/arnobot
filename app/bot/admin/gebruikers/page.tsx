@@ -15,6 +15,8 @@ import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { haalGebruikerKosten, REFERENTIE_PRIJS_EUR, type GebruikerKosten } from '@/lib/gebruikerKosten'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
+import { nlVandaag } from '@/lib/nlTijd'
+import { dagenTussen } from '@/lib/amsterdamTijd'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
 import TestPlanButtons from '../test-persona/TestPlanButtons'
@@ -450,8 +452,9 @@ export default async function GebruikersPage({
           {sorted.map((u) => {
             const name = u.clerkName || u.full_name || [u.voornaam, u.achternaam].filter(Boolean).join(' ') || 'n.v.t.'
             const status = trialStatus(u)
+            // Kalenderdagen in Amsterdam: "vandaag" is vanaf 0:00 Amsterdamse tijd, "gisteren" is de dag ervoor.
             const daysAgo = u.lastSession
-              ? Math.round((nu() - new Date(u.lastSession).getTime()) / (1000 * 60 * 60 * 24))
+              ? dagenTussen(nlVandaag(new Date(u.lastSession)), nlVandaag(new Date(nu()))) - 1
               : null
             const lastSessionLabel = daysAgo === null ? 'nooit' : daysAgo === 0 ? 'vandaag' : daysAgo === 1 ? 'gisteren' : `${daysAgo}d geleden`
             const actief7d = u.recentCount > 0
@@ -493,8 +496,8 @@ export default async function GebruikersPage({
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '2px', color: status.color, fontWeight: 700 }}>{status.label}</p>
                   {u.paid_at && u.expires_at
-                    ? <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>t/m {new Date(u.expires_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
-                    : u.created_at && <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })}</p>
+                    ? <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>t/m {new Date(u.expires_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Amsterdam' })}</p>
+                    : u.created_at && <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 2 }}>{new Date(u.created_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Amsterdam' })}</p>
                   }
                 </div>
                 {/* Gesprekken */}

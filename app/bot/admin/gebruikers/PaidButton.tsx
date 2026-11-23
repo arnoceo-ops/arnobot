@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Amsterdam' })
 }
 
 type Action = 'paid' | 'comp' | 'active' | 'refund'
