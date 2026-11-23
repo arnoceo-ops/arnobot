@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
+import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 // Eenmalige meting (2026-11-21), afgesproken met Arno voor vrijdag 27 november: hoe vaak gaat een beurt met een bijlage langs de
 // tabeltool en welke kolommen worden gevraagd (arnobot_rds_logs.verbruik.tools, commit "toolaanroepen in verbruik"), plus de
@@ -28,11 +29,12 @@ async function cronHandler(req: NextRequest) {
     if (nu.getUTCFullYear() !== 2026) return NextResponse.json({ ok: true, skipped: 'alleen 2026' })
 
     const sinds = new Date(nu.getTime() - 7 * 864e5).toISOString()
-    const query = supabase.from('arnobot_rds_logs').select('created_at, verbruik').gte('created_at', sinds)
-    const { data, error } = await excludeInternalTestUsers(query).order('created_at', { ascending: true }).limit(5000)
-    if (error) throw new Error(error.message)
+    // In blokken: PostgREST geeft hooguit 1000 rijen per vraag, ook bij .limit(5000), dus een week gesprekken werd stil afgekapt.
+    const alle = await haalAlleRijen<{ created_at: string; verbruik: Verbruik }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_rds_logs').select('created_at, verbruik').gte('created_at', sinds))
+        .order('created_at', { ascending: true }).order('id').range(van, tot))
 
-    const rijen = ((data ?? []) as { created_at: string; verbruik: Verbruik }[]).filter(r => r.verbruik)
+    const rijen = alle.filter(r => r.verbruik)
     const metTools = rijen.filter(r => Array.isArray(r.verbruik?.tools))
     const eerste = metTools[0]?.created_at
     const bijlageBeurten = rijen.filter(r => (r.verbruik?.bijlagen ?? 0) > 0 && eerste !== undefined && r.created_at >= eerste)
