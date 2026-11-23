@@ -22,6 +22,7 @@ const usd = (n: number) => `$${n.toFixed(2).replace('.', ',')}`
 const euro = (cent: number) => `€${(cent / 100).toFixed(2).replace('.', ',')}`
 const kort = (iso: string) => `${nlDatumTekst(iso).slice(0, 5)} ${nlTijdTekst(iso).slice(0, 5)}`
 const datum = (iso: string) => nlDatumTekst(iso).slice(0, 5)
+const maandNaamVan = (d: Date) => new Intl.DateTimeFormat('nl-NL', { timeZone: 'Europe/Amsterdam', month: 'long' }).format(d)
 const dagenTekst = (d: number) => (d === 0 ? 'vandaag' : d === 1 ? 'morgen' : `nog ${d} dagen`)
 
 function Stip({ niveau }: { niveau: Niveau }) {
@@ -83,6 +84,7 @@ export default async function AdminMobielPage() {
   }
 
   const nu = new Date()
+  const maandNaam = maandNaamVan(nu)
   // Elke kaart haalt zijn eigen gegevens op en valt apart om. Kosten, geld en te beoordelen wachten alleen op de
   // namen en rijen uit de gebruikerskaart; zonder die kaart tonen ze 'onbekend' in plaats van een naam.
   const gebruikersP = veilig('gebruikers', () => haalGebruikers(nu))
@@ -108,7 +110,7 @@ export default async function AdminMobielPage() {
   const signalen: { niveau: Niveau; tekst: string }[] = []
   if (status.ok && (status.data.niveau === 'let-op' || status.data.niveau === 'fout')) signalen.push({ niveau: status.data.niveau, tekst: 'status' })
   if (aantalBeoordelen > 0) signalen.push({ niveau: 'let-op', tekst: `${aantalBeoordelen} te beoordelen` })
-  if (geld.ok && (geld.data.mislukt.length > 0 || geld.data.openTeamFacturen.length > 0)) signalen.push({ niveau: 'let-op', tekst: 'geld' })
+  if (geld.ok && (geld.data.mislukt.length > 0 || geld.data.openTeamFacturen.length > 0)) signalen.push({ niveau: 'let-op', tekst: 'betalingen' })
   if (teams.ok) {
     const ergste = ergsteNiveau(teams.data.teams.map(t => t.niveau))
     if (ergste === 'let-op' || ergste === 'fout') signalen.push({ niveau: ergste, tekst: 'teams' })
@@ -179,12 +181,12 @@ export default async function AdminMobielPage() {
         </Kaart>
       ) : <Mislukt titel="TE BEOORDELEN" />}
 
-      {/* Geld */}
+      {/* Omzet */}
       {geld.ok ? (
         <Kaart
-          titel="GELD"
+          titel="OMZET"
           niveau={geld.data.mislukt.length || geld.data.openTeamFacturen.length ? 'let-op' : 'ok'}
-          samenvatting={`${euro(geld.data.maandCent)} deze maand${geld.data.mislukt.length ? ` · ${geld.data.mislukt.length} mislukt` : ''}`}
+          samenvatting={`${euro(geld.data.maandCent)} in ${maandNaam}${geld.data.mislukt.length ? ` · ${geld.data.mislukt.length} mislukt` : ''}`}
           open={geld.data.mislukt.length > 0 || geld.data.openTeamFacturen.length > 0}
         >
           {geld.data.mislukt.length > 0 && (
@@ -204,22 +206,24 @@ export default async function AdminMobielPage() {
           <Kop tekst="OPGEZEGD (LOOPT NOG)" />
           {geld.data.opgezegd.length === 0 ? <Leeg tekst="Niemand" /> : geld.data.opgezegd.map((o, i) => <Rij key={i} links={o.naam} rechts={o.plan} />)}
         </Kaart>
-      ) : <Mislukt titel="GELD" />}
+      ) : <Mislukt titel="OMZET" />}
 
-      {/* Status */}
-      {status.ok ? (
-        <Kaart
-          titel="STATUS"
-          niveau={status.data.niveau}
-          samenvatting={status.data.problemen.length ? `${status.data.problemen.length} punt${status.data.problemen.length > 1 ? 'en' : ''} vragen aandacht` : 'Alles in orde'}
-          open={status.data.problemen.length > 0}
-        >
-          {status.data.problemen.map((p, i) => (
-            <p key={i} style={{ margin: '0 0 10px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4 }}>{p}</p>
-          ))}
-          {status.data.regels.map(r => <Rij key={r.label} links={r.label} rechts={r.waarde} niveau={r.niveau} />)}
+      {/* Kosten */}
+      {kosten.ok ? (
+        <Kaart titel="KOSTEN" samenvatting={`${usd(kosten.data.totaalUsd)} in ${maandNaam}`}>
+          {kosten.data.top.map((t, i) => <Rij key={i} links={t.naam} rechts={usd(t.usd)} />)}
+          {kosten.data.restUsd > 0 && <Rij links="Overige gebruikers" rechts={usd(kosten.data.restUsd)} />}
+          {kosten.data.internUsd > 0 && <Rij links="Test en intern" rechts={usd(kosten.data.internUsd)} />}
+          <Kop tekst="PER LEVERANCIER" />
+          <Rij links="Anthropic" rechts={usd(kosten.data.perLeverancier.anthropic)} />
+          <Rij links="Spraak (ElevenLabs)" rechts={usd(kosten.data.perLeverancier.spraak)} />
+          <Rij links="Voyage" rechts={usd(kosten.data.perLeverancier.voyage)} />
+          <Rij links="Dicteren en audio" rechts={usd(kosten.data.perLeverancier.audio)} />
+          {kosten.data.zonderPrijs > 0 && (
+            <p style={{ margin: '10px 0 0', color: '#6b7280', fontSize: 13 }}>{kosten.data.zonderPrijs} aanroepen zonder bekend tarief tellen als nul.</p>
+          )}
         </Kaart>
-      ) : <Mislukt titel="STATUS" />}
+      ) : <Mislukt titel="KOSTEN" />}
 
       {/* Gebruikers */}
       {gebruikers.ok ? (
@@ -243,6 +247,21 @@ export default async function AdminMobielPage() {
         </Kaart>
       ) : <Mislukt titel="GEBRUIKERS" />}
 
+      {/* Status */}
+      {status.ok ? (
+        <Kaart
+          titel="STATUS"
+          niveau={status.data.niveau}
+          samenvatting={status.data.problemen.length ? `${status.data.problemen.length} punt${status.data.problemen.length > 1 ? 'en' : ''} vragen aandacht` : 'Alles in orde'}
+          open={status.data.problemen.length > 0}
+        >
+          {status.data.problemen.map((p, i) => (
+            <p key={i} style={{ margin: '0 0 10px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4 }}>{p}</p>
+          ))}
+          {status.data.regels.map(r => <Rij key={r.label} links={r.label} rechts={r.waarde} niveau={r.niveau} />)}
+        </Kaart>
+      ) : <Mislukt titel="STATUS" />}
+
       {/* Teams */}
       {teams.ok ? (
         <Kaart
@@ -263,23 +282,6 @@ export default async function AdminMobielPage() {
           <p style={{ margin: '14px 0 0', color: '#6b7280', fontSize: 13 }}>Een proef verlengen kan alleen op de pc.</p>
         </Kaart>
       ) : <Mislukt titel="TEAMS" />}
-
-      {/* Kosten */}
-      {kosten.ok ? (
-        <Kaart titel="KOSTEN DEZE MAAND" samenvatting={usd(kosten.data.totaalUsd)}>
-          {kosten.data.top.map((t, i) => <Rij key={i} links={t.naam} rechts={usd(t.usd)} />)}
-          {kosten.data.restUsd > 0 && <Rij links="Overige gebruikers" rechts={usd(kosten.data.restUsd)} />}
-          {kosten.data.internUsd > 0 && <Rij links="Test en intern" rechts={usd(kosten.data.internUsd)} />}
-          <Kop tekst="PER LEVERANCIER" />
-          <Rij links="Anthropic" rechts={usd(kosten.data.perLeverancier.anthropic)} />
-          <Rij links="Spraak (ElevenLabs)" rechts={usd(kosten.data.perLeverancier.spraak)} />
-          <Rij links="Voyage" rechts={usd(kosten.data.perLeverancier.voyage)} />
-          <Rij links="Dicteren en audio" rechts={usd(kosten.data.perLeverancier.audio)} />
-          {kosten.data.zonderPrijs > 0 && (
-            <p style={{ margin: '10px 0 0', color: '#6b7280', fontSize: 13 }}>{kosten.data.zonderPrijs} aanroepen zonder bekend tarief tellen als nul.</p>
-          )}
-        </Kaart>
-      ) : <Mislukt titel="KOSTEN DEZE MAAND" />}
     </main>
   )
 }
