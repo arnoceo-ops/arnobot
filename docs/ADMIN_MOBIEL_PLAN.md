@@ -10,6 +10,7 @@
 - Gekozen: **PWA op `/bot/admin/mobiel`**, alleen Android, alleen Arno. Verworpen: de admin in de bestaande store-app (reviewrisico, elke gebruiker draagt de code mee) en een aparte Capacitor-app (tweede app-ID, ondertekening, iOS-review, pas zinvol voor push en Telegram doet dat al).
 - Gekozen: **eigen inlog via Clerk**, los van het oude admin-wachtwoord, alleen het account `FOUNDER_USER_ID` (`linkedin@royaldutchsales.com`) met een geverifieerde LinkedIn-koppeling. De 2FA zit bij LinkedIn (Arno bevestigde dat die aan staat) en is door Clerk niet te controleren. Verworpen: Clerk-2FA of passkey afdwingen, want de app heeft geen Clerk-profielscherm om dat aan te zetten en dat bouwen hoort niet bij deze klus. Verworpen: de cookie van het oude slot korter maken (laat het structurele probleem staan).
 - Gekozen: **het wachtwoord van het LinkedIn-account is verwijderd in Clerk** (gedaan door Arno, `password_enabled: false` bevestigd via de API). Daardoor is het wachtwoordvak op `/sign-in` voor dit account dicht. Niet uit te sluiten vanaf hier: of de Clerk-instelling zelf nog een mailcode toestaat. Clerk geeft niet door met welke methode een sessie is gestart.
+- Gekozen: **het manifest als eigen route** (`mobiel/manifest.webmanifest/route.ts`) en expliciet gekoppeld in `mobiel/layout.tsx`. Verworpen: de `manifest.ts`-conventie van Next in een submap, want die werkt alleen in de hoofdmap van `app/` (gemeten 2026-11-23: 404, Chrome maakte daardoor alleen een gewone snelkoppeling met het standaardicoon). Les: na elke wijziging aan manifest of icoon de URL met curl ophalen en de `<link rel="manifest">` in de pagina controleren.
 - Gekozen: **manifest met `scope: '/'`**, zodat de inlog (`/sign-in`, LinkedIn) in hetzelfde appvenster blijft. Verworpen: scope alleen `/bot/admin/mobiel`, want dan opent Chrome de inlogstappen buiten de app.
 - Gekozen: **geen service worker en geen offline-opslag.** Bedrijfs- en gebruikersdata hoort niet in een cache. De installeerbaarheid op Android is gebaseerd op web.dev (install criteria, geen datum zichtbaar op de pagina), die geen service worker meer noemt. Een Chrome-blogsnippet noemde er eerder wel een; dat is niet getoetst op een echte telefoon.
 - Gekozen: **geen aparte push.** Telegram doet dat al. Verworpen: Web Push (kan op Android en iOS, maar voegt een tweede meldkanaal toe).
@@ -20,7 +21,7 @@
 **Afvinklijst:**
 - [x] Inlog: alleen `FOUNDER_USER_ID` met LinkedIn (`lib/adminMobiel.ts`, 4 tests)
 - [x] Wachtwoord van het LinkedIn-account in Clerk verwijderd
-- [x] Manifest en eigen icoon (`mobiel/manifest.ts`, `mobiel/icoon/[maat]`)
+- [x] Manifest en eigen icoon (`mobiel/manifest.webmanifest/route.ts`, `mobiel/icoon/[maat]`)
 - [x] Kaarten: te beoordelen, status, gebruikers, kosten, waarheidscontrole
 - [x] Actie "beoordeeld" via eigen route
 - [x] Automatisch verversen bij terugkeren in de app, verversknop
