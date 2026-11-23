@@ -21,7 +21,7 @@
 **Afvinklijst:**
 - [x] Inlog: alleen `FOUNDER_USER_ID` met LinkedIn (`lib/adminMobiel.ts`, 4 tests)
 - [x] Wachtwoord van het LinkedIn-account in Clerk verwijderd
-- [x] Manifest en eigen icoon (`mobiel/manifest.webmanifest/route.ts`, `mobiel/icoon/[maat]`)
+- [x] Manifest en eigen icoon (`mobiel/manifest.webmanifest/route.ts`, `public/admin-icoon-192.png` en `-512.png` (gemaakt met `scripts/maak-admin-icoon.mjs`))
 - [x] Kaarten: te beoordelen, status, gebruikers, kosten, waarheidscontrole
 - [x] Actie "beoordeeld" via eigen route
 - [x] Automatisch verversen bij terugkeren in de app, verversknop

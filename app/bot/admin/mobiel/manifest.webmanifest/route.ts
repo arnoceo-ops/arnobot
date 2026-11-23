@@ -17,9 +17,9 @@ const MANIFEST = {
   background_color: '#111827',
   theme_color: '#111827',
   icons: [
-    { src: '/bot/admin/mobiel/icoon/192', sizes: '192x192', type: 'image/png', purpose: 'any' },
-    { src: '/bot/admin/mobiel/icoon/512', sizes: '512x512', type: 'image/png', purpose: 'any' },
-    { src: '/bot/admin/mobiel/icoon/512', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: '/admin-icoon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/admin-icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/admin-icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
 }
 
