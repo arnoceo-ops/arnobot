@@ -17,9 +17,9 @@ const MANIFEST = {
   background_color: '#111827',
   theme_color: '#111827',
   icons: [
-    { src: '/admin-icoon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-    { src: '/admin-icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-    { src: '/admin-icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: '/admin-icoon-v2-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/admin-icoon-v2-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/admin-icoon-v2-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
 }
 
@@ -27,7 +27,7 @@ export function GET() {
   return new Response(JSON.stringify(MANIFEST), {
     headers: {
       'Content-Type': 'application/manifest+json',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'no-cache',
     },
   })
 }

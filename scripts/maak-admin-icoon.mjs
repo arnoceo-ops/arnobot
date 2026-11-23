@@ -1,4 +1,4 @@
-// Maakt het icoon van de admin-telefoonpagina (public/admin-icoon-192.png en -512.png) uit het
+// Maakt het icoon van de admin-telefoonpagina (public/admin-icoon-v2-192.png en -512.png) uit het
 // originele ArnoBot-logo (public/arnobot-app-icon-source.png), zodat de lettervormen exact gelijk zijn:
 // achtergrond amber, de A wit, de B donker (in het gewone logo is de achtergrond donker en de B amber).
 // Eenmalig draaien en de PNG's committen: de site rendert niets op aanvraag.
@@ -37,6 +37,6 @@ for (let i = 0; i < data.length; i += 3) {
 
 for (const maat of [192, 512]) {
   await sharp(uit, { raw: { width: info.width, height: info.height, channels: 3 } })
-    .resize(maat, maat, { kernel: 'lanczos3' }).png().toFile(`public/admin-icoon-${maat}.png`)
-  console.log(`public/admin-icoon-${maat}.png`)
+    .resize(maat, maat, { kernel: 'lanczos3' }).png().toFile(`public/admin-icoon-v2-${maat}.png`)
+  console.log(`public/admin-icoon-v2-${maat}.png`)
 }

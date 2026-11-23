@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   manifest: '/bot/admin/mobiel/manifest.webmanifest',
   icons: {
-    icon: [{ url: '/admin-icoon-192.png', sizes: '192x192', type: 'image/png' }],
-    apple: [{ url: '/admin-icoon-192.png', sizes: '192x192', type: 'image/png' }],
+    icon: [{ url: '/admin-icoon-v2-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/admin-icoon-v2-192.png', sizes: '192x192', type: 'image/png' }],
   },
 }
 

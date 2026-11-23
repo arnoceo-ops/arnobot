@@ -13,6 +13,7 @@
 - Gekozen: **het manifest als eigen route** (`mobiel/manifest.webmanifest/route.ts`) en expliciet gekoppeld in `mobiel/layout.tsx`. Verworpen: de `manifest.ts`-conventie van Next in een submap, want die werkt alleen in de hoofdmap van `app/` (gemeten 2026-11-23: 404, Chrome maakte daardoor alleen een gewone snelkoppeling met het standaardicoon). Les: na elke wijziging aan manifest of icoon de URL met curl ophalen en de `<link rel="manifest">` in de pagina controleren.
 - Gekozen: **manifest met `scope: '/'`**, zodat de inlog (`/sign-in`, LinkedIn) in hetzelfde appvenster blijft. Verworpen: scope alleen `/bot/admin/mobiel`, want dan opent Chrome de inlogstappen buiten de app.
 - Gekozen: **het icoon is het gewone ArnoBot-logo, herkleurd** (amber achtergrond, witte A, donkere B), exact dezelfde lettervormen via `scripts/maak-admin-icoon.mjs` uit `public/arnobot-app-icon-source.png`. Voorstel van Arno, 2026-11-23. Verworpen: eigen ontwerp met Bebas Neue en een klein ADMIN-label (Arno: "schrikbarend slecht", de letters weken af van het merk), een variant met donkere achtergrond (lijkt te veel op de gewone app) en een zonder tekst.
+- Les (2026-11-23): na een wijziging aan het icoon een **nieuwe bestandsnaam** gebruiken (nu `-v2-`) en het manifest op `no-cache` zetten. Arno zag na opnieuw installeren nog het vorige icoon terwijl het live bestand al gelijk was aan het nieuwe (md5 vergeleken); een telefoon bewaart een icoon onder dezelfde naam hardnekkig. Een geïnstalleerde app (WebAPK) verwijder je via het appoverzicht (lang indrukken, App-info, Verwijderen), niet alleen van het startscherm.
 - Gekozen: **geen service worker en geen offline-opslag.** Bedrijfs- en gebruikersdata hoort niet in een cache. De installeerbaarheid op Android is gebaseerd op web.dev (install criteria, geen datum zichtbaar op de pagina), die geen service worker meer noemt. Een Chrome-blogsnippet noemde er eerder wel een; dat is niet getoetst op een echte telefoon.
 - Gekozen: **geen aparte push.** Telegram doet dat al. Verworpen: Web Push (kan op Android en iOS, maar voegt een tweede meldkanaal toe).
 - Gekozen: **waarheidscontrole op de telefoon toont alleen de laatste mail en de patroontelling** (`lib/gedragspatronen.ts`, geen AI). Verworpen: de steekproef live berekenen, want dat kost bij elke paginalading AI-aanroepen. Er wordt geen resultaat opgeslagen.
@@ -22,7 +23,7 @@
 **Afvinklijst:**
 - [x] Inlog: alleen `FOUNDER_USER_ID` met LinkedIn (`lib/adminMobiel.ts`, 4 tests)
 - [x] Wachtwoord van het LinkedIn-account in Clerk verwijderd
-- [x] Manifest en eigen icoon (`mobiel/manifest.webmanifest/route.ts`, `public/admin-icoon-192.png` en `-512.png` (gemaakt met `scripts/maak-admin-icoon.mjs`))
+- [x] Manifest en eigen icoon (`mobiel/manifest.webmanifest/route.ts`, `public/admin-icoon-v2-192.png` en `-512.png` (gemaakt met `scripts/maak-admin-icoon.mjs`))
 - [x] Kaarten: te beoordelen, status, gebruikers, kosten, waarheidscontrole
 - [x] Actie "beoordeeld" via eigen route
 - [x] Automatisch verversen bij terugkeren in de app, verversknop
