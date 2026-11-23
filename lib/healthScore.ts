@@ -1,3 +1,6 @@
+import { nlVandaag } from './nlTijd'
+import { dagenTussen } from './amsterdamTijd'
+
 export type HealthBucket = 'risico' | 'neutraal' | 'gezond'
 
 export const HEALTH_BUCKET_META: Record<HealthBucket, { label: string; color: string }> = {
@@ -22,9 +25,10 @@ export interface HealthScoreResult {
   bucket: HealthBucket
 }
 
+// Kalenderdagen in Amsterdamse tijd: een gesprek van vandaag is 0 dagen geleden, ook als het om 00:05 was.
 function dagenSinds(iso: string | null | undefined, nu: number): number {
   if (!iso) return Infinity
-  return (nu - new Date(iso).getTime()) / (1000 * 60 * 60 * 24)
+  return dagenTussen(nlVandaag(new Date(iso)), nlVandaag(new Date(nu))) - 1
 }
 
 export function computeHealthScore(input: HealthScoreInput, nu: number = Date.now()): HealthScoreResult {
