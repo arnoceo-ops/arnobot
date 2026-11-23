@@ -20,6 +20,8 @@ export type ChatVerbruik = {
   gevraagd?: string
   /** Toolaanroepen van deze beurt (naam en ingekorte invoer), om een verkeerde kolomkeuze of een overgeslagen tool terug te zien (2026-11-21). */
   tools?: { naam: string; invoer: string; fout?: true }[]
+  /** Rondes waarvan de tekst vóór een toolaanroep niet is getoond (werkruis zoals "laat me de tabel overschrijven"), met een kort voorbeeld. Toegevoegd 2026-11-23. */
+  weggegooid?: { aantal: number; voorbeeld: string }
   /** Alleen bij een beurt via de lezer (lib/documentLezer.ts): het verbruik van die aparte, goedkopere aanroepen (ander model, ander tarief). */
   lezer?: { invoer: number; cache_schrijven: number; cache_lezen: number; uitvoer: number; aanroepen: number }
 }
@@ -43,6 +45,13 @@ export function telOp(totaal: ChatVerbruik, usage: UsageDeel | null | undefined)
   totaal.cache_schrijven += usage.cache_creation_input_tokens ?? 0
   totaal.cache_lezen += usage.cache_read_input_tokens ?? 0
   totaal.uitvoer += usage.output_tokens ?? 0
+}
+
+/** Telt een ronde waarvan de tekst vóór een toolaanroep is weggegooid; bewaart alleen het eerste voorbeeld, ingekort. */
+export function telWeggegooid(totaal: ChatVerbruik, tekst: string): void {
+  const w = (totaal.weggegooid ??= { aantal: 0, voorbeeld: '' })
+  w.aantal += 1
+  if (!w.voorbeeld && tekst.trim()) w.voorbeeld = tekst.trim().slice(0, 160)
 }
 
 /** Telt één aanroep van de lezer op, apart van het hoofdverbruik. Werkt het veld `lezer` pas bij op de eerste aanroep bij. */

@@ -74,7 +74,7 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { maakVerbruik, telOp, telOpLezer, telTool } from '@/lib/chatVerbruik'
+import { maakVerbruik, telOp, telOpLezer, telTool, telWeggegooid } from '@/lib/chatVerbruik'
 import { haalMaandKosten, beoordeelMaandKosten, bouwRemTekst, maandKostenUitgezonderd, meldEenmaligPerMaand, type MaandStand } from '@/lib/maandKosten'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { LEES_DOCUMENT_TOOL, LEES_DOCUMENT_TOOL_NAAM, bijlageRegelVoorLezer, kiesLezer, leesDocumenten, lezerBeschikbaarVoor, type LezerBron } from '@/lib/documentLezer'
@@ -161,12 +161,13 @@ async function streamRonde(
   controller: ReadableStreamDefaultController<Uint8Array>,
   encoder: TextEncoder,
   houdVast: boolean,
-): Promise<{ verborgen: boolean }> {
+): Promise<{ verborgen: boolean; weggegooid: string }> {
   const sanitizer = new StreamingDashSanitizer()
   let heeftTekst = false
   let vrijgegeven = !houdVast
   let verborgen = false
   let wacht = ''
+  let weggegooid = ''
   const stuur = (tekst: string) => {
     if (!tekst || verborgen) return
     if (vrijgegeven) { controller.enqueue(encoder.encode(tekst)); return }
@@ -176,6 +177,7 @@ async function streamRonde(
   for await (const event of stream) {
     if (event.type === 'content_block_start' && event.content_block.type === 'tool_use' && !vrijgegeven) {
       verborgen = true
+      weggegooid = wacht
       wacht = ''
     }
     // Met een link ophalen tussendoor bestaat een antwoord uit meerdere tekstblokken (voor en na het ophalen):
@@ -191,7 +193,7 @@ async function streamRonde(
   }
   stuur(sanitizer.flush())
   if (!vrijgegeven && !verborgen && wacht) controller.enqueue(encoder.encode(wacht))
-  return { verborgen }
+  return { verborgen, weggegooid }
 }
 
 
@@ -658,8 +660,11 @@ export async function POST(req: NextRequest) {
         try {
           // Tekst vóór een hulpmiddel (bijvoorbeeld "laat me de tabel overschrijven") is werkruis en wordt niet getoond: zie streamRonde.
           let laatsteRondeVerborgen = false
+          let laatsteWeggegooid = ''
           await Sentry.startSpan({ name: 'chat.main-response', op: 'ai.claude' }, async () => {
-            laatsteRondeVerborgen = (await streamRonde(anthropicStream, controller, encoder, Boolean(chatTools))).verborgen
+            const eerste = await streamRonde(anthropicStream, controller, encoder, Boolean(chatTools))
+            laatsteRondeVerborgen = eerste.verborgen
+            laatsteWeggegooid = eerste.weggegooid
           })
 
           let finalMessage = await anthropicStream.finalMessage()
@@ -703,6 +708,7 @@ export async function POST(req: NextRequest) {
           const moetDoorgaan = () => finalMessage.stop_reason === 'tool_use' || finalMessage.stop_reason === 'pause_turn'
           for (let ronde = 0; ronde < MAX_REKENRONDES && chatTools && moetDoorgaan(); ronde++) {
             const toolGebruik = finalMessage.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+            if (laatsteRondeVerborgen) telWeggegooid(verbruik, laatsteWeggegooid)
             eerdereTekst += laatsteRondeVerborgen ? '' : getAllText(finalMessage.content)
             werkBerichten = [
               ...werkBerichten,
@@ -731,7 +737,9 @@ export async function POST(req: NextRequest) {
               messages: werkBerichten,
               tools: chatTools,
             }, aiContext(userId, 'chat-toolronde'))
-            laatsteRondeVerborgen = (await streamRonde(rondeStream, controller, encoder, true)).verborgen
+            const rondeUit = await streamRonde(rondeStream, controller, encoder, true)
+            laatsteRondeVerborgen = rondeUit.verborgen
+            laatsteWeggegooid = rondeUit.weggegooid
             finalMessage = await rondeStream.finalMessage()
             telOp(verbruik, finalMessage.usage)
             opgehaald.push(...opgehaaldePaginas(finalMessage.content))

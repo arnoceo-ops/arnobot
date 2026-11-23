@@ -18,7 +18,8 @@ export const MAX_MIDDEL = 10
 export const MAX_LAAG = 5
 export const AANTAL_CONTROLE = 5
 
-type Rij = { id: string; user_id: string | null; session_id: string; question: string; answer: string; created_at: string; bron_context: string | null }
+type Verbruik = { weggegooid?: { aantal?: number; voorbeeld?: string } } | null
+type Rij = { id: string; user_id: string | null; session_id: string; question: string; answer: string; created_at: string; bron_context: string | null; verbruik?: Verbruik }
 export type Beoordeeld = { rij: Rij; eerder: string[]; oordeel: Oordeel; ongedekt: Bewering[]; hoogste: 'hoog' | 'middel' | 'laag' | null; taalfouten: Taalfout[] }
 
 export type Rapport = {
@@ -30,12 +31,18 @@ export type Rapport = {
   laag: number
   schoon: number
   // Terugkerende fouten in alle antwoorden van de week (ook zonder bron), met de week ervoor als vergelijking.
-  patronen: { nu: PatroonTelling[]; totaal: number; vorige: { sleutel: string; aantal: number }[]; totaalVorige: number }
+  patronen: { nu: PatroonTelling[]; totaal: number; vorige: { sleutel: string; aantal: number }[]; totaalVorige: number; weggegooid: { nu: number; vorige: number; voorbeelden: string[] } }
   taalfouten: { aantal: number; antwoorden: number; voorbeelden: { datum: string; fout: Taalfout }[] }
   geselecteerd: { hoog: Beoordeeld[]; middel: Beoordeeld[]; laag: Beoordeeld[]; controle: Beoordeeld[] }
 }
 
 const RANG = { hoog: 3, middel: 2, laag: 1 } as const
+
+// Rondes waarvan de tekst vóór een toolaanroep is weggegooid (lib/chatVerbruik.ts). Zolang dit boven nul blijft, schrijft het model nog werkruis
+// voor een hulpmiddel; de code houdt het uit het antwoord, maar de prompt werkt dan nog niet.
+function telWeggegooideRondes(rijen: { verbruik?: Verbruik }[]): number {
+  return rijen.reduce((n, r) => n + (r.verbruik?.weggegooid?.aantal ?? 0), 0)
+}
 
 function hoogsteErnst(ongedekt: Bewering[]): Beoordeeld['hoogste'] {
   let top: Beoordeeld['hoogste'] = null
@@ -71,7 +78,7 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
 
   let query = supabase
     .from('arnobot_rds_logs')
-    .select('id, user_id, session_id, question, answer, created_at, bron_context')
+    .select('id, user_id, session_id, question, answer, created_at, bron_context, verbruik')
     .gte('created_at', sinds)
   const { data, error } = await excludeInternalTestUsers(query).order('created_at', { ascending: true }).limit(MAX_ANTWOORDEN * 2)
   if (error) throw error
@@ -82,9 +89,9 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
 
   const vorigeStart = new Date(Date.now() - 2 * (opties.dagen ?? 7) * 864e5).toISOString()
   const { data: vorigeData } = await excludeInternalTestUsers(
-    supabase.from('arnobot_rds_logs').select('user_id, answer').gte('created_at', vorigeStart).lt('created_at', sinds),
+    supabase.from('arnobot_rds_logs').select('user_id, answer, verbruik').gte('created_at', vorigeStart).lt('created_at', sinds),
   ).limit(MAX_ANTWOORDEN * 2)
-  const vorigeRijen = ((vorigeData ?? []) as { user_id: string | null; answer: string }[])
+  const vorigeRijen = ((vorigeData ?? []) as { user_id: string | null; answer: string; verbruik?: Verbruik }[])
     .filter(r => r.user_id && typeof r.answer === 'string' && r.answer.length > 0 && (opties.ookEigenaar || !eigenaar || r.user_id !== eigenaar))
 
   const zonderBron = rijen.filter(r => !r.bron_context).length
@@ -134,6 +141,11 @@ export async function maakWaarheidsRapport(opties: { dagen?: number; ookEigenaar
       totaal: rijen.length,
       vorige: telGedragspatronen(vorigeRijen).map(t => ({ sleutel: t.sleutel, aantal: t.aantal })),
       totaalVorige: vorigeRijen.length,
+      weggegooid: {
+        nu: telWeggegooideRondes(rijen),
+        vorige: telWeggegooideRondes(vorigeRijen),
+        voorbeelden: rijen.map(r => r.verbruik?.weggegooid?.voorbeeld).filter((v): v is string => !!v).slice(0, 3),
+      },
     },
     taalfouten: {
       aantal: beoordeeld.reduce((n, b) => n + b.taalfouten.length, 0),
@@ -194,7 +206,9 @@ function patroonSectie(r: Rapport): string {
     const vb = t.voorbeelden.map(v => `<br><i style="color:#6b7280">${esc(v)}</i>`).join('')
     return `<li style="color:${kleur}"><b>${esc(t.naam)}</b>: ${t.aantal} van ${totaal} (${pct(t.aantal, totaal)}), vorige week ${totaalVorige === 0 ? 'geen data' : `${eerder} van ${totaalVorige}`}${trend}${t.aantal > 0 && eerder > 0 ? ' <b>(twee weken op rij: de aanpassing werkt niet)</b>' : ''}<br><span style="color:#6b7280;font-size:12px">hoort bij: ${esc(t.regel)}</span>${vb}</li>`
   }).join('')
-  return `<h3 style="margin:24px 0 4px">Terugkerende patronen (alle ${totaal} antwoorden van de week)</h3><p style="color:#6b7280;margin:4px 0">Tekstpatronen die eerder zijn aangepast. Staat een patroon twee weken op rij op meer dan nul, dan lost nog een zin in de prompt het niet op: dan gaat de aanpak naar de code.</p><ul style="padding-left:18px">${regels}</ul>`
+  const w = r.patronen.weggegooid
+  const wegRegel = `<li><b>Tekst vóór een hulpmiddel weggegooid</b> (de gebruiker zag dit niet): ${w.nu} rondes in ${totaal} antwoorden, vorige week ${totaalVorige === 0 ? 'geen data' : w.vorige}${totaalVorige > 0 && w.nu > w.vorige ? ' ▲' : totaalVorige > 0 && w.nu < w.vorige ? ' ▼' : ''}<br><span style="color:#6b7280;font-size:12px">hoort bij: systeemprompt (rekenen) en de tooluitleg; een getal boven nul betekent dat het model het nog steeds schrijft, de code vangt het op</span>${w.voorbeelden.map(v => `<br><i style="color:#6b7280">${esc(v)}</i>`).join('')}</li>`
+  return `<h3 style="margin:24px 0 4px">Terugkerende patronen (alle ${totaal} antwoorden van de week)</h3><p style="color:#6b7280;margin:4px 0">Tekstpatronen die eerder zijn aangepast. Staat een patroon twee weken op rij op meer dan nul, dan lost nog een zin in de prompt het niet op: dan gaat de aanpak naar de code.</p><ul style="padding-left:18px">${regels}${wegRegel}</ul>`
 }
 
 function taalSectie(r: Rapport): string {

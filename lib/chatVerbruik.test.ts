@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { maakVerbruik, telOp, verbruikKostenUsd, telTool } from './chatVerbruik'
+import { maakVerbruik, telOp, verbruikKostenUsd, telTool, telWeggegooid } from './chatVerbruik'
 
 describe('chatVerbruik', () => {
   it('telt meerdere aanroepen van één beurt op', () => {
@@ -42,5 +42,18 @@ describe('telTool', () => {
     const v = maakVerbruik()
     for (let i = 0; i < 30; i++) telTool(v, 'bereken', {}, false)
     expect(v.tools?.length).toBe(20)
+  })
+})
+
+describe('telWeggegooid', () => {
+  it('telt rondes en bewaart alleen het eerste voorbeeld, ingekort', () => {
+    const v = maakVerbruik()
+    telWeggegooid(v, 'Laat me de meest actuele tabel overschrijven.')
+    telWeggegooid(v, 'Tweede ronde')
+    telWeggegooid(v, '   ')
+    expect(v.weggegooid?.aantal).toBe(3)
+    expect(v.weggegooid?.voorbeeld).toBe('Laat me de meest actuele tabel overschrijven.')
+    telWeggegooid(v, 'x'.repeat(500))
+    expect(v.weggegooid?.voorbeeld.length).toBeLessThanOrEqual(160)
   })
 })
