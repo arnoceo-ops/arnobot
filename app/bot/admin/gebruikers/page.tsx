@@ -15,8 +15,8 @@ import AdminNav from '../AdminNav'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { haalGebruikerKosten, REFERENTIE_PRIJS_EUR, type GebruikerKosten } from '@/lib/gebruikerKosten'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
-import { nlVandaag } from '@/lib/nlTijd'
-import { dagenTussen } from '@/lib/amsterdamTijd'
+import { nlVandaag, nlDagStartIso } from '@/lib/nlTijd'
+import { dagenTussen, datumPlusDagen } from '@/lib/amsterdamTijd'
 import { huidigePersona } from '@/lib/testPersona'
 import TestPersonaButtons from '../test-persona/TestPersonaButtons'
 import TestPlanButtons from '../test-persona/TestPlanButtons'
@@ -28,21 +28,30 @@ function nu(): number {
   return Date.now()
 }
 
+// Kalenderdagen (Amsterdam) tot het einde van een proef of abonnement. Verlopen = -1, loopt vandaag nog af = 0,
+// morgen = 1. Telt dus op de datum van het einde, niet in blokken van 24 uur.
+function dagenTotEinde(eindMs: number): number {
+  if (eindMs <= nu()) return -1
+  return dagenTussen(nlVandaag(new Date(nu())), nlVandaag(new Date(eindMs))) - 1
+}
+
 function trialStatus(row: { paid_at?: string | null; expires_at?: string | null; trial_start?: string | null; is_active?: boolean }) {
   if (!row.is_active) return { label: 'INACTIEF', color: '#6b7280' }
   if (row.paid_at) return { label: 'BETAALD', color: '#44cc88' }
   if (row.expires_at) {
     const exp = new Date(row.expires_at)
-    const left = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    const left = dagenTotEinde(exp.getTime())
     // expires_at zonder trial_start = een handmatig gezette comp (GRATIS +), geen echte trial
     const isComp = !row.trial_start
-    if (left <= 0) return { label: isComp ? 'GRATIS VERLOPEN' : 'VERLOPEN', color: '#cc4444' }
+    if (left < 0) return { label: isComp ? 'GRATIS VERLOPEN' : 'VERLOPEN', color: '#cc4444' }
+    if (left === 0) return { label: isComp ? 'GRATIS VANDAAG' : 'TRIAL VANDAAG', color: '#f59e0b' }
     return { label: isComp ? `GRATIS ${left}d` : `TRIAL ${left}d`, color: '#f59e0b' }
   }
   if (row.trial_start) {
     const end = new Date(new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000)
-    const left = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    if (left <= 0) return { label: 'TRIAL VERLOPEN', color: '#cc4444' }
+    const left = dagenTotEinde(end.getTime())
+    if (left < 0) return { label: 'TRIAL VERLOPEN', color: '#cc4444' }
+    if (left === 0) return { label: 'TRIAL VANDAAG', color: '#f59e0b' }
     return { label: `TRIAL ${left}d`, color: '#f59e0b' }
   }
   return { label: 'ONBEKEND', color: '#6b7280' }
@@ -56,7 +65,7 @@ function proefDagenOver(row: { paid_at?: string | null; expires_at?: string | nu
   if (row.expires_at) end = new Date(row.expires_at).getTime()
   else if (row.trial_start) end = new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000
   if (end === null) return null
-  return Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24))
+  return dagenTotEinde(end)
 }
 
 const euro = (cent: number) => `€${(cent / 100).toFixed(2).replace('.', ',')}`
@@ -70,8 +79,8 @@ function statusSortKey(row: { is_active?: boolean; paid_at?: string | null; expi
   if (row.expires_at) end = new Date(row.expires_at).getTime()
   else if (row.trial_start) end = new Date(row.trial_start).getTime() + 30 * 24 * 60 * 60 * 1000
   if (end === null) return '4'
-  const daysLeft = Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24))
-  if (daysLeft <= 0) return '1'
+  const daysLeft = dagenTotEinde(end)
+  if (daysLeft < 0) return '1'
   return `2_${String(daysLeft).padStart(6, '0')}`
 }
 
@@ -147,7 +156,8 @@ export default async function GebruikersPage({
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const sevenDaysAgo = new Date(nu() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  // "Laatste 7 dagen" = vandaag plus de zes kalenderdagen ervoor, vanaf 0:00 Amsterdamse tijd.
+  const sevenDaysAgo = nlDagStartIso(datumPlusDagen(nlVandaag(new Date(nu())), -6))
 
   const [usersRes, logsRes, coachingRes, analysesRes, referralsRes, blogSessiesRes, sparringRes, teamMembersRes, betalingRijen, abonnementRijen, kostenPerUser, fx] = await Promise.all([
     supabase
@@ -361,7 +371,7 @@ export default async function GebruikersPage({
   // de mensen om zelf te bellen of te mailen voor het te laat is.
   const bellijst = enriched
     .map(u => ({ u, dagen: proefDagenOver(u) }))
-    .filter((x): x is { u: typeof x.u; dagen: number } => x.dagen !== null && x.dagen > 0 && x.dagen <= 7 && x.u.questions < 3)
+    .filter((x): x is { u: typeof x.u; dagen: number } => x.dagen !== null && x.dagen >= 0 && x.dagen <= 7 && x.u.questions < 3)
     .sort((a, b) => a.dagen - b.dagen)
 
   // Betalingen (laatste 5, nieuwste eerst) en het laatste abonnement per gebruiker, voor het paneel achter BETALING.
@@ -412,7 +422,7 @@ export default async function GebruikersPage({
                       <span style={{ color: '#6b7280' }}> · {u.email || 'geen e-mail'}</span>
                     </span>
                     <span style={{ fontSize: '12px', color: '#9ca3af', letterSpacing: '1px' }}>
-                      nog {dagen} dag{dagen !== 1 ? 'en' : ''} · {u.questions} vra{u.questions === 1 ? 'ag' : 'gen'} · laatste gesprek {u.lastSession ? new Date(u.lastSession).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Amsterdam' }) : 'nooit'}
+                      {dagen === 0 ? 'loopt vandaag af' : `nog ${dagen} dag${dagen !== 1 ? 'en' : ''}`} · {u.questions} vra{u.questions === 1 ? 'ag' : 'gen'} · laatste gesprek {u.lastSession ? new Date(u.lastSession).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Amsterdam' }) : 'nooit'}
                     </span>
                   </div>
                 )
