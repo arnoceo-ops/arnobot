@@ -26,7 +26,17 @@ describe('tabelTool', () => {
     const { r } = metTabel()
     expect(r.isError).toBe(false)
     expect(r.content).toContain('5 rijen')
-    expect(r.content).toContain('geen afwijkingen')
+    expect(r.content).not.toContain('KRUISCONTROLE')
+  })
+
+  it('vraagt hoogstens één keer om opnieuw te lezen: een blijvende afwijking wordt daarna niet meer gemeld', () => {
+    const fout = { ...TABEL, rijen: TABEL.rijen.map(r => (r.label === 'Carla Vos' ? { ...r, waarden: [3900000, 5000000, -1100000, 4750000, -580000] } : r)) }
+    const staat = maakTabelStaat()
+    expect(voerToolUit('schrijf_tabel_over', fout, staat).content).toContain('KRUISCONTROLE')
+    const tweede = voerToolUit('schrijf_tabel_over', fout, staat)
+    expect(tweede.isError).toBe(false)
+    expect(tweede.content).not.toContain('KRUISCONTROLE')
+    expect(tweede.content).not.toContain('Carla Vos')
   })
 
   it('kruiscontrole vangt een verkeerd overgeschreven cel', () => {
