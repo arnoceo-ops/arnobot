@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-23 (avond)
 
-**Waar we staan:** klaar voor gebruik op Arno's Android. Inlog, manifest (id `/admin-mobiel-2`), icoon (herkleurd ArnoBot-logo, `-v2-`) en de vijf kaarten staan op master (laatste commit `e4191eca`). Op de telefoon is de app geïnstalleerd met het nieuwe icoon (bevestigd door Arno met een screenshot van het appoverzicht, 2026-11-23, na het wissen van de Chrome-cache voor afbeeldingen). Wat nog niet is nagelopen: of de cijfers op de kaarten kloppen met de pc-pagina, en of inloggen met LinkedIn binnen de geïnstalleerde app goed gaat na afloop van de Clerk-sessie.
+**Waar we staan:** af en in gebruik op Arno's Android (laatste commit `30c3c6d1`). Zes kaarten in deze volgorde: TE BEOORDELEN, OMZET, KOSTEN, GEBRUIKERS, STATUS, TEAMS. Inlog via LinkedIn-account, icoon is het herkleurde ArnoBot-logo, app geïnstalleerd. Arno heeft de kaarten bekeken en akkoord gegeven (2026-11-23). Nog niet gemeten: inloggen met LinkedIn binnen de geïnstalleerde app nadat de Clerk-sessie is afgelopen.
 
-**Eerstvolgende stap (Arno):** de kaarten een paar dagen gebruiken en melden wat ontbreekt of niet klopt. De oude admin-app (met het smalle icoon en ADMIN-label) verwijderen als die er nog naast staat. In het Clerk-dashboard (Sessions) kijken hoe lang een sessie duurt, want dat bepaalt hoe vaak opnieuw inloggen nodig is.
+**Eerstvolgende stap (Arno):** een paar dagen gebruiken en melden wat ontbreekt of niet klopt. De cijfers bij GEBRUIKERS en OMZET een keer vergelijken met de pc-pagina's. In het Clerk-dashboard (Sessions) kijken hoe lang een sessie duurt. Daarna eventueel: het oude admin-slot repareren (apart plan, de cookie bevat de sleutel zelf).
 
 **Besluiten en verworpen alternatieven (2026-11-23):**
 - Gekozen: **PWA op `/bot/admin/mobiel`**, alleen Android, alleen Arno. Verworpen: de admin in de bestaande store-app (reviewrisico, elke gebruiker draagt de code mee) en een aparte Capacitor-app (tweede app-ID, ondertekening, iOS-review, pas zinvol voor push en Telegram doet dat al).
