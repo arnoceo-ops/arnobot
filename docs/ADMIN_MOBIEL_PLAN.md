@@ -1,10 +1,10 @@
 # Admin op de telefoon (`/bot/admin/mobiel`)
 
-**Laatst bijgewerkt:** 2026-11-23
+**Laatst bijgewerkt:** 2026-11-23 (avond)
 
-**Waar we staan:** inlog, manifest, icoon en de vijf kaarten staan op master (commits `a4de8a96`, `b4ca28f0`, `fa13f10b`). De inlog is op Arno's pc bevestigd ("Ingelogd" zichtbaar op arno.bot). De kaarten zijn nog niet door Arno bekeken en het icoon is nog niet op een Android-beginscherm gezet.
+**Waar we staan:** klaar voor gebruik op Arno's Android. Inlog, manifest (id `/admin-mobiel-2`), icoon (herkleurd ArnoBot-logo, `-v2-`) en de vijf kaarten staan op master (laatste commit `e4191eca`). Op de telefoon is de app geïnstalleerd; het icoon sprong na enige tijd over op het nieuwe (bevestigd door Arno, 2026-11-23). Wat nog niet is nagelopen: of de cijfers op de kaarten kloppen met de pc-pagina, en of inloggen met LinkedIn binnen de geïnstalleerde app goed gaat na afloop van de Clerk-sessie.
 
-**Eerstvolgende stap (Arno):** `arno.bot/bot/admin/mobiel` op de Android-telefoon openen met LinkedIn, de kaarten nalopen, en "Toevoegen aan startscherm" kiezen. Meld wat ontbreekt of niet klopt. Daarna doorlopen of het icoon er goed uitziet en of inloggen in de geïnstalleerde app werkt (zie de open punten).
+**Eerstvolgende stap (Arno):** de kaarten een paar dagen gebruiken en melden wat ontbreekt of niet klopt. De oude admin-app (met het smalle icoon en ADMIN-label) verwijderen als die er nog naast staat. In het Clerk-dashboard (Sessions) kijken hoe lang een sessie duurt, want dat bepaalt hoe vaak opnieuw inloggen nodig is.
 
 **Besluiten en verworpen alternatieven (2026-11-23):**
 - Gekozen: **PWA op `/bot/admin/mobiel`**, alleen Android, alleen Arno. Verworpen: de admin in de bestaande store-app (reviewrisico, elke gebruiker draagt de code mee) en een aparte Capacitor-app (tweede app-ID, ondertekening, iOS-review, pas zinvol voor push en Telegram doet dat al).
