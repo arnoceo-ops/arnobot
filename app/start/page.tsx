@@ -39,10 +39,10 @@ export default async function StartPage() {
         .start-logo span { color: #f59e0b; }
         .start-h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px,10vw,64px); letter-spacing: 3px; line-height: 1.05; color: #f1f5f9; font-weight: 400; }
         .start-sub { font-size: 15px; line-height: 1.9; color: #9ca3af; max-width: 560px; }
-        /* Primaire knop uit de stijlgids, op eigen breedte. */
+        /* Dezelfde pil als .nav-cta-btn op de hoofdpagina (app/page.tsx), op eigen breedte. */
         .start-cta {
-          font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
-          padding: 12px 36px; border-radius: 999px; background: #f59e0b; color: #111827;
+          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+          padding: 8px 20px; border-radius: 999px; background: #f59e0b; color: #111827;
           text-decoration: none; transition: background 0.2s;
         }
         .start-cta:hover { background: #d97706; }
