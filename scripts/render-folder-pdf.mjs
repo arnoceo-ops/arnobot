@@ -90,7 +90,7 @@ const HTML = `<!doctype html>
       </div>
       <div class="arno-kaart">
         <div class="arno-label">ARNOBOT</div>
-        <div class="arno-tekst">Wat zei je in je laatste gesprek precies? Vorige week vertelde je dat zijn directeur nog niet had ingestemd. Heb je dat er al bij gehaald?</div>
+        <div class="arno-tekst">Dit is de derde deal die stilvalt nadat je de prijs noemt. Dat ligt niet aan hem, maar aan jouw timing. Niet mailen: bel hem.</div>
       </div>
     </div>
     <div class="voor-voet">
