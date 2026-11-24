@@ -94,7 +94,7 @@ const HTML = `<!doctype html>
       </div>
     </div>
     <div class="voor-voet">
-      <div class="voor-slot">WIN DE DEAL,<br><span>VOORDAT DE KLANT STILVALT.</span></div>
+      <div class="voor-slot"><span>WIN DE DEAL,</span><br>VOORDAT DE KLANT STILVALT.</div>
     </div>
   </div>
 </section>
