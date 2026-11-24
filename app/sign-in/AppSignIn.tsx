@@ -91,6 +91,8 @@ export default function AppSignIn() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="E-mailadres"
+              autoComplete="username"
+              name="email"
               className="app-signin-input"
             />
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -100,6 +102,8 @@ export default function AppSignIn() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Wachtwoord"
+                autoComplete="current-password"
+                name="password"
                 className="app-signin-input"
                 style={{ paddingRight: 52 }}
               />
