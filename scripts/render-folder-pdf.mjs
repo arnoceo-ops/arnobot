@@ -33,6 +33,16 @@ const qrSvg = await QRCode.toString(BRON_URL, {
   type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#111827', light: '#ffffff' },
 })
 
+// Slotregel op de voorkant. Standaard "win"; `--variant=beton` rendert het alternatief naast de standaard
+// (ArnoBot-A5-solo-beton.pdf en preview-*-beton.png), zodat beide naast elkaar te vergelijken zijn.
+const SLOTEN = {
+  win: `<span>WIN DE DEAL,</span><br>VOORDAT DE KLANT STILVALT.`,
+  beton: `<span>GIET DE DEAL IN BETON,</span><br>VOORDAT DE KLANT STILVALT.`,
+}
+const variant = (process.argv.find(a => a.startsWith("--variant="))?.split("=")[1]) || "win"
+if (!SLOTEN[variant]) { console.error("Onbekende variant: " + variant); process.exit(1) }
+const suffix = variant === "win" ? "" : "-" + variant
+
 const HTML = `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"><style>
   @font-face { font-family: 'Bebas Neue'; src: url('${bebasUrl}') format('truetype'); }
@@ -94,7 +104,7 @@ const HTML = `<!doctype html>
       </div>
     </div>
     <div class="voor-voet">
-      <div class="voor-slot"><span>WIN DE DEAL,</span><br>VOORDAT DE KLANT STILVALT.</div>
+      <div class="voor-slot">${SLOTEN[variant]}</div>
     </div>
   </div>
 </section>
@@ -133,14 +143,14 @@ try {
   await page.setViewport({ width: 582, height: 816, deviceScaleFactor: 2 }) // 154 x 216 mm bij 96 dpi
   await page.setContent(HTML, { waitUntil: 'load', timeout: 60000 })
   await page.evaluateHandle('document.fonts.ready')
-  await page.pdf({ path: join(OUT_DIR, 'ArnoBot-A5-solo.pdf'), width: '154mm', height: '216mm', printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } })
-  console.log('ok  docs/folder/ArnoBot-A5-solo.pdf')
+  await page.pdf({ path: join(OUT_DIR, `ArnoBot-A5-solo${suffix}.pdf`), width: '154mm', height: '216mm', printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } })
+  console.log(`ok  docs/folder/ArnoBot-A5-solo${suffix}.pdf`)
   if (preview) {
     const paginas = await page.$$('.pagina')
     const namen = ['voor', 'achter']
     for (let i = 0; i < paginas.length; i++) {
-      await paginas[i].screenshot({ path: join(OUT_DIR, `preview-${namen[i]}.png`) })
-      console.log(`ok  docs/folder/preview-${namen[i]}.png`)
+      await paginas[i].screenshot({ path: join(OUT_DIR, `preview-${namen[i]}${suffix}.png`) })
+      console.log(`ok  docs/folder/preview-${namen[i]}${suffix}.png`)
     }
   }
 } finally {
