@@ -34,12 +34,15 @@ export default async function StartPage() {
         .start-h1 { font-family: 'Oswald', sans-serif; font-size: 40px; font-weight: 600; text-transform: uppercase; line-height: 1.05; text-wrap: balance; }
         .start-h1 span { color: #f59e0b; }
         .start-sub { font-size: 18px; line-height: 1.6; color: #94a3b8; text-wrap: pretty; }
+        /* Dezelfde pil als .nav-cta-btn op de hoofdpagina (app/page.tsx). align-self houdt hem
+           op eigen breedte in plaats van kolombreed. */
         .start-cta {
-          display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; background: #f59e0b;
-          padding: 18px 32px; font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600;
-          letter-spacing: 0.1em; color: #111827; text-decoration: none; text-transform: uppercase;
-          box-shadow: 0 20px 40px rgba(245,158,11,0.25);
+          align-self: flex-start;
+          font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+          color: #111827; text-decoration: none; background: #f59e0b;
+          padding: 8px 20px; border-radius: 999px; transition: background 0.2s;
         }
+        .start-cta:hover { background: #d97706; }
         .start-cta:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
         .start-punten { display: flex; flex-direction: column; gap: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 28px; }
         .start-punt-titel { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #f59e0b; margin-bottom: 4px; }
