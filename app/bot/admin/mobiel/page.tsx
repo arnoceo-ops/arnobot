@@ -252,7 +252,7 @@ export default async function AdminMobielPage() {
         <Kaart
           titel="STATUS"
           niveau={status.data.niveau}
-          samenvatting={status.data.problemen.length ? `${status.data.problemen.length} punt${status.data.problemen.length > 1 ? 'en' : ''} vragen aandacht` : 'Alles in orde'}
+          samenvatting={status.data.problemen.length ? (status.data.problemen.length > 1 ? `${status.data.problemen.length} punten vragen aandacht` : '1 punt vraagt aandacht') : 'Alles in orde'}
           open={status.data.problemen.length > 0}
         >
           {status.data.problemen.map((p, i) => (
