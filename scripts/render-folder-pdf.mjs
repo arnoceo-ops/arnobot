@@ -58,7 +58,7 @@ const HTML = `<!doctype html>
   .jij-tekst { font-family: 'Bebas Neue', sans-serif; font-size: 34pt; line-height: 1.12; letter-spacing: 0.5px; color: #f1f5f9; }
   .arno-kaart { background: #1f2937; border-radius: 3mm; padding: 7mm 7mm 8mm; border-left: 1.2mm solid #f59e0b; }
   .arno-label { font-family: 'Bebas Neue', sans-serif; font-size: 14pt; letter-spacing: 3px; color: #f59e0b; margin-bottom: 3mm; }
-  .arno-tekst { font-size: 10.5pt; line-height: 1.75; color: #d1d5db; }
+  .arno-tekst { font-size: 11.5pt; line-height: 1.75; color: #d1d5db; }
   .voor-voet { display: flex; align-items: flex-end; justify-content: space-between; gap: 6mm; }
   .voor-slot { font-family: 'Bebas Neue', sans-serif; font-size: 17pt; letter-spacing: 2px; line-height: 1.2; color: #f1f5f9; }
   .voor-slot span { color: #f59e0b; }
