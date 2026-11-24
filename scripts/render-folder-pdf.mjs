@@ -60,7 +60,7 @@ const HTML = `<!doctype html>
   .arno-label { font-family: 'Bebas Neue', sans-serif; font-size: 14pt; letter-spacing: 3px; color: #f59e0b; margin-bottom: 3mm; }
   .arno-tekst { font-size: 11.5pt; line-height: 1.75; color: #d1d5db; }
   .voor-voet { display: flex; align-items: flex-end; justify-content: space-between; gap: 6mm; }
-  .voor-slot { font-family: 'Bebas Neue', sans-serif; font-size: 17pt; letter-spacing: 2px; line-height: 1.2; color: #f1f5f9; }
+  .voor-slot { font-family: 'Bebas Neue', sans-serif; font-size: 34pt; letter-spacing: 0.5px; line-height: 1.12; color: #f1f5f9; }
   .voor-slot span { color: #f59e0b; }
 
   /* ACHTERKANT */
@@ -94,7 +94,7 @@ const HTML = `<!doctype html>
       </div>
     </div>
     <div class="voor-voet">
-      <div class="voor-slot">DE AI SALES COACH<br>DIE <span>JE GESPREKKEN KENT</span></div>
+      <div class="voor-slot">ZIE WAAR JE DEALS STRANDEN, <span>VOORDAT DE KLANT STILVALT.</span></div>
     </div>
   </div>
 </section>
