@@ -103,7 +103,7 @@ const HTML = `<!doctype html>
   <div class="gloed"></div>
   <div class="veilig">
     <div class="label">AI SALES COACH</div>
-    <div class="achter-kop">SLUIT MEER DEALS MET EEN COACH DIE <span>AL JE GESPREKKEN KENT</span></div>
+    <div class="achter-kop">SLUIT MEER DEALS MET EEN COACH DIE <span>JE UITDAAGT</span></div>
     <div class="punten">
       <div><div class="punt-titel">HIJ ONTHOUDT</div><div class="punt-tekst">Wat je vorige week zei, weet hij nog. Jij begint nooit meer bij nul.</div></div>
       <div><div class="punt-titel">HIJ SPIEGELT</div><div class="punt-tekst">Eerlijke terugkoppeling op jouw eigen gesprekken. Zo zie je waar je deals blijven hangen.</div></div>

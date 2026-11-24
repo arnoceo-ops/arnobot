@@ -14,7 +14,7 @@ import SignupCTA from '../components/SignupCTA'
 
 export const metadata: Metadata = {
   title: 'ArnoBot: 30 dagen gratis',
-  description: 'Sluit meer deals met een coach die al je gesprekken kent. Probeer ArnoBot 30 dagen gratis.',
+  description: 'Sluit meer deals met een coach die je uitdaagt. Probeer ArnoBot 30 dagen gratis.',
   // Alleen bedoeld voor wie de folder heeft, niet voor zoekmachines naast de hoofdpagina.
   robots: { index: false, follow: false },
 }
@@ -151,7 +151,7 @@ export default async function StartPage() {
         <div className="hero-inner">
           <div className="hero-copy">
             <p className="hero-eyebrow">AI SALES COACH</p>
-            <h1 className="hero-h1">Sluit meer deals met een coach die <span>al je gesprekken kent</span></h1>
+            <h1 className="hero-h1">Sluit meer deals met een coach die <span>je uitdaagt</span></h1>
             <p className="hero-sub">Probeer ArnoBot 30 dagen gratis. Daarna maak je zelf een keuze.</p>
             <SignupCTA className="hero-cta">30 dagen gratis</SignupCTA>
           </div>
