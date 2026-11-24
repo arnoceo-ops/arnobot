@@ -18,6 +18,8 @@ export type Meting = {
   /** Aantal Anthropic-limietfouten (429) in de afgelopen dag. */
   anthropic429Dag: number
   actieveGebruikers: number
+  /** Actieve gebruikers met een betaling (paid_at gevuld), zonder interne testaccounts. Afwezig = niet gemeten. */
+  betaaldeGebruikers?: number
 }
 
 export type Melding = {
@@ -45,7 +47,7 @@ export const KRITIEK = 0.9
 export const MIJLPALEN: { aantal: number; tekst: string }[] = [
   {
     aantal: 50,
-    tekst: 'Mijlpaal van 50 actieve gebruikers. Nu doen: Clerk Pro nemen (nu Hobby, $240 per jaar): inactivity timeout en sessieduur instellen, MFA overwegen voor managers, 7 dagen logs in plaats van 1 dag. Verder het WhatsApp-supportnummer overzetten naar het WhatsApp Business Platform met een helpdesktool en een echte DPA met Meta.',
+    tekst: 'Mijlpaal van 50 actieve gebruikers. Nu doen: het WhatsApp-supportnummer overzetten naar het WhatsApp Business Platform met een helpdesktool en een echte DPA met Meta.',
   },
   {
     aantal: 75,
@@ -54,6 +56,15 @@ export const MIJLPALEN: { aantal: number; tekst: string }[] = [
   {
     aantal: 150,
     tekst: 'Mijlpaal van 150 actieve gebruikers. Nu doen: Supabase PITR aanzetten ($100 per maand) en direct een restore-test uitvoeren (backup terugzetten in een tijdelijk project, tabellen en encoding controleren, project verwijderen).',
+  },
+]
+
+// Mijlpaal op betaalde gebruikers (besluit 2026-11-24): Clerk Hobby begrenst de sessieduur op 7 dagen,
+// dus elke app-gebruiker moet wekelijks opnieuw inloggen. Een langere duur vraagt Clerk Pro.
+export const MIJLPALEN_BETAALD: { aantal: number; tekst: string }[] = [
+  {
+    aantal: 10,
+    tekst: 'Mijlpaal van 10 actieve betaalde gebruikers. Nu doen: Clerk Pro nemen (nu Hobby, $240 per jaar): maximale sessieduur verlengen (Hobby: 7 dagen, dus wekelijks opnieuw inloggen in de Android-app), inactivity timeout en sessielimieten instellen, MFA overwegen voor managers, 7 dagen logs in plaats van 1 dag.',
   },
 ]
 
@@ -136,6 +147,12 @@ export function beoordeelCapaciteit(m: Meting): Melding[] {
   for (const mijlpaal of MIJLPALEN) {
     if (m.actieveGebruikers >= mijlpaal.aantal) {
       meldingen.push({ sleutel: `mijlpaal:${mijlpaal.aantal}`, niveau: 'mijlpaal', tekst: mijlpaal.tekst })
+    }
+  }
+
+  for (const mijlpaal of MIJLPALEN_BETAALD) {
+    if ((m.betaaldeGebruikers ?? 0) >= mijlpaal.aantal) {
+      meldingen.push({ sleutel: `mijlpaal-betaald:${mijlpaal.aantal}`, niveau: 'mijlpaal', tekst: mijlpaal.tekst })
     }
   }
 

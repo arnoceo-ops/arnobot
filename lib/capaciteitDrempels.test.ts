@@ -39,6 +39,8 @@ describe('beoordeelCapaciteit', () => {
   })
 
   it('mijlpalen: 50, 75 en 150 actieve gebruikers, elk één keer per drempel', () => {
+    expect(beoordeelCapaciteit({ ...rustig, betaaldeGebruikers: 9 })).toEqual([])
+    expect(beoordeelCapaciteit({ ...rustig, betaaldeGebruikers: 10 }).map(m => m.sleutel)).toEqual(['mijlpaal-betaald:10'])
     expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 49 })).toEqual([])
     expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 50 }).map(m => m.sleutel)).toEqual(['mijlpaal:50'])
     expect(beoordeelCapaciteit({ ...rustig, actieveGebruikers: 75 }).map(m => m.sleutel)).toEqual(['mijlpaal:50', 'mijlpaal:75'])

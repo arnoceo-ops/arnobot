@@ -21,6 +21,10 @@ async function cronHandler(req: NextRequest) {
       supabase.from('approved_users').select('*', { count: 'exact', head: true }).eq('is_active', true),
     )
     const actieveGebruikers = count ?? 0
+    const { count: betaaldCount } = await excludeInternalTestUsers(
+      supabase.from('approved_users').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    ).not('paid_at', 'is', null)
+    const betaaldeGebruikers = betaaldCount ?? 0
 
     // Databasegrootte via een SQL-functie (docs/sql/2026-11-04-db-grootte.sql). Ontbreekt die nog, dan slaan we dit over.
     let dbBytes: number | null = null
@@ -40,7 +44,7 @@ async function cronHandler(req: NextRequest) {
     const tellers = await leesTellers()
     const resendPlan: ResendPlan = process.env.RESEND_PLAN === 'pro' ? 'pro' : 'gratis'
 
-    const meldingen = beoordeelCapaciteit({ resendPlan, ...tellers, dbBytes, dbVerbindingen, dbMaxVerbindingen, actieveGebruikers })
+    const meldingen = beoordeelCapaciteit({ resendPlan, ...tellers, dbBytes, dbVerbindingen, dbMaxVerbindingen, actieveGebruikers, betaaldeGebruikers })
 
     const nieuw = []
     for (const m of meldingen) if (await nieuwMelden(m.sleutel, m.niveau)) nieuw.push(m)
