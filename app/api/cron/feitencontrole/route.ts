@@ -5,7 +5,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
-import { verdachteTellingen } from '@/lib/feitenControle'
+import { verdachteTellingen, gebruiktTabelTool } from '@/lib/feitenControle'
 import { vindFouteSommen, vindUVorm } from '@/lib/rekenControle'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { laadSessieDocumenten, laadBijlage } from '@/lib/documenten'
@@ -104,11 +104,11 @@ async function cronHandler(req: NextRequest) {
     const sinds = new Date(Date.now() - VENSTER_MS).toISOString()
     // Het venster in blokken (lib/haalAlleRijen.ts) en pas daarna begrenzen op MAX_LOGS: een .limit
     // boven 1000 werkt niet, de database kapt dan toch af op 1000.
-    const logs = (await haalAlleRijen<{ user_id: string | null; session_id: string | null; question: string | null; answer: string | null; created_at: string }>((van, tot) =>
+    const logs = (await haalAlleRijen<{ user_id: string | null; session_id: string | null; question: string | null; answer: string | null; created_at: string; verbruik: unknown }>((van, tot) =>
       excludeInternalTestUsers(
         supabase
           .from('arnobot_rds_logs')
-          .select('user_id, session_id, question, answer, created_at')
+          .select('user_id, session_id, question, answer, created_at, verbruik')
           .gte('created_at', sinds)
       )
         .order('created_at', { ascending: true })
@@ -142,6 +142,8 @@ async function cronHandler(req: NextRequest) {
     const kandidaten: { userId: string; sessieId: string; bron: string; antwoord: string; woorden: string[] }[] = []
     for (const r of rijen) {
       const bronnen = (vragenPerSessie.get(r.session_id as string) ?? []).filter(x => x.t <= (r.created_at as string)).map(x => x.v)
+      // Beurten met de tabeltool: de getallen komen uit een server-gecontroleerde tabel, zie gebruiktTabelTool.
+      if (gebruiktTabelTool(r.verbruik)) continue
       const woorden = verdachteTellingen(r.answer as string, bronnen)
       if (woorden.length > 0) kandidaten.push({ userId: String(r.user_id ?? ''), sessieId: r.session_id as string, bron: bronnen.join('\n---\n'), antwoord: r.answer as string, woorden })
     }

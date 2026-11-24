@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { verdachteTellingen, feitenRegel } from './feitenControle'
+import { verdachteTellingen, feitenRegel, gebruiktTabelTool } from './feitenControle'
 
 const bron = ['Financiering = deels uit vaste huur van 3 huurders. De overige dekking komt uit verhuur aan losse huurders en evenementen.']
 
@@ -27,5 +27,16 @@ describe('feitenRegel', () => {
   })
   it('bevat geen streepjes als leesteken', () => {
     expect(feitenRegel('x'.repeat(400))).not.toMatch(/[—–]/)
+  })
+})
+
+describe('gebruiktTabelTool', () => {
+  it('herkent een beurt met schrijf_tabel_over', () => {
+    expect(gebruiktTabelTool({ tools: [{ naam: 'schrijf_tabel_over', invoer: '14 rijen' }, { naam: 'groeidoel', invoer: '{}' }] })).toBe(true)
+  })
+  it('laat andere beurten met rust', () => {
+    expect(gebruiktTabelTool({ tools: [{ naam: 'groeidoel', invoer: '{}' }] })).toBe(false)
+    expect(gebruiktTabelTool({ bijlagen: 2 })).toBe(false)
+    expect(gebruiktTabelTool(null)).toBe(false)
   })
 })

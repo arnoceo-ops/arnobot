@@ -49,3 +49,14 @@ export function feitenRegel(vraag: string): string {
   if (vraag.length < 350 && aantalGetallen < 2) return ''
   return '\n\nFEITEN TERUGGEVEN: geef wat de gebruiker vertelde alleen terug in zijn eigen woorden en zijn eigen getallen. Noem nooit een aantal (aantal bronnen, personen, doelen, stappen) dat hij niet zelf noemde, en tel niets zelf op. Een berekening met zijn eigen getallen mag, zeg er dan bij hoe je erbij komt. Twijfel je over een feit, vraag het.'
 }
+
+/**
+ * Heeft deze beurt de tabeltool gebruikt? Dan komen de getallen uit een tabel die de server heeft nagerekend (sommen en totalen
+ * gecontroleerd, rangorde en groei berekend). Het model dat achteraf een afbeelding opnieuw leest, verwart kolommen en meldt
+ * dan een juist getal als fout (Telegram 19, 21 en 24 november: "€362k groei YTD" stond er gewoon in de kolom Δ TY-LY YTD).
+ * De cron laat zulke beurten daarom buiten het modeloordeel.
+ */
+export function gebruiktTabelTool(verbruik: unknown): boolean {
+  const tools = (verbruik as { tools?: unknown } | null)?.tools
+  return Array.isArray(tools) && tools.some(t => (t as { naam?: unknown } | null)?.naam === 'schrijf_tabel_over')
+}
