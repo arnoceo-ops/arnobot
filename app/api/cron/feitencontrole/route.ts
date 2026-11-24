@@ -171,8 +171,16 @@ async function cronHandler(req: NextRequest) {
       if (u) uVormen.push({ userId: uid, tekst: u })
     }
 
-    if (fouten.length + rekenFouten.length + uVormen.length > 0) {
-      const ids = [...new Set([...fouten, ...rekenFouten, ...uVormen].map(f => f.userId).filter(Boolean))]
+    // Superlatieven over een tabel die niet kloppen, door de chat zelf vastgesteld (lib/tabelClaims.ts, verbruik.tabelClaims).
+    const claimFouten: { userId: string; zin: string; kolom: string; plek: number; van: number; topWaarde: number }[] = []
+    for (const r of rijen) {
+      const lijst = (r.verbruik as { tabelClaims?: unknown } | null)?.tabelClaims
+      if (!Array.isArray(lijst)) continue
+      for (const c of lijst as { zin: string; kolom: string; plek: number; van: number; topWaarde: number }[]) claimFouten.push({ userId: String(r.user_id ?? ''), ...c })
+    }
+
+    if (fouten.length + rekenFouten.length + uVormen.length + claimFouten.length > 0) {
+      const ids = [...new Set([...fouten, ...rekenFouten, ...uVormen, ...claimFouten].map(f => f.userId).filter(Boolean))]
       const naamPerId = new Map<string, string>()
       if (ids.length > 0) {
         const { data: users } = await supabase.from('approved_users').select('user_id, voornaam').in('user_id', ids)
@@ -191,6 +199,9 @@ async function cronHandler(req: NextRequest) {
       }
       if (uVormen.length > 0) {
         blokken.push(`${uVormen.length} antwoord${uVormen.length === 1 ? '' : 'en'} met "u" in plaats van jij:\n${uVormen.slice(0, 15).map(f => `${naam(f.userId)}: "${f.tekst}"`).join('\n')}`)
+      }
+      if (claimFouten.length > 0) {
+        blokken.push(`${claimFouten.length} bewering${claimFouten.length === 1 ? '' : 'en'} over een tabel die niet klopt:\n${claimFouten.slice(0, 15).map(f => `${naam(f.userId)}: "${f.zin}" (kolom ${f.kolom}: plek ${f.plek} van ${f.van}, bovenaan staat ${f.topWaarde})`).join('\n')}`)
       }
       await notifyTelegram(`ARNOBOT FEITENCONTROLE · ${datum}\nVan ${rijen.length} gecontroleerd.\n\n${blokken.join('\n\n')}`)
     }

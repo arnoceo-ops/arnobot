@@ -74,7 +74,8 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { streamRonde } from '@/lib/chatStreamRonde'
+import { streamRonde, haalWerkruisWeg } from '@/lib/chatStreamRonde'
+import { vindOnjuisteSuperlatieven } from '@/lib/tabelClaims'
 import { maakVerbruik, telOp, telOpLezer, telTool, telWeggegooid } from '@/lib/chatVerbruik'
 import { haalMaandKosten, beoordeelMaandKosten, bouwRemTekst, maandKostenUitgezonderd, meldEenmaligPerMaand, type MaandStand } from '@/lib/maandKosten'
 import { notifyTelegram } from '@/lib/cron-notify'
@@ -664,7 +665,7 @@ export async function POST(req: NextRequest) {
           for (let ronde = 0; ronde < MAX_REKENRONDES && chatTools && moetDoorgaan(); ronde++) {
             const toolGebruik = finalMessage.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
             if (laatsteRondeVerborgen) telWeggegooid(verbruik, laatsteWeggegooid)
-            eerdereTekst += laatsteRondeVerborgen ? '' : getAllText(finalMessage.content)
+            eerdereTekst += laatsteRondeVerborgen ? '' : haalWerkruisWeg(getAllText(finalMessage.content))
             werkBerichten = [
               ...werkBerichten,
               { role: 'assistant', content: finalMessage.content },
@@ -703,7 +704,8 @@ export async function POST(req: NextRequest) {
             console.error('[chat] toolrondes op, antwoord zonder slot, sessionId:', sessionId, 'stop_reason:', finalMessage.stop_reason)
             Sentry.captureMessage('[chat] toolrondes op', { level: 'warning', extra: { sessionId, stopReason: finalMessage.stop_reason } })
           }
-          const laatsteTekst = laatsteRondeVerborgen ? '' : getAllText(finalMessage.content)
+          // Opgeslagen tekst = getoonde tekst: het werkruisfilter van streamRonde geldt hier ook, anders staat het bij herladen alsnog in het gesprek.
+          const laatsteTekst = laatsteRondeVerborgen ? '' : (chatTools ? haalWerkruisWeg(getAllText(finalMessage.content)) : getAllText(finalMessage.content))
           let answer = eerdereTekst + laatsteTekst
 
           if (!answer) {
@@ -766,6 +768,12 @@ export async function POST(req: NextRequest) {
                 extra: { sessionId, userId: userId ?? null, antwoordLengte, chatMaxTokens },
               })
             }
+          }
+
+          // Superlatieven over de tabel die niet kloppen ("de hoogste marge" terwijl een ander hoger staat): zie lib/tabelClaims.ts.
+          if (tabelStaat.tabel) {
+            const claims = vindOnjuisteSuperlatieven(answer, tabelStaat.tabel)
+            if (claims.length > 0) verbruik.tabelClaims = claims.slice(0, 5)
           }
 
           let logId: string | null = null

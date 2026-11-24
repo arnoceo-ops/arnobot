@@ -22,6 +22,8 @@ export type ChatVerbruik = {
   tools?: { naam: string; invoer: string; fout?: true }[]
   /** Rondes waarvan de tekst vóór een toolaanroep niet is getoond (werkruis zoals "laat me de tabel overschrijven"), met een kort voorbeeld. Toegevoegd 2026-11-23. */
   weggegooid?: { aantal: number; voorbeeld: string }
+  /** Superlatieven in het antwoord ("de hoogste marge") die aantoonbaar niet kloppen met de tabel (lib/tabelClaims.ts). Geen namen of waarden uit de tabel, alleen de zin, de kolomkop en de plek. Toegevoegd 2026-11-24. */
+  tabelClaims?: { zin: string; kolom: string; plek: number; van: number; topWaarde: number }[]
   /** Alleen bij een beurt via de lezer (lib/documentLezer.ts): het verbruik van die aparte, goedkopere aanroepen (ander model, ander tarief). */
   lezer?: { invoer: number; cache_schrijven: number; cache_lezen: number; uitvoer: number; aanroepen: number }
 }

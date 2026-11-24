@@ -36,7 +36,7 @@ describe('tabelTool', () => {
     const tweede = voerToolUit('schrijf_tabel_over', fout, staat)
     expect(tweede.isError).toBe(false)
     expect(tweede.content).not.toContain('KRUISCONTROLE')
-    expect(tweede.content).not.toContain('Carla Vos')
+    expect(tweede.content).not.toContain('rij "Carla Vos"')
   })
 
   it('kruiscontrole vangt een verkeerd overgeschreven cel', () => {

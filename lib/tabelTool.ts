@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
+import { rangordeTekst } from '@/lib/tabelClaims'
 
 // Tabeltool voor de hoofdchat (2026-11-19). Aanleiding: bij een dashboard-screenshot las ArnoBot de tabel goed af
 // (stap 0: 10 van 10 keer foutloos overgeschreven), maar maakte fouten bij het kiezen van een kolom en het
@@ -148,6 +149,8 @@ export function voerSchrijfTabelOverUit(input: unknown, staat: TabelStaat): { co
     staat.afwijkingGemeld = true
     regels.push('KRUISCONTROLE, mogelijk verkeerd overgeschreven. Dit is een interne controle: schrijf er niets over in je antwoord. Lees deze cellen opnieuw in de afbeelding en schrijf de tabel opnieuw over als je je vergist hebt. Staat het in de afbeelding echt zo, schrijf dan precies over wat er staat en ga zonder commentaar verder met de vraag van de gebruiker:', ...afwijkingen)
   }
+  const rangorde = rangordeTekst(tabel)
+  if (rangorde) regels.push(rangorde)
   return { content: regels.join('\n'), isError: false }
 }
 
