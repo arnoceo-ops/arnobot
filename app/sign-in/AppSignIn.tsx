@@ -122,13 +122,13 @@ export default function AppSignIn() {
             {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           </form>
 
-          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 1, textAlign: 'center', textWrap: 'balance', lineHeight: 1.8, marginTop: 24 }}>
+          <p style={{ fontSize: 13, color: '#9ca3af', letterSpacing: 0, wordSpacing: -2, textAlign: 'center', textWrap: 'balance', lineHeight: 1.8, marginTop: 24, maxWidth: 280, marginLeft: 'auto', marginRight: 'auto' }}>
             Nog geen wachtwoord?
             <br />
             <button
               type="button"
               onClick={() => Browser.open({ url: 'https://www.arno.bot/bot/account' })}
-              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 1, lineHeight: 1.8, padding: 0 }}
+              style={{ background: 'none', border: 'none', color: '#f59e0b', textDecoration: 'underline', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 0, wordSpacing: -2, lineHeight: 1.8, padding: 0 }}
             >
               Stel in
             </button>{' '}
