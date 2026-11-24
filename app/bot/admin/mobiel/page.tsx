@@ -256,7 +256,7 @@ export default async function AdminMobielPage() {
           open={status.data.problemen.length > 0}
         >
           {status.data.problemen.map((p, i) => (
-            <p key={i} style={{ margin: '0 0 10px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4 }}>{p}</p>
+            <p key={i} style={{ margin: '0 0 10px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4, whiteSpace: 'pre-line' }}>{p}</p>
           ))}
           {status.data.regels.map(r => <Rij key={r.label} links={r.label} rechts={r.waarde} niveau={r.niveau} />)}
         </Kaart>

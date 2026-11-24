@@ -106,16 +106,38 @@ export type StatusKaart = { niveau: Niveau; regels: StatusRegel[]; problemen: st
 
 const INDICATOR_NIVEAU: Record<string, Niveau> = { none: 'ok', minor: 'let-op', major: 'fout', critical: 'fout' }
 
-async function haalDienstStatus(): Promise<StatusRegel[]> {
-  return Promise.all(EXTERNE_DIENSTEN.map(async (d): Promise<StatusRegel> => {
+const COMPONENT_LABEL: Record<string, string> = {
+  degraded_performance: 'verminderd', partial_outage: 'gedeeltelijk down', major_outage: 'down', under_maintenance: 'onderhoud',
+}
+
+/** Wat er speelt, in gewone regels: de onderdelen die niet operationeel zijn en de open incidenten met hun laatste update (zoals de desktop-statuspagina). */
+function dienstDetails(j: { components?: { name: string; status: string; group?: boolean }[]; incidents?: { name: string; status: string; incident_updates?: { body?: string }[] }[] }): string[] {
+  const regels: string[] = []
+  for (const c of j.components ?? []) {
+    if (c.group || c.status === 'operational') continue
+    regels.push(`${c.name}: ${COMPONENT_LABEL[c.status] ?? c.status}`)
+  }
+  for (const i of j.incidents ?? []) {
+    regels.push(`${i.name} (${i.status})`)
+    const update = i.incident_updates?.[0]?.body?.trim()
+    if (update) regels.push(update.length > 300 ? `${update.slice(0, 300)}...` : update)
+  }
+  return regels
+}
+
+async function haalDienstStatus(): Promise<{ regel: StatusRegel; details: string[] }[]> {
+  return Promise.all(EXTERNE_DIENSTEN.map(async (d) => {
     try {
       const r = await fetch(d.url, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
       const j = await r.json()
       const niveau = INDICATOR_NIVEAU[j?.status?.indicator as string] ?? 'onbekend'
-      return { label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau }
+      return {
+        regel: { label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau },
+        details: niveau === 'ok' ? [] : dienstDetails(j),
+      }
     } catch {
       // Een statusfetch die mislukt is geen storing: onbekend, geen alarm (zoals /bot/admin/status).
-      return { label: d.name, waarde: 'status niet beschikbaar', niveau: 'onbekend' }
+      return { regel: { label: d.name, waarde: 'status niet beschikbaar', niveau: 'onbekend' as Niveau }, details: [] }
     }
   }))
 }
@@ -189,9 +211,9 @@ export async function haalStatus(actieveGebruikers: number, nu: Date): Promise<S
   }
 
   // Externe diensten (alleen niet-onbekende problemen krijgen een regel in problemen)
-  for (const d of diensten) {
+  for (const { regel: d, details } of diensten) {
     regels.push(d)
-    if (d.niveau === 'let-op' || d.niveau === 'fout') problemen.push(`${d.label}: ${d.waarde}`)
+    if (d.niveau === 'let-op' || d.niveau === 'fout') problemen.push([`${d.label}: ${d.waarde}`, ...details.map(t => `↳ ${t}`)].join('\n'))
   }
 
   return { niveau: ergsteNiveau(regels.map(r => r.niveau)), regels, problemen }
