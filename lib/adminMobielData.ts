@@ -110,18 +110,16 @@ const COMPONENT_LABEL: Record<string, string> = {
   degraded_performance: 'verminderd', partial_outage: 'gedeeltelijk down', major_outage: 'down', under_maintenance: 'onderhoud',
 }
 
-/** Wat er speelt, in gewone regels: de onderdelen die niet operationeel zijn en de open incidenten met hun laatste update (zoals de desktop-statuspagina). */
-function dienstDetails(j: { components?: { name: string; status: string; group?: boolean }[]; incidents?: { name: string; status: string; incident_updates?: { body?: string }[] }[] }): string[] {
+/** Wat er speelt, zoals de desktop-statuspagina: de onderdelen die niet operationeel zijn en het nieuwste incident. */
+function dienstDetails(j: { components?: { name: string; status: string; group?: boolean }[]; incidents?: { name: string; status: string }[] }): string[] {
   const regels: string[] = []
   for (const c of j.components ?? []) {
     if (c.group || c.status === 'operational') continue
     regels.push(`${c.name}: ${COMPONENT_LABEL[c.status] ?? c.status}`)
   }
-  for (const i of j.incidents ?? []) {
-    regels.push(`${i.name} (${i.status})`)
-    const update = i.incident_updates?.[0]?.body?.trim()
-    if (update) regels.push(update.length > 300 ? `${update.slice(0, 300)}...` : update)
-  }
+  // Zoals de desktop-statuspagina: alleen het nieuwste incident, naam en status, zonder updatetekst.
+  const i = j.incidents?.[0]
+  if (i) regels.push(`${i.name} · ${i.status}`)
   return regels
 }
 
