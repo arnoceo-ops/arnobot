@@ -1,4 +1,6 @@
 // Rendert de A5-folder (voor en achter) naar docs/folder/ArnoBot-A5-solo.pdf, zie docs/FOLDER_PLAN.md.
+// Amber (#f59e0b) staat bewust alleen op drie plekken, voor spot-UV: voorkant de eerste slotregel,
+// achterkant "JE UITDAAGT" en "30 DAGEN GRATIS". Al het andere is wit of grijs.
 //
 // Gebruik:  node scripts/render-folder-pdf.mjs [--preview]
 //   --preview schrijft er ook PNG's naast (docs/folder/preview-voor.png en preview-achter.png).
@@ -56,18 +58,18 @@ const HTML = `<!doctype html>
   .pagina:last-child { page-break-after: auto; }
   /* 3 mm afloop + 12 mm veilige marge = 15 mm tot de tekst */
   .veilig { position: absolute; inset: 15mm; display: flex; flex-direction: column; }
-  .gloed { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 45% at 50% 105%, rgba(245,158,11,0.22), transparent 70%); }
+  .gloed { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 45% at 50% 105%, rgba(148,163,184,0.12), transparent 70%); }
 
   .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22pt; letter-spacing: 3px; color: #f1f5f9; }
-  .logo span { color: #f59e0b; }
-  .label { font-family: 'Space Mono', monospace; font-size: 8pt; letter-spacing: 4px; color: #f59e0b; }
+  .logo span { color: #f1f5f9; }
+  .label { font-family: 'Space Mono', monospace; font-size: 8pt; letter-spacing: 4px; color: #9ca3af; }
 
   /* VOORKANT */
   .voor-midden { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 9mm; }
   .jij-label { font-family: 'Bebas Neue', sans-serif; font-size: 14pt; letter-spacing: 3px; color: #6b7280; margin-bottom: 2mm; }
   .jij-tekst { font-family: 'Bebas Neue', sans-serif; font-size: 34pt; line-height: 1.12; letter-spacing: 0.5px; color: #f1f5f9; }
-  .arno-kaart { background: #1f2937; border-radius: 3mm; padding: 7mm 7mm 8mm; border-left: 1.2mm solid #f59e0b; }
-  .arno-label { font-family: 'Bebas Neue', sans-serif; font-size: 14pt; letter-spacing: 3px; color: #f59e0b; margin-bottom: 3mm; }
+  .arno-kaart { background: #1f2937; border-radius: 3mm; padding: 7mm 7mm 8mm; border-left: 1.2mm solid #6b7280; }
+  .arno-label { font-family: 'Bebas Neue', sans-serif; font-size: 14pt; letter-spacing: 3px; color: #f1f5f9; margin-bottom: 3mm; }
   .arno-tekst { font-size: 11.5pt; line-height: 1.75; color: #d1d5db; }
   .voor-voet { display: flex; align-items: flex-end; justify-content: space-between; gap: 6mm; }
   .voor-slot { font-family: 'Bebas Neue', sans-serif; font-size: 34pt; letter-spacing: 0.5px; line-height: 1.12; color: #f1f5f9; }
@@ -77,7 +79,7 @@ const HTML = `<!doctype html>
   .achter-kop { font-family: 'Bebas Neue', sans-serif; font-size: 39pt; line-height: 1.05; letter-spacing: 1.5px; color: #f1f5f9; margin-top: 7mm; }
   .achter-kop span { color: #f59e0b; }
   .punten { margin-top: 9mm; display: grid; grid-template-columns: 1fr 1fr; gap: 6mm 7mm; }
-  .punt-titel { font-family: 'Bebas Neue', sans-serif; font-size: 15pt; letter-spacing: 2px; color: #f59e0b; margin-bottom: 1.2mm; }
+  .punt-titel { font-family: 'Bebas Neue', sans-serif; font-size: 15pt; letter-spacing: 2px; color: #f1f5f9; margin-bottom: 1.2mm; }
   .punt-tekst { font-size: 8.5pt; line-height: 1.6; color: #9ca3af; }
   .actie { margin-top: auto; display: flex; align-items: center; gap: 8mm; background: #1f2937; border-radius: 3mm; padding: 7mm; }
   .qr { flex: none; width: 40mm; height: 40mm; background: #ffffff; border-radius: 2mm; padding: 3mm; }
