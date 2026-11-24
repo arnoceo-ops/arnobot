@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 }
 
 const PUNTEN = [
-  { titel: 'HIJ ONTHOUDT', tekst: 'Wat je vorige week zei, weet hij nog. Heb je je actie gedaan? Dan vraagt hij ernaar.' },
-  { titel: 'HIJ SPIEGELT', tekst: 'Geen standaardadvies, maar vragen en eerlijke terugkoppeling over jouw gedrag.' },
-  { titel: 'HIJ LAAT JE OEFENEN', tekst: 'Sparren tegen een lastige prospect of sceptische CFO, met debrief.' },
-  { titel: 'HIJ MEET', tekst: 'Mindset, systeem en actie, uitgewerkt in een coachingrapport.' },
+  { titel: 'HIJ ONTHOUDT', tekst: 'Wat je vorige week zei, weet hij nog. Jij begint nooit meer bij nul.' },
+  { titel: 'HIJ SPIEGELT', tekst: 'Geen standaardadvies, maar eerlijke terugkoppeling op jouw eigen gesprekken. Zo zie je waar je deals blijven hangen.' },
+  { titel: 'HIJ LAAT JE OEFENEN', tekst: 'Sparren tegen een lastige prospect of sceptische CFO, voordat het erop aankomt. Met debrief.' },
+  { titel: 'HIJ LAAT JE GROEIEN', tekst: 'Mindset, systeem en actie in een coachingrapport. Je ziet je voortgang zwart op wit.' },
 ]
 
 export default async function StartPage() {
