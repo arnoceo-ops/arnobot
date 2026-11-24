@@ -201,7 +201,7 @@ Stand 2026-11-18: alles is klaar en lokaal gecommit; er wordt bewust nog niet ge
 - [x] Grens in Uploads 50 bestanden en 500 MB voor elk plan (Arno, 2026-11-18).
 - [x] Hernoeming: paginanaam ARCHIEF (menu en chat-nav volgen de schakelaar), Q&A en `appHelp` bijgewerkt; de overige treffers (mailknop OPEN MIJN ANALYSES, ANALYSEER-knoppen, adminpagina's) gaan over analyses zelf en blijven.
 - [x] `docs/ARNOBOT_OVERZICHT.md` en `docs/TECHNICAL_HANDOVER.md` bijgewerkt, met PDF's.
-- [ ] AVG art. 25 (privacy by default) getoetst door Arno.
+- [x] AVG art. 25 (privacy by default) getoetst door Arno (afgerond, bevestigd 2026-11-24).
 - [x] (afgevinkt 2026-11-24, de waarde zelf is niet uitleesbaar: versleuteld in Vercel) Livegang in deze volgorde: (1) Arno zet `DOCUMENTEN_OPEN=true` in Vercel (Production); (2) ik push de bundel, dat is de enige deploy en neemt de schakelaar en de teksten tegelijk mee; (3) na READY draait Arno de SQL voor `bron_context` nog één keer; (4) Arno controleert met een tweede, gewoon account dat de oude route weg is en de nieuwe werkt. Bewijs dat dit gebeurd is: `DOCUMENTEN_OPEN` staat in Vercel Production, `docs/HISTORIE_IMPORT_PLAN.md` (2026-11-18) zegt dat hij voor iedereen aan staat, en de livegang-bundel is gepusht (commit 9fad603e).
 - [ ] Na livegang: Arno loopt een audio-opname met transcript na (nog niet live uitgeprobeerd) en kijkt of de ARCHIEF-pagina voor een gewone gebruiker klopt.
 
