@@ -89,7 +89,7 @@ const HTML = `<!doctype html>
         <div class="jij-tekst">Ik denk dat ik de deal kwijt ben. Hij reageert niet meer.</div>
       </div>
       <div class="arno-kaart">
-        <div class="arno-label">ARNO</div>
+        <div class="arno-label">ARNOBOT</div>
         <div class="arno-tekst">Wat zei je in je laatste gesprek precies? Vorige week vertelde je dat zijn directeur nog niet had ingestemd. Heb je dat er al bij gehaald?</div>
       </div>
     </div>
