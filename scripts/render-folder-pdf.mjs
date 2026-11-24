@@ -82,7 +82,7 @@ const HTML = `<!doctype html>
   .punt-titel { font-family: 'Bebas Neue', sans-serif; font-size: 15pt; letter-spacing: 2px; color: #f1f5f9; margin-bottom: 1.2mm; }
   .punt-tekst { font-size: 8.5pt; line-height: 1.6; color: #9ca3af; }
   .actie { margin-top: auto; display: flex; align-items: center; gap: 8mm; background: #1f2937; border-radius: 3mm; padding: 7mm; }
-  .qr { flex: none; width: 40mm; height: 40mm; background: #ffffff; border-radius: 2mm; padding: 3mm; }
+  .qr { flex: none; width: 44mm; height: 44mm; background: #ffffff; border-radius: 2mm; padding: 5mm; }
   .qr svg { display: block; width: 100%; height: 100%; }
   .actie-kop { font-family: 'Bebas Neue', sans-serif; font-size: 27pt; letter-spacing: 2px; line-height: 1.05; color: #f1f5f9; }
   .actie-kop span { color: #f59e0b; }
