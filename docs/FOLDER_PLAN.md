@@ -28,7 +28,7 @@ Een hard kartonnen A5-folder om uit te delen aan mensen die Arno tegenkomt, met 
 - [ ] Testen in productie met een testbron
 - [ ] Landing `/start/team`
 - [ ] QR als vector (SVG), kleine bibliotheek toevoegen
-- [ ] Folder solo, A5 met 3 mm afloop, via de PDF-pijplijn (puppeteer, Bebas Neue, Space Mono, amber `#f59e0b`)
+- [x] Folder solo, eerste versie: `node scripts/render-folder-pdf.mjs --preview` maakt `docs/folder/ArnoBot-A5-solo.pdf` (A5 + 3 mm afloop, QR als vector, optie "Het gesprek"). Wacht op akkoord en drukkerspecs.
 - [ ] Folder team
 - [ ] Demo-mail op gedragsmoment
 - [ ] `docs/ARNOBOT_OVERZICHT.md` bijwerken bij oplevering van de landingpagina's

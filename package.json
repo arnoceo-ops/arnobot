@@ -49,6 +49,7 @@
     "marked": "^18.0.14",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^25.13.0",
+    "qrcode": "^1.5.4",
     "tailwindcss": "^4",
     "typescript": "^6",
     "vitest": "^4.1.10"
