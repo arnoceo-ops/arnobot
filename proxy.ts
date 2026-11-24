@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { beslisZonderToegang, datumToegang } from '@/lib/toegang'
+import { BRON_COOKIE, schoonBron } from '@/lib/bron'
 
 function buildCSP(nonce: string, allowWasm = false): string {
   // Een pk_test_-sleutel betekent altijd de Clerk development-instance (bijv. lokaal
@@ -198,6 +199,9 @@ export default clerkMiddleware(async (auth, req) => {
               if (process.env.SD_TOKEN_STEFANIE && sdToken === process.env.SD_TOKEN_STEFANIE) { sdSource = 'Stefanie'; sdAgent = 'sales_agent_1' }
               else if (process.env.SD_TOKEN_ANNIEK && sdToken === process.env.SD_TOKEN_ANNIEK) { sdSource = 'Anniek'; sdAgent = 'sales_agent_2' }
             }
+            // Bronattributie (folder-QR, docs/FOLDER_PLAN.md): de cookie komt van PageviewTracker
+            // en wordt hier gevalideerd voordat hij in de database belandt.
+            const bron = schoonBron(req.cookies.get(BRON_COOKIE)?.value)
             const newRow = {
               user_id: userId,
               email: email || null,
@@ -215,6 +219,7 @@ export default clerkMiddleware(async (auth, req) => {
               // i.p.v. te leunen op de kolom-default, die stond hier eerder foutief op 'basis'.
               plan: 'premium',
               ...(sdSource ? { command_manager: true } : {}),
+              ...(bron ? { bron } : {}),
               ...(sdAgent ? { sd_agent: sdAgent, sd_attribution_method: 'link' } : {}),
             }
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'

@@ -4,6 +4,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { randomUUID } from 'crypto'
 import { isBotUserAgent } from '@/lib/botDetection'
+import { BRON_COOKIE, schoonBron } from '@/lib/bron'
 
 // Klik op de aanmeldknop vóórdat er een account bestaat, dus nog niet te loggen via
 // lib/events.ts (die vereist een Clerk user_id). Zelfde anonieme arnobot_vid-cookie als
@@ -41,6 +42,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'path is verplicht' }, { status: 400 })
   }
 
+  // De bron staat in een cookie die PageviewTracker zet bij een bezoek met ?bron=.
+  const bron = schoonBron(req.cookies.get(BRON_COOKIE)?.value)
+
   let anonId = req.cookies.get('arnobot_vid')?.value
   const res = NextResponse.json({ ok: true })
   if (!anonId) {
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
     const { error } = await supabase.from('arnobot_cta_clicks').insert({
       anon_id: anonId,
       path: path.slice(0, 300),
+      ...(bron ? { bron } : {}),
     })
     if (error) console.error('track-cta-click insert mislukt', error.message)
   } catch (err) {

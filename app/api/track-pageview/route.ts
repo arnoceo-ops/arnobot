@@ -4,6 +4,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { randomUUID } from 'crypto'
 import { isBotUserAgent } from '@/lib/botDetection'
+import { schoonBron } from '@/lib/bron'
 
 // Anonieme pageview-teller voor de publieke marketingpagina's, om de
 // Bezoeker -> Trial conversie te kunnen meten naast de al bestaande
@@ -37,7 +38,8 @@ export async function POST(req: NextRequest) {
   if (!success) return NextResponse.json({ ok: true })
 
   const body = await req.json().catch(() => ({}))
-  const { path, referrer } = body as { path?: string; referrer?: string }
+  const { path, referrer, bron: bronRuw } = body as { path?: string; referrer?: string; bron?: unknown }
+  const bron = schoonBron(bronRuw)
   if (typeof path !== 'string' || !path) {
     return NextResponse.json({ error: 'path is verplicht' }, { status: 400 })
   }
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
       anon_id: anonId,
       path: path.slice(0, 300),
       referrer: typeof referrer === 'string' ? referrer.slice(0, 300) : null,
+      ...(bron ? { bron } : {}),
     })
     if (error) console.error('track-pageview insert mislukt', error.message)
   } catch (err) {
