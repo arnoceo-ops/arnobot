@@ -4,6 +4,7 @@ import { useSignIn, useUser } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import AppSignIn from '../AppSignIn'
+import { isTerugNaAutoStart, SIGNIN_START_KEY } from '@/lib/signInLus'
 
 function getClerkFrontendApi(): string {
   const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
@@ -180,6 +181,16 @@ export default function SignInPage() {
   useEffect(() => {
     if (fetchStatus === 'idle' && signIn && !isSignedIn && !autoTriggered && fallbackChecked && !fallbackEnabled && !isNativeApp) {
       setAutoTriggered(true)
+      // Tweede automatische start kort na de eerste = de aanmelding is mislukt (nieuw LinkedIn-account dat Clerk
+      // nog niet kent). Dan naar /sign-up in plaats van opnieuw LinkedIn te starten (lus).
+      try {
+        if (isTerugNaAutoStart(sessionStorage.getItem(SIGNIN_START_KEY), Date.now())) {
+          sessionStorage.removeItem(SIGNIN_START_KEY)
+          window.location.replace('/sign-up')
+          return
+        }
+        sessionStorage.setItem(SIGNIN_START_KEY, String(Date.now()))
+      } catch {}
       handleLinkedIn()
     }
   }, [fetchStatus, signIn, isSignedIn, autoTriggered, fallbackChecked, fallbackEnabled, isNativeApp])
