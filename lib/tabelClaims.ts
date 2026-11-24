@@ -44,6 +44,11 @@ function komtOvereen(cel: number, g: { waarde: number; decimalen: number; k: boo
   return Math.abs(cel - g.waarde) <= marge || (g.waarde > 1 && Math.abs(cel * 100 - g.waarde) <= marge)
 }
 
+/** Zinnen met een superlatief ("de hoogste", "het kleinste"), voor het tellen van wat de controle niet kan koppelen. */
+export function vindSuperlatiefZinnen(antwoord: string): string[] {
+  return antwoord.split(/(?<=[.!?])\s+|\n+/).map(z => z.replace(/\*+/g, '').trim()).filter(z => SUPERLATIEF.test(z))
+}
+
 export function vindOnjuisteSuperlatieven(antwoord: string, tabel: Tabel): TabelClaim[] {
   const claims: TabelClaim[] = []
   // Zinnen binnen een alinea, met de zin ervoor als steun voor het getal ("Bruto marge 47,0%. Hoogste van het team.").
