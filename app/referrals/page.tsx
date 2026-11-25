@@ -13,6 +13,10 @@ export default function ReferralSpelregelsPage() {
         body { background: #111827; color: #f1f5f9; font-family: 'Space Mono', monospace; font-weight: 400; }
         a { color: #f59e0b; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        /* Zonder bullets lijken de inspringende regels op een uitlijnfout (de globale reset haalt ze weg). */
+        ul { list-style: disc outside; }
+        li::marker { color: #f59e0b; }
+        li { padding-left: 4px; margin-bottom: 6px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         th { background: #1f2937; color: #f59e0b; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 4px; text-align: left; padding: 10px 14px; border-bottom: 2px solid #f59e0b; }
         td { font-family: 'Space Mono', monospace; font-size: 15px; color: #9ca3af; padding: 10px 14px; border-bottom: 1px solid #374151; vertical-align: top; line-height: 1.9; }
@@ -26,7 +30,7 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.6 · November 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.7 · November 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
@@ -112,15 +116,15 @@ export default function ReferralSpelregelsPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>25</td>
+                  <td style={{ color: '#f1f5f9' }}>50</td>
                   <td>Toegang tot de <strong style={{ color: '#f1f5f9' }}>ArnoBot Ambassadors Club</strong></td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>50</td>
-                  <td><strong style={{ color: '#f1f5f9' }}>Lifetime Subscription</strong> op ArnoBot</td>
+                  <td style={{ color: '#f1f5f9' }}>100</td>
+                  <td><strong style={{ color: '#f1f5f9' }}>Lifetime Solo Pro Subscription</strong> op ArnoBot</td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>100</td>
+                  <td style={{ color: '#f1f5f9' }}>250</td>
                   <td style={{ whiteSpace: 'nowrap' }}>Persoonlijk aanbod voor deelname in de <strong style={{ color: '#f1f5f9' }}>ArnoBot Venture 🚀</strong></td>
                 </tr>
               </tbody>
