@@ -107,20 +107,54 @@ export interface AanbrengerStand {
   laatsteEindeAt: string | null
   /** Sinds wanneer het team om wanbetaling geblokkeerd is. */
   geblokkeerdSindsAt?: string | null
-  /** Gewoon teamlid geworden: geen eigen abonnement meer. */
+  /** Gewoon teamlid geworden: geen eigen abonnement meer, maar hij gebruikt ArnoBot nog. */
   isGewoonTeamlid?: boolean
   /** Nooit een abonnement gehad: de uiterste dag voor een eerste betaling. */
   eersteBetalingUiterlijkAt?: string | null
 }
 
-/** 'actief': tegoed ontstaat en mag verrekend worden. 'wacht': staat stil. 'vervallen': definitief weg. */
-export function tegoedStatus(s: AanbrengerStand, nu: Date): 'actief' | 'wacht' | 'vervallen' {
+/**
+ * 'actief': tegoed ontstaat en mag verrekend worden. 'terugstorten': teamlid geworden, tegoed (ook van referrals van
+ * voor de overstap die later de drempel halen) gaat terug over zijn eigen eerdere betalingen. 'wacht': staat stil.
+ * 'vervallen': definitief weg.
+ */
+export type TegoedStatus = 'actief' | 'terugstorten' | 'wacht' | 'vervallen'
+
+export function tegoedStatus(s: AanbrengerStand, nu: Date): TegoedStatus {
   const voorbij = (vanaf: string, dagen: number) => nu.getTime() > Date.parse(vanaf) + dagen * DAG_MS
-  if (s.isGewoonTeamlid) return 'vervallen'
+  // Wie teamlid wordt stopt niet. Heeft hij ooit zelf betaald, dan is er iets om op terug te storten.
+  if (s.isGewoonTeamlid) return s.laatsteEindeAt ? 'terugstorten' : 'vervallen'
   if (s.geblokkeerdSindsAt) return voorbij(s.geblokkeerdSindsAt, VERVAL_NA_BLOKKADE_DAGEN) ? 'vervallen' : 'wacht'
   if (s.loopt) return 'actief'
   if (s.laatsteEindeAt) return voorbij(s.laatsteEindeAt, VERVAL_NA_EINDE_DAGEN) ? 'vervallen' : 'wacht'
   // Nog nooit betaald (proef): het tegoed wacht tot de termijn voor een eerste abonnement voorbij is.
   if (s.eersteBetalingUiterlijkAt && nu.getTime() > Date.parse(s.eersteBetalingUiterlijkAt)) return 'vervallen'
   return 'wacht'
+}
+
+/** Een eigen betaling van de aanbrenger. beschikbaarCent: betaald, minus alles wat al is terugbetaald of teruggeboekt. */
+export interface EigenBetaling {
+  id: string
+  betaaldAt: string
+  beschikbaarCent: number
+}
+
+/**
+ * Teruggestort over de eigen eerdere betalingen, nieuwste eerst, nooit meer dan hij zelf betaalde. Wat daar niet in
+ * past vervalt. Gebruikt als de aanbrenger gewoon teamlid is geworden.
+ */
+export function verdeelOverEigenBetalingen(
+  saldoNettoCent: number,
+  betalingen: EigenBetaling[],
+): { delen: { id: string; brutoCent: number; verbruiktNettoCent: number }[]; vervaltNettoCent: number } {
+  let rest = Math.max(0, saldoNettoCent)
+  const delen: { id: string; brutoCent: number; verbruiktNettoCent: number }[] = []
+  for (const b of [...betalingen].sort((x, y) => Date.parse(y.betaaldAt) - Date.parse(x.betaaldAt))) {
+    if (rest <= 0) break
+    const v = verrekening(rest, b.beschikbaarCent)
+    if (v.brutoCent <= 0) continue
+    delen.push({ id: b.id, ...v })
+    rest -= v.verbruiktNettoCent
+  }
+  return { delen, vervaltNettoCent: rest }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   brutoVanNetto, eersteBetalingOpTijd, kwalificatie, levertTegoedOp, maandNettoCent, tegoedNettoCent,
-  tegoedStatus, verrekening, type BetaaldePeriode,
+  tegoedStatus, verdeelOverEigenBetalingen, verrekening, type BetaaldePeriode,
 } from './referralRegels'
 
 const basicJaar = (k: 'particulier' | 'zakelijk') => maandNettoCent('basis', 'jaarlijks', k)
@@ -116,11 +116,30 @@ describe('wanneer vervalt het tegoed van de aanbrenger', () => {
     expect(tegoedStatus({ loopt: true, laatsteEindeAt: null, geblokkeerdSindsAt: '2027-06-01T00:00:00Z' }, nu)).toBe('wacht')
     expect(tegoedStatus({ loopt: true, laatsteEindeAt: null, geblokkeerdSindsAt: '2027-05-01T00:00:00Z' }, nu)).toBe('vervallen')
   })
-  it('gewoon teamlid geworden: weg', () => {
+  it('gewoon teamlid dat zelf betaalde: terugstorten', () => {
+    expect(tegoedStatus({ loopt: false, laatsteEindeAt: '2027-01-01T00:00:00Z', isGewoonTeamlid: true }, nu)).toBe('terugstorten')
+  })
+  it('gewoon teamlid dat nooit betaalde: weg', () => {
     expect(tegoedStatus({ loopt: false, laatsteEindeAt: null, isGewoonTeamlid: true }, nu)).toBe('vervallen')
   })
   it('nooit betaald: wacht tot de termijn voorbij is', () => {
     expect(tegoedStatus({ loopt: false, laatsteEindeAt: null, eersteBetalingUiterlijkAt: '2027-07-01T00:00:00Z' }, nu)).toBe('wacht')
     expect(tegoedStatus({ loopt: false, laatsteEindeAt: null, eersteBetalingUiterlijkAt: '2027-06-01T00:00:00Z' }, nu)).toBe('vervallen')
+  })
+})
+
+describe('aanbrenger wordt teamlid: terugstorten over eigen betalingen', () => {
+  const maandbetaling = (id: string, dag: string) => ({ id, betaaldAt: dag, beschikbaarCent: 5900 })
+  const betalingen = [maandbetaling('jan', '2027-01-01'), maandbetaling('mrt', '2027-03-01'), maandbetaling('feb', '2027-02-01')]
+  it('nieuwste eerst, over meerdere betalingen', () => {
+    // Drie tegoeden van Pro per maand (4876 netto per stuk).
+    const r = verdeelOverEigenBetalingen(3 * 4876, betalingen)
+    expect(r.delen.map(d => d.id)).toEqual(['mrt', 'feb', 'jan'])
+    expect(r.delen.every(d => d.brutoCent <= 5900)).toBe(true)
+  })
+  it('nooit meer dan zelf betaald, de rest vervalt', () => {
+    const r = verdeelOverEigenBetalingen(3 * 4876, [maandbetaling('mrt', '2027-03-01')])
+    expect(r.delen).toEqual([{ id: 'mrt', brutoCent: 5900, verbruiktNettoCent: 4876 }])
+    expect(r.vervaltNettoCent).toBe(2 * 4876)
   })
 })
