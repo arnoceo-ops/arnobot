@@ -7,6 +7,7 @@ import { useState } from 'react'
 const NAV_LINKS: { href: string; label: string; ook?: string[] }[] = [
   { href: '/bot/admin/gebruikers', label: 'USERS' },
   { href: '/bot/admin/teams', label: 'TEAMS' },
+  { href: '/bot/admin/referrals', label: 'REFERRALS' },
   { href: '/bot/admin', label: 'GESPREKKEN' },
   { href: '/bot/admin/analyse', label: 'ANALYSE' },
   { href: '/bot/admin/status', label: 'STATUS' },

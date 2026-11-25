@@ -65,6 +65,9 @@ const OWNERSHIP_EQ = /\.eq\(\s*['"]user_id['"]/
 //   veilig; zet ze hier neer.
 // - onderhoud/opruiming die juist ALLE rijen moet zien (data-cleanup, delete-account).
 const KNOWN_SAFE = new Set([
+  // Referraloverzicht: zoekt alleen de namen op bij de ids uit de referrallijst (.in). De berekening sluit testaccounts
+  // uit; in het overzicht staan ze bewust met naam en "telt niet mee".
+  'app/bot/admin/referrals/page.tsx:approved_users',
   // Opruiming van documenten (cron): ruimt voor alle accounts op, ook de testaccounts, dus juist niet uitsluiten.
   'lib/documentenOpruimen.ts:arnobot_documenten',
   // Opruiming van bron_context (cron): ruimt voor alle accounts op, ook de testaccounts, dus juist niet uitsluiten.
