@@ -2,9 +2,9 @@
 
 **Laatst bijgewerkt:** 2026-11-25
 
-**Waar we staan:** in gebruik op Arno's Android. Op 2026-11-25 zijn pushmeldingen gebouwd (kleurverandering van een stip geeft een melding uit de app zelf) en zijn de omgevingsvariabelen `ADMIN_VAPID_PUBLIC_KEY` en `ADMIN_VAPID_PRIVATE_KEY` in Vercel gezet. Nog niet bewezen op het toestel. Zolang de proefmelding niet is bevestigd, gaan alle meldingen nog via Telegram.
+**Waar we staan:** in gebruik op Arno's Android. Pushmeldingen gebouwd op 2026-11-25; Arno meldde dat de proefmelding op zijn telefoon aankomt. De knop STUUR PROEFMELDING is alleen zichtbaar zolang de meldingen niet bevestigd zijn (opnieuw testen: UITZETTEN en weer aanzetten). Nog niet gemeld: aankomst met vergrendeld scherm, of een tik de app opent, en de eerste echte stipmelding.
 
-**Eerstvolgende stap (Arno):** in de app onderaan bij MELDINGEN op MELDINGEN AANZETTEN tikken, toestaan, STUUR PROEFMELDING, en als de melding zichtbaar is IK ZIE DE MELDING. Ook testen: proefmelding met de app dicht en het scherm vergrendeld, en of een tik de app opent (niet Chrome).
+**Eerstvolgende stap (Arno):** bij de eerste echte melding kijken of een tik de app opent (niet Chrome) en of ze ook met vergrendeld scherm aankwam.
 
 **Besluiten en verworpen alternatieven (2026-11-23):**
 - Gekozen: **PWA op `/bot/admin/mobiel`**, alleen Android, alleen Arno. Verworpen: de admin in de bestaande store-app (reviewrisico, elke gebruiker draagt de code mee) en een aparte Capacitor-app (tweede app-ID, ondertekening, iOS-review, pas zinvol voor push en Telegram doet dat al).
@@ -53,7 +53,8 @@
 - [ ] Kaart GEBRUIKERS en KOSTEN vergelijken met de pc-pagina `/bot/admin/gebruikers` (cijfers moeten overeenkomen)
 - [x] Besluit: de kosten per gebruiker staan achter alleen het Clerk-slot (Abacus heeft een eigen wachtwoord). Arno zei ja op 2026-11-23.
 - [x] Pushmeldingen gebouwd (2026-11-25)
-- [ ] Arno: meldingen aanzetten en proefmelding bevestigen, ook met app dicht en scherm vergrendeld
+- [x] Arno: proefmelding komt aan op de telefoon (2026-11-25)
+- [ ] Arno: aankomst met vergrendeld scherm en tik die de app opent
 - [ ] Verse controle aan het eind van de fase: een nieuwe sessie toetst dit document aan de code
 
 **Open punten:**
