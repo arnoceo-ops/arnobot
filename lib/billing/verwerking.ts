@@ -221,6 +221,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
         updated_at: iso(new Date()),
       })
       .eq('id', sub.id)
+    await legPeriodeVast(rij.id, sub, start, einde)
 
     await maakMollieAbonnementVoor({ ...sub, periode_einde: iso(einde) }, start)
 
@@ -280,6 +281,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     .from('arnobot_subscriptions')
     .update({ periode_start: iso(huidigEinde), periode_einde: iso(nieuwEinde), updated_at: iso(new Date()) })
     .eq('id', huidig.id)
+  await legPeriodeVast(rij.id, huidig, huidigEinde, nieuwEinde)
 
   await zetToegang(huidig.user_id, huidig.plan, nieuwEinde, { eerste: false, betaaldOp })
 
@@ -302,6 +304,22 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     betaalId: mp.id,
   })
   await factureerBetaling(rij.id)
+}
+
+/**
+ * Momentopname: welk abonnement en welke periode deze betaling heeft betaald (voor referraltegoed, zie
+ * lib/billing/referralRegels.ts). Alleen aanroepen als de periode echt is gezet of verlengd. Een fout hier mag de
+ * verwerking van de betaling nooit tegenhouden.
+ */
+async function legPeriodeVast(payId: string, sub: SubRow, start: Date, einde: Date): Promise<void> {
+  const { error } = await billingDb
+    .from('arnobot_payments')
+    .update({ plan: sub.plan, cyclus: sub.cyclus, klant_type: sub.klant_type, periode_start: iso(start), periode_einde: iso(einde) })
+    .eq('id', payId)
+  if (error) {
+    console.error('[billing] periodemomentopname mislukt', payId, error.message)
+    await notifyTelegram(`Periode van een betaling niet vastgelegd op arno.bot (nodig voor referraltegoed)\n\nBetaling-rij: ${payId}`)
+  }
 }
 
 /** Hoort deze betaling bij het GEPLANDE Mollie-abonnement van de rij (de eerste na een overstap)? */
