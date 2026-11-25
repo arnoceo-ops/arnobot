@@ -18,7 +18,9 @@ function AanmeldenInner() {
     if (sd) {
       document.cookie = `arnobot_sd=${sd}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
     }
-    router.replace('/sign-in')
+    // Referral- en sales-development-links zijn voor nieuwe mensen: naar /sign-up. Via /sign-in liep een nieuw
+    // LinkedIn-account vast (external_account_not_found, 24-11-2026). Ingelogden gaat /sign-up zelf door naar /bot.
+    router.replace('/sign-up')
   }, [searchParams, router])
 
   return null
