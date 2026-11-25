@@ -40,7 +40,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         </>
       )}
       <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, lineHeight: 1.9, color: '#9ca3af', marginBottom: 24 }}>
-        Wie zich via jouw link aanmeldt en een abonnement neemt, krijgt korting op het eerste jaar of de vierde maand gratis. Jij krijgt tegoed, behalve als die persoon Basic per maand neemt. Mijlpalen: 50 Ambassadors Club, 100 Lifetime Solo Pro Subscription, 250 aanbod ArnoBot Venture. Go, Go Gadget 🚀
+        Wie zich via jouw link aanmeldt en een abonnement neemt, krijgt korting op het eerste jaar of de vierde maand gratis. Jij krijgt tegoed, behalve als die persoon Basic per maand neemt. Mijlpalen: 50 Ambassadors Club, 100 Lifetime Subscription (Solo Pro), 250 aanbod ArnoBot Venture. Go, Go Gadget 🚀
       </p>
 
       {/* Link + kopieerknop */}

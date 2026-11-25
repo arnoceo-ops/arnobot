@@ -121,7 +121,7 @@ export default function ReferralSpelregelsPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>100</td>
-                  <td><strong style={{ color: '#f1f5f9' }}>Lifetime Solo Pro Subscription</strong> op ArnoBot</td>
+                  <td><strong style={{ color: '#f1f5f9' }}>Lifetime Subscription (Solo Pro)</strong> op ArnoBot</td>
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>250</td>
