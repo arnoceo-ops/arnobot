@@ -158,3 +158,37 @@ export function verdeelOverEigenBetalingen(
   }
   return { delen, vervaltNettoCent: rest }
 }
+
+// ── Voordeel voor de aangebrachte (nieuwe) klant, Arno 25-11-2026 ──
+// Eenmalig, bij dezelfde termijn als hierboven (eersteBetalingOpTijd), voor elk abonnement, ook Basic per maand.
+// Jaarabonnement: een maand korting bij het afrekenen (bij herroeping krijgt hij gewoon terug wat hij betaalde).
+// Maandabonnement: de vierde betaalde maand gratis, na drie aaneengesloten betaalde maanden.
+
+/** Korting op de eerste jaarbetaling: een twaalfde van het jaarbedrag. Verlengingen zijn weer de volle prijs. */
+export function jaarKortingCent(jaarBedragCent: number): number {
+  return Math.round(Math.max(0, jaarBedragCent) / 12)
+}
+
+/**
+ * De betaalde maand die de klant gratis krijgt (wordt afgeschreven en daarna teruggestort): de vierde in een reeks
+ * aaneengesloten betaalde maanden. null zolang die er niet is.
+ */
+export function gratisVierdeMaand(periodes: BetaaldePeriode[]): BetaaldePeriode | null {
+  const maanden = periodes
+    .filter(p => p.geldig && p.cyclus === 'maandelijks')
+    .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart))
+  let reeks = 0
+  let vorigeEinde: number | null = null
+  for (const p of maanden) {
+    const aansluitend = vorigeEinde !== null && Date.parse(p.periodeStart) - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS
+    reeks = aansluitend ? reeks + 1 : 1
+    vorigeEinde = Date.parse(p.periodeEinde)
+    if (reeks === BENODIGDE_MAANDEN + 1) return p
+  }
+  return null
+}
+
+/** Bij een team is de gratis maand nooit meer dan de maandprijs waarmee het team begon (later toegevoegde gebruikers tellen niet). */
+export function gratisMaandBrutoCent(betalingBrutoCent: number, teamStartMaandBrutoCent?: number): number {
+  return Math.max(0, teamStartMaandBrutoCent === undefined ? betalingBrutoCent : Math.min(betalingBrutoCent, teamStartMaandBrutoCent))
+}
