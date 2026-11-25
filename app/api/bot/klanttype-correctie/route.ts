@@ -57,6 +57,11 @@ export async function POST(req: NextRequest) {
   const gevonden = await vindTeCorrigerenAbonnement(userId)
   if (!gevonden) return fout(404, 'Geen particulier abonnement gevonden om te corrigeren')
 
+  // De correctie rekent met de volle abonnementsprijs; met een referral fee op de eerste betaling klopt dat niet.
+  if (gevonden.payment.soort === 'eerste' && gevonden.payment.bedrag_cent < gevonden.sub.bedrag_cent) {
+    return fout(400, 'Op je eerste betaling zit een referral fee. Mail naar admin@arno.bot, dan passen we het voor je aan.')
+  }
+
   const resultaat = await startKlanttypeCorrectie({
     userId,
     sub: gevonden.sub,

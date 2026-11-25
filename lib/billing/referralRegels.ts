@@ -3,7 +3,7 @@
 // verrekenen komt de btw erbij. Particulieren en zakelijke klanten betalen allebei btw (particulier zit hij in de
 // getoonde prijs), dus uitkeren is voor beiden netto maal 1,21.
 
-import { BTW_PERCENTAGE, berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
+import { BTW_PERCENTAGE, berekenBedrag, type Bedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 import { amsterdamDatum, laatsteDagBedenktijd } from './perioden'
 
 export type ReferralPlan = Plan | 'team'
@@ -167,6 +167,14 @@ export function verdeelOverEigenBetalingen(
 /** Korting op de eerste jaarbetaling: een twaalfde van het jaarbedrag. Verlengingen zijn weer de volle prijs. */
 export function jaarKortingCent(jaarBedragCent: number): number {
   return Math.round(Math.max(0, jaarBedragCent) / 12)
+}
+
+/** Het bedrag van de eerste jaarbetaling met de referral fee, inclusief het bijbehorende btw-deel. */
+export function metJaarKorting(jaar: Bedrag): { bedrag: Bedrag; kortingBrutoCent: number; kortingNettoCent: number } {
+  const kortingBrutoCent = jaarKortingCent(jaar.brutoCent)
+  const brutoCent = jaar.brutoCent - kortingBrutoCent
+  const nettoCent = Math.round(brutoCent / btwFactor)
+  return { bedrag: { brutoCent, nettoCent, btwCent: brutoCent - nettoCent }, kortingBrutoCent, kortingNettoCent: jaar.nettoCent - nettoCent }
 }
 
 /**

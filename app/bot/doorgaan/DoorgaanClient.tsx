@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { berekenBedrag, type KlantType } from '@/lib/billing/prijzen'
+import { metJaarKorting } from '@/lib/billing/referralRegels'
 import { formatEuro } from '@/lib/billing/geld'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
@@ -47,6 +48,7 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
   const [plaats, setPlaats] = useState('')
   const [akkoord, setAkkoord] = useState(false)
   const [betaalFout, setBetaalFout] = useState('')
+  const [jaarKorting, setJaarKorting] = useState(false)
   const [betalen, setBetalen] = useState(false)
   const [terug, setTerug] = useState(false)
   const [verlengen, setVerlengen] = useState<'idle' | 'bezig' | 'klaar' | 'fout'>('idle')
@@ -69,7 +71,7 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
       .then(r => r.json())
       .then(d => {
         setAbonnement(d.abonnement ?? null)
-        return d as { abonnement: Abonnement | null; eerderBetaald?: boolean; alBetaald?: boolean; toegangActief?: boolean; trialEinde?: string | null }
+        return d as { abonnement: Abonnement | null; eerderBetaald?: boolean; alBetaald?: boolean; toegangActief?: boolean; trialEinde?: string | null; jaarKorting?: boolean }
       })
       .catch(() => null)
 
@@ -79,6 +81,7 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
       .then(d => {
         setEerderBetaald(!!d?.eerderBetaald)
         setToegangActief(d?.toegangActief !== false)
+        setJaarKorting(d?.jaarKorting === true)
         setTrialEindeDatum(typeof d?.trialEinde === 'string' ? d.trialEinde : null)
         setStatus(d?.alBetaald ? 'already_paid' : 'idle')
       })
@@ -270,7 +273,9 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
         )}
 
         {status === 'idle' && !terug && stap === 'gegevens' && gekozenPlan && (() => {
-          const bedrag = berekenBedrag(gekozenPlan, cyclus, klantType)
+          const volBedrag = berekenBedrag(gekozenPlan, cyclus, klantType)
+          const korting = jaarKorting && cyclus === 'jaarlijks' ? metJaarKorting(volBedrag) : null
+          const bedrag = korting ? korting.bedrag : volBedrag
           const periode = cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'
           const afspraak = klantType === 'zakelijk'
             ? 'Je abonnement loopt door tot je opzegt. De opzegtermijn is één maand.'
@@ -330,17 +335,30 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
               <div style={{ borderTop: '1px solid #374151', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {klantType === 'zakelijk' ? (
                   <>
-                    <div className="gegevens-regel"><span>Abonnement {periode}</span><strong>{formatEuro(bedrag.nettoCent)}</strong></div>
+                    <div className="gegevens-regel"><span>Abonnement {periode}</span><strong>{formatEuro(volBedrag.nettoCent)}</strong></div>
+                    {korting && <div className="gegevens-regel"><span>Referral fee eerste jaar</span><strong>-{formatEuro(korting.kortingNettoCent)}</strong></div>}
                     <div className="gegevens-regel"><span>BTW 21%</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
-                    <div className="gegevens-regel"><span>Totaal {periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
+                    <div className="gegevens-regel"><span>Totaal {korting ? 'eerste jaar' : periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
                   </>
                 ) : (
                   <>
-                    <div className="gegevens-regel"><span>Totaal {periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
+                    {korting && (
+                      <>
+                        <div className="gegevens-regel"><span>Abonnement {periode}</span><strong>{formatEuro(volBedrag.brutoCent)}</strong></div>
+                        <div className="gegevens-regel"><span>Referral fee eerste jaar</span><strong>-{formatEuro(korting.kortingBrutoCent)}</strong></div>
+                      </>
+                    )}
+                    <div className="gegevens-regel"><span>Totaal {korting ? 'eerste jaar' : periode}</span><strong>{formatEuro(bedrag.brutoCent)}</strong></div>
                     <div className="gegevens-regel"><span>Inclusief BTW</span><strong>{formatEuro(bedrag.btwCent)}</strong></div>
                   </>
                 )}
               </div>
+
+              {korting && (
+                <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5 }}>
+                  Daarna {formatEuro(klantType === 'zakelijk' ? volBedrag.nettoCent : volBedrag.brutoCent)} per jaar{klantType === 'zakelijk' ? ' exclusief BTW' : ''}.
+                </p>
+              )}
 
               {trialEindeDatum && (
                 <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5 }}>

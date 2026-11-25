@@ -5,6 +5,7 @@ import { billingDb, type SubRow } from '@/lib/billing/db'
 import { isTeamDekkingActief } from '@/lib/teamAccess'
 import { datumToegang, trialEinde } from '@/lib/toegang'
 import { VERLENG_VENSTER_DAGEN } from '@/lib/billing/perioden'
+import { heeftRechtOpJaarkorting } from '@/lib/billing/referralKorting'
 import { haalAbonnement } from '@/lib/billing/mollie'
 import { overstapBeschikbaarVoor } from '@/lib/billing/overstap'
 import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
@@ -54,11 +55,15 @@ export async function GET() {
     trialEinde: gebruiker && gebruiker.is_active !== false ? (trialEinde(gebruiker)?.toISOString() ?? null) : null,
   }
 
-  if (!sub) return NextResponse.json({ ...status, abonnement: null, overstap: null })
+  // Voor de betaalpagina: krijgt deze aangebrachte gebruiker korting op een jaarabonnement? Een fout hier mag de
+  // pagina niet breken; bij het afrekenen zelf wordt het opnieuw en streng bepaald.
+  const jaarKorting = await heeftRechtOpJaarkorting(userId).catch(() => false)
+
+  if (!sub) return NextResponse.json({ ...status, jaarKorting, abonnement: null, overstap: null })
 
   // Een onafgeronde poging van meer dan twee uur oud telt niet meer mee.
   if (sub.status === 'pending' && Date.now() - new Date(sub.created_at ?? 0).getTime() > 2 * 60 * 60 * 1000) {
-    return NextResponse.json({ ...status, abonnement: null, overstap: null })
+    return NextResponse.json({ ...status, jaarKorting, abonnement: null, overstap: null })
   }
 
   // Overstappen (docs/OVERSTAP_PLAN.md): alleen voor wie het mag (dark launch), en de kaart "per jaar betalen"

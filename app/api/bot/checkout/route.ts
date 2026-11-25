@@ -8,6 +8,8 @@ import { MollieError, SITE_URL, klantBestaat, maakEersteBetaling, maakKlant, mol
 import { berekenBedrag, isCyclus, isKlantType, isPlan, planNaam } from '@/lib/billing/prijzen'
 import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
 import { isTeamDekkingActief } from '@/lib/teamAccess'
+import { heeftRechtOpJaarkorting } from '@/lib/billing/referralKorting'
+import { metJaarKorting } from '@/lib/billing/referralRegels'
 
 const ratelimit = new Ratelimit({
   redis: new Redis({
@@ -133,6 +135,10 @@ export async function POST(req: NextRequest) {
       .eq('status', 'pending')
 
     const bedrag = berekenBedrag(plan, cyclus, klantType)
+    // Referral fee: alleen de eerste jaarbetaling is lager. Het abonnement houdt de volle prijs, zodat een
+    // verlenging vanzelf weer vol is.
+    const korting = cyclus === 'jaarlijks' && await heeftRechtOpJaarkorting(userId, nu)
+    const eersteBedrag = korting ? metJaarKorting(bedrag).bedrag : bedrag
     const { data: sub, error: subError } = await billingDb
       .from('arnobot_subscriptions')
       .insert({
@@ -151,8 +157,8 @@ export async function POST(req: NextRequest) {
 
     const betaling = await maakEersteBetaling({
       klantId,
-      brutoCent: bedrag.brutoCent,
-      omschrijving: `ArnoBot ${planNaam(plan)} ${cyclus}`,
+      brutoCent: eersteBedrag.brutoCent,
+      omschrijving: `ArnoBot ${planNaam(plan)} ${cyclus}${korting ? ', eerste jaar met referral fee' : ''}`,
       redirectUrl: `${SITE_URL}/bot/doorgaan?betaling=terug`,
       metadata: { userId, subscriptionRowId: sub.id },
       idempotencyKey: `eerste-${sub.id}`,
@@ -164,8 +170,8 @@ export async function POST(req: NextRequest) {
       mollie_payment_id: betaling.id,
       soort: 'eerste',
       status: betaling.status,
-      bedrag_cent: bedrag.brutoCent,
-      btw_cent: bedrag.btwCent,
+      bedrag_cent: eersteBedrag.brutoCent,
+      btw_cent: eersteBedrag.btwCent,
     })
 
     const checkoutUrl = betaling._links?.checkout?.href

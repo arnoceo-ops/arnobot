@@ -109,7 +109,9 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
     const factuur = await maakConceptFactuur({
       contactId,
       referentie: rij.mollie_payment_id,
-      omschrijving: isUpgrade ? 'ArnoBot upgrade naar Pro, naar rato' : `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}`,
+      omschrijving: isUpgrade
+        ? 'ArnoBot upgrade naar Pro, naar rato'
+        : `ArnoBot ${planNaam(sub.plan)} ${sub.cyclus}${rij.soort === 'eerste' && sub.cyclus === 'jaarlijks' && rij.bedrag_cent < sub.bedrag_cent ? ', eerste jaar met referral fee' : ''}`,
       periodeStart: isUpgrade ? betaaldOp : sub.periode_start ? new Date(sub.periode_start) : betaaldOp,
       periodeEinde,
       factuurDatum: betaaldOp,

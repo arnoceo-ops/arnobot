@@ -227,6 +227,10 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
 
     await zetToegang(sub.user_id, sub.plan, einde, { eerste: true, betaaldOp })
     await zetReferralConversie(sub.user_id, sub.plan)
+    // Vastleggen wat de aangebrachte klant aan referral fee kreeg (euro's).
+    if (sub.cyclus === 'jaarlijks' && rij.bedrag_cent < sub.bedrag_cent) {
+      await billingDb.from('arnobot_referrals').update({ referred_discount: (sub.bedrag_cent - rij.bedrag_cent) / 100 }).eq('referred_user_id', sub.user_id)
+    }
 
     await verstuurBillingMail(sub.user_id, 'betaling_bevestiging', {
       planNaam: naam,

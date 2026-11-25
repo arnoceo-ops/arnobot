@@ -22,7 +22,7 @@ export type ToegangVelden = {
   trial_start?: string | null
 }
 
-const TRIAL_DAGEN = 30
+export const TRIAL_DAGEN = 30
 
 /**
  * Toegang op basis van de eigen datums van de gebruiker. Een gezette expires_at is altijd
