@@ -58,6 +58,7 @@ function AuthPage({ onLinkedIn, error }: { onLinkedIn: () => void; error: string
             DOORGAAN MET LINKEDIN
           </button>
           </div>
+          <div id="clerk-captcha" />
           {error && <p style={{ color: '#cc2200', fontSize: 13, letterSpacing: 1, textAlign: 'center' }}>{error}</p>}
           <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: 1, textAlign: 'center', lineHeight: 1.8 }}>
             We respecteren je privacy. Door aan te melden ga je akkoord met de{' '}
