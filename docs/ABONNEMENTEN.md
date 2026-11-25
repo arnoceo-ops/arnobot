@@ -152,19 +152,9 @@ Preview-modus: `?preview=idle` in de URL toont de plankeuze ongeacht de echte re
 
 ---
 
-## Referralprogramma, herzien na de Basic/Pro/Team-rename (2026-08-10)
+## Referralprogramma (versie 1.6, besloten 2026-11-25)
 
-Volledige onderbouwing en de discussie die tot deze regel leidde staat in het geheugen `project-referral-basic-exclusion`, hier alleen de vastgestelde regel:
-
-- **Trigger:** er ontstaat alleen tegoed voor de referrer als de nieuw geworven gebruiker zelf voor Pro of Team kiest. Kiest die voor Basic, dan ontstaat er geen tegoed, voor niemand.
-- **Plafond:** het tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement: Basic €19 of €29, Pro €39 of €59, Team €49.
-- **Managers (besloten 2026-11-16):** de manager van een team (`command_manager`) heeft ook een referral-link, gewone teamleden niet (`isGewoonTeamlid` in `lib/teamAccess.ts`, afgedwongen in `/api/bot/referral`). Het plafond voor een manager is de totale maandprijs van het eigen team (€97 plus €49 per gebruiker). Een geworven team telt als één betalende referral voor de mijlpalen, ongeacht het aantal stoelen. Gekozen: tegoed schaalt mee met het geworven team via de bestaande plafondregel. Verworpen: tegoed gelijk aan één stoelprijs (maakt grote teams werven nauwelijks lonend), en een mijlpaalbonus per stoel (één team van 25 stoelen zou meteen de Ambassadors Club geven), en een referral-kaart op het teamdashboard. Spelregels versie 1.5. Besloten (2026-11-16): de gratis eerste maand en de drie-betaalmaandenregel gelden ook voor een geworven team. Verificatie in de code: de "gratis eerste maand" is geen aparte kortingsmechaniek maar de 30-daagse trial zelf, en het tegoed is handwerk. Een team via een agent-link heeft die trial dus vanzelf. Een team via het aanvraagformulier heeft geen trial en krijgt de gratis maand niet automatisch: dat moet Arno handmatig in de offerte/eerste factuur regelen. Coulance: 15 dagen voor individuen (win-backmail dag 45), 10 dagen voor een team uit de gratis agent-proef (`PROEF_COULANCE_DAGEN`), beide staan in artikel 4 van de spelregels. Gekozen: twee getallen, elk door een eigen mechanisme afgedwongen. Verworpen: één getal, want dat draait het teambesluit van 2026-11-15 terug of schendt de tweede kans voor individuen.
-- **Zichtbaarheid:** de referralsectie op de accountpagina is ook tijdens de trial zichtbaar (geen trialcheck in de pagina of de API), alleen verborgen voor gewone teamleden en in de Android-app.
-- **Nieuwe gebruiker (ongewijzigd):** krijgt altijd de eerste betaalmaand gratis, ongeacht welk abonnement gekozen wordt. Dat staat los van de referrer-trigger hierboven.
-
-**Doorgevoerd in 7 plekken:** `app/bot/qa/QAClient.tsx` (hoofdprijs-FAQ + 2 referral-FAQ's), `app/referrals/page.tsx` (spelregels-document, versie 1.3 → 1.4), `app/bot/profiel/ReferralSection.tsx`, `app/api/bot/referral/route.ts`, `lib/email-templates.ts` (`referral_aanmelding`-template). (De zevende plek, `app/evaluatie/page.tsx`, is 2026-09-15 verwijderd samen met de hele evaluatiepagina.)
-
-**Niet aangepast, bewust:** het Supabase-veld `referral_credit` op `approved_users` wordt nergens in de code automatisch opgehoogd, alleen uitgelezen. Het toekennen van tegoed is en blijft volledig handmatig (Arno berekent en vult het zelf in), deze wijziging verandert daar niets aan, alleen de copy die uitlegt hoeveel dat tegoed hoort te zijn.
+De geldende regels staan in `app/referrals/page.tsx`. Besluiten, verworpen alternatieven en bouwstand staan in `docs/REFERRAL_AUTOMATISERING.md`; de rekenregels in `lib/billing/referralRegels.ts`. Deze versie vervangt de regels van 2026-08-10 (Basic leverde nooit tegoed op, eerste betaalmaand gratis, tegoed zonder vervaldatum).
 
 ---
 

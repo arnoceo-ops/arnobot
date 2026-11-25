@@ -26,73 +26,72 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.5 · November 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.6 · November 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Wat is het referralprogramma</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Je ontvangt als actieve ArnoBot-gebruiker een persoonlijke referral link. Deel je die link en meldt iemand zich daarmee aan, dan profiteren zowel jij als de nieuwe gebruiker van een korting zodra de laatstgenoemde een betaald abonnement afsluit.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Deelname is automatisch voor iedere actieve gebruiker. Er zijn geen aparte aanmeldstappen vereist.</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Meedoen</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Deel je link, bijvoorbeeld <strong style={{ color: '#f1f5f9' }}>arno.bot/aanmelden?ref=NAAM-XXXX</strong>. De nieuwe gebruiker meldt zich ermee aan en betaalt binnen de proef of uiterlijk 15 dagen erna (teamproef: 10).</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 2</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Hoe het werkt</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Jij deelt als referrer je persoonlijke link (bijv. <strong style={{ color: '#f1f5f9' }}>arno.bot/aanmelden?ref=NAAM-XXXX</strong>). De nieuwe gebruiker klikt op die link, doorloopt de standaard gratis trial en sluit daarna een abonnement af. Op dat moment worden de kortingen en het tegoed van toepassing.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een referral code wordt eenmalig per account gekoppeld, op het moment van de eerste inlog via de link.</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Nieuwe gebruiker: eenmalig een referral fee</h2>
+            <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
+              <li>Per jaar: korting van een twaalfde op het eerste jaar.</li>
+              <li>Per maand: de vierde maand gratis, na drie aaneengesloten betaalde maanden. Je vierde maand schrijven we niet af. Stap je eerder over op een jaar, dan geldt de jaarkorting.</li>
+              <li>Team: ten hoogste de maandprijs bij de start.</li>
+            </ul>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 3</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Kortingen bij conversie</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Nieuwe gebruikers krijgen, ongeacht het gekozen abonnement, hun eerste betaalmaand gratis. Bij een jaarabonnement wordt dat verrekend als korting op de jaarfactuur.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Referrers ontvangen alleen tegoed als de nieuwe gebruiker voor Pro of Team kiest, niet bij Basic. Het tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement.</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Aanbrenger: eenmalig tegoed per klant</h2>
             <table>
               <thead>
                 <tr>
-                  <th>WIE</th>
-                  <th>SCENARIO</th>
-                  <th>VOORDEEL</th>
+                  <th>KLANT NEEMT</th>
+                  <th>TEGOED</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Elk abonnement, maandelijks</td>
-                  <td>Eerste maand gratis</td>
+                  <td style={{ color: '#f1f5f9' }}>Basic per maand</td>
+                  <td>Geen</td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Nieuwe gebruiker</td>
-                  <td>Elk abonnement, jaarlijks</td>
-                  <td>Eerste maand verrekend als korting op de jaarfactuur</td>
+                  <td style={{ color: '#f1f5f9' }}>Per jaar</td>
+                  <td>Particulier na 14 dagen, zakelijk direct</td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer</td>
-                  <td>Nieuwe gebruiker kiest Pro of Team</td>
-                  <td>Tegoed, maximaal jouw eigen maandprijs (Basic €19-29, Pro €39-59). Voor managers van een team is het plafond de totale maandprijs van het eigen team</td>
-                </tr>
-                <tr>
-                  <td style={{ color: '#f1f5f9' }}>Referrer</td>
-                  <td>Nieuwe gebruiker kiest Basic</td>
-                  <td>Geen tegoed</td>
+                  <td style={{ color: '#f1f5f9' }}>Pro of Team per maand</td>
+                  <td>Na 3 betaalde en verstreken maanden</td>
                 </tr>
               </tbody>
             </table>
+            <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
+              <li>Een onderbreking tot 14 dagen mag.</li>
+              <li>Hoogte: de laagste van jullie maandprijzen zonder btw, plus btw bij verrekenen.</li>
+              <li>Geen maximum aantal klanten. Een team telt als één.</li>
+            </ul>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 4</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Geldigheid van een referral</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Een referral telt mee zodra de nieuwe gebruiker een betaald abonnement afsluit binnen de 30-daagse trial of uiterlijk 15 dagen daarna. Wie na die periode converteert, ontvangt geen referralkorting meer. Voor een team dat zich via de gratis proef aanmeldt is dat 10 dagen na het einde van de proef.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij een maandabonnement ontvangt de referrer zijn tegoed nadat de nieuwe gebruiker drie aaneengesloten betaalmaanden heeft voltooid. Dat is in de vijfde maand na aanmelding: één trialmaand, één gratis referralmaand en drie betaalmaanden. Bij een jaarabonnement wordt het tegoed direct na de eerste jaarlijkse betaling bijgeschreven. Dit geldt alleen als de nieuwe gebruiker voor Pro of Team heeft gekozen, bij Basic ontstaat geen tegoed.</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Verrekenen</h2>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij je verlenging, via terugstorting, een overgeslagen incasso of korting op de teamfactuur. De rest blijft staan. Geen uitbetaling in geld. Je saldo staat op je <a href="/bot/account">accountpagina</a>.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 5</p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Spelregels voor tegoed</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Tegoed is uitsluitend inzetbaar als verlenging van een bestaand maand- of jaarabonnement, of als bijdrage aan een tweede licentie. Uitbetaling in contanten of via andere betaalmethoden is niet mogelijk.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 16 }}>Tegoed heeft geen vervaldatum en kent geen maximum. Het loopt door totdat het wordt ingezet voor een verlenging of tweede licentie.</p>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>De actuele stand van je referral saldo is te zien op je <a href="/bot/account">accountpagina</a>.</p>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Vervallen</h2>
+            <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
+              <li>14 dagen na afloop van je abonnement zonder nieuw abonnement.</li>
+              <li>Na 30 dagen teamblokkade wegens niet betalen.</li>
+              <li>Nog geen abonnement en niet op tijd afgesloten.</li>
+              <li>Word je teamlid, dan storten we terug op je eigen betalingen, nieuwste eerst. De rest vervalt.</li>
+              <li>Bij terugbetaling aan je klant vervalt het bijbehorende tegoed. Al gebruikt? Dan verrekenen we het later.</li>
+            </ul>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>

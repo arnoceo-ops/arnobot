@@ -200,7 +200,7 @@ export function getEmailTemplate(
   type: EmailType,
   naam: string,
   isTest = false,
-  options?: { sessionCount?: number; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patroon?: { zin: string; thema: string; aantal: number; url: string }; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions; team?: TeamMailOptions }
+  options?: { sessionCount?: number; viaReferral?: boolean; userId?: string; newUserName?: string; nudgeQuestion?: string; uitdaging?: string; patroon?: { zin: string; thema: string; aantal: number; url: string }; laggingNames?: string[]; billing?: BillingMailOptions; blog?: BlogMailOptions; team?: TeamMailOptions }
 ): { subject: string; html: string } {
   const optOutUrl = options?.userId
     ? `https://arno.bot/optout/${options.userId}?sig=${optOutSig(options.userId)}`
@@ -276,7 +276,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.`,
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.${options?.viaReferral ? '<br><br>Via je uitnodiging krijg je korting op je eerste jaar of je vierde maand gratis.' : ''}`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }
@@ -501,7 +501,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${newUser} heeft zich aangemeld via jouw referral code`,
         html: mail(
-          `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich zojuist aangemeld via jouw referral link.<br><br>Kiest ${newUser} voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, maximaal je eigen maandprijs. Bij Basic ontvang je geen tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`,
+          `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich via jouw link aangemeld.<br><br>Neemt ${newUser} een abonnement, dan krijg je mogelijk tegoed. Zie de <a href="https://arno.bot/referrals" style="color:#f59e0b;">spelregels</a>.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account'
         ),
       }

@@ -7,10 +7,21 @@ export default function SignUpPage() {
   const { signUp } = useSignUp()
   const { isSignedIn } = useUser()
   const [error, setError] = useState('')
+  const [uitnodiger, setUitnodiger] = useState<string | null>(null)
 
   useEffect(() => {
     if (isSignedIn) window.location.href = '/bot'
   }, [isSignedIn])
+
+  // Via een referrallink binnen (cookie gezet door /aanmelden): laten zien wie uitnodigt.
+  useEffect(() => {
+    const code = document.cookie.match(/(?:^|; )arnobot_ref=([^;]+)/)?.[1]
+    if (!code) return
+    fetch(`/api/referral-naam?code=${encodeURIComponent(code)}`)
+      .then(r => r.json())
+      .then(d => setUitnodiger(typeof d.voornaam === 'string' && d.voornaam ? d.voornaam : null))
+      .catch(() => {})
+  }, [])
 
   async function handleLinkedIn() {
     if (!signUp) return
@@ -27,10 +38,10 @@ export default function SignUpPage() {
     }
   }
 
-  return <AuthPage onLinkedIn={handleLinkedIn} error={error} />
+  return <AuthPage onLinkedIn={handleLinkedIn} error={error} uitnodiger={uitnodiger} />
 }
 
-function AuthPage({ onLinkedIn, error }: { onLinkedIn: () => void; error: string }) {
+function AuthPage({ onLinkedIn, error, uitnodiger }: { onLinkedIn: () => void; error: string; uitnodiger: string | null }) {
   return (
     <>
       <style>{`
@@ -50,6 +61,11 @@ function AuthPage({ onLinkedIn, error }: { onLinkedIn: () => void; error: string
             <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT UNLIMITED</p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, lineHeight: 1 }}>AANMELDEN</h1>
           </div>
+          {uitnodiger && (
+            <p style={{ fontSize: 14, color: '#f1f5f9', textAlign: 'center', lineHeight: 1.8 }}>
+              {uitnodiger} nodigt je uit. 30 dagen gratis, daarna bij een abonnement korting op je eerste jaar of je vierde maand gratis.
+            </p>
+          )}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button className="li-btn" onClick={onLinkedIn} type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

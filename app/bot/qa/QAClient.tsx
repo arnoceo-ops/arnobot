@@ -115,7 +115,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt het referralprogramma?',
-        a: 'Deel je persoonlijke referral-link vanuit je profiel. Kiest de nieuwe gebruiker voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, verrekend op je factuur. Kiest de nieuwe gebruiker voor Basic, dan ontstaat er geen tegoed. Bij een maandabonnement ontvang je het tegoed na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.',
+        a: 'Deel je link vanuit je account. Jullie hebben er allebei voordeel van. Zie de spelregels.',
       },
       {
         q: 'Hoe hoog is het tegoed?',

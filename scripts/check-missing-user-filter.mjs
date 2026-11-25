@@ -123,6 +123,7 @@ const KNOWN_SAFE_QUERIES = new Set([
   // een e-mail te sturen; referrer-data (incl. e-mailadres) wordt nooit teruggegeven
   // aan de aanroepende gebruiker.
   'app/api/bot/referral/route.ts:approved_users',
+  'app/api/referral-naam/route.ts:approved_users', // openbaar: alleen de voornaam bij een referralcode
   // Zoekt de manager van een team op via team_id (al gevalideerd via een eerdere,
   // wél op user_id gescopede lookup elders in dit bestand) om een notificatie te
   // maken; het resultaat gaat nooit terug naar de aanroeper.

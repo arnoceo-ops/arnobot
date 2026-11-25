@@ -189,7 +189,7 @@ Backend/bestandsnamen heten "sd-verdien", de publieke route is `/agents`.
 | Prijzen | `/prijzen` | Prijzenpagina (Basic/Pro/Team) |
 | Contact | `/contact` | Contactgegevens |
 | Team aanvragen | `/team/aanvragen` | Aanvraagformulier voor een Team-offerte met live berekende prijs |
-| Aanmelden | `/aanmelden` | Zet referral-/SD-attributiecookies, redirect naar `/sign-in` |
+| Aanmelden | `/aanmelden` | Zet referral-/SD-attributiecookies, redirect naar `/sign-up` |
 | Sign in | `/sign-in` | Clerk sign-in (LinkedIn OIDC) |
 | Sign in (enterprise) | `/sign-in/enterprise` | Enterprise SSO via e-maildomein |
 | Sign in (intern) | `/testlogin` | Verborgen wachtwoord-login, alleen Arno's eigen testaccount (tot 2026-10-13 op `/sign-in/intern`). Bij "login kapot": controleer eerst `expires_at` in `approved_users` (zie `lib/internalTestAccounts.ts`), niet meteen Clerk/routing verdenken |
@@ -292,6 +292,7 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 | `/api/bot/export` | Alle eigen data exporteren (AVG) |
 | `/api/bot/delete-account` | Verwijderverzoek account |
 | `/api/bot/referral` | Eigen referralcode ophalen/genereren |
+| `/api/referral-naam` | Openbaar, met limiet: voornaam bij een referralcode voor de aanmeldpagina |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/billing/upgrade` | Upgrade van Basic naar Pro, direct met bijbetaling naar rato (zie "Online betalen (Mollie)") |
 | `/api/bot/billing/overstap-intrekken` | Trekt een geplande overstap in |

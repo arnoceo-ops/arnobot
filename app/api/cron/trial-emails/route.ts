@@ -56,7 +56,7 @@ async function cronHandler(req: NextRequest) {
     const trialEnd = new Date(trialStart.getTime() + 30 * 24 * 60 * 60 * 1000)
     const naam = user.voornaam || 'daar'
 
-    async function send(type: EmailType, options?: { sessionCount?: number }) {
+    async function send(type: EmailType, options?: { sessionCount?: number; viaReferral?: boolean }) {
       const { subject, html } = getEmailTemplate(type, naam, false, options)
       // verstuurMail gooit bij een weigering (limiet, ongeldig adres): dan schrijft de aanroeper hieronder
       // GEEN logregel en probeert de volgende run opnieuw. Met een kale resend.emails.send ging de mail
@@ -148,8 +148,15 @@ async function cronHandler(req: NextRequest) {
 
     if (!emailType) continue
 
+    // Dag 25: wie via een referral binnenkwam hoort hier over zijn referral fee.
+    let viaReferral = false
+    if (emailType === 'dag25') {
+      const { data: referral } = await supabase.from('arnobot_referrals').select('id').eq('referred_user_id', user.user_id).maybeSingle()
+      viaReferral = !!referral
+    }
+
     try {
-      await send(emailType, emailOptions)
+      await send(emailType, viaReferral ? { viaReferral } : emailOptions)
       await supabase.from('arnobot_email_log').insert({
         user_id: user.user_id,
         email_type: emailType,
