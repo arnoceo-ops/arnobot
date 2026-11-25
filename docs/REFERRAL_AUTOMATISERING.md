@@ -2,14 +2,15 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-11-16
-- **Waar we staan:** alleen een plan, er is niets gebouwd. Het ontwerp is aangevallen door een onafhankelijke reviewer zonder voorgeschiedenis; de bevindingen zijn verwerkt. Arno heeft akkoord gegeven op de vier besluiten hieronder. Wat al staat (los van dit plan): managers van een team hebben een referral-link, een geworven team telt als één betalende referral, spelregels versie 1.5, en de teamaanvraagmelding vermeldt of het team via een referral binnenkwam.
-- **Eerstvolgende stap:** Arno beoordeelt dit document. Daarna fase 0 (schema van `arnobot_referrals` en `referral_credit` in Supabase nalezen, Mollie-terugbetalingskosten vaststellen), dan fase 1.
-- **Nog onverifieerd (eerst nalezen, niet aannemen):** (a) wat Mollie rekent voor een terugbetaling en of de oorspronkelijke transactiekosten terugkomen (de helppagina gaf een 403; een externe bron noemt €0,25 per terugbetaling zonder teruggave van de transactiekosten); (b) of een gedeeltelijke terugbetaling in de bestaande code goed doorloopt (`terugbetaald_cent` wordt gevuld, de cron behandelt alleen een volledige terugbetaling als einde van het abonnement); (c) het schema van `arnobot_referrals` en `referral_credit`: er staat nergens SQL voor in `docs/sql`; (d) de Moneybird-creditnota via de API.
+- **Laatst bijgewerkt:** 2026-11-25
+- **Waar we staan:** Arno heeft op 25-11 de regels voor de aanbrenger aangepast (zie "Regels per 25-11") en opdracht gegeven om te bouwen, inclusief overzicht en Telegram-meldingen. Er is nog niets van de automatisering gebouwd. Het aangepaste plan gaat eerst opnieuw door een onafhankelijke controle. In de database stond op 25-11 één referral (status signed_up) en geen gebruiker met tegoed boven nul.
+- **Eerstvolgende stap:** bevindingen van de controle verwerken, daarna fase 1.
+- **Los traject, open:** of de nieuw aangebrachte gebruiker zelf iets krijgt, en onder welke voorwaarden. Arno bespreekt dit apart; tot dan blijven de teksten daarover ongewijzigd. Let op: de beloofde gratis eerste maand zit niet in de betaalcode. Dit moet besloten zijn voordat de eerste aangebrachte gebruiker betaalt (proef loopt tot ongeveer 24-12-2026).
+- **Nog onverifieerd:** (a) of een Mollie-terugbetaling zelf geld kost en of de transactiekosten terugkomen. Op 25-11 gelezen: de prijspagina (mollie.com/nl/pricing) toont geen terugbetaalregel, help.mollie.com weigert automatisch lezen (403), één externe bron noemt €0,25 per terugbetaling zonder teruggave, andere bronnen noemen geen kosten. Arno kan dit zien in het Mollie-dashboard of navragen bij Mollie. Het ontwerp hangt er niet van af. Wel bevestigd (docs.mollie.com/docs/refunds): gedeeltelijke terugbetalingen worden ondersteund; een terugbetaling gaat van het beschikbare saldo en wordt in de wachtrij gezet als dat te laag is; een tweede terugbetaling van hetzelfde bedrag op dezelfde betaling binnen een uur wordt geweigerd. (b) of een gedeeltelijke terugbetaling in de bestaande code goed doorloopt; (c) de Moneybird-creditnota via de API voor een deelbedrag.
 
 ## Afvinklijst
 
-- [ ] Fase 0: schema nalezen, Mollie-kosten vaststellen, besluit over de bedragsbasis (zie hieronder)
+- [x] Fase 0 (25-11): schema nagelezen, bedragsbasis vastgelegd; Mollie-terugbetalingskosten niet vast te stellen uit openbare bronnen (zie onverifieerd)
 - [ ] Fase 1: grootboek, betrouwbare conversie (ook Team), verdien-cron, mijlpaalmelding, mails
 - [ ] Fase 2: terugdraaien bij herroeping, terugbetaling en chargeback
 - [ ] Fase 3: verrekenen voor team-managers (kortingsregel op de factuur)
@@ -21,14 +22,26 @@
 
 De spelregels (`app/referrals/page.tsx`, `docs/ABONNEMENTEN.md`) zijn gegeven: eenmalig tegoed als de geworven gebruiker Pro of Team kiest, plafond is de eigen maandprijs van de referrer (voor een manager de totale teamprijs), alleen verrekening op een verlenging, geen uitbetaling, geen vervaldatum. Het tegoed is nu handwerk: `referral_credit` op `approved_users` wordt nergens in de code opgehoogd, alleen uitgelezen. Geen Mollie- of Moneybird-gedrag is aangenomen zonder het in code of in de docs te zien; wat niet is gezien staat hierboven als onverifieerd.
 
-## Besluiten (Arno, 2026-11-16)
+## Regels per 25-11 (Arno), deze gaan vóór oudere tekst in dit document en in de spelregels
+
+| Aangebrachte klant | Tegoed voor de aanbrenger | Moment |
+|---|---|---|
+| niets, of Basic per maand | geen | niet |
+| Basic per jaar (nieuw: telt mee) | ja | particulier na de 14 dagen bedenktijd, zakelijk direct na betaling |
+| Pro of Team per maand | ja | na 3 aaneengesloten betaalmaanden |
+| Pro of Team per jaar | ja | particulier na de 14 dagen bedenktijd, zakelijk direct na betaling |
+
+- **Hoogte:** eenmalig, het laagste van twee maandprijzen: die van het afgesloten abonnement van de klant en die van de aanbrenger zelf. Manager van een team: plafond is de totale maandprijs van het eigen team. Berekend op de getoonde prijzen (Basic 19 per jaar-abonnement of 29 per maand, Pro 39 of 59); de btw-basis is die van de aanbrenger (particulier inclusief, zakelijk exclusief, zie lib/billing/prijzen.ts).
+- **Termijn:** afsluiten tijdens de proef of uiterlijk 15 dagen daarna; teamproef: 10 dagen na de proef. Een team telt als één referral.
+- **Stoppen is tegoed kwijt:** het tegoed vervalt zodra het abonnement van de aanbrenger echt is afgelopen (ook een niet verlengd jaarabonnement). Niet bij een lopende periode na opzegging, niet bij een ingetrokken opzegging, niet bij een overstap, upgrade of solo naar Team. Haalt een klant de drempel pas na dat einde, dan ontstaat geen tegoed. Wie later terugkomt krijgt niets terug. Vervangt besluit 5 van 16-11 (tegoed blijft staan). Verworpen: tegoed bewaren voor terugkeerders.
+- **Tweede licentie** vervalt.
+- **Bij de opzegging** (vooraf en in de bevestiging) wordt gemeld dat het tegoed vervalt.
+
+## Besluiten (Arno, 2026-11-16), nog geldig waar de regels van 25-11 niets anders zeggen
 
 1. **Volledig automatiseren**, niet halfautomatisch met een knop.
 2. **Verrekenen bij individuen via een gedeeltelijke terugbetaling van de verlengingsbetaling plus een creditnota in Moneybird. Bij team-managers via een kortingsregel op de factuur** op het moment dat onze eigen cron de factuur maakt. **Verworpen: het Mollie-abonnement verlagen** (PATCH van het bedrag voor toekomstige betalingen), want: Mollie accepteert geen bedrag van 0, een jaarlijks particulier abonnement heeft helemaal geen Mollie-abonnement (een jaar is één betaling), de code heeft geen PATCH en geen plek om het bedrag na de betaling terug te zetten, de cron draait om 05:00 UTC terwijl Mollie op de incassodatum incasseert (geen betrouwbaar venster), SEPA blijft dagen `pending`, een gemiste webhook laat de klant structureel te weinig betalen, en overstap, upgrade, intrekken en opzeggen maken abonnementen opnieuw met het volle bedrag. **Verworpen: gratis maanden via de einddatum**, want dat botst met de automatische incasso (dubbele afschrijving).
-3. **Jaarabonnement: tegoed pas na de bedenktijd van 14 dagen** (`lib/billing/herroeping.ts`), niet "direct na de eerste betaling". Artikel 4 van de spelregels wordt aangepast. **Verworpen:** direct toekennen met terugdraaien bij herroeping, want dat laat een kans op tegoed zonder dekking staan.
-4. **Referrer zonder betalend abonnement** (trial, Basic of handmatig BETAALD): het tegoed wacht tot zijn eerste verlenging. Een handmatig account (BETAALD-vlag, geen `arnobot_subscriptions`-rij en geen Mollie-abonnement) blijft handwerk met een Telegram-melding aan Arno. Interne testaccounts krijgen nooit tegoed.
-5. **Opzeggen:** het tegoed blijft staan, zonder vervaldatum (zoals artikel 5 al zegt).
-6. **"Tweede licentie" in artikel 5 van de spelregels vervalt**, want het is niet te automatiseren.
+3. **Referrer zonder betalend abonnement** (trial of handmatig BETAALD): het tegoed wacht tot zijn eerste verlenging. Een handmatig account (BETAALD-vlag, geen `arnobot_subscriptions`-rij en geen Mollie-abonnement) blijft handwerk met een Telegram-melding aan Arno. Interne testaccounts krijgen nooit tegoed.
 
 ## Wat er nodig is, per fase
 
@@ -49,7 +62,7 @@ De spelregels (`app/referrals/page.tsx`, `docs/ABONNEMENTEN.md`) zijn gegeven: e
 
 **Fase 5, bewaking.** Beheeroverzicht van het grootboek, Telegram bij elke fout (zoals `notifyTelegram` elders), testaccountfilters (`scripts/check-testaccount-filter.mjs`, `check-missing-user-filter.mjs`), unit tests, en één proef in Mollie-testmodus (met `MONEYBIRD_OOK_IN_TESTMODUS` niet aan, zodat er geen nepfactuur in de echte administratie komt; zie de factuurles in `docs/OVERSTAP_PLAN.md`).
 
-**Fase 6, copy en docs.** Spelregels versie 1.6 (artikel 4: 14 dagen bedenktijd bij een jaarabonnement; artikel 5: "tweede licentie" weg, uitleg dat de verrekening een terugbetaling op je betaalmiddel is of een korting op je teamfactuur), `lib/appHelp.ts`, `lib/email-templates.ts`, de plekken die nu "handwerk" zeggen (`lib/billing/teamlidSolo.ts`, `lib/billing/overstap.ts`, `app/api/team-aanvraag/route.ts`), `docs/ABONNEMENTEN.md`, `docs/ARNOBOT_OVERZICHT.md` en de PDF's (`npm run docs:pdf`). Alle teksten eerst als platte tekst aan Arno.
+**Fase 6, copy en docs.** Spelregels versie 1.6 volgens de regels van 25-11 (tegoed vervalt bij einde abonnement, Basic per jaar telt mee; artikel 4: particulier per jaar na 14 dagen, zakelijk direct; artikel 5: "tweede licentie" weg, uitleg dat de verrekening een terugbetaling op je betaalmiddel is of een korting op je teamfactuur), `lib/appHelp.ts`, `lib/email-templates.ts`, de plekken die nu "handwerk" zeggen (`lib/billing/teamlidSolo.ts`, `lib/billing/overstap.ts`, `app/api/team-aanvraag/route.ts`), `docs/ABONNEMENTEN.md`, `docs/ARNOBOT_OVERZICHT.md` en de PDF's (`npm run docs:pdf`). Alle teksten eerst als platte tekst aan Arno.
 
 ## Risico's uit de review die in het ontwerp zijn opgevangen
 
