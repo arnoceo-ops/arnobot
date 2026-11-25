@@ -101,7 +101,7 @@ export async function haalKosten(namen: Map<string, string>, nu: Date): Promise<
 
 // --- Status ------------------------------------------------------------------------------------
 
-export type StatusRegel = { label: string; waarde: string; niveau: Niveau }
+export type StatusRegel = { label: string; waarde: string; niveau: Niveau; meldingen?: string[] }
 export type StatusKaart = { niveau: Niveau; regels: StatusRegel[]; problemen: string[] }
 
 const INDICATOR_NIVEAU: Record<string, Niveau> = { none: 'ok', minor: 'let-op', major: 'fout', critical: 'fout' }
@@ -129,9 +129,12 @@ async function haalDienstStatus(): Promise<{ regel: StatusRegel; details: string
       const r = await fetch(d.url, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
       const j = await r.json()
       const niveau = INDICATOR_NIVEAU[j?.status?.indicator as string] ?? 'onbekend'
+      // Een dienst kan als geheel 'operationeel' zijn en toch een open incident hebben (bijvoorbeeld in
+      // 'monitoring'). Dat blijft zichtbaar onder de regel, net als op de desktop, zonder als probleem te tellen.
+      const details = dienstDetails(j)
       return {
-        regel: { label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau },
-        details: niveau === 'ok' ? [] : dienstDetails(j),
+        regel: { label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau, meldingen: niveau === 'ok' ? details : undefined },
+        details: niveau === 'ok' ? [] : details,
       }
     } catch {
       // Een statusfetch die mislukt is geen storing: onbekend, geen alarm (zoals /bot/admin/status).

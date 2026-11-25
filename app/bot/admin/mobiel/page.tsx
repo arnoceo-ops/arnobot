@@ -258,7 +258,14 @@ export default async function AdminMobielPage() {
           {status.data.problemen.map((p, i) => (
             <p key={i} style={{ margin: '0 0 10px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4, whiteSpace: 'pre-line' }}>{p}</p>
           ))}
-          {status.data.regels.map(r => <Rij key={r.label} links={r.label} rechts={r.waarde} niveau={r.niveau} />)}
+          {status.data.regels.map(r => (
+            <div key={r.label}>
+              <Rij links={r.label} rechts={r.waarde} niveau={r.niveau} />
+              {r.meldingen?.map(m => (
+                <p key={m} style={{ margin: '0 0 8px 18px', color: '#f59e0b', fontSize: 14, lineHeight: 1.4 }}>↳ {m}</p>
+              ))}
+            </div>
+          ))}
         </Kaart>
       ) : <Mislukt titel="STATUS" />}
 
