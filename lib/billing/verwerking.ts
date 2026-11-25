@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
+import { isVolledigTerugbetaald } from './terugbetaling'
 import {
   haalAbonnement,
   haalBetaling,
@@ -148,7 +149,7 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
     if (await claim(rij.id, 'verwerkt_at')) await verwerkMislukteBetaling(sub, rij)
   }
 
-  const volledig = terugbetaald >= rij.bedrag_cent || teruggeboekt > 0
+  const volledig = isVolledigTerugbetaald(rij, terugbetaald) || teruggeboekt > 0
   if (volledig && (await claim(rij.id, 'terugbetaling_verwerkt_at'))) {
     await verwerkVolledigeTerugbetaling(sub, rij, terugbetaald, teruggeboekt > 0)
   }
@@ -413,6 +414,8 @@ async function verwerkVolledigeTerugbetaling(
   terugbetaaldCent: number,
   isChargeback: boolean,
 ): Promise<void> {
+  // Wat de klant nu terugkrijgt, zonder het deel dat al als referraltegoed was teruggestort.
+  const bedragVoorKlant = Math.max(0, (terugbetaaldCent || rij.bedrag_cent) - (rij.referral_refund_cent ?? 0))
   // Een terugbetaling van de upgradebetaling beëindigt het abonnement NIET: alleen de upgrade gaat terug.
   if (rij.soort === 'upgrade') {
     await zetUpgradeTerug(sub)
@@ -420,9 +423,9 @@ async function verwerkVolledigeTerugbetaling(
       await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
       return
     }
-    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent, upgrade: true })
+    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant, upgrade: true })
     await creditnotaVoorBetaling(rij.id)
-    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(terugbetaaldCent || rij.bedrag_cent)}\nBetaling: ${rij.mollie_payment_id}`)
+    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}`)
     return
   }
   await stopMollieAbonnement(sub)
@@ -440,9 +443,9 @@ async function verwerkVolledigeTerugbetaling(
     await notifyTelegram(`CHARGEBACK op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
     return
   }
-  await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: terugbetaaldCent || rij.bedrag_cent })
+  await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant })
   await creditnotaVoorBetaling(rij.id)
-  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(terugbetaaldCent || rij.bedrag_cent)}\nBetaling: ${rij.mollie_payment_id}`)
+  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}`)
 }
 
 /** Een nieuwe eerste betaling vervangt eventuele eerdere lopende abonnementen van dezelfde gebruiker. */

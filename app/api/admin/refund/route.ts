@@ -5,6 +5,7 @@ import { billingDb, type PayRow } from '@/lib/billing/db'
 import { betaalTerug, MollieError, mollieIngeschakeld } from '@/lib/billing/mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 import { adminKeyMatches } from '@/lib/adminAuth'
+import { heeftAndereTerugbetaling, restantCent } from '@/lib/billing/terugbetaling'
 import { logAdminActie } from '@/lib/adminLog'
 
 // Volledige terugbetaling van de laatste online betaling van een gebruiker, bedoeld voor de
@@ -29,12 +30,13 @@ export async function POST(req: NextRequest) {
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'paid')
-    .eq('terugbetaald_cent', 0)
   if (typeof betalingId === 'string' && betalingId) betalingQuery = betalingQuery.eq('id', betalingId)
-  const { data: betaling } = await betalingQuery
+  const { data: kandidaten } = await betalingQuery
     .order('betaald_at', { ascending: false })
-    .limit(1)
-    .maybeSingle<PayRow>()
+    .limit(24)
+    .returns<PayRow[]>()
+  // Een betaling waarop alleen referraltegoed is teruggestort, is nog gewoon terug te betalen.
+  const betaling = (kandidaten ?? []).find(b => !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) && restantCent(b) > 0)
   if (!betaling) return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
 
   // De bedenktijd is 14 dagen na de betaling (voorwaarden artikel 8). Daarna terugbetalen kan
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
   try {
     const refund = await betaalTerug({
       betalingId: betaling.mollie_payment_id,
-      brutoCent: betaling.bedrag_cent,
+      brutoCent: restantCent(betaling),
       omschrijving: 'Terugbetaling binnen bedenktijd ArnoBot',
       idempotencyKey: `refund-${betaling.id}`,
     })
@@ -63,9 +65,9 @@ export async function POST(req: NextRequest) {
     await verwerkMolliebetaling(betaling.mollie_payment_id)
     await logAdminActie({
       actie: 'terugbetaling', doelUserId: userId,
-      details: { extra: { bedrag_cent: betaling.bedrag_cent, mollie_payment_id: betaling.mollie_payment_id, dagen_na_betaling: dagenGeleden, buiten_bedenktijd: buitenBedenktijd, refund_id: refund.id } },
+      details: { extra: { bedrag_cent: restantCent(betaling), mollie_payment_id: betaling.mollie_payment_id, dagen_na_betaling: dagenGeleden, buiten_bedenktijd: buitenBedenktijd, refund_id: refund.id } },
     })
-    return NextResponse.json({ ok: true, refundId: refund.id, bedragCent: betaling.bedrag_cent })
+    return NextResponse.json({ ok: true, refundId: refund.id, bedragCent: restantCent(betaling) })
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-refund' } })
     console.error('[admin/refund]', e instanceof MollieError ? e.message : e instanceof Error ? e.message : e)

@@ -52,6 +52,8 @@ export interface PayRow {
   bedrag_cent: number
   btw_cent: number
   terugbetaald_cent: number
+  /** Deel van terugbetaald_cent dat verrekend referraltegoed is, zie lib/billing/terugbetaling.ts. */
+  referral_refund_cent?: number | null
   teruggeboekt_cent: number
   betaald_at: string | null
   verwerkt_at: string | null

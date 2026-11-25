@@ -163,13 +163,16 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
   try {
     const { data: oudeBetaling } = await billingDb
       .from('arnobot_payments')
-      .select('moneybird_factuur_id')
+      .select('*')
       .eq('subscription_id', sub.id)
       .eq('status', 'paid')
       .not('moneybird_factuur_id', 'is', null)
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle<{ moneybird_factuur_id: string }>()
+      .maybeSingle<{ moneybird_factuur_id: string; mollie_payment_id: string; referral_refund_cent?: number | null }>()
+
+    // Met verrekend referraltegoed zou een volledige creditnota te veel crediteren: dan stoppen en handwerk.
+    if ((oudeBetaling?.referral_refund_cent ?? 0) > 0) throw new Error(`referraltegoed verrekend op ${oudeBetaling?.mollie_payment_id}: creditnota met de hand`)
 
     if (oudeBetaling?.moneybird_factuur_id) {
       await maakCreditnota(oudeBetaling.moneybird_factuur_id, {

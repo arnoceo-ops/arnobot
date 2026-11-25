@@ -144,3 +144,22 @@ export function herinneringenDue(
 export function eerstePeriodeStart(betaaldOp: Date, trialEindeDatum: Date | null): Date {
   return trialEindeDatum && trialEindeDatum > betaaldOp ? trialEindeDatum : betaaldOp
 }
+
+// Bedenktijd (voorwaarden artikel 8), gedeeld door de herroeping en de referralregels.
+export const BEDENKTIJD_DAGEN = 14
+const AMSTERDAM = 'Europe/Amsterdam'
+
+/** Kalenderdatum in Amsterdamse tijd, YYYY-MM-DD. */
+export function amsterdamDatum(d: Date): string {
+  return d.toLocaleDateString('sv-SE', { timeZone: AMSTERDAM })
+}
+
+/** De bedenktijd loopt tot en met de 14e kalenderdag na de betaling (Amsterdamse tijd). */
+export function laatsteDagBedenktijd(betaaldAt: string | Date): string {
+  const [j, m, d] = amsterdamDatum(new Date(betaaldAt)).split('-').map(Number)
+  return new Date(Date.UTC(j, m - 1, d + BEDENKTIJD_DAGEN)).toISOString().slice(0, 10)
+}
+
+export function isBinnenBedenktijd(betaaldAt: string | Date, nu: Date = new Date()): boolean {
+  return amsterdamDatum(nu) <= laatsteDagBedenktijd(betaaldAt)
+}

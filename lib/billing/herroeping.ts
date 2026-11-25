@@ -3,6 +3,9 @@ import { betaalTerug, mollieIngeschakeld } from './mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from './verwerking'
 import { verstuurBillingMail } from './mails'
 import { wieIs } from './wie'
+import { isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
+export { BEDENKTIJD_DAGEN, amsterdamDatum, isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
+import { heeftAndereTerugbetaling, restantCent } from './terugbetaling'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -17,8 +20,6 @@ import { isInternalTestUser } from '@/lib/internalTestAccounts'
 // accounts is het altijd proefmodus: de hele flow loopt (mail, adminlog, Telegram) maar er gaat niets
 // naar Mollie of Moneybird.
 
-export const BEDENKTIJD_DAGEN = 14
-const AMSTERDAM = 'Europe/Amsterdam'
 
 export type HerroepSoort = 'eerste' | 'upgrade'
 
@@ -33,20 +34,6 @@ export type Herroepbaar = {
 
 const euro = (cent: number) => `€${(cent / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-/** Kalenderdatum in Amsterdamse tijd, YYYY-MM-DD. */
-export function amsterdamDatum(d: Date): string {
-  return d.toLocaleDateString('sv-SE', { timeZone: AMSTERDAM })
-}
-
-/** De bedenktijd loopt tot en met de 14e kalenderdag na de betaling (Amsterdamse tijd). */
-export function laatsteDagBedenktijd(betaaldAt: string | Date): string {
-  const [j, m, d] = amsterdamDatum(new Date(betaaldAt)).split('-').map(Number)
-  return new Date(Date.UTC(j, m - 1, d + BEDENKTIJD_DAGEN)).toISOString().slice(0, 10)
-}
-
-export function isBinnenBedenktijd(betaaldAt: string | Date, nu: Date = new Date()): boolean {
-  return amsterdamDatum(nu) <= laatsteDagBedenktijd(betaaldAt)
-}
 
 /**
  * Welke betaling kan de klant nu ongedaan maken? De nieuwste eerst: een upgrade gaat vóór de eerste
@@ -56,7 +43,8 @@ export function kiesHerroepbareBetaling(betalingen: PayRow[], nu: Date = new Dat
   const kandidaten = betalingen
     .filter(b =>
       b.status === 'paid' &&
-      (b.terugbetaald_cent ?? 0) === 0 &&
+      !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) &&
+      restantCent(b) > 0 &&
       // Mollie rondt een terugbetaling pas na uren tot dagen af (terugbetaald_cent blijft zo lang 0), maar
       // terugbetaling_verwerkt_at wordt direct gezet. Zonder deze regel stond de knop na een klik nog even terug.
       !b.terugbetaling_verwerkt_at &&
@@ -101,7 +89,6 @@ export async function zoekHerroepbaar(userId: string, nu: Date = new Date()): Pr
       .select('*')
       .eq('user_id', userId)
       .eq('status', 'paid')
-      .eq('terugbetaald_cent', 0)
       .is('terugbetaling_verwerkt_at', null)
       .in('soort', ['eerste', 'upgrade'])
       .order('betaald_at', { ascending: false })
@@ -110,7 +97,7 @@ export async function zoekHerroepbaar(userId: string, nu: Date = new Date()): Pr
     if (betaling) {
       return {
         betaling,
-        herroepbaar: { soort: betaling.soort as HerroepSoort, bedragCent: betaling.bedrag_cent, uiterlijkTot: laatsteDagBedenktijd(betaling.betaald_at!), gesimuleerd: proef },
+        herroepbaar: { soort: betaling.soort as HerroepSoort, bedragCent: restantCent(betaling), uiterlijkTot: laatsteDagBedenktijd(betaling.betaald_at!), gesimuleerd: proef },
       }
     }
   }
@@ -146,7 +133,7 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
 
   const refund = await betaalTerug({
     betalingId: betaling.mollie_payment_id,
-    brutoCent: betaling.bedrag_cent,
+    brutoCent: restantCent(betaling),
     omschrijving: 'Herroeping binnen bedenktijd ArnoBot',
     idempotencyKey: `herroeping-${betaling.id}`,
   })
@@ -156,7 +143,7 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   await logAdminActie({
     actie: 'herroeping',
     doelUserId: userId,
-    details: { extra: { soort: herroepbaar.soort, bedrag_cent: betaling.bedrag_cent, mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
+    details: { extra: { soort: herroepbaar.soort, bedrag_cent: restantCent(betaling), mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
   })
-  return { ok: true, soort: herroepbaar.soort, bedragCent: betaling.bedrag_cent, proef: false }
+  return { ok: true, soort: herroepbaar.soort, bedragCent: restantCent(betaling), proef: false }
 }

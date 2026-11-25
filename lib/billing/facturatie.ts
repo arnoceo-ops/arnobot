@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
+import { restantCent } from './terugbetaling'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -155,10 +156,15 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
   if (!factureringToegestaan()) return
   const { data: rij } = await billingDb
     .from('arnobot_payments')
-    .select('moneybird_factuur_id, mollie_payment_id, user_id, bedrag_cent')
+    .select('*')
     .eq('id', payRowId)
-    .maybeSingle<Pick<PayRow, 'moneybird_factuur_id' | 'mollie_payment_id' | 'user_id' | 'bedrag_cent'>>()
+    .maybeSingle<PayRow>()
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
+  // Een volledige creditnota zou te veel crediteren als er al referraltegoed op deze betaling is verrekend.
+  if ((rij.referral_refund_cent ?? 0) > 0) {
+    await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
+    return
+  }
   try {
     const { data: abonnement } = await billingDb
       .from('arnobot_payments')

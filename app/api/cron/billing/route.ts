@@ -1,6 +1,7 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { billingDb, type PayRow, type SubRow } from '@/lib/billing/db'
+import { isVolledigTerugbetaald } from '@/lib/billing/terugbetaling'
 import { lijstRecenteTerugbetalingen, mollieIngeschakeld } from '@/lib/billing/mollie'
 import { herinneringenDue, moetMollieAbonnementNuStoppen, toegangTot } from '@/lib/billing/perioden'
 import { maakMollieAbonnementVoor, markeerTerugbetaald, stopMollieAbonnement, verwerkMolliebetaling } from '@/lib/billing/verwerking'
@@ -70,12 +71,12 @@ async function cronHandler(req: NextRequest) {
     if (perBetaling.size) {
       const { data: rijen } = await billingDb
         .from('arnobot_payments')
-        .select('id, user_id, mollie_payment_id, bedrag_cent')
+        .select('*')
         .in('mollie_payment_id', [...perBetaling.keys()])
         .is('terugbetaling_verwerkt_at', null)
-        .returns<Pick<PayRow, 'id' | 'user_id' | 'mollie_payment_id' | 'bedrag_cent'>[]>()
+        .returns<PayRow[]>()
       for (const r of (rijen ?? []).filter(r => !isInternalTestUser(r.user_id))) {
-        if ((perBetaling.get(r.mollie_payment_id) ?? 0) >= r.bedrag_cent && (await markeerTerugbetaald(r.id))) samenvatting.terugbetalingen++
+        if (isVolledigTerugbetaald(r, perBetaling.get(r.mollie_payment_id) ?? 0) && (await markeerTerugbetaald(r.id))) samenvatting.terugbetalingen++
       }
     }
 
