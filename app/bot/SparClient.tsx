@@ -924,17 +924,6 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       .catch(() => {})
 
 
-    // Verwerk referral code uit localStorage na OAuth
-    const referralCode = localStorage.getItem('arnobot_referral')
-    if (referralCode) {
-      localStorage.removeItem('arnobot_referral')
-      fetch('/api/bot/referral', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: referralCode }),
-      }).catch(() => {})
-    }
-
     if (userId) {
       // Pre-fill vanuit coaching pagina
       const prefill = localStorage.getItem('arnobot_prefill')

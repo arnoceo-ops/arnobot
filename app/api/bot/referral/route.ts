@@ -1,8 +1,6 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verstuurMailZacht } from '@/lib/mail'
-import { isValidEmail, emailHtml } from '@/lib/email-templates'
 import { isGewoonTeamlid } from '@/lib/teamAccess'
 
 const supabase = createClient(
@@ -67,85 +65,4 @@ export async function GET() {
     converted: converted ?? 0,
     credit: user.referral_credit ?? 0,
   })
-}
-
-// POST — verwerk referral code van nieuwe gebruiker na inloggen
-export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  // Zelfde vangnet als de GET hierboven: een gewoon teamlid hoort niet als referral
-  // geregistreerd te worden. Een nieuwe manager (een geworven team) wel.
-  if (await isGewoonTeamlid(userId)) {
-    return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor teamleden' }, { status: 400 })
-  }
-
-  const { code } = await req.json()
-  if (!code) return NextResponse.json({ error: 'Geen code' }, { status: 400 })
-
-  // Zoek referrer
-  const { data: referrer } = await supabase
-    .from('approved_users')
-    .select('user_id, voornaam, full_name, email')
-    .eq('referral_code', code.toUpperCase())
-    .maybeSingle()
-
-  if (!referrer) return NextResponse.json({ error: 'Onbekende code' }, { status: 404 })
-  if (referrer.user_id === userId) return NextResponse.json({ error: 'Eigen code' }, { status: 400 })
-
-  // Check niet al eerder gebruikt
-  const { data: existing } = await supabase
-    .from('arnobot_referrals')
-    .select('id')
-    .eq('referred_user_id', userId)
-    .maybeSingle()
-
-  if (existing) return NextResponse.json({ ok: true, already: true })
-
-  // Haal nieuwe gebruiker info op
-  const clerk = await clerkClient()
-  let newUserName = 'iemand'
-  try {
-    const cu = await clerk.users.getUser(userId)
-    newUserName = [cu.firstName, cu.lastName].filter(Boolean).join(' ') || 'iemand'
-  } catch {}
-
-  await supabase.from('arnobot_referrals').insert({
-    referrer_user_id: referrer.user_id,
-    referred_user_id: userId,
-    code_used: code.toUpperCase(),
-    referred_naam: newUserName,
-    status: 'signed_up',
-  })
-
-  // Telegram-melding naar Arno, zelfde bot/groep als de nieuwe-gebruiker-melding in proxy.ts.
-  // Ontbrak hier: een referral-code die pas na het inloggen wordt verwerkt (via SparClient.tsx,
-  // niet de aanmeld-cookie in proxy.ts) gaf tot nu toe alleen een mail aan de referrer, Arno
-  // zag deze aanmeldingen dus nergens (bevestigd 2026-08-25).
-  const tgToken = process.env.TELEGRAM_BOT_TOKEN
-  const tgChat = process.env.TELEGRAM_CHAT_ID
-  if (tgToken && tgChat) {
-    const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
-    const referrerLabel = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || referrer.email || 'onbekend'
-    const tgText = `Nieuwe referral-aanmelding\n\nNaam: ${tgSafe(newUserName)}\nReferral: ${tgSafe(code.toUpperCase())}\nReferrer: ${tgSafe(referrerLabel)}`
-    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: tgChat, text: tgText }),
-    }).catch(() => {})
-  }
-
-  // Email naar referrer
-  const referrerNaam = referrer.voornaam || (referrer.full_name ?? '').split(' ')[0] || 'Hey'
-  if (isValidEmail(referrer.email)) {
-    const body = `<strong style="color:#f1f5f9;">${newUserName}</strong> heeft zich zojuist aangemeld via jouw referral code <strong style="color:#f59e0b;">${code.toUpperCase()}</strong>.<br><br>Kiest ${newUserName} voor Pro of Team, dan ontvang jij tegoed zodra het abonnement is afgesloten, maximaal je eigen maandprijs. Bij Basic ontvang je geen tegoed. Bij een maandabonnement na drie voltooide betaalmaanden. Bij een jaarabonnement direct na de eerste betaling.`
-    await verstuurMailZacht({
-      from: 'ArnoBot <noreply@arno.bot>',
-      to: referrer.email,
-      subject: `${newUserName} heeft zich aangemeld via jouw referral code`,
-      html: emailHtml(body, 'MIJN REFERRALS →', 'https://arno.bot/bot/account', false, undefined, referrerNaam),
-    }).catch(() => {})
-  }
-
-  return NextResponse.json({ ok: true })
 }
