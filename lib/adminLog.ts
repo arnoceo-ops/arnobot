@@ -23,6 +23,8 @@ export type AdminActie =
   | 'team_opgezegd'
   | 'team_opzegging_ingetrokken'
   | 'team_gestopt'
+  | 'team_factuur_betaald_bank'
+  | 'team_factuur_teruggedraaid'
 
 export const ACTIE_LABEL: Record<AdminActie, string> = {
   betaald_gezet: 'BETAALD GEZET',
@@ -42,6 +44,8 @@ export const ACTIE_LABEL: Record<AdminActie, string> = {
   team_opgezegd: 'TEAM OPGEZEGD',
   team_opzegging_ingetrokken: 'OPZEGGING INGETROKKEN',
   team_gestopt: 'TEAM GESTOPT',
+  team_factuur_betaald_bank: 'TEAMFACTUUR BETAALD PER BANK',
+  team_factuur_teruggedraaid: 'TEAMFACTUUR TERUGGEDRAAID',
 }
 
 export type AdminLogDetails = {

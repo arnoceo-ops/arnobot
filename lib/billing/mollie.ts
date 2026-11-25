@@ -74,7 +74,7 @@ export interface MollieMandate {
 
 async function mollie<T>(
   pad: string,
-  init: { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown; idempotencyKey?: string } = {},
+  init: { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';body?: unknown; idempotencyKey?: string } = {},
 ): Promise<T> {
   const key = process.env.MOLLIE_API_KEY
   if (!key) throw new MollieError(0, 'MOLLIE_API_KEY ontbreekt')
@@ -305,6 +305,11 @@ export async function maakBetaalLink(input: {
   const url = res._links?.paymentLink?.href
   if (!url) throw new MollieError(0, 'Mollie gaf geen betaallink-url terug')
   return { id: res.id, url, _links: res._links }
+}
+
+/** Maakt een betaallink onbetaalbaar (docs.mollie.com/reference/update-payment-link, veld `archived`). */
+export async function archiveerBetaalLink(linkId: string): Promise<void> {
+  await mollie(`/payment-links/${encodeURIComponent(linkId)}`, { method: 'PATCH', body: { archived: true } })
 }
 
 /** Betalingen die via een betaallink zijn gedaan (Mollie: GET /payment-links/{id}/payments). */

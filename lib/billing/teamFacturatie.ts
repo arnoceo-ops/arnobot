@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb } from './db'
 import { mollieNaarCenten } from './geld'
-import { betaaldeBetalingVanLink, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { betaaldeBetalingVanLink, lijstBetaalLinkBetalingen, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { legBetaalwijzeVast, verwerkTeamNaBetaling } from './teamBetalingen'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -69,6 +70,12 @@ export interface TeamFactuurRow {
   betaald_at: string | null
   herinnering_at: string | null
   created_at: string
+  /** Vanaf docs/sql/2026-11-25-referral-teambetalingen.sql, zie lib/billing/teamBetalingen.ts. */
+  paid_via?: 'mollie' | 'bank' | null
+  mollie_payment_id?: string | null
+  terugbetaald_cent?: number
+  teruggeboekt_cent?: number
+  reversed_at?: string | null
 }
 
 /** Actueel ledenaantal van een team, nooit onder het afgesproken minimum. Nep-/testaccounts tellen nooit mee. */
@@ -296,7 +303,14 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
       .maybeSingle<TeamFactuurRow>()
     rij = data
   }
-  if (!rij || rij.status === 'paid' || !rij.mollie_payment_link_id) return
+  if (!rij || !rij.mollie_payment_link_id) return
+  // Al betaald of teruggedraaid: Mollie meldt zich dan voor een terugbetaling, terugboeking of tweede betaling.
+  if (rij.status === 'paid' || rij.status === 'refunded') {
+    // Zonder de migratie bestaan de kolommen nog niet en valt er niets vast te leggen.
+    if (rij.terugbetaald_cent === undefined) return
+    await verwerkTeamNaBetaling(rij, await lijstBetaalLinkBetalingen(rij.mollie_payment_link_id))
+    return
+  }
 
   const mp = await betaaldeBetalingVanLink(rij.mollie_payment_link_id, webhookId)
   if (!mp) return
@@ -313,6 +327,7 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
     .eq('status', 'open')
     .select('id')
   if ((geclaimd?.length ?? 0) !== 1) return // al verwerkt door een parallelle aanroep
+  await legBetaalwijzeVast(rij.id, mp.id)
 
   if (rij.moneybird_factuur_id && moneybirdIngeschakeld() && process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
     try {

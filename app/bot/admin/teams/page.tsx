@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import AdminNav from '../AdminNav'
 import TeamBillingForm from './TeamBillingForm'
 import TeamProefVerleng from './TeamProefVerleng'
+import TeamFactuurActies from './TeamFactuurActies'
 import { isAgentProef, proefEinde, proefStand, toegangTot, verlengStandaardDatum } from '@/lib/teamProef'
 import { TEST_TEAM_IDS_IN, isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
 import { berekenTeamPrijsPerMaand } from '@/lib/teamPricing'
@@ -54,7 +55,8 @@ export default async function TeamsAdminPage() {
   const facturenPerTeam = await Promise.all((teams ?? []).map(async t => {
     const { data } = await supabase
       .from('arnobot_team_facturen')
-      .select('team_id, soort, seats_aantal, bedrag_cent, status, created_at')
+      // Alle kolommen: paid_via bestaat pas na de migratie, en los benoemen zou de lijst dan leeg maken.
+      .select('*')
       .eq('team_id', t.id)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -158,13 +160,16 @@ export default async function TeamsAdminPage() {
               <p style={{ fontSize: 12, letterSpacing: 1, color: '#6b7280', marginBottom: 6 }}>{team.name}, facturen</p>
               <table style={{ width: '100%', fontSize: 13, color: '#9ca3af', borderCollapse: 'collapse' }}>
                 <tbody>
-                  {facturen.map((f, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #1f2937' }}>
+                  {facturen.map(f => (
+                    <tr key={f.id} style={{ borderBottom: '1px solid #1f2937' }}>
                       <td style={{ padding: '4px 8px' }}>{new Date(f.created_at).toLocaleDateString('nl-NL')}</td>
                       <td style={{ padding: '4px 8px' }}>{f.soort}</td>
                       <td style={{ padding: '4px 8px' }}>{f.seats_aantal} seats</td>
                       <td style={{ padding: '4px 8px' }}>€{(f.bedrag_cent / 100).toFixed(2)}</td>
-                      <td style={{ padding: '4px 8px', color: f.status === 'paid' ? '#22c55e' : f.status === 'open' ? '#f59e0b' : '#6b7280' }}>{f.status}</td>
+                      <td style={{ padding: '4px 8px', color: f.status === 'paid' ? '#22c55e' : f.status === 'open' ? '#f59e0b' : '#6b7280' }}>{f.status}{f.paid_via === 'bank' ? ' (bank)' : ''}{(f.terugbetaald_cent ?? 0) > 0 ? `, terugbetaald €${(f.terugbetaald_cent / 100).toFixed(2)}` : ''}</td>
+                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>
+                        <TeamFactuurActies factuurId={f.id} status={f.status} vandaag={vandaag} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -12,6 +12,7 @@ import {
   type TeamRow,
 } from '@/lib/billing/teamFacturatie'
 import { verstuurTeamMail } from '@/lib/billing/teamMails'
+import { controleerBetaaldeTeamFacturen } from '@/lib/billing/teamBetalingen'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { stopOpgezegdeTeams } from '@/lib/teamOpzegging'
@@ -28,13 +29,14 @@ const dagenSinds = (iso: string, nu: Date) => Math.floor((dagVan(nu).getTime() -
 //  2. eenmalige naar-rato tussenfactuur bij een jaarlijks team dat seats heeft toegevoegd
 //  3. herinnering 7 dagen na de vervaldatum (betaaltermijn 14 dagen) van een onbetaalde factuur
 //  4. blokkade 30 dagen na de vervaldatum van een nog altijd onbetaalde factuur
+//  5. nacontrole bij Mollie op terugbetalingen en terugboekingen van betaalde facturen
 async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
 
-  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, gestopt: 0, fouten: 0 }
+  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, gestopt: 0, terugdraaiingen: 0, fouten: 0 }
   try {
     const nu = new Date()
     const vandaag = dagVan(nu).toISOString().slice(0, 10)
@@ -127,6 +129,11 @@ async function cronHandler(req: NextRequest) {
         console.error('[cron/team-facturatie] team', team.id, e instanceof Error ? e.message : e)
       }
     }
+
+    // 5. Ook voor teams die inmiddels niet meer gefactureerd worden, daarom los van de lus hierboven.
+    const nacontrole = await controleerBetaaldeTeamFacturen(nu)
+    samenvatting.terugdraaiingen = nacontrole.gewijzigd
+    samenvatting.fouten += nacontrole.fouten
 
     return NextResponse.json({ ok: true, ...samenvatting })
   } catch (e) {
