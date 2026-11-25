@@ -135,8 +135,8 @@ export default function SignInPage() {
     try {
       await signIn.sso({
         strategy: 'oauth_linkedin_oidc',
-        redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectCallbackUrl: '/bot',
+        redirectUrl: `${window.location.origin}/bot`,
+        redirectCallbackUrl: '/sso-callback',
       })
       clearTimeout(timer)
     } catch (err: unknown) {

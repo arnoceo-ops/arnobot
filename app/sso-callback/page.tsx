@@ -23,6 +23,8 @@ export default function SSOCallback() {
           ARNO DENKT NA
         </p>
         <AuthenticateWithRedirectCallback />
+        {/* Een nieuw LinkedIn-account wordt hier aangemaakt; de botcontrole van Clerk heeft dit element nodig. */}
+        <div id="clerk-captcha" />
       </div>
     </>
   )

@@ -24,8 +24,8 @@ export default function EnterpriseSignInPage() {
     const { error: ssoError } = await signIn.sso({
       identifier: email,
       strategy: 'enterprise_sso',
-      redirectUrl: `${window.location.origin}/sso-callback`,
-      redirectCallbackUrl: '/bot',
+      redirectUrl: `${window.location.origin}/bot`,
+      redirectCallbackUrl: '/sso-callback',
     })
 
     if (ssoError) {
