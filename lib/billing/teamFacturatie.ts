@@ -16,7 +16,7 @@ import {
 } from './moneybird'
 import { verstuurTeamMail } from './teamMails'
 import { notifyTelegram } from '@/lib/cron-notify'
-import { isFakeDemoUser, isInternalTestUser } from '@/lib/internalTestAccounts'
+import { isFakeDemoUser, isInternalTestUser, TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 import { ontblokkeerNaBetaling } from '@/lib/teamOpzegging'
 import {
   berekenTeamPrijsPerMaand,
@@ -285,8 +285,9 @@ export async function maakTeamFactuur(team: TeamRow, input: {
  * betaallink-id (pl_) uit de webhook, `hintRijId` het `?r=` uit onze eigen webhook-URL. Beide
  * worden alleen gebruikt om de factuur te vinden: de betaling zelf wordt altijd bij Mollie
  * bevestigd als betaald en als horend bij de betaallink van déze factuur.
+ * Geeft true als deze aanroep een open factuur op betaald heeft gezet.
  */
-export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<void> {
+export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<boolean> {
   let rij: TeamFactuurRow | null = null
   if (webhookId.startsWith('pl_')) {
     const { data } = await billingDb
@@ -303,20 +304,20 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
       .maybeSingle<TeamFactuurRow>()
     rij = data
   }
-  if (!rij || !rij.mollie_payment_link_id) return
+  if (!rij || !rij.mollie_payment_link_id) return false
   // Al betaald of teruggedraaid: Mollie meldt zich dan voor een terugbetaling, terugboeking of tweede betaling.
   if (rij.status === 'paid' || rij.status === 'refunded') {
     // Zonder de migratie bestaan de kolommen nog niet en valt er niets vast te leggen.
-    if (rij.terugbetaald_cent === undefined) return
+    if (rij.terugbetaald_cent === undefined) return false
     await verwerkTeamNaBetaling(rij, await lijstBetaalLinkBetalingen(rij.mollie_payment_link_id))
-    return
+    return false
   }
 
   const mp = await betaaldeBetalingVanLink(rij.mollie_payment_link_id, webhookId)
-  if (!mp) return
+  if (!mp) return false
   if (mollieNaarCenten(mp.amount.value) !== rij.bedrag_cent) {
     Sentry.captureMessage('Team-betaling met afwijkend bedrag genegeerd', { level: 'error', tags: { onderdeel: 'team-facturatie' }, extra: { factuurId: rij.id, betaling: mp.id } })
-    return
+    return false
   }
 
   const betaaldOp = mp.paidAt ? new Date(mp.paidAt) : new Date()
@@ -326,7 +327,7 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
     .eq('id', rij.id)
     .eq('status', 'open')
     .select('id')
-  if ((geclaimd?.length ?? 0) !== 1) return // al verwerkt door een parallelle aanroep
+  if ((geclaimd?.length ?? 0) !== 1) return false // al verwerkt door een parallelle aanroep
   await legBetaalwijzeVast(rij.id, mp.id)
 
   if (rij.moneybird_factuur_id && moneybirdIngeschakeld() && process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
@@ -342,4 +343,30 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
   await ontblokkeerNaBetaling(rij.team_id, new Date().toISOString().slice(0, 10))
 
   await notifyTelegram(`Team-factuur betaald op arno.bot\n\nFactuur: ${rij.id}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}`)
+  return true
+}
+
+/**
+ * Vangnet voor een gemiste webhook: vraagt voor elke open factuur bij Mollie of er al betaald is. Draait in de cron
+ * vóór de herinnering en de blokkade, zodat een betaalde klant die nooit krijgt.
+ */
+export async function haalGemisteTeamBetalingenIn(): Promise<{ ingehaald: number; fouten: number }> {
+  const uit = { ingehaald: 0, fouten: 0 }
+  const { data, error } = await billingDb
+    .from('arnobot_team_facturen')
+    .select('id, team_id, mollie_payment_link_id')
+    .eq('status', 'open')
+    .not('mollie_payment_link_id', 'is', null)
+    .returns<Pick<TeamFactuurRow, 'id' | 'team_id' | 'mollie_payment_link_id'>[]>()
+  if (error) throw new Error(`Open teamfacturen ophalen mislukt: ${error.message}`)
+
+  for (const rij of (data ?? []).filter(r => !(TEST_TEAM_IDS as readonly string[]).includes(r.team_id))) {
+    try {
+      if (await verwerkTeamBetaling(rij.mollie_payment_link_id!, null)) uit.ingehaald++
+    } catch (e) {
+      uit.fouten++
+      Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie-inhalen' }, extra: { factuurId: rij.id } })
+    }
+  }
+  return uit
 }

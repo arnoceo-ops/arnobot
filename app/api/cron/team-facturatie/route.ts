@@ -6,6 +6,7 @@ import { voegMaandenToe } from '@/lib/billing/perioden'
 import {
   berekenReguliereBedrag,
   berekenTussentijdsBedrag,
+  haalGemisteTeamBetalingenIn,
   huidigSeats,
   maakTeamFactuur,
   type TeamFactuurRow,
@@ -25,6 +26,7 @@ const dagVan = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(
 const dagenSinds = (iso: string, nu: Date) => Math.floor((dagVan(nu).getTime() - dagVan(new Date(iso)).getTime()) / DAG_MS)
 
 // Dagelijkse Team-facturatieronde (fase 2b, zie docs/MOLLIE_PLAN.md):
+//  0. gemiste webhooks inhalen: open facturen die bij Mollie al betaald zijn (vóór herinnering en blokkade)
 //  1. reguliere cyclusfactuur zodra volgende_factuurdatum is bereikt
 //  2. eenmalige naar-rato tussenfactuur bij een jaarlijks team dat seats heeft toegevoegd
 //  3. herinnering 7 dagen na de vervaldatum (betaaltermijn 14 dagen) van een onbetaalde factuur
@@ -36,7 +38,7 @@ async function cronHandler(req: NextRequest) {
   }
   if (!mollieIngeschakeld()) return NextResponse.json({ ok: true, overgeslagen: 'mollie niet ingeschakeld' })
 
-  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, gestopt: 0, terugdraaiingen: 0, fouten: 0 }
+  const samenvatting = { reguliereFacturen: 0, tussentijdseFacturen: 0, herinneringen: 0, blokkades: 0, gestopt: 0, ingehaald: 0, terugdraaiingen: 0, fouten: 0 }
   try {
     const nu = new Date()
     const vandaag = dagVan(nu).toISOString().slice(0, 10)
@@ -44,6 +46,10 @@ async function cronHandler(req: NextRequest) {
     // Eerst de opgezegde teams waarvan de einddatum is bereikt: blokkeren en de facturatie uitzetten (docs/TEAM_PROCES.md, fase 6).
     // Daarna staat hun volgende factuurdatum leeg, dus de selectie hieronder slaat ze over en er komt geen factuur meer.
     samenvatting.gestopt = (await stopOpgezegdeTeams(vandaag, nu)).length
+
+    const gemist = await haalGemisteTeamBetalingenIn()
+    samenvatting.ingehaald = gemist.ingehaald
+    samenvatting.fouten += gemist.fouten
 
     // Alleen teams die zijn "geactiveerd" voor automatische facturatie (zie /bot/admin/teams).
     const { data: teamsRaw } = await billingDb
