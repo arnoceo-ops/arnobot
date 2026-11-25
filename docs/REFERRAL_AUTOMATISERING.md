@@ -4,7 +4,8 @@
 
 - **Laatst bijgewerkt:** 2026-11-25
 - **Waar we staan:** Arno heeft op 25-11 de regels voor de aanbrenger aangepast (zie "Regels per 25-11") en opdracht gegeven om te bouwen, inclusief overzicht en Telegram-meldingen. Er is nog niets van de automatisering gebouwd. Het aangepaste plan gaat eerst opnieuw door een onafhankelijke controle. In de database stond op 25-11 één referral (status signed_up) en geen gebruiker met tegoed boven nul.
-- **Eerstvolgende stap:** Arno beslist de open regelvragen uit "Controle 25-11". Daarna de bouwvolgorde hieronder. Stap B5 (oude koppelroute) is op 25-11 gedaan.
+- **Gebouwd op 25-11:** (1) blokkades B1 en B2: lib/billing/terugbetaling.ts bepaalt op een plek wat volledig terugbetaald is; verrekend tegoed beeindigt nooit een abonnement; admin-terugbetaling en herroeping storten alleen het restant; bij verrekend tegoed wordt een creditnota handwerk met Telegram-melding. (2) De regels als rekenlaag met tests: lib/billing/referralRegels.ts (verplaatst geen geld). (3) docs/sql/2026-11-25-referral-fundament.sql, **door Arno uit te voeren**; nog niet bevestigd.
+- **Eerstvolgende stap:** na bevestiging van de SQL: periodemomentopname per betaling vullen, teambetalingen en terugboekingen vastleggen (B3), daarna grootboek en toekenning eerst meelopend zonder gevolgen.
 - **Los traject, open:** of de nieuw aangebrachte gebruiker zelf iets krijgt, en onder welke voorwaarden. Arno bespreekt dit apart; tot dan blijven de teksten daarover ongewijzigd. Let op: de beloofde gratis eerste maand zit niet in de betaalcode. Dit moet besloten zijn voordat de eerste aangebrachte gebruiker betaalt (proef loopt tot ongeveer 24-12-2026).
 - **Nog onverifieerd:** (a) of een Mollie-terugbetaling zelf geld kost en of de transactiekosten terugkomen. Op 25-11 gelezen: de prijspagina (mollie.com/nl/pricing) toont geen terugbetaalregel, help.mollie.com weigert automatisch lezen (403), één externe bron noemt €0,25 per terugbetaling zonder teruggave, andere bronnen noemen geen kosten. Arno kan dit zien in het Mollie-dashboard of navragen bij Mollie. Het ontwerp hangt er niet van af. Wel bevestigd (docs.mollie.com/docs/refunds): gedeeltelijke terugbetalingen worden ondersteund; een terugbetaling gaat van het beschikbare saldo en wordt in de wachtrij gezet als dat te laag is; een tweede terugbetaling van hetzelfde bedrag op dezelfde betaling binnen een uur wordt geweigerd. (b) of een gedeeltelijke terugbetaling in de bestaande code goed doorloopt; (c) de Moneybird-creditnota via de API voor een deelbedrag.
 
@@ -36,6 +37,18 @@ De spelregels (`app/referrals/page.tsx`, `docs/ABONNEMENTEN.md`) zijn gegeven: e
 - **Stoppen is tegoed kwijt:** het tegoed vervalt zodra het abonnement van de aanbrenger echt is afgelopen (ook een niet verlengd jaarabonnement). Niet bij een lopende periode na opzegging, niet bij een ingetrokken opzegging, niet bij een overstap, upgrade of solo naar Team. Haalt een klant de drempel pas na dat einde, dan ontstaat geen tegoed. Wie later terugkomt krijgt niets terug. Vervangt besluit 5 van 16-11 (tegoed blijft staan). Verworpen: tegoed bewaren voor terugkeerders.
 - **Tweede licentie** vervalt.
 - **Bij de opzegging** (vooraf en in de bevestiging) wordt gemeld dat het tegoed vervalt.
+
+## Akkoord Arno 25-11 op de open regelvragen
+
+1. Drie maanden: betaald en verstreken, aaneengesloten; onderbreking tot 14 dagen mag, daarna opnieuw tellen.
+2. Op tijd afsluiten: de eerste betaling valt binnen de proef plus 15 dagen (teamproef 10). Later overstappen vanaf Basic per maand telt alsnog.
+3. Het abonnement op het moment van toekennen bepaalt of en hoeveel; per maand tellen alleen maanden die zelf tegoed opleveren.
+4. Bedrag ligt vast bij toekennen; heeft de aanbrenger nog geen abonnement, dan bij de eerste verrekening. Geen abonnement binnen de termijn: vervalt.
+5. "Echt afgelopen": 14 dagen na het einde zonder nieuw abonnement.
+6. Om wanbetaling geblokkeerd team: tegoed staat stil, vervalt na 30 dagen. Gewoon teamlid geworden: vervalt.
+7. **Alles exclusief btw:** het laagste van beide maandprijzen zonder btw; bij uitkeren komt de btw erbij (particulier en zakelijk). Zo geeft ArnoBot nooit meer weg dan een maand netto van beide kanten. Vervangt de eerdere tekst over getoonde prijzen en de btw-basis van de aanbrenger.
+8. Per verlenging zoveel als in de betaling past, de rest blijft staan.
+9. Klant is een team: aantal gebruikers op het moment van toekennen.
 
 ## Controle 25-11 (onafhankelijke reviewer): niet bouwen zoals de fasen hieronder staan
 
