@@ -168,3 +168,11 @@ export function niveauVanAandeel(aandeel: number | null, waarschuwing = 0.7, kri
   if (aandeel >= waarschuwing) return 'let-op'
   return 'ok'
 }
+
+// Kleur van de kaarten TE BEOORDELEN, OMZET en TEAMS. Gedeeld door de pagina en de stip-wacht
+// (lib/adminStipData.ts), zodat stip en pushmelding niet uit elkaar kunnen lopen.
+export const niveauTeBeoordelen = (aantal: number): Niveau => (aantal > 0 ? 'let-op' : 'ok')
+export const niveauOmzet = (mislukt: number, openTeamFacturen: number): Niveau => (mislukt > 0 || openTeamFacturen > 0 ? 'let-op' : 'ok')
+export const niveauTeamsKaart = (teams: { niveau: Niveau }[]): Niveau => ergsteNiveau(teams.map(t => t.niveau).concat('ok'))
+export const heeftVerseAanvraag = (aanvragen: { datum: string }[], nu: Date): boolean =>
+  aanvragen.some(a => new Date(a.datum).getTime() > nu.getTime() - 7 * 24 * 60 * 60 * 1000)

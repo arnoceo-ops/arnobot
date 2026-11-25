@@ -85,6 +85,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/stip-wacht",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/team-proef",
       "schedule": "50 7 * * *"
     },

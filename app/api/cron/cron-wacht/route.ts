@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { nieuwMelden } from '@/lib/capaciteit'
+import { pushActief } from '@/lib/adminPush'
 import { leesCrons } from '@/lib/cronOverzicht'
 import { leesCronRuns, registreerCronRun } from '@/lib/cronRun'
 import { ALARM_STATEN, beoordeelCron, bouwCronWachtBericht, registratieStartVan } from '@/lib/cronGezondheid'
@@ -28,7 +29,10 @@ async function cronHandler(req: NextRequest) {
     const nieuw = []
     for (const p of problemen) if (await nieuwMelden(`cron:${p.c.pad}:${p.g.staat}`, 'waarschuwing')) nieuw.push(p)
 
-    if (nieuw.length > 0) {
+    // De crons zijn een stip in de admin-app. Neemt die het over, dan meldt Telegram alleen nog als de
+    // stip-wacht zelf stilligt, want die kan dat niet over zichzelf melden.
+    const stipWachtStil = problemen.some(p => p.c.pad === '/api/cron/stip-wacht')
+    if (nieuw.length > 0 && (stipWachtStil || !(await pushActief()))) {
       await notifyTelegram(bouwCronWachtBericht(nieuw.map(p => ({ naam: p.c.naam, staat: p.g.staat, tekst: p.g.tekst }))))
     }
 

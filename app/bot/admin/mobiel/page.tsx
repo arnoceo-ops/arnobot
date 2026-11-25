@@ -4,7 +4,9 @@ import { controleerMobielToegang } from '@/lib/adminMobiel'
 import {
   haalGebruikers, haalKosten, haalStatus, haalTeBeoordelen, haalPatronen, haalGeld, haalTeams, veilig,
 } from '@/lib/adminMobielData'
-import { ergsteNiveau, type Niveau } from '@/lib/adminMobielLogica'
+import { ergsteNiveau, heeftVerseAanvraag, niveauOmzet, niveauTeBeoordelen, niveauTeamsKaart, type Niveau } from '@/lib/adminMobielLogica'
+import { isBevestigd, publiekeSleutel } from '@/lib/adminPush'
+import Meldingen from './Meldingen'
 import { nlDatumTekst, nlTijdTekst } from '@/lib/nlTijd'
 import BeoordeeldKnop from './BeoordeeldKnop'
 import Verversen from './Verversen'
@@ -103,6 +105,8 @@ export default async function AdminMobielPage() {
     veilig('patronen', () => haalPatronen(nu)),
   ])
 
+  const pushBevestigd = await isBevestigd().catch(() => false)
+
   const terugkerend = patronen.ok ? patronen.data.filter(p => p.tweeWekenOpRij) : []
   const aantalBeoordelen = (beoordelen.ok ? beoordelen.data.offtopic.length + beoordelen.data.duimpjes.length + beoordelen.data.bel.length : 0) + terugkerend.length
 
@@ -112,9 +116,9 @@ export default async function AdminMobielPage() {
   if (aantalBeoordelen > 0) signalen.push({ niveau: 'let-op', tekst: `${aantalBeoordelen} te beoordelen` })
   if (geld.ok && (geld.data.mislukt.length > 0 || geld.data.openTeamFacturen.length > 0)) signalen.push({ niveau: 'let-op', tekst: 'betalingen' })
   if (teams.ok) {
-    const ergste = ergsteNiveau(teams.data.teams.map(t => t.niveau))
+    const ergste = niveauTeamsKaart(teams.data.teams)
     if (ergste === 'let-op' || ergste === 'fout') signalen.push({ niveau: ergste, tekst: 'teams' })
-    if (teams.data.aanvragen.some(a => new Date(a.datum).getTime() > nu.getTime() - 7 * 864e5)) signalen.push({ niveau: 'let-op', tekst: 'teamaanvraag' })
+    if (heeftVerseAanvraag(teams.data.aanvragen, nu)) signalen.push({ niveau: 'let-op', tekst: 'teamaanvraag' })
   }
   const mislukt = [gebruikers, kosten, geld, beoordelen, status, teams, patronen].filter(s => !s.ok).length
   if (mislukt > 0) signalen.push({ niveau: 'let-op', tekst: `${mislukt} kaart${mislukt > 1 ? 'en' : ''} niet geladen` })
@@ -136,7 +140,7 @@ export default async function AdminMobielPage() {
       {beoordelen.ok ? (
         <Kaart
           titel="TE BEOORDELEN"
-          niveau={aantalBeoordelen ? 'let-op' : 'ok'}
+          niveau={niveauTeBeoordelen(aantalBeoordelen)}
           samenvatting={aantalBeoordelen ? `${aantalBeoordelen} ${aantalBeoordelen === 1 ? 'punt' : 'punten'}` : 'Niets te beoordelen'}
           open={aantalBeoordelen > 0}
         >
@@ -185,7 +189,7 @@ export default async function AdminMobielPage() {
       {geld.ok ? (
         <Kaart
           titel="OMZET"
-          niveau={geld.data.mislukt.length || geld.data.openTeamFacturen.length ? 'let-op' : 'ok'}
+          niveau={niveauOmzet(geld.data.mislukt.length, geld.data.openTeamFacturen.length)}
           samenvatting={`${euro(geld.data.maandCent)} in ${maandNaam}${geld.data.mislukt.length ? ` · ${geld.data.mislukt.length} mislukt` : ''}`}
           open={geld.data.mislukt.length > 0 || geld.data.openTeamFacturen.length > 0}
         >
@@ -273,7 +277,7 @@ export default async function AdminMobielPage() {
       {teams.ok ? (
         <Kaart
           titel="TEAMS"
-          niveau={ergsteNiveau(teams.data.teams.map(t => t.niveau).concat('ok'))}
+          niveau={niveauTeamsKaart(teams.data.teams)}
           samenvatting={`${teams.data.teams.length} ${teams.data.teams.length === 1 ? 'team' : 'teams'}${teams.data.aanvragen.length ? ` · ${teams.data.aanvragen.length} aanvra${teams.data.aanvragen.length === 1 ? 'ag' : 'gen'} (30 dagen)` : ''}`}
           open={teams.data.teams.some(t => t.niveau !== 'ok')}
         >
@@ -289,6 +293,8 @@ export default async function AdminMobielPage() {
           <p style={{ margin: '14px 0 0', color: '#6b7280', fontSize: 13 }}>Een proef verlengen kan alleen op de pc.</p>
         </Kaart>
       ) : <Mislukt titel="TEAMS" />}
+
+      <Meldingen sleutel={publiekeSleutel()} bevestigd={pushBevestigd} />
     </main>
   )
 }

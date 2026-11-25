@@ -2,6 +2,8 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
+import { pushActief } from '@/lib/adminPush'
+import { isStipCapaciteit } from '@/lib/adminStippen'
 import { nieuwMelden } from '@/lib/capaciteit'
 import { beoordeelCapaciteit } from '@/lib/capaciteitDrempels'
 import { leesServerMeting } from '@/lib/supabaseMetrics'
@@ -48,9 +50,12 @@ async function cronHandler(req: NextRequest) {
     const nieuw = []
     for (const m of meldingen) if (await nieuwMelden(m.sleutel, m.niveau)) nieuw.push(m)
 
-    if (nieuw.length > 0) {
-      const kritiek = nieuw.some(m => m.niveau === 'kritiek')
-      await notifyTelegram(`${kritiek ? 'ArnoBot capaciteit: ACTIE NODIG' : 'ArnoBot capaciteit'}\n\n${nieuw.map(m => m.tekst).join('\n\n')}`)
+    // Database en servergeheugen zijn stippen in de admin-app: neemt die het over, dan niet via Telegram.
+    const push = await pushActief()
+    const telegram = nieuw.filter(m => !(push && isStipCapaciteit(m.sleutel)))
+    if (telegram.length > 0) {
+      const kritiek = telegram.some(m => m.niveau === 'kritiek')
+      await notifyTelegram(`${kritiek ? 'ArnoBot capaciteit: ACTIE NODIG' : 'ArnoBot capaciteit'}\n\n${telegram.map(m => m.tekst).join('\n\n')}`)
     }
 
     return NextResponse.json({

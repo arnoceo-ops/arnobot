@@ -1,10 +1,10 @@
 # Admin op de telefoon (`/bot/admin/mobiel`)
 
-**Laatst bijgewerkt:** 2026-11-23 (avond)
+**Laatst bijgewerkt:** 2026-11-25
 
-**Waar we staan:** af en in gebruik op Arno's Android (laatste commit `30c3c6d1`). Zes kaarten in deze volgorde: TE BEOORDELEN, OMZET, KOSTEN, GEBRUIKERS, STATUS, TEAMS. Inlog via LinkedIn-account, icoon is het herkleurde ArnoBot-logo, app geïnstalleerd. Arno heeft de kaarten bekeken en akkoord gegeven (2026-11-23). Nog niet gemeten: inloggen met LinkedIn binnen de geïnstalleerde app nadat de Clerk-sessie is afgelopen.
+**Waar we staan:** in gebruik op Arno's Android. Op 2026-11-25 zijn pushmeldingen gebouwd (kleurverandering van een stip geeft een melding uit de app zelf) en zijn de omgevingsvariabelen `ADMIN_VAPID_PUBLIC_KEY` en `ADMIN_VAPID_PRIVATE_KEY` in Vercel gezet. Nog niet bewezen op het toestel. Zolang de proefmelding niet is bevestigd, gaan alle meldingen nog via Telegram.
 
-**Eerstvolgende stap (Arno):** een paar dagen gebruiken en melden wat ontbreekt of niet klopt. De cijfers bij GEBRUIKERS en OMZET een keer vergelijken met de pc-pagina's. In het Clerk-dashboard (Sessions) kijken hoe lang een sessie duurt. Daarna eventueel: het oude admin-slot repareren (apart plan, de cookie bevat de sleutel zelf).
+**Eerstvolgende stap (Arno):** in de app onderaan bij MELDINGEN op MELDINGEN AANZETTEN tikken, toestaan, STUUR PROEFMELDING, en als de melding zichtbaar is IK ZIE DE MELDING. Ook testen: proefmelding met de app dicht en het scherm vergrendeld, en of een tik de app opent (niet Chrome).
 
 **Besluiten en verworpen alternatieven (2026-11-23):**
 - Gekozen: **PWA op `/bot/admin/mobiel`**, alleen Android, alleen Arno. Verworpen: de admin in de bestaande store-app (reviewrisico, elke gebruiker draagt de code mee) en een aparte Capacitor-app (tweede app-ID, ondertekening, iOS-review, pas zinvol voor push en Telegram doet dat al).
@@ -17,8 +17,8 @@
 - Les (2026-11-23): na een wijziging aan het icoon een **nieuwe bestandsnaam** gebruiken (nu `-v2-`) en het manifest op `no-cache` zetten. Arno zag na opnieuw installeren nog het vorige icoon terwijl het live bestand al gelijk was aan het nieuwe (md5 vergeleken); een telefoon bewaart een icoon onder dezelfde naam hardnekkig. Een geïnstalleerde app (WebAPK) verwijder je via het appoverzicht (lang indrukken, App-info, Verwijderen), niet alleen van het startscherm.
 - Oorzaak en oplossing van het oude icoon (2026-11-23): de site was goed, alle oude icoon-URL's gaven 404 en het nieuwe bestand en manifest waren live, maar het installatievenster op de telefoon bleef het oude icoon tonen. Chrome op de telefoon had het in zijn cache. Opgelost door in Chrome alleen "Gecachte afbeeldingen en bestanden" te wissen (hele periode, geen cookies of wachtwoorden) en daarna opnieuw te installeren. Bij een icoonwijziging dus: nieuwe bestandsnaam, manifest op `no-cache`, en zo nodig die cache op de telefoon wissen. Het nieuwe manifest-`id` hieronder bleek niet de doorslag, maar blijft staan.
 - Gekozen (2026-11-23): **nieuw manifest-`id` (`/admin-mobiel-2`)** nadat een nieuwe bestandsnaam voor het icoon niet genoeg was. De site was aantoonbaar goed (ingelogd gecontroleerd: manifest 200, v2-iconen), maar de telefoon bleef de oude installatie tonen, `chrome://webapks` bleek niet bereikbaar. Een nieuw `id` is voor Chrome een andere app. Verworpen: blijven gokken waar de oude installatie vastzit.
-- Gekozen: **geen service worker en geen offline-opslag.** Bedrijfs- en gebruikersdata hoort niet in een cache. De installeerbaarheid op Android is gebaseerd op web.dev (install criteria, geen datum zichtbaar op de pagina), die geen service worker meer noemt. Een Chrome-blogsnippet noemde er eerder wel een; dat is niet getoetst op een echte telefoon.
-- Gekozen: **geen aparte push.** Telegram doet dat al. Verworpen: Web Push (kan op Android en iOS, maar voegt een tweede meldkanaal toe).
+- Gedeeltelijk herzien op 2026-11-25 (er is nu een service worker, alleen voor meldingen, nog steeds zonder cache). Gekozen op 2026-11-23: **geen service worker en geen offline-opslag.** Bedrijfs- en gebruikersdata hoort niet in een cache. De installeerbaarheid op Android is gebaseerd op web.dev (install criteria, geen datum zichtbaar op de pagina), die geen service worker meer noemt. Een Chrome-blogsnippet noemde er eerder wel een; dat is niet getoetst op een echte telefoon.
+- Teruggedraaid op 2026-11-25 (zie hieronder). Gekozen op 2026-11-23: **geen aparte push.** Telegram doet dat al. Verworpen: Web Push (kan op Android en iOS, maar voegt een tweede meldkanaal toe).
 - Gekozen (2026-11-23, na gebruik): **de kaart WAARHEIDSCONTROLE is van de telefoon gehaald.** Arno: onderweg heb je er niets aan, de uitkomst is een mail met een steekproef die je achter een bureau leest. Het signaal blijft: staat een patroon (`lib/gedragspatronen.ts`, tekstpatronen zonder AI) twee weken op rij boven nul, dan komt het in het stoplicht en onder TE BEOORDELEN. Verworpen: de steekproef live berekenen (AI-kosten bij elke paginalading) en een kaart met alleen de datum van de laatste mail.
 - Gekozen (2026-11-23): **namen bij GEBRUIKERS** (actief deze week met aantal gesprekken, nieuw met datum en proef/betaald, betalend met plan, proef loopt af). Gesprekken = verschillende sessies, zoals de pc-kolom. Geen doorklik naar de pc-pagina (die vraagt het oude wachtwoord).
 - Gekozen (2026-11-23, Arno): **volgorde van de kaarten: TE BEOORDELEN, OMZET (was GELD), KOSTEN (was KOSTEN DEZE MAAND), GEBRUIKERS, STATUS, TEAMS.** Omzet en kosten rekenen over de lopende kalendermaand vanaf de eerste (Amsterdamse tijd, `amsterdamMaandStart`), niet over de laatste 30 dagen; de samenvatting noemt de maand ("in november"). Het stoplicht noemt mislukte of open betalingen "betalingen".
@@ -27,6 +27,18 @@
 - Gekozen: **nieuwe kaart TEAMS, alleen kijken** (advies aan Arno, hij koos "adviseer"): per team de manager, leden en stand van de gratis proef (loopt, bijna, coulance, afgelopen, geblokkeerd) plus teamaanvragen van de laatste 30 dagen. Verworpen: proef verlengen vanaf de telefoon, want dat wijzigt gegevens en een verkeerde tik onderweg is lastig terug te draaien; de pc heeft de knop en de cron waarschuwt 5 dagen van tevoren per Telegram. Verworpen voor de telefoon: kennisbank, meta-analyse, mails testen, blog (werk voor achter een bureau).
 - Gekozen: **een eigen route voor "beoordeeld"** (`/api/admin/mobiel/beoordeeld`) met de Clerk-controle. Verworpen: de pc-route `/api/admin/offtopic-flags` hergebruiken, want die werkt met het oude wachtwoord en is voor de telefoon niet bereikbaar.
 - Gekozen: **de pc-admin blijft ongewijzigd** en blijft de volledige dashboards. De telefoonpagina is een uitsnede ernaast. De berekening van proefdagen staat daarom een tweede keer in `lib/adminMobielLogica.ts` (spiegel van `dagenTotEinde` en `proefDagenOver` in `app/bot/admin/gebruikers/page.tsx`). Wijzig je de regel op de ene plek, wijzig hem op de andere ook.
+
+**Besluiten pushmeldingen (2026-11-25, Arno):**
+- Gekozen: **Web Push vanuit de admin-app.** Arno wil de melding in de app op zijn telefoon. Verworpen: Telegram aanvullen (was mijn eerste advies, beantwoordde de vraag niet) en allebei tegelijk (alles dubbel).
+- De ArnoBot-store-app (Capacitor, `android/`) is niet geraakt. Het achtergrondscript `public/admin-sw.js` heeft bereik `/bot/admin/mobiel`, geen fetch-handler en geen cache.
+- Welke stippen: alle op de pagina (statuskaart per regel, TE BEOORDELEN, OMZET, TEAMS, en teamaanvraag uit het stoplicht). Regels in `lib/adminStippen.ts` (getest): rood meldt altijd, oranje bij verandering, rood na oranje opnieuw, groen na twee runs. Verworpen: alleen de statuskaart.
+- Externe diensten: oranje meldt alleen als een onderdeel geraakt is dat arno.bot gebruikt (`RELEVANTE_ONDERDELEN`). Supabase meldt elke oranje stip: de feed noemt alleen Auth. Noemt een feed geen onderdelen, dan wordt wel gemeld. Een open incident zonder kleurverandering meldt niet.
+- Geen namen van gebruikers of teams in meldingen (vergrendelscherm).
+- Telegram: pas na IK ZIE DE MELDING zwijgen de Telegramberichten over stippen (storing-wacht voor externe diensten en arno.bot bereikbaar, database-wacht en capaciteitswacht voor databasegrootte en servergeheugen, cron-wacht, de koppelingscheck van de billing-cron). In Telegram blijven: te traag, databaseverbindingen, Resend, Anthropic-limiet en tegoed, mijlpalen, mislukte cronruns met fouttekst (`notifyCronFailure`), cron-wacht als de stip-wacht zelf stilligt, en al het niet-stip-verkeer.
+- Vangnet: neemt de pushdienst een melding niet aan, dan gaat die naar Telegram. Is de aanmelding weg (404 of 410), dan melden de oude wachten weer. Neemt Google een melding aan die de telefoon niet toont, dan merkt de server dat niet.
+- Opslag in `arnobot_meta` (`admin_push_abonnementen`, `admin_push_bevestigd`, `admin_push_stippen`), geen SQL-migratie. Verworpen: eigen tabel.
+- Push loopt via de pushdienst van Google (dat is hoe Chrome op Android werkt), inhoud versleuteld door `web-push`. Geen gebruikersdata in de meldingen, dus geen wijziging in de sub-verwerkerstabel.
+- Niet bevestigd in documentatie (web.dev en MDN, geraadpleegd 2026-11-25): aflevering tijdens slaapstand (Doze), een teller op het app-icoon, en of een tik altijd in de app opent.
 
 **Afvinklijst:**
 - [x] Inlog: alleen `FOUNDER_USER_ID` met LinkedIn (`lib/adminMobiel.ts`, 4 tests)
@@ -40,6 +52,8 @@
 - [ ] Arno: op Android toevoegen aan startscherm, icoon en inloggen in de geïnstalleerde app testen
 - [ ] Kaart GEBRUIKERS en KOSTEN vergelijken met de pc-pagina `/bot/admin/gebruikers` (cijfers moeten overeenkomen)
 - [x] Besluit: de kosten per gebruiker staan achter alleen het Clerk-slot (Abacus heeft een eigen wachtwoord). Arno zei ja op 2026-11-23.
+- [x] Pushmeldingen gebouwd (2026-11-25)
+- [ ] Arno: meldingen aanzetten en proefmelding bevestigen, ook met app dicht en scherm vergrendeld
 - [ ] Verse controle aan het eind van de fase: een nieuwe sessie toetst dit document aan de code
 
 **Open punten:**

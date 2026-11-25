@@ -17,6 +17,7 @@ import { beoordeelCapaciteit, DB_LIMIET_BYTES, type ResendPlan } from '@/lib/cap
 import { leesServerMeting } from '@/lib/supabaseMetrics'
 import { leesInstatusMeting } from '@/lib/instatus'
 import { EXTERNE_DIENSTEN } from '@/lib/externeDiensten'
+import { dienstRaaktOns } from '@/lib/adminStippen'
 import { controleerKoppelingen } from '@/lib/billing/gezondheid'
 import { telGedragspatronen } from '@/lib/gedragspatronen'
 import { isAgentProef, proefEinde, proefStand } from '@/lib/teamProef'
@@ -101,7 +102,7 @@ export async function haalKosten(namen: Map<string, string>, nu: Date): Promise<
 
 // --- Status ------------------------------------------------------------------------------------
 
-export type StatusRegel = { label: string; waarde: string; niveau: Niveau; meldingen?: string[] }
+export type StatusRegel = { label: string; waarde: string; niveau: Niveau; meldingen?: string[]; meldBijOranje?: boolean }
 export type StatusKaart = { niveau: Niveau; regels: StatusRegel[]; problemen: string[] }
 
 const INDICATOR_NIVEAU: Record<string, Niveau> = { none: 'ok', minor: 'let-op', major: 'fout', critical: 'fout' }
@@ -133,7 +134,10 @@ async function haalDienstStatus(): Promise<{ regel: StatusRegel; details: string
       // 'monitoring'). Dat blijft zichtbaar onder de regel, net als op de desktop, zonder als probleem te tellen.
       const details = dienstDetails(j)
       return {
-        regel: { label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau, meldingen: niveau === 'ok' ? details : undefined },
+        regel: {
+          label: d.name, waarde: niveau === 'ok' ? 'operationeel' : (j?.status?.description ?? 'let op'), niveau,
+          meldingen: niveau === 'ok' ? details : undefined, meldBijOranje: dienstRaaktOns(d.name, j ?? {}),
+        },
         details: niveau === 'ok' ? [] : details,
       }
     } catch {
@@ -143,7 +147,8 @@ async function haalDienstStatus(): Promise<{ regel: StatusRegel; details: string
   }))
 }
 
-export async function haalStatus(actieveGebruikers: number, nu: Date): Promise<StatusKaart> {
+/** zonderCron: de stip-wacht beoordeelt zichzelf niet, zijn eigen run is op dat moment net gestart. */
+export async function haalStatus(actieveGebruikers: number, nu: Date, opties: { zonderCron?: string } = {}): Promise<StatusKaart> {
   const supabase = db()
   const [cronRuns, dbGrootte, dbGezondheid, server, tellers, instatus, koppelingen, diensten] = await Promise.all([
     leesCronRuns().catch(() => null),
@@ -163,7 +168,7 @@ export async function haalStatus(actieveGebruikers: number, nu: Date): Promise<S
   if (cronRuns) {
     const runs = cronRuns as Record<string, CronRunRij>
     const start = registratieStartVan(runs)
-    const crons = leesCrons().map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, start) }))
+    const crons = leesCrons().filter(c => c.pad !== opties.zonderCron).map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, start) }))
     const slecht = crons.filter(({ g }) => g.staat !== 'ok' && g.staat !== 'onbekend')
     const ok = crons.filter(({ g }) => g.staat === 'ok').length
     regels.push({ label: 'Crons', waarde: `${ok} van ${crons.length} in orde`, niveau: slecht.length ? 'fout' : 'ok' })

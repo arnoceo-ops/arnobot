@@ -12,6 +12,7 @@ import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { isTeamCovered } from '@/lib/teamAccess'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { controleerKoppelingen } from '@/lib/billing/gezondheid'
+import { pushActief } from '@/lib/adminPush'
 import { moetAfsluitingUitstellen, WACHT_OP_BETALING_DAGEN } from '@/lib/billing/openstaandeBetaling'
 
 const iso = (d: Date) => d.toISOString()
@@ -34,7 +35,8 @@ async function cronHandler(req: NextRequest) {
   // iets om, dan een Telegram-melding. Faalt de check zelf, dan gaat de onderhoudsronde gewoon door.
   try {
     const kapot = (await controleerKoppelingen()).filter(k => k.niveau === 'fout')
-    if (kapot.length > 0) {
+    // Mollie en Moneybird zijn stippen in de admin-app: neemt die het over, dan niet via Telegram.
+    if (kapot.length > 0 && !(await pushActief())) {
       await notifyTelegram(
         `Koppeling met betaalprovider werkt niet op arno.bot\n\n${kapot.map(k => `${k.naam}: ${k.beschrijving} (${k.regels[0] ?? ''})`).join('\n')}`,
       )

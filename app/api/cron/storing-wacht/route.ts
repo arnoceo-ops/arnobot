@@ -5,6 +5,8 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { EXTERNE_DIENSTEN } from '@/lib/externeDiensten'
 import { leesInstatusMeting } from '@/lib/instatus'
 import { beoordeelArnoBot, beoordeelExtern, bouwHerstelBericht, bouwStoringBericht, werkStoringenBij, type StoringMelding } from '@/lib/storing'
+import { pushActief } from '@/lib/adminPush'
+import { isStipStoring } from '@/lib/adminStippen'
 import { leesActieveStoringen, schrijfActieveStoringen } from '@/lib/storingStaat'
 
 // Elk kwartier. Meldt via Telegram wat de statuspagina alleen toont: arno.bot niet bereikbaar,
@@ -41,7 +43,12 @@ async function cronHandler(req: NextRequest) {
     const nieuw: StoringMelding[] = []
     for (const m of meldingen) if (await nieuwMelden(m.sleutel, m.niveau)) nieuw.push(m)
 
-    if (nieuw.length > 0) await notifyTelegram(bouwStoringBericht(nieuw))
+    // Neemt de admin-app het over, dan gaan de storingen die daar een stip zijn niet meer via Telegram
+    // (/api/cron/stip-wacht). Te traag is geen stip en blijft hier.
+    const push = await pushActief()
+    const viaTelegram = (sleutel: string) => !(push && isStipStoring(sleutel))
+    const telegramNieuw = nieuw.filter(m => viaTelegram(m.sleutel))
+    if (telegramNieuw.length > 0) await notifyTelegram(bouwStoringBericht(telegramNieuw))
 
     // Herstel: onthoud welke storingen actief zijn en meld het als er één twee runs achter elkaar
     // (een half uur) niet meer speelt. Kon een bron deze run niet gelezen worden (Instatus of een
@@ -54,7 +61,8 @@ async function cronHandler(req: NextRequest) {
     const vorige = await leesActieveStoringen()
     const { actief, hersteld } = werkStoringenBij(vorige, meldingen, new Set(nieuw.map(m => m.sleutel)), bronBeschikbaar, nu)
     await schrijfActieveStoringen(actief)
-    if (hersteld.length > 0) await notifyTelegram(bouwHerstelBericht(hersteld))
+    const telegramHersteld = hersteld.filter(h => viaTelegram(h.sleutel))
+    if (telegramHersteld.length > 0) await notifyTelegram(bouwHerstelBericht(telegramHersteld))
 
     return NextResponse.json({ ok: true, instatus: instatus !== null, storingen: meldingen.length, gemeld: nieuw.map(m => m.sleutel), hersteld: hersteld.map(h => h.sleutel) })
   } catch (err) {
