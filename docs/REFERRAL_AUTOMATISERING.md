@@ -4,7 +4,7 @@
 
 - **Laatst bijgewerkt:** 2026-11-25
 - **Waar we staan:** Arno heeft op 25-11 de regels voor de aanbrenger aangepast (zie "Regels per 25-11") en opdracht gegeven om te bouwen, inclusief overzicht en Telegram-meldingen. Er is nog niets van de automatisering gebouwd. Het aangepaste plan gaat eerst opnieuw door een onafhankelijke controle. In de database stond op 25-11 één referral (status signed_up) en geen gebruiker met tegoed boven nul.
-- **Eerstvolgende stap:** bevindingen van de controle verwerken, daarna fase 1.
+- **Eerstvolgende stap:** Arno beslist de open regelvragen uit "Controle 25-11". Daarna de bouwvolgorde hieronder. Stap B5 (oude koppelroute) is op 25-11 gedaan.
 - **Los traject, open:** of de nieuw aangebrachte gebruiker zelf iets krijgt, en onder welke voorwaarden. Arno bespreekt dit apart; tot dan blijven de teksten daarover ongewijzigd. Let op: de beloofde gratis eerste maand zit niet in de betaalcode. Dit moet besloten zijn voordat de eerste aangebrachte gebruiker betaalt (proef loopt tot ongeveer 24-12-2026).
 - **Nog onverifieerd:** (a) of een Mollie-terugbetaling zelf geld kost en of de transactiekosten terugkomen. Op 25-11 gelezen: de prijspagina (mollie.com/nl/pricing) toont geen terugbetaalregel, help.mollie.com weigert automatisch lezen (403), één externe bron noemt €0,25 per terugbetaling zonder teruggave, andere bronnen noemen geen kosten. Arno kan dit zien in het Mollie-dashboard of navragen bij Mollie. Het ontwerp hangt er niet van af. Wel bevestigd (docs.mollie.com/docs/refunds): gedeeltelijke terugbetalingen worden ondersteund; een terugbetaling gaat van het beschikbare saldo en wordt in de wachtrij gezet als dat te laag is; een tweede terugbetaling van hetzelfde bedrag op dezelfde betaling binnen een uur wordt geweigerd. (b) of een gedeeltelijke terugbetaling in de bestaande code goed doorloopt; (c) de Moneybird-creditnota via de API voor een deelbedrag.
 
@@ -36,6 +36,23 @@ De spelregels (`app/referrals/page.tsx`, `docs/ABONNEMENTEN.md`) zijn gegeven: e
 - **Stoppen is tegoed kwijt:** het tegoed vervalt zodra het abonnement van de aanbrenger echt is afgelopen (ook een niet verlengd jaarabonnement). Niet bij een lopende periode na opzegging, niet bij een ingetrokken opzegging, niet bij een overstap, upgrade of solo naar Team. Haalt een klant de drempel pas na dat einde, dan ontstaat geen tegoed. Wie later terugkomt krijgt niets terug. Vervangt besluit 5 van 16-11 (tegoed blijft staan). Verworpen: tegoed bewaren voor terugkeerders.
 - **Tweede licentie** vervalt.
 - **Bij de opzegging** (vooraf en in de bevestiging) wordt gemeld dat het tegoed vervalt.
+
+## Controle 25-11 (onafhankelijke reviewer): niet bouwen zoals de fasen hieronder staan
+
+De fasen verderop zijn op deze punten achterhaald; deze sectie gaat voor. B1 en B5 zijn daarna zelf in de code nagekeken en kloppen. De overige punten zijn bevindingen van de reviewer, nog niet allemaal zelf nagelopen.
+
+**Blokkades**
+- B1: een terugbetaling van tegoed die even hoog is als de betaling telt als volledige terugbetaling (lib/billing/verwerking.ts:151, app/api/cron/billing/route.ts:78): abonnement stopt en toegang eindigt. Oplossing: tegoedbedrag per betaling apart vastleggen en uitsluiten van "volledig".
+- B2: na een gedeeltelijke terugbetaling lopen admin-terugbetaling, herroeping en creditnota's fout (ze vragen het volle bedrag of slaan de betaling over). Alleen het restant terugbetalen en crediteren.
+- B3: terugboekingen en terugbetalingen van teamfacturen worden niet vastgelegd; bankoverschrijvingen worden niet op betaald gezet.
+- B4: betaalde maanden zijn niet betrouwbaar af te leiden: arnobot_payments mist plan, cyclus en periode. Momentopname per betaling toevoegen, alleen bij een echt verlengde periode.
+- B5: de oude route POST /api/bot/referral liet elk bestaand account achteraf een code koppelen. **Verwijderd op 25-11.** Nog nodig: unieke sleutel op referred_user_id en wederzijdse verwijzingen weigeren.
+
+**Ernstig (kort):** dubbele of verloren verrekening (reserveren in een databasefunctie met slot per aanbrenger, aparte cron); wachttijd na SEPA; een particuliere jaarverlenging komt binnen als "herhaling" of als nieuwe "eerste"; "echt afgelopen" vraagt een controle op accountniveau met respijt; teamkorting reserveren per factuur; conversie van Team wordt online niet vastgelegd en "converted" mag nooit de drempel zijn; eigen tegoed-terugbetaling mag iemand niet als aangebrachte klant diskwalificeren; omzetrapportage en creditnota's aanpassen.
+
+**Datamodel (minimaal):** referrals: unieke referred_user_id, checkout_deadline, first_checkout_at, qualified_at, rejected_reason. payments: plan, cyclus, klant_type, period_start, period_end, referral_refund_cent. team_facturen: reversed_at, paid_via, referral_discount_cent, unieke periode voor reguliere facturen. Nieuw: arnobot_referral_ledger (alleen toevoegen, unieke event_key, een toekenning per referral), arnobot_referral_redemptions, arnobot_referrer_state. Alle geldmutaties via een databasefunctie met slot per aanbrenger.
+
+**Bouwvolgorde:** besluiten, schema en B5, B1 en B2 met tests, periodemomentopnames en teambetalingen, grootboek met kwalificatie en vervallen eerst meelopend zonder gevolgen, terugdraaien, teamkorting, solo-terugbetaling met creditnota en proef in testmodus, overzicht, meldingen en teksten.
 
 ## Besluiten (Arno, 2026-11-16), nog geldig waar de regels van 25-11 niets anders zeggen
 
