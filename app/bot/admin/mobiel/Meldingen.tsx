@@ -116,7 +116,7 @@ export default function Meldingen({ sleutel, bevestigd }: { sleutel: string | nu
       {sleutel && (stand === 'uit' || stand === 'aan') && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
           {stand === 'uit' && <Knop tekst="MELDINGEN AANZETTEN" onClick={aanzetten} bezig={bezig} />}
-          {stand === 'aan' && <Knop tekst="STUUR PROEFMELDING" onClick={proef} bezig={bezig} rustig={werkt} />}
+          {stand === 'aan' && !bevestigd && <Knop tekst="STUUR PROEFMELDING" onClick={proef} bezig={bezig} />}
           {stand === 'aan' && proefVerstuurd && !bevestigd && <Knop tekst="IK ZIE DE MELDING" onClick={bevestig} bezig={bezig} />}
           {stand === 'aan' && <Knop tekst="UITZETTEN" onClick={uitzetten} bezig={bezig} rustig />}
         </div>
