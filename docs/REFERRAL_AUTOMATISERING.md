@@ -50,6 +50,10 @@ De spelregels (`app/referrals/page.tsx`, `docs/ABONNEMENTEN.md`) zijn gegeven: e
 8. Per verlenging zoveel als in de betaling past, de rest blijft staan.
 9. Klant is een team: aantal gebruikers op het moment van toekennen.
 
+**Aanvullingen 25-11:**
+- Het plafond en het abonnement komen uit arnobot_subscriptions (wat er betaald wordt), nooit uit approved_users.plan. Een account kan cadeau op Pro staan terwijl Basic betaald wordt. Zo'n cadeau valt bij de volgende betalingsverwerking terug naar het betaalde plan (zetToegang); nog niet geregeld.
+- Geen maximum op het aantal tegoeden (nog te bevestigen door Arno). Tegoed is eenmalig per aangebrachte klant.
+
 ## Controle 25-11 (onafhankelijke reviewer): niet bouwen zoals de fasen hieronder staan
 
 De fasen verderop zijn op deze punten achterhaald; deze sectie gaat voor. B1 en B5 zijn daarna zelf in de code nagekeken en kloppen. De overige punten zijn bevindingen van de reviewer, nog niet allemaal zelf nagelopen.
