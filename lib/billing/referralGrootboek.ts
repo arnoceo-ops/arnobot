@@ -742,6 +742,19 @@ async function bewijsOnderBesluit(klantId: string): Promise<Pick<GrootboekRegel,
   }
 }
 
+/**
+ * Een handmatige toekenning van voor de drempel heeft geen betalingskenmerken. Haalt de klant de drempel later alsnog,
+ * dan horen die betalingen eronder: anders wordt zij nooit uitbetaald (en door 'oudste eerst' latere toekenningen ook
+ * niet) en nooit teruggedraaid. Alleen in het geheugen: het grootboek zelf wordt niet aangepast. Alleen voor
+ * handmatige besluiten, want een automatische toekenning zonder kenmerken is een fout die zichtbaar moet blijven.
+ */
+export async function vulOntbrekendeBronnen(regels: GrootboekRegel[]): Promise<void> {
+  for (const t of regels.filter(r => r.soort === 'toekenning' && !r.bron_ids?.length && r.reden?.startsWith(HANDMATIG))) {
+    const bewijs = await bewijsOnderBesluit(t.klant_user_id)
+    if (bewijs.bron_ids) t.bron_ids = bewijs.bron_ids
+  }
+}
+
 const VERVAL_VRAAG = 'verval-handwerk:'
 
 const behoudRegels = (regels: GrootboekRegel[], referralId: string) =>

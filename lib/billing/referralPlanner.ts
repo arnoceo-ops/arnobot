@@ -3,6 +3,7 @@ import { billingDb } from './db'
 import {
   aanbrengerFeiten, betaaldeTeamsVan, eigenBetalingStaat, eigenBetalingTelt, klantFeiten, laadDossier, openVervalVraag, teamGestopt,
   vervalOordeel, type Betaling, type Dossier, type GrootboekRegel, type ReferralRij,
+  vulOntbrekendeBronnen,
 } from './referralGrootboek'
 import {
   eersteBetalingOpTijd, gratisVierdeMaand, jaarKortingCent, metJaarKorting, tegoedNettoCent, tegoedStatus, telMaanden, verrekening,
@@ -173,6 +174,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
   // Verrekenen gaat alleen over echte regels. Een droogloop mag op de meeloopstand rekenen, en zegt dat dan.
   ronde.opMeeloop = !uitvoeren && !echteRegels.length && alleRegels.length > 0
   const boek = ronde.opMeeloop ? alleRegels : echteRegels
+  await vulOntbrekendeBronnen(boek)
 
   const dossiers = new Map<string, Promise<Dossier | null>>()
   const dossier = (userId: string) => {

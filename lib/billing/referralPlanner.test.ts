@@ -490,6 +490,15 @@ describe('B4: aanbrenger die teamlid werd', () => {
     expect(r.voornemens).toMatchObject([{ soort: 'verval_teamlid' }])
     expect(await grootboek()).toHaveLength(1)
   })
+  it('met de tegoedschakelaar uit wordt er niet "vervallen" gemeld en niets geboekt', async () => {
+    const p = await teamlid([basisNetto], maanden('aanbrenger', 1, { plan: 'basis' }), {})
+    await h.db.wijzig('arnobot_payments', p[0].id, { referral_refund_cent: p[0].bedrag_cent, terugbetaald_cent: p[0].bedrag_cent })
+    vi.stubEnv('REFERRAL_TEGOED_VERREKENEN', '')
+    const r = await planReferral(NU, { uitvoeren: true })
+    expect(r.voornemens).toMatchObject([{ soort: 'verval_teamlid', stand: 'wacht' }])
+    expect(r.voornemens[0].reden).toContain('niets geboekt')
+    expect(await grootboek()).toHaveLength(1)
+  })
   it('de droogloop laat zien dat er iets zou vervallen en boekt niets', async () => {
     const p = await teamlid([basisNetto], maanden('aanbrenger', 1, { plan: 'basis' }), {})
     await h.db.wijzig('arnobot_payments', p[0].id, { referral_refund_cent: p[0].bedrag_cent, terugbetaald_cent: p[0].bedrag_cent })

@@ -1,5 +1,5 @@
 import { billingDb, type PayRow } from './db'
-import { MEELOOP, type GrootboekRegel } from './referralGrootboek'
+import { MEELOOP, vulOntbrekendeBronnen, type GrootboekRegel } from './referralGrootboek'
 import { isTeruggedraaid, restVanToekenning, toegekendCent } from './referralSaldo'
 import { isVolledigTerugbetaald } from './terugbetaling'
 import { haalBetaling, lijstBetalingTerugbetalingen } from './mollie'
@@ -84,6 +84,8 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
     billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', meeloop).order('created_at', { ascending: true }).order('id').range(van, tot))
   const acties = await haalAlleRijen<ActieRij>((van, tot) =>
     billingDb.from('arnobot_referral_acties').select('*').order('created_at', { ascending: true }).order('id').range(van, tot))
+
+  await vulOntbrekendeBronnen(regels)
 
   type Onderdeel = { sleutel: string } & ({ toekenning: GrootboekRegel } | { actie: ActieRij })
   const binnenTermijn = (iso?: string | null) => !iso || nu.getTime() - Date.parse(iso) <= NACONTROLE_DAGEN * DAG_MS

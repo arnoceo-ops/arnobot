@@ -57,7 +57,7 @@ vi.mock('./db', () => ({
   },
 }))
 
-import { draaiGrootboek, legBesluitVast, legVervalBesluitVast, openVervalVraag, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
+import { draaiGrootboek, vulOntbrekendeBronnen, legBesluitVast, legVervalBesluitVast, openVervalVraag, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
 import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 
 const gebruiker = (user_id: string, extra: Rij = {}): Rij => ({
@@ -1188,5 +1188,25 @@ describe('F3: ook het grootboek laat tegoed van een teamlid met betaalde teamfac
     await draai(new Date('2027-06-01T06:00:00.000Z'))
     expect(boek().some(r => r.soort === 'verval')).toBe(false)
     expect(boek().some(r => r.event_key === 'verval-handwerk:r1')).toBe(true)
+  })
+})
+
+describe('handmatige toekenning zonder betalingskenmerken', () => {
+  const toekenning = (reden: string) => ({ soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900, reden, event_key: 'uitkomst:r1', meeloop: false, klant_maand_netto_cent: 1900 }) as any
+  it('krijgt de betalingen zodra de klant de drempel haalt', async () => {
+    const regels = [toekenning('handmatig besluit: akkoord')]
+    await vulOntbrekendeBronnen(regels)
+    expect(regels[0].bron_ids).toEqual(['tr_klant'])
+  })
+  it('niet als de klant de drempel niet haalt', async () => {
+    zet({ arnobot_payments: [] })
+    const regels = [toekenning('handmatig besluit: akkoord')]
+    await vulOntbrekendeBronnen(regels)
+    expect(regels[0].bron_ids).toBeUndefined()
+  })
+  it('een automatische toekenning zonder kenmerken blijft zichtbaar leeg', async () => {
+    const regels = [toekenning('drempel gehaald')]
+    await vulOntbrekendeBronnen(regels)
+    expect(regels[0].bron_ids).toBeUndefined()
   })
 })
