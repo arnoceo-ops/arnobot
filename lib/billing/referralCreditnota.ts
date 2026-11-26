@@ -181,6 +181,41 @@ async function maak(a: Actie, betaling: PayRow, factuurId: string, nu: Date): Pr
   }
 }
 
+/** De referentie van de creditnota voor wat er na de referraluitkering(en) nog van een betaling terugging. */
+export const restReferentie = (betaalkenmerk: string) => `${betaalkenmerk}-REST`
+
+/**
+ * Een betaling waarop al referralgeld zat wordt alsnog helemaal terugbetaald: de uitkeringen krijgen hun eigen
+ * creditnota, hier wordt alleen het restant gecrediteerd. Opnieuw aanroepen maakt nooit een tweede: gezocht wordt op de
+ * eigen referentie. Gooit met een leesbare reden als een mens het moet doen.
+ */
+export async function maakRestCreditnota(invoer: {
+  factuurId: string; betaalkenmerk: string; brutoCent: number; zakelijk: boolean; voornaam?: string | null; nu?: Date
+}): Promise<void> {
+  const referentie = restReferentie(invoer.betaalkenmerk)
+  const vanFactuur = (lijst: MbCreditfactuur[]) => lijst.filter(f => f.original_sales_invoice_id === invoer.factuurId)
+  const eigen = vanFactuur(await zoekFacturenOpReferentie(referentie))
+  if (eigen.length > 1) throw new Handwerk(`er zijn ${eigen.length} creditnota's met referentie ${referentie}`)
+  if (eigen.length === 1 && eigen[0].state !== 'draft') return
+  if (!eigen.length && vanFactuur(await zoekFacturenOpReferentie(invoer.betaalkenmerk)).length) {
+    throw new Handwerk('op deze factuur staat al een creditnota die niet van de referral is: controleer wat er gecrediteerd is')
+  }
+  let credit = eigen.length ? await haalFactuur(eigen[0].id) : await maakCreditConcept(invoer.factuurId)
+  const regelId = creditBedragregel(credit)
+  if (!regelId) throw new Handwerk('de conceptcreditnota heeft niet precies een bedragregel')
+  credit = await zetCreditBedrag(credit.id, { regelId, brutoCent: invoer.brutoCent, referentie })
+  if (cent(credit.total_price_incl_tax) !== -invoer.brutoCent) {
+    throw new Handwerk(`de creditnota staat op ${credit.total_price_incl_tax} in plaats van ${(-invoer.brutoCent / 100).toFixed(2)}`)
+  }
+  if (process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
+    await verstuurFactuur(credit.id, 'Manual')
+    await boekTerugbetaling(credit.id, { brutoCent: invoer.brutoCent, betaaldOp: invoer.nu ?? new Date(), kenmerk: referentie })
+    if (invoer.zakelijk) await verstuurFactuur(credit.id, 'Email', creditMailTekst(invoer.voornaam))
+  } else {
+    await verstuurFactuur(credit.id, invoer.zakelijk ? 'Email' : 'Manual', invoer.zakelijk ? creditMailTekst(invoer.voornaam) : undefined)
+  }
+}
+
 const teDoen = (a: Pick<ActieRij, 'status' | 'credit_status'>) =>
   CREDIT_ACTIESTATUSSEN.includes(a.status) && (a.credit_status === 'nodig' || a.credit_status === 'bezig')
 
