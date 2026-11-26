@@ -1,12 +1,28 @@
 import { billingDb } from './db'
 import { getEmailTemplate, isValidEmail, type BillingMailOptions, type EmailType } from '@/lib/email-templates'
 import { verstuurMail } from '@/lib/mail'
+import { isGratisAccount } from '@/lib/gratisAccount'
 
 /** Lid van een team zonder er manager van te zijn. Lukt het opzoeken niet, dan nee: de mail gaat altijd door. */
 export async function isGewoonTeamlid(userId: string): Promise<boolean> {
   try {
     const { data } = await billingDb.from('arnobot_team_members').select('role').eq('user_id', userId).limit(10)
     return !!data?.length && !data.some(l => l.role === 'manager')
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Laat de zin over vervallend referraltegoed weg: bij een gewoon teamlid, bij een gratis account (verdient nooit
+ * tegoed) en bij Lifetime (daar vervalt tegoed niet). Lukt het opzoeken niet, dan blijft de zin staan.
+ */
+export async function zonderTegoedZin(userId: string): Promise<boolean> {
+  if (await isGewoonTeamlid(userId)) return true
+  try {
+    // Alle kolommen: gratis_sinds bestaat pas na de SQL van 26-11.
+    const { data } = await billingDb.from('approved_users').select('*').eq('user_id', userId).maybeSingle()
+    return !!data && (!!data.lifetime_sinds || isGratisAccount(data))
   } catch {
     return false
   }
@@ -26,7 +42,7 @@ export async function verstuurBillingMail(
       .eq('user_id', userId)
       .maybeSingle()
     if (!user || !isValidEmail(user.email)) return false
-    const { subject, html } = getEmailTemplate(type, user.voornaam || 'daar', false, { userId, billing, zonderTegoedZin: await isGewoonTeamlid(userId) })
+    const { subject, html } = getEmailTemplate(type, user.voornaam || 'daar', false, { userId, billing, zonderTegoedZin: await zonderTegoedZin(userId) })
     await verstuurMail({ from: 'ArnoBot <info@arno.bot>', to: user.email, subject, html })
     return true
   } catch (e) {

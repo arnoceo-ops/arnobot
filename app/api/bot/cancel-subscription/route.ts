@@ -7,6 +7,7 @@ import { meldOpzegging } from '@/lib/billing/opzeggen'
 import { soloStoptVoorTeam } from '@/lib/billing/soloNaarTeam'
 import { heeftEigenAbonnement } from '@/lib/teamLid'
 import { zegTeamOp } from '@/lib/teamOpzegging'
+import { zonderTegoedZin } from '@/lib/billing/mails'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,7 +91,7 @@ export async function POST() {
   if (isValidEmail(user.email)) {
     const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, {
       userId,
-      zonderTegoedZin: !!teamMember && !isManager,
+      zonderTegoedZin: (!!teamMember && !isManager) || (await zonderTegoedZin(userId)),
       // Bij een team: de einddatum noemen (12:00 UTC, zodat de datum in elke tijdzone dezelfde dag blijft).
       ...(teamStopt ? { team: { teamNaam: '', bedragCent: 0, seats: 0, einde: `${teamStopt}T12:00:00.000Z` } } : {}),
     })
@@ -155,5 +156,7 @@ export async function GET() {
     eindigt_op: sub?.opzegging_ingaat_at ?? (teamStoptOp ? new Date(`${teamStoptOp}T00:00:00.000Z`).toISOString() : null),
     team_stopt_op: teamStoptOp,
     solo_naar_team_op: soloNaarTeamOp,
+    // Niet voor gewone teamleden, gratis accounts en Lifetime (lib/billing/mails.ts).
+    toon_tegoed_zin: !(await zonderTegoedZin(userId)),
   })
 }

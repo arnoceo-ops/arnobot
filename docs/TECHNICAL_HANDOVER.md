@@ -292,7 +292,7 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 | `/api/bot/plan` | Eigen plan + command_manager-vlag ophalen |
 | `/api/bot/export` | Alle eigen data exporteren (AVG) |
 | `/api/bot/delete-account` | Verwijderverzoek account |
-| `/api/bot/referral` | Eigen referralcode ophalen/genereren |
+| `/api/bot/referral` | Eigen referralcode ophalen/genereren. Geweigerd voor gewone teamleden en gratis accounts (`approved_users.gratis_sinds`, `lib/gratisAccount.ts`; Lifetime gaat voor) |
 | `/api/referral-naam` | Openbaar, met limiet: voornaam bij een referralcode voor de aanmeldpagina |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/billing/upgrade` | Upgrade van Basic naar Pro, direct met bijbetaling naar rato (zie "Online betalen (Mollie)") |
@@ -566,6 +566,11 @@ Referraltracking: wie heeft wie uitgenodigd.
 
 ### `arnobot_referral_grootboek`
 Grootboek van het referraltegoed (SQL: `docs/sql/2026-11-25-referral-grootboek.sql`, RLS aan zonder policies). Alleen toevoegen: toekenning, afwijzing, vaststelling, verval en handwerk, elk met een unieke `event_key`; het saldo is de som van `netto_cent` (exclusief btw). Draait **meelopend** (`meeloop = true`): geen gevolgen voor tegoed, betalingen of toegang. Beoordeling: `lib/billing/referralBeoordeling.ts` en `referralRegels.ts`, ophalen en wegschrijven: `referralGrootboek.ts`. Plan en vóór-livegangpunten: `docs/REFERRAL_AUTOMATISERING.md`.
+
+### `arnobot_referral_acties` en `arnobot_referral_gratis_periodes`
+Uitkeringen van referralvoordeel en tegoed, met de databasefuncties eromheen (SQL: `docs/sql/2026-11-26-referral-verrekening.sql`, uitgevoerd op 26-11, RLS aan zonder policies, functies alleen voor `service_role`). Dezelfde SQL voegt `arnobot_payments.referral_bank_cent` en `referral_geblokkeerd_tot` toe. Adminterugbetaling en herroeping lopen via het slot `referral_voor_terugbetaling`. Geld verplaatsen staat uit: alleen de exacte tekst `true` in `REFERRAL_TERUGSTORTEN` of `REFERRAL_CREDITNOTA` zet aan (`lib/billing/referralSchakelaars.ts`; achter `REFERRAL_CREDITNOTA` is nog niets gebouwd).
+
+`approved_users.gratis_sinds` (SQL: `docs/sql/2026-11-26-gratis-kenmerk.sql`) markeert een gratis account. Aan: de knop GRATIS of SQL. Uit: een geslaagde betaling, een tweede proef of de knop BETAALD; de grootboekcron herstelt dagelijks wat gemist is (`lib/billing/gratisHerstel.ts`).
 
 ### `arnobot_shared_sessions`
 Publieke share-tokens voor individuele gesprekken (`/gesprek/[token]`).

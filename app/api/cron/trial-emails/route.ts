@@ -6,6 +6,7 @@ import { verstuurMail } from '@/lib/mail'
 import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { isGratisAccount } from '@/lib/gratisAccount'
 import { kiesTrialMail } from '@/lib/trialMailKeuze'
 
 const supabase = createClient(
@@ -181,11 +182,14 @@ async function cronHandler(req: NextRequest) {
   for (const ref of pendingReferrals ?? []) {
     const { data: referrer } = await supabase
       .from('approved_users')
-      .select('email, voornaam')
+      // Alle kolommen: isGratisAccount heeft gratis_sinds en lifetime_sinds nodig.
+      .select('*')
       .eq('user_id', ref.referrer_user_id)
       .single()
 
     if (!referrer?.email || !isValidEmail(referrer.email)) continue
+    // Een gratis account heeft geen referral en krijgt hier dus ook geen mail over.
+    if (isGratisAccount(referrer)) continue
 
     const referrerNaam = referrer.voornaam || 'daar'
     const { subject, html } = getEmailTemplate('referral_aanmelding', referrerNaam, false, {

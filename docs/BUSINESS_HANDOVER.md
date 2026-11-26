@@ -69,7 +69,7 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 **Elite:** de losse, individuele Elite-plan (€397/maand) is op 25 augustus 2026 volledig uit het systeem verwijderd, na een bevestigde 0-gebruikerstelling. Een Elite-optie binnen een Team-offerte (€338/maand surplus per teamlid) bestaat nog wel, zie "Team" hierboven.
 
 **Referral:**
-- Elke gebruiker heeft een referralcode
+- Elke gebruiker heeft een referralcode, behalve gewone teamleden en gratis accounts (bij een gratis account werkt een bestaande code niet en ontstaat er geen tegoed)
 - De geldende regels staan op arno.bot/referrals (spelregels); stand van de bouw in `docs/REFERRAL_AUTOMATISERING.md` en `docs/REFERRAL_CONTROLE_2026-11-26.md`
 - Nog niet alles gaat automatisch. Tegoed of een gratis maand terugstorten: per bankoverschrijving met een creditnota in Moneybird, **nooit** via een terugbetaling in Mollie (dat kan het abonnement beëindigen)
 

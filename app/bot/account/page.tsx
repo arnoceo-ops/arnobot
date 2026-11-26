@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
@@ -44,6 +44,8 @@ export default function AccountPage() {
   const [overstapVersie, setOverstapVersie] = useState(0)
   // Einddatum van een solo-abonnement dat stopt omdat de klant Team wordt (docs/OVERSTAP_PLAN.md): dan geen opzegknop.
   const [soloNaarTeamOp, setSoloNaarTeamOp] = useState<string | null>(null)
+  // Pas tonen als de server zegt dat de zin voor dit account geldt.
+  const [toonTegoedZin, setToonTegoedZin] = useState(false)
   // isTeamMember mag hier alleen gebruikt worden als loaded && !failed: bij een mislukte
   // fetch (failed) tonen we de REFERRAL-/ABONNEMENT-secties niet automatisch, dat zou een
   // teamlid ten onrechte toegang tot een sectie geven die voor hem verborgen hoort te zijn.
@@ -78,7 +80,7 @@ export default function AccountPage() {
   useEffect(() => {
     fetch('/api/bot/cancel-subscription')
       .then(r => r.json())
-      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op); if (d.team_stopt_op) setTeamStoptOp(d.team_stopt_op); if (d.solo_naar_team_op) setSoloNaarTeamOp(d.solo_naar_team_op) })
+      .then(d => { if (d.cancelled_at) setCancelledAt(d.cancelled_at); if (d.eindigt_op) setEindigtOp(d.eindigt_op); if (d.team_stopt_op) setTeamStoptOp(d.team_stopt_op); if (d.solo_naar_team_op) setSoloNaarTeamOp(d.solo_naar_team_op); setToonTegoedZin(d.toon_tegoed_zin === true) })
       .catch(() => {})
     fetch('/api/bot/instatus')
       .then(r => r.json())
@@ -469,7 +471,7 @@ export default function AccountPage() {
                   : 'Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.'}
               </p>
               {/* Niet in de app: daar staan geen koopverwijzingen (Google Play-beleid). */}
-              {!isNativeApp && !(isTeamMember && !isManager) && <p style={body}>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.</p>}
+              {!isNativeApp && toonTegoedZin && !(isTeamMember && !isManager) && <p style={body}>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.</p>}
               <button
                 onClick={() => setCancelConfirm(true)}
                 style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}
