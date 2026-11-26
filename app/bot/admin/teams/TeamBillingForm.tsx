@@ -39,6 +39,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
   const [minSeats, setMinSeats] = useState(initial.minSeats?.toString() ?? '')
   const [cyclus, setCyclus] = useState(initial.cyclus ?? 'maandelijks')
   const [volgendeFactuurdatum, setVolgendeFactuurdatum] = useState(initial.volgendeFactuurdatum ?? '')
+  const [opgeslagenDatum, setOpgeslagenDatum] = useState(initial.volgendeFactuurdatum ?? '')
   const [bedrijfsnaam, setBedrijfsnaam] = useState(initial.bedrijfsnaam ?? '')
   const [kvkNummer, setKvkNummer] = useState(initial.kvkNummer ?? '')
   const [btwNummer, setBtwNummer] = useState(initial.btwNummer ?? '')
@@ -62,14 +63,19 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
         teamId: initial.teamId,
         minSeats: minSeats ? Number(minSeats) : null,
         cyclus,
-        volgendeFactuurdatum: volgendeFactuurdatum || null,
+        // Alleen meesturen als je de datum zelf wijzigt: een tabblad dat al openstond zou anders de datum van vóór de
+        // facturatierun terugzetten.
+        ...(volgendeFactuurdatum !== opgeslagenDatum ? { volgendeFactuurdatum: volgendeFactuurdatum || null } : {}),
         bedrijfsnaam, kvkNummer, btwNummer, straat, postcode, plaats,
       }),
     })
     // De server valideert alles vóór het opslaat: bij een fout is er dus niets opgeslagen.
     // De reden (bijvoorbeeld een lege bedrijfsnaam) staat naast "Mislukt".
     if (!res.ok) setFoutTekst(String((await res.json().catch(() => ({}))).error ?? ''))
-    else setFoutTekst('')
+    else {
+      setFoutTekst('')
+      setOpgeslagenDatum(volgendeFactuurdatum)
+    }
     setStatus(res.ok ? 'opgeslagen' : 'fout')
   }
 

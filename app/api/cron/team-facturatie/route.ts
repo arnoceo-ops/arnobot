@@ -50,6 +50,10 @@ async function cronHandler(req: NextRequest) {
     const gemist = await haalGemisteTeamBetalingenIn()
     samenvatting.ingehaald = gemist.ingehaald
     samenvatting.fouten += gemist.fouten
+    const onzeker = new Set([...gemist.nietGecontroleerd, ...gemist.afwijkend])
+    if (gemist.afwijkend.length) {
+      await notifyTelegram(`Teambetaling met een afwijkend bedrag op arno.bot\n\nFactuur: ${gemist.afwijkend.join(', ')}\nEr is niets verwerkt en er volgt geen herinnering of blokkade. Beoordeel in Mollie.`)
+    }
 
     // Alleen teams die zijn "geactiveerd" voor automatische facturatie (zie /bot/admin/teams).
     const { data: teamsRaw } = await billingDb
@@ -72,8 +76,8 @@ async function cronHandler(req: NextRequest) {
           const periodeStart = new Date(team.volgende_factuurdatum)
           const periodeEinde = voegMaandenToe(periodeStart, team.cyclus === 'jaarlijks' ? 12 : 1)
           const { nettoCent, btwCent } = berekenReguliereBedrag(seats, team.cyclus!)
-          await maakTeamFactuur(team, { soort: 'regulier', periodeStart, periodeEinde, seats, nettoCent, btwCent })
-          samenvatting.reguliereFacturen++
+          const gemaakt = await maakTeamFactuur(team, { soort: 'regulier', periodeStart, periodeEinde, seats, nettoCent, btwCent })
+          if (gemaakt.ok) samenvatting.reguliereFacturen++
         } else if (team.cyclus === 'jaarlijks' && !team.stopt_op) {
           // 2. Tussentijdse uitbreiding: alleen zinvol te vergelijken als er al een eerdere
           // factuur was (anders is er niets om tegen af te zetten, en komt de eerste factuur
@@ -93,8 +97,8 @@ async function cronHandler(req: NextRequest) {
             const extra = seats - laatste.seats_aantal
             const { nettoCent, btwCent } = berekenTussentijdsBedrag(extra, resterendeDagen, totaalDagen)
             if (nettoCent > 0) {
-              await maakTeamFactuur(team, { soort: 'tussentijds', periodeStart: nu, periodeEinde, seats, nettoCent, btwCent })
-              samenvatting.tussentijdseFacturen++
+              const gemaakt = await maakTeamFactuur(team, { soort: 'tussentijds', periodeStart: nu, periodeEinde, seats, nettoCent, btwCent })
+              if (gemaakt.ok) samenvatting.tussentijdseFacturen++
             }
           }
         }
@@ -107,9 +111,19 @@ async function cronHandler(req: NextRequest) {
           .eq('status', 'open')
           .returns<TeamFactuurRow[]>()
         for (const f of openFacturen ?? []) {
+          // Niet bij Mollie kunnen controleren of er betaald is: dan niets, morgen opnieuw.
+          if (onzeker.has(f.id)) continue
           const dagenOverTijd = dagenSinds(f.created_at, nu) - BETAALTERMIJN_DAGEN
+          // Zonder betaallink kon de klant niet betalen: nooit herinneren of blokkeren, wel melden.
+          if (!f.mollie_payment_link_url) {
+            if (dagenOverTijd >= 7) {
+              await notifyTelegram(`Teamfactuur zonder betaallink op arno.bot\n\nTeam: ${team.name}\nFactuur: ${f.id}\nEr volgt geen herinnering of blokkade. Rond deze factuur met de hand af.`)
+            }
+            continue
+          }
           if (dagenOverTijd >= BLOKKADE_NA_DAGEN && !team.geblokkeerd_at) {
             await billingDb.from('arnobot_teams').update({ geblokkeerd_at: nu.toISOString() }).eq('id', team.id)
+            team.geblokkeerd_at = nu.toISOString()
             await verstuurTeamMail(team.manager_id, 'team_geblokkeerd', {
               teamNaam: team.name, bedragCent: f.bedrag_cent, seats: f.seats_aantal, betaalLink: f.mollie_payment_link_url ?? undefined,
             })
@@ -140,6 +154,10 @@ async function cronHandler(req: NextRequest) {
     const nacontrole = await controleerBetaaldeTeamFacturen(nu)
     samenvatting.terugdraaiingen = nacontrole.gewijzigd
     samenvatting.fouten += nacontrole.fouten
+    // De run telt als gelukt, dus een deelfout moet apart gemeld worden.
+    if (samenvatting.fouten > 0) {
+      await notifyTelegram(`Team-facturatie met ${samenvatting.fouten} fout(en) op arno.bot\n\nNiet bij Mollie gecontroleerde open facturen: ${gemist.nietGecontroleerd.join(', ') || 'geen'}\nDaarvoor is geen herinnering of blokkade gedaan. Zie Sentry.`)
+    }
 
     return NextResponse.json({ ok: true, ...samenvatting })
   } catch (e) {

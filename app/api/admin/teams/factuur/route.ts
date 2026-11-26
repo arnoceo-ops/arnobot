@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
+import * as Sentry from '@sentry/nextjs'
 import { zetBetaaldPerBank, zetTeruggedraaid } from '@/lib/billing/teamBetalingen'
+import { verwerkTeamBetaling } from '@/lib/billing/teamFacturatie'
 import { nlVandaag } from '@/lib/nlTijd'
 
 // Handmatige acties op een teamfactuur. Beide leggen alleen vast wat er buiten Mollie om is gebeurd.
@@ -20,14 +22,24 @@ export async function POST(req: NextRequest) {
   }
 
   const datum = typeof body.betaaldOp === 'string' ? body.betaaldOp : ''
-  if (actie === 'betaald_bank' && (!/^\d{4}-\d{2}-\d{2}$/.test(datum) || Number.isNaN(Date.parse(datum)) || datum > nlVandaag())) {
+  const bestaandeDag = /^\d{4}-\d{2}-\d{2}$/.test(datum) && !Number.isNaN(Date.parse(datum)) && new Date(datum).toISOString().slice(0, 10) === datum
+  if (actie === 'betaald_bank' && (!bestaandeDag || datum > nlVandaag())) {
     return NextResponse.json({ error: 'Kies de datum waarop het geld binnenkwam' }, { status: 400 })
   }
 
   const uitkomst = actie === 'betaald_bank'
     ? await zetBetaaldPerBank(factuurId, new Date(`${datum}T12:00:00Z`))
     : await zetTeruggedraaid(factuurId)
-  if (!uitkomst.ok) return NextResponse.json({ error: uitkomst.fout }, { status: uitkomst.status })
+  if (!uitkomst.ok) {
+    if (uitkomst.alViaMollie) {
+      try {
+        await verwerkTeamBetaling(uitkomst.alViaMollie, null)
+      } catch (e) {
+        Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie-inhalen' } })
+      }
+    }
+    return NextResponse.json({ error: uitkomst.fout }, { status: uitkomst.status })
+  }
 
   await logAdminActie({
     actie: actie === 'betaald_bank' ? 'team_factuur_betaald_bank' : 'team_factuur_teruggedraaid',

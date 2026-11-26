@@ -26,6 +26,20 @@ export async function legBetaalwijzeVast(factuurId: string, molliePaymentId: str
   if (error) console.error('[billing] betaalwijze teamfactuur niet vastgelegd', factuurId, error.message)
 }
 
+/** Wat er volgens Mollie van deze betaling terug is, in centen. */
+export function terugBijMollie(p: MolliePayment): { terugbetaald: number; teruggeboekt: number } {
+  return {
+    terugbetaald: p.amountRefunded ? mollieNaarCenten(p.amountRefunded.value) : 0,
+    teruggeboekt: p.amountChargedBack ? mollieNaarCenten(p.amountChargedBack.value) : 0,
+  }
+}
+
+/** Betaald en niet volledig terug: het geld staat nog bij ons. */
+function staatNog(p: MolliePayment): boolean {
+  const terug = terugBijMollie(p)
+  return p.status === 'paid' && terug.terugbetaald < mollieNaarCenten(p.amount.value) && terug.teruggeboekt === 0
+}
+
 /**
  * Verwerkt de actuele stand bij Mollie van een factuur die al betaald of teruggedraaid is. Meldt alleen bij een
  * verandering, dus vaker aanroepen is veilig. Een volledige terugbetaling of elke terugboeking zet de factuur op
@@ -56,40 +70,52 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
   if (!mp) return false
   if (!rij.mollie_payment_id) await legBetaalwijzeVast(rij.id, mp.id)
 
-  const terugbetaald = mp.amountRefunded ? mollieNaarCenten(mp.amountRefunded.value) : 0
-  const teruggeboekt = mp.amountChargedBack ? mollieNaarCenten(mp.amountChargedBack.value) : 0
+  const { terugbetaald, teruggeboekt } = terugBijMollie(mp)
   const oudTerugbetaald = rij.terugbetaald_cent ?? 0
   const oudTeruggeboekt = rij.teruggeboekt_cent ?? 0
   if (terugbetaald === oudTerugbetaald && teruggeboekt === oudTeruggeboekt) return false
 
   const volledig = terugbetaald >= rij.bedrag_cent || teruggeboekt > 0
   const draaiNuTerug = volledig && !rij.reversed_at
-  const { data, error } = await billingDb
+  // Mislukt of geannuleerd na een volledige terugdraaiing door Mollie: het geld is er toch, de factuur is weer betaald.
+  // Een met de hand gezette terugdraaiing (bedragen 0) blijft staan.
+  const wasVolledig = oudTerugbetaald >= rij.bedrag_cent || oudTeruggeboekt > 0
+  const herstel = !volledig && wasVolledig && !!rij.reversed_at
+  const gedaald = terugbetaald < oudTerugbetaald || teruggeboekt < oudTeruggeboekt
+
+  const schrijf = (extra: Record<string, unknown>) => billingDb
     .from('arnobot_team_facturen')
-    .update({
-      terugbetaald_cent: terugbetaald,
-      teruggeboekt_cent: teruggeboekt,
-      ...(draaiNuTerug ? { status: 'refunded', reversed_at: nuIso() } : {}),
-      updated_at: nuIso(),
-    })
+    .update({ terugbetaald_cent: terugbetaald, teruggeboekt_cent: teruggeboekt, ...extra, updated_at: nuIso() })
     .eq('id', rij.id)
     // Alleen als niemand ons voor was: zo komt elke verandering één keer binnen.
     .eq('terugbetaald_cent', oudTerugbetaald)
     .eq('teruggeboekt_cent', oudTeruggeboekt)
     .select('id')
+
+  let { data, error } = await schrijf(
+    draaiNuTerug ? { status: 'refunded', reversed_at: nuIso() } : herstel ? { status: 'paid', reversed_at: null } : {},
+  )
+  // 23505: er is intussen een vervangende factuur voor deze periode. Dan alleen de bedragen vastleggen.
+  const vervangen = herstel && (error as { code?: string } | null)?.code === '23505'
+  if (vervangen) ({ data, error } = await schrijf({}))
   if (error) throw new Error(`Terugbetaling teamfactuur niet vastgelegd: ${error.message}`)
   if ((data?.length ?? 0) !== 1) return false
 
-  const wat = teruggeboekt > oudTeruggeboekt
-    ? 'CHARGEBACK op een teamfactuur'
-    : teruggeboekt < oudTeruggeboekt
-      ? 'Terugboeking op een teamfactuur is door Mollie teruggedraaid'
-      : volledig ? 'Teamfactuur volledig terugbetaald' : 'Teamfactuur gedeeltelijk terugbetaald'
-  const actie = teruggeboekt < oudTeruggeboekt
-    ? 'De factuur blijft op teruggedraaid staan. Controleer dit met de hand.'
-    : volledig
+  let wat: string
+  let actie: string
+  if (gedaald) {
+    wat = 'Terugbetaling of terugboeking op een teamfactuur is niet doorgegaan'
+    actie = vervangen
+      ? 'Er is al een vervangende factuur voor deze periode, dus deze blijft op teruggedraaid. Controleer of er niet dubbel is gefactureerd.'
+      : herstel
+        ? 'De factuur staat weer op betaald. Had je al een creditnota gemaakt, draai die dan terug.'
+        : 'Controleer in Mollie wat er nu terug is en of je creditnota nog klopt.'
+  } else {
+    wat = teruggeboekt > oudTeruggeboekt ? 'CHARGEBACK op een teamfactuur' : volledig ? 'Teamfactuur volledig terugbetaald' : 'Teamfactuur gedeeltelijk terugbetaald'
+    actie = volledig
       ? 'De factuur staat op teruggedraaid. De toegang van het team is niet veranderd. Maak de creditnota met de hand in Moneybird en beslis zelf over blokkeren.'
       : 'Maak de creditnota voor dit deel met de hand in Moneybird.'
+  }
   await notifyTelegram(`${wat} (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nTerugbetaald: ${formatEuro(terugbetaald)}\nTeruggeboekt: ${formatEuro(teruggeboekt)}\n${actie}`)
   return true
 }
@@ -123,9 +149,12 @@ export async function controleerBetaaldeTeamFacturen(nu: Date): Promise<{ gecont
   return uit
 }
 
-export type HandmatigResultaat = { ok: true; teamId: string; bedragCent: number; waarschuwing?: string } | { ok: false; status: number; fout: string }
+export type HandmatigResultaat =
+  | { ok: true; teamId: string; bedragCent: number; waarschuwing?: string }
+  /** alViaMollie: de betaallink waarop al betaald blijkt te zijn; de aanroeper laat die betaling verwerken. */
+  | { ok: false; status: number; fout: string; alViaMollie?: string }
 
-const MIGRATIE_FOUT = 'Opslaan mislukt. Is docs/sql/2026-11-25-referral-teambetalingen.sql al uitgevoerd?'
+const opslaanFout = (e: { message: string }) => `Opslaan mislukt: ${e.message}`
 
 async function leesFactuur(factuurId: string): Promise<TeamFactuurRow | null> {
   const { data } = await billingDb.from('arnobot_team_facturen').select('*').eq('id', factuurId).maybeSingle<TeamFactuurRow>()
@@ -137,6 +166,23 @@ export async function zetBetaaldPerBank(factuurId: string, betaaldOp: Date): Pro
   const rij = await leesFactuur(factuurId)
   if (!rij) return { ok: false, status: 404, fout: 'Factuur niet gevonden' }
   if (!['open', 'overdue', 'expired'].includes(rij.status)) return { ok: false, status: 409, fout: 'Deze factuur staat niet open' }
+  if (rij.created_at && betaaldOp.toISOString().slice(0, 10) < rij.created_at.slice(0, 10)) {
+    return { ok: false, status: 400, fout: 'De betaaldatum ligt vóór de factuurdatum' }
+  }
+
+  // Eerst bij Mollie kijken: is er al via de link betaald (gemiste melding), dan is dit geen bankbetaling.
+  if (rij.mollie_payment_link_id) {
+    let betalingen: MolliePayment[]
+    try {
+      betalingen = await lijstBetaalLinkBetalingen(rij.mollie_payment_link_id)
+    } catch (e) {
+      Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie-betaallink' }, extra: { factuurId: rij.id } })
+      return { ok: false, status: 502, fout: 'Mollie is nu niet te controleren. Probeer het later opnieuw.' }
+    }
+    if (betalingen.some(staatNog)) {
+      return { ok: false, status: 409, fout: 'Deze factuur is al via de Mollie-betaallink betaald. Die betaling wordt nu verwerkt, ververs de pagina.', alViaMollie: rij.mollie_payment_link_id }
+    }
+  }
 
   const { data, error } = await billingDb
     .from('arnobot_team_facturen')
@@ -144,7 +190,7 @@ export async function zetBetaaldPerBank(factuurId: string, betaaldOp: Date): Pro
     .eq('id', rij.id)
     .eq('status', rij.status)
     .select('id')
-  if (error) return { ok: false, status: 500, fout: MIGRATIE_FOUT }
+  if (error) return { ok: false, status: 500, fout: opslaanFout(error) }
   if ((data?.length ?? 0) !== 1) return { ok: false, status: 409, fout: 'De factuur is net gewijzigd. Ververs de pagina.' }
 
   await ontblokkeerNaBetaling(rij.team_id, nuIso().slice(0, 10))
@@ -173,7 +219,7 @@ export async function zetTeruggedraaid(factuurId: string): Promise<HandmatigResu
     .eq('id', rij.id)
     .eq('status', 'paid')
     .select('id')
-  if (error) return { ok: false, status: 500, fout: MIGRATIE_FOUT }
+  if (error) return { ok: false, status: 500, fout: opslaanFout(error) }
   if ((data?.length ?? 0) !== 1) return { ok: false, status: 409, fout: 'De factuur is net gewijzigd. Ververs de pagina.' }
   return { ok: true, teamId: rij.team_id, bedragCent: rij.bedrag_cent }
 }

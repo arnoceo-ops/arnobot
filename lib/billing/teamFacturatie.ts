@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb } from './db'
 import { mollieNaarCenten } from './geld'
 import { betaaldeBetalingVanLink, lijstBetaalLinkBetalingen, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
-import { legBetaalwijzeVast, verwerkTeamNaBetaling } from './teamBetalingen'
+import { legBetaalwijzeVast, terugBijMollie, verwerkTeamNaBetaling } from './teamBetalingen'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -178,6 +178,35 @@ async function verkrijgMollieEnMoneybirdKlant(team: TeamRow): Promise<{ mollieKl
   return { mollieKlantId, contactId, voornaam: manager.voornaam }
 }
 
+export type TeamFactuurUitkomst = { ok: true } | { ok: false; reden: 'bestond_al' | 'niet_aangemaakt' | 'niet_afgerond' }
+
+/** Zet de volgende factuurdatum vooruit. Mislukt dat, dan botst de volgende run op de unieke index en herstelt hij het alsnog. */
+async function zetVolgendeFactuurdatum(teamId: string, datum: string): Promise<void> {
+  const { error } = await billingDb.from('arnobot_teams').update({ volgende_factuurdatum: datum }).eq('id', teamId)
+  if (error) Sentry.captureException(new Error(error.message), { tags: { onderdeel: 'team-facturatie-datum' }, extra: { teamId } })
+}
+
+/**
+ * Er staat al een reguliere factuur voor deze periode (unieke index), bijvoorbeeld na een afgebroken run of een
+ * teruggezette factuurdatum. De datum schuift door naar het einde van die factuur, anders komt er nooit meer een volgende.
+ */
+async function herstelNaBestaandeFactuur(team: TeamRow, periodeStart: string): Promise<boolean> {
+  const { data } = await billingDb
+    .from('arnobot_team_facturen')
+    .select('id, periode_einde, mollie_payment_link_url')
+    .eq('team_id', team.id)
+    .eq('periode_start', periodeStart)
+    .eq('soort', 'regulier')
+    .in('status', ['open', 'paid', 'overdue'])
+    .limit(1)
+    .returns<{ id: string; periode_einde: string; mollie_payment_link_url: string | null }[]>()
+  const bestaand = data?.[0]
+  if (!bestaand) return false
+  await zetVolgendeFactuurdatum(team.id, bestaand.periode_einde)
+  await notifyTelegram(`Teamfactuur bestond al op arno.bot\n\nTeam: ${team.name}\nPeriode vanaf ${periodeStart} had al factuur ${bestaand.id}. Er is geen nieuwe gemaakt en de volgende factuurdatum staat nu op ${bestaand.periode_einde}.${bestaand.mollie_payment_link_url ? '' : '\nLET OP: die factuur heeft geen betaallink. Rond hem met de hand af.'}`)
+  return true
+}
+
 /** Maakt de factuurregel (arnobot_team_facturen), de Moneybird-factuur en de Mollie-betaallink. */
 export async function maakTeamFactuur(team: TeamRow, input: {
   soort: 'regulier' | 'tussentijds'
@@ -188,7 +217,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   btwCent: number
   /** Testteam: wel de Mollie-betaallink, geen Moneybird-factuur (geen nepfactuur in de echte administratie). */
   zonderBoekhouding?: boolean
-}): Promise<void> {
+}): Promise<TeamFactuurUitkomst> {
   const brutoCent = input.nettoCent + input.btwCent
   const cyclus = team.cyclus ?? 'maandelijks'
 
@@ -208,10 +237,16 @@ export async function maakTeamFactuur(team: TeamRow, input: {
     .select('id')
     .single<{ id: string }>()
   if (error || !rij) {
+    const dubbel = (error as { code?: string } | null)?.code === '23505' && input.soort === 'regulier'
+    if (dubbel && (await herstelNaBestaandeFactuur(team, input.periodeStart.toISOString().slice(0, 10)))) return { ok: false, reden: 'bestond_al' }
     Sentry.captureException(error ?? new Error('insert arnobot_team_facturen mislukt'), { tags: { onderdeel: 'team-facturatie' } })
     await notifyTelegram(`Team-factuur aanmaken mislukt op arno.bot\n\nTeam: ${team.name}\nFout: ${error?.message}`)
-    return
+    return { ok: false, reden: 'niet_aangemaakt' }
   }
+
+  // Volgende cyclusdatum meteen vooruitzetten, vóór Mollie, Moneybird en de mail: breekt de functie daar af, dan mag de
+  // cron morgen niet opnieuw dezelfde periode factureren.
+  if (input.soort === 'regulier') await zetVolgendeFactuurdatum(team.id, input.periodeEinde.toISOString().slice(0, 10))
 
   try {
     const omschrijving = `ArnoBot Team${input.soort === 'tussentijds' ? ' (tussentijdse uitbreiding)' : ''} ${cyclus}`
@@ -224,10 +259,12 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       webhookUrl: `${SITE_URL}/api/webhooks/mollie-team?r=${rij.id}`,
       idempotencyKey: `teamfactuur-${rij.id}`,
     })
-    await billingDb
+    const { error: linkFout } = await billingDb
       .from('arnobot_team_facturen')
       .update({ mollie_payment_link_id: link.id, mollie_payment_link_url: link.url })
       .eq('id', rij.id)
+    // Zonder opgeslagen link kan een betaling nooit aan deze factuur worden gekoppeld.
+    if (linkFout) throw new Error(`betaallink niet opgeslagen: ${linkFout.message}`)
 
     if (factureringToegestaan() && !input.zonderBoekhouding) {
       const { contactId, voornaam } = await verkrijgMollieEnMoneybirdKlant(team)
@@ -268,16 +305,9 @@ export async function maakTeamFactuur(team: TeamRow, input: {
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' } })
     await notifyTelegram(`Team-factuur afronden mislukt op arno.bot\n\nTeam: ${team.name}\nFactuur-rij: ${rij.id}\nFout: ${e instanceof Error ? e.message : e}\nRond handmatig af.`)
+    return { ok: false, reden: 'niet_afgerond' }
   }
-
-  // Volgende cyclusdatum altijd meteen vooruitzetten bij een reguliere factuur, ongeacht of al
-  // betaald is: anders maakt de cron morgen een tweede factuur voor dezelfde periode.
-  if (input.soort === 'regulier') {
-    await billingDb
-      .from('arnobot_teams')
-      .update({ volgende_factuurdatum: input.periodeEinde.toISOString().slice(0, 10) })
-      .eq('id', team.id)
-  }
+  return { ok: true }
 }
 
 /**
@@ -285,9 +315,12 @@ export async function maakTeamFactuur(team: TeamRow, input: {
  * betaallink-id (pl_) uit de webhook, `hintRijId` het `?r=` uit onze eigen webhook-URL. Beide
  * worden alleen gebruikt om de factuur te vinden: de betaling zelf wordt altijd bij Mollie
  * bevestigd als betaald en als horend bij de betaallink van déze factuur.
- * Geeft true als deze aanroep een open factuur op betaald heeft gezet.
+ * 'betaald': deze aanroep zette een open factuur op betaald. 'terugbetaald': er was betaald, maar het geld is al terug.
+ * 'afwijkend': het bedrag klopt niet, er is niets verwerkt.
  */
-export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<boolean> {
+export type TeamBetalingUitkomst = 'betaald' | 'terugbetaald' | 'afwijkend' | 'niets'
+
+export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<TeamBetalingUitkomst> {
   let rij: TeamFactuurRow | null = null
   if (webhookId.startsWith('pl_')) {
     const { data } = await billingDb
@@ -304,30 +337,46 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
       .maybeSingle<TeamFactuurRow>()
     rij = data
   }
-  if (!rij || !rij.mollie_payment_link_id) return false
+  if (!rij || !rij.mollie_payment_link_id) return 'niets'
   // Al betaald of teruggedraaid: Mollie meldt zich dan voor een terugbetaling, terugboeking of tweede betaling.
   if (rij.status === 'paid' || rij.status === 'refunded') {
     // Zonder de migratie bestaan de kolommen nog niet en valt er niets vast te leggen.
-    if (rij.terugbetaald_cent === undefined) return false
+    if (rij.terugbetaald_cent === undefined) return 'niets'
     await verwerkTeamNaBetaling(rij, await lijstBetaalLinkBetalingen(rij.mollie_payment_link_id))
-    return false
+    return 'niets'
   }
 
   const mp = await betaaldeBetalingVanLink(rij.mollie_payment_link_id, webhookId)
-  if (!mp) return false
+  if (!mp) return 'niets'
   if (mollieNaarCenten(mp.amount.value) !== rij.bedrag_cent) {
     Sentry.captureMessage('Team-betaling met afwijkend bedrag genegeerd', { level: 'error', tags: { onderdeel: 'team-facturatie' }, extra: { factuurId: rij.id, betaling: mp.id } })
-    return false
+    return 'afwijkend'
   }
 
   const betaaldOp = mp.paidAt ? new Date(mp.paidAt) : new Date()
+  // Al volledig terugbetaald of teruggeboekt voordat wij de betaling zagen: dat is geen betaalde factuur en heft niets op.
+  const terug = terugBijMollie(mp)
+  if (terug.terugbetaald >= rij.bedrag_cent || terug.teruggeboekt > 0) {
+    const nu = new Date().toISOString()
+    const { data: gedraaid } = await billingDb
+      .from('arnobot_team_facturen')
+      .update({ status: 'refunded', betaald_at: betaaldOp.toISOString(), reversed_at: nu, terugbetaald_cent: terug.terugbetaald, teruggeboekt_cent: terug.teruggeboekt, updated_at: nu })
+      .eq('id', rij.id)
+      .eq('status', 'open')
+      .select('id')
+    if ((gedraaid?.length ?? 0) !== 1) return 'niets'
+    await legBetaalwijzeVast(rij.id, mp.id)
+    await notifyTelegram(`Teamfactuur betaald en meteen weer teruggedraaid (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nDe factuur staat op teruggedraaid. De toegang van het team is niet veranderd. Regel de creditnota en beslis zelf over blokkeren.`)
+    return 'terugbetaald'
+  }
+
   const { data: geclaimd } = await billingDb
     .from('arnobot_team_facturen')
     .update({ status: 'paid', betaald_at: betaaldOp.toISOString(), updated_at: new Date().toISOString() })
     .eq('id', rij.id)
     .eq('status', 'open')
     .select('id')
-  if ((geclaimd?.length ?? 0) !== 1) return false // al verwerkt door een parallelle aanroep
+  if ((geclaimd?.length ?? 0) !== 1) return 'niets' // al verwerkt door een parallelle aanroep
   await legBetaalwijzeVast(rij.id, mp.id)
 
   if (rij.moneybird_factuur_id && moneybirdIngeschakeld() && process.env.MONEYBIRD_BETALING_REGISTREREN === 'true') {
@@ -343,15 +392,16 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
   await ontblokkeerNaBetaling(rij.team_id, new Date().toISOString().slice(0, 10))
 
   await notifyTelegram(`Team-factuur betaald op arno.bot\n\nFactuur: ${rij.id}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}`)
-  return true
+  return 'betaald'
 }
 
 /**
  * Vangnet voor een gemiste webhook: vraagt voor elke open factuur bij Mollie of er al betaald is. Draait in de cron
  * vóór de herinnering en de blokkade, zodat een betaalde klant die nooit krijgt.
  */
-export async function haalGemisteTeamBetalingenIn(): Promise<{ ingehaald: number; fouten: number }> {
-  const uit = { ingehaald: 0, fouten: 0 }
+export async function haalGemisteTeamBetalingenIn(): Promise<{ ingehaald: number; fouten: number; nietGecontroleerd: string[]; afwijkend: string[] }> {
+  // Voor een factuur in nietGecontroleerd of afwijkend weten we niet of er betaald is: daar volgt geen herinnering of blokkade.
+  const uit = { ingehaald: 0, fouten: 0, nietGecontroleerd: [] as string[], afwijkend: [] as string[] }
   const { data, error } = await billingDb
     .from('arnobot_team_facturen')
     .select('id, team_id, mollie_payment_link_id')
@@ -362,9 +412,12 @@ export async function haalGemisteTeamBetalingenIn(): Promise<{ ingehaald: number
 
   for (const rij of (data ?? []).filter(r => !(TEST_TEAM_IDS as readonly string[]).includes(r.team_id))) {
     try {
-      if (await verwerkTeamBetaling(rij.mollie_payment_link_id!, null)) uit.ingehaald++
+      const uitkomst = await verwerkTeamBetaling(rij.mollie_payment_link_id!, null)
+      if (uitkomst === 'betaald') uit.ingehaald++
+      if (uitkomst === 'afwijkend') uit.afwijkend.push(rij.id)
     } catch (e) {
       uit.fouten++
+      uit.nietGecontroleerd.push(rij.id)
       Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie-inhalen' }, extra: { factuurId: rij.id } })
     }
   }

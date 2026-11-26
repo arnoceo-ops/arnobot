@@ -117,7 +117,47 @@ describe('dagelijkse nacontrole', () => {
   })
 })
 
+describe('terugdraaiing die niet doorgaat', () => {
+  const gedraaid = (extra: Rij) => factuur({ status: 'refunded', reversed_at: '2026-11-22T10:00:00.000Z', ...extra })
+  it('geannuleerde terugbetaling: factuur weer betaald, geen advies voor een creditnota', async () => {
+    h.rijen = [gedraaid({ terugbetaald_cent: 29645 })]
+    await verwerk(betaling())
+    expect(h.rijen[0]).toMatchObject({ status: 'paid', reversed_at: null, terugbetaald_cent: 0 })
+    expect(h.tg.mock.calls[0][0]).toContain('niet doorgegaan')
+    expect(h.tg.mock.calls[0][0]).not.toContain('Maak de creditnota')
+  })
+  it('door Mollie teruggedraaide chargeback: factuur weer betaald', async () => {
+    h.rijen = [gedraaid({ teruggeboekt_cent: 29645 })]
+    await verwerk(betaling())
+    expect(h.rijen[0]).toMatchObject({ status: 'paid', teruggeboekt_cent: 0 })
+  })
+  it('met de hand teruggedraaid blijft teruggedraaid', async () => {
+    h.rijen = [gedraaid({})]
+    await verwerk(betaling())
+    expect(h.rijen[0].status).toBe('refunded')
+    expect(h.tg).not.toHaveBeenCalled()
+  })
+})
+
 describe('adminacties', () => {
+  beforeEach(() => { h.lijst.mockReset(); h.lijst.mockResolvedValue([]) })
+  it('betaald per bank terwijl er al via de link betaald is: weigeren en niets wijzigen', async () => {
+    h.rijen = [factuur({ status: 'open', paid_via: null })]
+    h.lijst.mockResolvedValue([betaling()])
+    expect(await zetBetaaldPerBank('f1', new Date())).toMatchObject({ ok: false, status: 409, alViaMollie: 'pl_1' })
+    expect(h.rijen[0].status).toBe('open')
+    expect(h.archiveer).not.toHaveBeenCalled()
+  })
+  it('betaald per bank als Mollie niet te controleren is: weigeren', async () => {
+    h.rijen = [factuur({ status: 'open' })]
+    h.lijst.mockRejectedValue(new Error('mollie plat'))
+    expect(await zetBetaaldPerBank('f1', new Date())).toMatchObject({ ok: false, status: 502 })
+    expect(h.rijen[0].status).toBe('open')
+  })
+  it('betaaldatum vóór de factuurdatum wordt geweigerd', async () => {
+    h.rijen = [factuur({ status: 'open', created_at: '2026-11-20T05:10:00.000Z' })]
+    expect(await zetBetaaldPerBank('f1', new Date('2025-11-24T12:00:00Z'))).toMatchObject({ ok: false, status: 400 })
+  })
   it('betaald per bank: betaald, blokkade eraf, betaallink uit', async () => {
     h.rijen = [factuur({ status: 'open', paid_via: null, betaald_at: null })]
     const uit = await zetBetaaldPerBank('f1', new Date('2026-11-24T12:00:00Z'))

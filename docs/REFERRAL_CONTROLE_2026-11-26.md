@@ -27,6 +27,11 @@ Vijf agents zonder voorgeschiedenis (teambetalingen, grootboek, individuele beta
 
 Klein (agent): tweede proefperiode (herstart) opent de kortingstermijn opnieuw; verlengen met een klik toont geen bedrag; dubbele checkout geeft twee betalingen; factuuromschrijving leidt de korting af uit de huidige prijs; chargebackmelding gaat verloren als Telegram faalt; tweede betaling op een via Mollie betaalde teamfactuur wordt niet gemeld; betaaldOp heeft geen ondergrens; referral-insert in proxy.ts niet op fouten gecontroleerd; kolomtype van arnobot_referrals.referred_discount staat niet in de repo (is het integer, dan mislukt het wegschrijven stil).
 
+### Voortgang ronde 1 (akkoord Arno 26-11)
+
+- **R2 t/m R6 hersteld op 26-11** (teamfacturen, met tests): geen herinnering of blokkade als Mollie niet te controleren is, bij een afwijkend bedrag of zonder betaallink; melding bij deelfouten; botsing met de unieke periode schuift de factuurdatum door (datum gaat nu direct na het aanmaken vooruit); het Teams-formulier stuurt de factuurdatum alleen mee als die is gewijzigd; BETAALD PER BANK controleert eerst Mollie; een niet doorgegane terugdraaiing zet de factuur weer op betaald; een al teruggedraaide betaling telt niet als betaald; opheffen van een blokkade niet bij een eigen blokkade (SQL docs/sql/2026-11-26-team-blokkade-handmatig.sql, nog door Arno uit te voeren) of zolang een andere factuur over de grens open staat. Nieuwe klanttekst, nog door Arno te beoordelen: de foutmelding bij zelf activeren als de factuur niet lukt. Niet opnieuw onafhankelijk gecontroleerd en niet in Mollie beproefd.
+- Open in ronde 1: R1, R7 t/m R16.
+
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**
 
 Uitkomsten "afwijzing" en "verval" zijn definitief.

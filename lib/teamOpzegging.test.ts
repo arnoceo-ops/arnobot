@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 type Rij = Record<string, unknown>
 const { db, notify, logActie } = vi.hoisted(() => ({
-  db: { arnobot_team_members: [] as Rij[], arnobot_teams: [] as Rij[], approved_users: [] as Rij[] },
+  db: { arnobot_team_members: [] as Rij[], arnobot_teams: [] as Rij[], approved_users: [] as Rij[], arnobot_team_facturen: [] as Rij[] },
   notify: vi.fn(),
   logActie: vi.fn(),
 }))
@@ -26,6 +26,7 @@ function bouwer(tabel: Tabel) {
   b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
   b.is = (k: string, v: null) => { filters.push(r => (r[k] ?? null) === v); return b }
   b.lte = (k: string, v: string) => { filters.push(r => r[k] != null && String(r[k]) <= v); return b }
+  b.lt = (k: string, v: string) => { filters.push(r => r[k] != null && String(r[k]) < v); return b }
   b.not = (k: string, o: string, v: unknown) => {
     if (o === 'is') filters.push(r => (r[k] ?? null) !== v)
     else if (o === 'in') { const ids = String(v).replace(/[()]/g, '').split(','); filters.push(r => !ids.includes(String(r[k]))) }
@@ -53,6 +54,7 @@ beforeEach(() => {
   db.arnobot_team_members = [{ user_id: 'm1', team_id: 't1', role: 'manager' }, { user_id: 'l1', team_id: 't1', role: 'member' }]
   db.arnobot_teams = [team()]
   db.approved_users = [{ user_id: 'm1', cancelled_at: '2026-11-15T10:00:00Z' }]
+  db.arnobot_team_facturen = []
   notify.mockReset(); logActie.mockReset()
 })
 
@@ -165,6 +167,27 @@ describe('ontblokkeerNaBetaling', () => {
     db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-15T00:00:00Z', stopt_op: '2026-12-15' })]
     expect(await ontblokkeerNaBetaling('t1', '2026-12-20')).toBe(false)
     expect(db.arnobot_teams[0].geblokkeerd_at).toBe('2026-12-15T00:00:00Z')
+  })
+  it('laat een blokkade die Arno zelf zette staan en meldt dat', async () => {
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z', geblokkeerd_handmatig: true })]
+    expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(false)
+    expect(db.arnobot_teams[0].geblokkeerd_at).toBe('2026-12-01T00:00:00Z')
+    expect(notify).toHaveBeenCalledTimes(1)
+  })
+  it('laat de blokkade staan zolang een andere factuur over de grens open staat', async () => {
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
+    db.arnobot_team_facturen = [{ id: 'oud', team_id: 't1', status: 'open', created_at: '2026-10-01T05:10:00Z' }]
+    expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(false)
+    expect(db.arnobot_teams[0].geblokkeerd_at).toBe('2026-12-01T00:00:00Z')
+  })
+  it('een recente open factuur houdt het opheffen niet tegen, de grens is 44 dagen', async () => {
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
+    // 10-12 min 44 dagen is 27-10: een factuur van 28-10 is 43 dagen oud.
+    db.arnobot_team_facturen = [{ id: 'nieuw', team_id: 't1', status: 'open', created_at: '2026-10-28T05:10:00Z' }]
+    expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(true)
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
+    db.arnobot_team_facturen = [{ id: 'grens', team_id: 't1', status: 'open', created_at: '2026-10-27T05:10:00Z' }]
+    expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(false)
   })
   it('heft de blokkade wel op als de einddatum nog in de toekomst ligt', async () => {
     db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z', stopt_op: '2027-01-15' })]

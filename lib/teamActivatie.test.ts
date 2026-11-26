@@ -85,7 +85,7 @@ beforeEach(() => {
   for (const k of Object.keys(db)) delete db[k]
   notify.mockReset(); logActie.mockReset(); maakKlant.mockReset(); maakFactuur.mockReset()
   maakKlant.mockResolvedValue({ id: 'cst_1' })
-  maakFactuur.mockImplementation(async (team: Rij) => { db.arnobot_team_facturen.push({ team_id: team.id, status: 'open', bedrag_cent: 1, mollie_payment_link_url: 'https://pay.test/abc', created_at: new Date().toISOString() }) })
+  maakFactuur.mockImplementation(async (team: Rij) => { db.arnobot_team_facturen.push({ team_id: team.id, status: 'open', bedrag_cent: 1, mollie_payment_link_url: 'https://pay.test/abc', created_at: new Date().toISOString() }); return { ok: true } })
 })
 
 describe('valideerActivatie', () => {

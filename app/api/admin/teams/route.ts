@@ -85,6 +85,12 @@ export async function POST(req: NextRequest) {
       .maybeSingle<Record<string, unknown>>()
     const { error } = await supabase.from('arnobot_teams').update(teamUpdate).eq('id', teamId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (geblokkeerdAt !== undefined) {
+      // Los van de update hierboven: de kolom bestaat pas na docs/sql/2026-11-26-team-blokkade-handmatig.sql en zonder
+      // de migratie moet blokkeren gewoon blijven werken.
+      const { error: handmatigFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_handmatig: geblokkeerdAt !== null }).eq('id', teamId)
+      if (handmatigFout) console.error('[admin/teams] geblokkeerd_handmatig niet opgeslagen', handmatigFout.message)
+    }
     const oud: Record<string, unknown> = {}
     for (const k of Object.keys(teamUpdate)) oud[k] = oudTeam?.[k] ?? null
     await logAdminActie({ actie: 'team_instellingen', doelTeamId: String(teamId), details: { oud, nieuw: teamUpdate } })

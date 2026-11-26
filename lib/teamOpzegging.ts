@@ -113,13 +113,34 @@ export async function stopOpgezegdeTeams(vandaag: string, nu: Date = new Date())
   return gestopt
 }
 
+/** Zo veel dagen na de factuurdatum blokkeert de facturatiecron (14 dagen betaaltermijn plus 30 dagen). */
+export const BLOKKADE_NA_FACTUUR_DAGEN = 44
+
+async function meldBlokkadeBlijft(teamId: string, reden: string): Promise<false> {
+  await notifyTelegram(`Teamfactuur betaald, maar de blokkade blijft staan (arno.bot)\n\nTeam: ${teamId}\nReden: ${reden}\nHef de blokkade zelf op via Admin, Teams, als dat niet klopt.`)
+  return false
+}
+
 /**
- * Heft de blokkade van een team op na een betaling, behalve als het team is gestopt: een late betaling van een oude factuur
- * mag een opgezegd team niet weer openzetten. Geeft true als de blokkade is opgeheven.
+ * Heft de blokkade van een team op na een betaling. Niet als het team is gestopt (een late betaling zet een opgezegd team
+ * niet weer open), niet als Arno zelf heeft geblokkeerd en niet zolang een andere factuur ver genoeg over tijd openstaat.
+ * Bij een databasefout blijft de blokkade staan en volgt een melding. Geeft true als de blokkade is opgeheven.
  */
 export async function ontblokkeerNaBetaling(teamId: string, vandaag: string): Promise<boolean> {
-  const { data } = await supabase.from('arnobot_teams').select('stopt_op').eq('id', teamId).maybeSingle<{ stopt_op: string | null }>()
+  // Alle kolommen: geblokkeerd_handmatig bestaat pas na docs/sql/2026-11-26-team-blokkade-handmatig.sql.
+  const { data, error } = await supabase.from('arnobot_teams').select('*').eq('id', teamId)
+    .maybeSingle<{ stopt_op: string | null; geblokkeerd_at: string | null; geblokkeerd_handmatig?: boolean | null }>()
+  if (error) return meldBlokkadeBlijft(teamId, `het team is niet op te zoeken (${error.message})`)
   if (data?.stopt_op && data.stopt_op <= vandaag) return false
-  await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', teamId)
+  if (!data?.geblokkeerd_at) return true
+  if (data.geblokkeerd_handmatig) return meldBlokkadeBlijft(teamId, 'je hebt dit team zelf geblokkeerd')
+
+  const grens = new Date(Date.parse(`${vandaag}T00:00:00.000Z`) - (BLOKKADE_NA_FACTUUR_DAGEN - 1) * DAG).toISOString()
+  const { data: teLaat, error: factuurFout } = await supabase.from('arnobot_team_facturen').select('id').eq('team_id', teamId).eq('status', 'open').lt('created_at', grens)
+  if (factuurFout) return meldBlokkadeBlijft(teamId, `de open facturen zijn niet op te zoeken (${factuurFout.message})`)
+  if (teLaat?.length) return meldBlokkadeBlijft(teamId, 'er staat nog een andere factuur open die over de blokkadegrens is')
+
+  const { error: updateFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', teamId)
+  if (updateFout) return meldBlokkadeBlijft(teamId, `opheffen mislukt (${updateFout.message})`)
   return true
 }
