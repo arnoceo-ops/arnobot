@@ -63,7 +63,7 @@ function AuthPage({ onLinkedIn, error, uitnodiger }: { onLinkedIn: () => void; e
           </div>
           {uitnodiger && (
             <p style={{ fontSize: 14, color: '#f1f5f9', textAlign: 'center', lineHeight: 1.8 }}>
-              {uitnodiger} nodigt je uit. 30 dagen gratis, daarna bij een abonnement korting op je eerste jaar of je vierde maand gratis. Je voordeel geldt als je betaalt binnen je proef of 15 dagen erna.
+              {uitnodiger} nodigt je uit. 30 dagen gratis, daarna bij een abonnement korting op je eerste jaar of je vierde maand gratis. Je voordeel geldt als je betaalt binnen je proef of 15 dagen erna (teamproef: 10).
             </p>
           )}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
