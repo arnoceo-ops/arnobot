@@ -63,9 +63,20 @@ Met tests; typecontrole en 1451 tests groen. Niet onafhankelijk gecontroleerd en
 - **H2:** automatische blokkades (facturatie, teamproef, gestopt team) zetten geblokkeerd_handmatig op false; proef verlengen en activeren ook; de adminroute schrijft blokkade en kenmerk in een keer. Zelf activeren van een team dat Arno zelf blokkeerde wordt geweigerd (bestaande tekst) met een Telegram-melding.
 - **H3:** nieuwe kolom bezorgd_at, gezet na verzending door Moneybird, of bij geen Moneybird na onze eigen mail met de betaallink. Zonder dat vinkje geen herinnering of blokkade, en zo'n factuur houdt een blokkade ook niet vast. Gekozen: een eigen kolom. Verworpen: de betaallink wissen bij een mislukte verzending, want de manager ziet die link op zijn accountpagina en kan er dan niet meer betalen. Geen vulling van oude rijen (er stond niets open; de SQL toont het als dat wel zo is). Een factuur die Arno met de hand alsnog stuurt krijgt geen automatische herinnering.
 - **H4:** zelf omzetten naar zakelijk is ook geblokkeerd bij een open of lopende upgradebetaling; alleen mislukt, geannuleerd of verlopen telt niet. Omgekeerde volgorde meegenomen: wordt een al gestarte correctie betaald na een upgrade, dan maakt de app geen creditnota en factuur en meldt hij handwerk. Het abonnement wordt in dat geval wel op zakelijk gezet.
-- **H5:** het signaal staat nu na toegang, mail en factuur, en elke Telegram-melding in de hele app heeft een tijdslimiet van 8 seconden.
+- **H5:** het signaal staat nu na toegang, mail en factuur, en meldingen via notifyTelegram (waaronder alle meldingen in de betaalverwerking) hebben een tijdslimiet van 8 seconden.
 - **H6:** geen "dubbel betaald" meer na een chargeback; de herstelmelding noemt de blokkade; signalen zwijgen als de jaarkorting al is gebruikt (referred_discount) en na een eerdere reeks van drie; de opzegzin staat niet meer bij een gewoon teamlid (accountpagina, opzegmail en betaalmails); herhaalmeldingen over teamfacturen komen hooguit eens per week; de cronlus sluit alle testteams uit. Beperking: een met de hand gegeven voordeel (bankoverschrijving) wordt nergens vastgelegd.
 - **H7:** het Uitgangspunt in het plan is bijgewerkt. De vier klantteksten zijn door Arno goedgekeurd en doorgevoerd (spelregels 1.9).
+
+### Hercontrole van H1 t/m H7 door een nieuwe agent (26-11)
+
+Geen blokkerende bevindingen. H1 t/m H5 en H7 opgelost, H6 deels (N1).
+
+- **N1 (ernstig, ontstaan door H6), hersteld:** na het terugdraaien van een eerste betaling met referral fee bleef het voordeel als gebruikt staan. referred_discount gaat nu terug naar 0.
+- **N2, hersteld in de tekst:** alleen notifyTelegram heeft de tijdslimiet. Directe Telegram-aanroepen elders (proxy.ts, team-aanvraag, chat, dashboard, drie crons, twee webhooks of rapportroutes, adminknop) niet; die zitten niet in de betaalverwerking en zijn niet gewijzigd.
+- **N3, hersteld:** een mislukte query naar opgezegde teams stopt nu de facturatiecron, anders kon een opgezegd team nog een factuur krijgen.
+- **N4, hersteld:** opheffen na betaling en zelf activeren schrijven alleen als er intussen geen eigen blokkade is gezet. Het or-filter bij activeren is niet tegen de echte database beproefd.
+- **N5, open, bestond al:** zelf omzetten naar zakelijk blokkeert niet bij een geplande overstap zonder upgraderij; gepland_bedrag_cent en gepland_btw_cent blijven dan particulier (vastgesteld door de agent). Vermoeden van de agent, niet beproefd: het bedrag van het lopende Mollie-abonnement wordt bij een correctie nooit aangepast.
+- **Testdekking:** toegevoegd voor de Moneybird-route van H3 en voor N4. Nog niet gedekt: de webhook met 500, de nieuwe cronfouten, het testteamfilter, de opzegzin in mails, de volgorde van het signaal, N1 en N3.
 
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 

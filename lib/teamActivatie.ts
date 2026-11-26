@@ -175,6 +175,8 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
     .update({ min_seats: invoer.seats, cyclus: invoer.cyclus, volgende_factuurdatum: vandaag, geblokkeerd_at: null, geblokkeerd_handmatig: false })
     .eq('id', stand.teamId)
     .is('min_seats', null)
+    // Ook hier: een eigen blokkade die tijdens het activeren is gezet blijft staan.
+    .or('geblokkeerd_at.is.null,geblokkeerd_handmatig.is.null,geblokkeerd_handmatig.eq.false')
     .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
     .returns<TeamRow[]>()
   if (claimFout) return { ok: false, status: 500, fout: 'Team activeren mislukt' }

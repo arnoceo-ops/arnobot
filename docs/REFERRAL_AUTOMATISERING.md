@@ -3,7 +3,7 @@
 ## Statusblok
 
 - **Laatst bijgewerkt:** 2026-11-26
-- **Eerstvolgende stap (26-11, gaat vóór de oudere regels hieronder):** H1 t/m H6 uit docs/REFERRAL_CONTROLE_2026-11-26.md zijn hersteld. De SQL is uitgevoerd en de teksten van H7 staan live (spelregels 1.9). Open: (1) gerichte hercontrole door een nieuwe agent, (2) daarna ronde 2 (grootboek).
+- **Eerstvolgende stap (26-11, gaat vóór de oudere regels hieronder):** H1 t/m H6 uit docs/REFERRAL_CONTROLE_2026-11-26.md zijn hersteld. De SQL is uitgevoerd en de teksten van H7 staan live (spelregels 1.9). De hercontrole is geweest (zie het controledocument); N1 t/m N4 zijn afgehandeld. Open: (1) besluit Arno over N5, (2) daarna ronde 2 (grootboek).
 - **Waar we staan:** bouw loopt. De regels van 25-11 zijn goedgekeurd, het plan is door een onafhankelijke controle gegaan (zie "Controle 25-11"). Automatisch toekennen en verrekenen werkt nog niet. In de database stond op 25-11 een referral (status signed_up) en geen gebruiker met tegoed boven nul.
 - **Gebouwd op 25-11:** (1) oude koppelroute verwijderd (B5, deels); (2) B1 en B2: lib/billing/terugbetaling.ts bepaalt op een plek wat volledig terugbetaald is, verrekend tegoed beeindigt nooit een abonnement, admin-terugbetaling en herroeping storten alleen het restant, creditnota is dan handwerk met melding; (3) de regels als rekenlaag met tests, lib/billing/referralRegels.ts (verplaatst geen geld); (4) docs/sql/2026-11-25-referral-fundament.sql, door Arno uitgevoerd en bevestigd (6 kolommen en 1 index); (5) B4: elke eerste en herhaalbetaling legt plan, cyclus, klanttype en periode vast in arnobot_payments. Betalingen van voor 25-11 hebben die niet (alleen een eerste betaling van een aanbrenger, geen van een aangebrachte klant).
 - **Gebouwd op 25-11 (betaalpagina):** referral fee van een twaalfde op de eerste jaarbetaling van een individuele aangebrachte klant (lib/billing/referralKorting.ts, checkout, betaalpagina, factuur- en Mollie-omschrijving, referred_discount bij betaling). Abonnement houdt de volle prijs. Zelf omzetten naar zakelijk is dan geblokkeerd (mail). Term in alle klantteksten: "referral fee" (Arno, vervangt "uitnodigingskorting"). Nog niet: team per jaar, de gratis vierde maand, wisselen van maand naar jaar via overstappen.
@@ -29,7 +29,7 @@
 
 ## Uitgangspunt
 
-Gegeven zijn de regels van 25-11 hieronder en de spelregels op `app/referrals/page.tsx` (versie 1.8): tegoed ook bij Basic per jaar, het laagste van beide maandprijzen zonder btw, verrekening bij verlenging, geen uitbetaling, en het tegoed vervalt 14 dagen na het einde van het abonnement van de aanbrenger. Het tegoed is nu handwerk: `referral_credit` op `approved_users` wordt nergens in de code opgehoogd, alleen uitgelezen. Geen Mollie- of Moneybird-gedrag is aangenomen zonder het in code of in de docs te zien; wat niet is gezien staat hierboven als onverifieerd.
+Gegeven zijn de regels van 25-11 hieronder en de spelregels op `app/referrals/page.tsx` (versie 1.9): tegoed ook bij Basic per jaar, het laagste van beide maandprijzen zonder btw, verrekening bij verlenging, geen uitbetaling, en het tegoed vervalt 14 dagen na het einde van het abonnement van de aanbrenger. Het tegoed is nu handwerk: `referral_credit` op `approved_users` wordt nergens in de code opgehoogd, alleen uitgelezen. Geen Mollie- of Moneybird-gedrag is aangenomen zonder het in code of in de docs te zien; wat niet is gezien staat hierboven als onverifieerd.
 
 ## Regels per 25-11 (Arno), deze gaan vóór oudere tekst in dit document en in de spelregels
 

@@ -455,6 +455,14 @@ async function verwerkVolledigeTerugbetaling(
     await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}`)
     return
   }
+  // Gaat de eerste betaling met referral fee terug, dan is het voordeel niet gebruikt: hij mag opnieuw.
+  if (rij.soort === 'eerste' && rij.bedrag_cent < sub.bedrag_cent) {
+    const { error: feeFout } = await billingDb.from('arnobot_referrals').update({ referred_discount: 0 }).eq('referred_user_id', sub.user_id)
+    if (feeFout) {
+      Sentry.captureException(new Error(feeFout.message), { tags: { onderdeel: 'billing-referral-fee' }, extra: { userId: sub.user_id } })
+      await notifyTelegram(`Referral fee niet teruggezet na een terugbetaling op arno.bot\n\nUser: ${sub.user_id}\nDe signalen denken nu dat het voordeel gebruikt is. Zet arnobot_referrals.referred_discount op 0.`)
+    }
+  }
   await stopMollieAbonnement(sub)
   await billingDb
     .from('arnobot_subscriptions')

@@ -94,13 +94,15 @@ export async function trekTeamOpzeggingIn(userId: string, nu: Date = new Date())
  * Geeft de namen van de teams die nu zijn gestopt.
  */
 export async function stopOpgezegdeTeams(vandaag: string, nu: Date = new Date()): Promise<string[]> {
-  const { data: teams } = await supabase
+  const { data: teams, error: teamsFout } = await supabase
     .from('arnobot_teams')
     .select(KOLOMMEN)
     .not('stopt_op', 'is', null)
     .lte('stopt_op', vandaag)
     .not('id', 'in', TEST_TEAM_IDS_IN)
     .returns<TeamRij[]>()
+  // Stil doorgaan zou een opgezegd team nog een factuur geven.
+  if (teamsFout) throw new Error(`opgezegde teams ophalen mislukt: ${teamsFout.message}`)
   const gestopt: string[] = []
   for (const team of teams ?? []) {
     if (team.geblokkeerd_at && !team.volgende_factuurdatum) continue // al gestopt
@@ -145,7 +147,9 @@ export async function ontblokkeerNaBetaling(teamId: string, vandaag: string): Pr
   // kolom (undefined) telt elke open factuur.
   if (teLaat?.some(f => f.bezorgd_at !== null)) return meldBlokkadeBlijft(teamId, 'er staat nog een andere factuur open die over de blokkadegrens is')
 
-  const { error: updateFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', teamId)
+  // De voorwaarde dekt een eigen blokkade die tussen het lezen en dit schrijven is gezet.
+  const { data: opgeheven, error: updateFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', teamId).not('geblokkeerd_handmatig', 'is', true).select('id')
   if (updateFout) return meldBlokkadeBlijft(teamId, `opheffen mislukt (${updateFout.message})`)
+  if (!opgeheven?.length) return meldBlokkadeBlijft(teamId, 'het team is intussen met de hand geblokkeerd')
   return true
 }

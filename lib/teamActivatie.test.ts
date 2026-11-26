@@ -39,6 +39,7 @@ function bouwer(tabel: string) {
   const b: Record<string, unknown> = {}
   b.select = (_k?: string, o?: { head?: boolean }) => { head = !!o?.head; return b }
   b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
+  b.or = () => { filters.push(r => (r.geblokkeerd_at ?? null) === null || !r.geblokkeerd_handmatig); return b }
   b.is = (k: string, v: null) => { filters.push(r => (r[k] ?? null) === v); return b }
   b.in = (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return b }
   b.order = (k: string) => { volgorde = k; return b }
@@ -181,6 +182,14 @@ describe('activeerTeam', () => {
     expect(db.arnobot_teams[0].geblokkeerd_at).toBeTruthy()
     expect(maakFactuur).not.toHaveBeenCalled()
     expect(notify).toHaveBeenCalledOnce()
+  })
+
+  it('een eigen blokkade die tijdens het activeren wordt gezet blijft staan', async () => {
+    zet()
+    maakKlant.mockImplementation(async () => { Object.assign(db.arnobot_teams[0], { geblokkeerd_at: dagenGeleden(0), geblokkeerd_handmatig: true }); return { id: 'cst_1' } })
+    expect(await activeerTeam('m1', await invoer())).toMatchObject({ ok: false, status: 409 })
+    expect(db.arnobot_teams[0]).toMatchObject({ min_seats: null, geblokkeerd_handmatig: true })
+    expect(maakFactuur).not.toHaveBeenCalled()
   })
 
   it('een tweede aanroep na de eerste wordt door de standcontrole geweigerd', async () => {

@@ -158,6 +158,17 @@ describe('stopOpgezegdeTeams', () => {
 })
 
 describe('ontblokkeerNaBetaling', () => {
+  it('een eigen blokkade die tussen lezen en schrijven wordt gezet blijft staan', async () => {
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
+    // De factuurcontrole zit tussen lezen en schrijven: daar blokkeert Arno.
+    Object.defineProperty(db, 'arnobot_team_facturen', { configurable: true, get: () => { db.arnobot_teams[0].geblokkeerd_handmatig = true; return [] }, set: () => {} })
+    try {
+      expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(false)
+      expect(db.arnobot_teams[0].geblokkeerd_at).toBe('2026-12-01T00:00:00Z')
+    } finally {
+      Object.defineProperty(db, 'arnobot_team_facturen', { configurable: true, writable: true, enumerable: true, value: [] })
+    }
+  })
   it('heft de blokkade op na een betaling', async () => {
     db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
     expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(true)
