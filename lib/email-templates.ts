@@ -572,7 +572,7 @@ export function getEmailTemplate(
       const terug = 'Het gaat terug naar de rekening of kaart waarmee je betaalde. Het kan een paar werkdagen duren voordat je het ziet.'
       const tekst = {
         referral_voordeel: ['Je referral fee komt eraan', `We storten ${euro} aan je terug: je referral fee, ${options?.billing?.reden ?? 'jouw voordeel'}.<br><br>${terug}`],
-        referral_tegoed_toegekend: ['Je hebt referraltegoed', `Een klant die je aanbracht heeft de voorwaarden gehaald. ${euro ? `Je tegoed: ${euro} exclusief btw.` : 'Het bedrag volgt bij de eerste verrekening.'}<br><br>We verrekenen het bij je verlenging. Zie de ${spelregels}.`],
+        referral_tegoed_toegekend: ['Je hebt referraltegoed', `Een klant die je aanbracht heeft de voorwaarden gehaald. ${euro ? `Je tegoed: ${euro} exclusief btw.` : 'Het bedrag volgt bij de eerste verrekening.'}<br><br>Hoe we het verrekenen staat in de ${spelregels}.`],
         referral_tegoed_verrekend: ['Je referraltegoed is verrekend', `We storten ${euro} aan je terug: je referraltegoed, verrekend met je abonnement.<br><br>${terug}`],
         referral_tegoed_vervallen: ['Je referraltegoed is vervallen', `${euro ? `${euro} exclusief btw aan referraltegoed` : 'Referraltegoed'} is vervallen. Waarom dat kan staat in de ${spelregels}.`],
         referral_tegoed_teruggedraaid: ['Referraltegoed teruggedraaid', `De betaling van een klant die je aanbracht is teruggedraaid. Het bijbehorende tegoed${euro ? ` (${euro} exclusief btw)` : ''} vervalt.<br><br>Had je het al gebruikt, dan verrekenen we het met later tegoed. Zie de ${spelregels}.`],

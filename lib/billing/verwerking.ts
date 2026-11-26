@@ -451,7 +451,7 @@ async function verwerkVolledigeTerugbetaling(
   // Is er nu niets meer terug te betalen (alles was al referralgeld), dan gaat er geen mail met 0 euro uit. Voor een
   // bevestiging zonder bedrag is nog geen tekst vastgesteld; de eigenaar hoort dat de klant niets heeft gekregen.
   const geenMail = bedragVoorKlant === 0
-  const geenMailMelding = geenMail ? '\nEr is geen bevestigingsmail naar de klant gestuurd (bedrag 0, daarvoor is nog geen tekst vastgesteld).' : ''
+  const geenMailMelding = geenMail ? '\nBedrag 0: bij deze melding ging geen bevestigingsmail uit. Was het een herroeping, dan staat in die aparte melding of de klant een bevestiging kreeg.' : ''
   // Een terugbetaling van de upgradebetaling beëindigt het abonnement NIET: alleen de upgrade gaat terug.
   if (rij.soort === 'upgrade') {
     await zetUpgradeTerug(sub)

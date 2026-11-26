@@ -64,7 +64,7 @@ vi.mock('./moneybird', async origineel => {
 })
 
 import { maakKetenDb } from './referralNepKeten'
-import { creditAfboeken, creditReferentie, creditnotaStap, maakRestCreditnota, restReferentie } from './referralCreditnota'
+import { creditAfboeken, creditReferentie, creditnotaStap } from './referralCreditnota'
 
 const A = '11111111-1111-4111-8111-111111111111'
 const NU = new Date('2030-01-11T10:00:00.000Z')
@@ -252,39 +252,5 @@ describe('hervatten na een afgebroken run', () => {
     expect(await creditnotaStap(oud, NU)).toBe('handwerk')
     expect(h.mails).toEqual([])
     expect(creditnotas()).toHaveLength(1)
-  })
-})
-
-describe('creditnota voor het restant bij een volledige terugbetaling', () => {
-  const rest = (extra: Partial<Parameters<typeof maakRestCreditnota>[0]> = {}) =>
-    maakRestCreditnota({ factuurId: 'orig', betaalkenmerk: 'tr_x', brutoCent: 20900, zakelijk: false, nu: NU, ...extra })
-
-  it('precies het restant, eigen referentie, en een tweede aanroep maakt niets bij', async () => {
-    await rest()
-    await rest()
-    expect(creditnotas()).toMatchObject([{ state: 'open', reference: restReferentie('tr_x'), total_price_incl_tax: '-209.00' }])
-    expect(creditnotas()).toHaveLength(1)
-    expect(h.mails).toEqual([])
-  })
-  it('naast de creditnota van de uitkering zelf', async () => {
-    await draai()
-    await rest()
-    expect(creditnotas().map(f => f.total_price_incl_tax).sort()).toEqual(['-19.00', '-209.00'])
-  })
-  it('afgebroken bij het zetten van het bedrag: niet dubbel, een mens kijkt', async () => {
-    h.faal = { bij: 'zet', status: 500 }
-    await expect(rest()).rejects.toThrow()
-    await expect(rest()).rejects.toThrow('al een creditnota')
-    expect(creditnotas()).toHaveLength(1)
-  })
-  it('een onbekende creditnota op de factuur: niets maken', async () => {
-    h.facturen.push({ id: 'hand', state: 'open', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
-    await expect(rest()).rejects.toThrow('al een creditnota')
-    expect(creditnotas()).toHaveLength(1)
-  })
-  it('zakelijk wordt een keer gemaild', async () => {
-    await rest({ zakelijk: true })
-    await rest({ zakelijk: true })
-    expect(h.mails).toHaveLength(1)
   })
 })

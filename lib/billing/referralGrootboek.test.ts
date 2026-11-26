@@ -25,6 +25,7 @@ vi.mock('./db', () => ({
     from(tabel: string) {
       const filters: Array<(r: Rij) => boolean> = []
       let nieuw: Rij | null = null
+      let wijziging: Rij | null = null
       let bereik: [number, number] | null = null
       const uitvoeren = () => {
         if (h.fouten[tabel]) return { data: null, error: h.fouten[tabel] }
@@ -37,6 +38,7 @@ vi.mock('./db', () => ({
           rijen.push({ ...nieuw, created_at: new Date().toISOString() })
           return { data: null, error: null }
         }
+        if (wijziging) rijen.filter(r => filters.every(f => f(r))).forEach(r => Object.assign(r, wijziging))
         const treffers = rijen.filter(r => filters.every(f => f(r))).map(r => ({ ...r }))
         return { data: bereik ? treffers.slice(bereik[0], bereik[1] + 1) : treffers, error: null }
       }
@@ -49,6 +51,8 @@ vi.mock('./db', () => ({
         range: (van: number, tot: number) => { bereik = [van, tot]; return q },
         returns: () => q,
         insert: (r: Rij) => { nieuw = r; return q },
+        update: (r: Rij) => { wijziging = r; return q },
+        is: (k: string) => { filters.push(r => r[k] === null || r[k] === undefined); return q },
         maybeSingle: async () => { const r = uitvoeren(); return { data: r.data?.[0] ?? null, error: r.error } },
         then: (res: any, rej: any) => Promise.resolve(uitvoeren()).then(res, rej),
       }
@@ -57,7 +61,7 @@ vi.mock('./db', () => ({
   },
 }))
 
-import { draaiGrootboek, vulOntbrekendeBronnen, legBesluitVast, legVervalBesluitVast, openVervalVraag, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
+import { draaiGrootboek, legBesluitVast, legVervalBesluitVast, openVervalVraag, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
 import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 
 const gebruiker = (user_id: string, extra: Rij = {}): Rij => ({
@@ -1192,21 +1196,30 @@ describe('F3: ook het grootboek laat tegoed van een teamlid met betaalde teamfac
 })
 
 describe('handmatige toekenning zonder betalingskenmerken', () => {
-  const toekenning = (reden: string) => ({ soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900, reden, event_key: 'uitkomst:r1', meeloop: false, klant_maand_netto_cent: 1900 }) as any
-  it('krijgt de betalingen zodra de klant de drempel haalt', async () => {
-    const regels = [toekenning('handmatig besluit: akkoord')]
-    await vulOntbrekendeBronnen(regels)
-    expect(regels[0].bron_ids).toEqual(['tr_klant'])
+  const toekenning = (reden: string) => ({ soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900, reden, event_key: 'uitkomst:r1', meeloop: true, klant_maand_netto_cent: 1900, created_at: '2027-02-28T10:00:00.000Z' })
+  const met = (reden: string, extra: Record<string, Rij[]> = {}) => zet({ arnobot_referral_grootboek: [toekenning(reden)], ...extra })
+
+  it('de betalingen worden een keer opgeslagen en daarna niet meer veranderd', async () => {
+    met('handmatig besluit: akkoord')
+    await draai()
+    expect(boek()[0].bron_ids).toEqual(['tr_klant'])
+    h.tabellen.arnobot_payments = [jaar('klant', { mollie_payment_id: 'tr_ander' })]
+    await draai()
+    expect(boek()[0].bron_ids).toEqual(['tr_klant'])
   })
-  it('niet als de klant de drempel niet haalt', async () => {
-    zet({ arnobot_payments: [] })
-    const regels = [toekenning('handmatig besluit: akkoord')]
-    await vulOntbrekendeBronnen(regels)
-    expect(regels[0].bron_ids).toBeUndefined()
+  it('niet zolang de klant de drempel niet haalt', async () => {
+    met('handmatig besluit: akkoord', { arnobot_payments: [] })
+    await draai()
+    expect(boek()[0].bron_ids).toBeUndefined()
+  })
+  it('zonder schrijven (beheerpagina) wordt er niets opgeslagen', async () => {
+    met('handmatig besluit: akkoord')
+    await draaiGrootboek(NU, { schrijf: false })
+    expect(boek()[0].bron_ids).toBeUndefined()
   })
   it('een automatische toekenning zonder kenmerken blijft zichtbaar leeg', async () => {
-    const regels = [toekenning('drempel gehaald')]
-    await vulOntbrekendeBronnen(regels)
-    expect(regels[0].bron_ids).toBeUndefined()
+    met('drempel gehaald')
+    await draai()
+    expect(boek()[0].bron_ids).toBeUndefined()
   })
 })

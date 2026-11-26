@@ -9,7 +9,7 @@
 --
 -- Volgorde bij livegang:
 --   0. Kijk of er in approved_users een referral_credit boven 0 staat (oud, met de hand gegeven tegoed).
---   1. Met alle geldschakelaars uit (REFERRAL_TERUGSTORTEN, REFERRAL_TEGOED_VERREKENEN, REFERRAL_CREDITNOTA), en zo
+--   1. Met alle geldschakelaars en REFERRAL_MAILS uit (REFERRAL_TERUGSTORTEN, REFERRAL_TEGOED_VERREKENEN, REFERRAL_CREDITNOTA), en zo
 --      gepland dat stap 4 KLAAR EN ACTIEF is voor de eerstvolgende controle van 05:20 UTC. Doe SQL en deploy dus direct
 --      na elkaar, niet de dag ervoor.
 --   2. Eerst 2026-11-26-referral-verrekening.sql uitgevoerd en gecontroleerd. De droogloop naast de meeloopstand is
@@ -28,6 +28,8 @@
 --   7. PAS DAARNA REFERRAL_TERUGSTORTEN en eventueel REFERRAL_TEGOED_VERREKENEN aanzetten. De uitvoerronde van 05:40
 --      verrekent met terugwerkende kracht over alle verlengingen na het verdienmoment: wat niet is ingeboekt wordt
 --      dan nog een keer uitbetaald.
+--   8. Wil je klantmails: REFERRAL_MAILS=true en REFERRAL_MAILS_VANAF op de datum van vandaag, nooit eerder dan na
+--      stap 6. Zonder die datum gaat er niets uit.
 --   Zet de schakelaar daarna niet terug zonder plan.
 --
 -- De regel: van elke referral met minstens een handmatig besluit blijven ALLE regels bewaard (ook de automatische

@@ -36,6 +36,7 @@ const oud = '2027-01-01T06:00:00.000Z'
 
 beforeEach(() => {
   vi.stubEnv('REFERRAL_MAILS', 'true')
+  vi.stubEnv('REFERRAL_MAILS_VANAF', '2027-01-01')
   h.mails = []
   h.lukt = true
   h.meeloop = false
@@ -47,10 +48,10 @@ beforeEach(() => {
       { id: 'a4', user_id: 'onderweg', status: 'verzonden', soort: 'voordeel_jaar', doel_id: 'p4', bruto_cent: 100, mail_at: null, created_at: vers },
     ],
     arnobot_referral_grootboek: [
-      { id: 'g1', meeloop: false, soort: 'toekenning', aanbrenger_user_id: 'aanbrenger', netto_cent: 1900, event_key: 'uitkomst:r1', mail_at: null, created_at: vers },
+      { id: 'g1', referral_id: 'r1', meeloop: false, soort: 'toekenning', aanbrenger_user_id: 'aanbrenger', netto_cent: 1900, event_key: 'uitkomst:r1', mail_at: null, created_at: vers },
       { id: 'g2', meeloop: false, soort: 'verval', aanbrenger_user_id: 'aanbrenger', netto_cent: 0, event_key: 'verval:r2', mail_at: null, created_at: vers },
       { id: 'g3', meeloop: true, soort: 'toekenning', aanbrenger_user_id: 'meeloper', netto_cent: 1900, event_key: 'uitkomst:r3', mail_at: null, created_at: vers },
-      { id: 'g4', meeloop: false, soort: 'terugdraaiing', aanbrenger_user_id: 'aanbrenger', netto_cent: -1900, event_key: 'terugdraaiing:r1:1', mail_at: null, created_at: vers },
+      { id: 'g4', referral_id: 'r4', meeloop: false, soort: 'terugdraaiing', aanbrenger_user_id: 'aanbrenger', netto_cent: -1900, event_key: 'terugdraaiing:r1:1', mail_at: null, created_at: vers },
     ],
   }
 })
@@ -70,6 +71,21 @@ describe('referralmails', () => {
       ['aanbrenger', 'referral_tegoed_toegekend', 1900],
       ['aanbrenger', 'referral_tegoed_teruggedraaid', 1900],
     ])
+  })
+  it('zonder startdatum gaat er niets uit, en niets van voor de startdatum', async () => {
+    vi.stubEnv('REFERRAL_MAILS_VANAF', '')
+    await verstuurReferralMails(NU)
+    vi.stubEnv('REFERRAL_MAILS_VANAF', '2027-01-31')
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([])
+  })
+  it('een toekenning die al teruggedraaid is en een terugdraaiing die al hersteld is worden niet gemaild', async () => {
+    h.tabellen.arnobot_referral_grootboek.push(
+      { id: 'g5', referral_id: 'r1', meeloop: false, soort: 'terugdraaiing', aanbrenger_user_id: 'aanbrenger', netto_cent: -1900, event_key: 'terugdraaiing:r1:1', mail_at: 'al', created_at: vers },
+      { id: 'g6', referral_id: 'r4', meeloop: false, soort: 'herstel', aanbrenger_user_id: 'aanbrenger', netto_cent: 1900, event_key: 'herstel:r4:1', mail_at: null, created_at: vers },
+    )
+    await verstuurReferralMails(NU)
+    expect(h.mails.map(x => x[1])).toEqual(['referral_voordeel'])
   })
   it('in de meeloopstand geen mail over grootboekregels', async () => {
     h.meeloop = true

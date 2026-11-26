@@ -654,6 +654,8 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
     }
   }
 
+  run.fouten.push(...await legOntbrekendeBronnenVast(run.regels, schrijf))
+
   // 2. Per toekenning die nog niet vervallen is: vervalt het? Heeft de aanbrenger nog geen bedrag, dan wordt dat pas
   // bij de eerste verrekening vastgesteld (soort 'vaststelling', nog niet gebouwd).
   for (const t of run.regels.filter(r => r.soort === 'toekenning')) {
@@ -743,16 +745,24 @@ async function bewijsOnderBesluit(klantId: string): Promise<Pick<GrootboekRegel,
 }
 
 /**
- * Een handmatige toekenning van voor de drempel heeft geen betalingskenmerken. Haalt de klant de drempel later alsnog,
- * dan horen die betalingen eronder: anders wordt zij nooit uitbetaald (en door 'oudste eerst' latere toekenningen ook
- * niet) en nooit teruggedraaid. Alleen in het geheugen: het grootboek zelf wordt niet aangepast. Alleen voor
- * handmatige besluiten, want een automatische toekenning zonder kenmerken is een fout die zichtbaar moet blijven.
+ * Een handmatige toekenning van voor de drempel heeft geen betalingskenmerken: zonder die wordt zij nooit uitbetaald (en
+ * door 'oudste eerst' latere toekenningen ook niet) en nooit teruggedraaid. Haalt de klant de drempel later, dan worden
+ * ze EEN keer vastgelegd, alleen in de lege kolom. Daarna staan ze vast: opnieuw uitrekenen zou na een terugbetaling
+ * andere betalingen eronder schuiven. Alleen handmatige besluiten; een automatische toekenning zonder kenmerken is een
+ * fout die zichtbaar moet blijven. Voor de planner, de machine en de nacontrole telt alleen wat opgeslagen is.
  */
-export async function vulOntbrekendeBronnen(regels: GrootboekRegel[]): Promise<void> {
+async function legOntbrekendeBronnenVast(regels: GrootboekRegel[], schrijf: boolean): Promise<string[]> {
+  const fouten: string[] = []
   for (const t of regels.filter(r => r.soort === 'toekenning' && !r.bron_ids?.length && r.reden?.startsWith(HANDMATIG))) {
     const bewijs = await bewijsOnderBesluit(t.klant_user_id)
-    if (bewijs.bron_ids) t.bron_ids = bewijs.bron_ids
+    if (!bewijs.bron_ids || !schrijf) continue
+    const { error } = await billingDb.from('arnobot_referral_grootboek').update({ bron_ids: bewijs.bron_ids })
+      .eq('event_key', t.event_key).eq('meeloop', t.meeloop).is('bron_ids', null)
+    // De kolom bestaat pas na de verrekenings-SQL.
+    if (error && !error.message.includes('bron_ids')) fouten.push(`betalingskenmerken ${t.referral_id} niet opgeslagen: ${error.message}`)
+    else if (!error) t.bron_ids = bewijs.bron_ids
   }
+  return fouten
 }
 
 const VERVAL_VRAAG = 'verval-handwerk:'

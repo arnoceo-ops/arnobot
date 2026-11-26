@@ -77,6 +77,7 @@ export interface ActieRij {
   /** Een melding aan Arno die nog niet is aangekomen. Blijft staan tot Telegram haar heeft aangenomen. */
   melding?: OpenMelding | null
   created_at?: string
+  updated_at?: string
 }
 
 export interface OpenMelding {

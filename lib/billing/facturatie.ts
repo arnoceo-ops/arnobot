@@ -16,8 +16,6 @@ import {
 import { haalBetaling, MollieError } from './mollie'
 import { planNaam } from './prijzen'
 import { notifyTelegram } from '@/lib/cron-notify'
-import { maakRestCreditnota } from './referralCreditnota'
-import { schakelaarAan } from './referralSchakelaars'
 
 // Koppelt een verwerkte Mollie-betaling aan een Moneybird-factuur. Een mislukte factuur mag
 // nooit een betaalverwerking breken: fouten worden gemeld en de dagelijkse billing-cron
@@ -167,24 +165,9 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
   // Een volledige creditnota zou te veel crediteren als er al referraltegoed op deze betaling is verrekend.
   if ((rij.referral_refund_cent ?? 0) > 0 || (rij.referral_bank_cent ?? 0) > 0) {
-    // Met de referralcreditnota aan, en niets per bank: het restant gaat vanzelf. Anders, of lukt het niet, dan met de hand.
-    let waarom = ''
-    if (schakelaarAan('REFERRAL_CREDITNOTA') && !(rij.referral_bank_cent ?? 0) && restantCent(rij) > 0) {
-      try {
-        const { data: sub } = await billingDb.from('arnobot_subscriptions').select('klant_type').eq('id', rij.subscription_id!).maybeSingle<{ klant_type: string }>()
-        const { data: gebruiker } = await billingDb.from('approved_users').select('voornaam').eq('user_id', rij.user_id).maybeSingle<{ voornaam: string | null }>()
-        await maakRestCreditnota({
-          factuurId: rij.moneybird_factuur_id, betaalkenmerk: rij.mollie_payment_id, brutoCent: restantCent(rij),
-          zakelijk: sub?.klant_type === 'zakelijk', voornaam: gebruiker?.voornaam,
-        })
-        return
-      } catch (e) {
-        Sentry.captureException(e, { tags: { onderdeel: 'referral-restcreditnota' } })
-        waarom = `
-Automatisch lukte niet: ${e instanceof Error ? e.message : String(e)}`
-      }
-    }
-    await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend of per bank iets teruggegeven. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.${waarom}`)
+    // Alles was al referralgeld via Mollie: dat krijgt zijn eigen creditnota's, er is geen restant.
+    if (restantCent(rij) <= 0 && !(rij.referral_bank_cent ?? 0)) return
+    await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend of per bank iets teruggegeven. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
     return
   }
   // Bij het omzetten naar zakelijk is deze factuur al gecrediteerd. Zonder de tabel bestaan er geen correcties; lukt het

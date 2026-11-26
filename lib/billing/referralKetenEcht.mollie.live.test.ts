@@ -230,6 +230,25 @@ describe.skipIf(!LIVE)('ketenproef met het echte grootboek (testmodus, testdatab
     expect((await o.plan(a.userId)).filter(v => v.stand === 'gereserveerd' || v.stand === 'vervalt')).toHaveLength(0)
   })
 
+  it('een handmatige toekenning krijgt haar betalingskenmerken en wordt tot en met Mollie uitbetaald', { timeout: 600_000 }, async () => {
+    const o = await omgeving()
+    const a = await o.aanbrengerMetAbonnement()
+    const k = await o.nieuweKlant(a.userId)
+    // Zoals een besluit van voor de drempel: wel toegekend, zonder betalingskenmerken.
+    await o.moet('handmatig', o.billingDb.rpc('referral_boek', { p_regel: {
+      soort: 'toekenning', referral_id: k.referral.id, aanbrenger_user_id: a.userId, klant_user_id: k.wie.userId,
+      netto_cent: 1900, klant_maand_netto_cent: 1900, reden: 'handmatig besluit: proef',
+    } }))
+    const bron = await o.betaal(k.wie)
+    await o.boekGrootboek()
+    expect((await o.regels(a.userId))[0].bron_ids).toEqual([bron.mollie_payment_id])
+    const verlenging = await o.betaal(a)
+    expect((await o.plan(a.userId)).filter(v => v.stand === 'gereserveerd').map(v => v.betalingId)).toEqual([verlenging.id])
+    await o.verstuur()
+    expect((await o.m.lijstBetalingTerugbetalingen(verlenging.mollie_payment_id)).map((r: any) => r.amount.value)).toEqual(['22.99'])
+    meld('6 handmatige toekenning', { bron_ids: 1, terugbetaald: '22.99' })
+  })
+
   it.each([
     ['nog niet verstuurd', false],
     ['al verstuurd', true],
