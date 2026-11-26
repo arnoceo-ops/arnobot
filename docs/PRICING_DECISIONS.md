@@ -4,7 +4,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 
 ## Voorstel nieuwe tarieven (2026-11-26, NOG NIET INGEVOERD)
 
-**Status:** voorstel. De tarieven onder "Tiers en bedragen" hieronder gelden nog. Code, Abacus en `/prijzen` zijn niet aangepast. Invoeren gebeurt pas na een expliciet besluit van Arno.
+**Status:** Arno heeft op 2026-11-26 besloten deze tarieven in te voeren. Ze zijn nog niet ingevoerd: de tarieven onder "Tiers en bedragen" hieronder staan nog live. Stand, volledige inventaris en openstaande punten: `docs/PRIJSWIJZIGING_PLAN.md`.
 
 ### Tarieven
 
@@ -64,7 +64,7 @@ Bij 250 solo users is de huidige winst terug bij ongeveer 34% Pro, **alleen zola
 
 ### Eerst controleren: kostensprong door spraak
 
-Boven 120 gebruikers met Pro-niveau (solo Pro plus iedereen in een team) gaat Abacus voor ElevenLabs van het pakket van $299 naar $990 per maand. Met 25 teamgebruikers is dat vanaf 96 solo Pro. Dit rust op aannames (30% gebruikt spraak, 100 gesproken antwoorden per maand, 500 tekens per antwoord). Vóór invoering nagaan: het echte spraakgebruik (`arnobot_elevenlabs_usage`) en de actuele pakketten, prijzen en bijkoopmogelijkheid bij ElevenLabs. Dat is op 26 november niet gedaan.
+De tabellen hierboven rekenen met 1,0 credit per teken: de sprong ligt dan boven 120 gebruikers met Pro-niveau. De prijspagina van ElevenLabs noemt 0,5 credit voor Flash via de API, wat de sprong naar ongeveer 241 verschuift. Nog te bevestigen in het account, zie `docs/PRIJSWIJZIGING_PLAN.md`.
 
 ### Meten na invoering
 
@@ -72,18 +72,7 @@ Welk deel van de proefgebruikers betaalt, welk deel van de betalende solo-klante
 
 ### Wat er bij invoering moet veranderen
 
-Eerste inventarisatie via zoeken in de code, nog geen volledige audit.
-
-1. **Bedragen:** `SCENARIO_PRIJZEN`, `SCENARIO_TEAM_PRIJS` en `prijsPremiumEur` in `lib/kostenTarieven.ts`; de constanten in `lib/teamPricing.ts`.
-2. **Vaste teksten met bedragen:** `app/bot/doorgaan/DoorgaanClient.tsx`, `app/bot/qa/QAClient.tsx`, `app/team/aanvragen/page.tsx` en het rekenvoorbeeld in `app/agents/SdVerdienClient.tsx`. Daarnaast een sitebrede zoekactie, ook op bedragen zonder euroteken.
-3. **Manager niet meer als betalende gebruiker:** `huidigSeats` in `lib/billing/teamFacturatie.ts` telt nu alle teamleden, ook de manager. Nalopen wat daarop leunt: de teamfacturatie, `lib/teamActivatie.ts`, `lib/billing/soloNaarTeam.ts`, `lib/billing/referralGrootboek.ts`, `lib/mrr.ts`, `app/bot/admin/teams/page.tsx` en de betekenis van de opgeslagen `min_seats`.
-4. **Minimum:** `TEAM_MIN_GEBRUIKERS` (nu 3 inclusief manager) wordt 3 teamleden. Teksten op `/prijzen` ("vanaf 3 gebruikers"), `/team/aanvragen`, `TeamActiverenSectie.tsx`, de API-foutmeldingen en de docs aanpassen, met de contacttekst hierboven.
-5. **Uitzonderingen:** `berekenTeamPrijsPerMaand` geeft onder het minimum `null`, en facturatie en MRR maken daar €0 van. Het minimum voor zelf aanmelden moet los staan van de prijsberekening, zodat een door Arno ingesteld klein team een correcte factuur krijgt.
-6. **team@arno.bot:** adres controleren (ontvangt het mail?) en op de site aanklikbaar maken.
-7. **Elite binnen Team:** de toeslag van €338 is herleid uit €397 min €59. Besluiten of die €338 blijft of €348 wordt.
-8. **Abacus:** de teamomzet rekent per gebruiker inclusief manager. Voor omzet telt de manager niet meer mee, voor kosten wel. Ook het minimum van het veld "# teamleden" aanpassen.
-9. **Bestaande klanten:** nagaan welke lopende abonnementen en teams er zijn, welk bedrag bij Mollie en Moneybird vastligt en welke prijsafspraak voor hen geldt. Ook controleren hoe upgraden en overstappen rekenen voor iemand met een oud bedrag. Niet gecontroleerd.
-10. **Documenten:** `ABONNEMENTEN.md`, `ARNOBOT_OVERZICHT.md`, `BUSINESS_HANDOVER.md`, de overige plandocumenten met bedragen, en de voorwaarden nalopen. Daarna de PDF's opnieuw maken.
+Zie `docs/PRIJSWIJZIGING_PLAN.md`.
 
 ## Tiers en bedragen
 
