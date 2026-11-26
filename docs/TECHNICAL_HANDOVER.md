@@ -292,7 +292,7 @@ Ruim 150 routes in `app/api/**/route.ts`, gegroepeerd per functiegebied. De bron
 | `/api/bot/plan` | Eigen plan + command_manager-vlag ophalen |
 | `/api/bot/export` | Alle eigen data exporteren (AVG) |
 | `/api/bot/delete-account` | Verwijderverzoek account |
-| `/api/bot/referral` | Eigen referralcode ophalen/genereren. Geweigerd voor gewone teamleden en gratis accounts (`approved_users.gratis_sinds`, `lib/gratisAccount.ts`; Lifetime gaat voor) |
+| `/api/bot/referral` | Eigen referralcode ophalen/genereren, met de tellers van het referralblok (`lib/billing/referralCijfers.ts`: betalend uit betalingen en teamfacturen, tegoed uit het grootboek, `null` als niet te berekenen). Geweigerd voor gewone teamleden en gratis accounts (`approved_users.gratis_sinds`, `lib/gratisAccount.ts`; Lifetime gaat voor) |
 | `/api/referral-naam` | Openbaar, met limiet: voornaam bij een referralcode voor de aanmeldpagina |
 | `/api/bot/cancel-subscription` | Abonnement opzeggen (self-service) |
 | `/api/bot/billing/upgrade` | Upgrade van Basic naar Pro, direct met bijbetaling naar rato (zie "Online betalen (Mollie)") |

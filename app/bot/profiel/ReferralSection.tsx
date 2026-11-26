@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { formatEuro } from '@/lib/billing/geld'
 
 export default function ReferralSection({ inAccount }: { inAccount?: boolean }) {
   const isMobile = useIsMobile()
-  const [data, setData] = useState<{ code: string; link: string; referrals: number; converted: number; credit: number } | null>(null)
+  const [data, setData] = useState<{ code: string; link: string; referrals: number; betalend: number | null; tegoedCent: number | null } | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -77,11 +78,14 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         </button>
       </div>
 
-      {/* Stats. BETALEND en TEGOED zijn op 26-11 verborgen: de tellingen klopten niet. Terug zodra het saldo uit het
-          grootboek komt (docs/REFERRAL_CONTROLE_2026-11-26.md, R13). */}
+      {/* Stats. Alle drie altijd zichtbaar, ook op nul (besluit Arno 26-11), zodat een gebruiker ziet wat hij kan
+          verwachten. Berekening: lib/billing/referralCijfers.ts. Alleen een teller die nu niet te berekenen is
+          verdwijnt, liever dat dan een nul die niet klopt. */}
       <div style={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {[
           { label: 'AANGEMELD', value: String(data.referrals) },
+          ...(data.betalend === null ? [] : [{ label: 'BETALEND', value: String(data.betalend) }]),
+          ...(data.tegoedCent === null ? [] : [{ label: 'TEGOED', value: formatEuro(data.tegoedCent) }]),
         ].map(({ label, value }) => (
           <div key={label} style={{
             background: '#1f2937', padding: '16px 20px', flex: 1,

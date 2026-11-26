@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isGewoonTeamlid } from '@/lib/teamAccess'
 import { isGratisAccount } from '@/lib/gratisAccount'
+import { referralCijfers } from '@/lib/billing/referralCijfers'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,16 +57,16 @@ export async function GET() {
     await supabase.from('approved_users').update({ referral_code: code }).eq('user_id', userId)
   }
 
-  const [{ count }, { count: converted }] = await Promise.all([
+  const [{ count }, cijfers] = await Promise.all([
     supabase.from('arnobot_referrals').select('*', { count: 'exact', head: true }).eq('referrer_user_id', userId),
-    supabase.from('arnobot_referrals').select('*', { count: 'exact', head: true }).eq('referrer_user_id', userId).eq('status', 'converted'),
+    referralCijfers(userId),
   ])
 
   return NextResponse.json({
     code,
     link: `https://arno.bot/aanmelden?ref=${code}`,
     referrals: count ?? 0,
-    converted: converted ?? 0,
-    credit: user.referral_credit ?? 0,
+    betalend: cijfers.betalend,
+    tegoedCent: cijfers.tegoedCent,
   })
 }
