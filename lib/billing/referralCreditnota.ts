@@ -45,6 +45,9 @@ export const creditReferentie = (betaalkenmerk: string, actieId: string) => `${b
 export const creditAfboeken = (actieId: string) =>
   `update arnobot_referral_acties set credit_status = 'klaar', bezig_tot = null where id = '${actieId}';`
 
+const zelfGeregeld = (actieId: string) =>
+  `Pas of verstuur je haar zelf, boek dan METEEN af, anders mailt de volgende ronde haar nog een keer: ${creditAfboeken(actieId)}`
+
 const cent = (bedrag: string) => Math.round(Number(bedrag) * 100)
 
 class Handwerk extends Error {}
@@ -135,12 +138,12 @@ async function maak(a: Actie, betaling: PayRow, factuurId: string, nu: Date): Pr
     // Ook bij hervatten: intussen kan er met de hand een creditnota bij zijn gekomen.
     await eisGeenOnbekendeCredit(a, factuurId, betaling.mollie_payment_id)
     const regelId = creditBedragregel(credit)
-    if (!regelId) throw new Handwerk('de conceptcreditnota heeft niet precies een bedragregel')
+    if (!regelId) throw new Handwerk(`de conceptcreditnota heeft niet precies een bedragregel. ${zelfGeregeld(a.id)}`)
     credit = await zetCreditBedrag(credit.id, { regelId, brutoCent: a.bruto_cent, referentie: creditReferentie(betaling.mollie_payment_id, a.id) })
   }
   // De laatste controle voor er iets de deur uit gaat.
   if (cent(credit.total_price_incl_tax) !== -a.bruto_cent) {
-    throw new Handwerk(`de creditnota staat op ${credit.total_price_incl_tax} in plaats van ${(-a.bruto_cent / 100).toFixed(2)}`)
+    throw new Handwerk(`de creditnota staat op ${credit.total_price_incl_tax} in plaats van ${(-a.bruto_cent / 100).toFixed(2)}. ${zelfGeregeld(a.id)}`)
   }
 
   const { data: sub, error } = betaling.subscription_id

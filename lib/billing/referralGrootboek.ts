@@ -510,7 +510,8 @@ async function nogNietVerstuurd(betalingen: { id: string; referral_refund_cent?:
 async function onbekendeTerugbetaling(d: Dossier): Promise<boolean> {
   if (!mollieIngeschakeld()) return false
   const staand = d.betalingen.filter(eigenBetalingTelt)
-  const facturen = d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id)
+  // Bij een bankfactuur is het Mollie-kenmerk dat van de dubbele betaling: dat die terugging zegt niets over de factuur.
+  const facturen = d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id && f.paid_via !== 'bank')
   const nietVerstuurd = await nogNietVerstuurd([...staand, ...facturen])
   const verklaard = (r: { id: string; referral_refund_cent?: number | null }) => Math.max(0, (r.referral_refund_cent ?? 0) - (nietVerstuurd.get(r.id) ?? 0))
   const betalingen = [

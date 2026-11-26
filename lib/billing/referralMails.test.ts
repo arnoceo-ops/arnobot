@@ -100,6 +100,42 @@ describe('referralmails', () => {
     await verstuurReferralMails(NU)
     expect(h.mails.map(x => x[0])).toEqual(['laat'])
   })
+  const alleenRegels = (...regels: any[]) => {
+    h.tabellen.arnobot_referral_acties = []
+    h.tabellen.arnobot_referral_grootboek = regels.map((r, i) => ({ id: `n${i}`, referral_id: 'r9', meeloop: false, aanbrenger_user_id: 'aanbrenger', mail_at: null, created_at: vers, ...r }))
+  }
+  const bedragVolgt = { soort: 'toekenning', netto_cent: null, event_key: 'uitkomst:r9' }
+  it.each([
+    ['verval', 'referral_tegoed_vervallen'],
+    ['terugdraaiing', 'referral_tegoed_teruggedraaid'],
+  ])('na "bedrag volgt" hoort de aanbrenger ook van %s, zonder bedrag', async (soort, type) => {
+    alleenRegels({ ...bedragVolgt, mail_at: 'al' }, { soort, netto_cent: 0, event_key: `${soort}:r9` })
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([['aanbrenger', type, null]])
+  })
+  it('bedrag volgt en al vervallen voor de eerste ronde: alleen het verval', async () => {
+    alleenRegels(bedragVolgt, { soort: 'verval', netto_cent: 0, event_key: 'verval:r9' })
+    await verstuurReferralMails(NU)
+    expect(h.mails.map(x => x[1])).toEqual(['referral_tegoed_vervallen'])
+  })
+  it('stond het bedrag al vast en is alles gebruikt, dan is een verval van niets geen bericht', async () => {
+    alleenRegels({ ...bedragVolgt, mail_at: 'al' }, { soort: 'vaststelling', netto_cent: 1900, event_key: 'vaststelling:r9' }, { soort: 'verval', netto_cent: 0, event_key: 'verval:r9' })
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([])
+  })
+  it.each([
+    ['met de hand bevestigd na lang vastlopen: wel een mail', { bevestigd_met_de_hand: true }, ['hand']],
+    ['oud en niet met de hand: geen mail', {}, []],
+  ])('%s', async (_n, gegevens, wie) => {
+    h.tabellen.arnobot_referral_acties = [{ id: 'a9', user_id: 'hand', status: 'bevestigd', soort: 'voordeel_maand', doel_id: 'p9', bruto_cent: 2900, mail_at: null, created_at: oud, updated_at: vers, gegevens }]
+    h.tabellen.arnobot_referral_grootboek = []
+    await verstuurReferralMails(NU)
+    expect(h.mails.map(x => x[0])).toEqual(wie)
+  })
+  it.each(['referral_tegoed_vervallen', 'referral_tegoed_teruggedraaid'] as const)('%s zonder bedrag heeft een nette tekst', type => {
+    const m = getEmailTemplate(type, 'Test', false, { userId: 'u', billing: {} })
+    expect(m.subject + m.html.replace(/<style[\s\S]*?<\/style>/g, '')).not.toMatch(/undefined|null|\(\s*exclusief|\u2014|\u2013/)
+  })
   it.each(['01-12-2026', '2027/01/01', 'vandaag'])('startdatum "%s" telt niet', async waarde => {
     vi.stubEnv('REFERRAL_MAILS_VANAF', waarde)
     await verstuurReferralMails(NU)

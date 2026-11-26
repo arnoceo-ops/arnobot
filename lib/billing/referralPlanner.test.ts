@@ -72,6 +72,7 @@ import { isVolledigTerugbetaald } from './terugbetaling'
 import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 import { metJaarKorting } from './referralRegels'
 import { saldoVan } from './referralSaldo'
+import { draaiGrootboek } from './referralGrootboek'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 import { GET } from '@/app/api/cron/referral-uitvoeren/route'
 
@@ -1085,5 +1086,23 @@ describe('teams: de gratis teammaand en tegoed op de teamfactuur', () => {
     expect(h.posts.map(p => [p.betalingId, p.brutoCent])).toEqual([['tr_team3', 2299]])
     expect((await acties())[0]).toMatchObject({ status: 'bevestigd', doel_soort: 'teamfactuur' })
     expect(await eigenSaldo()).toBe(0)
+  })
+})
+
+describe('een dubbel betaalde bankfactuur', () => {
+  it('houdt de toekenning niet tegen als de dubbele Mollie-betaling is teruggestort', async () => {
+    const TEAM = uuid(800)
+    await zaai({
+      arnobot_subscriptions: [sub('aanbrenger')], arnobot_teams: [{ id: TEAM, manager_id: 'klant', name: 't', min_seats: 3, cyclus: 'jaarlijks', geblokkeerd_at: null, stopt_op: null, volgende_factuurdatum: '2028-02-01' }],
+      arnobot_team_facturen: [{
+        id: uuid(601), team_id: TEAM, soort: 'regulier', cyclus: 'jaarlijks', periode_start: '2027-02-01', periode_einde: '2028-02-01', seats_aantal: 3, status: 'paid',
+        bedrag_cent: 240000, btw_cent: 41653, created_at: dag('2027-02-01'), betaald_at: dag('2027-02-02'), paid_via: 'bank', mollie_payment_id: 'tr_dubbel',
+        terugbetaald_cent: 0, teruggeboekt_cent: 0, referral_refund_cent: 0, reversed_at: null, moneybird_factuur_id: null,
+      }],
+    })
+    h.refunds = [{ id: 're_dubbel', paymentId: 'tr_dubbel', status: 'refunded', amount: { currency: 'EUR', value: '2400.00' } }]
+    const run = await draaiGrootboek(NU, { schrijf: false })
+    expect(run.fouten).toEqual([])
+    expect(run.nieuw.filter(r => r.referral_id === REF).map(r => r.soort)).toEqual(['toekenning'])
   })
 })
