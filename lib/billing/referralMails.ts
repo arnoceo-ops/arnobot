@@ -89,6 +89,9 @@ export async function verstuurReferralMails(nu: Date): Promise<{ verstuurd: numb
     // Een verval of terugdraaiing van niets is geen bericht waard, behalve als het bedrag nog niet vaststond. Was het
     // tegoed al teruggedraaid, dan is dat het bericht en volgt er geen tweede over verval.
     if (r.soort !== 'toekenning' && !r.netto_cent && (!bedragNooitBekend(alle) || (r.soort === 'verval' && isTeruggedraaid(alle, r.referral_id)))) continue
+    // Hoorde de aanbrenger al dat dit tegoed zonder bedrag verviel, dan is een latere terugdraaiing van niets geen nieuws.
+    // Op mail_at: gingen beide nog niet uit, dan is "teruggedraaid" het ene bericht.
+    if (r.soort === 'terugdraaiing' && !r.netto_cent && alle.some(x => x.soort === 'verval' && !!x.mail_at)) continue
     if (await achterhaald(r, alle)) {
       await billingDb.from('arnobot_referral_grootboek').update({ mail_at: nu.toISOString() }).eq('id', r.id).is('mail_at', null)
       continue

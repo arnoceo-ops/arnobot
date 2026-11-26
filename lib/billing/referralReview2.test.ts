@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   creditnota: vi.fn(),
   /** De waarden die useState in HerroepSectie om de beurt krijgt. */
   state: null as unknown[] | null,
+  /** Wat het slot voor een terugbetaling teruggeeft. */
+  slot: null as any,
   meeloop: true,
   teksten: {} as Record<string, string>,
 }))
@@ -28,6 +30,7 @@ vi.mock('@/hooks/useIsNativeApp', () => ({ useIsNativeApp: () => false }))
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }))
 vi.mock('./db', () => ({
   billingDb: {
+    rpc: async () => h.slot,
     from(tabel: string) {
       let wijzigt = false
       const q: any = {
@@ -55,6 +58,7 @@ import HerroepSectie from '@/app/bot/account/HerroepSectie'
 beforeEach(() => {
   vi.clearAllMocks()
   h.state = null
+  h.slot = { data: null, error: { code: 'PGRST202', message: 'Could not find the function public.referral_voor_terugbetaling in the schema cache' } }
   h.sub = { id: 's1', user_id: 'u', plan: 'premium', cyclus: 'maandelijks', klant_type: 'particulier', status: 'active', bedrag_cent: 5900, mollie_customer_id: 'c' }
   h.rij = { id: 'p1', user_id: 'u', subscription_id: 's1', mollie_payment_id: 'tr_1', soort: 'eerste', status: 'paid', bedrag_cent: 5900, referral_refund_cent: 0 }
 })
@@ -104,6 +108,21 @@ describe('F7: wat per bank is gegeven staat apart van wat via Mollie is terugges
     expect(bron('lib/billing/klanttypeCorrectie.ts')).toContain('referral_bank_cent')
     // Voor de kolom bestaat mag er nooit met naam om gevraagd worden.
     expect(bron('lib/billing/klanttypeCorrectie.ts')).not.toMatch(/select\([^)]*referral_bank_cent/)
+  })
+})
+
+describe('een volledige terugbetaling buiten het slot om, met een nog niet verstuurde reservering', () => {
+  it('het slot geeft haar vrij: de mail noemt wat de klant echt terugkreeg', async () => {
+    h.rij.referral_refund_cent = 2299
+    h.slot = { data: { ok: true, referral_refund_cent: 0, referral_bank_cent: 0, onderweg_cent: 0, vast_cent: 0 }, error: null }
+    await markeerTerugbetaald('p1')
+    expect(h.mail).toHaveBeenCalledWith('u', 'terugbetaling_bevestiging', { bedragCent: 5900 })
+  })
+  it('wat al onderweg is blijft eraf', async () => {
+    h.rij.referral_refund_cent = 2299
+    h.slot = { data: { ok: true, referral_refund_cent: 2299, referral_bank_cent: 0, onderweg_cent: 2299, vast_cent: 0 }, error: null }
+    await markeerTerugbetaald('p1')
+    expect(h.mail).toHaveBeenCalledWith('u', 'terugbetaling_bevestiging', { bedragCent: 3601 })
   })
 })
 

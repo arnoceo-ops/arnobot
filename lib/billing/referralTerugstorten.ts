@@ -178,7 +178,7 @@ async function bewaar(a: ActieRij, patch: Partial<ActieRij>): Promise<void> {
 }
 
 /** In de SQL Editor, afhankelijk van wat Mollie laat zien. */
-const naKijken = (id: string) => `Is dit bedrag WEL teruggestort: select referral_bevestig_met_de_hand('${id}', 're_...', 'toelichting');\nIs het zeker NIET teruggestort: select referral_vrijgeven('${id}', 'vastgelopen', 'vrijgegeven', 'toelichting');\nGebruik referral_vrijgeven nooit als het geld weg is.`
+const naKijken = (id: string) => `Betaal dit NIET zelf via Mollie terug: dan kan het abonnement stoppen. Moet de klant het nog krijgen, geef het eerst vrij, stort per bank en boek het in (referral_handmatig_).\nIs dit bedrag WEL teruggestort: select referral_bevestig_met_de_hand('${id}', 're_...', 'toelichting');\nIs het zeker NIET teruggestort: select referral_vrijgeven('${id}', 'vastgelopen', 'vrijgegeven', 'toelichting');\nGebruik referral_vrijgeven nooit als het geld weg is.`
 
 const melding = (a: ActieRij, betaling: PayRow | null, bij: string, kop: string, uitleg: string): OpenMelding =>
   ({ bij, kop, uitleg, betaalkenmerk: betaling?.mollie_payment_id ?? a.doel_id })

@@ -113,6 +113,11 @@ describe('referralmails', () => {
     await verstuurReferralMails(NU)
     expect(h.mails).toEqual([['aanbrenger', type, null]])
   })
+  it('na een al gemeld verval zonder bedrag volgt geen "teruggedraaid"', async () => {
+    alleenRegels({ ...bedragVolgt, mail_at: 'al' }, { soort: 'verval', netto_cent: 0, event_key: 'verval:r9', mail_at: 'al' }, { soort: 'terugdraaiing', netto_cent: 0, event_key: 'terugdraaiing:r9:1' })
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([])
+  })
   it('bedrag volgt en al vervallen voor de eerste ronde: alleen het verval', async () => {
     alleenRegels(bedragVolgt, { soort: 'verval', netto_cent: 0, event_key: 'verval:r9' })
     await verstuurReferralMails(NU)

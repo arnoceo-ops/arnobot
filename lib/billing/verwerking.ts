@@ -26,6 +26,7 @@ import {
 } from './perioden'
 import { verstuurBillingMail } from './mails'
 import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
+import { slotVoorTerugbetaling } from './referralSlot'
 import { wieIs } from './wie'
 import { meldGratisVierdeMaand } from './referralSignalen'
 import { notifyTelegram } from '@/lib/cron-notify'
@@ -446,6 +447,13 @@ async function verwerkVolledigeTerugbetaling(
   terugbetaaldCent: number,
   isChargeback: boolean,
 ): Promise<void> {
+  // Een reservering die nog niet verstuurd is (bijvoorbeeld bij een terugbetaling in het Mollie-dashboard, buiten het slot
+  // om) telt niet als referralgeld: anders klopt het bedrag in de mail en in de creditnota-opdracht niet. Lukt vrijgeven
+  // niet, dan gaat de verwerking gewoon door.
+  if ((rij.referral_refund_cent ?? 0) > 0) {
+    const slot = await slotVoorTerugbetaling(sub.user_id, rij.id)
+    if (slot.stand === 'ok') rij = { ...rij, referral_refund_cent: slot.referralRefundCent, referral_bank_cent: slot.bankCent }
+  }
   // Wat de klant nu terugkrijgt, zonder het deel dat al als referraltegoed was teruggestort.
   const bedragVoorKlant = Math.max(0, terugbetaaldCent - (rij.referral_refund_cent ?? 0))
   // Is er nu niets meer terug te betalen (alles was al referralgeld), dan gaat er geen mail met 0 euro uit. Voor een

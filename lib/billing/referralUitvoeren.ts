@@ -5,6 +5,7 @@ import { actieTabelBestaat } from './referralAutomatisch'
 import { draaiNacontrole } from './referralNacontrole'
 import { verstuurReferralMails } from './referralMails'
 import { planReferral } from './referralPlanner'
+import { VEILIG_TERUGSTORTEN } from './referralSignalen'
 import { CREDIT_ACTIESTATUSSEN, creditAfboeken, creditnotaStap } from './referralCreditnota'
 import { verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
 import { magTerugstorten, schakelaarAan } from './referralSchakelaars'
@@ -75,7 +76,8 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
         // Wachten op bewijs mag niet onzichtbaar blijven.
         else if (v.bronNietBewezen) await eensPerWeek(`bron:${v.soort}:${v.userId}:${v.betalingId}`, `Wacht: ${tekst}`)
         else if (v.stand === 'niet-automatisch') {
-          await eensPerWeek(`plan:${v.soort}:${v.userId}:${v.betalingId}:${v.reden}`, `Niet vanzelf: ${tekst}. Geef je dit met de hand, boek het dan in (functies referral_handmatig_ in de SQL).`)
+          const hoe = v.soort === 'verval_teamlid' ? '' : ` ${VEILIG_TERUGSTORTEN}`
+          await eensPerWeek(`plan:${v.soort}:${v.userId}:${v.betalingId}:${v.reden}`, `Niet vanzelf: ${tekst}. Geef je dit met de hand, boek het dan in (functies referral_handmatig_ in de SQL).${hoe}`)
         }
       }
       fouten.push(...plan.fouten.map(f => `planner ${f}`))
