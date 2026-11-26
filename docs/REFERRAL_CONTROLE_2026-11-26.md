@@ -37,6 +37,24 @@ Klein (agent): tweede proefperiode (herstart) opent de kortingstermijn opnieuw; 
 - **R13:** gekozen BETALEND en TEGOED tijdelijk verbergen. Verworpen: nu repareren, want het saldo komt uit het grootboek en dat is nog niet betrouwbaar.
 - Eerstvolgende stap: nieuwe agents controleren heel ronde 1; daarna ronde 2.
 
+### Hercontrole van ronde 1 door twee nieuwe agents (26-11)
+
+SQL docs/sql/2026-11-26-team-blokkade-handmatig.sql is door Arno uitgevoerd. Geen blokkerende bevindingen. Opgelost bevonden: R3, R4 (hoofdroute), R8 (signaal), R10, R11, R13, R16, R14 (op een randgeval na). Deels: R2, R5, R6, R7, R9, R12, R15. R12 is daarna hersteld (de mobiele opmaak stond vóór de basisregels en werkte niet) en gemeten op 320 tot 414 pixels.
+
+**Open, volgende stap (wacht op akkoord Arno):**
+
+| Nr | Ernst | Bevinding |
+|---|---|---|
+| H1 | ernstig | verwerkTeamBetaling negeert databasefouten: een betaalde klant kan alsnog worden herinnerd en geblokkeerd, zonder melding. |
+| H2 | ernstig | geblokkeerd_handmatig blijft staan na proef verlengen of activeren, en wordt niet op false gezet bij een automatische blokkade; zelf activeren heft een eigen blokkade op. |
+| H3 | ernstig | Faalt Moneybird of de mail na het opslaan van de betaallink, dan volgen herinnering en blokkade voor een nooit bezorgde factuur. |
+| H4 | ernstig | Zelf omzetten naar zakelijk kan tijdens een lopende upgradebetaling (alleen status paid wordt getoetst). |
+| H5 | ernstig, kleine kans | Het signaal gratis vierde maand wordt afgewacht vóór zetToegang; blijft Telegram hangen, dan worden toegang, mail en factuur overgeslagen. |
+| H6 | klein | Melding "dubbel betaald" na een chargeback; herstel naar betaald noemt de blokkade niet; signalen kijken niet of het voordeel al gebruikt is; opzegzin zichtbaar voor een teamlid met eigen abonnement; dagelijkse herhaalmeldingen; TEST_TEAM_ID niet uitgesloten in de cronlus. |
+| H7 | klein, tekst (eerst Arno) | Artikel 3 mist "en verstreken"; appHelp en overzicht missen "zonder nieuw abonnement"; aanmeldpagina en dag-25-mail noemen niet de teamtermijn; Uitgangspunt in het plan is verouderd. |
+
+Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
+
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**
 
 Uitkomsten "afwijzing" en "verval" zijn definitief.

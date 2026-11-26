@@ -17,15 +17,16 @@ export default function ReferralSpelregelsPage() {
         ul { list-style: disc outside; }
         li::marker { color: #f59e0b; }
         li { padding-left: 4px; margin-bottom: 6px; }
-        /* Smal scherm: minder letterafstand in de tabelkoppen, anders loopt "REFERRALS" over de volgende kolom. */
-        @media (max-width: 520px) {
-          th { letter-spacing: 1px; font-size: 11px; padding: 8px 6px; }
-          td { font-size: 13px; padding: 8px 6px; overflow-wrap: anywhere; }
-        }
         table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         th { background: #1f2937; color: #f59e0b; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 4px; text-align: left; padding: 10px 14px; border-bottom: 2px solid #f59e0b; }
         td { font-family: 'Space Mono', monospace; font-size: 15px; color: #9ca3af; padding: 10px 14px; border-bottom: 1px solid #374151; vertical-align: top; line-height: 1.9; }
         tr:last-child td { border-bottom: none; }
+        /* Smal scherm: minder letterafstand in de tabelkoppen, anders loopt "REFERRALS" over de volgende kolom.
+           Moet NA de basisregels voor th en td staan, anders winnen die. */
+        @media (max-width: 520px) {
+          th { letter-spacing: 1px; font-size: 11px; padding: 8px 6px; }
+          td { font-size: 13px; padding: 8px 6px; overflow-wrap: anywhere; }
+        }
       `}</style>
 
       <PublicNav />
