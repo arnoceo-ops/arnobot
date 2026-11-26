@@ -19,6 +19,7 @@ vi.mock('./db', () => ({
         eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
         is: (k: string) => { filters.push(r => r[k] === null || r[k] === undefined); return q },
         in: (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return q },
+        gte: (k: string, v: string) => { filters.push(r => Date.parse(r[k] ?? r.created_at) >= Date.parse(v)); return q },
         update: (p: any) => { patch = p; return q },
         then: (ok: any, nee: any) => Promise.resolve(uit()).then(ok, nee),
       }
@@ -86,6 +87,23 @@ describe('referralmails', () => {
     )
     await verstuurReferralMails(NU)
     expect(h.mails.map(x => x[1])).toEqual(['referral_voordeel'])
+  })
+  it('een oude uitkering die vandaag nog wordt bijgewerkt (creditnota) geeft geen mail', async () => {
+    h.tabellen.arnobot_referral_acties = [{ id: 'a9', user_id: 'oud', status: 'bevestigd', soort: 'voordeel_maand', doel_id: 'p9', bruto_cent: 2900, mail_at: null, created_at: oud, updated_at: vers, gegevens: { bevestigd_at: oud } }]
+    h.tabellen.arnobot_referral_grootboek = []
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([])
+  })
+  it('lang geleden aangemaakt en pas nu bevestigd: wel een mail', async () => {
+    h.tabellen.arnobot_referral_acties = [{ id: 'a9', user_id: 'laat', status: 'bevestigd', soort: 'voordeel_jaar', doel_id: 'p9', bruto_cent: 1900, mail_at: null, created_at: oud, updated_at: vers, gegevens: { bevestigd_at: vers } }]
+    h.tabellen.arnobot_referral_grootboek = []
+    await verstuurReferralMails(NU)
+    expect(h.mails.map(x => x[0])).toEqual(['laat'])
+  })
+  it.each(['01-12-2026', '2027/01/01', 'vandaag'])('startdatum "%s" telt niet', async waarde => {
+    vi.stubEnv('REFERRAL_MAILS_VANAF', waarde)
+    await verstuurReferralMails(NU)
+    expect(h.mails).toEqual([])
   })
   it('in de meeloopstand geen mail over grootboekregels', async () => {
     h.meeloop = true

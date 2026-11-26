@@ -25,9 +25,14 @@ type MetMail<T> = T & { id: string; mail_at?: string | null }
 export async function verstuurReferralMails(nu: Date): Promise<{ verstuurd: number; mislukt: number }> {
   const uit = { verstuurd: 0, mislukt: 0 }
   if (!schakelaarAan('REFERRAL_MAILS')) return uit
-  const vanaf = Date.parse(process.env.REFERRAL_MAILS_VANAF ?? '')
+  // Alleen JJJJ-MM-DD, eventueel met tijd: 01-12-2026 zou anders als 12 januari gelezen worden en oud werk doorlaten.
+  const ingesteld = process.env.REFERRAL_MAILS_VANAF ?? ''
+  const vanaf = /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:\d{2}))?$/.test(ingesteld) ? Date.parse(ingesteld) : NaN
   if (!Number.isFinite(vanaf)) return uit
-  const recent = (iso?: string) => !!iso && Date.parse(iso) >= vanaf && nu.getTime() - Date.parse(iso) <= MAIL_VENSTER_DAGEN * 24 * 60 * 60 * 1000
+  // De ondergrens gaat ook de zoekvraag in: anders verdringen oude, nooit gemailde rijen de nieuwe uit de eerste 200.
+  const ondergrensMs = Math.max(vanaf, nu.getTime() - MAIL_VENSTER_DAGEN * 24 * 60 * 60 * 1000)
+  const ondergrens = new Date(ondergrensMs).toISOString()
+  const recent = (iso?: string) => !!iso && Date.parse(iso) >= ondergrensMs
 
   async function eenKeer(tabel: string, id: string, userId: string, type: EmailType, billing: Parameters<typeof verstuurBillingMail>[2]) {
     const { data, error } = await billingDb.from(tabel).update({ mail_at: nu.toISOString() }).eq('id', id).is('mail_at', null).select('id')
@@ -39,12 +44,13 @@ export async function verstuurReferralMails(nu: Date): Promise<{ verstuurd: numb
   }
 
   const { data: acties, error: actieFout } = await billingDb.from('arnobot_referral_acties').select('*').eq('status', 'bevestigd')
-    .is('mail_at', null).order('created_at', { ascending: false }).limit(200)
+    .is('mail_at', null).gte('updated_at', ondergrens).order('updated_at', { ascending: true }).limit(1000)
   if (actieFout) throw new Error(`referralacties ophalen mislukt: ${actieFout.message}`)
   for (const a of (acties ?? []) as MetMail<ActieRij>[]) {
     // Met de hand ingeboekt is geen terugstorting van ons: daar hoort geen mail bij.
-    // Het venster telt vanaf de bevestiging: na lang wachten bij Mollie hoort de mail er alsnog bij.
-    if (!recent(a.updated_at ?? a.created_at) || isInternalTestUser(a.user_id) || a.doel_id.startsWith('handmatig:')) continue
+    // Het venster telt vanaf de bevestiging: na lang wachten bij Mollie hoort de mail er alsnog bij. Zonder dat moment
+    // (met de hand bevestigd in de database) telt de dag van aanmaken.
+    if (!recent(a.gegevens?.bevestigd_at ?? a.created_at) || isInternalTestUser(a.user_id) || a.doel_id.startsWith('handmatig:')) continue
     await eenKeer('arnobot_referral_acties', a.id, a.user_id, a.soort.startsWith('voordeel') ? 'referral_voordeel' : 'referral_tegoed_verrekend',
       { bedragCent: a.bruto_cent, reden: REDEN[a.soort] })
   }
@@ -52,7 +58,7 @@ export async function verstuurReferralMails(nu: Date): Promise<{ verstuurd: numb
   // Over meeloopregels gaat nooit een mail uit.
   if (MEELOOP) return uit
   const { data: regels, error: regelFout } = await billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', false)
-    .is('mail_at', null).in('soort', Object.keys(REGEL_MAIL)).order('created_at', { ascending: true }).limit(200)
+    .is('mail_at', null).in('soort', Object.keys(REGEL_MAIL)).gte('created_at', ondergrens).order('created_at', { ascending: true }).limit(1000)
   if (regelFout) throw new Error(`grootboek ophalen mislukt: ${regelFout.message}`)
   /** Is dit bericht al achterhaald door een latere regel? Dan niet versturen. */
   const achterhaald = async (r: GrootboekRegel): Promise<boolean> => {

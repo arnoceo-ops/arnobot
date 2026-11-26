@@ -56,6 +56,8 @@ export interface ActieGegevens {
   niet_gevonden?: number
   leesfouten?: number
   boeking_teruggezet?: boolean
+  /** Een keer gezet, bij het bevestigen. updated_at is dat niet: elke latere wijziging verzet dat. */
+  bevestigd_at?: string
 }
 
 export interface ActieRij {
@@ -255,7 +257,10 @@ async function neemOver(a: ActieRij, betaling: PayRow, r: { id: string; status: 
   if (mislukt(r.status)) return geefVrij(a, betaling, 'vrijgegeven', `terugbetaling ${r.id} is bij Mollie ${r.status}`)
   if (r.status === 'refunded') {
     // De creditnota is een aparte stap. De mail aan de klant is nog niet gebouwd (mail_at blijft leeg).
-    await bewaar(a, { status: 'bevestigd', mollie_refund_id: r.id, credit_status: 'nodig', bezig_tot: null, fout: null })
+    await bewaar(a, {
+      status: 'bevestigd', mollie_refund_id: r.id, credit_status: 'nodig', bezig_tot: null, fout: null,
+      gegevens: { ...a.gegevens, bevestigd_at: nu.toISOString() },
+    })
     return 'bevestigd'
   }
   const { leesfouten: _gelezen, ...rest } = a.gegevens

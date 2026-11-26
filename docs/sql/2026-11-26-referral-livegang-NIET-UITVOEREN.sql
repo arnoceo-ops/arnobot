@@ -28,8 +28,9 @@
 --   7. PAS DAARNA REFERRAL_TERUGSTORTEN en eventueel REFERRAL_TEGOED_VERREKENEN aanzetten. De uitvoerronde van 05:40
 --      verrekent met terugwerkende kracht over alle verlengingen na het verdienmoment: wat niet is ingeboekt wordt
 --      dan nog een keer uitbetaald.
---   8. Wil je klantmails: REFERRAL_MAILS=true en REFERRAL_MAILS_VANAF op de datum van vandaag, nooit eerder dan na
---      stap 6. Zonder die datum gaat er niets uit.
+--   8. Wil je klantmails: REFERRAL_MAILS=true en REFERRAL_MAILS_VANAF op een tijdstip NA de eerste echte controle EN
+--      na stap 6, als JJJJ-MM-DD of met tijd (2027-01-10T12:00:00Z). Een kale datum telt vanaf middernacht UTC: kies dan
+--      de dag van MORGEN, anders krijgt iedereen mail over de net opnieuw aangemaakte regels. Zonder datum niets.
 --   Zet de schakelaar daarna niet terug zonder plan.
 --
 -- De regel: van elke referral met minstens een handmatig besluit blijven ALLE regels bewaard (ook de automatische

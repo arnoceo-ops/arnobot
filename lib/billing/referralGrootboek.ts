@@ -756,11 +756,12 @@ async function legOntbrekendeBronnenVast(regels: GrootboekRegel[], schrijf: bool
   for (const t of regels.filter(r => r.soort === 'toekenning' && !r.bron_ids?.length && r.reden?.startsWith(HANDMATIG))) {
     const bewijs = await bewijsOnderBesluit(t.klant_user_id)
     if (!bewijs.bron_ids || !schrijf) continue
-    const { error } = await billingDb.from('arnobot_referral_grootboek').update({ bron_ids: bewijs.bron_ids })
+    // Beide samen: alleen de kenmerken zou verlengingen tussen verdienen en besluit laten wegvallen.
+    const { error } = await billingDb.from('arnobot_referral_grootboek').update({ bron_ids: bewijs.bron_ids, verdiend_at: bewijs.verdiend_at })
       .eq('event_key', t.event_key).eq('meeloop', t.meeloop).is('bron_ids', null)
     // De kolom bestaat pas na de verrekenings-SQL.
-    if (error && !error.message.includes('bron_ids')) fouten.push(`betalingskenmerken ${t.referral_id} niet opgeslagen: ${error.message}`)
-    else if (!error) t.bron_ids = bewijs.bron_ids
+    if (error && !/bron_ids|verdiend_at/.test(error.message)) fouten.push(`betalingskenmerken ${t.referral_id} niet opgeslagen: ${error.message}`)
+    else if (!error) Object.assign(t, bewijs)
   }
   return fouten
 }
