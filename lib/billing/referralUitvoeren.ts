@@ -3,6 +3,7 @@ import { billingDb } from './db'
 import { mollieIngeschakeld } from './mollie'
 import { actieTabelBestaat } from './referralAutomatisch'
 import { draaiNacontrole } from './referralNacontrole'
+import { verstuurReferralMails } from './referralMails'
 import { planReferral } from './referralPlanner'
 import { CREDIT_ACTIESTATUSSEN, creditAfboeken, creditnotaStap } from './referralCreditnota'
 import { verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
@@ -110,6 +111,11 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
       // Wie er zelf een maakt moet haar afboeken, anders komt er bij het aanzetten van de schakelaar mogelijk een tweede.
       await eensPerWeek('creditnotas', `${zonderCreditnota.length} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt). Maak je er zelf een, boek haar dan meteen af:\n${zonderCreditnota.slice(0, 5).map(creditAfboeken).join('\n')}${zonderCreditnota.length > 5 ? `\nEn nog ${zonderCreditnota.length - 5}: dezelfde opdracht met het kenmerk uit arnobot_referral_acties.` : ''}`)
     }
+  })
+
+  await onderdeel('klantmails', async () => {
+    const r = await verstuurReferralMails(nu)
+    if (r.mislukt) fouten.push(`${r.mislukt} referralmail(s) niet verstuurd (volgende ronde opnieuw)`)
   })
 
   uit.fouten = fouten.length

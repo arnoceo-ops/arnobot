@@ -88,6 +88,11 @@ export type EmailType =
   | 'uitdaging_herinnering'
   | 'patroon_samenvatting'
   | 'referral_aanmelding'
+  | 'referral_voordeel'
+  | 'referral_tegoed_toegekend'
+  | 'referral_tegoed_verrekend'
+  | 'referral_tegoed_vervallen'
+  | 'referral_tegoed_teruggedraaid'
   | 'team_1on1_ritme_nudge'
   | 'team_1on1_ritme_herinnering'
   | 'blog_bevestiging'
@@ -136,6 +141,11 @@ export const EMAIL_META: Record<EmailType, { label: string; description: string;
   uitdaging_herinnering: { label: 'Uitdaging herinnering',  description: 'Recurring: dag 1/3/7 na een sessie, actie nog niet beantwoord',      category: 'user' },
   patroon_samenvatting:  { label: 'Patroonsamenvatting',    description: 'Recurring: maandelijks, een terugkerend thema met één zin en een sparscenario', category: 'user' },
   referral_aanmelding:   { label: 'Referral aanmelding',    description: 'Event: naar referrer zodra iemand zich aanmeldt via zijn link',      category: 'user' },
+  referral_voordeel:     { label: 'Referral fee terug',     description: 'Event: gratis vierde maand of jaarkorting is teruggestort (REFERRAL_MAILS)', category: 'user' },
+  referral_tegoed_toegekend:     { label: 'Referraltegoed toegekend',     description: 'Event: de aanbrenger heeft tegoed verdiend (REFERRAL_MAILS)',        category: 'user' },
+  referral_tegoed_verrekend:     { label: 'Referraltegoed verrekend',     description: 'Event: tegoed is teruggestort op een verlenging (REFERRAL_MAILS)',   category: 'user' },
+  referral_tegoed_vervallen:     { label: 'Referraltegoed vervallen',     description: 'Event: tegoed is vervallen (REFERRAL_MAILS)',                        category: 'user' },
+  referral_tegoed_teruggedraaid: { label: 'Referraltegoed teruggedraaid', description: 'Event: de betaling van de klant is teruggedraaid (REFERRAL_MAILS)', category: 'user' },
   team_1on1_ritme_nudge:       { label: '1:1-ritme nudge',       description: 'Event: teamlid 2+ weken geen 1:1, belletje 48u ongelezen',         category: 'user' },
   team_1on1_ritme_herinnering: { label: '1:1-ritme herinnering', description: 'Event: 5 dagen na eerste leessignaal, nog steeds geen 1:1',        category: 'user' },
   blog_bevestiging:      { label: 'Blog bevestiging',       description: 'Event: na aanmelden voor de blog, bevestig-link (double opt-in)',     category: 'user' },
@@ -179,6 +189,8 @@ export interface BillingMailOptions {
   bijbetalingCent?: number
   /** Overstap: zakelijk, dan is `bedragCent` exclusief btw en staat dat zo in de mail. */
   zakelijk?: boolean
+  /** Referral fee: waarvoor wordt er teruggestort. */
+  reden?: string
   /** Terugbetaling: het ging om de bijbetaling van een upgrade, het abonnement loopt door. */
   upgrade?: boolean
 }
@@ -536,6 +548,27 @@ export function getEmailTemplate(
           `<strong style="color:#f1f5f9;">${newUser}</strong> heeft zich via jouw link aangemeld.<br><br>Neemt ${newUser} een abonnement, dan krijg je mogelijk tegoed. Zie de <a href="https://arno.bot/referrals" style="color:#f59e0b;">spelregels</a>.`,
           'MIJN REFERRALS →', 'https://arno.bot/bot/account'
         ),
+      }
+    }
+    case 'referral_voordeel':
+    case 'referral_tegoed_toegekend':
+    case 'referral_tegoed_verrekend':
+    case 'referral_tegoed_vervallen':
+    case 'referral_tegoed_teruggedraaid': {
+      const bedrag = options?.billing?.bedragCent
+      const euro = typeof bedrag === 'number' ? billingEuro(bedrag) : null
+      const spelregels = '<a href="https://arno.bot/referrals" style="color:#f59e0b;">spelregels</a>'
+      const terug = 'Het gaat terug naar de rekening of kaart waarmee je betaalde. Het kan een paar werkdagen duren voordat je het ziet.'
+      const tekst = {
+        referral_voordeel: ['Je referral fee komt eraan', `We storten ${euro} aan je terug: je referral fee, ${options?.billing?.reden ?? 'jouw voordeel'}.<br><br>${terug}`],
+        referral_tegoed_toegekend: ['Je hebt referraltegoed', `Een klant die je aanbracht heeft de voorwaarden gehaald. ${euro ? `Je tegoed: ${euro} exclusief btw.` : 'Het bedrag volgt bij de eerste verrekening.'}<br><br>We verrekenen het bij je verlenging. Zie de ${spelregels}.`],
+        referral_tegoed_verrekend: ['Je referraltegoed is verrekend', `We storten ${euro} aan je terug: je referraltegoed, verrekend met je abonnement.<br><br>${terug}`],
+        referral_tegoed_vervallen: ['Je referraltegoed is vervallen', `${euro ? `${euro} exclusief btw aan referraltegoed` : 'Referraltegoed'} is vervallen. Waarom dat kan staat in de ${spelregels}.`],
+        referral_tegoed_teruggedraaid: ['Referraltegoed teruggedraaid', `De betaling van een klant die je aanbracht is teruggedraaid. Het bijbehorende tegoed${euro ? ` (${euro} exclusief btw)` : ''} vervalt.<br><br>Had je het al gebruikt, dan verrekenen we het met later tegoed. Zie de ${spelregels}.`],
+      }[type]
+      return {
+        subject: `${prefix}${tekst[0]}`,
+        html: mail(`${tekst[1]}<br><br>Vragen? Mail naar <a href="mailto:referrals@arno.bot" style="color:#f59e0b;">referrals@arno.bot</a>.`, 'MIJN ACCOUNT →', 'https://arno.bot/bot/account'),
       }
     }
     case 'team_1on1_ritme_nudge': {
