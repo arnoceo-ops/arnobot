@@ -295,6 +295,147 @@ describe.skipIf(!LIVE)('ketenproef: jaarkorting na maandbetalingen (testmodus, t
   })
 })
 
+describe.skipIf(!LIVE)('ketenproef: tegoed van de aanbrenger verrekenen (testmodus, testdatabase)', () => {
+  it('niets op een eerdere verlenging, wel op de verlenging na het verdienen, en maar een keer', { timeout: 600_000 }, async () => {
+    const key = eisTestomgeving()
+    process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
+    process.env.REFERRAL_TERUGSTORTEN = 'true'
+
+    const { billingDb } = await import('./db')
+    const m = await import('./mollie')
+    const { POST: webhook } = await import('@/app/api/webhooks/mollie/route')
+    const { planReferral } = await import('./referralPlanner')
+    const { verwerkOpenTerugstortingen } = await import('./referralTerugstorten')
+    const { draaiGrootboek } = await import('./referralGrootboek')
+    const { berekenBedrag } = await import('./prijzen')
+    const { verrekening } = await import('./referralRegels')
+    expect(m.MOLLIE_WEBHOOK_URL).toBe('https://example.com/arnobot-testwebhook')
+
+    const ruw = async (pad: string, init?: RequestInit) => {
+      const r = await fetch(`https://api.mollie.com/v2${pad}`, { ...init, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } })
+      return { status: r.status, json: (await r.json().catch(() => null)) as any }
+    }
+    const moet = async <T>(wat: string, vraag: PromiseLike<{ data: T; error: { message: string } | null }>) => {
+      const r = await vraag
+      if (r.error) throw new Error(`${wat}: ${r.error.message}`)
+      return r.data
+    }
+    const roepWebhook = async (id: string) =>
+      (await webhook(new Request('https://proef.invalid/api/webhooks/mollie', { method: 'POST', body: `id=${id}` }) as any)).status
+
+    const merk = Date.now().toString(36)
+    const aanbrenger = `user_keten_aanbrenger_t${merk}`
+    const klant = `user_keten_klant_t${merk}`
+    const nu = Date.now()
+    const aangemeld = new Date(nu - 10 * DAG).toISOString()
+    for (const [id, naam, proef] of [[aanbrenger, 'Proefaanbrenger', new Date(nu - 100 * DAG).toISOString()], [klant, 'Proefklant', aangemeld]]) {
+      await moet('gebruiker', billingDb.from('approved_users').insert({ user_id: id, email: `${id}@example.com`, voornaam: naam, trial_start: proef }))
+    }
+    const referral = (await moet('referral', billingDb.from('arnobot_referrals')
+      .insert({ referrer_user_id: aanbrenger, referred_user_id: klant, code_used: `PROEF-T-${merk}`, created_at: aangemeld }).select('*').single())) as any
+
+    const metAbonnement = async (userId: string, cyclus: 'maandelijks' | 'jaarlijks', klantType: 'particulier' | 'zakelijk', maandenTerug: number) => {
+      const mollieKlant = (await m.maakKlant({ naam: 'Proef Keten', email: 'proef@example.com', userId })).id
+      const mandaat = await ruw(`/customers/${mollieKlant}/mandates`, { method: 'POST', body: JSON.stringify({ method: 'directdebit', consumerName: 'Proef Keten', consumerAccount: 'NL55INGB0000000000' }) })
+      expect(mandaat.status).toBe(201)
+      const einde = new Date(nu); einde.setUTCMonth(einde.getUTCMonth() - maandenTerug)
+      const begin = new Date(einde); begin.setUTCMonth(begin.getUTCMonth() - 1)
+      const bedrag = berekenBedrag('basis', cyclus, klantType)
+      const sub = (await moet('abonnement', billingDb.from('arnobot_subscriptions').insert({
+        user_id: userId, plan: 'basis', cyclus, klant_type: klantType, status: 'active', bedrag_cent: bedrag.brutoCent, btw_cent: bedrag.btwCent,
+        mollie_customer_id: mollieKlant, periode_start: begin.toISOString(), periode_einde: einde.toISOString(), created_at: begin.toISOString(),
+      }).select('*').single())) as any
+      return { mollieKlant, sub, bedrag }
+    }
+    const eigen = await metAbonnement(aanbrenger, 'maandelijks', 'particulier', 1)
+    const ander = await metAbonnement(klant, 'jaarlijks', 'zakelijk', 0)
+
+    let browser: Browser | null = null
+    try {
+      browser = await chromium.launch()
+      const betaal = async (wie: typeof eigen, label: string) => {
+        const p = await m.maakLosseHerhaalBetaling({ klantId: wie.mollieKlant, brutoCent: wie.bedrag.brutoCent, omschrijving: `Keten tegoed ${merk} ${label}`, metadata: { subscriptionRowId: wie.sub.id }, idempotencyKey: `keten-t-${merk}-${label}` })
+        let stand = (await ruw(`/payments/${p.id}`)).json
+        if (stand.status !== 'paid') {
+          const pagina = await browser!.newPage()
+          await pagina.goto(stand._links.changePaymentState.href, { waitUntil: 'networkidle' })
+          await pagina.check('input[name=final_state][value=paid]')
+          await pagina.click('button:has-text("Ga verder"), button:has-text("Continue")')
+          await pagina.waitForLoadState('networkidle')
+          await pagina.close()
+          for (let i = 0; i < 20 && stand.status !== 'paid'; i++) { await wacht(1500); stand = (await ruw(`/payments/${p.id}`)).json }
+        }
+        expect(stand.status).toBe('paid')
+        expect(await roepWebhook(p.id)).toBe(200)
+        return (await moet('betaalrij', billingDb.from('arnobot_payments').select('*').eq('mollie_payment_id', p.id).single())) as any
+      }
+
+      // Volgorde in de tijd: eerst een verlenging van de aanbrenger, dan verdient de klant het tegoed, dan weer een verlenging.
+      const ervoor = await betaal(eigen, 'aanbrenger-ervoor')
+      await wacht(3000)
+      const vanKlant = await betaal(ander, 'klant-jaar')
+      await wacht(3000)
+      const erna = await betaal(eigen, 'aanbrenger-erna')
+
+      // De echte beoordeling zegt wat er hoort. Zolang het grootboek meeloopt boekt zij niets echts, dus dat doen we via de
+      // echte databasefunctie.
+      const run = await draaiGrootboek(new Date(), { schrijf: false })
+      const regel = run.nieuw.find(r => r.referral_id === referral.id)
+      meld('1 beoordeling', { fouten: run.fouten, regel: regel && { soort: regel.soort, netto: regel.netto_cent, reden: regel.reden, verdiend: regel.verdiend_at, bronnen: regel.bron_ids?.length } })
+      expect(regel?.soort).toBe('toekenning')
+      expect(Date.parse(regel!.verdiend_at!)).toBe(Date.parse(vanKlant.betaald_at))
+      expect(regel!.bron_ids).toEqual([vanKlant.mollie_payment_id])
+      const geboekt = (await moet('boeken', billingDb.rpc('referral_boek', { p_regel: {
+        soort: 'toekenning', referral_id: referral.id, aanbrenger_user_id: aanbrenger, klant_user_id: klant, netto_cent: regel!.netto_cent,
+        klant_maand_netto_cent: regel!.klant_maand_netto_cent, bron_ids: regel!.bron_ids, verdiend_at: regel!.verdiend_at, reden: regel!.reden,
+      } }))) as any
+      const opgeslagen = (await moet('regel', billingDb.from('arnobot_referral_grootboek').select('*').eq('referral_id', referral.id).eq('soort', 'toekenning').single())) as any
+      meld('2 geboekt', { ok: geboekt.ok, verdiend: opgeslagen.verdiend_at, aangemaakt: opgeslagen.created_at })
+      // De regel is NA de tweede verlenging aangemaakt: op de oude aanmaakdag-regel zou die verlenging afvallen.
+      expect(Date.parse(opgeslagen.created_at)).toBeGreaterThan(Date.parse(erna.betaald_at))
+      expect(Date.parse(opgeslagen.verdiend_at)).toBe(Date.parse(vanKlant.betaald_at))
+
+      // De database zelf weigert de verlenging van voor het verdienen. Een weigering wijzigt niets.
+      const geweigerd = (await moet('reserveer eerder', billingDb.rpc('referral_reserveer', { p_actie: crypto.randomUUID(), p_user: aanbrenger, p_doel: String(ervoor.id) }))) as any
+      meld('3 database op de eerdere verlenging', geweigerd)
+      expect(geweigerd).toMatchObject({ ok: false, reden: 'geen_saldo' })
+
+      const later = new Date(Date.now() + 8 * DAG)
+      const omschrijvingen = { tegoed_terugstorten: `Proef referraltegoed ${merk}` }
+      const verwacht = verrekening(regel!.netto_cent!, erna.bedrag_cent)
+      const plan = await planReferral(later, { uitvoeren: true, omschrijvingen })
+      const vanAanbrenger = plan.voornemens.filter(v => v.userId === aanbrenger)
+      meld('4 plan', { verwacht, voornemens: vanAanbrenger.map(v => ({ stand: v.stand, cent: v.brutoCent, opDeLaatste: v.betalingId === erna.id, reden: v.reden })), fouten: plan.fouten })
+      expect(plan.fouten).toEqual([])
+      expect(vanAanbrenger.filter(v => v.stand === 'gereserveerd').map(v => [v.betalingId, v.brutoCent])).toEqual([[erna.id, verwacht.brutoCent]])
+
+      const ronde = await verwerkOpenTerugstortingen(later)
+      expect(ronde.fouten).toEqual([])
+      const lijst = await m.lijstBetalingTerugbetalingen(erna.mollie_payment_id)
+      const eerdere = await m.lijstBetalingTerugbetalingen(ervoor.mollie_payment_id)
+      meld('5 bij Mollie', { opDeLaatste: lijst.map((r: any) => `${r.amount.value} ${r.status}`), opDeEerdere: eerdere.length })
+      expect(lijst.map((r: any) => r.amount.value)).toEqual([(verwacht.brutoCent / 100).toFixed(2)])
+      expect(eerdere).toHaveLength(0)
+
+      expect(await roepWebhook(erna.mollie_payment_id)).toBe(200)
+      const subNa = (await moet('abonnement na', billingDb.from('arnobot_subscriptions').select('*').eq('id', eigen.sub.id).single())) as any
+      const rest = (await moet('rest', billingDb.rpc('referral_rest', { p_referral: referral.id }))) as number
+      meld('6 na de webhook', { abonnement: subNa.status, restTegoed: rest })
+      expect(subNa.status).toBe('active')
+      expect(rest).toBe(regel!.netto_cent! - verwacht.verbruiktNettoCent)
+
+      const nogLater = new Date(later.getTime() + DAG)
+      const plan2 = await planReferral(nogLater, { uitvoeren: true, omschrijvingen })
+      await verwerkOpenTerugstortingen(nogLater)
+      expect(plan2.voornemens.filter(v => v.userId === aanbrenger && v.stand === 'gereserveerd')).toHaveLength(0)
+      expect(await m.lijstBetalingTerugbetalingen(erna.mollie_payment_id)).toHaveLength(1)
+      meld('7 tweede ronde', { nieuw: 0 })
+    } finally {
+      await browser?.close()
+    }
+  })
+})
+
 // NACONTROLE op de laatste ketenproef, zonder iets leeg te maken. Draai later opnieuw tot Mollie "refunded" meldt:
 //   RUN_LIVE_KETEN_NACHECK=true node --env-file=.env.testomgeving node_modules/vitest/vitest.mjs run lib/billing/referralKeten.mollie.live.test.ts
 describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: nacontrole', () => {
