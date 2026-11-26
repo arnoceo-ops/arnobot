@@ -254,6 +254,11 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Waarheidscontrole (wekelijkse mail)</div>
+              <NumberField label="Kosten per gecontroleerd antwoord ($)" hint={`Sonnet, beoordeling plus taalcontrole. Elke week maximaal ${TARIEVEN.waarheidsControleMaxPerWeek} antwoorden`} value={inputs.waarheidsControlePerAntwoord} step={0.001} onChange={v => set('waarheidsControlePerAntwoord', v)} />
+            </div>
+
+            <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Audiobijlage-analyse (AssemblyAI)</div>
               <NumberField label="% Pro/Team-users dat audio uploadt" hint="hidden feature, geen aankondiging, geen gemeten data: voorzichtige aanname" value={inputs.pctAudioAnalyse} max={100} onChange={v => set('pctAudioAnalyse', v)} />
               <NumberField label="Audiominuten per gebruiker/maand" hint="gemiddeld over wie het gebruikt" value={inputs.audioMinutenPerGebruiker} onChange={v => set('audioMinutenPerGebruiker', v)} />
@@ -359,6 +364,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Waarheidscontrole (wekelijkse mail)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.waarheidsControleKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Transcriptie + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Dicteren (OpenAI spraak naar tekst)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.dicteerKosten)}</span></div>

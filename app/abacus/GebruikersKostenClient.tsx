@@ -39,7 +39,6 @@ type Antwoord = {
   vandaag: string
   fxEurUsd: number
   gebruikers: Gebruiker[]
-  platform: { totaalUsd: number; perBron: BronRij[] }
 }
 
 const fmtUsd = (n: number) => '$' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -99,7 +98,6 @@ export default function GebruikersKostenClient() {
   const gebruikerSortering = useSortering<GebruikerKolom>()
   const soortSortering = useSortering<SoortKolom>()
   const bronSortering = useSortering<BronKolom>()
-  const platformSortering = useSortering<BronKolom>()
 
   useEffect(() => {
     let actueel = true
@@ -155,15 +153,6 @@ export default function GebruikersKostenClient() {
     omzet: g => (g.omzetCent > 0 ? g.omzetCent : null),
     marge: margeEur,
   })
-  // Kolomkoppen van de twee tabellen met de opbouw Bron, Aanroepen, Dollars.
-  const bronKoppen = (s: typeof bronSortering) => (
-    <tr>
-      <SorteerKop kolom="bron" label="Bron" tekst stijl={th} sortering={s.sortering} onKlik={s.klik} />
-      <SorteerKop kolom="aanroepen" label="Aanroepen" stijl={th} sortering={s.sortering} onKlik={s.klik} />
-      <SorteerKop kolom="dollars" label="Dollars" stijl={th} sortering={s.sortering} onKlik={s.klik} />
-    </tr>
-  )
-
   return (
     <div style={{ opacity: laden ? 0.6 : 1 }}>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
@@ -217,7 +206,13 @@ export default function GebruikersKostenClient() {
           </table>
           <div style={{ ...cardHeadStyle, marginBottom: 8 }}>Per bron</div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>{bronKoppen(bronSortering)}</thead>
+            <thead>
+              <tr>
+                <SorteerKop kolom="bron" label="Bron" tekst stijl={th} sortering={bronSortering.sortering} onKlik={bronSortering.klik} />
+                <SorteerKop kolom="aanroepen" label="Aanroepen" stijl={th} sortering={bronSortering.sortering} onKlik={bronSortering.klik} />
+                <SorteerKop kolom="dollars" label="Dollars" stijl={th} sortering={bronSortering.sortering} onKlik={bronSortering.klik} />
+              </tr>
+            </thead>
             <tbody>
               {bronSortering.sorteer(gebruiker.perBron, BRON_WAARDEN).map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}
               {gebruiker.perBron.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={3}>Geen kosten voor deze gebruiker in deze periode.</td></tr>}
@@ -229,7 +224,7 @@ export default function GebruikersKostenClient() {
         <div style={cardStyle}>
           <div style={cardHeadStyle}><span style={dotStyle} />Alle gebruikers, {periodeTekst}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            Totaal: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
+            Totaal: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers.
             Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden en naar rato van de dagen in de periode.
           </p>
           {data.testers.aantal > 0 && (
@@ -266,15 +261,6 @@ export default function GebruikersKostenClient() {
               </tbody>
             </table>
           </div>
-          {data.platform.perBron.length > 0 && (
-            <>
-              <div style={{ ...cardHeadStyle, margin: '20px 0 8px' }}>Platformwerk zonder gebruiker</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>{bronKoppen(platformSortering)}</thead>
-                <tbody>{platformSortering.sorteer(data.platform.perBron, BRON_WAARDEN).map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}</tbody>
-              </table>
-            </>
-          )}
         </div>
       )}
     </div>

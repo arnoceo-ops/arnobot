@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { DEFAULT_PRIJZEN } from '@/lib/kostenTarieven'
+import PlatformTabel, { type PlatformRij } from './PlatformTabel'
 
 type Meting = {
   maand: string
@@ -59,6 +60,7 @@ const numberInputStyle: React.CSSProperties = {
 export default function TrackrecordClient() {
   const [geschiedenis, setGeschiedenis] = useState<Meting[]>([])
   const [liveHuidigeMaand, setLiveHuidigeMaand] = useState<Meting | null>(null)
+  const [platform, setPlatform] = useState<Record<string, PlatformRij[]> | null>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [afsluiten, setAfsluiten] = useState(false)
@@ -74,6 +76,7 @@ export default function TrackrecordClient() {
       const data = await res.json()
       setGeschiedenis(data.geschiedenis ?? [])
       setLiveHuidigeMaand(data.liveHuidigeMaand ?? null)
+      setPlatform(data.platform ?? null)
     } catch {
       setError('Kon trackrecord niet laden.')
     } finally {
@@ -127,9 +130,13 @@ export default function TrackrecordClient() {
 
   if (loading) return <p style={{ color: '#94a3b8', fontSize: 14 }}>Laden...</p>
 
+  const platformVan = (maand: string) => platform?.[maand.slice(0, 7)] ?? []
+  const platformTotaal = (maand: string) => platformVan(maand).reduce((s, r) => s + r.usd, 0)
+
   return (
     <div>
       {error && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {platform === null && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>Kon het platformwerk niet laden.</p>}
 
       {liveHuidigeMaand && (
         <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
@@ -157,6 +164,16 @@ export default function TrackrecordClient() {
           <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
             Zet de prognose voor {fmtMaand(liveHuidigeMaand.maand)} vast op het huidige (nog groeiende) gebruik. Doe dit pas aan het einde van de maand, of als je de rest van de maand wilt negeren.
           </p>
+        </div>
+      )}
+
+      {liveHuidigeMaand && platformVan(liveHuidigeMaand.maand).length > 0 && (
+        <div style={cardStyle}>
+          <div style={cardHeadStyle}><span style={dotStyle} />Platformwerk zonder gebruiker: {fmtMaand(liveHuidigeMaand.maand)}</div>
+          <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 12 }}>
+            Totaal {fmtUSD(platformTotaal(liveHuidigeMaand.maand))}. Werkelijke AI-kosten van crons en admin. Ze horen bij de werkelijke kosten en komen niet bovenop de prognose.
+          </p>
+          <PlatformTabel rijen={platformVan(liveHuidigeMaand.maand)} />
         </div>
       )}
 
@@ -211,6 +228,12 @@ export default function TrackrecordClient() {
                 </div>
               </div>
             </div>
+            {platformVan(rij.maand).length > 0 && (
+              <details style={{ marginTop: 12 }}>
+                <summary style={{ fontSize: 12.5, color: '#94a3b8', cursor: 'pointer', marginBottom: 8 }}>Platformwerk zonder gebruiker: {fmtUSD(platformTotaal(rij.maand))}</summary>
+                <PlatformTabel rijen={platformVan(rij.maand)} />
+              </details>
+            )}
           </div>
         ))}
       </div>

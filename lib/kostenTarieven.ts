@@ -38,6 +38,11 @@ export const TARIEVEN = {
   // thema's $0,0009, entiteiten $0,0009) maal ongeveer 10 gesprekken per maand. Twee metingen is weinig: bijwerken met de bronnen sessie-*,
   // geheugen-*, groeibalans en mail-patroon uit arnobot_ai_gebruik zodra er meer data is.
   overigeAnthropicPerGebruikerPerMaand: 0.21,
+  // Wekelijkse waarheidscontrole (lib/waarheidsRapport.ts): platformwerk zonder gebruiker. Gemeten op de ene run van 23 november 2026:
+  // $5,086 voor 102 beoordelingen plus $0,196 voor 101 taalcontroles, dus $0,052 per antwoord. Eén week is weinig: bijwerken uit de bronnen
+  // waarheidscontrole en waarheidscontrole-taal in Abacus (tab Trackrecord). De grens per run gebruikt de controle zelf ook.
+  waarheidsControlePerAntwoordUsd: 0.052,
+  waarheidsControleMaxPerWeek: 120,
   // ElevenLabs: credits per teken (Flash v2.5). ElevenLabs zelf bevestigt alleen
   // een bereik van 0,5-1, dit is de veilige kant van dat bereik.
   creditPerTeken: 1.0,
@@ -250,6 +255,14 @@ export function resendOverageUsd(
   return (overschot / 1000) * TARIEVEN.resendOveragePer1000Usd
 }
 
+/**
+ * De wekelijkse controle beoordeelt elk chatantwoord met een bewaarde bron, tot de grens per run. Hier telt elk chatbericht als zo'n antwoord,
+ * dus onder de grens is dit aan de hoge kant. Een maand is 52/12 runs.
+ */
+export function waarheidsControleKostenUsd(chatberichtenPerMaand: number, perAntwoordUsd: number = TARIEVEN.waarheidsControlePerAntwoordUsd): number {
+  return Math.min(chatberichtenPerMaand, TARIEVEN.waarheidsControleMaxPerWeek * 52 / 12) * perAntwoordUsd
+}
+
 export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? supabaseBasisKosten() : 0)
@@ -289,6 +302,7 @@ export type Inputs = {
   kostenPerSparringBericht: number
   kostenPerDebrief: number
   overigeAnthropicPerGebruiker: number
+  waarheidsControlePerAntwoord: number
   pctVoice: number
   voiceInteracties: number
   tekensPerAntwoord: number
@@ -363,6 +377,7 @@ export const DEFAULT_INPUTS: Inputs = {
   // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
   // elke route apart te modelleren.
   overigeAnthropicPerGebruiker: TARIEVEN.overigeAnthropicPerGebruikerPerMaand,
+  waarheidsControlePerAntwoord: TARIEVEN.waarheidsControlePerAntwoordUsd,
   pctVoice: 30,
   voiceInteracties: 100,
   tekensPerAntwoord: TARIEVEN.tekensPerVoiceAntwoord,
@@ -508,6 +523,8 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   const historieImportKosten = historieGebruikers
     * (inputs.kostenPerHistorieImport + inputs.berichten * inputs.tokensHistorieProfiel * invoerPerToken)
 
+  const waarheidsControleKosten = waarheidsControleKostenUsd(totaalBerichten, inputs.waarheidsControlePerAntwoord)
+
   const upstashCommands = totaalBerichten * inputs.upstashPerBericht
   const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
@@ -530,12 +547,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
-    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten
+    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten + waarheidsControleKosten
 
   return {
     vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, waarheidsControleKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 

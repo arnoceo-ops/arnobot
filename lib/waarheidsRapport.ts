@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { ARNO_ERVARING } from '@/lib/arnoFeiten'
+import { TARIEVEN } from '@/lib/kostenTarieven'
 import { telGedragspatronen, type PatroonTelling } from '@/lib/gedragspatronen'
 import { beoordeelAntwoord, beoordeelNederlands, type Bewering, type Oordeel, type Taalfout } from '@/lib/waarheidsControle'
 
@@ -11,7 +12,7 @@ import { beoordeelAntwoord, beoordeelNederlands, type Bewering, type Oordeel, ty
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-const MAX_ANTWOORDEN = 120 // bovengrens per run, tegen een uit de hand lopende week
+const MAX_ANTWOORDEN = TARIEVEN.waarheidsControleMaxPerWeek // bovengrens per run, tegen een uit de hand lopende week
 const GELIJKTIJDIG = 4
 export const MAX_HOOG = 15
 export const MAX_MIDDEL = 10

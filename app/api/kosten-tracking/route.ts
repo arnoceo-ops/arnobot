@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, voyageKostenPerBericht } from '@/lib/kostenTarieven'
+import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, voyageKostenPerBericht, waarheidsControleKostenUsd } from '@/lib/kostenTarieven'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
@@ -138,6 +138,26 @@ function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
   return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + voyageKosten + analysesKosten + fable5Kosten
     + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
     + resendOverageUsd(m.gebruikers_count)
+    + waarheidsControleKostenUsd(m.berichten_count)
+}
+
+type PlatformRij = { bron: string; usd: number; aanroepen: number }
+
+// Gemeten AI-kosten zonder gebruiker (crons, admin) per maand, per bron. Sleutel is 'YYYY-MM', met dezelfde maandgrenzen (UTC) als de rest
+// van dit tabblad. Onderdeel van de werkelijke kosten, niet opgeteld bij de prognose.
+async function platformPerMaand(vanafMaand: string): Promise<Record<string, PlatformRij[]>> {
+  const rijen = await haalAlleRijen<{ bron: string; kosten_usd: number | string | null; created_at: string }>((van, tot) =>
+    supabase.from('arnobot_ai_gebruik').select('bron, kosten_usd, created_at').is('user_id', null).gte('created_at', maandRange(vanafMaand).start)
+      .order('id', { ascending: true }).range(van, tot))
+  const perMaand = new Map<string, Map<string, PlatformRij>>()
+  for (const r of rijen) {
+    const maand = new Date(r.created_at).toISOString().slice(0, 7)
+    const bronnen = perMaand.get(maand) ?? perMaand.set(maand, new Map()).get(maand)!
+    const rij = bronnen.get(r.bron) ?? bronnen.set(r.bron, { bron: r.bron, usd: 0, aanroepen: 0 }).get(r.bron)!
+    rij.usd += Number(r.kosten_usd ?? 0)
+    rij.aanroepen += 1
+  }
+  return Object.fromEntries([...perMaand].map(([maand, bronnen]) => [maand, [...bronnen.values()].sort((a, b) => b.usd - a.usd)]))
 }
 
 export async function GET() {
@@ -170,7 +190,14 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({ geschiedenis: geschiedenis ?? [], liveHuidigeMaand })
+  // Een fout hier mag het trackrecord zelf niet blokkeren: dan ontbreekt alleen het blok met platformwerk.
+  const oudsteMaand = [huidigeMaand, ...(geschiedenis ?? []).map(r => r.maand as string)].sort()[0]
+  const platform = await platformPerMaand(oudsteMaand).catch(err => {
+    console.error('[kosten-tracking platformwerk]', err)
+    return null
+  })
+
+  return NextResponse.json({ geschiedenis: geschiedenis ?? [], liveHuidigeMaand, platform })
 }
 
 export async function POST(req: NextRequest) {

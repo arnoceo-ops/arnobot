@@ -62,11 +62,11 @@ export async function GET(req: NextRequest) {
       if (meetStart && b.created_at >= meetStart) gemetenBerichtenPerGebruiker.set(b.user_id, (gemetenBerichtenPerGebruiker.get(b.user_id) ?? 0) + 1)
     }
 
-    // Per gebruiker en per bron, en het platformwerk zonder gebruiker (crons, admin) apart.
+    // Per gebruiker en per bron. Platformwerk zonder gebruiker (crons, admin) staat op de tab Trackrecord (api/kosten-tracking).
     const perBronPerGebruiker = new Map<string, Map<string, { usd: number; aanroepen: number }>>()
-    const platform = new Map<string, { usd: number; aanroepen: number }>()
     for (const r of rijen) {
-      const doel = r.user_id ? (perBronPerGebruiker.get(r.user_id) ?? perBronPerGebruiker.set(r.user_id, new Map()).get(r.user_id)!) : platform
+      if (!r.user_id) continue
+      const doel = perBronPerGebruiker.get(r.user_id) ?? perBronPerGebruiker.set(r.user_id, new Map()).get(r.user_id)!
       const huidig = doel.get(r.bron) ?? { usd: 0, aanroepen: 0 }
       huidig.usd += r.kosten_usd === null ? 0 : Number(r.kosten_usd)
       huidig.aanroepen++
@@ -171,7 +171,6 @@ export async function GET(req: NextRequest) {
       fxEurUsd: fx.rate,
       gebruikers,
       testers: { aantal: testers.length, totaalUsd: testers.reduce((s, g) => s + g.totaalUsd, 0), berichten: testers.reduce((s, g) => s + g.berichten, 0) },
-      platform: { totaalUsd: [...platform.values()].reduce((s, v) => s + v.usd, 0), perBron: naarLijst(platform) },
     })
   } catch (err) {
     console.error('[kosten-per-gebruiker]', err instanceof Error ? err.message : err)
