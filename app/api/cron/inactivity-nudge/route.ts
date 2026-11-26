@@ -31,7 +31,7 @@ async function cronHandler(req: NextRequest) {
 
   const { data: usersRaw } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, command_manager')
+    .select('user_id, email, voornaam, trial_start, command_manager, onboarding_done')
     .eq('is_active', true)
     .eq('nudge_opt_out', false)
     .not('email', 'is', null)
@@ -166,7 +166,9 @@ async function cronHandler(req: NextRequest) {
       }
     }
 
-    const template = getEmailTemplate(type, naam, false, { userId: user.user_id, nudgeQuestion })
+    // Zonder profiel kan iemand nog niet in gesprek: dan eerst naar het profiel verwijzen.
+    const mailType = type === 'geen_gesprek_nudge' && !user.onboarding_done ? 'profiel_dag7' : type
+    const template = getEmailTemplate(mailType, naam, false, { userId: user.user_id, nudgeQuestion })
 
     try {
       await verstuurMail({

@@ -51,6 +51,9 @@ export function emailHtml(body: string, ctaText: string, ctaUrl: string, isTest 
 }
 
 export type EmailType =
+  | 'profiel_dag1'
+  | 'profiel_dag4'
+  | 'profiel_dag7'
   | 'dag1'
   | 'dag4'
   | 'geen_gesprek_nudge'
@@ -96,7 +99,10 @@ export type EmailType =
   | 'team_proef_coulance'
 
 export const EMAIL_META: Record<EmailType, { label: string; description: string; category: 'user' | 'admin' }> = {
-  dag1:                  { label: 'Dag 1',                  description: 'Dag 1:welkom, waar begin je?',                                       category: 'user' },
+  profiel_dag1:          { label: 'Profiel dag 1',          description: 'Dag 1:profiel niet af',                                              category: 'user' },
+  profiel_dag4:          { label: 'Profiel dag 4',          description: 'Dag 4:profiel niet af',                                              category: 'user' },
+  profiel_dag7:          { label: 'Profiel dag 7',          description: 'Dag 7:profiel niet af',                                              category: 'user' },
+  dag1:                  { label: 'Dag 1',                 description: 'Dag 1:welkom, waar begin je?',                                       category: 'user' },
   dag4:                  { label: 'Dag 4',                  description: 'Dag 4:nog geen gesprek gevoerd',                                     category: 'user' },
   geen_gesprek_nudge:    { label: 'Geen gesprek nudge',     description: 'Dag 7:nooit een gesprek gestart',                                    category: 'user' },
   first_conversation:    { label: 'Eerste gesprek',         description: 'Dag 1-30:na het allereerste gesprek',                                category: 'user' },
@@ -226,6 +232,30 @@ export function getEmailTemplate(
   }
 
   switch (type) {
+    case 'profiel_dag1':
+      return {
+        subject: `${prefix}${naam}, je profiel is nog niet af`,
+        html: mail(
+          `Je account staat klaar. Vul nog even je profiel in, zodat ArnoBot zijn antwoorden op jouw situatie kan afstemmen. Je 30 dagen proeftijd beginnen pas als het af is.`,
+          'MAAK JE PROFIEL AF →', 'https://arno.bot/bot'
+        ),
+      }
+    case 'profiel_dag4':
+      return {
+        subject: `${prefix}${naam}, ArnoBot wil je leren kennen`,
+        html: mail(
+          `Je hebt je aangemeld, maar ArnoBot weet nog niets over jou en je werk. Met je profiel verandert dat, en daarna kun je meteen voorleggen wat er bij jou speelt.`,
+          'MAAK JE PROFIEL AF →', 'https://arno.bot/bot'
+        ),
+      }
+    case 'profiel_dag7':
+      return {
+        subject: `${prefix}${naam}, ArnoBot wacht op je`,
+        html: mail(
+          `Koudwatervrees, druk met andere dingen of gewoon vergeten? Begin met je profiel en stel daarna je eerste vraag. Het grootste risico dat je loopt, is dat je meer gaat verkopen.`,
+          'MAAK JE PROFIEL AF →', 'https://arno.bot/bot', optOutNote
+        ),
+      }
     case 'dag1':
       return {
         subject: `${prefix}${naam}, waar wil je mee beginnen?`,

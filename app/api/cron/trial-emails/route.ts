@@ -6,6 +6,7 @@ import { verstuurMail } from '@/lib/mail'
 import { getEmailTemplate, isValidEmail, type EmailType } from '@/lib/email-templates'
 import { E2E_TEST_USER_EMAIL, MANUAL_TEST_USER_EMAIL, APP_REVIEWER_EMAIL } from '@/lib/internalTestAccounts'
 import { notifyCronFailure } from '@/lib/cron-notify'
+import { kiesTrialMail } from '@/lib/trialMailKeuze'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,7 +25,7 @@ async function cronHandler(req: NextRequest) {
 
   const { data: usersRaw } = await supabase
     .from('approved_users')
-    .select('user_id, email, voornaam, trial_start, paid_at, arno_call_booked_at, command_manager')
+    .select('user_id, email, voornaam, trial_start, paid_at, arno_call_booked_at, command_manager, onboarding_done')
     .not('trial_start', 'is', null)
     .is('paid_at', null)
     .eq('is_active', true)
@@ -83,68 +84,28 @@ async function cronHandler(req: NextRequest) {
 
     const sentTypes = new Set((log || []).map((r: { email_type: string }) => r.email_type))
 
-    let emailType: EmailType | null = null
-    let emailOptions: { sessionCount?: number } | undefined
-
-    // Dag 1 — altijd
-    if (days >= 1 && !sentTypes.has('dag1')) {
-      emailType = 'dag1'
+    const [gesprekken, sessies, rapporten] = await Promise.all([
+      supabase.from('arnobot_rds_logs').select('*', { count: 'exact', head: true }).eq('user_id', user.user_id),
+      supabase.from('arnobot_blog_sessions').select('*', { count: 'exact', head: true }).eq('user_id', user.user_id),
+      supabase.from('arnobot_coaching_scores').select('*', { count: 'exact', head: true }).eq('user_id', user.user_id),
+    ])
+    // Een mislukte telling is niet hetzelfde als nul: dan vandaag geen mail, morgen opnieuw.
+    const telFout = gesprekken.error ?? sessies.error ?? rapporten.error
+    if (telFout) {
+      console.error(`Trial email: telling mislukt voor ${user.user_id}:`, telFout.message)
+      continue
     }
 
-    // Trigger: eerste gesprek (alleen nadat dag1 is verzonden)
-    if (!emailType && sentTypes.has('dag1') && !sentTypes.has('first_conversation')) {
-      const { count } = await supabase
-        .from('arnobot_rds_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.user_id)
-      if ((count ?? 0) >= 1) {
-        emailType = 'first_conversation'
-      }
-    }
-
-    // Dag 4 — alleen als 0 gesprekken
-    if (!emailType && days >= 4 && !sentTypes.has('dag4')) {
-      const { count } = await supabase
-        .from('arnobot_rds_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.user_id)
-      if ((count ?? 0) === 0) {
-        emailType = 'dag4'
-      }
-    }
-
-    // Trigger: eerste coaching (5+ gesprekken, nog geen coachingsrapport aangevraagd)
-    if (!emailType && !sentTypes.has('first_coaching')) {
-      const { count: sessionCount } = await supabase
-        .from('arnobot_blog_sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.user_id)
-      if ((sessionCount ?? 0) >= 5) {
-        const { count: coachingCount } = await supabase
-          .from('arnobot_coaching_scores')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.user_id)
-        if ((coachingCount ?? 0) === 0) {
-          emailType = 'first_coaching'
-          emailOptions = { sessionCount: sessionCount ?? 5 }
-        }
-      }
-    }
-
-    // Dag 14 — altijd
-    if (!emailType && days >= 14 && !sentTypes.has('dag14')) {
-      emailType = 'dag14'
-    }
-
-    // Dag 21 — alleen als nog geen gesprek met Arno geboekt is
-    if (!emailType && days >= 21 && !sentTypes.has('dag21_gesprek') && !user.arno_call_booked_at) {
-      emailType = 'dag21_gesprek'
-    }
-
-    // Dag 25 — altijd, met echte opt-in CTA
-    if (!emailType && days >= 25 && !sentTypes.has('dag25')) {
-      emailType = 'dag25'
-    }
+    const emailType = kiesTrialMail({
+      dagen: days,
+      profielAf: !!user.onboarding_done,
+      gesprekken: gesprekken.count ?? 0,
+      sessies: sessies.count ?? 0,
+      coachingRapporten: rapporten.count ?? 0,
+      gesprekMetArnoGeboekt: !!user.arno_call_booked_at,
+      verzonden: sentTypes,
+    })
+    const emailOptions = emailType === 'first_coaching' ? { sessionCount: sessies.count ?? 5 } : undefined
 
     if (!emailType) continue
 
