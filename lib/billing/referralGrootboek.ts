@@ -9,6 +9,7 @@ import {
   type BetaaldePeriode, type Dekking,
 } from './referralRegels'
 import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
+import { isTeruggedraaid, vervalBedrag } from './referralSaldo'
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
 import { eersteProefStart } from '@/lib/referralKenmerken'
@@ -27,7 +28,9 @@ export const MEELOOP = true
 const HANDMATIG = 'handmatig besluit: '
 const DAG_MS = 24 * 60 * 60 * 1000
 
+// De laatste vier ontstaan alleen via de databasefuncties (docs/sql/2026-11-26-referral-verrekening.sql).
 export type RegelSoort = 'toekenning' | 'afwijzing' | 'vaststelling' | 'verval' | 'handwerk'
+  | 'verrekening' | 'vrijgave' | 'terugdraaiing' | 'herstel'
 
 export interface GrootboekRegel {
   event_key: string
@@ -41,6 +44,12 @@ export interface GrootboekRegel {
   reden: string
   klant_maand_netto_cent: number | null
   created_at?: string
+  // Alle vier vanaf docs/sql/2026-11-26-referral-verrekening.sql.
+  /** Bij een toekenning: de betalingen eronder (Mollie-kenmerk, bij een team het id van de teamfactuur). */
+  bron_ids?: string[] | null
+  actie_id?: string | null
+  hoort_bij?: string | null
+  mail_at?: string | null
 }
 
 export interface ReferralRij {
@@ -291,6 +300,7 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
     periodes.push({
       plan, cyclus: b.cyclus, klantType: b.klant_type, periodeStart: b.periode_start, periodeEinde: b.periode_einde,
       betaaldAt: b.betaald_at, geldig: eigenBetalingTelt(b), maandNettoCent: rij ? subMaandCent(d, rij) : betaaldMaandCent(b),
+      bronId: b.mollie_payment_id,
     })
   }
 
@@ -304,7 +314,7 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
     if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_GEBRUIKERS)))
     periodes.push({
       plan: 'team', cyclus: f.cyclus, klantType: 'zakelijk', periodeStart: f.periode_start, periodeEinde: f.periode_einde,
-      betaaldAt: f.betaald_at!, geldig: teamFactuurTelt(f), maandNettoCent: teamMaandCent(seats, f.cyclus),
+      betaaldAt: f.betaald_at!, geldig: teamFactuurTelt(f), maandNettoCent: teamMaandCent(seats, f.cyclus), bronId: f.id,
     })
   }
 
@@ -484,7 +494,13 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
     if (bekend.has(regel.event_key)) return
     const volledig: GrootboekRegel = { ...regel, meeloop: MEELOOP }
     if (schrijf) {
-      const { error } = await billingDb.from('arnobot_referral_grootboek').insert(volledig)
+      let { error } = await billingDb.from('arnobot_referral_grootboek').insert(volledig)
+      // De kolom bron_ids bestaat pas na docs/sql/2026-11-26-referral-verrekening.sql: zolang die niet is uitgevoerd gaat
+      // de regel er zonder in. Elke fout die de kolom noemt telt: gaat het om iets anders, dan faalt de tweede poging ook.
+      if (error && volledig.bron_ids && error.message.includes('bron_ids')) {
+        const { bron_ids: _weg, ...zonder } = volledig
+        error = (await billingDb.from('arnobot_referral_grootboek').insert(zonder)).error
+      }
       // 23505: een gelijktijdige run was ons voor.
       if (error) {
         if ((error as { code?: string }).code === '23505') return
@@ -538,7 +554,10 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
 
       const basis = { referral_id: id, aanbrenger_user_id: aanbrengerId, klant_user_id: klantId, reden: beoordeling.reden }
       if (beoordeling.uitkomst === 'toekennen') {
-        await voegToe({ ...basis, event_key: `uitkomst:${id}`, soort: 'toekenning', netto_cent: beoordeling.nettoCent, klant_maand_netto_cent: beoordeling.klantMaandNettoCent })
+        await voegToe({
+          ...basis, event_key: `uitkomst:${id}`, soort: 'toekenning', netto_cent: beoordeling.nettoCent, klant_maand_netto_cent: beoordeling.klantMaandNettoCent,
+          ...(beoordeling.bronIds ? { bron_ids: beoordeling.bronIds } : {}),
+        })
       } else if (beoordeling.uitkomst === 'afwijzen') {
         await voegToe({ ...basis, event_key: `uitkomst:${id}`, soort: 'afwijzing', netto_cent: 0, klant_maand_netto_cent: null })
       } else if (beoordeling.uitkomst === 'handwerk') {
@@ -589,7 +608,7 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
       }
       await voegToe({
         ...basis, event_key: `verval:${t.referral_id}`, soort: 'verval',
-        netto_cent: -openstaand(run.regels, t) || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
+        netto_cent: vervalBedrag(run.regels, t.referral_id), reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
       })
     } catch (e) {
       run.fouten.push(`tegoed ${t.referral_id}: ${e instanceof Error ? e.message : String(e)}`)
@@ -638,10 +657,6 @@ const VERVAL_VRAAG = 'verval-handwerk:'
 const behoudRegels = (regels: GrootboekRegel[], referralId: string) =>
   regels.filter(r => r.referral_id === referralId && r.event_key.startsWith('verval-behoud:'))
 
-/** Het bedrag dat van een toekenning in het saldo staat. */
-const openstaand = (regels: GrootboekRegel[], toekenning: GrootboekRegel) =>
-  toekenning.netto_cent ?? regels.find(r => r.event_key === `vaststelling:${toekenning.referral_id}`)?.netto_cent ?? 0
-
 /** De vraag "laten vervallen of behouden?" die nog op Arno wacht. */
 export function openVervalVraag(regels: GrootboekRegel[], referralId: string): GrootboekRegel | null {
   if (regels.some(r => r.event_key === `verval:${referralId}`)) return null
@@ -668,7 +683,7 @@ export async function legVervalBesluitVast(referralId: string, invoer: VervalBes
     event_key: vervalt ? `verval:${referralId}` : `verval-behoud:${referralId}:${behoudRegels(regels, referralId).length + 1}`,
     meeloop: MEELOOP, soort: vervalt ? 'verval' : 'handwerk', referral_id: referralId,
     aanbrenger_user_id: toekenning.aanbrenger_user_id, klant_user_id: toekenning.klant_user_id,
-    netto_cent: vervalt ? -openstaand(regels, toekenning) || 0 : 0,
+    netto_cent: vervalt ? vervalBedrag(regels, referralId) : 0,
     reden: `${HANDMATIG}${toelichting.slice(0, 300)}`, klant_maand_netto_cent: toekenning.klant_maand_netto_cent,
   }, regels)
 }
@@ -701,6 +716,10 @@ export function regelTekst(r: GrootboekRegel, aanbrenger: string, klant: string)
     case 'vaststelling': return `Bedrag zou vaststaan voor ${aanbrenger} (klant ${klant}): ${bedrag}`
     case 'verval': return `Zou vervallen bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
     case 'handwerk': return `Zelf beoordelen: ${aanbrenger}, klant ${klant}: ${r.reden}`
+    case 'verrekening': return `Verrekend bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
+    case 'vrijgave': return `Verrekening teruggezet bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
+    case 'terugdraaiing': return `Teruggedraaid bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
+    case 'herstel': return `Hersteld bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
   }
 }
 
@@ -711,9 +730,13 @@ export interface Mijlpaal {
   aantal: number
 }
 
-/** De mijlpalen die een aanbrenger er met deze regels bij heeft gehaald (aantal toekenningen per persoon). */
+/**
+ * De mijlpalen die een aanbrenger er met deze regels bij heeft gehaald (aantal toekenningen per persoon). Een
+ * teruggedraaide toekenning telt niet mee, tot zij hersteld is. `regels` is het hele grootboek, inclusief `nieuw`.
+ */
 export function nieuweMijlpalen(regels: GrootboekRegel[], nieuw: GrootboekRegel[]): Mijlpaal[] {
-  const tel = (r: GrootboekRegel[], id: string) => r.filter(x => x.soort === 'toekenning' && x.aanbrenger_user_id === id).length
+  const tel = (r: GrootboekRegel[], id: string) =>
+    r.filter(x => x.soort === 'toekenning' && x.aanbrenger_user_id === id && !isTeruggedraaid(regels, x.referral_id)).length
   return [...new Set(nieuw.filter(r => r.soort === 'toekenning').map(r => r.aanbrenger_user_id))].flatMap(aanbrengerId => {
     const na = tel(regels, aanbrengerId)
     const voor = na - tel(nieuw, aanbrengerId)

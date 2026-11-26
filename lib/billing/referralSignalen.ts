@@ -1,6 +1,6 @@
 import { billingDb, type PayRow } from './db'
 import { heeftAndereTerugbetaling } from './terugbetaling'
-import { BENODIGDE_MAANDEN, telMaanden } from './referralRegels'
+import { BENODIGDE_MAANDEN, telMaanden, type GratisPeriode } from './referralRegels'
 import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -24,11 +24,14 @@ export function voordeelGebruikt(referral: { referred_discount?: number | string
  * Het aantal aaneengesloten betaalde maanden aan het eind van de rij, en of de benodigde reeks al eerder (vóór de
  * laatste maand) was gehaald. In dat laatste geval is het signaal al geweest.
  */
-export function maandReeks(betalingen: Rij[]): { reeks: number; eerderGehaald: boolean } {
+export function maandReeks(betalingen: Rij[], gratis: GratisPeriode[] = []): { reeks: number; eerderGehaald: boolean } {
   const maanden = betalingen
     .filter(b => b.status === 'paid' && b.cyclus === 'maandelijks' && !!b.periode_start && !!b.periode_einde
       && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0))
-  const stand = telMaanden(maanden.map(m => ({ periodeStart: m.periode_start!, periodeEinde: m.periode_einde! })))
+  const stand = telMaanden([
+    ...maanden.map(m => ({ periodeStart: m.periode_start!, periodeEinde: m.periode_einde!, gratis: false })),
+    ...gratis.map(g => ({ ...g, gratis: true })),
+  ])
   const reeks = stand.at(-1)?.reeks ?? 0
   const eerderGehaald = stand.slice(0, -1).some(m => m.reeks >= BENODIGDE_MAANDEN)
   return { reeks, eerderGehaald }

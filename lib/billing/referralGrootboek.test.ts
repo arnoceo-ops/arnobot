@@ -7,6 +7,8 @@ type Rij = Record<string, any>
 const h = vi.hoisted(() => ({
   tabellen: {} as Record<string, Rij[]>, fouten: {} as Record<string, { message: string; code?: string }>,
   terugbetalingen: {} as Record<string, Rij[]>, mollieFout: false,
+  /** true: de SQL met de kolom bron_ids is nog niet uitgevoerd. */
+  zonderBronKolom: false,
 }))
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }))
@@ -28,6 +30,9 @@ vi.mock('./db', () => ({
         if (h.fouten[tabel]) return { data: null, error: h.fouten[tabel] }
         const rijen = (h.tabellen[tabel] ??= [])
         if (nieuw) {
+          if (h.zonderBronKolom && 'bron_ids' in nieuw) {
+            return { data: null, error: { code: 'PGRST204', message: "Could not find the 'bron_ids' column of 'arnobot_referral_grootboek' in the schema cache" } }
+          }
           if (rijen.some(r => r.event_key === nieuw!.event_key && r.meeloop === nieuw!.meeloop)) return { data: null, error: { message: 'dubbel', code: '23505' } }
           rijen.push({ ...nieuw, created_at: new Date().toISOString() })
           return { data: null, error: null }
@@ -84,6 +89,7 @@ function zet(extra: Record<string, Rij[]> = {}) {
   h.fouten = {}
   h.terugbetalingen = {}
   h.mollieFout = false
+  h.zonderBronKolom = false
   h.tabellen = {
     arnobot_referral_grootboek: [],
     arnobot_referrals: [referral],
@@ -1069,5 +1075,37 @@ describe('besluit over een tegoed dat lijkt te vervallen', () => {
     await draai()
     expect(await legVervalBesluitVast('r1', { besluit: 'vervallen', toelichting: 'x' })).toMatchObject({ status: 404 })
     expect(await legVervalBesluitVast('r1', { besluit: 'vervallen', toelichting: ' ' })).toMatchObject({ status: 400 })
+  })
+})
+
+describe('betalingskenmerken onder een toekenning (bron_ids)', () => {
+  it('komen in de meeloopregel', async () => {
+    await draai()
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning', bron_ids: ['tr_klant'] })
+  })
+  it('zonder de SQL gaat de regel er gewoon in, zonder kenmerken en zonder fout', async () => {
+    h.zonderBronKolom = true
+    const run = await draai()
+    expect(run.fouten).toEqual([])
+    expect(boek()).toHaveLength(1)
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning', netto_cent: 1900 })
+    expect(boek()[0]).not.toHaveProperty('bron_ids')
+    expect((await draai()).nieuw).toHaveLength(0)
+  })
+  it('een afwijzing krijgt geen kolom mee', async () => {
+    zet({ arnobot_payments: [jaar('klant', { betaald_at: '2027-02-16T10:00:00.000Z' })] })
+    await draai()
+    expect(boek()[0]).not.toHaveProperty('bron_ids')
+  })
+})
+
+describe('verval na deelverbruik', () => {
+  it('boekt alleen wat er van de toekenning over is', async () => {
+    await draai()
+    boek().push({ event_key: 'verrekening:x:r1', meeloop: true, soort: 'verrekening', referral_id: 'r1', hoort_bij: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: -1500, reden: 'test' })
+    h.tabellen.arnobot_subscriptions = [sub('aanbrenger', { status: 'ended', periode_einde: '2027-03-05T00:00:00.000Z' }), klantSub()]
+    await draai(new Date('2027-03-25T06:00:00.000Z'))
+    expect(boek().at(-1)).toMatchObject({ soort: 'verval', netto_cent: -400 })
+    expect(saldoPerAanbrenger(boek() as any).get('aanbrenger')).toBe(0)
   })
 })

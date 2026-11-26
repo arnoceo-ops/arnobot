@@ -50,6 +50,8 @@ export interface MolliePayment {
   status: MolliePaymentStatus
   amount: MollieAmount
   amountRefunded?: MollieAmount
+  /** Wat er nog van deze betaling terug te storten is. */
+  amountRemaining?: MollieAmount
   amountChargedBack?: MollieAmount
   paidAt?: string | null
   customerId?: string | null
@@ -266,6 +268,8 @@ export async function betaalTerug(input: {
   brutoCent: number
   omschrijving: string
   idempotencyKey: string
+  /** Bewaart Mollie bij de terugbetaling. De idempotency-key vervalt na een uur, dit kenmerk niet. */
+  metadata?: Record<string, unknown>
 }): Promise<{ id: string; status: string }> {
   return mollie(`/payments/${input.betalingId}/refunds`, {
     method: 'POST',
@@ -273,6 +277,7 @@ export async function betaalTerug(input: {
     body: {
       amount: { currency: 'EUR', value: centenNaarMollie(input.brutoCent) },
       description: input.omschrijving,
+      ...(input.metadata ? { metadata: input.metadata } : {}),
     },
   })
 }
@@ -346,6 +351,7 @@ export interface MollieRefund {
   status: 'queued' | 'pending' | 'processing' | 'refunded' | 'failed' | 'canceled'
   amount: MollieAmount
   createdAt: string
+  metadata?: unknown
 }
 
 /**

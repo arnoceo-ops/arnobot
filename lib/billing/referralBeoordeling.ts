@@ -3,7 +3,7 @@
 
 import {
   BENODIGDE_MAANDEN, eersteBetalingOpTijd, kwalificatie, levertTegoedOp, tegoedNettoCent, tegoedStatus, vervallenNaAanmelding,
-  type AanbrengerHistorie, type AanbrengerStand, type BetaaldePeriode,
+  type AanbrengerHistorie, type AanbrengerStand, type BetaaldePeriode, type GratisPeriode,
 } from './referralRegels'
 
 export interface KlantFeiten {
@@ -17,6 +17,8 @@ export interface KlantFeiten {
    */
   betaalMomenten: { at: string; team: boolean }[]
   periodes: BetaaldePeriode[]
+  /** Periodes zonder betaling die de reeks niet breken. Nog niets vult dit (komt met overslaan en de teammaand). */
+  gratisPeriodes?: GratisPeriode[]
   /** Op betaald gezet zonder betaling in ons systeem. */
   handmatigBetaald: boolean
   /** Ooit met de knop BETAALD gezet, ook als er daarna online is betaald. */
@@ -44,7 +46,7 @@ export interface AanbrengerFeiten {
 
 export type Beoordeling =
   | { uitkomst: 'wacht'; reden: string }
-  | { uitkomst: 'toekennen'; reden: string; nettoCent: number | null; klantMaandNettoCent: number }
+  | { uitkomst: 'toekennen'; reden: string; nettoCent: number | null; klantMaandNettoCent: number; bronIds?: string[] }
   | { uitkomst: 'afwijzen'; reden: string }
   | { uitkomst: 'handwerk'; reden: string }
 
@@ -54,7 +56,12 @@ const handwerk = (reden: string): Beoordeling => ({ uitkomst: 'handwerk', reden 
 export const TEAMBEGIN_ONZEKER = 'het begin van het team van de aanbrenger hangt af van een teamfactuur die niet of niet meer betaald is'
 
 export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): Beoordeling {
-  const uitkomst = beoordeel(klant, aanbrenger, nu)
+  let uitkomst = beoordeel(klant, aanbrenger, nu)
+  if (uitkomst.uitkomst === 'toekennen') {
+    // De betalingen onder deze toekenning: gaat daar later iets van terug, dan is dit het bijbehorende tegoed.
+    const bronIds = kwalificatie(klant.periodes, nu, klant.gratisPeriodes)!.bronnen.map(p => p.bronId).filter((x): x is string => !!x)
+    if (bronIds.length) uitkomst = { ...uitkomst, bronIds }
+  }
   // Zou het tegoed vervallen zijn als een nooit betaalde of teruggedraaide teamfactuur niet meetelt, dan beslist Arno.
   if (uitkomst.uitkomst === 'toekennen' && aanbrenger.strengeHistorie
     && vervallenNaAanmelding(aanbrenger.strengeHistorie, klant.aangemeldAt!, nu)) {
@@ -77,7 +84,7 @@ function beoordeel(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): 
   }
   if (klant.bijbetalingLoopt) return wacht('bijbetaling van een upgrade van de klant loopt nog')
 
-  const gehaald = kwalificatie(klant.periodes, nu)
+  const gehaald = kwalificatie(klant.periodes, nu, klant.gratisPeriodes)
   if (!gehaald) {
     if (klant.handmatigBetaald) return handwerk('klant staat ook met de hand op betaald, de betaalde maanden zijn niet te tellen')
     const telt = klant.periodes.filter(p => p.geldig && levertTegoedOp(p.plan, p.cyclus))

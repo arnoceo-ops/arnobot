@@ -24,7 +24,9 @@ vi.mock('./db', () => {
     }
     return q
   }
-  return { billingDb: { from: () => keten() } }
+  // Zonder de referral-SQL bestaat de databasefunctie voor het slot niet.
+  const rpc = async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function public.referral_voor_terugbetaling in the schema cache' } })
+  return { billingDb: { from: () => keten(), rpc } }
 })
 vi.mock('./mollie', () => ({ betaalTerug: h.betaalTerug, mollieIngeschakeld: () => h.mollieAan }))
 vi.mock('./verwerking', () => ({ markeerTerugbetaald: h.markeer, verwerkMolliebetaling: h.verwerk }))

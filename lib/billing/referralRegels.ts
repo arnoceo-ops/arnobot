@@ -46,12 +46,17 @@ export function brutoVanNetto(nettoCent: number): number {
   return Math.round(nettoCent * btwFactor)
 }
 
-/** Hoeveel van het saldo in deze betaling past: wat wordt teruggestort of gekort, en wat van het saldo afgaat. */
+/**
+ * Hoeveel van het saldo in deze betaling past: wat wordt teruggestort of gekort, en wat van het saldo afgaat. Zou er door
+ * afronding 1 cent netto overblijven, dan telt die als verbruikt. De databasefunctie referral_verrekening rekent precies
+ * zo (docs/sql/2026-11-26-referral-verrekening.sql): wijzig ze altijd samen.
+ */
 export function verrekening(saldoNettoCent: number, betalingBrutoCent: number): { brutoCent: number; verbruiktNettoCent: number } {
   if (saldoNettoCent <= 0 || betalingBrutoCent <= 0) return { brutoCent: 0, verbruiktNettoCent: 0 }
   const vol = brutoVanNetto(saldoNettoCent)
   if (vol <= betalingBrutoCent) return { brutoCent: vol, verbruiktNettoCent: saldoNettoCent }
-  return { brutoCent: betalingBrutoCent, verbruiktNettoCent: Math.min(saldoNettoCent, Math.round(betalingBrutoCent / btwFactor)) }
+  const verbruikt = Math.min(saldoNettoCent, Math.round(betalingBrutoCent / btwFactor))
+  return { brutoCent: betalingBrutoCent, verbruiktNettoCent: saldoNettoCent - verbruikt === 1 ? saldoNettoCent : verbruikt }
 }
 
 /** Telt de aanmelding? De eerste betaling moet vallen binnen de proef of de dagen erna (Amsterdamse kalenderdagen). */
@@ -79,24 +84,52 @@ export interface Maand<T> {
   nieuw: boolean
 }
 
-/** Telt aaneengesloten maanden. Overlappende periodes tellen niet dubbel, ze verlengen alleen het einde. */
-export function telMaanden<T extends { periodeStart: string; periodeEinde: string }>(periodes: T[]): Maand<T>[] {
+/** Een periode waarvoor bewust niet is betaald: een overgeslagen incasso of een volledig verrekende teammaand. */
+export interface GratisPeriode {
+  periodeStart: string
+  periodeEinde: string
+}
+
+/**
+ * Telt aaneengesloten maanden. Overlappende periodes tellen niet dubbel, ze verlengen alleen het einde.
+ *
+ * Een gratis periode (`gratis: true`) is geen betaalde maand en breekt de reeks ook niet: zij schuift alleen het einde op
+ * vanaf waar de onderbreking telt. Sluit zij zelf niet aan (meer dan 14 dagen na het vorige einde), dan herstelt zij die
+ * onderbreking niet. Een betaalde periode die alleen met een gratis periode overlapt, telt gewoon mee: er is echt betaald.
+ */
+export function telMaanden<T extends { periodeStart: string; periodeEinde: string; gratis?: boolean }>(periodes: T[]): Maand<T>[] {
   let reeks = 0
-  let vorigeEinde: number | null = null
+  /** Tot waar er echt betaald is: hiermee wordt een dubbele betaling herkend. */
+  let betaaldTot: number | null = null
+  /** Tot waar de reeks loopt, gratis periodes meegeteld: hiermee wordt een onderbreking gemeten. */
+  let ketenTot: number | null = null
+  const marge = MAX_ONDERBREKING_DAGEN * DAG_MS
   return [...periodes]
     .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart) || Date.parse(a.periodeEinde) - Date.parse(b.periodeEinde))
     .map(periode => {
       const start = Date.parse(periode.periodeStart)
       const einde = Date.parse(periode.periodeEinde)
-      if (vorigeEinde !== null && start < vorigeEinde - OVERLAP_MARGE_DAGEN * DAG_MS) {
-        vorigeEinde = Math.max(vorigeEinde, einde)
+      if (periode.gratis) {
+        if (ketenTot !== null && start - ketenTot <= marge) ketenTot = Math.max(ketenTot, einde)
         return { periode, reeks, nieuw: false }
       }
-      reeks = vorigeEinde !== null && start - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS ? reeks + 1 : 1
-      vorigeEinde = einde
+      if (betaaldTot !== null && start < betaaldTot - OVERLAP_MARGE_DAGEN * DAG_MS) {
+        betaaldTot = Math.max(betaaldTot, einde)
+        ketenTot = Math.max(ketenTot!, einde)
+        return { periode, reeks, nieuw: false }
+      }
+      reeks = ketenTot !== null && start - ketenTot <= marge ? reeks + 1 : 1
+      betaaldTot = einde
+      ketenTot = ketenTot === null ? einde : Math.max(ketenTot, einde)
       return { periode, reeks, nieuw: true }
     })
 }
+
+/** De betaalde maanden en de gratis periodes door elkaar, klaar voor telMaanden. */
+const metGratis = <T extends GratisPeriode>(betaald: T[], gratis: GratisPeriode[]) => [
+  ...betaald.map(p => ({ periodeStart: p.periodeStart, periodeEinde: p.periodeEinde, gratis: false, betaald: p as T | null })),
+  ...gratis.map(p => ({ periodeStart: p.periodeStart, periodeEinde: p.periodeEinde, gratis: true, betaald: null as T | null })),
+]
 
 /** Een betaalde periode van de aangebrachte klant. `geldig` is false bij niet betaald, terugbetaald of teruggeboekt. */
 export interface BetaaldePeriode {
@@ -109,28 +142,35 @@ export interface BetaaldePeriode {
   geldig: boolean
   /** Maandprijs exclusief btw van deze periode. */
   maandNettoCent: number
+  /** Waar deze periode mee betaald is: het Mollie-kenmerk van de betaling, of bij een team het id van de teamfactuur. */
+  bronId?: string
 }
 
 export interface Kwalificatie {
   /** De periode die de drempel haalt: haar abonnement bepaalt het bedrag. */
   periode: BetaaldePeriode
+  /** De betalingen waarop de drempel rust: de jaarbetaling, of de drie maanden. */
+  bronnen: BetaaldePeriode[]
 }
 
 /**
  * Is de drempel gehaald? Jaarabonnement: zakelijk direct na betaling, particulier na de bedenktijd. Per maand: drie
  * aaneengesloten maanden die betaald en verstreken zijn. Alleen abonnementen die tegoed opleveren tellen mee.
  */
-export function kwalificatie(periodes: BetaaldePeriode[], nu: Date): Kwalificatie | null {
+export function kwalificatie(periodes: BetaaldePeriode[], nu: Date, gratis: GratisPeriode[] = []): Kwalificatie | null {
   const telt = periodes.filter(p => p.geldig && levertTegoedOp(p.plan, p.cyclus))
   const jaar = telt
     .filter(p => p.cyclus === 'jaarlijks')
     .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart))
     .find(p => p.klantType === 'zakelijk' || amsterdamDatum(nu) > laatsteDagBedenktijd(p.betaaldAt))
-  const maand = telMaanden(telt.filter(p => p.cyclus === 'maandelijks'))
-    .find(m => m.nieuw && m.reeks >= BENODIGDE_MAANDEN && Date.parse(m.periode.periodeEinde) <= nu.getTime())?.periode
+  const stand = telMaanden(metGratis(telt.filter(p => p.cyclus === 'maandelijks'), gratis))
+  const drempel = stand.findIndex(m => m.nieuw && m.reeks >= BENODIGDE_MAANDEN && Date.parse(m.periode.periodeEinde) <= nu.getTime())
+  const maand = drempel < 0 ? undefined : stand[drempel].periode.betaald!
   // Allebei gehaald: de eerste in de tijd.
   const periode = jaar && maand ? (Date.parse(jaar.periodeStart) <= Date.parse(maand.periodeStart) ? jaar : maand) : jaar ?? maand
-  return periode ? { periode } : null
+  if (!periode) return null
+  if (periode !== maand) return { periode, bronnen: [periode] }
+  return { periode, bronnen: stand.slice(0, drempel + 1).filter(m => m.nieuw).slice(-BENODIGDE_MAANDEN).map(m => m.periode.betaald!) }
 }
 
 export interface AanbrengerStand {
@@ -280,9 +320,9 @@ export function metJaarKorting(jaar: Bedrag): { bedrag: Bedrag; kortingBrutoCent
  * De betaalde maand die de klant gratis krijgt (wordt afgeschreven en daarna teruggestort): de vierde in een reeks
  * aaneengesloten betaalde maanden. null zolang die er niet is.
  */
-export function gratisVierdeMaand(periodes: BetaaldePeriode[]): BetaaldePeriode | null {
-  return telMaanden(periodes.filter(p => p.geldig && p.cyclus === 'maandelijks'))
-    .find(m => m.nieuw && m.reeks === BENODIGDE_MAANDEN + 1)?.periode ?? null
+export function gratisVierdeMaand(periodes: BetaaldePeriode[], gratis: GratisPeriode[] = []): BetaaldePeriode | null {
+  return telMaanden(metGratis(periodes.filter(p => p.geldig && p.cyclus === 'maandelijks'), gratis))
+    .find(m => m.nieuw && m.reeks === BENODIGDE_MAANDEN + 1)?.periode.betaald ?? null
 }
 
 /** Bij een team is de gratis maand nooit meer dan de maandprijs waarmee het team begon (later toegevoegde gebruikers tellen niet). */

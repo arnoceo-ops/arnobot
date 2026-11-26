@@ -6,7 +6,9 @@ import { betaalTerug, MollieError, mollieIngeschakeld } from '@/lib/billing/moll
 import { markeerTerugbetaald, verwerkMolliebetaling } from '@/lib/billing/verwerking'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { heeftAndereTerugbetaling, restantCent } from '@/lib/billing/terugbetaling'
+import { openReferralBedragen, slotVoorTerugbetaling, zonderReferralBedrag } from '@/lib/billing/referralSlot'
 import { logAdminActie } from '@/lib/adminLog'
+import { notifyTelegram } from '@/lib/cron-notify'
 
 // Volledige terugbetaling van de laatste online betaling van een gebruiker, bedoeld voor de
 // bedenktijd van 14 dagen (voorwaarden artikel 8). Het beëindigen van de toegang, het
@@ -35,8 +37,19 @@ export async function POST(req: NextRequest) {
     .order('betaald_at', { ascending: false })
     .limit(24)
     .returns<PayRow[]>()
+  // Een openstaande referralreservering mag niet laten lijken dat er niets terug te betalen is: dan zou een oudere
+  // betaling gekozen worden.
+  const open = await openReferralBedragen(kandidaten ?? [])
+  if (open.fout) {
+    Sentry.captureMessage(`Terugbetalen: referralacties niet te controleren: ${open.fout}`, { level: 'error', tags: { onderdeel: 'billing-refund' } })
+    return NextResponse.json({ error: 'Niet te controleren of er een referralterugstorting loopt. Probeer het zo opnieuw.' }, { status: 503 })
+  }
+  const nogOpen = (b: PayRow) => {
+    const o = open.bedragen.get(b.id)
+    return o ? o.gereserveerdCent + o.onderwegCent : 0
+  }
   // Een betaling waarop alleen referraltegoed is teruggestort, is nog gewoon terug te betalen.
-  const betaling = (kandidaten ?? []).find(b => !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) && restantCent(b) > 0)
+  let betaling = (kandidaten ?? []).find(b => !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) && restantCent(zonderReferralBedrag(b, nogOpen(b))) > 0)
   if (!betaling) return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
 
   // De bedenktijd is 14 dagen na de betaling (voorwaarden artikel 8). Daarna terugbetalen kan
@@ -52,6 +65,21 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Hetzelfde slot als de referralterugstortingen: wat nog niet verstuurd is valt vrij, nieuwe reserveringen zijn even
+  // geblokkeerd. Zonder uitgevoerde SQL bestaat er niets om te blokkeren. Niet te controleren: niets terugbetalen.
+  const slot = await slotVoorTerugbetaling(userId, betaling.id)
+  if (slot.stand === 'fout') {
+    Sentry.captureMessage(`Terugbetalen: referralslot mislukt: ${slot.fout}`, { level: 'error', tags: { onderdeel: 'billing-refund' } })
+    return NextResponse.json({ error: 'Niet te controleren of er een referralterugstorting loopt. Probeer het zo opnieuw.' }, { status: 503 })
+  }
+  if (slot.stand === 'ok') {
+    if (slot.onderwegCent > 0) {
+      return NextResponse.json({ error: 'Op deze betaling loopt nu een referralterugstorting. Probeer het later opnieuw.' }, { status: 409 })
+    }
+    betaling = { ...betaling, referral_refund_cent: slot.referralRefundCent }
+    if (restantCent(betaling) <= 0) return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
+  }
+
   try {
     const refund = await betaalTerug({
       betalingId: betaling.mollie_payment_id,
@@ -63,6 +91,9 @@ export async function POST(req: NextRequest) {
     // en dat kan uren tot dagen duren. De webhook later is dan een idempotente no-op.
     await markeerTerugbetaald(betaling.id)
     await verwerkMolliebetaling(betaling.mollie_payment_id)
+    if (slot.stand === 'ok' && slot.vastCent > 0) {
+      await notifyTelegram(`Controleer of nabetalen nodig is (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nEr staat een vastgelopen referralterugstorting van ${(slot.vastCent / 100).toFixed(2)} euro op, die niet is meebetaald. Is dat bedrag niet teruggestort, betaal het dan na.`)
+    }
     await logAdminActie({
       actie: 'terugbetaling', doelUserId: userId,
       details: { extra: { bedrag_cent: restantCent(betaling), mollie_payment_id: betaling.mollie_payment_id, dagen_na_betaling: dagenGeleden, buiten_bedenktijd: buitenBedenktijd, refund_id: refund.id } },

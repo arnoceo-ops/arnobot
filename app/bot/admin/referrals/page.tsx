@@ -18,6 +18,7 @@ const kop: React.CSSProperties = { ...cel, color: '#6b7280', fontSize: 12, lette
 
 const SOORT_LABEL: Record<GrootboekRegel['soort'], string> = {
   toekenning: 'Toekennen', afwijzing: 'Niets toekennen', vaststelling: 'Bedrag vast', verval: 'Vervallen', handwerk: 'Zelf beoordelen',
+  verrekening: 'Verrekend', vrijgave: 'Teruggezet', terugdraaiing: 'Teruggedraaid', herstel: 'Hersteld',
 }
 
 const dag = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : '')

@@ -6,6 +6,7 @@ import { wieIs } from './wie'
 import { isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
 export { BEDENKTIJD_DAGEN, amsterdamDatum, isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
 import { heeftAndereTerugbetaling, restantCent } from './terugbetaling'
+import { openReferralBedragen, slotVoorTerugbetaling, zonderReferralBedrag } from './referralSlot'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -93,11 +94,16 @@ export async function zoekHerroepbaar(userId: string, nu: Date = new Date()): Pr
       .in('soort', ['eerste', 'upgrade'])
       .order('betaald_at', { ascending: false })
       .limit(10)
-    const betaling = kiesHerroepbareBetaling((betalingen ?? []) as PayRow[], nu)
-    if (betaling) {
+    const rijen = (betalingen ?? []) as PayRow[]
+    // Een referralreservering die nog niet verstuurd is, valt bij herroepen vrij en telt dus niet mee. Niet te
+    // controleren: dan het lagere bedrag. Herroepen blijft altijd mogelijk.
+    const { bedragen } = await openReferralBedragen(rijen)
+    const gekozen = kiesHerroepbareBetaling(rijen.map(b => zonderReferralBedrag(b, bedragen.get(b.id)?.gereserveerdCent ?? 0)), nu)
+    if (gekozen) {
       return {
-        betaling,
-        herroepbaar: { soort: betaling.soort as HerroepSoort, bedragCent: restantCent(betaling), uiterlijkTot: laatsteDagBedenktijd(betaling.betaald_at!), gesimuleerd: proef },
+        // De rij zoals zij in de database staat.
+        betaling: rijen.find(b => b.id === gekozen.id)!,
+        herroepbaar: { soort: gekozen.soort as HerroepSoort, bedragCent: restantCent(gekozen), uiterlijkTot: laatsteDagBedenktijd(gekozen.betaald_at!), gesimuleerd: proef },
       }
     }
   }
@@ -131,19 +137,31 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   if (!betaling) return { ok: false, status: 404, fout: 'Er is geen betaling meer waarvoor je bedenktijd hebt.' }
   if (!mollieIngeschakeld()) return { ok: false, status: 503, fout: 'Terugbetalen is nu niet mogelijk. Mail admin@arno.bot.' }
 
+  // Hetzelfde slot als de referralterugstortingen. Herroepen wordt hier nooit geweigerd: wat al onderweg is krijgt de
+  // klant langs die weg, en lukt het vrijgeven niet, dan gaat het restant terug en hoort Arno dat hij moet nakijken.
+  const slot = await slotVoorTerugbetaling(userId, betaling.id)
+  const bedragCent = restantCent(slot.stand === 'ok' ? { ...betaling, referral_refund_cent: slot.referralRefundCent } : betaling)
+  if (bedragCent <= 0) return { ok: false, status: 503, fout: 'Terugbetalen is nu niet mogelijk. Mail admin@arno.bot.' }
+
   const refund = await betaalTerug({
     betalingId: betaling.mollie_payment_id,
-    brutoCent: restantCent(betaling),
+    brutoCent: bedragCent,
     omschrijving: 'Herroeping binnen bedenktijd ArnoBot',
     idempotencyKey: `herroeping-${betaling.id}`,
   })
   // Zoals de adminknop: toegang meteen beëindigen, de webhook later is dan een idempotente no-op.
   await markeerTerugbetaald(betaling.id)
   await verwerkMolliebetaling(betaling.mollie_payment_id)
+  const openCent = slot.stand === 'ok' ? slot.onderwegCent + slot.vastCent : 0
+  if (slot.stand === 'fout' || openCent > 0) {
+    await notifyTelegram(`Controleer of nabetalen nodig is na een herroeping (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nTerugbetaald: ${euro(bedragCent)}\n${slot.stand === 'fout'
+      ? `De referralacties waren niet te controleren (${slot.fout}). Kijk in Mollie of de klant in totaal het hele bedrag terugkrijgt.`
+      : `Daarnaast staat ${euro(openCent)} als referralterugstorting open die niet is meebetaald. Komt die niet aan, betaal dat bedrag dan na.`}`)
+  }
   await logAdminActie({
     actie: 'herroeping',
     doelUserId: userId,
-    details: { extra: { soort: herroepbaar.soort, bedrag_cent: restantCent(betaling), mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
+    details: { extra: { soort: herroepbaar.soort, bedrag_cent: bedragCent, mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
   })
-  return { ok: true, soort: herroepbaar.soort, bedragCent: restantCent(betaling), proef: false }
+  return { ok: true, soort: herroepbaar.soort, bedragCent, proef: false }
 }
