@@ -189,6 +189,8 @@ export interface BillingMailOptions {
   bijbetalingCent?: number
   /** Overstap: zakelijk, dan is `bedragCent` exclusief btw en staat dat zo in de mail. */
   zakelijk?: boolean
+  /** Herroeping waarbij alles al als referralgeld terug is: er volgt geen extra terugbetaling. */
+  alTerug?: boolean
   /** Referral fee: waarvoor wordt er teruggestort. */
   reden?: string
   /** Terugbetaling: het ging om de bijbetaling van een upgrade, het abonnement loopt door. */
@@ -468,6 +470,15 @@ export function getEmailTemplate(
       }
     case 'terugbetaling_bevestiging': {
       const b = options?.billing
+      if (b?.alTerug) {
+        return {
+          subject: `${prefix}Je herroeping is verwerkt`,
+          html: mail(
+            `Je herroeping is verwerkt. Wat je voor deze betaling betaalde is al aan je teruggestort of onderweg naar je, dus er volgt geen extra terugbetaling.<br><br>${b.upgrade ? 'Je upgrade is hiermee teruggedraaid. Je abonnement loopt door.' : 'Je abonnement is hiermee beëindigd.'}<br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+            'TERUG NAAR ARNOBOT →', 'https://arno.bot'
+          ),
+        }
+      }
       return {
         subject: `${prefix}Je terugbetaling is onderweg`,
         html: mail(

@@ -8,6 +8,7 @@ import { isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
 export { BEDENKTIJD_DAGEN, amsterdamDatum, isBinnenBedenktijd, laatsteDagBedenktijd } from './perioden'
 import { heeftAndereTerugbetaling, restantCent } from './terugbetaling'
 import { openReferralBedragen, slotVoorTerugbetaling, zonderReferralBedrag } from './referralSlot'
+import { schakelaarAan } from './referralSchakelaars'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -217,6 +218,9 @@ async function herroepZonderTerugbetaling(userId: string, soort: HerroepSoort, b
     doelUserId: userId,
     details: { extra: { soort, bedrag_cent: 0, zonder_terugbetaling: true, referral_cent: referralCent, mollie_payment_id: betaling.mollie_payment_id } },
   })
-  await meldArno(`Herroeping zonder terugbetaling op arno.bot\n\nWie: ${await wieIs(userId)}\nWat: ${soort === 'upgrade' ? 'upgrade teruggedraaid, het abonnement loopt door' : 'abonnement en toegang beëindigd'}\nBetaling: ${betaling.mollie_payment_id}\nBetaald: ${euro(betaling.bedrag_cent)}, als referralbedrag geboekt (via Mollie of per bank): ${euro(referralCent)}\nEr is geen bevestigingsmail naar de klant gestuurd: daarvoor is nog geen tekst vastgesteld. De klant heeft wel recht op een bevestiging.\n${nakijken ?? 'Controleer in Mollie dat de klant dit bedrag echt heeft teruggekregen.'}`)
+  // De bevestiging gaat alleen vanzelf als zeker is dat het geld terug of onderweg is.
+  const bevestigd = !nakijken && schakelaarAan('REFERRAL_MAILS')
+    && await verstuurBillingMail(betaling.user_id, 'terugbetaling_bevestiging', { alTerug: true, upgrade: soort === 'upgrade' })
+  await meldArno(`Herroeping zonder terugbetaling op arno.bot\n\nWie: ${await wieIs(userId)}\nWat: ${soort === 'upgrade' ? 'upgrade teruggedraaid, het abonnement loopt door' : 'abonnement en toegang beëindigd'}\nBetaling: ${betaling.mollie_payment_id}\nBetaald: ${euro(betaling.bedrag_cent)}, als referralbedrag geboekt (via Mollie of per bank): ${euro(referralCent)}\n${bevestigd ? 'De klant heeft de bevestigingsmail gekregen.' : 'Er is geen bevestigingsmail naar de klant gestuurd. De klant heeft wel recht op een bevestiging.'}\n${nakijken ?? 'Controleer in Mollie dat de klant dit bedrag echt heeft teruggekregen.'}`)
   return { ok: true, soort, bedragCent: 0, proef: false }
 }
