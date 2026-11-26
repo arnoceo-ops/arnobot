@@ -4,6 +4,8 @@ import { isGratisAccount } from '@/lib/gratisAccount'
 import { NextResponse } from 'next/server'
 import { beslisZonderToegang, datumToegang } from '@/lib/toegang'
 import { BRON_COOKIE, schoonBron } from '@/lib/bron'
+import { notifyTelegram } from '@/lib/cron-notify'
+import { wieRef } from '@/lib/billing/wie'
 
 function buildCSP(nonce: string, allowWasm = false): string {
   // Een pk_test_-sleutel betekent altijd de Clerk development-instance (bijv. lokaal
@@ -269,18 +271,8 @@ export default clerkMiddleware(async (auth, req) => {
             // Zelfde bot/groep als de rest van de Telegram-meldingen sinds de samenvoeging van
             // ArnoBot Feedback + ArnoBot NewUsers tot één ArnoBot-groep (2026-08-01); de aparte
             // TELEGRAM_NEW_USER_BOT_TOKEN/TELEGRAM_NEW_USER_CHAT_ID bestaan niet meer (bot verwijderd).
-            const tgToken = process.env.TELEGRAM_BOT_TOKEN
-            const tgChat = process.env.TELEGRAM_CHAT_ID
-            if (tgToken && tgChat) {
-              const refCodeForTg = req.cookies.get('arnobot_ref')?.value?.toUpperCase()
-              const tgSafe = (s: string) => s.replace(/[\r\n\t]/g, ' ').slice(0, 100)
-              const tgText = `Nieuwe ArnoBot gebruiker\n\nNaam: ${tgSafe(clerkUser.firstName || '')} ${tgSafe(clerkUser.lastName || '')}\nEmail: ${tgSafe(email || '')}\nLinkedIn: ${tgSafe(linkedinUrl || 'onbekend')}${refCodeForTg ? `\nReferral: ${tgSafe(refCodeForTg)}` : ''}${sdSource ? `\nSales development: via ${sdSource}, command_manager direct aangezet` : ''}`
-              await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: tgChat, text: tgText }),
-              }).catch(() => {})
-            }
+            const viaReferral = !!req.cookies.get('arnobot_ref')?.value
+            await notifyTelegram(`Nieuwe ArnoBot gebruiker\n\n${wieRef(userId)}${viaReferral ? '\nVia een referrallink' : ''}${sdSource ? `\nSales development: via ${sdSource}, command_manager direct aangezet` : ''}`)
           }
         }
       } catch (e) {

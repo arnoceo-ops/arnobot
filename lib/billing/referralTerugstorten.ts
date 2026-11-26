@@ -6,7 +6,7 @@ import { formatEuro, mollieNaarCenten } from './geld'
 import { heeftAndereTerugbetaling } from './terugbetaling'
 import { tabelOntbreekt } from './tabel'
 import { magTerugstorten } from './referralSchakelaars'
-import { wieIs } from './wie'
+import { wieRef } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { bewijsToekenningen, maakBewijzer, type Bewijs, type BronRegel } from './referralBronnen'
 import { isTeruggedraaid } from './referralSaldo'
@@ -192,12 +192,7 @@ async function wisMelding(a: ActieRij): Promise<void> {
 async function stuurMelding(a: ActieRij): Promise<boolean> {
   const m = a.melding
   if (!m || m.bij !== a.status) return false
-  let wie = a.user_id
-  try {
-    wie = await wieIs(a.user_id)
-  } catch {
-    // Dan met het kenmerk: de melding zelf is belangrijker dan de naam.
-  }
+  const wie = wieRef(a.user_id)
   const gelukt = await notifyTelegram(`${m.kop} (referral, arno.bot)\n\nWie: ${wie}\nBedrag: ${formatEuro(a.bruto_cent)}\nBetaling: ${m.betaalkenmerk}\nActie: ${a.id}\n${m.uitleg}`)
     .catch(() => false)
   if (gelukt !== false) await wisMelding(a)

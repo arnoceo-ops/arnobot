@@ -12,7 +12,7 @@ import { magTerugstorten, schakelaarAan } from './referralSchakelaars'
 import { regelTekst } from './referralGrootboek'
 import { splitsBericht } from './berichtDelen'
 import { formatEuro } from './geld'
-import { wieIs } from './wie'
+import { wieRef } from './wie'
 import { nieuwMelden } from '@/lib/capaciteit'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
@@ -30,7 +30,7 @@ export interface UitvoerSamenvatting {
   meldingMislukt: boolean
 }
 
-const wie = async (userId: string) => wieIs(userId).catch(() => userId)
+const wie = (userId: string) => wieRef(userId)
 
 export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatting> {
   const uit: UitvoerSamenvatting = { gecontroleerd: 0, geboekt: 0, gereserveerd: 0, uitgevoerd: 0, fouten: 0, meldingMislukt: false }
@@ -57,7 +57,7 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
     uit.gecontroleerd = r.gecontroleerd
     uit.geboekt = r.geboekt.length
     for (const regel of r.geboekt) {
-      regels.push(`${r.meeloop ? 'Meeloopstand, zonder gevolgen. ' : ''}${regelTekst(regel, await wie(regel.aanbrenger_user_id), await wie(regel.klant_user_id))}`)
+      regels.push(`${r.meeloop ? 'Meeloopstand, zonder gevolgen. ' : ''}${regelTekst(regel, wie(regel.aanbrenger_user_id), wie(regel.klant_user_id))}`)
     }
     if (r.vrijgegeven.length) regels.push(`${r.vrijgegeven.length} nog niet verstuurde verrekening(en) vrijgegeven na een terugdraaiing.`)
     for (const m of r.meldingen) await eensPerWeek(m.sleutel, m.tekst)
@@ -70,7 +70,7 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
       const plan = await planReferral(nu, { uitvoeren: true })
       for (const v of plan.voornemens) {
         const bedrag = v.brutoCent !== null ? formatEuro(v.brutoCent) : v.nettoCent !== null ? `${formatEuro(v.nettoCent)} excl. btw` : ''
-        const tekst = `${v.soort} voor ${await wie(v.userId)} ${bedrag}${v.betaalkenmerk ? ` op ${v.betaalkenmerk}` : ''}: ${v.reden}`
+        const tekst = `${v.soort} voor ${wie(v.userId)} ${bedrag}${v.betaalkenmerk ? ` op ${v.betaalkenmerk}` : ''}: ${v.reden}`
         if (v.stand === 'gereserveerd') { uit.gereserveerd++; regels.push(`Gereserveerd: ${tekst}`) }
         else if (v.stand === 'vervalt') regels.push(`Vervallen: ${tekst}`)
         // Wachten op bewijs mag niet onzichtbaar blijven.

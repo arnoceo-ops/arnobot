@@ -7,6 +7,7 @@ import { excludeInternalTestUsers, TEST_TEAM_IDS_IN } from '@/lib/internalTestAc
 import { logAdminActie } from '@/lib/adminLog'
 import { isAgentProef, proefEinde, proefStand, toegangTot, PROEF_COULANCE_DAGEN } from '@/lib/teamProef'
 import { verstuurTeamMail } from '@/lib/billing/teamMails'
+import { wieRef } from '@/lib/billing/wie'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -64,7 +65,7 @@ async function cronHandler(req: NextRequest) {
         // Bij een betalende manager is expires_at het einde van de betaalperiode, niet van de proef: alleen de 30 dagen tellen.
         const eindeBetaald = proefEinde({ ...m, paid_at: null, expires_at: null })
         if (eindeBetaald && proefStand(eindeBetaald, nu).staat === 'verlopen' && (await nieuwMelden(`teamproef:betaald:${m.user_id}`, 'waarschuwing'))) {
-          berichten.push(`Controle nodig: ${m.voornaam ?? 'onbekend'} (${m.email ?? 'geen e-mail'}) betaalt zelf, maar team "${team.name}" heeft geen facturatie ingesteld en de agent-proef is voorbij. Het team loopt gratis mee. Stel de facturatie in bij Teams, of blokkeer het team.`)
+          berichten.push(`Controle nodig: manager ${wieRef(m.user_id)}\nbetaalt zelf, maar team "${team.name}" heeft geen facturatie ingesteld en de agent-proef is voorbij. Het team loopt gratis mee. Stel de facturatie in bij Teams, of blokkeer het team.`)
         }
         continue
       }
@@ -72,7 +73,7 @@ async function cronHandler(req: NextRequest) {
       const einde = proefEinde(m)
       if (!einde) continue
       const stand = proefStand(einde, nu)
-      const wie = `${m.voornaam ?? 'onbekend'} (${m.email ?? 'geen e-mail'})`
+      const wie = wieRef(m.user_id)
 
       if (stand.staat === 'coulance') {
         // Dag 30 tot 40: het team houdt toegang. Eenmalig per proef (per einddatum) krijgt de manager een mail dat hij kan activeren.

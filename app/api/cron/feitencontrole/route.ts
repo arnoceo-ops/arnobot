@@ -10,6 +10,7 @@ import { vindFouteSommen, vindUVorm } from '@/lib/rekenControle'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { laadSessieDocumenten, laadBijlage } from '@/lib/documenten'
 import { stelBijlagenSamen, bouwBijlageTekst } from '@/lib/documentenSamenstellen'
+import { meldMetDetailMail } from '@/lib/detailMail'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -203,7 +204,7 @@ async function cronHandler(req: NextRequest) {
       if (claimFouten.length > 0) {
         blokken.push(`${claimFouten.length} bewering${claimFouten.length === 1 ? '' : 'en'} over een tabel die niet klopt:\n${claimFouten.slice(0, 15).map(f => `${naam(f.userId)}: "${f.zin}" (kolom ${f.kolom}: plek ${f.plek} van ${f.van}, bovenaan staat ${f.topWaarde})`).join('\n')}`)
       }
-      await notifyTelegram(`ARNOBOT FEITENCONTROLE · ${datum}\nVan ${rijen.length} gecontroleerd.\n\n${blokken.join('\n\n')}`)
+      await meldMetDetailMail(`ARNOBOT FEITENCONTROLE · ${datum}`, `Van ${rijen.length} gecontroleerd: ${fouten.length} tellingen, ${rekenFouten.length} sommen, ${uVormen.length} u-vormen, ${claimFouten.length} tabelbeweringen niet in orde.`, blokken.join('\n\n'))
     }
 
     // Alleen melden als de controle zelf structureel uitvalt (meer dan een kwart), niet bij één losse uitschieter.

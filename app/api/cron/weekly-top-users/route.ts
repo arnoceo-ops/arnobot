@@ -4,22 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { meldMetDetailMail } from '@/lib/detailMail'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-async function sendTelegram(text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) return
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  })
-}
 
 async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -90,7 +80,7 @@ async function cronHandler(req: NextRequest) {
 
   const text = `📈 ARNOBOT WEEK · ${weekOf}\n\n${lines.join('\n')}\n\nv=vragen  g=gesprekken  a=analyses  c=coaching`
 
-  await sendTelegram(text)
+  await meldMetDetailMail(`ARNOBOT WEEK · ${weekOf}`, `Top ${top10.length} van deze week`, text)
 
   return NextResponse.json({ ok: true, sent: top10.length })
   } catch (err) {

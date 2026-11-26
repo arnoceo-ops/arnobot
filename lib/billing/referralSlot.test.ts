@@ -57,7 +57,7 @@ vi.mock('./mollie', async origineel => ({
 }))
 vi.mock('./verwerking', () => ({ markeerTerugbetaald: h.markeer, verwerkMolliebetaling: h.verwerk }))
 vi.mock('./mails', () => ({ verstuurBillingMail: vi.fn() }))
-vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => id) }))
+vi.mock('./wie', () => ({ wieRef: vi.fn((id: string) => id) }))
 vi.mock('@/lib/adminLog', () => ({ logAdminActie: h.log }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 

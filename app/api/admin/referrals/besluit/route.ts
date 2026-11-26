@@ -5,7 +5,7 @@ import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
 import { legBesluitVast, legVervalBesluitVast } from '@/lib/billing/referralGrootboek'
 import { notifyTelegram } from '@/lib/cron-notify'
-import { wieIs } from '@/lib/billing/wie'
+import { wieRef } from '@/lib/billing/wie'
 
 // Arno's besluit over een referral die als handwerk in het grootboek staat, of over een tegoed dat lijkt te vervallen. Legt alleen vast: er verandert niets aan
 // tegoed, betalingen of toegang.
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       details: { nieuw: { soort: uitkomst.regel.soort, netto_cent: uitkomst.regel.netto_cent }, extra: { referralId, reden: uitkomst.regel.reden } },
     })
     // De cron meldt alleen zijn eigen regels, dus een mijlpaal door dit besluit gaat hier naar Telegram.
-    for (const m of uitkomst.mijlpalen) await notifyTelegram(`Mijlpaal referrals op arno.bot: ${await wieIs(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
+    for (const m of uitkomst.mijlpalen) await notifyTelegram(`Mijlpaal referrals op arno.bot: ${wieRef(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
     return NextResponse.json({ ok: true, mijlpalen: uitkomst.mijlpalen.map(m => m.aantal) })
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'referral-besluit' }, extra: { referralId } })

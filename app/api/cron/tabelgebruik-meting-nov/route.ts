@@ -1,7 +1,8 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
+import { notifyCronFailure } from '@/lib/cron-notify'
+import { meldMetDetailMail } from '@/lib/detailMail'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 import { haalWerkruisWeg } from '@/lib/chatStreamRonde'
@@ -66,7 +67,9 @@ async function cronHandler(req: NextRequest) {
       `Superlatieven in tabelantwoorden: ${superlatieven.length}, waarvan ${nietTeControleren} niet te koppelen aan een kolom en getal (niet gecontroleerd)${nietTeControleren > 0 ? `, bijvoorbeeld: "${superlatieven.find(z => !onjuist.some(o => o.zin === z.slice(0, 200)))?.slice(0, 140) ?? ''}"` : ''}.`,
     ].join('\n')
 
-    await notifyTelegram(
+    await meldMetDetailMail(
+      'Meting tabelgebruik',
+      `${tabelBeurten.length} tabelgesprekken, ${tabelVragen} aanroepen van tabel_vraag.`,
       [
         'Meting tabelgebruik (afgesproken voor vrijdag 27-11), laatste 7 dagen, zonder testaccounts:',
         eerste

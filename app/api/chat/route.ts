@@ -138,11 +138,7 @@ async function notifyRateLimit(identifier: string, reden: string, dedupKey?: str
   }
 
   const text = `Rate limit geraakt op arno.bot\n\nGebruiker: ${identifier}\nReden: ${reden}`
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  }).catch(() => {})
+  await notifyTelegram(text)
 }
 
 const client = maakAnthropic()

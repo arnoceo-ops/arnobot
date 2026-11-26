@@ -6,6 +6,7 @@ import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { gaatAutomatisch } from './referralAutomatisch'
 import { trialEinde } from '@/lib/toegang'
+import { wieRef } from './wie'
 
 // Iemand met een eigen abonnement of proef accepteert de uitnodiging van een teammanager (docs/TEAM_PROCES.md).
 // Besluit Arno (2026-11-15): vanaf dat moment betaalt het team. De volgende betaling van het eigen abonnement stopt
@@ -110,7 +111,6 @@ export async function stopSoloBijJoin(userId: string, teamNaam: string, nu: Date
       const referralZin = automatisch
         ? 'Referraltegoed stort het systeem zelf terug. Geef je coulance per bank, boek die dan meteen in met referral_handmatig_betaling in de SQL Editor.'
         : 'Is er ook referraltegoed, tel het niet dubbel.'
-      const wie = `${u.voornaam ?? 'onbekend'} (${u.email ?? 'geen e-mail'})`
       const delen = [
         resultaat.abonnement === 'gestopt' ? `Eigen abonnement ${resultaat.omschrijving} gestopt, loopt t/m ${resultaat.loptTot ? new Date(resultaat.loptTot).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : 'onbekend'}, geen restitutie.${resultaat.naarRato ? ` Nog ${resultaat.naarRato.maanden} maanden betaald (${resultaat.naarRato.dagen} dagen), naar rato ongeveer €${(resultaat.naarRato.bedragCent / 100).toFixed(2)} incl. btw. Overweeg een deelrestitutie uit coulance. ${referralZin} Stort per bankoverschrijving en maak een creditnota, niet via een terugbetaling in Mollie.` : ''}`
           : resultaat.abonnement === 'mislukt' ? `Eigen abonnement ${resultaat.omschrijving} STOPPEN MISLUKT: stop het zelf in het Mollie-dashboard.`
@@ -118,7 +118,7 @@ export async function stopSoloBijJoin(userId: string, teamNaam: string, nu: Date
         resultaat.handmatigBetaald ? 'Heeft handmatig betaald (BETAALD gezet) zonder online abonnement: er is niets gestopt, zijn eigen toegang loopt door.' : null,
         resultaat.proefBeeindigd ? 'Eigen proef beëindigd, resterende dagen vervallen.' : null,
       ].filter(Boolean)
-      await notifyTelegram(`Nieuw teamlid met een eigen abonnement of proef op arno.bot\n\n${wie} is lid geworden van "${teamNaam}".\n${delen.join('\n')}`)
+      await notifyTelegram(`Nieuw teamlid met een eigen abonnement of proef op arno.bot\n\nNieuw lid van "${teamNaam}": ${wieRef(userId)}\n${delen.join('\n')}`)
     }
     return resultaat
   } catch (e) {

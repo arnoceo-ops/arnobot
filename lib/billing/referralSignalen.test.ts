@@ -13,7 +13,7 @@ const h = vi.hoisted(() => ({
 vi.mock('./referralTeksten', () => ({ TERUGSTORT_OMSCHRIJVING: h.teksten }))
 
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
-vi.mock('./wie', () => ({ wieIs: async () => 'Test Klant' }))
+vi.mock('./wie', () => ({ wieRef: () => 'Test Klant' }))
 vi.mock('./db', () => ({
   billingDb: {
     from(tabel: string) {

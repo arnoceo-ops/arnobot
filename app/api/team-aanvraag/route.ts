@@ -7,6 +7,9 @@ import { limietVeilig } from '@/lib/limietVeilig'
 import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml } from '@/lib/email-templates'
 import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
+import { notifyTelegram } from '@/lib/cron-notify'
+import { gaatAutomatisch } from '@/lib/billing/referralAutomatisch'
+import { NIET_MET_DE_HAND, VEILIG_TERUGSTORTEN } from '@/lib/billing/referralSignalen'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -110,7 +113,7 @@ export async function POST(req: Request) {
         .eq('user_id', verw.referrer_user_id)
         .maybeSingle()
       const naam = referrer?.voornaam || (referrer?.full_name ?? '').split(' ')[0] || referrer?.email || 'onbekend'
-      referralRegel = `Via referral van ${naam} (code ${verw.code_used}): het team krijgt eenmalig een maand voor het hele team, hooguit de maandprijs bij de start. Dit gaat niet automatisch. Het tegoed voor de aanbrenger volgt de spelregels.`
+      referralRegel = `Via referral van ${naam} (code ${verw.code_used}): het team krijgt eenmalig een maand voor het hele team, hooguit de maandprijs bij de start. ${(await gaatAutomatisch('voordeel_maand').catch(() => false)) ? NIET_MET_DE_HAND : `Dit gaat niet automatisch. ${VEILIG_TERUGSTORTEN}`} Het tegoed voor de aanbrenger volgt de spelregels.`
     }
   }
 
@@ -126,18 +129,8 @@ export async function POST(req: Request) {
     ),
   }).catch(() => {})
 
-  const tgToken = process.env.TELEGRAM_BOT_TOKEN
-  const tgChat = process.env.TELEGRAM_CHAT_ID
-  if (tgToken && tgChat) {
-    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: tgChat,
-        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? `\n\n${referralRegel}` : ''}`,
-      }),
-    }).catch(() => {})
-  }
+  // Zonder contactgegevens en referralnaam: die staan in de mail hierboven.
+  await notifyTelegram(`Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? '\nVia een referral: lees de mail voordat je iets doet.' : ''}\nContactgegevens staan in de mail.`)
 
   return NextResponse.json({ ok: true })
 }

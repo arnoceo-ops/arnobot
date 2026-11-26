@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Redis } from '@upstash/redis'
 import { computeSpiegelSignaal, formatSystemischSignaal } from '@/lib/spiegel'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
+import { notifyTelegram as notifyTelegramCentraal } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,11 +31,7 @@ async function notifySystemischSignaal(teamNaam: string, thema: string, leden: n
   await redis.set(dedupKey, '1', { ex: 30 * 86400 })
 
   const text = `Manager als Variabele-signaal (2C)\n\nTeam: ${teamNaam}\nThema: ${thema}\nBij ${leden} teamleden\n\nDe manager ziet dit als hypothese in zijn eigen leiderschapspagina en teamoverzicht. Overweeg zelf contact op te nemen.`
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  }).catch(() => {})
+  await notifyTelegramCentraal(text)
 }
 
 export async function GET() {

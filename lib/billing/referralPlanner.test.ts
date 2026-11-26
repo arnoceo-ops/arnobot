@@ -58,7 +58,7 @@ vi.mock('./mollie', async origineel => ({
     return { id: r.id, status: r.status }
   }),
 }))
-vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => id) }))
+vi.mock('./wie', () => ({ wieRef: vi.fn((id: string) => id) }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async (t: string) => { if (h.telegramStuk) return false; h.telegram.push(t); return true }), notifyCronFailure: vi.fn() }))
 vi.mock('@/lib/capaciteit', () => ({ nieuwMelden: vi.fn(async (sleutel: string) => (h.gemeld.has(sleutel) ? false : (h.gemeld.add(sleutel), true))) }))
 vi.mock('@/lib/cronRun', () => ({ registreerCronRun: (_pad: string, handler: any) => handler }))

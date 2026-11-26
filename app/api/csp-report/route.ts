@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { notifyTelegram as stuurNaarTelegram } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,11 +19,7 @@ async function notifyTelegram(directive: string, blocked: string, page: string, 
 
   const bron = sourceFile ? `\nBron: ${sourceFile}${lineNumber ? `:${lineNumber}${columnNumber ? `:${columnNumber}` : ''}` : ''}` : ''
   const text = `CSP schending op arno.bot\n\nGeblokkeerd: ${blocked}\nRegel: ${directive}\nPagina: ${page}${bron}`
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  })
+  await stuurNaarTelegram(text)
 }
 
 export async function POST(req: NextRequest) {

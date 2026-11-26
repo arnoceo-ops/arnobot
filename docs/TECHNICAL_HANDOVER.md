@@ -40,7 +40,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Rate limiting | Upstash Redis | ^1 / ^2 |
 | Foutmonitoring | Sentry (`@sentry/nextjs`) | ^10 |
 | Productanalyse (publiek + ingelogd) | PostHog (`posthog-js`) | ^1 |
-| Admin/ops-notificaties | Telegram Bot API | directe fetch |
+| Admin/ops-notificaties | Telegram Bot API | alleen via `notifyTelegram` (`lib/cron-notify.ts`, afgedwongen met een test). Zonder namen, e-mailadressen of gespreksteksten: een gebruiker staat er als id met adminlink (`wieRef`), e-mail- en IP-adressen worden centraal weggehaald. Overzichten met inhoud gaan per mail naar hq@ (`lib/detailMail.ts`). Besluit 2026-11-26: Telegram is geen sub-verwerker (verworpen: Telegram aan de privacyverklaring toevoegen). Teamnamen en bedrijfsnamen in teammeldingen blijven staan |
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
 | Mobiele wrapper (Android live, iOS gepland) | Capacitor | ^8 |
@@ -403,10 +403,10 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/leveranciers-wijzigingen` | Maandag 06:50 | Wekelijkse controle op wijzigingen in DPA's en deprecations-pagina's van leveranciers |
 | `/api/cron/comp-reminder-nov` | 25 t/m 29 november 08:00 (eenmalig) | Eenmalige mail aan één gebruiker met gratis toegang tot 1 december, alleen als Mollie live staat. Wegwerpcode na verzending |
 | `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
-| `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
-| `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is. Stuurt daarnaast de FAQ-zoektermen zonder treffer (tabel `faq_zoekmislukkingen`) en ruimt die na 30 dagen op |
+| `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen), lijst per mail, aantal via Telegram |
+| `/api/cron/productvragen` | Dagelijks 06:30 UTC | Overzicht per mail (aantal via Telegram) van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is. Stuurt daarnaast de FAQ-zoektermen zonder treffer (tabel `faq_zoekmislukkingen`) en ruimt die na 30 dagen op |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
-| `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
+| `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers, per mail, seintje via Telegram |
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 10+ nieuwe gesprekken sinds de laatste analyse, plus mail "Je analyses zijn bijgewerkt" |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
 | `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output. Analyseert de 300 meest recente gesprekken + 50 meest recente analyses (over alle gebruikers samen, aantal-gebaseerd, geen datumvenster) |
@@ -727,9 +727,9 @@ Elke push/PR naar `master` triggert `.github/workflows/security-audit.yml` (niet
 | `lib/groeibalansServer.ts` (`recomputeGroeibalans`, Gebruiksbalans-classificatie + persoonlijk advies en sparscenario) | `claude-sonnet-4-6` | Sinds 2026-10-05 ook een persoonlijke zin uit de eigen historie (thema's, laatste sparsessie, coaching, teamthema) plus voorgesteld sparscenario, daarom Sonnet i.p.v. Haiku (taalkwaliteit). Fail-open, advies valt terug op de vaste kadertekst. Aangeroepen vanuit session-end en sparring/debrief. | 2026-10-05 |
 | `app/api/cron/refresh-openers/route.ts` | `claude-sonnet-4-6` | Expliciete check op geldige JSON-structuur. | 2026-07 |
 | `app/api/cron/rss-ingest/route.ts` | `claude-haiku-4-5-20251001` | Expliciete fallback-tekst. | 2026-07 |
-| `app/api/cron/feitencontrole/route.ts` | `claude-sonnet-4-6` | Dagelijks 06:45 UTC. Voorselectie op telwoorden in antwoorden die niet in het gesprek staan (`lib/feitenControle.ts`), daarna een oordeel van Sonnet over alleen die kandidaten, Telegram-melding als een antwoord een feit van de gebruiker verkeerd terugspeelt ("vier bronnen" terwijl er twee genoemd waren). Draait op opgeslagen antwoorden, dus zonder vertraging in de chat. Sonnet en niet Haiku: een valse melding kost Arno tijd, en Haiku had bij het mailpatroon te veel valse positieven. Besloten 2026-10-31 (verworpen: eerst controleren dan tonen, want de chat streamt en dat maakt elk antwoord trager). Gemeten: bij Thijs' briefing 0 echte telfouten in 60 runs, dus zeldzaam. | 2026-10-31 |
+| `app/api/cron/feitencontrole/route.ts` | `claude-sonnet-4-6` | Dagelijks 06:45 UTC. Voorselectie op telwoorden in antwoorden die niet in het gesprek staan (`lib/feitenControle.ts`), daarna een oordeel van Sonnet over alleen die kandidaten, mail naar hq@ met Telegram-seintje als een antwoord een feit van de gebruiker verkeerd terugspeelt ("vier bronnen" terwijl er twee genoemd waren). Draait op opgeslagen antwoorden, dus zonder vertraging in de chat. Sonnet en niet Haiku: een valse melding kost Arno tijd, en Haiku had bij het mailpatroon te veel valse positieven. Besloten 2026-10-31 (verworpen: eerst controleren dan tonen, want de chat streamt en dat maakt elk antwoord trager). Gemeten: bij Thijs' briefing 0 echte telfouten in 60 runs, dus zeldzaam. | 2026-10-31 |
 | `app/api/cron/waarheidscontrole/route.ts` | `claude-sonnet-4-6` | Wekelijks maandag 07:15 UTC. Beoordeelt alle antwoorden van de afgelopen week met een bewaarde bron (`arnobot_rds_logs.bron_context`) via `lib/waarheidsControle.ts` (cite-first, vier groepen: feit of cijfer, over Arno of ArnoBot, over de gebruiker, algemene kennis) en mailt Arno een steekproef (`lib/waarheidsRapport.ts`), plus een korte Telegram-melding zonder gebruikersinhoud. `?dry=1` met CRON_SECRET geeft het rapport zonder te versturen. | 2026-11 |
-| `app/api/cron/productvragen/route.ts` | `claude-haiku-4-5-20251001` | Dagelijks 06:30 UTC. Kiest uit de vragen van de laatste 24 uur (zonder testaccounts) welke over het gebruik van ArnoBot zelf gaan en meldt die in één Telegram-bericht, alleen als er iets is. Retry-bij-leeg, bij aanhoudend ongeldig antwoord een cron-foutmelding i.p.v. stilte. Besloten 2026-10-21 als losse cron (verworpen: controle per bericht in `chat/route.ts`, raakt de chat). | 2026-10-21 |
+| `app/api/cron/productvragen/route.ts` | `claude-haiku-4-5-20251001` | Dagelijks 06:30 UTC. Kiest uit de vragen van de laatste 24 uur (zonder testaccounts) welke over het gebruik van ArnoBot zelf gaan en meldt die in één mail met een Telegram-seintje, alleen als er iets is. Retry-bij-leeg, bij aanhoudend ongeldig antwoord een cron-foutmelding i.p.v. stilte. Besloten 2026-10-21 als losse cron (verworpen: controle per bericht in `chat/route.ts`, raakt de chat). | 2026-10-21 |
 | `app/api/cron/inactivity-nudge/route.ts` | `claude-haiku-4-5-20251001` | Valt terug op generieke e-mailtemplate bij fout. | 2026-07 |
 | `app/api/cron/model-check/route.ts` (adviesgeneratie, e-mail only) | `claude-sonnet-4-6` (+ web_search) | Haalt de modeltabel live uit docs/MODELINVENTARIS.md via GitHub API, echte web_search naar pricingpagina's. Faalt hard bij ophaalfout. | 2026-08-12 |
 | `app/api/admin/feedback-analyse/route.ts` | `claude-haiku-4-5-20251001` | Nog geen expliciete leeg-check. | 2026-07 |
@@ -893,6 +893,9 @@ Voor elk van deze diensten heb je toegang nodig om de app te runnen. Zie BUSINES
 **Kritieke acties:** REST URL en token bekijken, gebruik monitoren
 
 ### Sentry
+
+Sinds 2026-11-26: geen Sentry-schermopnames (replay liep zonder paginafilter) en `Sentry.setUser` krijgt alleen het account-id, geen naam of e-mailadres. Verworpen: replay houden en in de privacyverklaring beschrijven.
+
 **Doel:** Foutmonitoring + performance tracing.
 **Init:** `sentry.server.config.ts`, `sentry.edge.config.ts`. Tunnel-endpoint `app/monitoring/route.ts` (proxy naar Sentry, dodge ad-blockers).
 **Kritieke acties:** Errors/spans bekijken, quota controleren.

@@ -4,7 +4,7 @@ export const maxDuration = 300
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
-import { notifyCronFailure } from '@/lib/cron-notify'
+import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -208,14 +208,7 @@ async function cronHandler(req: NextRequest) {
     const chatId = process.env.TELEGRAM_CHAT_ID
     if (token && chatId && newItems.length > 0) {
       const titels = newItems.map(i => `• ${i.title}`).join('\n')
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `ArnoBot kennisbank bijgewerkt\n\n${newItems.length} nieuw${newItems.length > 1 ? 'e artikelen' : ' artikel'} geindexeerd:\n${titels}\n\n${totalInserted} chunks toegevoegd.`,
-        }),
-      }).catch(() => {})
+      await notifyTelegram(`ArnoBot kennisbank bijgewerkt\n\n${newItems.length} nieuw${newItems.length > 1 ? 'e artikelen' : ' artikel'} geindexeerd:\n${titels}\n\n${totalInserted} chunks toegevoegd.`)
     }
 
     await markRssRun()

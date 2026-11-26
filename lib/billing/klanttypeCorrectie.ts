@@ -336,7 +336,7 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
   )
   if (klantFout) await notifyTelegram(`Klanttype-correctie: bedrijfsgegevens niet opgeslagen op arno.bot\n\nUser: ${rij.user_id}\nFout: ${klantFout.message}`)
 
-  await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nUser: ${rij.user_id}\nBedrijf: ${rij.bedrijfsnaam}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
+  await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nUser: ${rij.user_id}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
 
   if (!factureringToegestaan()) return
   if (!gebruiker?.email) throw new Error('geen e-mailadres bekend, er is niet gefactureerd')

@@ -11,7 +11,6 @@ const h = vi.hoisted(() => ({
   tabelWeg: false,
   telegram: [] as string[],
   telegramStuk: false,
-  wieStuk: false,
   mollie: {
     refunds: [] as any[],
     posts: [] as any[],
@@ -79,7 +78,7 @@ vi.mock('./mollie', async origineel => {
   }
 })
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async (t: string) => { if (h.telegramStuk) return false; h.telegram.push(t); return true }) }))
-vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => { if (h.wieStuk) throw new Error('clerk plat'); return id }) }))
+vi.mock('./wie', () => ({ wieRef: vi.fn((id: string) => id) }))
 
 import { maakNepDb } from './referralNepDb'
 import { reserveerTerugstorting, verwerkOpenTerugstortingen, voerTerugstortingUit } from './referralTerugstorten'
@@ -130,7 +129,6 @@ beforeEach(async () => {
   h.tabelWeg = false
   h.telegram.length = 0
   h.telegramStuk = false
-  h.wieStuk = false
   Object.assign(h.mollie, { refunds: [], posts: [], plan: [], sleutels: new Map(), klok: NU.getTime(), betaling: {}, lijstStuk: false, zonderMetadata: false })
   await zaai()
 })
@@ -584,11 +582,6 @@ describe('een melding gaat niet verloren', () => {
     await ronde(3 * DAG)
     expect(h.telegram).toHaveLength(1)
     expect(h.telegram[0]).toContain('vastgelopen')
-  })
-  it('de naam niet op te zoeken: de melding gaat met het kenmerk', async () => {
-    h.wieStuk = true
-    expect(await loopVast()).toBe('vastgelopen')
-    expect(h.telegram[0]).toContain('user_a')
   })
   it('ook de melding na een vrijgave wordt herhaald', async () => {
     await reservering()
