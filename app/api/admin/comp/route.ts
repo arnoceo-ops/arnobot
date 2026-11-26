@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
-import { bewaarEersteProefStart } from '@/lib/referralKenmerken'
+import { bewaarEersteProefStart, zetGratisKenmerk } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
     console.error('[admin/comp]', error.message)
     return NextResponse.json({ error: 'Bijwerken mislukt' }, { status: 500 })
   }
+
+  // Vanaf nu een gratis account: geen referral (lib/gratisAccount.ts).
+  await zetGratisKenmerk(supabase, userId, true)
 
   // paid_at gaat hier naar leeg: een betalende gebruiker die op GRATIS wordt gezet verliest BETAALD.
   // Daarom staan de oude waarden in het logboek.

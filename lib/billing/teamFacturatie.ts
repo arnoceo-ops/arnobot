@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb } from './db'
 import { mollieNaarCenten } from './geld'
 import { betaaldeBetalingVanLink, lijstBetaalLinkBetalingen, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
-import { legBetaalwijzeVast, terugBijMollie, verwerkTeamNaBetaling } from './teamBetalingen'
+import { beeindigGratisVanManager, legBetaalwijzeVast, terugBijMollie, verwerkTeamNaBetaling } from './teamBetalingen'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -417,6 +417,7 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
   // Betaling ontvangen: een eventuele blokkade van dit team meteen opheffen, behalve bij een team dat is gestopt na opzegging
   // (een late betaling van een oude factuur zet het niet weer open).
   await ontblokkeerNaBetaling(rij.team_id, new Date().toISOString().slice(0, 10))
+  await beeindigGratisVanManager(rij.team_id)
 
   await notifyTelegram(`Team-factuur betaald op arno.bot\n\nFactuur: ${rij.id}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}`)
   return 'betaald'

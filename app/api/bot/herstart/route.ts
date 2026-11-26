@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { herstartStatus, type HerstartStatus } from '@/lib/herstart'
-import { bewaarEersteProefStart } from '@/lib/referralKenmerken'
+import { bewaarEersteProefStart, zetGratisKenmerk } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,6 +57,8 @@ export async function POST() {
     paid_at: null,
     expires_at: null,
   }).eq('user_id', userId)
+
+  await zetGratisKenmerk(supabase, userId, false)
 
   // Clear email log so trial sequence restarts from dag1
   await supabase.from('arnobot_email_log').delete().eq('user_id', userId)

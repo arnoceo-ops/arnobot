@@ -87,7 +87,12 @@ function beoordeel(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): 
   }
   const klantMaandNettoCent = gehaald.periode.maandNettoCent
 
-  if (aanbrenger.gratis) return { uitkomst: 'afwijzen', reden: 'aanbrenger heeft een gratis account' }
+  if (aanbrenger.gratis) {
+    // Staat zijn teamfactuur open of is zijn team net geblokkeerd, dan kan hij nog betalen: dan is hij niet meer gratis.
+    return aanbrenger.stand.teamInAfwachting || (aanbrenger.stand.geblokkeerdSindsAt && tegoedStatus(aanbrenger.stand, nu) === 'wacht')
+      ? wacht('aanbrenger heeft een gratis account en zijn teamfactuur is nog niet betaald')
+      : { uitkomst: 'afwijzen', reden: 'aanbrenger heeft een gratis account' }
+  }
   if (aanbrenger.handmatigBetaald) return handwerk('aanbrenger staat met de hand op betaald')
   if (vervallenNaAanmelding(aanbrenger.historie, klant.aangemeldAt, nu)) {
     if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald, had gratis toegang of was teamlid')

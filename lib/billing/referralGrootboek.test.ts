@@ -784,7 +784,7 @@ describe('tweede controle', () => {
   const gratis = [{ doel_user_id: 'aanbrenger', actie: 'gratis_toegang' }]
   it('aanbrenger met een gratis account: niets toekennen, zonder vraag', async () => {
     zet({
-      approved_users: [gebruiker('aanbrenger', { trial_start: null, expires_at: '2027-12-31T00:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z' }), gebruiker('klant')],
+      approved_users: [gebruiker('aanbrenger', { trial_start: null, expires_at: '2027-12-31T00:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z', gratis_sinds: '2027-01-10T00:00:00.000Z' }), gebruiker('klant')],
       arnobot_subscriptions: [klantSub()], arnobot_admin_log: gratis,
     })
     await draai()
@@ -879,13 +879,25 @@ describe('enige teamfactuur teruggedraaid en team geblokkeerd: 30 dagen', () => 
 })
 
 describe('gratis toegang', () => {
-  it('nu gratis: nooit tegoed, ook niet met een lopende proefstand', async () => {
-    zet({
-      approved_users: [gebruiker('aanbrenger', { expires_at: '2027-12-31T00:00:00.000Z' }), gebruiker('klant')],
-      arnobot_subscriptions: [klantSub()],
-    })
+  const metKenmerk = (extra: Rij = {}) => gebruiker('aanbrenger', { gratis_sinds: '2027-01-10T00:00:00.000Z', ...extra })
+  it('met het kenmerk: nooit tegoed, ook met BETAALD', async () => {
+    zet({ approved_users: [metKenmerk({ paid_at: '2027-01-10T00:00:00.000Z' }), gebruiker('klant')], arnobot_subscriptions: [klantSub()] })
     await draai()
     expect(boek()[0]).toMatchObject({ soort: 'afwijzing', reden: 'aanbrenger heeft een gratis account' })
+  })
+  it('zonder kenmerk maakt een einddatum iemand niet gratis', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger', { expires_at: '2027-12-31T00:00:00.000Z' }), gebruiker('klant')] })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+  it('gratis manager met een open teamfactuur: eerst wachten', async () => {
+    zet({
+      approved_users: [metKenmerk({ command_manager: true }), gebruiker('klant')], arnobot_subscriptions: [klantSub()],
+      arnobot_teams: [team()], arnobot_team_facturen: [factuur({ status: 'open', betaald_at: null })],
+    })
+    const run = await draai()
+    expect(uitkomst(run).uitkomst).toBe('wacht')
+    expect(boek()).toHaveLength(0)
   })
   it('weer betalend, gat uit de gratis tijd zonder adminlog: lege trial_start is het spoor', async () => {
     zet({
@@ -942,6 +954,39 @@ describe('oude teamblokkade na een nieuw eigen abonnement', () => {
     Object.assign(h.tabellen, blok([teruggedraaid()], [nieuw('2027-05-01T00:00:00.000Z')]))
     await draai(new Date('2027-05-02T06:00:00.000Z'))
     expect(boek().map(r => r.soort)).toEqual(['toekenning', 'verval'])
+  })
+})
+
+describe('gestopt team zonder staande betaling', () => {
+  const gestopt = (extra: Rij, facturen: Rij[]) => ({
+    arnobot_subscriptions: [klantSub()], arnobot_teams: [team({ stopt_op: '2027-03-09', ...extra })], arnobot_team_facturen: facturen,
+  })
+  it.each([
+    ['teruggedraaid', {}, factuur({ status: 'refunded', reversed_at: '2027-03-05T00:00:00.000Z' })],
+    ['nooit betaald en geblokkeerd', { geblokkeerd_at: '2027-03-06T00:00:00.000Z' }, factuur({ status: 'open', betaald_at: null })],
+  ])('%s: niet meteen vervallen, wel na 14 dagen', async (_naam, extra, f) => {
+    await draai()
+    Object.assign(h.tabellen, gestopt(extra, [f]))
+    await draai(new Date('2027-03-10T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+    await draai(new Date('2027-04-10T06:00:00.000Z'))
+    expect(boek().some(r => r.soort === 'verval' || r.event_key === 'verval-handwerk:r1')).toBe(true)
+  })
+})
+
+describe('abonnement van voor de blokkade dat doorliep', () => {
+  it('na het einde gelden de 14 dagen, niet de oude blokkade', async () => {
+    await draai()
+    Object.assign(h.tabellen, {
+      arnobot_subscriptions: [sub('aanbrenger', { status: 'cancelled', periode_einde: '2027-06-01T00:00:00.000Z' }), klantSub()],
+      arnobot_teams: [team({ geblokkeerd_at: '2027-03-06T06:00:00.000Z' })], arnobot_team_facturen: [factuur({ status: 'open', betaald_at: null })],
+    })
+    await draai(new Date('2027-05-01T06:00:00.000Z'))
+    h.tabellen.arnobot_subscriptions[0].status = 'ended'
+    await draai(new Date('2027-06-02T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+    await draai(new Date('2027-06-20T06:00:00.000Z'))
+    expect(boek().some(r => r.soort === 'verval' || r.event_key === 'verval-handwerk:r1')).toBe(true)
   })
 })
 

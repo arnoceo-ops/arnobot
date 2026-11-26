@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { zetGratisKenmerk } from '@/lib/referralKenmerken'
 import { billingDb } from './db'
 import { mollieNaarCenten, formatEuro } from './geld'
 import { archiveerBetaalLink, lijstBetaalLinkBetalingen, type MolliePayment } from './mollie'
@@ -158,6 +159,17 @@ export type HandmatigResultaat =
 
 const opslaanFout = (e: { message: string }) => `Opslaan mislukt: ${e.message}`
 
+/** Een manager die voor zijn team betaalt is geen gratis account meer. Gooit nooit: de betaling is al verwerkt. */
+export async function beeindigGratisVanManager(teamId: string): Promise<void> {
+  try {
+    const { data, error } = await billingDb.from('arnobot_teams').select('manager_id').eq('id', teamId).maybeSingle<{ manager_id: string }>()
+    if (error) throw new Error(error.message)
+    if (data?.manager_id) await zetGratisKenmerk(billingDb, data.manager_id, false)
+  } catch (e) {
+    Sentry.captureException(e, { level: 'error', tags: { onderdeel: 'team-facturatie-gratis' }, extra: { teamId } })
+  }
+}
+
 async function leesFactuur(factuurId: string): Promise<TeamFactuurRow | null> {
   const { data } = await billingDb.from('arnobot_team_facturen').select('*').eq('id', factuurId).maybeSingle<TeamFactuurRow>()
   return data
@@ -196,6 +208,7 @@ export async function zetBetaaldPerBank(factuurId: string, betaaldOp: Date): Pro
   if ((data?.length ?? 0) !== 1) return { ok: false, status: 409, fout: 'De factuur is net gewijzigd. Ververs de pagina.' }
 
   await ontblokkeerNaBetaling(rij.team_id, nuIso().slice(0, 10))
+  await beeindigGratisVanManager(rij.team_id)
 
   let waarschuwing: string | undefined
   if (rij.mollie_payment_link_id) {

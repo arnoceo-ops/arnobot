@@ -27,6 +27,22 @@ export async function bewaarOoitTeamlid(db: SupabaseClient, userId: string): Pro
 }
 
 /**
+ * Het kenmerk gratis account (lib/gratisAccount.ts). Een eigen schrijfactie die nooit gooit: een betaling, herstart of
+ * adminknop mag er niet op mislukken. Aan bewaart de eerste datum.
+ */
+export async function zetGratisKenmerk(db: SupabaseClient, userId: string, aan: boolean): Promise<void> {
+  try {
+    const kolom = db.from('approved_users')
+    const { error } = aan
+      ? await kolom.update({ gratis_sinds: new Date().toISOString() }).eq('user_id', userId).is('gratis_sinds', null)
+      : await kolom.update({ gratis_sinds: null }).eq('user_id', userId)
+    if (error && !kolomOntbreekt(error)) throw new Error(error.message)
+  } catch (e) {
+    Sentry.captureException(e, { level: 'error', tags: { onderdeel: 'referral-kenmerk' }, extra: { userId, kolom: 'gratis_sinds', aan } })
+  }
+}
+
+/**
  * De start van de eerste echte proef (besluit Arno 26-11-2026): de bewaarde datum, anders trial_start zolang er nooit is
  * herstart, anders de meegegeven terugvaldatum (bij een aangebrachte klant de aanmelding).
  */

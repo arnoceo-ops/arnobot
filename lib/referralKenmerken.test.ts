@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const h = vi.hoisted(() => ({ gemeld: [] as unknown[] }))
 vi.mock('@sentry/nextjs', () => ({ captureException: (e: unknown) => h.gemeld.push(e) }))
 
-import { bewaarEersteProefStart, bewaarOoitTeamlid, eersteProefStart } from './referralKenmerken'
+import { bewaarEersteProefStart, bewaarOoitTeamlid, eersteProefStart, zetGratisKenmerk } from './referralKenmerken'
 
 function db(error: { message: string } | null) {
   const vragen: unknown[] = []
@@ -38,6 +38,24 @@ describe('eenmalig vastleggen', () => {
   })
   it('een andere fout gaat naar Sentry en gooit niet', async () => {
     await bewaarOoitTeamlid(db({ message: 'time-out' }).client, 'u')
+    expect(h.gemeld).toHaveLength(1)
+  })
+})
+
+describe('kenmerk gratis account', () => {
+  it('aan bewaart de eerste datum', async () => {
+    const { client, vragen } = db(null)
+    await zetGratisKenmerk(client, 'u', true)
+    expect(vragen.slice(1)).toEqual([['eq', 'user_id', 'u'], ['is', 'gratis_sinds', null]])
+  })
+  it('uit maakt het veld leeg', async () => {
+    const vragen: unknown[] = []
+    const client = { from: () => ({ update: (w: unknown) => ({ eq: async (...a: unknown[]) => { vragen.push(w, a); return { error: null } } }) }) } as any
+    await zetGratisKenmerk(client, 'u', false)
+    expect(vragen).toEqual([{ gratis_sinds: null }, ['user_id', 'u']])
+  })
+  it('een databasefout gooit nooit maar gaat naar Sentry', async () => {
+    await zetGratisKenmerk(db({ message: 'time-out' }).client, 'u', true)
     expect(h.gemeld).toHaveLength(1)
   })
 })

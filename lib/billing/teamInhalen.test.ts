@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   betaald: vi.fn(),
   ontblokkeer: vi.fn(async () => true),
   vastleggen: vi.fn(async () => {}),
+  gratisUit: vi.fn(async () => {}),
   dbFout: null as null | 'lezen' | 'schrijven',
 }))
 
@@ -17,7 +18,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async () => {}) }))
 vi.mock('@/lib/teamOpzegging', () => ({ ontblokkeerNaBetaling: h.ontblokkeer }))
 vi.mock('./mollie', () => ({ betaaldeBetalingVanLink: h.betaald, SITE_URL: 'https://x.test' }))
 vi.mock('./teamBetalingen', () => ({
-  legBetaalwijzeVast: h.vastleggen, verwerkTeamNaBetaling: vi.fn(),
+  legBetaalwijzeVast: h.vastleggen, verwerkTeamNaBetaling: vi.fn(), beeindigGratisVanManager: h.gratisUit,
   terugBijMollie: (p: any) => ({
     terugbetaald: p.amountRefunded ? Math.round(Number(p.amountRefunded.value) * 100) : 0,
     teruggeboekt: p.amountChargedBack ? Math.round(Number(p.amountChargedBack.value) * 100) : 0,
@@ -63,6 +64,7 @@ describe('gemiste teambetalingen inhalen', () => {
     expect(await haalGemisteTeamBetalingenIn()).toMatchObject({ ingehaald: 1, fouten: 0 })
     expect(h.rijen[0]).toMatchObject({ status: 'paid', betaald_at: '2026-11-24T09:00:00.000Z' })
     expect(h.ontblokkeer).toHaveBeenCalledWith('t1', expect.any(String))
+    expect(h.gratisUit).toHaveBeenCalledWith('t1')
     expect(h.vastleggen).toHaveBeenCalledWith('f1', 'tr_1')
   })
   it('nog niet betaald: niets verandert', async () => {

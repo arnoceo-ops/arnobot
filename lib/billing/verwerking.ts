@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { zetGratisKenmerk } from '@/lib/referralKenmerken'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { isVolledigTerugbetaald } from './terugbetaling'
 import { tabelOntbreekt } from './tabel'
@@ -639,6 +640,8 @@ async function zetToegang(
     update.cancelled_at = null
   }
   await billingDb.from('approved_users').update(update).eq('user_id', userId)
+  // Wie betaalt is geen gratis account meer.
+  await zetGratisKenmerk(billingDb, userId, false)
 }
 
 // Zelfde regel als /api/admin/payment: alleen Pro/Team-conversies tellen voor referrals.

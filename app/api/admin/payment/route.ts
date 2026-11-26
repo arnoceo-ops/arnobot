@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
+import { zetGratisKenmerk } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
     console.error('[admin/payment]', error.message)
     return NextResponse.json({ error: 'Bijwerken mislukt' }, { status: 500 })
   }
+
+  await zetGratisKenmerk(supabase, userId, false)
 
   // Een handmatige BETAALD-vlag maakt geen arnobot_payments-rij en is dus geen omzet voor de MRR.
   // Het logboek is het enige spoor van wie dit wanneer zette.
