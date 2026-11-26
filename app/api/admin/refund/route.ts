@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   }
   const nogOpen = (b: PayRow) => {
     const o = open.bedragen.get(b.id)
-    return o ? o.gereserveerdCent + o.onderwegCent : 0
+    return o ? o.gereserveerdCent + o.onderwegCent + o.vastCent : 0
   }
   // Een betaling waarop alleen referraltegoed is teruggestort, is nog gewoon terug te betalen.
   let betaling = (kandidaten ?? []).find(b => !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) && restantCent(zonderReferralBedrag(b, nogOpen(b))) > 0)
@@ -74,10 +74,15 @@ export async function POST(req: NextRequest) {
   }
   if (slot.stand === 'ok') {
     if (slot.onderwegCent > 0) {
-      return NextResponse.json({ error: 'Op deze betaling loopt nu een referralterugstorting. Probeer het later opnieuw.' }, { status: 409 })
+      return NextResponse.json({ error: `Op deze betaling loopt nu een referralterugstorting van ${(slot.onderwegCent / 100).toFixed(2)} euro. Die wordt dagelijks nagekeken en loopt na een begrensd aantal mislukte controles vast, met een melding. Probeer het later opnieuw.` }, { status: 409 })
     }
     betaling = { ...betaling, referral_refund_cent: slot.referralRefundCent }
-    if (restantCent(betaling) <= 0) return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
+    if (restantCent(betaling) <= 0) {
+      if (slot.vastCent > 0) {
+        await notifyTelegram(`Terugbetalen niet mogelijk vanuit de admin (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nDe hele betaling staat geboekt als vastgelopen referralterugstorting (${(slot.vastCent / 100).toFixed(2)} euro). Kijk in Mollie of dat is teruggestort. Zo niet, betaal het daar terug en beëindig het abonnement.`)
+      }
+      return NextResponse.json({ error: 'Geen terug te betalen online betaling gevonden' }, { status: 404 })
+    }
   }
 
   try {

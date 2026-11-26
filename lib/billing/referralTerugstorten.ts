@@ -18,8 +18,8 @@ import { isInternalTestUser } from '@/lib/internalTestAccounts'
 // terugbetalingen (met ons actiekenmerk in de metadata) is leidend. En nooit vrijgeven als niet zeker is dat er geen geld
 // is verplaatst: dan blijft de reservering staan, krijgt de actie 'vastgelopen' en hoort Arno het.
 //
-// NOG NIET AANGESLOTEN: niets maakt acties aan en geen cron roept dit aan. Dat Mollie de metadata in de lijst teruggeeft
-// is nog niet beproefd (bouwplan, onderdeel C).
+// De planner (referralPlanner.ts) maakt de acties, de cron referral-uitvoeren roept dit aan. Dat Mollie de metadata in de
+// lijst teruggeeft is nog niet beproefd (bouwplan, onderdeel C).
 
 export const WACHT_NA_BETALING_DAGEN = 7
 export const WACHTRIJ_MELDEN_NA_DAGEN = 7
@@ -27,6 +27,11 @@ export const WACHTRIJ_MELDEN_NA_DAGEN = 7
 export const MAX_POGINGEN_GEWEIGERD = 3
 /** Zo vaak een onduidelijke uitkomst voordat een mens moet kijken. */
 export const MAX_POGINGEN_ONBEKEND = 5
+/** Zo vaak achter elkaar niets kunnen lezen bij Mollie voordat een claim niet langer mag blijven hangen. */
+export const MAX_LEESFOUTEN = 10
+/** Een actie die zo lang onderweg is, wordt elke week genoemd. */
+export const HANG_MELDEN_NA_DAGEN = 14
+const HERHAAL_MELDING_DAGEN = 7
 
 const DAG_MS = 24 * 60 * 60 * 1000
 export const TERUGSTORT_SOORTEN = ['tegoed_terugstorten', 'voordeel_jaar', 'voordeel_maand'] as const
@@ -39,7 +44,9 @@ export interface ActieGegevens {
   post_geprobeerd_at?: string | null
   verzonden_at?: string
   wachtrij_gemeld_at?: string
+  hang_gemeld_at?: string
   niet_gevonden?: number
+  leesfouten?: number
   boeking_teruggezet?: boolean
 }
 
@@ -59,6 +66,17 @@ export interface ActieRij {
   mollie_refund_id: string | null
   gegevens: ActieGegevens
   credit_status: 'nvt' | 'nodig' | 'bezig' | 'klaar'
+  /** Een melding aan Arno die nog niet is aangekomen. Blijft staan tot Telegram haar heeft aangenomen. */
+  melding?: OpenMelding | null
+  created_at?: string
+}
+
+export interface OpenMelding {
+  kop: string
+  uitleg: string
+  betaalkenmerk: string
+  /** Alleen versturen als de actie echt in deze status is gekomen. */
+  bij: string
 }
 
 type DbFout = { code?: string; message: string }
@@ -72,7 +90,7 @@ function verplicht<T>(wat: string, r: { data: T; error: DbFout | null }): T {
 // ── Stap 1: reserveren ──
 
 export type ReserveerInvoer = { actieId: string; userId: string; betalingId: string; omschrijving: string } & (
-  | { soort: 'tegoed_terugstorten'; maxNettoCent?: number; terugwerkend?: boolean }
+  | { soort: 'tegoed_terugstorten'; maxNettoCent?: number; terugwerkend?: boolean; plafondCent?: number; maxBrutoCent?: number }
   | { soort: 'voordeel_jaar' | 'voordeel_maand'; referralId: string; brutoCent: number }
 )
 
@@ -92,7 +110,8 @@ export async function reserveerTerugstorting(invoer: ReserveerInvoer): Promise<R
   const { data, error } = invoer.soort === 'tegoed_terugstorten'
     ? await billingDb.rpc('referral_reserveer', {
       p_actie: invoer.actieId, p_user: invoer.userId, p_doel: invoer.betalingId, p_max_netto: invoer.maxNettoCent ?? null,
-      p_gegevens: gegevens, p_terugwerkend: invoer.terugwerkend ?? false,
+      p_gegevens: gegevens, p_terugwerkend: invoer.terugwerkend ?? false, p_plafond: invoer.plafondCent ?? null,
+      p_max_bruto: invoer.maxBrutoCent ?? null,
     })
     : await billingDb.rpc('referral_reserveer_voordeel', {
       p_actie: invoer.actieId, p_user: invoer.userId, p_soort: invoer.soort, p_referral: invoer.referralId,
@@ -149,29 +168,65 @@ async function bewaar(a: ActieRij, patch: Partial<ActieRij>): Promise<void> {
   Object.assign(a, patch)
 }
 
-async function meld(a: ActieRij, betaling: PayRow | null, kop: string, uitleg: string): Promise<void> {
-  await notifyTelegram(`${kop} (referral, arno.bot)\n\nWie: ${await wieIs(a.user_id)}\nBedrag: ${formatEuro(a.bruto_cent)}\nBetaling: ${betaling?.mollie_payment_id ?? a.doel_id}\nActie: ${a.id}\n${uitleg}`)
+const melding = (a: ActieRij, betaling: PayRow | null, bij: string, kop: string, uitleg: string): OpenMelding =>
+  ({ bij, kop, uitleg, betaalkenmerk: betaling?.mollie_payment_id ?? a.doel_id })
+
+async function wisMelding(a: ActieRij): Promise<void> {
+  verplicht('melding afvinken', await billingDb.from('arnobot_referral_acties').update({ melding: null }).eq('id', a.id).select('id'))
+  a.melding = null
+}
+
+/** Verstuurt de openstaande melding van een actie. Lukt dat niet, dan blijft zij staan voor de volgende ronde. */
+async function stuurMelding(a: ActieRij): Promise<boolean> {
+  const m = a.melding
+  if (!m || m.bij !== a.status) return false
+  let wie = a.user_id
+  try {
+    wie = await wieIs(a.user_id)
+  } catch {
+    // Dan met het kenmerk: de melding zelf is belangrijker dan de naam.
+  }
+  const gelukt = await notifyTelegram(`${m.kop} (referral, arno.bot)\n\nWie: ${wie}\nBedrag: ${formatEuro(a.bruto_cent)}\nBetaling: ${m.betaalkenmerk}\nActie: ${a.id}\n${m.uitleg}`)
+    .catch(() => false)
+  if (gelukt !== false) await wisMelding(a)
+  return gelukt !== false
+}
+
+/** Meldingen die eerder niet aankwamen. */
+export async function verstuurOpenMeldingen(): Promise<void> {
+  const rijen = (verplicht('openstaande meldingen ophalen',
+    await billingDb.from('arnobot_referral_acties').select('*').not('melding', 'is', null).limit(200)) ?? []) as ActieRij[]
+  for (const a of rijen) {
+    // De wijziging waar de melding bij hoorde is niet doorgegaan, of de actie is intussen verder.
+    if (a.melding!.bij !== a.status) await wisMelding(a)
+    else await stuurMelding(a)
+  }
 }
 
 /** Een mens moet kijken. De reservering blijft geboekt: het is niet zeker dat er niets is verplaatst. */
 async function loopVast(a: ActieRij, betaling: PayRow | null, reden: string): Promise<'vastgelopen'> {
-  await bewaar(a, { status: 'vastgelopen', bezig_tot: null, fout: reden })
-  await meld(a, betaling, 'Terugstorting vastgelopen', `${reden}.\nDe reservering blijft staan en niets probeert het opnieuw. Kijk in Mollie of dit bedrag is teruggestort.`)
+  await bewaar(a, {
+    status: 'vastgelopen', bezig_tot: null, fout: reden,
+    melding: melding(a, betaling, 'vastgelopen', 'Terugstorting vastgelopen', `${reden}.\nDe reservering blijft staan en niets probeert het opnieuw. Kijk in Mollie of dit bedrag is teruggestort.`),
+  })
+  await stuurMelding(a)
   return 'vastgelopen'
 }
 
 /** Alleen aanroepen als zeker is dat er geen geld is verplaatst. */
 async function geefVrij(a: ActieRij, betaling: PayRow, eind: 'vrijgegeven' | 'vastgelopen', reden: string): Promise<'vrijgegeven' | 'vastgelopen' | 'niet-geclaimd'> {
+  const m = eind === 'vastgelopen'
+    ? melding(a, betaling, eind, 'Terugstorting vastgelopen', `${reden}.\nEr is niets teruggestort en de reservering is teruggezet. Niets probeert het vanzelf opnieuw.`)
+    : betaling.terugbetaling_verwerkt_at
+      // Wie intussen terugbetaalde, kan dit bedrag hebben overgeslagen omdat het onderweg was.
+      ? melding(a, betaling, eind, 'Controleer of nabetalen nodig is', `${reden}.\nDeze referralterugstorting gaat niet door en de betaling is intussen op een andere manier terugbetaald. Reken in Mollie na of de klant dit bedrag nog moet krijgen.`)
+      : melding(a, betaling, eind, 'Terugstorting niet doorgegaan', `${reden}.\nDe reservering is teruggezet.`)
+  // Eerst de melding klaarzetten: valt de run na het vrijgeven weg, dan gaat zij alsnog uit.
+  await bewaar(a, { melding: m })
   const r = verplicht('actie vrijgeven', await billingDb.rpc('referral_vrijgeven', { p_actie: a.id, p_van: a.status, p_eind: eind, p_reden: reden }))
   if (!(r as { ok?: boolean } | null)?.ok) return 'niet-geclaimd'
-  if (eind === 'vastgelopen') {
-    await meld(a, betaling, 'Terugstorting vastgelopen', `${reden}.\nEr is niets teruggestort en de reservering is teruggezet. Niets probeert het vanzelf opnieuw.`)
-  } else if (betaling.terugbetaling_verwerkt_at) {
-    // Wie intussen terugbetaalde, kan dit bedrag hebben overgeslagen omdat het onderweg was.
-    await meld(a, betaling, 'Controleer of nabetalen nodig is', `${reden}.\nDeze referralterugstorting gaat niet door en de betaling is intussen op een andere manier terugbetaald. Reken in Mollie na of de klant dit bedrag nog moet krijgen.`)
-  } else {
-    await meld(a, betaling, 'Terugstorting niet doorgegaan', `${reden}.\nDe reservering is teruggezet.`)
-  }
+  a.status = eind
+  await stuurMelding(a)
   return eind
 }
 
@@ -191,15 +246,32 @@ async function neemOver(a: ActieRij, betaling: PayRow, r: { id: string; status: 
     await bewaar(a, { status: 'bevestigd', mollie_refund_id: r.id, credit_status: 'nodig', bezig_tot: null, fout: null })
     return 'bevestigd'
   }
-  const gegevens: ActieGegevens = { ...a.gegevens, verzonden_at: a.gegevens.verzonden_at ?? r.createdAt ?? nu.toISOString() }
-  const langInWachtrij = r.status === 'queued' && !gegevens.wachtrij_gemeld_at
-    && nu.getTime() - Date.parse(gegevens.verzonden_at!) > WACHTRIJ_MELDEN_NA_DAGEN * DAG_MS
+  const { leesfouten: _gelezen, ...rest } = a.gegevens
+  const gegevens: ActieGegevens = { ...rest, verzonden_at: a.gegevens.verzonden_at ?? r.createdAt ?? nu.toISOString() }
+  const sinds = (iso: string) => nu.getTime() - Date.parse(iso)
+  const langInWachtrij = r.status === 'queued' && sinds(gegevens.verzonden_at!) > WACHTRIJ_MELDEN_NA_DAGEN * DAG_MS
+    && (!gegevens.wachtrij_gemeld_at || sinds(gegevens.wachtrij_gemeld_at) >= HERHAAL_MELDING_DAGEN * DAG_MS)
   if (langInWachtrij) gegevens.wachtrij_gemeld_at = nu.toISOString()
-  await bewaar(a, { status: 'verzonden', mollie_refund_id: r.id, gegevens, bezig_tot: null, fout: null })
-  if (langInWachtrij) {
-    await meld(a, betaling, 'Terugstorting staat lang in de wachtrij', `Al meer dan ${WACHTRIJ_MELDEN_NA_DAGEN} dagen. Waarschijnlijk is het saldo bij Mollie te laag.`)
-  }
+  await bewaar(a, {
+    status: 'verzonden', mollie_refund_id: r.id, gegevens, bezig_tot: null, fout: null,
+    ...(langInWachtrij ? { melding: melding(a, betaling, 'verzonden', 'Terugstorting staat lang in de wachtrij', `Al meer dan ${WACHTRIJ_MELDEN_NA_DAGEN} dagen. Waarschijnlijk is het saldo bij Mollie te laag. Zolang zij openstaat weigert de beheerderknop deze betaling.`) } : {}),
+  })
+  if (langInWachtrij) await stuurMelding(a)
   return 'verzonden'
+}
+
+/**
+ * Lezen bij Mollie mislukte. De claim mag niet eeuwig blijven hangen: na een begrensd aantal keer loopt de actie vast.
+ * Is er zeker nooit iets verstuurd, dan gaat de reservering terug.
+ */
+async function leesFout(a: ActieRij, betaling: PayRow, e: unknown): Promise<UitvoerUitkomst> {
+  const keer = (a.gegevens.leesfouten ?? 0) + 1
+  if (keer >= MAX_LEESFOUTEN) {
+    const reden = `Mollie is ${keer} keer achter elkaar niet te lezen: ${e instanceof Error ? e.message : e}`
+    return a.status === 'bezig' && !a.gegevens.post_geprobeerd_at ? geefVrij(a, betaling, 'vastgelopen', reden) : loopVast(a, betaling, reden)
+  }
+  await bewaar(a, { gegevens: { ...a.gegevens, leesfouten: keer } })
+  throw e
 }
 
 /** Van ons, en niet van ons: terugbetalingen op deze betaling die geen andere actie van ons verklaart. */
@@ -271,7 +343,12 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
   if (!betaling) return loopVast(a, null, 'de betaling is niet meer te vinden')
 
   // Stap 3: eerst kijken wat er bij Mollie al is. Nooit blind opnieuw.
-  const refunds = await lijstBetalingTerugbetalingen(betaling.mollie_payment_id)
+  let refunds: MollieRefund[]
+  try {
+    refunds = await lijstBetalingTerugbetalingen(betaling.mollie_payment_id)
+  } catch (e) {
+    return leesFout(a, betaling, e)
+  }
   const { vanOns, vreemd } = await sorteer(a, refunds)
   const lopend = vanOns.filter(r => !mislukt(r.status))
   if (lopend.length > 1) return loopVast(a, betaling, 'er staan meer terugbetalingen met dit actiekenmerk: mogelijk dubbel teruggestort')
@@ -280,13 +357,23 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
   if (a.status === 'verzonden') {
     const keer = (a.gegevens.niet_gevonden ?? 0) + 1
     if (keer >= MAX_POGINGEN_ONBEKEND) return loopVast(a, betaling, `terugbetaling ${a.mollie_refund_id} staat niet meer in de lijst van Mollie`)
-    await bewaar(a, { gegevens: { ...a.gegevens, niet_gevonden: keer }, bezig_tot: null })
+    const { leesfouten: _gelezen, ...rest } = a.gegevens
+    await bewaar(a, { gegevens: { ...rest, niet_gevonden: keer }, bezig_tot: null })
     return 'onbekend'
   }
 
   // Stap 4: mag er nu nog teruggestort worden?
   const eerderOnbekend = !!a.gegevens.post_geprobeerd_at
-  const mp = await haalBetaling(betaling.mollie_payment_id)
+  let mp: Awaited<ReturnType<typeof haalBetaling>>
+  try {
+    mp = await haalBetaling(betaling.mollie_payment_id)
+  } catch (e) {
+    return leesFout(a, betaling, e)
+  }
+  if (a.gegevens.leesfouten) {
+    const { leesfouten: _gelezen, ...rest } = a.gegevens
+    await bewaar(a, { gegevens: rest })
+  }
   const bezwaar = betaling.status !== 'paid' || mp.status !== 'paid' ? 'de betaling staat niet (meer) op betaald'
     : betaling.terugbetaling_verwerkt_at ? 'de betaling wordt of is al terugbetaald'
       : betaling.teruggeboekt_cent > 0 || (!!mp.amountChargedBack && mollieNaarCenten(mp.amountChargedBack.value) > 0) ? 'de betaling is teruggeboekt'
@@ -300,7 +387,14 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
   }
   if ((betaling.referral_refund_cent ?? 0) < a.bruto_cent) return loopVast(a, betaling, 'de reservering staat niet op de betaling geboekt')
   if (!schakelaarAan('REFERRAL_TERUGSTORTEN')) {
-    if (!eerderOnbekend) await legTerug(a)
+    if (!eerderOnbekend) {
+      await legTerug(a)
+      return 'schakelaar-uit'
+    }
+    // Niet opnieuw versturen, maar ook niet eeuwig op 'bezig' laten staan: de beheerderknop wacht hierop.
+    const keer = (a.gegevens.niet_gevonden ?? 0) + 1
+    if (keer >= MAX_POGINGEN_ONBEKEND) return loopVast(a, betaling, `na ${keer} controles niet bij Mollie gevonden terwijl een eerdere poging een onbekende uitkomst heeft`)
+    await bewaar(a, { gegevens: { ...a.gegevens, niet_gevonden: keer } })
     return 'schakelaar-uit'
   }
   if (!wachttijdVoorbij(betaling, nu)) {
@@ -358,7 +452,7 @@ export interface TerugstortRonde {
   fouten: string[]
 }
 
-/** Voor de toekomstige cron (referral-uitvoeren): een voor een, een fout bij de een houdt de ander niet tegen. */
+/** Voor de cron referral-uitvoeren: een voor een, een fout bij de een houdt de ander niet tegen. */
 export async function verwerkOpenTerugstortingen(nu: Date = new Date()): Promise<TerugstortRonde> {
   const ronde: TerugstortRonde = { sqlOntbreekt: false, uitkomsten: [], fouten: [] }
   const { data, error } = await billingDb.from('arnobot_referral_acties').select('id')
@@ -375,5 +469,27 @@ export async function verwerkOpenTerugstortingen(nu: Date = new Date()): Promise
       ronde.fouten.push(`actie ${id}: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
+  for (const [wat, taak] of [['meldingen', verstuurOpenMeldingen], ['hangende acties', () => meldHangende(nu)]] as const) {
+    try {
+      await taak()
+    } catch (e) {
+      ronde.fouten.push(`${wat}: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
   return ronde
+}
+
+/** Wat lang onderweg blijft (wachtrij, een claim die steeds mislukt) mag niet onzichtbaar worden. */
+async function meldHangende(nu: Date): Promise<void> {
+  const rijen = (verplicht('hangende acties ophalen', await billingDb.from('arnobot_referral_acties').select('*')
+    .in('status', ['bezig', 'verzonden']).limit(200)) ?? []) as ActieRij[]
+  const oud = (iso: string | undefined, dagen: number) => !!iso && nu.getTime() - Date.parse(iso) >= dagen * DAG_MS
+  for (const a of rijen) {
+    if (!oud(a.created_at, HANG_MELDEN_NA_DAGEN) || (a.gegevens.hang_gemeld_at && !oud(a.gegevens.hang_gemeld_at, HERHAAL_MELDING_DAGEN))) continue
+    await bewaar(a, {
+      gegevens: { ...a.gegevens, hang_gemeld_at: nu.toISOString() },
+      melding: melding(a, null, a.status, 'Terugstorting staat al lang open', `Status ${a.status} sinds ${a.created_at!.slice(0, 10)}${a.fout ? `. Laatste fout: ${a.fout}` : ''}. Zolang zij openstaat weigert de beheerderknop deze betaling.`),
+    })
+    await stuurMelding(a)
+  }
 }

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import AdminNav from '../AdminNav'
 import BesluitFormulier from './BesluitFormulier'
+import Uitbetalen from './Uitbetalen'
 import { billingDb } from '@/lib/billing/db'
 import { formatEuro } from '@/lib/billing/geld'
 import { draaiGrootboek, openVervalVraag, saldoPerAanbrenger, type GrootboekRegel, type ReferralStand } from '@/lib/billing/referralGrootboek'
@@ -99,6 +100,8 @@ export default async function ReferralsAdminPage() {
             </tbody>
           </table>
         )}
+
+        <Uitbetalen naam={naam} />
 
         <p style={sectionLabel}>Grootboek</p>
         {opgeslagen.length === 0 ? <p style={muted}>Nog geen regels.</p> : (

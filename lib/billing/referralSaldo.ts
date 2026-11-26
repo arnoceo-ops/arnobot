@@ -45,8 +45,21 @@ export interface Saldo {
   toekenningen: ToekenningRest[]
 }
 
+export interface SaldoOpties {
+  /** Voor de aanbrenger die teamlid werd: van elke toekenning gaat er in totaal nooit meer uit dan dit. */
+  plafondCent?: number
+  /** Alleen toekenningen van vóór dit moment (de betaaldag): nooit verrekenen met terugwerkende kracht. */
+  toegekendVoor?: string
+}
+
+/** Wat er in totaal aan een toekenning is toegekend, ongeacht wat ermee gebeurd is. */
+export function toegekendCent(regels: SaldoRegel[], referralId: string): number {
+  return regels.filter(r => (r.soort === 'toekenning' || r.soort === 'vaststelling') && hoortBij(r) === referralId)
+    .reduce((som, r) => som + (r.netto_cent ?? 0), 0)
+}
+
 /** Het saldo van een aanbrenger. Geef alleen de regels van die ene aanbrenger mee. */
-export function saldoVan(regels: SaldoRegel[]): Saldo {
+export function saldoVan(regels: SaldoRegel[], opties: SaldoOpties = {}): Saldo {
   const toegekend = regels
     .filter(r => r.soort === 'toekenning')
     .sort((a, b) => Date.parse(a.created_at ?? '') - Date.parse(b.created_at ?? '') || (a.referral_id < b.referral_id ? -1 : 1))
@@ -57,16 +70,22 @@ export function saldoVan(regels: SaldoRegel[]): Saldo {
     const positief = Math.max(0, t.restCent)
     const eraf = Math.min(openSchuld, positief)
     openSchuld -= eraf
-    return { ...t, vrijCent: positief - eraf }
+    let vrijCent = positief - eraf
+    if (opties.plafondCent !== undefined) vrijCent = Math.max(0, vrijCent - Math.max(0, toegekendCent(regels, t.referralId) - opties.plafondCent))
+    if (opties.toegekendVoor !== undefined) {
+      const toegekendAt = toegekend.find(r => r.referral_id === t.referralId)!.created_at
+      if (!(Date.parse(toegekendAt ?? '') < Date.parse(opties.toegekendVoor))) vrijCent = 0
+    }
+    return { ...t, vrijCent }
   })
   return { beschikbaarCent: toekenningen.reduce((som, t) => som + t.vrijCent, 0), schuldCent, toekenningen }
 }
 
 /** Van welke toekenningen dit bedrag afgaat: oudste eerst. Meer dan beschikbaar kan niet. */
-export function verdeelVerrekening(regels: SaldoRegel[], nettoCent: number): { referralId: string; nettoCent: number }[] {
+export function verdeelVerrekening(regels: SaldoRegel[], nettoCent: number, opties: SaldoOpties = {}): { referralId: string; nettoCent: number }[] {
   let nog = nettoCent
   const delen: { referralId: string; nettoCent: number }[] = []
-  for (const t of saldoVan(regels).toekenningen) {
+  for (const t of saldoVan(regels, opties).toekenningen) {
     const deel = Math.min(nog, t.vrijCent)
     if (deel <= 0) continue
     delen.push({ referralId: t.referralId, nettoCent: deel })

@@ -22,6 +22,7 @@ export function maakNepDb() {
       select: () => q, order: () => q, limit: () => q, returns: () => q,
       eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
       in: (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return q },
+      not: (k: string, _is: 'is', _leeg: null) => { filters.push(r => r[k] !== null && r[k] !== undefined); return q },
       update: (patch: Rij) => { wijziging = patch; return q },
       maybeSingle: async () => { const r = uit(); return { data: r.data[0] ?? null, error: null } },
       then: (ok: any, nee: any) => Promise.resolve(uit()).then(ok, nee),
@@ -61,7 +62,8 @@ export function maakNepDb() {
 
   const nieuweActie = (extra: Rij): Rij => ({
     soort: 'tegoed_terugstorten', referral_id: null, doel_soort: 'betaling', bruto_cent: 1210, netto_cent: 1000, status: 'gereserveerd',
-    bezig_tot: null, pogingen: 0, fout: null, mollie_refund_id: null, gegevens: {}, credit_status: 'nvt', ...extra,
+    bezig_tot: null, pogingen: 0, fout: null, mollie_refund_id: null, gegevens: {}, credit_status: 'nvt', melding: null,
+    created_at: '2030-01-10T10:00:00.000Z', ...extra,
   })
 
   return {

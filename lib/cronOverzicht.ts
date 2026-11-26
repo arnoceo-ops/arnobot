@@ -22,6 +22,7 @@ export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/trial-emails': { naam: 'Trial-mails', wat: 'Lifecycle-mails van dag 1 tot en met win-back, en het sluiten van verlopen trials', ontvanger: 'Gebruiker', soort: 'gebruikers' },
   '/api/cron/inactivity-nudge': { naam: 'Inactiviteitsmails', wat: 'Nudges bij geen gesprek, een rustige week en inactiviteit na 21, 45 en 60 dagen', ontvanger: 'Gebruiker', soort: 'gebruikers' },
   '/api/cron/referral-grootboek': { naam: 'Referralgrootboek', wat: 'Rekent per referral uit welk tegoed zou ontstaan of vervallen (meeloopstand, verandert niets aan geld of tegoed), meldt alleen iets nieuws', ontvanger: 'Telegram', soort: 'mij' },
+  '/api/cron/referral-uitvoeren': { naam: 'Referral uitvoeren', wat: 'Controleert na of betalingen onder referraltegoed zijn teruggedraaid en handelt terugstortingen af. Zolang REFERRAL_TERUGSTORTEN uit staat wordt er niets gereserveerd of verstuurd', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/weekly-activity':{ naam: 'Wekelijkse activiteit', wat: 'Actieve gebruikers van de afgelopen 7 dagen', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/productvragen': { naam: 'Productvragen', wat: 'Vragen van de afgelopen 24 uur over het gebruik van ArnoBot zelf, alleen als er iets is', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/feitencontrole': { naam: 'Feitencontrole', wat: 'Controleert de antwoorden van de afgelopen 24 uur op feiten van de gebruiker die verkeerd zijn teruggespeeld', ontvanger: 'Arno', soort: 'mij' },

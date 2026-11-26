@@ -4,6 +4,7 @@ import { stopMollieAbonnement } from './verwerking'
 import { planNaam } from './prijzen'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { gaatAutomatisch } from './referralAutomatisch'
 import { trialEinde } from '@/lib/toegang'
 
 // Iemand met een eigen abonnement of proef accepteert de uitnodiging van een teammanager (docs/TEAM_PROCES.md).
@@ -103,9 +104,15 @@ export async function stopSoloBijJoin(userId: string, teamNaam: string, nu: Date
     }
 
     if (resultaat.abonnement !== 'geen' || resultaat.proefBeeindigd || resultaat.handmatigBetaald) {
+      // Doet het systeem het referraltegoed zelf, dan moet een coulancebetaling per bank worden ingeboekt, anders kan hij
+      // samen meer terugkrijgen dan hij betaalde. Niet te controleren: de gewone tekst, het joinen mag hier niet op mislukken.
+      const automatisch = await gaatAutomatisch('tegoed_terugstorten').catch(() => false)
+      const referralZin = automatisch
+        ? 'Referraltegoed stort het systeem zelf terug. Geef je coulance per bank, boek die dan meteen in met referral_handmatig_betaling in de SQL Editor.'
+        : 'Is er ook referraltegoed, tel het niet dubbel.'
       const wie = `${u.voornaam ?? 'onbekend'} (${u.email ?? 'geen e-mail'})`
       const delen = [
-        resultaat.abonnement === 'gestopt' ? `Eigen abonnement ${resultaat.omschrijving} gestopt, loopt t/m ${resultaat.loptTot ? new Date(resultaat.loptTot).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : 'onbekend'}, geen restitutie.${resultaat.naarRato ? ` Nog ${resultaat.naarRato.maanden} maanden betaald (${resultaat.naarRato.dagen} dagen), naar rato ongeveer €${(resultaat.naarRato.bedragCent / 100).toFixed(2)} incl. btw. Overweeg een deelrestitutie uit coulance. Is er ook referraltegoed, tel het niet dubbel. Stort per bankoverschrijving en maak een creditnota, niet via een terugbetaling in Mollie.` : ''}`
+        resultaat.abonnement === 'gestopt' ? `Eigen abonnement ${resultaat.omschrijving} gestopt, loopt t/m ${resultaat.loptTot ? new Date(resultaat.loptTot).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) : 'onbekend'}, geen restitutie.${resultaat.naarRato ? ` Nog ${resultaat.naarRato.maanden} maanden betaald (${resultaat.naarRato.dagen} dagen), naar rato ongeveer €${(resultaat.naarRato.bedragCent / 100).toFixed(2)} incl. btw. Overweeg een deelrestitutie uit coulance. ${referralZin} Stort per bankoverschrijving en maak een creditnota, niet via een terugbetaling in Mollie.` : ''}`
           : resultaat.abonnement === 'mislukt' ? `Eigen abonnement ${resultaat.omschrijving} STOPPEN MISLUKT: stop het zelf in het Mollie-dashboard.`
           : null,
         resultaat.handmatigBetaald ? 'Heeft handmatig betaald (BETAALD gezet) zonder online abonnement: er is niets gestopt, zijn eigen toegang loopt door.' : null,

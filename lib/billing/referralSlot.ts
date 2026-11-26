@@ -48,6 +48,8 @@ export interface OpenBedrag {
   gereserveerdCent: number
   /** Al op weg naar de klant. */
   onderwegCent: number
+  /** Vastgelopen met de reservering nog geboekt. */
+  vastCent: number
 }
 
 /**
@@ -62,16 +64,17 @@ export async function openReferralBedragen(betalingen: PayRow[]): Promise<{ bedr
   try {
     const { data, error } = await billingDb
       .from('arnobot_referral_acties')
-      .select('doel_id, bruto_cent, status')
+      .select('doel_id, bruto_cent, status, gegevens')
       .eq('doel_soort', 'betaling')
       .in('doel_id', ids)
-      .in('status', ['gereserveerd', 'bezig', 'verzonden'])
+      .in('status', ['gereserveerd', 'bezig', 'verzonden', 'vastgelopen'])
       .limit(200)
     if (error) return { bedragen, fout: actieTabelOntbreekt(error) ? null : error.message }
-    for (const a of (data ?? []) as { doel_id: string; bruto_cent: number; status: string }[]) {
-      const som = bedragen.get(a.doel_id) ?? { gereserveerdCent: 0, onderwegCent: 0 }
+    for (const a of (data ?? []) as { doel_id: string; bruto_cent: number; status: string; gegevens?: { boeking_teruggezet?: boolean } | null }[]) {
+      const som = bedragen.get(a.doel_id) ?? { gereserveerdCent: 0, onderwegCent: 0, vastCent: 0 }
       if (a.status === 'gereserveerd') som.gereserveerdCent += a.bruto_cent
-      else som.onderwegCent += a.bruto_cent
+      else if (a.status !== 'vastgelopen') som.onderwegCent += a.bruto_cent
+      else if (!a.gegevens?.boeking_teruggezet) som.vastCent += a.bruto_cent
       bedragen.set(a.doel_id, som)
     }
     return { bedragen, fout: null }

@@ -13,6 +13,10 @@
       "schedule": "20 5 * * *"
     },
     {
+      "path": "/api/cron/referral-uitvoeren",
+      "schedule": "40 5 * * *"
+    },
+    {
       "path": "/api/cron/team-facturatie",
       "schedule": "10 5 * * *"
     },

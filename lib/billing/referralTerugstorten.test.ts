@@ -9,6 +9,8 @@ const h = vi.hoisted(() => ({
   faalUpdate: null as null | ((patch: any) => boolean),
   tabelWeg: false,
   telegram: [] as string[],
+  telegramStuk: false,
+  wieStuk: false,
   mollie: {
     refunds: [] as any[],
     posts: [] as any[],
@@ -75,8 +77,8 @@ vi.mock('./mollie', async origineel => {
     }),
   }
 })
-vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async (t: string) => { h.telegram.push(t); return true }) }))
-vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => id) }))
+vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async (t: string) => { if (h.telegramStuk) return false; h.telegram.push(t); return true }) }))
+vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => { if (h.wieStuk) throw new Error('clerk plat'); return id }) }))
 
 import { maakNepDb } from './referralNepDb'
 import { creditnotaStap, reserveerTerugstorting, verwerkOpenTerugstortingen, voerTerugstortingUit } from './referralTerugstorten'
@@ -124,6 +126,8 @@ beforeEach(async () => {
   h.faalUpdate = null
   h.tabelWeg = false
   h.telegram.length = 0
+  h.telegramStuk = false
+  h.wieStuk = false
   Object.assign(h.mollie, { refunds: [], posts: [], plan: [], sleutels: new Map(), klok: NU.getTime(), betaling: {}, lijstStuk: false, zonderMetadata: false })
   await zaai()
 })
@@ -534,5 +538,104 @@ describe('creditnota: aparte stap, nog niet gebouwd', () => {
     expect(await creditnotaStap(await actie())).toBe('geen-factuur-testmodus')
     expect((await actie()).credit_status).toBe('nvt')
     expect(await creditnotaStap(await actie())).toBe('niet-nodig')
+  })
+})
+
+describe('de beheerderknop mag niet blijvend geweigerd worden', () => {
+  it('schakelaar uit, onbekende uitkomst en niets gevonden: na vijf keer vastgelopen met melding', async () => {
+    await reservering()
+    h.mollie.plan = [{ fout: 'timeout' }]
+    await draai()
+    vi.stubEnv('REFERRAL_TERUGSTORTEN', '')
+    for (let i = 1; i < 5; i++) expect(await draai(i * DAG)).toBe('schakelaar-uit')
+    expect(await draai(5 * DAG)).toBe('vastgelopen')
+    expect((await actie()).status).toBe('vastgelopen')
+    expect(await geboekt()).toBe(1210)
+    expect(posts()).toBe(1)
+    expect(h.telegram).toHaveLength(1)
+  })
+  it('Mollie blijft niet te lezen: na tien keer vastgelopen, de claim hangt niet eeuwig', async () => {
+    await reservering()
+    h.mollie.plan = [{ fout: 'timeout' }]
+    await draai()
+    h.mollie.lijstStuk = true
+    for (let i = 1; i < 10; i++) await expect(draai(i * DAG)).rejects.toThrow('mollie plat')
+    expect(await draai(10 * DAG)).toBe('vastgelopen')
+    expect(await geboekt()).toBe(1210)
+    expect(h.telegram).toHaveLength(1)
+  })
+  it('niet te lezen terwijl er zeker niets verstuurd is: de reservering gaat terug', async () => {
+    await reservering()
+    h.mollie.lijstStuk = true
+    for (let i = 0; i < 9; i++) await expect(draai(i * DAG)).rejects.toThrow('mollie plat')
+    expect(await draai(10 * DAG)).toBe('vastgelopen')
+    expect(await geboekt()).toBe(0)
+  })
+  it('een gelukte lezing zet de teller terug', async () => {
+    await reservering()
+    h.mollie.plan = [{ status: 'pending' }]
+    await draai()
+    for (let ronde = 0; ronde < 3; ronde++) {
+      h.mollie.lijstStuk = true
+      for (let i = 0; i < 6; i++) await expect(draai((1 + ronde * 10 + i) * DAG)).rejects.toThrow('mollie plat')
+      h.mollie.lijstStuk = false
+      expect(await draai((8 + ronde * 10) * DAG)).toBe('verzonden')
+    }
+  })
+  it('queued: elke week opnieuw gemeld', async () => {
+    await reservering()
+    h.mollie.plan = [{ status: 'queued' }]
+    await draai()
+    await draai(8 * DAG)
+    await draai(10 * DAG)
+    expect(h.telegram).toHaveLength(1)
+    await draai(16 * DAG)
+    expect(h.telegram).toHaveLength(2)
+  })
+})
+
+describe('een melding gaat niet verloren', () => {
+  const loopVast = async () => {
+    await reservering()
+    h.mollie.refunds.push(vreemde({ id: 're_x', metadata: { referralActie: A }, amount: { currency: 'EUR', value: '1.00' } }))
+    return draai()
+  }
+  const ronde = async (na: number) => { await db().verloopClaims(); return verwerkOpenTerugstortingen(later(na)) }
+
+  it('Telegram faalt: bij elke volgende ronde opnieuw, tot het lukt, daarna niet meer', async () => {
+    h.telegramStuk = true
+    expect(await loopVast()).toBe('vastgelopen')
+    await ronde(DAG)
+    expect(h.telegram).toHaveLength(0)
+    h.telegramStuk = false
+    await ronde(2 * DAG)
+    await ronde(3 * DAG)
+    expect(h.telegram).toHaveLength(1)
+    expect(h.telegram[0]).toContain('vastgelopen')
+  })
+  it('de naam niet op te zoeken: de melding gaat met het kenmerk', async () => {
+    h.wieStuk = true
+    expect(await loopVast()).toBe('vastgelopen')
+    expect(h.telegram[0]).toContain('user_a')
+  })
+  it('ook de melding na een vrijgave wordt herhaald', async () => {
+    await reservering()
+    h.mollie.refunds.push(vreemde())
+    h.telegramStuk = true
+    expect(await draai()).toBe('vrijgegeven')
+    h.telegramStuk = false
+    await ronde(DAG)
+    expect(h.telegram).toHaveLength(1)
+    expect(h.telegram[0]).toContain('niet doorgegaan')
+  })
+  it('een actie die al lang openstaat wordt elke week genoemd', async () => {
+    await reservering()
+    await draai()
+    await db().wijzigActie(A, { created_at: new Date(NU.getTime() - 15 * DAG).toISOString() })
+    await ronde(DAG)
+    await ronde(2 * DAG)
+    expect(h.telegram.filter(t => t.includes('staat al lang open'))).toHaveLength(1)
+    await ronde(9 * DAG)
+    expect(h.telegram.filter(t => t.includes('staat al lang open'))).toHaveLength(2)
   })
 })

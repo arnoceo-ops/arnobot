@@ -9,6 +9,9 @@ const h = vi.hoisted(() => ({
   acties: [] as any[],
   actiesFout: null as any,
   slot: null as any,
+  /** De betaalrij zoals zij bij opnieuw lezen is (na een slot waarvan het antwoord verloren ging). */
+  vers: null as any,
+  versFout: false,
   bevraagd: [] as string[],
   betaalTerug: vi.fn(),
   markeer: vi.fn(),
@@ -27,9 +30,14 @@ vi.mock('./db', () => ({
       const uit = () => tabel === 'arnobot_referral_acties'
         ? { data: h.actiesFout ? null : h.acties, error: h.actiesFout }
         : { data: tabel === 'arnobot_payments' ? h.betalingen.map(b => ({ ...b })) : [], error: null }
+      let id: unknown
       const q: any = {
-        select: () => q, eq: () => q, in: () => q, is: () => q, order: () => q, limit: () => q, returns: () => q,
-        maybeSingle: async () => ({ data: tabel === 'arnobot_subscriptions' ? { id: 's1', klant_type: 'particulier', bedrag_cent: 5900, status: 'active' } : null }),
+        select: () => q, eq: (k: string, v: unknown) => { if (k === 'id') id = v; return q }, in: () => q, is: () => q, order: () => q, limit: () => q, returns: () => q,
+        maybeSingle: async () => {
+          if (tabel === 'arnobot_subscriptions') return { data: { id: 's1', klant_type: 'particulier', bedrag_cent: 5900, status: 'active' } }
+          if (tabel === 'arnobot_payments' && h.versFout) return { data: null, error: { message: 'time-out' } }
+          return { data: h.vers ?? h.betalingen.find(b => b.id === id) ?? null, error: null }
+        },
         then: (ok: any) => ok(uit()),
       }
       return q
@@ -70,8 +78,10 @@ const adminTerug = async (body: any = { userId: 'user_gewoon', bevestigNaBedenkt
 
 beforeEach(() => {
   vi.clearAllMocks()
-  Object.assign(h, { betalingen: [betaling()], acties: [], actiesFout: null, slot: GEEN_SQL, bevraagd: [] })
+  Object.assign(h, { betalingen: [betaling()], acties: [], actiesFout: null, slot: GEEN_SQL, vers: null, versFout: false, bevraagd: [] })
   h.betaalTerug.mockResolvedValue({ id: 're_1' })
+  h.markeer.mockResolvedValue(true)
+  h.tg.mockResolvedValue(true)
 })
 
 describe('zonder uitgevoerde SQL: precies als voorheen', () => {
@@ -179,6 +189,98 @@ describe('met openstaande acties', () => {
     h.slot = ok({ referral_refund_cent: 1000, [veld]: 1000 })
     expect(await voerHerroepingUit('user_gewoon', nu)).toMatchObject({ ok: true, bedragCent: 4900 })
     expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('nabetalen'))
+  })
+})
+
+describe('herroepen als referralgeld de hele betaling dekt (wettelijk recht)', () => {
+  /** Abonnement en toegang eindigen, zonder terugbetaling bij Mollie, vastgelegd en gemeld. */
+  const verwachtBeeindigd = async (id = 'p1') => {
+    expect(await voerHerroepingUit('user_gewoon', nu)).toMatchObject({ ok: true, bedragCent: 0, proef: false })
+    expect(h.betaalTerug).not.toHaveBeenCalled()
+    expect(h.markeer).toHaveBeenCalledExactlyOnceWith(id)
+    expect(h.log).toHaveBeenCalledWith(expect.objectContaining({ actie: 'herroeping', details: { extra: expect.objectContaining({ bedrag_cent: 0, zonder_terugbetaling: true }) } }))
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('zonder terugbetaling'))
+  }
+
+  it('al volledig teruggestort als referralgeld: nog steeds te herroepen', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900, terugbetaald_cent: 5900 })]
+    h.slot = ok({ referral_refund_cent: 5900 })
+    expect((await zoekHerroepbaar('user_gewoon', nu)).herroepbaar).toMatchObject({ soort: 'eerste', bedragCent: 0 })
+    await verwachtBeeindigd()
+  })
+  it.each(['bezig', 'verzonden'])('volledig onderweg (%s)', async status => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900 })]
+    h.acties = [{ doel_id: 'p1', bruto_cent: 5900, status, gegevens: {} }]
+    h.slot = ok({ referral_refund_cent: 5900, onderweg_cent: 5900 })
+    await verwachtBeeindigd()
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('€59,00'))
+  })
+  it('de machine claimt tussen het zoeken en het slot', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900 })]
+    h.acties = [{ doel_id: 'p1', bruto_cent: 5900, status: 'gereserveerd', gegevens: {} }]
+    h.slot = ok({ referral_refund_cent: 5900, onderweg_cent: 5900 })
+    await verwachtBeeindigd()
+  })
+  it('slot mislukt en alles is gereserveerd: toch beëindigd, vastgelegd en gemeld', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900 })]
+    h.acties = [{ doel_id: 'p1', bruto_cent: 5900, status: 'gereserveerd', gegevens: {} }]
+    h.slot = { data: null, error: { message: 'time-out' } }
+    await verwachtBeeindigd()
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('€59,00'))
+  })
+  it('ook als de acties en de rij niet opnieuw te lezen zijn', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900 })]
+    h.actiesFout = { message: 'time-out' }
+    h.versFout = true
+    h.slot = new Error('fetch failed')
+    await verwachtBeeindigd()
+  })
+  it('lukt het beëindigen niet, dan geen succes maar wel een melding', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 5900, terugbetaald_cent: 5900 })]
+    h.slot = ok({ referral_refund_cent: 5900 })
+    h.markeer.mockResolvedValue(false)
+    expect(await voerHerroepingUit('user_gewoon', nu)).toMatchObject({ ok: false, status: 503 })
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('niet beëindigd'))
+  })
+  it('een volledig gedekte upgrade: alleen de upgrade wordt herroepen, nooit het hele abonnement', async () => {
+    h.betalingen = [
+      betaling(),
+      betaling({ id: 'up', mollie_payment_id: 'tr_up', soort: 'upgrade', bedrag_cent: 2000, referral_refund_cent: 2000, terugbetaald_cent: 2000, betaald_at: '2026-11-08T10:00:00Z' }),
+    ]
+    h.slot = ok({ referral_refund_cent: 2000 })
+    expect((await zoekHerroepbaar('user_gewoon', nu)).herroepbaar).toMatchObject({ soort: 'upgrade', bedragCent: 0 })
+    await verwachtBeeindigd('up')
+  })
+  it('mislukt de terugbetaling bij Mollie, dan hoort Arno het', async () => {
+    h.betaalTerug.mockRejectedValue(new Error('Mollie 422'))
+    await expect(voerHerroepingUit('user_gewoon', nu)).rejects.toThrow('422')
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('Herroeping mislukt'))
+  })
+})
+
+describe('slot onbekend terwijl de vrijgave wel gebeurde', () => {
+  it('de rij wordt opnieuw gelezen: de klant krijgt het hele bedrag', async () => {
+    h.betalingen = [betaling({ referral_refund_cent: 1000 })]
+    h.acties = [{ doel_id: 'p1', bruto_cent: 1000, status: 'gereserveerd', gegevens: {} }]
+    // Het antwoord van het slot ging verloren; in de database is de reservering al terug.
+    h.vers = betaling({ referral_refund_cent: 0 })
+    h.slot = new Error('fetch failed')
+    expect(await voerHerroepingUit('user_gewoon', nu)).toMatchObject({ ok: true, bedragCent: 5900 })
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('niet te controleren'))
+  })
+})
+
+describe('beheerderknop bij een vastgelopen bedrag', () => {
+  const vast = (cent: number) => {
+    h.betalingen = [betaling({ referral_refund_cent: cent }), betaling({ id: 'oud', mollie_payment_id: 'tr_oud', betaald_at: '2026-10-05T10:00:00Z' })]
+    h.acties = [{ doel_id: 'p1', bruto_cent: cent, status: 'vastgelopen', gegevens: {} }]
+    h.slot = ok({ referral_refund_cent: cent, vast_cent: cent })
+  }
+  it('dekt het de hele betaling: geen oudere betaling pakken, 404 met melding', async () => {
+    vast(5900)
+    expect((await adminTerug()).status).toBe(404)
+    expect(h.betaalTerug).not.toHaveBeenCalled()
+    expect(h.tg).toHaveBeenCalledWith(expect.stringContaining('59.00'))
   })
 })
 

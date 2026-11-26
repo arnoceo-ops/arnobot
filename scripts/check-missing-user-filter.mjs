@@ -95,6 +95,9 @@ const OWNERSHIP_EQ = /\.(eq|in)\(\s*['"][^'"]*(?:user_id|manager_id|member_id)[^
 // (referral-code, team_id) waarvan de output nooit terug naar de aanroeper lekt.
 // Formaat: 'relatief/pad.ts:tabelnaam'.
 const KNOWN_SAFE_QUERIES = new Set([
+  // De referralplanner beoordeelt alle referrals (cron en adminoverzicht), testaccounts overgeslagen. Nooit via een
+  // gebruikersroute aangeroepen; betalingen en abonnementen leest hij per gebruiker via laadDossier.
+  'lib/billing/referralPlanner.ts:arnobot_referrals',
   // De dagelijkse bedragcontrole (billing-cron) vergelijkt elk lopend abonnement met Mollie, over alle gebruikers, met
   // de interne testaccounts uitgesloten. Alleen lezen en melden aan Arno.
   'lib/billing/bedragControle.ts:arnobot_subscriptions',

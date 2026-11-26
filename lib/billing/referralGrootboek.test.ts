@@ -1109,3 +1109,42 @@ describe('verval na deelverbruik', () => {
     expect(saldoPerAanbrenger(boek() as any).get('aanbrenger')).toBe(0)
   })
 })
+
+describe('onbekende terugbetaling vóór een toekenning', () => {
+  const metActie = (status: string, extra: Rij = {}) => {
+    zet({
+      arnobot_payments: [jaar('klant', { referral_refund_cent: 1000 })],
+      arnobot_referral_acties: [{ doel_soort: 'betaling', doel_id: 'pay_klant', bruto_cent: 1000, status, gegevens: {}, ...extra }],
+    })
+    h.terugbetalingen = { tr_klant: [{ status: 'pending', amount: { currency: 'EUR', value: '10.00' } }] }
+  }
+  it.each(['gereserveerd', 'bezig'])('een nog niet verstuurde reservering (%s) telt niet als bekend teruggestort', async status => {
+    metActie(status)
+    const run = await draai()
+    expect(boek()).toHaveLength(0)
+    expect(uitkomst(run)).toMatchObject({ uitkomst: 'wacht', reden: 'bij de klant loopt een terugbetaling' })
+  })
+  it.each(['verzonden', 'bevestigd'])('wat verstuurd is (%s) is wel bekend', async status => {
+    metActie(status)
+    await draai()
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning' })
+  })
+  it('een poging met onbekende uitkomst kan verstuurd zijn', async () => {
+    metActie('bezig', { gegevens: { post_geprobeerd_at: '2027-02-28T00:00:00Z' } })
+    await draai()
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning' })
+  })
+  it('zonder de actietabel telt het geboekte bedrag zoals voorheen', async () => {
+    metActie('gereserveerd')
+    h.fouten = { arnobot_referral_acties: { code: 'PGRST205', message: "Could not find the table 'public.arnobot_referral_acties' in the schema cache" } }
+    await draai()
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning' })
+  })
+  it('zijn de acties niet te lezen, dan niets beslissen', async () => {
+    metActie('verzonden')
+    h.fouten = { arnobot_referral_acties: { message: 'time-out' } }
+    const run = await draai()
+    expect(boek()).toHaveLength(0)
+    expect(run.fouten).toHaveLength(1)
+  })
+})

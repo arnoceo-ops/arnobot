@@ -2,6 +2,7 @@ import { billingDb, type PayRow } from './db'
 import { heeftAndereTerugbetaling } from './terugbetaling'
 import { BENODIGDE_MAANDEN, telMaanden, type GratisPeriode } from './referralRegels'
 import { wieIs } from './wie'
+import { gaatAutomatisch, heeftVoordeelActie } from './referralAutomatisch'
 import { notifyTelegram } from '@/lib/cron-notify'
 
 // Meldingen aan Arno voor wat bij een aangebrachte klant beloofd is maar nog niet automatisch gebeurt
@@ -12,6 +13,9 @@ import { notifyTelegram } from '@/lib/cron-notify'
  * abonnement, en ook een deel laat de betaling niet meer meetellen. Een bankoverschrijving ziet de app niet.
  */
 export const VEILIG_TERUGSTORTEN = 'Stort per bankoverschrijving en maak een creditnota in Moneybird. NIET via een terugbetaling in Mollie: dan kan het abonnement stoppen.'
+
+/** In plaats van het verzoek om het met de hand te doen, zodra het systeem het zelf doet. */
+export const NIET_MET_DE_HAND = 'Stort dit NIET met de hand terug: de referralverrekening beoordeelt het zelf (zie /bot/admin/referrals). Kan zij het niet, dan hoor je dat apart.'
 
 type Rij = PayRow & { cyclus?: string | null; periode_start?: string | null; periode_einde?: string | null }
 
@@ -51,6 +55,12 @@ export async function meldGratisVierdeMaand(userId: string, vierdeIncassoRond: D
     if (error) throw new Error(error.message)
     const { reeks, eerderGehaald } = maandReeks(data ?? [])
     if (reeks !== BENODIGDE_MAANDEN || eerderGehaald) return
+    // Al klaargezet, gegeven of met de hand ingeboekt.
+    if (await heeftVoordeelActie(String(referral.id))) return
+    if (await gaatAutomatisch('voordeel_maand')) {
+      await notifyTelegram(`Aangebrachte klant heeft ${BENODIGDE_MAANDEN} maanden betaald op arno.bot\n\nWie: ${await wieIs(userId)}\n${NIET_MET_DE_HAND}`)
+      return
+    }
     const datum = vierdeIncassoRond.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
     await notifyTelegram(`ACTIE: gratis vierde maand op arno.bot\n\nWie: ${await wieIs(userId)}\nDeze aangebrachte klant heeft ${BENODIGDE_MAANDEN} maanden betaald. De incasso rond ${datum} hoort gratis te zijn en dat gebeurt NIET automatisch. Controleer eerst of de eerste betaling op tijd was (eerste proef plus 15 dagen).\n${VEILIG_TERUGSTORTEN}`)
   } catch (e) {

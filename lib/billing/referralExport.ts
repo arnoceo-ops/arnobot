@@ -40,3 +40,24 @@ export async function exporteerGrootboek(db: SupabaseClient, userId: string) {
       .map(({ created_at, meeloop, klant_maand_netto_cent }) => ({ created_at, meeloop, jouw_maandprijs_netto_cent: klant_maand_netto_cent })),
   }
 }
+
+/**
+ * Wat er aan deze gebruiker is uitgekeerd of klaarstaat (arnobot_referral_acties) en zijn eigen gratis periodes. Zonder
+ * kenmerken van de referral of de ander (die zeggen iets over diens abonnement) en zonder interne velden. Zolang de
+ * tabellen niet bestaan zijn de lijsten leeg.
+ */
+export async function exporteerReferralActies(db: SupabaseClient, userId: string) {
+  const lees = async (tabel: string, kolommen: string, volgorde: string) => {
+    const { data, error } = await db.from(tabel).select(kolommen).eq('user_id', userId).order(volgorde, { ascending: true }).limit(1000)
+    if (error) {
+      if (tabelOntbreekt(error)) return []
+      throw new Error(`${tabel} ophalen mislukt: ${error.message}`)
+    }
+    return data ?? []
+  }
+  const [uitkeringen, gratis_periodes] = await Promise.all([
+    lees('arnobot_referral_acties', 'created_at, soort, bruto_cent, netto_cent, status', 'created_at'),
+    lees('arnobot_referral_gratis_periodes', 'periode_start, periode_einde', 'periode_start'),
+  ])
+  return { uitkeringen, gratis_periodes }
+}

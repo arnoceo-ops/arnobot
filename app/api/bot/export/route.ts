@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { leesProfielen } from '@/lib/historieImport'
-import { exporteerGrootboek, eigenReferralGegevens } from '@/lib/billing/referralExport'
+import { exporteerGrootboek, exporteerReferralActies, eigenReferralGegevens } from '@/lib/billing/referralExport'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +14,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
 
   try {
-    const [profile, logs, account, coaching, referrals, teamlidmaatschap, sessieanalyses, documenten, profielenAndereAi, referraltegoed] = await Promise.all([
+    const [profile, logs, account, coaching, referrals, teamlidmaatschap, sessieanalyses, documenten, profielenAndereAi, referraltegoed, referraluitkeringen] = await Promise.all([
       supabaseAdmin.from('arnobot_blog_profiles').select('*').eq('user_id', userId),
       supabaseAdmin.from('arnobot_rds_logs').select('*').eq('user_id', userId),
       supabaseAdmin.from('approved_users').select('*').eq('user_id', userId),
@@ -32,6 +32,7 @@ export async function GET() {
       // De profielen die de gebruiker zelf uit een andere AI heeft overgenomen (alleen via lib/historieImport.ts, de tabel mag nergens anders gelezen worden).
       leesProfielen(supabaseAdmin, userId),
       exporteerGrootboek(supabaseAdmin, userId),
+      exporteerReferralActies(supabaseAdmin, userId),
     ])
 
     return NextResponse.json({
@@ -43,6 +44,7 @@ export async function GET() {
       coaching: coaching.data ?? [],
       referrals: eigenReferralGegevens(referrals.data ?? [], userId),
       referraltegoed,
+      referraluitkeringen,
       team: teamlidmaatschap.data ?? [],
       sessie_analyses: sessieanalyses.data ?? [],
       documenten: documenten.data ?? [],

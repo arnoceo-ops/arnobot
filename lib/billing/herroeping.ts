@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { betaalTerug, mollieIngeschakeld } from './mollie'
 import { markeerTerugbetaald, verwerkMolliebetaling } from './verwerking'
@@ -45,7 +46,9 @@ export function kiesHerroepbareBetaling(betalingen: PayRow[], nu: Date = new Dat
     .filter(b =>
       b.status === 'paid' &&
       !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) &&
-      restantCent(b) > 0 &&
+      // Herroepen is een recht op de koop, niet alleen op geld: ook als alles al als referralgeld terug is of onderweg is,
+      // moeten abonnement en toegang kunnen eindigen. Het terug te betalen bedrag is dan 0.
+      (restantCent(b) > 0 || (b.referral_refund_cent ?? 0) > 0) &&
       // Mollie rondt een terugbetaling pas na uren tot dagen af (terugbetaald_cent blijft zo lang 0), maar
       // terugbetaling_verwerkt_at wordt direct gezet. Zonder deze regel stond de knop na een klik nog even terug.
       !b.terugbetaling_verwerkt_at &&
@@ -138,30 +141,78 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   if (!mollieIngeschakeld()) return { ok: false, status: 503, fout: 'Terugbetalen is nu niet mogelijk. Mail admin@arno.bot.' }
 
   // Hetzelfde slot als de referralterugstortingen. Herroepen wordt hier nooit geweigerd: wat al onderweg is krijgt de
-  // klant langs die weg, en lukt het vrijgeven niet, dan gaat het restant terug en hoort Arno dat hij moet nakijken.
+  // klant langs die weg, en lukt het vrijgeven niet, dan gaat terug wat er volgens de betaalrij over is.
   const slot = await slotVoorTerugbetaling(userId, betaling.id)
-  const bedragCent = restantCent(slot.stand === 'ok' ? { ...betaling, referral_refund_cent: slot.referralRefundCent } : betaling)
-  if (bedragCent <= 0) return { ok: false, status: 503, fout: 'Terugbetalen is nu niet mogelijk. Mail admin@arno.bot.' }
-
-  const refund = await betaalTerug({
-    betalingId: betaling.mollie_payment_id,
-    brutoCent: bedragCent,
-    omschrijving: 'Herroeping binnen bedenktijd ArnoBot',
-    idempotencyKey: `herroeping-${betaling.id}`,
-  })
-  // Zoals de adminknop: toegang meteen beëindigen, de webhook later is dan een idempotente no-op.
-  await markeerTerugbetaald(betaling.id)
-  await verwerkMolliebetaling(betaling.mollie_payment_id)
+  let referralCent = slot.stand === 'ok' ? slot.referralRefundCent : betaling.referral_refund_cent ?? 0
+  // Het antwoord van het slot kan verloren zijn gegaan terwijl de vrijgave wel gebeurde. Daarom de rij opnieuw lezen:
+  // referral_refund_cent daalt alleen als er zeker niets is verplaatst, dus de actuele waarde geeft nooit te veel terug.
+  if (slot.stand === 'fout') referralCent = (await leesReferralCent(userId, betaling.id)) ?? referralCent
+  const bedragCent = restantCent({ ...betaling, referral_refund_cent: referralCent })
   const openCent = slot.stand === 'ok' ? slot.onderwegCent + slot.vastCent : 0
-  if (slot.stand === 'fout' || openCent > 0) {
-    await notifyTelegram(`Controleer of nabetalen nodig is na een herroeping (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nTerugbetaald: ${euro(bedragCent)}\n${slot.stand === 'fout'
-      ? `De referralacties waren niet te controleren (${slot.fout}). Kijk in Mollie of de klant in totaal het hele bedrag terugkrijgt.`
-      : `Daarnaast staat ${euro(openCent)} als referralterugstorting open die niet is meebetaald. Komt die niet aan, betaal dat bedrag dan na.`}`)
+  const nakijken = slot.stand === 'fout'
+    ? `De referralacties waren niet te controleren (${slot.fout}). Op deze betaling staat ${euro(referralCent)} als referralbedrag geboekt. Kijk in Mollie of de klant in totaal ${euro(betaling.bedrag_cent)} terugkrijgt en betaal na wat ontbreekt.`
+    : openCent > 0
+      ? `Daarnaast staat ${euro(openCent)} als referralterugstorting open die niet is meebetaald. Komt die niet aan, betaal dat bedrag dan na.`
+      : null
+
+  try {
+    if (bedragCent <= 0) return await herroepZonderTerugbetaling(userId, herroepbaar.soort, betaling, referralCent, nakijken)
+
+    const refund = await betaalTerug({
+      betalingId: betaling.mollie_payment_id,
+      brutoCent: bedragCent,
+      omschrijving: 'Herroeping binnen bedenktijd ArnoBot',
+      idempotencyKey: `herroeping-${betaling.id}`,
+    })
+    // Zoals de adminknop: toegang meteen beëindigen, de webhook later is dan een idempotente no-op.
+    await markeerTerugbetaald(betaling.id)
+    await verwerkMolliebetaling(betaling.mollie_payment_id)
+    if (nakijken) {
+      await meldArno(`Controleer of nabetalen nodig is na een herroeping (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nTerugbetaald: ${euro(bedragCent)}\n${nakijken}`)
+    }
+    await logAdminActie({
+      actie: 'herroeping',
+      doelUserId: userId,
+      details: { extra: { soort: herroepbaar.soort, bedrag_cent: bedragCent, mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
+    })
+    return { ok: true, soort: herroepbaar.soort, bedragCent, proef: false }
+  } catch (e) {
+    await meldArno(`Herroeping mislukt of niet volledig verwerkt op arno.bot\n\nBetaling: ${betaling.mollie_payment_id}\nTerug te betalen: ${euro(bedragCent)}\nFout: ${e instanceof Error ? e.message : e}\nKijk in Mollie of er is terugbetaald en of de toegang is beëindigd. De klant heeft recht op herroepen.`)
+    throw e
+  }
+}
+
+/** Een melding over een wettelijk recht mag niet stil wegvallen. */
+async function meldArno(tekst: string): Promise<void> {
+  if ((await notifyTelegram(tekst)) === false) {
+    Sentry.captureMessage(`Herroeping: Telegrammelding niet aangekomen\n\n${tekst}`, { level: 'error', tags: { onderdeel: 'billing-herroepen' } })
+  }
+}
+
+/** null: niet te lezen. */
+async function leesReferralCent(userId: string, betalingId: string): Promise<number | null> {
+  try {
+    const { data, error } = await billingDb.from('arnobot_payments').select('*').eq('id', betalingId).eq('user_id', userId).maybeSingle<PayRow>()
+    return error || !data ? null : data.referral_refund_cent ?? 0
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Alles van deze betaling is als referralgeld al terug of onderweg: er is niets meer te betalen, maar de herroeping gaat
+ * gewoon door. Abonnement en toegang eindigen (bij een upgrade alleen de upgrade), zij wordt vastgelegd en Arno hoort het.
+ */
+async function herroepZonderTerugbetaling(userId: string, soort: HerroepSoort, betaling: PayRow, referralCent: number, nakijken: string | null): Promise<HerroepUitkomst> {
+  if (!(await markeerTerugbetaald(betaling.id))) {
+    await meldArno(`Herroeping niet beëindigd op arno.bot\n\nBetaling: ${betaling.mollie_payment_id}\nEr valt niets terug te betalen, maar het abonnement kon niet worden beëindigd. Doe dat zelf. De klant heeft recht op herroepen.`)
+    return { ok: false, status: 503, fout: 'Terugbetalen is nu niet mogelijk. Mail admin@arno.bot.' }
   }
   await logAdminActie({
     actie: 'herroeping',
     doelUserId: userId,
-    details: { extra: { soort: herroepbaar.soort, bedrag_cent: bedragCent, mollie_payment_id: betaling.mollie_payment_id, refund_id: refund.id } },
+    details: { extra: { soort, bedrag_cent: 0, zonder_terugbetaling: true, referral_cent: referralCent, mollie_payment_id: betaling.mollie_payment_id } },
   })
-  return { ok: true, soort: herroepbaar.soort, bedragCent, proef: false }
+  await meldArno(`Herroeping zonder terugbetaling op arno.bot\n\nWie: ${await wieIs(userId)}\nWat: ${soort === 'upgrade' ? 'upgrade teruggedraaid, het abonnement loopt door' : 'abonnement en toegang beëindigd'}\nBetaling: ${betaling.mollie_payment_id}\nBetaald: ${euro(betaling.bedrag_cent)}, als referralbedrag geboekt: ${euro(referralCent)}\n${nakijken ?? 'Controleer in Mollie dat de klant dit bedrag echt heeft teruggekregen.'}`)
+  return { ok: true, soort, bedragCent: 0, proef: false }
 }

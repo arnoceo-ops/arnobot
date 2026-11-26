@@ -105,12 +105,12 @@ interface Gebruiker {
 
 type Sub = SubRow & { updated_at?: string | null }
 type Team = TeamRow & { stopt_op?: string | null }
-type Betaling = PayRow & {
+export type Betaling = PayRow & {
   plan?: BetaaldePeriode['plan'] | null; cyclus?: Cyclus | null; klant_type?: BetaaldePeriode['klantType'] | null
   periode_start?: string | null; periode_einde?: string | null
 }
 
-interface Dossier {
+export interface Dossier {
   gebruiker: Gebruiker
   subs: Sub[]
   betalingen: Betaling[]
@@ -124,7 +124,7 @@ interface Dossier {
 }
 
 /** null: het account bestaat niet meer, ook als het alleen geanonimiseerd is. */
-async function laadDossier(userId: string): Promise<Dossier | null> {
+export async function laadDossier(userId: string): Promise<Dossier | null> {
   const [gebruiker, subs, betalingen, lid, teams, handLog] = await Promise.all([
     // Alle kolommen: lifetime_sinds bestaat pas na de SQL.
     billingDb.from('approved_users').select('*').eq('user_id', userId).maybeSingle<Gebruiker>(),
@@ -155,11 +155,11 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
 }
 
 /** Betaald en niet helemaal teruggedraaid. Telt voor "op tijd betaald", ook na een deelterugbetaling. */
-const eigenBetalingStaat = (b: Betaling) =>
+export const eigenBetalingStaat = (b: Betaling) =>
   b.status === 'paid' && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !isVolledigTerugbetaald(b, b.terugbetaald_cent ?? 0)
 
 /** Telt als betaalde periode: er is niets van terug, behalve verrekend referraltegoed. */
-const eigenBetalingTelt = (b: Betaling) => eigenBetalingStaat(b) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0)
+export const eigenBetalingTelt = (b: Betaling) => eigenBetalingStaat(b) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0)
 
 const teamFactuurStaat = (f: TeamFactuurRow) => f.status === 'paid' && !f.reversed_at && !(f.teruggeboekt_cent ?? 0)
 const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !(f.terugbetaald_cent ?? 0)
@@ -221,10 +221,10 @@ const bijbetalingLoopt = (d: Dossier) => d.betalingen.some(b => b.soort === 'upg
   && !['paid', 'failed', 'canceled', 'expired'].includes(b.status)
   && d.subs.some(s => s.id === b.subscription_id && lopend(s)))
 
-const teamGestopt = (t: Team, nu: Date) => !!t.stopt_op && t.stopt_op <= nlVandaag(nu)
+export const teamGestopt = (t: Team, nu: Date) => !!t.stopt_op && t.stopt_op <= nlVandaag(nu)
 
 /** Alleen een team waarvoor echt betaald is (en niet teruggedraaid), telt als abonnement van de manager. */
-const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
+export const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
 
 const heeftTeruggedraaideFactuur = (d: Dossier, t: Team) =>
   d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
@@ -281,7 +281,7 @@ function handmatigOpBetaald(d: Dossier, nu: Date): boolean {
   return !d.betalingen.some(b => !!b.betaald_at && Math.abs(Date.parse(b.betaald_at) - Date.parse(paidAt)) < 5 * 60 * 1000)
 }
 
-async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Promise<KlantFeiten> {
+export async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Promise<KlantFeiten> {
   const betaalMomenten: KlantFeiten['betaalMomenten'] = []
   const periodes: BetaaldePeriode[] = []
 
@@ -357,7 +357,7 @@ function dekkingVan(d: Dossier, nu: Date, alleenBetaaldeFacturen = false): Dekki
   return uit
 }
 
-async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten> {
+export async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten> {
   const betaaldeTeams = betaaldeTeamsVan(d)
   const gestopt = (t: Team) => teamGestopt(t, nu)
   const lopendTeam = betaaldeTeams.find(t => !gestopt(t) && !t.geblokkeerd_at)
@@ -445,14 +445,36 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
 }
 
 /**
+ * Per betaling wat als referralbedrag geboekt staat maar zeker nog niet naar Mollie is gestuurd. Dat verklaart geen
+ * terugbetaling die Mollie noemt. Zonder de actietabel is er niets gereserveerd.
+ */
+async function nogNietVerstuurd(betalingen: Betaling[]): Promise<Map<string, number>> {
+  const uit = new Map<string, number>()
+  const ids = betalingen.filter(b => (b.referral_refund_cent ?? 0) > 0).map(b => b.id)
+  if (!ids.length) return uit
+  const { data, error } = await billingDb.from('arnobot_referral_acties').select('doel_id, bruto_cent, status, gegevens')
+    .eq('doel_soort', 'betaling').in('doel_id', ids).in('status', ['gereserveerd', 'bezig']).limit(1000)
+  if (error) {
+    if (tabelOntbreekt(error)) return uit
+    throw new Error(`referralacties ophalen mislukt: ${error.message}`)
+  }
+  for (const a of (data ?? []) as { doel_id: string; bruto_cent: number; status: string; gegevens?: { post_geprobeerd_at?: string | null } | null }[]) {
+    if (a.status === 'gereserveerd' || !a.gegevens?.post_geprobeerd_at) uit.set(a.doel_id, (uit.get(a.doel_id) ?? 0) + a.bruto_cent)
+  }
+  return uit
+}
+
+/**
  * Loopt er bij de klant een terugbetaling die onze database nog niet kent? amountRefunded op de betaling blijft 0 zolang
  * een terugbetaling loopt (gemeten in testmodus, 26-11-2026), de lijst met terugbetalingen toont haar wel. Een
  * toekenning is definitief, dus dit gaat er vlak voor. Een fout bij Mollie wordt doorgegeven: morgen opnieuw.
  */
 async function onbekendeTerugbetaling(d: Dossier): Promise<boolean> {
   if (!mollieIngeschakeld()) return false
+  const staand = d.betalingen.filter(eigenBetalingTelt)
+  const nietVerstuurd = await nogNietVerstuurd(staand)
   const betalingen = [
-    ...d.betalingen.filter(eigenBetalingTelt).map(b => ({ id: b.mollie_payment_id, tegoed: b.referral_refund_cent ?? 0 })),
+    ...staand.map(b => ({ id: b.mollie_payment_id, tegoed: Math.max(0, (b.referral_refund_cent ?? 0) - (nietVerstuurd.get(b.id) ?? 0)) })),
     ...d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id).map(f => ({ id: f.mollie_payment_id!, tegoed: 0 })),
   ]
   for (const b of betalingen) {
@@ -462,6 +484,30 @@ async function onbekendeTerugbetaling(d: Dossier): Promise<boolean> {
     if (terug > b.tegoed) return true
   }
   return false
+}
+
+export type VervalOordeel = { stand: 'nee' } | { stand: 'vervalt' } | { stand: 'twijfel'; waarom: string; behouden: number }
+
+/** Is het tegoed van deze toekenning vervallen, zeker of niet zeker? */
+export function vervalOordeel(
+  feiten: AanbrengerFeiten, regels: GrootboekRegel[], t: GrootboekRegel, aangemeld: string | null | undefined, nu: Date,
+): VervalOordeel {
+  // Na een handmatig besluit (toekennen of tegoed behouden) telt alleen wat daarna gebeurt: Arno heeft het verleden al
+  // beoordeeld.
+  const behouden = behoudRegels(regels, t.referral_id)
+  const besluitAt = [t.reden.startsWith(HANDMATIG) ? t.created_at : null, ...behouden.map(r => r.created_at)]
+    .filter((x): x is string => !!x)
+    .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null
+  const vanaf = besluitAt && aangemeld && Date.parse(besluitAt) > Date.parse(aangemeld) ? besluitAt : aangemeld
+  const moment = vervalMoment(feiten.stand)
+  const nuVervallen = tegoedStatus(feiten.stand, nu) === 'vervallen'
+    && (!besluitAt || (moment !== null && moment > Date.parse(besluitAt)))
+  const zeker = nuVervallen || (!!vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))
+  if (!zeker && !(vanaf && feiten.strengeHistorie && vervallenNaAanmelding(feiten.strengeHistorie, vanaf, nu))) return { stand: 'nee' }
+  const waarom = !zeker ? TEAMBEGIN_ONZEKER
+    : feiten.historieOnvolledig ? 'de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid'
+      : null
+  return waarom ? { stand: 'twijfel', waarom, behouden: behouden.length } : { stand: 'vervalt' }
 }
 
 const tabelOntbreekt = (e: { code?: string; message: string }) =>
@@ -579,30 +625,17 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
       const feiten = eigen ? await aanbrengerFeiten(eigen, nu) : null
       if (feiten?.handmatigBetaald) continue
       const aangemeld = referrals.find(r => String(r.id) === t.referral_id)?.created_at
-      // Na een handmatig besluit (toekennen of tegoed behouden) telt alleen wat daarna gebeurt: Arno heeft het verleden
-      // al beoordeeld.
-      const behouden = behoudRegels(run.regels, t.referral_id)
-      const besluitAt = [t.reden.startsWith(HANDMATIG) ? t.created_at : null, ...behouden.map(r => r.created_at)]
-        .filter((x): x is string => !!x)
-        .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null
-      const vanaf = besluitAt && aangemeld && Date.parse(besluitAt) > Date.parse(aangemeld) ? besluitAt : aangemeld
       const basis = {
         referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id,
         klant_maand_netto_cent: t.klant_maand_netto_cent,
       }
       if (feiten) {
-        const moment = vervalMoment(feiten.stand)
-        const nuVervallen = tegoedStatus(feiten.stand, nu) === 'vervallen'
-          && (!besluitAt || (moment !== null && moment > Date.parse(besluitAt)))
-        const zeker = nuVervallen || (!!vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))
-        if (!zeker && !(vanaf && feiten.strengeHistorie && vervallenNaAanmelding(feiten.strengeHistorie, vanaf, nu))) continue
-        const twijfel = !zeker ? TEAMBEGIN_ONZEKER
-          : feiten.historieOnvolledig ? 'de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid'
-            : null
-        if (twijfel) {
+        const oordeel = vervalOordeel(feiten, run.regels, t, aangemeld, nu)
+        if (oordeel.stand === 'nee') continue
+        if (oordeel.stand === 'twijfel') {
           // Niet zeker: niets laten vervallen, een keer aan Arno vragen. Na "behouden" is een volgende keer een nieuwe vraag.
-          const nummer = behouden.length ? `:${behouden.length + 1}` : ''
-          await voegToe({ ...basis, event_key: `${VERVAL_VRAAG}${t.referral_id}${nummer}`, soort: 'handwerk', netto_cent: 0, reden: `tegoed lijkt te vervallen, maar ${twijfel}` })
+          const nummer = oordeel.behouden ? `:${oordeel.behouden + 1}` : ''
+          await voegToe({ ...basis, event_key: `${VERVAL_VRAAG}${t.referral_id}${nummer}`, soort: 'handwerk', netto_cent: 0, reden: `tegoed lijkt te vervallen, maar ${oordeel.waarom}` })
           continue
         }
       }

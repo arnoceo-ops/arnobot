@@ -52,10 +52,13 @@ create table if not exists public.arnobot_referral_acties (
   credit_status text not null default 'nvt' check (credit_status in ('nvt', 'nodig', 'bezig', 'klaar')),
   credit_id text,
   mail_at timestamptz,
+  melding jsonb,                        -- melding aan de eigenaar die nog niet is aangekomen
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint arnobot_referral_acties_voordeel_referral check (soort not like 'voordeel%' or referral_id is not null)
 );
+
+alter table public.arnobot_referral_acties add column if not exists melding jsonb;
 
 -- Een voordeel per aangebrachte klant: jaarkorting, gratis maand en teammaand sluiten elkaar uit.
 create unique index if not exists referral_een_voordeel on public.arnobot_referral_acties (referral_id)
@@ -170,8 +173,14 @@ end $$;
 -- Alleen echte regels (meeloop = false). Kan het niet, dan verandert er niets en zegt 'reden' waarom.
 -- p_terugwerkend: alleen voor de aanbrenger die gewoon teamlid is geworden; anders telt alleen tegoed dat er al was
 -- toen de betaling werd gedaan.
+-- p_plafond: ook voor die aanbrenger. Van elke toekenning gaat er in totaal nooit meer uit dan dit (zijn laatst zelf
+-- betaalde maandprijs exclusief btw), ook niet over meer keren verdeeld.
+-- p_max_bruto: wat er volgens Mollie nog van de betaling terug te storten is.
+-- Een eerdere versie van dit bestand had minder parameters: die eerst weg, anders bestaan er twee functies naast elkaar.
+drop function if exists public.referral_reserveer(uuid, text, text, integer, jsonb, boolean);
 create or replace function public.referral_reserveer(p_actie uuid, p_user text, p_doel text, p_max_netto integer default null,
-  p_gegevens jsonb default '{}'::jsonb, p_terugwerkend boolean default false)
+  p_gegevens jsonb default '{}'::jsonb, p_terugwerkend boolean default false, p_plafond integer default null,
+  p_max_bruto integer default null)
 returns jsonb language plpgsql security invoker set search_path = public as $$
 declare
   a arnobot_referral_acties%rowtype;
@@ -185,6 +194,8 @@ declare
   beschikbaar integer := 0;
   nog integer;
   deel integer;
+  ruimte integer;
+  toegekend integer;
   kandidaten jsonb := '[]'::jsonb;
   k jsonb;
 begin
@@ -225,6 +236,12 @@ begin
     eraf := least(open_schuld, vrij);
     open_schuld := open_schuld - eraf;
     vrij := vrij - eraf;
+    if p_plafond is not null then
+      -- Wat deze toekenning boven het maximum uitkomt, blijft altijd staan.
+      select coalesce(sum(g.netto_cent), 0)::integer into toegekend from arnobot_referral_grootboek g
+        where not g.meeloop and g.soort in ('toekenning', 'vaststelling') and coalesce(g.hoort_bij, g.referral_id) = t.referral_id;
+      vrij := greatest(0, vrij - greatest(0, toegekend - p_plafond));
+    end if;
     if vrij > 0 and (p_terugwerkend or t.created_at < b.betaald_at) then
       beschikbaar := beschikbaar + vrij;
       kandidaten := kandidaten || jsonb_build_object('referral_id', t.referral_id, 'klant', t.klant_user_id, 'vrij', vrij);
@@ -232,7 +249,9 @@ begin
   end loop;
   if beschikbaar <= 0 then return jsonb_build_object('ok', false, 'reden', 'geen_saldo'); end if;
 
-  select * into v from public.referral_verrekening(least(beschikbaar, coalesce(p_max_netto, beschikbaar)), b.ruimte_cent);
+  ruimte := least(b.ruimte_cent, coalesce(p_max_bruto, b.ruimte_cent));
+  if ruimte <= 0 then return jsonb_build_object('ok', false, 'reden', 'geen_ruimte'); end if;
+  select * into v from public.referral_verrekening(least(beschikbaar, coalesce(p_max_netto, beschikbaar)), ruimte);
   if v.bruto_cent <= 0 or v.verbruikt_netto_cent <= 0 then return jsonb_build_object('ok', false, 'reden', 'geen_saldo'); end if;
 
   insert into arnobot_referral_acties (id, soort, user_id, doel_soort, doel_id, bruto_cent, netto_cent, gegevens)
@@ -317,6 +336,33 @@ begin
   return jsonb_build_object('ok', true, 'bestaand', false, 'status', 'gereserveerd', 'bruto_cent', p_bruto, 'netto_cent', netto);
 end $$;
 
+-- Boekt de verrekeningen van een actie terug. Alleen aanroepen binnen het slot van de gebruiker.
+create or replace function public.referral_boeking_terug(p_actie uuid, p_reden text)
+returns void language plpgsql security invoker set search_path = public as $$
+declare
+  v record;
+  rest integer;
+begin
+  for v in
+    select * from arnobot_referral_grootboek g where not g.meeloop and g.actie_id = p_actie and g.soort = 'verrekening'
+  loop
+    insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
+      netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
+    values ('vrijgave:' || p_actie || ':' || v.hoort_bij, false, 'vrijgave', v.referral_id, v.aanbrenger_user_id,
+      v.klant_user_id, -v.netto_cent, p_reden, null, p_actie, v.hoort_bij);
+    -- Is dit tegoed intussen vervallen, dan komt het niet terug: vervallen is definitief.
+    if exists (select 1 from arnobot_referral_grootboek g where not g.meeloop and g.event_key = 'verval:' || v.hoort_bij) then
+      rest := public.referral_rest(v.hoort_bij);
+      if rest > 0 then
+        insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
+          netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
+        values ('verval:' || v.hoort_bij || ':vrijgave:' || p_actie, false, 'verval', v.referral_id, v.aanbrenger_user_id,
+          v.klant_user_id, -least(rest, -v.netto_cent), 'dit tegoed was al vervallen', null, p_actie, v.hoort_bij);
+      end if;
+    end if;
+  end loop;
+end $$;
+
 -- ── 3. Vrijgeven ────────────────────────────────────────────────────────────────────────────────────────────────────
 -- ALLEEN aanroepen als zeker is dat er geen geld is verplaatst. p_van: alleen als de actie nog die status heeft.
 -- p_eind 'vastgelopen': de reservering wordt teruggezet en de actie blijft het doel bezet houden, zodat niets het
@@ -327,8 +373,6 @@ returns jsonb language plpgsql security invoker set search_path = public as $$
 declare
   eigenaar text;
   a arnobot_referral_acties%rowtype;
-  v record;
-  rest integer;
 begin
   if p_eind is null or p_eind not in ('vrijgegeven', 'vastgelopen') then
     raise exception 'referral_vrijgeven: onbekende eindstatus %', p_eind;
@@ -349,24 +393,7 @@ begin
   end if;
 
   if coalesce((a.gegevens->>'boeking_teruggezet')::boolean, false) = false then
-    for v in
-      select * from arnobot_referral_grootboek g where not g.meeloop and g.actie_id = p_actie and g.soort = 'verrekening'
-    loop
-      insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
-        netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
-      values ('vrijgave:' || p_actie || ':' || v.hoort_bij, false, 'vrijgave', v.referral_id, v.aanbrenger_user_id,
-        v.klant_user_id, -v.netto_cent, coalesce(p_reden, 'niet teruggestort'), null, p_actie, v.hoort_bij);
-      -- Is dit tegoed intussen vervallen, dan komt het niet terug: vervallen is definitief.
-      if exists (select 1 from arnobot_referral_grootboek g where not g.meeloop and g.event_key = 'verval:' || v.hoort_bij) then
-        rest := public.referral_rest(v.hoort_bij);
-        if rest > 0 then
-          insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
-            netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
-          values ('verval:' || v.hoort_bij || ':vrijgave:' || p_actie, false, 'verval', v.referral_id, v.aanbrenger_user_id,
-            v.klant_user_id, -least(rest, -v.netto_cent), 'dit tegoed was al vervallen', null, p_actie, v.hoort_bij);
-        end if;
-      end if;
-    end loop;
+    perform public.referral_boeking_terug(p_actie, coalesce(p_reden, 'niet teruggestort'));
     if a.doel_soort = 'betaling' and a.bruto_cent > 0 then
       update arnobot_payments set referral_refund_cent = greatest(0, coalesce(referral_refund_cent, 0) - a.bruto_cent)
         where id::text = a.doel_id and user_id::text = a.user_id;
@@ -500,6 +527,129 @@ begin
   return jsonb_build_object('ok', true, 'bestaand', false, 'soort', s, 'netto_cent', netto, 'event_key', sleutel);
 end $$;
 
+-- ── Ongedaan maken ──────────────────────────────────────────────────────────────────────────────────────────────────
+-- De aanbrenger heeft de betaling waarop zijn tegoed verrekend was alsnog helemaal teruggekregen: het tegoed komt terug.
+-- Het geld is wel teruggestort, dus referral_refund_cent blijft staan. Een voordeel van de nieuwe klant wordt nooit
+-- teruggehaald of opnieuw gegeven.
+create or replace function public.referral_ongedaan(p_actie uuid, p_reden text default null)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+declare
+  eigenaar text;
+  a arnobot_referral_acties%rowtype;
+begin
+  select user_id into eigenaar from arnobot_referral_acties where id = p_actie;
+  if not found then return jsonb_build_object('ok', false, 'reden', 'actie_onbekend'); end if;
+  perform pg_advisory_xact_lock(hashtextextended(eigenaar, 0));
+  select * into a from arnobot_referral_acties where id = p_actie for update;
+  if a.soort not like 'tegoed%' then return jsonb_build_object('ok', false, 'reden', 'alleen_tegoed'); end if;
+  if a.status = 'ongedaan' then return jsonb_build_object('ok', true, 'bestaand', true); end if;
+  if a.status <> 'bevestigd' then return jsonb_build_object('ok', false, 'reden', 'niet_bevestigd', 'status', a.status); end if;
+  perform public.referral_boeking_terug(p_actie, coalesce(p_reden, 'de betaling is alsnog terugbetaald'));
+  update arnobot_referral_acties set status = 'ongedaan', fout = p_reden, updated_at = now() where id = p_actie;
+  return jsonb_build_object('ok', true, 'bestaand', false);
+end $$;
+
+-- ── Wat met de hand is gegeven ──────────────────────────────────────────────────────────────────────────────────────
+-- Een bankoverschrijving ziet de app niet. Wat zo is gegeven MOET met een van deze drie worden vastgelegd, voordat de
+-- schakelaar REFERRAL_TERUGSTORTEN aan gaat en daarna bij elke keer, anders krijgt de ander het nog een keer.
+
+-- Het voordeel van de nieuwe klant (jaarkorting of gratis maand): daarna komt er voor deze referral nooit meer een.
+-- select referral_handmatig_voordeel('user_...', '<id van de referral>', 5900, 'bank, 1-2-2027');
+create or replace function public.referral_handmatig_voordeel(p_user text, p_referral text, p_bruto integer, p_reden text)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+begin
+  if p_user is null or p_referral is null or p_bruto is null or p_bruto <= 0 or coalesce(btrim(p_reden), '') = '' then
+    return jsonb_build_object('ok', false, 'reden', 'ongeldig');
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(p_user, 0));
+  if not exists (select 1 from arnobot_referrals x where x.id::text = p_referral and x.referred_user_id::text = p_user) then
+    return jsonb_build_object('ok', false, 'reden', 'referral_onbekend');
+  end if;
+  if exists (select 1 from arnobot_referral_acties x where x.referral_id = p_referral and x.soort like 'voordeel%'
+      and x.status not in ('vrijgegeven', 'ongedaan')) then
+    return jsonb_build_object('ok', false, 'reden', 'voordeel_al_gebruikt');
+  end if;
+  insert into arnobot_referral_acties (soort, user_id, referral_id, doel_soort, doel_id, bruto_cent, netto_cent, status, gegevens)
+  values ('voordeel_maand', p_user, p_referral, 'betaling', 'handmatig:' || p_referral, p_bruto,
+    public.referral_rond(p_bruto / (1::float8 + 21::float8 / 100::float8)), 'bevestigd',
+    jsonb_build_object('handmatig', true, 'toelichting', p_reden));
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- Tegoed van een aanbrenger dat per bank is gegeven: gaat van zijn saldo af (oudste eerst, alleen echte regels, dus pas
+-- na de livegang van het grootboek).
+-- select referral_handmatig_tegoed('user_...', 1900, 'bank, 1-2-2027');
+create or replace function public.referral_handmatig_tegoed(p_user text, p_netto integer, p_reden text)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+declare
+  t record;
+  actie uuid := gen_random_uuid();
+  nog integer := p_netto;
+  vrij integer;
+  schuld integer;
+  deel integer;
+begin
+  if p_user is null or p_netto is null or p_netto <= 0 or coalesce(btrim(p_reden), '') = '' then
+    return jsonb_build_object('ok', false, 'reden', 'ongeldig');
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(p_user, 0));
+  select coalesce(sum(greatest(0, -public.referral_rest(g.referral_id))), 0)::integer into schuld
+    from arnobot_referral_grootboek g where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user;
+  if (select coalesce(sum(public.referral_rest(g.referral_id)), 0) from arnobot_referral_grootboek g
+      where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user) < p_netto then
+    return jsonb_build_object('ok', false, 'reden', 'niet_genoeg_saldo');
+  end if;
+  insert into arnobot_referral_acties (id, soort, user_id, doel_soort, doel_id, bruto_cent, netto_cent, status, gegevens)
+  values (actie, 'tegoed_terugstorten', p_user, 'betaling', 'handmatig:' || actie,
+    public.referral_rond(p_netto * (1::float8 + 21::float8 / 100::float8)), p_netto, 'bevestigd',
+    jsonb_build_object('handmatig', true, 'toelichting', p_reden));
+  for t in
+    select g.referral_id, g.klant_user_id from arnobot_referral_grootboek g
+    where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user
+    order by g.created_at, g.referral_id collate "C"
+  loop
+    vrij := greatest(0, public.referral_rest(t.referral_id));
+    deel := least(schuld, vrij);
+    schuld := schuld - deel;
+    deel := least(nog, vrij - deel);
+    if deel > 0 then
+      insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
+        netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
+      values ('verrekening:' || actie || ':' || t.referral_id, false, 'verrekening', t.referral_id, p_user, t.klant_user_id,
+        -deel, 'met de hand gegeven: ' || p_reden, null, actie, t.referral_id);
+      nog := nog - deel;
+    end if;
+  end loop;
+  if nog <> 0 then raise exception 'referral_handmatig_tegoed: verdeling klopt niet (% over)', nog; end if;
+  return jsonb_build_object('ok', true, 'actie_id', actie);
+end $$;
+
+-- Geld dat per bank over een bepaalde betaling is teruggegeven (coulance bij solo naar teamlid, of tegoed): zo kan de
+-- app nooit meer over die betaling terugstorten dan er over is. Raakt het saldo niet.
+-- select referral_handmatig_betaling('user_...', '<id uit arnobot_payments>', 2000, 'coulance per bank, 1-2-2027');
+create or replace function public.referral_handmatig_betaling(p_user text, p_betaling text, p_bruto integer, p_reden text)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+declare
+  b record;
+  actie uuid := gen_random_uuid();
+begin
+  if p_user is null or p_betaling is null or p_bruto is null or p_bruto <= 0 or coalesce(btrim(p_reden), '') = '' then
+    return jsonb_build_object('ok', false, 'reden', 'ongeldig');
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(p_user, 0));
+  select * into b from arnobot_payments p where p.id::text = p_betaling and p.user_id::text = p_user for update;
+  if not found then return jsonb_build_object('ok', false, 'reden', 'betaling_onbekend'); end if;
+  if coalesce(b.referral_refund_cent, 0) + p_bruto > b.bedrag_cent then
+    return jsonb_build_object('ok', false, 'reden', 'meer_dan_de_betaling');
+  end if;
+  insert into arnobot_referral_acties (id, soort, user_id, doel_soort, doel_id, bruto_cent, netto_cent, status, gegevens)
+  values (actie, 'tegoed_terugstorten', p_user, 'betaling', 'handmatig:' || actie, p_bruto,
+    public.referral_rond(p_bruto / (1::float8 + 21::float8 / 100::float8)), 'bevestigd',
+    jsonb_build_object('handmatig', true, 'betaling', p_betaling, 'toelichting', p_reden));
+  update arnobot_payments set referral_refund_cent = coalesce(referral_refund_cent, 0) + p_bruto where id::text = p_betaling;
+  return jsonb_build_object('ok', true, 'actie_id', actie);
+end $$;
+
 -- ── Voor de terugstortmachine ───────────────────────────────────────────────────────────────────────────────────────
 -- Een actie claimen: alleen als zij nog de verwachte status heeft en niemand er nu mee bezig is. Geeft de rij of null.
 create or replace function public.referral_claim(p_actie uuid, p_van text, p_minuten integer default 10)
@@ -566,7 +716,8 @@ begin
     select p.oid::regprocedure as naam from pg_proc p
     where p.pronamespace = 'public'::regnamespace and p.proname in ('referral_rond', 'referral_verrekening', 'referral_rest',
       'referral_betaling_ruimte', 'referral_reserveer', 'referral_reserveer_voordeel', 'referral_vrijgeven', 'referral_boek',
-      'referral_claim', 'referral_voor_terugbetaling')
+      'referral_claim', 'referral_voor_terugbetaling', 'referral_boeking_terug', 'referral_ongedaan',
+      'referral_handmatig_voordeel', 'referral_handmatig_tegoed', 'referral_handmatig_betaling')
   loop
     execute format('revoke execute on function %s from public, anon, authenticated', f.naam);
     execute format('grant execute on function %s to service_role', f.naam);
@@ -585,7 +736,8 @@ with functies as (
   select p.oid, p.prosecdef from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.proname in ('referral_rond', 'referral_verrekening', 'referral_rest',
     'referral_betaling_ruimte', 'referral_reserveer', 'referral_reserveer_voordeel', 'referral_vrijgeven', 'referral_boek',
-    'referral_claim', 'referral_voor_terugbetaling')
+    'referral_claim', 'referral_voor_terugbetaling', 'referral_boeking_terug', 'referral_ongedaan',
+    'referral_handmatig_voordeel', 'referral_handmatig_tegoed', 'referral_handmatig_betaling')
 )
 select 1 as nr, 'twee nieuwe tabellen met RLS aan' as controle, count(*)::text as uitkomst, count(*) = 2 as goed
   from pg_tables where schemaname = 'public' and rowsecurity
@@ -603,9 +755,9 @@ select 4, 'soortcontrole kent verrekening en herstel', count(*)::text, count(*) 
   from pg_constraint where conrelid = 'public.arnobot_referral_grootboek'::regclass and contype = 'c'
     and pg_get_constraintdef(oid) like '%verrekening%' and pg_get_constraintdef(oid) like '%herstel%'
 union all
-select 5, 'tien functies, geen enkele security definer', count(*)::text, count(*) = 10 and not bool_or(prosecdef) from functies
+select 5, 'vijftien functies, geen enkele security definer', count(*)::text, count(*) = 15 and not bool_or(prosecdef) from functies
 union all
-select 6, 'anon en authenticated mogen geen functie uitvoeren, service_role alle', count(*)::text, count(*) = 10
+select 6, 'anon en authenticated mogen geen functie uitvoeren, service_role alle', count(*)::text, count(*) = 15
   from functies where not has_function_privilege('anon', oid, 'execute') and not has_function_privilege('authenticated', oid, 'execute')
     and has_function_privilege('service_role', oid, 'execute')
 union all
