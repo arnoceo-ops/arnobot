@@ -32,6 +32,11 @@ function eisTestomgeving(): string {
 }
 
 const DAG = 24 * 60 * 60 * 1000
+/** Mollie geeft ons actiekenmerk terug in de lijst met terugbetalingen: daarop leunt het hervatten. */
+async function eisEigenKenmerk(db: any, userId: string, refund: any): Promise<void> {
+  const { data } = await db.from('arnobot_referral_acties').select('id').eq('user_id', userId)
+  expect((data as { id: string }[]).map(a => a.id)).toContain(refund.metadata?.referralActie)
+}
 const meld = (stap: string, uitkomst: unknown) => console.log(`KETEN ${stap}: ${JSON.stringify(uitkomst)}`)
 const wacht = (ms: number) => new Promise(r => setTimeout(r, ms))
 
@@ -128,8 +133,11 @@ describe.skipIf(!LIVE)('ketenproef: gratis vierde maand (testmodus, testdatabase
       const lijst = await m.lijstBetalingTerugbetalingen(vierde)
       meld('4 bij Mollie', lijst.map((r: any) => ({ status: r.status, bedrag: r.amount.value, heeftMetadata: !!r.metadata, metadata: r.metadata })))
       expect(lijst).toHaveLength(1)
+      expect(lijst[0].amount.value).toBe('29.00')
+      await eisEigenKenmerk(billingDb, klant, lijst[0])
 
-      // De belangrijkste vraag: een terugstorting van de hele maand mag het abonnement en de toegang niet beeindigen.
+      // Let op: zolang de terugbetaling 'pending' is meldt Mollie 0,00 terug en bewijst dit weinig. Of een gemelde
+      // terugbetaling van de hele maand het abonnement met rust laat, toetst de nacontrole (bij 'refunded').
       expect(await roepWebhook(vierde)).toBe(200)
       const subNa = (await moet('abonnement na', billingDb.from('arnobot_subscriptions').select('*').eq('id', sub.id).single())) as any
       const betalingNa = (await moet('betaling na', billingDb.from('arnobot_payments').select('*').eq('mollie_payment_id', vierde).single())) as any
@@ -262,6 +270,7 @@ describe.skipIf(!LIVE)('ketenproef: jaarkorting na maandbetalingen (testmodus, t
       meld('4 bij Mollie', lijst.map((r: any) => ({ status: r.status, bedrag: r.amount.value, heeftMetadata: !!r.metadata, metadata: r.metadata })))
       expect(lijst).toHaveLength(1)
       expect(lijst[0].amount.value).toBe((korting / 100).toFixed(2))
+      await eisEigenKenmerk(billingDb, klant, lijst[0])
 
       // Een deel terug mag het abonnement en de toegang niet beeindigen.
       expect(await roepWebhook(jaarbetaling)).toBe(200)
@@ -605,8 +614,9 @@ describe.skipIf(!LIVE)('ketenproef: de klant boekt terug (testmodus, testdatabas
 // NACONTROLE op de laatste ketenproef, zonder iets leeg te maken. Draai later opnieuw tot Mollie "refunded" meldt:
 //   RUN_LIVE_KETEN_NACHECK=true node --env-file=.env.testomgeving node_modules/vitest/vitest.mjs run lib/billing/referralKeten.mollie.live.test.ts
 describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: nacontrole', () => {
-  it('na een echte terugbetaling blijft het abonnement lopen', { timeout: 120_000 }, async () => {
+  it('elke verzonden uitkering: abonnement loopt, en zodra Mollie refunded meldt is zij bevestigd en geboekt', { timeout: 120_000 }, async () => {
     eisTestomgeving()
+    process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
@@ -618,6 +628,7 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
     expect(acties!.length).toBeGreaterThan(0)
     const ronde = await verwerkOpenTerugstortingen(new Date(Date.now() + 8 * DAG))
     expect(ronde.fouten).toEqual([])
+    let afgerond = 0
 
     for (const actie of acties as any[]) {
       const betaling = async () => (await billingDb.from('arnobot_payments').select('*').eq('id', actie.doel_id).single()).data as any
@@ -637,6 +648,14 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
       expect(sub.status).toBe('active')
       expect(rij.terugbetaling_verwerkt_at).toBeNull()
       expect(terug).toHaveLength(1)
+      if (terug[0].status === 'refunded') {
+        afgerond++
+        expect(na.status).toBe('bevestigd')
+        expect(rij.terugbetaald_cent).toBe(actie.bruto_cent)
+        expect(bijMollie.amountRefunded?.value).toBe((actie.bruto_cent / 100).toFixed(2))
+      }
     }
+    // Zonder een enkele afgeronde terugbetaling is er niets over 'refunded' bewezen.
+    expect(afgerond).toBeGreaterThan(0)
   })
 })

@@ -4,7 +4,7 @@ import { mollieIngeschakeld } from './mollie'
 import { actieTabelBestaat } from './referralAutomatisch'
 import { draaiNacontrole } from './referralNacontrole'
 import { planReferral } from './referralPlanner'
-import { creditnotaStap } from './referralCreditnota'
+import { CREDIT_ACTIESTATUSSEN, creditAfboeken, creditnotaStap } from './referralCreditnota'
 import { verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
 import { schakelaarAan } from './referralSchakelaars'
 import { regelTekst } from './referralGrootboek'
@@ -90,24 +90,25 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
 
   await onderdeel('openstaand', async () => {
     const acties = await haalAlleRijen<ActieRij>((van, tot) => billingDb.from('arnobot_referral_acties').select('*')
-      .in('status', ['gereserveerd', 'bezig', 'verzonden', 'bevestigd']).order('id', { ascending: true }).range(van, tot))
-    const open = acties.filter(a => a.status !== 'bevestigd').length
+      .in('status', ['gereserveerd', 'bezig', 'verzonden', ...CREDIT_ACTIESTATUSSEN]).order('id', { ascending: true }).range(van, tot))
+    const open = acties.filter(a => !CREDIT_ACTIESTATUSSEN.includes(a.status)).length
     if (open && !schakelaarAan('REFERRAL_TERUGSTORTEN')) {
       await eensPerWeek('open-terwijl-uit', `REFERRAL_TERUGSTORTEN staat uit terwijl er ${open} referralterugstorting(en) openstaan.`)
     }
-    let creditnotas = 0
-    for (const a of acties.filter(a => a.status === 'bevestigd' && (a.credit_status === 'nodig' || a.credit_status === 'bezig'))) {
+    const zonderCreditnota: string[] = []
+    for (const a of acties.filter(a => CREDIT_ACTIESTATUSSEN.includes(a.status) && (a.credit_status === 'nodig' || a.credit_status === 'bezig'))) {
       try {
         const stap = await creditnotaStap(a, nu)
         if (stap === 'handwerk') await eensPerWeek(`creditnota:${a.id}`, `Creditnota niet vanzelf (actie ${a.id}, ${formatEuro(a.bruto_cent)}): ${a.fout}`)
         else if (stap === 'mislukt') fouten.push(`${a.fout} (actie ${a.id})`)
-        else if (stap === 'uit' || stap === 'wacht-op-factuur') creditnotas++
+        else if (stap === 'uit' || stap === 'wacht-op-factuur') zonderCreditnota.push(a.id)
       } catch (e) {
         fouten.push(`creditnota actie ${a.id}: ${e instanceof Error ? e.message : String(e)}`)
       }
     }
-    if (creditnotas) {
-      await eensPerWeek('creditnotas', `${creditnotas} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt).`)
+    if (zonderCreditnota.length) {
+      // Wie er zelf een maakt moet haar afboeken, anders komt er bij het aanzetten van de schakelaar mogelijk een tweede.
+      await eensPerWeek('creditnotas', `${zonderCreditnota.length} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt). Maak je er zelf een, boek haar dan meteen af:\n${zonderCreditnota.slice(0, 5).map(creditAfboeken).join('\n')}`)
     }
   })
 

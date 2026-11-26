@@ -31,7 +31,11 @@ vi.mock('./moneybird', async origineel => {
     creditBedragregel: echt.creditBedragregel,
     creditMailTekst: echt.creditMailTekst,
     moneybirdIngeschakeld: () => true,
-    haalFactuur: async (id: string) => { mis('haal'); return kopie(vind(id)) },
+    haalFactuur: async (id: string) => {
+      mis('haal')
+      if (!vind(id)) throw new echt.MoneybirdError(404, 'weg')
+      return kopie(vind(id))
+    },
     zoekFacturenOpReferentie: async (ref: string) => { mis('zoek'); return kopie(h.facturen.filter(f => f.reference === ref)) },
     maakCreditConcept: async (origineelId: string) => {
       mis('maak')
@@ -60,7 +64,7 @@ vi.mock('./moneybird', async origineel => {
 })
 
 import { maakKetenDb } from './referralNepKeten'
-import { creditReferentie, creditnotaStap } from './referralCreditnota'
+import { creditAfboeken, creditReferentie, creditnotaStap } from './referralCreditnota'
 
 const A = '11111111-1111-4111-8111-111111111111'
 const NU = new Date('2030-01-11T10:00:00.000Z')
@@ -163,11 +167,48 @@ describe('hervatten na een afgebroken run', () => {
     h.facturen.push({ id: 'vreemd', state: 'draft', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
     expect(await draai()).toBe('handwerk')
     expect(creditnotas().map(f => f.id)).toEqual(['vreemd'])
-    expect((await actie()).fout).toContain('conceptcreditnota')
+    expect((await actie()).fout).toContain('VERWIJDER het, verstuur het niet')
   })
-  it('een eerdere verstuurde creditnota op dezelfde factuur staat niet in de weg', async () => {
-    h.facturen.push({ id: 'eerder', state: 'open', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-5.00', details: [], payments: [] })
+  it('een verstuurde creditnota die niet van ons is (met de hand gemaakt): niets bijmaken, met de manier om af te boeken', async () => {
+    h.facturen.push({ id: 'hand', state: 'open', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-19.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas().map(f => f.id)).toEqual(['hand'])
+    const { fout, credit_status } = await actie()
+    expect(credit_status).toBe('nodig')
+    expect(fout).toContain(creditAfboeken(A))
+    expect(fout).toContain('VERWIJDER')
+    expect(fout).not.toMatch(/verwijder of verstuur/i)
+  })
+  it('afgebroken na het aanmaken: ook nadat dat concept toch verstuurd is komt er geen tweede', async () => {
+    h.facturen.push({ id: 'wees', state: 'draft', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    h.facturen.find(f => f.id === 'wees').state = 'open'
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas()).toHaveLength(1)
+  })
+  it('bij hervatten van een eigen concept wordt opnieuw gekeken: intussen met de hand gemaakt is niet versturen', async () => {
+    h.faal = { bij: 'zet', status: 500 }
+    expect(await draai()).toBe('mislukt')
+    h.facturen.push({ id: 'hand', state: 'open', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-19.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas().find(f => f.id === 'c1').state).toBe('draft')
+  })
+  it('het onafgemaakte concept van een andere actie op dezelfde betaling staat niet in de weg', async () => {
+    await h.db.voegToe('arnobot_referral_acties', { id: 'andere', doel_id: 'p1', credit_id: 'vanAndere' })
+    h.facturen.push({ id: 'vanAndere', state: 'draft', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
     expect(await draai()).toBe('klaar')
+  })
+  it('een verwijderd concept met bewaard kenmerk wordt opnieuw gemaakt', async () => {
+    h.faal = { bij: 'zet', status: 500 }
+    await draai()
+    h.facturen = h.facturen.filter(f => f.id !== 'c1')
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toMatchObject([{ id: 'c2', total_price_incl_tax: '-19.00' }])
+  })
+  it('ongedaan voordat de creditnota er was: ons deel wordt alsnog gecrediteerd', async () => {
+    await zaai({ actie: { status: 'ongedaan' } })
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toMatchObject([{ total_price_incl_tax: '-19.00' }])
   })
   it('mail: een duidelijke weigering wordt opnieuw geprobeerd', async () => {
     await zaai({ klantType: 'zakelijk' })
@@ -181,7 +222,35 @@ describe('hervatten na een afgebroken run', () => {
     h.faal = { bij: 'verstuur-Email', status: 0 }
     expect(await draai()).toBe('handwerk')
     expect((await actie()).fout).toContain('gemaild')
-    await draai()
+    // De uitkomst was onbekend: hier is zij toch aangekomen. Geen tweede mail en nooit vanzelf klaar.
+    h.facturen.find(f => f.id === 'c1').state = 'open'
+    for (let ronde = 0; ronde < 3; ronde++) expect(await draai()).toBe('handwerk')
+    expect(await actie()).toMatchObject({ credit_status: 'nodig' })
+    expect((await actie()).fout).toContain(creditAfboeken(A))
     expect(h.mails).toEqual([])
+  })
+  it('mail met onbekende uitkomst terwijl de creditnota nog concept is: zeker niet verstuurd, dus opnieuw', async () => {
+    await zaai({ klantType: 'zakelijk' })
+    h.faal = { bij: 'verstuur-Email', status: 0 }
+    expect(await draai()).toBe('handwerk')
+    expect(await draai()).toBe('klaar')
+    expect(h.mails).toEqual(['c1'])
+  })
+  it('gestopt tussen vastleggen en mailen, creditnota al open: vragen, niet stil klaar', async () => {
+    await zaai({ klantType: 'zakelijk', actie: { credit_status: 'bezig', credit_id: 'c9', gegevens: { credit_mail_at: NU.toISOString() } } })
+    h.facturen.push({ id: 'c9', state: 'open', reference: REF, original_sales_invoice_id: 'orig', total_price_incl_tax: '-19.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    expect(h.mails).toEqual([])
+  })
+  it('wie een oude rij heeft mailt niet nog eens', async () => {
+    await zaai({ klantType: 'zakelijk' })
+    const oud = await actie()
+    h.faal = { bij: 'verstuur-Email', status: 0 }
+    await draai()
+    h.facturen.find(f => f.id === 'c1').state = 'open'
+    // De tweede run las de actie voor de eerste: zonder credit_id en zonder mailvlag.
+    expect(await creditnotaStap(oud, NU)).toBe('handwerk')
+    expect(h.mails).toEqual([])
+    expect(creditnotas()).toHaveLength(1)
   })
 })

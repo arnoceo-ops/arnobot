@@ -30,22 +30,37 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: de echte cre
     const { creditnotaStap } = await import('./referralCreditnota')
 
     // Een bevestigde uitkering uit de ketenproef.
-    const { data: acties, error } = await billingDb.from('arnobot_referral_acties').select('*').eq('status', 'bevestigd').order('created_at').limit(1)
+    const { data: acties, error } = await billingDb.from('arnobot_referral_acties').select('*').eq('status', 'bevestigd').order('created_at')
     if (error) throw new Error(error.message)
-    expect(acties).toHaveLength(1)
-    const actieId = acties![0].id as string
-    const betaling = (await billingDb.from('arnobot_payments').select('*').eq('id', acties![0].doel_id).single()).data as any
+    // Alleen een particulier: bij zakelijk mailt de stap, en e-mails uit de sandbox komen echt aan.
+    let gekozen: any = null
+    let betaling: any = null
+    for (const a of acties as any[]) {
+      const p = (await billingDb.from('arnobot_payments').select('*').eq('id', a.doel_id).single()).data as any
+      const s = (await billingDb.from('arnobot_subscriptions').select('klant_type').eq('id', p.subscription_id).single()).data as any
+      if (s.klant_type === 'particulier') { gekozen = a; betaling = p; break }
+    }
+    expect(gekozen, 'geen bevestigde particuliere uitkering in de testdatabase: draai eerst de ketenproef').not.toBeNull()
+    const actieId = gekozen.id as string
 
     const merk = Date.now().toString(36)
     const contactId = await mb.zoekOfMaakContact({ userId: `user_keten_stap_${merk}`, email: 'test@arno.bot', naam: 'Proef Stap', particulier: true })
     const nu = new Date()
-    const { id: factuurId } = await mb.maakConceptFactuur({
-      contactId, referentie: betaling.mollie_payment_id, omschrijving: 'Proef creditnotastap', periodeStart: nu, periodeEinde: new Date(nu.getTime() + 30 * 24 * 60 * 60 * 1000),
-      factuurDatum: nu, brutoCent: betaling.bedrag_cent, nettoCent: betaling.bedrag_cent - betaling.btw_cent, inclusiefBtw: true,
-      taxRateId: await mb.btwTariefId(), ledgerAccountId: await mb.omzetGrootboekId(),
-    })
-    await mb.verstuurFactuur(factuurId, 'Manual')
-    await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: factuurId }).eq('id', betaling.id)
+    // Eigen referentie per run, zodat facturen van eerdere runs niet meetellen.
+    const kenmerk = `tr_proefstap${merk}`
+    await billingDb.from('arnobot_payments').update({ mollie_payment_id: kenmerk }).eq('id', betaling.id)
+    const nieuweFactuur = async () => {
+      const { id } = await mb.maakConceptFactuur({
+        contactId, referentie: kenmerk, omschrijving: 'Proef creditnotastap', periodeStart: nu, periodeEinde: new Date(nu.getTime() + 30 * 24 * 60 * 60 * 1000),
+        factuurDatum: nu, brutoCent: betaling.bedrag_cent, nettoCent: betaling.bedrag_cent - betaling.btw_cent, inclusiefBtw: true,
+        taxRateId: await mb.btwTariefId(), ledgerAccountId: await mb.omzetGrootboekId(),
+      })
+      await mb.verstuurFactuur(id, 'Manual')
+      await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: id }).eq('id', betaling.id)
+      return id
+    }
+    try {
+    const factuurId = await nieuweFactuur()
 
     const zetOpNodig = () => billingDb.from('arnobot_referral_acties').update({ credit_status: 'nodig', credit_id: null, bezig_tot: null, fout: null }).eq('id', actieId)
     const lees = async () => (await billingDb.from('arnobot_referral_acties').select('*').eq('id', actieId).single()).data as any
@@ -67,6 +82,29 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: de echte cre
     expect(tweede).toBe('klaar')
     expect(na2.credit_id).toBe(na.credit_id)
     expect(alle).toHaveLength(1)
+
+    // Het echte crashvenster: het concept bestaat, maar het kenmerk is niet bewaard en de referentie is nog die van de
+    // factuur. Er mag niets bij komen; na verwijderen maakt de stap zelf de juiste.
+    const factuur2 = await nieuweFactuur()
+    const wees = await mb.maakCreditConcept(factuur2)
+    await zetOpNodig()
+    const metWees = await creditnotaStap(await lees())
+    const na3 = await lees()
+    const opFactuur2 = (await mb.zoekFacturenOpReferentie(kenmerk)).filter(f => f.original_sales_invoice_id === factuur2)
+    meld('stap 3 onbekend concept', { uitkomst: metWees, opFactuur: opFactuur2.map(f => `${f.state} ${f.total_price_incl_tax}`), fout: na3.fout?.slice(0, 90) })
+    expect(metWees).toBe('handwerk')
+    expect(na3.credit_status).toBe('nodig')
+    expect(opFactuur2.map(f => f.id)).toEqual([wees.id])
+    const weg = await fetch(`https://moneybird.com/api/v2/${SANDBOX}/sales_invoices/${wees.id}.json`, { method: 'DELETE', headers: { Authorization: `Bearer ${process.env.MONEYBIRD_API_TOKEN}` } })
+    expect(weg.status).toBe(204)
+    const daarna = await creditnotaStap(await lees())
+    const na4 = await lees()
+    expect(daarna, na4.fout ?? '').toBe('klaar')
+    expect(Math.round(Number((await mb.haalFactuur(na4.credit_id)).total_price_incl_tax) * 100)).toBe(-na4.bruto_cent)
+    meld('stap 4 na verwijderen', { uitkomst: daarna })
+    } finally {
+      await billingDb.from('arnobot_payments').update({ mollie_payment_id: betaling.mollie_payment_id }).eq('id', betaling.id)
+    }
   })
 })
 
@@ -109,6 +147,16 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: zakelijke de
       await api(`/sales_invoices/${dup.json.id}.json`, { method: 'DELETE' })
     }
     meld('zakelijk', uitkomsten)
+    for (const u of uitkomsten) {
+      expect(u.http).toBe(200)
+      if (u.manier === 'incl') expect(u.kreeg, JSON.stringify(u)).toBe(u.gevraagd)
+    }
+    // En met de functie die de app gebruikt, op een bedrag dat niet als netto maal 1,21 bestaat.
+    const eigenDup = await mb.maakCreditConcept(id)
+    const gezet = await mb.zetCreditBedrag(eigenDup.id, { regelId: mb.creditBedragregel(eigenDup)!, brutoCent: 1000, referentie: `tr_proefzak${merk}-app` })
+    expect(Number(gezet.total_price_incl_tax)).toBe(-10)
+    expect(gezet.original_sales_invoice_id).toBe(id)
+    await api(`/sales_invoices/${eigenDup.id}.json`, { method: 'DELETE' })
 
     // Terugvinden: een concept met een eigen kenmerk in de referentie, voor en na het op open zetten.
     const eigen = `ref-actie-${merk}`
@@ -117,14 +165,17 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: zakelijke de
       const z = await api(`/sales_invoices.json?filter=${encodeURIComponent(`reference:${waarop}`)}`)
       return Array.isArray(z.json) ? z.json.map((x: any) => `${x.id === dup.json.id ? 'creditnota' : x.id === id ? 'origineel' : 'ander'} ${x.state} ${x.total_price_incl_tax}`) : z.tekst
     }
-    meld('zoeken concept op oude referentie', await zoek(`tr_proefzak${merk}`))
+    const opOud = await zoek(`tr_proefzak${merk}`)
+    meld('zoeken concept op oude referentie', opOud)
+    // Hierop leunt het herkennen van een onbekende creditnota: het concept houdt de referentie van de factuur.
+    expect(opOud).toContain('creditnota draft -275.88')
     await api(`/sales_invoices/${dup.json.id}.json`, { method: 'PATCH', body: { sales_invoice: { reference: `tr_proefzak${merk} ${eigen}` } } })
-    meld('zoeken concept op eigen kenmerk', await zoek(eigen))
-    meld('zoeken concept op hele nieuwe referentie', await zoek(`tr_proefzak${merk} ${eigen}`))
+    expect(await zoek(eigen)).toEqual([])
+    expect(await zoek(`tr_proefzak${merk} ${eigen}`)).toEqual(['creditnota draft -275.88'])
     await api(`/sales_invoices/${dup.json.id}.json`, { method: 'PATCH', body: { sales_invoice: { reference: eigen } } })
     meld('zoeken concept, referentie is alleen het kenmerk', await zoek(eigen))
     await mb.verstuurFactuur(dup.json.id, 'Manual')
-    meld('zoeken na op open zetten', await zoek(eigen))
+    expect(await zoek(eigen)).toHaveLength(1)
     // Wat weet de creditnota zelf over de oorspronkelijke factuur?
     const volledig = (await api(`/sales_invoices/${dup.json.id}.json`)).json
     meld('velden die naar het origineel wijzen', Object.fromEntries(Object.entries(volledig).filter(([k, v]) => /original|credit|parent/i.test(k) && v !== null).map(([k, v]) => [k, v === id ? 'origineel' : v])))
