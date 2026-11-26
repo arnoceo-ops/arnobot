@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     return fout(500, 'Dat lukt nu even niet. Probeer het later opnieuw.')
   }
   if (reden === 'referral_fee') return fout(400, 'Op je eerste betaling zit een referral fee. Mail naar admin@arno.bot, dan passen we het voor je aan.')
-  if (reden === 'upgrade') return fout(400, 'Je hebt tussentijds geüpgraded. Mail naar admin@arno.bot, dan passen we het voor je aan.')
+  if (reden === 'upgrade') return fout(400, 'Je hebt tussentijds geüpgraded. Mail even naar admin@arno.bot, dan regelen we het voor je.')
 
   const resultaat = await startKlanttypeCorrectie({
     userId,

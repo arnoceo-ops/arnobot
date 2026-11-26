@@ -276,7 +276,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.${options?.viaReferral ? '<br><br>Via je uitnodiging krijg je korting op je eerste jaar of je vierde maand gratis.' : ''}`,
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.${options?.viaReferral ? '<br><br>Via je uitnodiging krijg je korting op je eerste jaar of je vierde maand gratis. Je voordeel geldt als je betaalt binnen je proef of 15 dagen erna.' : ''}`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }
@@ -361,7 +361,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Wil je nog een jaar verder met ArnoBot?`,
         html: mail(
-          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je nog een jaar verder? Met één klik verleng je, wij gebruiken je bestaande betaalmethode.<br><br>Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.`,
+          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je nog een jaar verder? Met één klik verleng je, wij gebruiken je bestaande betaalmethode.<br><br>Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.<br><br>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.`,
           'VERLENGEN →', 'https://arno.bot/bot/doorgaan?verlengen=1'
         ),
       }
@@ -369,7 +369,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je ArnoBot-abonnement loopt bijna af`,
         html: mail(
-          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je door, verleng dan met één klik. Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.`,
+          `Je ArnoBot-abonnement loopt af op ${billingDatum(options?.billing?.datum)}. Wil je door, verleng dan met één klik. Doe je niets, dan stopt je toegang op die datum en wordt er niets meer afgeschreven.<br><br>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.`,
           'VERLENGEN →', 'https://arno.bot/bot/doorgaan?verlengen=1'
         ),
       }
@@ -418,7 +418,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Je ArnoBot-abonnement is afgelopen`,
         html: mail(
-          `Je ArnoBot-abonnement is afgelopen en er wordt niets meer afgeschreven. Je data blijft nog 30 dagen bewaard.<br><br>Wil je verder, dan kun je op elk moment weer een abonnement kiezen.`,
+          `Je ArnoBot-abonnement is afgelopen en er wordt niets meer afgeschreven. Je data blijft nog 30 dagen bewaard.<br><br>Wil je verder, dan kun je op elk moment weer een abonnement kiezen.<br><br>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.`,
           'ABONNEMENT KIEZEN →', 'https://arno.bot/bot/doorgaan'
         ),
       }
@@ -492,7 +492,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}Opzegging ontvangen`,
         html: mail(
-          `${options?.team?.einde ? `Je opzegging is ontvangen. Je team stopt op ${billingDatum(options.team.einde)}. Tot die dag blijft alles werken voor jou en je team.` : 'Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.'}<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
+          `${options?.team?.einde ? `Je opzegging is ontvangen. Je team stopt op ${billingDatum(options.team.einde)}. Tot die dag blijft alles werken voor jou en je team.` : 'Je opzegging is ontvangen. Je toegang blijft actief tot het einde van de lopende betaalperiode.'}<br><br>Je data blijft daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.<br><br>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.<br><br>Vragen? Mail naar <a href="mailto:admin@arno.bot" style="color:#f59e0b;">admin@arno.bot</a>.`,
           'MIJN DATA DOWNLOADEN →', 'https://arno.bot/bot/account'
         ),
       }

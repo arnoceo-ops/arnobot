@@ -35,7 +35,7 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.7 · November 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.8 · November 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
@@ -48,8 +48,8 @@ export default function ReferralSpelregelsPage() {
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Nieuwe gebruiker: eenmalig een referral fee</h2>
             <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
               <li>Per jaar: korting van een twaalfde op het eerste jaar.</li>
-              <li>Per maand: de vierde maand gratis, na drie aaneengesloten betaalde maanden. Je vierde maand schrijven we niet af. Stap je eerder over op een jaar, dan geldt de jaarkorting.</li>
-              <li>Team: ten hoogste de maandprijs bij de start.</li>
+              <li>Per maand: na drie betaalde maanden op rij krijg je de vierde gratis. Stap je eerder over op een jaar, dan krijg je de jaarkorting.</li>
+              <li>Team: jullie krijgen één maand gratis, tot maximaal de maandprijs bij de start.</li>
             </ul>
           </div>
 
@@ -60,7 +60,7 @@ export default function ReferralSpelregelsPage() {
               <thead>
                 <tr>
                   <th>KLANT NEEMT</th>
-                  <th>TEGOED</th>
+                  <th>WANNEER JE HET KRIJGT</th>
                 </tr>
               </thead>
               <tbody>
@@ -74,7 +74,7 @@ export default function ReferralSpelregelsPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Pro of Team per maand</td>
-                  <td>Na 3 betaalde en verstreken maanden</td>
+                  <td>Na 3 betaalde maanden op rij</td>
                 </tr>
               </tbody>
             </table>
@@ -82,13 +82,14 @@ export default function ReferralSpelregelsPage() {
               <li>Een onderbreking tot 14 dagen mag.</li>
               <li>Hoogte: de laagste van jullie maandprijzen zonder btw, plus btw bij verrekenen.</li>
               <li>Geen maximum aantal klanten. Een team telt als één.</li>
+              <li>Begint je klant met Basic per maand en stapt die later over, dan telt dat ook. Het bedrag ligt vast zodra je het tegoed krijgt.</li>
             </ul>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 4</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Verrekenen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij je verlenging, via terugstorting, een overgeslagen incasso of korting op de teamfactuur. De rest blijft staan. Geen uitbetaling in geld. Je saldo staat op je <a href="/bot/account">accountpagina</a>.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Bij je verlenging, via terugstorting, een overgeslagen incasso of korting op de teamfactuur. De rest blijft staan. Geen uitbetaling in geld. Heb je een vraag over je tegoed? Mail naar <a href="mailto:referrals@arno.bot">referrals@arno.bot</a>.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
@@ -97,8 +98,9 @@ export default function ReferralSpelregelsPage() {
             <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
               <li>14 dagen na afloop van je abonnement zonder nieuw abonnement.</li>
               <li>Na 30 dagen teamblokkade wegens niet betalen.</li>
-              <li>Nog geen abonnement en niet op tijd afgesloten.</li>
-              <li>Word je teamlid, dan storten we terug op je eigen betalingen, nieuwste eerst. De rest vervalt.</li>
+              <li>Heb je nog geen abonnement, sluit er dan een af binnen je proef of 15 dagen erna (team: 10).</li>
+              <li>Haalt je klant de drempel pas nadat jouw abonnement is gestopt, dan krijg je geen tegoed.</li>
+              <li>Word je teamlid, dan storten we je tegoed terug, tot maximaal wat je zelf hebt betaald.</li>
               <li>Bij terugbetaling aan je klant vervalt het bijbehorende tegoed. Al gebruikt? Dan verrekenen we het later.</li>
             </ul>
           </div>
@@ -139,7 +141,7 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 7</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Uitsluitingen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar. Teamleden hebben geen eigen referral link, de manager van een team heeft die wel.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar. Elkaar over en weer aanbrengen telt niet mee. Teamleden hebben geen eigen referral link, de manager van een team heeft die wel.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>

@@ -33,7 +33,9 @@ Klein (agent): tweede proefperiode (herstart) opent de kortingstermijn opnieuw; 
 - **Later op 26-11 hersteld:** R7 (zelf omzetten naar zakelijk ook geblokkeerd na een upgrade; de referral fee wordt op de eerste betaling zelf getoetst), R10 en R16 (adminmeldingen), R12 (spelregels op smal scherm, niet in een browser nagekeken).
 - **R8 en R9: alleen het signaal**, het voordeel zelf is nog niet gebouwd: Telegram-actie bij zelf activeren van een aangebracht team, bij de derde betaalde maand van een aangebrachte klant (lib/billing/referralSignalen.ts) en in de overstapmelding.
 - **R1, voorlopige werkwijze:** tegoed of een gratis maand altijd per bankoverschrijving terugstorten met een creditnota in Moneybird, nooit via Mollie (de app ziet een bankoverschrijving niet). Een adminactie die veilig via Mollie terugstort is nog niet gebouwd; die hoort bij het verrekenen in ronde 3, tenzij Arno hem eerder wil.
-- Open in ronde 1: R11, R13, R14, R15 (klantteksten en schermlabels, eerst als platte tekst aan Arno).
+- **R11, R14 en R15 live op 26-11** met door Arno goedgekeurde, korte en vriendelijke teksten (spelregels 1.8). Gekozen: kort met gewone zinnen. Verworpen: de uitgebreide versie (veel te lang) en de heel korte (te staccato). De melding bij opzeggen staat niet in de Android-app (geen koopverwijzingen).
+- **R13:** gekozen BETALEND en TEGOED tijdelijk verbergen. Verworpen: nu repareren, want het saldo komt uit het grootboek en dat is nog niet betrouwbaar.
+- Eerstvolgende stap: nieuwe agents controleren heel ronde 1; daarna ronde 2.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**
 

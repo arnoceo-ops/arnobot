@@ -152,7 +152,7 @@ Preview-modus: `?preview=idle` in de URL toont de plankeuze ongeacht de echte re
 
 ---
 
-## Referralprogramma (versie 1.6, besloten 2026-11-25)
+## Referralprogramma (versie 1.8, besloten 2026-11-25, teksten bijgewerkt 2026-11-26)
 
 De geldende regels staan in `app/referrals/page.tsx`. Besluiten, verworpen alternatieven en bouwstand staan in `docs/REFERRAL_AUTOMATISERING.md`; de rekenregels in `lib/billing/referralRegels.ts`. Deze versie vervangt de regels van 2026-08-10 (Basic leverde nooit tegoed op, eerste betaalmaand gratis, tegoed zonder vervaldatum).
 

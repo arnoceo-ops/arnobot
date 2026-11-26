@@ -115,11 +115,11 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoe werkt het referralprogramma?',
-        a: 'Deel je link vanuit je account. Jullie hebben er allebei voordeel van. Zie de spelregels.',
+        a: 'Deel je link vanuit je account. Jullie hebben er allebei voordeel van. In de spelregels lees je hoe het werkt.',
       },
       {
         q: 'Hoe hoog is het tegoed?',
-        a: 'Het tegoed is nooit hoger dan wat je zelf per maand betaalt: bij Basic €19 of €29, bij Pro €39 of €59, bij Team €49. Dit wordt verrekend met je eerstvolgende factuur. Het tegoed is niet uitbetaalbaar in contanten.',
+        a: 'Dat is de laagste van jullie twee maandprijzen. De precieze regels vind je in de spelregels.',
       },
     ],
   },

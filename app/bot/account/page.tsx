@@ -471,6 +471,8 @@ export default function AccountPage() {
                   ? `Dit beëindigt het teamabonnement voor je hele team van ${memberCount ?? 'meerdere'} leden, niet alleen jouw eigen toegang. De toegang blijft actief tot het einde van de lopende betaalperiode.`
                   : 'Je toegang blijft actief tot het einde van de lopende betaalperiode. Je data wordt daarna nog 30 dagen bewaard, zodat je deze kunt downloaden of verwijderen.'}
               </p>
+              {/* Niet in de app: daar staan geen koopverwijzingen (Google Play-beleid). */}
+              {!isNativeApp && <p style={body}>Heb je referraltegoed? Dat vervalt 14 dagen na het einde, tenzij je weer een abonnement neemt.</p>}
               <button
                 onClick={() => setCancelConfirm(true)}
                 style={{ ...btn, background: 'transparent', color: '#cc2200', border: '1px solid #cc2200' }}

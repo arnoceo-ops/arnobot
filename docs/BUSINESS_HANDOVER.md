@@ -70,9 +70,8 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 
 **Referral:**
 - Elke gebruiker heeft een referralcode
-- Tegoed ontstaat alleen als de nieuw geworven gebruiker voor Pro of Team kiest (niet bij Basic)
-- Tegoed is nooit hoger dan wat de referrer zelf per maand betaalt op zijn eigen abonnement
-- Credit werkt als korting op de volgende verlengingsbetaling, niet als cashback
+- De geldende regels staan op arno.bot/referrals (spelregels); stand van de bouw in `docs/REFERRAL_AUTOMATISERING.md` en `docs/REFERRAL_CONTROLE_2026-11-26.md`
+- Nog niet alles gaat automatisch. Tegoed of een gratis maand terugstorten: per bankoverschrijving met een creditnota in Moneybird, **nooit** via een terugbetaling in Mollie (dat kan het abonnement beëindigen)
 
 **Betalingsverwerking:**
 - **Betalingen (bijgewerkt 2026-11-15):** Mollie incasseert (iDEAL, creditcard, Bancontact; Team per factuur) en Moneybird maakt de facturen; beide staan live sinds 2026-11-04. Zie `docs/MOLLIE_PLAN.md`. [ARNO: vul aan hoe je uitbetalingen en de boekhouding zelf afhandelt]

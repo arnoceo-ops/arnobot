@@ -71,12 +71,11 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         </button>
       </div>
 
-      {/* Stats */}
+      {/* Stats. BETALEND en TEGOED zijn op 26-11 verborgen: de tellingen klopten niet. Terug zodra het saldo uit het
+          grootboek komt (docs/REFERRAL_CONTROLE_2026-11-26.md, R13). */}
       <div style={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {[
           { label: 'AANGEMELD', value: loading ? '...' : String(data?.referrals ?? 0) },
-          { label: 'BETALEND',  value: loading ? '...' : String(data?.converted ?? 0) },
-          { label: 'TEGOED',    value: loading ? '...' : `€${(data?.credit ?? 0).toFixed(0)}` },
         ].map(({ label, value }) => (
           <div key={label} style={{
             background: '#1f2937', padding: '16px 20px', flex: 1,

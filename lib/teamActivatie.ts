@@ -187,7 +187,7 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
   })
   await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nSeats: ${seats} (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
   // Het team is al geactiveerd; zonder factuur geen succesmelding aan de manager.
-  if (!gemaakt.ok) return { ok: false, status: 500, fout: 'Je team is geactiveerd, maar de factuur is niet gelukt. We lossen dit op en sturen hem na.' }
+  if (!gemaakt.ok) return { ok: false, status: 500, fout: 'Je team is actief, maar de factuur is niet gelukt. We sturen hem je na.' }
 
   const { data: factuur } = await supabase
     .from('arnobot_team_facturen').select('mollie_payment_link_url').eq('team_id', team.id).order('created_at', { ascending: false }).limit(1)
