@@ -21,7 +21,7 @@ type Gebruiker = {
   omzetCent: number
   testaccount: boolean
   berichten: number
-  /** Berichten vanaf het begin van de meting: alleen daarvoor zijn kosten bekend. */
+  /** Berichten vanaf het begin van de meting: alleen daarvoor zijn kosten bekend. Niet getoond (besluit Arno 2026-11-26), wel de deler van Per chatbericht. */
   gemetenBerichten: number
   totaalUsd: number
   anthropicUsd: number
@@ -72,11 +72,11 @@ function periodeVoorSnelkeuze(keuze: Snelkeuze, vandaag: string, meetStart: stri
 }
 const PLAN_LABEL: Record<string, string> = { basis: 'Basic', premium: 'Pro', team: 'Team' }
 
-type GebruikerKolom = 'naam' | 'plan' | 'berichten' | 'gemeten' | 'anthropic' | 'voyage' | 'audio' | 'voice' | 'totaal' | 'abonnement' | 'omzet' | 'marge'
+type GebruikerKolom = 'naam' | 'plan' | 'berichten' | 'anthropic' | 'voyage' | 'audio' | 'voice' | 'totaal' | 'abonnement' | 'omzet' | 'marge'
 const GEBRUIKER_KOLOMMEN: { kolom: GebruikerKolom; label: string; tekst?: boolean }[] = [
-  { kolom: 'naam', label: 'Gebruiker', tekst: true }, { kolom: 'plan', label: 'Plan', tekst: true }, { kolom: 'berichten', label: 'Berichten' }, { kolom: 'gemeten', label: 'Gemeten' },
+  { kolom: 'naam', label: 'Gebruiker', tekst: true }, { kolom: 'plan', label: 'Plan', tekst: true }, { kolom: 'berichten', label: 'Berichten' },
   { kolom: 'anthropic', label: 'Anthropic' }, { kolom: 'voyage', label: 'Voyage' }, { kolom: 'audio', label: 'Audio' }, { kolom: 'voice', label: 'Voice' }, { kolom: 'totaal', label: 'Totaal' },
-  { kolom: 'abonnement', label: 'Abonnement', tekst: true }, { kolom: 'omzet', label: 'Omzet mnd' }, { kolom: 'marge', label: 'Marge' },
+  { kolom: 'abonnement', label: 'Abonnement', tekst: true }, { kolom: 'omzet', label: 'Omzet' }, { kolom: 'marge', label: 'Marge' },
 ]
 type SoortKolom = 'soort' | 'dollars' | 'euro'
 type BronKolom = 'bron' | 'aanroepen' | 'dollars'
@@ -144,15 +144,11 @@ export default function GebruikersKostenClient() {
   const margeEur = (g: Gebruiker): number | null => (data.periodeVolledigGemeten && g.omzetCent > 0 ? g.omzetCent / 100 - eur(g.totaalUsd) : null)
   const periodeTekst = data.van === data.tot ? fmtDatum(data.van) : `${fmtDatum(data.van)} t/m ${fmtDatum(data.tot)}`
   const margeTekst = (g: Gebruiker) => { const m = margeEur(g); return m === null ? '-' : fmtEur(m) }
-  const meetStartTekst = data.meetStart
-    ? new Date(data.meetStart).toLocaleString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
-    : 'nog niet'
 
   const gebruikerRijen = gebruikerSortering.sorteer(data.gebruikers, {
     naam: g => g.naam,
     plan: g => PLAN_LABEL[g.plan ?? ''] ?? null,
     berichten: g => g.berichten,
-    gemeten: g => g.gemetenBerichten,
     anthropic: g => g.anthropicUsd,
     voyage: g => g.voyageUsd,
     audio: g => g.audioUsd,
@@ -193,14 +189,14 @@ export default function GebruikersKostenClient() {
         <div style={cardStyle}>
           <div style={cardHeadStyle}><span style={dotStyle} />{gebruiker.naam}{gebruiker.testaccount ? ' (testaccount)' : ''}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in de periode, waarvan {gebruiker.gemetenBerichten} vanaf het begin van de meting ({meetStartTekst})
+            {gebruiker.email ?? 'geen e-mail'} · plan {PLAN_LABEL[gebruiker.plan ?? ''] ?? 'onbekend'} · {gebruiker.berichten} chatberichten in de periode
           </p>
           <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap', marginBottom: 18 }}>
             <div><div style={statLabel}>Totaal</div><div style={{ ...statValue, color: '#f59e0b' }}>{fmtUsd(gebruiker.totaalUsd)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{fmtEur(eur(gebruiker.totaalUsd))}</div></div>
-            <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.gemetenBerichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.gemetenBerichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend, over {gebruiker.gemetenBerichten} gemeten berichten</div></div>
+            <div><div style={statLabel}>Per chatbericht</div><div style={statValue}>{gebruiker.gemetenBerichten ? fmtUsd3(gebruiker.totaalUsd / gebruiker.gemetenBerichten) : '-'}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>alles meegerekend</div></div>
             <div><div style={statLabel}>Abonnement</div><div style={{ ...statValue, fontSize: 16 }}>{statusTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>uit de betaaladministratie</div></div>
             <div><div style={statLabel}>Omzet in de periode</div><div style={statValue}>{omzetTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>netto zonder btw, jaarbetaling gedeeld door 12</div></div>
-            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.periodeVolledigGemeten ? 'omzet min gemeten kosten' : 'pas als de hele periode gemeten is'}</div></div>
+            <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>omzet min kosten</div></div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead>
@@ -227,7 +223,7 @@ export default function GebruikersKostenClient() {
             <thead>{bronKoppen(bronSortering)}</thead>
             <tbody>
               {bronSortering.sorteer(gebruiker.perBron, BRON_WAARDEN).map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}
-              {gebruiker.perBron.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={3}>Nog niets gemeten voor deze gebruiker in deze maand.</td></tr>}
+              {gebruiker.perBron.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={3}>Geen kosten voor deze gebruiker in deze periode.</td></tr>}
             </tbody>
           </table>
           {gebruiker.zonderPrijs > 0 && <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 10 }}>{gebruiker.zonderPrijs} aanroepen zonder bekend tarief staan op nul.</p>}
@@ -236,13 +232,12 @@ export default function GebruikersKostenClient() {
         <div style={cardStyle}>
           <div style={cardHeadStyle}><span style={dotStyle} />Alle gebruikers, {periodeTekst}</div>
           <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
-            Totaal gemeten: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
-            De meting loopt sinds {meetStartTekst}: berichten van daarvoor tellen mee in Berichten, maar niet in de kosten. Kolom Gemeten telt alleen berichten vanaf dat moment.
-            Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden en naar rato van de dagen in de periode. Marge verschijnt pas als de hele periode gemeten is.
+            Totaal: {fmtUsd(totaalUsd)} ({fmtEur(eur(totaalUsd))}) over {data.gebruikers.length} gebruikers, plus {fmtUsd(data.platform.totaalUsd)} platformwerk zonder gebruiker (crons, admin).
+            Omzet is netto zonder btw, een jaarbetaling gedeeld over 12 maanden en naar rato van de dagen in de periode.
           </p>
           {data.testers.aantal > 0 && (
             <p style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 14 }}>
-              Niet getoond: {data.testers.aantal} testers en testaccounts ({data.testers.berichten} berichten), samen {fmtUsd(data.testers.totaalUsd)} aan gemeten kosten. Die tellen niet mee in het totaal hierboven, maar wel in de Anthropic-Console.
+              Niet getoond: {data.testers.aantal} testers en testaccounts ({data.testers.berichten} berichten), samen {fmtUsd(data.testers.totaalUsd)} aan kosten. Die tellen niet mee in het totaal hierboven, maar wel in de Anthropic-Console.
             </p>
           )}
           <div style={{ overflowX: 'auto' }}>
@@ -259,7 +254,6 @@ export default function GebruikersKostenClient() {
                       <td style={{ ...td, textAlign: 'left' }}>{g.naam}{g.testaccount ? <span style={{ color: '#6b7280' }}> (test)</span> : null}</td>
                       <td style={td}>{PLAN_LABEL[g.plan ?? ''] ?? '-'}</td>
                       <td style={td}>{g.berichten}</td>
-                      <td style={td}>{g.gemetenBerichten}</td>
                       <td style={td}>{fmtUsd(g.anthropicUsd)}</td>
                       <td style={td}>{fmtUsd(g.voyageUsd)}</td>
                       <td style={td}>{fmtUsd(g.audioUsd)}</td>
@@ -271,7 +265,7 @@ export default function GebruikersKostenClient() {
                     </tr>
                   )
                 })}
-                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={13}>Nog niets gemeten in deze maand.</td></tr>}
+                {data.gebruikers.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={11}>Geen gebruikers in deze periode.</td></tr>}
               </tbody>
             </table>
           </div>

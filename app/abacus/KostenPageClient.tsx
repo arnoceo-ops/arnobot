@@ -111,7 +111,7 @@ export default function KostenPageClient({ fxRate }: Props) {
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
             <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kosten per gebruiker</h1>
             <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-              Wat elke gebruiker over een periode aan AI en spraak kost, gemeten per aanroep. Kies een periode of eigen datums, en een gebruiker voor de uitsplitsing per bron.
+              Wat elke gebruiker over een periode aan AI en spraak kost. Kies een periode of eigen datums, en een gebruiker voor de uitsplitsing per bron.
             </p>
           </div>
           <GebruikersKostenClient />
