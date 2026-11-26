@@ -104,7 +104,10 @@ export async function stopOpgezegdeTeams(vandaag: string, nu: Date = new Date())
   const gestopt: string[] = []
   for (const team of teams ?? []) {
     if (team.geblokkeerd_at && !team.volgende_factuurdatum) continue // al gestopt
-    const { error } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: team.geblokkeerd_at ?? nu.toISOString(), volgende_factuurdatum: null }).eq('id', team.id)
+    const { error } = await supabase.from('arnobot_teams')
+      // Een blokkade die er al stond houdt zijn kenmerk; een nieuwe is niet van jou.
+      .update({ geblokkeerd_at: team.geblokkeerd_at ?? nu.toISOString(), volgende_factuurdatum: null, ...(team.geblokkeerd_at ? {} : { geblokkeerd_handmatig: false }) })
+      .eq('id', team.id)
     if (error) throw new Error(`team stoppen mislukt: ${error.message}`)
     await logAdminActie({ actie: 'team_gestopt', doelUserId: team.manager_id, doelTeamId: team.id, details: { nieuw: { stopt_op: team.stopt_op } } })
     await notifyTelegram(`Team gestopt na opzegging op arno.bot\n\nTeam: ${team.name}\nEinddatum: ${team.stopt_op}\nDe toegang van manager en leden is geblokkeerd en de facturatie is gestopt. Team en leden blijven in de database staan.`)
@@ -136,9 +139,11 @@ export async function ontblokkeerNaBetaling(teamId: string, vandaag: string): Pr
   if (data.geblokkeerd_handmatig) return meldBlokkadeBlijft(teamId, 'je hebt dit team zelf geblokkeerd')
 
   const grens = new Date(Date.parse(`${vandaag}T00:00:00.000Z`) - (BLOKKADE_NA_FACTUUR_DAGEN - 1) * DAG).toISOString()
-  const { data: teLaat, error: factuurFout } = await supabase.from('arnobot_team_facturen').select('id').eq('team_id', teamId).eq('status', 'open').lt('created_at', grens)
+  const { data: teLaat, error: factuurFout } = await supabase.from('arnobot_team_facturen').select('*').eq('team_id', teamId).eq('status', 'open').lt('created_at', grens)
   if (factuurFout) return meldBlokkadeBlijft(teamId, `de open facturen zijn niet op te zoeken (${factuurFout.message})`)
-  if (teLaat?.length) return meldBlokkadeBlijft(teamId, 'er staat nog een andere factuur open die over de blokkadegrens is')
+  // Een factuur die de klant nooit heeft bereikt blokkeert niet, en houdt een blokkade dus ook niet vast. Zonder de
+  // kolom (undefined) telt elke open factuur.
+  if (teLaat?.some(f => f.bezorgd_at !== null)) return meldBlokkadeBlijft(teamId, 'er staat nog een andere factuur open die over de blokkadegrens is')
 
   const { error: updateFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', teamId)
   if (updateFout) return meldBlokkadeBlijft(teamId, `opheffen mislukt (${updateFout.message})`)

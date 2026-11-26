@@ -7,6 +7,8 @@ export async function notifyTelegram(text: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text }),
+    // Een hangende melding mag nooit een betaalverwerking of cron ophouden.
+    signal: AbortSignal.timeout(8000),
   }).catch(() => {})
 }
 

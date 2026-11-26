@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   betaald: vi.fn(),
   ontblokkeer: vi.fn(async () => true),
   vastleggen: vi.fn(async () => {}),
+  dbFout: null as null | 'lezen' | 'schrijven',
 }))
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }))
@@ -34,14 +35,15 @@ vi.mock('./db', () => ({
         if (patch) for (const r of treffers) Object.assign(r, patch)
         return { data: treffers.map(r => ({ ...r })), error: null }
       }
+      const fout = { data: null, error: { message: 'database weg' } }
       const q: any = {
         select: () => q,
         eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
         not: (k: string) => { filters.push(r => r[k] != null); return q },
         returns: () => q,
         update: (p: Rij) => { patch = p; return q },
-        maybeSingle: async () => ({ data: uitvoeren().data[0] ?? null, error: null }),
-        then: (res: any, rej: any) => Promise.resolve(uitvoeren()).then(res, rej),
+        maybeSingle: async () => (h.dbFout === 'lezen' ? fout : { data: uitvoeren().data[0] ?? null, error: null }),
+        then: (res: any, rej: any) => Promise.resolve(h.dbFout === 'schrijven' && patch ? fout : uitvoeren()).then(res, rej),
       }
       return q
     },
@@ -53,7 +55,7 @@ import { haalGemisteTeamBetalingenIn } from './teamFacturatie'
 const factuur = (extra: Rij = {}): Rij => ({ id: 'f1', team_id: 't1', status: 'open', bedrag_cent: 29645, mollie_payment_link_id: 'pl_1', moneybird_factuur_id: null, ...extra })
 const betaling = (value = '296.45') => ({ id: 'tr_1', status: 'paid', amount: { currency: 'EUR', value }, paidAt: '2026-11-24T09:00:00.000Z' })
 
-beforeEach(() => { h.rijen = [factuur()]; vi.clearAllMocks() })
+beforeEach(() => { h.rijen = [factuur()]; h.dbFout = null; vi.clearAllMocks() })
 
 describe('gemiste teambetalingen inhalen', () => {
   it('betaald bij Mollie: factuur op betaald, blokkade eraf, betaalwijze vastgelegd', async () => {
@@ -78,6 +80,12 @@ describe('gemiste teambetalingen inhalen', () => {
     expect(await haalGemisteTeamBetalingenIn()).toMatchObject({ ingehaald: 0, fouten: 0 })
     expect(h.rijen[0]).toMatchObject({ status: 'refunded', teruggeboekt_cent: 29645 })
     expect(h.rijen[0].reversed_at).toBeTruthy()
+    expect(h.ontblokkeer).not.toHaveBeenCalled()
+  })
+  it.each(['lezen', 'schrijven'] as const)('databasefout bij %s: geldt als niet gecontroleerd, dus geen herinnering of blokkade', async soort => {
+    h.dbFout = soort
+    h.betaald.mockResolvedValue(betaling())
+    expect(await haalGemisteTeamBetalingenIn()).toMatchObject({ ingehaald: 0, fouten: 1, nietGecontroleerd: ['f1'] })
     expect(h.ontblokkeer).not.toHaveBeenCalled()
   })
   it('fout bij één factuur houdt de andere niet tegen', async () => {

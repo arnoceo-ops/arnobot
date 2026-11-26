@@ -85,7 +85,7 @@ async function cronHandler(req: NextRequest) {
       } else if (stand.staat === 'verlopen') {
         if (team) {
           if (team.geblokkeerd_at) continue // al beëindigd
-          const { error: fout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: nu.toISOString() }).eq('id', team.id)
+          const { error: fout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: nu.toISOString(), geblokkeerd_handmatig: false }).eq('id', team.id)
           if (fout) throw new Error(`team blokkeren mislukt: ${fout.message}`)
           await logAdminActie({ actie: 'team_proef_beeindigd', doelUserId: m.user_id, doelTeamId: team.id, details: { extra: { proef_einde: einde.toISOString().slice(0, 10), actie: 'team geblokkeerd' } } })
           berichten.push(`Agent-proef afgelopen: team "${team.name}" van ${wie} is geblokkeerd, na ${PROEF_COULANCE_DAGEN} dagen coulance. Verlengen kan met VERLENG PROEF bij Teams in de admin.`)

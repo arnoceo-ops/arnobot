@@ -76,6 +76,8 @@ export interface TeamFactuurRow {
   terugbetaald_cent?: number
   teruggeboekt_cent?: number
   reversed_at?: string | null
+  /** Wanneer de factuur de klant echt heeft bereikt (docs/sql/2026-11-26-team-factuur-bezorgd.sql). Leeg: nooit herinneren of blokkeren. */
+  bezorgd_at?: string | null
 }
 
 /** Actueel ledenaantal van een team, nooit onder het afgesproken minimum. Nep-/testaccounts tellen nooit mee. */
@@ -193,18 +195,26 @@ async function zetVolgendeFactuurdatum(teamId: string, datum: string): Promise<v
 async function herstelNaBestaandeFactuur(team: TeamRow, periodeStart: string): Promise<boolean> {
   const { data } = await billingDb
     .from('arnobot_team_facturen')
-    .select('id, periode_einde, mollie_payment_link_url')
+    .select('*')
     .eq('team_id', team.id)
     .eq('periode_start', periodeStart)
     .eq('soort', 'regulier')
     .in('status', ['open', 'paid', 'overdue'])
     .limit(1)
-    .returns<{ id: string; periode_einde: string; mollie_payment_link_url: string | null }[]>()
+    .returns<TeamFactuurRow[]>()
   const bestaand = data?.[0]
   if (!bestaand) return false
   await zetVolgendeFactuurdatum(team.id, bestaand.periode_einde)
-  await notifyTelegram(`Teamfactuur bestond al op arno.bot\n\nTeam: ${team.name}\nPeriode vanaf ${periodeStart} had al factuur ${bestaand.id}. Er is geen nieuwe gemaakt en de volgende factuurdatum staat nu op ${bestaand.periode_einde}.${bestaand.mollie_payment_link_url ? '' : '\nLET OP: die factuur heeft geen betaallink. Rond hem met de hand af.'}`)
+  await notifyTelegram(`Teamfactuur bestond al op arno.bot\n\nTeam: ${team.name}\nPeriode vanaf ${periodeStart} had al factuur ${bestaand.id}. Er is geen nieuwe gemaakt en de volgende factuurdatum staat nu op ${bestaand.periode_einde}.${!bestaand.mollie_payment_link_url ? '\nLET OP: die factuur heeft geen betaallink. Rond hem met de hand af.' : bestaand.status === 'open' && !bestaand.bezorgd_at ? '\nLET OP: die factuur staat niet als bezorgd. Controleer of de klant hem heeft en rond hem met de hand af.' : ''}`)
   return true
+}
+
+/** Legt vast dat de klant de factuur heeft. Zonder dit vinkje volgen nooit een herinnering of blokkade. */
+async function markeerBezorgd(factuurId: string): Promise<void> {
+  const { error } = await billingDb.from('arnobot_team_facturen').update({ bezorgd_at: new Date().toISOString() }).eq('id', factuurId)
+  if (!error) return
+  Sentry.captureException(new Error(error.message), { tags: { onderdeel: 'team-facturatie-bezorgd' }, extra: { factuurId } })
+  await notifyTelegram(`Teamfactuur verstuurd, maar niet als bezorgd vastgelegd op arno.bot\n\nFactuur: ${factuurId}\nEr volgt geen automatische herinnering of blokkade. Houd de betaling zelf in de gaten.`)
 }
 
 /** Maakt de factuurregel (arnobot_team_facturen), de Moneybird-factuur en de Mollie-betaallink. */
@@ -266,6 +276,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
     // Zonder opgeslagen link kan een betaling nooit aan deze factuur worden gekoppeld.
     if (linkFout) throw new Error(`betaallink niet opgeslagen: ${linkFout.message}`)
 
+    let bezorgdViaMoneybird = false
     if (factureringToegestaan() && !input.zonderBoekhouding) {
       const { contactId, voornaam } = await verkrijgMollieEnMoneybirdKlant(team)
       const factuur = await maakConceptFactuur({
@@ -290,21 +301,29 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       // De factuur gaat als bijlage per mail naar de teambaas (zakelijk, voorwaarden artikel 4), met de
       // betaallink erin. De factuur blijft "open" in Moneybird tot de betaling binnen is.
       await verstuurFactuur(factuur.id, 'Email', teamFactuurMailTekst(voornaam, link.url, TEAM_BETAALTERMIJN_DAGEN))
+      bezorgdViaMoneybird = true
+      // Meteen vastleggen: breekt er hierna iets af, dan heeft de klant de factuur wel.
+      await markeerBezorgd(rij.id)
     }
 
-    await verstuurTeamMail(team.manager_id, 'team_factuur', {
+    const eigenMail = await verstuurTeamMail(team.manager_id, 'team_factuur', {
       teamNaam: team.name,
       bedragCent: brutoCent,
       seats: input.seats,
       betaalLink: link.url,
       tussentijds: input.soort === 'tussentijds',
     })
+    // Zonder Moneybird (testsleutel, testteam) is onze eigen mail de enige bezorging.
+    if (!bezorgdViaMoneybird) {
+      if (!eigenMail) throw new Error('de mail met de betaallink is niet verstuurd')
+      await markeerBezorgd(rij.id)
+    }
     await notifyTelegram(
-      `Team-factuur aangemaakt op arno.bot\n\nTeam: ${team.name}\nSoort: ${input.soort}\nSeats: ${input.seats}\nBedrag: €${(brutoCent / 100).toFixed(2)}\nLink: ${link.url}`,
+      `Team-factuur aangemaakt op arno.bot\n\nTeam: ${team.name}\nSoort: ${input.soort}\nSeats: ${input.seats}\nBedrag: €${(brutoCent / 100).toFixed(2)}\nLink: ${link.url}${eigenMail ? '' : '\nLET OP: onze eigen mail is niet verstuurd, de factuur uit Moneybird wel.'}`,
     )
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' } })
-    await notifyTelegram(`Team-factuur afronden mislukt op arno.bot\n\nTeam: ${team.name}\nFactuur-rij: ${rij.id}\nFout: ${e instanceof Error ? e.message : e}\nRond handmatig af.`)
+    await notifyTelegram(`Team-factuur afronden mislukt op arno.bot\n\nTeam: ${team.name}\nFactuur-rij: ${rij.id}\nFout: ${e instanceof Error ? e.message : e}\nRond handmatig af. Is de factuur niet bezorgd, dan volgt er ook later geen automatische herinnering of blokkade, ook niet als je hem zelf nog stuurt.`)
     return { ok: false, reden: 'niet_afgerond' }
   }
   return { ok: true }
@@ -322,19 +341,23 @@ export type TeamBetalingUitkomst = 'betaald' | 'terugbetaald' | 'afwijkend' | 'n
 
 export async function verwerkTeamBetaling(webhookId: string, hintRijId: string | null): Promise<TeamBetalingUitkomst> {
   let rij: TeamFactuurRow | null = null
+  // Elke databasefout gooit: de webhook geeft dan een 500 (Mollie probeert het opnieuw) en de cron slaat herinnering en
+  // blokkade voor deze factuur over. Stil 'niets' zou een betaalde klant laten blokkeren.
   if (webhookId.startsWith('pl_')) {
-    const { data } = await billingDb
+    const { data, error } = await billingDb
       .from('arnobot_team_facturen')
       .select('*')
       .eq('mollie_payment_link_id', webhookId)
       .maybeSingle<TeamFactuurRow>()
+    if (error) throw new Error(`teamfactuur opzoeken mislukt: ${error.message}`)
     rij = data
   } else if (hintRijId) {
-    const { data } = await billingDb
+    const { data, error } = await billingDb
       .from('arnobot_team_facturen')
       .select('*')
       .eq('id', hintRijId)
       .maybeSingle<TeamFactuurRow>()
+    if (error) throw new Error(`teamfactuur opzoeken mislukt: ${error.message}`)
     rij = data
   }
   if (!rij || !rij.mollie_payment_link_id) return 'niets'
@@ -358,24 +381,26 @@ export async function verwerkTeamBetaling(webhookId: string, hintRijId: string |
   const terug = terugBijMollie(mp)
   if (terug.terugbetaald >= rij.bedrag_cent || terug.teruggeboekt > 0) {
     const nu = new Date().toISOString()
-    const { data: gedraaid } = await billingDb
+    const { data: gedraaid, error: draaiFout } = await billingDb
       .from('arnobot_team_facturen')
       .update({ status: 'refunded', betaald_at: betaaldOp.toISOString(), reversed_at: nu, terugbetaald_cent: terug.terugbetaald, teruggeboekt_cent: terug.teruggeboekt, updated_at: nu })
       .eq('id', rij.id)
       .eq('status', 'open')
       .select('id')
+    if (draaiFout) throw new Error(`teruggedraaide teambetaling niet vastgelegd: ${draaiFout.message}`)
     if ((gedraaid?.length ?? 0) !== 1) return 'niets'
     await legBetaalwijzeVast(rij.id, mp.id)
     await notifyTelegram(`Teamfactuur betaald en meteen weer teruggedraaid (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nDe factuur staat op teruggedraaid. De toegang van het team is niet veranderd. Regel de creditnota en beslis zelf over blokkeren.`)
     return 'terugbetaald'
   }
 
-  const { data: geclaimd } = await billingDb
+  const { data: geclaimd, error: claimFout } = await billingDb
     .from('arnobot_team_facturen')
     .update({ status: 'paid', betaald_at: betaaldOp.toISOString(), updated_at: new Date().toISOString() })
     .eq('id', rij.id)
     .eq('status', 'open')
     .select('id')
+  if (claimFout) throw new Error(`betaalde teamfactuur niet vastgelegd: ${claimFout.message}`)
   if ((geclaimd?.length ?? 0) !== 1) return 'niets' // al verwerkt door een parallelle aanroep
   await legBetaalwijzeVast(rij.id, mp.id)
 

@@ -44,10 +44,9 @@ export async function POST(req: NextRequest) {
     }
     const { error: managerFout } = await supabase.from('approved_users').update({ expires_at: einde.toISOString() }).eq('user_id', team.manager_id)
     if (managerFout) return NextResponse.json({ error: managerFout.message }, { status: 500 })
-    if (team.geblokkeerd_at) {
-      const { error: teamFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null }).eq('id', team.id)
-      if (teamFout) return NextResponse.json({ error: teamFout.message }, { status: 500 })
-    }
+    // Verlengen is jouw eigen besluit en heft ook een eigen blokkade op, inclusief het kenmerk.
+    const { error: teamFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_at: null, geblokkeerd_handmatig: false }).eq('id', team.id)
+    if (teamFout) return NextResponse.json({ error: teamFout.message }, { status: 500 })
     await logAdminActie({
       actie: 'team_proef_verlengd', doelUserId: team.manager_id, doelTeamId: String(team.id),
       details: { oud: { expires_at: manager.expires_at, geblokkeerd_at: team.geblokkeerd_at }, nieuw: { expires_at: einde.toISOString(), geblokkeerd_at: null } },
@@ -75,22 +74,20 @@ export async function POST(req: NextRequest) {
   if (minSeats !== undefined) teamUpdate.min_seats = minSeats === null ? null : Number(minSeats)
   if (cyclus !== undefined) teamUpdate.cyclus = cyclus
   if (volgendeFactuurdatum !== undefined) teamUpdate.volgende_factuurdatum = volgendeFactuurdatum
-  if (geblokkeerdAt !== undefined) teamUpdate.geblokkeerd_at = geblokkeerdAt
+  if (geblokkeerdAt !== undefined) {
+    teamUpdate.geblokkeerd_at = geblokkeerdAt
+    // Een blokkade die je hier zet wordt niet door een betaling of door zelf activeren opgeheven.
+    teamUpdate.geblokkeerd_handmatig = geblokkeerdAt !== null
+  }
 
   if (Object.keys(teamUpdate).length) {
     const { data: oudTeam } = await supabase
       .from('arnobot_teams')
-      .select('min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
+      .select('min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, geblokkeerd_handmatig')
       .eq('id', teamId)
       .maybeSingle<Record<string, unknown>>()
     const { error } = await supabase.from('arnobot_teams').update(teamUpdate).eq('id', teamId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    if (geblokkeerdAt !== undefined) {
-      // Los van de update hierboven: de kolom bestaat pas na docs/sql/2026-11-26-team-blokkade-handmatig.sql en zonder
-      // de migratie moet blokkeren gewoon blijven werken.
-      const { error: handmatigFout } = await supabase.from('arnobot_teams').update({ geblokkeerd_handmatig: geblokkeerdAt !== null }).eq('id', teamId)
-      if (handmatigFout) console.error('[admin/teams] geblokkeerd_handmatig niet opgeslagen', handmatigFout.message)
-    }
     const oud: Record<string, unknown> = {}
     for (const k of Object.keys(teamUpdate)) oud[k] = oudTeam?.[k] ?? null
     await logAdminActie({ actie: 'team_instellingen', doelTeamId: String(teamId), details: { oud, nieuw: teamUpdate } })

@@ -1,4 +1,6 @@
+import * as Sentry from '@sentry/nextjs'
 import { registreerCronRun } from '@/lib/cronRun'
+import { nieuwMelden } from '@/lib/capaciteit'
 import { NextRequest, NextResponse } from 'next/server'
 import { billingDb } from '@/lib/billing/db'
 import { mollieIngeschakeld } from '@/lib/billing/mollie'
@@ -15,7 +17,7 @@ import {
 import { verstuurTeamMail } from '@/lib/billing/teamMails'
 import { controleerBetaaldeTeamFacturen } from '@/lib/billing/teamBetalingen'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
-import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
+import { TEST_TEAM_IDS_IN } from '@/lib/internalTestAccounts'
 import { stopOpgezegdeTeams } from '@/lib/teamOpzegging'
 
 const DAG_MS = 24 * 60 * 60 * 1000
@@ -52,18 +54,22 @@ async function cronHandler(req: NextRequest) {
     samenvatting.fouten += gemist.fouten
     const onzeker = new Set([...gemist.nietGecontroleerd, ...gemist.afwijkend])
     if (gemist.afwijkend.length) {
-      await notifyTelegram(`Teambetaling met een afwijkend bedrag op arno.bot\n\nFactuur: ${gemist.afwijkend.join(', ')}\nEr is niets verwerkt en er volgt geen herinnering of blokkade. Beoordeel in Mollie.`)
+      // Eens per week per factuur, niet elke dag dezelfde melding.
+      const nieuw: string[] = []
+      for (const id of gemist.afwijkend) if (await nieuwMelden(`teamfactuur:afwijkend:${id}`, 'waarschuwing')) nieuw.push(id)
+      if (nieuw.length) await notifyTelegram(`Teambetaling met een afwijkend bedrag op arno.bot\n\nFactuur: ${nieuw.join(', ')}\nEr is niets verwerkt en er volgt geen herinnering of blokkade. Beoordeel in Mollie.`)
     }
 
     // Alleen teams die zijn "geactiveerd" voor automatische facturatie (zie /bot/admin/teams).
-    const { data: teamsRaw } = await billingDb
+    const { data: teamsRaw, error: teamsFout } = await billingDb
       .from('arnobot_teams')
       .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op')
       .not('min_seats', 'is', null)
       .not('cyclus', 'is', null)
       .not('volgende_factuurdatum', 'is', null)
-      .neq('id', TEST_PROEF_TEAM_ID)
+      .not('id', 'in', TEST_TEAM_IDS_IN)
       .returns<TeamRow[]>()
+    if (teamsFout) throw new Error(`teams ophalen mislukt: ${teamsFout.message}`)
     const teams = teamsRaw ?? []
 
     for (const team of teams) {
@@ -104,38 +110,49 @@ async function cronHandler(req: NextRequest) {
         }
 
         // 3 + 4. Herinnering en blokkade op openstaande facturen van dit team.
-        const { data: openFacturen } = await billingDb
+        const { data: openFacturen, error: openFout } = await billingDb
           .from('arnobot_team_facturen')
           .select('*')
           .eq('team_id', team.id)
           .eq('status', 'open')
           .returns<TeamFactuurRow[]>()
+        if (openFout) throw new Error(`open facturen ophalen mislukt: ${openFout.message}`)
         for (const f of openFacturen ?? []) {
           // Niet bij Mollie kunnen controleren of er betaald is: dan niets, morgen opnieuw.
           if (onzeker.has(f.id)) continue
           const dagenOverTijd = dagenSinds(f.created_at, nu) - BETAALTERMIJN_DAGEN
-          // Zonder betaallink kon de klant niet betalen: nooit herinneren of blokkeren, wel melden.
-          if (!f.mollie_payment_link_url) {
-            if (dagenOverTijd >= 7) {
-              await notifyTelegram(`Teamfactuur zonder betaallink op arno.bot\n\nTeam: ${team.name}\nFactuur: ${f.id}\nEr volgt geen herinnering of blokkade. Rond deze factuur met de hand af.`)
+          // Zonder betaallink kon de klant niet betalen, en zonder bezorging weet hij van niets: nooit herinneren of
+          // blokkeren, wel melden (eens per week).
+          if (!f.mollie_payment_link_url || !f.bezorgd_at) {
+            if (dagenOverTijd >= 7 && (await nieuwMelden(`teamfactuur:niet-bezorgd:${f.id}`, 'waarschuwing'))) {
+              await notifyTelegram(`Teamfactuur ${f.mollie_payment_link_url ? 'niet als bezorgd vastgelegd' : 'zonder betaallink'} op arno.bot\n\nTeam: ${team.name}\nFactuur: ${f.id}\nEr volgt geen herinnering of blokkade. Rond deze factuur met de hand af.`)
             }
             continue
           }
           if (dagenOverTijd >= BLOKKADE_NA_DAGEN && !team.geblokkeerd_at) {
-            await billingDb.from('arnobot_teams').update({ geblokkeerd_at: nu.toISOString() }).eq('id', team.id)
+            const { data: geblokkeerd, error: blokFout } = await billingDb
+              .from('arnobot_teams')
+              .update({ geblokkeerd_at: nu.toISOString(), geblokkeerd_handmatig: false })
+              .eq('id', team.id)
+              .is('geblokkeerd_at', null)
+              .select('id')
+            if (blokFout) throw new Error(`team blokkeren mislukt: ${blokFout.message}`)
             team.geblokkeerd_at = nu.toISOString()
+            // Intussen al geblokkeerd (bijvoorbeeld door jou): geen mail.
+            if ((geblokkeerd?.length ?? 0) !== 1) continue
             await verstuurTeamMail(team.manager_id, 'team_geblokkeerd', {
               teamNaam: team.name, bedragCent: f.bedrag_cent, seats: f.seats_aantal, betaalLink: f.mollie_payment_link_url ?? undefined,
             })
             await notifyTelegram(`Team geblokkeerd wegens onbetaalde factuur op arno.bot\n\nTeam: ${team.name}\nFactuur: ${f.id}`)
             samenvatting.blokkades++
           } else if (dagenOverTijd >= 7 && !f.herinnering_at) {
-            const { data: geclaimd } = await billingDb
+            const { data: geclaimd, error: herinnerFout } = await billingDb
               .from('arnobot_team_facturen')
               .update({ herinnering_at: nu.toISOString() })
               .eq('id', f.id)
               .is('herinnering_at', null)
               .select('id')
+            if (herinnerFout) throw new Error(`herinnering vastleggen mislukt: ${herinnerFout.message}`)
             if ((geclaimd?.length ?? 0) === 1) {
               await verstuurTeamMail(team.manager_id, 'team_factuur_herinnering', {
                 teamNaam: team.name, bedragCent: f.bedrag_cent, seats: f.seats_aantal, betaalLink: f.mollie_payment_link_url ?? undefined,
@@ -146,6 +163,7 @@ async function cronHandler(req: NextRequest) {
         }
       } catch (e) {
         samenvatting.fouten++
+        Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' }, extra: { teamId: team.id } })
         console.error('[cron/team-facturatie] team', team.id, e instanceof Error ? e.message : e)
       }
     }

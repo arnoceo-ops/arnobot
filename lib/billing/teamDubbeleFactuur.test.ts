@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Botst een nieuwe teamfactuur met de unieke index, dan schuift de factuurdatum door in plaats van voor altijd vast te lopen.
 
 type Rij = Record<string, any>
-const h = vi.hoisted(() => ({ tabellen: {} as Record<string, Rij[]>, insertFout: null as any, link: vi.fn(), tg: vi.fn(async (_t: string) => {}) }))
+const h = vi.hoisted(() => ({ tabellen: {} as Record<string, Rij[]>, insertFout: null as any, link: vi.fn(), mail: vi.fn(), tg: vi.fn(async (_t: string) => {}) }))
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi.fn() }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
@@ -12,7 +12,7 @@ vi.mock('@/lib/teamOpzegging', () => ({ ontblokkeerNaBetaling: vi.fn() }))
 vi.mock('./mollie', () => ({ maakBetaalLink: h.link, SITE_URL: 'https://x.test' }))
 vi.mock('./teamBetalingen', () => ({}))
 vi.mock('./moneybird', () => ({ moneybirdIngeschakeld: () => false }))
-vi.mock('./teamMails', () => ({ verstuurTeamMail: vi.fn() }))
+vi.mock('./teamMails', () => ({ verstuurTeamMail: h.mail }))
 vi.mock('./db', () => ({
   billingDb: {
     from(tabel: string) {
@@ -61,6 +61,20 @@ describe('teamfactuur en de unieke periode', () => {
     h.insertFout = { code: '08006', message: 'verbinding weg' }
     expect(await maakTeamFactuur(team, invoer)).toEqual({ ok: false, reden: 'niet_aangemaakt' })
     expect(h.tabellen.arnobot_teams[0].volgende_factuurdatum).toBe('2026-12-01')
+  })
+  it('mail niet verstuurd en geen Moneybird: niet bezorgd en niet gelukt', async () => {
+    h.link.mockResolvedValue({ id: 'pl_1', url: 'https://pay.test/y' })
+    h.mail.mockResolvedValue(false)
+    h.tabellen.arnobot_team_facturen = [{ id: 'nieuw' }]
+    expect(await maakTeamFactuur(team, invoer)).toEqual({ ok: false, reden: 'niet_afgerond' })
+    expect(h.tabellen.arnobot_team_facturen[0].bezorgd_at).toBeUndefined()
+  })
+  it('mail verstuurd: factuur staat als bezorgd', async () => {
+    h.link.mockResolvedValue({ id: 'pl_1', url: 'https://pay.test/y' })
+    h.mail.mockResolvedValue(true)
+    h.tabellen.arnobot_team_facturen = [{ id: 'nieuw' }]
+    expect(await maakTeamFactuur(team, invoer)).toEqual({ ok: true })
+    expect(h.tabellen.arnobot_team_facturen[0].bezorgd_at).toBeTruthy()
   })
   it('betaallink mislukt: datum staat al vooruit en de uitkomst is niet gelukt', async () => {
     h.link.mockRejectedValue(new Error('mollie plat'))

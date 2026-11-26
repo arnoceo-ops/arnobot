@@ -40,6 +40,16 @@ describe('signaal gratis vierde maand', () => {
     await roep()
     expect(h.tg).not.toHaveBeenCalled()
   })
+  it('voordeel al gebruikt als jaarkorting: stil', async () => {
+    h.referral = { id: 'r1', referred_discount: 39 }
+    await roep()
+    expect(h.tg).not.toHaveBeenCalled()
+  })
+  it('na een onderbreking opnieuw drie op rij: geen tweede signaal', async () => {
+    h.betalingen = [maand(1), maand(2), maand(3), maand(5), maand(6), maand(7)]
+    await roep()
+    expect(h.tg).not.toHaveBeenCalled()
+  })
   it('niet aangebracht: stil', async () => {
     h.referral = null
     await roep()

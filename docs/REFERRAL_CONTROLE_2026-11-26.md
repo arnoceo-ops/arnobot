@@ -55,6 +55,18 @@ Opgave Arno 26-11: er is nog niets met Teams gedaan en er staat geen teamfactuur
 | H6 | klein | Melding "dubbel betaald" na een chargeback; herstel naar betaald noemt de blokkade niet; signalen kijken niet of het voordeel al gebruikt is; opzegzin zichtbaar voor een teamlid met eigen abonnement; dagelijkse herhaalmeldingen; TEST_TEAM_ID niet uitgesloten in de cronlus. |
 | H7 | klein, tekst (eerst Arno) | Artikel 3 mist "en verstreken"; appHelp en overzicht missen "zonder nieuw abonnement"; aanmeldpagina en dag-25-mail noemen niet de teamtermijn; Uitgangspunt in het plan is verouderd. |
 
+### Herstel H1 t/m H6 (26-11)
+
+Met tests; typecontrole en 1451 tests groen. Niet onafhankelijk gecontroleerd en niet in Mollie beproefd. **SQL docs/sql/2026-11-26-team-factuur-bezorgd.sql nog door Arno uit te voeren.** Zonder die SQL volgen er geen herinneringen en geen blokkades wegens niet betalen.
+
+- **H1:** elke lees- of schrijffout in verwerkTeamBetaling en bij een dubbele betaling gooit nu: de webhook geeft 500 (Mollie probeert opnieuw), de cron slaat die factuur over en meldt het. De cron zelf controleert ook de fouten bij teams ophalen, open facturen, herinneren en blokkeren; de blokkademail gaat alleen als het blokkeren echt is gelukt.
+- **H2:** automatische blokkades (facturatie, teamproef, gestopt team) zetten geblokkeerd_handmatig op false; proef verlengen en activeren ook; de adminroute schrijft blokkade en kenmerk in een keer. Zelf activeren van een team dat Arno zelf blokkeerde wordt geweigerd (bestaande tekst) met een Telegram-melding.
+- **H3:** nieuwe kolom bezorgd_at, gezet na verzending door Moneybird, of bij geen Moneybird na onze eigen mail met de betaallink. Zonder dat vinkje geen herinnering of blokkade, en zo'n factuur houdt een blokkade ook niet vast. Gekozen: een eigen kolom. Verworpen: de betaallink wissen bij een mislukte verzending, want de manager ziet die link op zijn accountpagina en kan er dan niet meer betalen. Geen vulling van oude rijen (er stond niets open; de SQL toont het als dat wel zo is). Een factuur die Arno met de hand alsnog stuurt krijgt geen automatische herinnering.
+- **H4:** zelf omzetten naar zakelijk is ook geblokkeerd bij een open of lopende upgradebetaling; alleen mislukt, geannuleerd of verlopen telt niet. Omgekeerde volgorde meegenomen: wordt een al gestarte correctie betaald na een upgrade, dan maakt de app geen creditnota en factuur en meldt hij handwerk. Het abonnement wordt in dat geval wel op zakelijk gezet.
+- **H5:** het signaal staat nu na toegang, mail en factuur, en elke Telegram-melding in de hele app heeft een tijdslimiet van 8 seconden.
+- **H6:** geen "dubbel betaald" meer na een chargeback; de herstelmelding noemt de blokkade; signalen zwijgen als de jaarkorting al is gebruikt (referred_discount) en na een eerdere reeks van drie; de opzegzin staat niet meer bij een gewoon teamlid (accountpagina, opzegmail en betaalmails); herhaalmeldingen over teamfacturen komen hooguit eens per week; de cronlus sluit alle testteams uit. Beperking: een met de hand gegeven voordeel (bankoverschrijving) wordt nergens vastgelegd.
+- **H7:** het Uitgangspunt in het plan is bijgewerkt. De klantteksten wachten op akkoord Arno.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

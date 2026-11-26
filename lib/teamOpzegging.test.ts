@@ -189,6 +189,11 @@ describe('ontblokkeerNaBetaling', () => {
     db.arnobot_team_facturen = [{ id: 'grens', team_id: 't1', status: 'open', created_at: '2026-10-27T05:10:00Z' }]
     expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(false)
   })
+  it('een nooit bezorgde oude factuur houdt de blokkade niet vast', async () => {
+    db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z' })]
+    db.arnobot_team_facturen = [{ id: 'oud', team_id: 't1', status: 'open', created_at: '2026-10-01T05:10:00Z', bezorgd_at: null }]
+    expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(true)
+  })
   it('heft de blokkade wel op als de einddatum nog in de toekomst ligt', async () => {
     db.arnobot_teams = [team({ geblokkeerd_at: '2026-12-01T00:00:00Z', stopt_op: '2027-01-15' })]
     expect(await ontblokkeerNaBetaling('t1', '2026-12-10')).toBe(true)

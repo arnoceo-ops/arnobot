@@ -13,6 +13,7 @@ import {
 } from './moneybird'
 import { verstuurBillingMail } from './mails'
 import { berekenBedrag } from './prijzen'
+import { redenGeenZelfCorrectie } from './referralKorting'
 import { notifyTelegram } from '@/lib/cron-notify'
 
 // Zelf-bediening: een particulier die eigenlijk zakelijk had moeten afrekenen, corrigeert dit
@@ -161,6 +162,10 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
   if (!factureringToegestaan() || !gebruiker?.email) return
 
   try {
+    // Is er tussen het starten en betalen van de correctie geüpgraded, dan kloppen de bedragen niet: handwerk.
+    const reden = await redenGeenZelfCorrectie(sub.id)
+    if (reden) throw new Error(`${reden === 'upgrade' ? 'upgrade' : 'referral fee'} op dit abonnement: controleer bedrag, creditnota en factuur met de hand`)
+
     const { data: oudeBetaling } = await billingDb
       .from('arnobot_payments')
       .select('*')
@@ -215,7 +220,7 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     await verstuurFactuur(factuur.id, 'Email')
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-facturatie' } })
-    await notifyTelegram(`Klanttype-correctie: Moneybird-afronding mislukt op arno.bot\n\nUser: ${rij.user_id}\nRond handmatig af in Moneybird.`)
+    await notifyTelegram(`Klanttype-correctie: Moneybird-afronding mislukt op arno.bot\n\nUser: ${rij.user_id}\nReden: ${e instanceof Error ? e.message : e}\nRond handmatig af in Moneybird.`)
   }
 
   await verstuurBillingMail(rij.user_id, 'betaling_bevestiging', {

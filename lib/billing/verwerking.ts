@@ -228,10 +228,10 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
 
     await zetToegang(sub.user_id, sub.plan, einde, { eerste: true, betaaldOp })
     await zetReferralConversie(sub.user_id, sub.plan)
-    if (sub.cyclus === 'maandelijks') await meldGratisVierdeMaand(sub.user_id, einde)
-    // Vastleggen wat de aangebrachte klant aan referral fee kreeg (euro's).
+    // Vastleggen wat de aangebrachte klant aan referral fee kreeg (euro's). De signalen kijken hiernaar.
     if (sub.cyclus === 'jaarlijks' && rij.bedrag_cent < sub.bedrag_cent) {
-      await billingDb.from('arnobot_referrals').update({ referred_discount: (sub.bedrag_cent - rij.bedrag_cent) / 100 }).eq('referred_user_id', sub.user_id)
+      const { error: feeFout } = await billingDb.from('arnobot_referrals').update({ referred_discount: (sub.bedrag_cent - rij.bedrag_cent) / 100 }).eq('referred_user_id', sub.user_id)
+      if (feeFout) Sentry.captureException(new Error(feeFout.message), { tags: { onderdeel: 'billing-referral-fee' }, extra: { userId: sub.user_id } })
     }
 
     await verstuurBillingMail(sub.user_id, 'betaling_bevestiging', {
@@ -244,6 +244,8 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     })
     await notifyTelegram(`Nieuw betaald abonnement op arno.bot\n\n${naam} ${sub.cyclus}, ${sub.klant_type}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}\nUser: ${sub.user_id}`)
     await factureerBetaling(rij.id)
+    // Signalen aan Arno altijd als laatste: ze mogen toegang, mail en factuur nooit ophouden.
+    if (sub.cyclus === 'maandelijks') await meldGratisVierdeMaand(sub.user_id, einde)
     return
   }
 
@@ -288,7 +290,6 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     .update({ periode_start: iso(huidigEinde), periode_einde: iso(nieuwEinde), updated_at: iso(new Date()) })
     .eq('id', huidig.id)
   await legPeriodeVast(rij.id, huidig, huidigEinde, nieuwEinde)
-  if (huidig.cyclus === 'maandelijks') await meldGratisVierdeMaand(huidig.user_id, nieuwEinde)
 
   await zetToegang(huidig.user_id, huidig.plan, nieuwEinde, { eerste: false, betaaldOp })
 
@@ -311,6 +312,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     betaalId: mp.id,
   })
   await factureerBetaling(rij.id)
+  if (huidig.cyclus === 'maandelijks') await meldGratisVierdeMaand(huidig.user_id, nieuwEinde)
 }
 
 /**

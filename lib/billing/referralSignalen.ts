@@ -17,20 +17,30 @@ const DAG_MS = 24 * 60 * 60 * 1000
 
 type Rij = PayRow & { cyclus?: string | null; periode_start?: string | null; periode_einde?: string | null }
 
-/** Het aantal aaneengesloten betaalde maanden aan het eind van de rij. */
-export function aaneengeslotenMaanden(betalingen: Rij[]): number {
+/** Het voordeel van de nieuwe gebruiker is eenmalig. Automatisch vastgelegd is alleen de korting op een jaarbetaling. */
+export function voordeelGebruikt(referral: { referred_discount?: number | string | null }): boolean {
+  return Number(referral.referred_discount ?? 0) > 0
+}
+
+/**
+ * Het aantal aaneengesloten betaalde maanden aan het eind van de rij, en of de benodigde reeks al eerder (vóór de
+ * laatste maand) was gehaald. In dat laatste geval is het signaal al geweest.
+ */
+export function maandReeks(betalingen: Rij[]): { reeks: number; eerderGehaald: boolean } {
   const maanden = betalingen
     .filter(b => b.status === 'paid' && b.cyclus === 'maandelijks' && !!b.periode_start && !!b.periode_einde
       && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0))
     .sort((a, b) => Date.parse(a.periode_start!) - Date.parse(b.periode_start!))
   let reeks = 0
   let vorigeEinde: number | null = null
+  let eerderGehaald = false
   for (const m of maanden) {
+    if (reeks >= BENODIGDE_MAANDEN) eerderGehaald = true
     const aansluitend = vorigeEinde !== null && Date.parse(m.periode_start!) - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS
     reeks = aansluitend ? reeks + 1 : 1
     vorigeEinde = Date.parse(m.periode_einde!)
   }
-  return reeks
+  return { reeks, eerderGehaald }
 }
 
 /**
@@ -39,12 +49,14 @@ export function aaneengeslotenMaanden(betalingen: Rij[]): number {
  */
 export async function meldGratisVierdeMaand(userId: string, vierdeIncassoRond: Date): Promise<void> {
   try {
-    const { data: referral, error: refFout } = await billingDb.from('arnobot_referrals').select('id').eq('referred_user_id', userId).maybeSingle<{ id: string }>()
+    const { data: referral, error: refFout } = await billingDb.from('arnobot_referrals').select('id, referred_discount').eq('referred_user_id', userId)
+      .maybeSingle<{ id: string; referred_discount: number | null }>()
     if (refFout) throw new Error(refFout.message)
-    if (!referral) return
+    if (!referral || voordeelGebruikt(referral)) return
     const { data, error } = await billingDb.from('arnobot_payments').select('*').eq('user_id', userId).eq('status', 'paid').limit(1000).returns<Rij[]>()
     if (error) throw new Error(error.message)
-    if (aaneengeslotenMaanden(data ?? []) !== BENODIGDE_MAANDEN) return
+    const { reeks, eerderGehaald } = maandReeks(data ?? [])
+    if (reeks !== BENODIGDE_MAANDEN || eerderGehaald) return
     const datum = vierdeIncassoRond.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
     await notifyTelegram(`ACTIE: gratis vierde maand op arno.bot\n\nWie: ${await wieIs(userId)}\nDeze aangebrachte klant heeft ${BENODIGDE_MAANDEN} maanden betaald. De incasso rond ${datum} hoort gratis te zijn en dat gebeurt NIET automatisch. Controleer eerst of de eerste betaling op tijd was (proef plus 15 dagen).\n${VEILIG_TERUGSTORTEN}`)
   } catch (e) {

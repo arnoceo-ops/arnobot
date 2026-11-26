@@ -39,22 +39,30 @@ describe('bedrag van de eerste jaarbetaling', () => {
 })
 
 describe('zelf omzetten naar zakelijk', () => {
-  const eerste = (bedrag_cent: number) => ({ soort: 'eerste', plan: 'basis', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent })
+  const eerste = (bedrag_cent: number) => ({ status: 'paid', soort: 'eerste', plan: 'basis', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent })
   beforeEach(() => { h.betalingen = []; h.fout = null })
   it('volle prijs: mag', async () => {
     h.betalingen = [eerste(22800)]
     expect(await redenGeenZelfCorrectie('s')).toBeNull()
   })
   it('referral fee op de eerste betaling blokkeert, ook na een upgrade', async () => {
-    h.betalingen = [eerste(20900), { soort: 'upgrade', bedrag_cent: 24000 }]
+    h.betalingen = [eerste(20900), { status: 'paid', soort: 'upgrade', bedrag_cent: 24000 }]
     expect(await redenGeenZelfCorrectie('s')).toBe('referral_fee')
   })
   it('na een upgrade zonder referral fee: ook niet zelf, en niet de referralmelding', async () => {
-    h.betalingen = [eerste(22800), { soort: 'upgrade', bedrag_cent: 24000 }]
+    h.betalingen = [eerste(22800), { status: 'paid', soort: 'upgrade', bedrag_cent: 24000 }]
     expect(await redenGeenZelfCorrectie('s')).toBe('upgrade')
   })
+  it.each(['open', 'pending'])('lopende upgradebetaling (%s) blokkeert ook', async status => {
+    h.betalingen = [eerste(22800), { status, soort: 'upgrade', bedrag_cent: 24000 }]
+    expect(await redenGeenZelfCorrectie('s')).toBe('upgrade')
+  })
+  it.each(['failed', 'canceled', 'expired'])('mislukte upgrade (%s) telt niet', async status => {
+    h.betalingen = [eerste(22800), { status, soort: 'upgrade', bedrag_cent: 24000 }]
+    expect(await redenGeenZelfCorrectie('s')).toBeNull()
+  })
   it('betaling van vóór de momentopname: mag', async () => {
-    h.betalingen = [{ soort: 'eerste', bedrag_cent: 100 }]
+    h.betalingen = [{ status: 'paid', soort: 'eerste', bedrag_cent: 100 }]
     expect(await redenGeenZelfCorrectie('s')).toBeNull()
   })
   it('databasefout laat de correctie niet door', async () => {

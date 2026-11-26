@@ -14,14 +14,14 @@ export async function redenGeenZelfCorrectie(abonnementId: string): Promise<'ref
     .select('*')
     .eq('subscription_id', abonnementId)
     .limit(1000)
-    .eq('status', 'paid')
     .returns<(PayRow & { plan?: Plan | null; cyclus?: Cyclus | null; klant_type?: KlantType | null })[]>()
   if (error) throw new Error(`betalingen opzoeken mislukt: ${error.message}`)
   // De korting bestaat alleen bij jaarbetalingen en pas sinds de momentopname per betaling wordt vastgelegd.
-  const metFee = (data ?? []).some(b => b.soort === 'eerste' && b.cyclus === 'jaarlijks' && !!b.plan && !!b.klant_type
+  const metFee = (data ?? []).some(b => b.status === 'paid' && b.soort === 'eerste' && b.cyclus === 'jaarlijks' && !!b.plan && !!b.klant_type
     && b.bedrag_cent < berekenBedrag(b.plan, 'jaarlijks', b.klant_type).brutoCent)
   if (metFee) return 'referral_fee'
-  return (data ?? []).some(b => b.soort === 'upgrade') ? 'upgrade' : null
+  // Ook een lopende bijbetaling telt: het abonnement staat dan al op Pro. Alleen een mislukte upgrade telt niet.
+  return (data ?? []).some(b => b.soort === 'upgrade' && !['failed', 'canceled', 'expired'].includes(b.status)) ? 'upgrade' : null
 }
 
 /**

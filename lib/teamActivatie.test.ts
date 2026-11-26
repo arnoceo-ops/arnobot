@@ -174,6 +174,15 @@ describe('activeerTeam', () => {
     expect(notify).toHaveBeenCalledOnce()
   })
 
+  it('heft een blokkade die Arno zelf zette niet op', async () => {
+    zet({ team: { geblokkeerd_at: dagenGeleden(2), geblokkeerd_handmatig: true } })
+    expect(await activeerTeam('m1', await invoer())).toMatchObject({ ok: false, status: 409 })
+    expect(db.arnobot_teams[0]).toMatchObject({ min_seats: null, geblokkeerd_handmatig: true })
+    expect(db.arnobot_teams[0].geblokkeerd_at).toBeTruthy()
+    expect(maakFactuur).not.toHaveBeenCalled()
+    expect(notify).toHaveBeenCalledOnce()
+  })
+
   it('een tweede aanroep na de eerste wordt door de standcontrole geweigerd', async () => {
     zet()
     const i = await invoer()

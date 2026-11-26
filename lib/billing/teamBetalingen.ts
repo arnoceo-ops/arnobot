@@ -50,15 +50,17 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
 
   if (rij.paid_via === 'bank') {
     // Al per bank betaald en daarna toch via de link: dan is er twee keer betaald.
-    const dubbel = betaald.find(p => (p.amountRefunded ? mollieNaarCenten(p.amountRefunded.value) : 0) < mollieNaarCenten(p.amount.value))
+    // Alleen geld dat nog bij ons staat: een teruggestorte of teruggeboekte betaling is niet dubbel betaald.
+    const dubbel = betaald.find(staatNog)
     if (!dubbel) return false
     // Het betaal-id vastleggen is de claim: zo komt dit één keer binnen, ook als er via de bank wordt teruggestort.
-    const { data: geclaimd } = await billingDb
+    const { data: geclaimd, error: claimFout } = await billingDb
       .from('arnobot_team_facturen')
       .update({ mollie_payment_id: dubbel.id, updated_at: nuIso() })
       .eq('id', rij.id)
       .is('mollie_payment_id', null)
       .select('id')
+    if (claimFout) throw new Error(`dubbele teambetaling niet vastgelegd: ${claimFout.message}`)
     if ((geclaimd?.length ?? 0) !== 1) return false
     await notifyTelegram(`Teamfactuur dubbel betaald op arno.bot\n\nFactuur: ${rij.id}\nDeze stond al op betaald per bank en is nu ook via Mollie betaald (${dubbel.id}, ${formatEuro(mollieNaarCenten(dubbel.amount.value))}).\nStort een van de twee terug.`)
     return true
@@ -108,7 +110,7 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
     actie = vervangen
       ? 'Er is al een vervangende factuur voor deze periode, dus deze blijft op teruggedraaid. Controleer of er niet dubbel is gefactureerd.'
       : herstel
-        ? 'De factuur staat weer op betaald. Had je al een creditnota gemaakt, draai die dan terug.'
+        ? 'De factuur staat weer op betaald. Had je al een creditnota gemaakt, draai die dan terug. Een blokkade van het team is niet opgeheven: kijk bij Admin, Teams.'
         : 'Controleer in Mollie wat er nu terug is en of je creditnota nog klopt.'
   } else {
     wat = teruggeboekt > oudTeruggeboekt ? 'CHARGEBACK op een teamfactuur' : volledig ? 'Teamfactuur volledig terugbetaald' : 'Teamfactuur gedeeltelijk terugbetaald'

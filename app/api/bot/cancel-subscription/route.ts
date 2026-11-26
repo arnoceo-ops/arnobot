@@ -90,6 +90,7 @@ export async function POST() {
   if (isValidEmail(user.email)) {
     const { subject, html } = getEmailTemplate('opzegging_bevestiging', user.voornaam || 'daar', false, {
       userId,
+      zonderTegoedZin: !!teamMember && !isManager,
       // Bij een team: de einddatum noemen (12:00 UTC, zodat de datum in elke tijdzone dezelfde dag blijft).
       ...(teamStopt ? { team: { teamNaam: '', bedragCent: 0, seats: 0, einde: `${teamStopt}T12:00:00.000Z` } } : {}),
     })

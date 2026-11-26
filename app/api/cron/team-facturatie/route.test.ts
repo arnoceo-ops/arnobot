@@ -9,8 +9,11 @@ const h = vi.hoisted(() => ({
   gemist: vi.fn(),
   mail: vi.fn(async () => {}),
   tg: vi.fn(async (_t: string) => {}),
+  nieuw: vi.fn(async (_s: string, _n: string) => true),
 }))
 
+vi.mock('@/lib/capaciteit', () => ({ nieuwMelden: h.nieuw }))
+vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }))
 vi.mock('@/lib/cronRun', () => ({ registreerCronRun: (_p: string, f: unknown) => f }))
 vi.mock('@/lib/billing/mollie', () => ({ mollieIngeschakeld: () => true }))
 vi.mock('@/lib/billing/teamFacturatie', () => ({
@@ -49,7 +52,7 @@ vi.mock('@/lib/billing/db', () => ({
 import { GET } from './route'
 
 const oud = () => new Date(Date.now() - 60 * 86_400_000).toISOString()
-const factuur = (id: string, extra: Rij = {}): Rij => ({ id, team_id: 't1', status: 'open', bedrag_cent: 100, seats_aantal: 3, created_at: oud(), herinnering_at: null, mollie_payment_link_url: 'https://pay.test/x', ...extra })
+const factuur = (id: string, extra: Rij = {}): Rij => ({ id, team_id: 't1', status: 'open', bedrag_cent: 100, seats_aantal: 3, created_at: oud(), herinnering_at: null, mollie_payment_link_url: 'https://pay.test/x', bezorgd_at: oud(), ...extra })
 const draai = () => (GET as any)(new Request('https://x.test', { headers: { authorization: 'Bearer geheim' } }))
 const team = () => h.tabellen.arnobot_teams[0]
 
@@ -85,6 +88,23 @@ describe('cron team-facturatie: herinnering en blokkade', () => {
     await draai()
     expect(team().geblokkeerd_at).toBeNull()
     expect(h.tg.mock.calls[0][0]).toContain('zonder betaallink')
+  })
+  it('automatische blokkade is geen eigen blokkade', async () => {
+    await draai()
+    expect(team().geblokkeerd_handmatig).toBe(false)
+  })
+  it.each([[null], [undefined]])('niet als bezorgd vastgelegd (%s): geen herinnering en geen blokkade, wel melden', async bezorgd => {
+    h.tabellen.arnobot_team_facturen = [factuur('f1', { bezorgd_at: bezorgd })]
+    await draai()
+    expect(team().geblokkeerd_at).toBeNull()
+    expect(h.mail).not.toHaveBeenCalled()
+    expect(h.tg.mock.calls[0][0]).toContain('niet als bezorgd')
+  })
+  it('dezelfde melding komt niet elke dag terug', async () => {
+    h.nieuw.mockResolvedValueOnce(false)
+    h.tabellen.arnobot_team_facturen = [factuur('f1', { bezorgd_at: null })]
+    await draai()
+    expect(h.tg).not.toHaveBeenCalled()
   })
   it('twee facturen over tijd geven één blokkademail', async () => {
     h.tabellen.arnobot_team_facturen = [factuur('f1', { herinnering_at: oud() }), factuur('f2', { herinnering_at: oud() })]

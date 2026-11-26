@@ -8,7 +8,7 @@ import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } fro
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
-import { VEILIG_TERUGSTORTEN } from '@/lib/billing/referralSignalen'
+import { VEILIG_TERUGSTORTEN, voordeelGebruikt } from '@/lib/billing/referralSignalen'
 
 // Zelf een teamproef omzetten naar een betaald Team (docs/TEAM_PROCES.md, "Zelf activeren").
 // Alleen voor een manager van een agent-proef (isAgentProef). Het doet hetzelfde als stap 7 van de
@@ -106,12 +106,14 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
  * houdt het activeren niet tegen.
  */
 async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise<void> {
-  const { data, error } = await supabase.from('arnobot_referrals').select('code_used').eq('referred_user_id', managerId).maybeSingle<{ code_used: string | null }>()
+  const { data, error } = await supabase.from('arnobot_referrals').select('code_used, referred_discount').eq('referred_user_id', managerId)
+    .maybeSingle<{ code_used: string | null; referred_discount: number | null }>()
   if (error) {
     await notifyTelegram(`Niet te controleren of een geactiveerd team is aangebracht (arno.bot)\n\nTeam: ${teamNaam}\nZoek zelf in Admin, Referrals.`)
     return
   }
-  if (!data) return
+  // Het voordeel is eenmalig: wie al een referral fee op een eigen jaarabonnement kreeg, krijgt geen teammaand.
+  if (!data || voordeelGebruikt(data)) return
   await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd betaalt (teamproef plus 10 dagen). Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
 }
 
@@ -129,6 +131,15 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
   const stand = await leesActivatieStand(userId)
   if (!stand) return { ok: false, status: 404, fout: 'Je beheert geen team' }
   if (!stand.kanActiveren) return { ok: false, status: 409, fout: stand.geactiveerd ? 'Dit team is al geactiveerd' : 'Dit team kan niet zelf geactiveerd worden, neem contact met ons op' }
+
+  // Een blokkade die Arno zelf zette heft de manager niet op door te activeren.
+  const { data: blok, error: blokFout } = await supabase.from('arnobot_teams').select('geblokkeerd_at, geblokkeerd_handmatig').eq('id', stand.teamId)
+    .maybeSingle<{ geblokkeerd_at: string | null; geblokkeerd_handmatig: boolean | null }>()
+  if (blokFout) return { ok: false, status: 500, fout: 'Team activeren mislukt' }
+  if (blok?.geblokkeerd_at && blok.geblokkeerd_handmatig) {
+    await notifyTelegram(`Manager probeert een team te activeren dat je zelf hebt geblokkeerd (arno.bot)\n\nTeam: ${stand.teamNaam}\nEr is niets gewijzigd. Wil je dit team toelaten, hef dan de blokkade op bij Admin, Teams.`)
+    return { ok: false, status: 409, fout: 'Dit team kan niet zelf geactiveerd worden, neem contact met ons op' }
+  }
 
   const { data: gebruiker } = await supabase.from('approved_users').select('email').eq('user_id', userId).maybeSingle<{ email: string | null }>()
   const { data: bestaand } = await supabase.from('arnobot_billing_customers').select('mollie_customer_id').eq('user_id', userId).maybeSingle<{ mollie_customer_id: string }>()
@@ -161,7 +172,7 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
   const vandaag = nu.toISOString().slice(0, 10)
   const { data: geclaimd, error: claimFout } = await supabase
     .from('arnobot_teams')
-    .update({ min_seats: invoer.seats, cyclus: invoer.cyclus, volgende_factuurdatum: vandaag, geblokkeerd_at: null })
+    .update({ min_seats: invoer.seats, cyclus: invoer.cyclus, volgende_factuurdatum: vandaag, geblokkeerd_at: null, geblokkeerd_handmatig: false })
     .eq('id', stand.teamId)
     .is('min_seats', null)
     .select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at')
