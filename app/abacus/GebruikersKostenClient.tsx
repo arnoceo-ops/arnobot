@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { datumPlusDagen } from '@/lib/amsterdamTijd'
+import { SorteerKop, useSortering } from './sorteerTabel'
 
 // Tab Gebruikers: wat elke gebruiker over een periode (Amsterdamse kalenderdagen) aan AI en spraak kost, uit /api/kosten-per-gebruiker.
 // Alleen wat gemeten wordt (arnobot_ai_gebruik, sinds 2026-11-19, en ElevenLabs-tekens). Met namen, besluit Arno 2026-11-19.
@@ -71,6 +72,16 @@ function periodeVoorSnelkeuze(keuze: Snelkeuze, vandaag: string, meetStart: stri
 }
 const PLAN_LABEL: Record<string, string> = { basis: 'Basic', premium: 'Pro', team: 'Team' }
 
+type GebruikerKolom = 'naam' | 'plan' | 'berichten' | 'gemeten' | 'anthropic' | 'voyage' | 'audio' | 'voice' | 'totaal' | 'abonnement' | 'omzet' | 'marge'
+const GEBRUIKER_KOLOMMEN: { kolom: GebruikerKolom; label: string; tekst?: boolean }[] = [
+  { kolom: 'naam', label: 'Gebruiker', tekst: true }, { kolom: 'plan', label: 'Plan', tekst: true }, { kolom: 'berichten', label: 'Berichten' }, { kolom: 'gemeten', label: 'Gemeten' },
+  { kolom: 'anthropic', label: 'Anthropic' }, { kolom: 'voyage', label: 'Voyage' }, { kolom: 'audio', label: 'Audio' }, { kolom: 'voice', label: 'Voice' }, { kolom: 'totaal', label: 'Totaal' },
+  { kolom: 'abonnement', label: 'Abonnement', tekst: true }, { kolom: 'omzet', label: 'Omzet mnd' }, { kolom: 'marge', label: 'Marge' },
+]
+type SoortKolom = 'soort' | 'dollars' | 'euro'
+type BronKolom = 'bron' | 'aanroepen' | 'dollars'
+const BRON_WAARDEN = { bron: (b: BronRij) => b.bron, aanroepen: (b: BronRij) => b.aanroepen, dollars: (b: BronRij) => b.usd }
+
 const cardStyle: React.CSSProperties = { background: '#1a2333', border: '1px solid #2d3a4f', borderRadius: 12, padding: '20px 22px', marginBottom: 18 }
 const cardHeadStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }
 const dotStyle: React.CSSProperties = { width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }
@@ -88,6 +99,10 @@ export default function GebruikersKostenClient() {
   const [fout, setFout] = useState('')
   const [laden, setLaden] = useState(true)
   const [gekozen, setGekozen] = useState<string>('')
+  const gebruikerSortering = useSortering<GebruikerKolom>()
+  const soortSortering = useSortering<SoortKolom>()
+  const bronSortering = useSortering<BronKolom>()
+  const platformSortering = useSortering<BronKolom>()
 
   useEffect(() => {
     let actueel = true
@@ -133,6 +148,29 @@ export default function GebruikersKostenClient() {
     ? new Date(data.meetStart).toLocaleString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' })
     : 'nog niet'
 
+  const gebruikerRijen = gebruikerSortering.sorteer(data.gebruikers, {
+    naam: g => g.naam,
+    plan: g => PLAN_LABEL[g.plan ?? ''] ?? null,
+    berichten: g => g.berichten,
+    gemeten: g => g.gemetenBerichten,
+    anthropic: g => g.anthropicUsd,
+    voyage: g => g.voyageUsd,
+    audio: g => g.audioUsd,
+    voice: g => g.voiceUsd,
+    totaal: g => g.totaalUsd,
+    abonnement: statusTekst,
+    omzet: g => (g.omzetCent > 0 ? g.omzetCent : null),
+    marge: margeEur,
+  })
+  // Kolomkoppen van de twee tabellen met de opbouw Bron, Aanroepen, Dollars.
+  const bronKoppen = (s: typeof bronSortering) => (
+    <tr>
+      <SorteerKop kolom="bron" label="Bron" tekst stijl={th} sortering={s.sortering} onKlik={s.klik} />
+      <SorteerKop kolom="aanroepen" label="Aanroepen" stijl={th} sortering={s.sortering} onKlik={s.klik} />
+      <SorteerKop kolom="dollars" label="Dollars" stijl={th} sortering={s.sortering} onKlik={s.klik} />
+    </tr>
+  )
+
   return (
     <div style={{ opacity: laden ? 0.6 : 1 }}>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
@@ -165,18 +203,30 @@ export default function GebruikersKostenClient() {
             <div><div style={statLabel}>Marge</div><div style={{ ...statValue, color: (margeEur(gebruiker) ?? 0) < 0 ? '#cc4444' : '#44cc88' }}>{margeTekst(gebruiker)}</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.periodeVolledigGemeten ? 'omzet min gemeten kosten' : 'pas als de hele periode gemeten is'}</div></div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
-            <thead><tr><th style={{ ...th, textAlign: 'left' }}>Soort</th><th style={th}>Dollars</th><th style={th}>Euro</th></tr></thead>
+            <thead>
+              <tr>
+                <SorteerKop kolom="soort" label="Soort" tekst stijl={th} sortering={soortSortering.sortering} onKlik={soortSortering.klik} />
+                <SorteerKop kolom="dollars" label="Dollars" stijl={th} sortering={soortSortering.sortering} onKlik={soortSortering.klik} />
+                <SorteerKop kolom="euro" label="Euro" stijl={th} sortering={soortSortering.sortering} onKlik={soortSortering.klik} />
+              </tr>
+            </thead>
             <tbody>
-              {[['Anthropic (chat, geheugen, analyses)', gebruiker.anthropicUsd], ['Voyage (zoeken)', gebruiker.voyageUsd], ['Audio (dicteren, bijlagen)', gebruiker.audioUsd], ['Voice (ElevenLabs)', gebruiker.voiceUsd]].map(([label, usd]) => (
-                <tr key={label as string}><td style={{ ...td, textAlign: 'left' }}>{label as string}</td><td style={td}>{fmtUsd3(usd as number)}</td><td style={td}>{fmtEur(eur(usd as number))}</td></tr>
+              {soortSortering.sorteer(
+                [
+                  { label: 'Anthropic (chat, geheugen, analyses)', usd: gebruiker.anthropicUsd }, { label: 'Voyage (zoeken)', usd: gebruiker.voyageUsd },
+                  { label: 'Audio (dicteren, bijlagen)', usd: gebruiker.audioUsd }, { label: 'Voice (ElevenLabs)', usd: gebruiker.voiceUsd },
+                ],
+                { soort: r => r.label, dollars: r => r.usd, euro: r => r.usd },
+              ).map(({ label, usd }) => (
+                <tr key={label}><td style={{ ...td, textAlign: 'left' }}>{label}</td><td style={td}>{fmtUsd3(usd)}</td><td style={td}>{fmtEur(eur(usd))}</td></tr>
               ))}
             </tbody>
           </table>
           <div style={{ ...cardHeadStyle, marginBottom: 8 }}>Per bron</div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr><th style={{ ...th, textAlign: 'left' }}>Bron</th><th style={th}>Aanroepen</th><th style={th}>Dollars</th></tr></thead>
+            <thead>{bronKoppen(bronSortering)}</thead>
             <tbody>
-              {gebruiker.perBron.map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}
+              {bronSortering.sorteer(gebruiker.perBron, BRON_WAARDEN).map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}
               {gebruiker.perBron.length === 0 && <tr><td style={{ ...td, textAlign: 'left', color: '#6b7280' }} colSpan={3}>Nog niets gemeten voor deze gebruiker in deze maand.</td></tr>}
             </tbody>
           </table>
@@ -199,12 +249,11 @@ export default function GebruikersKostenClient() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 960 }}>
               <thead>
                 <tr>
-                  <th style={{ ...th, textAlign: 'left' }}>Gebruiker</th><th style={th}>Plan</th><th style={th}>Berichten</th><th style={th}>Gemeten</th>
-                  <th style={th}>Anthropic</th><th style={th}>Voyage</th><th style={th}>Audio</th><th style={th}>Voice</th><th style={th}>Totaal</th><th style={{ ...th, textAlign: 'left' }}>Abonnement</th><th style={th}>Omzet mnd</th><th style={th}>Marge</th>
+                  {GEBRUIKER_KOLOMMEN.map(k => <SorteerKop key={k.kolom} {...k} stijl={th} sortering={gebruikerSortering.sortering} onKlik={gebruikerSortering.klik} />)}
                 </tr>
               </thead>
               <tbody>
-                {data.gebruikers.map(g => {
+                {gebruikerRijen.map(g => {
                   return (
                     <tr key={g.userId} onClick={() => setGekozen(g.userId)} style={{ cursor: 'pointer' }}>
                       <td style={{ ...td, textAlign: 'left' }}>{g.naam}{g.testaccount ? <span style={{ color: '#6b7280' }}> (test)</span> : null}</td>
@@ -230,8 +279,8 @@ export default function GebruikersKostenClient() {
             <>
               <div style={{ ...cardHeadStyle, margin: '20px 0 8px' }}>Platformwerk zonder gebruiker</div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead><tr><th style={{ ...th, textAlign: 'left' }}>Bron</th><th style={th}>Aanroepen</th><th style={th}>Dollars</th></tr></thead>
-                <tbody>{data.platform.perBron.map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}</tbody>
+                <thead>{bronKoppen(platformSortering)}</thead>
+                <tbody>{platformSortering.sorteer(data.platform.perBron, BRON_WAARDEN).map(b => <tr key={b.bron}><td style={{ ...td, textAlign: 'left' }}>{b.bron}</td><td style={td}>{b.aanroepen}</td><td style={td}>{fmtUsd3(b.usd)}</td></tr>)}</tbody>
               </table>
             </>
           )}
