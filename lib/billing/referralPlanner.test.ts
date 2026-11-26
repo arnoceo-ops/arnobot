@@ -1052,6 +1052,26 @@ describe('teams: de gratis teammaand en tegoed op de teamfactuur', () => {
     expect((await plan()).voornemens).toMatchObject([{ soort: 'voordeel_maand', stand: 'niet-automatisch' }])
     expect(await acties()).toEqual([])
   })
+  it('een per bank betaalde verlenging wordt niet gemeld als het tegoed op een latere past', async () => {
+    const f = facturen(4, i => (i === 2 ? { paid_via: 'bank', mollie_payment_id: null } : {}))
+    await zaai({ arnobot_referrals: [], arnobot_subscriptions: [], arnobot_teams: [team('aanbrenger')], arnobot_team_facturen: f, arnobot_referral_grootboek: [regel('toekenning', REF, 1900)] })
+    expect((await plan()).voornemens).toMatchObject([{ stand: 'gereserveerd', betalingId: f[3].id }])
+  })
+  it('kan het alleen op een bankfactuur, dan een melding; een dubbel betaalde bankfactuur telt ook als bank', async () => {
+    const f = facturen(3, i => (i === 2 ? { paid_via: 'bank' } : {}))
+    await zaai({ arnobot_referrals: [], arnobot_subscriptions: [], arnobot_teams: [team('aanbrenger')], arnobot_team_facturen: f, arnobot_referral_grootboek: [regel('toekenning', REF, 1900)] })
+    expect((await plan()).voornemens).toMatchObject([{ stand: 'niet-automatisch', betalingId: f[2].id }])
+    expect(await acties()).toEqual([])
+  })
+  it('de maandprijs bij de start blijft die van de eerste factuur, ook als die is teruggedraaid', async () => {
+    const f = facturen(5, i => (i ? { bedrag_cent: 30000, btw_cent: 5207 } : { status: 'refunded', reversed_at: dag('2027-02-20') }))
+    // Een latere proef: anders valt de eerste staande factuur buiten de termijn.
+    await zaai({
+      arnobot_subscriptions: [sub('aanbrenger')], arnobot_teams: [team('klant')], arnobot_team_facturen: f,
+      approved_users: [gebruiker('aanbrenger'), gebruiker('klant', { trial_start: dag('2027-02-15') })],
+    })
+    expect((await plan()).voornemens).toMatchObject([{ soort: 'voordeel_maand', betalingId: f[4].id, brutoCent: 20000 }])
+  })
   it('tegoed van een manager gaat over een volgende reguliere teamfactuur, niet over de eerste of een tussentijdse', async () => {
     const f = [...facturen(4), factuur(9, '2027-03-20', '2027-04-01', { soort: 'tussentijds' })]
     await zaai({

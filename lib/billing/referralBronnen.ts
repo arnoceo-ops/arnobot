@@ -64,7 +64,7 @@ async function bewijs(bronId: string, userId: string): Promise<Bewijs> {
   if (data.status !== 'paid' || data.reversed_at || heeftAndereTerugbetaling(data, data.terugbetaald_cent ?? 0) || (data.teruggeboekt_cent ?? 0) > 0) {
     return nee(`teamfactuur ${bronId} staat niet (volledig) betaald`)
   }
-  if (!data.mollie_payment_id) return nee(`teamfactuur ${bronId} heeft geen Mollie-betaling (per bank): niet te controleren`)
+  if (!data.mollie_payment_id || data.paid_via === 'bank') return nee(`teamfactuur ${bronId} heeft geen Mollie-betaling (per bank): niet te controleren`)
   return bewijsBijMollie(data.mollie_payment_id, data.id)
 }
 

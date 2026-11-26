@@ -197,7 +197,7 @@ begin
     if f.status is distinct from 'paid' or f.betaald_at is null then reden := 'niet_betaald';
     elsif f.reversed_at is not null then reden := 'terugbetaald';
     elsif coalesce(f.teruggeboekt_cent, 0) <> 0 then reden := 'teruggeboekt';
-    elsif f.mollie_payment_id is null then reden := 'per_bank';
+    elsif f.mollie_payment_id is null or f.paid_via = 'bank' then reden := 'per_bank';
     elsif coalesce(f.terugbetaald_cent, 0) > f.referral_refund_cent then reden := 'andere_terugbetaling';
     else
       ruimte_cent := f.bedrag_cent - greatest(coalesce(f.terugbetaald_cent, 0), f.referral_refund_cent);

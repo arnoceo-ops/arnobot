@@ -128,10 +128,12 @@ export function kiesVoordeel(d: Pick<Dossier, 'betalingen'>, feiten: Pick<KlantF
  * meer dan de maandprijs waarmee het team begon: later toegevoegde gebruikers tellen niet.
  */
 export function kiesTeamVoordeel(userId: string, d: Pick<Dossier, 'facturen'>, feiten: Pick<KlantFeiten, 'periodes'>): VoordeelKeuze {
-  const regulier = d.facturen.filter(f => f.soort === 'regulier').map(f => factuurAlsBetaling(f, userId))
-    .filter(eigenBetalingStaat).sort((a, b) => Date.parse(a.periode_start!) - Date.parse(b.periode_start!))
-  const start = regulier[0]
-  if (!start) return null
+  const alle = d.facturen.filter(f => f.soort === 'regulier').map(f => factuurAlsBetaling(f, userId))
+    .sort((a, b) => Date.parse(a.periode_start!) - Date.parse(b.periode_start!))
+  const regulier = alle.filter(eigenBetalingStaat)
+  if (!regulier.length) return null
+  // De prijs waarmee het team begon, ook als die eerste factuur later is teruggedraaid of nooit betaald.
+  const start = alle[0]
   const startMaandCent = start.cyclus === 'jaarlijks' ? Math.round(start.bedrag_cent / 12) : start.bedrag_cent
   const maanden = feiten.periodes.filter(p => p.geldig && p.cyclus === 'maandelijks' && p.plan === 'team')
   const jaar = regulier.find(b => b.cyclus === 'jaarlijks')
@@ -407,8 +409,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
         nettoCent: bedrag.verbruiktNettoCent, stand: 'klaar', reden: extra.terugwerkend ? 'teamlid: terug over een eigen betaling' : 'verrekenen bij de verlenging',
         opMeeloop: ronde.opMeeloop,
       })
-      if (!b.mollie_payment_id) Object.assign(v, { stand: 'niet-automatisch', reden: PER_BANK })
-      else if (eerstVoordeel.has(b.id)) Object.assign(v, { stand: 'wacht', reden: 'eerst het eigen voordeel op deze betaling' })
+      if (eerstVoordeel.has(b.id)) Object.assign(v, { stand: 'wacht', reden: 'eerst het eigen voordeel op deze betaling' })
       else toets(v, b)
       if (v.stand === 'klaar') {
         const refs = verdeelVerrekening(werk, bedrag.verbruiktNettoCent, saldo).map(deel => deel.referralId)
@@ -436,8 +437,18 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       const verlengingen = alle.filter(b => isVerlenging(b, alle)).sort((a, b) => Date.parse(a.betaald_at!) - Date.parse(b.betaald_at!))
       for (const b of verlengingen) {
         if (bronWacht) break
-        if (bezet(b) || ruimteCent(b) <= 0) continue
+        if (!b.mollie_payment_id || bezet(b) || ruimteCent(b) <= 0) continue
         await opBetaling(b, { toegekendVoor: b.betaald_at! }, ruimteCent(b), {})
+      }
+      // Pas melden wat nergens anders heen kan: anders staat hetzelfde tegoed hier "met de hand" en daar gereserveerd.
+      const perBank = bronWacht ? undefined : verlengingen.find(b => !b.mollie_payment_id && !bezet(b) && ruimteCent(b) > 0
+        && verrekening(saldoVan(werk, { toegekendVoor: b.betaald_at! }).beschikbaarCent, ruimteCent(b)).brutoCent > 0)
+      if (perBank) {
+        const bedrag = verrekening(saldoVan(werk, { toegekendVoor: perBank.betaald_at! }).beschikbaarCent, ruimteCent(perBank))
+        nieuw({
+          soort: 'tegoed_terugstorten', userId, betalingId: perBank.id, betaalkenmerk: kenmerkVan(perBank), brutoCent: bedrag.brutoCent,
+          nettoCent: bedrag.verbruiktNettoCent, stand: 'niet-automatisch', reden: PER_BANK, opMeeloop: ronde.opMeeloop,
+        })
       }
       return
     }

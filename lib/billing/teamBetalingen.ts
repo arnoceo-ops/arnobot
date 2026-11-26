@@ -77,7 +77,10 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
   const { terugbetaald, teruggeboekt } = terugBijMollie(mp)
   const oudTerugbetaald = rij.terugbetaald_cent ?? 0
   const oudTeruggeboekt = rij.teruggeboekt_cent ?? 0
-  if (terugbetaald === oudTerugbetaald && teruggeboekt === oudTeruggeboekt) return false
+  // Ook zonder nieuwe bedragen kan de uitkomst veranderen: een referralreservering die intussen is vrijgegeven telde eerder
+  // een volledige terugbetaling weg.
+  const alsnogVolledig = !rij.reversed_at && isVolledigTerugbetaald(rij, terugbetaald)
+  if (terugbetaald === oudTerugbetaald && teruggeboekt === oudTeruggeboekt && !alsnogVolledig) return false
 
   const volledig = isVolledigTerugbetaald(rij, terugbetaald) || teruggeboekt > 0
   const draaiNuTerug = volledig && !rij.reversed_at
@@ -126,7 +129,7 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
       ? 'De factuur staat op teruggedraaid. De toegang van het team is niet veranderd. Maak de creditnota met de hand in Moneybird en beslis zelf over blokkeren.'
       : 'Maak de creditnota voor dit deel met de hand in Moneybird.'
   }
-  await notifyTelegram(`${wat} (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nTerugbetaald: ${formatEuro(terugbetaald)}\nTeruggeboekt: ${formatEuro(teruggeboekt)}\n${actie}${referralCent > 0 ? `\nOp deze factuur is ${formatEuro(referralCent)} referralgeld teruggestort. Dat deel krijgt een eigen creditnota: crediteer alleen de rest.` : ''}`)
+  await notifyTelegram(`${wat} (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nTerugbetaald: ${formatEuro(terugbetaald)}\nTeruggeboekt: ${formatEuro(teruggeboekt)}\n${actie}${referralCent > 0 ? `\nOp deze factuur staat ${formatEuro(referralCent)} als referralgeld geboekt, mogelijk nog niet verstuurd. Alleen wat echt is teruggestort krijgt een eigen creditnota: kijk op /bot/admin/referrals voordat je crediteert.` : ''}`)
   return true
 }
 

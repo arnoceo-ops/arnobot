@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow } from './db'
 import {
   MoneybirdError, boekTerugbetaling, creditBedragregel, creditMailTekst, haalFactuur, maakCreditConcept, moneybirdIngeschakeld,
-  verstuurFactuur, zetCreditBedrag, zoekFacturenOpReferentie, type MbCreditfactuur,
+  verstuurFactuur, zetCreditBedrag, zoekFacturenOpReferentie, zoekFacturenVanContact, type MbCreditfactuur,
 } from './moneybird'
 import { schakelaarAan } from './referralSchakelaars'
 import { isTeamDoel, leesDoel } from './referralDoel'
@@ -80,11 +80,17 @@ async function claim(a: Actie, nu: Date): Promise<boolean> {
  * maken en versturen we niets. Niet te zien: een met de hand gemaakte creditnota waarvan de referentie is aangepast.
  */
 async function eisGeenOnbekendeCredit(a: Actie, factuurId: string, betaalkenmerk: string): Promise<void> {
-  // Een nieuwe creditnota neemt de referentie van de factuur over. Bij een eigen betaling is dat het Mollie-kenmerk, bij
-  // een teamfactuur de teamnaam met de periode: die staat alleen op de factuur zelf.
-  const referentie = isTeamDoel(a) ? (await haalFactuur(factuurId)).reference : betaalkenmerk
-  if (!referentie) throw new Handwerk('de factuur in Moneybird heeft geen referentie: niet te controleren of er al een creditnota is')
-  const opFactuur = (await zoekFacturenOpReferentie(referentie)).filter(f => f.original_sales_invoice_id === factuurId)
+  // Een nieuwe creditnota neemt de referentie van de factuur over. Bij een eigen betaling is dat het Mollie-kenmerk. Op de
+  // referentie van een teamfactuur is niet te zoeken, dus daar kijken we alles van die klant na.
+  let kandidaten: MbCreditfactuur[]
+  if (isTeamDoel(a)) {
+    const contactId = (await haalFactuur(factuurId)).contact_id
+    if (!contactId) throw new Handwerk('de factuur in Moneybird heeft geen klant: niet te controleren of er al een creditnota is')
+    kandidaten = await zoekFacturenVanContact(contactId)
+  } else {
+    kandidaten = await zoekFacturenOpReferentie(betaalkenmerk)
+  }
+  const opFactuur = kandidaten.filter(f => f.original_sales_invoice_id === factuurId)
   if (!opFactuur.length) return
   const { data, error } = await billingDb.from('arnobot_referral_acties').select('id, credit_id').eq('doel_id', a.doel_id)
   if (error) throw new Error(`referralacties ophalen mislukt: ${error.message}`)

@@ -76,7 +76,13 @@ describe('terugbetaling en terugboeking van een teamfactuur', () => {
     h.rijen = [factuur({ referral_refund_cent: 2299, terugbetaald_cent: 2299 })]
     await verwerk(betaling({ amountRefunded: eur('296.45') }))
     expect(h.rijen[0]).toMatchObject({ status: 'refunded' })
-    expect(String(h.tg.mock.calls[0][0])).toContain('crediteer alleen de rest')
+    expect(String(h.tg.mock.calls[0][0])).toContain('als referralgeld geboekt')
+  })
+  it('de reservering is vrijgegeven na een volledige terugbetaling: bij dezelfde bedragen alsnog teruggedraaid', async () => {
+    h.rijen = [factuur({ referral_refund_cent: 0, terugbetaald_cent: 29645 })]
+    await verwerk(betaling({ amountRefunded: eur('296.45') }))
+    expect(h.rijen[0]).toMatchObject({ status: 'refunded' })
+    expect(h.tg).toHaveBeenCalledTimes(1)
   })
   it('gedeeltelijk terugbetaald: bedrag vastgelegd, factuur blijft betaald', async () => {
     await verwerk(betaling({ amountRefunded: eur('50.00') }))

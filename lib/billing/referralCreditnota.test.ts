@@ -36,7 +36,9 @@ vi.mock('./moneybird', async origineel => {
       if (!vind(id)) throw new echt.MoneybirdError(404, 'weg')
       return kopie(vind(id))
     },
-    zoekFacturenOpReferentie: async (ref: string) => { mis('zoek'); return kopie(h.facturen.filter(f => f.reference === ref)) },
+    // Zoals Moneybird: op een referentie met een komma komt er niets terug.
+    zoekFacturenOpReferentie: async (ref: string) => { mis('zoek'); return kopie(ref.includes(',') ? [] : h.facturen.filter(f => f.reference === ref)) },
+    zoekFacturenVanContact: async (id: string) => { mis('zoek'); return kopie(h.facturen.filter(f => f.contact_id === id)) },
     maakCreditConcept: async (origineelId: string) => {
       mis('maak')
       const o = vind(origineelId)
@@ -252,5 +254,31 @@ describe('hervatten na een afgebroken run', () => {
     expect(await creditnotaStap(oud, NU)).toBe('handwerk')
     expect(h.mails).toEqual([])
     expect(creditnotas()).toHaveLength(1)
+  })
+})
+
+describe('teamfactuur', () => {
+  const zaaiTeam = async () => {
+    await zaai({ actie: { doel_soort: 'teamfactuur', doel_id: 'f1' } })
+    await h.db.zaai({
+      arnobot_teams: [{ id: 't1', manager_id: 'u' }],
+      arnobot_team_facturen: [{ id: 'f1', team_id: 't1', status: 'paid', soort: 'regulier', bedrag_cent: 22800, btw_cent: 3957, mollie_payment_id: 'tr_x', moneybird_factuur_id: 'orig' }],
+      approved_users: [{ user_id: 'u', voornaam: 'Test' }],
+      arnobot_referral_acties: [await actie()],
+    })
+    Object.assign(h.facturen[0], { reference: 'Proefteam, periode 1 januari tot 1 februari', contact_id: 'c1' })
+  }
+  it('maakt de creditnota en mailt haar: een team is zakelijk', async () => {
+    await zaaiTeam()
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toHaveLength(1)
+    expect(h.mails).toHaveLength(1)
+  })
+  it('ziet een onbekende creditnota ondanks de komma in de referentie: geen tweede', async () => {
+    await zaaiTeam()
+    h.facturen.push({ id: 'hand', state: 'draft', reference: h.facturen[0].reference, contact_id: 'c1', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas()).toHaveLength(1)
+    expect(h.mails).toHaveLength(0)
   })
 })

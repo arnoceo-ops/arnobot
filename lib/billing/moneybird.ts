@@ -352,6 +352,7 @@ export interface MbCreditfactuur {
   reference: string | null
   total_price_incl_tax: string
   original_sales_invoice_id: string | null
+  contact_id?: string | null
   details: { id: string; amount: string | null }[]
   payments: { transaction_identifier: string | null }[]
 }
@@ -363,6 +364,14 @@ export async function haalFactuur(id: string): Promise<MbCreditfactuur> {
 /** Moneybird zoekt alleen op de HELE referentie, niet op een deel ervan. */
 export async function zoekFacturenOpReferentie(referentie: string): Promise<MbCreditfactuur[]> {
   return mb(`/sales_invoices.json?filter=${encodeURIComponent(`reference:${referentie}`)}`)
+}
+
+/**
+ * Alle facturen en creditnota's van een klant, nieuwste eerst. Zonder periodefilter komen alle jaren terug (gemeten in de
+ * sandbox, 26-11-2026). Voor teams: hun referentie bevat een komma, en die scheidt in Moneybird twee filters.
+ */
+export async function zoekFacturenVanContact(contactId: string): Promise<MbCreditfactuur[]> {
+  return mb(`/sales_invoices.json?filter=${encodeURIComponent(`contact_id:${contactId}`)}&per_page=100`)
 }
 
 /** Een concept dat de hele factuur crediteert. Het bedrag wordt daarna met zetCreditBedrag aangepast. */

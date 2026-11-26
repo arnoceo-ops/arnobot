@@ -11,7 +11,8 @@ export const isTeamDoel = (a: { doel_soort: string }) => a.doel_soort === 'teamf
 /** `soort`: een tussentijdse factuur is als een bijbetaling bij een upgrade en dus nooit een verlenging. */
 export function factuurAlsBetaling(f: TeamFactuurRow, userId: string): Betaling {
   return {
-    id: f.id, user_id: userId, subscription_id: null, mollie_payment_id: f.mollie_payment_id ?? '',
+    // Bij een dubbele betaling krijgt een bankfactuur het kenmerk van de Mollie-betaling die terug moet: daar niet op bouwen.
+    id: f.id, user_id: userId, subscription_id: null, mollie_payment_id: f.paid_via === 'bank' ? '' : f.mollie_payment_id ?? '',
     soort: f.soort === 'tussentijds' ? 'upgrade' : 'eerste', status: f.status, bedrag_cent: f.bedrag_cent, btw_cent: f.btw_cent,
     terugbetaald_cent: f.terugbetaald_cent ?? 0, teruggeboekt_cent: f.teruggeboekt_cent ?? 0, referral_refund_cent: f.referral_refund_cent ?? 0,
     referral_bank_cent: 0, betaald_at: f.betaald_at, terugbetaling_verwerkt_at: f.reversed_at ?? null, moneybird_factuur_id: f.moneybird_factuur_id,
