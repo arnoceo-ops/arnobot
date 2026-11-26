@@ -5,6 +5,7 @@ import { abonnementVoorOverstap } from './perioden'
 import { berekenBedrag, planNaam, type Bedrag, type Cyclus, type Plan } from './prijzen'
 import { berekenUpgradeBedrag } from './upgradeBedrag'
 import { heeftOpenstaandeBetaling } from './openstaandeBetaling'
+import { CORRECTIE_OPEN_UREN } from './klanttypeOmzetten'
 import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { VEILIG_TERUGSTORTEN, voordeelGebruikt } from './referralSignalen'
@@ -201,13 +202,15 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
   const periodeEinde = new Date(sub.periode_einde)
   if (periodeEinde.getTime() <= nu.getTime()) return weiger(409, 'Je betaalperiode is afgelopen. Rond eerst je betaling af.')
 
-  const { data: correctie } = await billingDb
+  const { data: correcties } = await billingDb
     .from('arnobot_klanttype_correcties')
-    .select('id')
+    .select('status, abonnement_omgezet_at, created_at')
     .eq('subscription_id', sub.id)
-    .eq('status', 'open')
-    .limit(1)
-  if (correctie?.length) return weiger(409, 'Er staat nog een correctie open. Rond die eerst af.')
+    .limit(20)
+  const openVanaf = nu.getTime() - CORRECTIE_OPEN_UREN * 60 * 60 * 1000
+  const correctieOpen = (correcties ?? []).some(c => !c.abonnement_omgezet_at
+    && (c.status === 'paid' || !c.created_at || Date.parse(c.created_at as string) > openVanaf))
+  if (correctieOpen) return weiger(409, 'Er staat nog een correctie open. Rond die eerst af.')
 
   // Controles bij Mollie: machtiging, status van het abonnement en de echte volgende incassodatum.
   let ingang: Date | null = null

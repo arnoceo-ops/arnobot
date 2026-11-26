@@ -14,6 +14,8 @@ import { isTeamCovered } from '@/lib/teamAccess'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { controleerKoppelingen } from '@/lib/billing/gezondheid'
 import { pushActief } from '@/lib/adminPush'
+import { rondOpenstaandeCorrectiesAf } from '@/lib/billing/klanttypeCorrectie'
+import { controleerAbonnementsBedragen } from '@/lib/billing/bedragControle'
 import { moetAfsluitingUitstellen, WACHT_OP_BETALING_DAGEN } from '@/lib/billing/openstaandeBetaling'
 
 const iso = (d: Date) => d.toISOString()
@@ -25,6 +27,7 @@ const MIN_MS = 60 * 1000
 //  3. opgezegde abonnementen stopzetten zodra er niets meer verschuldigd is
 //  4. verlengherinneringen (particulier, 30 en 7 dagen vóór het einde)
 //  5. verlopen abonnementen afsluiten en de afscheidsmail sturen
+//  6. bedrag van de lopende Mollie-abonnementen vergelijken met de database
 async function cronHandler(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -46,7 +49,7 @@ async function cronHandler(req: NextRequest) {
     console.error('[cron/billing] koppelingscheck', e instanceof Error ? e.message : e)
   }
 
-  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, wachtOpBetaling: 0, fouten: 0 }
+  const samenvatting = { betalingenOpnieuw: 0, terugbetalingen: 0, facturen: 0, abonnementenHersteld: 0, abonnementenGestopt: 0, herinneringen: 0, afgesloten: 0, wachtOpBetaling: 0, bedragAfwijkingen: 0, fouten: 0 }
   try {
     const nu = new Date()
 
@@ -78,6 +81,15 @@ async function cronHandler(req: NextRequest) {
       for (const r of (rijen ?? []).filter(r => !isInternalTestUser(r.user_id))) {
         if (isVolledigTerugbetaald(r, perBetaling.get(r.mollie_payment_id) ?? 0) && (await markeerTerugbetaald(r.id))) samenvatting.terugbetalingen++
       }
+    }
+
+    // 1d. Betaalde particulier-naar-zakelijk-correcties die nog niet zijn omgezet, en gemiste meldingen daarvan.
+    // Een fout hier mag de rest van de ronde niet tegenhouden.
+    try {
+      samenvatting.fouten += (await rondOpenstaandeCorrectiesAf(nu)).fouten
+    } catch (e) {
+      samenvatting.fouten++
+      console.error('[cron/billing] klanttype-correcties', e instanceof Error ? e.message : e)
     }
 
     // 1c. Betalingen die verwerkt zijn maar nog geen Moneybird-factuur hebben (alleen actief
@@ -177,6 +189,15 @@ async function cronHandler(req: NextRequest) {
         samenvatting.fouten++
         console.error('[cron/billing] abonnement', s.id, e instanceof Error ? e.message : e)
       }
+    }
+
+    // 6. Klopt het bedrag van elk lopend Mollie-abonnement met onze database? Opnieuw ophalen: hierboven kan iets zijn
+    // gewijzigd.
+    try {
+      samenvatting.bedragAfwijkingen = await controleerAbonnementsBedragen()
+    } catch (e) {
+      samenvatting.fouten++
+      await notifyTelegram(`Bedragcontrole van de abonnementen mislukt op arno.bot\n\n${e instanceof Error ? e.message : e}`)
     }
 
     return NextResponse.json({ ok: true, ...samenvatting })

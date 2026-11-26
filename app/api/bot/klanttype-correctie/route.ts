@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { vindTeCorrigerenAbonnement, startKlanttypeCorrectie } from '@/lib/billing/klanttypeCorrectie'
-import { berekenBedrag, planNaam } from '@/lib/billing/prijzen'
+import { planNaam } from '@/lib/billing/prijzen'
+import { zakelijkBedragVan } from '@/lib/billing/klanttypeOmzetten'
 import { redenGeenZelfCorrectie } from '@/lib/billing/referralKorting'
 import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from '@/lib/billing/btwNummer'
 
@@ -16,7 +17,7 @@ export async function GET() {
   if (!gevonden) return NextResponse.json({ abonnement: null })
 
   const { sub } = gevonden
-  const zakelijkBedrag = berekenBedrag(sub.plan, sub.cyclus, 'zakelijk')
+  const zakelijkBedrag = zakelijkBedragVan(sub.bedrag_cent)
   const verschilCent = zakelijkBedrag.brutoCent - sub.bedrag_cent
   return NextResponse.json({
     abonnement: {

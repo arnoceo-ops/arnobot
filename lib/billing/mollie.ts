@@ -64,6 +64,7 @@ export interface MollieSubscription {
   id: string
   status: 'pending' | 'active' | 'canceled' | 'suspended' | 'completed'
   nextPaymentDate?: string | null
+  amount?: MollieAmount
 }
 
 export interface MollieMandate {
@@ -290,6 +291,8 @@ export async function maakBetaalLink(input: {
   /** Welke webhook de statusupdates van betalingen via deze link ontvangt. */
   webhookUrl: string
   idempotencyKey: string
+  /** Daarna is de link niet meer te betalen (docs.mollie.com/reference/create-payment-link, alleen bij aanmaken). */
+  verlooptOp?: Date
 }): Promise<MolliePaymentLink> {
   const res = await mollie<{ id: string; _links?: { paymentLink?: { href: string } } }>('/payment-links', {
     method: 'POST',
@@ -299,6 +302,7 @@ export async function maakBetaalLink(input: {
       description: input.omschrijving,
       redirectUrl: input.redirectUrl,
       webhookUrl: input.webhookUrl,
+      ...(input.verlooptOp ? { expiresAt: input.verlooptOp.toISOString().replace(/\.\d{3}Z$/, '+00:00') } : {}),
     },
   })
   // Mollie geeft de betaalpagina als _links.paymentLink.href, er is geen `url`-veld.

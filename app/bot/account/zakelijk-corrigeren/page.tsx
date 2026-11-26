@@ -124,6 +124,8 @@ export default function ZakelijkCorrigerenPage() {
                 </div>
               </div>
 
+              <p style={{ ...body, fontSize: 14 }}>Als zakelijke klant heb je een opzegtermijn van één maand en geen 14 dagen bedenktijd.</p>
+
               <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 24, fontSize: 14, color: '#94a3b8' }}>
                 <input type="checkbox" checked={akkoord} onChange={e => setAkkoord(e.target.checked)} />
                 <span>Ik betaal het verschil van {formatEuro(abonnement.verschilCent)} om mijn abonnement te corrigeren naar zakelijk.</span>

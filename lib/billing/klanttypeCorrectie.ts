@@ -12,7 +12,8 @@ import {
   zoekOfMaakContact,
 } from './moneybird'
 import { verstuurBillingMail } from './mails'
-import { berekenBedrag } from './prijzen'
+import { controleerStart, zakelijkBedragVan, zetAbonnementZakelijk } from './klanttypeOmzetten'
+import { nieuwMelden } from '@/lib/capaciteit'
 import { redenGeenZelfCorrectie } from './referralKorting'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -41,6 +42,12 @@ export interface KlanttypeCorrectieRow {
   postcode: string
   plaats: string
   moneybird_factuur_id: string | null
+  /** Het zakelijke abonnementsbedrag, vastgelegd bij het starten. */
+  nieuw_bedrag_cent: number
+  nieuw_btw_cent: number
+  nieuw_mollie_subscription_id: string | null
+  abonnement_omgezet_at: string | null
+  created_at: string
 }
 
 /** De meest recente betaalde particuliere factuur van de gebruiker, met het te crediteren Moneybird-id. */
@@ -72,25 +79,28 @@ export async function vindTeCorrigerenAbonnement(userId: string): Promise<{ sub:
  * of betaallink-id (pl_), `hintRijId` het `?r=` uit onze eigen webhook-URL. Beide dienen alleen
  * om de rij te vinden: de betaling zelf wordt bij Mollie bevestigd als betaald en als horend
  * bij de betaallink van déze correctie (die staat in `mollie_payment_id`).
+ * Elke databasefout gooit: de webhook geeft dan 500 en Mollie probeert het opnieuw.
  */
 export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: string | null): Promise<void> {
   let rij: KlanttypeCorrectieRow | null = null
   if (webhookId.startsWith('pl_')) {
-    const { data } = await billingDb
+    const { data, error } = await billingDb
       .from('arnobot_klanttype_correcties')
       .select('*')
       .eq('mollie_payment_id', webhookId)
       .maybeSingle<KlanttypeCorrectieRow>()
+    if (error) throw new Error(`correctie opzoeken mislukt: ${error.message}`)
     rij = data
   } else if (hintRijId) {
-    const { data } = await billingDb
+    const { data, error } = await billingDb
       .from('arnobot_klanttype_correcties')
       .select('*')
       .eq('id', hintRijId)
       .maybeSingle<KlanttypeCorrectieRow>()
+    if (error) throw new Error(`correctie opzoeken mislukt: ${error.message}`)
     rij = data
   }
-  if (!rij || rij.status === 'paid' || !rij.mollie_payment_id) return
+  if (!rij || !rij.mollie_payment_id || rij.abonnement_omgezet_at) return
 
   const mp = await betaaldeBetalingVanLink(rij.mollie_payment_id, webhookId)
   if (!mp) return
@@ -99,29 +109,83 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     return
   }
 
-  const { data: geclaimd } = await billingDb
-    .from('arnobot_klanttype_correcties')
-    .update({ status: 'paid', betaald_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('id', rij.id)
-    .eq('status', 'open')
-    .select('id')
-  if ((geclaimd?.length ?? 0) !== 1) return
+  if (rij.status === 'open') {
+    const { data: geclaimd, error } = await billingDb
+      .from('arnobot_klanttype_correcties')
+      .update({ status: 'paid', betaald_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('id', rij.id)
+      .eq('status', 'open')
+      .select('id')
+    if (error) throw new Error(`betaalde correctie niet vastgelegd: ${error.message}`)
+    // Een gelijktijdige aanroep is ermee bezig.
+    if ((geclaimd?.length ?? 0) !== 1) return
+  }
 
-  const { data: sub } = await billingDb
+  await rondCorrectieAf(rij, mp.id)
+}
+
+/** Vinkt de correctie af. Alleen wie dit als eerste doet, mag factureren en mailen. */
+async function vinkOmgezetAf(rijId: string): Promise<boolean> {
+  const { data, error } = await billingDb
+    .from('arnobot_klanttype_correcties')
+    .update({ abonnement_omgezet_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', rijId)
+    .is('abonnement_omgezet_at', null)
+    .select('id')
+  if (error) throw new Error(`correctie niet afgevinkt: ${error.message}`)
+  return (data?.length ?? 0) === 1
+}
+
+/** Het vervolg op een betaalde correctie: abonnement omzetten, daarna een keer factureren en mailen. */
+async function rondCorrectieAf(rij: KlanttypeCorrectieRow, betaalId: string): Promise<void> {
+  const { data: eerder, error: eerderFout } = await billingDb
+    .from('arnobot_klanttype_correcties')
+    .select('id')
+    .eq('subscription_id', rij.subscription_id)
+    .not('abonnement_omgezet_at', 'is', null)
+    .limit(1)
+  if (eerderFout) throw new Error(`eerdere correcties opzoeken mislukt: ${eerderFout.message}`)
+  if (eerder?.length) {
+    if (await vinkOmgezetAf(rij.id)) {
+      await notifyTelegram(`Klanttype-correctie dubbel betaald op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nBedrag: €${(rij.verschil_cent / 100).toFixed(2)}\nHet abonnement was al omgezet. Stort deze betaling terug.`)
+    }
+    return
+  }
+
+  const uitkomst = await zetAbonnementZakelijk(rij)
+  if (uitkomst.stand === 'wacht') {
+    if (await nieuwMelden(`klanttype:wacht:${rij.id}`, 'waarschuwing')) {
+      await notifyTelegram(`Klanttype-correctie betaald, nog niet omgezet op arno.bot\n\nUser: ${rij.user_id}\nReden: ${uitkomst.reden}\nDe billing-cron probeert het dagelijks opnieuw. Er is nog niet gefactureerd.`)
+    }
+    return
+  }
+  if (!(await vinkOmgezetAf(rij.id))) return
+
+  const { data: sub, error: subFout } = await billingDb
     .from('arnobot_subscriptions')
     .select('*')
     .eq('id', rij.subscription_id)
     .maybeSingle<SubRow>()
-  if (!sub) return
+  if (subFout || !sub) {
+    await notifyTelegram(`Klanttype-correctie omgezet, niet gefactureerd op arno.bot\n\nUser: ${rij.user_id}\nRond de factuur en creditnota met de hand af in Moneybird.`)
+    return
+  }
 
-  const nieuweBedrag = berekenBedrag(sub.plan, sub.cyclus, 'zakelijk')
+  const nettoCent = rij.nieuw_bedrag_cent - rij.nieuw_btw_cent
+  const oudBedragCent = rij.nieuw_bedrag_cent - rij.verschil_cent
 
-  // Boekhouding en abonnement meteen bijwerken, ongeacht of de Moneybird-facturering lukt:
-  // de betaling is binnen, de klant is nu zakelijk.
-  await billingDb
-    .from('arnobot_subscriptions')
-    .update({ klant_type: 'zakelijk', bedrag_cent: nieuweBedrag.brutoCent, btw_cent: nieuweBedrag.btwCent, updated_at: new Date().toISOString() })
-    .eq('id', sub.id)
+  // Ging er tussen het starten en het omzetten nog een incasso af, dan was die op het particuliere bedrag.
+  const { data: tussendoor } = await billingDb
+    .from('arnobot_payments')
+    .select('id')
+    .eq('subscription_id', rij.subscription_id)
+    .eq('soort', 'herhaling')
+    .eq('status', 'paid')
+    .gt('created_at', rij.created_at)
+    .limit(1)
+  if (tussendoor?.length) {
+    await notifyTelegram(`Klanttype-correctie: tussendoor geïncasseerd op arno.bot\n\nUser: ${rij.user_id}\nTussen het starten en het omzetten is nog een betaling op het particuliere bedrag gedaan. Controleer de factuur en het verschil met de hand.`)
+  }
 
   const { data: bestaandeKlant } = await billingDb
     .from('arnobot_billing_customers')
@@ -141,7 +205,7 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     ? bewaardeKlant
     : (gebruiker?.email ? (await maakKlant({ naam: rij.bedrijfsnaam, email: gebruiker.email, userId: rij.user_id, vervangt: bewaardeKlant })).id : null)
 
-  await billingDb.from('arnobot_billing_customers').upsert(
+  const { error: klantFout } = await billingDb.from('arnobot_billing_customers').upsert(
     {
       user_id: rij.user_id,
       ...(mollieKlantId ? { mollie_customer_id: mollieKlantId } : {}),
@@ -156,6 +220,7 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     },
     { onConflict: 'user_id' },
   )
+  if (klantFout) await notifyTelegram(`Klanttype-correctie: bedrijfsgegevens niet opgeslagen op arno.bot\n\nUser: ${rij.user_id}\nFout: ${klantFout.message}`)
 
   await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nUser: ${rij.user_id}\nBedrijf: ${rij.bedrijfsnaam}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
 
@@ -182,9 +247,9 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     if (oudeBetaling?.moneybird_factuur_id) {
       await maakCreditnota(oudeBetaling.moneybird_factuur_id, {
         terugbetalingRegistreren: false,
-        brutoCent: sub.bedrag_cent,
+        brutoCent: oudBedragCent,
         betaaldOp: new Date(),
-        mollieId: rij.mollie_payment_id ?? mp.id,
+        mollieId: rij.mollie_payment_id ?? betaalId,
         voornaam: gebruiker.voornaam,
         mailen: true,
       })
@@ -209,8 +274,8 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
       periodeStart,
       periodeEinde,
       factuurDatum: new Date(),
-      brutoCent: nieuweBedrag.brutoCent,
-      nettoCent: nieuweBedrag.nettoCent,
+      brutoCent: rij.nieuw_bedrag_cent,
+      nettoCent,
       inclusiefBtw: false,
       taxRateId: await btwTariefId(),
       ledgerAccountId: await omzetGrootboekId(),
@@ -225,11 +290,11 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
 
   await verstuurBillingMail(rij.user_id, 'betaling_bevestiging', {
     planNaam: `${sub.plan === 'premium' ? 'Pro' : 'Basic'} (zakelijk)`,
-    bedragCent: nieuweBedrag.brutoCent,
-    btwCent: nieuweBedrag.btwCent,
+    bedragCent: rij.nieuw_bedrag_cent,
+    btwCent: rij.nieuw_btw_cent,
     datum: sub.periode_einde ?? new Date().toISOString(),
     eerste: false,
-    betaalId: mp.id,
+    betaalId,
   })
 }
 
@@ -245,9 +310,18 @@ export async function startKlanttypeCorrectie(input: {
   postcode: string
   plaats: string
 }): Promise<{ checkoutUrl: string } | { fout: string }> {
-  const nieuweBedrag = berekenBedrag(input.sub.plan, input.sub.cyclus, 'zakelijk')
+  const nieuweBedrag = zakelijkBedragVan(input.sub.bedrag_cent)
   const verschilCent = nieuweBedrag.brutoCent - input.sub.bedrag_cent
   if (verschilCent <= 0) return { fout: 'Er is geen verschil te corrigeren voor dit abonnement' }
+
+  let controle: Awaited<ReturnType<typeof controleerStart>>
+  try {
+    controle = await controleerStart(input.sub)
+  } catch (e) {
+    Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-controle' } })
+    return { fout: 'Dat lukt nu even niet. Probeer het later opnieuw.' }
+  }
+  if (!controle.ok) return { fout: controle.fout }
 
   const { data: rij, error } = await billingDb
     .from('arnobot_klanttype_correcties')
@@ -255,7 +329,9 @@ export async function startKlanttypeCorrectie(input: {
       user_id: input.userId,
       subscription_id: input.sub.id,
       verschil_cent: verschilCent,
-      btw_cent: nieuweBedrag.btwCent - input.payment.btw_cent,
+      btw_cent: Math.max(0, nieuweBedrag.btwCent - input.payment.btw_cent),
+      nieuw_bedrag_cent: nieuweBedrag.brutoCent,
+      nieuw_btw_cent: nieuweBedrag.btwCent,
       bedrijfsnaam: input.bedrijfsnaam,
       kvk_nummer: input.kvkNummer,
       btw_nummer: input.btwNummer,
@@ -274,11 +350,50 @@ export async function startKlanttypeCorrectie(input: {
       redirectUrl: `${SITE_URL}/bot/account/zakelijk-corrigeren?betaling=terug`,
       webhookUrl: `${SITE_URL}/api/webhooks/mollie-correctie?r=${rij.id}`,
       idempotencyKey: `correctie-${rij.id}`,
+      verlooptOp: controle.linkVerlooptOp,
     })
-    await billingDb.from('arnobot_klanttype_correcties').update({ mollie_payment_id: link.id }).eq('id', rij.id)
+    const { error: linkFout } = await billingDb.from('arnobot_klanttype_correcties').update({ mollie_payment_id: link.id }).eq('id', rij.id)
+    // Zonder opgeslagen link is een betaling nooit aan deze correctie te koppelen.
+    if (linkFout) throw new Error(`betaallink niet opgeslagen: ${linkFout.message}`)
     return { checkoutUrl: link.url }
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-start' } })
     return { fout: 'Betaling starten is niet gelukt, probeer het later opnieuw of mail admin@arno.bot' }
   }
+}
+
+/** Zo lang kijkt de billing-cron nog of een onbetaalde correctie toch betaald is (gemiste webhook). */
+const NAKIJKEN_DAGEN = 14
+
+/**
+ * Dagelijks vangnet: rondt betaalde maar nog niet omgezette correcties af en haalt een gemiste webhook in. Zonder de
+ * tabel (SQL nog niet uitgevoerd) gebeurt er niets.
+ */
+export async function rondOpenstaandeCorrectiesAf(nu: Date = new Date()): Promise<{ nagekeken: number; fouten: number }> {
+  const uit = { nagekeken: 0, fouten: 0 }
+  const { data, error } = await billingDb
+    .from('arnobot_klanttype_correcties')
+    .select('*')
+    .is('abonnement_omgezet_at', null)
+    .not('mollie_payment_id', 'is', null)
+    .limit(100)
+    .returns<KlanttypeCorrectieRow[]>()
+  if (error) {
+    if (!/does not exist|schema cache/i.test(error.message)) throw new Error(`open correcties ophalen mislukt: ${error.message}`)
+    return uit
+  }
+  const vers = nu.getTime() - NAKIJKEN_DAGEN * 24 * 60 * 60 * 1000
+  for (const rij of (data ?? []).filter(r => r.status === 'paid' || Date.parse(r.created_at) > vers)) {
+    try {
+      uit.nagekeken++
+      await verwerkKlanttypeCorrectie(rij.mollie_payment_id!, null)
+    } catch (e) {
+      uit.fouten++
+      Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-inhalen' }, extra: { correctieId: rij.id } })
+      if (rij.status === 'paid' && (await nieuwMelden(`klanttype:fout:${rij.id}`, 'waarschuwing'))) {
+        await notifyTelegram(`Klanttype-correctie afronden mislukt op arno.bot\n\nUser: ${rij.user_id}\nFout: ${e instanceof Error ? e.message : e}`)
+      }
+    }
+  }
+  return uit
 }

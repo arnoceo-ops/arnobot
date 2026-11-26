@@ -90,6 +90,10 @@ Geen blokkerende bevindingen. H1 t/m H5 en H7 opgelost, H6 deels (N1).
 4. Dagelijkse controle in de billing-cron: bedrag van elk lopend en gepland Mollie-abonnement gelijk aan de database, anders Telegram.
 5. Tests, SQL (bestaande migratie plus de nieuwe kolom), proef in Mollie testmodus (eerst vragen), onafhankelijke controle.
 
+**N5 gebouwd op 26-11 (akkoord Arno op plan en teksten).** lib/billing/klanttypeOmzetten.ts, lib/billing/klanttypeCorrectie.ts, lib/billing/bedragControle.ts, stap 1d en 6 in de billing-cron. 1486 tests groen. Nog niet onafhankelijk gecontroleerd en niet in Mollie beproefd. SQL: docs/sql/2026-11-26-klanttype-correctie-omzetten.sql, **nog niet uitvoeren** (pas na de controle; daarmee staat de functie aan). Aanvullingen op het plan: het zakelijke bedrag komt uit het eigen abonnement (niet uit de prijslijst, zodat een prijswijziging bestaande klanten niet raakt); er wordt pas gefactureerd als het abonnement is omgezet; een onbetaalde correctie blokkeert overstappen en upgraden nog 48 uur (voorheen voor altijd); een tweede betaalde correctie geeft een melding om terug te storten. Betaallink verloopt via expiresAt (https://docs.mollie.com/reference/create-payment-link, gelezen 26-11; de docs zeggen niets over een betaling die net voor het verlopen start).
+
+**Proef in testmodus (nog te doen, eerst Arno vragen):** accepteert Mollie expiresAt in dit formaat; mag een nieuw abonnement starten op de nextPaymentDate van het oude en geeft Mollie daarna dezelfde nextPaymentDate terug (de code leunt daarop bij het hervatten); stoppen en bevestigen van het oude.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**
