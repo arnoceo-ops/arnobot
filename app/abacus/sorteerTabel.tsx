@@ -44,11 +44,11 @@ export function SorteerKop<K extends string>({ kolom, label, tekst = false, stij
       <button
         type="button"
         onClick={() => onKlik(kolom)}
-        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', textAlign: 'inherit', color: actief ? '#f59e0b' : 'inherit' }}
+        style={{ position: 'relative', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', textAlign: 'inherit', color: actief ? '#f59e0b' : 'inherit' }}
       >
         {label}
-        {/* Altijd aanwezig, zodat de kolombreedte niet verspringt bij het klikken. */}
-        <span aria-hidden="true" style={{ visibility: actief ? 'visible' : 'hidden', marginLeft: 3 }}>{omhoog ? '↑' : '↓'}</span>
+        {/* Het pijltje staat in de celmarge en neemt geen ruimte in: de kop lijnt zo gelijk uit met de waarden en verspringt niet bij het klikken. Bij getallen links van de kop, bij tekst rechts. */}
+        {actief && <span aria-hidden="true" style={{ position: 'absolute', top: 0, ...(tekst ? { left: '100%' } : { right: '100%' }) }}>{omhoog ? '↑' : '↓'}</span>}
       </button>
     </th>
   )
