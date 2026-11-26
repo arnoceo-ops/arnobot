@@ -2,6 +2,89 @@
 
 Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat deze keuzes opnieuw ter discussie komen. Wijzigingen hier alleen na expliciet nieuw besluit van Arno.
 
+## Voorstel nieuwe tarieven (2026-11-26, NOG NIET INGEVOERD)
+
+**Status:** voorstel. De tarieven onder "Tiers en bedragen" hieronder gelden nog. Code, Abacus en `/prijzen` zijn niet aangepast. Invoeren gebeurt pas na een expliciet besluit van Arno.
+
+### Tarieven
+
+| | Per maand | Jaarabonnement, per maand | Per jaar |
+|---|---:|---:|---:|
+| Basic (ongewijzigd) | €29 | €19 | €228 |
+| Pro, solo en teamlid | €49 | €33 | €396 |
+| Teammanager, inclusief eigen Pro | €97 | €77 | €924 |
+
+### Teamregels
+
+- De manager zit in de €97 (of €77) en betaalt dus geen apart Pro-bedrag. Nu telt de code de manager mee als betalende gebruiker.
+- Een team is een manager plus **minimaal 3 teamleden**. Kleinste team: €244 per maand, of €176 per maand bij een jaarabonnement. De formulering "3 gebruikers inclusief manager" willen we nergens meer zien.
+- Tekst voor kleinere teams: "Team is er vanaf een manager en 3 teamleden. Begin je kleiner, bijvoorbeeld als startup met 2 teamleden? Neem dan contact op via team@arno.bot."
+- Open: hoe een uitzondering geprijsd wordt. Advies: de gewone formule (2 teamleden is €195, of €143 bij een jaarabonnement), dus alleen een uitzondering op het minimum.
+
+### Waarom
+
+Eén Pro-prijs voor iedereen, en daarbovenop een managerbedrag. Een team kost altijd meer dan hetzelfde aantal keer Pro solo: €48 per maand, of €44 bij een jaarabonnement. Arno verwacht dat vooral solo-gebruikers Pro nu te duur vinden naast Basic, en rekent daarom op meer upgrades en meer Pro-klanten. Dat is een verwachting, niet gemeten.
+
+### Verworpen varianten
+
+| Variant (leiderschap + per teamlid; maand / jaarabonnement) | Waarom niet |
+|---|---|
+| €77 + €39 / €77 + €39 | Geen jaarkorting meer voor teams |
+| €77 + €39 / €61 + €31 | Teamlid goedkoper dan Pro solo op jaarbasis |
+| €77 + €39 / €67 + €33 | Pro per maand niet gelijk voor solo (€49) en teamlid (€39) |
+| €77 + €49 / €67 + €33 | Het managerbedrag blijft liever op €97 en €77 |
+| €97 + €49 / €77 + €33, manager betaalt daarnaast eigen Pro | De manager hoort in de €97 te zitten |
+| Minimum 3 gebruikers inclusief manager (eerste advies) | Arno kiest manager plus minimaal 3 teamleden |
+
+### Doorrekening
+
+Berekend met de formules uit `lib/kostenTarieven.ts`, buiten Abacus om. Aannames: 250 solo users (80% Basic, 20% Pro; 40% van Basic en 10% van Pro op jaarbasis), 5 teams van een manager plus 4 teamleden, 20% van de teams op jaarbasis, wisselkoers 1,0949 dollar per euro (26 november 2026).
+
+| | Huidig | Voorstel |
+|---|---:|---:|
+| Omzet solo | €7.850 | €7.370 |
+| Omzet team | €1.640 | €1.381 |
+| Omzet totaal | €9.490 | €8.751 |
+| Kosten totaal | €2.144 | €2.142 |
+| Marge | 77% | 76% |
+| Winst per maand | €7.346 | €6.609 |
+
+Voor dezelfde winst: **282 solo users** (307 inclusief team) bij gelijkblijvende teams. Een team van 5 gaat van €342 naar €293 per maand, en van €272 naar €209 bij een jaarabonnement.
+
+Aandeel Pro, met dezelfde overige aannames:
+
+| Aandeel Pro | Winst bij 250 solo users | Winst bij 300 solo users |
+|---|---:|---:|
+| 20% | €6.609 | €7.780 |
+| 30% | €7.144 | €8.422 |
+| 40% | €7.049 | €8.433 |
+| 50% | €7.584 | €9.076 |
+
+Bij 250 solo users is de huidige winst terug bij ongeveer 34% Pro, **alleen zolang de kostensprong hieronder niet is bereikt**. Reageert alleen de vraag naar Pro, dan zijn 69 in plaats van 50 solo Pro-klanten nodig (+38%).
+
+### Eerst controleren: kostensprong door spraak
+
+Boven 120 gebruikers met Pro-niveau (solo Pro plus iedereen in een team) gaat Abacus voor ElevenLabs van het pakket van $299 naar $990 per maand. Met 25 teamgebruikers is dat vanaf 96 solo Pro. Dit rust op aannames (30% gebruikt spraak, 100 gesproken antwoorden per maand, 500 tekens per antwoord). Vóór invoering nagaan: het echte spraakgebruik (`arnobot_elevenlabs_usage`) en de actuele pakketten, prijzen en bijkoopmogelijkheid bij ElevenLabs. Dat is op 26 november niet gedaan.
+
+### Meten na invoering
+
+Welk deel van de proefgebruikers betaalt, welk deel van de betalende solo-klanten Pro kiest (belangrijkste cijfer), hoeveel Basic-klanten upgraden en hoeveel teamaanvragen binnenkomen. Spreek vooraf een meetmoment af op aantallen, bijvoorbeeld na 50 afgelopen proefperiodes.
+
+### Wat er bij invoering moet veranderen
+
+Eerste inventarisatie via zoeken in de code, nog geen volledige audit.
+
+1. **Bedragen:** `SCENARIO_PRIJZEN`, `SCENARIO_TEAM_PRIJS` en `prijsPremiumEur` in `lib/kostenTarieven.ts`; de constanten in `lib/teamPricing.ts`.
+2. **Vaste teksten met bedragen:** `app/bot/doorgaan/DoorgaanClient.tsx`, `app/bot/qa/QAClient.tsx`, `app/team/aanvragen/page.tsx` en het rekenvoorbeeld in `app/agents/SdVerdienClient.tsx`. Daarnaast een sitebrede zoekactie, ook op bedragen zonder euroteken.
+3. **Manager niet meer als betalende gebruiker:** `huidigSeats` in `lib/billing/teamFacturatie.ts` telt nu alle teamleden, ook de manager. Nalopen wat daarop leunt: de teamfacturatie, `lib/teamActivatie.ts`, `lib/billing/soloNaarTeam.ts`, `lib/billing/referralGrootboek.ts`, `lib/mrr.ts`, `app/bot/admin/teams/page.tsx` en de betekenis van de opgeslagen `min_seats`.
+4. **Minimum:** `TEAM_MIN_GEBRUIKERS` (nu 3 inclusief manager) wordt 3 teamleden. Teksten op `/prijzen` ("vanaf 3 gebruikers"), `/team/aanvragen`, `TeamActiverenSectie.tsx`, de API-foutmeldingen en de docs aanpassen, met de contacttekst hierboven.
+5. **Uitzonderingen:** `berekenTeamPrijsPerMaand` geeft onder het minimum `null`, en facturatie en MRR maken daar €0 van. Het minimum voor zelf aanmelden moet los staan van de prijsberekening, zodat een door Arno ingesteld klein team een correcte factuur krijgt.
+6. **team@arno.bot:** adres controleren (ontvangt het mail?) en op de site aanklikbaar maken.
+7. **Elite binnen Team:** de toeslag van €338 is herleid uit €397 min €59. Besluiten of die €338 blijft of €348 wordt.
+8. **Abacus:** de teamomzet rekent per gebruiker inclusief manager. Voor omzet telt de manager niet meer mee, voor kosten wel. Ook het minimum van het veld "# teamleden" aanpassen.
+9. **Bestaande klanten:** nagaan welke lopende abonnementen en teams er zijn, welk bedrag bij Mollie en Moneybird vastligt en welke prijsafspraak voor hen geldt. Ook controleren hoe upgraden en overstappen rekenen voor iemand met een oud bedrag. Niet gecontroleerd.
+10. **Documenten:** `ABONNEMENTEN.md`, `ARNOBOT_OVERZICHT.md`, `BUSINESS_HANDOVER.md`, de overige plandocumenten met bedragen, en de voorwaarden nalopen. Daarna de PDF's opnieuw maken.
+
 ## Tiers en bedragen
 
 ### Basic
