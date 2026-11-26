@@ -25,7 +25,7 @@ vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi
 import { gratisVierdeMaand, kwalificatie, tegoedStatus, telMaanden, tijdigMomentTeam, vervallenNaAanmelding, type AanbrengerHistorie, type BetaaldePeriode } from './referralRegels'
 import { maandReeks } from './referralSignalen'
 import { splitsBericht } from './berichtDelen'
-import { exporteerGrootboek } from './referralExport'
+import { eigenReferralGegevens, exporteerGrootboek } from './referralExport'
 import { huidigSeats } from './teamFacturatie'
 
 const maand = (start: string, einde: string): BetaaldePeriode => ({
@@ -107,6 +107,16 @@ describe('Telegrammelding', () => {
   it('kort een te lange alinea in', () => {
     const [deel] = splitsBericht('kop', ['y'.repeat(9000)], 'voet')
     expect(deel.length).toBeLessThanOrEqual(3900)
+  })
+})
+
+describe('export van de aanmeldingen', () => {
+  const rij = { id: 'r1', referrer_user_id: 'a', referred_user_id: 'b', referred_naam: 'Sam Jansen', code_used: 'KIM-AB12', status: 'converted', referred_discount: 39, created_at: '2027-01-01', notif_sent_at: null }
+  it('de aanbrenger ziet niets over de nieuwe gebruiker', () => {
+    expect(eigenReferralGegevens([rij], 'a')).toEqual([{ rol: 'aanbrenger', created_at: '2027-01-01', code_used: 'KIM-AB12', notif_sent_at: null }])
+  })
+  it('de nieuwe gebruiker ziet alleen de eigen gegevens, niet het id van de aanbrenger', () => {
+    expect(eigenReferralGegevens([rij], 'b')).toEqual([{ rol: 'nieuwe gebruiker', created_at: '2027-01-01', code_used: 'KIM-AB12', referred_naam: 'Sam Jansen', status: 'converted', referred_discount: 39 }])
   })
 })
 

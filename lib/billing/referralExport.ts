@@ -5,6 +5,17 @@ import { tabelOntbreekt } from './tabel'
 // Bewust zonder het id van de andere persoon, diens maandprijs en de reden: die zeggen iets over diens abonnement en
 // betaalgedrag (AVG artikel 15 lid 4).
 
+type ReferralRij = Record<string, unknown> & { referrer_user_id?: string; referred_user_id?: string }
+
+const kies = (r: ReferralRij, velden: string[]) => Object.fromEntries(velden.filter(v => v in r).map(v => [v, r[v]]))
+
+/** De rijen uit arnobot_referrals met per persoon alleen de eigen gegevens: nooit het id, de naam of de korting van de ander. */
+export function eigenReferralGegevens(rijen: ReferralRij[], userId: string) {
+  return rijen.map(r => r.referred_user_id === userId
+    ? { rol: 'nieuwe gebruiker', ...kies(r, ['created_at', 'code_used', 'referred_naam', 'status', 'referred_discount']) }
+    : { rol: 'aanbrenger', ...kies(r, ['created_at', 'code_used', 'notif_sent_at']) })
+}
+
 type Rij = { created_at: string; soort: string; netto_cent: number | null; meeloop: boolean; klant_maand_netto_cent: number | null }
 
 export async function exporteerGrootboek(db: SupabaseClient, userId: string) {

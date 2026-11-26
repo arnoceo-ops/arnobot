@@ -33,9 +33,10 @@ export async function redenGeenZelfCorrectie(abonnementId: string): Promise<'ref
 export async function heeftRechtOpJaarkorting(userId: string, nu: Date = new Date()): Promise<boolean> {
   const { data: referral, error: refFout } = await billingDb
     .from('arnobot_referrals')
-    .select('id, created_at')
+    // Alle kolommen: dit zit in het afrekenen, een ontbrekende kolomnaam mag dat nooit laten mislukken.
+    .select('*')
     .eq('referred_user_id', userId)
-    .maybeSingle<{ id: string; created_at: string | null }>()
+    .maybeSingle<{ id: string; created_at?: string | null }>()
   if (refFout) throw new Error(`referral opzoeken mislukt: ${refFout.message}`)
   if (!referral) return false
 
@@ -56,7 +57,7 @@ export async function heeftRechtOpJaarkorting(userId: string, nu: Date = new Dat
     .eq('user_id', userId)
     .maybeSingle<{ trial_start: string | null; trial_reactivated_at?: string | null; eerste_proef_start?: string | null }>()
   if (userFout) throw new Error(`gebruiker opzoeken mislukt: ${userFout.message}`)
-  const start = eersteProefStart(gebruiker, referral.created_at)
+  const start = eersteProefStart(gebruiker, referral.created_at ?? null)
   if (!start) return false
 
   const proefEinde = new Date(Date.parse(start) + TRIAL_DAGEN * 24 * 60 * 60 * 1000)

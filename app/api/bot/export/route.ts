@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { leesProfielen } from '@/lib/historieImport'
-import { exporteerGrootboek } from '@/lib/billing/referralExport'
+import { exporteerGrootboek, eigenReferralGegevens } from '@/lib/billing/referralExport'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +41,7 @@ export async function GET() {
       profiel: profile.data ?? [],
       gesprekken: logs.data ?? [],
       coaching: coaching.data ?? [],
-      referrals: referrals.data ?? [],
+      referrals: eigenReferralGegevens(referrals.data ?? [], userId),
       referraltegoed,
       team: teamlidmaatschap.data ?? [],
       sessie_analyses: sessieanalyses.data ?? [],
