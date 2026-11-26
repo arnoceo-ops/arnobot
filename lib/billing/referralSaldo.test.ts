@@ -166,6 +166,36 @@ describe('verval op de rest', () => {
   })
 })
 
+describe('het verdienmoment', () => {
+  it('per maand: zodra de derde maand voorbij is, ongeacht wanneer we kijken', () => {
+    const later = new Date('2027-09-01T00:00:00Z')
+    expect(kwalificatie([jan, feb, mrt], NU)!.verdiendAt).toBe(new Date(mrt.periodeEinde).toISOString())
+    expect(kwalificatie([jan, feb, mrt, apr], later)!.verdiendAt).toBe(new Date(mrt.periodeEinde).toISOString())
+  })
+  it('per maand: een derde maand die pas na afloop betaald is, telt vanaf die betaling', () => {
+    const laat = { ...mrt, betaaldAt: '2027-04-09T10:00:00.000Z' }
+    expect(kwalificatie([jan, feb, laat], NU)!.verdiendAt).toBe('2027-04-09T10:00:00.000Z')
+  })
+  it('zakelijk per jaar: bij betaling; particulier: de eerste dag na de bedenktijd, winter en zomer', () => {
+    const jaar = (klantType: 'zakelijk' | 'particulier', betaaldAt: string) =>
+      maand('2027-01-01', '2028-01-01', { cyclus: 'jaarlijks', klantType, betaaldAt })
+    const laterNu = new Date('2027-12-01T00:00:00Z')
+    expect(kwalificatie([jaar('zakelijk', '2027-01-01T10:00:00.000Z')], laterNu)!.verdiendAt).toBe('2027-01-01T10:00:00.000Z')
+    expect(kwalificatie([jaar('particulier', '2027-01-01T10:00:00.000Z')], laterNu)!.verdiendAt).toBe('2027-01-15T23:00:00.000Z')
+    expect(kwalificatie([jaar('particulier', '2027-06-01T10:00:00.000Z')], laterNu)!.verdiendAt).toBe('2027-06-15T22:00:00.000Z')
+  })
+  it('een later aangemaakte regel verrekent met een verlenging na het verdienen, niet met een eerdere', () => {
+    const r = [regel('toekenning', 'a', 1900, { created_at: '2027-08-01T00:00:00.000Z', verdiend_at: '2027-04-01T00:00:00.000Z' })]
+    expect(saldoVan(r, { toegekendVoor: '2027-05-01T00:00:00.000Z' }).beschikbaarCent).toBe(1900)
+    expect(saldoVan(r, { toegekendVoor: '2027-03-01T00:00:00.000Z' }).beschikbaarCent).toBe(0)
+  })
+  it('oudste eerst gaat op het verdienmoment', () => {
+    const r = [regel('toekenning', 'later-verdiend', 1000, { verdiend_at: '2027-05-01T00:00:00.000Z' }),
+      regel('toekenning', 'eerder-verdiend', 1000, { verdiend_at: '2027-04-01T00:00:00.000Z' })]
+    expect(verdeelVerrekening(r, 1000)).toEqual([{ referralId: 'eerder-verdiend', nettoCent: 1000 }])
+  })
+})
+
 describe('mijlpalen', () => {
   const toekenningen = (n: number) => Array.from({ length: n }, (_, i) => ({ soort: 'toekenning', referral_id: `r${i}`, aanbrenger_user_id: 'a' }) as any)
   const op = (soort: string, i: number) => ({ soort, referral_id: `r${i}`, hoort_bij: `r${i}`, aanbrenger_user_id: 'a' }) as any

@@ -9,7 +9,12 @@ export interface SaldoRegel {
   hoort_bij?: string | null
   netto_cent: number | null
   created_at?: string
+  /** Bij een toekenning: wanneer de klant het tegoed verdiende. */
+  verdiend_at?: string | null
 }
+
+/** Vanaf wanneer een toekenning telt. Zonder verdienmoment (handmatig besluit) de dag van vastleggen. */
+const teltVanaf = (r: SaldoRegel) => r.verdiend_at ?? r.created_at ?? ''
 
 const hoortBij = (r: SaldoRegel) => r.hoort_bij ?? r.referral_id
 
@@ -48,7 +53,7 @@ export interface Saldo {
 export interface SaldoOpties {
   /** Voor de aanbrenger die teamlid werd: van elke toekenning gaat er in totaal nooit meer uit dan dit. */
   plafondCent?: number
-  /** Alleen toekenningen van vóór dit moment (de betaaldag): nooit verrekenen met terugwerkende kracht. */
+  /** Alleen tegoed dat vóór dit moment (de betaling) verdiend was: nooit op een eerdere betaling. */
   toegekendVoor?: string
 }
 
@@ -62,7 +67,7 @@ export function toegekendCent(regels: SaldoRegel[], referralId: string): number 
 export function saldoVan(regels: SaldoRegel[], opties: SaldoOpties = {}): Saldo {
   const toegekend = regels
     .filter(r => r.soort === 'toekenning')
-    .sort((a, b) => Date.parse(a.created_at ?? '') - Date.parse(b.created_at ?? '') || (a.referral_id < b.referral_id ? -1 : 1))
+    .sort((a, b) => Date.parse(teltVanaf(a)) - Date.parse(teltVanaf(b)) || (a.referral_id < b.referral_id ? -1 : 1))
   const rest = toegekend.map(t => ({ referralId: t.referral_id, restCent: restVanToekenning(regels, t.referral_id) }))
   const schuldCent = rest.reduce((som, t) => som + Math.max(0, -t.restCent), 0)
   let openSchuld = schuldCent
@@ -73,8 +78,8 @@ export function saldoVan(regels: SaldoRegel[], opties: SaldoOpties = {}): Saldo 
     let vrijCent = positief - eraf
     if (opties.plafondCent !== undefined) vrijCent = Math.max(0, vrijCent - Math.max(0, toegekendCent(regels, t.referralId) - opties.plafondCent))
     if (opties.toegekendVoor !== undefined) {
-      const toegekendAt = toegekend.find(r => r.referral_id === t.referralId)!.created_at
-      if (!(Date.parse(toegekendAt ?? '') < Date.parse(opties.toegekendVoor))) vrijCent = 0
+      const vanaf = teltVanaf(toegekend.find(r => r.referral_id === t.referralId)!)
+      if (!(Date.parse(vanaf) < Date.parse(opties.toegekendVoor))) vrijCent = 0
     }
     return { ...t, vrijCent }
   })

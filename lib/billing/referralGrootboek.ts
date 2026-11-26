@@ -48,6 +48,8 @@ export interface GrootboekRegel {
   // Alle vier vanaf docs/sql/2026-11-26-referral-verrekening.sql.
   /** Bij een toekenning: de betalingen eronder (Mollie-kenmerk, bij een team het id van de teamfactuur). */
   bron_ids?: string[] | null
+  /** Bij een toekenning: wanneer de klant het tegoed verdiende. Leeg bij een handmatig besluit: dan telt created_at. */
+  verdiend_at?: string | null
   actie_id?: string | null
   hoort_bij?: string | null
   mail_at?: string | null
@@ -545,12 +547,15 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
     if (bekend.has(regel.event_key)) return
     const volledig: GrootboekRegel = { ...regel, meeloop: MEELOOP }
     if (schrijf) {
-      let { error } = await billingDb.from('arnobot_referral_grootboek').insert(volledig)
-      // De kolom bron_ids bestaat pas na docs/sql/2026-11-26-referral-verrekening.sql: zolang die niet is uitgevoerd gaat
-      // de regel er zonder in. Elke fout die de kolom noemt telt: gaat het om iets anders, dan faalt de tweede poging ook.
-      if (error && volledig.bron_ids && error.message.includes('bron_ids')) {
-        const { bron_ids: _weg, ...zonder } = volledig
-        error = (await billingDb.from('arnobot_referral_grootboek').insert(zonder)).error
+      const invoer = { ...volledig }
+      let { error } = await billingDb.from('arnobot_referral_grootboek').insert(invoer)
+      // Deze kolommen bestaan pas na docs/sql/2026-11-26-referral-verrekening.sql: zolang die niet is uitgevoerd gaat de
+      // regel er zonder in. Er wordt per fout een kolom genoemd. Gaat het om iets anders, dan faalt de volgende poging ook.
+      for (let poging = 0; error && poging < 2; poging++) {
+        const kolom = (['bron_ids', 'verdiend_at'] as const).find(k => invoer[k] && error!.message.includes(k))
+        if (!kolom) break
+        delete invoer[kolom]
+        error = (await billingDb.from('arnobot_referral_grootboek').insert({ ...invoer })).error
       }
       // 23505: een gelijktijdige run was ons voor.
       if (error) {
@@ -608,6 +613,7 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
         await voegToe({
           ...basis, event_key: `uitkomst:${id}`, soort: 'toekenning', netto_cent: beoordeling.nettoCent, klant_maand_netto_cent: beoordeling.klantMaandNettoCent,
           ...(beoordeling.bronIds ? { bron_ids: beoordeling.bronIds } : {}),
+          ...(beoordeling.verdiendAt ? { verdiend_at: beoordeling.verdiendAt } : {}),
         })
       } else if (beoordeling.uitkomst === 'afwijzen') {
         await voegToe({ ...basis, event_key: `uitkomst:${id}`, soort: 'afwijzing', netto_cent: 0, klant_maand_netto_cent: null })

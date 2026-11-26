@@ -73,6 +73,7 @@ alter table public.arnobot_referral_acties enable row level security;
 
 alter table public.arnobot_referral_grootboek
   add column if not exists bron_ids text[],     -- betaal- of factuurkenmerken onder de toekenning
+  add column if not exists verdiend_at timestamptz, -- wanneer de klant het tegoed verdiende; leeg: created_at telt
   add column if not exists actie_id uuid,
   add column if not exists hoort_bij text,      -- referral_id van de aangesproken toekenning
   add column if not exists mail_at timestamptz;
@@ -252,9 +253,10 @@ begin
     from arnobot_referral_grootboek g where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user;
   open_schuld := schuld;
   for t in
-    select g.referral_id, g.klant_user_id, g.created_at from arnobot_referral_grootboek g
+    select g.referral_id, g.klant_user_id, coalesce(g.verdiend_at, g.created_at) as telt_vanaf
+    from arnobot_referral_grootboek g
     where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user
-    order by g.created_at, g.referral_id collate "C"
+    order by coalesce(g.verdiend_at, g.created_at), g.referral_id collate "C"
   loop
     vrij := greatest(0, public.referral_rest(t.referral_id));
     eraf := least(open_schuld, vrij);
@@ -266,7 +268,7 @@ begin
         where not g.meeloop and g.soort in ('toekenning', 'vaststelling') and coalesce(g.hoort_bij, g.referral_id) = t.referral_id;
       vrij := greatest(0, vrij - greatest(0, toegekend - p_plafond));
     end if;
-    if vrij > 0 and (p_terugwerkend or t.created_at < b.betaald_at) then
+    if vrij > 0 and (p_terugwerkend or t.telt_vanaf < b.betaald_at) then
       beschikbaar := beschikbaar + vrij;
       kandidaten := kandidaten || jsonb_build_object('referral_id', t.referral_id, 'klant', t.klant_user_id, 'vrij', vrij);
     end if;
@@ -541,9 +543,9 @@ begin
   end if;
 
   insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
-    netto_cent, reden, klant_maand_netto_cent, bron_ids, hoort_bij)
+    netto_cent, reden, klant_maand_netto_cent, bron_ids, hoort_bij, verdiend_at)
   values (sleutel, false, s, ref, aanbrenger, klant, netto, coalesce(p_regel->>'reden', s), maandprijs, bronnen,
-    case when mutatie then ref end);
+    case when mutatie then ref end, case when s = 'toekenning' then (p_regel->>'verdiend_at')::timestamptz end);
 
   -- Was dit tegoed vervallen terwijl het teruggedraaid was, dan brengt een herstel het niet terug.
   if s = 'herstel' and exists (select 1 from arnobot_referral_grootboek g where not g.meeloop and g.event_key = 'verval:' || ref) then
@@ -652,7 +654,7 @@ begin
   for t in
     select g.referral_id, g.klant_user_id from arnobot_referral_grootboek g
     where not g.meeloop and g.soort = 'toekenning' and g.aanbrenger_user_id = p_user
-    order by g.created_at, g.referral_id collate "C"
+    order by coalesce(g.verdiend_at, g.created_at), g.referral_id collate "C"
   loop
     vrij := greatest(0, public.referral_rest(t.referral_id));
     deel := least(schuld, vrij);
@@ -934,9 +936,9 @@ select 1 as nr, 'twee nieuwe tabellen met RLS aan' as controle, count(*)::text a
   from pg_tables where schemaname = 'public' and rowsecurity
     and tablename in ('arnobot_referral_acties', 'arnobot_referral_gratis_periodes')
 union all
-select 2, 'zes nieuwe kolommen op grootboek en betalingen', count(*)::text, count(*) = 6
+select 2, 'zeven nieuwe kolommen op grootboek en betalingen', count(*)::text, count(*) = 7
   from information_schema.columns where table_schema = 'public'
-    and ((table_name = 'arnobot_referral_grootboek' and column_name in ('bron_ids', 'actie_id', 'hoort_bij', 'mail_at'))
+    and ((table_name = 'arnobot_referral_grootboek' and column_name in ('bron_ids', 'verdiend_at', 'actie_id', 'hoort_bij', 'mail_at'))
       or (table_name = 'arnobot_payments' and column_name in ('referral_geblokkeerd_tot', 'referral_bank_cent')))
 union all
 select 3, 'unieke indexen op de acties', count(*)::text, count(*) = 2

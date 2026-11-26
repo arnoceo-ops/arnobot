@@ -48,7 +48,7 @@ export interface AanbrengerFeiten {
 
 export type Beoordeling =
   | { uitkomst: 'wacht'; reden: string }
-  | { uitkomst: 'toekennen'; reden: string; nettoCent: number | null; klantMaandNettoCent: number; bronIds?: string[] }
+  | { uitkomst: 'toekennen'; reden: string; nettoCent: number | null; klantMaandNettoCent: number; bronIds?: string[]; verdiendAt?: string }
   | { uitkomst: 'afwijzen'; reden: string }
   | { uitkomst: 'handwerk'; reden: string }
 
@@ -61,8 +61,9 @@ export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeit
   let uitkomst = beoordeel(klant, aanbrenger, nu)
   if (uitkomst.uitkomst === 'toekennen') {
     // De betalingen onder deze toekenning: gaat daar later iets van terug, dan is dit het bijbehorende tegoed.
-    const bronIds = kwalificatie(klant.periodes, nu, klant.gratisPeriodes)!.bronnen.map(p => p.bronId).filter((x): x is string => !!x)
-    if (bronIds.length) uitkomst = { ...uitkomst, bronIds }
+    const gehaald = kwalificatie(klant.periodes, nu, klant.gratisPeriodes)!
+    const bronIds = gehaald.bronnen.map(p => p.bronId).filter((x): x is string => !!x)
+    uitkomst = { ...uitkomst, verdiendAt: gehaald.verdiendAt, ...(bronIds.length ? { bronIds } : {}) }
   }
   // Zou het tegoed vervallen zijn als een nooit betaalde of teruggedraaide teamfactuur niet meetelt, dan beslist Arno.
   if (uitkomst.uitkomst === 'toekennen' && aanbrenger.strengeHistorie

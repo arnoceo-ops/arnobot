@@ -151,6 +151,19 @@ export interface Kwalificatie {
   periode: BetaaldePeriode
   /** De betalingen waarop de drempel rust: de jaarbetaling, of de drie maanden. */
   bronnen: BetaaldePeriode[]
+  /**
+   * Wanneer de klant het tegoed verdiende. Volgt uit de betalingen, niet uit de dag waarop het grootboek het vastlegde:
+   * anders vallen verlengingen weg als regels later (bij de livegang) opnieuw worden aangemaakt.
+   */
+  verdiendAt: string
+}
+
+/** Het begin (00:00 Amsterdamse tijd) van de dag na deze kalenderdag. */
+function beginDagErna(datum: string): string {
+  const utc = Date.parse(`${datum}T00:00:00Z`) + DAG_MS
+  const zomer = new Date(utc - 2 * 60 * 60 * 1000)
+  const volgende = new Date(utc).toISOString().slice(0, 10)
+  return (amsterdamDatum(zomer) === volgende ? zomer : new Date(utc - 60 * 60 * 1000)).toISOString()
 }
 
 /**
@@ -169,8 +182,16 @@ export function kwalificatie(periodes: BetaaldePeriode[], nu: Date, gratis: Grat
   // Allebei gehaald: de eerste in de tijd.
   const periode = jaar && maand ? (Date.parse(jaar.periodeStart) <= Date.parse(maand.periodeStart) ? jaar : maand) : jaar ?? maand
   if (!periode) return null
-  if (periode !== maand) return { periode, bronnen: [periode] }
-  return { periode, bronnen: stand.slice(0, drempel + 1).filter(m => m.nieuw).slice(-BENODIGDE_MAANDEN).map(m => m.periode.betaald!) }
+  if (periode !== maand) {
+    const verdiendAt = periode.klantType === 'zakelijk'
+      ? new Date(periode.betaaldAt).toISOString()
+      : beginDagErna(laatsteDagBedenktijd(periode.betaaldAt))
+    return { periode, bronnen: [periode], verdiendAt }
+  }
+  const bronnen = stand.slice(0, drempel + 1).filter(m => m.nieuw).slice(-BENODIGDE_MAANDEN).map(m => m.periode.betaald!)
+  // Betaald en verstreken: de derde maand moet voorbij zijn en elke betaling binnen.
+  const verdiendAt = new Date(Math.max(Date.parse(periode.periodeEinde), ...bronnen.map(p => Date.parse(p.betaaldAt)))).toISOString()
+  return { periode, bronnen, verdiendAt }
 }
 
 export interface AanbrengerStand {
