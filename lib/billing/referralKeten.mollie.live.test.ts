@@ -634,8 +634,32 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
     const ronde = await verwerkOpenTerugstortingen(new Date(Date.now() + 8 * DAG))
     expect(ronde.fouten).toEqual([])
     let afgerond = 0
+    let teamAfgerond = 0
 
-    for (const actie of acties as any[]) {
+    // Een teamfactuur: de teamwebhookcode mag ons eigen referralgeld nooit als terugbetaling van de factuur zien.
+    const { verwerkTeamBetaling } = await import('./teamFacturatie')
+    for (const actie of (acties as any[]).filter(a => a.doel_soort === 'teamfactuur')) {
+      const factuur = async () => (await billingDb.from('arnobot_team_facturen').select('*').eq('id', actie.doel_id).single()).data as any
+      const f = await factuur()
+      await verwerkTeamBetaling(f.mollie_payment_link_id, f.id)
+      const terug = await m.lijstBetalingTerugbetalingen(f.mollie_payment_id)
+      const rij = await factuur()
+      const na = (await billingDb.from('arnobot_referral_acties').select('*').eq('id', actie.id).single()).data as any
+      meld(`nacontrole team ${actie.soort}`, {
+        terugstorting: terug.map((r: any) => `${r.amount.value} ${r.status}`), actie: na.status, creditnota: na.credit_status,
+        factuur: rij.status, terugbetaaldInDatabase: rij.terugbetaald_cent, referralCent: rij.referral_refund_cent, teruggedraaid: rij.reversed_at,
+      })
+      expect([rij.status, rij.reversed_at]).toEqual(['paid', null])
+      expect(terug).toHaveLength(1)
+      if (terug[0].status === 'refunded') {
+        afgerond++
+        teamAfgerond++
+        expect(na.status).toBe('bevestigd')
+        expect([rij.terugbetaald_cent, rij.referral_refund_cent]).toEqual([actie.bruto_cent, actie.bruto_cent])
+      }
+    }
+
+    for (const actie of (acties as any[]).filter(a => a.doel_soort !== 'teamfactuur')) {
       const betaling = async () => (await billingDb.from('arnobot_payments').select('*').eq('id', actie.doel_id).single()).data as any
       const kenmerk = (await betaling()).mollie_payment_id as string
       const status = await webhook(new Request('https://proef.invalid/api/webhooks/mollie', { method: 'POST', body: `id=${kenmerk}` }) as any)
@@ -671,5 +695,6 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
     }
     // Zonder een enkele afgeronde terugbetaling is er niets over 'refunded' bewezen.
     expect(afgerond).toBeGreaterThan(0)
+    if ((acties as any[]).some(a => a.doel_soort === 'teamfactuur')) expect(teamAfgerond).toBeGreaterThan(0)
   })
 })

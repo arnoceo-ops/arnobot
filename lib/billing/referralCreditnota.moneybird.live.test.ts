@@ -30,7 +30,7 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: de echte cre
     const { creditnotaStap } = await import('./referralCreditnota')
 
     // Een bevestigde uitkering uit de ketenproef.
-    const { data: acties, error } = await billingDb.from('arnobot_referral_acties').select('*').eq('status', 'bevestigd').order('created_at')
+    const { data: acties, error } = await billingDb.from('arnobot_referral_acties').select('*').eq('status', 'bevestigd').eq('doel_soort', 'betaling').order('created_at')
     if (error) throw new Error(error.message)
     // Alleen een particulier: bij zakelijk mailt de stap, en e-mails uit de sandbox komen echt aan.
     let gekozen: any = null
