@@ -85,7 +85,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         {[
           { label: 'AANGEMELD', value: String(data.referrals) },
           ...(data.betalend === null ? [] : [{ label: 'BETALEND', value: String(data.betalend) }]),
-          ...(data.tegoedCent === null ? [] : [{ label: 'TEGOED', value: formatEuro(data.tegoedCent) }]),
+          ...(data.tegoedCent === null ? [] : [{ label: 'TEGOED EXCL. BTW', value: formatEuro(data.tegoedCent) }]),
         ].map(({ label, value }) => (
           <div key={label} style={{
             background: '#1f2937', padding: '16px 20px', flex: 1,
