@@ -19,6 +19,7 @@ import { schakelaarAan } from './referralSchakelaars'
 import { actieTabelBestaat } from './referralAutomatisch'
 import { TERUGSTORT_OMSCHRIJVING } from './referralTeksten'
 import { reserveerTerugstorting, WACHT_NA_BETALING_DAGEN, type ActieRij, type ReserveerInvoer } from './referralTerugstorten'
+import { bewijsToekenningen, maakBewijzer } from './referralBronnen'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
@@ -54,6 +55,8 @@ export interface Voornemen {
   reden: string
   /** Berekend op regels van het meelopende grootboek: er kan niets mee gebeuren. */
   opMeeloop: boolean
+  /** Wacht omdat niet vaststaat dat een betaling eronder nog staat. Blijft dat, dan hoort de eigenaar het elke week. */
+  bronNietBewezen?: boolean
 }
 
 export interface PlanRonde {
@@ -73,7 +76,8 @@ export interface PlanOpties {
 type Referral = ReferralRij & { referred_discount?: number | string | null }
 type Rij = Betaling & { referral_geblokkeerd_tot?: string | null }
 
-const ruimteCent = (b: Betaling) => Math.max(0, b.bedrag_cent - Math.max(b.terugbetaald_cent ?? 0, b.referral_refund_cent ?? 0))
+const ruimteCent = (b: Betaling) =>
+  Math.max(0, b.bedrag_cent - Math.max(b.terugbetaald_cent ?? 0, b.referral_refund_cent ?? 0) - (b.referral_bank_cent ?? 0))
 const oudGenoeg = (b: Betaling, nu: Date) => !!b.betaald_at && nu.getTime() - Date.parse(b.betaald_at) >= WACHT_NA_BETALING_DAGEN * DAG_MS
 const geblokkeerd = (b: Rij, nu: Date) => !!b.referral_geblokkeerd_tot && Date.parse(b.referral_geblokkeerd_tot) > nu.getTime()
 const actief = (a: ActieRij) => a.status !== 'vrijgegeven' && a.status !== 'ongedaan'
@@ -81,8 +85,8 @@ const actief = (a: ActieRij) => a.status !== 'vrijgegeven' && a.status !== 'onge
 // ── B2 en B3a: het voordeel van de nieuwe gebruiker ──
 
 export type VoordeelKeuze =
-  | { soort: 'voordeel_jaar' | 'voordeel_maand'; betaling: Betaling; brutoCent: number; uitleg: string }
-  | { soort: 'voordeel_jaar' | 'voordeel_maand'; betaling: Betaling; brutoCent: number; uitleg: string; nietAutomatisch: string }
+  /** bronnen: de eerdere betaalde maanden waarop het voordeel rust (Mollie-kenmerken). */
+  | { soort: 'voordeel_jaar' | 'voordeel_maand'; betaling: Betaling; brutoCent: number; bronnen: string[]; uitleg: string; nietAutomatisch?: string }
   | null
 
 /**
@@ -98,15 +102,21 @@ export function kiesVoordeel(d: Pick<Dossier, 'betalingen'>, feiten: Pick<KlantF
   const vierde = gratisVierdeMaand(maanden)
   if (vierde && (!jaar || Date.parse(vierde.periodeStart) < Date.parse(jaar.periode_start!))) {
     const betaling = d.betalingen.find(b => b.mollie_payment_id === vierde.bronId)
-    return betaling ? { soort: 'voordeel_maand', betaling, brutoCent: betaling.bedrag_cent, uitleg: 'vierde betaalde maand op rij gratis' } : null
+    const stand = telMaanden(maanden).filter(m => m.nieuw)
+    const bronnen = stand.slice(0, stand.findIndex(m => m.periode === vierde)).slice(-BENODIGDE_MAANDEN).map(m => m.periode.bronId ?? '')
+    return betaling ? { soort: 'voordeel_maand', betaling, brutoCent: betaling.bedrag_cent, bronnen, uitleg: 'vierde betaalde maand op rij gratis' } : null
   }
   if (!jaar || !eigenBetalingTelt(jaar)) return null
   // Al met korting afgerekend.
   if ((jaar.plan === 'basis' || jaar.plan === 'premium') && jaar.klant_type
     && jaar.bedrag_cent === metJaarKorting(berekenBedrag(jaar.plan, 'jaarlijks', jaar.klant_type)).bedrag.brutoCent) return null
-  const ervoor = telMaanden(maanden.filter(p => Date.parse(p.periodeStart) < Date.parse(jaar.periode_start!))).filter(m => m.nieuw).length
+  const eerdere = telMaanden(maanden.filter(p => Date.parse(p.periodeStart) < Date.parse(jaar.periode_start!))).filter(m => m.nieuw)
+  const ervoor = eerdere.length
   if (ervoor === 0) return null
-  const keuze = { soort: 'voordeel_jaar' as const, betaling: jaar, brutoCent: jaarKortingCent(jaar.bedrag_cent), uitleg: `jaarkorting na ${ervoor} betaalde maand(en)` }
+  const keuze = {
+    soort: 'voordeel_jaar' as const, betaling: jaar, brutoCent: jaarKortingCent(jaar.bedrag_cent),
+    bronnen: eerdere.map(m => m.periode.bronId ?? ''), uitleg: `jaarkorting na ${ervoor} betaalde maand(en)`,
+  }
   return ervoor <= BENODIGDE_MAANDEN
     ? keuze
     : { ...keuze, nietAutomatisch: `er gingen ${ervoor} betaalde maanden vooraf, niet vier op rij: daarover is niets besloten` }
@@ -221,6 +231,9 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     return true
   }
 
+  const bewijzer = maakBewijzer()
+  const onbewezen = (v: Voornemen, reden: string) => Object.assign(v, { stand: 'wacht', bronNietBewezen: true, reden: `bron niet bewezen: ${reden}` })
+
   // ── Eerst het eigen voordeel ──
   /** Betalingen waarop een voordeel hoort dat nog niet gereserveerd is: daar komt geen tegoed overheen. */
   const eerstVoordeel = new Set<string>()
@@ -261,13 +274,18 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
         brutoCent: keuze.brutoCent, stand: 'klaar', reden: keuze.uitleg,
       })
       eerstVoordeel.add(b.id)
-      const nietAuto = onzeker ?? ('nietAutomatisch' in keuze ? keuze.nietAutomatisch : null)
+      const nietAuto = onzeker ?? keuze.nietAutomatisch
       if (nietAuto) Object.assign(v, { stand: 'niet-automatisch', reden: `${keuze.uitleg}: ${nietAuto}` })
       else if (feiten.bijbetalingLoopt) Object.assign(v, { stand: 'wacht', reden: 'de bijbetaling van een upgrade loopt nog' })
       else if (ruimteCent(b) < keuze.brutoCent) Object.assign(v, { stand: 'niet-automatisch', reden: `${keuze.uitleg}: past niet, er staat al iets op deze betaling` })
       else toets(v, b, id)
+      if (v.stand === 'klaar') {
+        const bewijs = await bewijzer([...keuze.bronnen, b.mollie_payment_id], klantId)
+        if (!bewijs.staat) onbewezen(v, bewijs.reden)
+      }
       if (await reserveer(v, omschrijving => ({
         actieId: randomUUID(), userId: klantId, betalingId: b.id, omschrijving, soort: keuze.soort, referralId: id, brutoCent: keuze.brutoCent,
+        bronnen: keuze.bronnen,
       }))) {
         // Over de rest van deze betaling mag daarna tegoed.
         eerstVoordeel.delete(b.id)
@@ -336,6 +354,9 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
 
     const bezet = (b: Betaling) => acties.some(a => a.soort === 'tegoed_terugstorten' && a.doel_id === b.id && a.user_id === userId && actief(a))
 
+    /** Staat er een bron niet vast, dan stopt het voor deze aanbrenger: de database verbruikt altijd het oudste eerst. */
+    let bronWacht = false
+
     /** Een betaling waarop (een deel van) het saldo past. */
     async function opBetaling(b: Rij, saldo: SaldoOpties, ruimte: number, extra: { terugwerkend?: boolean; plafondCent?: number; maxBrutoCent?: number }) {
       const beschikbaar = saldoVan(werk, saldo).beschikbaarCent
@@ -348,6 +369,15 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       })
       if (eerstVoordeel.has(b.id)) Object.assign(v, { stand: 'wacht', reden: 'eerst het eigen voordeel op deze betaling' })
       else toets(v, b)
+      if (v.stand === 'klaar') {
+        const refs = verdeelVerrekening(werk, bedrag.verbruiktNettoCent, saldo).map(deel => deel.referralId)
+        const bewijs = await bewijsToekenningen(werk, refs, bewijzer)
+        if (!bewijs.staat) {
+          onbewezen(v, bewijs.reden)
+          bronWacht = true
+          return
+        }
+      }
       if (v.stand === 'klaar' && uitvoeren && omschrijvingen.tegoed_terugstorten) await stelVast()
       await reserveer(v, omschrijving => ({ actieId: randomUUID(), userId, betalingId: b.id, omschrijving, soort: 'tegoed_terugstorten', ...extra }))
       // Wat hier (straks) op gaat, is niet nog eens beschikbaar voor een volgende betaling.
@@ -362,6 +392,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     if (status === 'actief') {
       const verlengingen = d.betalingen.filter(b => isVerlenging(b, d.betalingen)).sort((a, b) => Date.parse(a.betaald_at!) - Date.parse(b.betaald_at!))
       for (const b of verlengingen) {
+        if (bronWacht) break
         if (bezet(b) || ruimteCent(b) <= 0) continue
         await opBetaling(b, { toegekendVoor: b.betaald_at! }, ruimteCent(b), {})
       }
@@ -374,7 +405,6 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     const betaald = d.betalingen
       .filter(b => b.status === 'paid' && !!b.betaald_at && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0))
       .sort((a, b) => Date.parse(b.betaald_at!) - Date.parse(a.betaald_at!))
-    const voor = ronde.voornemens.length
     let nergensRuimte = true
     for (const b of betaald) {
       if (ruimteCent(b) <= 0) continue
@@ -396,14 +426,41 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
         nieuw({ soort: 'tegoed_terugstorten', userId, betalingId: b.id, betaalkenmerk: b.mollie_payment_id, stand: 'niet-automatisch', reden: 'van deze betaling is al op een andere manier iets terug', opMeeloop: ronde.opMeeloop })
         continue
       }
-      await opBetaling(b, { plafondCent }, ruimte, { terugwerkend: true, plafondCent, maxBrutoCent: ruimte })
+      if (!bronWacht) await opBetaling(b, { plafondCent }, ruimte, { terugwerkend: true, plafondCent, maxBrutoCent: ruimte })
     }
 
     // Wat nergens meer in past vervalt, maar pas als alles wat onderweg was bevestigd is. Dat is definitief, dus bij elke
-    // onduidelijkheid (iets open, vastgelopen of ooit vrijgegeven, iets niet te lezen) niet.
+    // onduidelijkheid niet vanzelf.
     const overCent = saldoVan(werk).beschikbaarCent
-    const onduidelijk = acties.some(a => a.user_id === userId && a.soort.startsWith('tegoed') && !['bevestigd', 'ongedaan'].includes(a.status))
-    if (!nergensRuimte || overCent <= 0 || onduidelijk || ronde.voornemens.length > voor || zonderBedrag.length > vaststellingen.length) return
+    if (!nergensRuimte || overCent <= 0 || zonderBedrag.length > vaststellingen.length) return
+    // Er is in deze ronde al iets over deze gebruiker gezegd (een voornemen, ook zijn eigen voordeel): eerst dat.
+    if (ronde.voornemens.some(v => v.userId === userId)) return
+    const zijnBetalingen = new Set(d.betalingen.map(b => b.id))
+    const staatOpen = acties.some(a => (a.user_id === userId || zijnBetalingen.has(a.doel_id)) && a.status !== 'bevestigd' && a.status !== 'ongedaan')
+      || d.betalingen.some(b => eerstVoordeel.has(b.id))
+    if (staatOpen) {
+      nieuw({ soort: 'verval_teamlid', userId, nettoCent: overCent, stand: 'wacht', reden: 'er staat nog een uitkering open, vastgelopen of vrijgegeven bij deze gebruiker of zijn betalingen', opMeeloop: ronde.opMeeloop })
+      return
+    }
+    // Is zijn voorgeschiedenis niet volledig (met de hand betaald of gratis geweest, of hij betaalde als manager
+    // teamfacturen), dan weten we niet of er echt niets meer van hem is: dan beslist de eigenaar, nooit het systeem.
+    const onvolledig = feiten.historieOnvolledig || !!feiten.betaaldeTeamfactuur
+    if (onvolledig) {
+      const teVragen = toekenningen.filter(t => restVanToekenning(werk, t.referral_id) > 0
+        // Al eens besloten het te behouden: niet opnieuw vragen en niets laten vervallen.
+        && !eigen.some(r => r.event_key.startsWith(`verval-behoud:${t.referral_id}:`)))
+      if (!teVragen.length) return
+      const waarom = 'tegoed lijkt te vervallen, maar de voorgeschiedenis van dit teamlid is niet volledig (met de hand betaald, gratis geweest of als manager teamfacturen betaald)'
+      nieuw({ soort: 'verval_teamlid', userId, nettoCent: overCent, stand: 'niet-automatisch', reden: `${waarom}: de eigenaar beslist op /bot/admin/referrals`, opMeeloop: ronde.opMeeloop })
+      if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return
+      for (const t of teVragen) {
+        const { data, error } = await billingDb.rpc('referral_boek', {
+          p_regel: { soort: 'handwerk', event_key: `verval-handwerk:${t.referral_id}`, referral_id: t.referral_id, aanbrenger_user_id: userId, klant_user_id: t.klant_user_id, reden: waarom },
+        })
+        if (error || !(data as { ok?: boolean } | null)?.ok) throw new Error(`vraag over verval niet geboekt: ${error?.message ?? (data as { reden?: string } | null)?.reden}`)
+      }
+      return
+    }
     const v = nieuw({ soort: 'verval_teamlid', userId, nettoCent: overCent, stand: 'vervalt', reden: 'past niet meer in zijn eigen betalingen', opMeeloop: ronde.opMeeloop })
     // Definitief: alleen als terugstorten ook echt ingericht is (schakelaar, SQL en vastgestelde klanttekst).
     if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return

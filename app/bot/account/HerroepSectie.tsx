@@ -34,7 +34,7 @@ export default function HerroepSectie() {
   const [bevestig, setBevestig] = useState(false)
   const [bezig, setBezig] = useState(false)
   const [fout, setFout] = useState<string | null>(null)
-  const [klaar, setKlaar] = useState<{ proef: boolean; soort: 'eerste' | 'upgrade' } | null>(null)
+  const [klaar, setKlaar] = useState<{ proef: boolean; soort: 'eerste' | 'upgrade'; bedragCent: number } | null>(null)
 
   useEffect(() => {
     fetch('/api/bot/billing/herroepen', { cache: 'no-store' })
@@ -48,7 +48,7 @@ export default function HerroepSectie() {
   if (klaar) {
     return (
       <p style={klaarStijl}>
-        ✓ Gelukt. Je krijgt een bevestiging per e-mail. Het bedrag komt terug op de rekening waarmee je betaalde.
+        ✓ Gelukt.{klaar.bedragCent !== 0 && ' Je krijgt een bevestiging per e-mail. Het bedrag komt terug op de rekening waarmee je betaalde.'}
         {klaar.soort === 'eerste' && !klaar.proef && <><br />Je abonnement is gestopt en je toegang eindigt nu. Je gegevens kun je nog 30 dagen opvragen via hq@arno.bot.</>}
         {klaar.proef && <><br /><span style={{ color: '#6b7280' }}>PROEFMODUS: er is niets echt terugbetaald.</span></>}
       </p>
@@ -58,6 +58,8 @@ export default function HerroepSectie() {
   const h = data?.herroepbaar
   if (!data?.beschikbaar || !h) return null
   const upgrade = h.soort === 'upgrade'
+  // Valt er niets terug te betalen, dan staan er ook geen zinnen over geld.
+  const metBedrag = h.bedragCent !== 0
 
   async function ongedaanMaken() {
     setBezig(true); setFout(null)
@@ -65,7 +67,7 @@ export default function HerroepSectie() {
       const res = await fetch('/api/bot/billing/herroepen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bevestigd: true }) })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setFout(String(d.error ?? 'Ongedaan maken is niet gelukt.')); return }
-      setKlaar({ proef: d.proef === true, soort: h!.soort })
+      setKlaar({ proef: d.proef === true, soort: h!.soort, bedragCent: Number(d.bedragCent) })
     } catch { setFout('Ongedaan maken is niet gelukt. Probeer het zo opnieuw.') } finally { setBezig(false) }
   }
 
@@ -74,14 +76,14 @@ export default function HerroepSectie() {
       <p style={label}>BEDENKTIJD</p>
       {h.gesimuleerd && <p style={proefStijl}>PROEFMODUS (alleen zichtbaar voor testaccounts): er wordt niets echt terugbetaald.</p>}
       <p style={body}>
-        Je hebt tot en met {datumNl(h.uiterlijkTot)} bedenktijd. Maak {upgrade ? 'je upgrade' : 'je aankoop'} ongedaan en je krijgt je geld terug.
+        Je hebt tot en met {datumNl(h.uiterlijkTot)} bedenktijd.{metBedrag && ` Maak ${upgrade ? 'je upgrade' : 'je aankoop'} ongedaan en je krijgt je geld terug.`}
       </p>
       {!bevestig ? (
         <button onClick={() => { setBevestig(true); setFout(null) }} style={btn}>KOOP ONGEDAAN MAKEN</button>
       ) : (
         <>
           <p style={body}>
-            Je krijgt {euro(h.bedragCent)} terug. {upgrade ? 'Je upgrade wordt teruggedraaid en je abonnement loopt door.' : 'Je abonnement stopt direct en je toegang eindigt.'}
+            {metBedrag && `Je krijgt ${euro(h.bedragCent)} terug. `}{upgrade ? 'Je upgrade wordt teruggedraaid en je abonnement loopt door.' : 'Je abonnement stopt direct en je toegang eindigt.'}
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={ongedaanMaken} disabled={bezig} style={{ ...btn, cursor: bezig ? 'not-allowed' : 'pointer' }}>

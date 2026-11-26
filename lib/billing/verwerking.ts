@@ -155,7 +155,7 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
 
   const volledig = isVolledigTerugbetaald(rij, terugbetaald) || teruggeboekt > 0
   if (volledig && (await claim(rij.id, 'terugbetaling_verwerkt_at'))) {
-    await verwerkVolledigeTerugbetaling(sub, rij, terugbetaald, teruggeboekt > 0)
+    await verwerkVolledigeTerugbetaling(sub, rij, terugbetaald || rij.bedrag_cent, teruggeboekt > 0)
   }
 }
 
@@ -170,7 +170,8 @@ export async function markeerTerugbetaald(payRowId: string): Promise<boolean> {
   const { data: sub } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', rij.subscription_id).maybeSingle<SubRow>()
   if (!sub) return false
   if (!(await claim(rij.id, 'terugbetaling_verwerkt_at'))) return false
-  await verwerkVolledigeTerugbetaling(sub, rij, rij.bedrag_cent, false)
+  // Wat per bank al terugging (kolom na de referral-SQL) gaat nu niet meer terug.
+  await verwerkVolledigeTerugbetaling(sub, rij, rij.bedrag_cent - (rij.referral_bank_cent ?? 0), false)
   return true
 }
 
@@ -446,7 +447,11 @@ async function verwerkVolledigeTerugbetaling(
   isChargeback: boolean,
 ): Promise<void> {
   // Wat de klant nu terugkrijgt, zonder het deel dat al als referraltegoed was teruggestort.
-  const bedragVoorKlant = Math.max(0, (terugbetaaldCent || rij.bedrag_cent) - (rij.referral_refund_cent ?? 0))
+  const bedragVoorKlant = Math.max(0, terugbetaaldCent - (rij.referral_refund_cent ?? 0))
+  // Is er nu niets meer terug te betalen (alles was al referralgeld), dan gaat er geen mail met 0 euro uit. Voor een
+  // bevestiging zonder bedrag is nog geen tekst vastgesteld; de eigenaar hoort dat de klant niets heeft gekregen.
+  const geenMail = bedragVoorKlant === 0
+  const geenMailMelding = geenMail ? '\nEr is geen bevestigingsmail naar de klant gestuurd (bedrag 0, daarvoor is nog geen tekst vastgesteld).' : ''
   // Een terugbetaling van de upgradebetaling beëindigt het abonnement NIET: alleen de upgrade gaat terug.
   if (rij.soort === 'upgrade') {
     await zetUpgradeTerug(sub)
@@ -454,9 +459,9 @@ async function verwerkVolledigeTerugbetaling(
       await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
       return
     }
-    await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant, upgrade: true })
+    if (!geenMail) await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant, upgrade: true })
     await creditnotaVoorBetaling(rij.id)
-    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}`)
+    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
     return
   }
   // Gaat de eerste betaling met referral fee terug, dan is het voordeel niet gebruikt: hij mag opnieuw.
@@ -482,9 +487,9 @@ async function verwerkVolledigeTerugbetaling(
     await notifyTelegram(`CHARGEBACK op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
     return
   }
-  await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant })
+  if (!geenMail) await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant })
   await creditnotaVoorBetaling(rij.id)
-  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}`)
+  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
 }
 
 /** Een nieuwe eerste betaling vervangt eventuele eerdere lopende abonnementen van dezelfde gebruiker. */

@@ -164,8 +164,8 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
     .maybeSingle<PayRow>()
   if (!rij?.moneybird_factuur_id || rij.moneybird_factuur_id === BEZIG) return
   // Een volledige creditnota zou te veel crediteren als er al referraltegoed op deze betaling is verrekend.
-  if ((rij.referral_refund_cent ?? 0) > 0) {
-    await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
+  if ((rij.referral_refund_cent ?? 0) > 0 || (rij.referral_bank_cent ?? 0) > 0) {
+    await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend of per bank iets teruggegeven. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
     return
   }
   // Bij het omzetten naar zakelijk is deze factuur al gecrediteerd. Zonder de tabel bestaan er geen correcties; lukt het

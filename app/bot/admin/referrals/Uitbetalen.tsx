@@ -76,6 +76,12 @@ export default async function Uitbetalen({ naam }: { naam: (id: string) => strin
       )}
 
       <p style={sectionLabel}>Openstaande uitkeringen</p>
+      {Array.isArray(open) && open.some(a => a.status === 'vastgelopen') && (
+        <p style={let_op}>
+          Vastgelopen: kijk eerst in Mollie. Is het bedrag WEL teruggestort, dan in de SQL Editor referral_bevestig_met_de_hand(actie, &apos;re_...&apos;, toelichting).
+          Is het zeker NIET teruggestort, dan referral_vrijgeven(actie, &apos;vastgelopen&apos;, &apos;vrijgegeven&apos;, toelichting). Gebruik referral_vrijgeven nooit als het geld weg is.
+        </p>
+      )}
       {typeof open === 'string' ? <p style={let_op}>Niet op te halen: {open}</p> : open.length === 0 ? <p style={muted}>Niets open.</p> : (
         <table style={tabel}>
           <thead><tr><th style={kop}>Sinds</th><th style={kop}>Wat</th><th style={kop}>Wie</th><th style={kop}>Bedrag</th><th style={kop}>Status</th></tr></thead>

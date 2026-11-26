@@ -10,6 +10,7 @@ import {
 } from './referralRegels'
 import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { isTeruggedraaid, vervalBedrag } from './referralSaldo'
+import { MEELOOP } from './referralStand'
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
 import { eersteProefStart } from '@/lib/referralKenmerken'
@@ -24,7 +25,7 @@ import { haalAlleRijen } from '@/lib/haalAlleRijen'
 // meeloop = true, er verandert niets aan referrals, tegoed, betalingen of toegang, en niemand krijgt bericht behalve
 // Arno. Bij livegang worden de meeloopregels niet meegenomen. Tabel: docs/sql/2026-11-25-referral-grootboek.sql.
 
-export const MEELOOP = true
+export { MEELOOP }
 const HANDMATIG = 'handmatig besluit: '
 const DAG_MS = 24 * 60 * 60 * 1000
 
@@ -434,11 +435,13 @@ export async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<Aanbrenger
     },
     historie,
     strengeHistorie: { ...historie, dekking: dekkingVan(d, nu, true) },
-    gratis: !d.isGewoonTeamlid && isGratisAccount(g),
+    // Alleen gratis_sinds beslist (Lifetime gaat voor), ook voor wie teamlid is geworden (regel eigenaar 26-11-2026).
+    gratis: isGratisAccount(g),
     // Bij Lifetime vervalt niets: een BETAALD-vlag hoeft dan niets tegen te houden.
     handmatigBetaald: !g.lifetime_sinds && handmatigOpBetaald(d, nu),
     // Als gewoon teamlid is de stand wel zeker; daarna niet meer te zien wanneer dat was.
     historieOnvolledig: d.ooitMetDeHandBetaald || d.ooitGratisToegang || (!d.isGewoonTeamlid && !!g.ooit_teamlid_at),
+    betaaldeTeamfactuur: d.facturen.some(f => f.status === 'paid' || !!f.betaald_at),
     maandNettoCent: maand,
     bijbetalingLoopt: bijbetalingLoopt(d),
   }
@@ -506,7 +509,9 @@ export function vervalOordeel(
   if (!zeker && !(vanaf && feiten.strengeHistorie && vervallenNaAanmelding(feiten.strengeHistorie, vanaf, nu))) return { stand: 'nee' }
   const waarom = !zeker ? TEAMBEGIN_ONZEKER
     : feiten.historieOnvolledig ? 'de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid'
-      : null
+      // Wie teamlid is en als manager teamfacturen betaalde, heeft geld betaald dat hier niet als eigen betaling telt.
+      : feiten.stand.isGewoonTeamlid && feiten.betaaldeTeamfactuur ? 'het teamlid betaalde als manager teamfacturen'
+        : null
   return waarom ? { stand: 'twijfel', waarom, behouden: behouden.length } : { stand: 'vervalt' }
 }
 

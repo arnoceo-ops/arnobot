@@ -39,6 +39,8 @@ export interface AanbrengerFeiten {
   gratis?: boolean
   /** Ooit met de hand op betaald gezet, gratis toegang gehad of teamlid geweest: dan nooit automatisch tegen hem beslissen. */
   historieOnvolledig: boolean
+  /** Er is als manager ooit een teamfactuur betaald (ook als die later is teruggedraaid). */
+  betaaldeTeamfactuur?: boolean
   /** Maandprijs exclusief btw van wat de aanbrenger nu betaalt, of het laatst betaalde. null: nooit betaald. */
   maandNettoCent: number | null
   bijbetalingLoopt: boolean

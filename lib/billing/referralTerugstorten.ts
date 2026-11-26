@@ -8,6 +8,8 @@ import { tabelOntbreekt } from './tabel'
 import { schakelaarAan } from './referralSchakelaars'
 import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { bewijsToekenningen, maakBewijzer, type Bewijs, type BronRegel } from './referralBronnen'
+import { isTeruggedraaid } from './referralSaldo'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 // De terugstortmachine (docs/REFERRAL_BOUWPLAN_R3.md, B0): reserveren in de database, de rij claimen, eerst bij Mollie
@@ -32,6 +34,8 @@ export const MAX_LEESFOUTEN = 10
 /** Een actie die zo lang onderweg is, wordt elke week genoemd. */
 export const HANG_MELDEN_NA_DAGEN = 14
 const HERHAAL_MELDING_DAGEN = 7
+/** Zo lang wachten op bewijs van de bronbetaling voordat het gemeld wordt. */
+export const BRON_WACHT_MELDEN_NA_DAGEN = 7
 
 const DAG_MS = 24 * 60 * 60 * 1000
 export const TERUGSTORT_SOORTEN = ['tegoed_terugstorten', 'voordeel_jaar', 'voordeel_maand'] as const
@@ -45,6 +49,10 @@ export interface ActieGegevens {
   verzonden_at?: string
   wachtrij_gemeld_at?: string
   hang_gemeld_at?: string
+  /** Bij een voordeel: de eerdere betalingen van de nieuwe gebruiker waarop het rust. */
+  bronnen?: string[]
+  bron_wacht_sinds?: string
+  bron_gemeld_at?: string
   niet_gevonden?: number
   leesfouten?: number
   boeking_teruggezet?: boolean
@@ -91,7 +99,7 @@ function verplicht<T>(wat: string, r: { data: T; error: DbFout | null }): T {
 
 export type ReserveerInvoer = { actieId: string; userId: string; betalingId: string; omschrijving: string } & (
   | { soort: 'tegoed_terugstorten'; maxNettoCent?: number; terugwerkend?: boolean; plafondCent?: number; maxBrutoCent?: number }
-  | { soort: 'voordeel_jaar' | 'voordeel_maand'; referralId: string; brutoCent: number }
+  | { soort: 'voordeel_jaar' | 'voordeel_maand'; referralId: string; brutoCent: number; bronnen: string[] }
 )
 
 export type ReserveerUitkomst =
@@ -106,7 +114,7 @@ export async function reserveerTerugstorting(invoer: ReserveerInvoer): Promise<R
   if (isInternalTestUser(invoer.userId)) return { stand: 'geweigerd', reden: 'testaccount' }
   const omschrijving = invoer.omschrijving.trim()
   if (!omschrijving) return { stand: 'geweigerd', reden: 'omschrijving_ontbreekt' }
-  const gegevens: ActieGegevens = { omschrijving }
+  const gegevens: ActieGegevens = { omschrijving, ...(invoer.soort !== 'tegoed_terugstorten' ? { bronnen: invoer.bronnen } : {}) }
   const { data, error } = invoer.soort === 'tegoed_terugstorten'
     ? await billingDb.rpc('referral_reserveer', {
       p_actie: invoer.actieId, p_user: invoer.userId, p_doel: invoer.betalingId, p_max_netto: invoer.maxNettoCent ?? null,
@@ -133,7 +141,7 @@ export type UitvoerUitkomst =
   | 'niets-te-doen' | 'niet-geclaimd' | 'testaccount'
   /** Schakelaar uit en nog niets verstuurd. */
   | 'zou-doen'
-  | 'wacht-7-dagen' | 'schakelaar-uit' | 'later-opnieuw' | 'onbekend'
+  | 'wacht-7-dagen' | 'wacht-op-bron' | 'schakelaar-uit' | 'later-opnieuw' | 'onbekend'
   | 'verzonden' | 'bevestigd' | 'vrijgegeven' | 'vastgelopen'
 
 const mislukt = (status: string) => status === 'failed' || status === 'canceled'
@@ -167,6 +175,9 @@ async function bewaar(a: ActieRij, patch: Partial<ActieRij>): Promise<void> {
   if (rijen?.length !== 1) throw new Error(`referralactie ${a.id} is intussen gewijzigd`)
   Object.assign(a, patch)
 }
+
+/** In de SQL Editor, afhankelijk van wat Mollie laat zien. */
+const naKijken = (id: string) => `Is dit bedrag WEL teruggestort: select referral_bevestig_met_de_hand('${id}', 're_...', 'toelichting');\nIs het zeker NIET teruggestort: select referral_vrijgeven('${id}', 'vastgelopen', 'vrijgegeven', 'toelichting');\nGebruik referral_vrijgeven nooit als het geld weg is.`
 
 const melding = (a: ActieRij, betaling: PayRow | null, bij: string, kop: string, uitleg: string): OpenMelding =>
   ({ bij, kop, uitleg, betaalkenmerk: betaling?.mollie_payment_id ?? a.doel_id })
@@ -207,7 +218,7 @@ export async function verstuurOpenMeldingen(): Promise<void> {
 async function loopVast(a: ActieRij, betaling: PayRow | null, reden: string): Promise<'vastgelopen'> {
   await bewaar(a, {
     status: 'vastgelopen', bezig_tot: null, fout: reden,
-    melding: melding(a, betaling, 'vastgelopen', 'Terugstorting vastgelopen', `${reden}.\nDe reservering blijft staan en niets probeert het opnieuw. Kijk in Mollie of dit bedrag is teruggestort.`),
+    melding: melding(a, betaling, 'vastgelopen', 'Terugstorting vastgelopen', `${reden}.\nDe reservering blijft staan en niets probeert het opnieuw. Kijk in Mollie of dit bedrag is teruggestort.\n${naKijken(a.id)}`),
   })
   await stuurMelding(a)
   return 'vastgelopen'
@@ -216,7 +227,7 @@ async function loopVast(a: ActieRij, betaling: PayRow | null, reden: string): Pr
 /** Alleen aanroepen als zeker is dat er geen geld is verplaatst. */
 async function geefVrij(a: ActieRij, betaling: PayRow, eind: 'vrijgegeven' | 'vastgelopen', reden: string): Promise<'vrijgegeven' | 'vastgelopen' | 'niet-geclaimd'> {
   const m = eind === 'vastgelopen'
-    ? melding(a, betaling, eind, 'Terugstorting vastgelopen', `${reden}.\nEr is niets teruggestort en de reservering is teruggezet. Niets probeert het vanzelf opnieuw.`)
+    ? melding(a, betaling, eind, 'Terugstorting vastgelopen', `${reden}.\nEr is niets teruggestort en de reservering is teruggezet. Niets probeert het vanzelf opnieuw; controleer dit in Mollie.\n${naKijken(a.id)}`)
     : betaling.terugbetaling_verwerkt_at
       // Wie intussen terugbetaalde, kan dit bedrag hebben overgeslagen omdat het onderweg was.
       ? melding(a, betaling, eind, 'Controleer of nabetalen nodig is', `${reden}.\nDeze referralterugstorting gaat niet door en de betaling is intussen op een andere manier terugbetaald. Reken in Mollie na of de klant dit bedrag nog moet krijgen.`)
@@ -323,6 +334,64 @@ async function naFout(a: ActieRij, betaling: PayRow, e: unknown, eerderOnbekend:
   return 'later-opnieuw'
 }
 
+/** De echte grootboekregels van de toekenningen waarop deze actie rust. */
+async function rustOp(a: ActieRij): Promise<{ refs: string[]; regels: BronRegel[] }> {
+  const eigen = (verplicht('verrekeningen ophalen', await billingDb.from('arnobot_referral_grootboek').select('*')
+    .eq('actie_id', a.id).eq('meeloop', false).limit(1000)) ?? []) as (BronRegel & { soort: string; hoort_bij: string | null })[]
+  const refs = [...new Set(eigen.filter(r => r.soort === 'verrekening').map(r => r.hoort_bij!))]
+  if (!refs.length) return { refs, regels: [] }
+  const regels = (verplicht('toekenningen ophalen', await billingDb.from('arnobot_referral_grootboek').select('*')
+    .eq('meeloop', false).in('referral_id', refs).limit(1000)) ?? []) as BronRegel[]
+  return { refs, regels }
+}
+
+const isTegoed = (a: ActieRij) => a.soort.startsWith('tegoed')
+
+/** Positief bewijs dat alles waarop deze uitkering rust nog staat. Gooit niet: niet te controleren is geen bewijs. */
+async function bewijsVoorActie(a: ActieRij): Promise<Bewijs> {
+  try {
+    const bewijzer = maakBewijzer()
+    if (!isTegoed(a)) return await bewijzer(a.gegevens.bronnen ?? [], a.user_id)
+    const { refs, regels } = await rustOp(a)
+    return await bewijsToekenningen(regels, refs, bewijzer)
+  } catch (e) {
+    return { staat: false, reden: `niet te controleren: ${e instanceof Error ? e.message : e}` }
+  }
+}
+
+/** De database weigerde claimen of markeren omdat het tegoed teruggedraaid is: dan vrijgeven, als er zeker niets weg is. */
+async function geefTeruggedraaidVrij(a: ActieRij, betaling: PayRow | null): Promise<boolean> {
+  const r = verplicht('teruggedraaide actie vrijgeven', await billingDb.rpc('referral_geef_teruggedraaid_vrij', { p_actie: a.id }))
+  if (!(r as { ok?: boolean } | null)?.ok) return false
+  await bewaar({ ...a, status: 'vrijgegeven' }, {
+    melding: melding(a, betaling, 'vrijgegeven', 'Terugstorting niet doorgegaan', 'De betaling onder dit tegoed is teruggedraaid.\nDe reservering is teruggezet.'),
+  })
+  const vers = await leesActie(a.id)
+  if (vers) await stuurMelding(vers)
+  return true
+}
+
+/** Geen bewijs: niet versturen. Na een week en daarna elke week hoort de eigenaar het. */
+async function wachtOpBron(a: ActieRij, betaling: PayRow, reden: string, eerderOnbekend: boolean, nu: Date): Promise<UitvoerUitkomst> {
+  const sinds = a.gegevens.bron_wacht_sinds ?? nu.toISOString()
+  const dagen = (iso: string) => (nu.getTime() - Date.parse(iso)) / DAG_MS
+  const melden = dagen(sinds) >= BRON_WACHT_MELDEN_NA_DAGEN && (!a.gegevens.bron_gemeld_at || dagen(a.gegevens.bron_gemeld_at) >= HERHAAL_MELDING_DAGEN)
+  const gegevens: ActieGegevens = { ...a.gegevens, bron_wacht_sinds: sinds, ...(melden ? { bron_gemeld_at: nu.toISOString() } : {}) }
+  const bericht = (status: string) => (melden
+    ? { melding: melding(a, betaling, status, 'Terugstorting wacht op bewijs van de bronbetaling', `Sinds ${sinds.slice(0, 10)}: ${reden}.\nEr wordt niets verstuurd zolang niet vaststaat dat de betaling eronder nog staat.`) }
+    : {})
+  if (!eerderOnbekend) {
+    await legTerug(a, { gegevens, fout: reden, ...bericht('gereserveerd') })
+  } else {
+    // Er ging mogelijk al iets uit: niet opnieuw versturen, en de beheerderknop niet eeuwig laten wachten.
+    const keer = (a.gegevens.niet_gevonden ?? 0) + 1
+    if (keer >= MAX_POGINGEN_ONBEKEND) return loopVast(a, betaling, `${reden}, en een eerdere poging heeft een onbekende uitkomst`)
+    await bewaar(a, { gegevens: { ...gegevens, niet_gevonden: keer }, fout: reden, ...bericht(a.status) })
+  }
+  if (melden) await stuurMelding(a)
+  return 'wacht-op-bron'
+}
+
 /** Voert een actie zo ver mogelijk uit. Vaker aanroepen is veilig. Gooit bij een storing; dan morgen opnieuw. */
 export async function voerTerugstortingUit(actieId: string, nu: Date = new Date()): Promise<UitvoerUitkomst> {
   const gevonden = await leesActie(actieId)
@@ -338,7 +407,8 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
 
   // Stap 2: claimen, achter het slot per gebruiker.
   const a = verplicht('actie claimen', await billingDb.rpc('referral_claim', { p_actie: actieId, p_van: gevonden.status })) as ActieRij | null
-  if (!a) return 'niet-geclaimd'
+  // Geweigerd omdat het tegoed teruggedraaid is: dan geven we haar hier vrij, ook als de nacontrole dat nog niet deed.
+  if (!a) return gevonden.status !== 'verzonden' && isTegoed(gevonden) && await geefTeruggedraaidVrij(gevonden, await leesBetaling(gevonden)) ? 'vrijgegeven' : 'niet-geclaimd'
   const betaling = await leesBetaling(a)
   if (!betaling) return loopVast(a, null, 'de betaling is niet meer te vinden')
 
@@ -374,10 +444,13 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
     const { leesfouten: _gelezen, ...rest } = a.gegevens
     await bewaar(a, { gegevens: rest })
   }
-  const bezwaar = betaling.status !== 'paid' || mp.status !== 'paid' ? 'de betaling staat niet (meer) op betaald'
+  const onder = isTegoed(a) ? await rustOp(a) : null
+  const bezwaar = onder?.refs.some(ref => isTeruggedraaid(onder.regels, ref)) ? 'het tegoed onder deze uitkering is teruggedraaid'
+    : betaling.status !== 'paid' || mp.status !== 'paid' ? 'de betaling staat niet (meer) op betaald'
     : betaling.terugbetaling_verwerkt_at ? 'de betaling wordt of is al terugbetaald'
       : betaling.teruggeboekt_cent > 0 || (!!mp.amountChargedBack && mollieNaarCenten(mp.amountChargedBack.value) > 0) ? 'de betaling is teruggeboekt'
         : vreemd.length || heeftAndereTerugbetaling(betaling, betaling.terugbetaald_cent ?? 0) ? 'er staat een andere terugbetaling op deze betaling'
+          : (betaling.referral_refund_cent ?? 0) + (betaling.referral_bank_cent ?? 0) > betaling.bedrag_cent ? 'er is per bank al zoveel teruggegeven dat dit niet meer past'
           : mp.amountRemaining && mollieNaarCenten(mp.amountRemaining.value) < a.bruto_cent ? 'er is bij Mollie niet genoeg over om terug te storten'
             : null
   if (bezwaar) {
@@ -406,8 +479,19 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
     return eerderOnbekend ? loopVast(a, betaling, 'de omschrijving ontbreekt') : geefVrij(a, betaling, 'vastgelopen', 'de omschrijving ontbreekt')
   }
 
-  // Stap 5. Eerst vastleggen dat er een poging komt: valt de run hierna weg, dan geldt de uitkomst als onbekend.
-  await bewaar(a, { gegevens: { ...a.gegevens, post_geprobeerd_at: a.gegevens.post_geprobeerd_at ?? nu.toISOString() } })
+  // Vlak voor het versturen: staat alles waarop dit rust nog, volgens de database en volgens Mollie?
+  const bewijs = await bewijsVoorActie(a)
+  if (!bewijs.staat) return wachtOpBron(a, betaling, bewijs.reden, eerderOnbekend, nu)
+  if (a.gegevens.bron_wacht_sinds) {
+    const { bron_wacht_sinds: _sinds, bron_gemeld_at: _gemeld, ...rest } = a.gegevens
+    await bewaar(a, { gegevens: rest })
+  }
+
+  // Stap 5. Eerst vastleggen dat er een poging komt: valt de run hierna weg, dan geldt de uitkomst als onbekend. Dat doet
+  // de database, achter hetzelfde slot als het terugdraaien: zo kan er niets tussen deze controle en het vastleggen komen.
+  const mag = verplicht('poging vastleggen', await billingDb.rpc('referral_markeer_versturen', { p_actie: a.id, p_op: nu.toISOString() }))
+  if (mag !== true) return await geefTeruggedraaidVrij(a, betaling) ? 'vrijgegeven' : 'niet-geclaimd'
+  a.gegevens = { ...a.gegevens, post_geprobeerd_at: a.gegevens.post_geprobeerd_at ?? nu.toISOString() }
   let antwoord: { id: string; status: string }
   try {
     antwoord = await betaalTerug({

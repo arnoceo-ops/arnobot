@@ -6,13 +6,18 @@
 export interface TerugbetaalRij {
   bedrag_cent: number
   referral_refund_cent?: number | null
+  /**
+   * Wat per bank over deze betaling is teruggegeven (kolom na docs/sql/2026-11-26-referral-verrekening.sql). Gaat wel af
+   * van wat er nog terug te betalen is, en telt nooit mee in vergelijkingen met wat Mollie noemt.
+   */
+  referral_bank_cent?: number | null
 }
 
 const tegoedDeel = (rij: TerugbetaalRij) => rij.referral_refund_cent ?? 0
 
-/** Wat er van deze betaling nog van de klant bij ons staat, zonder het al verrekende referraltegoed. */
+/** Wat er van deze betaling nog van de klant bij ons staat: zonder verrekend referraltegoed en wat per bank terugging. */
 export function restantCent(rij: TerugbetaalRij): number {
-  return Math.max(0, rij.bedrag_cent - tegoedDeel(rij))
+  return Math.max(0, rij.bedrag_cent - tegoedDeel(rij) - (rij.referral_bank_cent ?? 0))
 }
 
 /** Is er buiten het referraltegoed om al iets terugbetaald? */

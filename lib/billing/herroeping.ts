@@ -48,7 +48,7 @@ export function kiesHerroepbareBetaling(betalingen: PayRow[], nu: Date = new Dat
       !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0) &&
       // Herroepen is een recht op de koop, niet alleen op geld: ook als alles al als referralgeld terug is of onderweg is,
       // moeten abonnement en toegang kunnen eindigen. Het terug te betalen bedrag is dan 0.
-      (restantCent(b) > 0 || (b.referral_refund_cent ?? 0) > 0) &&
+      (restantCent(b) > 0 || (b.referral_refund_cent ?? 0) > 0 || (b.referral_bank_cent ?? 0) > 0) &&
       // Mollie rondt een terugbetaling pas na uren tot dagen af (terugbetaald_cent blijft zo lang 0), maar
       // terugbetaling_verwerkt_at wordt direct gezet. Zonder deze regel stond de knop na een klik nog even terug.
       !b.terugbetaling_verwerkt_at &&
@@ -131,7 +131,7 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   const upgrade = herroepbaar.soort === 'upgrade'
 
   if (herroepbaar.gesimuleerd) {
-    await verstuurBillingMail(userId, 'terugbetaling_bevestiging', { bedragCent: herroepbaar.bedragCent, upgrade })
+    if (herroepbaar.bedragCent > 0) await verstuurBillingMail(userId, 'terugbetaling_bevestiging', { bedragCent: herroepbaar.bedragCent, upgrade })
     await logAdminActie({ actie: 'herroeping', doelUserId: userId, details: { extra: { proef: true, soort: herroepbaar.soort, bedrag_cent: herroepbaar.bedragCent } } })
     await notifyTelegram(`PROEF herroeping op arno.bot (er is niets terugbetaald)\n\nWie: ${await wieIs(userId)}\nWat: klant maakt ${upgrade ? 'een upgrade' : 'de eerste betaling'} ongedaan\nBedrag: ${euro(herroepbaar.bedragCent)}`)
     return { ok: true, soort: herroepbaar.soort, bedragCent: herroepbaar.bedragCent, proef: true }
@@ -143,11 +143,15 @@ export async function voerHerroepingUit(userId: string, nu: Date = new Date()): 
   // Hetzelfde slot als de referralterugstortingen. Herroepen wordt hier nooit geweigerd: wat al onderweg is krijgt de
   // klant langs die weg, en lukt het vrijgeven niet, dan gaat terug wat er volgens de betaalrij over is.
   const slot = await slotVoorTerugbetaling(userId, betaling.id)
-  let referralCent = slot.stand === 'ok' ? slot.referralRefundCent : betaling.referral_refund_cent ?? 0
+  let geboekt = slot.stand === 'ok'
+    ? { referral_refund_cent: slot.referralRefundCent, referral_bank_cent: slot.bankCent }
+    : { referral_refund_cent: betaling.referral_refund_cent ?? 0, referral_bank_cent: betaling.referral_bank_cent ?? 0 }
   // Het antwoord van het slot kan verloren zijn gegaan terwijl de vrijgave wel gebeurde. Daarom de rij opnieuw lezen:
   // referral_refund_cent daalt alleen als er zeker niets is verplaatst, dus de actuele waarde geeft nooit te veel terug.
-  if (slot.stand === 'fout') referralCent = (await leesReferralCent(userId, betaling.id)) ?? referralCent
-  const bedragCent = restantCent({ ...betaling, referral_refund_cent: referralCent })
+  if (slot.stand === 'fout') geboekt = (await leesGeboekt(userId, betaling.id)) ?? geboekt
+  const bedragCent = restantCent({ ...betaling, ...geboekt })
+  /** Alles wat niet meer via deze herroeping hoeft: referralgeld via Mollie en wat per bank terugging. */
+  const referralCent = geboekt.referral_refund_cent + geboekt.referral_bank_cent
   const openCent = slot.stand === 'ok' ? slot.onderwegCent + slot.vastCent : 0
   const nakijken = slot.stand === 'fout'
     ? `De referralacties waren niet te controleren (${slot.fout}). Op deze betaling staat ${euro(referralCent)} als referralbedrag geboekt. Kijk in Mollie of de klant in totaal ${euro(betaling.bedrag_cent)} terugkrijgt en betaal na wat ontbreekt.`
@@ -190,10 +194,10 @@ async function meldArno(tekst: string): Promise<void> {
 }
 
 /** null: niet te lezen. */
-async function leesReferralCent(userId: string, betalingId: string): Promise<number | null> {
+async function leesGeboekt(userId: string, betalingId: string): Promise<{ referral_refund_cent: number; referral_bank_cent: number } | null> {
   try {
     const { data, error } = await billingDb.from('arnobot_payments').select('*').eq('id', betalingId).eq('user_id', userId).maybeSingle<PayRow>()
-    return error || !data ? null : data.referral_refund_cent ?? 0
+    return error || !data ? null : { referral_refund_cent: data.referral_refund_cent ?? 0, referral_bank_cent: data.referral_bank_cent ?? 0 }
   } catch {
     return null
   }
@@ -213,6 +217,6 @@ async function herroepZonderTerugbetaling(userId: string, soort: HerroepSoort, b
     doelUserId: userId,
     details: { extra: { soort, bedrag_cent: 0, zonder_terugbetaling: true, referral_cent: referralCent, mollie_payment_id: betaling.mollie_payment_id } },
   })
-  await meldArno(`Herroeping zonder terugbetaling op arno.bot\n\nWie: ${await wieIs(userId)}\nWat: ${soort === 'upgrade' ? 'upgrade teruggedraaid, het abonnement loopt door' : 'abonnement en toegang beëindigd'}\nBetaling: ${betaling.mollie_payment_id}\nBetaald: ${euro(betaling.bedrag_cent)}, als referralbedrag geboekt: ${euro(referralCent)}\n${nakijken ?? 'Controleer in Mollie dat de klant dit bedrag echt heeft teruggekregen.'}`)
+  await meldArno(`Herroeping zonder terugbetaling op arno.bot\n\nWie: ${await wieIs(userId)}\nWat: ${soort === 'upgrade' ? 'upgrade teruggedraaid, het abonnement loopt door' : 'abonnement en toegang beëindigd'}\nBetaling: ${betaling.mollie_payment_id}\nBetaald: ${euro(betaling.bedrag_cent)}, als referralbedrag geboekt (via Mollie of per bank): ${euro(referralCent)}\nEr is geen bevestigingsmail naar de klant gestuurd: daarvoor is nog geen tekst vastgesteld. De klant heeft wel recht op een bevestiging.\n${nakijken ?? 'Controleer in Mollie dat de klant dit bedrag echt heeft teruggekregen.'}`)
   return { ok: true, soort, bedragCent: 0, proef: false }
 }

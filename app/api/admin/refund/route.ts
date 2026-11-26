@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (slot.onderwegCent > 0) {
       return NextResponse.json({ error: `Op deze betaling loopt nu een referralterugstorting van ${(slot.onderwegCent / 100).toFixed(2)} euro. Die wordt dagelijks nagekeken en loopt na een begrensd aantal mislukte controles vast, met een melding. Probeer het later opnieuw.` }, { status: 409 })
     }
-    betaling = { ...betaling, referral_refund_cent: slot.referralRefundCent }
+    betaling = { ...betaling, referral_refund_cent: slot.referralRefundCent, referral_bank_cent: slot.bankCent }
     if (restantCent(betaling) <= 0) {
       if (slot.vastCent > 0) {
         await notifyTelegram(`Terugbetalen niet mogelijk vanuit de admin (referral, arno.bot)\n\nBetaling: ${betaling.mollie_payment_id}\nDe hele betaling staat geboekt als vastgelopen referralterugstorting (${(slot.vastCent / 100).toFixed(2)} euro). Kijk in Mollie of dat is teruggestort. Zo niet, betaal het daar terug en beëindig het abonnement.`)

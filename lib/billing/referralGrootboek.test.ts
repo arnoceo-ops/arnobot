@@ -1148,3 +1148,45 @@ describe('onbekende terugbetaling vóór een toekenning', () => {
     expect(run.fouten).toHaveLength(1)
   })
 })
+
+describe('F5: gratis telt ook voor een teamlid', () => {
+  const teamlid = (extra: Rij = {}) => zet({
+    approved_users: [gebruiker('aanbrenger', { gratis_sinds: '2027-01-10T00:00:00.000Z', ...extra }), gebruiker('klant')],
+    arnobot_team_members: [{ team_id: 'ander', user_id: 'aanbrenger' }],
+    arnobot_subscriptions: [sub('aanbrenger', { status: 'ended', periode_einde: '2027-02-01T00:00:00.000Z' }), klantSub()],
+  })
+  it('een gratis aanbrenger die teamlid is krijgt niets toegekend', async () => {
+    teamlid()
+    await draai()
+    expect(boek()).toMatchObject([{ soort: 'afwijzing', reden: 'aanbrenger heeft een gratis account' }])
+  })
+  it('met Lifetime niet', async () => {
+    teamlid({ lifetime_sinds: '2027-01-11T00:00:00.000Z' })
+    await draai()
+    expect(boek()[0]?.reden).not.toBe('aanbrenger heeft een gratis account')
+  })
+})
+
+describe('F3: ook het grootboek laat tegoed van een teamlid met betaalde teamfacturen niet vanzelf vervallen', () => {
+  const oudManager = (facturen: Rij[]) => zet({
+    approved_users: [gebruiker('aanbrenger'), gebruiker('klant')],
+    arnobot_subscriptions: [klantSub()],
+    arnobot_team_members: [{ team_id: 'ander', user_id: 'aanbrenger' }],
+    arnobot_teams: [team({ volgende_factuurdatum: null, stopt_op: '2027-02-15' })],
+    arnobot_team_facturen: facturen,
+  })
+  const toegekend = () => boek().push({
+    event_key: 'uitkomst:r1', meeloop: true, soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900,
+    reden: 'drempel gehaald', klant_maand_netto_cent: 1900, created_at: '2027-02-10T00:00:00.000Z',
+  })
+  it.each([
+    ['betaald en later teruggedraaid', [factuur({ status: 'refunded', reversed_at: '2027-02-10T00:00:00Z' })]],
+    ['betaald en deels teruggeboekt', [factuur({ teruggeboekt_cent: 100 })]],
+  ])('%s: geen verval, hooguit een vraag', async (_n, facturen) => {
+    oudManager(facturen)
+    toegekend()
+    await draai(new Date('2027-06-01T06:00:00.000Z'))
+    expect(boek().some(r => r.soort === 'verval')).toBe(false)
+    expect(boek().some(r => r.event_key === 'verval-handwerk:r1')).toBe(true)
+  })
+})

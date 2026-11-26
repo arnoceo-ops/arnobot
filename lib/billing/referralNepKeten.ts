@@ -94,6 +94,10 @@ export function maakKetenDb() {
     }
     if (naam === 'referral_boek') {
       const r = p.p_regel
+      if (r.soort === 'handwerk') {
+        if (!echte().some(x => x.event_key === r.event_key)) regel({ ...r, netto_cent: 0 })
+        return ja({ event_key: r.event_key })
+      }
       const t = echte().find(x => x.soort === 'toekenning' && x.referral_id === r.referral_id)
       if (!t) return nee('geen_toekenning')
       const eigen = echte().filter(x => (x.hoort_bij ?? x.referral_id) === r.referral_id)
@@ -110,8 +114,20 @@ export function maakKetenDb() {
       return ja({ netto_cent: netto || 0, event_key: sleutel })
     }
     const a = actie(p.p_actie)
+    const gedraaid = (x: Rij) => echte().some(r => r.actie_id === x.id && r.soort === 'verrekening' && isTeruggedraaid(echte(), r.hoort_bij))
+    if (naam === 'referral_markeer_versturen') {
+      if (!a || a.status !== 'bezig' || gedraaid(a)) return { data: false, error: null }
+      a.gegevens = { ...a.gegevens, post_geprobeerd_at: a.gegevens?.post_geprobeerd_at ?? p.p_op }
+      return { data: true, error: null }
+    }
+    if (naam === 'referral_geef_teruggedraaid_vrij') {
+      if (!a || !gedraaid(a)) return nee('niet_teruggedraaid')
+      if (!['gereserveerd', 'bezig'].includes(a.status) || a.gegevens?.post_geprobeerd_at) return nee('mogelijk_verstuurd')
+      return rpc('referral_vrijgeven', { p_actie: a.id, p_van: a.status, p_eind: 'vrijgegeven', p_reden: 'teruggedraaid' })
+    }
     if (naam === 'referral_claim') {
       if (!a || a.status !== p.p_van || (a.bezig_tot && Date.parse(a.bezig_tot) > Date.now())) return { data: null, error: null }
+      if (['gereserveerd', 'bezig'].includes(a.status) && !a.gegevens?.post_geprobeerd_at && gedraaid(a)) return { data: null, error: null }
       if (a.status === 'gereserveerd') a.status = 'bezig'
       a.bezig_tot = new Date(Date.now() + 10 * 60 * 1000).toISOString()
       return { data: kopie(a), error: null }

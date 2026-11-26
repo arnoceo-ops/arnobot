@@ -161,13 +161,22 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
     }
   }
 
-  /** Verrekeningen die nog niet verstuurd zijn en op een teruggedraaide toekenning rusten, gaan niet door. */
-  async function geefOpenVrij(referralId: string): Promise<void> {
-    const ids = new Set(regels.filter(r => !r.meeloop && r.soort === 'verrekening' && r.hoort_bij === referralId).map(r => r.actie_id))
-    for (const a of acties.filter(a => ids.has(a.id) && a.status === 'gereserveerd')) {
-      const { data, error } = await billingDb.rpc('referral_vrijgeven', { p_actie: a.id, p_van: 'gereserveerd', p_eind: 'vrijgegeven', p_reden: 'de betaling onder dit tegoed is teruggedraaid' })
-      if (error) throw new Error(`vrijgeven mislukt: ${error.message}`)
-      if ((data as { ok?: boolean } | null)?.ok) { a.status = 'vrijgegeven'; ronde.vrijgegeven.push(a.id) }
+  /**
+   * Verrekeningen die zeker nog niet verstuurd zijn en op een teruggedraaide toekenning rusten, gaan niet door. Elke run
+   * opnieuw, voor alle toekenningen (niet alleen de portie van vandaag): mislukte het eerder, dan nu alsnog. De database
+   * controleert zelf, achter het slot, dat er niets verstuurd is; wat mogelijk wel weg is handelt de machine af.
+   */
+  async function geefOpenVrij(): Promise<void> {
+    const gedraaid = new Set(regels.filter(r => r.soort === 'toekenning' && isTeruggedraaid(regels, r.referral_id)).map(r => r.referral_id))
+    const ids = new Set(regels.filter(r => r.soort === 'verrekening' && gedraaid.has(r.hoort_bij ?? '')).map(r => r.actie_id))
+    for (const a of acties.filter(a => ids.has(a.id) && ['gereserveerd', 'bezig'].includes(a.status) && !a.gegevens?.post_geprobeerd_at)) {
+      try {
+        const { data, error } = await billingDb.rpc('referral_geef_teruggedraaid_vrij', { p_actie: a.id })
+        if (error) throw new Error(error.message)
+        if ((data as { ok?: boolean } | null)?.ok) { a.status = 'vrijgegeven'; ronde.vrijgegeven.push(a.id) }
+      } catch (e) {
+        ronde.fouten.push(`vrijgeven ${a.id} mislukt: ${e instanceof Error ? e.message : String(e)}`)
+      }
     }
   }
 
@@ -179,8 +188,6 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
       if (!teruggedraaid) {
         const hoe = bronnen.some(b => b.chargeback) ? 'teruggeboekt' : 'volledig terugbetaald'
         await boek(t, 'terugdraaiing', `een betaling onder deze toekenning is ${hoe}`)
-        // Verrekenen en terugdraaien gaan alleen over echte regels.
-        if (!meeloop) await geefOpenVrij(t.referral_id)
       }
       return
     }
@@ -221,5 +228,18 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
       ronde.fouten.push(`${o.sleutel}: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
+  // Verrekenen en terugdraaien gaan alleen over echte regels. Opnieuw lezen: hierboven kan iets zijn teruggedraaid.
+  if (!meeloop) {
+    try {
+      const vers = await haalAlleRijen<GrootboekRegel>((van, tot) =>
+        billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', false).order('created_at', { ascending: true }).order('id').range(van, tot))
+      regels.length = 0
+      for (const r of vers) regels.push(r)
+      await geefOpenVrij()
+    } catch (e) {
+      ronde.fouten.push(`vrijgeven na terugdraaien: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
   return ronde
 }

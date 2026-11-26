@@ -116,7 +116,15 @@ const referral = (extra: any = {}) => ({ id: REF, referrer_user_id: 'aanbrenger'
 let regelNr = 0
 const regel = (soort: string, ref: string, netto_cent: number | null, extra: any = {}) => ({
   id: uuid(500 + ++regelNr), created_at: dag('2027-03-15'), event_key: `${soort === 'toekenning' ? 'uitkomst' : soort}:${ref}`, meeloop: false, soort, referral_id: ref,
-  aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent, reden: 'drempel gehaald', klant_maand_netto_cent: 1900, hoort_bij: null, actie_id: null, bron_ids: null, ...extra,
+  // Standaard rust een toekenning op de bronbetaling die zaai klaarzet. Wie zelf bron_ids geeft, doet dat voor 'klant'.
+  aanbrenger_user_id: 'aanbrenger', klant_user_id: 'bron_ids' in extra ? 'klant' : 'bronklant', netto_cent, reden: 'drempel gehaald', klant_maand_netto_cent: 1900, hoort_bij: null, actie_id: null,
+  bron_ids: soort === 'toekenning' ? ['tr_bron'] : null, ...extra,
+})
+/** De betaling van een nieuwe gebruiker waar een toekenning op rust. */
+const bronBetaling = (extra: any = {}) => ({
+  id: uuid(99), user_id: 'bronklant', subscription_id: null, mollie_payment_id: 'tr_bron', soort: 'eerste', status: 'paid', bedrag_cent: 22800, btw_cent: 3957,
+  terugbetaald_cent: 0, teruggeboekt_cent: 0, referral_refund_cent: 0, betaald_at: dag('2027-02-01'), verwerkt_at: dag('2027-02-01'), terugbetaling_verwerkt_at: null,
+  moneybird_factuur_id: null, plan: 'basis', cyclus: 'jaarlijks', klant_type: 'zakelijk', periode_start: dag('2027-02-01'), periode_einde: dag('2028-02-01'), ...extra,
 })
 
 async function zaai(extra: Record<string, any[]> = {}) {
@@ -124,9 +132,10 @@ async function zaai(extra: Record<string, any[]> = {}) {
     arnobot_referrals: [referral()],
     approved_users: [gebruiker('aanbrenger'), gebruiker('klant')],
     arnobot_subscriptions: [sub('aanbrenger'), sub('klant', { plan: 'basis' })],
-    arnobot_payments: [], arnobot_referral_grootboek: [], arnobot_referral_acties: [], arnobot_team_members: [], arnobot_teams: [],
+    arnobot_referral_grootboek: [], arnobot_referral_acties: [], arnobot_team_members: [], arnobot_teams: [],
     arnobot_team_facturen: [], arnobot_admin_log: [],
     ...extra,
+    arnobot_payments: [...(extra.arnobot_payments ?? []), bronBetaling()],
   })
 }
 
@@ -618,7 +627,7 @@ describe('nacontrole en terugdraaien', () => {
     const b = bron()
     await zaai({ arnobot_payments: [b], arnobot_referral_grootboek: [
       regel('toekenning', 'oud', 1, { meeloop: true, bron_ids: [b.mollie_payment_id], created_at: new Date(NU.getTime() - (NACONTROLE_DAGEN + 1) * DAG).toISOString() }),
-      regel('toekenning', 'zonder', 1, { meeloop: true, id: uuid(971) }),
+      regel('toekenning', 'zonder', 1, { meeloop: true, id: uuid(971), bron_ids: null }),
     ] })
     const r = await draai()
     expect(r.gecontroleerd).toBe(0)
@@ -692,5 +701,289 @@ describe('de cron referral-uitvoeren', () => {
   })
   it('de ronde zelf geeft dezelfde samenvatting terug', async () => {
     expect(await draaiReferralUitvoeren(NU)).toMatchObject({ gereserveerd: 0, fouten: 0, meldingMislukt: false })
+  })
+})
+
+// ── Bevindingen uit de tweede onafhankelijke controle ──
+
+const eur = (cent: number) => ({ currency: 'EUR', value: (cent / 100).toFixed(2) })
+const echteSom = async () => (await grootboek()).filter(r => !r.meeloop).reduce((s, r) => s + (r.netto_cent ?? 0), 0)
+async function weerVrij() {
+  for (const a of await acties()) if (a.bezig_tot) await h.db.wijzig('arnobot_referral_acties', a.id, { bezig_tot: null })
+}
+
+describe('F1: een teruggedraaide toekenning wordt nooit meer uitbetaald', () => {
+  const opzet = async () => {
+    const eigen = maanden('aanbrenger', 6)
+    const klant = maanden('klant', 3)
+    await zaai({ arnobot_payments: [...eigen, ...klant], arnobot_referrals: [], arnobot_referral_grootboek: [regel('toekenning', 'r1', 1900, { bron_ids: klant.map(b => b.mollie_payment_id) })] })
+    await plan()
+    expect((await acties()).map(a => a.status)).toEqual(['gereserveerd'])
+    h.mp[klant[2].mollie_payment_id] = { amountChargedBack: eur(1000) }
+  }
+  const zonderVrijgave = async (taak: () => Promise<unknown>) => {
+    const echt = h.db.rpc
+    h.db.rpc = (n: string, p: any) => (n === 'referral_vrijgeven' || n === 'referral_geef_teruggedraaid_vrij' ? Promise.resolve({ data: null, error: { message: 'time-out' } }) : echt(n, p))
+    try { return await taak() } finally { h.db.rpc = echt }
+  }
+  it('mislukt het vrijgeven, dan probeert elke volgende run het opnieuw', async () => {
+    await opzet()
+    await zonderVrijgave(() => draaiNacontrole(NU, { meeloop: false }))
+    const r = await draaiNacontrole(NU, { meeloop: false })
+    expect(r.vrijgegeven).toHaveLength(1)
+    expect(await echteSom()).toBe(0)
+  })
+  it('vrijgeven hangt niet aan de portie of de 400 dagen', async () => {
+    await opzet()
+    await zonderVrijgave(() => draaiNacontrole(NU, { meeloop: false }))
+    const r = await draaiNacontrole(new Date(NU.getTime() + 500 * DAG), { meeloop: false })
+    expect(r.vrijgegeven).toHaveLength(1)
+  })
+  it('ook als de nacontrole niet meer draait verstuurt de machine niets', async () => {
+    await opzet()
+    await zonderVrijgave(() => draaiNacontrole(NU, { meeloop: false }))
+    // De bron staat intussen weer, maar de terugdraaiing staat nog: dan nog steeds niet.
+    h.mp = {}
+    await verwerkOpenTerugstortingen(NU)
+    expect(h.posts).toEqual([])
+    expect((await acties()).map(a => a.status)).toEqual(['vrijgegeven'])
+    expect(await echteSom()).toBe(0)
+  })
+  it('met een eerdere poging met onbekende uitkomst: vastgelopen, niet vrijgegeven', async () => {
+    await opzet()
+    const [a] = await acties()
+    await h.db.wijzig('arnobot_referral_acties', a.id, { status: 'bezig', gegevens: { ...a.gegevens, post_geprobeerd_at: NU.toISOString() } })
+    await zonderVrijgave(() => draaiNacontrole(NU, { meeloop: false }))
+    await draaiNacontrole(NU, { meeloop: false })
+    expect((await acties())[0].status).toBe('bezig')
+    await verwerkOpenTerugstortingen(NU)
+    expect(h.posts).toEqual([])
+    expect((await acties())[0].status).toBe('vastgelopen')
+  })
+  it('de terugdraaiing valt tussen de laatste controle en het versturen: de database houdt het tegen', async () => {
+    await opzet()
+    h.mp = {}
+    const echt = h.db.rpc
+    h.db.rpc = async (n: string, p: any) => {
+      if (n === 'referral_markeer_versturen') await echt('referral_boek', { p_regel: { soort: 'terugdraaiing', referral_id: 'r1', reden: 't' } })
+      return echt(n, p)
+    }
+    try { await verwerkOpenTerugstortingen(NU) } finally { h.db.rpc = echt }
+    expect(h.posts).toEqual([])
+  })
+})
+
+describe('F2: tegoed gaat pas uit met positief bewijs dat de bronbetaling staat', () => {
+  type Soort = 'mollie-fout' | 'pending-refund' | 'db-terugbetaling-verwerkt' | 'chargeback' | 'deels-terug' | 'onbekende-amountRefunded' | 'status-open' | 'geen-bron-ids' | 'bron-onbekend'
+  const SOORTEN: Soort[] = ['mollie-fout', 'pending-refund', 'db-terugbetaling-verwerkt', 'chargeback', 'deels-terug', 'onbekende-amountRefunded', 'status-open', 'geen-bron-ids', 'bron-onbekend']
+  const mollieNep = async () => (await import('./mollie')).haalBetaling as any
+  async function opzet() {
+    const eigen = maanden('aanbrenger', 6)
+    const klant = maanden('klant', 3)
+    await zaai({ arnobot_payments: [...eigen, ...klant], arnobot_referrals: [], arnobot_referral_grootboek: [regel('toekenning', 'r1', 1900, { bron_ids: klant.map(b => b.mollie_payment_id) })] })
+    return klant
+  }
+  /** Maakt de derde bronbetaling onbewijsbaar. Geeft terug hoe dat weer te herstellen is. */
+  async function verstoor(soort: Soort, klant: any[]): Promise<() => Promise<void>> {
+    const b = klant[2]
+    const nep = await mollieNep()
+    const origineel = nep.getMockImplementation()
+    const grootboekRij = (await grootboek()).find(r => r.soort === 'toekenning')!
+    if (soort === 'mollie-fout') nep.mockImplementation(async (id: string) => { if (id === b.mollie_payment_id) throw new Error('503'); return origineel(id) })
+    if (soort === 'pending-refund') h.refunds.push({ id: 're_k', paymentId: b.mollie_payment_id, status: 'pending', amount: eur(b.bedrag_cent) })
+    if (soort === 'deels-terug') h.refunds.push({ id: 're_k', paymentId: b.mollie_payment_id, status: 'refunded', amount: eur(500) })
+    if (soort === 'chargeback') h.mp[b.mollie_payment_id] = { amountChargedBack: eur(1000) }
+    if (soort === 'onbekende-amountRefunded') h.mp[b.mollie_payment_id] = { amountRefunded: eur(500) }
+    if (soort === 'status-open') h.mp[b.mollie_payment_id] = { status: 'open' }
+    if (soort === 'db-terugbetaling-verwerkt') await h.db.wijzig('arnobot_payments', b.id, { terugbetaling_verwerkt_at: dag('2027-08-01') })
+    if (soort === 'geen-bron-ids') await h.db.wijzig('arnobot_referral_grootboek', grootboekRij.id, { bron_ids: null })
+    if (soort === 'bron-onbekend') await h.db.wijzig('arnobot_referral_grootboek', grootboekRij.id, { bron_ids: ['tr_bestaatniet'] })
+    return async () => {
+      nep.mockImplementation(origineel)
+      h.refunds = h.refunds.filter(r => r.id !== 're_k')
+      delete h.mp[b.mollie_payment_id]
+    }
+  }
+  it.each(SOORTEN)('vóór het reserveren (%s): niets reserveren, wel zichtbaar', async soort => {
+    const herstel = await verstoor(soort, await opzet())
+    const r = await plan()
+    await herstel()
+    expect(await acties()).toEqual([])
+    expect(r.voornemens).toMatchObject([{ stand: 'wacht', bronNietBewezen: true }])
+  })
+  it.each(SOORTEN)('vóór het versturen (%s): niets versturen, de reservering blijft wachten', async soort => {
+    const klant = await opzet()
+    await plan()
+    expect(await acties()).toHaveLength(1)
+    const herstel = await verstoor(soort, klant)
+    await verwerkOpenTerugstortingen(NU)
+    await herstel()
+    expect(h.posts).toEqual([])
+    expect((await acties())[0].status).toBe('gereserveerd')
+  })
+  it('bewezen en dan pas versturen; ons eigen referralgeld op de bron telt niet als onbekend', async () => {
+    const klant = await opzet()
+    h.refunds.push({ id: 're_ons', paymentId: klant[0].mollie_payment_id, status: 'refunded', amount: eur(100), metadata: { referralActie: uuid(990) } })
+    await h.db.voegToe('arnobot_referral_acties', { id: uuid(990), soort: 'voordeel_maand', user_id: 'klant', referral_id: uuid(991), doel_soort: 'betaling', doel_id: klant[0].id, bruto_cent: 100, netto_cent: 83, status: 'bevestigd', gegevens: {} })
+    await h.db.wijzig('arnobot_payments', klant[0].id, { referral_refund_cent: 100, terugbetaald_cent: 100 })
+    await plan()
+    await verwerkOpenTerugstortingen(NU)
+    expect(h.posts).toHaveLength(1)
+  })
+  it('ook zonder nacontrole en na meer dan 400 dagen', async () => {
+    const klant = await opzet()
+    await plan()
+    h.mp[klant[2].mollie_payment_id] = { amountChargedBack: eur(1000) }
+    await verwerkOpenTerugstortingen(new Date(NU.getTime() + 500 * DAG))
+    expect(h.posts).toEqual([])
+  })
+  it('lang wachten wordt elke week aan de eigenaar gemeld', async () => {
+    const klant = await opzet()
+    await plan()
+    h.mp[klant[2].mollie_payment_id] = { amountChargedBack: eur(1000) }
+    const dagen = async (n: number) => { await weerVrij(); await verwerkOpenTerugstortingen(new Date(NU.getTime() + n * DAG)) }
+    const meldingen = () => h.telegram.filter(t => t.includes('wacht op bewijs')).length
+    await dagen(0); await dagen(6)
+    expect(meldingen()).toBe(0)
+    await dagen(8); await dagen(9)
+    expect(meldingen()).toBe(1)
+    await dagen(16)
+    expect(meldingen()).toBe(2)
+  })
+  it('met een onbekende eerdere poging blijft de beheerderknop niet eeuwig geweigerd', async () => {
+    const klant = await opzet()
+    await plan()
+    const [a] = await acties()
+    await h.db.wijzig('arnobot_referral_acties', a.id, { status: 'bezig', gegevens: { ...a.gegevens, post_geprobeerd_at: NU.toISOString() } })
+    h.mp[klant[2].mollie_payment_id] = { amountChargedBack: eur(1000) }
+    for (let i = 0; i < 6; i++) { await weerVrij(); await verwerkOpenTerugstortingen(new Date(NU.getTime() + i * DAG)) }
+    expect((await acties())[0].status).toBe('vastgelopen')
+    expect(h.posts).toEqual([])
+  })
+  it('een onbewezen oudste toekenning wordt niet overgeslagen: dan gaat er niets', async () => {
+    const eigen = maanden('aanbrenger', 6)
+    await zaai({ arnobot_payments: eigen, arnobot_referrals: [], arnobot_referral_grootboek: [
+      regel('toekenning', 'oud', 1900, { bron_ids: null, klant_user_id: 'bronklant', created_at: dag('2027-03-10') }), regel('toekenning', 'goed', 1900, { id: uuid(972) }),
+    ] })
+    await plan()
+    expect(await acties()).toEqual([])
+  })
+  it('de cron meldt een onbewezen bron een keer per week', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(NU)
+    const klant = await opzet()
+    Object.assign(h.teksten, OMSCHRIJVINGEN)
+    h.mp[klant[2].mollie_payment_id] = { amountChargedBack: eur(1000) }
+    for (let i = 0; i < 2; i++) await GET(new Request('https://x', { headers: { authorization: 'Bearer s' } }) as any)
+    vi.useRealTimers()
+    expect(h.telegram.join('\n').split('bron niet bewezen').length - 1).toBe(1)
+  })
+
+  describe('hetzelfde voor het voordeel van de nieuwe gebruiker', () => {
+    it.each(['pending-refund', 'chargeback', 'mollie-fout'] as Soort[])('een van de drie maanden ervoor is niet bewezen (%s): niets', async soort => {
+      const p = maanden('klant', 4)
+      await zaai({ arnobot_payments: p })
+      const nep = await mollieNep()
+      const origineel = nep.getMockImplementation()
+      if (soort === 'mollie-fout') nep.mockImplementation(async (id: string) => { if (id === p[1].mollie_payment_id) throw new Error('503'); return origineel(id) })
+      if (soort === 'pending-refund') h.refunds.push({ id: 're_k', paymentId: p[1].mollie_payment_id, status: 'pending', amount: eur(p[1].bedrag_cent) })
+      if (soort === 'chargeback') h.mp[p[1].mollie_payment_id] = { amountChargedBack: eur(1000) }
+      const r = await plan()
+      nep.mockImplementation(origineel)
+      expect(await acties()).toEqual([])
+      expect(r.voornemens).toMatchObject([{ soort: 'voordeel_maand', stand: 'wacht', bronNietBewezen: true }])
+    })
+    it('het gaat na het reserveren mis: niet versturen', async () => {
+      const p = [...maanden('klant', 2), jaarbet('klant', '2027-04-01')]
+      await zaai({ arnobot_payments: p })
+      await plan()
+      expect((await acties())[0].gegevens.bronnen).toEqual([p[0].mollie_payment_id, p[1].mollie_payment_id])
+      h.mp[p[0].mollie_payment_id] = { amountChargedBack: eur(1000) }
+      await verwerkOpenTerugstortingen(NU)
+      expect(h.posts).toEqual([])
+    })
+  })
+})
+
+describe('F3: bij een onvolledige voorgeschiedenis vervalt tegoed van een teamlid nooit vanzelf', () => {
+  const factuur = (extra: any = {}) => ({
+    id: uuid(810), team_id: uuid(800), status: 'paid', soort: 'regulier', cyclus: 'maandelijks', created_at: dag('2027-05-01'), betaald_at: dag('2027-05-02'),
+    periode_start: dag('2027-05-01'), periode_einde: dag('2027-06-01'), reversed_at: null, terugbetaald_cent: 0, teruggeboekt_cent: 0, mollie_payment_id: 'tr_team1',
+    bedrag_cent: 20000, btw_cent: 3000, seats_aantal: 3, ...extra,
+  })
+  const oudTeam = { id: uuid(800), manager_id: 'aanbrenger', name: 't', min_seats: 3, cyclus: 'maandelijks', geblokkeerd_at: null, stopt_op: '2027-07-01', volgende_factuurdatum: null }
+  const leeg = () => {
+    const oud = bet('aanbrenger', '2027-02-01', '2027-03-01', { soort: 'eerste', plan: 'basis' })
+    return { ...oud, referral_refund_cent: oud.bedrag_cent }
+  }
+  const teamlidZonderRuimte = (extra: Record<string, any[]> = {}) => zaai({
+    arnobot_payments: [leeg()], arnobot_referrals: [], arnobot_subscriptions: [sub('aanbrenger', { plan: 'basis', status: 'ended', periode_einde: dag('2027-03-01') })],
+    arnobot_team_members: [{ team_id: uuid(801), user_id: 'aanbrenger', role: 'member' }], arnobot_referral_grootboek: [regel('toekenning', 'r1', 1900)], ...extra,
+  })
+  const geenVerval = async () => expect((await grootboek()).filter(r => r.soort === 'verval')).toEqual([])
+  const vragen = async () => (await grootboek()).filter(r => String(r.event_key).startsWith('verval-handwerk:'))
+
+  it.each([
+    ['ooit met de hand op betaald', { arnobot_admin_log: [{ actie: 'betaald_gezet', doel_user_id: 'aanbrenger' }] }],
+    ['als manager een betaalde teamfactuur', { arnobot_teams: [oudTeam], arnobot_team_facturen: [factuur()] }],
+    ['als manager een betaalde en later teruggedraaide teamfactuur', { arnobot_teams: [oudTeam], arnobot_team_facturen: [factuur({ status: 'refunded', reversed_at: dag('2027-06-01') })] }],
+  ] as [string, any][])('%s: een vraag aan de eigenaar, geen verval, en niet twee keer', async (_n, extra) => {
+    await teamlidZonderRuimte(extra)
+    const r = await plan()
+    await plan()
+    await geenVerval()
+    expect(await vragen()).toMatchObject([{ soort: 'handwerk', netto_cent: 0, event_key: 'verval-handwerk:r1', meeloop: false }])
+    expect(r.voornemens).toMatchObject([{ soort: 'verval_teamlid', stand: 'niet-automatisch' }])
+  })
+  it('ook een oud-teammanager zonder eigen online betalingen', async () => {
+    await teamlidZonderRuimte({ arnobot_payments: [], arnobot_subscriptions: [], arnobot_teams: [oudTeam], arnobot_team_facturen: [factuur()] })
+    await plan()
+    await geenVerval()
+    expect(await vragen()).toHaveLength(1)
+  })
+  it('na "behouden" komt de vraag niet terug en vervalt er niets', async () => {
+    await teamlidZonderRuimte({ arnobot_admin_log: [{ actie: 'betaald_gezet', doel_user_id: 'aanbrenger' }] })
+    await plan()
+    await h.db.voegToe('arnobot_referral_grootboek', regel('handwerk', 'r1', 0, { event_key: 'verval-behoud:r1:1', id: uuid(973), reden: 'handmatig besluit: houden' }))
+    await plan()
+    await geenVerval()
+    expect(await vragen()).toHaveLength(1)
+  })
+  it('de droogloop schrijft geen vraag', async () => {
+    await teamlidZonderRuimte({ arnobot_admin_log: [{ actie: 'betaald_gezet', doel_user_id: 'aanbrenger' }] })
+    await droog()
+    expect(await grootboek()).toHaveLength(1)
+  })
+  it.each(['gereserveerd', 'bezig', 'verzonden', 'vastgelopen', 'vrijgegeven'])('een voordeelactie (%s) van deze gebruiker: wachten', async status => {
+    await teamlidZonderRuimte()
+    await h.db.voegToe('arnobot_referral_acties', { id: uuid(992), soort: 'voordeel_maand', user_id: 'aanbrenger', referral_id: uuid(993), doel_soort: 'betaling', doel_id: uuid(994), bruto_cent: 1, netto_cent: 1, status, gegevens: {} })
+    const r = await plan()
+    await geenVerval()
+    expect(await vragen()).toEqual([])
+    expect(r.voornemens).toMatchObject([{ soort: 'verval_teamlid', stand: 'wacht' }])
+  })
+  it('een actie van iemand anders op een van zijn betalingen: wachten', async () => {
+    const p = leeg()
+    await teamlidZonderRuimte({ arnobot_payments: [p] })
+    await h.db.voegToe('arnobot_referral_acties', { id: uuid(995), soort: 'tegoed_terugstorten', user_id: 'iemand', referral_id: null, doel_soort: 'betaling', doel_id: p.id, bruto_cent: 1, netto_cent: 1, status: 'verzonden', gegevens: {} })
+    await plan()
+    await geenVerval()
+  })
+})
+
+describe('F5: een gratis account verdient nooit referraltegoed, ook niet als teamlid', () => {
+  const gratisTeamlid = (extra: any = {}) => zaai({
+    approved_users: [gebruiker('aanbrenger', { gratis_sinds: dag('2027-03-01'), ...extra }), gebruiker('klant')],
+    arnobot_payments: maanden('aanbrenger', 2, { plan: 'basis' }), arnobot_referrals: [], arnobot_subscriptions: [sub('aanbrenger', { plan: 'basis', status: 'ended', periode_einde: dag('2027-04-01') })],
+    arnobot_team_members: [{ team_id: uuid(801), user_id: 'aanbrenger', role: 'member' }], arnobot_referral_grootboek: [regel('toekenning', 'r1', 1900)],
+  })
+  it('de planner doet niets', async () => {
+    await gratisTeamlid()
+    expect((await plan()).voornemens).toMatchObject([{ stand: 'wacht', reden: expect.stringContaining('gratis') }])
+    expect(await acties()).toEqual([])
+  })
+  it('Lifetime gaat voor', async () => {
+    await gratisTeamlid({ lifetime_sinds: dag('2027-03-02') })
+    await plan()
+    expect((await acties()).length).toBeGreaterThan(0)
   })
 })

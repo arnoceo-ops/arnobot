@@ -4,13 +4,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // de incasso stopt zonder restitutie, een lopende proef vervalt, en een mislukte stop breekt niets.
 
 type Rij = Record<string, unknown>
-const { db, notify, stopMollie } = vi.hoisted(() => ({
-  db: { approved_users: [] as Rij[], arnobot_subscriptions: [] as Rij[] },
+const { db, notify, stopMollie, referral } = vi.hoisted(() => ({
+  db: { approved_users: [] as Rij[], arnobot_subscriptions: [] as Rij[], arnobot_referral_acties: [] as Rij[] },
+  referral: { meeloop: true, teksten: {} as Record<string, string> },
   notify: vi.fn(),
   stopMollie: vi.fn(),
 }))
 
-function bouwer(tabel: 'approved_users' | 'arnobot_subscriptions') {
+function bouwer(tabel: 'approved_users' | 'arnobot_subscriptions' | 'arnobot_referral_acties') {
   const filters: ((r: Rij) => boolean)[] = []
   let op: 'select' | 'update' = 'select'
   let waarden: Rij = {}
@@ -33,6 +34,8 @@ function bouwer(tabel: 'approved_users' | 'arnobot_subscriptions') {
 vi.mock('./db', () => ({ billingDb: { from: bouwer } }))
 vi.mock('./verwerking', () => ({ stopMollieAbonnement: stopMollie }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: notify }))
+vi.mock('./referralTeksten', () => ({ TERUGSTORT_OMSCHRIJVING: referral.teksten }))
+vi.mock('./referralStand', () => ({ get MEELOOP() { return referral.meeloop } }))
 
 const { stopSoloBijJoin, restantNaarRato } = await import('./teamlidSolo')
 
@@ -156,5 +159,33 @@ describe('de Telegram bij een jaarabonnement', () => {
     const r = await stopSoloBijJoin('u1', 'Team Een', nu)
     expect(r.naarRato).toBeUndefined()
     expect(notify.mock.calls[0][0]).not.toContain('deelrestitutie')
+  })
+})
+
+describe('F9: de melding zegt alleen dat het systeem het referraltegoed doet als dat echt zo is', () => {
+  const jaarSub = { cyclus: 'jaarlijks', bedrag_cent: 22800, periode_start: dagenGeleden(30), periode_einde: dagenVooruit(335) }
+  const meld = async () => {
+    zet({ user: { paid_at: dagenGeleden(30), expires_at: dagenVooruit(335), trial_start: dagenGeleden(90) }, sub: jaarSub })
+    await stopSoloBijJoin('u1', 'Team Een', nu)
+    return notify.mock.calls[0][0] as string
+  }
+  const alles = () => { vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true'); referral.teksten.tegoed_terugstorten = 'x' }
+
+  beforeEach(() => { referral.meeloop = true; delete referral.teksten.tegoed_terugstorten; vi.stubEnv('REFERRAL_TERUGSTORTEN', '') })
+
+  it('schakelaar en tekst, maar het grootboek loopt nog mee: de gewone waarschuwing', async () => {
+    alles()
+    const tekst = await meld()
+    expect(tekst).toContain('Is er ook referraltegoed, tel het niet dubbel.')
+    expect(tekst).not.toContain('stort het systeem zelf')
+  })
+  it('pas met een echt grootboek erbij zegt hij dat het systeem het doet', async () => {
+    alles()
+    referral.meeloop = false
+    expect(await meld()).toContain('Referraltegoed stort het systeem zelf terug.')
+  })
+  it('alles uit: als voorheen', async () => {
+    referral.meeloop = false
+    expect(await meld()).toContain('Is er ook referraltegoed, tel het niet dubbel.')
   })
 })

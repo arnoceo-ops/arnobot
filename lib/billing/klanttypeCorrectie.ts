@@ -353,12 +353,12 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     .not('moneybird_factuur_id', 'is', null)
     .order('created_at', { ascending: false })
     .limit(1)
-    .maybeSingle<{ id: string; moneybird_factuur_id: string; mollie_payment_id: string; referral_refund_cent?: number | null }>()
+    .maybeSingle<{ id: string; moneybird_factuur_id: string; mollie_payment_id: string; referral_refund_cent?: number | null; referral_bank_cent?: number | null }>()
   if (oudeFout) throw new Error(`eerdere betaling niet gelezen: ${oudeFout.message}`)
   if (!oudeBetaling) await notifyTelegram(`Klanttype-correctie: geen eerdere factuur om te crediteren op arno.bot\n\nUser: ${rij.user_id}\nDe nieuwe zakelijke factuur wordt wel gemaakt. Controleer in Moneybird.`)
 
   // Met verrekend referraltegoed zou een volledige creditnota te veel crediteren: dan stoppen en handwerk.
-  if ((oudeBetaling?.referral_refund_cent ?? 0) > 0) throw new Error(`referraltegoed verrekend op ${oudeBetaling?.mollie_payment_id}: creditnota met de hand`)
+  if ((oudeBetaling?.referral_refund_cent ?? 0) > 0 || (oudeBetaling?.referral_bank_cent ?? 0) > 0) throw new Error(`referraltegoed verrekend op ${oudeBetaling?.mollie_payment_id}: creditnota met de hand`)
 
   if (oudeBetaling?.moneybird_factuur_id) {
     // Eerst vastleggen welke betaling wordt gecrediteerd: een latere terugbetaling mag dat niet nog eens doen.

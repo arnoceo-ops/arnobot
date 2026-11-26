@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   db: null as any,
   /** Laat een databasewijziging mislukken. */
   faalUpdate: null as null | ((patch: any) => boolean),
+  faalRpc: '',
   tabelWeg: false,
   telegram: [] as string[],
   telegramStuk: false,
@@ -40,7 +41,7 @@ vi.mock('./db', () => ({
       }
       return q
     },
-    rpc: (naam: string, p: any) => h.db.rpc(naam, p),
+    rpc: (naam: string, p: any) => (naam === h.faalRpc ? Promise.resolve({ data: null, error: { message: 'verbinding weg' } }) : h.db.rpc(naam, p)),
   },
 }))
 vi.mock('./mollie', async origineel => {
@@ -124,6 +125,7 @@ beforeEach(async () => {
   vi.stubEnv('REFERRAL_CREDITNOTA', '')
   h.db ??= maakNepDb()
   h.faalUpdate = null
+  h.faalRpc = ''
   h.tabelWeg = false
   h.telegram.length = 0
   h.telegramStuk = false
@@ -246,10 +248,10 @@ describe('fouttabel: na reserveren, vóór versturen', () => {
   })
   it('lukt het vastleggen van de poging niet, dan wordt er niet verstuurd', async () => {
     await reservering()
-    h.faalUpdate = p => !!p.gegevens?.post_geprobeerd_at
+    h.faalRpc = 'referral_markeer_versturen'
     await expect(draai()).rejects.toThrow('verbinding weg')
     expect(posts()).toBe(0)
-    h.faalUpdate = null
+    h.faalRpc = ''
     expect(await draai(DAG)).toBe('verzonden')
     expect(posts()).toBe(1)
   })

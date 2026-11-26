@@ -54,6 +54,8 @@ export interface PayRow {
   terugbetaald_cent: number
   /** Deel van terugbetaald_cent dat verrekend referraltegoed is, zie lib/billing/terugbetaling.ts. */
   referral_refund_cent?: number | null
+  /** Per bank teruggegeven (met de hand ingeboekt). Nooit vergelijken met wat Mollie noemt. */
+  referral_bank_cent?: number | null
   teruggeboekt_cent: number
   betaald_at: string | null
   verwerkt_at: string | null

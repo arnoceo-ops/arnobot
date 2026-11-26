@@ -25,6 +25,8 @@ export type SlotUitkomst =
     stand: 'ok'
     /** De nieuwe stand van arnobot_payments.referral_refund_cent. */
     referralRefundCent: number
+    /** arnobot_payments.referral_bank_cent: per bank teruggegeven. */
+    bankCent: number
     /** Al op weg naar de klant (bezig of verzonden). */
     onderwegCent: number
     /** Vastgelopen met de reservering nog geboekt: onduidelijk of dit geld is verplaatst. */
@@ -35,9 +37,9 @@ export async function slotVoorTerugbetaling(userId: string, betalingId: string):
   try {
     const { data, error } = await billingDb.rpc('referral_voor_terugbetaling', { p_user: userId, p_betaling: betalingId })
     if (error) return functieOntbreekt(error) ? { stand: 'niet-geinstalleerd' } : { stand: 'fout', fout: error.message }
-    const r = data as { ok?: boolean; reden?: string; referral_refund_cent?: number; onderweg_cent?: number; vast_cent?: number } | null
+    const r = data as { ok?: boolean; reden?: string; referral_refund_cent?: number; referral_bank_cent?: number; onderweg_cent?: number; vast_cent?: number } | null
     if (!r?.ok || typeof r.referral_refund_cent !== 'number') return { stand: 'fout', fout: r?.reden ?? 'onverwacht antwoord' }
-    return { stand: 'ok', referralRefundCent: r.referral_refund_cent, onderwegCent: r.onderweg_cent ?? 0, vastCent: r.vast_cent ?? 0 }
+    return { stand: 'ok', referralRefundCent: r.referral_refund_cent, bankCent: r.referral_bank_cent ?? 0, onderwegCent: r.onderweg_cent ?? 0, vastCent: r.vast_cent ?? 0 }
   } catch (e) {
     return { stand: 'fout', fout: e instanceof Error ? e.message : String(e) }
   }

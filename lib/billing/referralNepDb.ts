@@ -5,6 +5,12 @@
 
 export type Rij = Record<string, any>
 
+/** De betaling waar het tegoed in deze tests op rust. */
+export const BRON: Rij = {
+  id: '99999999-9999-4999-8999-999999999999', user_id: 'bronklant', mollie_payment_id: 'tr_bron', soort: 'eerste', status: 'paid', bedrag_cent: 22800,
+  btw_cent: 3957, terugbetaald_cent: 0, teruggeboekt_cent: 0, referral_refund_cent: 0, betaald_at: '2029-12-01T10:00:00.000Z', terugbetaling_verwerkt_at: null,
+}
+
 export function maakNepDb() {
   let tabellen: Record<string, Rij[]> = {}
   const kopie = <T>(x: T): T => structuredClone(x)
@@ -38,6 +44,10 @@ export function maakNepDb() {
     Object.assign(a, { status: eind, bezig_tot: null, fout: reden, gegevens: { ...a.gegevens, boeking_teruggezet: true } })
   }
 
+  const verreken = (actieId: string, userId: string) => tabellen.arnobot_referral_grootboek.push({
+    meeloop: false, soort: 'verrekening', referral_id: 'z1', hoort_bij: 'z1', actie_id: actieId, aanbrenger_user_id: userId, netto_cent: -1000,
+  })
+
   const rpc = async (naam: string, p: Rij) => {
     const a = p.p_actie ? zoek('arnobot_referral_acties', p.p_actie) : undefined
     if (naam === 'referral_claim') {
@@ -46,6 +56,12 @@ export function maakNepDb() {
       a.bezig_tot = new Date(Date.now() + 10 * 60 * 1000).toISOString()
       return { data: kopie(a), error: null }
     }
+    if (naam === 'referral_markeer_versturen') {
+      if (!a || a.status !== 'bezig') return { data: false, error: null }
+      a.gegevens = { ...a.gegevens, post_geprobeerd_at: a.gegevens.post_geprobeerd_at ?? p.p_op }
+      return { data: true, error: null }
+    }
+    if (naam === 'referral_geef_teruggedraaid_vrij') return { data: { ok: false, reden: 'niet_teruggedraaid' }, error: null }
     if (naam === 'referral_vrijgeven') {
       if (!a || a.status !== p.p_van) return { data: { ok: false, reden: 'status_gewijzigd' }, error: null }
       vrijgeven(a, p.p_eind, p.p_reden)
@@ -54,6 +70,7 @@ export function maakNepDb() {
     if (naam === 'referral_reserveer') {
       const b = zoek('arnobot_payments', p.p_doel)!
       ;(tabellen.arnobot_referral_acties ??= []).push(nieuweActie({ id: p.p_actie, user_id: p.p_user, doel_id: p.p_doel, gegevens: p.p_gegevens }))
+      verreken(p.p_actie, p.p_user)
       b.referral_refund_cent += 1210
       return { data: { ok: true, bruto_cent: 1210, netto_cent: 1000, bestaand: false }, error: null }
     }
@@ -70,12 +87,16 @@ export function maakNepDb() {
     from, rpc,
     /** Leeg beginnen, met tegoed bij de gebruiker en een betaalde betaling. */
     async zaai(betaling: Rij, _tegoedNettoCent: number) {
-      tabellen = { arnobot_payments: [kopie(betaling)], arnobot_referral_acties: [] }
+      tabellen = {
+        arnobot_payments: [kopie(betaling), kopie(BRON)], arnobot_referral_acties: [],
+        arnobot_referral_grootboek: [{ meeloop: false, soort: 'toekenning', referral_id: 'z1', aanbrenger_user_id: betaling.user_id, klant_user_id: BRON.user_id, netto_cent: _tegoedNettoCent, bron_ids: [BRON.mollie_payment_id] }],
+      }
     },
     /** Een gereserveerde actie, zoals na stap 1. */
     async zetReservering(id: string, gegevens: Rij, extra: Rij = {}) {
       const betaling = tabellen.arnobot_payments[0]
       tabellen.arnobot_referral_acties.push(nieuweActie({ id, user_id: betaling.user_id, doel_id: betaling.id, gegevens, ...extra }))
+      if (!extra.soort) verreken(id, betaling.user_id)
       betaling.referral_refund_cent += 1210
     },
     async actie(id: string) { return kopie(zoek('arnobot_referral_acties', id))! },

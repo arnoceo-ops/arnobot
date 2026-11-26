@@ -70,6 +70,8 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
         const tekst = `${v.soort} voor ${await wie(v.userId)} ${bedrag}${v.betaalkenmerk ? ` op ${v.betaalkenmerk}` : ''}: ${v.reden}`
         if (v.stand === 'gereserveerd') { uit.gereserveerd++; regels.push(`Gereserveerd: ${tekst}`) }
         else if (v.stand === 'vervalt') regels.push(`Vervallen: ${tekst}`)
+        // Wachten op bewijs mag niet onzichtbaar blijven.
+        else if (v.bronNietBewezen) await eensPerWeek(`bron:${v.soort}:${v.userId}:${v.betalingId}`, `Wacht: ${tekst}`)
         else if (v.stand === 'niet-automatisch') {
           await eensPerWeek(`plan:${v.soort}:${v.userId}:${v.betalingId}:${v.reden}`, `Niet vanzelf: ${tekst}. Geef je dit met de hand, boek het dan in (functies referral_handmatig_ in de SQL).`)
         }
